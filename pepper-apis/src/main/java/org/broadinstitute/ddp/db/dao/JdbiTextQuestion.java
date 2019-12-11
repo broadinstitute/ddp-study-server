@@ -18,16 +18,18 @@ import org.jdbi.v3.stringtemplate4.UseStringTemplateSqlLocator;
 
 public interface JdbiTextQuestion extends SqlObject {
 
-    @SqlUpdate("insert into text_question (question_id, input_type_id, suggestion_type_id, placeholder_template_id)"
+    @SqlUpdate("insert into text_question (question_id, input_type_id, suggestion_type_id, placeholder_template_id, confirm_entry)"
             + " values (:questionId,"
             + "   (select text_question_input_type_id from text_question_input_type where text_question_input_type_code = :inputType),"
             + "   (select suggestion_type_id from suggestion_type where suggestion_type_code = :suggestionType),"
-            + "   :placeholderTemplateId)"
+            + "   :placeholderTemplateId,"
+            + "   :confirmEntry)"
     )
     int insert(@Bind("questionId") long questionId,
                @Bind("inputType") TextInputType inputType,
                @Bind("suggestionType") SuggestionType suggestionType,
-               @Bind("placeholderTemplateId") Long placeholderTemplateId);
+               @Bind("placeholderTemplateId") Long placeholderTemplateId,
+               @Bind("confirmEntry") boolean confirmEntry);
 
     @SqlUpdate("UPDATE text_question as tq "
             + "INNER JOIN text_question_input_type AS i_type ON i_type.text_question_input_type_code = :inputType "
@@ -58,6 +60,5 @@ public interface JdbiTextQuestion extends SqlObject {
             }
         }
     }
-
 
 }

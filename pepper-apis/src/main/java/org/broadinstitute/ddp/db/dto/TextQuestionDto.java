@@ -15,16 +15,19 @@ public final class TextQuestionDto extends QuestionDto {
     private SuggestionType suggestionType;
     private Long placeholderTemplateId;
     private List<String> suggestions;
+    private boolean confirmEntry;
 
     @JdbiConstructor
     public TextQuestionDto(@Nested QuestionDto questionDto,
                            @ColumnName("input_type_code") TextInputType inputType,
                            @ColumnName("suggestion_type_code") SuggestionType suggestionType,
-                           @ColumnName("placeholder_template_id") Long placeholderTemplateId) {
+                           @ColumnName("placeholder_template_id") Long placeholderTemplateId,
+                           @ColumnName("confirm_entry") boolean confirmEntry) {
         super(questionDto);
         this.inputType = inputType;
         this.suggestionType = suggestionType;
         this.placeholderTemplateId = placeholderTemplateId;
+        this.confirmEntry = confirmEntry;
     }
 
     public TextInputType getInputType() {
@@ -50,4 +53,7 @@ public final class TextQuestionDto extends QuestionDto {
         suggestions.add(suggestionToAdd);
     }
 
+    public boolean isConfirmEntry() {
+        return confirmEntry;
+    }
 }

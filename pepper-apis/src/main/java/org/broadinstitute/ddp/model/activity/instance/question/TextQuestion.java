@@ -39,13 +39,16 @@ public class TextQuestion extends Question<TextAnswer> {
     @SerializedName("suggestions")
     private List<String> suggestions;
 
+    @SerializedName("confirmEntry")
+    private boolean confirmEntry;
+
     private transient Long placeholderTemplateId;
 
     public TextQuestion(String stableId, long promptTemplateId, Long placeholderTemplateId,
                         boolean isRestricted, boolean isDeprecated,
                         Long additionalInfoHeaderTemplateId, Long additionalInfoFooterTemplateId, List<TextAnswer> answers,
                         List<Rule<TextAnswer>> validations, TextInputType inputType, SuggestionType suggestionType,
-                        List<String> suggestions) {
+                        List<String> suggestions, boolean confirmEntry) {
         super(QuestionType.TEXT,
                 stableId,
                 promptTemplateId,
@@ -58,6 +61,7 @@ public class TextQuestion extends Question<TextAnswer> {
         
         this.inputType = MiscUtil.checkNonNull(inputType, "inputType");
         this.placeholderTemplateId = placeholderTemplateId;
+        this.confirmEntry = confirmEntry;
         this.suggestionType = Optional.ofNullable(suggestionType).orElse(SuggestionType.NONE);
 
         if (CollectionUtils.isNotEmpty(suggestions)) {
@@ -67,7 +71,7 @@ public class TextQuestion extends Question<TextAnswer> {
 
     public TextQuestion(String stableId, long promptTemplateId, Long placeholderTemplateId, List<TextAnswer> answers,
                         List<Rule<TextAnswer>> validations, TextInputType inputType, SuggestionType suggestionType,
-                        List<String> suggestions) {
+                        List<String> suggestions, boolean confirmEntry) {
         this(stableId,
                 promptTemplateId,
                 placeholderTemplateId,
@@ -79,7 +83,8 @@ public class TextQuestion extends Question<TextAnswer> {
                 validations,
                 inputType,
                 suggestionType,
-                suggestions);
+                suggestions,
+                confirmEntry);
     }
 
     public TextQuestion(String stableId, long promptTemplateId, Long placeholderTemplateId,
@@ -95,7 +100,8 @@ public class TextQuestion extends Question<TextAnswer> {
                 validations,
                 inputType,
                 null,
-                null);
+                null,
+                false);
     }
 
     @Override

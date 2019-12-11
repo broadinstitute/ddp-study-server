@@ -29,6 +29,9 @@ public final class TextQuestionDef extends QuestionDef {
     @SerializedName("suggestions")
     private List<String> suggestions;
 
+    @SerializedName("confirmEntry")
+    private boolean confirmEntry;
+
     public static Builder builder() {
         return new Builder();
     }
@@ -74,7 +77,7 @@ public final class TextQuestionDef extends QuestionDef {
     public TextQuestionDef(String stableId, boolean isRestricted, Template promptTemplate, Template placeholderTemplate,
                            Template additionalInfoHeaderTemplate, Template additionalInfoFooterTemplate,
                            List<RuleDef> validations, TextInputType inputType, SuggestionType suggestionType,
-                           List<String> suggestions, boolean hideNumber) {
+                           List<String> suggestions, boolean hideNumber, boolean confirmEntry) {
         this(stableId,
                 isRestricted,
                 promptTemplate,
@@ -86,6 +89,7 @@ public final class TextQuestionDef extends QuestionDef {
                 hideNumber);
         this.suggestionType = suggestionType;
         this.suggestions = suggestions;
+        this.confirmEntry = confirmEntry;
     }
 
     public TextInputType getInputType() {
@@ -104,6 +108,10 @@ public final class TextQuestionDef extends QuestionDef {
         return suggestions;
     }
 
+    public boolean isConfirmEntry() {
+        return confirmEntry;
+    }
+
     public static final class Builder extends AbstractQuestionBuilder<Builder> {
 
         private TextInputType inputType;
@@ -111,6 +119,7 @@ public final class TextQuestionDef extends QuestionDef {
         private SuggestionType suggestionType;
         private Template placeholderTemplate;
         private List<String> suggestions;
+        private boolean confirmEntry;
 
         private Builder() {
             // Use static factories.
@@ -136,6 +145,11 @@ public final class TextQuestionDef extends QuestionDef {
             return self();
         }
 
+        public Builder setConfirmEntry(boolean confirmEntry) {
+            this.confirmEntry = confirmEntry;
+            return this;
+        }
+
         public Builder addSuggestions(List<String> suggestionsToAdd) {
             if (suggestions == null) {
                 suggestions = new ArrayList<>();
@@ -155,7 +169,8 @@ public final class TextQuestionDef extends QuestionDef {
                                                             inputType,
                                                             suggestionType,
                                                             suggestions,
-                                                            hideNumber);
+                                                            hideNumber,
+                                                            confirmEntry);
             configure(question);
             return question;
         }

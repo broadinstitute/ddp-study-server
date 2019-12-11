@@ -498,7 +498,8 @@ public interface QuestionDao extends SqlObject {
                 rules,
                 textQuestionDto.getInputType(),
                 textQuestionDto.getSuggestionType(),
-                textQuestionDto.getSuggestions());
+                textQuestionDto.getSuggestions(),
+                textQuestionDto.isConfirmEntry());
     }
 
     /**
@@ -864,7 +865,8 @@ public interface QuestionDao extends SqlObject {
         int numInserted = getJdbiTextQuestion().insert(textQuestion.getQuestionId(),
                 textQuestion.getInputType(),
                 textQuestion.getSuggestionType(),
-                placeholderTemplateId);
+                placeholderTemplateId,
+                textQuestion.isConfirmEntry());
         if (numInserted != 1) {
             throw new DaoException("Inserted " + numInserted + " for text question " + textQuestion.getStableId());
         }
@@ -1297,6 +1299,7 @@ public interface QuestionDao extends SqlObject {
                 .setRestricted(textDto.isRestricted())
                 .setDeprecated(textDto.isDeprecated())
                 .setHideNumber(textDto.shouldHideNumber())
+                .setConfirmEntry(textDto.isConfirmEntry())
                 .addSuggestions(suggestions)
                 .addValidations(validations)
                 .build();

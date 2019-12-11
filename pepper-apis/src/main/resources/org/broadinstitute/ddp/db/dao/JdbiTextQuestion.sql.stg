@@ -23,6 +23,7 @@ queryDtoAndSuggestionsByQuestionId() ::= <<
 select tqit.text_question_input_type_code   p_input_type_code,
        st.suggestion_type_code              p_suggestion_type_code,
        tq.placeholder_template_id           p_placeholder_template_id,
+       tq.confirm_entry                     p_confirm_entry,
        qt.question_type_code                p_question_type_code,
        qsc.stable_id                        p_stable_id,
        q.question_id                        p_question_id,
