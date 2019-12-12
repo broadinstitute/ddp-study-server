@@ -64,6 +64,7 @@ public class EventConfigurationDto {
 
     /* PDF_GENERATION */
     private Long pdfDocumentConfigurationId;
+    private Boolean generateIfMissing;
 
     /* ACTIVITY_INSTANCE_CREATION */
     private Long activityInstanceCreationStudyActivityId;
@@ -95,6 +96,7 @@ public class EventConfigurationDto {
                                  Long notificationTemplateId,
                                  Long linkedActivityId,
                                  Long pdfDocumentConfigurationId,
+                                 Boolean generateIfMissing,
                                  Long activityInstanceCreationStudyActivityId,
                                  CopyAnswerTarget copyAnswerTarget,
                                  String copySourceQuestionStableId) {
@@ -118,6 +120,7 @@ public class EventConfigurationDto {
         this.notificationTemplateId = notificationTemplateId;
         this.linkedActivityId = linkedActivityId;
         this.pdfDocumentConfigurationId = pdfDocumentConfigurationId;
+        this.generateIfMissing = generateIfMissing;
         this.activityInstanceCreationStudyActivityId = activityInstanceCreationStudyActivityId;
         this.copyAnswerTarget = copyAnswerTarget;
         this.copySourceQuestionStableId = copySourceQuestionStableId;
@@ -213,5 +216,9 @@ public class EventConfigurationDto {
 
     public String getCopySourceQuestionStableId() {
         return copySourceQuestionStableId;
+    }
+
+    public Boolean getGenerateIfMissing() {
+        return generateIfMissing;
     }
 }

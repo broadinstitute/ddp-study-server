@@ -7,10 +7,12 @@ import org.jdbi.v3.core.Handle;
 
 public class PdfGenerationEventAction extends EventAction {
     Long pdfDocumentConfigurationId;
+    Boolean generateIfMissing;
 
     public PdfGenerationEventAction(EventConfiguration eventConfiguration, EventConfigurationDto dto) {
         super(eventConfiguration, dto);
         pdfDocumentConfigurationId = dto.getPdfDocumentConfigurationId();
+        generateIfMissing = dto.getGenerateIfMissing();
     }
 
     @Override

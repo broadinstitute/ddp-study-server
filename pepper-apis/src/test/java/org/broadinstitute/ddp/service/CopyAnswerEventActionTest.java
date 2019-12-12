@@ -124,6 +124,7 @@ public class CopyAnswerEventActionTest extends TxnAwareBaseTest {
                     null,
                     null,
                     null,
+                    null,
                     CopyAnswerTarget.PARTICIPANT_PROFILE_LAST_NAME,
                     textQuestionStableId);
 

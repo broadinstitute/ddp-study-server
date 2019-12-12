@@ -4,7 +4,6 @@ import static org.broadinstitute.ddp.util.StreamUtils.throwIfEmpty;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.broadinstitute.ddp.db.DaoException;
@@ -21,9 +20,7 @@ import org.broadinstitute.ddp.model.event.PdfAttachment;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
-import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
-import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.stringtemplate4.UseStringTemplateSqlLocator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,18 +29,20 @@ public interface EventDao extends SqlObject {
 
     Logger LOG = LoggerFactory.getLogger(EventDao.class);
 
-    default List<EventConfiguration> getEventConfigurationByTriggerType(EventTriggerType eventTriggerType) {
-        return throwIfEmpty(getEventConfigurationDtosForTriggerType(eventTriggerType).stream(),
+    default List<EventConfiguration> getEventConfigurationByStudyIdAndTriggerType(long studyId, EventTriggerType eventTriggerType) {
+        return throwIfEmpty(getEventConfigurationDtosForStudyIdAndTriggerType(studyId, eventTriggerType).stream(),
                 () -> new DaoException(String.format("No event configurations found for trigger type:"
                         + eventTriggerType.toString())))
                 .map(dto -> new EventConfiguration(dto))
                 .collect(Collectors.toList());
     }
 
-    @SqlQuery("getEventConfigurationsForTriggerType")
+    @SqlQuery("getEventConfigurationsForStudyIdAndTriggerType")
     @UseStringTemplateSqlLocator
     @RegisterConstructorMapper(EventConfigurationDto.class)
-    List<EventConfigurationDto> getEventConfigurationDtosForTriggerType(@Bind("eventTriggerType") EventTriggerType eventTriggerType);
+    List<EventConfigurationDto> getEventConfigurationDtosForStudyIdAndTriggerType(@Bind("studyId") long studyId,
+                                                                                  @Bind("eventTriggerType")
+                                                                                          EventTriggerType eventTriggerType);
 
     /**
      * Returns the event configurations for the given
@@ -62,14 +61,9 @@ public interface EventDao extends SqlObject {
     List<EventConfigurationDto> getActiveDispatchConfigsByStudyIdAndTrigger(@Bind("studyId") long studyId,
                                                                             @Bind("trigger") EventTriggerType trigger);
 
-    @UseStringTemplateSqlLocator
-    @SqlQuery("getActiveDispatchedEventConfigSummariesByStudyIdAndTriggerType")
-    @RegisterConstructorMapper(EventConfigurationDto.class)
-    List<EventConfigurationDto> getEventConfigSummariesByStudyIdAndTriggerType(@Bind("studyId") long studyId,
-                                                                               @Bind("triggerType") EventTriggerType triggerType);
-
     default int addMedicalUpdateTriggeredEventsToQueue(long studyId, long participantId) {
-        List<EventConfigurationDto> summaries = getEventConfigSummariesByStudyIdAndTriggerType(studyId, EventTriggerType.MEDICAL_UPDATE);
+        List<EventConfigurationDto> summaries = getEventConfigurationDtosForStudyIdAndTriggerType(studyId,
+                EventTriggerType.MEDICAL_UPDATE);
 
         QueuedEventDao queuedEventDao = getHandle().attach(QueuedEventDao.class);
         int numEventsQueued = 0;
@@ -143,7 +137,8 @@ public interface EventDao extends SqlObject {
     @SqlQuery("getTemplateSubstitutionsForQueuedNotification")
     @UseStringTemplateSqlLocator
     @RegisterConstructorMapper(NotificationTemplateSubstitutionDto.class)
-    List<NotificationTemplateSubstitutionDto> getTemplateSubstitutionsForQueuedNotification(@Bind("queuedEventId") long queuedEventId);
+    List<NotificationTemplateSubstitutionDto> getTemplateSubstitutionsForQueuedNotification(@Bind("queuedEventId")
+                                                                                                    long queuedEventId);
 
     @SqlQuery("getNotificationDetailsForQueuedEvent")
     @UseStringTemplateSqlLocator
@@ -198,9 +193,5 @@ public interface EventDao extends SqlObject {
     @RegisterConstructorMapper(EventConfigurationDto.class)
     List<EventConfigurationDto> getNotificationConfigsForWorkflowState(@Bind("studyGuid") String studyGuid,
                                                                        @Bind("workflowStateId") long workflowStateId);
-
-    @SqlUpdate("update event_configuration set is_active = :enable where umbrella_study_id = :studyId")
-    int enableAllStudyEvents(@Bind("studyId") long studyId, @Bind("enable") boolean enable);
-
 
 }

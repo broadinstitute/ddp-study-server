@@ -103,7 +103,8 @@ public class EventService {
     public void processEventSignal(Handle handle, EventSignal eventSignal) {
         // Look up interested EventConfigs:
         List<EventConfiguration> eventConfigs = handle.attach(EventDao.class)
-                .getEventConfigurationByTriggerType(eventSignal.getEventTriggerType());
+                .getEventConfigurationByStudyIdAndTriggerType(eventSignal.getStudyId(),
+                        eventSignal.getEventTriggerType());
 
         PexInterpreter pexInterpreter = new TreeWalkInterpreter();
         eventConfigs.forEach(eventConfiguration -> processEventSignalForEventConfiguration(handle,
