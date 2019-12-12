@@ -115,7 +115,8 @@ import org.slf4j.LoggerFactory;
         GetStudyPasswordRequirementsRouteTest.class,
         UpdateUserPasswordRouteTest.class,
         UpdateUserEmailRouteTest.class,
-        GetStudiesRouteTest.class
+        GetStudiesRouteTest.class,
+        VerifyInvitationRouteTest.class
 })
 public class IntegrationTestSuite {
 

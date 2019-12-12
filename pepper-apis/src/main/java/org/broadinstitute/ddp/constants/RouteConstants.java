@@ -17,6 +17,7 @@ public class RouteConstants {
     public static final class API {
         public static final String VERSION = "v1";
         public static final String BASE = "/pepper/" + VERSION;
+        public static final String INVITATIONS = BASE + "/invitations";
 
         public static final String HEALTH_CHECK = "/" + VERSION + "/healthcheck";
         public static final String DEPLOYED_VERSION = BASE + "/version";
@@ -126,6 +127,8 @@ public class RouteConstants {
 
         public static final String DSM_DRUGS = "app/drugs";
         public static final String DSM_CANCERS = "app/cancers";
+
+        public static final String VERIFY_INVITATION = INVITATIONS + "/verify";
 
         public static final class DSM {
             public static final class PathSegments {

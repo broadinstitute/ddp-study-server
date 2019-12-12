@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="andrew" id="DDP-4266-invitation-ddl">
+        <createTable tableName="invitation_type">
+            <column name="invitation_type_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="invitation_type_pk" nullable="false"/>
+            </column>
+            <column name="invitation_type_code" type="varchar(80)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="invitation_type_code_uk"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="invitation">
+            <column name="invitation_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="invitation_pk" nullable="false"/>
+            </column>
+            <column name="invitation_type_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <!-- going with user_id without participant or operator qualifier, as we might send invitations to either for different reasons -->
+            <column name="user_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="invitation_guid" type="varchar(36)" >
+                <constraints nullable="false" unique="true" uniqueConstraintName="invitation_guid_uk"/>
+            </column>
+            <column name="study_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <!-- going with datetime(0) after much thrashing with fractional seconds and zone drama for timestamps -->
+            <column name="created_at" type="datetime(3)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="voided_at" type="datetime(3)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="verified_at" type="datetime(3)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="accepted_at" type="datetime(3)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="contact_email" type="varchar(255)">
+                <constraints nullable="false    "/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint constraintName="invitation_invitation_type_fk"
+                                 baseTableName="invitation" baseColumnNames="invitation_type_id"
+                                 referencedTableName="invitation_type" referencedColumnNames="invitation_type_id"/>
+
+        <addForeignKeyConstraint constraintName="invitation_study_fk"
+                                 baseTableName="invitation" baseColumnNames="study_id"
+                                 referencedTableName="umbrella_study" referencedColumnNames="umbrella_study_id"/>
+
+        <addForeignKeyConstraint constraintName="invitation_user_fk"
+                                 baseTableName="invitation" baseColumnNames="user_id"
+                                 referencedTableName="user" referencedColumnNames="user_id"/>
+    </changeSet>
+</databaseChangeLog>

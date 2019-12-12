@@ -124,6 +124,7 @@ import org.broadinstitute.ddp.route.UpdateUserEmailRoute;
 import org.broadinstitute.ddp.route.UpdateUserPasswordRoute;
 import org.broadinstitute.ddp.route.UserActivityInstanceListRoute;
 import org.broadinstitute.ddp.route.UserRegistrationRoute;
+import org.broadinstitute.ddp.route.VerifyInvitationRoute;
 import org.broadinstitute.ddp.route.VerifyMailAddressRoute;
 import org.broadinstitute.ddp.schedule.DsmCancerLoaderJob;
 import org.broadinstitute.ddp.schedule.DsmDrugLoaderJob;
@@ -458,6 +459,8 @@ public class DataDonationPlatform {
                 new UpdateUserEmailRoute(),
                 responseSerializer
         );
+
+        post(API.VERIFY_INVITATION, new VerifyInvitationRoute(), responseSerializer);
 
         Runnable runnable = () -> {
             //load drug list

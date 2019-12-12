@@ -150,3 +150,10 @@ JoinMailingListPayload:
     application/json:
       schema:
         $ref: '../pepper.yml#/components/schemas/JoinMailingListPayload'
+VerifyInvitationPayload:
+  description: payload that identifies which invitation to mark
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: '../pepper.yml#/components/schemas/Invitation'

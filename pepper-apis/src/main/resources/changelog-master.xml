@@ -172,4 +172,6 @@
     <include file="db-changes/schema/DDP-4268-multiple-study-activity-mappings.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-4124-create-per-activity-validation-tables.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/seed/DDP-4209-consent-suspended.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-4266-invitation.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/seed/DDP-4266-invitation-types.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

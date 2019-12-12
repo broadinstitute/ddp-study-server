@@ -20,6 +20,13 @@
       "field_security": {
         "grant": ["*"]
       }
+    },
+    {
+      "names": ["users.cmi.*"],
+      "privileges": ["read", "view_index_metadata"],
+      "field_security": {
+        "grant": ["*"]
+      }
     }
   ]
 }

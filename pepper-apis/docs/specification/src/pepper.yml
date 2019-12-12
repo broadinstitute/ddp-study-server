@@ -15,6 +15,8 @@ tags:
     description: messages from a study to participants
   - name: Consent
     description: view and updates study consent elections
+  - name: Invitations
+    description: operations related to managing invitations
   - name: Mailing Address
     description: participant mailing address management
   - name: Medical Providers
@@ -96,6 +98,8 @@ paths:
     $ref: 'endpoints/cancers.yml'
   /autocomplete/institution:
     $ref: 'endpoints/autocomplete.institution.yml'
+  /invitations/verify:
+    $ref: 'endpoints/invitations.verify.yml'
 components:
   schemas:
     $ref: 'components/schemas.yml'

@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.util;
 
 import java.util.Random;
+import java.util.UUID;
 
 public final class GuidUtils {
 
@@ -59,5 +60,12 @@ public final class GuidUtils {
             randomChars[i] = (allowedChars[randomInt]);
         }
         return new String(randomChars);
+    }
+
+    /**
+     * Returns a standard UUID 4
+     */
+    public static String randomUUID() {
+        return UUID.randomUUID().toString();
     }
 }

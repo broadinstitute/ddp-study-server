@@ -1,7 +1,7 @@
 {
   "settings": {
     "index": {
-      "number_of_shards": "3",
+      "number_of_shards": "1",
       "number_of_replicas": "1"
     }
   },
@@ -71,133 +71,75 @@
           "ignore_malformed": false,
           "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
         },
-        "PREQUAL_FIRST_NAME": {
-          "type": "text"
-        },
-        "PREQUAL_LAST_NAME": {
-          "type": "text"
-        },
         "PREQUAL_SELF_DESCRIBE": {
           "type": "keyword"
         },
-        "ANGIOABOUTYOU_v1": {
+        "SELF_CURRENT_AGE": {
+          "type": "long"
+        },
+        "SELF_COUNTRY": {
           "type": "keyword"
         },
-        "ANGIOABOUTYOU_v1_status": {
+        "SELF_STATE": {
           "type": "keyword"
         },
-        "ANGIOABOUTYOU_v1_created_at": {
+        "SELF_PROVINCE": {
+          "type": "keyword"
+        },
+        "CHILD_CURRENT_AGE": {
+          "type": "long"
+        },
+        "CHILD_COUNTRY": {
+          "type": "keyword"
+        },
+        "CHILD_STATE": {
+          "type": "keyword"
+        },
+        "CHILD_PROVINCE": {
+          "type": "keyword"
+        },
+        "LOVEDONE_v1": {
+          "type": "keyword"
+        },
+        "LOVEDONE_v1_status": {
+          "type": "keyword"
+        },
+        "LOVEDONE_v1_created_at": {
           "type": "date",
           "ignore_malformed": false,
           "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
         },
-        "ANGIOABOUTYOU_v1_updated_at": {
+        "LOVEDONE_v1_updated_at": {
           "type": "date",
           "ignore_malformed": false,
           "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
         },
-        "ANGIOABOUTYOU_v1_completed_at": {
+        "LOVEDONE_v1_completed_at": {
           "type": "date",
           "ignore_malformed": false,
           "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
         },
-        "DIAGNOSIS_DATE_MONTH": {
-          "type": "integer"
-        },
-        "DIAGNOSIS_DATE_YEAR": {
-          "type": "integer"
-        },
-        "DIAGNOSIS_LOC": {
-          "type": "text"
-        },
-        "DIAGNOSIS_LOC_BONELIMB_DETAILS": {
-          "type": "text"
-        },
-        "DIAGNOSIS_LOC_ABDOMINAL_DETAILS": {
-          "type": "text"
-        },
-        "DIAGNOSIS_LOC_OTHER_DETAILS": {
-          "type": "text"
-        },
-        "EVER_LOCATION": {
-          "type": "text"
-        },
-        "EVER_LOCATION_BONELIMB_DETAILS": {
-          "type": "text"
-        },
-        "EVER_LOCATION_ABDOMINAL_DETAILS": {
-          "type": "text"
-        },
-        "EVER_LOCATION_OTHER_DETAILS": {
-          "type": "text"
-        },
-        "CURRENT_LOCATION": {
-          "type": "text"
-        },
-        "CURRENT_LOCATION_BONELIMB_DETAILS": {
-          "type": "text"
-        },
-        "CURRENT_LOCATION_ABDOMINAL_DETAILS": {
-          "type": "text"
-        },
-        "CURRENT_LOCATION_OTHER_DETAILS": {
-          "type": "text"
-        },
-        "SURGERY": {
+        "LOVEDONE_RELATION_TO": {
           "type": "keyword"
         },
-        "SURGERY_CLEAN_MARGINS": {
-          "type": "keyword"
-        },
-        "RADIATION": {
-          "type": "keyword"
-        },
-        "RADIATION_SURGERY": {
-          "type": "keyword"
-        },
-        "ALL_TREATMENTS": {
+        "LOVEDONE_RELATION_TO_OTHER_DETAILS": {
           "type": "text"
         },
-        "CURRENTLY_TREATED": {
-          "type": "keyword"
+        "LOVEDONE_PRIMARY_CAREGIVER": {
+          "type": "boolean"
         },
-        "CURRENT_THERAPIES": {
+        "LOVEDONE_FIRST_NAME": {
           "type": "text"
         },
-        "OTHER_CANCER": {
-          "type": "keyword"
-        },
-        "OTHER_CANCER_LIST": {
+        "LOVEDONE_LAST_NAME": {
           "type": "text"
         },
-        "OTHER_CANCER_RADIATION": {
-          "type": "keyword"
+        "LOVEDONE_DOB": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy||strict_date"
         },
-        "OTHER_CANCER_RADIATION_LOC": {
-          "type": "text"
-        },
-        "REFERRAL_SOURCE": {
-          "type": "text"
-        },
-        "EXPERIENCE": {
-          "type": "text"
-        },
-        "HISPANIC": {
-          "type": "keyword"
-        },
-        "RACE": {
-          "type": "text"
-        },
-        "RACE_OTHER_DETAILS": {
-          "type": "text"
-        },
-        "BIRTH_YEAR": {
-          "type": "integer"
-        },
-        "COUNTRY": {
-          "type": "keyword"
-        },
-        "POSTAL_CODE": {
+        "LOVEDONE_DIAGNOSIS_POSTAL_CODE": {
           "type": "text",
           "fields": {
             "keyword": {
@@ -205,116 +147,127 @@
             }
           }
         },
-        "DIAGNOSIS_PRIMARY_LOC": {
-          "type": "text"
+        "LOVEDONE_PASSED_POSTAL_CODE": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword"
+            }
+          }
         },
-        "DIAGNOSIS_PRIMARY_LOC_BONELIMB_DETAILS": {
-          "type": "text"
+        "LOVEDONE_DIAGNOSIS_DATE_MONTH": {
+          "type": "integer"
         },
-        "DIAGNOSIS_PRIMARY_LOC_ABDOMINAL_DETAILS": {
-          "type": "text"
+        "LOVEDONE_DIAGNOSIS_DATE_YEAR": {
+          "type": "integer"
         },
-        "DIAGNOSIS_PRIMARY_LOC_OTHER_DETAILS": {
-          "type": "text"
-        },
-        "DIAGNOSIS_SPREAD": {
+        "LOVEDONE_SYMPTOMS_START_TIME": {
           "type": "keyword"
         },
-        "DIAGNOSIS_SPREAD_LOC": {
+        "LOVEDONE_DIAGNOSED_DETAILS": {
           "type": "text"
         },
-        "DIAGNOSIS_SPREAD_LOC_BONELIMB_DETAILS": {
+        "LOVEDONE_PASSING_DATE_MONTH": {
+          "type": "integer"
+        },
+        "LOVEDONE_PASSING_DATE_YEAR": {
+          "type": "integer"
+        },
+        "LOVEDONE_DIAGNOSIS_PRIMARY_LOC": {
           "type": "text"
         },
-        "DIAGNOSIS_SPREAD_LOC_ABDOMINAL_DETAILS": {
+        "LOVEDONE_DIAGNOSIS_PRIMARY_LOC_OTHER_DETAILS": {
           "type": "text"
         },
-        "DIAGNOSIS_SPREAD_LOC_OTHER_DETAILS": {
+        "LOVEDONE_METASTATIC_DISEASE_DATE": {
           "type": "text"
         },
-        "POST_DIAGNOSIS_SPREAD": {
+        "LOVEDONE_DIAGNOSIS_SPREAD_LOC": {
+          "type": "text"
+        },
+        "LOVEDONE_DIAGNOSIS_SPREAD_LOC_OTHER_DETAILS": {
+          "type": "text"
+        },
+        "LOVEDONE_HAD_SURGERY": {
           "type": "keyword"
         },
-        "POST_DIAGNOSIS_SPREAD_LOC": {
+        "LOVEDONE_SURGERIES": {
           "type": "text"
         },
-        "POST_DIAGNOSIS_SPREAD_LOC_BONELIMB_DETAILS": {
+        "LOVEDONE_SURGERIES_OTHER_DETAILS": {
           "type": "text"
         },
-        "POST_DIAGNOSIS_SPREAD_LOC_ABDOMINAL_DETAILS": {
-          "type": "text"
-        },
-        "POST_DIAGNOSIS_SPREAD_LOC_OTHER_DETAILS": {
-          "type": "text"
-        },
-        "LOCAL_RECURRENCE": {
+        "LOVEDONE_HAD_RADIATION": {
           "type": "keyword"
         },
-        "LOCAL_RECURRENCE_LOC": {
+        "LOVEDONE_THERAPIES_RECEIVED": {
           "type": "text"
         },
-        "LOCAL_RECURRENCE_LOC_BONELIMB_DETAILS": {
+        "LOVEDONE_THERAPIES_RECEIVED_OTHER_DETAILS": {
           "type": "text"
         },
-        "LOCAL_RECURRENCE_LOC_ABDOMINAL_DETAILS": {
-          "type": "text"
-        },
-        "LOCAL_RECURRENCE_LOC_OTHER_DETAILS": {
-          "type": "text"
-        },
-        "TREATMENT_PAST": {
-          "type": "text"
-        },
-        "TREATMENT_NOW": {
-          "type": "text"
-        },
-        "DISEASE_FREE_NOW": {
+        "LOVEDONE_EVER_RELAPSED": {
           "type": "keyword"
         },
-        "SUPPORT_MEMBERSHIP": {
-          "type": "keyword"
-        },
-        "SUPPORT_MEMBERSHIP_TEXT": {
+        "LOVEDONE_RELAPSE_DATES": {
           "type": "text"
         },
-        "ANGIOCONSENT_v1": {
+        "LOVEDONE_OTHER_CANCERS": {
           "type": "keyword"
         },
-        "ANGIOCONSENT_v1_status": {
+        "LOVEDONE_OTHER_CANCERS_LIST": {
+          "type": "text"
+        },
+        "LOVEDONE_RECEIVED_RADIATION": {
           "type": "keyword"
         },
-        "ANGIOCONSENT_v1_created_at": {
+        "LOVEDONE_RADIATION_LOC": {
+          "type": "text"
+        },
+        "LOVEDONE_HAD_BENIGNBONE_TUMOR": {
+          "type": "keyword"
+        },
+        "LOVEDONE_FAMILY_HISTORY": {
+          "type": "text"
+        },
+        "LOVEDONE_EXPERIENCE": {
+          "type": "text"
+        },
+        "LOVEDONE_HISPANIC": {
+          "type": "keyword"
+        },
+        "LOVEDONE_RACE": {
+          "type": "text"
+        },
+        "LOVEDONE_RACE_OTHER_DETAILS": {
+          "type": "text"
+        },
+        "LOVEDONE_HOW_HEAR": {
+          "type": "text"
+        },
+        "LOVEDONE_FUTURE_CONTACT": {
+          "type": "boolean"
+        },
+        "LOVEDONE_ADDITIONAL_SURVEY_CONTACT": {
+          "type": "boolean"
+        },
+        "CONSENT_v1": {
+          "type": "keyword"
+        },
+        "CONSENT_v1_status": {
+          "type": "keyword"
+        },
+        "CONSENT_v1_created_at": {
           "type": "date",
           "ignore_malformed": false,
           "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
         },
-        "ANGIOCONSENT_v1_updated_at": {
+        "CONSENT_v1_updated_at": {
           "type": "date",
           "ignore_malformed": false,
           "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
         },
-        "ANGIOCONSENT_v1_completed_at": {
-          "type": "date",
-          "ignore_malformed": false,
-          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
-        },
-        "ANGIOCONSENT_v2": {
-          "type": "keyword"
-        },
-        "ANGIOCONSENT_v2_status": {
-          "type": "keyword"
-        },
-        "ANGIOCONSENT_v2_created_at": {
-          "type": "date",
-          "ignore_malformed": false,
-          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
-        },
-        "ANGIOCONSENT_v2_updated_at": {
-          "type": "date",
-          "ignore_malformed": false,
-          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
-        },
-        "ANGIOCONSENT_v2_completed_at": {
+        "CONSENT_v1_completed_at": {
           "type": "date",
           "ignore_malformed": false,
           "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
@@ -325,7 +278,10 @@
         "CONSENT_TISSUE": {
           "type": "boolean"
         },
-        "CONSENT_FULLNAME": {
+        "CONSENT_FIRSTNAME": {
+          "type": "text"
+        },
+        "CONSENT_LASTNAME": {
           "type": "text"
         },
         "CONSENT_DOB": {
@@ -333,35 +289,129 @@
           "ignore_malformed": false,
           "format": "MM/dd/yyyy||strict_date"
         },
-        "TREATMENT_NOW_TEXT": {
+        "CONSENT_SIGNATURE": {
           "type": "text"
         },
-        "TREATMENT_NOW_START_MONTH": {
-          "type": "integer"
-        },
-        "TREATMENT_NOW_START_YEAR": {
-          "type": "integer"
-        },
-        "TREATMENT_PAST_TEXT": {
-          "type": "text"
-        },
-        "ANGIORELEASE_v1": {
+        "PARENTAL_CONSENT_v1": {
           "type": "keyword"
         },
-        "ANGIORELEASE_v1_status": {
+        "PARENTAL_CONSENT_v1_status": {
           "type": "keyword"
         },
-        "ANGIORELEASE_v1_created_at": {
+        "PARENTAL_CONSENT_v1_created_at": {
           "type": "date",
           "ignore_malformed": false,
           "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
         },
-        "ANGIORELEASE_v1_updated_at": {
+        "PARENTAL_CONSENT_v1_updated_at": {
           "type": "date",
           "ignore_malformed": false,
           "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
         },
-        "ANGIORELEASE_v1_completed_at": {
+        "PARENTAL_CONSENT_v1_completed_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "PARENTAL_CONSENT_BLOOD": {
+          "type": "boolean"
+        },
+        "PARENTAL_CONSENT_TISSUE": {
+          "type": "boolean"
+        },
+        "PARENTAL_CONSENT_CHILD_FIRSTNAME": {
+          "type": "text"
+        },
+        "PARENTAL_CONSENT_CHILD_LASTNAME": {
+          "type": "text"
+        },
+        "PARENTAL_CONSENT_CHILD_DOB": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy||strict_date"
+        },
+        "PARENTAL_CONSENT_FIRSTNAME": {
+          "type": "text"
+        },
+        "PARENTAL_CONSENT_LASTNAME": {
+          "type": "text"
+        },
+        "PARENTAL_CONSENT_SIGNATURE": {
+          "type": "text"
+        },
+        "PARENTAL_CONSENT_RELATIONSHIP": {
+          "type": "keyword"
+        },
+        "CONSENT_ASSENT_v1": {
+          "type": "keyword"
+        },
+        "CONSENT_ASSENT_v1_status": {
+          "type": "keyword"
+        },
+        "CONSENT_ASSENT_v1_created_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "CONSENT_ASSENT_v1_updated_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "CONSENT_ASSENT_v1_completed_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "CONSENT_ASSENT_BLOOD": {
+          "type": "boolean"
+        },
+        "CONSENT_ASSENT_TISSUE": {
+          "type": "boolean"
+        },
+        "CONSENT_ASSENT_CHILD_FIRSTNAME": {
+          "type": "text"
+        },
+        "CONSENT_ASSENT_CHILD_LASTNAME": {
+          "type": "text"
+        },
+        "CONSENT_ASSENT_CHILD_DOB": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy||strict_date"
+        },
+        "CONSENT_ASSENT_FIRSTNAME": {
+          "type": "text"
+        },
+        "CONSENT_ASSENT_LASTNAME": {
+          "type": "text"
+        },
+        "CONSENT_ASSENT_PARENT_SIGNATURE": {
+          "type": "text"
+        },
+        "CONSENT_ASSENT_RELATIONSHIP": {
+          "type": "keyword"
+        },
+        "CONSENT_ASSENT_CHILD_SIGNATURE": {
+          "type": "text"
+        },
+        "RELEASE_SELF_v1": {
+          "type": "keyword"
+        },
+        "RELEASE_SELF_v1_status": {
+          "type": "keyword"
+        },
+        "RELEASE_SELF_v1_created_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "RELEASE_SELF_v1_updated_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "RELEASE_SELF_v1_completed_at": {
           "type": "date",
           "ignore_malformed": false,
           "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
@@ -425,172 +475,191 @@
         "INSTITUTION": {
           "type": "text"
         },
-        "RELEASE_AGREEMENT": {
+        "RELEASE_SELF_AGREEMENT": {
           "type": "boolean"
         },
-        "ANGIOLOVEDONE_v1": {
+        "RELEASE_MINOR_v1": {
           "type": "keyword"
         },
-        "ANGIOLOVEDONE_v1_status": {
+        "RELEASE_MINOR_v1_status": {
           "type": "keyword"
         },
-        "ANGIOLOVEDONE_v1_created_at": {
+        "RELEASE_MINOR_v1_created_at": {
           "type": "date",
           "ignore_malformed": false,
           "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
         },
-        "ANGIOLOVEDONE_v1_updated_at": {
+        "RELEASE_MINOR_v1_updated_at": {
           "type": "date",
           "ignore_malformed": false,
           "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
         },
-        "ANGIOLOVEDONE_v1_completed_at": {
+        "RELEASE_MINOR_v1_completed_at": {
           "type": "date",
           "ignore_malformed": false,
           "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
         },
-        "LOVEDONE_RELATION_TO": {
-          "type": "keyword"
-        },
-        "LOVEDONE_RELATION_TO_OTHER_DETAILS": {
-          "type": "text"
-        },
-        "LOVEDONE_FIRST_NAME": {
-          "type": "text"
-        },
-        "LOVEDONE_LAST_NAME": {
-          "type": "text"
-        },
-        "LOVEDONE_DOB": {
-          "type": "date",
-          "ignore_malformed": false,
-          "format": "MM/dd/yyyy||strict_date"
-        },
-        "LOVEDONE_DIAGNOSIS_POSTAL_CODE": {
-          "type": "text",
-          "fields": {
-            "keyword": {
-              "type": "keyword"
-            }
-          }
-        },
-        "LOVEDONE_PASSED_POSTAL_CODE": {
-          "type": "text",
-          "fields": {
-            "keyword": {
-              "type": "keyword"
-            }
-          }
-        },
-        "LOVEDONE_DIAGNOSIS_DATE_MONTH": {
-          "type": "integer"
-        },
-        "LOVEDONE_DIAGNOSIS_DATE_YEAR": {
-          "type": "integer"
-        },
-        "LOVEDONE_PASSING_DATE_MONTH": {
-          "type": "integer"
-        },
-        "LOVEDONE_PASSING_DATE_YEAR": {
-          "type": "integer"
-        },
-        "LOVEDONE_DIAGNOSIS_PRIMARY_LOC": {
-          "type": "keyword"
-        },
-        "LOVEDONE_DIAGNOSIS_PRIMARY_LOC_BONELIMB_DETAILS": {
-          "type": "text"
-        },
-        "LOVEDONE_DIAGNOSIS_PRIMARY_LOC_ABDOMINAL_DETAILS": {
-          "type": "text"
-        },
-        "LOVEDONE_DIAGNOSIS_PRIMARY_LOC_OTHER_DETAILS": {
-          "type": "text"
-        },
-        "LOVEDONE_DIAGNOSIS_SPREAD_LOC": {
-          "type": "text"
-        },
-        "LOVEDONE_DIAGNOSIS_SPREAD_LOC_BONELIMB_DETAILS": {
-          "type": "text"
-        },
-        "LOVEDONE_DIAGNOSIS_SPREAD_LOC_ABDOMINAL_DETAILS": {
-          "type": "text"
-        },
-        "LOVEDONE_DIAGNOSIS_SPREAD_LOC_OTHER_DETAILS": {
-          "type": "text"
-        },
-        "LOVEDONE_OTHER_CANCER": {
-          "type": "keyword"
-        },
-        "LOVEDONE_OTHER_CANCER_RADIATION": {
-          "type": "keyword"
-        },
-        "LOVEDONE_OTHER_CANCER_RADIATION_YES_DETAILS": {
-          "type": "text"
-        },
-        "LOVEDONE_OTHER_CANCER_TEXT": {
-          "type": "text"
-        },
-        "LOVEDONE_EXPERIENCE": {
-          "type": "text"
-        },
-        "LOVEDONE_FUTURE_CONTACT": {
-          "type": "keyword"
-        },
-        "followupconsent_v1": {
-          "type": "keyword"
-        },
-        "followupconsent_v1_status": {
-          "type": "keyword"
-        },
-        "followupconsent_v1_created_at": {
-          "type": "date",
-          "ignore_malformed": false,
-          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
-        },
-        "followupconsent_v1_updated_at": {
-          "type": "date",
-          "ignore_malformed": false,
-          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
-        },
-        "followupconsent_v1_completed_at": {
-          "type": "date",
-          "ignore_malformed": false,
-          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
-        },
-        "followupconsent_v2": {
-          "type": "keyword"
-        },
-        "followupconsent_v2_status": {
-          "type": "keyword"
-        },
-        "followupconsent_v2_created_at": {
-          "type": "date",
-          "ignore_malformed": false,
-          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
-        },
-        "followupconsent_v2_updated_at": {
-          "type": "date",
-          "ignore_malformed": false,
-          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
-        },
-        "followupconsent_v2_completed_at": {
-          "type": "date",
-          "ignore_malformed": false,
-          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
-        },
-        "FOLLOWUPCONSENT_BLOOD": {
+        "RELEASE_MINOR_AGREEMENT": {
           "type": "boolean"
         },
-        "FOLLOWUPCONSENT_TISSUE": {
-          "type": "boolean"
+        "ABOUTYOU_v1": {
+          "type": "keyword"
         },
-        "FOLLOWUPCONSENT_FULLNAME": {
-          "type": "text"
+        "ABOUTYOU_v1_status": {
+          "type": "keyword"
         },
-        "FOLLOWUPCONSENT_DOB": {
+        "ABOUTYOU_v1_created_at": {
           "type": "date",
           "ignore_malformed": false,
-          "format": "MM/dd/yyyy||strict_date"
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "ABOUTYOU_v1_updated_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "ABOUTYOU_v1_completed_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "DIAGNOSIS_DATE_MONTH": {
+          "type": "integer"
+        },
+        "DIAGNOSIS_DATE_YEAR": {
+          "type": "integer"
+        },
+        "SYMPTOMS_START_TIME": {
+          "type": "keyword"
+        },
+        "INITIAL_BODY_LOC": {
+          "type": "text"
+        },
+        "INITIAL_BODY_LOC_OTHER_DETAILS": {
+          "type": "text"
+        },
+        "CURRENT_BODY_LOC": {
+          "type": "text"
+        },
+        "CURRENT_BODY_LOC_OTHER_DETAILS": {
+          "type": "text"
+        },
+        "HAD_RADIATION": {
+          "type": "keyword"
+        },
+        "THERAPIES_RECEIVED": {
+          "type": "text"
+        },
+        "THERAPIES_RECEIVED_OTHER_DETAILS": {
+          "type": "text"
+        },
+        "EVER_RELAPSED": {
+          "type": "keyword"
+        },
+        "CURRENTLY_TREATED": {
+          "type": "keyword"
+        },
+        "OTHER_CANCERS": {
+          "type": "keyword"
+        },
+        "OTHER_CANCERS_LIST": {
+          "type": "text"
+        },
+        "EXPERIENCE": {
+          "type": "text"
+        },
+        "HISPANIC": {
+          "type": "keyword"
+        },
+        "RACE": {
+          "type": "text"
+        },
+        "RACE_OTHER_DETAILS": {
+          "type": "text"
+        },
+        "HOW_HEAR": {
+          "type": "text"
+        },
+        "ABOUTCHILD_v1": {
+          "type": "keyword"
+        },
+        "ABOUTCHILD_v1_status": {
+          "type": "keyword"
+        },
+        "ABOUTCHILD_v1_created_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "ABOUTCHILD_v1_updated_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "ABOUTCHILD_v1_completed_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "WHO_IS_FILLING": {
+          "type": "keyword"
+        },
+        "CHILD_DIAGNOSIS_DATE_MONTH": {
+          "type": "integer"
+        },
+        "CHILD_DIAGNOSIS_DATE_YEAR": {
+          "type": "integer"
+        },
+        "CHILD_SYMPTOMS_START_TIME": {
+          "type": "keyword"
+        },
+        "CHILD_INITIAL_BODY_LOC": {
+          "type": "text"
+        },
+        "CHILD_INITIAL_BODY_LOC_OTHER_DETAILS": {
+          "type": "text"
+        },
+        "CHILD_CURRENT_BODY_LOC": {
+          "type": "text"
+        },
+        "CHILD_CURRENT_BODY_LOC_OTHER_DETAILS": {
+          "type": "text"
+        },
+        "CHILD_HAD_RADIATION": {
+          "type": "keyword"
+        },
+        "CHILD_THERAPIES_RECEIVED": {
+          "type": "text"
+        },
+        "CHILD_THERAPIES_RECEIVED_OTHER_DETAILS": {
+          "type": "text"
+        },
+        "CHILD_EVER_RELAPSED": {
+          "type": "keyword"
+        },
+        "CHILD_CURRENTLY_TREATED": {
+          "type": "keyword"
+        },
+        "CHILD_OTHER_CANCERS": {
+          "type": "keyword"
+        },
+        "CHILD_OTHER_CANCERS_LIST": {
+          "type": "text"
+        },
+        "CHILD_EXPERIENCE": {
+          "type": "text"
+        },
+        "CHILD_HISPANIC": {
+          "type": "keyword"
+        },
+        "CHILD_RACE": {
+          "type": "text"
+        },
+        "CHILD_RACE_OTHER_DETAILS": {
+          "type": "text"
+        },
+        "CHILD_HOW_HEAR": {
+          "type": "text"
         }
       }
     }

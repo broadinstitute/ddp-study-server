@@ -79,6 +79,10 @@ public final class DBUtils {
         return uniqueGuid(GuidUtils::randomUserHruid, handle, UserTable._NAME, UserTable.HRUID);
     }
 
+    public static String uniqueUUID4(Handle handle, String tableName, String tableColumn) {
+        return uniqueGuid(GuidUtils::randomUUID, handle, tableName, tableColumn);
+    }
+
     /**
      * Generate a standard guid that is unique for given table.
      *

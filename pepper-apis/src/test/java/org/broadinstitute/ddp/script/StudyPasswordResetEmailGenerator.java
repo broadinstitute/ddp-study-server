@@ -188,7 +188,7 @@ public class StudyPasswordResetEmailGenerator {
         final JdbiProfile profileDao = handle.attach(JdbiProfile.class);
         final JdbiUser userDao = handle.attach(JdbiUser.class);
         return allStudyEnrollments.stream()
-                .filter(each -> each.getEnrollmentStatus().isExited() || !each.getEnrollmentStatus().shouldReceiveCommunications())
+                .filter(each -> !each.getEnrollmentStatus().isExited() && each.getEnrollmentStatus().shouldReceiveCommunications())
                 .map(userEnrollment -> {
                     UserProfileDto profile = profileDao.getUserProfileByUserId(userEnrollment.getUserId());
                     UserDto userDto = userDao.findByUserId(userEnrollment.getUserId());

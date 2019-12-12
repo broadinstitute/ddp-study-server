@@ -50,6 +50,11 @@ public class SqlConstants {
         public static final String DO_NOT_CONTACT = "do_not_contact";
     }
 
+    public static final class InvitationTable {
+        public static final String _NAME = "invitation";
+        public static final String GUID = "invitation_guid";
+    }
+
     public static final class UserTable {
         public static final String _NAME = "user";
         public static final String GUID = "guid";

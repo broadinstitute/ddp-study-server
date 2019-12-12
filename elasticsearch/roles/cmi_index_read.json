@@ -214,6 +214,63 @@
           "PAST_MED_LIST"
         ]
       }
+    },
+    {
+      "names": ["participants.cmi.cmi-osteo"],
+      "privileges": ["read", "view_index_metadata"],
+      "field_security": {
+        "grant": [
+          "participant_hruid",
+          "created_at",
+          "status",
+          "status_timestamp",
+          "PREQUAL_v1",
+          "PREQUAL_v1_status",
+          "PREQUAL_v1_created_at",
+          "PREQUAL_v1_updated_at",
+          "PREQUAL_v1_completed_at",
+          "LOVEDONE_v1",
+          "LOVEDONE_v1_status",
+          "LOVEDONE_v1_created_at",
+          "LOVEDONE_v1_updated_at",
+          "LOVEDONE_v1_completed_at",
+          "CONSENT_v1",
+          "CONSENT_v1_status",
+          "CONSENT_v1_created_at",
+          "CONSENT_v1_updated_at",
+          "CONSENT_v1_completed_at",
+          "PARENTAL_CONSENT_v1",
+          "PARENTAL_CONSENT_v1_status",
+          "PARENTAL_CONSENT_v1_created_at",
+          "PARENTAL_CONSENT_v1_updated_at",
+          "PARENTAL_CONSENT_v1_completed_at",
+          "CONSENT_ASSENT_v1",
+          "CONSENT_ASSENT_v1_status",
+          "CONSENT_ASSENT_v1_created_at",
+          "CONSENT_ASSENT_v1_updated_at",
+          "CONSENT_ASSENT_v1_completed_at",
+          "RELEASE_SELF_v1",
+          "RELEASE_SELF_v1_status",
+          "RELEASE_SELF_v1_created_at",
+          "RELEASE_SELF_v1_updated_at",
+          "RELEASE_SELF_v1_completed_at",
+          "RELEASE_MINOR_v1",
+          "RELEASE_MINOR_v1_status",
+          "RELEASE_MINOR_v1_created_at",
+          "RELEASE_MINOR_v1_updated_at",
+          "RELEASE_MINOR_v1_completed_at",
+          "ABOUTYOU_v1",
+          "ABOUTYOU_v1_status",
+          "ABOUTYOU_v1_created_at",
+          "ABOUTYOU_v1_updated_at",
+          "ABOUTYOU_v1_completed_at",
+          "ABOUTCHILD_v1",
+          "ABOUTCHILD_v1_status",
+          "ABOUTCHILD_v1_created_at",
+          "ABOUTCHILD_v1_updated_at",
+          "ABOUTCHILD_v1_completed_at"
+        ]
+      }
     }
   ]
 }
