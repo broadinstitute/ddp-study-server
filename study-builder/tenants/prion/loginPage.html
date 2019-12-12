@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <title>Prion Registry</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+    <link href="https://fonts.googleapis.com/css?family=Raleway:300i,300,400,500,700" rel="stylesheet">
+    <link id="app-favicon" rel="icon" type="image/x-icon" href="https://dev.prionregistry.org/assets/favicon.ico">
+</head>
+<body>
+
+<!--[if IE 8]>
+<script src="//cdnjs.cloudflare.com/ajax/libs/ie8/0.2.5/ie8.js"></script>
+<![endif]-->
+
+<!--[if lte IE 9]>
+<script src="https://cdn.auth0.com/js/base64.js"></script>
+<script src="https://cdn.auth0.com/js/es5-shim.min.js"></script>
+<![endif]-->
+
+<script src="https://cdn.auth0.com/js/lock/11.9/lock.min.js"></script>
+
+<style type="text/css">
+    html,
+    body {
+        margin: 0;
+        padding: 0 !important;
+        height: 100%;
+        font-size: 16px;
+        background-color:#f9f3e8;
+    }
+    body {
+        font-family: 'Raleway', sans-serif !important;
+    }
+    h2 {
+        font-size: 1.5rem !important;
+        font-family: 'Raleway', sans-serif !important;
+        font-weight: 500 !important;
+        margin-bottom: 15px !important;
+        text-align: left !important;
+    }
+    h5 {
+        font-size: 1rem;
+        font-family: 'Raleway', sans-serif;
+        line-height: 1.5rem;
+        font-weight: 400 !important;
+        color: #000000 !important;
+        margin-top: 0 !important;
+        margin-bottom: 15px !important;
+        text-align: left !important;
+    }
+    p {
+        font-size: 1rem;
+        font-family: 'Raleway', sans-serif;
+        line-height: 1.5rem;
+        font-weight: 400 !important;
+        display: block !important;
+        color: #000000 !important;
+    }
+    .auth0-lock .auth0-lock-opened-in-frame .auth0-lock-with-tabs {
+        height:available !important;
+    }
+    .auth0-lock-header-welcome, .auth0-lock-header{
+        background-color: #F2B815 !important;
+        border-top-left-radius: 0 !important;
+        border-top-right-radius: 0 !important;
+        padding: 0 !important;
+    }
+
+    .auth0-lock.auth0-lock .auth0-lock-header-bg {
+        height: 1% !important;
+    }
+
+    .auth0-lock-header-logo {
+        text-align: left;
+        margin-left: 80px !important;
+        height: 55px !important;
+
+    }
+
+    .auth0-lock.auth0-lock .auth0-lock-header {
+        height: unset;
+    }
+
+    .auth0-lock-cred-pane .auth0-lock-quiet, .auth0-lock-cred-pane, .auth0-lock.auth0-lock.auth0-lock-opened .auth0-lock-widget,
+    .auth0-lock-widget-container, .auth0-lock-center {
+        background-color:#f9f3e8 !important;
+    }
+
+    .auth0-lock.auth0-lock.auth0-lock-opened .auth0-lock-widget,
+    .auth0-lock-widget-container, .auth0-lock-center{
+        height: 100% !important;
+        width: 100% !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+
+    .auth0-lock.auth0-lock .auth0-lock-submit {
+        padding-left: 30px;
+        padding-right: 30px;
+        padding-top:10px;
+        width:calc(100% - 60px);
+        box-sizing: border-box;
+        background-color: #82B547 !important;
+        margin-left:30px !important;
+        margin-right: 30px !important;
+        display: block !important;
+    }
+
+    .auth0-lock-alternative-link {
+        font-size: 0.75rem;
+        font-weight: 300;
+        font-style: italic;
+        color: #717174;
+    }
+
+    .auth0-lock-alternative-link:hover {
+        color: #82B547;
+    }
+
+    .auth0-lock-view-content {
+        background-color: #ffffff;
+        margin-left: 30px !important;
+        margin-right: 30px !important;
+    }
+
+    .auth0-lock-content {
+        max-width: 804px;
+        padding-left: 30px;
+        padding-right: 30px;
+        padding-top:10px;
+    }
+</style>
+
+<script>
+    // Decode utf8 characters properly
+    var config = JSON.parse(decodeURIComponent(escape(window.atob('@@config@@'))));
+    config.extraParams = config.extraParams || {};
+    var mode = config.extraParams.mode;
+    var headerLogo = 'https://dev.prionregistry.org/assets/images/prion-logo.svg';
+    var studyColor = '#DDDDDD';
+    var title = 'Welcome!';
+
+    var mainUrl = '';
+    var authLoc = config.callbackURL.indexOf('/auth');
+    if (authLoc === -1) {
+        mainUrl = config.callbackURL;
+    }
+    else {
+        mainUrl = config.callbackURL.substring(0,authLoc);
+    }
+
+    if (mode === 'login') {
+        title = 'Sign In';
+    }
+    else if (mode === 'signup') {
+        title = 'Join Us!';
+    }
+
+    var loginUrl = mainUrl + '/login-landing/login';
+    var registerUrl = mainUrl;
+
+    var connection = config.connection;
+    var prompt = !prompt;
+    var languageDictionary;
+    var language;
+    var showPasswordRecentText = false;
+    var doNotShowRegLink = false;
+
+    languageDictionary = { title: title,signupTitle: title, lastLoginInstructions: 'Last time you signed in with',
+    loginAtLabel: 'Sign in at %s', loginLabel: 'Sign In', loginSubmitLabel: 'Sign In', loginWithLabel: 'Sign in with %s',
+    signUpTitle: ' ', signUpLabel: 'Join Us', signUpSubmitLabel: 'Join Us',
+        databaseSignUpInstructions: '<h2>Join Us</h2> <h5>Do you or a relative of yours have prion disease? Tell us about it and join us making a difference...</h5> <h5>You can register in the platform using your email address and creating a password. We will use this account to communicate with you regarding the Prion Registry.</h5>',
+    blankErrorHint: "Please fill out this field."};
+    languageDictionary.error = languageDictionary.error || {};
+    languageDictionary.error.signUp = languageDictionary.error.signUp || {};
+    languageDictionary.error.signUp.user_exists = 'If you have already registered, sign in here.';
+    languageDictionary.success = {
+        forgotPassword: "If you have previously registered, please check your email to reset your password."
+    };
+    languageDictionary.lastLoginInstructions = 'Last time you signed in with';
+    var loginHint = config.extraParams.login_hint;
+    var realOptions = {
+        avatar: null,
+        auth: {
+            redirectUrl: config.callbackURL,
+            responseType: (config.internalOptions || {}).response_type ||
+            config.callbackOnLocationHash ? 'token' : 'code',
+            params: config.internalOptions
+        },
+        assetsUrl:  config.assetsUrl,
+        allowedConnections: connection ? [connection] : null,
+        rememberLastLogin: false,
+        language: language,
+        languageDictionary: languageDictionary,
+        theme: {
+            logo:            headerLogo,
+            primaryColor:    studyColor
+        },
+        prefill: loginHint ? { email: loginHint, username: loginHint } : null,
+        closable: false,
+        configurationBaseUrl: config.clientConfigurationBaseUrl,
+        overrides: {
+            __tenant: config.auth0Tenant,
+            __token_issuer: mainUrl}
+    };
+    var options = {allowForgotPassword:true};
+    if (mode === 'signup') {
+        options.allowSignUp = true;
+        options.allowLogin = false;
+    }
+    else if (mode === 'login') {
+        options.allowSignUp = false;
+        options.allowLogin = true;
+    }
+    else {
+        options.allowSignUp = true;
+        options.allowLogin = true;
+    }
+    if (config.extraParams.showPasswordReset) {
+        options.allowSignUp = false;
+        options.allowLogin = false;
+    }
+    if (config.extraParams.show_password_reset) {
+        options.initialScreen = 'forgotPassword';
+    }
+    if (config.extraParams.user_email) {
+        realOptions.prefill = {email: config.extraParams.user_email, username: config.extraParams.user_email};
+    }
+    if (config.extraParams.password_was_reset) {
+        showPasswordRecentText = true;
+    }
+    var lock = new Auth0Lock(config.clientID, config.auth0Domain, realOptions);
+    function addHelp() {
+        // we use setInterval because auth0's on() methods for display
+        // do not account for all the display modes and they appear to fire
+        // before animations complete, not after
+        setInterval(function() {
+            if (document.getElementsByClassName('auth0-global-message').length > 0) {
+                if (languageDictionary.error.signUp.user_exists.toUpperCase() === document.getElementsByClassName('auth0-global-message')[0].children[0].children[0].innerText.toUpperCase()) {
+                    if (!document.getElementById('ddp-already-registered')) {
+                        var auth0GlobalMessage = document.getElementsByClassName('auth0-global-message')[0].children[0].children[0];
+                        console.log('parent: ' + auth0GlobalMessage.parentElement);
+                        auth0GlobalMessage.parentElement.removeChild(auth0GlobalMessage);
+                        var alreadyRegistered = document.createElement('a');
+                        alreadyRegistered.setAttribute('href', loginUrl);
+                        alreadyRegistered.setAttribute('style','color:black');
+                        alreadyRegistered.setAttribute('id','ddp-already-registered');
+                        alreadyRegistered.innerText = 'If you have already registered, sign in here.';
+                        document.getElementsByClassName('auth0-global-message')[0].children[0].appendChild(alreadyRegistered);
+                    }
+                }
+            }
+            if (!document.getElementById('ddp-header')) {
+                // tweak the header
+                var header = document.createElement('div');
+                header.innerHTML = '<div id="ddp-header" style="display:flex;flex-direction:row;justify-content: flex-start;align-items:center;padding-top:30px;padding-bottom:20px;"><a href="' + mainUrl + '"><img class="auth0-lock-header-logo" src="' + headerLogo + '"></a></div></div>';
+                var auth0LockHeader = document.getElementsByClassName('auth0-lock-header-logo')[0];
+                if (auth0LockHeader) {
+                    console.log('parent' + auth0LockHeader.parentElement);
+                    auth0LockHeader.parentElement.removeChild(auth0LockHeader);
+                    var headerWelcome = document.getElementsByClassName('auth0-lock-header-welcome')[0];
+                    headerWelcome.insertBefore(header,(headerWelcome.hasChildNodes())
+                        ? headerWelcome.childNodes[0]
+                        : null);
+                }
+            }
+            if (!document.getElementById('ddp-help')) {
+                var lockForm = document.getElementsByClassName('auth0-lock-form');
+
+                var showSignUpHelp = document.getElementsByClassName('auth0-lock-last-login-pane').length === 0;
+                if (mode === 'login' && !doNotShowRegLink) {
+                    // navigate back to registration
+                    var registerMessageWrapper = document.createElement("p");
+                    registerMessageWrapper.setAttribute('class','auth0-lock-alternative');
+                    registerMessageWrapper.setAttribute('id','ddp-reg');
+                    registerMessageWrapper.setAttribute('style','margin-top:0;font-size: small;text-align: left;');
+                    if (showSignUpHelp) {
+                        var registerMessage = document.createElement('p');
+                        registerMessage.setAttribute('style','margin-bottom:0;');
+                        registerMessage.innerHTML =  "If you haven't registered yet, please <a class='auth0-lock-alternative-link' href='" + registerUrl + "'>do so here</a>.";
+                        registerMessageWrapper.appendChild(registerMessage);
+                        if (lockForm) {
+                            lockForm[0].appendChild(registerMessageWrapper);
+                        }
+                    }
+                }
+                var helpWrapper = document.createElement('div');
+                helpWrapper.setAttribute('id','ddp-help');
+                helpWrapper.setAttribute('style','display:flex;flex-direction:row;align-items:center;margin-top:5px;flex-wrap:none;');
+                if (lockForm) {
+                    lockForm[0].appendChild(helpWrapper);
+                }
+                if (mode === 'signup' || options.allowSignUp) {
+                    console.log('appending sign in here');
+                    var loginLink = document.createElement('a');
+                    loginLink.setAttribute('class', 'auth0-lock-alternative-link');
+                    loginLink.setAttribute('href', loginUrl);
+                    loginLink.innerText = 'Already registered? Sign In here';
+                    var switchToLogin = document.createElement('p');
+                    switchToLogin.setAttribute('style','text-align:left;margin-top:15px;margin-bottom:5px');
+                    switchToLogin.innerText = '';
+                    switchToLogin.appendChild(loginLink);
+                    helpWrapper.parentElement.appendChild(switchToLogin);
+                }
+                if (showPasswordRecentText) {
+                    if (!document.getElementById('ddp-pwd')) {
+                        var resetPasswordWrapper = document.createElement("p");
+                        resetPasswordWrapper.setAttribute('class','auth0-lock-alternative');
+                        resetPasswordWrapper.setAttribute('id','ddp-pwd');
+                        resetPasswordWrapper.setAttribute('style','margin-top:0px;');
+                        var resetPasswordText = document.createElement("div");
+                        resetPasswordText.innerText = "Password reset successfully.  Please sign in with your new password.";
+                        resetPasswordWrapper.appendChild(resetPasswordText);
+                        document.getElementsByClassName('auth0-lock-content')[0].prepend(resetPasswordWrapper);
+                    }
+                }
+            }
+        },200);
+    };
+    lock.on('show',function() {
+        addHelp();
+        if(realOptions.prefill && realOptions.prefill.email){
+            var getInputElement = function(name) {
+                return document.getElementsByName(name)[0];
+            };
+            var setFocus = function(theElement) {
+                theElement.focus();
+                return true;
+            };
+            var getElementWithFocus = function() {
+                return document.querySelector(':focus');
+            };
+            var intervalId = setInterval(function() {
+                var pwdElement = getInputElement('password');
+                var emailElement = getInputElement('email');
+                if(pwdElement && emailElement && emailElement.value.trim()){
+                    setFocus(pwdElement);
+                    var elementWithFocus = getElementWithFocus();
+                    if(elementWithFocus && elementWithFocus.name && pwdElement.name === elementWithFocus.name){
+                        clearInterval(intervalId);
+                    }
+                }
+            }, 200);
+        }
+    });
+    lock.on('forgot_password ready', function() {
+    });
+    console.log('auth mode: ' + mode);
+    lock.show(options);
+</script>
+</body>
+</html>
