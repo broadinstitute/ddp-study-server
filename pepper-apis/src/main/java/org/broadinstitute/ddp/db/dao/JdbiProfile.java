@@ -47,11 +47,11 @@ public interface JdbiProfile {
 
     @SqlUpdate("INSERT INTO user_profile (user_id, first_name) VALUES (:userId, :firstName)"
             + " ON DUPLICATE KEY UPDATE first_name = VALUES(first_name)")
-    int upsertFirstName(@Bind("userId") long userId, @Bind("firstName") String firstName);
+    boolean upsertFirstName(@Bind("userId") long userId, @Bind("firstName") String firstName);
 
     @SqlUpdate("INSERT INTO user_profile (user_id, last_name) VALUES (:userId, :lastName)"
             + " ON DUPLICATE KEY UPDATE last_name = VALUES(last_name)")
-    int upsertLastName(@Bind("userId") long userId, @Bind("lastName") String lastName);
+    boolean upsertLastName(@Bind("userId") long userId, @Bind("lastName") String lastName);
 
     @SqlUpdate("insert into user_profile (user_id, birth_date) values (:userId, :birthDate)"
             + " on duplicate key update birth_date = values(birth_date)")
