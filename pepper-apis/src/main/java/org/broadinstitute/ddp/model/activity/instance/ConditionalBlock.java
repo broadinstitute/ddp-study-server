@@ -25,10 +25,10 @@ public final class ConditionalBlock extends FormBlock implements Numberable {
 
     private transient boolean hideDisplayNumber;
 
-
     public ConditionalBlock(Question control) {
         super(BlockType.CONDITIONAL);
         this.control = control;
+        this.hideDisplayNumber = control.shouldHideQuestionNumber();
     }
 
     public Question getControl() {

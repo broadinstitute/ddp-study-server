@@ -14,6 +14,7 @@ import java.lang.reflect.Type;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -344,11 +345,12 @@ public class DataExporterTest extends TxnAwareBaseTest {
         List<ActivityExtract> activities = dataExporterTestData.getActivities();
         List<Participant> participants = dataExporterTestData.getParticipants();
 
+        StudyExtract studyExtract = new StudyExtract(activities, Collections.EMPTY_LIST, Collections.EMPTY_MAP, Collections.EMPTY_MAP);
         // Run the test!
         boolean exportStructuredDocument = false;
         Map<String, String> result = TransactionWrapper.withTxn(handle ->
                 exporter.prepareParticipantRecordsForJSONExport(
-                        activities, participants, exportStructuredDocument, handle
+                        studyExtract, participants, exportStructuredDocument, handle
                 )
         );
         assertEquals(1, result.size());
@@ -431,11 +433,13 @@ public class DataExporterTest extends TxnAwareBaseTest {
         DataExporterTestData dataExporterTestData = new DataExporterTestData(false, false);
         List<ActivityExtract> activities = dataExporterTestData.getActivities();
         List<Participant> participants = dataExporterTestData.getParticipants();
+        StudyExtract studyExtract = new StudyExtract(activities, Collections.EMPTY_LIST, Collections.EMPTY_MAP, Collections.EMPTY_MAP);
+
         // Run the test!
         boolean exportStructuredDocument = false;
         Map<String, String> result = TransactionWrapper.withTxn(handle ->
                 exporter.prepareParticipantRecordsForJSONExport(
-                        activities, participants, exportStructuredDocument, handle
+                        studyExtract, participants, exportStructuredDocument, handle
                 )
         );
         assertEquals(1, result.size());
@@ -449,9 +453,10 @@ public class DataExporterTest extends TxnAwareBaseTest {
         List<ActivityExtract> activities = dataExporterTestData.getActivities();
         List<Participant> participants = dataExporterTestData.getParticipants();
         boolean exportStructuredDocument = true;
+        StudyExtract studyExtract = new StudyExtract(activities, Collections.EMPTY_LIST, Collections.EMPTY_MAP, Collections.EMPTY_MAP);
         Map<String, String> result = TransactionWrapper.withTxn(handle ->
                 exporter.prepareParticipantRecordsForJSONExport(
-                        activities, participants, exportStructuredDocument, handle
+                        studyExtract, participants, exportStructuredDocument, handle
                 )
         );
         assertEquals(1, result.size());
@@ -463,9 +468,10 @@ public class DataExporterTest extends TxnAwareBaseTest {
         List<ActivityExtract> activities = dataExporterTestData.getActivities();
         List<Participant> participants = dataExporterTestData.getParticipants();
         boolean exportStructuredDocument = true;
+        StudyExtract studyExtract = new StudyExtract(activities, Collections.EMPTY_LIST, Collections.EMPTY_MAP, Collections.EMPTY_MAP);
         Map<String, String> result = TransactionWrapper.withTxn(handle ->
                 exporter.prepareParticipantRecordsForJSONExport(
-                        activities, participants, exportStructuredDocument, handle
+                        studyExtract, participants, exportStructuredDocument, handle
                 )
         );
         assertEquals(1, result.size());
@@ -561,7 +567,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
                                     .builder(NumericType.INTEGER, "Q_NUMERIC", Template.text("numeric prompt"))
                                     .build()))))
                     .addSection(new FormSectionDef(null, Arrays.asList(
-                            new MailingAddressComponentDef(),
+                            new MailingAddressComponentDef(null, null),
                             new PhysicianComponentDef(true, null, null, null, InstitutionType.PHYSICIAN, true))))
                     .build();
             ActivityVersionDto versionDto = new ActivityVersionDto(1L, 1L, "v1", 1L, timestamp, null);

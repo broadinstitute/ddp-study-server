@@ -18,6 +18,7 @@ public class ErrorCodes {
     public static final String MALFORMED_ACCEPT_LANGUAGE_HEADER = "MALFORMED_ACCEPT_LANGUAGE_HEADER";
     public static final String MALFORMED_REDIRECT_URL = "MALFORMED_REDIRECT_URL";
     public static final String MALFORMED_DRUG_QUERY = "MALFORMED_DRUG_QUERY";
+    public static final String MALFORMED_CANCER_QUERY = "MALFORMED_CANCER_QUERY";
 
     public static final String NO_SUCH_ELEMENT = "NO_SUCH_ELEMENT";
     public static final String UNEXPECTED_NUMBER_OF_ELEMENTS = "UNEXPECTED_NUMBER_OF_ELEMENTS";
@@ -39,6 +40,7 @@ public class ErrorCodes {
     public static final String INVALID_REQUEST = "INVALID_REQUEST";
     public static final String ANSWER_EXISTS = "ANSWER_EXISTS";
     public static final String ANSWER_VALIDATION = "ANSWER_VALIDATION";
+    public static final String ACTIVITY_VALIDATION = "ACTIVITY_VALIDATION";
     public static final String TRANSLATION_NOT_FOUND = "TRANSLATION_NOT_FOUND";
     public static final String ACTIVITY_INSTANCE_IS_READONLY = "ACTIVITY_INSTANCE_IS_READONLY";
     public static final String QUESTION_NOT_FOUND = "QUESTION_NOT_FOUND";
@@ -52,6 +54,7 @@ public class ErrorCodes {
     public static final String STUDY_PASSWORD_REQUIREMENTS_NOT_FOUND = "STUDY_PASSWORD_REQUIREMENTS_NOT_FOUND";
     public static final String ACTIVITY_NOT_FOUND = "ACTIVITY_NOT_FOUND";
     public static final String MAIL_ADDRESS_NOT_FOUND = "MAIL_ADDRESS_NOT_FOUND";
+    public static final String PDF_CONFIG_NAME_NOT_FOUND = "PDF_CONFIG_NAME_NOT_FOUND";
 
     public static final String MISSING_FROM_PARAM = "MISSING_FROM_PARAM";
     public static final String INVALID_FROM_PARAM = "INVALID_FROM_PARAM";

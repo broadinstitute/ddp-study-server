@@ -29,13 +29,18 @@ import com.google.gson.GsonBuilder;
 import com.opencsv.CSVWriter;
 import com.typesafe.config.Config;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.ActivityDefStore;
+import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dao.FormActivityDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
 import org.broadinstitute.ddp.db.dao.JdbiStudyActivityNameTranslation;
 import org.broadinstitute.ddp.db.dao.ParticipantDao;
+import org.broadinstitute.ddp.db.dao.PdfDao;
+import org.broadinstitute.ddp.db.dao.UserDao;
+import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceStatusDto;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
@@ -56,9 +61,11 @@ import org.broadinstitute.ddp.export.json.structured.DateQuestionRecord;
 import org.broadinstitute.ddp.export.json.structured.DsmComputedRecord;
 import org.broadinstitute.ddp.export.json.structured.ParticipantProfile;
 import org.broadinstitute.ddp.export.json.structured.ParticipantRecord;
+import org.broadinstitute.ddp.export.json.structured.PdfConfigRecord;
 import org.broadinstitute.ddp.export.json.structured.PicklistQuestionRecord;
 import org.broadinstitute.ddp.export.json.structured.QuestionRecord;
 import org.broadinstitute.ddp.export.json.structured.SimpleQuestionRecord;
+import org.broadinstitute.ddp.export.json.structured.UserRecord;
 import org.broadinstitute.ddp.model.activity.definition.ActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.ComponentBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.ConditionalBlockDef;
@@ -82,15 +89,20 @@ import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
+import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.activity.types.InstitutionType;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.address.MailAddress;
 import org.broadinstitute.ddp.model.address.OLCPrecision;
+import org.broadinstitute.ddp.model.governance.Governance;
+import org.broadinstitute.ddp.model.pdf.PdfConfigInfo;
+import org.broadinstitute.ddp.model.pdf.PdfVersion;
 import org.broadinstitute.ddp.model.study.Participant;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.service.ConsentService;
 import org.broadinstitute.ddp.service.MedicalRecordService;
 import org.broadinstitute.ddp.service.OLCService;
+import org.broadinstitute.ddp.service.PdfService;
 import org.broadinstitute.ddp.util.Auth0MgmtTokenHelper;
 import org.broadinstitute.ddp.util.Auth0Util;
 import org.broadinstitute.ddp.util.ElasticsearchServiceUtil;
@@ -119,6 +131,7 @@ public class DataExporter {
     private Config cfg;
     private Gson gson;
     private Set<String> componentNames;
+    private PdfService pdfService;
 
     public static String makeExportCSVFilename(String studyGuid, Instant timestamp) {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmssX").withZone(ZoneOffset.UTC);
@@ -146,6 +159,7 @@ public class DataExporter {
     public DataExporter(Config cfg) {
         this.cfg = cfg;
         this.gson = new GsonBuilder().serializeNulls().create();
+        this.pdfService = new PdfService();
         componentNames = new HashSet<>();
         componentNames.add("MAILING_ADDRESS");
         componentNames.add("INITIAL_BIOPSY");
@@ -213,23 +227,26 @@ public class DataExporter {
     }
 
     private List<Participant> extractParticipantsFromResultSet(Handle handle, StudyDto studyDto, Stream<Participant> resultset) {
-        Set<String> usersMissingEmails = new HashSet<>();
+        Map<String, String> usersMissingEmails = new HashMap<>();
 
         Map<String, Participant> participants = resultset
                 .peek(pt -> {
                     String auth0UserId = pt.getUser().getAuth0UserId();
+                    if (StringUtils.isBlank(auth0UserId)) {
+                        return;
+                    }
                     String email = emailStore.get(auth0UserId);
                     if (email == null) {
-                        usersMissingEmails.add(auth0UserId);
+                        usersMissingEmails.put(auth0UserId, pt.getUser().getGuid());
                     } else {
                         pt.getUser().setEmail(email);
                     }
                 })
-                .collect(Collectors.toMap(pt -> pt.getUser().getAuth0UserId(), pt -> pt));
+                .collect(Collectors.toMap(pt -> pt.getUser().getGuid(), pt -> pt));
 
         if (!usersMissingEmails.isEmpty()) {
-            fetchAndCacheAuth0Emails(handle, studyDto.getGuid(), usersMissingEmails)
-                    .forEach((auth0UserId, email) -> participants.get(auth0UserId).getUser().setEmail(email));
+            fetchAndCacheAuth0Emails(handle, studyDto.getGuid(), usersMissingEmails.keySet())
+                    .forEach((auth0UserId, email) -> participants.get(usersMissingEmails.get(auth0UserId)).getUser().setEmail(email));
         }
 
         return new ArrayList<>(participants.values());
@@ -312,7 +329,7 @@ public class DataExporter {
     }
 
     public void exportActivityDefinitionsToElasticsearch(
-            Handle handle, StudyDto studyDto, Config cfg) throws Exception {
+            Handle handle, StudyDto studyDto, Config cfg) {
 
         //get study activities
         List<ActivityExtract> activityExtracts = extractActivities(handle, studyDto);
@@ -341,10 +358,17 @@ public class DataExporter {
                 ElasticSearchIndexType.ACTIVITY_DEFINITION
         );
 
-        exportDataToElasticSearch(index, allActivityDefs, cfg);
+        try {
+            exportDataToElasticSearch(index, allActivityDefs, cfg);
+        } catch (IOException e) {
+            LOG.error("[activitydefinition export] failed during export ", e);
+        }
     }
 
-    private void exportDataToElasticSearch(String index, Map<String, Object> data, Config cfg) throws Exception {
+    private void exportDataToElasticSearch(String index, Map<String, Object> data, Config cfg) throws IOException {
+        if (data.isEmpty()) {
+            return;
+        }
         try (RestHighLevelClient client = ElasticsearchServiceUtil.getClientForElasticsearchCloud(cfg)) {
             BulkRequest bulkRequest = new BulkRequest().timeout("2m");
 
@@ -367,6 +391,118 @@ public class DataExporter {
         }
     }
 
+    public void exportUsersToElasticsearch(Handle handle, StudyDto studyDto, Set<Long> userIds) {
+
+        //load participants
+        Stream<Participant> resultset;
+        if (userIds != null) {
+            resultset = handle.attach(ParticipantDao.class).findParticipantsWithUserProfileByStudyIdAndUserIds(
+                    studyDto.getId(), userIds);
+        } else {
+            resultset = handle.attach(ParticipantDao.class)
+                    .findParticipantsWithUserProfileByStudyId(studyDto.getId());
+        }
+        List<Participant> participants = extractParticipantsFromResultSet(handle, studyDto, resultset);
+
+        //load governances and build data structures to get proxies and governedUsers
+        UserGovernanceDao userGovernanceDao = handle.attach(UserGovernanceDao.class);
+        Stream<Governance> allGovernances = userGovernanceDao.findActiveGovernancesByStudyGuid(studyDto.getGuid());
+        Map<String, Set<String>> proxiesMap = new HashMap<>();
+        Map<String, Set<String>> governedUsersMap = new HashMap<>();
+        Set<String> operatorGuids = new HashSet<>();
+
+        allGovernances.forEach(governance -> {
+            String proxyGuid = governance.getProxyUserGuid();
+            String governedUserGuid = governance.getGovernedUserGuid();
+            Long governedUserId = governance.getGovernedUserId();
+            governedUsersMap.computeIfAbsent(governedUserGuid, key -> new HashSet<>());
+            governedUsersMap.get(governedUserGuid).add(proxyGuid);
+            proxiesMap.computeIfAbsent(proxyGuid, key -> new HashSet<>());
+            proxiesMap.get(proxyGuid).add(governedUserGuid);
+            if (userIds == null || userIds.contains(governedUserId)) {
+                operatorGuids.add(proxyGuid);
+            }
+        });
+
+        Map<String, Object> allUsers = new HashMap<>();
+        //load participants
+        participants.forEach(participant -> {
+            User user = participant.getUser();
+            allUsers.put(user.getGuid(), createUserRecord(user, proxiesMap, governedUsersMap));
+        });
+
+        //load operators
+        Stream<User> users = handle.attach(UserDao.class).findUsersAndProfilesByGuids(operatorGuids);
+        List<User> operators = extractUsersFromResultSet(handle, studyDto, users);
+        operators.forEach(user -> {
+            if (allUsers.containsKey(user.getGuid())) {
+                //operator/user is also a participant... skip
+                return;
+            }
+            allUsers.put(user.getGuid(), createUserRecord(user, proxiesMap, governedUsersMap));
+        });
+
+        String index = ElasticsearchServiceUtil.getIndexForStudy(
+                handle,
+                studyDto,
+                ElasticSearchIndexType.USERS
+        );
+
+        try {
+            exportDataToElasticSearch(index, allUsers, cfg);
+        } catch (IOException e) {
+            LOG.error("[users elasticsearch export] failed during export ", e);
+        }
+    }
+
+    private UserRecord createUserRecord(User user,
+                                        Map<String, Set<String>> proxiesMap,
+                                        Map<String, Set<String>> governedUsersMap) {
+        UserProfileDto profileDto = user.getProfile();
+        ParticipantProfile profile = new ParticipantProfile(profileDto.getFirstName(), profileDto.getLastName(),
+                user.getGuid(), user.getHruid(), user.getLegacyAltPid(), user.getLegacyShortId(), user.getEmail(),
+                profileDto.getDoNotContact(), user.getCreatedAt());
+
+        Set<String> proxies = new HashSet<>();
+        Set<String> governedUsers = new HashSet<>();
+        if (governedUsersMap.containsKey(user.getGuid())) {
+            proxies = governedUsersMap.get(user.getGuid());
+        }
+        if (proxiesMap.containsKey(user.getGuid())) {
+            governedUsers = proxiesMap.get(user.getGuid());
+        }
+
+        UserRecord userRecord = new UserRecord(profile, proxies, governedUsers);
+
+        return userRecord;
+    }
+
+    private List<User> extractUsersFromResultSet(Handle handle, StudyDto studyDto, Stream<User> resultset) {
+        Map<String, String> usersMissingEmails = new HashMap<>();
+
+        Map<String, User> users = resultset
+                .peek(user -> {
+                    String auth0UserId = user.getAuth0UserId();
+                    if (StringUtils.isBlank(auth0UserId)) {
+                        return;
+                    }
+                    String email = emailStore.get(auth0UserId);
+                    if (email == null) {
+                        usersMissingEmails.put(auth0UserId, user.getGuid());
+                    } else {
+                        user.setEmail(email);
+                    }
+                })
+                .collect(Collectors.toMap(user -> user.getGuid(), user -> user));
+
+        if (!usersMissingEmails.isEmpty()) {
+            fetchAndCacheAuth0Emails(handle, studyDto.getGuid(), usersMissingEmails.keySet())
+                    .forEach((auth0UserId, email) -> users.get(usersMissingEmails.get(auth0UserId)).setEmail(email));
+        }
+
+        return new ArrayList<>(users.values());
+    }
+
     /**
      * Exports data for a given study to Elasticsearch in the form of an upsert.
      *
@@ -384,8 +520,38 @@ public class DataExporter {
                 exportStructuredDocument ? ElasticSearchIndexType.PARTICIPANTS_STRUCTURED : ElasticSearchIndexType.PARTICIPANTS
         );
 
+        List<PdfConfigInfo> studyPdfConfigs = handle.attach(PdfDao.class).findConfigInfoByStudyGuid(studyDto.getGuid());
+
+        Map<Long, List<PdfVersion>> configPdfVersions = new HashMap<>();
+        for (PdfConfigInfo pdfConfigInfo : studyPdfConfigs) {
+            if (!configPdfVersions.containsKey(pdfConfigInfo.getId())) {
+                List<PdfVersion> versions = handle.attach(PdfDao.class).findOrderedConfigVersionsByConfigId(pdfConfigInfo.getId());
+                if (versions.isEmpty()) {
+                    throw new DaoException("No versions found for pdf config with id=" + pdfConfigInfo.getId() + ", need at least one");
+                } else {
+                    configPdfVersions.put(pdfConfigInfo.getId(), versions);
+                }
+            }
+        }
+
+        //load proxies
+        Map<String, List<Governance>> userProxies = handle.attach(UserGovernanceDao.class)
+                .findActiveGovernancesByStudyGuid(studyDto.getGuid())
+                .collect(Collectors.groupingBy(Governance::getGovernedUserGuid));
+
+        Map<String, List<String>> participantProxyGuids = new HashMap<>();
+        if (!userProxies.isEmpty()) {
+            userProxies.forEach((key, value) -> {
+                List<String> proxyGuids = new ArrayList<>();
+                value.forEach(governance -> proxyGuids.add(governance.getProxyUserGuid()));
+                participantProxyGuids.put(key, proxyGuids);
+            });
+        }
+
+        StudyExtract studyExtract = new StudyExtract(activities, studyPdfConfigs, configPdfVersions, participantProxyGuids);
+
         Map<String, String> participantRecords = prepareParticipantRecordsForJSONExport(
-                activities, dataset, exportStructuredDocument, handle
+                studyExtract, dataset, exportStructuredDocument, handle
         );
 
         try (RestHighLevelClient client = ElasticsearchServiceUtil.getClientForElasticsearchCloud(cfg)) {
@@ -412,12 +578,12 @@ public class DataExporter {
     /**
      * Convert the given dataset to the given output using JSON formatting.
      *
-     * @param activities   the list of activity data for a study
+     * @param studyExtract study data with list of activity data and study pdf-config info
      * @param participants the participant data for a study
      * @return map with key = participant guid and value = participant records
      */
     public Map<String, String> prepareParticipantRecordsForJSONExport(
-            List<ActivityExtract> activities,
+            StudyExtract studyExtract,
             List<Participant> participants,
             boolean exportStructuredDocument,
             Handle handle
@@ -427,9 +593,9 @@ public class DataExporter {
             try {
                 String elasticSearchDocument = null;
                 if (exportStructuredDocument) {
-                    elasticSearchDocument = formatParticipantToStructuredJSON(activities, extract, handle);
+                    elasticSearchDocument = formatParticipantToStructuredJSON(studyExtract, extract, handle);
                 } else {
-                    elasticSearchDocument = formatParticipantToFlatJSON(activities, extract);
+                    elasticSearchDocument = formatParticipantToFlatJSON(studyExtract.getActivities(), extract);
                 }
                 participantsRecords.put(extract.getUser().getGuid(), elasticSearchDocument);
             } catch (Exception e) {
@@ -490,7 +656,7 @@ public class DataExporter {
      * Unlike formatParticipantToFlatJSON, creates a nested JSON with participant data
      */
     private String formatParticipantToStructuredJSON(
-            List<ActivityExtract> activityExtracts,
+            StudyExtract studyExtract,
             Participant participant,
             Handle handle
     ) {
@@ -515,7 +681,8 @@ public class DataExporter {
 
         // ActivityInstances (aka "surveys")
         List<ActivityInstanceRecord> activityInstanceRecords = new ArrayList<>();
-        for (ActivityExtract activityExtract : activityExtracts) {
+        Map<String, Set<String>> userActivityVersions = new HashMap<>();
+        for (ActivityExtract activityExtract : studyExtract.getActivities()) {
             List<ActivityResponse> instances = participant.getResponses(activityExtract.getTag());
             for (ActivityResponse instance : instances) {
                 ActivityInstanceStatusDto lastStatus = instance.getLatestStatus();
@@ -530,20 +697,39 @@ public class DataExporter {
                         lastStatus.getUpdatedAt(),
                         questionsAnswers
                 );
+
                 activityInstanceRecords.add(activityInstanceRecord);
+                if (lastStatus.getType().equals(InstanceStatusType.COMPLETE)) {
+                    userActivityVersions
+                            .computeIfAbsent(instance.getActivityCode(), key -> new HashSet<>())
+                            .add(instance.getActivityVersionTag());
+                }
             }
+        }
+
+        String userGuid = user.getGuid();
+        String studyGuid = statusDto.getStudyGuid();
+
+        List<PdfConfigInfo> pdfConfigInfoList = findPdfConfigsForStudyUser(
+                studyExtract.getStudyPdfConfigs(), studyExtract.getPdfVersions(), userActivityVersions);
+        List<PdfConfigRecord> pdfConfigRecords = new ArrayList<>();
+        for (PdfConfigInfo info : pdfConfigInfoList) {
+            pdfConfigRecords.add(new PdfConfigRecord(info.getConfigName(), info.getDisplayName()));
         }
 
         // Retrieving information to compute the dsm record
         MedicalRecordService medicalRecordService = new MedicalRecordService(ConsentService.createInstance());
-        String userGuid = user.getGuid();
-        String studyGuid = statusDto.getStudyGuid();
-        DateValue diagnosisDate = medicalRecordService.getDateOfDiagnosis(handle, userGuid, studyGuid).orElse(null);
-        DateValue birthDate = medicalRecordService.getDateOfBirth(handle, userGuid, studyGuid).orElse(null);
-        MedicalRecordService.ParticipantConsents consents = medicalRecordService.fetchBloodAndTissueConsents(handle, userGuid, studyGuid);
+        DateValue diagnosisDate = medicalRecordService.getDateOfDiagnosis(handle, user.getId(), statusDto.getStudyId()).orElse(null);
+        DateValue birthDate = medicalRecordService.getDateOfBirth(handle, user.getId(), statusDto.getStudyId()).orElse(null);
+        MedicalRecordService.ParticipantConsents consents = medicalRecordService
+                .fetchBloodAndTissueConsents(handle, user.getId(), userGuid, statusDto.getStudyId(), studyGuid);
         DsmComputedRecord dsmComputedRecord = new DsmComputedRecord(birthDate, diagnosisDate,
-                consents.hasConsentedToBloodDraw(), consents.hasConsentedToTissueSample());
+                consents.hasConsentedToBloodDraw(), consents.hasConsentedToTissueSample(), pdfConfigRecords);
 
+        List<String> proxies = studyExtract.getParticipantProxyGuids().get(user.getGuid());
+        if (proxies == null) {
+            proxies = List.of();
+        }
         ParticipantRecord participantRecord = new ParticipantRecord(
                 statusDto.getEnrollmentStatus(),
                 statusDto.getValidFromMillis(),
@@ -551,9 +737,27 @@ public class DataExporter {
                 activityInstanceRecords,
                 participant.getProviders(),
                 user.getAddress(),
-                dsmComputedRecord
+                dsmComputedRecord,
+                proxies
         );
         return gson.toJson(participantRecord);
+    }
+
+    private List<PdfConfigInfo> findPdfConfigsForStudyUser(List<PdfConfigInfo> studyConfigs,
+                                                          Map<Long, List<PdfVersion>> configPdfVersions,
+                                                          Map<String, Set<String>> userActivityVersions) {
+
+        List<PdfConfigInfo> userPdfConfigs = new ArrayList<>();
+
+        for (PdfConfigInfo pdfConfigInfo : studyConfigs) {
+            PdfVersion pdfVersion = pdfService.findPdfConfigVersionForUser(
+                    configPdfVersions.get(pdfConfigInfo.getId()),
+                    userActivityVersions);
+            if (pdfVersion != null) {
+                userPdfConfigs.add(pdfConfigInfo);
+            }
+        }
+        return userPdfConfigs;
     }
 
     /**

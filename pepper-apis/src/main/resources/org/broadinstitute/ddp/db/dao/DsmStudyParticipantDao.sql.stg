@@ -1,6 +1,7 @@
 selectParticipantInfo(statuses) ::= <<
     /* if given altpid, return altpid if it's there.  otherwise, return guid */
     SELECT coalesce((select legacy_altpid from user u2 where u2.legacy_altpid = :userGuidOrAltPid), (select guid from user u2 where u2.guid = :userGuidOrAltPid)) as participantId,
+        u.user_id as user_id,
         u.guid as user_guid,
         up.first_name,
         up.last_name,

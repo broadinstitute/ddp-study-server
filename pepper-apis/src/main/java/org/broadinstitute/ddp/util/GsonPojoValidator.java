@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.validation.ConstraintViolation;
 import javax.validation.ElementKind;
 import javax.validation.Path;
@@ -184,6 +185,15 @@ public class GsonPojoValidator {
         }
 
         return jsonPath;
+    }
+
+    public static String createValidationErrorMessage(List<JsonValidationError> errors, String delimiter) {
+        if (delimiter == null) {
+            delimiter = ", ";
+        }
+        return errors.stream()
+                .map(JsonValidationError::toDisplayMessage)
+                .collect(Collectors.joining(delimiter));
     }
 
     protected Field getDeclaredFieldFromObjectHierarchy(Class<?> theClass, String fieldName) throws NoSuchFieldException {

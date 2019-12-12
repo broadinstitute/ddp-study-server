@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.db.dto;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.broadinstitute.ddp.model.event.NotificationServiceType;
@@ -60,6 +61,7 @@ public class NotificationDetailsDto {
         this.linkedActivityId = linkedActivityId;
         this.webBaseUrl = webBaseUrl;
         this.toEmailAddress = toEmailAddress;
+        this.templateSubstitutions = new ArrayList<>();
     }
 
     public void setTemplateSubstitutions(List<NotificationTemplateSubstitutionDto> templateSubstitutions) {

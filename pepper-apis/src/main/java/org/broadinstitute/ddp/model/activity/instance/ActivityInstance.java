@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.model.activity.instance;
 import javax.validation.constraints.NotNull;
 
 import com.google.gson.annotations.SerializedName;
+
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
 import org.broadinstitute.ddp.util.MiscUtil;
 
@@ -108,4 +109,5 @@ public class ActivityInstance {
     public Long getFirstCompletedAt() {
         return firstCompletedAt;
     }
+
 }

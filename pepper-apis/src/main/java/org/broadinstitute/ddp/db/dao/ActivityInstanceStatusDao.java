@@ -364,7 +364,8 @@ public interface ActivityInstanceStatusDao extends SqlObject {
                             "Error inserting announcement for participant id %d and study id %d", participantId, studyId));
                 }
             } else if (eventConfig.getEventActionType() == EventActionType.COPY_ANSWER) {
-                boolean successfulCopy = CopyAnswerService.getInstance().copyAnswerValue(eventConfig, instanceDto, getHandle());
+                boolean successfulCopy = CopyAnswerService.getInstance().copyAnswerValue(eventConfig, instanceDto, operatorId,
+                        getHandle());
                 if (successfulCopy) {
                     LOG.info("Answer from instance GUID {} succesfully copied", instanceDto.getGuid());
                 }

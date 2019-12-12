@@ -11,11 +11,11 @@ import org.apache.commons.lang3.StringUtils;
 
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
+import org.broadinstitute.ddp.json.DrugSuggestionResponse;
 import org.broadinstitute.ddp.model.dsm.Drug;
 import org.broadinstitute.ddp.model.dsm.DrugStore;
-import org.broadinstitute.ddp.model.dsm.DrugSuggestion;
-import org.broadinstitute.ddp.model.dsm.DrugSuggestionResponse;
-import org.broadinstitute.ddp.model.dsm.PatternMatch;
+import org.broadinstitute.ddp.model.suggestion.DrugSuggestion;
+import org.broadinstitute.ddp.model.suggestion.PatternMatch;
 import org.broadinstitute.ddp.util.DrugTypeaheadComparator;
 import org.broadinstitute.ddp.util.ResponseUtil;
 
@@ -77,8 +77,8 @@ public class GetDsmDrugSuggestionsRoute implements Route {
     @Override
     public DrugSuggestionResponse handle(Request request, Response response) {
         String studyGuid = request.params(RouteConstants.PathParam.STUDY_GUID);
-        String drugQuery = request.queryParams(RouteConstants.QueryParam.DRUG_QUERY);
-        String queryLimit = request.queryParams(RouteConstants.QueryParam.DRUG_QUERY_LIMIT);
+        String drugQuery = request.queryParams(RouteConstants.QueryParam.TYPEAHEAD_QUERY);
+        String queryLimit = request.queryParams(RouteConstants.QueryParam.TYPEAHEAD_QUERY_LIMIT);
         int limit = !StringUtils.isBlank(queryLimit) ? Integer.valueOf(queryLimit) : DEFAULT_LIMIT;
         LOG.info("Limit was not specified, defaulting it to {}", DEFAULT_LIMIT);
         if (StringUtils.isBlank(studyGuid)) {
@@ -86,7 +86,7 @@ public class GetDsmDrugSuggestionsRoute implements Route {
             ResponseUtil.halt400ErrorResponse(response, ErrorCodes.MISSING_STUDY_GUID);
         }
         if (StringUtils.isBlank(drugQuery)) {
-            LOG.info("Drug quert is blank, returning all results");
+            LOG.info("Drug query is blank, returning all results");
             return getUnfilteredDrugSuggestions(drugQuery, limit);
         } else {
             if (!Pattern.compile(DRUG_QUERY_REGEX, Pattern.UNICODE_CHARACTER_CLASS).matcher(drugQuery).find()) {

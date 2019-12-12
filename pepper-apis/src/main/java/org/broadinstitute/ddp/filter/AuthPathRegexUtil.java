@@ -34,6 +34,9 @@ public class AuthPathRegexUtil {
 
     private static final String DRUG_SUGGESTION_ROUTE_REGEX = BASE_REGEX + "\\/studies\\/" + GUID_PATTERN + "/suggestions/drugs" + "\\/?";
 
+    private static final String CANCER_SUGGESTION_ROUTE_REGEX = BASE_REGEX + "\\/studies\\/" + GUID_PATTERN + "/suggestions/cancers"
+            + "\\/?";
+
     private static final String UPDATE_USER_PASSWORD_ROUTE_REGEX = BASE_REGEX + "\\/user\\/" + GUID_PATTERN + "/password";
 
     private static final String UPDATE_USER_EMAIL_ROUTE_REGEX = BASE_REGEX + "\\/user\\/" + GUID_PATTERN + "/email";
@@ -65,6 +68,10 @@ public class AuthPathRegexUtil {
 
     public boolean isDrugSuggestionRoute(String path) {
         return Pattern.compile(DRUG_SUGGESTION_ROUTE_REGEX).matcher(path).matches();
+    }
+
+    public boolean isCancerSuggestionRoute(String path) {
+        return Pattern.compile(CANCER_SUGGESTION_ROUTE_REGEX).matcher(path).matches();
     }
 
     public boolean isUpdateUserPasswordRoute(String path) {

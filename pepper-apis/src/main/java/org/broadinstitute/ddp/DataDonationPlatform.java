@@ -70,6 +70,7 @@ import org.broadinstitute.ddp.route.ExportStudyRoute;
 import org.broadinstitute.ddp.route.GetActivityInstanceRoute;
 import org.broadinstitute.ddp.route.GetActivityInstanceStatusTypeListRoute;
 import org.broadinstitute.ddp.route.GetAdminStudiesRoute;
+import org.broadinstitute.ddp.route.GetCancerSuggestionsRoute;
 import org.broadinstitute.ddp.route.GetConsentSummariesRoute;
 import org.broadinstitute.ddp.route.GetConsentSummaryRoute;
 import org.broadinstitute.ddp.route.GetCountryAddressInfoRoute;
@@ -94,6 +95,7 @@ import org.broadinstitute.ddp.route.GetMedicalProviderListRoute;
 import org.broadinstitute.ddp.route.GetParticipantDefaultMailAddressRoute;
 import org.broadinstitute.ddp.route.GetParticipantInfoRoute;
 import org.broadinstitute.ddp.route.GetParticipantMailAddressRoute;
+import org.broadinstitute.ddp.route.GetPdfRoute;
 import org.broadinstitute.ddp.route.GetPrequalifierInstanceRoute;
 import org.broadinstitute.ddp.route.GetProfileRoute;
 import org.broadinstitute.ddp.route.GetStudiesRoute;
@@ -128,6 +130,7 @@ import org.broadinstitute.ddp.schedule.DsmDrugLoaderJob;
 import org.broadinstitute.ddp.schedule.JobScheduler;
 import org.broadinstitute.ddp.security.JWTConverter;
 import org.broadinstitute.ddp.service.ActivityInstanceService;
+import org.broadinstitute.ddp.service.ActivityValidationService;
 import org.broadinstitute.ddp.service.AddressService;
 import org.broadinstitute.ddp.service.CancerService;
 import org.broadinstitute.ddp.service.ConsentService;
@@ -255,6 +258,7 @@ public class DataDonationPlatform {
 
         PexInterpreter interpreter = new TreeWalkInterpreter();
         final ActivityInstanceService actInstService = new ActivityInstanceService(activityInstanceDao, interpreter);
+        final ActivityValidationService activityValidationService = new ActivityValidationService();
 
         final FireCloudExportService fireCloudExportService = FireCloudExportService.fromSqlConfig(sqlConfig);
         final StudyAdminDao studyAdminDao = StudyAdminDao.init(sqlConfig, firecloudKeysDir);
@@ -360,14 +364,22 @@ public class DataDonationPlatform {
         // User activity instance routes
         get(API.USER_ACTIVITIES, new UserActivityInstanceListRoute(activityInstanceDao), responseSerializer);
         post(API.USER_ACTIVITIES, new CreateActivityInstanceRoute(activityInstanceDao), responseSerializer);
-        get(API.USER_ACTIVITIES_INSTANCE, new GetActivityInstanceRoute(actInstService, activityInstanceDao), responseSerializer);
+        get(
+                API.USER_ACTIVITIES_INSTANCE,
+                new GetActivityInstanceRoute(actInstService, activityValidationService, activityInstanceDao, interpreter),
+                responseSerializer
+        );
 
         // User activity answers routes
         FormActivityService formService = new FormActivityService(interpreter);
         patch(API.USER_ACTIVITY_ANSWERS,
-                new PatchFormAnswersRoute(formService, activityInstanceDao, answerDao),
+                new PatchFormAnswersRoute(formService, activityValidationService, activityInstanceDao, answerDao, interpreter),
                 responseSerializer);
-        put(API.USER_ACTIVITY_ANSWERS, new PutFormAnswersRoute(workflowService, formInstanceDao, interpreter), responseSerializer);
+        put(
+                API.USER_ACTIVITY_ANSWERS,
+                new PutFormAnswersRoute(workflowService, activityValidationService, formInstanceDao, interpreter),
+                responseSerializer
+        );
 
         // Study exit request
         post(API.USER_STUDY_EXIT, new SendExitNotificationRoute());
@@ -397,6 +409,7 @@ public class DataDonationPlatform {
         PdfGenerationService pdfGenerationService = new PdfGenerationService();
         get(API.DSM_PARTICIPANT_RELEASE_PDF, new GetDsmReleasePdfRoute(pdfService, pdfBucketService, pdfGenerationService));
         get(API.DSM_PARTICIPANT_CONSENT_PDF, new GetDsmConsentPdfRoute(pdfService, pdfBucketService, pdfGenerationService));
+        get(API.DSM_PARTICIPANT_PDF, new GetPdfRoute(pdfService, pdfBucketService, pdfGenerationService));
 
         get(API.DSM_ONDEMAND_ACTIVITIES, new GetDsmOnDemandActivitiesRoute(), responseSerializer);
         get(API.DSM_ONDEMAND_ACTIVITY, new GetDsmTriggeredInstancesRoute(), responseSerializer);
@@ -421,6 +434,8 @@ public class DataDonationPlatform {
         get(API.POST_PASSWORD_RESET, new PostPasswordResetRoute(), responseSerializer);
 
         get(API.DSM_DRUG_SUGGESTION, new GetDsmDrugSuggestionsRoute(DrugStore.getInstance()), responseSerializer);
+
+        get(API.CANCER_SUGGESTION, new GetCancerSuggestionsRoute(CancerStore.getInstance()), responseSerializer);
 
         // Routes calling DSM
         URL dsmBaseUrl = null;

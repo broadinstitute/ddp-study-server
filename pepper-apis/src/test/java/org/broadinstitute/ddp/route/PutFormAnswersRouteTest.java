@@ -37,6 +37,7 @@ import org.broadinstitute.ddp.db.dao.JdbiWorkflowTransition;
 import org.broadinstitute.ddp.db.dao.QuestionDao;
 import org.broadinstitute.ddp.db.dao.WorkflowDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
+import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.model.activity.definition.ConditionalBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
@@ -72,6 +73,7 @@ import org.junit.Test;
 
 public class PutFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
 
+    private static ActivityVersionDto activityVersionDto;
     private static AnswerDao answerDao;
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static Auth0Util.TestingUser user;
@@ -140,7 +142,6 @@ public class PutFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
                 .addSection(new FormSectionDef(null, Collections.singletonList(conditionalBlock)))
                 .build();
         handle.attach(ActivityDao.class).insertActivity(form, RevisionMetadata.now(userId, "test"));
-        assertNotNull(form.getActivityId());
         return form;
     }
 
@@ -167,7 +168,9 @@ public class PutFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
                 .addName(new Translation("en", "activity " + code))
                 .addSections(Arrays.asList(compositeSection))
                 .build();
-        handle.attach(ActivityDao.class).insertActivity(compositeFormActivityDef, RevisionMetadata.now(userId, "test"));
+        activityVersionDto = handle.attach(ActivityDao.class).insertActivity(
+                compositeFormActivityDef, RevisionMetadata.now(userId, "test")
+        );
         assertNotNull(compositeFormActivityDef.getActivityId());
         return compositeFormActivityDef;
 
@@ -621,6 +624,64 @@ public class PutFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
                 .body("workflow.next", equalTo(StateType.ACTIVITY.name()))
                 .body("workflow.activityCode", equalTo(expectedActivityCode))
                 .body("workflow.instanceGuid", equalTo(expectedInstanceGuid));
+    }
+
+    @Test
+    public void given_oneTrueExpr_whenRouteIsCalled_thenItReturnsOK() {
+        try {
+            ActivityInstanceDto instanceDto = TransactionWrapper.withTxn(handle -> {
+                handle.attach(JdbiActivity.class).insertValidation(
+                        RouteTestUtil.createActivityValidationDto(
+                                form, "false", "Should never fail", List.of(stableId)
+                        ),
+                        testData.getUserId(),
+                        testData.getStudyId(),
+                        activityVersionDto.getRevId()
+                );
+                return insertNewInstanceAndDeferCleanup(handle, form.getActivityId());
+            });
+            callEndpoint(instanceDto.getGuid())
+                    .then()
+                    .assertThat()
+                    .statusCode(200).contentType(ContentType.JSON);
+        } finally {
+            TransactionWrapper.useTxn(handle -> {
+                handle.attach(JdbiActivity.class).deleteValidationsByCode(form.getActivityId());
+            });
+        }
+    }
+
+    @Test
+    public void given_oneTrueExpr_whenRouteIsCalled_thenItReturns422_AndRespContainsCorrectErrorCode() {
+        try {
+            ActivityInstanceDto instanceDto = TransactionWrapper.withTxn(handle -> {
+                handle.attach(JdbiActivity.class).insertValidation(
+                        RouteTestUtil.createActivityValidationDto(
+                                form, "true", "Should always fail", List.of(stableId)
+                        ),
+                        testData.getUserId(),
+                        testData.getStudyId(),
+                        activityVersionDto.getRevId()
+                );
+                return insertNewInstanceAndDeferCleanup(handle, form.getActivityId());
+            });
+            callEndpoint(instanceDto.getGuid())
+                    .then()
+                    .assertThat()
+                    .statusCode(422).contentType(ContentType.JSON)
+                    .body("code", equalTo(ErrorCodes.ACTIVITY_VALIDATION));
+        } finally {
+            TransactionWrapper.useTxn(handle -> {
+                handle.attach(JdbiActivity.class).deleteValidationsByCode(form.getActivityId());
+            });
+        }
+    }
+
+    private io.restassured.response.Response callEndpoint(String instanceGuid) {
+        return given().auth().oauth2(token)
+                .pathParam("instanceGuid", instanceGuid)
+                .when()
+                .put(urlTemplate);
     }
 
     private FormActivityDef insertNewActivity(Handle handle) {

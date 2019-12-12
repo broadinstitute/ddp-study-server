@@ -67,7 +67,7 @@ patch:
     409:
       description: answer already exists for questions, `answerGuid` should be specified
     422:
-      description: activity instance is read-only or answer submission failed validation
+      $ref: '../pepper.yml#/components/responses/ActivityAnswersPatchErrorResponse'
     default:
       $ref: '../pepper.yml#/components/responses/ErrorResponse'
 
@@ -96,6 +96,6 @@ put:
     404:
       description: activity instance not found
     422:
-      description: activity instance is read-only or required questions not answered yet
+      description: activity instance is read-only or required questions not answered yet or there are validation errors
     default:
       $ref: '../pepper.yml#/components/responses/ErrorResponse'

@@ -69,6 +69,7 @@ public class DataExporterCli {
         options.addOption("m", "mappings", false, "export mappings file instead of dataset");
         options.addOption("g", "guids", true, "specific user guids to export");
         options.addOption("s", "structured", false, "export a structured document");
+        options.addOption("u", "users", false, "export study users document");
         options.addOption("ad", "activitydefinitions", false, "export study activity definitions to elasticsearch");
 
         CommandLineParser parser = new DefaultParser();
@@ -91,11 +92,12 @@ public class DataExporterCli {
         boolean hasSpecificGuids = cmd.hasOption("g");
         boolean exportStructuredDocument = cmd.hasOption("s");
         boolean exportActivityDefinitions = cmd.hasOption("ad");
+        boolean exportUsersDocument = cmd.hasOption("u");
 
         int choicesMade = (csvExport ? 1 : 0) + (elasticExport ? 1 : 0) + (mappingFileOnly ? 1 : 0)
-                + (exportActivityDefinitions ? 1 : 0);
+                + (exportActivityDefinitions ? 1 : 0) + (exportUsersDocument ? 1 : 0);
         if (choicesMade != 1) {
-            formatter.printHelp(80, USAGE, "You must select only one of: [c, e or m]", options, "");
+            formatter.printHelp(80, USAGE, "You must select only one of: [c, e, u, ad or m]", options, "");
             return;
         }
 
@@ -123,6 +125,8 @@ public class DataExporterCli {
             runEsExport(studyGuid, specificGuids, exportStructuredDocument);
         } else if (exportActivityDefinitions) {
             runActivityDefinitionExportToES(studyGuid);
+        } else if (exportUsersDocument) {
+            runUsersExportToElasticsearch(studyGuid);
         }
     }
 
@@ -164,6 +168,24 @@ public class DataExporterCli {
             exporter.exportParticipantsToElasticsearchByGuids(handle, studyDto, participantGuids, exportStructuredDocument);
             long elapsed = System.currentTimeMillis() - start;
             System.out.println(String.format("[export] took %d ms (%.2f s)", elapsed, elapsed / 1000.0));
+        });
+    }
+
+    private void runUsersExportToElasticsearch(String studyGuid) {
+        TransactionWrapper.useTxn(handle -> {
+            System.out.println("[user export] warming up caches...");
+            StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
+
+            // Warm up the emails cache
+            DataExporter.fetchAndCacheAuth0Emails(handle, studyGuid,
+                    handle.select("select auth0_user_id from user").mapTo(String.class).stream().collect(Collectors.toSet()));
+
+            System.out.println("[export] starting elasticsearch user export...");
+
+            long start = System.currentTimeMillis();
+            exporter.exportUsersToElasticsearch(handle, studyDto, null);
+            long elapsed = System.currentTimeMillis() - start;
+            System.out.println(String.format("[users export] took %d ms (%.2f s)", elapsed, elapsed / 1000.0));
         });
     }
 

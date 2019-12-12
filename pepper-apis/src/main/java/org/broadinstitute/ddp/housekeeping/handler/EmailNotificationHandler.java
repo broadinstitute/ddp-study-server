@@ -1,7 +1,11 @@
 package org.broadinstitute.ddp.housekeeping.handler;
 
 import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.DDP_BASE_WEB_URL;
+import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.DDP_PARTICIPANT_FIRST_NAME;
+import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.DDP_PARTICIPANT_GUID;
+import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.DDP_PARTICIPANT_LAST_NAME;
 import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.DDP_SALUTATION;
+import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.DDP_STUDY_GUID;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -178,7 +182,6 @@ public class EmailNotificationHandler implements HousekeepingMessageHandler<Noti
             }
         }
 
-
         // general approach to personalizations: we add them for every template, but the template
         // might not make use of them.  So they're kind of special/global/magic reserved words in our templates
         personalization.addSubstitution(DDP_SALUTATION,
@@ -188,6 +191,10 @@ public class EmailNotificationHandler implements HousekeepingMessageHandler<Noti
                         notificationMessage.getDefaultSalutation()
                 ));
         personalization.addSubstitution(DDP_BASE_WEB_URL, notificationMessage.getWebBaseUrl());
+        personalization.addSubstitution(DDP_STUDY_GUID, studyGuid);
+        personalization.addSubstitution(DDP_PARTICIPANT_GUID, participantGuid);
+        personalization.addSubstitution(DDP_PARTICIPANT_FIRST_NAME, notificationMessage.getParticipantFirstName());
+        personalization.addSubstitution(DDP_PARTICIPANT_LAST_NAME, notificationMessage.getParticipantLastName());
 
         for (NotificationTemplateSubstitutionDto sub : notificationMessage.getTemplateSubstitutions()) {
             personalization.addSubstitution(sub.getVariableName(), sub.getValue());
@@ -254,11 +261,12 @@ public class EmailNotificationHandler implements HousekeepingMessageHandler<Noti
                     );
                 }
         );
-        if (status.isPresent() && EnrollmentStatusType.getAllExitedStates().contains(status.get())) {
+        if (status.isPresent() && !status.get().shouldReceiveCommunications()) {
             LOG.info(
-                    "The participant {} exited the study {}, so nothing will be sent",
+                    "The participant {} in study {} should not receive communications because of status {}",
                     notificationMessage.getParticipantGuid(),
-                    notificationMessage.getStudyGuid()
+                    notificationMessage.getStudyGuid(),
+                    status.get()
             );
             return true;
         }

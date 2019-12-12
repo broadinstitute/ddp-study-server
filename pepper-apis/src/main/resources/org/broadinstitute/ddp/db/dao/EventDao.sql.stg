@@ -130,6 +130,7 @@ getNotificationConfigsForMailingListByEventType() ::= <<
 getPendingConfigurations() ::= <<
 select
     q.queued_event_id,
+    q.operator_user_id,
     (select u.guid from user u where u.user_id = q.participant_user_id) as participant_guid,
     (select u.hruid from user u where u.user_id = q.participant_user_id) as participant_hruid,
     cfg.event_configuration_id,

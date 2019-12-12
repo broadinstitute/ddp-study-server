@@ -23,6 +23,8 @@ public class AngioPdfConstants {
     public static final class ReleaseFirstPageFields {
         public static final String FIRST_NAME = "firstName";
         public static final String LAST_NAME = "lastName";
+        public static final String PROXY_FIRST_NAME = "proxyFirstName";
+        public static final String PROXY_LAST_NAME = "proxyLastName";
         public static final String MAILING_ADDRESS_STREET = "street";
         public static final String MAILING_ADDRESS_CITY = "city";
         public static final String MAILING_ADDRESS_STATE = "state";

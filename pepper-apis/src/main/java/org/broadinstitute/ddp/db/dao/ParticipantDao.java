@@ -78,6 +78,14 @@ public interface ParticipantDao extends SqlObject {
         return _findParticipantsWithUserDataByStudyId(studyId, false, false, null, userGuids);
     }
 
+    default Stream<Participant> findParticipantsWithUserProfileByStudyIdAndUserIds(long studyId, Set<Long> userIds) {
+        return _findParticipantsWithUserProfile(studyId, false, true, userIds, null);
+    }
+
+    default Stream<Participant> findParticipantsWithUserProfileByStudyId(long studyId) {
+        return _findParticipantsWithUserProfile(studyId, true, true, null, null);
+    }
+
     @UseStringTemplateSqlLocator
     @SqlQuery("bulkQueryLatestEnrollmentsWithUserDataAndOrderedProvidersByStudyId")
     @RegisterConstructorMapper(value = User.class, prefix = "u")
@@ -87,6 +95,18 @@ public interface ParticipantDao extends SqlObject {
     @RegisterColumnMapper(DsmAddressValidationStatus.ByOrdinalColumnMapper.class)
     @UseRowReducer(ParticipantsWithUserDataReducer.class)
     Stream<Participant> _findParticipantsWithUserDataByStudyId(
+            @Bind("studyId") long studyId,
+            @Define("selectAll") boolean selectAll,
+            @Define("byId") boolean byId,
+            @BindList(value = "userIds", onEmpty = BindList.EmptyHandling.NULL) Set<Long> userIds,
+            @BindList(value = "userGuids", onEmpty = BindList.EmptyHandling.NULL) Set<String> userGuids);
+
+    @UseStringTemplateSqlLocator
+    @SqlQuery("bulkQueryLatestEnrollmentsWithUserProfileByStudyId")
+    @RegisterConstructorMapper(value = User.class, prefix = "u")
+    @RegisterConstructorMapper(value = UserProfileDto.class, prefix = "p")
+    @UseRowReducer(ParticipantsWithUserProfileReducer.class)
+    Stream<Participant> _findParticipantsWithUserProfile(
             @Bind("studyId") long studyId,
             @Define("selectAll") boolean selectAll,
             @Define("byId") boolean byId,
@@ -121,6 +141,30 @@ public interface ParticipantDao extends SqlObject {
             if (row.getColumn("m_user_medical_provider_id", Long.class) != null) {
                 participant.addProvider(row.getRow(MedicalProviderDto.class));
             }
+        }
+    }
+
+    class ParticipantsWithUserProfileReducer implements LinkedHashMapRowReducer<Long, Participant> {
+        @Override
+        public void accumulate(Map<Long, Participant> container, RowView row) {
+            long enrollmentId = row.getColumn("enrollment_id", Long.class);
+
+            Participant participant = container.computeIfAbsent(enrollmentId, id -> {
+                EnrollmentStatusDto status = new EnrollmentStatusDto(
+                        id,
+                        row.getColumn("u_user_id", Long.class),
+                        row.getColumn("u_user_guid", String.class),
+                        row.getColumn("study_id", Long.class),
+                        row.getColumn("study_guid", String.class),
+                        EnrollmentStatusType.valueOf(row.getColumn("enrollment_status", String.class)),
+                        row.getColumn("valid_from", Long.class),
+                        null);
+                User user = row.getRow(User.class);
+                if (row.getColumn("p_user_id", Long.class) != null) {
+                    user.setProfile(row.getRow(UserProfileDto.class));
+                }
+                return new Participant(status, user);
+            });
         }
     }
 }

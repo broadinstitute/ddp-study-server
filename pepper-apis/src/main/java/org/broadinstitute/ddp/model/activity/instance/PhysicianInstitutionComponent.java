@@ -32,11 +32,11 @@ public abstract class PhysicianInstitutionComponent extends FormComponent {
     private transient boolean showFields;
 
     protected PhysicianInstitutionComponent(ComponentType physicianOrInstitution,
-                                           boolean allowMultiple,
-                                           String addButtonText,
-                                           String titleText,
-                                           String subtitleText,
-                                           InstitutionType institutionType,
+                                            boolean allowMultiple,
+                                            String addButtonText,
+                                            String titleText,
+                                            String subtitleText,
+                                            InstitutionType institutionType,
                                             boolean showFields,
                                             boolean hideNumber) {
         super(physicianOrInstitution);

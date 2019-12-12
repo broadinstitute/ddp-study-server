@@ -259,7 +259,7 @@ public class PdfGenerationServiceTest extends TxnAwareBaseTest {
         byte[] outputDoc = TransactionWrapper.withTxn(handle -> pdfGenerationService.generateMailingAddressPdf(
                 pdfInfo.getMailingAddressTemplate(),
                 participant.getUser(),
-                new ArrayList<>()
+                new ArrayList<>(), pdfInfo.getPdfConfiguration().getStudyGuid(), handle
         ));
 
         createDebugFileWithFlattenedFields(outputDoc);
@@ -334,7 +334,27 @@ public class PdfGenerationServiceTest extends TxnAwareBaseTest {
             pdfGenerationService.generateMailingAddressPdf(
                     pdfInfo.getMailingAddressTemplate(),
                     participant.getUser(),
-                    errors
+                    errors, pdfInfo.getPdfConfiguration().getStudyGuid(), handle
+            );
+            assertEquals(1, errors.size());
+            assertEquals(errors.get(0), "Could not find PDFFormField field with name: " + fieldName);
+        });
+    }
+
+    @Test
+    public void testGenerateMailingAddressFailsWithMissingProxyField() throws IOException {
+        String fieldName = "proxyLastName";
+        pdfInfo.getMailingAddressTemplate().setProxyLastNamePlaceholder(fieldName);
+
+        Participant participant = TransactionWrapper.withTxn(handle -> pdfGenerationService.loadParticipantData(
+                handle, pdfInfo.getPdfConfiguration(), pdfInfo.getData().getUserGuid()));
+
+        List<String> errors = new ArrayList<>();
+        TransactionWrapper.useTxn(handle -> {
+            pdfGenerationService.generateMailingAddressPdf(
+                    pdfInfo.getMailingAddressTemplate(),
+                    participant.getUser(),
+                    errors, pdfInfo.getPdfConfiguration().getStudyGuid(), handle
             );
             assertEquals(1, errors.size());
             assertEquals(errors.get(0), "Could not find PDFFormField field with name: " + fieldName);

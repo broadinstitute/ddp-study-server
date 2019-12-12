@@ -25,7 +25,6 @@ import org.broadinstitute.ddp.db.dto.SendgridConfigurationDto;
 import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.db.dto.UserProfileDto;
 import org.broadinstitute.ddp.exception.DDPException;
-import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.util.Auth0MgmtTokenHelper;
 import org.broadinstitute.ddp.util.Auth0Util;
 import org.broadinstitute.ddp.util.DdpParticipantSendGridEmailPersonalization;
@@ -189,7 +188,7 @@ public class StudyPasswordResetEmailGenerator {
         final JdbiProfile profileDao = handle.attach(JdbiProfile.class);
         final JdbiUser userDao = handle.attach(JdbiUser.class);
         return allStudyEnrollments.stream()
-                .filter(each -> EnrollmentStatusType.getAllExitedStates().contains(each.getEnrollmentStatus()))
+                .filter(each -> each.getEnrollmentStatus().isExited() || !each.getEnrollmentStatus().shouldReceiveCommunications())
                 .map(userEnrollment -> {
                     UserProfileDto profile = profileDao.getUserProfileByUserId(userEnrollment.getUserId());
                     UserDto userDto = userDao.findByUserId(userEnrollment.getUserId());

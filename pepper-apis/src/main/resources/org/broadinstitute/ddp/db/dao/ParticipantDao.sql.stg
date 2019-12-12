@@ -63,6 +63,39 @@ select en.user_study_enrollment_id as enrollment_id,
   left join user_medical_provider as mp on mp.user_id = u.user_id and mp.umbrella_study_id = en.study_id
 >>
 
+select_all_enrollments_with_user_profile() ::= <<
+select en.user_study_enrollment_id as enrollment_id,
+       en.valid_from,
+       en.study_id,
+       (select guid from umbrella_study where umbrella_study_id = en.study_id) as study_guid,
+       (select enrollment_status_type_code from enrollment_status_type where enrollment_status_type_id = en.enrollment_status_type_id) as enrollment_status,
+       u.user_id              as u_user_id,
+       u.guid                 as u_user_guid,
+       u.hruid                as u_user_hruid,
+       u.legacy_altpid        as u_legacy_altpid,
+       u.legacy_shortid       as u_legacy_shortid,
+       u.is_locked            as u_is_locked,
+       u.created_by_client_id as u_created_by_client_id,
+       u.auth0_tenant_id      as u_auth0_tenant_id,
+       u.auth0_user_id        as u_auth0_user_id,
+       u.created_at           as u_created_at,
+       u.updated_at           as u_updated_at,
+       u.expires_at           as u_expires_at,
+       up.user_id               as p_user_id,
+       up.first_name            as p_first_name,
+       up.last_name             as p_last_name,
+       up.sex                   as p_sex,
+       up.birth_year            as p_birth_year,
+       up.birth_month           as p_birth_month,
+       up.birth_day_in_month    as p_birth_day,
+       up.do_not_contact        as p_do_not_contact,
+       up.preferred_language_id as p_preferred_language_id,
+       (select iso_language_code from language_code where language_code_id = up.preferred_language_id) as p_iso_language_code
+  from user_study_enrollment as en
+  join user as u on u.user_id = en.user_id
+  left join user_profile as up on up.user_id = u.user_id
+>>
+
 bulkQueryLatestEnrollmentsWithUserDataAndOrderedProvidersByStudyId(selectAll, byId, userIds, userGuids) ::= <<
 <select_all_enrollments_with_user_profile_address_providers()>
 where en.study_id = :studyId
@@ -75,4 +108,18 @@ where en.study_id = :studyId
 <endif>
 <endif>
 order by u.user_id asc, mp.user_medical_provider_id asc
+>>
+
+bulkQueryLatestEnrollmentsWithUserProfileByStudyId(selectAll, byId, userIds, userGuids) ::= <<
+<select_all_enrollments_with_user_profile()>
+where en.study_id = :studyId
+  and en.valid_to is null
+<if(!selectAll)>
+<if(byId)>
+  and u.user_id in (<userIds>)
+<else>
+  and u.guid in (<userGuids>)
+<endif>
+<endif>
+order by u.user_id asc
 >>

@@ -115,6 +115,12 @@ public interface JdbiActivityInstance extends SqlObject {
     @RegisterRowMapper(ActivityInstanceRowMapper.class)
     Optional<ActivityInstanceDto> getByActivityInstanceId(@Bind("activityInstanceId") long activityInstanceId);
 
+    @SqlQuery(
+            "SELECT ai.study_activity_id FROM activity_instance AS ai"
+            + " WHERE ai.activity_instance_guid = :guid"
+    )
+    long getActivityIdByGuid(@Bind("guid") String guid);
+
     // Note: this should only be used in tests.
     @SqlUpdate("delete from activity_instance where activity_instance_guid = ?")
     int deleteByInstanceGuid(String instanceGuid);

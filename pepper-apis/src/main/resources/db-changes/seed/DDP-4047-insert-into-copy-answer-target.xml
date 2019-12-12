@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="sampath" id="20191106-insert-into-copy-answer-target">
+        <insert tableName="copy_answer_target">
+            <column name="copy_target" value="OPERATOR_PROFILE_FIRST_NAME"/>
+            <column name="description" value="The first name of the operator's profile"/>
+        </insert>
+        <insert tableName="copy_answer_target">
+            <column name="copy_target" value="OPERATOR_PROFILE_LAST_NAME"/>
+            <column name="description" value="The last name of the operator's profile"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

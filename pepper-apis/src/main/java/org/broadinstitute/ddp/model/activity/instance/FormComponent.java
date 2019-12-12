@@ -39,6 +39,7 @@ public abstract class FormComponent implements Numberable {
         return displayNumber;
     }
 
+    @Override
     public boolean shouldHideNumber() {
         return hideDisplayNumber;
     }

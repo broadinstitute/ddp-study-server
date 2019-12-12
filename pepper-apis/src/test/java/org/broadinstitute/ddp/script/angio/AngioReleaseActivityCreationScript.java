@@ -107,7 +107,7 @@ public class AngioReleaseActivityCreationScript extends TxnAwareBaseTest {
 
         // setup the main inputs for release
         List<FormBlockDef> mainSectionBlocks = new ArrayList<>();
-        mainSectionBlocks.add(new MailingAddressComponentDef());
+        mainSectionBlocks.add(new MailingAddressComponentDef(null, null));
         mainSectionBlocks.add(createPhysiciansComponent());
         mainSectionBlocks.add(createInitialBiopsyComponent());
         mainSectionBlocks.add(createOtherInstitutionsComponent());

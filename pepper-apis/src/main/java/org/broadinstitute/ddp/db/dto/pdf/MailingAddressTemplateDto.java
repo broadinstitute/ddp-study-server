@@ -8,6 +8,8 @@ public class MailingAddressTemplateDto {
     private long pdfBaseTemplateId;
     private String firstNamePlaceholder;
     private String lastNamePlaceholder;
+    private String proxyFirstNamePlaceholder;
+    private String proxyLastNamePlaceholder;
     private String streetPlaceholder;
     private String cityPlaceholder;
     private String statePlaceholder;
@@ -19,6 +21,8 @@ public class MailingAddressTemplateDto {
     public MailingAddressTemplateDto(@ColumnName("template_id") long pdfBaseTemplateId,
                                      @ColumnName("first_name_placeholder") String firstNamePlaceholder,
                                      @ColumnName("last_name_placeholder") String lastNamePlaceholder,
+                                     @ColumnName("proxy_last_name_placeholder") String proxyLastNamePlaceholder,
+                                     @ColumnName("proxy_first_name_placeholder") String proxyFirstNamePlaceholder,
                                      @ColumnName("street_placeholder") String streetPlaceholder,
                                      @ColumnName("city_placeholder") String cityPlaceholder,
                                      @ColumnName("state_placeholder") String statePlaceholder,
@@ -28,6 +32,8 @@ public class MailingAddressTemplateDto {
         this.pdfBaseTemplateId = pdfBaseTemplateId;
         this.firstNamePlaceholder = firstNamePlaceholder;
         this.lastNamePlaceholder = lastNamePlaceholder;
+        this.proxyFirstNamePlaceholder = proxyFirstNamePlaceholder;
+        this.proxyLastNamePlaceholder = proxyLastNamePlaceholder;
         this.streetPlaceholder = streetPlaceholder;
         this.cityPlaceholder = cityPlaceholder;
         this.statePlaceholder = statePlaceholder;
@@ -66,5 +72,13 @@ public class MailingAddressTemplateDto {
 
     public String getPhonePlaceholder() {
         return phonePlaceholder;
+    }
+
+    public String getProxyFirstNamePlaceholder() {
+        return proxyFirstNamePlaceholder;
+    }
+
+    public String getProxyLastNamePlaceholder() {
+        return proxyLastNamePlaceholder;
     }
 }

@@ -17,6 +17,7 @@ import org.broadinstitute.ddp.content.ContentStyle;
 import org.broadinstitute.ddp.content.HtmlConverter;
 import org.broadinstitute.ddp.content.Renderable;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
+import org.broadinstitute.ddp.model.activity.instance.validation.ActivityValidationFailure;
 import org.broadinstitute.ddp.model.activity.instance.validation.RequiredRule;
 import org.broadinstitute.ddp.model.activity.instance.validation.Rule;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
@@ -59,6 +60,9 @@ public abstract class Question<T extends Answer> implements Renderable {
     @NotNull
     @SerializedName("validations")
     protected List<Rule> validations = new ArrayList<>();
+
+    @SerializedName("validationFailures")
+    protected List<ActivityValidationFailure> activityValidationFailures;
 
     protected transient long questionId;
     protected transient boolean isRestricted;
@@ -158,6 +162,10 @@ public abstract class Question<T extends Answer> implements Renderable {
 
     public long getPromptTemplateId() {
         return promptTemplateId;
+    }
+
+    public void setActivityValidationFailures(List<ActivityValidationFailure> activityValidationFailures) {
+        this.activityValidationFailures = activityValidationFailures;
     }
 
     /**

@@ -1,16 +1,17 @@
-package org.broadinstitute.ddp.model.dsm;
+package org.broadinstitute.ddp.json;
 
 import java.util.List;
 
 import com.google.gson.annotations.SerializedName;
+import org.broadinstitute.ddp.model.suggestion.CancerSuggestion;
 
-public class DrugSuggestionResponse {
+public class CancerSuggestionResponse {
     @SerializedName("query")
     private String query;
     @SerializedName("results")
-    private List<DrugSuggestion> results;
+    private List<CancerSuggestion> results;
 
-    public DrugSuggestionResponse(String query, List<DrugSuggestion> results) {
+    public CancerSuggestionResponse(String query, List<CancerSuggestion> results) {
         this.query = query;
         this.results = results;
     }
@@ -19,7 +20,7 @@ public class DrugSuggestionResponse {
         return query;
     }
 
-    public List<DrugSuggestion> getResults() {
+    public List<CancerSuggestion> getResults() {
         return results;
     }
 }

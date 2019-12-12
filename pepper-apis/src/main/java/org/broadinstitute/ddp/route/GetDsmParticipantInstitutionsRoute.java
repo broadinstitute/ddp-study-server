@@ -3,16 +3,19 @@ package org.broadinstitute.ddp.route;
 import static org.broadinstitute.ddp.constants.RouteConstants.PathParam.STUDY_GUID;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivityMapping;
 import org.broadinstitute.ddp.db.dao.JdbiMailAddress;
 import org.broadinstitute.ddp.db.dao.JdbiMedicalProvider;
@@ -22,9 +25,11 @@ import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dto.EnrollmentStatusDto;
 import org.broadinstitute.ddp.db.dto.MedicalProviderDto;
+import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.db.dto.UserProfileDto;
 import org.broadinstitute.ddp.json.errors.ApiError;
+import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
 import org.broadinstitute.ddp.model.activity.types.ActivityMappingType;
 import org.broadinstitute.ddp.model.address.MailAddress;
 import org.broadinstitute.ddp.model.dsm.Institution;
@@ -51,9 +56,16 @@ public class GetDsmParticipantInstitutionsRoute implements Route {
             String studyGuid = request.params(STUDY_GUID);
             if (studyGuid == null) {
                 logger.error("Study GUID not found in request");
-                ResponseUtil.haltError(response, HttpStatus.SC_BAD_REQUEST,
+                throw ResponseUtil.haltError(response, HttpStatus.SC_BAD_REQUEST,
                         new ApiError(ErrorCodes.MISSING_STUDY_GUID, "Study GUID is missing"));
-                return null;
+            }
+
+            StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
+            if (studyDto == null) {
+                String errorMessage = "Study not found for: " + studyGuid;
+                logger.error(errorMessage);
+                throw ResponseUtil.haltError(response, HttpStatus.SC_NOT_FOUND,
+                        new ApiError(ErrorCodes.STUDY_NOT_FOUND, errorMessage));
             }
 
             List<EnrollmentStatusDto> allUsers = handle.attach(JdbiUserStudyEnrollment.class).findByStudyGuid(studyGuid);
@@ -68,22 +80,11 @@ public class GetDsmParticipantInstitutionsRoute implements Route {
                 return new ArrayList<>();
             } else {
                 try {
-                    Optional<Long> studyIdResponse = handle.attach(JdbiUmbrellaStudy.class).getIdByGuid(studyGuid);
-
-                    if (!studyIdResponse.isPresent()) {
-                        String errorMessage = "Study not found for: " + studyGuid;
-                        logger.error(errorMessage);
-                        ResponseUtil.haltError(response, HttpStatus.SC_NOT_FOUND,
-                                new ApiError(ErrorCodes.STUDY_NOT_FOUND, errorMessage));
-                        return null;
-                    }
-
-                    return buildJsonForParticipants(handle, includedUsers, studyIdResponse.get(), response, studyGuid);
+                    return buildJsonForParticipants(handle, includedUsers, studyDto.getId(), response, studyGuid);
                 } catch (Exception e) {
                     logger.error("Could not build JSON response", e);
-                    ResponseUtil.haltError(response, HttpStatus.SC_INTERNAL_SERVER_ERROR,
+                    throw ResponseUtil.haltError(response, HttpStatus.SC_INTERNAL_SERVER_ERROR,
                             new ApiError(ErrorCodes.SERVER_ERROR, "Could not build JSON response"));
-                    return null;
                 }
             }
         });
@@ -100,15 +101,28 @@ public class GetDsmParticipantInstitutionsRoute implements Route {
                 .map(EnrollmentStatusDto::getUserId)
                 .collect(Collectors.toList());
 
-        Map<Long, EnrollmentStatusDto> userIdToEnrolledUser = enrolledUsers
-                .stream()
-                .collect(Collectors.toMap(EnrollmentStatusDto::getUserId, dto -> dto));
-
         Map<Long, List<MedicalProviderDto>> medicalRecordsByUserId = handle.attach(JdbiMedicalProvider.class)
                 .getAllByUsersAndStudyIds(userIds, studyId)
                 .stream()
                 .filter(dto -> !dto.isBlank())
                 .collect(Collectors.groupingBy(MedicalProviderDto::getUserId));
+
+        List<StudyActivityMapping> studyActivityMappings = handle.attach(JdbiActivityMapping.class)
+                .getActivityMappingForStudyAndActivityType(studyId, ActivityMappingType.MEDICAL_RELEASE)
+                .collect(Collectors.toList());
+        if (studyActivityMappings.isEmpty()) {
+            String errorMessage = "Activity mapping: " + ActivityMappingType.MEDICAL_RELEASE + " not found for: " + studyGuid;
+            logger.error(errorMessage);
+            throw ResponseUtil.haltError(response, HttpStatus.SC_NOT_FOUND,
+                    new ApiError(ErrorCodes.STUDY_NOT_FOUND, errorMessage));
+        }
+
+        Set<Long> releaseActivityIds = studyActivityMappings.stream()
+                .map(StudyActivityMapping::getStudyActivityId)
+                .collect(Collectors.toSet());
+        Map<Long, List<ActivityResponse>> userIdToReleaseInstances = handle.attach(ActivityInstanceDao.class)
+                .findBaseResponsesByStudyAndUserIds(studyId, Set.copyOf(userIds), true, releaseActivityIds)
+                .collect(Collectors.groupingBy(ActivityResponse::getParticipantId));
 
         for (Map.Entry<Long, List<MedicalProviderDto>> user : medicalRecordsByUserId.entrySet()) {
             long userId = user.getKey();
@@ -124,7 +138,8 @@ public class GetDsmParticipantInstitutionsRoute implements Route {
                     .map(Institution::new)
                     .collect(Collectors.toList());
 
-            String userGuid = userIdToEnrolledUser.get(userId).getUserGuid();
+            UserDto userDto = handle.attach(JdbiUser.class).findByUserId(userId);
+            String userGuid = userDto.getUserGuid();
 
             Optional<MailAddress> mailAddressResult = handle.attach(JdbiMailAddress.class)
                     .findDefaultAddressForParticipant(userGuid);
@@ -134,71 +149,30 @@ public class GetDsmParticipantInstitutionsRoute implements Route {
             UserProfileDto userProfileDto = handle.attach(JdbiProfile.class)
                     .getUserProfileByUserId(userId);
 
-            Optional<StudyActivityMapping> studyActivityMapping = handle.attach(JdbiActivityMapping.class)
-                    .getActivityMappingForStudyAndActivityType(studyGuid, ActivityMappingType.MEDICAL_RELEASE.toString());
-
-            if (!studyActivityMapping.isPresent()) {
-                String errorMessage = "Activity mapping: " + ActivityMappingType.MEDICAL_RELEASE.toString()
-                        + " not found for: " + studyGuid;
-                logger.error(errorMessage);
-                throw ResponseUtil.haltError(response, HttpStatus.SC_NOT_FOUND,
-                        new ApiError(ErrorCodes.STUDY_NOT_FOUND, errorMessage));
-            }
-
             List<EnrollmentStatusDto> enrollmentStatusDtos = handle.attach(JdbiUserStudyEnrollment.class)
                     .getAllEnrollmentStatusesByUserAndStudyIds(userId, studyId);
-
-            Optional<EnrollmentStatusDto> surveyCreated = enrollmentStatusDtos.stream()
-                    .filter(enrollmentStatusDto -> enrollmentStatusDto.getEnrollmentStatus() == EnrollmentStatusType.REGISTERED)
-                    .sorted(Comparator.comparing(EnrollmentStatusDto::getValidFromMillis).reversed())
-                    .findFirst();
-
-            // If we got this far, it means a survey was completed. This has to be 1 entry
-            if (!surveyCreated.isPresent()) {
-                logger.error("No registered entry found for activity "
-                        + studyActivityMapping.get().getStudyActivityId()
-                        + " and user " + userId);
-                throw ResponseUtil.haltError(response, HttpStatus.SC_INTERNAL_SERVER_ERROR,
-                        new ApiError(ErrorCodes.SERVER_ERROR, "Could not build JSON response"));
-            }
-
-            long timeFirstCreated = surveyCreated.get().getValidFromMillis();
-
-
             Optional<EnrollmentStatusDto> userExitedBeforeEnrollment = enrollmentStatusDtos.stream()
                     .filter(enrollmentStatusDto ->
                             enrollmentStatusDto.getEnrollmentStatus() == EnrollmentStatusType.EXITED_BEFORE_ENROLLMENT)
                     .sorted(Comparator.comparing(EnrollmentStatusDto::getValidFromMillis).reversed())
                     .findFirst();
-
             if (userExitedBeforeEnrollment.isPresent()) {
-                logger.error("Found for study activity "
-                        + studyActivityMapping.get().getStudyActivityId()
-                        + " and user " + userId
-                        + " user exited before enrollment");
+                logger.error("Found user " + userGuid + " exited before enrollment");
                 throw ResponseUtil.haltError(response, HttpStatus.SC_INTERNAL_SERVER_ERROR,
                         new ApiError(ErrorCodes.SERVER_ERROR, "Could not build JSON response"));
             }
 
+            ActivityResponse latestInstance = userIdToReleaseInstances.getOrDefault(userId, Collections.emptyList())
+                    .stream()
+                    .filter(instance -> instance.getFirstCompletedAt() != null)
+                    .max(Comparator.comparing(ActivityResponse::getFirstCompletedAt))
+                    .orElse(null);
 
-            Optional<EnrollmentStatusDto> surveyCompleted = enrollmentStatusDtos.stream()
-                    .filter(enrollmentStatusDto -> enrollmentStatusDto.getEnrollmentStatus() == EnrollmentStatusType.ENROLLED)
-                    .sorted(Comparator.comparing(EnrollmentStatusDto::getValidFromMillis).reversed())
-                    .findFirst();
-
-
-            // If we got this far, it means a survey was completed. This has to be 1 entry
-            if (!surveyCompleted.isPresent()) {
-                logger.error("No registered entry found for activity "
-                        + studyActivityMapping.get().getStudyActivityId()
-                        + " and user " + userId);
+            if (latestInstance == null) {
+                logger.error("No completed release survey found for user " + userGuid);
                 throw ResponseUtil.haltError(response, HttpStatus.SC_INTERNAL_SERVER_ERROR,
                         new ApiError(ErrorCodes.SERVER_ERROR, "Could not build JSON response"));
             }
-
-            long timeFirstCompleted = surveyCompleted.get().getValidFromMillis();
-
-            UserDto userDto = handle.attach(JdbiUser.class).findByUserGuid(userGuid);
 
             ParticipantInstitution participantInstitution = new ParticipantInstitution(
                     userProfileDto.getFirstName(),
@@ -206,9 +180,9 @@ public class GetDsmParticipantInstitutionsRoute implements Route {
                     userDto.getUserHruid(),
                     userDto.getLegacyShortId(),
                     mailAddressResult.map(MailAddress::getCountry).orElse(null),
-                    timeFirstCreated,
-                    userIdToEnrolledUser.get(userId).getValidFromMillis(),
-                    timeFirstCompleted,
+                    latestInstance.getCreatedAt(),
+                    latestInstance.getLatestStatus().getUpdatedAt(),
+                    latestInstance.getFirstCompletedAt(),
                     mailAddressResult.map(mailAddress -> {
                         try {
                             return DsmAddressValidationStatus.addressValidStatuses()

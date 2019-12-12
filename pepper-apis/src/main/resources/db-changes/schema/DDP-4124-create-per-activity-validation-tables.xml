@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="sretsia" id="20191024-create-activity-validation-table">
+        <createTable tableName="activity_validation">
+            <column name="activity_validation_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="activity_validation_id_pk"/>
+            </column>
+            <column name="study_activity_id" type="bigint">
+                <constraints nullable="false" foreignKeyName="av_activity_id_sa_study_act_id_fk" references="study_activity(study_activity_id)"/>
+            </column>
+            <column name="precondition_text" type="varchar(10000)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="expression_text" type="varchar(10000)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="error_message_template_id" type="bigint">
+                <constraints nullable="false" foreignKeyName="av_err_msg_template_id_tmpl_template_id_fk" references="template(template_id)"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="sretsia" id="20191024-create-activity-validation-affected-fields">
+        <createTable tableName="activity_validation_affected_question">
+            <column name="activity_validation_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="question_id" type="bigint">
+                <constraints nullable="false" foreignKeyName="avaq_question_id_q_question_id_fk" references="question(question_id)"/>
+            </column>
+        </createTable>
+        <addUniqueConstraint tableName="activity_validation_affected_question" columnNames="activity_validation_id, question_id"
+                             constraintName="avaq_activity_validation_id_question_id_uk"/>
+        <addPrimaryKey tableName="activity_validation_affected_question" columnNames="activity_validation_id, question_id" constraintName="avaq_pk"/>
+        <addForeignKeyConstraint constraintName="avaq_act_validation_id_av_act_validation_id_fk"
+                                 baseTableName="activity_validation_affected_question" baseColumnNames="activity_validation_id"
+                                 referencedTableName="activity_validation" referencedColumnNames="activity_validation_id"
+                                 onDelete="CASCADE"/>
+    </changeSet>
+
+</databaseChangeLog>

@@ -7,6 +7,8 @@ import java.util.Map;
 import org.broadinstitute.ddp.db.DaoException;
 import org.jdbi.v3.sqlobject.CreateSqlObject;
 import org.jdbi.v3.sqlobject.SqlObject;
+import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -111,9 +113,19 @@ public interface QueuedEventDao extends SqlObject {
         return queuedEventId;
     }
 
-    default long addToQueue(long eventConfigId, long operatorId, long participantId, Integer delaySecondsFromNow) {
+    default long addToQueue(long eventConfigId, Long operatorId, long participantId, Integer delaySecondsFromNow) {
         int delayBeforePosting = delaySecondsFromNow != null ? delaySecondsFromNow : 0;
         long postAfter = Instant.now().getEpochSecond() + delayBeforePosting;
         return getJdbiQueuedEvent().insert(eventConfigId, postAfter, participantId, operatorId);
     }
+
+    @SqlUpdate("update queued_event as q"
+            + "   join event_configuration as e on e.event_configuration_id = q.event_configuration_id"
+            + "    set q.participant_user_id = :newParticipantId"
+            + "  where q.participant_user_id = :oldParticipantId"
+            + "    and e.umbrella_study_id = :studyId")
+    int reassignQueuedEventsInStudy(
+            @Bind("studyId") long studyId,
+            @Bind("oldParticipantId") long oldParticipantId,
+            @Bind("newParticipantId") long newParticipantId);
 }

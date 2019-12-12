@@ -13,6 +13,7 @@ public class QueuedNotificationDto extends QueuedEventDto {
                                  NotificationDetailsDto notificationDetails) {
         super(pendingEvent.getEventConfigurationId(),
                 pendingEvent.getQueuedEventId(),
+                pendingEvent.getOperatorUserId(),
                 pendingEvent.getParticipantGuid(),
                 pendingEvent.getParticipantHruid(),
                 pendingEvent.getActionType(),

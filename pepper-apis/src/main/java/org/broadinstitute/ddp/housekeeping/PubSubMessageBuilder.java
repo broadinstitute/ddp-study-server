@@ -7,6 +7,8 @@ import static org.broadinstitute.ddp.Housekeeping.DDP_HOUSEKEEPING_VERSION;
 import static org.broadinstitute.ddp.Housekeeping.DDP_IGNORE_AFTER;
 import static org.broadinstitute.ddp.Housekeeping.DDP_MESSAGE_ID;
 import static org.broadinstitute.ddp.Housekeeping.DDP_STUDY_GUID;
+import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.DDP_PROXY_FIRST_NAME;
+import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.DDP_PROXY_LAST_NAME;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -23,18 +25,21 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.NotificationTemplateVariables;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
-import org.broadinstitute.ddp.db.dao.JdbiUser;
+import org.broadinstitute.ddp.db.dao.JdbiProfile;
+import org.broadinstitute.ddp.db.dao.UserDao;
+import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dto.NotificationTemplateSubstitutionDto;
 import org.broadinstitute.ddp.db.dto.QueuedEventDto;
 import org.broadinstitute.ddp.db.dto.QueuedNotificationDto;
 import org.broadinstitute.ddp.db.dto.QueuedPdfGenerationDto;
-import org.broadinstitute.ddp.db.dto.UserDto;
+import org.broadinstitute.ddp.db.dto.UserProfileDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.exception.MessageBuilderException;
 import org.broadinstitute.ddp.housekeeping.message.NotificationMessage;
 import org.broadinstitute.ddp.housekeeping.message.PdfGenerationMessage;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.event.NotificationType;
+import org.broadinstitute.ddp.model.governance.Governance;
 import org.broadinstitute.ddp.util.Auth0MgmtTokenHelper;
 import org.broadinstitute.ddp.util.Auth0Util;
 import org.broadinstitute.ddp.util.GsonUtil;
@@ -61,6 +66,8 @@ public class PubSubMessageBuilder {
             throw new RuntimeException("ddpMessageId is required");
         }
         String messageJson = null;
+        String participantGuid = pendingEvent.getParticipantGuid();
+        String studyGuid = pendingEvent.getStudyGuid();
         if (pendingEvent.getActionType() == EventActionType.NOTIFICATION) {
             QueuedNotificationDto queuedNotificationDto = (QueuedNotificationDto) pendingEvent;
             if (NotificationType.EMAIL == queuedNotificationDto.getNotificationType()
@@ -77,32 +84,72 @@ public class PubSubMessageBuilder {
                     sendToList.add(queuedNotificationDto.getToEmail());
                 } else {
                     // otherwise, lookup address information for the auth0 account
-                    UserDto userDto = apisHandle.attach(JdbiUser.class).findByUserGuid(pendingEvent.getParticipantGuid());
+                    UserDao userDao = apisHandle.attach(UserDao.class);
+                    String auth0UserId = userDao.findUserByGuid(participantGuid).map(user -> user.getAuth0UserId()).orElse(null);
+
+                    if (auth0UserId == null) {
+                        List<Governance> governances = apisHandle.attach(UserGovernanceDao.class)
+                                .findActiveGovernancesByParticipantAndStudyGuids(participantGuid, studyGuid)
+                                .collect(Collectors.toList());
+                        if (governances.isEmpty()) {
+                            throw new MessageBuilderException(String.format(
+                                    "Cannot send email to participant %s with no auth0 account and no proxies in study %s",
+                                    participantGuid, studyGuid));
+                        }
+
+                        Governance gov = null;
+                        if (pendingEvent.getOperatorUserId() != null) {
+                            gov = governances.stream()
+                                    .filter(governance -> governance.getProxyUserId() == pendingEvent.getOperatorUserId())
+                                    .findFirst().orElse(null);
+                        }
+
+                        if (gov != null) {
+                            LOG.info("Operator {} is a proxy for participant {} in study {}, will send email to that user",
+                                    gov.getProxyUserGuid(), participantGuid, studyGuid);
+                        } else if (governances.size() == 1) {
+                            gov = governances.get(0);
+                            LOG.info("Will send email to proxy {} for participant {} in study {}",
+                                    gov.getProxyUserGuid(), participantGuid, studyGuid);
+                        } else {
+                            gov = governances.get(0);
+                            LOG.error("Multiple proxies found for participant {} in study {}, will send email to the first proxy {}",
+                                    participantGuid, studyGuid, gov.getProxyUserGuid());
+                        }
+
+                        auth0UserId = userDao.findUserById(gov.getProxyUserId()).map(user -> user.getAuth0UserId()).orElse(null);
+
+                        // add personalizations for proxy
+                        UserProfileDto profileDto = apisHandle.attach(JdbiProfile.class).getUserProfileByUserId(gov.getProxyUserId());
+                        if (profileDto != null) {
+                            queuedNotificationDto.addTemplateSubstitutions(
+                                    new NotificationTemplateSubstitutionDto(DDP_PROXY_FIRST_NAME, profileDto.getFirstName()),
+                                    new NotificationTemplateSubstitutionDto(DDP_PROXY_LAST_NAME, profileDto.getLastName()));
+                        }
+                    }
 
                     User auth0User = null;
                     try {
                         Auth0MgmtTokenHelper auth0MgmtTokenHelper = Auth0Util.getManagementTokenHelperForStudy(
                                 apisHandle, pendingEvent.getStudyGuid());
-
                         auth0User = new Auth0Util(auth0MgmtTokenHelper.getDomain()).getAuth0User(
-                                userDto.getAuth0UserId(), auth0MgmtTokenHelper.getManagementApiToken());
+                                auth0UserId, auth0MgmtTokenHelper.getManagementApiToken());
                     } catch (Auth0Exception e) {
-                        throw new MessageBuilderException("Could not get auth0 user " + userDto.getAuth0UserId(), e);
+                        throw new MessageBuilderException("Could not get auth0 user " + auth0UserId, e);
                     }
                     if (auth0User != null) {
                         if (StringUtils.isNotBlank(auth0User.getEmail())) {
                             sendToList.add(auth0User.getEmail());
                         } else {
-                            throw new DDPException("Cannot send email to ddp user " + pendingEvent.getParticipantGuid()
+                            throw new DDPException("Cannot send email to ddp user " + participantGuid
                                     + " because they have no email address");
                         }
                     } else {
-                        throw new MessageBuilderException("Cannot send email to ddp user " + pendingEvent.getParticipantGuid()
+                        throw new MessageBuilderException("Cannot send email to ddp user " + participantGuid
                                 + " because they have no auth0 account");
                     }
                 }
 
-                String studyGuid = queuedNotificationDto.getStudyGuid();
                 String fromName = queuedNotificationDto.getStudyFromName();
                 String fromEmail = queuedNotificationDto.getStudyFromEmail();
                 if (NotificationType.STUDY_EMAIL == queuedNotificationDto.getNotificationType()) {
@@ -135,23 +182,16 @@ public class PubSubMessageBuilder {
                     }
                 }
 
-                String participantFirstName = queuedNotificationDto.getUserFirstName();
-                String participantLastName = queuedNotificationDto.getUserLastName();
-                String participantGuid = queuedNotificationDto.getParticipantGuid();
-                String participantHruid = queuedNotificationDto.getParticipantHruid();
-
-                queuedNotificationDto.addTemplateSubstitutions(
-                        new NotificationTemplateSubstitutionDto(NotificationTemplateVariables.DDP_STUDY_GUID, studyGuid),
-                        new NotificationTemplateSubstitutionDto(NotificationTemplateVariables.DDP_PARTICIPANT_GUID, participantGuid),
-                        new NotificationTemplateSubstitutionDto(NotificationTemplateVariables.DDP_PARTICIPANT_HRUID, participantHruid));
+                queuedNotificationDto.addTemplateSubstitutions(new NotificationTemplateSubstitutionDto(
+                        NotificationTemplateVariables.DDP_PARTICIPANT_HRUID, queuedNotificationDto.getParticipantHruid()));
 
                 NotificationMessage notificationMessage = new NotificationMessage(
                         queuedNotificationDto.getNotificationType(),
                         queuedNotificationDto.getNotificationServiceType(),
                         queuedNotificationDto.getTemplateKey(),
                         sendToList,
-                        participantFirstName,
-                        participantLastName,
+                        queuedNotificationDto.getUserFirstName(),
+                        queuedNotificationDto.getUserLastName(),
                         participantGuid,
                         studyGuid,
                         fromName,
@@ -173,8 +213,8 @@ public class PubSubMessageBuilder {
         } else if (pendingEvent.getActionType() == EventActionType.PDF_GENERATION) {
             QueuedPdfGenerationDto queuedPdfGenerationDto = (QueuedPdfGenerationDto) pendingEvent;
             PdfGenerationMessage pdfGenerationMessage = new PdfGenerationMessage(
-                    pendingEvent.getParticipantGuid(),
-                    pendingEvent.getStudyGuid(),
+                    participantGuid,
+                    studyGuid,
                     queuedPdfGenerationDto.getEventConfigurationId(),
                     queuedPdfGenerationDto.getPdfDocumentConfigurationId());
             messageJson = gson.toJson(pdfGenerationMessage);
@@ -188,7 +228,7 @@ public class PubSubMessageBuilder {
                 .putAttributes(DDP_EVENT_TYPE, pendingEvent.getActionType().name())
                 .putAttributes(DDP_MESSAGE_ID, ddpMessageId)
                 .putAttributes(DDP_EVENT_CONFIGURATION_ID, Long.toString(pendingEvent.getEventConfigurationId()))
-                .putAttributes(DDP_STUDY_GUID, pendingEvent.getStudyGuid())
+                .putAttributes(DDP_STUDY_GUID, studyGuid)
                 .putAttributes(DDP_HOUSEKEEPING_VERSION, "1.0");
         if (pendingEvent.getMaxOccurrencesPerUser() != null) {
             messageBuilder.putAttributes(DDP_IGNORE_AFTER, Integer.toString(pendingEvent.getMaxOccurrencesPerUser()));

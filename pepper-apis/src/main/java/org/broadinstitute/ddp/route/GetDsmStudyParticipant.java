@@ -32,7 +32,7 @@ public class GetDsmStudyParticipant implements Route {
 
             DsmStudyParticipantDao dsmStudyParticipantDao = handle.attach(DsmStudyParticipantDao.class);
             Optional<DsmStudyParticipant> optionalParticipant = dsmStudyParticipantDao
-                    .findStudyParticipant(userGuidOrAltpid, studyGuid, EnrollmentStatusType.getNonExitedStates());
+                    .findStudyParticipant(userGuidOrAltpid, studyGuid, EnrollmentStatusType.getDSMVisibleStates());
             if (optionalParticipant.isPresent()) {
                 return optionalParticipant.get();
             } else {

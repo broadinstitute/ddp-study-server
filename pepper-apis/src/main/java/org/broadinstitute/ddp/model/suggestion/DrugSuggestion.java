@@ -1,8 +1,9 @@
-package org.broadinstitute.ddp.model.dsm;
+package org.broadinstitute.ddp.model.suggestion;
 
 import java.util.List;
 
 import com.google.gson.annotations.SerializedName;
+import org.broadinstitute.ddp.model.dsm.Drug;
 
 public class DrugSuggestion {
     @SerializedName("drug")

@@ -8,6 +8,7 @@ public class QueuedPdfGenerationDto extends QueuedEventDto {
                                   long pdfDocumentConfigurationId) {
         super(pendingEvent.getEventConfigurationId(),
                 pendingEvent.getQueuedEventId(),
+                pendingEvent.getOperatorUserId(),
                 pendingEvent.getParticipantGuid(),
                 pendingEvent.getParticipantHruid(),
                 pendingEvent.getActionType(),

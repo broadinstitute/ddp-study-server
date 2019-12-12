@@ -14,6 +14,7 @@ public class QueuedEventDto {
     private long secondsPostDelay;
     private long eventConfigurationId;
     private long queuedEventId;
+    private Long operatorUserId;
     private String pubSubTopic;
     private String participantGuid;
     private String participantHruid;
@@ -29,7 +30,8 @@ public class QueuedEventDto {
      */
     public QueuedEventDto(
             long eventConfigurationId,
-            Long queuedEventId,
+            long queuedEventId,
+            Long operatorUserId,
             String participantGuid,
             String participantHruid,
             EventActionType eventActionType,
@@ -42,6 +44,7 @@ public class QueuedEventDto {
     ) {
         this.eventConfigurationId = eventConfigurationId;
         this.queuedEventId = queuedEventId;
+        this.operatorUserId = operatorUserId;
         this.participantGuid = participantGuid;
         this.participantHruid = participantHruid;
         this.eventActionType = eventActionType;
@@ -92,6 +95,10 @@ public class QueuedEventDto {
 
     public String getCancelCondition() {
         return cancelCondition;
+    }
+
+    public Long getOperatorUserId() {
+        return operatorUserId;
     }
 
     public String getParticipantGuid() {

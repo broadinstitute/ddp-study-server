@@ -7,8 +7,9 @@ group JdbiComponent;
 queryComponentIdByInstanceGuidAndBlockId() ::= <<
 select
 comp.component_id,
-ct.component_type_code,
-comp.hide_number
+ct.component_type_code as component_type,
+comp.hide_number,
+comp.revision_id
 from
 component comp,
 component_type ct,

@@ -909,6 +909,38 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
         testEval_picklistAnswerQuery(expr, true);
     }
 
+    @Test
+    public void testEval_questionQuery_unknownActivity() {
+        thrown.expect(PexFetchException.class);
+        String expr = String.format(
+                "user.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"].isAnswered()",
+                "abc", "xyz", boolStableId);
+        run(expr);
+    }
+
+    @Test
+    public void testEval_questionQuery_isAnswered() {
+        String expr = String.format(
+                "user.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"].isAnswered()",
+                studyGuid, activityCode, boolStableId);
+        assertFalse("should be false because question is not answered yet", run(expr));
+
+        TransactionWrapper.useTxn(handle -> {
+            BoolAnswer answer = new BoolAnswer(null, boolStableId, null, false);
+            AnswerDao answerDao = AnswerDao.fromSqlConfig(sqlConfig);
+            answerDao.createAnswer(handle, answer, userGuid, firstInstanceGuid);
+
+            assertFalse("should be false because first instance is not latest", run(handle, expr));
+
+            answer = new BoolAnswer(null, boolStableId, null, false);
+            answerDao.createAnswer(handle, answer, userGuid, secondInstanceGuid);
+
+            assertTrue("should be true because latest instance is answered", run(handle, expr));
+
+            handle.rollback();
+        });
+    }
+
     private boolean run(String expr) {
         return TransactionWrapper.withTxn(handle -> new TreeWalkInterpreter().eval(expr, handle, userGuid, firstInstanceGuid));
     }

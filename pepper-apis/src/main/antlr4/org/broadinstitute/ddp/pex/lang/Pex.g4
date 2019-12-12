@@ -13,6 +13,7 @@ expr : '!' expr          # NotExpr
      ;
 
 query : 'user' '.' study '.' form '.' question '.' 'answers' '.' predicate                   # DefaultLatestAnswerQuery
+      | 'user' '.' study '.' form '.' question '.' questionPredicate                         # QuestionQuery
       | 'user' '.' study '.' form '.' formPredicate                                          # FormQuery
       | 'user' '.' study '.' form '.' instance '.' question '.' 'answers' '.' predicate      # AnswerQuery
       ;
@@ -38,6 +39,10 @@ predicate : 'hasTrue()'     # HasTruePredicate
 formPredicate : 'isStatus' '(' STR ( ',' STR )* ')'  # IsStatusPredicate
               | 'hasInstance()'         # HasInstancePredicate
               ;
+
+// Question predicate functions
+questionPredicate : 'isAnswered' '(' ')'    # IsAnsweredPredicate
+                  ;
 
 // Lexical rules
 

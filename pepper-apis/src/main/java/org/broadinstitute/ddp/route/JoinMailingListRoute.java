@@ -41,7 +41,7 @@ public class JoinMailingListRoute extends ValidatedJsonInputRoute<JoinMailingLis
 
         if (choices != 1) {
             ResponseUtil.haltError(response, 400,
-                    new ApiError(ErrorCodes.BAD_PAYLOAD, "You must provide either studyGuid or umbrellaGuid but not both"));
+                    new ApiError(ErrorCodes.BAD_PAYLOAD, "Must provide either studyGuid or umbrellaGuid"));
         }
 
         TransactionWrapper.useTxn(handle -> {

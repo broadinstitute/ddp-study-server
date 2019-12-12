@@ -164,4 +164,12 @@
     <include file="db-changes/schema/DDP-4081-numeric-question.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/seed/DDP-4081-numeric-question-types.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-3554-study-governance-policy.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/seed/DDP-4047-insert-into-copy-answer-target.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-4047-add-field-to-pdf-mailing-address-template.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-4093-add-field-to-pdf-document-configuration.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-4157-mailing-address-component-title-subtitle.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/seed/DDP-4269-add-new-suggestion-type-cancer.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-4268-multiple-study-activity-mappings.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-4124-create-per-activity-validation-tables.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/seed/DDP-4209-consent-suspended.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

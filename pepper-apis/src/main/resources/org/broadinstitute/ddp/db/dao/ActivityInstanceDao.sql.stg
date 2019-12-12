@@ -92,7 +92,7 @@ order by ai.participant_id asc,
       ca_child_col asc
 >>
 
-queryBaseResponsesByStudyAndUserGuid() ::= <<
+select_all_base_instance_responses_with_latest_status() ::= <<
 select ai.activity_instance_id   as instance_id,
        ai.activity_instance_guid as instance_guid,
        ai.participant_id,
@@ -123,6 +123,19 @@ select ai.activity_instance_id   as instance_id,
   join study_activity as act on act.study_activity_id = ai.study_activity_id
   join umbrella_study as s on s.umbrella_study_id = act.study_id
   join user as u on u.user_id = ai.participant_id
- where s.guid = :studyGuid
-   and u.guid = :userGuid
+>>
+
+queryBaseResponsesByStudyAndUserGuid() ::= <<
+<select_all_base_instance_responses_with_latest_status()>
+where s.guid = :studyGuid
+  and u.guid = :userGuid
+>>
+
+queryBaseResponsesByStudyIdAndUserIdsLimitedToActivityIds(userIds, limitActivities, activityIds) ::= <<
+<select_all_base_instance_responses_with_latest_status()>
+where s.umbrella_study_id = :studyId
+  and u.user_id in (<userIds>)
+<if(limitActivities)>
+  and ai.study_activity_id in (<activityIds>)
+<endif>
 >>

@@ -36,8 +36,8 @@ public class GetDsmDrugSuggestionsRouteTest extends IntegrationTestSuite.TestCas
 
     private String createUrlFromTemplate(String urlTemplate, String query, String limit) {
         String url = URL_TEMPLATE.replace(RouteConstants.PathParam.STUDY_GUID, TestData.STUDY_GUID);
-        return url + "?" + RouteConstants.QueryParam.DRUG_QUERY + "=" + query
-                + "&" + RouteConstants.QueryParam.DRUG_QUERY_LIMIT + "=" + limit;
+        return url + "?" + RouteConstants.QueryParam.TYPEAHEAD_QUERY + "=" + query
+                + "&" + RouteConstants.QueryParam.TYPEAHEAD_QUERY_LIMIT + "=" + limit;
     }
 
     private String createUrlFromTemplate(String urlTemplate) {

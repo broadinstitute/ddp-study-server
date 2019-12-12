@@ -156,12 +156,13 @@ public class PdfBuilder {
             if (hasExisting) {
                 long versionId = pdfDao.insertNewConfigVersion(pdf);
                 pdfId = pdf.getId();
-                LOG.info("Added pdf configuration version for id={} with name={}, filename={}, versionId={}, versionTag={}",
-                        pdfId, pdf.getConfigName(), pdf.getFilename(), versionId, pdf.getVersion().getVersionTag());
+                LOG.info("Added pdf configuration version for id={} with name={}, filename={}, displayName={}, versionId={}, versionTag={}",
+                        pdfId, pdf.getConfigName(), pdf.getFilename(), pdf.getDisplayName(), pdf.getVersion().getVersionTag());
             } else {
                 pdfId = pdfDao.insertNewConfig(pdf);
-                LOG.info("Created pdf configuration with id={}, name={}, filename={}, versionId={}, versionTag={}",
-                        pdfId, pdf.getConfigName(), pdf.getFilename(), pdf.getVersion().getId(), pdf.getVersion().getVersionTag());
+                LOG.info("Created pdf configuration with id={}, name={}, filename={}, displayName={}, versionId={}, versionTag={}",
+                        pdfId, pdf.getConfigName(), pdf.getFilename(), pdf.getDisplayName(),
+                        pdf.getVersion().getId(), pdf.getVersion().getVersionTag());
             }
         }
 
@@ -203,7 +204,8 @@ public class PdfBuilder {
     }
 
     private PdfConfiguration buildPdfConfiguration(Handle handle, long revId, Config pdfCfg, Config versionCfg) {
-        PdfConfigInfo info = new PdfConfigInfo(studyDto.getId(), pdfCfg.getString("name"), pdfCfg.getString("filename"));
+        PdfConfigInfo info = new PdfConfigInfo(studyDto.getId(), pdfCfg.getString("name"),
+                pdfCfg.getString("filename"), pdfCfg.getString("displayName"));
         PdfVersion version = buildPdfVersion(handle, revId, versionCfg);
 
         List<PdfTemplate> templates = new ArrayList<>();
@@ -277,8 +279,10 @@ public class PdfBuilder {
     private PdfTemplate buildMailingAddressTemplate(Config fileCfg, byte[] rawBytes) {
         return new MailingAddressTemplate(
                 rawBytes,
-                fileCfg.getString("fields.firstName"),
-                fileCfg.getString("fields.lastName"),
+                ConfigUtil.getStrIfPresent(fileCfg, "fields.firstName"),
+                ConfigUtil.getStrIfPresent(fileCfg, "fields.lastName"),
+                ConfigUtil.getStrIfPresent(fileCfg, "fields.proxyFirstName"),
+                ConfigUtil.getStrIfPresent(fileCfg, "fields.proxyLastName"),
                 fileCfg.getString("fields.street"),
                 fileCfg.getString("fields.city"),
                 fileCfg.getString("fields.state"),

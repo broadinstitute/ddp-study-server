@@ -1034,6 +1034,7 @@ public class TestDataSetupUtil {
         PdfConfigInfo info = new PdfConfigInfo(
                 generatedTestData.getStudyId(),
                 GuidUtils.randomStringFromDictionary(UPPER_ALPHA_NUMERIC, 20),
+                GuidUtils.randomStringFromDictionary(UPPER_ALPHA_NUMERIC, 20),
                 GuidUtils.randomStringFromDictionary(UPPER_ALPHA_NUMERIC, 20));
         PdfVersion version = new PdfVersion("v1", revId);
         version.addDataSource(new PdfActivityDataSource(consentActivityId, generatedTestData.getConsentVersionId()));

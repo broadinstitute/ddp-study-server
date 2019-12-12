@@ -21,6 +21,9 @@ public abstract class ComponentBlockDef extends FormBlockDef {
     @SerializedName("componentType")
     protected ComponentType componentType;
 
+    @SerializedName("hideNumber")
+    private boolean hideNumber;
+
     public ComponentBlockDef(ComponentType componentType) {
         super(BlockType.COMPONENT);
         this.componentType = componentType;
@@ -28,6 +31,14 @@ public abstract class ComponentBlockDef extends FormBlockDef {
 
     public ComponentType getComponentType() {
         return componentType;
+    }
+
+    public boolean shouldHideNumber() {
+        return hideNumber;
+    }
+
+    public void setHideNumber(boolean hideNumber) {
+        this.hideNumber = hideNumber;
     }
 
     public static class Deserializer implements JsonDeserializer<ComponentBlockDef> {

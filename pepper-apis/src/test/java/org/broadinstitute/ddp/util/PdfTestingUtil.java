@@ -189,7 +189,7 @@ public final class PdfTestingUtil {
             AnswerDao.fromSqlConfig(RouteTestUtil.getSqlConfig())
                     .createAnswer(handle, answer, userGuid, instanceDto.getGuid());
 
-            PdfConfigInfo info = new PdfConfigInfo(studyId, configurationName, pdfFilename);
+            PdfConfigInfo info = new PdfConfigInfo(studyId, configurationName, pdfFilename, UUID.randomUUID().toString());
             PdfVersion version = new PdfVersion("v1", activityVersion.getRevId());
             version.addDataSource(new PdfActivityDataSource(activity.getActivityId(), activityVersion.getId()));
             PdfConfiguration config = new PdfConfiguration(info, version);
@@ -299,6 +299,8 @@ public final class PdfTestingUtil {
                     IOUtils.toByteArray(new FileInputStream(MAILING_ADDRESS_FILE_PATH)),
                     MAILING_ADDRESS_FIRST_NAME_FIELD_VALUE,
                     MAILING_ADDRESS_LAST_NAME_FIELD_VALUE,
+                    null,
+                    null,
                     MAILING_ADDRESS_STREET_FIELD_VALUE,
                     MAILING_ADDRESS_CITY_FIELD_VALUE,
                     MAILING_ADDRESS_STATE_FIELD_VALUE,
@@ -403,6 +405,7 @@ public final class PdfTestingUtil {
 
 
             PdfConfigInfo info = new PdfConfigInfo(pdfInfo.getStudyId(),
+                    GuidUtils.randomStringFromDictionary(UPPER_ALPHA_NUMERIC, 20),
                     GuidUtils.randomStringFromDictionary(UPPER_ALPHA_NUMERIC, 20),
                     GuidUtils.randomStringFromDictionary(UPPER_ALPHA_NUMERIC, 20));
             long revId = handle.attach(JdbiRevision.class).insertStart(Instant.now().toEpochMilli(), pdfInfo.getData().getUserId(),

@@ -1,6 +1,8 @@
 package org.broadinstitute.ddp.route;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
@@ -17,11 +19,13 @@ import org.broadinstitute.ddp.json.PutAnswersResponse;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.json.workflow.WorkflowResponse;
 import org.broadinstitute.ddp.model.activity.instance.FormInstance;
+import org.broadinstitute.ddp.model.activity.instance.validation.ActivityValidationFailure;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.workflow.ActivityState;
 import org.broadinstitute.ddp.model.workflow.WorkflowState;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.security.DDPAuth;
+import org.broadinstitute.ddp.service.ActivityValidationService;
 import org.broadinstitute.ddp.service.WorkflowService;
 import org.broadinstitute.ddp.util.FormActivityStatusUtil;
 import org.broadinstitute.ddp.util.ResponseUtil;
@@ -37,11 +41,18 @@ public class PutFormAnswersRoute implements Route {
     private static final Logger LOG = LoggerFactory.getLogger(PutFormAnswersRoute.class);
 
     private final WorkflowService workflowService;
+    private final ActivityValidationService actValidationService;
     private final FormInstanceDao formInstanceDao;
     private final PexInterpreter interpreter;
 
-    public PutFormAnswersRoute(WorkflowService workflowService, FormInstanceDao formInstanceDao, PexInterpreter interpreter) {
+    public PutFormAnswersRoute(
+            WorkflowService workflowService,
+            ActivityValidationService actValidationService,
+            FormInstanceDao formInstanceDao,
+            PexInterpreter interpreter
+    ) {
         this.workflowService = workflowService;
+        this.actValidationService = actValidationService;
         this.formInstanceDao = formInstanceDao;
         this.interpreter = interpreter;
     }
@@ -103,6 +114,17 @@ public class PutFormAnswersRoute implements Route {
                         LOG.info(msg);
                         ResponseUtil.haltError(response, 422, new ApiError(ErrorCodes.QUESTION_REQUIREMENTS_NOT_MET, msg));
                         return null;
+                    }
+
+                    List<ActivityValidationFailure> validationFailures = actValidationService.validate(
+                            handle, interpreter, userGuid, activityInstanceGuid, form.getActivityId(), langCodeId
+                    );
+                    if (!validationFailures.isEmpty()) {
+                        String msg = "Activity validation failed";
+                        List<String> validationErrorSummaries = validationFailures
+                                .stream().map(failure -> failure.getErrorMessage()).collect(Collectors.toList());
+                        LOG.info(msg + ", reasons: {}", validationErrorSummaries);
+                        throw ResponseUtil.haltError(response, 422, new ApiError(ErrorCodes.ACTIVITY_VALIDATION, msg));
                     }
 
                     FormActivityStatusUtil.updateFormActivityStatus(

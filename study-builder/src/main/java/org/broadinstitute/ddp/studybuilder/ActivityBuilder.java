@@ -17,12 +17,14 @@ import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityMapping;
 import org.broadinstitute.ddp.db.dao.JdbiFormTypeActivityInstanceStatusType;
 import org.broadinstitute.ddp.db.dao.JdbiRevision;
+import org.broadinstitute.ddp.db.dto.ActivityValidationDto;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.definition.ActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.ConsentActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
+import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
 import org.broadinstitute.ddp.model.activity.types.FormType;
@@ -88,7 +90,9 @@ public class ActivityBuilder {
             }
             if (activityCode.equals(definition.getString("activityCode"))) {
                 LOG.info("Using configuration for activityCode={} with filepath={}", activityCode, activityCfg.getString("filepath"));
-                ActivityDef def = insertActivity(handle, definition, timestamp);
+                ActivityDef def = gson.fromJson(ConfigUtil.toJson(definition), ActivityDef.class);
+                validateDefinition(def);
+                insertActivity(handle, def, timestamp);
                 insertActivityMappings(handle, activityCfg, def);
                 found = true;
                 break;
@@ -103,31 +107,35 @@ public class ActivityBuilder {
     private void insertActivities(Handle handle) {
         Instant timestamp = ConfigUtil.getInstantIfPresent(cfg, "activityTimestamp");
         for (Config activityCfg : cfg.getConfigList("activities")) {
-            Config definition = readDefinitionConfig(activityCfg.getString("filepath"));
-            ActivityDef def = insertActivity(handle, definition, timestamp);
+            Config definitionCfg = readDefinitionConfig(activityCfg.getString("filepath"));
+            ActivityDef def = gson.fromJson(ConfigUtil.toJson(definitionCfg), ActivityDef.class);
+            validateDefinition(def);
+            long activityRevisionId = insertActivity(handle, def, timestamp).getRevId();
             insertActivityMappings(handle, activityCfg, def);
+            insertActivityValidations(handle, activityCfg, def, activityRevisionId);
         }
     }
 
-    public ActivityDef insertActivity(Handle handle, Config definition, Instant timestamp) {
+    public ActivityVersionDto insertActivity(Handle handle, Config definition, Instant timestamp) {
         ActivityDef def = gson.fromJson(ConfigUtil.toJson(definition), ActivityDef.class);
         validateDefinition(def);
+        return insertActivity(handle, def, timestamp);
+    }
 
+    public ActivityVersionDto insertActivity(Handle handle, ActivityDef def, Instant timestamp) {
         long startMillis = (timestamp == null) ? Instant.now().toEpochMilli() : timestamp.toEpochMilli();
         String reason = String.format("Create activity with studyGuid=%s activityCode=%s versionTag=%s",
                 def.getStudyGuid(), def.getActivityCode(), def.getVersionTag());
         RevisionMetadata meta = new RevisionMetadata(startMillis, adminUserId, reason);
 
         if (def.getActivityType() == ActivityType.FORMS) {
-            insertFormActivity(handle, (FormActivityDef) def, meta);
+            return insertFormActivity(handle, (FormActivityDef) def, meta);
         } else {
             throw new DDPException("Unsupported activity type " + def.getActivityType());
         }
-
-        return def;
     }
 
-    private void insertFormActivity(Handle handle, FormActivityDef def, RevisionMetadata meta) {
+    private ActivityVersionDto insertFormActivity(Handle handle, FormActivityDef def, RevisionMetadata meta) {
         ActivityDao activityDao = handle.attach(ActivityDao.class);
 
         ActivityVersionDto versionDto;
@@ -140,6 +148,7 @@ public class ActivityBuilder {
         LOG.info("Created activity with id={}, code={}, versionTag={}, revisionId={}, revisionStart={}",
                 def.getActivityId(), def.getActivityCode(), def.getVersionTag(), versionDto.getRevId(),
                 Instant.ofEpochMilli(versionDto.getRevStart()).toString());
+        return versionDto;
     }
 
     private void insertActivityMappings(Handle handle, Config activityCfg, ActivityDef def) {
@@ -150,6 +159,40 @@ public class ActivityBuilder {
             jdbiActivityMapping.insertMapping(studyDto.getGuid(), type, def.getActivityId(), stableId);
             LOG.info("Added activity mapping for {} with type={}, activityId={}, subStableId={}",
                     def.getActivityCode(), type, def.getActivityId(), stableId);
+        }
+    }
+
+    private void insertActivityValidations(Handle handle, Config activityCfg, ActivityDef def, long activityRevisionId) {
+        JdbiActivity jdbiActivity = handle.attach(JdbiActivity.class);
+        for (Config validationCfg : activityCfg.getConfigList("validations")) {
+            Template errorMessageTemplate = gson.fromJson(ConfigUtil.toJson(validationCfg.getConfig("messageTemplate")), Template.class);
+            List<JsonValidationError> errors = validator.validateAsJson(errorMessageTemplate);
+            if (!errors.isEmpty()) {
+                String errorMessage = GsonPojoValidator.createValidationErrorMessage(errors, ", ");
+                throw new DDPException(
+                        String.format(
+                                "Validation error message template for activity %d has the following validation errors: %s",
+                                def.getActivityId(),
+                                errorMessage
+                        )
+                );
+            }
+
+            String precondition = ConfigUtil.getStrIfPresent(validationCfg, "precondition");
+            String expression = validationCfg.getString("expression");
+            ActivityValidationDto dto = new ActivityValidationDto(
+                    def.getActivityId(),
+                    null,
+                    precondition,
+                    expression,
+                    errorMessageTemplate
+            );
+            List<String> stableIds = validationCfg.getStringList("stableIds");
+            dto.addAffectedFields(stableIds);
+            long studyId = jdbiActivity.getStudyIdByActivityId(def.getActivityId()).get();
+            jdbiActivity.insertValidation(dto, adminUserId, studyId, activityRevisionId);
+            LOG.info("Added activity validations for {}, activityId={}, expression={}, affectedQuestionStableIds={}",
+                    def.getActivityCode(), def.getActivityId(), expression, stableIds);
         }
     }
 

@@ -13,12 +13,20 @@ public class CopyAnswerValueSetterDefinitions {
     }
 
     private static final StringValueSetter PARTICIPANT_PROFILE_FIRST_NAME_SETTER =
-            (newValue, activityInstanceDto, handle) -> handle.attach(JdbiProfile.class)
-                    .upsertFirstName(activityInstanceDto.getParticipantId(), newValue) >= 0;
+            (newValue, participantId, operatorId, handle) -> handle.attach(JdbiProfile.class)
+                    .upsertFirstName(participantId, newValue) == 1;
 
     private static final StringValueSetter PARTICIPANT_PROFILE_LAST_NAME_SETTER =
-            (newLastName, activityInstanceDto, handle) -> handle.attach(JdbiProfile.class)
-                    .upsertLastName(activityInstanceDto.getParticipantId(), newLastName) >= 0;
+            (newLastName, participantId, operatorId, handle) -> handle.attach(JdbiProfile.class)
+                    .upsertLastName(participantId, newLastName) == 1;
+
+    private static final StringValueSetter OPERATOR_PROFILE_FIRST_NAME_SETTER =
+            (newFirstName, participantId, operatorId, handle) -> handle.attach(JdbiProfile.class)
+                    .upsertFirstName(operatorId, newFirstName) == 1;
+
+    private static final StringValueSetter OPERATOR_PROFILE_LAST_NAME_SETTER =
+            (newLastName, participantId, operatorId, handle) -> handle.attach(JdbiProfile.class)
+                    .upsertLastName(operatorId, newLastName) == 1;
 
     public static ValueSetter<?> findValueSetter(CopyAnswerTarget targetEnum) {
         switch (targetEnum) {
@@ -26,6 +34,10 @@ public class CopyAnswerValueSetterDefinitions {
                 return PARTICIPANT_PROFILE_LAST_NAME_SETTER;
             case PARTICIPANT_PROFILE_FIRST_NAME:
                 return PARTICIPANT_PROFILE_FIRST_NAME_SETTER;
+            case OPERATOR_PROFILE_LAST_NAME:
+                return OPERATOR_PROFILE_LAST_NAME_SETTER;
+            case OPERATOR_PROFILE_FIRST_NAME:
+                return OPERATOR_PROFILE_FIRST_NAME_SETTER;
             default:
                 throw new DDPException("Could not find CopyAnswerTarget definition for:" + targetEnum);
         }

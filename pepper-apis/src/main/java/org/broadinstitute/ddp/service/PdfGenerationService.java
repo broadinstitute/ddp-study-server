@@ -28,9 +28,12 @@ import com.itextpdf.kernel.pdf.PdfReader;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
+import org.broadinstitute.ddp.db.dao.JdbiProfile;
 import org.broadinstitute.ddp.db.dao.ParticipantDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
+import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dto.MedicalProviderDto;
 import org.broadinstitute.ddp.db.dto.UserProfileDto;
 import org.broadinstitute.ddp.exception.DDPException;
@@ -47,6 +50,7 @@ import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.activity.types.InstitutionType;
 import org.broadinstitute.ddp.model.address.MailAddress;
+import org.broadinstitute.ddp.model.governance.Governance;
 import org.broadinstitute.ddp.model.pdf.ActivityDateSubstitution;
 import org.broadinstitute.ddp.model.pdf.AnswerSubstitution;
 import org.broadinstitute.ddp.model.pdf.BooleanAnswerSubstitution;
@@ -146,7 +150,8 @@ public class PdfGenerationService {
                             pdfOrderIndex, configuration.getConfigName(), participant, instances, errors);
                     break;
                 case MAILING_ADDRESS:
-                    pdf = generateMailingAddressPdf((MailingAddressTemplate) template, participant.getUser(), errors);
+                    pdf = generateMailingAddressPdf((MailingAddressTemplate) template, participant.getUser(), errors,
+                            configuration.getStudyGuid(), handle);
                     break;
                 default:
                     errors.add("Tried to use a template type (" + template.getType() + ") that is unsupported.");
@@ -717,7 +722,7 @@ public class PdfGenerationService {
 
 
     public byte[] generateMailingAddressPdf(MailingAddressTemplate template, User user,
-                                            List<String> errors) throws IOException {
+                                            List<String> errors, String studyGuid, Handle handle) throws IOException {
 
         InputStream templateStream = template.asByteStream();
         try (ByteArrayOutputStream renderedStream = new ByteArrayOutputStream();
@@ -730,9 +735,23 @@ public class PdfGenerationService {
             if (template.getCountryPlaceholder() != null) {
                 placeholders.add(template.getCountryPlaceholder());
             }
+            if (template.getFirstNamePlaceholder() != null) {
+                placeholders.add(template.getFirstNamePlaceholder());
+            }
+            if (template.getLastNamePlaceholder() != null) {
+                placeholders.add(template.getLastNamePlaceholder());
+            }
+            if (template.getProxyFirstNamePlaceholder() != null) {
+                placeholders.add(template.getProxyFirstNamePlaceholder());
+            }
+            if (template.getProxyLastNamePlaceholder() != null) {
+                placeholders.add(template.getProxyLastNamePlaceholder());
+            }
+
             Optional<String> fieldNotFound = placeholders.stream()
                     .filter(placeholder -> form.getField(placeholder) == null)
                     .findAny();
+
             if (fieldNotFound.isPresent()) {
                 errors.add("Could not find PDFFormField field with name: " + fieldNotFound.get());
                 return null;
@@ -748,8 +767,40 @@ public class PdfGenerationService {
             UserProfileDto userProfileDto = user.getProfile();
             Map<String, String> placeholderToValue = new HashMap<>();
 
-            placeholderToValue.put(template.getFirstNamePlaceholder(), userProfileDto.getFirstName());
-            placeholderToValue.put(template.getLastNamePlaceholder(), userProfileDto.getLastName());
+            //check if we need proxy name
+            if (StringUtils.isNotBlank(template.getProxyFirstNamePlaceholder())
+                    || StringUtils.isNotBlank(template.getProxyLastNamePlaceholder())) {
+                Governance governance = null;
+                UserGovernanceDao userGovernanceDao = handle.attach(UserGovernanceDao.class);
+                List<Governance> governances = userGovernanceDao.findActiveGovernancesByParticipantAndStudyGuids(user.getGuid(), studyGuid)
+                        .collect(Collectors.toList());
+                if (governances.isEmpty()) {
+                    String errorMessage = String.format("No proxy found for participant %s in study %s to substitute proxy name ",
+                            user.getGuid(), studyGuid);
+                    LOG.error(errorMessage);
+                    errors.add(errorMessage);
+                } else {
+                    if (governances.size() > 1) {
+                        LOG.warn("Multiple proxies found for participant {} in study {} , using first one ", user.getGuid(), studyGuid);
+                    }
+                    governance = governances.get(0);
+                    //get proxy userProfile to substitute first & last names
+                    userProfileDto = handle.attach(JdbiProfile.class).getUserProfileByUserGuid(governance.getProxyUserGuid());
+                    if (StringUtils.isNotBlank(template.getProxyFirstNamePlaceholder())) {
+                        placeholderToValue.put(template.getProxyFirstNamePlaceholder(), userProfileDto.getFirstName());
+                    }
+                    if (StringUtils.isNotBlank(template.getProxyLastNamePlaceholder())) {
+                        placeholderToValue.put(template.getProxyLastNamePlaceholder(), userProfileDto.getLastName());
+                    }
+                }
+            }
+
+            if (template.getFirstNamePlaceholder() != null) {
+                placeholderToValue.put(template.getFirstNamePlaceholder(), userProfileDto.getFirstName());
+            }
+            if (template.getLastNamePlaceholder() != null) {
+                placeholderToValue.put(template.getLastNamePlaceholder(), userProfileDto.getLastName());
+            }
             placeholderToValue.put(template.getStreetPlaceholder(), address.getCombinedStreet());
             placeholderToValue.put(template.getCityPlaceholder(), address.getCity());
             placeholderToValue.put(template.getStatePlaceholder(), address.getState());

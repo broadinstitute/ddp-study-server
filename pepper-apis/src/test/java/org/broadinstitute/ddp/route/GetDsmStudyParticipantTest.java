@@ -11,6 +11,7 @@ import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.constants.TestConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.junit.AfterClass;
@@ -86,6 +87,15 @@ public class GetDsmStudyParticipantTest extends DsmRouteTest {
 
     @Test
     public void test_providingGuid_getsUser() {
+        doLookupWithId(userGuid)
+                .and().body("participantId", equalTo(userGuid));
+    }
+
+    @Test
+    public void test_providingGuid_getsConsentSuspendedUser() {
+        TransactionWrapper.useTxn(handle ->
+                handle.attach(JdbiUserStudyEnrollment.class).changeUserStudyEnrollmentStatus(
+                        userGuid, studyGuid, EnrollmentStatusType.CONSENT_SUSPENDED));
         doLookupWithId(userGuid)
                 .and().body("participantId", equalTo(userGuid));
     }

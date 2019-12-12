@@ -66,7 +66,7 @@ public class PdfDaoTest extends TxnAwareBaseTest {
         TransactionWrapper.useTxn(handle -> {
             long revId = handle.attach(JdbiRevision.class).insertStart(1L, testData.getUserId(), "pdf");
 
-            PdfConfigInfo info = new PdfConfigInfo(testData.getStudyId(), "config", "file");
+            PdfConfigInfo info = new PdfConfigInfo(testData.getStudyId(), "config", "file", "display name");
             PdfVersion version = new PdfVersion("pdf-v1", revId);
             version.addDataSource(new PdfDataSource(PdfDataSourceType.EMAIL));
             version.addDataSource(new PdfDataSource(PdfDataSourceType.PARTICIPANT));
@@ -76,7 +76,7 @@ public class PdfDaoTest extends TxnAwareBaseTest {
             custom.addSubstitution(new ProfileSubstitution("s1", "first_name"));
 
             config.addTemplate(custom);
-            config.addTemplate(new MailingAddressTemplate(new byte[]{1}, "fn", "ln", "st", "c", "s", "z", "country", "phone"));
+            config.addTemplate(new MailingAddressTemplate(new byte[]{1}, "fn", "ln", null, null, "st", "c", "s", "z", "country", "phone"));
             config.addTemplate(new PhysicianInstitutionTemplate(new byte[]{2}, InstitutionType.PHYSICIAN, "pn", "in", "c", "s"));
 
             PdfDao dao = handle.attach(PdfDao.class);
@@ -97,7 +97,7 @@ public class PdfDaoTest extends TxnAwareBaseTest {
             long rev1 = handle.attach(JdbiRevision.class).insert(testData.getUserId(), 1L, 2L, "pdf 1");
             long rev2 = handle.attach(JdbiRevision.class).insert(testData.getUserId(), 2L, null, "pdf 2");
 
-            PdfConfigInfo info = new PdfConfigInfo(testData.getStudyId(), "config", "file");
+            PdfConfigInfo info = new PdfConfigInfo(testData.getStudyId(), "config", "file", "display name");
             PdfConfiguration config1 = new PdfConfiguration(info, new PdfVersion("pdf-v1", rev1));
             PdfConfiguration config2 = new PdfConfiguration(info, new PdfVersion("pdf-v2", rev2));
 
@@ -122,7 +122,7 @@ public class PdfDaoTest extends TxnAwareBaseTest {
         TransactionWrapper.useTxn(handle -> {
             long rev = handle.attach(JdbiRevision.class).insert(testData.getUserId(), 1L, 2L, "pdf 1");
 
-            PdfConfigInfo info = new PdfConfigInfo(testData.getStudyId(), "non-exist", "file");
+            PdfConfigInfo info = new PdfConfigInfo(testData.getStudyId(), "non-exist", "file", "display name");
             PdfConfiguration config = new PdfConfiguration(info, new PdfVersion("new-version", rev));
 
             PdfDao dao = handle.attach(PdfDao.class);
@@ -138,7 +138,7 @@ public class PdfDaoTest extends TxnAwareBaseTest {
             long rev1 = handle.attach(JdbiRevision.class).insert(testData.getUserId(), 1L, 2L, "pdf 1");
             long rev2 = handle.attach(JdbiRevision.class).insert(testData.getUserId(), 2L, null, "pdf 2");
 
-            PdfConfigInfo info = new PdfConfigInfo(testData.getStudyId(), "config", "file");
+            PdfConfigInfo info = new PdfConfigInfo(testData.getStudyId(), "config", "file", "display name");
             PdfConfiguration config = new PdfConfiguration(info, new PdfVersion("pdf-v1", rev1));
 
             PdfDao dao = handle.attach(PdfDao.class);
@@ -160,7 +160,7 @@ public class PdfDaoTest extends TxnAwareBaseTest {
             long rev1 = handle.attach(JdbiRevision.class).insert(testData.getUserId(), 1L, 2L, "pdf 1");
             long rev2 = handle.attach(JdbiRevision.class).insert(testData.getUserId(), 2L, null, "pdf 2");
 
-            PdfConfigInfo info = new PdfConfigInfo(testData.getStudyId(), "config", "file");
+            PdfConfigInfo info = new PdfConfigInfo(testData.getStudyId(), "config", "file", "display name");
             PdfVersion version1 = new PdfVersion("pdf-v1", rev1);
             PdfConfiguration config = new PdfConfiguration(info, version1);
 
@@ -184,7 +184,7 @@ public class PdfDaoTest extends TxnAwareBaseTest {
         TransactionWrapper.useTxn(handle -> {
             long rev1 = handle.attach(JdbiRevision.class).insert(testData.getUserId(), 1L, 2L, "pdf 1");
 
-            PdfConfigInfo info = new PdfConfigInfo(testData.getStudyId(), "config", "file");
+            PdfConfigInfo info = new PdfConfigInfo(testData.getStudyId(), "config", "file", "display name");
             PdfVersion version1 = new PdfVersion("pdf-v1", rev1);
             PdfConfiguration config = new PdfConfiguration(info, version1);
 
@@ -206,7 +206,7 @@ public class PdfDaoTest extends TxnAwareBaseTest {
             long revId = handle.attach(JdbiRevision.class).insert(testData.getUserId(), 1L, 2L, "pdf 1");
 
             PdfConfiguration config = new PdfConfiguration(
-                    new PdfConfigInfo(testData.getStudyId(), "config", "file"),
+                    new PdfConfigInfo(testData.getStudyId(), "config", "file", "display name"),
                     new PdfVersion("pdf-v1", revId));
 
             PdfDao dao = handle.attach(PdfDao.class);
@@ -234,7 +234,7 @@ public class PdfDaoTest extends TxnAwareBaseTest {
             version.addDataSource(new PdfDataSource(PdfDataSourceType.PARTICIPANT));
 
             PdfConfiguration config = new PdfConfiguration(
-                    new PdfConfigInfo(testData.getStudyId(), "config", "file"),
+                    new PdfConfigInfo(testData.getStudyId(), "config", "file", "display name"),
                     version);
 
             PdfDao dao = handle.attach(PdfDao.class);
@@ -261,7 +261,7 @@ public class PdfDaoTest extends TxnAwareBaseTest {
             long rev1 = handle.attach(JdbiRevision.class).insert(testData.getUserId(), 1L, 2L, "pdf 1");
             long rev2 = handle.attach(JdbiRevision.class).insert(testData.getUserId(), 2L, null, "pdf 2");
 
-            PdfConfigInfo info = new PdfConfigInfo(testData.getStudyId(), "config", "file");
+            PdfConfigInfo info = new PdfConfigInfo(testData.getStudyId(), "config", "file", "display name");
             PdfVersion version1 = new PdfVersion("pdf-v1", rev1);
             PdfConfiguration config = new PdfConfiguration(info, version1);
 
@@ -300,7 +300,7 @@ public class PdfDaoTest extends TxnAwareBaseTest {
             version.addDataSource(new PdfActivityDataSource(act.getActivityId(), actVer.getId()));
 
             PdfConfiguration config = new PdfConfiguration(
-                    new PdfConfigInfo(testData.getStudyId(), "config", "file"),
+                    new PdfConfigInfo(testData.getStudyId(), "config", "file", "display name"),
                     version);
 
             CustomTemplate custom = new CustomTemplate(new byte[]{3});
@@ -310,7 +310,7 @@ public class PdfDaoTest extends TxnAwareBaseTest {
             custom.addSubstitution(new ProfileSubstitution("s4", "first_name"));
 
             config.addTemplate(custom);
-            config.addTemplate(new MailingAddressTemplate(new byte[]{1}, "fn", "ln", "st", "c", "s", "z", "country", "phone"));
+            config.addTemplate(new MailingAddressTemplate(new byte[]{1}, "fn", "ln", null, null, "st", "c", "s", "z", "country", "phone"));
             config.addTemplate(new PhysicianInstitutionTemplate(new byte[]{2}, InstitutionType.PHYSICIAN, "pn", "in", "c", "s"));
 
             PdfDao dao = handle.attach(PdfDao.class);

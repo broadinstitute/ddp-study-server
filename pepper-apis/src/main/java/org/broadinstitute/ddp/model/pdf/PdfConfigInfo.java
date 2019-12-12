@@ -13,24 +13,28 @@ public class PdfConfigInfo {
     private String studyGuid;
     private String configName;
     private String filename;
+    private String displayName;
 
     @JdbiConstructor
     public PdfConfigInfo(@ColumnName("pdf_document_configuration_id") long id,
                          @ColumnName("study_id") long studyId,
                          @ColumnName("study_guid") String studyGuid,
                          @ColumnName("configuration_name") String configName,
-                         @ColumnName("file_name") String filename) {
+                         @ColumnName("file_name") String filename,
+                         @ColumnName("display_name") String displayName) {
         this.id = id;
         this.studyId = studyId;
         this.studyGuid = studyGuid;
         this.configName = configName;
         this.filename = filename;
+        this.displayName = displayName;
     }
 
-    public PdfConfigInfo(long studyId, String configName, String filename) {
+    public PdfConfigInfo(long studyId, String configName, String filename, String displayName) {
         this.studyId = studyId;
         this.configName = configName;
         this.filename = filename;
+        this.displayName = displayName;
     }
 
     public long getId() {
@@ -55,5 +59,9 @@ public class PdfConfigInfo {
 
     public String getFilename() {
         return filename;
+    }
+
+    public String getDisplayName() {
+        return displayName;
     }
 }

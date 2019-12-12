@@ -53,11 +53,17 @@ public class AuthPathRegexUtilTest {
     }
 
     @Test
-    public void testDrugSuggestionPathMatching() {
+    public void testSuggestionPathMatching() {
         Assert.assertTrue(authPathRegexUtil.isDrugSuggestionRoute("/pepper/v1/studies/xyz/suggestions/drugs"));
         Assert.assertTrue(authPathRegexUtil.isDrugSuggestionRoute("/pepper/v1/studies/xyz/suggestions/drugs/"));
         Assert.assertFalse(authPathRegexUtil.isDrugSuggestionRoute("/pepper/v1/study/xyz/suggestions/drugs"));
         Assert.assertFalse(authPathRegexUtil.isDrugSuggestionRoute("/pepper/v1/studies/suggestions/drugs"));
+
+        Assert.assertTrue(authPathRegexUtil.isCancerSuggestionRoute("/pepper/v1/studies/xyz/suggestions/cancers"));
+        Assert.assertTrue(authPathRegexUtil.isCancerSuggestionRoute("/pepper/v1/studies/xyz/suggestions/cancers/"));
+        Assert.assertFalse(authPathRegexUtil.isCancerSuggestionRoute("/pepper/v1/study/xyz/suggestions/cancers"));
+        Assert.assertFalse(authPathRegexUtil.isCancerSuggestionRoute("/pepper/v1/studies/suggestions/cancers"));
+        Assert.assertFalse(authPathRegexUtil.isCancerSuggestionRoute("/pepper/v1/studies/xyz/suggestions/cancers1233"));
     }
 
 }

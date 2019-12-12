@@ -99,6 +99,31 @@ public interface UserGovernanceDao extends SqlObject {
         return findGovernancesByProxyAndStudyGuids(proxyUserGuid, studyGuid).filter(Governance::isActive);
     }
 
+    @UseStringTemplateSqlLocator
+    @SqlQuery("queryGovernancesByParticipantAndStudyGuids")
+    @RegisterConstructorMapper(Governance.class)
+    @RegisterConstructorMapper(GrantedStudy.class)
+    @UseRowReducer(GovernanceWithStudiesReducer.class)
+    Stream<Governance> findGovernancesByParticipantAndStudyGuids(
+            @Bind("participantGuid") String participantGuid,
+            @Bind("studyGuid") String studyGuid);
+
+    default Stream<Governance> findActiveGovernancesByParticipantAndStudyGuids(String participantGuid, String studyGuid) {
+        return findGovernancesByParticipantAndStudyGuids(participantGuid, studyGuid).filter(Governance::isActive);
+    }
+
+    @UseStringTemplateSqlLocator
+    @SqlQuery("queryGovernancesByStudyGuid")
+    @RegisterConstructorMapper(Governance.class)
+    @RegisterConstructorMapper(GrantedStudy.class)
+    @UseRowReducer(GovernanceWithStudiesReducer.class)
+    Stream<Governance> findGovernancesByStudyGuid(
+            @Bind("studyGuid") String studyGuid);
+
+    default Stream<Governance> findActiveGovernancesByStudyGuid(String studyGuid) {
+        return findGovernancesByStudyGuid(studyGuid).filter((Governance::isActive));
+    }
+
     class GovernanceWithStudiesReducer implements LinkedHashMapRowReducer<Long, Governance> {
         @Override
         public void accumulate(Map<Long, Governance> container, RowView view) {

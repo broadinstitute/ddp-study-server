@@ -35,12 +35,12 @@ public class MailingAddressFormatter {
 
     //used for elastic search activity_definition index
     //stableIds, definitions really don't exist in db, added to cater dsm search.
-    public Map<String, Object> definition() {
+    public Map<String, Object> definition(String text) {
         String stableId = "MAILING_ADDRESS";
         Map<String, Object> props = new HashMap<>();
         props.put("stableId", stableId);
         props.put("questionType", "COMPOSITE");
-        props.put("questionText", "Your contact information");
+        props.put("questionText", text);
         props.put("allowMultiple", false);
 
         String[] childQuestionsText = {"Full Name", "Street Address", "Apt/Floor#", "City", "State",

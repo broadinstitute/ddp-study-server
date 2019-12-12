@@ -162,7 +162,7 @@ public class ParticipantInstitution {
                 this.valid = DsmAddressValidationStatus.addressValidStatuses()
                         .contains(DsmAddressValidationStatus.getByCode(mailAddress.getValidationStatus()));
             } else {
-                this.empty = false;
+                this.empty = true;
             }
         }
 

@@ -139,10 +139,10 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                 }
 
                 registerUserWithStudy(handle, study, studyUser);
+                queueUserRegisteredEvents(handle, study, operatorUser, studyUser);
                 handle.attach(DataExportDao.class).queueDataSync(studyUser.getId());
 
                 unregisterEmailFromStudyMailingList(handle, study, operatorUser, auth0Util, mgmtTokenHelper);
-                queueUserRegisteredEvents(handle, study, operatorUser);
 
                 ddpUserGuid = operatorUser.getGuid();
             } else {
@@ -206,9 +206,9 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                 throw ResponseUtil.haltError(response, HttpStatus.SC_UNPROCESSABLE_ENTITY, new ApiError(ErrorCodes.SIGNUP_REQUIRED, msg));
             } else {
                 registerUserWithStudy(handle, study, user);
+                queueUserRegisteredEvents(handle, study, user, user);
                 handle.attach(DataExportDao.class).queueDataSync(user.getId());
                 unregisterEmailFromStudyMailingList(handle, study, user, auth0Util, mgmtTokenHelper);
-                queueUserRegisteredEvents(handle, study, user);
                 return user.getGuid();
             }
         } else {
@@ -262,6 +262,11 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                 .reassignInstancesInStudy(policy.getStudyId(), operatorUser.getId(), gov.getGovernedUserId());
         LOG.info("Re-assigned {} activity instances in study {} from operator {} to governed user {}",
                 numInstancesReassigned, policy.getStudyGuid(), operatorUser.getGuid(), gov.getGovernedUserGuid());
+
+        int numEventsReassigned = handle.attach(QueuedEventDao.class)
+                .reassignQueuedEventsInStudy(policy.getStudyId(), operatorUser.getId(), gov.getGovernedUserId());
+        LOG.info("Re-assigned {} queued events in study {} from operator {} to governed user {}",
+                numEventsReassigned, policy.getStudyGuid(), operatorUser.getGuid(), gov.getGovernedUserGuid());
 
         return governedUser;
     }
@@ -382,7 +387,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
         }
     }
 
-    private void queueUserRegisteredEvents(Handle handle, StudyDto studyDto, User user) {
+    private void queueUserRegisteredEvents(Handle handle, StudyDto studyDto, User operator, User participant) {
         QueuedEventDao queuedEventDao = handle.attach(QueuedEventDao.class);
         List<EventConfigurationDto> configs = handle.attach(EventDao.class)
                 .getActiveDispatchConfigsByStudyIdAndTrigger(studyDto.getId(), EventTriggerType.USER_REGISTERED);
@@ -403,12 +408,12 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
             long queuedEventId = queuedEventDao.insertNotification(
                     config.getEventConfigurationId(),
                     postAfter,
-                    user.getId(),
-                    user.getId(),
+                    participant.getId(),
+                    operator.getId(),
                     Collections.emptyMap());
 
-            LOG.info("Queued notification event with id={} for eventConfigurationId={} postAfter={} userGuid={}",
-                    queuedEventId, config.getEventConfigurationId(), postAfter, user.getGuid());
+            LOG.info("Queued notification event with id={} for eventConfigurationId={} postAfter={} participantGuid={} operatorGuid={}",
+                    queuedEventId, config.getEventConfigurationId(), postAfter, participant.getGuid(), operator.getGuid());
         }
     }
 }

@@ -59,6 +59,22 @@ public interface AnswerDao extends SqlObject {
     @CreateSqlObject
     JdbiAnswer getJdbiAnswer();
 
+    /**
+     * Finds the answer id to specified question in the last-created activity instance of the specified activity. Useful in cases where we
+     * just need to know if there is an answer or not instead of needing all the data about the answer itself.
+     *
+     * @param userGuid         the user guid
+     * @param activityId       the activity id
+     * @param questionStableId the question stable id
+     * @return answer id if exists, empty otherwise
+     */
+    @UseStringTemplateSqlLocator
+    @SqlQuery("queryAnswerIdForQuestionInLatestInstance")
+    Optional<Long> findAnswerIdForQuestionInLatestInstance(
+            @Bind("userGuid") String userGuid,
+            @Bind("activityId") long activityId,
+            @Bind("questionStableId") String questionStableId);
+
     @SqlQuery(" select da.year, da.month, da.day "
             + " from activity_instance as ai "
             + " join answer as a on ai.activity_instance_id = a.activity_instance_id "
@@ -68,16 +84,16 @@ public interface AnswerDao extends SqlObject {
             + " join question_stable_code as qsc on qsc.question_stable_code_id = q.question_stable_code_id "
             + " join umbrella_study as us on qsc.umbrella_study_id = us.umbrella_study_id "
             + " join revision as rev on rev.revision_id = q.revision_id "
-            + " where u.guid = :userGuid "
+            + " where u.user_id = :userId "
             + " and rev.start_date <= ai.created_at "
             + " and (rev.end_date is null or ai.created_at < rev.end_date) "
             + " and qsc.stable_id = :questionStableId "
-            + " and us.guid = :studyGuid "
+            + " and us.umbrella_study_id = :studyId "
             + " order by ai.created_at desc limit 1")
     @RegisterConstructorMapper(DateValue.class)
-    Optional<DateValue> findLatestDateAnswerByQuestionStableIdAndUserGuid(@Bind("questionStableId") String questionStableId,
-                                                                          @Bind("userGuid") String userGuid,
-                                                                          @Bind("studyGuid") String studyGuid);
+    Optional<DateValue> findLatestDateAnswerByQuestionStableIdAndUserId(@Bind("questionStableId") String questionStableId,
+                                                                        @Bind("userId") long userId,
+                                                                        @Bind("studyId") long studyId);
 
     @SqlQuery("select qt.question_type_code"
             + "  from answer as a"

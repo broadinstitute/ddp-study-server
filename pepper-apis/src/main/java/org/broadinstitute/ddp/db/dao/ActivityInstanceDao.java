@@ -192,6 +192,16 @@ public interface ActivityInstanceDao extends SqlObject {
     @UseRowReducer(BaseActivityResponsesReducer.class)
     List<ActivityResponse> findBaseResponsesByStudyAndUserGuid(@Bind("studyGuid") String studyGuid, @Bind("userGuid") String userGuid);
 
+    @UseStringTemplateSqlLocator
+    @SqlQuery("queryBaseResponsesByStudyIdAndUserIdsLimitedToActivityIds")
+    @RegisterConstructorMapper(FormResponse.class)
+    @UseRowReducer(BaseActivityResponsesReducer.class)
+    Stream<ActivityResponse> findBaseResponsesByStudyAndUserIds(
+            @Bind("studyId") long studyId,
+            @BindList(value = "userIds", onEmpty = BindList.EmptyHandling.NULL) Set<Long> userIds,
+            @Define("limitActivities") boolean limitActivities,
+            @BindList(value = "activityIds", onEmpty = BindList.EmptyHandling.NULL) Set<Long> activityIds);
+
     default Stream<FormResponse> findFormResponsesWithAnswersByUserIds(long studyId, Set<Long> userIds) {
         return _findFormResponsesWithAnswersByStudyIdAndUsersWithActivitiesLimit(studyId, false, true, userIds, null, false, null);
     }

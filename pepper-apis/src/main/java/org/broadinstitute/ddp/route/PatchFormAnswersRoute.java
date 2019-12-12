@@ -63,12 +63,15 @@ import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOpt
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.instance.question.CompositeQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.Question;
+import org.broadinstitute.ddp.model.activity.instance.validation.ActivityValidationFailure;
 import org.broadinstitute.ddp.model.activity.instance.validation.Rule;
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.activity.types.NumericType;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
+import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.security.DDPAuth;
+import org.broadinstitute.ddp.service.ActivityValidationService;
 import org.broadinstitute.ddp.service.FormActivityService;
 import org.broadinstitute.ddp.util.ActivityInstanceUtil;
 import org.broadinstitute.ddp.util.FormActivityStatusUtil;
@@ -90,19 +93,25 @@ public class PatchFormAnswersRoute implements Route {
     private Gson gson;
     private GsonPojoValidator checker;
     private FormActivityService formService;
+    private ActivityValidationService actValidationService;
     private ActivityInstanceDao activityInstanceDao;
     private AnswerDao answerDao;
+    private PexInterpreter interpreter;
 
     public PatchFormAnswersRoute(
             FormActivityService formService,
+            ActivityValidationService actValidationService,
             ActivityInstanceDao activityInstanceDao,
-            AnswerDao answerDao
+            AnswerDao answerDao,
+            PexInterpreter interpreter
     ) {
         this.gson = new Gson();
         this.checker = new GsonPojoValidator();
         this.formService = formService;
+        this.actValidationService = actValidationService;
         this.activityInstanceDao = activityInstanceDao;
         this.answerDao = answerDao;
+        this.interpreter = interpreter;
     }
 
     @Override
@@ -175,6 +184,7 @@ public class PatchFormAnswersRoute implements Route {
             Long languageCodeId = jdbiLanguageCode.getLanguageCodeId(isoLanguageCode);
 
             try {
+                Map<String, List<Rule>> failedRulesByQuestion = new HashMap<>();
                 for (AnswerSubmission submission : submissions) {
                     String questionStableId = extractQuestionStableId(submission, response);
 
@@ -195,49 +205,58 @@ public class PatchFormAnswersRoute implements Route {
                     // Run constraint checks before processing validation rules.
                     checkAnswerConstraints(response, answer);
 
-                    Rule failure = validateAnswer(answer, activityInstanceGuid, question);
-                    if (failure != null) {
-                        String msg = "An answer submission failed validation for its question";
-                        LOG.info(msg);
-                        ResponseUtil.haltError(response, 422, new AnswerValidationError(msg,
-                                questionStableId, failure.getRuleType(), failure.getMessage()));
-                        return null;
-                    }
-
-                    // todo: proper usage of flag when requirements are better understood
-                    boolean forceAdd = false;
-
-                    // Attempt to figure out the answer to update if one exists.
-                    if (answer.getAnswerGuid() == null && !forceAdd) {
-                        List<String> answerGuids =
-                                answerDao.getAnswerGuidsForQuestion(handle, activityInstanceGuid, questionStableId);
-                        if (answerGuids.size() > 1) {
-                            String msg = "Question is already answered. Provide the answer guid to update.";
-                            LOG.info(msg);
-                            ResponseUtil.haltError(response, 409, new AnswerExistsError(msg, questionStableId));
-                        } else if (answerGuids.size() == 1) {
-                            answer.setAnswerGuid(answerGuids.get(0));
-                        } else {
-                            // No answers exist. Fall through to create a new answer.
+                    List<Rule> failures = validateAnswer(answer, activityInstanceGuid, question);
+                    if (!failures.isEmpty()) {
+                        List<Rule> failedRules = failedRulesByQuestion.get(questionStableId);
+                        if (failedRules == null) {
+                            failedRules = new ArrayList<>();
+                            failedRulesByQuestion.put(questionStableId, failedRules);
                         }
-                    }
-
-                    if (answer.getAnswerGuid() == null) {
-                        String guid = answerDao.createAnswer(handle, answer, operatorGuid, activityInstanceGuid);
-                        answer.setAnswerGuid(guid);
-                        LOG.info("Created answer with guid {} for question stable id {}", guid, questionStableId);
+                        failedRules.addAll(failures);
                     } else {
-                        Long answerId = answerDao.getAnswerIdByGuids(handle, activityInstanceGuid, answer.getAnswerGuid());
-                        if (answerId == null) {
-                            String msg = "Answer with guid " + answer.getAnswerGuid() + " is not found";
-                            ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.ANSWER_NOT_FOUND, msg));
-                            return null;
+                        // todo: proper usage of flag when requirements are better understood
+                        boolean forceAdd = false;
+
+                        // Attempt to figure out the answer to update if one exists.
+                        if (answer.getAnswerGuid() == null && !forceAdd) {
+                            List<String> answerGuids =
+                                    answerDao.getAnswerGuidsForQuestion(handle, activityInstanceGuid, questionStableId);
+                            if (answerGuids.size() > 1) {
+                                String msg = "Question is already answered. Provide the answer guid to update.";
+                                LOG.info(msg);
+                                ResponseUtil.haltError(response, 409, new AnswerExistsError(msg, questionStableId));
+                            } else if (answerGuids.size() == 1) {
+                                answer.setAnswerGuid(answerGuids.get(0));
+                            } else {
+                                // No answers exist. Fall through to create a new answer.
+                            }
                         }
-                        answerDao.updateAnswerById(handle, activityInstanceGuid, answerId, answer, operatorGuid);
-                        LOG.info("Updated answer with guid {} for question stable id {}",
-                                answer.getAnswerGuid(), questionStableId);
+
+                        if (answer.getAnswerGuid() == null) {
+                            String guid = answerDao.createAnswer(handle, answer, operatorGuid, activityInstanceGuid);
+                            answer.setAnswerGuid(guid);
+                            LOG.info("Created answer with guid {} for question stable id {}", guid, questionStableId);
+                        } else {
+                            Long answerId = answerDao.getAnswerIdByGuids(handle, activityInstanceGuid, answer.getAnswerGuid());
+                            if (answerId == null) {
+                                String msg = "Answer with guid " + answer.getAnswerGuid() + " is not found";
+                                ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.ANSWER_NOT_FOUND, msg));
+                                return null;
+                            }
+                            answerDao.updateAnswerById(handle, activityInstanceGuid, answerId, answer, operatorGuid);
+                            LOG.info("Updated answer with guid {} for question stable id {}",
+                                    answer.getAnswerGuid(), questionStableId);
+                        }
+                        res.addAnswer(new AnswerResponse(questionStableId, answer.getAnswerGuid()));
                     }
-                    res.addAnswer(new AnswerResponse(questionStableId, answer.getAnswerGuid()));
+                }
+                if (!failedRulesByQuestion.isEmpty()) {
+                    String msg = "One or more answer submission(s) failed validation for their question(s)";
+                    LOG.info(msg);
+                    ResponseUtil.haltError(
+                            response, 422, new AnswerValidationError(msg, failedRulesByQuestion)
+                    );
+                    return null;
                 }
             } catch (NoSuchElementException e) {
                 LOG.warn(e.getMessage());
@@ -254,6 +273,15 @@ public class PatchFormAnswersRoute implements Route {
             }
 
             res.setBlockVisibilities(formService.getBlockVisibilities(handle, participantGuid, activityInstanceGuid));
+
+            List<ActivityValidationFailure> failures = getActivityValidationFailures(
+                    handle, participantGuid, activityInstanceGuid, languageCodeId
+            );
+            if (!failures.isEmpty()) {
+                LOG.info("Activity validation failed, reasons: {}", createValidationFailureSummaries(failures));
+                return enrichPayloadWithValidationFailures(res, failures);
+            }
+
             FormActivityStatusUtil.updateFormActivityStatus(
                     handle,
                     InstanceStatusType.IN_PROGRESS,
@@ -556,7 +584,7 @@ public class PatchFormAnswersRoute implements Route {
      * @param question     the question object
      * @return the failed validation rule info, or null if validation passed
      */
-    private Rule validateAnswer(Answer answer, String instanceGuid, Question question) {
+    private List<Rule> validateAnswer(Answer answer, String instanceGuid, Question question) {
         List<Answer> answersToCheck = new ArrayList<>();
         answersToCheck.add(answer);
         if (answer.getQuestionType() == QuestionType.COMPOSITE) {
@@ -574,6 +602,7 @@ public class PatchFormAnswersRoute implements Route {
                     .forEach(child -> questionMap.put(child.getStableId(), child));
         }
 
+        List<Rule> failedRules = new ArrayList<>();
         for (Answer currentAnswer : answersToCheck) {
             Question currentQuestion = questionMap.get(currentAnswer.getQuestionStableId());
             if (currentQuestion == null) {
@@ -586,15 +615,32 @@ public class PatchFormAnswersRoute implements Route {
             // For some reason if I don't declare intermediate stream of type Stream<Rule>
             // the filter considers the parameter to be of type Object
             Stream<Rule> questionRules = currentQuestion.getValidations().stream();
-            Optional<Rule> firstFailedRule = questionRules
-                    .filter(rule -> !rule.getAllowSave())
-                    .filter(rule -> !rule.validate(currentQuestion, currentAnswer))
-                    .findFirst();
-            if (firstFailedRule.isPresent()) {
-                return firstFailedRule.get();
-            }
+            failedRules.addAll(
+                    questionRules
+                            .filter(rule -> !rule.getAllowSave())
+                            .filter(rule -> !rule.validate(currentQuestion, currentAnswer))
+                            .collect(Collectors.toList())
+            );
         }
 
-        return null;
+        return failedRules;
+    }
+
+    private PatchAnswerResponse enrichPayloadWithValidationFailures(PatchAnswerResponse payload, List<ActivityValidationFailure> failures) {
+        payload.addValidationFailures(failures);
+        return payload;
+    }
+
+    private List<String> createValidationFailureSummaries(List<ActivityValidationFailure> failures) {
+        return failures.stream().map(failure -> failure.getErrorMessage()).collect(Collectors.toList());
+    }
+
+    private List<ActivityValidationFailure> getActivityValidationFailures(
+            Handle handle, String participantGuid, String activityInstanceGuid, long languageCodeId
+    ) {
+        long activityId = handle.attach(JdbiActivityInstance.class).getActivityIdByGuid(activityInstanceGuid);
+        return actValidationService.validate(
+                handle, interpreter, participantGuid, activityInstanceGuid, activityId, languageCodeId
+        );
     }
 }

@@ -20,6 +20,15 @@ public class DsmStudyParticipant {
     private String street2;
     private String state;
     private String userGuid;
+    private transient long userId;
+
+    public long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(long userId) {
+        this.userId = userId;
+    }
 
     public String getUserGuid() {
         return userGuid;
@@ -148,6 +157,4 @@ public class DsmStudyParticipant {
     public void setState(String state) {
         this.state = state;
     }
-
-
 }

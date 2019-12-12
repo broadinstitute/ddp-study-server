@@ -39,6 +39,7 @@ ActivityAnswersPatchResponse:
         required:
           - answers
           - blockVisibility
+          - validationFailures
         properties:
           answers:
             type: array
@@ -70,6 +71,16 @@ ActivityAnswersPatchResponse:
                 shown:
                   type: boolean
                   description: whether block is shown or not
+          validationFailures:
+            type: array
+            items:
+              $ref: '../pepper.yml#/components/schemas/ValidationFailure'
+ActivityAnswersPatchErrorResponse:
+  description: activity instance is read-only or answer submission failed validation
+  content:
+    application/json:
+      schema:
+        $ref: '../pepper.yml#/components/schemas/Error.Answer'
 ActivityAnswersPutResponse:
   description: successfully completed activity instance
   content:
@@ -147,6 +158,25 @@ DrugSuggestionResponse:
             description: a list of `Drug` suggestions with a possible list of substring matches of the query within the drug's name
             items:
               $ref: '../pepper.yml#/components/schemas/Suggestion.Drug'
+CancerSuggestionResponse:
+  description: list of suggested cancer names
+  content:
+    application/json:
+      schema:
+        type: object
+        required:
+          - query
+          - results
+        properties:
+          query:
+            type: string
+            description: the string which was submitted for this set of suggestions. May be `null` if a query was not used.
+            nullable: true
+          results:
+            type: array
+            description: a list of `Cancer` suggestions with a possible list of substring matches of the query within the cancer name
+            items:
+              $ref: '../pepper.yml#/components/schemas/Suggestion.Cancer'
 ConsentErrorResponse:
   description: failed to
   content:

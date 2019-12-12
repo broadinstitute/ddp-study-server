@@ -351,6 +351,16 @@ public interface PdfDao extends SqlObject {
     Optional<PdfConfigInfo> findConfigInfoByStudyIdAndName(@Bind("studyId") long studyId, @Bind("name") String configName);
 
     @UseStringTemplateSqlLocator
+    @SqlQuery("queryDocumentConfigInfoByStudyGuidAndName")
+    @RegisterConstructorMapper(PdfConfigInfo.class)
+    Optional<PdfConfigInfo> findConfigInfoByStudyGuidAndName(@Bind("studyGuid") String studyGuid, @Bind("name") String configName);
+
+    @UseStringTemplateSqlLocator
+    @SqlQuery("queryDocumentConfigInfoByStudyGuid")
+    @RegisterConstructorMapper(PdfConfigInfo.class)
+    List<PdfConfigInfo> findConfigInfoByStudyGuid(@Bind("studyGuid") String studyGuid);
+
+    @UseStringTemplateSqlLocator
     @SqlQuery("queryVersionWithDataSourcesById")
     @RegisterConstructorMapper(value = PdfVersion.class, prefix = "v")
     @RegisterConstructorMapper(value = PdfDataSource.class, prefix = "s")

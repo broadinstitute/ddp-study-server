@@ -17,6 +17,7 @@ import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
 import org.broadinstitute.ddp.model.activity.definition.GroupBlockDef;
+import org.broadinstitute.ddp.model.activity.definition.MailingAddressComponentDef;
 import org.broadinstitute.ddp.model.activity.definition.PhysicianInstitutionComponentDef;
 import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.question.AgreementQuestionDef;
@@ -267,15 +268,25 @@ public class ActivityResponseCollector {
     }
 
     private void collectComponentDefinitions(List<Object> questions, ComponentBlockDef componentBlockDef) {
+        String questionText;
         switch (componentBlockDef.getComponentType()) {
             case MAILING_ADDRESS:
-                questions.add(addressFmt.definition());
+                MailingAddressComponentDef mailingAddressComponentDef = (MailingAddressComponentDef) componentBlockDef;
+                if (mailingAddressComponentDef.getTitleTemplate() != null) {
+                    questionText = mailingAddressComponentDef.getTitleTemplate().render("en");
+                } else {
+                    questionText = "Your contact information";
+                }
+                questions.add(addressFmt.definition(questionText));
                 break;
             case PHYSICIAN: //fall-through
             case INSTITUTION:
-                String questionText;
                 PhysicianInstitutionComponentDef physicianInstitutionDef = (PhysicianInstitutionComponentDef) componentBlockDef;
-                questionText = physicianInstitutionDef.getTitleTemplate().render("en");
+                if (physicianInstitutionDef.getTitleTemplate() != null) {
+                    questionText = physicianInstitutionDef.getTitleTemplate().render("en");
+                } else {
+                    questionText = physicianInstitutionDef.getInstitutionType().name();
+                }
                 questions.add(providerFmt.definition((PhysicianInstitutionComponentDef) componentBlockDef, questionText));
                 break;
             default:

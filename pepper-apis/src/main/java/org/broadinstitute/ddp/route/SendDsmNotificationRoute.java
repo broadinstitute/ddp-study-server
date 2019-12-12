@@ -1,6 +1,5 @@
 package org.broadinstitute.ddp.route;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -9,18 +8,15 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ErrorCodes;
-import org.broadinstitute.ddp.constants.NotificationTemplateVariables;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.JdbiDsmNotificationEventType;
-import org.broadinstitute.ddp.db.dao.JdbiProfile;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.QueuedEventDao;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.UserDto;
-import org.broadinstitute.ddp.db.dto.UserProfileDto;
 import org.broadinstitute.ddp.json.dsm.DsmNotificationEvent;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.util.RequestUtil;
@@ -78,7 +74,6 @@ public class SendDsmNotificationRoute implements Route {
                         return null;
                     }
 
-                    final UserDto finalUserDto = userDto;
                     String userGuid = userDto.getUserGuid();
 
                     // No DSM notification event type found, respond with HTTP 404
@@ -106,21 +101,10 @@ public class SendDsmNotificationRoute implements Route {
                     // insert the record to the "queued_event" and subclass tables
                     QueuedEventDao queuedEventDao = handle.attach(QueuedEventDao.class);
 
-
-                    Map<String, String> templateVars = new HashMap<>();
-                    templateVars.put(NotificationTemplateVariables.DDP_BASE_WEB_URL, studyDto.getWebBaseUrl());
-
-                    UserProfileDto userProfile = handle.attach(JdbiProfile.class).getUserProfileByUserGuid(userDto.getUserGuid());
-                    String firstName = "";
-                    if (userProfile != null) {
-                        firstName = userProfile.getFirstName();
-                    }
-                    templateVars.put(NotificationTemplateVariables.DDP_PARTICIPANT_FIRST_NAME, firstName);
-
                     eventConfigurationIds.forEach(eid -> queuedEventDao.insertNotification(eid, 0L,
-                            finalUserDto.getUserId(),
-                            finalUserDto.getUserId(),
-                            templateVars));
+                            userDto.getUserId(),
+                            null,
+                            Map.of()));
                     // All fine, the notification(s) were queued. Respond with HTTP 200
                     LOG.info("Successfully queued {} event configurations for the user {}", eventConfigurationIds.size(), userGuid);
                     response.status(HttpStatus.SC_OK);

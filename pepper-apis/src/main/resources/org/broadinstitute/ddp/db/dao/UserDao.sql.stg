@@ -32,6 +32,38 @@ where u.auth0_user_id = :auth0UserId
   and u.auth0_tenant_id = :auth0TenantId
 >>
 
+select_user_and_profile() ::= <<
+select u.user_id              as u_user_id,
+       u.guid                 as u_user_guid,
+       u.hruid                as u_user_hruid,
+       u.legacy_altpid        as u_legacy_altpid,
+       u.legacy_shortid       as u_legacy_shortid,
+       u.is_locked            as u_is_locked,
+       u.created_by_client_id as u_created_by_client_id,
+       u.auth0_tenant_id      as u_auth0_tenant_id,
+       u.auth0_user_id        as u_auth0_user_id,
+       u.created_at           as u_created_at,
+       u.updated_at           as u_updated_at,
+       u.expires_at           as u_expires_at,
+       up.user_id               as p_user_id,
+       up.first_name            as p_first_name,
+       up.last_name             as p_last_name,
+       up.sex                   as p_sex,
+       up.birth_year            as p_birth_year,
+       up.birth_month           as p_birth_month,
+       up.birth_day_in_month    as p_birth_day,
+       up.do_not_contact        as p_do_not_contact,
+       up.preferred_language_id as p_preferred_language_id,
+       (select iso_language_code from language_code where language_code_id = up.preferred_language_id) as p_iso_language_code
+  from user as u
+  left join user_profile as up on up.user_id = u.user_id
+>>
+
+queryUsersAndProfilesByGuids(userGuids) ::= <<
+<select_user_and_profile()>
+ where u.guid in (<userGuids>)
+>>
+
 /**
  * Note: we use left-join here since a user might not have a certain piece of data.
  * For data that has both operator/participant user id, we should join on either one.

@@ -254,8 +254,21 @@
             },
             "hasConsentedToTissueSample": {
               "type": "boolean"
+            },
+            "pdfs": {
+              "properties": {
+                "configName":{
+                  "type": "keyword"
+                },
+                "displayName":{
+                  "type": "text"
+                }
+              }
             }
           }
+        },
+        "proxies": {
+          "type": "keyword"
         }
       }
     }

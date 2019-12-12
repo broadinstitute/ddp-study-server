@@ -16,16 +16,20 @@ import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dao.QueuedEventDao;
 import org.broadinstitute.ddp.db.dao.StudyDao;
+import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dto.EventConfigurationDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.UserDto;
+import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.json.study.StudyExitRequestPayload;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.study.StudyExitRequest;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
+import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.util.ResponseUtil;
+import org.broadinstitute.ddp.util.RouteUtil;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,10 +47,11 @@ public class SendExitNotificationRoute extends ValidatedJsonInputRoute<StudyExit
 
     @Override
     public Object handle(Request request, Response response, StudyExitRequestPayload payload) {
+        String operatorGuid = RouteUtil.getDDPAuth(request).getOperator();
         String userGuid = request.params(RouteConstants.PathParam.USER_GUID);
         String studyGuid = request.params(RouteConstants.PathParam.STUDY_GUID);
 
-        LOG.info("Attempting to create study exit request for user={}, study={}", userGuid, studyGuid);
+        LOG.info("Attempting to create study exit request for user={}, operator={}, study={}", userGuid, operatorGuid, studyGuid);
 
         return TransactionWrapper.withTxn(handle -> {
             UserDto userDto = handle.attach(JdbiUser.class).findByUserGuid(userGuid);
@@ -61,7 +66,7 @@ public class SendExitNotificationRoute extends ValidatedJsonInputRoute<StudyExit
                         return ResponseUtil.haltError(response, HttpStatus.SC_UNPROCESSABLE_ENTITY, err);
                     });
 
-            if (EnrollmentStatusType.getAllExitedStates().contains(status)) {
+            if (status.isExited()) {
                 String msg = String.format("User %s in study %s is already exited", userGuid, studyGuid);
                 ApiError err = new ApiError(ErrorCodes.OPERATION_NOT_ALLOWED, msg);
                 LOG.warn(msg);
@@ -87,13 +92,15 @@ public class SendExitNotificationRoute extends ValidatedJsonInputRoute<StudyExit
                 throw ResponseUtil.haltError(response, HttpStatus.SC_UNPROCESSABLE_ENTITY, err);
             }
 
+            User operatorUser = handle.attach(UserDao.class).findUserByGuid(operatorGuid)
+                    .orElseThrow(() -> new DDPException("Could not find operator user with guid " + operatorGuid));
             QueuedEventDao queuedEventDao = handle.attach(QueuedEventDao.class);
             for (EventConfigurationDto eventDto : eventDtos) {
                 if (eventDto.getEventActionType() == EventActionType.NOTIFICATION) {
                     Map<String, String> vars = new HashMap<>();
                     vars.put(NotificationTemplateVariables.DDP_PARTICIPANT_EXIT_NOTES, StringUtils.defaultString(payload.getNotes()));
                     queuedEventDao.insertNotification(eventDto.getEventConfigurationId(), 0L,
-                            userDto.getUserId(), userDto.getUserId(), vars);
+                            userDto.getUserId(), operatorUser.getId(), vars);
                 } else {
                     LOG.error("Exit request event configuration with id={} is configured with unsupported actionType={}",
                             eventDto.getEventConfigurationId(), eventDto.getEventActionType());

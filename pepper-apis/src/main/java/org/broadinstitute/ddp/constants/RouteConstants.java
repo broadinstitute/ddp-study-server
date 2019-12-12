@@ -98,6 +98,7 @@ public class RouteConstants {
         public static final String DSM_KIT_REQUESTS_STARTING_AFTER = DSM_ALL_KIT_REQUESTS + "/"
                 + PathParam.PREVIOUS_LAST_KIT_REQUEST_ID;
         public static final String DSM_STUDY_PARTICIPANT = DSM_STUDY + "/participants/" + PathParam.USER_GUID;
+        public static final String DSM_PARTICIPANT_PDF = DSM_STUDY_PARTICIPANT + "/pdfs/" + PathParam.CONFIG_NAME;
         public static final String DSM_PARTICIPANT_MEDICAL_INFO = DSM_STUDY_PARTICIPANT + "/medical";
         public static final String DSM_PARTICIPANT_RELEASE_PDF = DSM_STUDY_PARTICIPANT + "/releasepdf";
         public static final String DSM_PARTICIPANT_CONSENT_PDF = DSM_STUDY_PARTICIPANT + "/consentpdf";
@@ -145,6 +146,9 @@ public class RouteConstants {
         public static final String DSM_DRUG_SUGGESTION = fmt(
                 STUDY_DETAIL + "/suggestions/drugs"
         );
+        public static final String CANCER_SUGGESTION = fmt(
+                STUDY_DETAIL + "/suggestions/cancers"
+        );
 
         public static final String STUDY_PASSWORD_REQUIREMENTS = STUDY_DETAIL + "/password-requirements";
         public static final String UPDATE_USER_PASSWORD = USER_SPECIFIC + "/password";
@@ -154,6 +158,7 @@ public class RouteConstants {
     public static final class PathParam {
         public static final String USER_GUID = ":userGuid";
         public static final String STUDY_GUID = ":studyGuid";
+        public static final String CONFIG_NAME = ":configName";
         public static final String MAX_ID = ":maxId";
         public static final String ACTIVITY_CODE = ":activityCode";
         public static final String INSTANCE_GUID = ":instanceGuid";
@@ -175,8 +180,8 @@ public class RouteConstants {
         public static final String EMAIL  = "email";
         public static final String SUCCESS  = "success";
         public static final String UMBRELLA = "umbrella";
-        public static final String DRUG_QUERY = "q";
-        public static final String DRUG_QUERY_LIMIT = "limit";
+        public static final String TYPEAHEAD_QUERY = "q";
+        public static final String TYPEAHEAD_QUERY_LIMIT = "limit";
         public static final String ERROR_CODE = "errorCode";
     }
 

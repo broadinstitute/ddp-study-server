@@ -125,7 +125,7 @@ public class EmbeddedComponentActivityInstanceTest extends IntegrationTestSuite.
                 "embedded components test " + System.currentTimeMillis());
 
         List<FormBlockDef> blocksWithEmbeddedComponents = new ArrayList<>();
-        blocksWithEmbeddedComponents.add(new MailingAddressComponentDef());
+        blocksWithEmbeddedComponents.add(new MailingAddressComponentDef(null, null));
         institutionComponentDef = buildInstitutionsComponentDef(true, InstitutionType.INSTITUTION, false);
         blocksWithEmbeddedComponents.add(institutionComponentDef);
         physicianComponentDef = buildPhysiciansComponentDef(false, InstitutionType.PHYSICIAN, true);

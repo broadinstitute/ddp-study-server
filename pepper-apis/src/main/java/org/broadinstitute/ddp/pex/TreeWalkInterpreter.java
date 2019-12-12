@@ -17,8 +17,10 @@ import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.db.dao.AnswerDao;
+import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
+import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
@@ -41,6 +43,8 @@ import org.broadinstitute.ddp.pex.lang.PexParser.HasTruePredicateContext;
 import org.broadinstitute.ddp.pex.lang.PexParser.IsStatusPredicateContext;
 import org.broadinstitute.ddp.pex.lang.PexParser.OrExprContext;
 import org.broadinstitute.ddp.pex.lang.PexParser.PredicateContext;
+import org.broadinstitute.ddp.pex.lang.PexParser.QuestionPredicateContext;
+import org.broadinstitute.ddp.pex.lang.PexParser.QuestionQueryContext;
 import org.jdbi.v3.core.Handle;
 
 /**
@@ -132,14 +136,12 @@ public class TreeWalkInterpreter implements PexInterpreter {
         String studyGuid = extractString(ctx.study().STR());
         String activityCode = extractString(ctx.form().STR());
         String stableId = extractString(ctx.question().STR());
-        long studyId = TransactionWrapper.withTxn(TransactionWrapper.DB.APIS, handle -> {
-            return handle.attach(JdbiUmbrellaStudy.class)
-                    .getIdByGuid(studyGuid)
-                    .orElseThrow(() -> {
-                        String msg = String.format("Study guid '%s' does not refer to a valid study", studyGuid);
-                        return new PexFetchException(new NoSuchElementException(msg));
-                    });
-        });
+        long studyId = ictx.getHandle().attach(JdbiUmbrellaStudy.class)
+                .getIdByGuid(studyGuid)
+                .orElseThrow(() -> {
+                    String msg = String.format("Study guid '%s' does not refer to a valid study", studyGuid);
+                    return new PexFetchException(new NoSuchElementException(msg));
+                });
 
         QuestionType questionType = fetcher.findQuestionType(ictx, studyGuid, activityCode, stableId).orElseThrow(() -> {
             String msg = String.format(
@@ -194,6 +196,32 @@ public class TreeWalkInterpreter implements PexInterpreter {
             return fetcher.findLatestActivityInstanceStatus(ictx, studyGuid, activityCode).isPresent();
         } else {
             throw new PexUnsupportedException("Unsupported form predicate: " + predCtx.getText());
+        }
+    }
+
+    private boolean evalQuestionQuery(InterpreterContext ictx, QuestionQueryContext ctx) {
+        String studyGuid = extractString(ctx.study().STR());
+        String activityCode = extractString(ctx.form().STR());
+        String stableId = extractString(ctx.question().STR());
+
+        long activityId = ictx.getHandle().attach(JdbiActivity.class)
+                .findActivityByStudyGuidAndCode(studyGuid, activityCode)
+                .map(ActivityDto::getActivityId)
+                .orElseThrow(() -> {
+                    String msg = String.format("Could not find activity with study guid %s and activity code %s", studyGuid, activityCode);
+                    return new PexFetchException(new NoSuchElementException(msg));
+                });
+
+        return applyQuestionPredicate(ictx, activityId, stableId, ctx.questionPredicate());
+    }
+
+    private boolean applyQuestionPredicate(InterpreterContext ictx, long activityId, String stableId, QuestionPredicateContext predCtx) {
+        if (predCtx instanceof PexParser.IsAnsweredPredicateContext) {
+            return ictx.getHandle().attach(AnswerDao.class)
+                    .findAnswerIdForQuestionInLatestInstance(ictx.getUserGuid(), activityId, stableId)
+                    .isPresent();
+        } else {
+            throw new PexUnsupportedException("Unsupported question predicate: " + predCtx.getText());
         }
     }
 
@@ -306,14 +334,12 @@ public class TreeWalkInterpreter implements PexInterpreter {
         String activityCode = extractString(ctx.form().STR());
         String type = ctx.instance().INSTANCE_TYPE().getText();
         String stableId = extractString(ctx.question().STR());
-        long studyId = TransactionWrapper.withTxn(handle -> {
-            return handle.attach(JdbiUmbrellaStudy.class)
-                    .getIdByGuid(studyGuid)
-                    .orElseThrow(() -> {
-                        String msg = String.format("Study guid '%s' does not refer to a valid study", studyGuid);
-                        return new PexFetchException(new NoSuchElementException(msg));
-                    });
-        });
+        long studyId = ictx.getHandle().attach(JdbiUmbrellaStudy.class)
+                .getIdByGuid(studyGuid)
+                .orElseThrow(() -> {
+                    String msg = String.format("Study guid '%s' does not refer to a valid study", studyGuid);
+                    return new PexFetchException(new NoSuchElementException(msg));
+                });
 
         QuestionType questionType = fetcher.findQuestionType(ictx, studyGuid, activityCode, stableId).orElseThrow(() -> {
             String msg = String.format(
@@ -491,6 +517,11 @@ public class TreeWalkInterpreter implements PexInterpreter {
         @Override
         public Boolean visitFormQuery(FormQueryContext ctx) {
             return interpreter.evalFormQuery(ictx, ctx);
+        }
+
+        @Override
+        public Boolean visitQuestionQuery(PexParser.QuestionQueryContext ctx) {
+            return interpreter.evalQuestionQuery(ictx, ctx);
         }
     }
 }

@@ -452,7 +452,8 @@ Block.Component:
     - $ref: '../pepper.yml#/components/schemas/Block'
     - type: object
       required:
-        - html
+        - component
+        - displayNumber
       properties:
         blockType:
           type: string
@@ -461,10 +462,19 @@ Block.Component:
             - COMPONENT
         component:
           $ref: '../pepper.yml#/components/schemas/Component'
+        displayNumber:
+          type: integer
+          minimum: 1
+          nullable: true
+          description: the number to label this block, `null` if it shouldn't be numbered
 Block.Conditional:
   allOf:
     - $ref: '../pepper.yml#/components/schemas/Block'
     - type: object
+      required:
+        - control
+        - nested
+        - displayNumber
       properties:
         blockType:
           type: string
@@ -480,6 +490,11 @@ Block.Conditional:
               - $ref: '../pepper.yml#/components/schemas/Block.Component'
               - $ref: '../pepper.yml#/components/schemas/Block.Question'
               - $ref: '../pepper.yml#/components/schemas/Block.Content'
+        displayNumber:
+          type: integer
+          minimum: 1
+          nullable: true
+          description: the number to label this block, `null` if it shouldn't be numbered
 Block.Grouped:
   allOf:
     - $ref: '../pepper.yml#/components/schemas/Block'
@@ -514,6 +529,7 @@ Block.Question:
     - type: object
       required:
         - question
+        - displayNumber
       properties:
         blockType:
           type: string
@@ -522,6 +538,11 @@ Block.Question:
             - QUESTION
         question:
           $ref: '../pepper.yml#/components/schemas/Question'
+        displayNumber:
+          type: integer
+          minimum: 1
+          nullable: true
+          description: the number to label this block, `null` if it shouldn't be numbered
 Block.Content:
   allOf:
     - $ref: '../pepper.yml#/components/schemas/Block'
@@ -553,49 +574,89 @@ Component:
     componentType:
       type: string
       enum:
+        - PHYSICIAN
         - INSTITUTION
         - MAILING_ADDRESS
-    properties:
+    parameters:
       type: object
+Component.Physician:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Component'
+    - type: object
+      required:
+        - componentType
+        - parameters
+      properties:
+        componentType:
+          type: string
+          enum:
+            - PHYSICIAN
+        parameters:
+          type: object
+          properties:
+            titleText:
+              type: string
+            subtitleText:
+              type: string
+            allowMultiple:
+              type: boolean
+            addButtonText:
+              type: string
+            institutionType:
+              type: string
+              enum:
+                - PHYSICIAN
+            showFieldsInitially:
+              type: boolean
 Component.Institution:
   allOf:
     - $ref: '../pepper.yml#/components/schemas/Component'
     - type: object
       required:
         - componentType
-        - properties
+        - parameters
       properties:
         componentType:
           type: string
           enum:
             - INSTITUTION
-        properties:
+        parameters:
           type: object
           properties:
-            allowMultiple:
-              type: boolean
-            addButtonText:
-              type: string
             titleText:
               type: string
             subtitleText:
               type: string
+            allowMultiple:
+              type: boolean
+            addButtonText:
+              type: string
             institutionType:
               type: string
-            showFields:
+              enum:
+                - INITIAL_BIOPSY
+                - INSTITUTION
+            showFieldsInitially:
               type: boolean
 Component.MailingAddress:
   allOf:
     - $ref: '../pepper.yml#/components/schemas/Component'
     - type: object
-      title: MailingAddress
       required:
-        - properties
+        - componentType
+        - parameters
       properties:
         componentType:
           type: string
           enum:
-            - INSTITUTION
+            - MAILING_ADDRESS
+        parameters:
+          type: object
+          properties:
+            titleText:
+              type: string
+            subtitleText:
+              type: string
 ConditionalRule:
   type: object
   title: ConditionalRule
@@ -683,15 +744,8 @@ Error.Answer:
     - $ref: '../pepper.yml#/components/schemas/Error'
     - type: object
       required:
-        - violation
+        - validationFailures
       properties:
-        violation:
-          type: object
-          properties:
-            stableId:
-              type: string
-            rule:
-              $ref: '../pepper.yml#/components/schemas/ValidationType'
         code:
           type: string
           enum:
@@ -703,6 +757,24 @@ Error.Answer:
             - ANSWER_EXISTS
             - ANSWER_VALIDATION
             - ACTIVITY_INSTANCE_IS_READONLY
+        validationFailures:
+          type: array
+          items:
+            $ref: '../pepper.yml#/components/schemas/ValidationFailure'
+ValidationFailure:
+  type: object
+  required:
+    - message
+  properties:
+    stableIds:
+      description: |
+        ids of questions associated with the validation failure. If not specified, interpreted mean scope of failure is the full activity
+        instance
+      type: array
+      items:
+        type: string
+    message:
+      type: string
 Error.Consent:
   allOf:
     - $ref: '../pepper.yml#/components/schemas/Error'
@@ -954,6 +1026,10 @@ Question:
       type: array
       items:
         $ref: '../pepper.yml#/components/schemas/ConditionalRule'
+    validationFailures:
+      type: array
+      items:
+        $ref: '../pepper.yml#/components/schemas/ValidationFailure'
 Question.Agreement:
   allOf:
   - $ref: '../pepper.yml#/components/schemas/Question'
@@ -1184,6 +1260,7 @@ Question.Text:
           - NONE
           - DRUG
           - INCLUDED
+          - CANCER
       suggestions:
         description: 'If the suggestionType is INCLUDED, then this is the list of suggestions to use'
         type: array
@@ -1450,6 +1527,34 @@ Suggestion.Drug:
       minItems: 0
       items:
         $ref: '../pepper.yml#/components/schemas/Suggestion.Match'
+Cancer:
+  type: object
+  required:
+    - name
+    - description
+  properties:
+    name:
+      type: string
+      description: a short name for the cancer
+      example: Sarcoma
+    description:
+      type: string
+      description: a longer name for the cancer
+      nullable: true
+Suggestion.Cancer:
+  required:
+    - cancer
+    - matches
+  type: object
+  properties:
+    cancer:
+      $ref: '../pepper.yml#/components/schemas/Cancer'
+    matches:
+      type: array
+      description: Contains a list of substring matches for the given `Cancer` name. The substrings are based within the cancer `name` property.
+      minItems: 0
+      items:
+        $ref: '../pepper.yml#/components/schemas/Suggestion.Match'
 Suggestion.Institution:
   type: object
   required:
@@ -1478,15 +1583,6 @@ Suggestion.Match:
     length:
       type: integer
       minimum: 0
-Cancer:
-  type: object
-  properties:
-    name:
-      type: string
-      description: a short name for the cancer
-    description:
-      type: string
-      description: a longer name for the cancer
 MailingAddress:
   type: object
   description: a participant's mailing address, to be used for delivery.

@@ -680,7 +680,7 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
 
             FormSectionDef componentSection = new FormSectionDef(null, new ArrayList<>());
 
-            componentSection.getBlocks().add(new MailingAddressComponentDef());
+            componentSection.getBlocks().add(new MailingAddressComponentDef(null, null));
 
             componentSection.getBlocks().add(new PhysicianComponentDef(true,
                     Template.text("button"), Template.text("title"), Template.text("subtitle"),

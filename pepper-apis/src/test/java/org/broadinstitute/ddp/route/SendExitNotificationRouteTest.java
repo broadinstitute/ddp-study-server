@@ -30,6 +30,7 @@ import org.broadinstitute.ddp.json.study.StudyExitRequestPayload;
 import org.broadinstitute.ddp.model.study.StudyExitRequest;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
+import org.jdbi.v3.core.Handle;
 import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -163,25 +164,55 @@ public class SendExitNotificationRouteTest extends IntegrationTestSuite.TestCase
     }
 
     @Test
+    public void testCanExitFromSuspendedState() {
+        long eventId = TransactionWrapper.withTxn(handle -> {
+            handle.attach(JdbiUserStudyEnrollment.class).changeUserStudyEnrollmentStatus(
+                    testData.getUserGuid(), testData.getStudyGuid(), EnrollmentStatusType.CONSENT_SUSPENDED);
+            return setupStudyExitConfiguration(handle);
+        });
+
+        try {
+            postExitAndVerifySuccess();
+        } finally {
+            TransactionWrapper.useTxn(handle -> deleteStudyExitConfiguration(handle, eventId));
+        }
+    }
+
+    private void postExitAndVerifySuccess() {
+        given().auth().oauth2(token)
+                .body(new StudyExitRequestPayload("some notes"))
+                .when().post(url)
+                .then().assertThat()
+                .statusCode(204);
+    }
+
+    private long setupStudyExitConfiguration(Handle handle) {
+        long triggerId = handle.attach(EventTriggerDao.class).insertExitRequestTrigger();
+        long actionId = handle.attach(EventActionDao.class).insertStudyNotificationAction(
+                new SendgridEmailEventActionDto("template", "en"));
+
+        return handle.attach(JdbiEventConfiguration.class).insert(triggerId, actionId, testData.getStudyId(),
+                Instant.now().toEpochMilli(), null, null, null, null, true, 1);
+
+    }
+
+    private void deleteStudyExitConfiguration(Handle handle, long eventId) {
+        handle.attach(QueuedEventDao.class).deleteQueuedEventsByEventConfigurationId(eventId);
+        handle.attach(JdbiEventConfiguration.class).deleteById(eventId);
+    }
+
+
+    @Test
     public void test_exitRequestSuccess_204() {
         long eventId = TransactionWrapper.withTxn(handle -> {
             handle.attach(JdbiUserStudyEnrollment.class).changeUserStudyEnrollmentStatus(
                     testData.getUserGuid(), testData.getStudyGuid(), EnrollmentStatusType.REGISTERED);
 
-            long triggerId = handle.attach(EventTriggerDao.class).insertExitRequestTrigger();
-            long actionId = handle.attach(EventActionDao.class).insertStudyNotificationAction(
-                    new SendgridEmailEventActionDto("template", "en"));
-
-            return handle.attach(JdbiEventConfiguration.class).insert(triggerId, actionId, testData.getStudyId(),
-                    Instant.now().toEpochMilli(), null, null, null, null, true, 1);
+            return setupStudyExitConfiguration(handle);
         });
 
         try {
-            given().auth().oauth2(token)
-                    .body(new StudyExitRequestPayload("some notes"))
-                    .when().post(url)
-                    .then().assertThat()
-                    .statusCode(204);
+            postExitAndVerifySuccess();
             TransactionWrapper.useTxn(handle -> {
                 List<Long> res = handle.attach(JdbiQueuedEvent.class).findQueuedEventIdsByEventConfigurationId(eventId);
                 assertEquals(1, res.size());
@@ -200,8 +231,7 @@ public class SendExitNotificationRouteTest extends IntegrationTestSuite.TestCase
             });
         } finally {
             TransactionWrapper.useTxn(handle -> {
-                handle.attach(QueuedEventDao.class).deleteQueuedEventsByEventConfigurationId(eventId);
-                handle.attach(JdbiEventConfiguration.class).deleteById(eventId);
+                deleteStudyExitConfiguration(handle, eventId);
             });
         }
     }

@@ -6,9 +6,12 @@ import static org.broadinstitute.ddp.constants.SqlConstants.FormTypeTable.FORM_T
 import java.util.List;
 import java.util.Optional;
 
+import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
+import org.broadinstitute.ddp.db.dto.ActivityValidationDto;
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
 import org.broadinstitute.ddp.model.activity.types.FormType;
+import org.jdbi.v3.sqlobject.CreateSqlObject;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
@@ -17,6 +20,9 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
 public interface JdbiActivity extends SqlObject {
+
+    @CreateSqlObject
+    JdbiActivityValidation getJdbiActivityValidation();
 
     @SqlUpdate("insert into study_activity"
             + " (activity_type_id,study_id,study_activity_code,max_instances_per_user,display_order,"
@@ -105,5 +111,22 @@ public interface JdbiActivity extends SqlObject {
             @Bind("studyActivityId") long studyActivityId,
             @Bind("maxInstances") Integer maxInstances
     );
+
+    default List<ActivityValidationDto> findValidationsById(long activityId, long languageCodeId) {
+        return getJdbiActivityValidation()._findByActivityIdTranslated(activityId, languageCodeId);
+    }
+
+    default int deleteValidationsByCode(long activityId) {
+        return getJdbiActivityValidation()._deleteByActivityId(activityId);
+    }
+
+    default int insertValidation(
+            ActivityValidationDto activityValidationDto, long userId, long umbrellaStudyId, long errorMessageTemplateRevisionId
+    ) {
+        if (activityValidationDto.getAffectedQuestionStableIds().isEmpty()) {
+            throw new DaoException("A activity validation must have affected fields, otherwise it doesn't make sense");
+        }
+        return getJdbiActivityValidation()._insert(activityValidationDto, userId, umbrellaStudyId, errorMessageTemplateRevisionId);
+    }
 
 }

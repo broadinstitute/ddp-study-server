@@ -33,7 +33,7 @@ public class JdbiStudyPdfMappingTest extends TxnAwareBaseTest {
 
             long revId = handle.attach(JdbiRevision.class).insertStart(Instant.now().toEpochMilli(), testData.getUserId(), "dummy pdf");
             PdfConfiguration config = new PdfConfiguration(
-                    new PdfConfigInfo(testData.getStudyId(), "dummy_pdf", "dummy-pdf"),
+                    new PdfConfigInfo(testData.getStudyId(), "dummy_pdf", "dummy-pdf", "dummy-display-name"),
                     new PdfVersion("v1-no-data-sources", revId));
             long expectedPdfConfigId = handle.attach(PdfDao.class).insertNewConfig(config);
 

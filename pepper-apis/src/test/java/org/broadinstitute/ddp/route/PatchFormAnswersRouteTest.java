@@ -4,8 +4,10 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.isEmptyOrNullString;
 import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
@@ -55,6 +57,7 @@ import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.PicklistAnswerDao;
 import org.broadinstitute.ddp.db.dao.QuestionDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceStatusDto;
+import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.json.AnswerResponse;
 import org.broadinstitute.ddp.json.AnswerSubmission;
@@ -123,6 +126,7 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
     private static String url;
 
     private static FormActivityDef activity;
+    private static ActivityVersionDto activityVersionDto;
     private static String instanceGuid;
     private static String boolStableId;
     private static String textStableId;
@@ -139,6 +143,7 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
     private static String compStabledId;
     private static String numericIntegerSid;
     private static String numericIntegerReqSid;
+    private static String numericIntegerWithMultipleRulesSid;
 
     private static String plistSingle_option1_sid;
     private static String plistSingle_option2_sid;
@@ -272,7 +277,13 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
                 .builder(NumericType.INTEGER, numericIntegerReqSid, newTemplate())
                 .addValidation(new RequiredRuleDef(null))
                 .build();
-        FormSectionDef numericSection = new FormSectionDef(null, TestUtil.wrapQuestions(n1, n2));
+        numericIntegerWithMultipleRulesSid = "PATCH_NUM_INT_W_MULT_RULES" + timestamp;
+        NumericQuestionDef n3 = NumericQuestionDef
+                .builder(NumericType.INTEGER, numericIntegerWithMultipleRulesSid, newTemplate())
+                .addValidation(new IntRangeRuleDef(null, 5L, 100L))
+                .addValidation(new IntRangeRuleDef(null, 200L, 500L))
+                .build();
+        FormSectionDef numericSection = new FormSectionDef(null, TestUtil.wrapQuestions(n1, n2, n3));
 
         String code = "PATCH_ANS_ACT_" + timestamp;
         activity = FormActivityDef.generalFormBuilder(code, "v1", testData.getStudyGuid())
@@ -285,7 +296,7 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
                         )
                 )
                 .build();
-        handle.attach(ActivityDao.class).insertActivity(activity, RevisionMetadata.now(testData.getUserId(),
+        activityVersionDto = handle.attach(ActivityDao.class).insertActivity(activity, RevisionMetadata.now(testData.getUserId(),
                 "add " + code));
         assertNotNull(activity.getActivityId());
     }
@@ -645,8 +656,9 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
         AnswerValidationError validationError = gson.fromJson(json, AnswerValidationError.class);
         assertNotNull(validationError);
         assertNotNull(validationError.getCode());
-        assertNotNull(validationError.getViolation());
-        assertEquals(compStabledId, validationError.getViolation().getStableId());
+        assertNotNull(validationError.getViolations().size() == 1);
+        assertNotNull(validationError.getViolations().get(0).getRules().size() == 1);
+        assertEquals(compStabledId, validationError.getViolations().get(0).getStableId());
     }
 
     @Test
@@ -1009,8 +1021,8 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
                 .then().assertThat()
                 .statusCode(422).contentType(ContentType.JSON)
                 .body("code", equalTo(ErrorCodes.ANSWER_VALIDATION))
-                .body("violation.stableId", equalTo(plistMultiSelectSid))
-                .body("violation.rule", equalTo(RuleType.REQUIRED.name()));
+                .body("violations[0].stableId", equalTo(plistMultiSelectSid))
+                .body("violations[0].rules[0]", equalTo(RuleType.REQUIRED.name()));
     }
 
     @Test
@@ -1260,8 +1272,8 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
                 .then().assertThat()
                 .statusCode(422).contentType(ContentType.JSON)
                 .body("code", equalTo(ErrorCodes.ANSWER_VALIDATION))
-                .body("violation.stableId", equalTo(dateSingleTextSid))
-                .body("violation.rule", equalTo(RuleType.YEAR_REQUIRED.name()));
+                .body("violations[0].stableId", equalTo(dateSingleTextSid))
+                .body("violations[0].rules[0]", equalTo(RuleType.YEAR_REQUIRED.name()));
     }
 
     @Test
@@ -1273,8 +1285,8 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
                 .then().assertThat()
                 .statusCode(422).contentType(ContentType.JSON)
                 .body("code", equalTo(ErrorCodes.ANSWER_VALIDATION))
-                .body("violation.stableId", equalTo(dateSingleTextSid))
-                .body("violation.rule", equalTo(RuleType.DATE_RANGE.name()));
+                .body("violations[0].stableId", equalTo(dateSingleTextSid))
+                .body("violations[0].rules[0]", equalTo(RuleType.DATE_RANGE.name()));
     }
 
     @Test
@@ -1453,8 +1465,8 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
                 .then().assertThat()
                 .statusCode(422).contentType(ContentType.JSON)
                 .body("code", equalTo(ErrorCodes.ANSWER_VALIDATION))
-                .body("violation.stableId", equalTo(numericIntegerSid))
-                .body("violation.rule", equalTo(RuleType.INT_RANGE.name()));
+                .body("violations[0].stableId", equalTo(numericIntegerSid))
+                .body("violations[0].rules[0]", equalTo(RuleType.INT_RANGE.name()));
     }
 
     @Test
@@ -1465,8 +1477,8 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
                 .then().assertThat()
                 .statusCode(422).contentType(ContentType.JSON)
                 .body("code", equalTo(ErrorCodes.ANSWER_VALIDATION))
-                .body("violation.stableId", equalTo(numericIntegerSid))
-                .body("violation.rule", equalTo(RuleType.INT_RANGE.name()));
+                .body("violations[0].stableId", equalTo(numericIntegerSid))
+                .body("violations[0].rules[0]", equalTo(RuleType.INT_RANGE.name()));
     }
 
     @Test
@@ -1477,8 +1489,21 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
                 .then().assertThat()
                 .statusCode(422).contentType(ContentType.JSON)
                 .body("code", equalTo(ErrorCodes.ANSWER_VALIDATION))
-                .body("violation.stableId", equalTo(numericIntegerReqSid))
-                .body("violation.rule", equalTo(RuleType.REQUIRED.name()));
+                .body("violations[0].stableId", equalTo(numericIntegerReqSid))
+                .body("violations[0].rules[0]", equalTo(RuleType.REQUIRED.name()));
+    }
+
+    @Test
+    public void testPath_whenMultipleRulesFail_allOfThemAreCommunicated() {
+        AnswerSubmission submission = new AnswerSubmission(numericIntegerWithMultipleRulesSid, null, gson.toJsonTree(1024));
+        PatchAnswerPayload data = new PatchAnswerPayload(List.of(submission));
+        givenAnswerPatchRequest(instanceGuid, data)
+                .then().assertThat()
+                .statusCode(422).contentType(ContentType.JSON)
+                .body("code", equalTo(ErrorCodes.ANSWER_VALIDATION))
+                .body("violations[0].stableId", equalTo(numericIntegerWithMultipleRulesSid))
+                .body("violations[0].rules[0]", equalTo(RuleType.INT_RANGE.name()))
+                .body("violations[0].rules[1]", equalTo(RuleType.INT_RANGE.name()));
     }
 
     /**
@@ -1562,6 +1587,63 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
         String json = EntityUtils.toString(response.getEntity());
         ApiError resp = gson.fromJson(json, ApiError.class);
         assertEquals(ErrorCodes.ACTIVITY_INSTANCE_IS_READONLY, resp.getCode());
+    }
+
+    @Test
+    public void given_oneTrueExpr_whenRouteIsCalled_thenItReturnsOk() {
+        try {
+            String answerGuid = TransactionWrapper.withTxn(handle -> {
+                handle.attach(JdbiActivity.class).insertValidation(
+                        RouteTestUtil.createActivityValidationDto(
+                            activity, "false", "Should never fail", List.of(textStableId)
+                        ),
+                        testData.getUserId(),
+                        testData.getStudyId(),
+                        activityVersionDto.getRevId()
+                );
+                TextAnswer answer = new TextAnswer(null, textStableId, null, "old value");
+                return createAnswerAndDeferCleanup(handle, answer);
+            });
+            PatchAnswerPayload data = new PatchAnswerPayload();
+            data.addSubmission(new AnswerSubmission(textStableId, answerGuid, new JsonPrimitive("hi there")));
+            givenAnswerPatchRequest(instanceGuid, data)
+                .then().assertThat()
+                .statusCode(200).contentType(ContentType.JSON);
+        } finally {
+            TransactionWrapper.useTxn(handle -> {
+                handle.attach(JdbiActivity.class).deleteValidationsByCode(activity.getActivityId());
+            });
+        }
+    }
+
+    @Test
+    public void given_oneTrueExpr_whenRouteIsCalled_thenItReturnsOkAndRespContainsOneErrorPlusOneAnswer() {
+        try {
+            String answerGuid = TransactionWrapper.withTxn(handle -> {
+                handle.attach(JdbiActivity.class).insertValidation(
+                        RouteTestUtil.createActivityValidationDto(
+                                activity, "true", "Should always fail", List.of(textStableId)
+                        ),
+                        testData.getUserId(),
+                        testData.getStudyId(),
+                        activityVersionDto.getRevId()
+                );
+                TextAnswer answer = new TextAnswer(null, textStableId, null, "old value");
+                return createAnswerAndDeferCleanup(handle, answer);
+            });
+            PatchAnswerPayload data = new PatchAnswerPayload();
+            data.addSubmission(new AnswerSubmission(textStableId, answerGuid, new JsonPrimitive("hi there")));
+            givenAnswerPatchRequest(instanceGuid, data)
+                .then().assertThat()
+                .statusCode(200).contentType(ContentType.JSON)
+                .body("validationFailures", is(notNullValue()))
+                .body("validationFailures.size()", equalTo(1))
+                .body("answers.size()", equalTo(1));
+        } finally {
+            TransactionWrapper.useTxn(handle -> {
+                handle.attach(JdbiActivity.class).deleteValidationsByCode(activity.getActivityId());
+            });
+        }
     }
 
     private String extractAnswerGuid(HttpResponse response) throws IOException {

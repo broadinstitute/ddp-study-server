@@ -1,14 +1,19 @@
 package org.broadinstitute.ddp.db.dao;
 
 import java.time.Instant;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
+import org.broadinstitute.ddp.db.dto.UserProfileDto;
 import org.broadinstitute.ddp.model.user.User;
 import org.jdbi.v3.core.Handle;
+import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
+import org.jdbi.v3.core.result.RowView;
 import org.jdbi.v3.sqlobject.CreateSqlObject;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
@@ -16,6 +21,7 @@ import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
+import org.jdbi.v3.sqlobject.statement.UseRowReducer;
 import org.jdbi.v3.stringtemplate4.UseStringTemplateSqlLocator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -94,6 +100,14 @@ public interface UserDao extends SqlObject {
     }
 
     @UseStringTemplateSqlLocator
+    @SqlQuery("queryUsersAndProfilesByGuids")
+    @RegisterConstructorMapper(value = User.class, prefix = "u")
+    @RegisterConstructorMapper(value = UserProfileDto.class, prefix = "p")
+    @UseRowReducer(UserWithProfileReducer.class)
+    Stream<User> findUsersAndProfilesByGuids(
+            @BindList(value = "userGuids", onEmpty = BindList.EmptyHandling.NULL) Set<String> userGuids);
+
+    @UseStringTemplateSqlLocator
     @SqlUpdate("deleteAllTempUserRelatedDataByUserIds")
     int _deleteAllTempUserRelatedDataByUserIds(@BindList(value = "userIds", onEmpty = BindList.EmptyHandling.NULL) Set<Long> userIds);
 
@@ -129,5 +143,19 @@ public interface UserDao extends SqlObject {
         }
 
         return numDeleted;
+    }
+
+    class UserWithProfileReducer implements LinkedHashMapRowReducer<Long, User> {
+        @Override
+        public void accumulate(Map<Long, User> container, RowView row) {
+            long userId = row.getColumn("u_user_id", Long.class);
+            if (!container.containsKey(userId)) {
+                User user = row.getRow(User.class);
+                if (row.getColumn("p_user_id", Long.class) != null) {
+                    user.setProfile(row.getRow(UserProfileDto.class));
+                }
+                container.put(userId, user);
+            }
+        }
     }
 }

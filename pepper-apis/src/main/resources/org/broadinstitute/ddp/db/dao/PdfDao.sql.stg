@@ -5,7 +5,8 @@ select pdf.pdf_document_configuration_id,
        s.umbrella_study_id as study_id,
        s.guid              as study_guid,
        pdf.configuration_name,
-       pdf.file_name
+       pdf.file_name,
+       pdf.display_name
   from pdf_document_configuration as pdf
   join umbrella_study as s on s.umbrella_study_id = pdf.umbrella_study_id
 >>
@@ -19,6 +20,17 @@ queryDocumentConfigInfoByStudyIdAndName() ::= <<
 <select_all_config_info()>
 where s.umbrella_study_id = :studyId
   and pdf.configuration_name = :name
+>>
+
+queryDocumentConfigInfoByStudyGuidAndName() ::= <<
+<select_all_config_info()>
+where s.guid = :studyGuid
+  and pdf.configuration_name = :name
+>>
+
+queryDocumentConfigInfoByStudyGuid() ::= <<
+<select_all_config_info()>
+where s.guid = :studyGuid
 >>
 
 select_all_versions_with_data_sources() ::= <<
@@ -68,6 +80,8 @@ select base.pdf_base_template_id    as template_id,
        taddr.pdf_base_template_id   as m_template_id,
        taddr.first_name_placeholder as m_first_name_placeholder,
        taddr.last_name_placeholder  as m_last_name_placeholder,
+       taddr.proxy_first_name_placeholder as m_proxy_first_name_placeholder,
+       taddr.proxy_last_name_placeholder  as m_proxy_last_name_placeholder,
        taddr.street_placeholder     as m_street_placeholder,
        taddr.city_placeholder       as m_city_placeholder,
        taddr.state_placeholder      as m_state_placeholder,

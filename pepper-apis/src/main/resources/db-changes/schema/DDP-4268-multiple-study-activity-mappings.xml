@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="20191202-alter-study-activity-mapping-pk">
+        <!-- need to drop FK first since PK index is used for FK -->
+        <dropForeignKeyConstraint baseTableName="study_activity_mapping" constraintName="dsm_activity_mapping_umbrella_study_id_fk"/>
+
+        <dropPrimaryKey tableName="study_activity_mapping"/>
+        <addPrimaryKey tableName="study_activity_mapping"
+                       columnNames="umbrella_study_id, activity_mapping_type_id, study_activity_id"
+                       constraintName="study_activity_mapping_pk"/>
+
+        <addForeignKeyConstraint constraintName="study_activity_mapping_study_fk"
+                                 baseTableName="study_activity_mapping" baseColumnNames="umbrella_study_id"
+                                 referencedTableName="umbrella_study" referencedColumnNames="umbrella_study_id"/>
+    </changeSet>
+
+</databaseChangeLog>

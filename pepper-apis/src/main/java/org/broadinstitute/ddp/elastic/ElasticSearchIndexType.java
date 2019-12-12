@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.elastic;
 public enum ElasticSearchIndexType {
     PARTICIPANTS("participants"),
     PARTICIPANTS_STRUCTURED("participants_structured"),
+    USERS("users"),
     DRUG_LIST("drug_list"),
     INSTITUTION_LIST("institution_list"),
     ACTIVITY_DEFINITION("activity_definition");

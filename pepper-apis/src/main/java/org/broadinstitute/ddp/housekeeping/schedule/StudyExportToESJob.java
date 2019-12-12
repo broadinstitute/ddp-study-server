@@ -115,6 +115,13 @@ public class StudyExportToESJob implements Job {
                         () -> exporter.exportParticipantsToElasticsearch(handle, studyDto, true)
                 );
                 LOG.info("Elasticsearch export (study-centric)'{}' completed in {}ms", getKey(), elapsed);
+
+                // Export a "study-centric users" document to ES
+                LOG.info("Inside the StudyExportToES job '{}'. Doing the study-centric users export ", getKey());
+                elapsed = estimateExecutionTime(
+                        () -> exporter.exportUsersToElasticsearch(handle, studyDto, null)
+                );
+                LOG.info("Elasticsearch export (study-centric)'{}' completed in {}ms", getKey(), elapsed);
             });
         } catch (Exception e) {
             LOG.error("Error while executing elasticsearch export job '{}' ", getKey(), e);

@@ -1,8 +1,12 @@
 package org.broadinstitute.ddp.route;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
@@ -10,6 +14,7 @@ import org.broadinstitute.ddp.content.ContentStyle;
 import org.broadinstitute.ddp.db.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
+import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
@@ -17,14 +22,29 @@ import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.activity.instance.ActivityInstance;
+import org.broadinstitute.ddp.model.activity.instance.ConditionalBlock;
+import org.broadinstitute.ddp.model.activity.instance.FormBlock;
+import org.broadinstitute.ddp.model.activity.instance.FormInstance;
+import org.broadinstitute.ddp.model.activity.instance.FormSection;
+import org.broadinstitute.ddp.model.activity.instance.GroupBlock;
+import org.broadinstitute.ddp.model.activity.instance.QuestionBlock;
+import org.broadinstitute.ddp.model.activity.instance.question.Question;
+import org.broadinstitute.ddp.model.activity.instance.validation.ActivityValidationFailure;
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
+import org.broadinstitute.ddp.model.activity.types.BlockType;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
+import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.security.DDPAuth;
 import org.broadinstitute.ddp.service.ActivityInstanceService;
+import org.broadinstitute.ddp.service.ActivityValidationService;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
+
+import org.jdbi.v3.core.Handle;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import spark.Request;
 import spark.Response;
 import spark.Route;
@@ -35,11 +55,20 @@ public class GetActivityInstanceRoute implements Route {
     private static final String DEFAULT_ISO_LANGUAGE_CODE = "en";
 
     private ActivityInstanceService actInstService;
+    private ActivityValidationService actValidationService;
     private ActivityInstanceDao activityInstanceDao;
+    private PexInterpreter interpreter;
 
-    public GetActivityInstanceRoute(ActivityInstanceService actInstService, ActivityInstanceDao activityInstanceDao) {
+    public GetActivityInstanceRoute(
+            ActivityInstanceService actInstService,
+            ActivityValidationService actValidationService,
+            ActivityInstanceDao activityInstanceDao,
+            PexInterpreter interpreter
+    ) {
         this.actInstService = actInstService;
+        this.actValidationService = actValidationService;
         this.activityInstanceDao = activityInstanceDao;
+        this.interpreter = interpreter;
     }
 
     @Override
@@ -93,11 +122,13 @@ public class GetActivityInstanceRoute implements Route {
                     // To-do: change this to just "if (enrollmentStatus.get() == EnrollmentStatusType.EXITED_BEFORE_ENROLLMENT)) {...}"
                     // when every user registered in the system will become enrolled automatically
                     // When it is implemented, the check for the enrollment status presence is not needed
-                    if (enrollmentStatus.isPresent() && EnrollmentStatusType.getAllExitedStates().contains(enrollmentStatus.get())) {
+                    if (enrollmentStatus.isPresent() && enrollmentStatus.get().shouldMarkActivitiesReadOnly()) {
                         activityInstance.makeReadonly();
                     }
                     // end To-do
-                    return activityInstance;
+                    JdbiLanguageCode jdbiLanguageCode = handle.attach(JdbiLanguageCode.class);
+                    Long languageCodeId = jdbiLanguageCode.getLanguageCodeId(isoLangCode);
+                    return validateActivityInstance(handle, activityInstance, userGuid, languageCodeId);
                 } else {
                     LOG.info("Failed to find a translation to the '{}' language code for the activity instance "
                             + "with GUID {}, keep on searching", isoLangCode, activityInstanceGuid);
@@ -106,5 +137,90 @@ public class GetActivityInstanceRoute implements Route {
 
             throw new DDPException("Unable to find activity instance " + activityInstanceGuid + " of type " + activityType);
         });
+    }
+
+    private ActivityInstance validateActivityInstance(
+            Handle handle, ActivityInstance activityInstance, String userGuid, long languageCodeId
+    ) {
+        List<ActivityValidationFailure> validationFailures = actValidationService.validate(
+                handle, interpreter, userGuid, activityInstance.getGuid(), activityInstance.getActivityId(), languageCodeId
+        );
+        if (validationFailures.isEmpty()) {
+            return activityInstance;
+        }
+        String msg = "Activity validation failed";
+        List<String> validationErrorSummaries = validationFailures
+                .stream().map(failure -> failure.getErrorMessage()).collect(Collectors.toList());
+        LOG.info(msg + ", reasons: {}", validationErrorSummaries);
+        ActivityInstance enrichedInstance = enrichFormQuestionsWithActivityValidationFailures(
+                (FormInstance)activityInstance,
+                validationFailures
+        );
+        return enrichedInstance;
+    }
+
+    private FormInstance enrichFormQuestionsWithActivityValidationFailures(
+            FormInstance form,
+            List<ActivityValidationFailure> failures
+    ) {
+        Map<String, List<ActivityValidationFailure>> failuresByQuestionStableId = mapValidationFailuresToQuestionStableId(failures);
+        List<Question> allQuestions = new ArrayList<>();
+        for (FormSection formSection : form.getAllSections()) {
+            for (FormBlock formBlock : formSection.getBlocks()) {
+                // Step inside the group block and get questions from all nested question blocks
+                // Link each nested question to the grouping block
+                if (formBlock.getBlockType() == BlockType.GROUP) {
+                    GroupBlock groupBlock = (GroupBlock) formBlock;
+                    List<FormBlock> nestedBlocks = groupBlock.getNested();
+                    for (FormBlock nestedBlock : nestedBlocks) {
+                        if (nestedBlock.getBlockType() == BlockType.QUESTION) {
+                            QuestionBlock questionBlock = (QuestionBlock) nestedBlock;
+                            allQuestions.add(questionBlock.getQuestion());
+                        }
+                    }
+                } else if (formBlock.getBlockType() == BlockType.CONDITIONAL) {
+                    ConditionalBlock conditionalBlock = (ConditionalBlock) formBlock;
+                    Question controlQuestion = conditionalBlock.getControl();
+                    // Adding a control question itself
+                    allQuestions.add(controlQuestion);
+                    // Adding nested questions and linking them to the control question
+                    for (FormBlock nestedBlock : conditionalBlock.getNested()) {
+                        if (nestedBlock.getBlockType() == BlockType.QUESTION) {
+                            QuestionBlock questionBlock = (QuestionBlock) nestedBlock;
+                            allQuestions.add(questionBlock.getQuestion());
+                        }
+                    }
+                } else if (formBlock.getBlockType() == BlockType.QUESTION) {
+                    QuestionBlock questionBlock = (QuestionBlock) formBlock;
+                    allQuestions.add(questionBlock.getQuestion());
+                }
+            }
+        }
+        allQuestions.forEach(
+                question -> {
+                    String stableId = question.getStableId();
+                    if (failuresByQuestionStableId.containsKey(stableId)) {
+                            question.setActivityValidationFailures(
+                                    failuresByQuestionStableId.get(question.getStableId())
+                            );
+                    }
+                }
+        );
+        return form;
+    }
+
+    private Map<String, List<ActivityValidationFailure>> mapValidationFailuresToQuestionStableId(List<ActivityValidationFailure> failures) {
+        Map<String, List<ActivityValidationFailure>> failuresByQuestionStableId = new HashMap<>();
+        for (ActivityValidationFailure failure: failures) {
+            for (String questionStableId: failure.getAffectedQuestionStableIds()) {
+                List<ActivityValidationFailure> failuresForQuestion = failuresByQuestionStableId.get(questionStableId);
+                if (failuresForQuestion == null) {
+                    failuresForQuestion = new ArrayList<>();
+                    failuresByQuestionStableId.put(questionStableId, failuresForQuestion);
+                }
+                failuresForQuestion.add(failure);
+            }
+        }
+        return failuresByQuestionStableId;
     }
 }

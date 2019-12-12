@@ -89,7 +89,8 @@ public class UserAuthCheckFilter implements Filter {
             canAccess = ddpAuth.canAccessGovernedUsers(requestedUserGuid);
         } else if (pathMatcher.isAdminRoute(path)) {
             canAccess = ddpAuth.isAdmin();
-        } else if (pathMatcher.isAutocompleteRoute(path) || pathMatcher.isDrugSuggestionRoute(path)) {
+        } else if (pathMatcher.isAutocompleteRoute(path)
+                || pathMatcher.isDrugSuggestionRoute(path) || pathMatcher.isCancerSuggestionRoute(path)) {
             canAccess = ddpAuth.isActive();
         } else {
             ResponseUtil.halt400ErrorResponse(response, ErrorCodes.AUTH_CANNOT_BE_DETERMINED);

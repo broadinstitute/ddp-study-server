@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.export.json.structured;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import com.google.gson.annotations.SerializedName;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
@@ -17,9 +18,18 @@ public class DsmComputedRecord {
     private boolean hasConsentedToBloodDraw;
     @SerializedName("hasConsentedToTissueSample")
     private boolean hasConsentedToTissueSample;
+    @SerializedName("pdfs")
+    private List<PdfConfigRecord> pdfConfigRecords;
 
     private transient DateValue birthDate;
     private transient DateValue diagnosisDate;
+
+    public DsmComputedRecord(DateValue birthDate, DateValue diagnosisDate,
+                             boolean hasConsentedToBloodDraw, boolean hasConsentedToTissueSample,
+                             List<PdfConfigRecord> pdfConfigRecords) {
+        this(birthDate, diagnosisDate, hasConsentedToBloodDraw, hasConsentedToTissueSample);
+        this.pdfConfigRecords = pdfConfigRecords;
+    }
 
     public DsmComputedRecord(DateValue birthDate, DateValue diagnosisDate,
                              boolean hasConsentedToBloodDraw, boolean hasConsentedToTissueSample) {

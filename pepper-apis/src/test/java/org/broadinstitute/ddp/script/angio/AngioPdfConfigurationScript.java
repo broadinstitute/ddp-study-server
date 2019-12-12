@@ -75,6 +75,8 @@ public class AngioPdfConfigurationScript extends TxnAwareBaseTest {
                 IOUtils.toByteArray(new FileInputStream(AngioPdfConstants.PdfFileLocations.RELEASE_FIRST_PAGE)),
                 AngioPdfConstants.ReleaseFirstPageFields.FIRST_NAME,
                 AngioPdfConstants.ReleaseFirstPageFields.LAST_NAME,
+                AngioPdfConstants.ReleaseFirstPageFields.PROXY_FIRST_NAME,
+                AngioPdfConstants.ReleaseFirstPageFields.PROXY_LAST_NAME,
                 AngioPdfConstants.ReleaseFirstPageFields.MAILING_ADDRESS_STREET,
                 AngioPdfConstants.ReleaseFirstPageFields.MAILING_ADDRESS_CITY,
                 AngioPdfConstants.ReleaseFirstPageFields.MAILING_ADDRESS_STATE,
@@ -114,7 +116,7 @@ public class AngioPdfConfigurationScript extends TxnAwareBaseTest {
                 consentActivityId, QuestionType.DATE, AngioConsentActivityCreationScript.CONSENT_BIRTHDATE_STABLE_ID));
         lastPage.addSubstitution(new ActivityDateSubstitution(AngioPdfConstants.ReleaseLastPageFields.DATE, consentActivityId));
 
-        PdfConfigInfo info = new PdfConfigInfo(studyDto.getId(), configName, fileName);
+        PdfConfigInfo info = new PdfConfigInfo(studyDto.getId(), configName, fileName, "Angio release pdf");
         PdfVersion version = new PdfVersion("v1", revId);
         version.addDataSource(new PdfDataSource(PdfDataSourceType.PARTICIPANT));
         version.addDataSource(new PdfActivityDataSource(consentActivityId, consentVersionId));

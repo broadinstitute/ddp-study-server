@@ -144,6 +144,9 @@ public class DataSyncJob implements Job {
             if (studyDto.isDataExportEnabled()) {
                 LOG.info("Syncing data for study {}", studyDto.getGuid());
                 exporter.exportParticipantsToElasticsearchByIds(handle, studyDto, userIds, true);
+
+                //data sync to users index
+                exporter.exportUsersToElasticsearch(handle, studyDto, userIds);
                 distinctUsers.addAll(userIds);
             } else {
                 LOG.warn("Study {} does not have data export enabled, skipping data sync", studyDto.getGuid());

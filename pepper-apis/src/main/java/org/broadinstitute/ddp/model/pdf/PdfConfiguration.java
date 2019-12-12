@@ -43,6 +43,10 @@ public class PdfConfiguration {
         return info.getFilename();
     }
 
+    public String getDisplayName() {
+        return info.getDisplayName();
+    }
+
     public PdfConfigInfo getInfo() {
         return info;
     }

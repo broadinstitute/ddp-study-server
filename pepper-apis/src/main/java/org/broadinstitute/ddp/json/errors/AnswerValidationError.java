@@ -1,52 +1,56 @@
 package org.broadinstitute.ddp.json.errors;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import com.google.gson.annotations.SerializedName;
 import org.broadinstitute.ddp.constants.ErrorCodes;
+import org.broadinstitute.ddp.model.activity.instance.validation.Rule;
 import org.broadinstitute.ddp.model.activity.types.RuleType;
 
 public class AnswerValidationError extends ApiError {
 
-    @SerializedName("violation")
-    private Violation violation;
+    @SerializedName("violations")
+    private List<Violation> violations = new ArrayList<>();
 
-    public AnswerValidationError(String message, String stableId, RuleType rule,
-                                 String violationMessage) {
+    public AnswerValidationError(String message, Map<String, List<Rule>> failedRulesByQuestion) {
         super(ErrorCodes.ANSWER_VALIDATION, message);
-        this.violation = new Violation(stableId, rule, violationMessage);
+        for (Map.Entry<String, List<Rule>> entry: failedRulesByQuestion.entrySet()) {
+            String questionStableId = entry.getKey();
+            List<Rule> failedRules = entry.getValue();
+            List<RuleType> failedRulesTypes = failedRules.stream().map(rule -> rule.getRuleType()).collect(Collectors.toList());
+            violations.add(new Violation(questionStableId, failedRulesTypes));
+        }
     }
 
-    public Violation getViolation() {
-        return violation;
+    public List<Violation> getViolations() {
+        return violations;
     }
 
     public static class Violation {
 
         @SerializedName("stableId")
         private String stableId;
-        @SerializedName("rule")
-        private RuleType rule;
-        @SerializedName("message")
-        private String message;
+        @SerializedName("rules")
+        private List<RuleType> rules;
 
         /**
-         * Instantiate Violateion object.
+         * Instantiate Violation object.
          */
-        public Violation(String stableId, RuleType rule, String message) {
+        public Violation(String stableId, List<RuleType> rules) {
             this.stableId = stableId;
-            this.rule = rule;
-            this.message = message;
+            this.rules = rules;
         }
 
         public String getStableId() {
             return stableId;
         }
 
-        public RuleType getRule() {
-            return rule;
+        public List<RuleType> getRules() {
+            return rules;
         }
 
-        public String getMessage() {
-            return message;
-        }
     }
 }

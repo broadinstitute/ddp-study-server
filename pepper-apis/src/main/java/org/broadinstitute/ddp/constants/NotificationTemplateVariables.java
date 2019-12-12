@@ -7,7 +7,6 @@ package org.broadinstitute.ddp.constants;
  */
 public class NotificationTemplateVariables {
 
-
     /**
      * First name of the participant
      */
@@ -33,6 +32,15 @@ public class NotificationTemplateVariables {
      */
     public static final String DDP_PARTICIPANT_EXIT_NOTES = "-ddp.participant.exitNotes-";
 
+    /**
+     * First name of the proxy who is receiving the email notification on behalf of the participant
+     */
+    public static final String DDP_PROXY_FIRST_NAME = "-ddp.proxy.firstName-";
+
+    /**
+     * Last name of the proxy who is receiving the email notification on behalf of the participant
+     */
+    public static final String DDP_PROXY_LAST_NAME = "-ddp.proxy.lastName-";
 
     /**
      * An activity instance guid

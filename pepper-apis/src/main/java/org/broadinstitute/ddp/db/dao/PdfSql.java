@@ -16,15 +16,16 @@ import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 public interface PdfSql extends SqlObject {
 
     @GetGeneratedKeys
-    @SqlUpdate("insert into pdf_document_configuration (umbrella_study_id, configuration_name, file_name)"
-            + " values (:studyId, :configName, :filename)")
+    @SqlUpdate("insert into pdf_document_configuration (umbrella_study_id, configuration_name, file_name, display_name)"
+            + " values (:studyId, :configName, :filename, :displayName)")
     long insertConfigInfo(
             @Bind("studyId") long studyId,
             @Bind("configName") String configurationName,
-            @Bind("filename") String filename);
+            @Bind("filename") String filename,
+            @Bind("displayName") String displayName);
 
     default long insertConfigInfo(PdfConfigInfo info) {
-        return insertConfigInfo(info.getStudyId(), info.getConfigName(), info.getFilename());
+        return insertConfigInfo(info.getStudyId(), info.getConfigName(), info.getFilename(), info.getDisplayName());
     }
 
     @GetGeneratedKeys
@@ -55,15 +56,19 @@ public interface PdfSql extends SqlObject {
 
     @SqlUpdate("insert into pdf_mailing_address_template ("
             + "        pdf_base_template_id, first_name_placeholder, last_name_placeholder,"
+            + "        proxy_first_name_placeholder, proxy_last_name_placeholder,"
             + "        street_placeholder, city_placeholder, state_placeholder,"
             + "        zip_placeholder, country_placeholder, phone_placeholder)"
             + " values (:templateId, :firstNamePlaceholder, :lastNamePlaceholder,"
+            + "        :proxyFirstNamePlaceholder, :proxyLastNamePlaceholder,"
             + "        :streetPlaceholder, :cityPlaceholder, :statePlaceholder,"
             + "        :zipPlaceholder, :countryPlaceholder, :phonePlaceholder)")
     int insertMailingAddressTemplate(
             @Bind("templateId") long templateId,
             @Bind("firstNamePlaceholder") String firstNamePlaceholder,
             @Bind("lastNamePlaceholder") String lastNamePlaceholder,
+            @Bind("proxyFirstNamePlaceholder") String proxyFirstNamePlaceholder,
+            @Bind("proxyLastNamePlaceholder") String proxyLastNamePlaceholder,
             @Bind("streetPlaceholder") String streetPlaceholder,
             @Bind("cityPlaceholder") String cityPlaceholder,
             @Bind("statePlaceholder") String statePlaceholder,
@@ -76,6 +81,8 @@ public interface PdfSql extends SqlObject {
                 template.getId(),
                 template.getFirstNamePlaceholder(),
                 template.getLastNamePlaceholder(),
+                template.getProxyFirstNamePlaceholder(),
+                template.getProxyLastNamePlaceholder(),
                 template.getStreetPlaceholder(),
                 template.getCityPlaceholder(),
                 template.getStatePlaceholder(),

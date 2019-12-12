@@ -1,22 +1,33 @@
 package org.broadinstitute.ddp.service;
 
+import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
+import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivityMapping;
 import org.broadinstitute.ddp.json.consent.ConsentSummary;
+import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
 import org.broadinstitute.ddp.model.activity.instance.ConsentElection;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.activity.types.ActivityMappingType;
 import org.broadinstitute.ddp.model.dsm.StudyActivityMapping;
-
 import org.jdbi.v3.core.Handle;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Fetches the information related to the user medical record
  */
 public class MedicalRecordService {
+
+    private static final Logger LOG = LoggerFactory.getLogger(MedicalRecordService.class);
 
     private ConsentService consentService;
 
@@ -24,115 +35,133 @@ public class MedicalRecordService {
         this.consentService = consentService;
     }
 
-    public Optional<DateValue> getDateOfDiagnosis(Handle handle, String participantGuid, String studyGuid) {
-        JdbiActivityMapping jdbiActivityMapping = handle.attach(JdbiActivityMapping.class);
-        return Optional.ofNullable(getDateOfDiagnosisStudyActivityMapping(jdbiActivityMapping, studyGuid)).flatMap(
-                dodMapping -> {
-                    Optional<DateValue> dateOfDiagnosis = handle.attach(AnswerDao.class).findLatestDateAnswerByQuestionStableIdAndUserGuid(
-                            dodMapping.getSubActivityStableId(),
-                            participantGuid,
-                            studyGuid
-                    );
-                    return dateOfDiagnosis;
-                }
-        );
+    /**
+     * Find value for "date of diagnosis". Looks through all submitted activity instances mapped by the study, sorted by latest
+     * first-completion date, and looks for the first non-null date value.
+     *
+     * @param handle            the database handle
+     * @param participantUserId the participant user id
+     * @param studyId           the study id
+     * @return first non-null date-of-diagnosis value, empty if none exists
+     */
+    public Optional<DateValue> getDateOfDiagnosis(Handle handle, long participantUserId, long studyId) {
+        AnswerDao answerDao = handle.attach(AnswerDao.class);
+
+        Map<Long, StudyActivityMapping> mappings = handle.attach(JdbiActivityMapping.class)
+                .getActivityMappingForStudyAndActivityType(studyId, ActivityMappingType.DATE_OF_DIAGNOSIS)
+                .collect(Collectors.toMap(StudyActivityMapping::getStudyActivityId, Function.identity()));
+
+        return handle.attach(ActivityInstanceDao.class)
+                .findBaseResponsesByStudyAndUserIds(studyId, Set.of(participantUserId), true, mappings.keySet())
+                .filter(instance -> instance.getFirstCompletedAt() != null)
+                .sorted(Comparator.comparing(ActivityResponse::getFirstCompletedAt).reversed())
+                .flatMap(instance -> answerDao
+                        .findLatestDateAnswerByQuestionStableIdAndUserId(
+                                mappings.get(instance.getActivityId()).getSubActivityStableId(), participantUserId, studyId)
+                        .stream()
+                ).findFirst();
     }
 
-    public Optional<DateValue> getDateOfBirth(Handle handle, String participantGuid, String studyGuid) {
-        JdbiActivityMapping jdbiActivityMapping = handle.attach(JdbiActivityMapping.class);
-        return Optional.ofNullable(getDateOfBirthStudyActivityMapping(jdbiActivityMapping, studyGuid)).flatMap(
-                dobMapping -> {
-                    Optional<DateValue> dateOfBirth = handle.attach(AnswerDao.class).findLatestDateAnswerByQuestionStableIdAndUserGuid(
-                            dobMapping.getSubActivityStableId(),
-                            participantGuid,
-                            studyGuid
-                    );
-                    return dateOfBirth;
-                }
-        );
+    /**
+     * Find value for "date of birth". Looks through all submitted activity instances mapped by the study, sorted by latest first-completion
+     * date, and looks for the first non-null date value.
+     *
+     * @param handle            the database handle
+     * @param participantUserId the participant user id
+     * @param studyId           the study id
+     * @return first non-null date-of-birth value, empty if none exists
+     */
+    public Optional<DateValue> getDateOfBirth(Handle handle, long participantUserId, long studyId) {
+        AnswerDao answerDao = handle.attach(AnswerDao.class);
+
+        Map<Long, StudyActivityMapping> mappings = handle.attach(JdbiActivityMapping.class)
+                .getActivityMappingForStudyAndActivityType(studyId, ActivityMappingType.DATE_OF_BIRTH)
+                .collect(Collectors.toMap(StudyActivityMapping::getStudyActivityId, Function.identity()));
+
+        return handle.attach(ActivityInstanceDao.class)
+                .findBaseResponsesByStudyAndUserIds(studyId, Set.of(participantUserId), true, mappings.keySet())
+                .filter(instance -> instance.getFirstCompletedAt() != null)
+                .sorted(Comparator.comparing(ActivityResponse::getFirstCompletedAt).reversed())
+                .flatMap(instance -> answerDao
+                        .findLatestDateAnswerByQuestionStableIdAndUserId(
+                                mappings.get(instance.getActivityId()).getSubActivityStableId(), participantUserId, studyId)
+                        .stream()
+                ).findFirst();
     }
 
-    public ParticipantConsents fetchBloodAndTissueConsents(Handle handle, String participantGuid, String studyGuid) {
-        List<ConsentSummary> consentSummaries = consentService.getAllConsentSummariesByUserGuid(handle, participantGuid, studyGuid);
+    /**
+     * Find consent election statuses for blood/tissue. Looks for the latest submitted activity instance for each election mapping and
+     * determines its election status. Defaults to `false` when none exists or couldn't determine status.
+     *
+     * @param handle            the database handle
+     * @param participantUserId the participant user id
+     * @param participantGuid   the participant user guid
+     * @param studyId           the study id
+     * @param studyGuid         the study guid
+     * @return the election statuses
+     */
+    public ParticipantConsents fetchBloodAndTissueConsents(Handle handle, long participantUserId, String participantGuid,
+                                                           long studyId, String studyGuid) {
         JdbiActivityMapping jdbiActivityMapping = handle.attach(JdbiActivityMapping.class);
-        StudyActivityMapping bloodStudyActivityMapping = getBloodStudyConsentMapping(jdbiActivityMapping, studyGuid);
-        StudyActivityMapping tissueStudyActivityMapping = getTissueStudyConsentMapping(jdbiActivityMapping, studyGuid);
+        Map<Long, StudyActivityMapping> bloodMappings = jdbiActivityMapping
+                .getActivityMappingForStudyAndActivityType(studyId, ActivityMappingType.BLOOD)
+                .collect(Collectors.toMap(StudyActivityMapping::getStudyActivityId, Function.identity()));
+        Map<Long, StudyActivityMapping> tissueMappings = jdbiActivityMapping
+                .getActivityMappingForStudyAndActivityType(studyId, ActivityMappingType.TISSUE)
+                .collect(Collectors.toMap(StudyActivityMapping::getStudyActivityId, Function.identity()));
 
-        long activityId = 0L;
-        if (bloodStudyActivityMapping != null) {
-            activityId = bloodStudyActivityMapping.getStudyActivityId();
-        } else if (tissueStudyActivityMapping != null) {
-            activityId = tissueStudyActivityMapping.getStudyActivityId();
-        }
+        Set<Long> activityIds = new HashSet<>();
+        activityIds.addAll(bloodMappings.keySet());
+        activityIds.addAll(tissueMappings.keySet());
 
-        boolean hasConsentedToBloodDraw = false;
-        boolean hasConsentedToTissueSample = false;
-        for (ConsentSummary summary : consentSummaries) {
-            if (summary.getActivityId() == activityId) {
-                for (ConsentElection election : summary.getElections()) {
-                    boolean hasElection = election.getSelected() != null ? election.getSelected() : false;
-                    if (election.getStableId().equals(bloodStudyActivityMapping.getSubActivityStableId())) {
-                        hasConsentedToBloodDraw = hasElection;
-                    } else if (election.getStableId().equals(tissueStudyActivityMapping.getSubActivityStableId())) {
-                        hasConsentedToTissueSample = hasElection;
-                    }
-                }
+        List<ActivityResponse> sortedSubmittedInstances = handle.attach(ActivityInstanceDao.class)
+                .findBaseResponsesByStudyAndUserIds(studyId, Set.of(participantUserId), true, activityIds)
+                .filter(instance -> instance.getFirstCompletedAt() != null)
+                .sorted(Comparator.comparing(ActivityResponse::getFirstCompletedAt).reversed())
+                .collect(Collectors.toList());
 
-            }
-        }
+        boolean hasConsentedToBloodDraw = determineElectionStatus(handle, participantGuid, studyGuid,
+                ActivityMappingType.BLOOD, bloodMappings, sortedSubmittedInstances);
+        boolean hasConsentedToTissueSample = determineElectionStatus(handle, participantGuid, studyGuid,
+                ActivityMappingType.TISSUE, tissueMappings, sortedSubmittedInstances);
+
         return new ParticipantConsents(hasConsentedToBloodDraw, hasConsentedToTissueSample);
     }
 
-    /**
-     * Queries the activity mapping table to figure out which Activity Id and Question Stable Id map to Date of Diagnosis
-     *
-     * @param jdbiActivityMapping dao for retrieving consent mappings
-     * @param studyGuid study we are looking date of diagnosis up for
-     * @return StudyActivityMapping for Date of Diagnosis for this study
-     */
-    private StudyActivityMapping getDateOfDiagnosisStudyActivityMapping(JdbiActivityMapping jdbiActivityMapping, String studyGuid) {
-        return jdbiActivityMapping
-                .getActivityMappingForStudyAndActivityType(studyGuid, ActivityMappingType.DATE_OF_DIAGNOSIS.toString())
+    private boolean determineElectionStatus(Handle handle, String participantGuid, String studyGuid, ActivityMappingType mappingType,
+                                            Map<Long, StudyActivityMapping> mappings, List<ActivityResponse> instances) {
+        ActivityResponse instance = instances.stream()
+                .filter(inst -> mappings.containsKey(inst.getActivityId()))
+                .findFirst()
                 .orElse(null);
-    }
+        if (instance == null) {
+            LOG.info("No completed activity instance found for user {} and study {} for mapping type {}",
+                    participantGuid, studyGuid, mappingType);
+            return false;
+        }
 
-    /**
-     * Queries the activity mapping table to figure out which Activity Id and Question Stable Id map to Date of Birth
-     *
-     * @param jdbiActivityMapping dao for retrieving consent mappings
-     * @param studyGuid study we are looking date of diagnosis up for
-     * @return StudyActivityMapping for Date of Diagnosis for this study
-     */
-    private StudyActivityMapping getDateOfBirthStudyActivityMapping(JdbiActivityMapping jdbiActivityMapping, String studyGuid) {
-        return jdbiActivityMapping
-                .getActivityMappingForStudyAndActivityType(studyGuid, ActivityMappingType.DATE_OF_BIRTH.toString())
+        ConsentSummary summary = consentService
+                .getLatestConsentSummary(handle, participantGuid, studyGuid, instance.getActivityCode())
                 .orElse(null);
-    }
+        if (summary == null) {
+            LOG.error("No consent summary found for activity {} user {} study {} for mapping type {}",
+                    instance.getActivityCode(), participantGuid, studyGuid, mappingType);
+            return false;
+        }
 
-    /**
-     * Queries the consent mapping table to figure out which Activity Id and Election Id map to Blood Draw Consent
-     *
-     * @param jdbiActivityMapping dao for retrieving consent mappings
-     * @param studyGuid           study we are looking blood draw up for
-     * @return StudyActivityMapping for Blood Draw for this study
-     */
-    private StudyActivityMapping getBloodStudyConsentMapping(JdbiActivityMapping jdbiActivityMapping, String studyGuid) {
-        return jdbiActivityMapping
-                .getActivityMappingForStudyAndActivityType(studyGuid, ActivityMappingType.BLOOD.toString())
+        String electionStableId = mappings.get(instance.getActivityId()).getSubActivityStableId();
+        ConsentElection election = summary.getElections()
+                .stream()
+                .filter(consentElection -> consentElection.getStableId().equals(electionStableId))
+                .findFirst()
                 .orElse(null);
-    }
-
-    /**
-     * Queries the consent mapping table to figure out which Activity Id and Election Id map to Tissue Collection Consent
-     *
-     * @param jdbiActivityMapping dao for retrieving consent mappings
-     * @param studyGuid           study we are looking tissue sample up for
-     * @return StudyActivityMapping for Tissue Sample for this study
-     */
-    private StudyActivityMapping getTissueStudyConsentMapping(JdbiActivityMapping jdbiActivityMapping, String studyGuid) {
-        return jdbiActivityMapping
-                .getActivityMappingForStudyAndActivityType(studyGuid, ActivityMappingType.TISSUE.toString())
-                .orElse(null);
+        if (election != null) {
+            return election.getSelected() != null ? election.getSelected() : false;
+        } else {
+            LOG.error("No consent election found for stableId {} activity {} user {} study {} for mapping type {}",
+                    electionStableId, instance.getActivityCode(), participantGuid, studyGuid, mappingType);
+            return false;
+        }
     }
 
     public static class ParticipantConsents {

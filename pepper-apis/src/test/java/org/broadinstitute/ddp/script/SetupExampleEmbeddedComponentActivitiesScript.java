@@ -44,7 +44,7 @@ public class SetupExampleEmbeddedComponentActivitiesScript extends TxnAwareBaseT
         TransactionWrapper.useTxn(handle -> {
 
             List<FormBlockDef> blocksWithEmbeddedComponents = new ArrayList<>();
-            blocksWithEmbeddedComponents.add(new MailingAddressComponentDef());
+            blocksWithEmbeddedComponents.add(new MailingAddressComponentDef(null, null));
             blocksWithEmbeddedComponents.add(buildInstitutionsComponentDef(true, InstitutionType.INSTITUTION, true));
             blocksWithEmbeddedComponents.add(buildPhysiciansComponentDef(true, InstitutionType.PHYSICIAN, false));
             blocksWithEmbeddedComponents.add(buildInstitutionsComponentDef(false, InstitutionType.INITIAL_BIOPSY,

@@ -18,6 +18,7 @@ import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -25,6 +26,7 @@ import com.google.gson.Gson;
 import io.restassured.http.ContentType;
 import io.restassured.http.Header;
 import io.restassured.response.Response;
+import io.restassured.response.ValidatableResponse;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.util.EntityUtils;
@@ -44,6 +46,7 @@ import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
+import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.activity.definition.ContentBlockDef;
@@ -89,6 +92,7 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
     public static final String TEXT_QUESTION_STABLE_ID = "TEXT_Q";
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static FormActivityDef activity;
+    private static ActivityVersionDto activityVersionDto;
     private static ActivityInstanceDto instanceDto;
     private static String userGuid;
     private static String token;
@@ -97,7 +101,10 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
     private static Template placeholderTemplate;
     private static String essayQuestionStableId;
     private static String activityCode;
+    private static long activityId;
     private static QuestionDto answeredQuestionDto;
+    private static TextQuestionDef txt1;
+    private static TextQuestionDef txt2;
 
     @BeforeClass
     public static void setup() throws Exception {
@@ -135,11 +142,11 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
                 .build();
         FormSectionDef dateSection = new FormSectionDef(null, TestUtil.wrapQuestions(d1, d2, d3));
 
-        TextQuestionDef txt1 = TextQuestionDef.builder(TextInputType.TEXT, TEXT_QUESTION_STABLE_ID, newTemplate())
+        txt1 = TextQuestionDef.builder(TextInputType.TEXT, TEXT_QUESTION_STABLE_ID, newTemplate())
                 .setPlaceholderTemplate(placeholderTemplate)
                 .addValidation(new LengthRuleDef(newTemplate(), 5, 300))
                 .build();
-        TextQuestionDef txt2 = TextQuestionDef.builder(TextInputType.TEXT, "TEXT_DRUG", newTemplate())
+        txt2 = TextQuestionDef.builder(TextInputType.TEXT, "TEXT_DRUG", newTemplate())
                 .setSuggestionType(SuggestionType.DRUG)
                 .build();
         FormSectionDef textSection = new FormSectionDef(null, TestUtil.wrapQuestions(txt1, txt2));
@@ -199,8 +206,11 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
                 .addSections(Arrays.asList(dateSection, textSection, plistSection, textSection2, agreementSection, contentSection))
                 .addSection(iconSection)
                 .build();
-        handle.attach(ActivityDao.class).insertActivity(activity, RevisionMetadata.now(testData.getUserId(), "add " + activityCode));
+        activityVersionDto = handle.attach(ActivityDao.class).insertActivity(
+                activity, RevisionMetadata.now(testData.getUserId(), "add " + activityCode)
+        );
         assertNotNull(activity.getActivityId());
+        activityId = activity.getActivityId();
         instanceDto = handle.attach(ActivityInstanceDao.class).insertInstance(activity.getActivityId(), userGuid);
 
         long answerId = handle.attach(JdbiAnswer.class).insertBaseAnswer(txt1.getQuestionId(), userGuid, instanceDto.getId());
@@ -244,10 +254,10 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
         assertEquals(200, response.getStatusLine().getStatusCode());
 
         String json = EntityUtils.toString(response.getEntity());
-        ActivityInstance activity = gson.fromJson(json, ActivityInstance.class);
-        assertEquals(ActivityType.FORMS, activity.getActivityType());
-        assertEquals(instanceDto.getGuid(), activity.getGuid());
-        assertEquals(activityCode, activity.getActivityCode());
+        ActivityInstance inst = gson.fromJson(json, ActivityInstance.class);
+        assertEquals(ActivityType.FORMS, inst.getActivityType());
+        assertEquals(instanceDto.getGuid(), inst.getGuid());
+        assertEquals(activityCode, inst.getActivityCode());
     }
 
     @Test
@@ -288,10 +298,10 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
             HttpResponse response = request.execute().returnResponse();
             assertEquals(200, response.getStatusLine().getStatusCode());
             String json = EntityUtils.toString(response.getEntity());
-            ActivityInstance activity = gson.fromJson(json, ActivityInstance.class);
-            assertEquals(ActivityType.FORMS, activity.getActivityType());
-            assertEquals(instanceDto.getGuid(), activity.getGuid());
-            assertEquals(activityCode, activity.getActivityCode());
+            ActivityInstance inst = gson.fromJson(json, ActivityInstance.class);
+            assertEquals(ActivityType.FORMS, inst.getActivityType());
+            assertEquals(instanceDto.getGuid(), inst.getGuid());
+            assertEquals(activityCode, inst.getActivityCode());
         } finally {
             //revert back temp user update for other tests.
             TransactionWrapper.useTxn(handle -> {
@@ -304,12 +314,7 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
 
     @Test
     public void testGet_PicklistQuestionLabels() {
-        Response resp = given().auth().oauth2(token)
-                .pathParam("instanceGuid", instanceDto.getGuid())
-                .when().get(url).then().assertThat()
-                .statusCode(200).contentType(ContentType.JSON)
-                .and().extract().response();
-
+        Response resp = testFor200AndExtractResponse();
         // When "other" is not allowed, properties should be null.
         resp.then().assertThat()
                 .body("sections[2].blocks[0].question.stableId", equalTo("PL_NO_OTHER"))
@@ -328,10 +333,7 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
 
     @Test
     public void testGet_picklistQuestion_withGroups() {
-        given().auth().oauth2(token)
-                .pathParam("instanceGuid", instanceDto.getGuid())
-                .when().get(url).then().assertThat()
-                .statusCode(200).contentType(ContentType.JSON)
+        testFor200()
                 .body("sections.size()", equalTo(activity.getSections().size()))
                 .body("sections[2].blocks.size()", equalTo(3))
                 .root("sections[2].blocks[2].question")
@@ -352,12 +354,7 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
 
     @Test
     public void testQuestionNumbering() {
-        Response resp = given().auth().oauth2(token)
-                .pathParam("instanceGuid", instanceDto.getGuid())
-                .when().get(url).then().assertThat()
-                .statusCode(200).contentType(ContentType.JSON)
-                .and().extract().response();
-
+        Response resp = testFor200AndExtractResponse();
         resp.then().assertThat()
                 .body("sections[0].blocks[0].displayNumber", isEmptyOrNullString())
                 .body("sections[0].blocks[1].displayNumber", equalTo(1))
@@ -367,13 +364,7 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
 
     @Test
     public void testGet_textAnswerWithType() {
-
-        Response resp = given().auth().oauth2(token)
-                .pathParam("instanceGuid", instanceDto.getGuid())
-                .when().get(url).then().assertThat()
-                .statusCode(200).contentType(ContentType.JSON)
-                .and().extract().response();
-
+        Response resp = testFor200AndExtractResponse();
         resp.then().assertThat()
                 .body("sections[1].blocks[0].question.answers[0].value", equalTo("valid answer"));
         resp.then().assertThat()
@@ -382,25 +373,14 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
 
     @Test
     public void testGet_agreementQuestion() {
-        Response resp = given().auth().oauth2(token)
-                .pathParam("instanceGuid", instanceDto.getGuid())
-                .when().get(url).then().assertThat()
-                .statusCode(200).contentType(ContentType.JSON)
-                .and().extract().response();
-
+        Response resp = testFor200AndExtractResponse();
         resp.then().assertThat()
                 .body("sections[4].blocks[0].question.stableId", equalTo("AGREEMENT_Q"));
-
     }
 
     @Test
     public void testTextQuestionPlaceholder() {
-        Response resp = given().auth().oauth2(token)
-                .pathParam("instanceGuid", instanceDto.getGuid())
-                .when().get(url).then().assertThat()
-                .statusCode(200).contentType(ContentType.JSON)
-                .and().extract().response();
-
+        Response resp = testFor200AndExtractResponse();
         resp.then().assertThat()
                 .body("sections[1].blocks[0].question.stableId", equalTo(TEXT_QUESTION_STABLE_ID));
         resp.then().assertThat()
@@ -412,25 +392,16 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
 
     @Test
     public void testEssayQuestionHasEmptyPlaceholderField() {
-        Response resp = given().auth().oauth2(token)
-                .pathParam("instanceGuid", instanceDto.getGuid())
-                .when().get(url).then().assertThat()
-                .statusCode(200).contentType(ContentType.JSON)
-                .and().extract().response();
-
+        Response resp = testFor200AndExtractResponse();
         resp.then().assertThat()
                 .body("sections[3].blocks[0].question.stableId", equalTo(essayQuestionStableId));
-
         resp.then().assertThat()
                 .body("sections[3].blocks[0].question", not(hasKey("placeholderText")));
     }
 
     @Test
     public void testGet_textQuestion_withSuggestionType() {
-        given().auth().oauth2(token)
-                .pathParam("instanceGuid", instanceDto.getGuid())
-                .when().get(url).then().assertThat()
-                .statusCode(200).contentType(ContentType.JSON)
+        testFor200()
                 .body("sections.size()", equalTo(activity.getSections().size()))
                 .body("sections[1].blocks.size()", equalTo(2))
                 .root("sections[1].blocks[1].question")
@@ -441,10 +412,7 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
 
     @Test
     public void testGet_datePicker_retrieved_withPlaceholder() {
-        given().auth().oauth2(token)
-                .pathParam("instanceGuid", instanceDto.getGuid())
-                .when().get(url).then().assertThat()
-                .statusCode(200).contentType(ContentType.JSON)
+        testFor200()
                 .body("guid", equalTo(instanceDto.getGuid()))
                 .body("activityType", equalTo(ActivityType.FORMS.name()))
                 .body("formType", equalTo(FormType.GENERAL.name()))
@@ -456,10 +424,7 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
 
     @Test
     public void testGet_datePicker_validationRulesRetrieved() {
-        Response resp = given().auth().oauth2(token)
-                .pathParam("instanceGuid", instanceDto.getGuid())
-                .when().get(url).then().assertThat()
-                .statusCode(200).contentType(ContentType.JSON)
+        Response resp = testFor200()
                 .body("guid", equalTo(instanceDto.getGuid()))
                 .and().extract().response();
 
@@ -488,12 +453,7 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
     @Test
     public void testGet_renderedCorrectly() {
         // todo: write some better tests when test data are cleaned up
-        Response resp = given().auth().oauth2(token)
-                .pathParam("instanceGuid", instanceDto.getGuid())
-                .when().get(url).then().assertThat()
-                .statusCode(200).contentType(ContentType.JSON)
-                .and().extract().response();
-
+        Response resp = testFor200AndExtractResponse();
         // Basic size checks
         resp.then().assertThat()
                 .body("sections.size()", equalTo(activity.getSections().size()))
@@ -511,9 +471,7 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
     @Test
     public void testGet_readonlyIsSetCorrectly() throws InterruptedException {
         Response resp = testFor200AndExtractResponse();
-        resp.then().assertThat()
-                .body("readonly", equalTo(false));
-
+        resp.then().assertThat().body("readonly", equalTo(false));
 
         Optional<Long> optStudyId = TransactionWrapper.withTxn(handle -> handle.attach(JdbiUmbrellaStudy.class).getIdByGuid(
                 activity.getStudyGuid())
@@ -532,14 +490,6 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
         TransactionWrapper.withTxn(handle -> handle.attach(JdbiActivity.class).updateEditTimeoutSecByCode(
                 null, activity.getActivityCode(), optStudyId.get())
         );
-    }
-
-    private Response testFor200AndExtractResponse() {
-        return given().auth().oauth2(token)
-                .pathParam("instanceGuid", instanceDto.getGuid())
-                .when().get(url).then().assertThat()
-                .statusCode(200).contentType(ContentType.JSON)
-                .and().extract().response();
     }
 
     @Test
@@ -607,10 +557,7 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
 
     @Test
     public void testGet_contentStyle_defaultsToStandard() {
-        given().auth().oauth2(token)
-                .pathParam("instanceGuid", instanceDto.getGuid())
-                .when().get(url).then().assertThat()
-                .statusCode(200).contentType(ContentType.JSON)
+        testFor200()
                 .body("guid", equalTo(instanceDto.getGuid()))
                 .body("sections[5].blocks[0].blockType", equalTo(BlockType.CONTENT.name()))
                 .body("sections[5].blocks[0].title", equalTo("<p>hello title</p>"))
@@ -619,20 +566,14 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
 
     @Test
     public void testGet_iconSection_nameSerialized() {
-        given().auth().oauth2(token)
-                .pathParam("instanceGuid", instanceDto.getGuid())
-                .when().get(url).then().assertThat()
-                .statusCode(200).contentType(ContentType.JSON)
+        testFor200()
                 .body("guid", equalTo(instanceDto.getGuid()))
                 .body("sections[6].name", equalTo("icon section"));
     }
 
     @Test
     public void testGet_iconSection_iconsSerialized() {
-        given().auth().oauth2(token)
-                .pathParam("instanceGuid", instanceDto.getGuid())
-                .when().get(url).then().assertThat()
-                .statusCode(200).contentType(ContentType.JSON)
+        testFor200()
                 .body("guid", equalTo(instanceDto.getGuid()))
                 .body("sections[6].icons.size()", equalTo(2))
                 .body("sections[6].icons[0].state", equalTo(FormSectionState.COMPLETE.name()))
@@ -643,10 +584,7 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
 
     @Test
     public void testGet_iconSection_iconAdditionalScaleFactorsSerializedAsProperties() {
-        given().auth().oauth2(token)
-                .pathParam("instanceGuid", instanceDto.getGuid())
-                .when().get(url).then().assertThat()
-                .statusCode(200).contentType(ContentType.JSON)
+        testFor200()
                 .body("guid", equalTo(instanceDto.getGuid()))
                 .body("sections[6].icons.size()", equalTo(2))
                 .body("sections[6].icons[1].state", equalTo(FormSectionState.INCOMPLETE.name()))
@@ -667,14 +605,9 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
                     );
                 }
         );
-        Response resp = given().auth().oauth2(token)
-                .pathParam("instanceGuid", instanceDto.getGuid())
-                .when().get(url).then().assertThat()
-                .statusCode(200).contentType(ContentType.JSON)
-                .and().extract().response();
+        Response resp = testFor200AndExtractResponse();
 
-        resp.then().assertThat()
-                .body("readonly", equalTo(true));
+        resp.then().assertThat().body("readonly", equalTo(true));
 
         TransactionWrapper.useTxn(
                 handle -> {
@@ -686,4 +619,63 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
                 }
         );
     }
+
+    @Test
+    public void given_oneTrueExpr_whenRouteIsCalled_thenItReturnsOkAndResponseDoesntContainFailedValidations() {
+        try {
+            TransactionWrapper.useTxn(handle -> {
+                handle.attach(JdbiActivity.class).insertValidation(
+                        RouteTestUtil.createActivityValidationDto(
+                            activity,
+                            "false", "Should never fail", List.of(txt1.getStableId())
+                        ),
+                        testData.getUserId(),
+                        testData.getStudyId(),
+                        activityVersionDto.getRevId()
+                );
+            });
+            testFor200()
+                .body("sections[1].blocks[0].question.validationFailures", is(nullValue()));
+        } finally {
+            TransactionWrapper.useTxn(handle -> {
+                handle.attach(JdbiActivity.class).deleteValidationsByCode(activityId);
+            });
+        }
+    }
+
+    @Test
+    public void given_oneTrueExpr_whenRouteIsCalled_thenItReturnsOkAndResponseContainsFailedValidations() {
+        try {
+            TransactionWrapper.useTxn(handle -> {
+                handle.attach(JdbiActivity.class).insertValidation(
+                        RouteTestUtil.createActivityValidationDto(
+                            activity,
+                            "true", "Should always fail", List.of(txt1.getStableId())
+                        ),
+                        testData.getUserId(),
+                        testData.getStudyId(),
+                        activityVersionDto.getRevId()
+                );
+            });
+            testFor200()
+                .body("sections[1].blocks[0].question.validationFailures", not(is(nullValue())))
+                .body("sections[1].blocks[0].question.validationFailures.size()", equalTo(1));
+        } finally {
+            TransactionWrapper.useTxn(handle -> {
+                handle.attach(JdbiActivity.class).deleteValidationsByCode(activityId);
+            });
+        }
+    }
+
+    private static ValidatableResponse testFor200() {
+        return given().auth().oauth2(token)
+                .pathParam("instanceGuid", instanceDto.getGuid())
+                .when().get(url).then().assertThat()
+                .statusCode(200).contentType(ContentType.JSON);
+    }
+
+    private Response testFor200AndExtractResponse() {
+        return testFor200().and().extract().response();
+    }
+
 }

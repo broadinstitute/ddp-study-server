@@ -396,7 +396,7 @@ public class AngioEmailConfigurationScript extends TxnAwareBaseTest {
             customTemplate.addSubstitution(new ActivityDateSubstitution(fieldValues.get(6), consentDto.getActivityId()));
 
             PdfConfigInfo info = new PdfConfigInfo(studyDto.getId(),
-                    ANGIO_CONSENT_PDF_CONFIGURATION_NAME, ANGIO_CONSENT_PDF_CONFIGURATION_FILE_NAME);
+                    ANGIO_CONSENT_PDF_CONFIGURATION_NAME, ANGIO_CONSENT_PDF_CONFIGURATION_FILE_NAME, "Angio consent pdf");
 
             PdfVersion version = new PdfVersion("v1", revId);
             version.addDataSource(new PdfActivityDataSource(consentDto.getActivityId(), consentVersion.getId()));

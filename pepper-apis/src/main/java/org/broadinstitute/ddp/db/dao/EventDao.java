@@ -79,7 +79,7 @@ public interface EventDao extends SqlObject {
 
         for (EventConfigurationDto summary : summaries) {
             long queuedEventId = queuedEventDao.addToQueue(summary.getEventConfigurationId(),
-                    participantId, participantId, summary.getSecondsToWaitBeforePosting());
+                    null, participantId, summary.getSecondsToWaitBeforePosting());
             LOG.info("Inserted queued event id={} for eventConfigurationId={}", queuedEventId, summary.getEventConfigurationId());
             numEventsQueued++;
         }
@@ -225,6 +225,7 @@ public interface EventDao extends SqlObject {
             return new QueuedEventDto(
                     rs.getLong(SqlConstants.EventConfigurationTable.ID),
                     rs.getLong(SqlConstants.QueuedEventTable.ID),
+                    rs.getLong(SqlConstants.QueuedEventTable.OPERATOR_USER_ID),
                     rs.getString(ConfigFile.SqlQuery.PARTICIPANT_GUID),
                     rs.getString(ConfigFile.SqlQuery.PARTICIPANT_HRUID),
                     EventActionType.valueOf(rs.getString(SqlConstants.EventActionTypeTable.TYPE)),

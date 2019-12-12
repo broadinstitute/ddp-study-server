@@ -5,6 +5,7 @@ import java.nio.file.Paths;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 import com.auth0.exception.Auth0Exception;
@@ -30,7 +31,10 @@ import org.broadinstitute.ddp.db.dao.DataExportDao;
 import org.broadinstitute.ddp.db.dao.JdbiAuth0Tenant;
 import org.broadinstitute.ddp.db.dao.JdbiProfile;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
+import org.broadinstitute.ddp.db.dto.ActivityValidationDto;
 import org.broadinstitute.ddp.db.dto.Auth0TenantDto;
+import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
+import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.ddp.util.RouteUtil;
 import org.broadinstitute.ddp.util.TestingUserUtil;
@@ -376,6 +380,25 @@ public class RouteTestUtil {
      */
     public static String getUnverifiedUserGuidFromToken(String jwtToken) {
         return JWT.decode(jwtToken).getClaim(Auth0Constants.DDP_USER_ID_CLAIM).asString();
+    }
+
+    public static ActivityValidationDto createActivityValidationDto(
+            FormActivityDef activity, String precond, String expr, String errorMessage, List<String> affectedQuestionStableIds
+    ) {
+        Template errorMessageTemplate = Template.text(errorMessage);
+        ActivityValidationDto dto = new ActivityValidationDto(
+                activity.getActivityId(), null, precond, expr, errorMessageTemplate
+        );
+        affectedQuestionStableIds.forEach(
+                field -> dto.addAffectedField(field)
+        );
+        return dto;
+    }
+
+    public static ActivityValidationDto createActivityValidationDto(
+            FormActivityDef activity, String expr, String errorMessage, List<String> affectedQuestionStableIds
+    ) {
+        return createActivityValidationDto(activity, null, expr, errorMessage, affectedQuestionStableIds);
     }
 
     public enum RequestMethod {

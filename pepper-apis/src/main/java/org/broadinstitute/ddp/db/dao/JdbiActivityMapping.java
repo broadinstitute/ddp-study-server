@@ -1,8 +1,9 @@
 package org.broadinstitute.ddp.db.dao;
 
-import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.broadinstitute.ddp.db.DaoException;
+import org.broadinstitute.ddp.model.activity.types.ActivityMappingType;
 import org.broadinstitute.ddp.model.dsm.StudyActivityMapping;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
@@ -56,9 +57,9 @@ public interface JdbiActivityMapping extends SqlObject {
             + "JOIN umbrella_study as study ON activity_mapping.umbrella_study_id = study.umbrella_study_id "
             + "JOIN activity_mapping_type ON activity_mapping.activity_mapping_type_id = activity_mapping_type.activity_mapping_type_id "
             + "WHERE "
-            + "   study.guid = :studyGUID "
-            + "   and activity_mapping_type.activity_mapping_code = :activityTypeCode ")
+            + "   study.umbrella_study_id = :studyId"
+            + "   and activity_mapping_type.activity_mapping_code = :mappingType")
     @RegisterConstructorMapper(StudyActivityMapping.class)
-    Optional<StudyActivityMapping> getActivityMappingForStudyAndActivityType(@Bind("studyGUID") String studyGUID,
-                                                                             @Bind("activityTypeCode") String activityTypeCode);
+    Stream<StudyActivityMapping> getActivityMappingForStudyAndActivityType(@Bind("studyId") long studyId,
+                                                                           @Bind("mappingType") ActivityMappingType mappingType);
 }

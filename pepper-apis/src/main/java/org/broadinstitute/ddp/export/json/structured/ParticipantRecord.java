@@ -26,6 +26,8 @@ public class ParticipantRecord {
     private List<ActivityInstanceRecord> activityInstanceRecords;
     @SerializedName("dsm")
     private DsmComputedRecord dsmComputedRecord;
+    @SerializedName("proxies")
+    private List<String> proxies;
 
     public ParticipantRecord(
             EnrollmentStatusType enrollmentStatus,
@@ -34,7 +36,8 @@ public class ParticipantRecord {
             List<ActivityInstanceRecord> activityInstanceRecords,
             List<MedicalProviderDto> medicalProviders,
             MailAddress mailAddress,
-            DsmComputedRecord dsmComputedRecord
+            DsmComputedRecord dsmComputedRecord,
+            List<String> proxies
     ) {
         this.status = enrollmentStatus;
         this.statusTimestamp = enrollmentStatusTimestamp;
@@ -50,5 +53,6 @@ public class ParticipantRecord {
         }
 
         this.dsmComputedRecord = dsmComputedRecord;
+        this.proxies = proxies;
     }
 }

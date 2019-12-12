@@ -76,6 +76,37 @@ public class PdfService {
         return versions.get(0);     // Use latest version as fallback.
     }
 
+    public PdfVersion findPdfConfigVersionForUser(
+            List<PdfVersion> versions,
+            Map<String, Set<String>> userActivityVersions) {
+
+        for (PdfVersion version : versions) {
+            Map<String, Set<String>> acceptedActivityVersions = version.getAcceptedActivityVersions();
+            if (acceptedActivityVersions.isEmpty()) {
+                return version;
+            }
+
+            boolean matched = true;
+            for (Map.Entry<String, Set<String>> entry : acceptedActivityVersions.entrySet()) {
+                String activityCode = entry.getKey();
+                Set<String> acceptedVersionTags = entry.getValue();
+                Set<String> userVersionTags = userActivityVersions.getOrDefault(activityCode, new HashSet<>());
+                Set<String> result = new HashSet<>(userVersionTags);
+                result.retainAll(acceptedVersionTags);
+                if (result.isEmpty()) {
+                    matched = false;
+                    break;
+                }
+            }
+
+            if (matched) {
+                return version;     // Activity sources match, use this version.
+            }
+        }
+
+        return null;     //no match with submitted activity instances.
+    }
+
     public String generateAndUpload(Handle handle,
                                     PdfGenerationService pdfGenerationService,
                                     PdfBucketService pdfBucketService,

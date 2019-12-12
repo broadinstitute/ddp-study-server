@@ -416,6 +416,7 @@ public class SqlConstants {
 
     public static final class QueuedEventTable {
         public static final String ID = "queued_event_id";
+        public static final String OPERATOR_USER_ID = "operator_user_id";
     }
 
     public static final class EventActionTypeTable {
@@ -459,27 +460,6 @@ public class SqlConstants {
 
         public static final String NAME = "name";
     }
-
-    public static final class ComponentTable {
-        public static final String COMPONENT_TYPE = "component_type_code";
-        public static final String HIDE_NUMBER = "hide_number";
-        public static String ID = "component_id";
-    }
-
-    public static final class InstitutionPhysicianComponentTable {
-
-        public static final String BUTTON_TEMPLATE_ID = "add_button_template_id";
-        public static final String TITLE_TEMPLATE_ID = "title_template_id";
-        public static final String SUBTITLE_TEMPLATE_ID = "subtitle_template_id";
-        public static final String ALLOW_MULTIPLE = "allow_multiple";
-        public static final String SHOW_FIELDS = "show_fields_initially";
-        public static final String HIDE_NUMBER = "hide_number";
-    }
-
-    public static final class InstitutionTypeTable {
-        public static final String INSTITUTION_TYPE_CODE = "institution_type_code";
-    }
-
 
     public static final class KitTypeTable {
         public static final String ID = "kit_type_id";

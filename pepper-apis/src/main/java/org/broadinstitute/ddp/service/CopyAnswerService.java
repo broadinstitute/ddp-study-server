@@ -39,7 +39,8 @@ public class CopyAnswerService {
         this.answerDao = AnswerDao.fromSqlConfig(ConfigFactory.load(ConfigFile.SQL_CONFIG_FILE));
     }
 
-    public <T> boolean  copyAnswerValue(EventConfigurationDto eventConfig, ActivityInstanceDto instanceDto, Handle handle) {
+    public <T> boolean  copyAnswerValue(EventConfigurationDto eventConfig, ActivityInstanceDto instanceDto, long operatorId,
+                                        Handle handle) {
         // this OK. Just sets up the base type
         //noinspection unchecked
         ValueSetter<T> targetValueSetter = (ValueSetter<T>)
@@ -53,7 +54,7 @@ public class CopyAnswerService {
             return false;
         }
         T sourceAnswerValue = extractValueFromAnswer(sourceAnswer, targetValueSetter.getValueType());
-        return targetValueSetter.setValue(sourceAnswerValue, instanceDto, handle);
+        return targetValueSetter.setValue(sourceAnswerValue, instanceDto.getParticipantId(), operatorId, handle);
     }
 
     private Answer getAnswer(String activityInstanceGuid, String questionStableId, Handle handle) {

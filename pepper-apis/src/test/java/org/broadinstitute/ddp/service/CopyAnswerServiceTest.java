@@ -94,7 +94,7 @@ public class CopyAnswerServiceTest extends TxnAwareBaseTest {
             //set only the stuff that matters
             EventConfigurationDto eventConfig = new EventConfigurationDto(null, null, 0L, null, null, 0L, null, null,
                     EventActionType.COPY_ANSWER, 0L, textQuestionStableId, CopyAnswerTarget.PARTICIPANT_PROFILE_LAST_NAME);
-            copyService.copyAnswerValue(eventConfig, instance, handle);
+            copyService.copyAnswerValue(eventConfig, instance, 0L, handle);
 
             UserProfileDto profile = profileDao.getUserProfileByUserId(data.getUserId());
 
