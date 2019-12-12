@@ -174,4 +174,5 @@
     <include file="db-changes/seed/DDP-4209-consent-suspended.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-4266-invitation.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/seed/DDP-4266-invitation-types.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-4221-refactor-profile-dob.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

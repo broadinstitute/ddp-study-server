@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="20191209-combine-profile-dob-into-single-column">
+        <!-- any existing date in old profile dob columns will not be migrated -->
+        <dropColumn tableName="user_profile" columnName="birth_year"/>
+        <dropColumn tableName="user_profile" columnName="birth_month"/>
+        <dropColumn tableName="user_profile" columnName="birth_day_in_month"/>
+
+        <addColumn tableName="user_profile">
+            <column name="birth_date" type="date">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>
