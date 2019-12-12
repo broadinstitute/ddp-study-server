@@ -24,19 +24,26 @@ import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
+import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
+import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.activity.types.TemplateType;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
+import org.broadinstitute.ddp.model.event.ActivityInstanceStatusChangeSignal;
 import org.broadinstitute.ddp.model.event.CopyAnswerTarget;
+import org.broadinstitute.ddp.model.event.EventConfiguration;
+import org.broadinstitute.ddp.pex.PexInterpreter;
+import org.broadinstitute.ddp.pex.TreeWalkInterpreter;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.broadinstitute.ddp.util.TestUtil;
 import org.jdbi.v3.core.Handle;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class CopyAnswerServiceTest extends TxnAwareBaseTest {
+public class CopyAnswerEventActionTest extends TxnAwareBaseTest {
     private static TestDataSetupUtil.GeneratedTestData data;
+    private static long instanceId;
     private static String instanceGuid;
-    private static CopyAnswerService copyService;
+    private static EventService eventService;
     private static ActivityInstanceDto instance;
     private static String textQuestionStableId;
 
@@ -46,7 +53,7 @@ public class CopyAnswerServiceTest extends TxnAwareBaseTest {
             data = TestDataSetupUtil.generateBasicUserTestData(handle);
             setupActivityAndInstance(handle);
         });
-        copyService = CopyAnswerService.getInstance();
+        eventService = EventService.getInstance();
     }
 
     private static void setupActivityAndInstance(Handle handle) {
@@ -68,6 +75,7 @@ public class CopyAnswerServiceTest extends TxnAwareBaseTest {
         instance = handle.attach(ActivityInstanceDao.class).insertInstance(form.getActivityId(),
                 data.getTestingUser().getUserGuid());
         instanceGuid = instance.getGuid();
+        instanceId = instance.getId();
     }
 
     private static TextQuestionDef buildTextQuestionDef(String stableId) {
@@ -86,15 +94,50 @@ public class CopyAnswerServiceTest extends TxnAwareBaseTest {
             AnswerDao answerDao = AnswerDao.fromSqlConfig(sqlConfig);
             String lastNameFromAnswer = "Sargent" + Instant.now().toEpochMilli();
             Answer expected = new TextAnswer(null, textQuestionStableId, null, lastNameFromAnswer);
-            String answerGuid = answerDao.createAnswer(handle, expected, data.getUserGuid(), instanceGuid);
+            answerDao.createAnswer(handle, expected, data.getUserGuid(), instanceGuid);
 
             //Let's make sure they start being different
             assertNotEquals(originalProfile.getLastName(), expected.getValue());
 
             //set only the stuff that matters
-            EventConfigurationDto eventConfig = new EventConfigurationDto(null, null, 0L, null, null, 0L, null, null,
-                    EventActionType.COPY_ANSWER, 0L, textQuestionStableId, CopyAnswerTarget.PARTICIPANT_PROFILE_LAST_NAME);
-            copyService.copyAnswerValue(eventConfig, instance, 0L, handle);
+
+            PexInterpreter pexInterpreter = new TreeWalkInterpreter();
+
+            EventConfigurationDto eventConfig = new EventConfigurationDto(1,
+                    EventTriggerType.ACTIVITY_STATUS,
+                    EventActionType.COPY_ANSWER,
+                    0,
+                    false,
+                    null,
+                    null,
+                    1,
+                    null,
+                    InstanceStatusType.COMPLETE,
+                    instanceId,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    CopyAnswerTarget.PARTICIPANT_PROFILE_LAST_NAME,
+                    textQuestionStableId);
+
+
+            eventService.processEventSignalForEventConfiguration(
+                    handle,
+                    new ActivityInstanceStatusChangeSignal(data.getUserId(),
+                            data.getUserId(),
+                            data.getUserGuid(),
+                            instanceId,
+                            data.getStudyId(),
+                            InstanceStatusType.COMPLETE),
+                    new EventConfiguration(eventConfig),
+                    pexInterpreter);
 
             UserProfileDto profile = profileDao.getUserProfileByUserId(data.getUserId());
 

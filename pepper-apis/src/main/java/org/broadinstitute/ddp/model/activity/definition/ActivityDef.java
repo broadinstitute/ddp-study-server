@@ -179,10 +179,6 @@ public abstract class ActivityDef {
         return editTimeoutSec;
     }
 
-    public String getCreationExpr() {
-        return creationExpr;
-    }
-
     public void setCreationExpr(String creationExpression) {
         this.creationExpr = creationExpression;
     }

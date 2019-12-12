@@ -20,7 +20,6 @@ import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.EventActionDao;
 import org.broadinstitute.ddp.db.dao.EventTriggerDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
-import org.broadinstitute.ddp.db.dao.JdbiActivityCondition;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstanceCreationAction;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstanceStatus;
@@ -200,13 +199,6 @@ public class PostActivityStatusChangeHookTest extends IntegrationTestSuite.TestC
                             1
                     );
 
-                    if (!handle.attach(JdbiActivityCondition.class).getById(studyActivityToCreateId).isPresent()) {
-                        handle.attach(JdbiActivityCondition.class).insert(
-                                studyActivityToCreateId,
-                                creationExprId
-                        );
-                    }
-
                     // Resetting the activity instance status to "CREATED", otherwise the status change won't occur
                     long activityInstanceId = handle.attach(JdbiActivityInstance.class)
                             .getActivityInstanceId(TestData.activityInstanceGuid);
@@ -243,7 +235,6 @@ public class PostActivityStatusChangeHookTest extends IntegrationTestSuite.TestC
                     handle.attach(JdbiEventAction.class).deleteById(activityInstanceCreationEventActionId);
                     handle.attach(JdbiEventAction.class).deleteById(dsmInclusionEventActionId);
                     handle.attach(EventActionDao.class).deleteAnnouncementAction(announcementActionId);
-                    handle.attach(JdbiActivityCondition.class).deleteById(studyActivityToCreateId);
                     handle.attach(JdbiExpression.class).deleteById(creationExprId);
                     handle.attach(JdbiExpression.class).updateById(precondExprId, "true");
 

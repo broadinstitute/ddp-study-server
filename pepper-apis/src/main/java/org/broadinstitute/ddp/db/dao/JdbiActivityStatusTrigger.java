@@ -15,4 +15,7 @@ public interface JdbiActivityStatusTrigger extends SqlObject {
 
     @SqlUpdate("delete from activity_status_trigger where activity_status_trigger_id = :activityStatusTriggerId")
     int deleteById(@Bind("activityStatusTriggerId") long activityStatusTriggerId);
+
+
+
 }

@@ -79,7 +79,6 @@ public class ActivityDefTest {
         assertEquals(def.getStudyGuid(), actual.getStudyGuid());
         assertEquals(def.getActivityCode(), actual.getActivityCode());
         assertEquals(def.getVersionTag(), actual.getVersionTag());
-        assertEquals(def.getCreationExpr(), actual.getCreationExpr());
         assertEquals(def.getMaxInstancesPerUser(), actual.getMaxInstancesPerUser());
         assertEquals(def.isWriteOnce(), actual.isWriteOnce());
         assertEquals(def.getEditTimeoutSec(), actual.getEditTimeoutSec());
@@ -157,7 +156,6 @@ public class ActivityDefTest {
         assertEquals(def.getStudyGuid(), actual.getStudyGuid());
         assertEquals(def.getActivityCode(), actual.getActivityCode());
         assertEquals(def.getVersionTag(), actual.getVersionTag());
-        assertEquals(def.getCreationExpr(), actual.getCreationExpr());
         assertEquals(def.getMaxInstancesPerUser(), actual.getMaxInstancesPerUser());
         assertEquals(def.isWriteOnce(), actual.isWriteOnce());
         assertEquals(def.getEditTimeoutSec(), actual.getEditTimeoutSec());
