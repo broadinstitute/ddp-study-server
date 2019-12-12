@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="cardell" id="20190322-add-unique-nonnullable-guid-to-umbrella-and-backfill">
+        <addColumn tableName="umbrella">
+            <column name="umbrella_guid" type="varchar(20)">
+                <constraints unique="true" uniqueConstraintName="umbrella_guid_uk"/>
+            </column>
+        </addColumn>
+
+        <update tableName="umbrella">
+            <column name="umbrella_guid" valueComputed="lower(umbrella_name)"/>
+            <where>umbrella_guid is null</where>
+        </update>
+
+        <addNotNullConstraint tableName="umbrella" columnName="umbrella_guid" columnDataType="varchar(20)"/>
+    </changeSet>
+
+</databaseChangeLog>

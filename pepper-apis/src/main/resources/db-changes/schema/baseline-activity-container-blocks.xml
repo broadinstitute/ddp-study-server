@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="baseline-block-nesting-table">
+        <createTable tableName="block_nesting">
+            <column name="block_nesting_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="block_nesting_pk"/>
+            </column>
+            <column name="parent_block_id" type="bigint">
+                <constraints nullable="false" references="block(block_id)" foreignKeyName="block_nesting_parent_block_fk"/>
+            </column>
+            <column name="nested_block_id" type="bigint">
+                <constraints nullable="false" references="block(block_id)" foreignKeyName="block_nesting_nested_block_fk"/>
+            </column>
+            <column name="display_order" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revision_id" type="bigint">
+                <constraints nullable="false" references="revision(revision_id)" foreignKeyName="block_nesting_revision_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-block-nesting-uk">
+        <addUniqueConstraint tableName="block_nesting" columnNames="parent_block_id, nested_block_id, revision_id"
+                             constraintName="block_nesting_parent_nested_revision_uk"/>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-block-conditional-control-table">
+        <createTable tableName="block_conditional_control">
+            <column name="block_conditional_control_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="block_conditional_control_pk"/>
+            </column>
+            <column name="block_id" type="bigint">
+                <constraints nullable="false" references="block(block_id)" foreignKeyName="block_conditional_control_block_fk"/>
+            </column>
+            <column name="control_question_id" type="bigint">
+                <constraints nullable="false" references="question(question_id)" foreignKeyName="block_conditional_control_question_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-block-group-header-table">
+        <createTable tableName="block_group_header">
+            <column name="block_group_header_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="block_group_header_pk"/>
+            </column>
+            <column name="block_id" type="bigint">
+                <constraints nullable="false" references="block(block_id)" foreignKeyName="block_group_header_block_fk"/>
+            </column>
+            <column name="title_template_id" type="bigint">
+                <constraints references="template(template_id)" foreignKeyName="block_group_header_title_template_fk"/>
+            </column>
+            <column name="list_style_hint_id" type="bigint">
+                <constraints references="list_style_hint(list_style_hint_id)" foreignKeyName="block_group_header_list_style_hint_fk"/>
+            </column>
+            <column name="revision_id" type="bigint">
+                <constraints nullable="false" references="revision(revision_id)" foreignKeyName="block_group_header_revision_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-block-group-header-uk">
+        <addUniqueConstraint tableName="block_group_header" columnNames="block_id, revision_id"
+                             constraintName="block_group_header_block_revision_uk"/>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,51 @@
+{{with $environment := env "ENVIRONMENT"}}
+{{with $version := env "VERSION"}}
+{{with $vault := vault (printf "secret/pepper/%s/%s/conf" $environment $version)}}
+{{with $conf := $vault.Data }}
+{{with $auth := index $conf "auth0"}}
+
+export CONFIG_OPTS="-Dsurefire.runOrder=filesystem -Ditext.license=output-build-config/itextkey.xml -Dddp.firecloudKeysDir=output-build-config/fc_keys -Dconfig.file=output-build-config/testing-inmemorydb.conf"
+
+# Unignore the ignored
+sed -i '' '/Ignore/d' src/test/java/org/broadinstitute/ddp/script/angio/*.java
+
+mvn $CONFIG_OPTS test -Dddp.baseWebUrl="{{$conf.pepperWebBaseUrl}}" \
+		      -Dddp.cmiAuth0Domain="{{$auth.domain}}" \
+		      -Dddp.cmiMgmtClientId="{{$auth.managementApiClientId}}" \
+              -Dddp.cmiMgmtSecret="{{$auth.managementApiSecret}}" \
+              -Dddp.fromName="Dr.Pepper" \
+              -Dddp.fromEmail="{{$auth.testUser}}" \
+              -Dddp.sendgridKey="{{$conf.sendgridToken}}" \
+              -Dtest=org.broadinstitute.ddp.script.angio.AngioStudyCreationScript && \
+mvn $CONFIG_OPTS test -Dddp.baseWebUrl="{{$conf.pepperWebBaseUrl}}" \
+               -Dddp.clientId="{{$auth.angularClientId}}" \
+               -Dddp.clientSecret="{{$auth.angularClientSecret}}" \
+               -Dddp.cmiAuth0Domain="{{$auth.domain}}" \
+               -Dddp.clientName="angio-angular-client" \
+               -Dddp.clientPasswordRedirectUrl="https://pepper-angio-test.datadonationplatform.org/password-reset-done" \
+               -Dddp.dsmClientId={{$auth.dsmClientId}} \
+               -Dddp.dsmClientSecret={{$auth.dsmClientSecret}} \
+               -Dtest=org.broadinstitute.ddp.script.angio.AngioClientSetupScript && \
+mvn $CONFIG_OPTS test -Dtest=org.broadinstitute.ddp.script.angio.AngioAboutYouActivityCreationScript && \
+mvn $CONFIG_OPTS test -Dddp.assetsBucket=angio-assets \
+              -Dtest=org.broadinstitute.ddp.script.angio.AngioConsentActivityCreationScript && \
+mvn $CONFIG_OPTS test -Dtest=org.broadinstitute.ddp.script.angio.AngioReleaseActivityCreationScript && \
+mvn $CONFIG_OPTS test -Dddp.assetsBucket=angio-assets \
+              -Dddp.resendEmailTemplateKey="969bde20-5580-41a4-bff6-0c70cd2adc14" \
+              -Dtest=org.broadinstitute.ddp.script.angio.AngioLovedOneActivityCreationScript && \
+mvn $CONFIG_OPTS test -Dddp.assetsBucket=angio-assets \
+              -Dtest=org.broadinstitute.ddp.script.angio.AngioFollowupConsentCreationScript && \
+mvn $CONFIG_OPTS test -Dddp.angio.emailConfigFile="src/test/resources/angio-emails.conf" \
+              -Dtest=org.broadinstitute.ddp.script.angio.AngioEmailConfigurationScript  && \
+mvn $CONFIG_OPTS test -Dddp.resendEmailTemplateKey="969bde20-5580-41a4-bff6-0c70cd2adc14" \
+              -Dtest=org.broadinstitute.ddp.script.angio.AngioWorkflowConfigScript && \
+mvn $CONFIG_OPTS test -Dtest=org.broadinstitute.ddp.script.angio.AngioPdfConfigurationScript
+
+
+{{end}}
+{{end}}
+{{end}}
+{{end}}
+{{end}}
+
+

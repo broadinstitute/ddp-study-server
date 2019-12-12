@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.broadinstitute.ddp</groupId>
+        <artifactId>pepper-base</artifactId>
+        <version>SNAPSHOT</version>
+        <relativePath>parent-pom.xml</relativePath>
+    </parent>
+
+    <groupId>org.broadinstitute.ddp</groupId>
+    <artifactId>pepper-testutil</artifactId>
+    <version>SNAPSHOT</version>
+    <packaging>jar</packaging>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <build>
+        <plugins>
+            <plugin>
+	            <!-- used to generate single jar file for DDP server -->
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>2.4.3</version>
+                <configuration>
+                    <filters>
+                        <filter>
+                            <!-- without this, docker deploys complain with "Invalid signature file digest for Manifest main attributes" -->
+                            <artifact>*:*</artifact>
+                            <excludes>
+                                <exclude>META-INF/*.SF</exclude>
+                                <exclude>META-INF/*.DSA</exclude>
+                                <exclude>META-INF/*.RSA</exclude>
+                            </excludes>
+                        </filter>
+                    </filters>
+                    <finalName>PepperTestUtil</finalName>
+                    <transformers>
+                        <!-- without this transformer, we cannot keep hsqldb and mysql in the shaded jar https://issues.apache.org/jira/browse/MSHADE-204 -->
+                        <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
+                        <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                            <mainClass>org.broadinstitute.ddp.util.TestDataSetupUtil</mainClass>
+                            <manifestEntries>
+                                <Main-Class>org.broadinstitute.ddp.util.TestDataSetupUtil</Main-Class>
+                            </manifestEntries>
+                        </transformer>
+                        <transformer implementation="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer">
+                            <resource>org/broadinstitute/ddp/util/TestDataSetupUtil.class</resource>
+                            <file>target/test-classes/org/broadinstitute/ddp/util/TestDataSetupUtil.class</file>
+                        </transformer>
+                        <transformer implementation="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer">
+                            <resource>org/broadinstitute/ddp/util/TestDataSetupUtil$GeneratedTestData.class</resource>
+                            <file>target/test-classes/org/broadinstitute/ddp/util/TestDataSetupUtil$GeneratedTestData.class</file>
+                        </transformer>
+                        <transformer implementation="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer">
+                            <resource>org/broadinstitute/ddp/util/TestUtil.class</resource>
+                            <file>target/test-classes/org/broadinstitute/ddp/util/TestUtil.class</file>
+                        </transformer>
+                        <transformer implementation="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer">
+                            <resource>org/broadinstitute/ddp/util/GuidUtils.class</resource>
+                            <file>target/test-classes/org/broadinstitute/ddp/util/GuidUtils.class</file>
+                        </transformer>
+                        <transformer implementation="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer">
+                            <resource>org/broadinstitute/ddp/constants/TestConstants.class</resource>
+                            <file>target/test-classes/org/broadinstitute/ddp/constants/TestConstants.class</file>
+                        </transformer>
+                        <transformer implementation="org.apache.maven.plugins.shade.resource.IncludeResourceTransformer">
+                            <resource>org/broadinstitute/ddp/util/MedicalProviderUtil.class</resource>
+                            <file>target/test-classes/org/broadinstitute/ddp/util/MedicalProviderUtil.class</file>
+                        </transformer>
+                    </transformers>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

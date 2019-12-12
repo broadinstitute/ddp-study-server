@@ -1,0 +1,9 @@
+{
+  "applications": [
+    {
+      "application": "kibana-.kibana",
+      "privileges": ["all"],
+      "resources": ["*"]
+    }
+  ]
+}

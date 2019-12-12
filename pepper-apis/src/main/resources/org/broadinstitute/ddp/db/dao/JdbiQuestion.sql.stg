@@ -1,0 +1,68 @@
+group JdbiQuestion;
+
+queryQuestionDtoByStableIdAndInstanceGuid() ::= <<
+select qt.question_type_code, qsc.stable_id, q.*, rev.start_date as revision_start, rev.end_date as revision_end
+  from question as q
+  join question_type as qt on qt.question_type_id = q.question_type_id
+  join question_stable_code as qsc on qsc.question_stable_code_id = q.question_stable_code_id
+  join revision as rev on rev.revision_id = q.revision_id
+  join activity_instance as ai on ai.study_activity_id = q.study_activity_id
+ where qsc.stable_id = :stableId
+   and ai.activity_instance_guid = :instanceGuid
+   and rev.start_date \<= ai.created_at
+   and (rev.end_date is null or ai.created_at \< rev.end_date)
+>>
+
+queryQuestionDtoByStudyIdStableIdAndUserGuid() ::= <<
+SELECT
+    qt.question_type_code,
+    qsc.stable_id,
+    q.*,
+    rev.start_date as revision_start,
+    rev.end_date as revision_end
+FROM
+    question as q
+JOIN question_type as qt ON qt.question_type_id = q.question_type_id
+JOIN question_stable_code as qsc ON qsc.question_stable_code_id = q.question_stable_code_id
+JOIN revision as rev on rev.revision_id = q.revision_id
+JOIN umbrella_study as study on study.umbrella_study_id = qsc.umbrella_study_id
+JOIN study_activity as act on act.study_activity_id = q.study_activity_id and act.study_id = qsc.umbrella_study_id
+JOIN activity_instance as ai on ai.study_activity_id = act.study_activity_id
+JOIN user as u on ai.participant_id = u.user_id
+WHERE
+    qsc.stable_id = :stableId
+    AND u.guid = :userGuid
+    AND study.umbrella_study_id = :studyId
+    AND rev.start_date \<= ai.created_at
+    AND (rev.end_date is null or ai.created_at \< rev.end_date)
+>>
+
+queryQuestionInfoIfActiveByQuestionId() ::= <<
+  select qt.question_type_code, qsc.stable_id, q.*, rev.start_date as revision_start, rev.end_date as revision_end
+    from question as q
+    join question_type as qt on qt.question_type_id = q.question_type_id
+    join question_stable_code as qsc on qsc.question_stable_code_id = q.question_stable_code_id
+    join revision as rev on rev.revision_id = q.revision_id
+   where q.question_id = :questionId
+     and rev.end_date is null
+  >>
+
+queryQuestionInfoByQuestionId() ::= <<
+select qt.question_type_code, qsc.stable_id, q.*, rev.start_date as revision_start, rev.end_date as revision_end
+  from question as q
+  join question_type as qt on qt.question_type_id = q.question_type_id
+  join question_stable_code as qsc on qsc.question_stable_code_id = q.question_stable_code_id
+  join revision as rev on rev.revision_id = q.revision_id
+ where q.question_id = :questionId
+>>
+
+queryLatestQuestionDtoByQuestionStableIdAndUmbrellaStudyId() ::= <<
+select qt.question_type_code, qsc.stable_id, q.*, rev.start_date as revision_start, rev.end_date as revision_end
+  from question as q
+  join question_type as qt on qt.question_type_id = q.question_type_id
+  join question_stable_code as qsc on qsc.question_stable_code_id = q.question_stable_code_id
+  join revision as rev on rev.revision_id = q.revision_id
+ where qsc.stable_id = :questionStableId
+ and qsc.umbrella_study_id = :umbrellaStudyId
+ and rev.end_date is null
+>>

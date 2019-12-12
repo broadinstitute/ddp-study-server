@@ -1,0 +1,13 @@
+post:
+  operationId: createTempUser
+  tags:
+    - Temporary Users
+  summary: create new temporary user
+  description: Request for a new temporary user. These users may be used with a limited set of APIs. The user account will expire after a certain time, i.e. 24 hours, after which it will be invalidated and should not be used.
+  requestBody:
+    $ref: '../pepper.yml#/components/requestBodies/CreateTempUserRequestBody'
+  responses:
+    201:
+      $ref: '../pepper.yml#/components/responses/CreateTempUserResponse'
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="baseline-text-question-input-type-table">
+        <createTable tableName="text_question_input_type">
+            <column name="text_question_input_type_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="text_question_input_type_pk"/>
+            </column>
+            <column name="text_question_input_type_code" type="varchar(45)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="text_question_input_type_code_uk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-text-question-table">
+        <createTable tableName="text_question">
+            <column name="question_id" type="bigint">
+                <constraints primaryKey="true" primaryKeyName="text_question_pk"
+                             references="question(question_id)" foreignKeyName="text_question_question_fk"/>
+            </column>
+            <column name="input_type_id" type="bigint">
+                <constraints nullable="false" references="text_question_input_type(text_question_input_type_id)"
+                             foreignKeyName="text_question_input_type_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-text-answer-table">
+        <createTable tableName="text_answer">
+            <column name="answer_id" type="bigint">
+                <constraints primaryKey="true" primaryKeyName="text_answer_pk"
+                             references="answer(answer_id)" foreignKeyName="text_answer_answer_fk"/>
+            </column>
+            <column name="answer" type="varchar(10000)"/>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,25 @@
+get:
+  operationId: getParticipantStatus
+  tags:
+    - Operator & Participant
+  summary: fetch a participant status
+  description: |
+    returns the status of the medical record, tissue samples and kits sent by the user.
+  parameters:
+    - in: path
+      name: user
+      required: true
+      description: the participant's guid
+      schema:
+        type: string
+    - in: path
+      name: study
+      required: true
+      description: the study's guid
+      schema:
+        type: string
+  responses:
+    200:
+      $ref: '../pepper.yml#/components/responses/ParticipantStatusResponse'
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'

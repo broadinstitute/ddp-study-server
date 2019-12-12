@@ -1,0 +1,44 @@
+selectParticipantInfo(statuses) ::= <<
+    /* if given altpid, return altpid if it's there.  otherwise, return guid */
+    SELECT coalesce((select legacy_altpid from user u2 where u2.legacy_altpid = :userGuidOrAltPid), (select guid from user u2 where u2.guid = :userGuidOrAltPid)) as participantId,
+        u.guid as user_guid,
+        up.first_name,
+        up.last_name,
+        m.name as mail_to_name,
+        u.hruid as shortId,
+        u.legacy_shortid as legacyShortId,
+        m.postal_code as postalCode,
+        m.street1,
+        m.street2,
+        m.city,
+        coalesce(csd.code, m.state) AS state,
+        c.code country,
+        vs.code validAddress,
+        est.enrollment_status_type_code as enrollment_status_type
+        FROM
+    		user u
+    	JOIN
+    	    user_profile up on u.user_id=up.user_id
+    	LEFT JOIN
+    	    default_mailing_address da ON u.user_id=da.participant_user_id
+        LEFT JOIN
+            mailing_address m on da.address_id=m.address_id
+        JOIN
+            user_study_enrollment usen on u.user_id = usen.user_id
+        JOIN
+            umbrella_study ub on usen.study_id = ub.umbrella_study_id
+        JOIN
+            enrollment_status_type est on usen.enrollment_status_type_id = est.enrollment_status_type_id
+        LEFT JOIN
+            country_subnational_division csd on csd.country_subnational_division_id=m.subnational_division_id
+        LEFT JOIN
+            country_address_info c on c.country_address_info_id=m.country_id
+        LEFT JOIN
+    	    mailing_address_validation_status vs on m.validation_status_id=vs.mailing_address_validation_status_id
+        WHERE
+            (u.guid =:userGuidOrAltPid or u.legacy_altpid = :userGuidOrAltPid)
+            AND ub.guid=:studyGuid
+            AND est.enrollment_status_type_code IN (<statuses>)
+            AND usen.valid_to is null
+    	LIMIT 1
+>>

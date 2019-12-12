@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="baseline-boolean-question-table">
+        <createTable tableName="boolean_question">
+            <column name="question_id" type="bigint">
+                <constraints primaryKey="true" primaryKeyName="boolean_question_pk"
+                             references="question(question_id)" foreignKeyName="boolean_question_question_fk"/>
+            </column>
+            <column name="true_template_id" type="bigint">
+                <constraints nullable="false" references="template(template_id)" foreignKeyName="boolean_question_true_template_fk"/>
+            </column>
+            <column name="false_template_id" type="bigint">
+                <constraints nullable="false" references="template(template_id)" foreignKeyName="boolean_question_false_template_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-boolean-answer-table">
+        <createTable tableName="boolean_answer">
+            <column name="answer_id" type="bigint">
+                <constraints primaryKey="true" primaryKeyName="boolean_answer_pk"
+                             references="answer(answer_id)" foreignKeyName="boolean_answer_answer_fk"/>
+            </column>
+            <column name="answer" type="boolean">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>

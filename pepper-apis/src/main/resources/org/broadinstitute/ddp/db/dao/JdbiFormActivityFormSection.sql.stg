@@ -1,0 +1,20 @@
+group JdbiFormActivityFormSection;
+
+queryOrderedBodySectionIdsByInstanceGuid() ::= <<
+select
+    fs.form_section_id
+from
+    activity_instance as ai,
+    form_activity__form_section as fa_fs,
+    form_activity as fa,
+    form_section as fs,
+    revision as rev
+where ai.activity_instance_guid = :instanceGuid
+and ai.study_activity_id = fa.study_activity_id
+and fa_fs.form_activity_id = fa.study_activity_id
+and fa_fs.form_section_id = fs.form_section_id
+and fa_fs.revision_id = rev.revision_id
+and rev.start_date \<= ai.created_at
+and (rev.end_date is null or ai.created_at \< rev.end_date)
+order by fa_fs.display_order asc
+>>

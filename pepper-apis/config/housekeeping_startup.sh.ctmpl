@@ -1,0 +1,22 @@
+#!/bin/bash
+
+echo 'Starting housekeeping...'
+{{with $environment := env "ENVIRONMENT"}}
+{{with $version := env "VERSION"}}
+{{with $conf := vault (printf "secret/pepper/%s/%s/conf" $environment $version)}}
+
+CORE_COMMAND="-Dddp.firecloudKeysDir=fc_keys -Dconfig.file=config/application.conf -Xms256m -Xmx512m -jar target/Housekeeping.jar"
+DEBUG="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=9876"
+
+# pass in debug flag
+DO_DEBUG=${1-false}
+
+if [ $DO_DEBUG = "true" ]; then
+    java $DEBUG $CORE_COMMAND
+else
+    java $CORE_COMMAND
+fi
+
+{{end}}
+{{end}}
+{{end}}

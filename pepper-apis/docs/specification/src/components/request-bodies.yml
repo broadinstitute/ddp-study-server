@@ -1,0 +1,152 @@
+ActivityCreateRequestBody:
+  description: activity guid to create a new instance from
+  required: true
+  content:
+    application/json:
+      schema:
+        type: object
+        required:
+          - activityCode
+        properties:
+          activityCode:
+            type: string
+            example: ABCDEFGH12
+ActivityAnswersPatchRequestBody:
+  description: answer submissions to create or update
+  required: true
+  content:
+    application/json:
+      schema:
+        type: object
+        required:
+          - answers
+        properties:
+          answers:
+            type: array
+            description: list of answer submissions
+            minItems: 0
+            items:
+              $ref: '../pepper.yml#/components/schemas/AnswerSubmission'
+ProfileRequestBody:
+  description: a user profile
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: '../pepper.yml#/components/schemas/ProfileModel'
+RegisterRequestBody:
+  description: user and client data from Auth0
+  required: true
+  content:
+    application/json:
+      schema:
+        type: object
+        required:
+          - auth0UserId
+          - auth0ClientId
+          - auth0Domain
+          - studyGuid
+        properties:
+          auth0UserId:
+            type: string
+            example: 67260dcec4566e049d4e5b48
+          auth0ClientId:
+            type: string
+            example: 2lfrgD13LXGCBLwQYt5mpM9ejAjMnPRF
+          auth0Domain:
+            type: string
+            example: https://example-study.auth0.com/
+          studyGuid:
+            type: string
+            example: EXAMPLE_STUDY
+          tempUserGuid:
+            type: string
+            description: if this is present, server will attempt to upgrade the temporary user using the `auth0UserId` given in request
+CreateTempUserRequestBody:
+  description: client data from Auth0
+  required: true
+  content:
+    application/json:
+      schema:
+        type: object
+        required:
+          - auth0ClientId
+        properties:
+          auth0ClientId:
+            type: string
+            description: the client making the request
+MailingAddress:
+  description: payload for setting a participant's address
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: '../pepper.yml#/components/schemas/MailingAddress'
+SetDefaultAddress:
+  description: payload for setting a participant's default address
+  required: true
+  content:
+    application/json:
+      schema:
+        type: object
+        required:
+          - addressGuid
+        properties:
+          addressGuid:
+            type: string
+            example: RPI4AWDCZY
+StudyExitRequestBody:
+  description: payload for requesting withdraw from a study
+  required: true
+  content:
+    application/json:
+      schema:
+        type: object
+        required:
+          - notes
+        properties:
+          notes:
+            type: string
+            nullable: true
+            maxLength: 1000
+            description: optional notes from participant
+MedicalProviderRequest:
+  description: the medical provider details to save
+  content:
+    application/json:
+      schema:
+        $ref: '../pepper.yml#/components/schemas/MedicalProvider'
+UpdateUserEmailRequestBody:
+  description: the new email for the user
+  required: true
+  content:
+    application/json:
+      schema:
+        type: object
+        required:
+          - email
+        properties:
+          email:
+            type: string
+UpdateUserPasswordRequestBody:
+  description: the current & new passwords for the user
+  required: true
+  content:
+    application/json:
+      schema:
+        type: object
+        required:
+          - currentPassword
+          - password
+        properties:
+          currentPassword:
+            type: string
+          password:
+            type: string
+JoinMailingListPayload:
+  description: payload to add a user to a study specific or umbrella specific email list
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: '../pepper.yml#/components/schemas/JoinMailingListPayload'

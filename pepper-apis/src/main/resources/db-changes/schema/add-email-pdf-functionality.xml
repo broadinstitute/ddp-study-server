@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="sardell" id="notification-attachment-table">
+        <createTable tableName="user_notification_attachment_list">
+            <column name="user_notification_attachment_list_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="user_notification_attachment_list_pk"/>
+            </column>
+            <column name="pdf_document_configuration_id" type="bigint">
+                <constraints nullable="false" foreignKeyName="user_notification_attachment_list_pdf_document_configuration_fk"
+                             references="pdf_document_configuration(pdf_document_configuration_id)"/>
+            </column>
+            <column name="user_notification__notification_template_id" type="bigint">
+                <constraints nullable="false" foreignKeyName="usr_notifictn_attchmnt_lst_usr_notifictn__notifictn_tmplt_fk"
+                             references="user_notification__notification_template(user_notification__notification_template_id)"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>

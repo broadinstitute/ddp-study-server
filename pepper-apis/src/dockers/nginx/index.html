@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>test login</title>
+    <style>
+        body {
+            width: 35em;
+            margin: 0 auto;
+            font-family: Tahoma, Verdana, Arial, sans-serif;
+        }
+    </style>
+</head>
+<body>
+
+<script src="https://cdn.auth0.com/js/lock/10.20/lock.min.js"></script>
+<script>
+    var lock = new Auth0Lock('5ps6MnYXmzpuo4OePvfcW0Dfv6cMPNIC', 'ddp-dev.auth0.com', {
+        auth: {
+            redirectUrl: 'https://pepper-dev.datadonationplatform.org',
+            responseType: 'token id_token',
+            params: {
+                scope: 'openid'
+            }
+        },
+        theme: {
+            logo: '//ddp.png'
+        },
+        theme: {
+            logo: 'https://pepper-dev.datadonationplatform.org/ddp.png',
+            primaryColor:'#F27833'
+        },
+        languageDictionary: {
+            title: "Welcome to Pepper"
+        }
+    });
+
+    lock.on("authenticated", function(authResult) {
+        // Use the token in authResult to getUserInfo() and save it to localStorage
+        localStorage.setItem('lockIdToken', authResult.idToken);
+        console.log('idToken:' + authResult.idToken);
+    });
+</script>
+<p onclick="lock.show();">Login</p>
+
+
+</body>
+</html>

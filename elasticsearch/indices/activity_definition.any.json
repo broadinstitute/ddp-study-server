@@ -1,0 +1,87 @@
+{
+  "settings": {
+    "index": {
+      "number_of_shards": "1",
+      "number_of_replicas": "0"
+    }
+  },
+  "mappings": {
+    "_doc": {
+      "properties": {
+        "studyGuid": {
+          "type": "keyword"
+        },
+        "activityCode": {
+          "type": "keyword"
+        },
+        "activityVersion": {
+          "type": "keyword"
+        },
+        "activityName": {
+          "type": "text"
+        },
+        "questions": {
+          "properties": {
+            "stableId": {
+              "type": "keyword"
+            },
+            "questionType": {
+              "type": "keyword"
+            },
+            "questionText": {
+              "type": "text"
+            },
+            "allowMultiple": {
+              "type": "boolean"
+            },
+            "selectMode": {
+              "type": "keyword"
+            },
+            "dateFields": {
+              "type": "keyword"
+            },
+            "options": {
+              "properties": {
+                "optionStableId": {
+                  "type": "keyword"
+                },
+                "optionText": {
+                  "type": "text"
+                }
+              }
+            },
+            "childQuestions": {
+              "properties": {
+                "stableId": {
+                  "type": "keyword"
+                },
+                "questionType": {
+                  "type": "keyword"
+                },
+                "questionText": {
+                  "type": "text"
+                },
+                "selectMode": {
+                  "type": "keyword"
+                },
+                "dateFields": {
+                  "type": "keyword"
+                },
+                "options": {
+                  "properties": {
+                    "optionStableId": {
+                      "type": "keyword"
+                    },
+                    "optionText": {
+                      "type": "text"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

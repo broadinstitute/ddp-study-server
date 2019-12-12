@@ -1,0 +1,29 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+    <changeSet id="20190402-create-text-question-suggestion-table" author="sampath">
+
+        <createTable tableName="text_question_suggestion">
+            <column name="text_question_suggestion_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="text_question_suggestion_pk"/>
+            </column>
+            <column name="text_question_id" type="bigint">
+                <constraints nullable="false" references="text_question(question_id)"
+                             foreignKeyName="text_question_suggestion_txt_q_fk"/>
+            </column>
+            <column name="suggestion" type="varchar(128)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="display_order" type="int">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addUniqueConstraint tableName="text_question_suggestion"
+                             columnNames="text_question_id,suggestion"
+                             constraintName="text_question_suggestion_uk"/>
+
+    </changeSet>
+</databaseChangeLog>

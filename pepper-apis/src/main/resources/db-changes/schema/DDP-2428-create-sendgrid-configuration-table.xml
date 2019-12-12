@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="sretsia" id="20180921-create-sendgrid-configuration-table">
+        <createTable tableName="sendgrid_configuration">
+            <column name="sendgrid_configuration_id" type="bigint" autoIncrement="true" startWith="1">
+                 <constraints primaryKey="true" nullable="false" primaryKeyName="sc_sendgrid_configuration_id_pk"/>
+            </column>
+            <column name="umbrella_study_id" type="bigint">
+                 <constraints nullable="false" foreignKeyName="sc_umbrella_study_id_us_umbrella_study_id_fk" references="umbrella_study(umbrella_study_id)"/>
+            </column>
+            <column name="api_key" type="varchar(96)">
+                 <constraints nullable="false"/>
+            </column>
+            <column name="from_name" type="varchar(200)">
+                 <constraints nullable="false"/>
+            </column>
+            <column name="from_email" type="varchar(200)">
+                 <constraints nullable="false" unique="true" uniqueConstraintName="sc_from_email_uk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>

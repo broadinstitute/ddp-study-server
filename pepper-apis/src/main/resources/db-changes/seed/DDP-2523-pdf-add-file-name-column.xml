@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+    <changeSet id="20181203-add-pdf-file-name-column" author="cardell">
+        <addColumn tableName="pdf_document_configuration">
+            <column name="file_name" type="varchar(255)"/>
+        </addColumn>
+        <sql>update pdf_document_configuration set file_name = configuration_name</sql>
+        <addNotNullConstraint tableName="pdf_document_configuration" columnName="file_name" columnDataType="varchar(255)"/>
+    </changeSet>
+</databaseChangeLog>

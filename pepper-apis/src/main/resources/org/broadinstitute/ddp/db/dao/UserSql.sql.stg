@@ -1,0 +1,17 @@
+group UserSql;
+
+insertByClientIdOrAuth0Ids(byClientId) ::= <<
+insert into user (created_by_client_id, auth0_tenant_id, auth0_user_id,
+       guid, hruid, legacy_altpid, legacy_shortid, is_locked, created_at, updated_at, expires_at)
+select c.client_id, t.auth0_tenant_id, :auth0UserId,
+       :guid, :hruid, :legacyAltPid, :legacyShortId, :isLocked, :createdAt, :updatedAt, :expiresAt
+  from auth0_tenant as t
+  join client as c on c.auth0_tenant_id = t.auth0_tenant_id
+<if(byClientId)>
+ where c.client_id = :clientId
+<else>
+ where t.auth0_domain = :auth0Domain
+   and c.auth0_client_id = :auth0ClientId
+<endif>
+>>
+

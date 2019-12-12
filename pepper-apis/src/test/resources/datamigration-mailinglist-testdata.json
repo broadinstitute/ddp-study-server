@@ -1,0 +1,52 @@
+{
+  "mailing_list_data": [
+    {
+      "firstname": "sampath",
+      "lastname": "2a",
+      "email": "sampath2a@datadonationplatform.org",
+      "datecreated": 1536764898
+    },
+    {
+      "firstname": "aa",
+      "lastname": "aa",
+      "email": "asdfghjkl@datadonationplatform.org",
+      "datecreated": 1535121926
+    },
+    {
+      "firstname": "adf",
+      "lastname": "asdf",
+      "email": "ebakeR+12@datadonationplatform.org",
+      "datecreated": 1536199112
+    },
+    {
+      "firstname": "asdf",
+      "lastname": "asdf",
+      "email": "ebaker+aksdfklndsafl@datadonationplatform.org",
+      "datecreated": 1513874729
+    },
+    {
+      "firstname": "Esme",
+      "lastname": "Baker",
+      "email": "ebaker+11@datadonationplatform.org",
+      "datecreated": 1496764616
+    },
+    {
+      "firstname": "Esme",
+      "lastname": "Baker",
+      "email": "ebaker+anotherfakeone@datadonationplatform.org",
+      "datecreated": 1515039968
+    },
+    {
+      "firstname": "foo",
+      "lastname": "bar",
+      "email": "foo@bar.com",
+      "datecreated": 1526399460
+    },
+    {
+      "firstname": "foo",
+      "lastname": "bar",
+      "email": "foo@bar.org2",
+      "datecreated": 1528919911
+    }
+  ]
+}

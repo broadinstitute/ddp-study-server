@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="sretsia" id="20181210-create-i18n-study-activity-dashboard-summary-trans-table">
+        <createTable tableName="i18n_study_activity_summary_trans">
+            <column name="i18n_study_activity_summary_trans_id" type="bigint" autoIncrement="true" startWith="1">
+                 <constraints nullable="false" primaryKey="true" primaryKeyName="i18n_sast_pk"/>
+            </column>
+            <column name="study_activity_id" type="bigint">
+                 <constraints nullable="false" foreignKeyName="i18n_sast_study_activity_id_sa_study_activity_id_fk" references="study_activity(study_activity_id)"/>
+            </column>
+            <column name="activity_instance_status_type_id" type="bigint">
+                 <constraints nullable="false" foreignKeyName="i18n_sast_aist_sa_aist_activity_instance_status_type_id_fk" references="activity_instance_status_type(activity_instance_status_type_id)"/>
+            </column>
+            <column name="language_code_id" type="bigint">
+                 <constraints nullable="false" foreignKeyName="i18n_sast_language_code_id_lc_language_code_id" references="language_code(language_code_id)"/>
+            </column>
+            <column name="translation_text" type="varchar(500)">
+                 <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addUniqueConstraint
+            tableName="i18n_study_activity_summary_trans"
+            columnNames="study_activity_id, activity_instance_status_type_id, language_code_id"
+            constraintName="i18n_sast_study_act_id_act_st_type_id_lc_id_uk"
+        />
+    </changeSet>
+
+</databaseChangeLog>

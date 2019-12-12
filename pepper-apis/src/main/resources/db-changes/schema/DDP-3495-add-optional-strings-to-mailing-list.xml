@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="rnordin" id="20190406-add-optional-strings-to-mailing-list">
+        <dropNotNullConstraint tableName="study_mailing_list" columnName="umbrella_study_id" columnDataType="bigint"/>
+        <addColumn tableName="study_mailing_list">
+            <column name="umbrella_id" type="bigint">
+                <constraints nullable="true" references="umbrella(umbrella_id)"
+                             foreignKeyName="study_mailing_list_umbrella_fk"/>
+            </column>
+        </addColumn>
+        <addColumn tableName="study_mailing_list">
+            <column name="info" type="varchar(1024)"/>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

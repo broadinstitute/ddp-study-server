@@ -1,0 +1,12 @@
+group StudyGovernanceSql;
+
+insertPolicyByStudyIdOrGuid(byStudyId) ::= <<
+insert into study_governance_policy (study_id, should_create_governed_user_expression_id)
+values (
+<if(byStudyId)>
+       :studyId,
+<else>
+       (select umbrella_study_id from umbrella_study where guid = :studyGuid),
+<endif>
+       :shouldCreateGovernedUserExprId)
+>>

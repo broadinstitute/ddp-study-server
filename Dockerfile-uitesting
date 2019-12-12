@@ -1,0 +1,39 @@
+FROM maven:3.3.9-jdk-8
+
+RUN true \
+  && apt-get update \
+  && apt-get install -y curl \
+  && apt-get install -y nano \
+  && apt-get install -y --no-install-recommends libopencv-core2.4 libopencv-highgui2.4 libtesseract3 # without these libs, remote webdriver croaks
+
+ENV M2_REPO=/app/repo
+ENV SET_LOCAL_M2_REPO="-Dmaven.repo.local=$M2_REPO"
+ENV MAVEN_OPTS="-Xms256m -Xmx1g"
+
+RUN mkdir /app
+RUN mkdir /app/pepper-apis
+RUN mkdir /app/ddp-automation
+
+WORKDIR /app/pepper-apis
+ADD pepper-apis/pom.xml /app/pepper-apis/
+ADD pepper-apis/parent-pom.xml /app/pepper-apis/
+ADD pepper-apis/checkstyle.xml /app/pepper-apis/
+
+RUN ["echo", "Building parent pom..."]
+RUN mvn --batch-mode $SET_LOCAL_M2_REPO -DskipTests -f parent-pom.xml clean install
+
+RUN ["echo","Frontloading maven dependencies for local build of backend..."]
+RUN mvn --batch-mode -v $SET_LOCAL_M2_REPO dependency:go-offline
+COPY pepper-apis/src/ /app/pepper-apis/src
+RUN ["echo","Building pepper-apis"]
+RUN  mvn --batch-mode $SET_LOCAL_M2_REPO -DskipTests=true clean install
+
+WORKDIR /app/ddp-automation
+ADD ddp-automation/pom.xml /app/ddp-automation/
+ADD pepper-apis/checkstyle.xml /app/ddp-automation/
+RUN ["echo","Frontloading maven dependencies for webdriver..."]
+RUN mvn --batch-mode $SET_LOCAL_M2_REPO dependency:go-offline
+
+COPY ddp-automation/src/ /app/ddp-automation/src
+RUN ["echo","Running tests..."]
+CMD mvn --batch-mode $SET_LOCAL_M2_REPO -Dorg.datadonationplatform.postToSlack="$POST_TO_SLACK" -Dconfig.file=/app/config.conf -P $TEST_PROFILE -Dorg.datadonationplatform.browserStackBuildName="$BUILD_NAME" -Dorg.datadonationplatform.browserStackSessionName="$SESSION_NAME" test

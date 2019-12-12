@@ -1,0 +1,11 @@
+get:
+  operationId: getCancers
+  tags:
+    - Other
+  summary: list of cancers
+  description: returns a list of cancers
+  responses:
+    200:
+      $ref: '../pepper.yml#/components/responses/CancersResponse'
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'

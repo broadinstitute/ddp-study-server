@@ -1,0 +1,11 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+    <changeSet id="20181025-DDP-2637-add-dms-notification-type" author="andrew">
+        <insert tableName="event_trigger_type">
+            <column name="event_trigger_type_code">DSM_NOTIFICATION</column>
+        </insert>
+    </changeSet>
+</databaseChangeLog>

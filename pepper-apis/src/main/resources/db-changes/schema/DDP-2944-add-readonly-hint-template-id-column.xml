@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="sretsia" id="20181213-add-readonly-hint-template-id-column">
+        <addColumn tableName="form_activity_setting">
+            <column name="readonly_hint_template_id" type="bigint">
+                <constraints nullable="true" foreignKeyName="fas_readonly_hint_template_fk" referencedTableName="template" referencedColumnNames="template_id"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

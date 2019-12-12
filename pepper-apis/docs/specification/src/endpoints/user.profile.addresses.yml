@@ -1,0 +1,31 @@
+parameters:
+  - in: path
+    name: user
+    required: true
+    description: "the user's unique identifier"
+    schema:
+      type: string
+
+get:
+  operationId: getMailingAddresses
+  description: fetch all saved addresses for a participant
+  tags:
+    - Mailing Address
+  responses:
+    200:
+      $ref: '../pepper.yml#/components/responses/MailingAddresses'
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'
+
+post:
+  operationId: createMailingAddress
+  description: save a new address for a participant
+  tags:
+    - Mailing Address
+  requestBody:
+    $ref: '../pepper.yml#/components/requestBodies/MailingAddress'
+  responses:
+    200:
+      $ref: '../pepper.yml#/components/responses/MailingAddress'
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'

@@ -1,0 +1,116 @@
+group JdbiTempMailAddress;
+
+upsertTempAddress() ::= <<
+    INSERT INTO temp_mailing_address(
+        participant_user_id,
+        operator_user_id,
+        activity_instance_id,
+        name,
+        street1,
+        street2,
+        city,
+        postal_code,
+        state,
+        subnational_division_id,
+        country_id,
+        phone,
+        description,
+        is_default)
+    VALUES(
+    (SELECT
+        user_id
+     FROM
+        user up
+     WHERE
+        up.guid = :participantGuid),
+    (SELECT
+        user_id
+     FROM
+        user uo
+     WHERE
+        uo.guid = :operatorGuid),
+     (SELECT
+             activity_instance_id
+      FROM
+         activity_instance ai
+      WHERE
+         ai.activity_instance_guid = :activityInstanceGuid),
+      :a.name,
+      :a.street1,
+      :a.street2,
+      :a.city,
+      :a.zip,
+      :a.state,
+      (SELECT
+           country_subnational_division_id
+       FROM
+           country_subnational_division s
+               JOIN
+           country_address_info c ON c.country_address_info_id = s.country_address_info_id
+       WHERE
+           s.code = :a.state AND c.code = :a.country),
+      (SELECT
+          country_address_info_id
+      FROM
+          country_address_info
+      WHERE
+          code = :a.country),
+      :a.phone,
+      :a.description,
+      :a.defaultValue)
+      ON DUPLICATE KEY UPDATE
+       participant_user_id=VALUES(participant_user_id),
+       operator_user_id=VALUES(operator_user_id),
+       activity_instance_id=VALUES(activity_instance_id),
+       name=VALUES(name),
+       street1=VALUES(street1),
+       street2=VALUES(street2),
+       city=VALUES(city),
+       postal_code=VALUES(postal_code),
+       state=VALUES(state),
+       subnational_division_id=VALUES(subnational_division_id),
+       country_id=VALUES(country_id),
+       phone=VALUES(phone),
+       description=VALUES(description),
+       is_default=VALUES(is_default)
+>>
+
+findTempAddressByActivityInstanceGuid() ::= <<
+    SELECT
+        m.temp_address_id AS id,
+        m.name,
+        m.street1,
+        m.street2,
+        m.city,
+        m.postal_code AS zip,
+        coalesce(s.code, m.state) AS state,
+        c.code AS country,
+        m.phone,
+        m.is_default AS defaultValue,
+        m.description
+
+    FROM
+        temp_mailing_address m
+            LEFT OUTER JOIN
+        country_address_info c ON c.country_address_info_id = m.country_id
+            LEFT OUTER JOIN
+        country_subnational_division s ON s.country_subnational_division_id = m.subnational_division_id
+            JOIN
+        activity_instance ai on m.activity_instance_id=ai.activity_instance_id
+    WHERE
+        ai.activity_instance_guid=:activityInstanceGuid
+
+>>
+deleteTempAddressByActivityInstanceGuid() ::= <<
+        DELETE FROM
+            temp_mailing_address
+        WHERE
+            temp_mailing_address.activity_instance_id IN
+            (SELECT
+                activity_instance_id
+             FROM
+                activity_instance ai
+             WHERE
+                ai.activity_instance_guid=:activityInstanceGuid)
+>>
+

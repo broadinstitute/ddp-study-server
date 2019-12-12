@@ -1,0 +1,35 @@
+post:
+  operationId: userStudyExit
+  tags:
+    - Operator & Participant
+  summary: request to withdraw from a study
+  description: |
+    When a participant requests to withdraw from a study, a notification will be sent to the study staff.
+    The participant is not considered "exited" until a study staff processes this request. This exit
+    request may be made once by a participant for the study.
+  parameters:
+    - in: path
+      name: user
+      required: true
+      description: the participant's identifier
+      schema:
+        type: string
+    - in: path
+      name: study
+      required: true
+      description: the study's identifier
+      schema:
+        type: string
+  requestBody:
+    $ref: '../pepper.yml#/components/requestBodies/StudyExitRequestBody'
+  responses:
+      204:
+        description: exit request has been created
+      400:
+        $ref: '../pepper.yml#/components/responses/BadPayloadResponse'
+      401:
+        description: missing credentials for user
+      422:
+        $ref: '../pepper.yml#/components/responses/StudyExitErrorResponse'
+      default:
+        $ref: '../pepper.yml#/components/responses/ErrorResponse'

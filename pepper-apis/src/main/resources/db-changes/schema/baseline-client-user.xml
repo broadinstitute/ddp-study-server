@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="baseline-client-table">
+        <createTable tableName="client">
+            <column name="client_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="client_pk"/>
+            </column>
+            <column name="client_name" type="varchar(45)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_revoked" type="boolean">
+                <constraints nullable="false"/>
+            </column>
+            <column name="auth0_client_id" type="varchar(80)">
+                <constraints unique="true" uniqueConstraintName="client_auth0_uk"/>
+            </column>
+            <column name="auth0_signing_secret" type="varchar(200)"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-user-table">
+        <createTable tableName="user">
+            <column name="user_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="user_pk"/>
+            </column>
+            <column name="auth0_user_id" type="varchar(500)"/>
+            <column name="guid" type="varchar(20)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="user_guid_uk"/>
+            </column>
+            <column name="hruid" type="varchar(5)">
+                <constraints unique="true" uniqueConstraintName="user_hruid_uk"/>
+            </column>
+            <column name="is_locked" type="boolean">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by_client_id" type="bigint">
+                <constraints nullable="false" foreignKeyName="user_client_fk" references="client(client_id)"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-user-profile-table">
+        <createTable tableName="user_profile">
+            <column name="user_profile_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="user_profile_pk"/>
+            </column>
+            <column name="user_id" type="bigint">
+                <constraints nullable="false" unique="true" uniqueConstraintName="user_profile_user_uk"
+                             references="user(user_id)" foreignKeyName="user_profile_user_fk"/>
+            </column>
+            <column name="first_name" type="varchar(100)"/>
+            <column name="last_name" type="varchar(100)"/>
+            <column name="sex" type="varchar(20)"/>
+            <column name="birth_year" type="int"/>
+            <column name="birth_month" type="int"/>
+            <column name="birth_day_in_month" type="int"/>
+            <column name="preferred_language_id" type="bigint">
+                <constraints references="language_code(language_code_id)" foreignKeyName="user_profile_language_code_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-user-governance-table">
+        <createTable tableName="user_governance">
+            <column name="user_governance_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="user_governance_pk"/>
+            </column>
+            <column name="operator_user_id" type="bigint">
+                <constraints nullable="false" references="user(user_id)" foreignKeyName="user_governance_operator_user_fk"/>
+            </column>
+            <column name="participant_user_id" type="bigint">
+                <constraints nullable="false" references="user(user_id)" foreignKeyName="user_governance_participant_user_fk"/>
+            </column>
+            <column name="alias" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_active" type="boolean">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-user-governance-uk">
+        <addUniqueConstraint tableName="user_governance" columnNames="operator_user_id, alias"
+                             constraintName="user_governance_operator_user_alias_uk"/>
+    </changeSet>
+
+</databaseChangeLog>

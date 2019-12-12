@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="baseline-seed-en-trans-form-activity-type">
+        <insert tableName="i18n_activity_type_name_trans">
+            <column name="activity_type_id" valueComputed="(select activity_type_id from activity_type where activity_type_code = 'FORMS')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'en')"/>
+            <column name="translation_text" value="Forms"/>
+        </insert>
+        <insert tableName="i18n_activity_type_name_trans">
+            <column name="activity_type_id" valueComputed="(select activity_type_id from activity_type where activity_type_code = 'FORMS')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'ru')"/>
+            <column name="translation_text" value="Анкета"/>
+        </insert>
+        <insert tableName="i18n_activity_type_name_trans">
+            <column name="activity_type_id" valueComputed="(select activity_type_id from activity_type where activity_type_code = 'FORMS')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'fr')"/>
+            <column name="translation_text" value="Formulaire"/>
+        </insert>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-seed-en-trans-activity-instance-status-type">
+        <insert tableName="i18n_activity_instance_status_type_name_trans">
+            <column name="activity_instance_status_type_id"
+                    valueComputed="(select activity_instance_status_type_id from activity_instance_status_type where activity_instance_status_type_code = 'COMPLETE')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'en')"/>
+            <column name="translation_text" value="Complete"/>
+        </insert>
+        <insert tableName="i18n_activity_instance_status_type_name_trans">
+            <column name="activity_instance_status_type_id"
+                    valueComputed="(select activity_instance_status_type_id from activity_instance_status_type where activity_instance_status_type_code = 'COMPLETE')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'ru')"/>
+            <column name="translation_text" value="Завершено"/>
+        </insert>
+        <insert tableName="i18n_activity_instance_status_type_name_trans">
+            <column name="activity_instance_status_type_id"
+                    valueComputed="(select activity_instance_status_type_id from activity_instance_status_type where activity_instance_status_type_code = 'COMPLETE')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'fr')"/>
+            <column name="translation_text" value="Achevée"/>
+        </insert>
+
+        <insert tableName="i18n_activity_instance_status_type_name_trans">
+            <column name="activity_instance_status_type_id"
+                    valueComputed="(select activity_instance_status_type_id from activity_instance_status_type where activity_instance_status_type_code = 'CREATED')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'en')"/>
+            <column name="translation_text" value="Created"/>
+        </insert>
+        <insert tableName="i18n_activity_instance_status_type_name_trans">
+            <column name="activity_instance_status_type_id"
+                    valueComputed="(select activity_instance_status_type_id from activity_instance_status_type where activity_instance_status_type_code = 'CREATED')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'ru')"/>
+            <column name="translation_text" value="Создано"/>
+        </insert>
+        <insert tableName="i18n_activity_instance_status_type_name_trans">
+            <column name="activity_instance_status_type_id"
+                    valueComputed="(select activity_instance_status_type_id from activity_instance_status_type where activity_instance_status_type_code = 'CREATED')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'fr')"/>
+            <column name="translation_text" value="Créé"/>
+        </insert>
+
+        <insert tableName="i18n_activity_instance_status_type_name_trans">
+            <column name="activity_instance_status_type_id"
+                    valueComputed="(select activity_instance_status_type_id from activity_instance_status_type where activity_instance_status_type_code = 'IN_PROGRESS')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'en')"/>
+            <column name="translation_text" value="In Progress"/>
+        </insert>
+        <insert tableName="i18n_activity_instance_status_type_name_trans">
+            <column name="activity_instance_status_type_id"
+                    valueComputed="(select activity_instance_status_type_id from activity_instance_status_type where activity_instance_status_type_code = 'IN_PROGRESS')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'ru')"/>
+            <column name="translation_text" value="В процессе"/>
+        </insert>
+        <insert tableName="i18n_activity_instance_status_type_name_trans">
+            <column name="activity_instance_status_type_id"
+                    valueComputed="(select activity_instance_status_type_id from activity_instance_status_type where activity_instance_status_type_code = 'IN_PROGRESS')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'fr')"/>
+            <column name="translation_text" value="En progression"/>
+        </insert>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-seed-en-trans-question-validation-rule-type">
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'DATE_AFTER')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'en')"/>
+            <column name="translation_text" value="The selected date can't be in the past."/>
+        </insert>
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'DATE_AFTER')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'ru')"/>
+            <column name="translation_text" value="Выбранная дата не может быть в прошлом."/>
+        </insert>
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'DATE_AFTER')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'fr')"/>
+            <column name="translation_text" value="La date sélectionnée ne peut pas être dans le passé."/>
+        </insert>
+
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'DATE_BEFORE')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'en')"/>
+            <column name="translation_text" value="The selected date can't be in the future."/>
+        </insert>
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'DATE_BEFORE')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'ru')"/>
+            <column name="translation_text" value="Выбранная дата не может быть в будущем."/>
+        </insert>
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'DATE_BEFORE')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'fr')"/>
+            <column name="translation_text" value="La date choisie ne peut pas être dans le futur."/>
+        </insert>
+
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'DAY_REQUIRED')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'en')"/>
+            <column name="translation_text" value="The day field is required."/>
+        </insert>
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'DAY_REQUIRED')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'ru')"/>
+            <column name="translation_text" value="Поле дня требуется."/>
+        </insert>
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'DAY_REQUIRED')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'fr')"/>
+            <column name="translation_text" value="Le champ jour est requis."/>
+        </insert>
+
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'LENGTH')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'en')"/>
+            <column name="translation_text" value="The answer length requirement is not met."/>
+        </insert>
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'LENGTH')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'ru')"/>
+            <column name="translation_text" value="Требование длины ответа не выполняется."/>
+        </insert>
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'LENGTH')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'fr')"/>
+            <column name="translation_text" value="L'exigence de longueur de réponse n'est pas remplie."/>
+        </insert>
+
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'MONTH_REQUIRED')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'en')"/>
+            <column name="translation_text" value="The month field is required."/>
+        </insert>
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'MONTH_REQUIRED')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'ru')"/>
+            <column name="translation_text" value="Поле месяца требуется."/>
+        </insert>
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'MONTH_REQUIRED')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'fr')"/>
+            <column name="translation_text" value="Le champ mois est requis."/>
+        </insert>
+
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'NUM_OPTIONS_SELECTED')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'en')"/>
+            <column name="translation_text" value="Minimum or maximum selections requirement is not met."/>
+        </insert>
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'NUM_OPTIONS_SELECTED')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'ru')"/>
+            <column name="translation_text" value="Требование минимального или максимального выбора не выполняется."/>
+        </insert>
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'NUM_OPTIONS_SELECTED')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'fr')"/>
+            <column name="translation_text" value="L'exigence de sélection minimale ou maximale n'est pas satisfaite."/>
+        </insert>
+
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'REGEX')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'en')"/>
+            <column name="translation_text" value="The answer regex requirement is not met."/>
+        </insert>
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'REGEX')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'ru')"/>
+            <column name="translation_text" value="Требование к регулярному выражению ответа не выполняется."/>
+        </insert>
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'REGEX')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'fr')"/>
+            <column name="translation_text" value="L'exigence d'une expression régulière de la réponse n'est pas remplie."/>
+        </insert>
+
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'REQUIRED')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'en')"/>
+            <column name="translation_text" value="This question requires an answer."/>
+        </insert>
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'REQUIRED')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'ru')"/>
+            <column name="translation_text" value="Этот вопрос требует ответа."/>
+        </insert>
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'REQUIRED')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'fr')"/>
+            <column name="translation_text" value="Cette question nécessite une réponse."/>
+        </insert>
+
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'YEAR_REQUIRED')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'en')"/>
+            <column name="translation_text" value="The year field is required."/>
+        </insert>
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'YEAR_REQUIRED')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'ru')"/>
+            <column name="translation_text" value="Поле года требуется."/>
+        </insert>
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'YEAR_REQUIRED')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'fr')"/>
+            <column name="translation_text" value="Le champ année est requis."/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

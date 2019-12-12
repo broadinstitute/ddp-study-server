@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="baseline-form-type-table">
+        <createTable tableName="form_type">
+            <column name="form_type_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="form_type_pk"/>
+            </column>
+            <column name="form_type_code" type="varchar(80)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="form_type_code_uk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-form-icon-bundle-table">
+        <createTable tableName="form_type__activity_instance_status_type">
+            <column name="form_type__activity_instance_status_type_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="form_type__activity_instance_status_type_pk"/>
+            </column>
+            <column name="umbrella_study_id" type="bigint">
+                <constraints nullable="false" references="umbrella_study(umbrella_study_id)"
+                             foreignKeyName="form_type__activity_instance_status_type_umbrella_study_fk"/>
+            </column>
+            <column name="form_type_id" type="bigint">
+                <constraints nullable="false" references="form_type(form_type_id)"
+                             foreignKeyName="form_type__activity_instance_status_type_form_type_fk"/>
+            </column>
+            <column name="activity_instance_status_type_id" type="bigint">
+                <constraints nullable="false" references="activity_instance_status_type(activity_instance_status_type_id)"
+                             foreignKeyName="form_type__activity_instance_status_type_status_type_fk"/>
+            </column>
+            <column name="icon_blob" type="blob"/>
+            <column name="revision_id" type="bigint">
+                <constraints nullable="false" references="revision(revision_id)"
+                             foreignKeyName="form_type__activity_instance_status_type_revision_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-form-icon-bundle-uk">
+        <addUniqueConstraint tableName="form_type__activity_instance_status_type"
+                             columnNames="umbrella_study_id, form_type_id, activity_instance_status_type_id, revision_id"
+                             constraintName="ftaist_study_form_status_revision_uk"/>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-form-activity-table">
+        <createTable tableName="form_activity">
+            <column name="study_activity_id" type="bigint">
+                <constraints primaryKey="true" primaryKeyName="form_activity_pk"
+                             references="study_activity(study_activity_id)" foreignKeyName="form_activity_study_activity_fk"/>
+            </column>
+            <column name="form_type_id" type="bigint">
+                <constraints nullable="false" references="form_type(form_type_id)" foreignKeyName="form_activity_form_type_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-form-section-table">
+        <createTable tableName="form_section">
+            <column name="form_section_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="form_section_pk"/>
+            </column>
+            <column name="form_section_code" type="varchar(80)">
+                <constraints unique="true" uniqueConstraintName="form_section_code_uk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-form-activity-setting-table">
+        <createTable tableName="form_activity_setting">
+            <column name="form_activity_setting_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="form_activity_setting_pk"/>
+            </column>
+            <column name="form_activity_id" type="bigint">
+                <constraints nullable="false" references="form_activity(study_activity_id)" foreignKeyName="form_activity_setting_form_activity_fk"/>
+            </column>
+            <column name="list_style_hint_id" type="bigint">
+                <constraints references="list_style_hint(list_style_hint_id)" foreignKeyName="form_activity_setting_list_style_hint_fk"/>
+            </column>
+            <column name="introduction_section_id" type="bigint">
+                <constraints references="form_section(form_section_id)" foreignKeyName="form_activity_setting_introduction_section_fk"/>
+            </column>
+            <column name="closing_section_id" type="bigint">
+                <constraints references="form_section(form_section_id)" foreignKeyName="form_activity_setting_closing_section_fk"/>
+            </column>
+            <column name="revision_id" type="bigint">
+                <constraints nullable="false" references="revision(revision_id)" foreignKeyName="form_activity_setting_revision_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-form-activity-setting-uk">
+        <addUniqueConstraint tableName="form_activity_setting" columnNames="form_activity_id, revision_id"
+                             constraintName="form_activity_setting_activity_revision_uk"/>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-form-activity-section-membership-table">
+        <createTable tableName="form_activity__form_section">
+            <column name="form_activity__form_section_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="form_activity__form_section_pk"/>
+            </column>
+            <column name="form_activity_id" type="bigint">
+                <constraints nullable="false" references="form_activity(study_activity_id)"
+                             foreignKeyName="form_activity__form_section_form_activity_fk"/>
+            </column>
+            <column name="form_section_id" type="bigint">
+                <constraints nullable="false" references="form_section(form_section_id)"
+                             foreignKeyName="form_activity__form_section_section_fk"/>
+            </column>
+            <column name="display_order" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revision_id" type="bigint">
+                <constraints nullable="false" references="revision(revision_id)"
+                             foreignKeyName="form_activity__form_section_revision_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-block-type-table">
+        <createTable tableName="block_type">
+            <column name="block_type_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="block_type_pk"/>
+            </column>
+            <column name="block_type_code" type="varchar(45)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="block_type_code_uk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-block-table">
+        <createTable tableName="block">
+            <column name="block_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="block_pk"/>
+            </column>
+            <column name="block_type_id" type="bigint">
+                <constraints nullable="false" references="block_type(block_type_id)" foreignKeyName="block_block_type_fk"/>
+            </column>
+            <column name="block_guid" type="varchar(10)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="block_guid_uk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-block-conditional-expression-table">
+        <createTable tableName="block__expression">
+            <column name="block__expression_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="block__expression_pk"/>
+            </column>
+            <column name="block_id" type="bigint">
+                <constraints nullable="false" references="block(block_id)" foreignKeyName="block__expression_block_fk"/>
+            </column>
+            <column name="expression_id" type="bigint">
+                <constraints nullable="false" references="expression(expression_id)" foreignKeyName="block__expression_expression_fk"/>
+            </column>
+            <column name="revision_id" type="bigint">
+                <constraints nullable="false" references="revision(revision_id)" foreignKeyName="block__expression_revision_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-form-section-block-membership-table">
+        <createTable tableName="form_section__block">
+            <column name="form_section__block_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="form_section__block_pk"/>
+            </column>
+            <column name="form_section_id" type="bigint">
+                <constraints nullable="false" references="form_section(form_section_id)" foreignKeyName="form_section__block_section_fk"/>
+            </column>
+            <column name="block_id" type="bigint">
+                <constraints nullable="false" references="block(block_id)" foreignKeyName="form_section__block_block_fk"/>
+            </column>
+            <column name="display_order" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revision_id" type="bigint">
+                <constraints nullable="false" references="revision(revision_id)" foreignKeyName="form_section__block_revision_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>

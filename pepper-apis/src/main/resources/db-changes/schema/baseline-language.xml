@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="baseline-language-code-table">
+        <createTable tableName="language_code">
+            <column name="language_code_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="language_code_pk"/>
+            </column>
+            <column name="iso_language_code" type="varchar(5)" remarks="5 characters to account for cases like 'en-gb'">
+                <constraints nullable="false" unique="true" uniqueConstraintName="language_code_iso_code_uk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="andrew" id="20180908-add-text-question-placeholder">
+        <addColumn tableName="text_question">
+            <column name="placeholder_template_id" type="bigint"/>
+        </addColumn>
+
+        <addForeignKeyConstraint constraintName="text_question_placeholder_template_fk"
+                                 baseTableName="text_question"
+                                 baseColumnNames="placeholder_template_id"
+                                 referencedTableName="template"
+                                 referencedColumnNames="template_id"/>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet id="20181003-pdf-boolean-answer-substitution" author="andrew">
+        <createTable tableName="pdf_boolean_answer_substitution">
+            <column name="pdf_answer_substitution_id" type="bigint">
+                <constraints nullable="false"
+                             primaryKey="true"
+                             primaryKeyName="pdf_boolean_answer_substitution_pk"
+                             foreignKeyName="pdf_bool_ans_subs_pdf_ans_subs_fk"
+                             references="pdf_answer_substitution(pdf_answer_substitution_id)"/>
+            </column>
+            <column name="check_if_false" type="boolean" defaultValueBoolean="false"/>
+        </createTable>
+
+        <update tableName="pdf_boolean_answer_substitution">
+            <column name="check_if_false" type="boolean" valueBoolean="false"/>
+        </update>
+
+        <addNotNullConstraint tableName="pdf_boolean_answer_substitution" columnName="check_if_false" columnDataType="boolean"/>
+    </changeSet>
+
+</databaseChangeLog>

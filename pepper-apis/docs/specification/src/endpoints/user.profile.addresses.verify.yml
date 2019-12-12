@@ -1,0 +1,20 @@
+parameters:
+  - in: path
+    name: user
+    required: true
+    description: the user's unique identifier
+    schema:
+      type: string
+
+post:
+  operationId: verifyMailingAddress
+  description: verify address for a participant to ensure deliverability
+  tags:
+    - Mailing Address
+  requestBody:
+    $ref: '../pepper.yml#/components/requestBodies/MailingAddress'
+  responses:
+    200:
+      $ref: '../pepper.yml#/components/responses/MailingAddress'
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'

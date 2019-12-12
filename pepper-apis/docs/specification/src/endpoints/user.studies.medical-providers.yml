@@ -1,0 +1,49 @@
+parameters:
+  - in: path
+    name: user
+    required: true
+    description: the participant's guid
+    schema:
+      type: string
+  - in: path
+    name: study
+    required: true
+    description: the study's guid
+    schema:
+      type: string
+  - in: path
+    name: institutionType
+    required: true
+    description: the type of institution
+    schema:
+      type: string
+      enum:
+        - institution
+        - initial-biopsy
+        - physician
+
+get:
+  operationId: fetchAllMedicalProviders
+  description: fetches all of a participant's saved medical providers
+  tags:
+    - Medical Providers
+  responses:
+    200:
+      $ref: '../pepper.yml#/components/responses/ListMedicalProviders'
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'
+
+post:
+  operationId: createMedicalProvider
+  description: saves a new medical provider for a participant
+  tags:
+    - Medical Providers
+  requestBody:
+    $ref: '../pepper.yml#/components/requestBodies/MedicalProviderRequest'
+  responses:
+    201:
+      $ref: '../pepper.yml#/components/responses/MedicalProviderResponse'
+    404:
+      $ref: '../pepper.yml#/components/responses/ProviderNotFoundError'
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'

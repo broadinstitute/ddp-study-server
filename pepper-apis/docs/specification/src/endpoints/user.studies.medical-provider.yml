@@ -1,0 +1,55 @@
+parameters:
+  - in: path
+    name: user
+    required: true
+    description: the participant's guid
+    schema:
+      type: string
+  - in: path
+    name: study
+    required: true
+    description: the study's guid
+    schema:
+      type: string
+  - in: path
+    name: institutionType
+    required: true
+    description: the type of institution
+    schema:
+      type: string
+      enum:
+        - institution
+        - initial-biopsy
+        - physician
+  - in: path
+    name: provider
+    required: true
+    description: the medical provider's guid
+    schema:
+      type: string
+
+patch:
+  operationId: updateMedicalProvider
+  description: Updates the specified medical provider
+  tags:
+    - Medical Providers
+  requestBody:
+    $ref: '../pepper.yml#/components/requestBodies/MedicalProviderRequest'
+  responses:
+    204:
+      description: The medical provider was successfully updated
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'
+
+delete:
+  operationId: deleteMedicalProvider
+  description: Deletes the specified saved medical provider for a participant
+  tags:
+    - Medical Providers
+  responses:
+    204:
+      description: The medical provider was successfully deleted
+    404:
+      $ref: '../pepper.yml#/components/responses/ProviderNotFoundError'
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'

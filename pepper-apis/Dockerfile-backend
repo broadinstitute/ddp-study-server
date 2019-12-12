@@ -1,0 +1,47 @@
+FROM maven:3.6.0-jdk-11
+
+RUN true \
+  && apt-get update \
+  && apt-get install -y curl \
+  && apt-get install -y nano
+
+ENV M2_REPO /app/repo
+ENV SET_LOCAL_M2_REPO "-Dmaven.repo.local=$M2_REPO"
+
+RUN mkdir /app
+RUN mkdir $M2_REPO
+
+# ADD poms and download maven dependencies here before copying source
+# so that downloads will be cached unless poms change
+ADD pom.xml /app/
+ADD parent-pom.xml /app/
+ADD smoketest-pom.xml /app/
+ADD housekeeping-pom.xml /app/
+ADD checkstyle.xml /app/
+WORKDIR /app
+RUN ["echo","Installing gcloud tools..."]
+RUN curl -o gcloud.tar.gz https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-197.0.0-linux-x86_64.tar.gz
+RUN gunzip gcloud.tar.gz
+RUN tar -xvf gcloud.tar
+ENV PATH="/app/google-cloud-sdk/bin:${PATH}"
+RUN gcloud components install beta --quiet
+RUN gcloud components install pubsub-emulator --quiet
+RUN gcloud components update --quiet
+ENV PUBSUB_EMULATOR_HOST "localhost:8442"
+
+RUN ["echo","Frontloading maven dependencies..."]
+# This command forces maven to download everything (deps and all plugins) and take advantage of
+# caching.  dependency:go-offline does not do a good enough job capturing the full dependencies,
+# nor does dependency-resolve and dependency:resolve-plugins.  So we just run a quick test to get
+# maven to download everything
+RUN mvn $SET_LOCAL_M2_REPO --batch-mode clean install package test  surefire-report:report-only sonar:sonar --fail-never || echo "warning: failed to build pepper-apis"
+COPY src/ /app/src
+RUN mvn $SET_LOCAL_M2_REPO -o --batch-mode -DskipTests=true clean install package || echo "warning: failed to build pepper-apis"
+RUN mvn $SET_LOCAL_M2_REPO -o --batch-mode -DskipTests=true --file smoketest-pom.xml package || echo "warning: failed to build pepper-apis/smoketest"
+RUN mvn $SET_LOCAL_M2_REPO -o --batch-mode -DskipTests=true --file housekeeping-pom.xml package || echo "warning: failed to build pepper-apis/housekeeping"
+
+# keep track of git hash
+ARG GIT_SHA
+RUN echo $GIT_SHA > /app/git_sha.txt
+
+CMD  ["./startup.sh"]

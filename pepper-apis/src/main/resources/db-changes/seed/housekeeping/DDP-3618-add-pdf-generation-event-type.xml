@@ -1,0 +1,11 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+    <changeSet id="20190529-add-pdf-generation-event-type" author="yufeng">
+        <insert tableName="event_type">
+            <column name="event_type_code" value="PDF_GENERATION"/>
+        </insert>
+    </changeSet>
+</databaseChangeLog>

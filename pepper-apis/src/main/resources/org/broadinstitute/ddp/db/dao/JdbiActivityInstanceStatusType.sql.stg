@@ -1,0 +1,16 @@
+group JdbiActivityInstanceStatusType;
+/**
+    We have to do LEFT JOIN since we need to retain a status even though there is no translation for it into a desired language
+    We use a subquery because we need a iso language code which is not available before you join to i18n_activity_instance_status_type_name_trans
+    (which, in turn, requires the iso language code)
+*/
+queryTranslatedActivityInstanceStatusTypeNames() ::= <<
+	select
+		aist.activity_instance_status_type_code,
+		aistnt.translation_text as activity_instance_status_type_name
+	from
+		activity_instance_status_type aist
+		left join i18n_activity_instance_status_type_name_trans aistnt
+			on aist.activity_instance_status_type_id = aistnt.activity_instance_status_type_id
+			and aistnt.language_code_id = (select lc.language_code_id from language_code lc where lc.iso_language_code = :isoLanguageCode)
+>>

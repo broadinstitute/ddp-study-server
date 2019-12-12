@@ -1,0 +1,20 @@
+get:
+  operationId: getStudies
+  tags:
+    - Studies
+  summary: summary for each study under an umbrella
+  description: returns a list of summary information for each of the studies under a given umbrella.
+  parameters:
+    - in: query
+      name: umbrella
+      required: true
+      description: the identifier of the umbrella to return a list of studies for
+      schema:
+        type: string
+  responses:
+    200:
+      $ref: '../pepper.yml#/components/responses/StudySummaryResponse'
+    404:
+      $ref: '../pepper.yml#/components/responses/UmbrellaNotFoundErrorResponse'
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'

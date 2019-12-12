@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="baseline-institution-type-table">
+        <createTable tableName="institution_type">
+            <column name="institution_type_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="institution_type_pk"/>
+            </column>
+            <column name="institution_type_code" type="varchar(45)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="institution_type_code_uk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-institution-table">
+        <createTable tableName="institution">
+            <column name="institution_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="institution_pk"/>
+            </column>
+            <column name="institution_type_id" type="bigint">
+                <constraints nullable="false" references="institution_type(institution_type_id)"
+                             foreignKeyName="institution_institution_type_fk"/>
+            </column>
+            <column name="institution_guid" type="varchar(36)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="institution_guid_uk"/>
+            </column>
+            <column name="name" type="varchar(128)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="city_id" type="bigint">
+                <constraints nullable="false" references="city(city_id)" foreignKeyName="institution_city_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-institution-alias-table">
+        <createTable tableName="institution_alias">
+            <column name="institution_alias_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="institution_alias_pk"/>
+            </column>
+            <column name="alias" type="varchar(200)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-institution-known-alias-table">
+        <createTable tableName="institution__institution_alias">
+            <column name="institution__institution_alias_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="institution__institution_alias_pk"/>
+            </column>
+            <column name="institution_id" type="bigint">
+                <constraints nullable="false" references="institution(institution_id)"
+                             foreignKeyName="institution__institution_alias_institution_fk"/>
+            </column>
+            <column name="institution_alias_id" type="bigint">
+                <constraints nullable="false" references="institution_alias(institution_alias_id)"
+                             foreignKeyName="institution__institution_alias_alias_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-institution-physician-component-table">
+        <createTable tableName="institution_physician_component">
+            <column name="institution_physician_component_id" type="bigint">
+                <constraints primaryKey="true" primaryKeyName="institution_physician_component_pk"
+                             references="component(component_id)" foreignKeyName="institution_physician_component_component_fk"/>
+            </column>
+            <column name="institution_type_id" type="bigint">
+                <constraints nullable="false" references="institution_type(institution_type_id)"
+                             foreignKeyName="institution_physician_component_institution_type_fk"/>
+            </column>
+            <column name="allow_multiple" type="boolean">
+                <constraints nullable="false"/>
+            </column>
+            <column name="show_fields_initially" type="boolean">
+                <constraints nullable="false"/>
+            </column>
+            <column name="add_button_template_id" type="bigint">
+                <constraints references="template(template_id)" foreignKeyName="institution_physician_component_add_button_template_fk"/>
+            </column>
+            <column name="title_template_id" type="bigint">
+                <constraints references="template(template_id)" foreignKeyName="institution_physician_component_title_template_fk"/>
+            </column>
+            <column name="subtitle_template_id" type="bigint">
+                <constraints references="template(template_id)" foreignKeyName="institution_physician_component_subtitle_template_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-user-medical-provider-table">
+        <createTable tableName="user_medical_provider">
+            <column name="user_medical_provider_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="user_medical_provider_pk"/>
+            </column>
+            <column name="user_medical_provider_guid" type="varchar(36)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="user_medical_provider_guid_uk"/>
+            </column>
+            <column name="user_id" type="bigint">
+                <constraints nullable="false" references="user(user_id)" foreignKeyName="user_medical_provider_user_fk"/>
+            </column>
+            <column name="umbrella_study_id" type="bigint">
+                <constraints nullable="false" references="umbrella_study(umbrella_study_id)"
+                             foreignKeyName="user_medical_provider_umbrella_study_fk"/>
+            </column>
+            <column name="institution_type_id" type="bigint">
+                <constraints nullable="false" references="institution_type(institution_type_id)"
+                             foreignKeyName="user_medical_provider_institution_type_fk"/>
+            </column>
+            <column name="institution_name" type="varchar(200)"/>
+            <column name="physician_name" type="varchar(200)"/>
+            <column name="state" type="varchar(200)"/>
+            <column name="city" type="varchar(200)"/>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,64 @@
+get:
+  operationId: getUserProfile
+  tags:
+    - Operator & Participant
+  description: |
+    return the user's profile
+
+    _This API allows access to temporary users._
+  parameters:
+    - in: path
+      name: user
+      required: true
+      description: "the user's unique identifier"
+      schema:
+        type: string
+  responses:
+    200:
+      $ref: '../pepper.yml#/components/responses/ProfileResponse'
+    400:
+      $ref: '../pepper.yml#/components/responses/ProfileGetErrorResponse'
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'
+post:
+  operationId: createUserProfile
+  tags:
+    - Operator & Participant
+  description: create a new profile for a user
+  parameters:
+    - in: path
+      name: user
+      required: true
+      description: "the user's unique identifier"
+      schema:
+        type: string
+  requestBody:
+    $ref: '../pepper.yml#/components/requestBodies/ProfileRequestBody'
+  responses:
+    200:
+      $ref: '../pepper.yml#/components/responses/ProfileResponse'
+    400:
+      $ref: '../pepper.yml#/components/responses/ProfileUpdateErrorResponse'
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'
+patch:
+  operationId: updateUserProfile
+  tags:
+    - Operator & Participant
+  description: update the user's profile
+  parameters:
+    - in: path
+      name: user
+      required: true
+      description: "the user's unique identifier"
+      schema:
+        type: string
+  requestBody:
+    $ref: '../pepper.yml#/components/requestBodies/ProfileRequestBody'
+  responses:
+    200:
+      $ref: '../pepper.yml#/components/responses/ProfileResponse'
+    400:
+      $ref: '../pepper.yml#/components/responses/ProfileUpdateErrorResponse'
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'

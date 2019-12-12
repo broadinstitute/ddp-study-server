@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="baseline-mailing-address-validation-status-table">
+        <createTable tableName="mailing_address_validation_status">
+            <column name="mailing_address_validation_status_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="mailing_address_validation_status_pk"/>
+            </column>
+            <column name="code" type="int">
+                <constraints nullable="false" unique="true" uniqueConstraintName="mailing_address_validation_status_code_uk"/>
+            </column>
+            <column name="name" type="varchar(20)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="mailing_address_validation_status_name_uk"/>
+            </column>
+            <column name="description" type="varchar(100)"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-mailing-address-table">
+        <createTable tableName="mailing_address">
+            <column name="address_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="mailing_address_pk"/>
+            </column>
+            <column name="address_guid" type="varchar(10)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="mailing_address_guid_uk"/>
+            </column>
+            <column name="operator_user_id" type="bigint">
+                <constraints nullable="false" references="user(user_id)" foreignKeyName="mailing_address_operator_user_fk"/>
+            </column>
+            <column name="participant_user_id" type="bigint">
+                <constraints nullable="false" references="user(user_id)" foreignKeyName="mailing_address_participant_user_fk"/>
+            </column>
+            <column name="name" type="varchar(100)"/>
+            <column name="street1" type="varchar(100)"/>
+            <column name="street2" type="varchar(100)"/>
+            <column name="city" type="varchar(100)"/>
+            <column name="postal_code" type="varchar(100)"/>
+            <column name="subnational_division_id" type="bigint">
+                <constraints references="country_subnational_division(country_subnational_division_id)"
+                             foreignKeyName="mailing_address_country_subnational_division_fk"/>
+            </column>
+            <column name="country_id" type="bigint">
+                <constraints references="country_address_info(country_address_info_id)"
+                             foreignKeyName="mailing_address_country_address_info_fk"/>
+            </column>
+            <column name="phone" type="varchar(100)"/>
+            <column name="description" type="varchar(50)"/>
+            <column name="validation_status_id" type="bigint">
+                <constraints references="mailing_address_validation_status(mailing_address_validation_status_id)"
+                             foreignKeyName="mailing_address_validation_status_fk"/>
+            </column>
+            <column name="created_at" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-default-mailing-address-table">
+        <createTable tableName="default_mailing_address">
+            <column name="default_mail_address_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="default_mailing_address_pk"/>
+            </column>
+            <column name="participant_user_id" type="bigint">
+                <constraints nullable="false" unique="true" uniqueConstraintName="default_mailing_address_participant_user_uk"/>
+            </column>
+            <column name="address_id" type="bigint"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-default-mailing-address-fk">
+        <!-- if user is deleted this row has no meaning and should not block user deletion -->
+        <addForeignKeyConstraint baseTableName="default_mailing_address" baseColumnNames="participant_user_id"
+                                 referencedTableName="user" referencedColumnNames="user_id"
+                                 onDelete="CASCADE" constraintName="default_mailing_address_participant_user_fk"/>
+        <!-- if mail address is deleted then this row makes no sense whatsoever -->
+        <addForeignKeyConstraint baseTableName="default_mailing_address" baseColumnNames="address_id"
+                                 referencedTableName="mailing_address" referencedColumnNames="address_id"
+                                 onDelete="CASCADE" constraintName="default_mailing_address_address_fk"/>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-temp-mailing-address-table">
+        <createTable tableName="temp_mailing_address">
+            <column name="temp_address_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="temp_mailing_address_pk"/>
+            </column>
+            <column name="operator_user_id" type="bigint">
+                <constraints nullable="false" references="user(user_id)" foreignKeyName="temp_mailing_address_operator_user_fk"/>
+            </column>
+            <column name="participant_user_id" type="bigint">
+                <constraints nullable="false" references="user(user_id)" foreignKeyName="temp_mailing_address_participant_user_fk"/>
+            </column>
+            <column name="activity_instance_id" type="bigint">
+                <constraints nullable="false" unique="true" uniqueConstraintName="temp_mailing_address_activity_instance_uk"/>
+            </column>
+            <column name="name" type="varchar(100)"/>
+            <column name="street1" type="varchar(100)"/>
+            <column name="street2" type="varchar(100)"/>
+            <column name="city" type="varchar(100)"/>
+            <column name="postal_code" type="varchar(100)"/>
+            <column name="subnational_division_id" type="bigint">
+                <constraints references="country_subnational_division(country_subnational_division_id)"
+                             foreignKeyName="temp_mailing_address_country_subnational_division_fk"/>
+            </column>
+            <column name="country_id" type="bigint">
+                <constraints references="country_address_info(country_address_info_id)"
+                             foreignKeyName="temp_mailing_address_country_fk"/>
+            </column>
+            <column name="phone" type="varchar(100)"/>
+            <column name="description" type="varchar(50)"/>
+            <column name="is_default" type="boolean"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-templ-mailing-address-fk">
+        <addForeignKeyConstraint baseTableName="temp_mailing_address" baseColumnNames="activity_instance_id"
+                                 referencedTableName="activity_instance" referencedColumnNames="activity_instance_id"
+                                 onDelete="CASCADE" constraintName="temp_mailing_address_operator_activity_instance_fk"/>
+    </changeSet>
+
+</databaseChangeLog>

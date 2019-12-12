@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="rnordin" id="20180917-dsm-activity-mapping">
+        <createTable tableName="activity_mapping_type">
+            <column name="activity_mapping_type_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="activity_mapping_type_pk"/>
+            </column>
+            <column name="activity_mapping_code" type="varchar(45)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="activity_mapping_uk"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="dsm_activity_mapping">
+            <column name="umbrella_study_id" type="bigint">
+                <constraints nullable="false"
+                             foreignKeyName="dsm_activity_mapping_umbrella_study_id_fk"
+                             references="umbrella_study(umbrella_study_id)"/>
+            </column>
+            <column name="activity_mapping_type_id" type="bigint">
+                <constraints nullable="false"
+                             foreignKeyName="dsm_activity_mapping_activity_mapping_type_fk"
+                             references="activity_mapping_type(activity_mapping_type_id)"/>
+            </column>
+            <column name="study_activity_id" type="bigint">
+                <constraints nullable="false"
+                             foreignKeyName="study_activity_id_activity_code_fk"
+                             references="study_activity(study_activity_id)"/>
+            </column>
+            <column name="election_stable_id" type="varchar(80)">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+
+        <addPrimaryKey tableName="dsm_activity_mapping" columnNames="umbrella_study_id, activity_mapping_type_id"/>
+
+        <insert tableName="activity_mapping_type">
+            <column name="activity_mapping_code" value="BLOOD"/>
+        </insert>
+
+        <insert tableName="activity_mapping_type">
+            <column name="activity_mapping_code" value="TISSUE"/>
+        </insert>
+
+        <insert tableName="activity_mapping_type">
+            <column name="activity_mapping_code" value="MEDICAL_RELEASE"/>
+        </insert>
+
+        <insert tableName="event_action_type">
+            <column name="event_action_type_code" value="DSM_INCLUSION_ELIGIBILITY"/>
+        </insert>
+    </changeSet>
+</databaseChangeLog>

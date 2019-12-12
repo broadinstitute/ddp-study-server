@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="baseline-component-type-table">
+        <createTable tableName="component_type">
+            <column name="component_type_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="component_type_pk"/>
+            </column>
+            <column name="component_type_code" type="varchar(45)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="component_type_code_uk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-component-table">
+        <createTable tableName="component">
+            <column name="component_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="component_pk"/>
+            </column>
+            <column name="component_type_id" type="bigint">
+                <constraints nullable="false" references="component_type(component_type_id)" foreignKeyName="component_component_type_fk"/>
+            </column>
+            <column name="revision_id" type="bigint">
+                <constraints nullable="false" references="revision(revision_id)" foreignKeyName="component_revision_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-block-component-table">
+        <createTable tableName="block_component">
+            <column name="block_component_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="block_component_pk"/>
+            </column>
+            <column name="block_id" type="bigint">
+                <constraints nullable="false" references="block(block_id)" foreignKeyName="block_component_block_fk"/>
+            </column>
+            <column name="component_id" type="bigint">
+                <constraints nullable="false" references="component(component_id)" foreignKeyName="block_component_component_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-block-component-uk">
+        <addUniqueConstraint tableName="block_component" columnNames="block_id, component_id" constraintName="block_component_uk"/>
+    </changeSet>
+
+</databaseChangeLog>

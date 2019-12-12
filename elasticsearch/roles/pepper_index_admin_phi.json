@@ -1,0 +1,11 @@
+{
+  "indices": [
+    {
+      "names": ["*"],
+      "privileges": ["all"],
+      "field_security": {
+        "grant": ["*"]
+      }
+    }
+  ]
+}

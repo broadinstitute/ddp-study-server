@@ -1,0 +1,39 @@
+{{with $environment := env "ENVIRONMENT"}}
+{{with $version := env "VERSION"}}
+{{with $study := env "STUDY_KEY"}}
+{{with $response := vault (printf "secret/pepper/%s/%s/%s/conf" $environment $version $study)}}
+{{with $conf := $response.Data}}
+{{with $auth := $conf.auth0}}
+
+{
+    "auth0": {
+        "domain": "{{$auth.domain}}",
+        "mgmtClientId": "{{$auth.mgmtClientId}}",
+        "mgmtSecret": "{{$auth.mgmtSecret}}",
+        "clientId": "{{$auth.clientId}}",
+        "clientSecret": "{{$auth.clientSecret}}"
+    },
+    "baseWebUrl": "{{$conf.baseWebUrl}}",
+    "passwordRedirectUrl": "{{$conf.passwordRedirectUrl}}",
+    "assetsBucketName": "{{$conf.assetsBucketName}}",
+    "sendgridApiKey": "{{$conf.sendgridApiKey}}",
+    "sendgridFromName": "{{$conf.sendgridFromName}}",
+    "sendgridFromEmail": "{{$conf.sendgridFromEmail}}",
+    "sendgridDefaultSalutation" : "{{$conf.sendgridDefaultSalutation}}",
+
+{{if not $conf.irbPassword}}
+    "irbPassword": null,
+{{else}}
+    "irbPassword": "{{$conf.irbPassword}}",
+{{end}}
+
+    "emails": {{$conf.emails | toJSONPretty}}
+
+}
+
+{{end}}
+{{end}}
+{{end}}
+{{end}}
+{{end}}
+{{end}}

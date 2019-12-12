@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet id="20190821-add-is-followup-to-study-activity" author="sretsya">
+        <addColumn tableName="study_activity">
+            <column name="is_followup" type="boolean">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <update tableName="study_activity">
+            <column name="is_followup" valueBoolean="false"/>
+        </update>
+        <addNotNullConstraint tableName="study_activity" columnName="is_followup" columnDataType="boolean"/>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="baseline-seed-workflow-state-type">
+        <insert tableName="workflow_state_type">
+            <column name="workflow_state_type_code" value="ACTIVITY"/>
+        </insert>
+        <insert tableName="workflow_state_type">
+            <column name="workflow_state_type_code" value="DASHBOARD"/>
+        </insert>
+        <insert tableName="workflow_state_type">
+            <column name="workflow_state_type_code" value="DONE"/>
+        </insert>
+        <insert tableName="workflow_state_type">
+            <column name="workflow_state_type_code" value="START"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,126 @@
+group JdbiPicklistOption;
+
+insertOption() ::= <<
+insert into picklist_option (picklist_question_id, picklist_option_stable_id,
+       option_label_template_id, detail_label_template_id, allow_details, is_exclusive, display_order, revision_id)
+values (:picklistQuestionId, :stableId,
+       :optionLabelTemplateId, :detailLabelTemplateId, :allowDetails, :isExclusive, :displayOrder, :revisionId)
+>>
+
+insertOptionByDto() ::= <<
+insert into picklist_option (picklist_question_id, picklist_option_stable_id,
+       option_label_template_id, detail_label_template_id, allow_details, is_exclusive, display_order, revision_id)
+values (:picklistQuestionId, :dto.getStableId, :dto.getOptionLabelTemplateId, :dto.getDetailLabelTemplateId,
+       :dto.getAllowDetails, :dto.isExclusive, :dto.getDisplayOrder, :revisionId)
+>>
+
+queryInfoByOptionStableIdAndRevision() ::= <<
+select
+    po.picklist_option_id,
+    po.picklist_option_stable_id,
+    po.option_label_template_id,
+    po.detail_label_template_id,
+    po.allow_details,
+    po.is_exclusive,
+    po.display_order,
+    po.revision_id
+from
+    activity_instance as ai,
+    picklist_option as po,
+    revision as rev
+where ai.activity_instance_guid = :instanceGuid
+and po.picklist_question_id = :questionId
+and po.picklist_option_stable_id = :stableId
+and po.revision_id = rev.revision_id
+and rev.start_date \<= ai.created_at
+and (rev.end_date is null or ai.created_at \< rev.end_date)
+>>
+
+// Order by display_order, and then insertion order for good measure.
+queryAllOrderedOptionsByQuestionIdAndRevision() ::= <<
+select
+    po.picklist_option_id,
+    po.picklist_option_stable_id,
+    po.option_label_template_id,
+    po.detail_label_template_id,
+    po.allow_details,
+    po.is_exclusive,
+    po.display_order,
+    po.revision_id
+from
+    activity_instance as ai,
+    picklist_option as po,
+    revision as rev
+where ai.activity_instance_guid = :instanceGuid
+and po.picklist_question_id = :questionId
+and po.revision_id = rev.revision_id
+and rev.start_date \<= ai.created_at
+and (rev.end_date is null or ai.created_at \< rev.end_date)
+order by po.display_order asc, po.picklist_option_id asc
+>>
+
+// @BindList and stringtemplate does not play nice together, so we must specify the `stableIds` argument in the query
+// name below when binding a list. See issue: https://github.com/jdbi/jdbi/issues/1131.
+queryOptionsByStableIdsQuestionIdAndRevision(stableIds) ::= <<
+select po.picklist_option_id,
+       po.picklist_option_stable_id,
+       po.option_label_template_id,
+       po.detail_label_template_id,
+       po.allow_details,
+       po.is_exclusive,
+       po.display_order,
+       po.revision_id
+  from picklist_option as po
+  join revision as rev on po.revision_id = rev.revision_id
+  join activity_instance as ai on ai.activity_instance_guid = :instanceGuid
+ where po.picklist_question_id = :questionId
+   and po.picklist_option_stable_id in (<stableIds>)
+   and rev.start_date \<= ai.created_at
+   and (rev.end_date is null or ai.created_at \< rev.end_date)
+>>
+
+queryActiveInfoByOptionStableId() ::= <<
+select
+    po.picklist_option_id,
+    po.picklist_option_stable_id,
+    po.option_label_template_id,
+    po.detail_label_template_id,
+    po.allow_details,
+    po.is_exclusive,
+    po.display_order,
+    po.revision_id
+from
+    picklist_option as po,
+    revision as rev
+where po.picklist_question_id = :questionId
+and po.picklist_option_stable_id = :stableId
+and po.revision_id = rev.revision_id
+and rev.end_date is null
+>>
+
+queryAllActiveOrderedOptionsByQuestionId() ::= <<
+select po.picklist_option_id,
+       po.picklist_option_stable_id,
+       po.option_label_template_id,
+       po.detail_label_template_id,
+       po.allow_details,
+       po.is_exclusive,
+       po.display_order,
+       po.revision_id
+  from picklist_option as po
+  join revision as rev on rev.revision_id = po.revision_id
+ where po.picklist_question_id = :questionId
+   and rev.end_date is null
+ order by po.display_order asc, po.picklist_option_id asc
+>>
+
+isStableIdCurrentlyActive() ::= <<
+select 1
+from
+    picklist_option as po,
+    revision as rev
+where po.picklist_question_id = :questionId
+and po.picklist_option_stable_id = :stableId
+and po.revision_id = rev.revision_id
+and rev.end_date is null
+>>

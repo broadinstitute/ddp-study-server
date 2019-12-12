@@ -1,0 +1,362 @@
+{
+  "settings": {
+    "index": {
+      "number_of_shards": "3",
+      "number_of_replicas": "0"
+    }
+  },
+  "mappings": {
+    "_doc": {
+      "properties": {
+        "participant_guid": {
+          "type": "keyword"
+        },
+        "participant_hruid": {
+          "type": "keyword"
+        },
+        "legacy_altpid": {
+          "type": "keyword"
+        },
+        "legacy_shortid": {
+          "type": "keyword"
+        },
+        "first_name": {
+          "type": "text"
+        },
+        "last_name": {
+          "type": "text"
+        },
+        "email": {
+          "type": "keyword",
+          "fields": {
+            "text": {
+              "type": "text"
+            }
+          }
+        },
+        "do_not_contact": {
+          "type": "boolean"
+        },
+        "created_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "status": {
+          "type": "keyword"
+        },
+        "status_timestamp": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "PREQUAL_v1": {
+          "type": "keyword"
+        },
+        "PREQUAL_v1_status": {
+          "type": "keyword"
+        },
+        "PREQUAL_v1_created_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "PREQUAL_v1_updated_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "PREQUAL_v1_completed_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "PREQUAL_FIRST_NAME": {
+          "type": "text"
+        },
+        "PREQUAL_LAST_NAME": {
+          "type": "text"
+        },
+        "PREQUAL_SELF_DESCRIBE": {
+          "type": "keyword"
+        },
+        "ABOUTYOU_v1": {
+          "type": "keyword"
+        },
+        "ABOUTYOU_v1_status": {
+          "type": "keyword"
+        },
+        "ABOUTYOU_v1_created_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "ABOUTYOU_v1_updated_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "ABOUTYOU_v1_completed_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "DIAGNOSIS_DATE_YEAR": {
+          "type": "integer"
+        },
+        "DIAGNOSIS_DATE_MONTH": {
+          "type": "integer"
+        },
+        "BRAIN_CANCER_TYPE": {
+          "type": "text"
+        },
+        "BRAIN_CANCER_GRADE": {
+          "type": "keyword"
+        },
+        "BRAIN_CANCER_TYPE_CHANGED": {
+          "type": "keyword"
+        },
+        "BRAIN_CANCER_TYPE_CHANGED_UNSURE_DETAILS": {
+          "type": "text"
+        },
+        "BRAIN_CANCER_TYPE_CHANGED_LIST": {
+          "type": "text"
+        },
+        "BRAIN_CANCER_GRADE_CHANGED": {
+          "type": "keyword"
+        },
+        "BRAIN_CANCER_GRADE_CHANGED_UNSURE_DETAILS": {
+          "type": "text"
+        },
+        "BRAIN_CANCER_GRADE_CHANGED_LIST": {
+          "type": "text"
+        },
+        "BIRTH_YEAR": {
+          "type": "integer"
+        },
+        "COUNTRY": {
+          "type": "keyword"
+        },
+        "POSTAL_CODE": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword"
+            }
+          }
+        },
+        "REFERRAL_SOURCE": {
+          "type": "text"
+        },
+        "CONSENT_v1": {
+          "type": "keyword"
+        },
+        "CONSENT_v1_status": {
+          "type": "keyword"
+        },
+        "CONSENT_v1_created_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "CONSENT_v1_updated_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "CONSENT_v1_completed_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "CONSENT_BLOOD": {
+          "type": "boolean"
+        },
+        "CONSENT_TISSUE": {
+          "type": "boolean"
+        },
+        "CONSENT_FULLNAME": {
+          "type": "text"
+        },
+        "CONSENT_DOB": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy||strict_date"
+        },
+        "RELEASE_v1": {
+          "type": "keyword"
+        },
+        "RELEASE_v1_status": {
+          "type": "keyword"
+        },
+        "RELEASE_v1_created_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "RELEASE_v1_updated_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "RELEASE_v1_completed_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "ADDRESS_FULLNAME": {
+          "type": "text"
+        },
+        "ADDRESS_STREET1": {
+          "type": "text"
+        },
+        "ADDRESS_STREET2": {
+          "type": "text"
+        },
+        "ADDRESS_CITY": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword"
+            }
+          }
+        },
+        "ADDRESS_STATE": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword"
+            }
+          }
+        },
+        "ADDRESS_ZIP": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword"
+            }
+          }
+        },
+        "ADDRESS_COUNTRY": {
+          "type": "keyword"
+        },
+        "ADDRESS_PHONE": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword"
+            }
+          }
+        },
+        "ADDRESS_PLUSCODE": {
+          "type": "keyword"
+        },
+        "ADDRESS_STATUS": {
+          "type": "keyword"
+        },
+        "PHYSICIAN": {
+          "type": "text"
+        },
+        "INITIAL_BIOPSY": {
+          "type": "text"
+        },
+        "INSTITUTION": {
+          "type": "text"
+        },
+        "RELEASE_AGREEMENT": {
+          "type": "boolean"
+        },
+        "POSTCONSENT_v1": {
+          "type": "keyword"
+        },
+        "POSTCONSENT_v1_status": {
+          "type": "keyword"
+        },
+        "POSTCONSENT_v1_created_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "POSTCONSENT_v1_updated_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "POSTCONSENT_v1_completed_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "SURGICAL_PROCEDURES": {
+          "type": "text"
+        },
+        "SURGICAL_PROCEDURES_OTHER_DETAILS": {
+          "type": "text"
+        },
+        "SURGICAL_PROCEDURES_UNSURE_DETAILS": {
+          "type": "text"
+        },
+        "RADIATION": {
+          "type": "keyword"
+        },
+        "RADIATION_UNSURE_DETAILS": {
+          "type": "text"
+        },
+        "THERAPY_KIND": {
+          "type": "text"
+        },
+        "THERAPY_KIND_OTHER_DETAILS": {
+          "type": "text"
+        },
+        "THERAPY_KIND_UNSURE_DETAILS": {
+          "type": "text"
+        },
+        "THERAPIES": {
+          "type": "keyword"
+        },
+        "THERAPIES_UNSURE_DETAILS": {
+          "type": "text"
+        },
+        "THERAPIES_LIST": {
+          "type": "text"
+        },
+        "OTHER_CANCERS": {
+          "type": "keyword"
+        },
+        "OTHER_CANCERS_UNSURE_DETAILS": {
+          "type": "text"
+        },
+        "OTHER_CANCER_LIST": {
+          "type": "text"
+        },
+        "GENDER": {
+          "type": "text"
+        },
+        "GENDER_NOT_LISTED_DETAILS": {
+          "type": "text"
+        },
+        "TRANSGENDER": {
+          "type": "keyword"
+        },
+        "TRANSGENDER_UNSURE_DETAILS": {
+          "type": "text"
+        },
+        "HISPANIC": {
+          "type": "keyword"
+        },
+        "HISPANIC_UNSURE_DETAILS": {
+          "type": "text"
+        },
+        "RACE": {
+          "type": "text"
+        },
+        "RACE_OTHER_DETAILS": {
+          "type": "text"
+        },
+        "EXPERIENCE": {
+          "type": "text"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="baseline-question-type-table">
+        <createTable tableName="question_type">
+            <column name="question_type_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="question_type_pk"/>
+            </column>
+            <column name="question_type_code" type="varchar(80)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="question_type_code_uk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-question-stable-code-table">
+        <createTable tableName="question_stable_code">
+            <column name="question_stable_code_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="question_stable_code_pk"/>
+            </column>
+            <column name="umbrella_study_id" type="bigint">
+                <constraints nullable="false" references="umbrella_study(umbrella_study_id)"
+                             foreignKeyName="question_stable_code_umbrella_study_fk"/>
+            </column>
+            <column name="stable_id" type="varchar(45)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-question-stable-code-uk">
+        <addUniqueConstraint tableName="question_stable_code" columnNames="umbrella_study_id, stable_id"
+                             constraintName="question_stable_code_uk"/>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-question-table">
+        <createTable tableName="question">
+            <column name="question_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="question_pk"/>
+            </column>
+            <column name="question_type_id" type="bigint">
+                <constraints nullable="false" references="question_type(question_type_id)" foreignKeyName="question_question_type_fk"/>
+            </column>
+            <column name="question_stable_code_id" type="bigint">
+                <constraints nullable="false" references="question_stable_code(question_stable_code_id)"
+                             foreignKeyName="question_question_stable_code_fk"/>
+            </column>
+            <column name="question_prompt_template_id" type="bigint">
+                <constraints nullable="false" references="template(template_id)" foreignKeyName="question_prompt_template_fk"/>
+            </column>
+            <column name="study_activity_id" type="bigint">
+                <constraints nullable="false" references="study_activity(study_activity_id)" foreignKeyName="question_study_activity_fk"/>
+            </column>
+            <column name="is_restricted" type="boolean">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revision_id" type="bigint">
+                <constraints nullable="false" references="revision(revision_id)" foreignKeyName="question_revision_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-block-question-table">
+        <createTable tableName="block__question">
+            <column name="block__question_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="block__question_pk"/>
+            </column>
+            <column name="block_id" type="bigint">
+                <constraints nullable="false" references="block(block_id)" foreignKeyName="block__question_block_fk"/>
+            </column>
+            <column name="question_id" type="bigint">
+                <constraints nullable="false" references="question(question_id)" foreignKeyName="block__question_question_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-answer-table">
+        <createTable tableName="answer">
+            <column name="answer_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="answer_pk"/>
+            </column>
+            <column name="answer_guid" type="varchar(10)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="answer_guid_uk"/>
+            </column>
+            <column name="question_id" type="bigint">
+                <constraints nullable="false" references="question(question_id)" foreignKeyName="answer_question_fk"/>
+            </column>
+            <column name="operator_user_id" type="bigint">
+                <constraints nullable="false" references="user(user_id)" foreignKeyName="answer_operator_user_fk"/>
+            </column>
+            <column name="activity_instance_id" type="bigint">
+                <constraints nullable="false" references="activity_instance(activity_instance_id)" foreignKeyName="answer_activity_instance_fk"/>
+            </column>
+            <column name="created_at" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_updated_at" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>

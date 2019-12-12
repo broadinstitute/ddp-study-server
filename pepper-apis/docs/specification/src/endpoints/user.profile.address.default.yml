@@ -1,0 +1,31 @@
+parameters:
+  - in: path
+    name: user
+    required: true
+    description: "the user's unique identifier"
+    schema:
+      type: string
+
+get:
+  operationId: getDefaultMailingAddress
+  description: fetch the default mailing address for a participant 
+  tags:
+    - Mailing Address
+  responses:
+    200:
+      $ref: '../pepper.yml#/components/responses/MailingAddress'
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'
+
+post:
+  operationId: setDefaultMailingAddress
+  description: set the new default mailing address for a participant
+  tags:
+    - Mailing Address
+  requestBody:
+    $ref: '../pepper.yml#/components/requestBodies/SetDefaultAddress'
+  responses:
+    204:
+      description: The default address was successfully set
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'

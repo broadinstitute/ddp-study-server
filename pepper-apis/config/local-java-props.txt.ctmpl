@@ -1,0 +1,15 @@
+{{with $environment := env "ENVIRONMENT"}}
+{{with $version := env "VERSION"}}
+{{with $conf := vault (printf "secret/pepper/%s/%s/conf" $environment $version)}}
+
+Use the following for running tests:
+-Ditext.license=output-build-config/itextkey.xml -Dddp.firecloudKeysDir=output-build-config/fc_keys -Dconfig.file=output-build-config/testing-inmemorydb.conf
+
+Use the following for running DataDonationPlatform:
+local db:        -Dconfig.file=output-build-config/testing-inmemorydb.conf
+shared cloud db: -Dconfig.file=output-config/application.conf
+-Ditext.license=output-build-config/itextkey.xml -Dddp.firecloudKeysDir=output-config/fc_keys
+
+{{end}}
+{{end}}
+{{end}}

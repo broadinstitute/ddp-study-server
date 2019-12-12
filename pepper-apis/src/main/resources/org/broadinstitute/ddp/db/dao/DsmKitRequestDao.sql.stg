@@ -1,0 +1,125 @@
+insertKitRequest() ::= <<
+	INSERT INTO kit_request
+        (kit_request_guid,
+        study_id,
+        mailing_address_id,
+        kit_type_id,
+        participant_user_id,
+        created_at)
+    VALUES
+        (:guid,
+            (select umbrella_study_id from umbrella_study where guid=:studyGuid),
+        :addressId,
+        :kitTypeId,
+        :participantUserId,
+        :creationTime)
+>>
+selectKitRequestbyId() ::= <<
+    SELECT
+         kit_request_id id,
+         kit_request_guid kitRequestId,
+         study_id,
+         mailing_address_id,
+         coalesce(u.legacy_altpid, u.guid) as participantId,
+         kt.name kitType
+     FROM
+         kit_request kr
+         JOIN kit_type kt on kr.kit_type_id=kt.kit_type_id
+         LEFT JOIN mailing_address ma on kr.mailing_address_id=ma.address_id
+         LEFT JOIN user u on ma.participant_user_id=u.user_id
+    WHERE
+        kit_request_id=?
+>>
+selectAllKitRequestsForStudy() ::= <<
+     SELECT
+          kit_request_id id,
+          kit_request_guid kitRequestId,
+          study_id,
+          mailing_address_id,
+          coalesce(u.legacy_altpid, u.guid) as participantId,
+          kt.name kitType
+      FROM
+          kit_request kr
+          JOIN kit_type kt on kr.kit_type_id=kt.kit_type_id
+          JOIN umbrella_study st on st.umbrella_study_id=kr.study_id
+          JOIN mailing_address ma on kr.mailing_address_id=ma.address_id
+          JOIN user u on ma.participant_user_id=u.user_id
+     WHERE
+        st.guid=?
+     ORDER BY
+         kit_request_id
+>>
+selectAllKitRequestsForStudyWithStatus(statusCodes) ::= <<
+    SELECT
+          kit_request_id id,
+          kit_request_guid kitRequestId,
+          study_id,
+          mailing_address_id,
+          coalesce(u.legacy_altpid, u.guid) as participantId,
+          kt.name kitType
+      FROM
+          kit_request kr
+          JOIN kit_type kt on kr.kit_type_id=kt.kit_type_id
+          JOIN umbrella_study st on st.umbrella_study_id=kr.study_id
+          JOIN mailing_address ma on kr.mailing_address_id=ma.address_id
+          JOIN user u on ma.participant_user_id=u.user_id
+          JOIN mailing_address_validation_status mavs on ma.validation_status_id=mavs.mailing_address_validation_status_id
+     WHERE
+         mavs.code in (<statusCodes>)
+         AND
+        st.guid=:studyGuid
+     ORDER BY
+         kit_request_id
+>>
+selectAllKitRequestsAfterGuid() ::= <<
+    SELECT
+      kit_request_id id,
+      kit_request_guid kitRequestId,
+      study_id,
+      mailing_address_id,
+      coalesce(u.legacy_altpid, u.guid) as participantId,
+      kt.name kitType
+    FROM
+      kit_request kr
+      JOIN kit_type kt on kr.kit_type_id=kt.kit_type_id
+      JOIN umbrella_study st on st.umbrella_study_id=study_id
+      JOIN mailing_address ma on kr.mailing_address_id=ma.address_id
+      JOIN user u on ma.participant_user_id=u.user_id
+    WHERE
+    	st.guid=:studyGuid
+    	AND
+    		kit_request_id > (select kit_request_id from kit_request  where kit_request_guid=:previousGuid)
+    	ORDER BY
+    		kit_request_id
+>>
+selectAllKitRequestsAfterGuidWithStatus(statusCodes) ::= <<
+    SELECT
+      kit_request_id id,
+      kit_request_guid kitRequestId,
+      study_id,
+      mailing_address_id,
+      coalesce(u.legacy_altpid, u.guid) as participantId,
+      kt.name kitType
+    FROM
+      kit_request kr
+      JOIN kit_type kt on kr.kit_type_id=kt.kit_type_id
+      JOIN umbrella_study st on st.umbrella_study_id=study_id
+      JOIN mailing_address ma on kr.mailing_address_id=ma.address_id
+      JOIN user u on ma.participant_user_id=u.user_id
+      JOIN mailing_address_validation_status mavs on ma.validation_status_id=mavs.mailing_address_validation_status_id
+    WHERE
+        mavs.code in (<statusCodes>)
+        AND
+    	st.guid=:studyGuid
+    	AND
+    		kit_request_id > (select kit_request_id from kit_request  where kit_request_guid=:previousGuid)
+    	ORDER BY
+    		kit_request_id
+>>
+deleteKitRequestById() ::= <<
+    DELETE
+    FROM
+        kit_request
+    WHERE
+        kit_request_id=?
+>>

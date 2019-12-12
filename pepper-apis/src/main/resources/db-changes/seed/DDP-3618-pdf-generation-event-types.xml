@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="20190531-add-pdf-generation-event-types">
+        <insert tableName="event_trigger_type">
+            <column name="event_trigger_type_code" value="MEDICAL_UPDATE"/>
+        </insert>
+        <insert tableName="event_action_type">
+            <column name="event_action_type_code" value="PDF_GENERATION"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

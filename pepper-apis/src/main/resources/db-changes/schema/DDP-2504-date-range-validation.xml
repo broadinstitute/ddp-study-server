@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="20181017-date-range-validation-table">
+        <createTable tableName="date_range_validation">
+            <column name="validation_id" type="bigint">
+                <constraints primaryKey="true"
+                             primaryKeyName="date_range_validation_pk"
+                             references="validation(validation_id)"
+                             foreignKeyName="date_range_validation_validation_fk"/>
+            </column>
+            <column name="start_date" type="date"/>
+            <column name="end_date" type="date"/>
+            <column name="use_today_as_end" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20181017-date-range-validation-type">
+        <insert tableName="validation_type">
+            <column name="validation_type_code" value="DATE_RANGE"/>
+        </insert>
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'DATE_RANGE')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'en')"/>
+            <column name="translation_text" value="The selected date must be within date range."/>
+        </insert>
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'DATE_RANGE')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'ru')"/>
+            <column name="translation_text" value="Выбранная дата должна быть в диапазоне дат."/>
+        </insert>
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'DATE_RANGE')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'fr')"/>
+            <column name="translation_text" value="La date sélectionnée doit être comprise dans la plage de dates."/>
+        </insert>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20181017-migrate-relative-date-validations">
+        <sql>
+            insert into date_range_validation (validation_id, start_date, end_date, use_today_as_end)
+            select rel.validation_id, rel.full_date, null, false
+              from relative_date_validation as rel
+              join validation as val on val.validation_id = rel.validation_id
+              join validation_type as vt on vt.validation_type_id = val.validation_type_id
+             where vt.validation_type_code = 'DATE_AFTER'
+        </sql>
+        <sql>
+            insert into date_range_validation (validation_id, start_date, end_date, use_today_as_end)
+            select rel.validation_id, null, rel.full_date, rel.full_date is null
+              from relative_date_validation as rel
+              join validation as val on val.validation_id = rel.validation_id
+              join validation_type as vt on vt.validation_type_id = val.validation_type_id
+             where vt.validation_type_code = 'DATE_BEFORE'
+        </sql>
+        <update tableName="validation">
+            <column name="validation_type_id"
+                    valueComputed="(select validation_type_id from validation_type where validation_type_code = 'DATE_RANGE')"/>
+            <where>
+                validation_type_id in (
+                    select validation_type_id
+                      from validation_type
+                     where validation_type_code in ('DATE_AFTER', 'DATE_BEFORE')
+                )
+            </where>
+        </update>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20181017-cleanup-relative-date-validation">
+        <delete tableName="i18n_validation_msg_trans">
+            <where>
+                validation_type_id in (
+                    select validation_type_id
+                      from validation_type
+                     where validation_type_code in ('DATE_AFTER', 'DATE_BEFORE')
+                )
+            </where>
+        </delete>
+        <delete tableName="validation_type">
+            <where>
+                validation_type_code in ('DATE_AFTER', 'DATE_BEFORE')
+            </where>
+        </delete>
+        <dropTable tableName="relative_date_validation"/>
+    </changeSet>
+
+</databaseChangeLog>

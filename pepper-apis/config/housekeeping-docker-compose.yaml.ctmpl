@@ -1,0 +1,31 @@
+{{$debug := env "DEBUG"}}
+{{$dir := env "DIR"}}
+{{$image := env "IMAGE"}}
+{{$no_syslog := env "NO_SYSLOG"}}
+
+sqlproxy:
+  image: broadinstitute/cloudsqlproxy:1.11_20180808
+  env_file:
+    - {{$dir}}/sqlproxy.env
+  volumes:
+    - {{$dir}}/sqlproxy-service-account.json:/etc/sqlproxy-service-account.json
+  restart: always
+
+housekeeping:
+  image: broadinstitute/pepper-api-backend:{{$image}}
+  volumes:
+    - {{$dir}}/application.conf:/app/config/application.conf
+    - {{$dir}}/housekeeping_startup.sh:/app/housekeeping_startup.sh
+    - {{$dir}}/housekeeping-service-account.json:/app/housekeeping-service-account.json
+  environment:
+    - GOOGLE_APPLICATION_CREDENTIALS=/app/housekeeping-service-account.json
+  links:
+    - sqlproxy:sqlproxy
+{{if eq $debug "true"}}
+  ports:
+    - "9876:9876"
+{{end}}
+{{if ne $no_syslog "true"}}
+  log_driver: "syslog"
+{{end}}
+  command: [sh, /app/housekeeping_startup.sh, "{{$debug}}"]

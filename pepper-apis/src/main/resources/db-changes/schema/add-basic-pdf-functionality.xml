@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="sardell" id="20180821-add-pdf-document-configuration-table">
+        <createTable tableName="pdf_document_configuration">
+            <column name="pdf_document_configuration_id" type="bigint(20)" autoIncrement="true" startWith="1">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pdf_document_configuration_pk"/>
+            </column>
+            <column name="umbrella_study_id" type="bigint(20)">
+                <constraints nullable="false" foreignKeyName="pdf_document_configuration_umbrella_study_fk" references="umbrella_study(umbrella_study_id)"/>
+            </column>
+            <column name="configuration_name" type="varchar(100)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="pdf_document_configuration_name_uk"/>
+            </column>
+            <column name="revision_id" type="bigint(20)">
+                <constraints nullable="false" foreignKeyName="pdf_document_configuration_revision_fk" references="revision(revision_id)"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+
+    <changeSet id="20180821-add-template-tables" author="sardell">
+        <createTable tableName="pdf_template_type">
+            <column name="pdf_template_type_id" type="bigint(20)" autoIncrement="true" startWith="1">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pdf_template_type_pk"/>
+            </column>
+            <column name="pdf_template_type_code" type="varchar(100)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="pdf_template_type_code_uk"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="pdf_base_template">
+            <column name="pdf_base_template_id" type="bigint(20)" autoIncrement="true" startWith="1">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pdf_base_template_pk"/>
+            </column>
+            <column name="template" type="LONGBLOB">
+                <constraints nullable="false"/>
+            </column>
+            <column name="pdf_template_type_id" type="bigint(20)">
+                <constraints nullable="false" foreignKeyName="pdf_base_template_pdf_template_type_fk" references="pdf_template_type(pdf_template_type_id)"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="pdf_physician_institution_template">
+            <column name="pdf_physician_institution_template_id" type="bigint(20)" autoIncrement="true" startWith="1">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pdf_physician_institution_template_pk"/>
+            </column>
+            <column name="pdf_base_template_id" type="bigint(20)">
+                <constraints nullable="false" foreignKeyName="pdf_physician_institution_template_pdf_base_template_fk" references="pdf_base_template(pdf_base_template_id)"/>
+            </column>
+            <column name="physician_name_placeholder" type="varchar(100)"/>
+            <column name="institution_name_placeholder" type="varchar(100)"/>
+            <column name="city_placeholder" type="varchar(100)"/>
+            <column name="state_placeholder" type="varchar(100)"/>
+            <column name="institution_type_id" type="bigint(20)">
+                <constraints nullable="false" foreignKeyName="pdf_physician_institution_template_institution_type_fk" references="institution_type(institution_type_id)"/>
+            </column>
+        </createTable>
+        
+        <createTable tableName="pdf_custom_template">
+            <column name="pdf_custom_template_id" type="bigint(20)" autoIncrement="true" startWith="1">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pdf_custom_template_pk"/>
+            </column>
+            <column name="pdf_base_template_id" type="bigint(20)">
+                <constraints nullable="false" foreignKeyName="pdf_custom_template_pdf_base_template_fk" references="pdf_base_template(pdf_base_template_id)"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="20180821-add-substitution-tables" author="sardell">
+        <createTable tableName="pdf_substitution_type">
+            <column name="pdf_substitution_type_id" type="bigint(20)" autoIncrement="true" startWith="1">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pdf_substitution_type_pk"/>
+            </column>
+            <column name="pdf_substitution_type_code" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="pdf_substitution">
+            <column name="pdf_substitution_id" type="bigint(20)" autoIncrement="true" startWith="1">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pdf_substitution_pk"/>
+            </column>
+            <column name="placeholder" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="pdf_substitution_type_id" type="bigint(20)">
+                <constraints nullable="false" foreignKeyName="pdf_substitution_pdf_substitution_type_fk" references="pdf_substitution_type(pdf_substitution_type_id)"/>
+            </column>
+        </createTable>
+        
+        <createTable tableName="pdf_answer_substitution">
+            <column name="pdf_answer_substitution_id" type="bigint(20)" autoIncrement="true" startWith="1">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pdf_answer_substitution_pk"/>
+            </column>
+            <column name="pdf_substitution_id" type="bigint(20)">
+                <constraints nullable="false" foreignKeyName="pdf_answer_substitution_pdf_substitution_fk" references="pdf_substitution(pdf_substitution_id)"/>
+            </column>
+            <column name="question_stable_code_id" type="bigint(20)">
+                <constraints nullable="false" foreignKeyName="pdf_answer_substitution_question_fk" references="question_stable_code(question_stable_code_id)"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="pdf_profile_field">
+            <column name="pdf_profile_field_id" type="bigint(20)" autoIncrement="true" startWith="1">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="profile_field_pk"/>
+            </column>
+            <column name="field_name" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="pdf_profile_substitution">
+            <column name="pdf_profile_substitution_id" type="bigint(20)" autoIncrement="true" startWith="1">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pdf_profile_substitution_pk"/></column>
+            <column name="pdf_substitution_id" type="bigint(20)">
+                <constraints nullable="false" foreignKeyName="pdf_profile_substitution_pdf_substitution_fk" references="pdf_substitution(pdf_substitution_id)"/>
+            </column>
+            <column name="pdf_profile_field_id" type="bigint(20)">
+                <constraints nullable="false" foreignKeyName="pdf_profile_substitution_pdf_profile_field_fk" references="pdf_profile_field(pdf_profile_field_id)"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    
+    <changeSet id="20180821-add-join-tables" author="sardell">
+        <createTable tableName="pdf_template_substitution_set">
+            <column name="pdf_template_substitution_set_id" type="bigint(20)" autoIncrement="true" startWith="1">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pdf_template_substitution_set_pk"/>
+            </column>
+            <column name="custom_pdf_template_id" type="bigint(20)">
+                <constraints nullable="false" foreignKeyName="pdf_template_substitution_set_pdf_custom_template_fk" references="pdf_custom_template(pdf_custom_template_id)"/>
+            </column>
+            <column name="pdf_substitution_id" type="bigint(20)">
+                <constraints nullable="false" foreignKeyName="pdf_template_substitution_set_pdf_substitution_fk" references="pdf_substitution(pdf_substitution_id)"/>
+            </column>
+        </createTable>
+        
+        <createTable tableName="pdf_document_template_set">
+            <column name="pdf_document_template_set_id" type="bigint(20)" autoIncrement="true" startWith="1">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pdf_document_template_set_pk"/>
+            </column>
+            <column name="pdf_document_configuration_id" type="bigint(20)">
+                <constraints nullable="false" foreignKeyName="pdf_document_template_set_pdf_document_configuration_fk" references="pdf_document_configuration(pdf_document_configuration_id)"/>
+            </column>
+            <column name="pdf_base_template_id" type="bigint(20)">
+                <constraints nullable="false" foreignKeyName="pdf_document_template_set_base_pdf_template_fk" references="pdf_base_template(pdf_base_template_id)"/>
+            </column>
+            <column name="template_order" type="bigint(20)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+
+    <changeSet id="20180822-populate-type-tables" author="sardell">
+        <insert tableName="pdf_template_type">
+            <column name="pdf_template_type_code" value="PHYSICIAN_INSTITUTION"/>
+        </insert>
+        <insert tableName="pdf_template_type">
+            <column name="pdf_template_type_code" value="CUSTOM"/>
+        </insert>
+
+        <insert tableName="pdf_substitution_type">
+            <column name="pdf_substitution_type_code" value="PROFILE"/>
+        </insert>
+        <insert tableName="pdf_substitution_type">
+            <column name="pdf_substitution_type_code" value="ANSWER"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

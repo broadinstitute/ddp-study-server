@@ -1,0 +1,28 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+    <changeSet id="20190312-create-backup-job-table" author="sampath">
+
+        <createTable tableName="backup_job">
+            <column name="backup_job_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="backup_job_pk"/>
+            </column>
+            <column name="run_name" type="varchar(80)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="backup_job_uk"/>
+            </column>
+            <column name="start_time" type="bigint">
+                <constraints nullable="false" />
+            </column>
+            <column name="end_time" type="bigint"/>
+            <column name="database_name" type="varchar(80)">
+                <constraints nullable="false" />
+            </column>
+            <column name="status" type="varchar(80)">
+                <constraints nullable="false" />
+            </column>
+        </createTable>
+
+    </changeSet>
+</databaseChangeLog>

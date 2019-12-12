@@ -1,0 +1,168 @@
+group JdbiActivityInstance;
+
+queryByGuid() ::= <<
+	select
+        ai.activity_instance_id,
+        ai.activity_instance_guid,
+        ai.study_activity_id,
+        ai.participant_id,
+        ai.created_at,
+        ai.first_completed_at,
+        ai.is_readonly,
+        ai.ondemand_trigger_id,
+        sa.allow_unauthenticated,
+        (
+            select
+                distinct aist.activity_instance_status_type_code
+            from
+                activity_instance_status_type aist,
+                activity_instance_status ais
+            where
+                ais.activity_instance_status_type_id = aist.activity_instance_status_type_id
+                and ais.activity_instance_id = ai.activity_instance_id
+                and ais.updated_at = (
+                    select
+                        max(ais2.updated_at)
+                    from
+                        activity_instance_status ais2
+                    where
+                        ais2.activity_instance_id = ais.activity_instance_id
+                )
+        ) as activity_instance_status_type_code
+	from
+		activity_instance ai,
+        study_activity sa
+	where
+        ai.study_activity_id = sa.study_activity_id
+		and ai.activity_instance_guid = :activityInstanceGuid
+>>
+
+queryById() ::= <<
+	select
+        ai.activity_instance_id,
+        ai.activity_instance_guid,
+        ai.study_activity_id,
+        ai.participant_id,
+        ai.created_at,
+        ai.first_completed_at,
+        ai.is_readonly,
+        ai.ondemand_trigger_id,
+        sa.allow_unauthenticated,
+        (
+            select
+                distinct aist.activity_instance_status_type_code
+            from
+                activity_instance_status_type aist,
+                activity_instance_status ais
+            where
+                ais.activity_instance_status_type_id = aist.activity_instance_status_type_id
+                and ais.activity_instance_id = ai.activity_instance_id
+                and ais.updated_at = (
+                    select
+                        max(ais2.updated_at)
+                    from
+                        activity_instance_status ais2
+                    where
+                        ais2.activity_instance_id = ais.activity_instance_id
+                )
+        ) as activity_instance_status_type_code
+	from
+		activity_instance ai,
+        study_activity sa
+	where
+        ai.study_activity_id = sa.study_activity_id
+		and ai.activity_instance_id = :activityInstanceId
+>>
+
+queryByUserGuidAndInstanceGuid() ::= <<
+    select
+        ai.activity_instance_id,
+        ai.activity_instance_guid,
+        ai.study_activity_id,
+        ai.participant_id,
+        ai.created_at,
+        ai.first_completed_at,
+        ai.is_readonly,
+        ai.ondemand_trigger_id,
+        sa.allow_unauthenticated,
+        (
+            select
+                distinct aist.activity_instance_status_type_code
+            from
+                activity_instance_status_type aist,
+                activity_instance_status ais
+            where
+                ais.activity_instance_status_type_id = aist.activity_instance_status_type_id
+                and ais.activity_instance_id = ai.activity_instance_id
+                and ais.updated_at = (
+                    select
+                        max(ais2.updated_at)
+                    from
+                        activity_instance_status ais2
+                    where
+                        ais2.activity_instance_id = ais.activity_instance_id
+                )
+        ) as activity_instance_status_type_code
+    from
+        activity_instance ai,
+        study_activity sa,
+        user as u
+    where
+        ai.study_activity_id = sa.study_activity_id
+        and ai.participant_id = u.user_id
+        and u.guid = :userGuid
+        and ai.activity_instance_guid = :instanceGuid
+>>
+
+queryLatestGuidByUserGuidAndCodesOfActivities(activityCodes) ::= <<
+	select
+		ai.activity_instance_guid
+	from
+		activity_instance as ai,
+		study_activity as sa,
+		user as u
+	where
+		u.guid = :userGuid
+		and sa.study_id = :studyId
+		and sa.study_activity_code in (<activityCodes>)
+		and ai.participant_id = u.user_id
+		and ai.study_activity_id = sa.study_activity_id
+	order by
+		ai.created_at desc
+	limit 1
+>>
+
+queryAllByUserGuidAndActivityCode() ::= <<
+select instance.*, activity.allow_unauthenticated,
+       (select stype.activity_instance_status_type_code
+          from activity_instance_status as status
+          join activity_instance_status_type as stype
+            on stype.activity_instance_status_type_id = status.activity_instance_status_type_id
+         where status.activity_instance_id = instance.activity_instance_id
+         order by status.updated_at desc
+         limit 1
+       ) as activity_instance_status_type_code
+  from activity_instance as instance
+  join study_activity as activity on activity.study_activity_id = instance.study_activity_id
+  join user as participant on participant.user_id = instance.participant_id
+ where participant.guid = :userGuid
+   and activity.study_activity_code = :activityCode
+   and activity.study_id = :studyId
+>>
+
+queryAllByUserIdAndStudyId() ::= <<
+select instance.*, activity.allow_unauthenticated,
+       (select stype.activity_instance_status_type_code
+          from activity_instance_status as status
+          join activity_instance_status_type as stype
+            on stype.activity_instance_status_type_id = status.activity_instance_status_type_id
+         where status.activity_instance_id = instance.activity_instance_id
+         order by status.updated_at desc
+         limit 1
+       ) as activity_instance_status_type_code
+  from activity_instance as instance
+  join study_activity as activity on activity.study_activity_id = instance.study_activity_id
+  join user as participant on participant.user_id = instance.participant_id
+ where instance.participant_id = :userId
+   and activity.study_id = :studyId
+>>

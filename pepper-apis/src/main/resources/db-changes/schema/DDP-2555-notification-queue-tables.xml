@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="andrew" id="20181009-add-notification-queue-tables">
+        <!-- placeholder table in case we want top-level notification-specific values in the future -->
+        <createTable tableName="queued_notification">
+            <column name="queued_event_id" type="bigint">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="queued_notification_pk_fk"
+                             foreignKeyName="queued_notification_queued_event_fk"
+                             references="queued_event(queued_event_id)"/>
+            </column>
+        </createTable>
+
+        <!-- key/value substitution in a notification template -->
+        <createTable tableName="queued_notification_template_substitution">
+            <column name="template_substitution_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="queued_notification_template_queued_event_pk"/>
+            </column>
+            <column name="queued_event_id" type="bigint">
+                <constraints nullable="false" foreignKeyName="queued_notification_template_queued_event_fk"
+                             references="queued_notification(queued_event_id)"/>
+            </column>
+            <column name="variable_name" type="varchar(500)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="value" type="varchar(500)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addUniqueConstraint tableName="queued_notification_template_substitution" columnNames="queued_event_id,variable_name"
+                             constraintName="queued_notification_variable_uk"/>
+
+        <createTable tableName="workflow_state_trigger">
+            <column name="event_trigger_id" type="bigint">
+                <constraints nullable="false"
+                primaryKey="true"
+                primaryKeyName="workflow_state_trigger_pk"
+                foreignKeyName="workflow_state_trigger_event_fk"
+                referencedTableName="event_trigger"
+                referencedColumnNames="event_trigger_id"/>
+            </column>
+            <column name="workflow_state_id" type="bigint">
+                <constraints
+                    foreignKeyName="workflow_state_trigger_workflow_state_fk"
+                    referencedTableName="workflow_state"
+                    referencedColumnNames="workflow_state_id"
+                />
+            </column>
+            <!-- bit of potential future-proofing: if we want this trigger to be detected automatically by workflow,
+            we could set this to true and write some code to detect changes.  For now, we aren't doing that. -->
+            <column name="trigger_automatically" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <!-- it's okay to have the same from for different studies, this might happen in umbrellas -->
+        <dropUniqueConstraint tableName="sendgrid_configuration" constraintName="sc_from_email_uk"/>
+        <!-- we should have at most one sendgrid configuration per study -->
+        <addUniqueConstraint tableName="sendgrid_configuration" columnNames="umbrella_study_id"/>
+
+        <insert tableName="workflow_state_type">
+            <!-- new state that represents user returning to the study from an external place like a link in an email -->
+            <column name="workflow_state_type_code" value="RETURN_USER"/>
+        </insert>
+
+        <insert tableName="event_trigger_type">
+            <column name="event_trigger_type_code" value="WORKFLOW_STATE"/>
+        </insert>
+
+    </changeSet>
+
+</databaseChangeLog>

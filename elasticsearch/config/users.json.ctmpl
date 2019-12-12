@@ -1,0 +1,17 @@
+{{with $environment := env "ENVIRONMENT"}}
+{{with $version := env "VERSION"}}
+{{with $response := vault (printf "secret/pepper/%s/%s/elasticsearch" $environment $version)}}
+{{with $conf := $response.Data}}
+
+{
+  "users": [
+{{range $idx, $acct := $conf.accounts}}
+  {{if gt $idx 0}},{{end}} {{$acct | toJSON}}
+{{end}}
+  ]
+}
+
+{{end}}
+{{end}}
+{{end}}
+{{end}}

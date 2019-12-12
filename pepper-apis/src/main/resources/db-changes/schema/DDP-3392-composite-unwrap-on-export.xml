@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="20190820-add-composite-unwrap-on-export-column-with-backfill">
+        <addColumn tableName="composite_question">
+            <column name="unwrap_on_export" type="boolean"/>
+        </addColumn>
+
+        <update tableName="composite_question">
+            <column name="unwrap_on_export" valueBoolean="false"/>
+            <where>unwrap_on_export is null</where>
+        </update>
+
+        <addNotNullConstraint tableName="composite_question" columnName="unwrap_on_export" columnDataType="boolean"/>
+    </changeSet>
+
+</databaseChangeLog>

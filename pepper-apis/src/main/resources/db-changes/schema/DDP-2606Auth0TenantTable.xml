@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+    <changeSet author="andrew" id="DDP-2606_AddAuth0TenantTable">
+        <!-- create tenant table -->
+        <createTable tableName="auth0_tenant">
+            <column name="auth0_tenant_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="auth0_tenant_pk"/>
+            </column>
+            <column name="auth0_domain" type="varchar(500)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="auth0_tenant_uk"/>
+            </column>
+            <column name="management_client_id" type="varchar(500)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="management_client_secret" type="varchar(500)">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+
+        <addColumn tableName="umbrella_study">
+            <column name="auth0_tenant_id" type="bigint">
+                <constraints foreignKeyName="umbrella_study_tenant_fk" references="auth0_tenant(auth0_tenant_id)"/>
+            </column>
+        </addColumn>
+
+        <addColumn tableName="client">
+            <column name="auth0_tenant_id" type="bigint">
+                <constraints foreignKeyName="client_tenant_fk" references="auth0_tenant(auth0_tenant_id)"/>
+            </column>
+        </addColumn>
+
+        <addColumn tableName="user">
+            <column name="auth0_tenant_id" type="bigint">
+                <constraints foreignKeyName="user_tenant_fk" references="auth0_tenant(auth0_tenant_id)"/>
+            </column>
+        </addColumn>
+
+    </changeSet>
+</databaseChangeLog>

@@ -1,0 +1,131 @@
+group PdfDao;
+
+select_all_config_info() ::= <<
+select pdf.pdf_document_configuration_id,
+       s.umbrella_study_id as study_id,
+       s.guid              as study_guid,
+       pdf.configuration_name,
+       pdf.file_name
+  from pdf_document_configuration as pdf
+  join umbrella_study as s on s.umbrella_study_id = pdf.umbrella_study_id
+>>
+
+queryDocumentConfigInfoById() ::= <<
+<select_all_config_info()>
+where pdf.pdf_document_configuration_id = :id
+>>
+
+queryDocumentConfigInfoByStudyIdAndName() ::= <<
+<select_all_config_info()>
+where s.umbrella_study_id = :studyId
+  and pdf.configuration_name = :name
+>>
+
+select_all_versions_with_data_sources() ::= <<
+select ver.pdf_document_version_id          as v_pdf_document_version_id,
+       ver.pdf_document_configuration_id    as v_pdf_document_configuration_id,
+       ver.version_tag                      as v_version_tag,
+       rev.revision_id                      as v_revision_id,
+       rev.start_date                       as v_revision_start,
+       rev.end_date                         as v_revision_end,
+       src.pdf_data_source_id               as s_pdf_data_source_id,
+       src_ty.pdf_data_source_type_code     as s_pdf_data_source_type,
+       act.study_activity_id                as s_activity_id,
+       act.study_activity_code              as s_activity_code,
+       act_ver.activity_version_id          as s_activity_version_id,
+       act_ver.version_tag                  as s_activity_version_tag
+  from pdf_document_version as ver
+  join revision as rev on rev.revision_id = ver.revision_id
+  left join pdf_data_source as src on src.pdf_document_version_id = ver.pdf_document_version_id
+  left join pdf_data_source_type as src_ty on src_ty.pdf_data_source_type_id = src.pdf_data_source_type_id
+  left join pdf_activity_data_source as act_src on act_src.pdf_data_source_id = src.pdf_data_source_id
+  left join study_activity as act on act.study_activity_id = act_src.activity_id
+  left join activity_version as act_ver on act_ver.activity_version_id = act_src.activity_version_id
+>>
+
+queryVersionWithDataSourcesById() ::= <<
+<select_all_versions_with_data_sources()>
+where ver.pdf_document_version_id = :versionId
+>>
+
+queryVersionWithDataSourcesByConfigIdAndVersionTag() ::= <<
+<select_all_versions_with_data_sources()>
+where ver.pdf_document_configuration_id = :configId
+  and ver.version_tag = :versionTag
+>>
+
+bulkQueryVersionsWithDataSourcesByConfigIdInDescOrder() ::= <<
+<select_all_versions_with_data_sources()>
+where ver.pdf_document_configuration_id = :configId
+order by rev.start_date desc,
+      src.pdf_data_source_id asc
+>>
+
+bulkQueryBaseTemplatesByVersionId() ::= <<
+select base.pdf_base_template_id    as template_id,
+       base.template                as template_blob,
+       ttype.pdf_template_type_code as template_type,
+       taddr.pdf_base_template_id   as m_template_id,
+       taddr.first_name_placeholder as m_first_name_placeholder,
+       taddr.last_name_placeholder  as m_last_name_placeholder,
+       taddr.street_placeholder     as m_street_placeholder,
+       taddr.city_placeholder       as m_city_placeholder,
+       taddr.state_placeholder      as m_state_placeholder,
+       taddr.zip_placeholder        as m_zip_placeholder,
+       taddr.country_placeholder    as m_country_placeholder,
+       taddr.phone_placeholder      as m_phone_placeholder,
+       tphys.pdf_base_template_id         as p_template_id,
+       tphys.physician_name_placeholder   as p_physician_name_placeholder,
+       tphys.institution_name_placeholder as p_institution_name_placeholder,
+       tphys.city_placeholder             as p_city_placeholder,
+       tphys.state_placeholder            as p_state_placeholder,
+       tphys.street_placeholder           as p_street_placeholder,
+       tphys.zip_placeholder              as p_zip_placeholder,
+       tphys.phone_placeholder            as p_phone_placeholder,
+       itype.institution_type_code        as p_institution_type
+  from pdf_version_template as pvt
+  join pdf_base_template as base on base.pdf_base_template_id = pvt.pdf_base_template_id
+  join pdf_template_type as ttype on ttype.pdf_template_type_id = base.pdf_template_type_id
+  left join pdf_mailing_address_template as taddr on taddr.pdf_base_template_id = base.pdf_base_template_id
+  left join pdf_physician_institution_template as tphys on tphys.pdf_base_template_id = base.pdf_base_template_id
+  left join institution_type as itype on itype.institution_type_id = tphys.institution_type_id
+ where pvt.pdf_document_version_id = :versionId
+ order by pvt.template_order asc
+>>
+
+bulkQuerySubstitutionsByCustomTemplateIds(customTemplateIds) ::= <<
+select stype.pdf_substitution_type_code as substitution_type,
+       sub.pdf_substitution_id     as p_pdf_substitution_id,
+       ptss.pdf_custom_template_id as p_pdf_template_id,
+       sub.placeholder             as p_placeholder,
+       sprof.profile_field_name    as p_profile_field_name,
+       sub.pdf_substitution_id     as d_pdf_substitution_id,
+       ptss.pdf_custom_template_id as d_pdf_template_id,
+       sub.placeholder             as d_placeholder,
+       sdate.study_activity_id     as d_activity_id,
+       sub.pdf_substitution_id     as a_pdf_substitution_id,
+       ptss.pdf_custom_template_id as a_pdf_template_id,
+       sub.placeholder             as a_placeholder,
+       (select q.study_activity_id
+          from question as q
+         where q.question_stable_code_id = sans.question_stable_code_id
+         limit 1
+       ) as a_activity_id,
+       (select qt.question_type_code
+          from question as q
+          join question_type as qt on qt.question_type_id = q.question_type_id
+         where q.question_stable_code_id = sans.question_stable_code_id
+         limit 1
+       ) as a_question_type,
+       qsc.stable_id               as a_question_stable_id,
+       sbool.check_if_false        as a_check_if_false
+  from pdf_template_substitution_set as ptss
+  join pdf_substitution as sub on sub.pdf_substitution_id = ptss.pdf_substitution_id
+  join pdf_substitution_type as stype on stype.pdf_substitution_type_id = sub.pdf_substitution_type_id
+  left join pdf_profile_substitution as sprof on sprof.pdf_substitution_id = sub.pdf_substitution_id
+  left join pdf_activity_date_substitution as sdate on sdate.pdf_substitution_id = sub.pdf_substitution_id
+  left join pdf_answer_substitution as sans on sans.pdf_substitution_id = sub.pdf_substitution_id
+  left join pdf_boolean_answer_substitution as sbool on sbool.pdf_answer_substitution_id = sans.pdf_substitution_id
+  left join question_stable_code as qsc on qsc.question_stable_code_id = sans.question_stable_code_id
+ where ptss.pdf_custom_template_id in (<customTemplateIds>)
+>>

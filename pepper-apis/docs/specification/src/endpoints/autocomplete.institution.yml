@@ -1,0 +1,16 @@
+get:
+  operationId: getInstitutionSuggestions
+  tags:
+    - Suggestion
+  description: fetches a list of medical institution suggestions
+  parameters:
+    - in: query
+      name: namePattern
+      description: the substring to filter on
+      schema:
+        type: string
+  responses:
+    200:
+      $ref: '../pepper.yml#/components/responses/InstitutionSuggestion'
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'

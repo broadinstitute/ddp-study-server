@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="20190307-suggestion-type-table">
+        <createTable tableName="suggestion_type">
+            <column name="suggestion_type_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="suggestion_type_pk"/>
+            </column>
+            <column name="suggestion_type_code" type="varchar(45)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="suggestion_type_uk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20190307-add-suggestion-type-to-text-question">
+        <addColumn tableName="text_question">
+            <column name="suggestion_type_id" type="bigint">
+                <constraints nullable="true"
+                             references="suggestion_type(suggestion_type_id)"
+                             foreignKeyName="text_question_suggestion_type_fk"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

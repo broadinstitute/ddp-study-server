@@ -1,0 +1,30 @@
+patch:
+  operationId: updateUserEmail
+  tags:
+    - Operator & Participant
+  summary: update email for a user
+  description: updates user email in Auth0
+  parameters:
+    - in: path
+      name: user
+      required: true
+      description: the user's guid
+      schema:
+        type: string
+  requestBody:
+    $ref: '../pepper.yml#/components/requestBodies/UpdateUserEmailRequestBody'
+  responses:
+    204:
+      description: the email was successfully changed
+    400:
+      $ref: '../pepper.yml#/components/responses/UpdateUserLoginDataMalformedEmailOrEmailAlreadyExistsInAuth0ErrorResponse'
+    401:
+      $ref: '../pepper.yml#/components/responses/UpdateUserLoginDataTokenNotRecognizedByAuth0ErrorResponse'
+    403:
+      $ref: '../pepper.yml#/components/responses/UpdateUserLoginDataPepperUserNotAssociatedWithAuth0UserErrorResponse'
+    404:
+      $ref: '../pepper.yml#/components/responses/UpdateUserLoginDataUserDoesntExistInPepperErrorResponse'
+    422:
+      $ref: '../pepper.yml#/components/responses/UpdateUserLoginDataMalformedEmailErrorResponse'
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'

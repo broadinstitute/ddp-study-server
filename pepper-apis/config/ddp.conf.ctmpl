@@ -1,0 +1,100 @@
+{{with $environment := env "ENVIRONMENT"}}
+{{with $version := env "VERSION"}}
+{{with $response := vault (printf "secret/pepper/%s/%s/conf" $environment $version)}}
+{{with $conf := $response.Data}}
+
+# ddp nginx configuration
+{{$documentationHost := env "DOCS_PROXIED_HOST"}}
+{{$backendHost := env "NGINX_PROXIED_HOST"}}
+include /etc/nginx/modules/naxsi_core.rules;
+
+upstream api_server {
+    # backend is for pure docker-compose deploys
+     # hardcoded IP is for local dev servers proxied by nginx
+    server {{$backendHost}}:5555;
+}
+
+{{if ne $documentationHost ""}}
+upstream documentation_server {
+    server {{$documentationHost}}:80;
+}
+{{end}}
+
+limit_req_zone $http_x_forwarded_for zone=api_limit:16m rate={{$conf.nginx.apiLimitRate}};
+
+server {
+
+    listen 443 ssl;
+
+    root /usr/share/nginx/html;
+
+    # this conditionally bounces you to https
+    # but only if you came in from the google load balancer
+    if ($http_x_forwarded_proto = "http") {
+       return 301 https://$host$request_uri;
+    }
+
+    # next two lines are needed for handling compressed data behind google load balancer
+    gzip_proxied any;
+    gzip_vary on;
+    gzip_static on;
+    sendfile on;
+
+    tcp_nodelay on;
+    tcp_nopush on;
+
+    keepalive_timeout 620;
+
+    ssl_certificate /app/config/pepper-cert.crt;
+    ssl_certificate_key /app/config/pepper-cert.key;
+
+    location /pepper/ {
+        limit_req zone=api_limit burst={{$conf.nginx.apiLimitBurst}} nodelay;
+        limit_req_status 429;
+        proxy_pass "http://api_server/pepper/";
+        include /app/config/waf.conf;
+    }
+
+{{if ne $documentationHost ""}}
+    location /docs/api/ {
+        proxy_pass "http://documentation_server/";
+    }
+{{end}}
+
+    # healthcheck should not be visible to the outside world as a pepper route.
+    # should just be visible to load balancer
+    location = /healthcheck {
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_pass "http://api_server/v1/healthcheck";
+        include /app/config/waf.conf;
+    }
+
+    location /blocked {
+        return 503;
+    }
+
+}
+
+server {
+
+    listen 80;
+
+    # ok to expose healthcheck over http
+    location = /healthcheck {
+        proxy_set_header Host $host;
+        proxy_pass "http://api_server/v1/healthcheck";
+        include /app/config/waf.conf;
+    }
+
+    location / {
+        # bounce anything else to https
+        return 301 https://$host$request_uri;
+        include /app/config/waf.conf;
+    }
+}
+
+{{end}}
+{{end}}
+{{end}}
+{{end}}

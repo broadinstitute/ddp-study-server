@@ -1,0 +1,22 @@
+{{$dir := env "DIR"}}
+{{$image := env "IMAGE"}}
+
+sqlproxy:
+  image: broadinstitute/cloudsqlproxy:1.11_20180808
+  env_file:
+    - ${CONFIG_DIR}/sqlproxy.env
+  volumes:
+    - ${CONFIG_DIR}/sqlproxy-service-account.json:/etc/sqlproxy-service-account.json
+  restart: always
+
+webdriver:
+  image: broadinstitute/pepper-ui-tests:{{$image}}
+  volumes:
+     - ${CONFIG_DIR}/config.conf:/app/config.conf
+  environment:
+     - TEST_PROFILE=${TEST_PROFILE}
+     - BUILD_NAME=${BUILD_NAME}
+     - SESSION_NAME=${SESSION_NAME}
+     - POST_TO_SLACK=${POST_TO_SLACK}
+  links:
+    - sqlproxy:sqlproxy

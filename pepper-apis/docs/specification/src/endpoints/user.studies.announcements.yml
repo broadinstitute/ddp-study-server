@@ -1,0 +1,24 @@
+get:
+  operationId: getAnnouncements
+  tags:
+    - Announcements
+  summary: retrieve announcement messages
+  description: Returns the announcement message objects. Note that currently, messages are automatically deleted once retrieved.
+  parameters:
+    - in: path
+      name: user
+      required: true
+      description: the participant's guid
+      schema:
+        type: string
+    - in: path
+      name: study
+      required: true
+      description: the study's unique identifier
+      schema:
+        type: string
+  responses:
+      200:
+        $ref: '../pepper.yml#/components/responses/AnnouncementsResponse'
+      default:
+        $ref: '../pepper.yml#/components/responses/ErrorResponse'

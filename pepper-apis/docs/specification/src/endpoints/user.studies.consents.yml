@@ -1,0 +1,24 @@
+get:
+  operationId: getConsentElections
+  tags:
+    - Consent
+  summary: view all consent elections for a study
+  description: returns a summary of all the consents for a study, including any elections that were made
+  parameters:
+    - in: path
+      name: user
+      required: true
+      description: the participant's guid
+      schema:
+        type: string
+    - in: path
+      name: study
+      required: true
+      description: the study's guid
+      schema:
+        type: string
+  responses:
+      200:
+        $ref: '../pepper.yml#/components/responses/ConsentsResponse'
+      default:
+        $ref: '../pepper.yml#/components/responses/ErrorResponse'

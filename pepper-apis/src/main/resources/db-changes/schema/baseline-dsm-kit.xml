@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="baseline-kit-type-table">
+        <createTable tableName="kit_type">
+            <column name="kit_type_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="kit_type_pk"/>
+            </column>
+            <column name="name" type="varchar(50)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="kit_type_name_uk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-kit-request-table">
+        <createTable tableName="kit_request">
+            <column name="kit_request_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="kit_request_pk"/>
+            </column>
+            <column name="kit_request_guid" type="varchar(36)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="kit_request_guid_uk"/>
+            </column>
+            <column name="kit_type_id" type="bigint">
+                <constraints nullable="false" references="kit_type(kit_type_id)" foreignKeyName="kit_request_kit_type_fk"/>
+            </column>
+            <column name="study_id" type="bigint">
+                <constraints references="umbrella_study(umbrella_study_id)" foreignKeyName="kit_request_umbrella_study_fk"/>
+            </column>
+            <column name="participant_user_id" type="bigint">
+                <constraints nullable="false" references="user(user_id)" foreignKeyName="kit_request_participant_user_fk"/>
+            </column>
+            <column name="mailing_address_id" type="bigint"/>
+            <column name="created_at" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-kit-request-fk">
+        <addForeignKeyConstraint baseTableName="kit_request" baseColumnNames="mailing_address_id"
+                                 referencedTableName="mailing_address" referencedColumnNames="address_id"
+                                 onDelete="SET NULL" constraintName="kit_request_mailing_address_fk"/>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-kit-rule-type-table">
+        <createTable tableName="kit_rule_type">
+            <column name="kit_rule_type_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="kit_rule_type_pk"/>
+            </column>
+            <column name="kit_rule_type_code" type="varchar(100)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="kit_rule_type_code_uk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-kit-rule-table">
+        <createTable tableName="kit_rule">
+            <column name="kit_rule_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="kit_rule_pk"/>
+            </column>
+            <column name="kit_rule_type_id" type="bigint">
+                <constraints nullable="false" references="kit_rule_type(kit_rule_type_id)" foreignKeyName="kit_rule_kit_rule_type_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-kit-country-rule-table">
+        <createTable tableName="kit_country_rule">
+            <column name="kit_rule_id" type="bigint">
+                <constraints primaryKey="true" primaryKeyName="kit_country_rule_pk"
+                             references="kit_rule(kit_rule_id)" foreignKeyName="kit_country_rule_kit_rule_fk"/>
+            </column>
+            <column name="country_id" type="bigint">
+                <constraints nullable="false" references="country(country_id)" foreignKeyName="kit_country_rule_country_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-kit-pex-rule-table">
+        <createTable tableName="kit_pex_rule">
+            <column name="kit_rule_id" type="bigint">
+                <constraints primaryKey="true" primaryKeyName="kit_pex_rule_pk"
+                             references="kit_rule(kit_rule_id)" foreignKeyName="kit_pex_rule_kit_rule_fk"/>
+            </column>
+            <column name="expression_id" type="bigint">
+                <constraints nullable="false" references="expression(expression_id)" foreignKeyName="kit_pex_rule_expression_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-kit-configuration-table">
+        <createTable tableName="kit_configuration">
+            <column name="kit_configuration_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="kit_configuration_pk"/>
+            </column>
+            <column name="study_id" type="bigint">
+                <constraints nullable="false" references="umbrella_study(umbrella_study_id)"
+                             foreignKeyName="kit_configuration_umbrella_study_fk"/>
+            </column>
+            <column name="kit_type_id" type="bigint">
+                <constraints nullable="false" references="kit_type(kit_type_id)"
+                             foreignKeyName="kit_configuration_kit_type_fk"/>
+            </column>
+            <column name="number_of_kits" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-kit-configuration-rule-restriction-table">
+        <createTable tableName="kit_configuration__kit_rule">
+            <column name="kit_configuration__kit_rule_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="kit_configuration__kit_rule_pk"/>
+            </column>
+            <column name="kit_configuration_id" type="bigint">
+                <constraints nullable="false" references="kit_configuration(kit_configuration_id)"
+                             foreignKeyName="kit_configuration__kit_rule_configuration_fk"/>
+            </column>
+            <column name="kit_rule_id" type="bigint">
+                <constraints nullable="false" references="kit_rule(kit_rule_id)"
+                             foreignKeyName="kit_configuration__kit_rule_rule_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-kit-configuration-rule-restriction-uk">
+        <addUniqueConstraint tableName="kit_configuration__kit_rule" columnNames="kit_configuration_id, kit_rule_id"
+                             constraintName="kit_configuration__kit_rule_uk"/>
+    </changeSet>
+
+</databaseChangeLog>

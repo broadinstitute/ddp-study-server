@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="20190809-study-exit-request-table">
+        <createTable tableName="study_exit_request">
+            <column name="study_exit_request_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="study_exit_request_pk"/>
+            </column>
+            <column name="study_id" type="bigint">
+                <constraints nullable="false"
+                             references="umbrella_study(umbrella_study_id)"
+                             foreignKeyName="study_exit_request_study_fk"/>
+            </column>
+            <column name="user_id" type="bigint">
+                <constraints nullable="false"
+                             references="user(user_id)"
+                             foreignKeyName="study_exit_request_user_fk"/>
+            </column>
+            <column name="notes" type="varchar(1000)"/>
+            <column name="created_at" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addUniqueConstraint tableName="study_exit_request" columnNames="study_id, user_id"
+                             constraintName="study_exit_request_study_user_uk"/>
+    </changeSet>
+
+</databaseChangeLog>

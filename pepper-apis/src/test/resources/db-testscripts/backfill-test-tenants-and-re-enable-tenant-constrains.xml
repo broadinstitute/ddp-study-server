@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet id="DDP-2606-migrate-study-client-tenant-re-enable-constraints" author="andrew">
+        <sql>
+            update umbrella_study s set s.auth0_tenant_id = (select auth0_tenant_id from auth0_tenant order by auth0_tenant_id asc limit 1)
+            where s.auth0_tenant_id is null
+        </sql>
+
+        <sql>
+            update client c set c.auth0_tenant_id = (select auth0_tenant_id from auth0_tenant order by auth0_tenant_id asc limit 1)
+            where c.auth0_tenant_id is null
+        </sql>
+
+        <sql>
+            update user set auth0_tenant_id = (select auth0_tenant_id from auth0_tenant order by auth0_tenant_id asc limit 1)
+            where auth0_tenant_id is null
+        </sql>
+
+        <addNotNullConstraint tableName="client" columnName="auth0_tenant_id" columnDataType="bigint"/>
+
+        <addNotNullConstraint tableName="umbrella_study" columnName="auth0_tenant_id" columnDataType="bigint"/>
+
+        <dropColumn tableName="client" columnName="auth0_domain"/>
+
+        <addNotNullConstraint tableName="user" columnName="auth0_tenant_id" columnDataType="bigint"/>
+
+        <addUniqueConstraint tableName="user" columnNames="auth0_user_id,auth0_tenant_id" constraintName="user_auth0_tenant_uk"/>
+
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="baseline-picklist-select-mode-table">
+        <createTable tableName="picklist_select_mode">
+            <column name="picklist_select_mode_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="picklist_select_mode_pk"/>
+            </column>
+            <column name="picklist_select_mode_code" type="varchar(45)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="picklist_select_mode_code_uk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-picklist-render-mode-table">
+        <createTable tableName="picklist_render_mode">
+            <column name="picklist_render_mode_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="picklist_render_mode_pk"/>
+            </column>
+            <column name="picklist_render_mode_code" type="varchar(45)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="picklist_render_mode_code_uk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-picklist-question-table">
+        <createTable tableName="picklist_question">
+            <column name="question_id" type="bigint">
+                <constraints primaryKey="true" primaryKeyName="picklist_question_pk"
+                             references="question(question_id)" foreignKeyName="picklist_question_question_fk"/>
+            </column>
+            <column name="picklist_select_mode_id" type="bigint">
+                <constraints nullable="false" references="picklist_select_mode(picklist_select_mode_id)"
+                             foreignKeyName="picklist_question_picklist_select_mode_fk"/>
+            </column>
+            <column name="picklist_render_mode_id" type="bigint">
+                <constraints nullable="false" references="picklist_render_mode(picklist_render_mode_id)"
+                             foreignKeyName="picklist_question_picklist_render_mode_fk"/>
+            </column>
+            <column name="picklist_label_template_id" type="bigint">
+                <constraints references="template(template_id)" foreignKeyName="picklist_question_picklist_label_template_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-picklist-option-table">
+        <createTable tableName="picklist_option">
+            <column name="picklist_option_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="picklist_option_pk"/>
+            </column>
+            <column name="picklist_question_id" type="bigint">
+                <constraints nullable="false" references="picklist_question(question_id)"
+                             foreignKeyName="picklist_option_picklist_question_fk"/>
+            </column>
+            <column name="picklist_option_stable_id" type="varchar(45)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="option_label_template_id" type="bigint">
+                <constraints nullable="false" references="template(template_id)"
+                             foreignKeyName="picklist_option_option_label_template_fk"/>
+            </column>
+            <column name="detail_label_template_id" type="bigint">
+                <constraints references="template(template_id)" foreignKeyName="picklist_option_detail_label_template_fk"/>
+            </column>
+            <column name="allow_details" type="boolean">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_exclusive" type="boolean">
+                <constraints nullable="false"/>
+            </column>
+            <column name="display_order" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revision_id" type="bigint">
+                <constraints nullable="false" references="revision(revision_id)" foreignKeyName="picklist_option_revision_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-picklist-option-uk">
+        <addUniqueConstraint tableName="picklist_option"
+                             columnNames="picklist_question_id, picklist_option_stable_id, revision_id"
+                             constraintName="picklist_option_question_option_revision_uk"/>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-picklist-option-selection-table">
+        <createTable tableName="picklist_option__answer">
+            <column name="picklist_option__answer_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="picklist_option__answer_pk"/>
+            </column>
+            <column name="picklist_option_id" type="bigint">
+                <constraints nullable="false" references="picklist_option(picklist_option_id)"
+                             foreignKeyName="picklist_option__answer_option_fk"/>
+            </column>
+            <column name="answer_id" type="bigint">
+                <constraints nullable="false" references="answer(answer_id)"
+                             foreignKeyName="picklist_option__answer_answer_fk"/>
+            </column>
+            <column name="detail_text" type="varchar(255)"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-picklist-option-selection-uk">
+        <addUniqueConstraint tableName="picklist_option__answer" columnNames="picklist_option_id, answer_id"
+                             constraintName="picklist_option__answer_uk"/>
+    </changeSet>
+
+</databaseChangeLog>

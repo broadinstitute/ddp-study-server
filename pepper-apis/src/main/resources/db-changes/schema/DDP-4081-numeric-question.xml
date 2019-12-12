@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="20191008-add-numeric-type-table">
+        <createTable tableName="numeric_type">
+            <column name="numeric_type_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="numeric_type_pk"/>
+            </column>
+            <column name="numeric_type_code" type="varchar(20)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="numeric_type_code_uk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20191008-add-numeric-question-table">
+        <createTable tableName="numeric_question">
+            <column name="question_id" type="bigint">
+                <constraints primaryKey="true" primaryKeyName="numeric_question_pk"
+                             references="question(question_id)" foreignKeyName="numeric_question_question_fk"/>
+            </column>
+            <column name="numeric_type_id" type="bigint">
+                <constraints nullable="false"
+                             references="numeric_type(numeric_type_id)"
+                             foreignKeyName="numeric_question_numeric_type_fk"/>
+            </column>
+            <column name="placeholder_template_id" type="bigint">
+                <constraints nullable="true"
+                             references="template(template_id)"
+                             foreignKeyName="numeric_question_placeholder_template_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20191008-add-numeric-answer-table">
+        <createTable tableName="numeric_answer">
+            <column name="answer_id" type="bigint">
+                <constraints primaryKey="true" primaryKeyName="numeric_answer_pk"
+                             references="answer(answer_id)" foreignKeyName="numeric_answer_answer_fk"/>
+            </column>
+            <column name="int_value" type="bigint"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20191008-add-int-range-validation-table">
+        <createTable tableName="int_range_validation">
+            <column name="validation_id" type="bigint">
+                <constraints primaryKey="true" primaryKeyName="int_range_validation_pk"
+                             references="validation(validation_id)" foreignKeyName="int_range_validation_fk"/>
+            </column>
+            <column name="min" type="bigint"/>
+            <column name="max" type="bigint"/>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>

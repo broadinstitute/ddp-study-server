@@ -1,0 +1,16 @@
+{{with $environment := env "ENVIRONMENT"}}
+{{with $version := env "VERSION"}}
+{{with $response := vault (printf "secret/pepper/%s/%s/conf" $environment $version)}}
+{{with $conf := $response.Data}}
+
+{
+    "dbUrl": "jdbc:hsqldb:file:/tmp/ddp-testingdb;hsqldb.lock_file=false;sql.syntax_mys=true",
+    "auth0": {
+        "encryptionSecret": "{{$conf.auth0.encryptionSecret}}"
+    }
+}
+
+{{end}}
+{{end}}
+{{end}}
+{{end}}

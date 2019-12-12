@@ -1,0 +1,23 @@
+group JdbiVariableSubstitution;
+
+queryActiveRevisionIdsByTemplateId() ::= <<
+select sub.i18n_template_substitution_id,
+       rev.revision_id
+  from template as tmpl
+  join template_variable as var
+       on var.template_id = tmpl.template_id
+  join i18n_template_substitution as sub
+       on sub.template_variable_id = var.template_variable_id
+  join revision as rev
+       on rev.revision_id = sub.revision_id
+ where tmpl.template_id = :templateId
+   and rev.end_date is null
+>>
+
+querySubstitutionValueByTemplateId() ::= <<
+select  s.substitution_value
+from template t, template_variable tv, i18n_template_substitution s
+where tv.template_id = t.template_id
+and s.template_variable_id = tv.template_variable_id
+and t.template_id = :templateId
+>>

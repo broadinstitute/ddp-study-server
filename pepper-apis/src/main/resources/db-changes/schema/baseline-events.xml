@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="baseline-event-trigger-type-table">
+        <createTable tableName="event_trigger_type">
+            <column name="event_trigger_type_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="event_trigger_type_pk"/>
+            </column>
+            <column name="event_trigger_type_code" type="varchar(80)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="event_trigger_type_code_uk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-event-trigger-table">
+        <createTable tableName="event_trigger">
+            <column name="event_trigger_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="event_trigger_pk"/>
+            </column>
+            <column name="event_trigger_type_id" type="bigint">
+                <constraints nullable="false" references="event_trigger_type(event_trigger_type_id)"
+                             foreignKeyName="event_trigger_event_trigger_type_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-activity-status-trigger-table">
+        <createTable tableName="activity_status_trigger">
+            <column name="activity_status_trigger_id" type="bigint">
+                <constraints primaryKey="true" primaryKeyName="activity_status_trigger_pk"
+                             references="event_trigger(event_trigger_id)" foreignKeyName="activity_status_trigger_event_trigger_fk"/>
+            </column>
+            <column name="activity_instance_status_type_id" type="bigint">
+                <constraints nullable="false" references="activity_instance_status_type(activity_instance_status_type_id)"
+                             foreignKeyName="activity_status_trigger_status_type_fk"/>
+            </column>
+            <column name="study_activity_id" type="bigint">
+                <constraints nullable="false" references="study_activity(study_activity_id)"
+                             foreignKeyName="activity_status_trigger_study_activity_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-event-action-type-table">
+        <createTable tableName="event_action_type">
+            <column name="event_action_type_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="event_action_type_pk"/>
+            </column>
+            <column name="event_action_type_code" type="varchar(100)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="event_action_type_code_uk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-message-destination-table">
+        <createTable tableName="message_destination">
+            <column name="message_destination_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="message_destination_pk"/>
+            </column>
+            <column name="gcp_topic" type="varchar(500)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="message_destination_topic_uk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-event-action-table">
+        <createTable tableName="event_action">
+            <column name="event_action_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="event_action_pk"/>
+            </column>
+            <column name="event_action_type_id" type="bigint">
+                <constraints nullable="false" references="event_action_type(event_action_type_id)"
+                             foreignKeyName="event_action_event_action_type_fk"/>
+            </column>
+            <column name="message_destination_id" type="bigint">
+                <constraints references="message_destination(message_destination_id)" foreignKeyName="event_action_message_destination_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-activity-instance-creation-action-table">
+        <createTable tableName="activity_instance_creation_action">
+            <column name="activity_instance_creation_action_id" type="bigint">
+                <constraints primaryKey="true" primaryKeyName="activity_instance_creation_action_pk"
+                             references="event_action(event_action_id)" foreignKeyName="activity_instance_creation_action_event_action_fk"/>
+            </column>
+            <column name="study_activity_id" type="bigint">
+                <constraints nullable="false" references="study_activity(study_activity_id)" foreignKeyName="activity_instance_creation_action_study_activity_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-notification-type-table">
+        <createTable tableName="notification_type">
+            <column name="notification_type_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="notification_type_pk"/>
+            </column>
+            <column name="notification_type_code" type="varchar(40)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="notification_type_code_uk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-notification-service-table">
+        <createTable tableName="notification_service">
+            <column name="notification_service_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="notification_service_pk"/>
+            </column>
+            <column name="service_code" type="varchar(80)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="notification_service_code_uk"/>
+            </column>
+            <column name="description" type="varchar(500)"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-notification-template-table">
+        <createTable tableName="notification_template">
+            <column name="notification_template_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="notification_template_pk"/>
+            </column>
+            <column name="template_key" type="varchar(500)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="language_code_id" type="bigint">
+                <constraints nullable="false" references="language_code(language_code_id)"
+                             foreignKeyName="notification_template_language_code_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-user-notification-event-action-table">
+        <createTable tableName="user_notification_event_action">
+            <column name="user_notification_event_action_id" type="bigint">
+                <constraints primaryKey="true" primaryKeyName="user_notification_event_action_pk"
+                             references="event_action(event_action_id)" foreignKeyName="user_notification_event_action_event_action_fk"/>
+            </column>
+            <column name="notification_type_id" type="bigint">
+                <constraints nullable="false" references="notification_type(notification_type_id)"
+                             foreignKeyName="user_notification_event_action_notification_type_fk"/>
+            </column>
+            <column name="notification_service_id" type="bigint">
+                <constraints nullable="false" references="notification_service(notification_service_id)"
+                             foreignKeyName="user_notification_event_action_notification_service_fk"/>
+            </column>
+            <column name="notification_template_id" type="bigint">
+                <constraints nullable="false" references="notification_template(notification_template_id)"
+                             foreignKeyName="user_notification_event_action_template_uk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-user-notification-template-revision-table">
+        <createTable tableName="user_notification__notification_template">
+            <column name="user_notification__notification_template_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="user_notification__notification_template_pk"/>
+            </column>
+            <column name="user_notification_event_action_id" type="bigint">
+                <constraints nullable="false" references="user_notification_event_action(user_notification_event_action_id)"
+                             foreignKeyName="unnt_user_notification_event_action_fk"/>
+            </column>
+            <column name="notification_template_id" type="bigint">
+                <constraints nullable="false" references="notification_template(notification_template_id)"
+                             foreignKeyName="unnt_notification_template_fk"/>
+            </column>
+            <column name="revision_id" type="bigint">
+                <constraints nullable="false" references="revision(revision_id)" foreignKeyName="unnt_revision_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-event-configuration-table">
+        <createTable tableName="event_configuration">
+            <column name="event_configuration_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="event_configuration_pk"/>
+            </column>
+            <column name="event_trigger_id" type="bigint">
+                <constraints nullable="false" references="event_trigger(event_trigger_id)"
+                             foreignKeyName="event_configuration_event_trigger_id"/>
+            </column>
+            <column name="event_action_id" type="bigint">
+                <constraints nullable="false" references="event_action(event_action_id)"
+                             foreignKeyName="event_configuration_event_action_fk"/>
+            </column>
+            <column name="umbrella_study_id" type="bigint">
+                <constraints nullable="false" references="umbrella_study(umbrella_study_id)"
+                             foreignKeyName="event_configuration_umbrella_study_fk"/>
+            </column>
+            <column name="precondition_expression_id" type="bigint">
+                <constraints references="expression(expression_id)" foreignKeyName="event_configuration_precondition_expression_fk"/>
+            </column>
+            <column name="cancel_expression_id" type="bigint">
+                <constraints references="expression(expression_id)" foreignKeyName="event_configuration_cancel_expression_fk"/>
+            </column>
+            <column name="max_occurrences_per_user" type="int"/>
+            <column name="post_delay_seconds" type="int"/>
+            <column name="dispatch_to_housekeeping" type="boolean">
+                <constraints nullable="false"/>
+            </column>
+            <column name="execution_order" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_active" type="boolean">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-event-configuration-occurrence-counter-table">
+        <createTable tableName="event_configuration_occurrence_counter">
+            <column name="event_configuration_occurrence_counter_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="event_configuration_occurrence_counter_pk"/>
+            </column>
+            <column name="event_configuration_id" type="bigint">
+                <constraints nullable="false" references="event_configuration(event_configuration_id)"
+                             foreignKeyName="event_configuration_occurrence_counter_event_configuration_fk"/>
+            </column>
+            <column name="participant_user_id" type="bigint">
+                <constraints nullable="false" references="user(user_id)"
+                             foreignKeyName="event_configuration_occurrence_counter_participant_user_fk"/>
+            </column>
+            <column name="num_occurrences" type="int">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-queued-event-status-type-table">
+        <createTable tableName="queued_event_status_type">
+            <column name="status_type_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="queued_event_status_type_pk"/>
+            </column>
+            <column name="status_type_code" type="varchar(80)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="queued_event_status_type_code_uk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-queued-event-table">
+        <createTable tableName="queued_event">
+            <column name="queued_event_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="queued_event_pk"/>
+            </column>
+            <column name="event_configuration_id" type="bigint">
+                <constraints references="event_configuration(event_configuration_id)"
+                             foreignKeyName="queued_event_event_configuration_fk"/>
+            </column>
+            <column name="operator_user_id" type="bigint">
+                <constraints nullable="false" references="user(user_id)" foreignKeyName="queued_event_operator_user_fk"/>
+            </column>
+            <column name="participant_user_id" type="bigint">
+                <constraints nullable="false" references="user(user_id)" foreignKeyName="queued_event_participant_user_fk"/>
+            </column>
+            <column name="post_after" type="bigint"/>
+            <column name="status_type_id" type="bigint">
+                <constraints references="queued_event_status_type(status_type_id)" foreignKeyName="queued_event_status_type_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-queued-event-index">
+        <createIndex tableName="queued_event" indexName="queued_event_post_after_idx">
+            <column name="post_after" type="bigint"/>
+        </createIndex>
+    </changeSet>
+
+</databaseChangeLog>

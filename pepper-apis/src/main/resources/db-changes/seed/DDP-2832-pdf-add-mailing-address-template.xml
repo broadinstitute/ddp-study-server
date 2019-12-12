@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="cameron" id="20181129-add-pdf-template-type-mailing-address">
+        <insert tableName="pdf_template_type">
+            <column name="pdf_template_type_code" value="MAILING_ADDRESS"/>
+        </insert>
+
+        <createTable tableName="pdf_mailing_address_template">
+            <column name="pdf_mailing_address_template_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pdf_mailing_address_template_pk"/>
+            </column>
+            <column name="pdf_base_template_id" type="bigint">
+                <constraints nullable="false" foreignKeyName="pdf_mailing_address_template_pdf_base_template_fk" references="pdf_base_template(pdf_base_template_id)"/>
+            </column>
+            <column name="first_name_placeholder" type="varchar(200)"/>
+            <column name="last_name_placeholder" type="varchar(200)"/>
+            <column name="street_placeholder" type="varchar(200)"/>
+            <column name="city_placeholder" type="varchar(200)"/>
+            <column name="state_placeholder" type="varchar(200)"/>
+            <column name="phone_placeholder" type="varchar(200)"/>
+            <column name="zip_placeholder" type="varchar(200)"/>
+            <column name="country_placeholder" type="varchar(200)"/>
+
+        </createTable>
+    </changeSet>
+
+
+</databaseChangeLog>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="rnordin" id="20180917-dsm-inclusion-eligibility">
+        <createTable tableName="dsm_inclusion_eligibility">
+            <column name="participant_user_id" type="bigint"/>
+            <column name="umbrella_study_id" type="bigint"/>
+            <column name="last_modified" type="timestamp"/>
+        </createTable>
+
+        <addNotNullConstraint tableName="dsm_inclusion_eligibility" columnName="last_modified" columnDataType="timestamp"/>
+
+        <addPrimaryKey tableName="dsm_inclusion_eligibility"
+                       columnNames="participant_user_id, umbrella_study_id"
+                       constraintName="dsm_inclusion_eligibility_pk"/>
+
+        <addForeignKeyConstraint constraintName="dsm_inclusion_eligibility__user_fk"
+                                 baseTableName="dsm_inclusion_eligibility"
+                                 baseColumnNames="participant_user_id"
+                                 referencedTableName="user"
+                                 referencedColumnNames="user_id"/>
+
+        <addForeignKeyConstraint constraintName="dsm_inclusion_eligibility__umbrella_study_fk"
+                                 baseTableName="dsm_inclusion_eligibility"
+                                 baseColumnNames="umbrella_study_id"
+                                 referencedTableName="umbrella_study"
+                                 referencedColumnNames="umbrella_study_id"/>
+    </changeSet>
+</databaseChangeLog>

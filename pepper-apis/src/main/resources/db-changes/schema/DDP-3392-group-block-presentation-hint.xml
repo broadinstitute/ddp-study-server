@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="20190820-add-presentation-hint-table">
+        <createTable tableName="presentation_hint">
+            <column name="presentation_hint_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="presentation_hint_pk"/>
+            </column>
+            <column name="presentation_hint_code" type="varchar(20)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="presentation_hint_code_uk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20190820-seed-presentation-hint-values">
+        <insert tableName="presentation_hint">
+            <column name="presentation_hint_code" value="DEFAULT"/>
+        </insert>
+        <insert tableName="presentation_hint">
+            <column name="presentation_hint_code" value="MERGE"/>
+        </insert>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20190820-add-group-block-presentation-hint-column-with-backfill">
+        <addColumn tableName="block_group_header">
+            <column name="presentation_hint_id" type="bigint">
+                <constraints nullable="true"
+                             references="presentation_hint(presentation_hint_id)"
+                             foreignKeyName="block_group_header_presentation_hint_fk"/>
+            </column>
+        </addColumn>
+
+        <update tableName="block_group_header">
+            <column name="presentation_hint_id" valueComputed="(select presentation_hint_id from presentation_hint where presentation_hint_code = 'DEFAULT')"/>
+            <where>presentation_hint_id is null</where>
+        </update>
+
+        <addNotNullConstraint tableName="block_group_header" columnName="presentation_hint_id" columnDataType="bigint"/>
+    </changeSet>
+
+</databaseChangeLog>

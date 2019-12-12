@@ -1,0 +1,48 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+    <changeSet id="20180323-create-message-table" author="andrew">
+
+        <createTable tableName="event_type">
+            <column name="event_type_id" type="bigint(20)" autoIncrement="true" startWith="1">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="event_type_pk"/>
+            </column>
+            <column name="event_type_code" type="varchar(80)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="event_type_uk"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="event">
+            <column name="event_id" type="bigint(20)" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="event_pk"/>
+            </column>
+            <column name="event_type_id" type="bigint(20)">
+                <constraints nullable="false" foreignKeyName="event_event_type_uk" referencedTableName="event_type" referencedColumnNames="event_type_id"/>
+            </column>
+            <column name="event_guid" type="varchar(80)">
+                <constraints unique="true" uniqueConstraintName="event_uk" nullable="false"/>
+            </column>
+            <column name="num_occurrences_processed" type="int" defaultValue="0">
+                <constraints nullable="false"/>
+            </column>
+            <column name="max_occurrences" type="int">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="message">
+            <column name="ddp_message_id" type="bigint(20)" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" nullable="false" primaryKeyName="message_pk"/>
+            </column>
+            <column name="pubsub_message_id" type="varchar(500)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="event_id" type="bigint(20)">
+                <constraints nullable="false" foreignKeyName="message_event_fk" referencedTableName="event" referencedColumnNames="event_id"/>
+            </column>
+            <column name="is_processed" type="bool" defaultValue="false"/>
+        </createTable>
+    </changeSet>
+</databaseChangeLog>

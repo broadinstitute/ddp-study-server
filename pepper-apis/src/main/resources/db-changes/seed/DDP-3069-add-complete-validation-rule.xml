@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="20180124-add-complete-validation-rule-type">
+        <insert tableName="validation_type">
+            <column name="validation_type_code" value="COMPLETE"/>
+        </insert>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20180124-add-complete-validation-rule-translations">
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'COMPLETE')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'en')"/>
+            <column name="translation_text" value="This question needs to be completely filled in."/>
+        </insert>
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'COMPLETE')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'ru')"/>
+            <column name="translation_text" value="Этот вопрос должен быть полностью заполнен."/>
+        </insert>
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'COMPLETE')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'fr')"/>
+            <column name="translation_text" value="Cette question doit être complétée complètement."/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

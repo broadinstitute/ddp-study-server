@@ -1,0 +1,24 @@
+get:
+  operationId: getGovernedStudyParticipants
+  tags:
+    - Operator & Participant
+  summary: list of an operator's governed participants in a study
+  description: Retrieves a list of the operator's governed participants in a study.
+  parameters:
+    - in: path
+      name: user
+      required: true
+      description: the operator's unique identifier
+      schema:
+        type: string
+    - in: path
+      name: study
+      required: true
+      description: the study's unique identifier
+      schema:
+        type: string
+  responses:
+      200:
+        $ref: '../pepper.yml#/components/responses/GetStudyParticipantsResponse'
+      default:
+        $ref: '../pepper.yml#/components/responses/ErrorResponse'

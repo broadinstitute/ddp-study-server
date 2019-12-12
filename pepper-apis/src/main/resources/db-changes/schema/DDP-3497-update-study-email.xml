@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet id="20190422-update-study-email" author="sampath">
+        <sql>
+            update umbrella_study s set s.study_email = 'info@ascproject.org'
+            where s.guid = 'ANGIO' and s.study_email is null
+        </sql>
+
+        <sql>
+            update umbrella_study s set s.study_email = 'info@braincancerproject.org'
+            where s.guid = 'cmi-brain' and s.study_email is null
+        </sql>
+
+    </changeSet>
+
+</databaseChangeLog>

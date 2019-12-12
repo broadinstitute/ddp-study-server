@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="20190906-add-pdf-document-version-table">
+        <createTable tableName="pdf_document_version">
+            <column name="pdf_document_version_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="pdf_document_version_pk"/>
+            </column>
+            <column name="pdf_document_configuration_id" type="bigint">
+                <constraints nullable="false"
+                             references="pdf_document_configuration(pdf_document_configuration_id)"
+                             foreignKeyName="pdf_document_version_pdf_config_fk"/>
+            </column>
+            <column name="version_tag" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revision_id" type="bigint">
+                <constraints nullable="false"
+                             references="revision(revision_id)"
+                             foreignKeyName="pdf_document_version_revision_fk"/>
+            </column>
+        </createTable>
+
+        <addUniqueConstraint tableName="pdf_document_version" columnNames="pdf_document_configuration_id, version_tag"
+                             constraintName="pdf_document_version_pdf_config_version_tag_uk"/>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20190906-add-pdf-data-source-tables">
+        <createTable tableName="pdf_data_source_type">
+            <column name="pdf_data_source_type_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="pdf_data_source_type_pk"/>
+            </column>
+            <column name="pdf_data_source_type_code" type="varchar(20)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="pdf_data_source_type_code_uk"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="pdf_data_source">
+            <column name="pdf_data_source_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="pdf_data_source_pk"/>
+            </column>
+            <column name="pdf_data_source_type_id" type="bigint">
+                <constraints nullable="false"
+                             references="pdf_data_source_type(pdf_data_source_type_id)"
+                             foreignKeyName="pdf_data_source_pdf_data_source_type_fk"/>
+            </column>
+            <column name="pdf_document_version_id" type="bigint">
+                <constraints nullable="false"
+                             references="pdf_document_version(pdf_document_version_id)"
+                             foreignKeyName="pdf_data_source_pdf_version_fk"/>
+            </column>
+        </createTable>
+
+        <createTable tableName="pdf_activity_data_source">
+            <column name="pdf_data_source_id" type="bigint">
+                <constraints primaryKey="true" primaryKeyName="pdf_activity_data_source_pk"
+                             references="pdf_data_source(pdf_data_source_id)" foreignKeyName="pdf_activity_data_source_pdf_data_source_fk"/>
+            </column>
+            <column name="activity_id" type="bigint">
+                <constraints nullable="false"
+                             references="study_activity(study_activity_id)"
+                             foreignKeyName="pdf_activity_data_source_activity_fk"/>
+            </column>
+            <column name="activity_version_id" type="bigint">
+                <constraints nullable="false"
+                             references="activity_version(activity_version_id)"
+                             foreignKeyName="pdf_activity_data_source_activity_version_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20190906-add-pdf-version-template-table">
+        <createTable tableName="pdf_version_template">
+            <column name="pdf_version_template_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="pdf_version_template_pk"/>
+            </column>
+            <column name="pdf_document_version_id" type="bigint">
+                <constraints nullable="false"
+                             references="pdf_document_version(pdf_document_version_id)"
+                             foreignKeyName="pdf_version_template_pdf_version_fk"/>
+            </column>
+            <column name="pdf_base_template_id" type="bigint">
+                <constraints nullable="false"
+                             references="pdf_base_template(pdf_base_template_id)"
+                             foreignKeyName="pdf_version_template_pdf_template_fk"/>
+            </column>
+            <column name="template_order" type="int">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20190906-migrate-to-versioned-pdf">
+        <!-- add a version for existing pdf configs with a generic version-tag -->
+        <sql>
+            insert into pdf_document_version (pdf_document_configuration_id, version_tag, revision_id)
+            select pdf_document_configuration_id, 'tag', revision_id
+              from pdf_document_configuration
+        </sql>
+        <dropForeignKeyConstraint baseTableName="pdf_document_configuration" constraintName="pdf_document_configuration_revision_fk"/>
+        <dropColumn tableName="pdf_document_configuration" columnName="revision_id"/>
+
+        <!-- move pdf templates to be under a version instead of top-level config -->
+        <sql>
+            insert into pdf_version_template (pdf_document_version_id, pdf_base_template_id, template_order)
+            select (select pdf_document_version_id from pdf_document_version where pdf_document_configuration_id = tmpl.pdf_document_configuration_id),
+                   tmpl.pdf_base_template_id,
+                   tmpl.template_order
+              from pdf_document_template_set as tmpl
+             order by tmpl.pdf_document_configuration_id asc, tmpl.template_order asc
+        </sql>
+        <dropTable tableName="pdf_document_template_set"/>
+
+        <!-- no longer need activity id in pdf mapping -->
+        <dropForeignKeyConstraint baseTableName="study_pdf_mapping" constraintName="study_pdf_mapping_study_activity_fk"/>
+        <dropColumn tableName="study_pdf_mapping" columnName="study_activity_id"/>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20190906-refactor-pdf-template-schema">
+        <!-- make parent substitution id primary key instead of an auto increment column -->
+        <modifyDataType tableName="pdf_mailing_address_template" columnName="pdf_mailing_address_template_id" newDataType="bigint"/>
+        <dropPrimaryKey tableName="pdf_mailing_address_template"/>
+        <dropColumn tableName="pdf_mailing_address_template" columnName="pdf_mailing_address_template_id"/>
+        <addPrimaryKey tableName="pdf_mailing_address_template" columnNames="pdf_base_template_id" constraintName="pdf_mailing_address_template_pk"/>
+
+        <!-- make parent substitution id primary key instead of an auto increment column -->
+        <modifyDataType tableName="pdf_physician_institution_template" columnName="pdf_physician_institution_template_id" newDataType="bigint"/>
+        <dropPrimaryKey tableName="pdf_physician_institution_template"/>
+        <dropColumn tableName="pdf_physician_institution_template" columnName="pdf_physician_institution_template_id"/>
+        <addPrimaryKey tableName="pdf_physician_institution_template" columnNames="pdf_base_template_id" constraintName="pdf_physician_institution_template_pk"/>
+
+        <!-- move FK in join-table to point to another column -->
+        <addColumn tableName="pdf_template_substitution_set">
+            <column name="pdf_custom_template_id" type="bigint"/>
+        </addColumn>
+        <update tableName="pdf_template_substitution_set">
+            <column name="pdf_custom_template_id"
+                    valueComputed="(select pdf_base_template_id from pdf_custom_template where pdf_custom_template_id = custom_pdf_template_id)"/>
+        </update>
+        <dropForeignKeyConstraint baseTableName="pdf_template_substitution_set" constraintName="pdf_template_substitution_set_pdf_custom_template_fk"/>
+        <dropColumn tableName="pdf_template_substitution_set" columnName="custom_pdf_template_id"/>
+        <addNotNullConstraint tableName="pdf_template_substitution_set" columnName="pdf_custom_template_id" columnDataType="bigint"/>
+        <addForeignKeyConstraint constraintName="pdf_template_substitution_set_pdf_custom_template_fk"
+                                 baseTableName="pdf_template_substitution_set" baseColumnNames="pdf_custom_template_id"
+                                 referencedTableName="pdf_custom_template" referencedColumnNames="pdf_base_template_id"/>
+
+        <!-- make parent substitution id primary key instead of an auto increment column -->
+        <modifyDataType tableName="pdf_custom_template" columnName="pdf_custom_template_id" newDataType="bigint"/>
+        <dropPrimaryKey tableName="pdf_custom_template"/>
+        <dropColumn tableName="pdf_custom_template" columnName="pdf_custom_template_id"/>
+        <addPrimaryKey tableName="pdf_custom_template" columnNames="pdf_base_template_id" constraintName="pdf_custom_template_pk"/>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20190906-refactor-pdf-substitution-schema">
+        <!-- make parent substitution id primary key instead of an auto increment column -->
+        <modifyDataType tableName="pdf_profile_substitution" columnName="pdf_profile_substitution_id" newDataType="bigint"/>
+        <dropPrimaryKey tableName="pdf_profile_substitution"/>
+        <dropColumn tableName="pdf_profile_substitution" columnName="pdf_profile_substitution_id"/>
+        <addPrimaryKey tableName="pdf_profile_substitution" columnNames="pdf_substitution_id" constraintName="pdf_profile_substitution_pk"/>
+
+        <!-- move profile field name into parent table -->
+        <addColumn tableName="pdf_profile_substitution">
+            <column name="profile_field_name" type="varchar(100)"/>
+        </addColumn>
+        <sql>
+            update pdf_profile_substitution as pps
+               set pps.profile_field_name = (select field_name
+                                               from pdf_profile_field
+                                              where pdf_profile_field_id = pps.pdf_profile_field_id)
+        </sql>
+        <addNotNullConstraint tableName="pdf_profile_substitution" columnName="profile_field_name" columnDataType="varchar(100)"/>
+        <dropForeignKeyConstraint baseTableName="pdf_profile_substitution" constraintName="pdf_profile_substitution_pdf_profile_field_fk"/>
+        <dropColumn tableName="pdf_profile_substitution" columnName="pdf_profile_field_id"/>
+        <dropTable tableName="pdf_profile_field"/>
+
+        <!-- add a throw-away column to hold the parent substitution id -->
+        <addColumn tableName="pdf_boolean_answer_substitution">
+            <column name="pdf_sub_id" type="bigint"/>
+        </addColumn>
+        <sql>
+            update pdf_boolean_answer_substitution as pbas
+               set pbas.pdf_sub_id = (select pdf_substitution_id
+                                        from pdf_answer_substitution
+                                       where pdf_answer_substitution_id = pbas.pdf_answer_substitution_id)
+        </sql>
+
+        <!-- drop the current primary key -->
+        <dropForeignKeyConstraint baseTableName="pdf_boolean_answer_substitution" constraintName="pdf_bool_ans_subs_pdf_ans_subs_fk"/>
+        <modifyDataType tableName="pdf_boolean_answer_substitution" columnName="pdf_answer_substitution_id" newDataType="bigint"/>
+        <dropPrimaryKey tableName="pdf_boolean_answer_substitution"/>
+        <dropColumn tableName="pdf_boolean_answer_substitution" columnName="pdf_answer_substitution_id"/>
+
+        <!-- add new primary key column and copy ids over to it -->
+        <addColumn tableName="pdf_boolean_answer_substitution">
+            <column name="pdf_answer_substitution_id" type="bigint">
+                <constraints nullable="true"
+                             references="pdf_answer_substitution(pdf_substitution_id)"
+                             foreignKeyName="pdf_bool_ans_subs_pdf_ans_subs_fk"/>
+            </column>
+        </addColumn>
+        <update tableName="pdf_boolean_answer_substitution">
+            <column name="pdf_answer_substitution_id" valueComputed="pdf_sub_id"/>
+        </update>
+        <dropColumn tableName="pdf_boolean_answer_substitution" columnName="pdf_sub_id"/>
+
+        <!-- make new column primary key -->
+        <addNotNullConstraint tableName="pdf_boolean_answer_substitution" columnName="pdf_answer_substitution_id" columnDataType="bigint"/>
+        <addPrimaryKey tableName="pdf_boolean_answer_substitution" columnNames="pdf_answer_substitution_id"/>
+
+        <!-- make parent substitution id primary key instead of an auto increment column -->
+        <modifyDataType tableName="pdf_answer_substitution" columnName="pdf_answer_substitution_id" newDataType="bigint"/>
+        <dropPrimaryKey tableName="pdf_answer_substitution"/>
+        <dropColumn tableName="pdf_answer_substitution" columnName="pdf_answer_substitution_id"/>
+        <addPrimaryKey tableName="pdf_answer_substitution" columnNames="pdf_substitution_id" constraintName="pdf_answer_substitution_pk"/>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,30 @@
+group JdbiFormTypeActivityInstanceStatusType;
+
+insertIconBlob() ::= <<
+insert into form_type__activity_instance_status_type
+       (umbrella_study_id, form_type_id, activity_instance_status_type_id, icon_blob, revision_id)
+values (:studyId,
+       (select form_type_id from form_type where form_type_code = :formType),
+       (select activity_instance_status_type_id from activity_instance_status_type where activity_instance_status_type_code = :statusType),
+       :icon, :revisionId)
+>>
+
+queryLatestIconBlobs() ::= <<
+	select
+        ft.form_type_code,
+        aist.activity_instance_status_type_code,
+		ftaist.icon_blob
+	from
+		form_type__activity_instance_status_type ftaist,
+		activity_instance_status_type aist,
+		form_type ft,
+		revision r,
+		umbrella_study us
+	where
+	        us.guid = :studyGuid
+	        and ftaist.umbrella_study_id = us.umbrella_study_id
+		and ftaist.activity_instance_status_type_id = aist.activity_instance_status_type_id
+		and ftaist.form_type_id = ft.form_type_id
+        and ftaist.revision_id = r.revision_id
+        and r.end_date is null
+>>

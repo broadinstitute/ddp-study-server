@@ -1,0 +1,518 @@
+{
+  "system": "pepper",
+  "source_file": "relative/path/to/angio.csv",
+  "lovedone_keyed_by": "source_name",
+  "activities": [
+    {
+      "ref_id": "about-you",
+      "src_id": "ANGIOABOUTYOU_v1",
+      "columns": [
+        {
+          "ref_id": "created_at",
+          "src_id": "ANGIOABOUTYOU_v1_created_at",
+          "type": "us_timestamp"
+        },
+        {
+          "ref_id": "updated_at",
+          "src_id": "ANGIOABOUTYOU_v1_updated_at",
+          "type": "us_timestamp"
+        },
+        {
+          "ref_id": "completed_at",
+          "src_id": "ANGIOABOUTYOU_v1_completed_at",
+          "type": "us_timestamp"
+        },
+        {
+          "ref_id": "DIAGNOSIS_DATE_MONTH",
+          "type": "str"
+        },
+        {
+          "ref_id": "DIAGNOSIS_DATE_YEAR",
+          "type": "str"
+        },
+        {
+          "ref_id": "DIAGNOSIS_LOC",
+          "type": "choice"
+        },
+        {
+          "ref_id": "DIAGNOSIS_LOC_BONELIMB_DETAILS",
+          "type": "str"
+        },
+        {
+          "ref_id": "DIAGNOSIS_LOC_ABDOMINAL_DETAILS",
+          "type": "str"
+        },
+        {
+          "ref_id": "DIAGNOSIS_LOC_OTHER_DETAILS",
+          "type": "str"
+        },
+        {
+          "ref_id": "EVER_LOCATION",
+          "type": "choice"
+        },
+        {
+          "ref_id": "EVER_LOCATION_BONELIMB_DETAILS",
+          "type": "str"
+        },
+        {
+          "ref_id": "EVER_LOCATION_ABDOMINAL_DETAILS",
+          "type": "str"
+        },
+        {
+          "ref_id": "EVER_LOCATION_OTHER_DETAILS",
+          "type": "str"
+        },
+        {
+          "ref_id": "CURRENT_LOCATION",
+          "type": "choice"
+        },
+        {
+          "ref_id": "CURRENT_LOCATION_BONELIMB_DETAILS",
+          "type": "str"
+        },
+        {
+          "ref_id": "CURRENT_LOCATION_ABDOMINAL_DETAILS",
+          "type": "str"
+        },
+        {
+          "ref_id": "CURRENT_LOCATION_OTHER_DETAILS",
+          "type": "str"
+        },
+        {
+          "ref_id": "SURGERY",
+          "type": "choice"
+        },
+        {
+          "ref_id": "SURGERY_CLEAN_MARGINS",
+          "type": "choice"
+        },
+        {
+          "ref_id": "RADIATION",
+          "type": "choice"
+        },
+        {
+          "ref_id": "RADIATION_SURGERY",
+          "type": "choice"
+        },
+        {
+          "ref_id": "ALL_TREATMENTS",
+          "type": "multi_line"
+        },
+        {
+          "ref_id": "CURRENTLY_TREATED",
+          "type": "choice"
+        },
+        {
+          "ref_id": "CURRENT_THERAPIES",
+          "type": "multi_line"
+        },
+        {
+          "ref_id": "OTHER_CANCER",
+          "type": "choice"
+        },
+        {
+          "ref_id": "OTHER_CANCER_LIST",
+          "type": "str"
+        },
+        {
+          "ref_id": "OTHER_CANCER_RADIATION",
+          "type": "choice"
+        },
+        {
+          "ref_id": "OTHER_CANCER_RADIATION_LOC",
+          "type": "multi_line"
+        },
+        {
+          "ref_id": "REFERRAL_SOURCE",
+          "type": "multi_line"
+        },
+        {
+          "ref_id": "EXPERIENCE",
+          "type": "multi_line"
+        },
+        {
+          "ref_id": "HISPANIC",
+          "type": "choice"
+        },
+        {
+          "ref_id": "RACE",
+          "type": "choice"
+        },
+        {
+          "ref_id": "RACE_OTHER_DETAILS",
+          "type": "str"
+        },
+        {
+          "ref_id": "BIRTH_YEAR",
+          "type": "str"
+        },
+        {
+          "ref_id": "COUNTRY",
+          "type": "choice"
+        },
+        {
+          "ref_id": "POSTAL_CODE",
+          "type": "str"
+        },
+        {
+          "ref_id": "DIAGNOSIS_PRIMARY_LOC",
+          "type": "choice"
+        },
+        {
+          "ref_id": "DIAGNOSIS_PRIMARY_LOC_BONELIMB_DETAILS",
+          "type": "str"
+        },
+        {
+          "ref_id": "DIAGNOSIS_PRIMARY_LOC_ABDOMINAL_DETAILS",
+          "type": "str"
+        },
+        {
+          "ref_id": "DIAGNOSIS_PRIMARY_LOC_OTHER_DETAILS",
+          "type": "str"
+        },
+        {
+          "ref_id": "DIAGNOSIS_SPREAD",
+          "type": "choice"
+        },
+        {
+          "ref_id": "DIAGNOSIS_SPREAD_LOC",
+          "type": "choice"
+        },
+        {
+          "ref_id": "DIAGNOSIS_SPREAD_LOC_BONELIMB_DETAILS",
+          "type": "str"
+        },
+        {
+          "ref_id": "DIAGNOSIS_SPREAD_LOC_ABDOMINAL_DETAILS",
+          "type": "str"
+        },
+        {
+          "ref_id": "DIAGNOSIS_SPREAD_LOC_OTHER_DETAILS",
+          "type": "str"
+        },
+        {
+          "ref_id": "POST_DIAGNOSIS_SPREAD",
+          "type": "choice"
+        },
+        {
+          "ref_id": "POST_DIAGNOSIS_SPREAD_LOC",
+          "type": "choice"
+        },
+        {
+          "ref_id": "POST_DIAGNOSIS_SPREAD_LOC_BONELIMB_DETAILS",
+          "type": "str"
+        },
+        {
+          "ref_id": "POST_DIAGNOSIS_SPREAD_LOC_ABDOMINAL_DETAILS",
+          "type": "str"
+        },
+        {
+          "ref_id": "POST_DIAGNOSIS_SPREAD_LOC_OTHER_DETAILS",
+          "type": "str"
+        },
+        {
+          "ref_id": "LOCAL_RECURRENCE",
+          "type": "choice"
+        },
+        {
+          "ref_id": "LOCAL_RECURRENCE_LOC",
+          "type": "choice"
+        },
+        {
+          "ref_id": "LOCAL_RECURRENCE_LOC_BONELIMB_DETAILS",
+          "type": "str"
+        },
+        {
+          "ref_id": "LOCAL_RECURRENCE_LOC_ABDOMINAL_DETAILS",
+          "type": "str"
+        },
+        {
+          "ref_id": "LOCAL_RECURRENCE_LOC_OTHER_DETAILS",
+          "type": "str"
+        },
+        {
+          "ref_id": "TREATMENT_PAST",
+          "type": "multi_line"
+        },
+        {
+          "ref_id": "TREATMENT_NOW",
+          "type": "multi_line"
+        },
+        {
+          "ref_id": "DISEASE_FREE_NOW",
+          "type": "choice"
+        },
+        {
+          "ref_id": "SUPPORT_MEMBERSHIP",
+          "type": "choice"
+        },
+        {
+          "ref_id": "SUPPORT_MEMBERSHIP_TEXT",
+          "type": "multi_line"
+        }
+      ]
+    },
+    {
+      "ref_id": "consent",
+      "src_id": "ANGIOCONSENT_v1",
+      "columns": [
+        {
+          "ref_id": "created_at",
+          "src_id": "ANGIOCONSENT_v1_created_at",
+          "type": "us_timestamp"
+        },
+        {
+          "ref_id": "updated_at",
+          "src_id": "ANGIOCONSENT_v1_updated_at",
+          "type": "us_timestamp"
+        },
+        {
+          "ref_id": "completed_at",
+          "src_id": "ANGIOCONSENT_v1_completed_at",
+          "type": "us_timestamp"
+        },
+        {
+          "ref_id": "CONSENT_BLOOD",
+          "type": "bool"
+        },
+        {
+          "ref_id": "CONSENT_TISSUE",
+          "type": "bool"
+        },
+        {
+          "ref_id": "CONSENT_FULLNAME",
+          "type": "str"
+        },
+        {
+          "ref_id": "CONSENT_DOB",
+          "type": "str"
+        },
+        {
+          "ref_id": "TREATMENT_NOW_TEXT",
+          "type": "multi_line"
+        },
+        {
+          "ref_id": "TREATMENT_NOW_START_MONTH",
+          "type": "str"
+        },
+        {
+          "ref_id": "TREATMENT_NOW_START_YEAR",
+          "type": "str"
+        },
+        {
+          "ref_id": "TREATMENT_PAST_TEXT",
+          "type": "multi_line"
+        }
+      ]
+    },
+    {
+      "ref_id": "release",
+      "src_id": "ANGIORELEASE_v1",
+      "columns": [
+        {
+          "ref_id": "created_at",
+          "src_id": "ANGIORELEASE_v1_created_at",
+          "type": "us_timestamp"
+        },
+        {
+          "ref_id": "updated_at",
+          "src_id": "ANGIORELEASE_v1_updated_at",
+          "type": "us_timestamp"
+        },
+        {
+          "ref_id": "completed_at",
+          "src_id": "ANGIORELEASE_v1_completed_at",
+          "type": "us_timestamp"
+        },
+        {
+          "ref_id": "ADDRESS_FULLNAME",
+          "type": "str"
+        },
+        {
+          "ref_id": "ADDRESS_PHONE",
+          "type": "str"
+        },
+        {
+          "ref_id": "ADDRESS",
+          "join_src_ids": ["ADDRESS_STREET1", "ADDRESS_STREET2", "ADDRESS_CITY", "ADDRESS_STATE", "ADDRESS_ZIP", "ADDRESS_COUNTRY"],
+          "join_delimiter": ",",
+          "type": "str"
+        },
+        {
+          "ref_id": "PHYSICIAN",
+          "type": "str"
+        },
+        {
+          "ref_id": "INITIAL_BIOPSY",
+          "type": "str"
+        },
+        {
+          "ref_id": "INSTITUTION",
+          "type": "str"
+        },
+        {
+          "ref_id": "RELEASE_AGREEMENT",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "ref_id": "loved-one",
+      "src_id": "ANGIOLOVEDONE_v1",
+      "columns": [
+        {
+          "ref_id": "created_at",
+          "src_id": "ANGIOLOVEDONE_v1_created_at",
+          "type": "us_timestamp"
+        },
+        {
+          "ref_id": "updated_at",
+          "src_id": "ANGIOLOVEDONE_v1_updated_at",
+          "type": "us_timestamp"
+        },
+        {
+          "ref_id": "completed_at",
+          "src_id": "ANGIOLOVEDONE_v1_completed_at",
+          "type": "us_timestamp"
+        },
+        {
+          "ref_id": "LOVEDONE_RELATION_TO",
+          "type": "choice"
+        },
+        {
+          "ref_id": "LOVEDONE_RELATION_TO_OTHER_DETAILS",
+          "type": "str"
+        },
+        {
+          "ref_id": "LOVEDONE_FIRST_NAME",
+          "type": "str"
+        },
+        {
+          "ref_id": "LOVEDONE_LAST_NAME",
+          "type": "str"
+        },
+        {
+          "ref_id": "LOVEDONE_DOB",
+          "type": "str"
+        },
+        {
+          "ref_id": "LOVEDONE_DIAGNOSIS_POSTAL_CODE",
+          "type": "str"
+        },
+        {
+          "ref_id": "LOVEDONE_PASSED_POSTAL_CODE",
+          "type": "str"
+        },
+        {
+          "ref_id": "LOVEDONE_DIAGNOSIS_DATE_MONTH",
+          "type": "str"
+        },
+        {
+          "ref_id": "LOVEDONE_DIAGNOSIS_DATE_YEAR",
+          "type": "str"
+        },
+        {
+          "ref_id": "LOVEDONE_PASSING_DATE_MONTH",
+          "type": "str"
+        },
+        {
+          "ref_id": "LOVEDONE_PASSING_DATE_YEAR",
+          "type": "str"
+        },
+        {
+          "ref_id": "LOVEDONE_DIAGNOSIS_PRIMARY_LOC",
+          "type": "choice"
+        },
+        {
+          "ref_id": "LOVEDONE_DIAGNOSIS_PRIMARY_LOC_BONELIMB_DETAILS",
+          "type": "str"
+        },
+        {
+          "ref_id": "LOVEDONE_DIAGNOSIS_PRIMARY_LOC_ABDOMINAL_DETAILS",
+          "type": "str"
+        },
+        {
+          "ref_id": "LOVEDONE_DIAGNOSIS_PRIMARY_LOC_OTHER_DETAILS",
+          "type": "str"
+        },
+        {
+          "ref_id": "LOVEDONE_DIAGNOSIS_SPREAD_LOC",
+          "type": "choice"
+        },
+        {
+          "ref_id": "LOVEDONE_DIAGNOSIS_SPREAD_LOC_BONELIMB_DETAILS",
+          "type": "str"
+        },
+        {
+          "ref_id": "LOVEDONE_DIAGNOSIS_SPREAD_LOC_ABDOMINAL_DETAILS",
+          "type": "str"
+        },
+        {
+          "ref_id": "LOVEDONE_DIAGNOSIS_SPREAD_LOC_OTHER_DETAILS",
+          "type": "str"
+        },
+        {
+          "ref_id": "LOVEDONE_OTHER_CANCER",
+          "type": "choice"
+        },
+        {
+          "ref_id": "LOVEDONE_OTHER_CANCER_RADIATION",
+          "type": "choice"
+        },
+        {
+          "ref_id": "LOVEDONE_OTHER_CANCER_RADIATION_YES_DETAILS",
+          "type": "str"
+        },
+        {
+          "ref_id": "LOVEDONE_OTHER_CANCER_TEXT",
+          "type": "multi_line"
+        },
+        {
+          "ref_id": "LOVEDONE_EXPERIENCE",
+          "type": "multi_line"
+        },
+        {
+          "ref_id": "LOVEDONE_FUTURE_CONTACT",
+          "type": "choice"
+        }
+      ]
+    },
+    {
+      "ref_id": "followup-consent",
+      "src_id": "followupconsent_v1",
+      "columns": [
+        {
+          "ref_id": "created_at",
+          "src_id": "followupconsent_v1_created_at",
+          "type": "us_timestamp"
+        },
+        {
+          "ref_id": "updated_at",
+          "src_id": "followupconsent_v1_updated_at",
+          "type": "us_timestamp"
+        },
+        {
+          "ref_id": "completed_at",
+          "src_id": "followupconsent_v1_completed_at",
+          "type": "us_timestamp"
+        },
+        {
+          "ref_id": "FOLLOWUPCONSENT_BLOOD",
+          "type": "bool"
+        },
+        {
+          "ref_id": "FOLLOWUPCONSENT_TISSUE",
+          "type": "bool"
+        },
+        {
+          "ref_id": "FOLLOWUPCONSENT_FULLNAME",
+          "type": "str"
+        },
+        {
+          "ref_id": "FOLLOWUPCONSENT_DOB",
+          "type": "str"
+        }
+      ]
+    }
+  ]
+}

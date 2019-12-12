@@ -1,0 +1,69 @@
+group JdbiCompositeAnswer;
+
+//Note the 2 left joins
+getCompositeAnswerSummary() ::= <<
+SELECT
+	pa.answer_id AS parent_answer_id,
+	pa.answer_guid AS parent_answer_guid,
+	pq.question_id AS parent_question_id,
+	pqsc.stable_id AS parent_question_stable_id,
+	ar.answer_id AS child_answer_id,
+	ar.answer_guid AS child_answer_guid,
+	cqq.child_question_id AS child_question_id,
+	cqt.question_type_code AS child_question_type_code,
+	cqsc.stable_id AS child_question_stable_id,
+	cqq.display_order,
+	qr.response_order AS row_order
+ FROM
+	answer pa
+		JOIN
+    question pq ON pa.question_id=pq.question_id
+        JOIN
+    question_stable_code pqsc ON pq.question_stable_code_id = pqsc.question_stable_code_id
+        JOIN
+    composite_question__question cqq ON cqq.parent_question_id = pq.question_id
+		JOIN
+	question cq ON cqq.child_question_id=cq.question_id
+		JOIN
+	question_type cqt ON cqt.question_type_id = cq.question_type_id
+	    JOIN
+    question_stable_code cqsc ON cq.question_stable_code_id = cqsc.question_stable_code_id
+    -- creating a subquery "table" that has one entry per row of child answers
+    -- there might be no child answer entries, so outer join
+        LEFT JOIN
+    (SELECT DISTINCT
+		parent_answer_id,response_order
+	FROM
+		composite_answer_item i) AS qr ON pa.answer_id=qr.parent_answer_id
+    -- create another subquery "table" that has the child answers
+    -- will need to join back to expected answer rows by parent answer id, child question
+    -- and expected row position
+    LEFT JOIN
+    (SELECT
+		i.parent_answer_id,ca.question_id,ca.answer_guid,ca.answer_id,i.response_order
+	FROM
+		composite_answer_item i
+	LEFT JOIN
+		answer ca on ca.answer_id=i.child_answer_id) AS ar ON ar.parent_answer_id=pa.answer_id AND ar.question_id=cqq.child_question_id AND qr.response_order=ar.response_order
+  WHERE
+	pa.answer_id=:parentAnswerId
+  ORDER BY
+	qr.response_order,
+    cqq.display_order
+>>
+
+deleteCompositeAnswerItemsByParentId() ::= <<
+DELETE FROM
+    composite_answer_item
+WHERE
+    parent_answer_id=:parentAnswerId
+>>
+
+insertCompositeAnswerItem() ::= <<
+INSERT INTO
+    composite_answer_item(parent_answer_id,child_answer_id,response_order)
+VALUES(
+    :parentAnswerId,
+    :answerId,
+    :orderIdx)
+>>

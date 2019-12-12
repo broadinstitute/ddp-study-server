@@ -1,0 +1,28 @@
+group JdbiProfile;
+
+createUserProfileStmt() ::= <<
+    INSERT INTO user_profile
+        (
+            user_id,
+            first_name,
+            last_name,
+            sex,
+            birth_year,
+            birth_month,
+            birth_day_in_month,
+            preferred_language_id,
+            do_not_contact
+        )
+    VALUES
+        (
+            :userId,
+            :firstName,
+            :lastName,
+            :sex,
+            :birthYear,
+            :birthMonth,
+            :birthDayInMonth,
+            :preferredLanguageId,
+            :doNotContact
+        )
+>>

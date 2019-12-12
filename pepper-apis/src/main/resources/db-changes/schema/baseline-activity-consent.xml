@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="baseline-consent-condition-table">
+        <createTable tableName="consent_condition">
+            <column name="consent_condition_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="consent_condition_pk"/>
+            </column>
+            <column name="form_activity_id" type="bigint">
+                <constraints nullable="false" references="form_activity(study_activity_id)"
+                             foreignKeyName="consent_condition_form_activity_fk"/>
+            </column>
+            <column name="consented_expression_id" type="bigint">
+                <constraints nullable="false" references="expression(expression_id)"
+                             foreignKeyName="consent_condition_consented_expression_fk"/>
+            </column>
+            <column name="revision_id" type="bigint">
+                <constraints nullable="false" references="revision(revision_id)" foreignKeyName="consent_condition_revision_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-consent-condition-uk">
+        <addUniqueConstraint tableName="consent_condition" columnNames="form_activity_id, revision_id"
+                             constraintName="consent_condition_form_activity_revision_uk"/>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-consent-election-table">
+        <createTable tableName="consent_election">
+            <column name="consent_election_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="consent_election_pk"/>
+            </column>
+            <column name="form_activity_id" type="bigint">
+                <constraints nullable="false" references="form_activity(study_activity_id)"
+                             foreignKeyName="consent_election_form_activity_fk"/>
+            </column>
+            <column name="election_stable_id" type="varchar(80)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="election_selected_expression_id" type="bigint">
+                <constraints nullable="false" references="expression(expression_id)"
+                             foreignKeyName="consent_election_selected_expression_fk"/>
+            </column>
+            <column name="revision_id" type="bigint">
+                <constraints nullable="false" references="revision(revision_id)" foreignKeyName="consent_election_revision_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-consent-election-uk">
+        <addUniqueConstraint tableName="consent_election" columnNames="form_activity_id, election_stable_id, revision_id"
+                             constraintName="consent_election_form_activity_stable_id_revision_uk"/>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-consent-mapping-type-table">
+        <createTable tableName="consent_mapping_type">
+            <column name="consent_mapping_type_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="consent_mapping_type_pk"/>
+            </column>
+            <column name="consent_mapping_code" type="varchar(45)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="consent_mapping_code_uk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-dsm-study-consent-mapping-table">
+        <createTable tableName="dsm_study_consent_mapping">
+            <column name="umbrella_study_id" type="bigint">
+                <constraints nullable="false" references="umbrella_study(umbrella_study_id)"
+                             foreignKeyName="dsm_study_consent_mapping_umbrella_study_fk"/>
+            </column>
+            <column name="consent_mapping_type_id" type="bigint">
+                <constraints nullable="false" references="consent_mapping_type(consent_mapping_type_id)"
+                             foreignKeyName="dsm_study_consent_mapping_consent_mapping_type_fk"/>
+            </column>
+            <column name="consent_activity_id" type="bigint">
+                <constraints nullable="false" references="study_activity(study_activity_id)"
+                             foreignKeyName="dsm_study_consent_mapping_study_activity_fk"/>
+            </column>
+            <column name="election_stable_id" type="varchar(80)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-study-consent-mapping-pk">
+        <addPrimaryKey tableName="dsm_study_consent_mapping" columnNames="umbrella_study_id, consent_mapping_type_id"
+                       constraintName="dsm_study_consent_mapping_pk"/>
+    </changeSet>
+
+</databaseChangeLog>

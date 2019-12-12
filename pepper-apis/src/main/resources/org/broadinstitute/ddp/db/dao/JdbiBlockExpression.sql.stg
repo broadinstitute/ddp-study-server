@@ -1,0 +1,19 @@
+group JdbiBlockExpression;
+
+queryExprTextByBlockIdAndRevision() ::= <<
+select
+    e.expression_text
+from
+    activity_instance as ai,
+    block__expression as b_e,
+    block as b,
+    expression as e,
+    revision as rev
+where ai.activity_instance_guid = :instanceGuid
+and b.block_id = :blockId
+and b_e.block_id = b.block_id
+and b_e.expression_id = e.expression_id
+and b_e.revision_id = rev.revision_id
+and rev.start_date \<= ai.created_at
+and (rev.end_date is null or ai.created_at \< rev.end_date)
+>>

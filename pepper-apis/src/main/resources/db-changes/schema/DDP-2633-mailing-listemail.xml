@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="andrew" id="20181022-emails-for-mailing-list">
+        <!-- add new type for events triggered by joining the mailing list -->
+        <insert tableName="event_trigger_type">
+            <column name="event_trigger_type_code">JOIN_MAILING_LIST</column>
+        </insert>
+
+        <!-- operator and participant ids no longer required, since sending an email in
+        response to joining the mailing list does not involve a true user -->
+
+        <dropNotNullConstraint columnDataType="bigint"
+                               columnName="operator_user_id"
+                               tableName="queued_event"/>
+
+        <dropNotNullConstraint columnDataType="bigint"
+                               columnName="participant_user_id"
+                               tableName="queued_event"/>
+
+        <addColumn tableName="queued_notification">
+            <!-- optional email_address for sending emails to non-users, such as folks who join the mailing list -->
+            <column name="email_address" type="varchar(500)">
+                <constraints nullable="true"></constraints>
+            </column>
+        </addColumn>
+
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="cardell" id="20190624-add-default-salutation-to-sendgrid-configuration">
+        <addColumn tableName="sendgrid_configuration">
+            <column name="default_salutation" type="varchar(200)" defaultValue=""/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="cardell" id="20190627-make-default-salutation-not-nullable.xml">
+        <addNotNullConstraint tableName="sendgrid_configuration"
+                              columnName="default_salutation"
+                              columnDataType="varchar(200)"
+                              defaultNullValue=""
+        />
+    </changeSet>
+
+</databaseChangeLog>

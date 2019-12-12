@@ -1,0 +1,49 @@
+group UserDao;
+
+select_user() ::= <<
+select u.user_id,
+       u.guid  as user_guid,
+       u.hruid as user_hruid,
+       u.legacy_altpid,
+       u.legacy_shortid,
+       u.is_locked,
+       u.created_by_client_id,
+       u.auth0_tenant_id,
+       u.auth0_user_id,
+       u.created_at,
+       u.updated_at,
+       u.expires_at
+  from user as u
+>>
+
+queryUserById() ::= <<
+<select_user()>
+where u.user_id = :id
+>>
+
+queryUserByGuid() ::= <<
+<select_user()>
+where u.guid = :guid
+>>
+
+queryUserByAuth0UserId() ::= <<
+<select_user()>
+where u.auth0_user_id = :auth0UserId
+  and u.auth0_tenant_id = :auth0TenantId
+>>
+
+/**
+ * Note: we use left-join here since a user might not have a certain piece of data.
+ * For data that has both operator/participant user id, we should join on either one.
+ *
+ * A regular user might have other pieces of data, i.e. addresses/providers/kits etc,
+ * but in current model a temporary user will not. If model changes to allow such, we
+ * can add more joins here as appropriate to delete more pieces of data.
+ */
+deleteAllTempUserRelatedDataByUserIds(userIds) ::= <<
+delete profile, counter
+  from user as u
+  left join user_profile as profile on profile.user_id = u.user_id
+  left join event_configuration_occurrence_counter as counter on counter.participant_user_id = u.user_id
+ where u.user_id in (<userIds>)
+>>

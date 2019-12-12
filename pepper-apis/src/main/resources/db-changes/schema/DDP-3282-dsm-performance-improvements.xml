@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="rnordin" id="20190301-insert-registered-but-exited">
+        <insert tableName="enrollment_status_type">
+            <column name="enrollment_status_type_code">EXITED_AFTER_ENROLLMENT</column>
+        </insert>
+        <update tableName="enrollment_status_type">
+            <column name="enrollment_status_type_code" value="EXITED_BEFORE_ENROLLMENT"/>
+            <where>
+                enrollment_status_type_code = 'EXITED'
+            </where>
+        </update>
+    </changeSet>
+
+
+</databaseChangeLog>

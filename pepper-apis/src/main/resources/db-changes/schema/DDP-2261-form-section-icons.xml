@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="20180920-add-name-template-to-form-section">
+        <addColumn tableName="form_section">
+            <column name="name_template_id" type="bigint">
+                <constraints references="template(template_id)" foreignKeyName="form_section_name_template_fk"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20180920-form-section-state-table">
+        <createTable tableName="form_section_state">
+            <column name="form_section_state_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="form_section_state_pk"/>
+            </column>
+            <column name="form_section_state_code" type="varchar(45)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="form_section_state_uk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20180920-form-section-icon-table">
+        <createTable tableName="form_section_icon">
+            <column name="form_section_icon_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="form_section_icon_pk"/>
+            </column>
+            <column name="form_section_id" type="bigint">
+                <constraints nullable="false"
+                             references="form_section(form_section_id)"
+                             foreignKeyName="form_section_icon_form_section_fk"/>
+            </column>
+            <column name="form_section_state_id" type="bigint">
+                <constraints nullable="false"
+                             references="form_section_state(form_section_state_id)"
+                             foreignKeyName="form_section_icon_form_section_state_fk"/>
+            </column>
+            <column name="height_points" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="width_points" type="int">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20180920-form-section-icon-uk">
+        <addUniqueConstraint tableName="form_section_icon" columnNames="form_section_id, form_section_state_id"
+                             constraintName="form_section_icon_section_state_uk"/>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20180920-scale-factor-table">
+        <createTable tableName="scale_factor">
+            <column name="scale_factor_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="scale_factor_pk"/>
+            </column>
+            <column name="name" type="varchar(5)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="scale_factor_uk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20180920-form-section-icon-source-table">
+        <createTable tableName="form_section_icon_source">
+            <column name="form_section_icon_source_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="form_section_icon_source_pk"/>
+            </column>
+            <column name="form_section_icon_id" type="bigint">
+                <constraints nullable="false"
+                             references="form_section_icon(form_section_icon_id)"
+                             foreignKeyName="form_section_icon_source_form_section_icon_fk"/>
+            </column>
+            <column name="scale_factor_id" type="bigint">
+                <constraints nullable="false"
+                             references="scale_factor(scale_factor_id)"
+                             foreignKeyName="form_section_icon_source_scale_factor_fk"/>
+            </column>
+            <column name="url" type="varchar(3000)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20180920-form-section-icon-source-uk">
+        <addUniqueConstraint tableName="form_section_icon_source" columnNames="form_section_icon_id, scale_factor_id"
+                             constraintName="form_section_icon_scale_factor_uk"/>
+    </changeSet>
+
+</databaseChangeLog>

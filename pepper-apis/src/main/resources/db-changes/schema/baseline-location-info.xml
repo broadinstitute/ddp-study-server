@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="baseline-country-table">
+        <createTable tableName="country">
+            <column name="country_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="country_pk"/>
+            </column>
+            <column name="country_code" type="varchar(2)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="country_code_uk"/>
+            </column>
+            <column name="country_name" type="varchar(64)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="country_name_uk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-country-language-table">
+        <createTable tableName="country__language">
+            <column name="country__language_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="country__language_pk"/>
+            </column>
+            <column name="country_id" type="bigint">
+                <constraints nullable="false" references="country(country_id)" foreignKeyName="country__language_country_fk"/>
+            </column>
+            <column name="language_code_id" type="bigint">
+                <constraints nullable="false" references="language_code(language_code_id)"
+                             foreignKeyName="country__language_language_code_fk"/>
+            </column>
+            <column name="official_language" type="boolean">
+                <constraints nullable="false"/>
+            </column>
+            <column name="primary_language" type="boolean">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-country-language-uk">
+        <addUniqueConstraint tableName="country__language" columnNames="country_id, language_code_id"
+                             constraintName="country__language_country_language_code_uk"/>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-country-address-info-table">
+        <createTable tableName="country_address_info">
+            <column name="country_address_info_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="country_address_info_pk"/>
+            </column>
+            <column name="name" type="varchar(100)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="country_address_info_name_uk"/>
+            </column>
+            <column name="code" type="varchar(2)" remarks="International postal codes. https://en.wikipedia.org/wiki/List_of_postal_codes">
+                <constraints nullable="false" unique="true" uniqueConstraintName="country_address_info_code_uk"/>
+            </column>
+            <column name="subnational_division_type_label" type="varchar(100)" remarks="Most common are state and province"/>
+            <column name="postal_code_label" type="varchar(50)" remarks="Label to be used in UI for postal code. In US it is ZIP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="postal_code_regex" type="varchar(100)" remarks="To be used to validate entered postal code"/>
+            <column name="state_code" type="varchar(100)"
+                    remarks="Code to be included using EasyPost API if we dont have subnational division"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-country-subnational-division-table">
+        <createTable tableName="country_subnational_division" remarks="Hold country states/provinces/etc in support of mailing addresses">
+            <column name="country_subnational_division_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="country_subnational_division_pk"/>
+            </column>
+            <column name="country_address_info_id" type="bigint">
+                <constraints nullable="false" references="country_address_info(country_address_info_id)"
+                             foreignKeyName="country_subnational_division_country_address_info_fk"/>
+            </column>
+            <column name="name" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="code" type="varchar(100)" remarks="State code">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-country-subnational-division-uk">
+        <addUniqueConstraint tableName="country_subnational_division" columnNames="country_address_info_id, name"
+                             constraintName="country_subnational_division_country_address_info_name_uk"/>
+        <addUniqueConstraint tableName="country_subnational_division" columnNames="country_address_info_id, code"
+                             constraintName="country_subnational_division_country_address_info_code_uk"/>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-city-table">
+        <createTable tableName="city">
+            <column name="city_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="city_pk"/>
+            </column>
+            <column name="state_id" type="bigint">
+                <constraints nullable="false" references="country_subnational_division(country_subnational_division_id)"
+                             foreignKeyName="city_country_subnational_division_fk"/>
+            </column>
+            <column name="name" type="varchar(128)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-city-uk">
+        <addUniqueConstraint tableName="city" columnNames="state_id, name" constraintName="city_state_name_uk"/>
+    </changeSet>
+
+</databaseChangeLog>

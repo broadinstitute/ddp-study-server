@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+    <changeSet id="20190718-create-legacy-data-table" author="sampath">
+
+
+        <createTable tableName="user_study_legacy_data">
+            <column name="user_study_legacy_data_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="user_study_legacy_data_pk"/>
+            </column>
+            <column name="user_id" type="bigint(20)">
+                <constraints nullable="false"
+                             foreignKeyName="user_study_legacy_data_user_fk"
+                             references="user(user_id)"/>
+            </column>
+            <column name="umbrella_study_id" type="bigint(20)">
+                <constraints nullable="false"
+                             foreignKeyName="user_study_legacy_data_study_fk"
+                             references="umbrella_study(umbrella_study_id)"/>/>
+            </column>
+            <column name="activity_instance_id" type="bigint(20)">
+                <constraints nullable="true"
+                             foreignKeyName="user_study_legacy_data_activity_instance_fk"
+                             references="activity_instance(activity_instance_id)"/>
+            </column>
+            <column name="field_name" type="varchar(200)"/>
+            <column name="field_value" type="varchar(2000)"/>
+        </createTable>
+
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,20 @@
+group JdbiDateAnswer;
+
+queryDateAnswerInfoById() ::= <<
+select
+  qsc.stable_id,
+  a.answer_id,
+  a.answer_guid,
+  da.month,
+  da.day,
+  da.year
+from
+  answer as a,
+  date_answer as da,
+  question as q,
+  question_stable_code as qsc
+where a.answer_id = :answerId
+and a.answer_id = da.answer_id
+and a.question_id = q.question_id
+and q.question_stable_code_id = qsc.question_stable_code_id
+>>

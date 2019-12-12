@@ -1,0 +1,241 @@
+group JdbiMailAddress;
+
+findAddressByGuid() ::= <<
+    SELECT
+        m.address_id AS id,
+        m.address_guid AS guid,
+        m.name,
+        m.street1,
+        m.street2,
+        m.city,
+        coalesce(s.code, m.state) AS state,
+        c.code AS country,
+        m.phone,
+        m.pluscode,
+        m.description,
+        vs.code AS validationStatus,
+        m.postal_code AS zip,
+        da.address_id AS defaultValue
+    FROM
+        mailing_address m
+            LEFT JOIN
+        country_address_info c ON c.country_address_info_id = m.country_id
+            LEFT JOIN
+        country_subnational_division s ON s.country_subnational_division_id = m.subnational_division_id
+            LEFT JOIN
+        default_mailing_address da ON m.address_id=da.address_id
+            LEFT JOIN
+        mailing_address_validation_status vs on m.validation_status_id=vs.mailing_address_validation_status_id
+    WHERE
+        m.address_guid=?
+
+>>
+findDefaultAddressForParticipantGuid() ::= <<
+        SELECT
+            m.address_id AS id,
+            m.address_guid AS guid,
+            m.name,
+            m.street1,
+            m.street2,
+            m.city,
+            coalesce(s.code, m.state) AS state,
+            c.code AS country,
+            m.phone,
+            m.pluscode,
+            m.description,
+            vs.code AS validationStatus,
+            m.postal_code AS zip,
+            da.address_id AS defaultValue
+        FROM
+            mailing_address m
+                LEFT JOIN
+            country_address_info c ON c.country_address_info_id = m.country_id
+                LEFT JOIN
+            country_subnational_division s ON s.country_subnational_division_id = m.subnational_division_id
+                JOIN
+            default_mailing_address da ON m.address_id=da.address_id
+                JOIN
+            user u on u.user_id=m.participant_user_id
+               LEFT JOIN
+            mailing_address_validation_status vs on m.validation_status_id=vs.mailing_address_validation_status_id
+        WHERE
+            u.guid=?
+>>
+findAllAddressesByParticipantGuid() ::= <<
+        SELECT
+            m.address_id AS id,
+            m.address_guid AS guid,
+            m.name,
+            m.street1,
+            m.street2,
+            m.city,
+            coalesce(s.code, m.state) AS state,
+            c.code AS country,
+            m.phone,
+            m.pluscode,
+            m.description,
+            vs.code AS validationStatus,
+            m.postal_code AS zip,
+            da.address_id AS defaultValue
+        FROM
+            mailing_address m
+                LEFT JOIN
+            country_address_info c ON c.country_address_info_id = m.country_id
+                LEFT JOIN
+            country_subnational_division s ON s.country_subnational_division_id = m.subnational_division_id
+                JOIN
+            user u on u.user_id=m.participant_user_id
+                LEFT JOIN
+            default_mailing_address da ON m.address_id=da.address_id
+               LEFT JOIN
+            mailing_address_validation_status vs on m.validation_status_id=vs.mailing_address_validation_status_id
+        WHERE
+            u.guid=?
+        ORDER BY
+            m.created_at
+
+>>
+insertAddress() ::= <<
+    INSERT INTO mailing_address(
+        address_guid,
+        participant_user_id,
+        operator_user_id,
+        name,
+        street1,
+        street2,
+        city,
+        postal_code,
+        state,
+        subnational_division_id,
+        country_id,
+        phone,
+        pluscode,
+        description,
+        validation_status_id,
+        created_at,
+        updated_at)
+
+        VALUES(
+        :guid,
+        (SELECT
+            user_id
+         FROM
+            user up
+         WHERE
+            up.guid = :participantGuid),
+        (SELECT
+            user_id
+         FROM
+            user uo
+         WHERE
+            uo.guid = :operatorGuid),
+        :a.name,
+        :a.street1,
+        :a.street2,
+        :a.city,
+        :a.zip,
+        :a.state,
+        (SELECT
+             country_subnational_division_id
+         FROM
+             country_subnational_division s
+                 JOIN
+             country_address_info c ON c.country_address_info_id = s.country_address_info_id
+         WHERE
+             s.code = :a.state AND c.code = :a.country),
+        (SELECT
+            country_address_info_id
+        FROM
+            country_address_info
+        WHERE
+            code = :a.country),
+        :a.phone,
+        :a.plusCode,
+        :a.description,
+        (SELECT mailing_address_validation_status_id
+        FROM mailing_address_validation_status vs
+        WHERE vs.code=:a.validationStatus),
+        :creationTime,
+        :creationTime)
+>>
+
+updateAddress() ::= <<
+    UPDATE mailing_address
+           SET
+            participant_user_id=(SELECT
+                                 user_id
+                              FROM
+                                 user up
+                              WHERE
+                                 up.guid = :participantGuid),
+            operator_user_id= (SELECT
+                                    user_id
+                                 FROM
+                                    user uo
+                                 WHERE
+                                    uo.guid = :operatorGuid),
+           name=:a.name,
+           street1=:a.street1,
+           street2=:a.street2,
+           city=:a.city,
+           postal_code=:a.zip,
+           state=:a.state,
+           subnational_division_id=(SELECT
+                                        country_subnational_division_id
+                                    FROM
+                                        country_subnational_division s
+                                            JOIN
+                                        country_address_info c ON c.country_address_info_id = s.country_address_info_id
+                                    WHERE
+                                        s.code = :a.state AND c.code = :a.country),
+           country_id=(SELECT
+                                  country_address_info_id
+                              FROM
+                                  country_address_info
+                              WHERE
+                                  code = :a.country),
+           phone=:a.phone,
+           pluscode=:a.plusCode,
+           validation_status_id=(SELECT mailing_address_validation_status_id
+                    FROM mailing_address_validation_status vs
+                    WHERE vs.code=:a.validationStatus),
+           description=:a.description,
+           updated_at=:updateTime
+    WHERE
+        address_guid=:guid
+>>
+setAddressAsDefault() ::= <<
+    INSERT INTO
+        default_mailing_address(
+            participant_user_id,
+            address_id)
+        SELECT
+            u.user_id,m.address_id
+        FROM
+            mailing_address m
+        JOIN
+            user u ON u.user_id=m.participant_user_id
+        WHERE
+            m.address_guid=:guid
+        ON DUPLICATE KEY UPDATE
+            address_id=VALUES(address_id)
+>>
+unsetAddressAsDefault() ::= <<
+    DELETE
+    FROM default_mailing_address
+    WHERE address_id in
+        (SELECT
+            m.address_id
+         FROM
+            mailing_address m
+         WHERE
+            m.address_guid=:guid)
+>>
+
+deleteAddressById() ::= <<
+    DELETE FROM mailing_address where address_id=?
+>>
+deleteAddressByGuid() ::= <<
+    DELETE FROM mailing_address where address_guid=?
+>>
+

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="sampath" id="20190524-add-activity-allow-unauthenticated-column">
+        <addColumn tableName="study_activity">
+            <column name="allow_unauthenticated" type="boolean"/>
+        </addColumn>
+
+        <update tableName="study_activity">
+            <column name="allow_unauthenticated" valueBoolean="false"/>
+            <where>allow_unauthenticated is null</where>
+        </update>
+
+        <addNotNullConstraint tableName="study_activity" columnName="allow_unauthenticated" columnDataType="boolean"/>
+    </changeSet>
+
+</databaseChangeLog>

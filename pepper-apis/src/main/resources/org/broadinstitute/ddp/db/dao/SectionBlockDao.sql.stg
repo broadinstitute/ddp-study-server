@@ -1,0 +1,18 @@
+group SectionBlockDao;
+
+queryAllInstanceSectionsWithIconsByIds() ::= <<
+select sect.form_section_id,
+       sect.name_template_id,
+       icon.form_section_icon_id,
+       icon.height_points,
+       icon.width_points,
+       state.form_section_state_code,
+       scale.name,
+       src.url
+  from form_section as sect
+  left join form_section_icon as icon on icon.form_section_id = sect.form_section_id
+  left join form_section_state as state on state.form_section_state_id = icon.form_section_state_id
+  left join form_section_icon_source as src on src.form_section_icon_id = icon.form_section_icon_id
+  left join scale_factor as scale on scale.scale_factor_id = src.scale_factor_id
+ where sect.form_section_id in (\<sectionIds\>)
+>>

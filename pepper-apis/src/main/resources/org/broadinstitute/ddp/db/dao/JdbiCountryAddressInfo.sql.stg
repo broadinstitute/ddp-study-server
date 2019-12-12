@@ -1,0 +1,30 @@
+group JdbiCountryAddressInfo;
+
+getAllCountryAddressInfoSummaries() ::= <<
+    SELECT
+        name, code
+    FROM
+        country_address_info
+    ORDER BY name
+>>
+
+getCountryAddressInfo() ::= <<
+    SELECT
+        c.country_address_info_id c_country_address_info_id,
+        c.name c_name,
+        c.code c_code,
+        c.subnational_division_type_label c_subnational_division_type_label,
+        c.postal_code_label c_postal_code_label,
+        c.postal_code_regex c_postal_code_regex,
+        c.state_code c_state_code,
+        d.country_subnational_division_id d_country_subnational_division_id,
+        d.name d_name,
+        d.code d_code
+    FROM
+        country_address_info c
+            LEFT JOIN
+        country_subnational_division d ON c.country_address_info_id = d.country_address_info_id
+    WHERE
+        c.code = ?
+    ORDER BY c.name , d.name
+>>

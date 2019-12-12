@@ -1,0 +1,37 @@
+{{with $environment := env "ENVIRONMENT"}}
+{{with $version := env "VERSION"}}
+{{with $testingConf := vault (printf "secret/pepper/%s/%s/testing" $environment $version)}}
+{{with $testingAuth := index $testingConf.Data "auth0"}}
+{{with $conf := vault (printf "secret/pepper/%s/%s/conf" $environment $version)}}
+
+
+{
+    "socialTestEmail":"{{$testingConf.Data.socialTestEmail}}",
+    "socialTestPassword":"{{$testingConf.Data.socialTestPassword}}",
+	{{if eq $environment "dev"}}
+        "baseUrl": "https://basil-test.datadonationplatform.org",
+        "angioUrl":"https://pepper-angio-dev.datadonationplatform.org"
+    {{end}}
+    {{if eq $environment "test"}}
+        "baseUrl": "https://basil-dev.datadonationplatform.org",
+        "angioUrl":"https://pepper-angio-test.datadonationplatform.org"
+    {{end}}
+    {{if eq $environment "staging"}}
+        "baseUrl": "https://basil-staging.datadonationplatform.org",
+        "angioUrl":"https://pepper-angio-staging.datadonationplatform.org"
+    {{end}}
+    "testUser":"{{$testingAuth.testUser}}",
+    "testUserPassword":"{{$testingAuth.testUserPassword}}",
+	"browserStackUser":"{{$testingConf.Data.browserStackUser}}",
+	"browserStackKey":"{{$testingConf.Data.browserStackKey}}",
+	"slackNotificationHookUrl":"{{$testingConf.Data.slackNotificationHookUrl}}",
+	"dbUrl":"{{$conf.Data.dbUrl}}",
+    "maxConnections": {{$conf.Data.maxConnections}}
+}
+
+
+{{end}}
+{{end}}
+{{end}}
+{{end}}
+{{end}}

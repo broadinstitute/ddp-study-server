@@ -1,0 +1,29 @@
+get:
+  operationId: getDrugSuggestions
+  tags:
+    - Suggestion
+  summary: get a list of drug autosuggestion results
+  description: returns a list of drug autosuggestion results from the given query `q`. If `q` is not provided, or is empty, an unfiltered list will be returned. The number of results returned may be limited by including a value for the `limit` parameter
+  parameters:
+    - in: path
+      name: study
+      required: true
+      description: the unique identifier for the study
+      schema:
+        type: string
+    - in: query
+      name: q
+      description: the substring to filter on
+      schema:
+        type: string
+    - in: query
+      name: limit
+      description: maximum number of suggestions to return
+      schema:
+        type: integer
+        minimum: 0
+  responses:
+    200:
+      $ref: '../pepper.yml#/components/responses/DrugSuggestionResponse'
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'

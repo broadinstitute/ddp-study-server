@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <!-- This file is used for testing in LiquibaseUtilTest. -->
+
+    <changeSet author="yufeng" id="insert-data-successful">
+        <insert tableName="test_table">
+            <column name="name">another</column>
+        </insert>
+        <rollback>
+            <delete tableName="test_table">
+                <where>name = 'another'</where>
+            </delete>
+        </rollback>
+    </changeSet>
+
+    <changeSet author="yufeng" id="faulty-sql">
+        <insert tableName="non_existing_table">
+            <column name="name">blah</column>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

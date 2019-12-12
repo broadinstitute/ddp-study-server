@@ -1,0 +1,103 @@
+openapi: 3.0.0
+servers: []
+info:
+  description: 'Specification for the Pepper API: `v1-Poblano`'
+  version: 1.0.0
+  title: Pepper
+  contact:
+    email: info@datadonationplatform.org
+tags:
+  - name: Admin
+    description: administrative & internal calls
+  - name: Activities
+    description: view and update survey responses
+  - name: Announcements
+    description: messages from a study to participants
+  - name: Consent
+    description: view and updates study consent elections
+  - name: Mailing Address
+    description: participant mailing address management
+  - name: Medical Providers
+    description: physicians, hospitals, and other medical providers
+  - name: Operator & Participant
+    description: participant & operator related calls
+  - name: Studies
+    description: view study-specific details
+  - name: Suggestion
+    description: endpoints offering autosuggestion options
+  - name: Temporary Users
+    description: endpoints for temporary users
+  - name: Workflow
+    description: user's workflow in a study
+  - name: Other
+    description: other endpoints
+paths:
+  /healthcheck:
+    $ref: 'endpoints/private/healthcheck.yml'
+  /register:
+    $ref: 'endpoints/private/register.yml'
+  /temporary-users:
+    $ref: 'endpoints/temporary-users.yml'
+  /studies:
+    $ref: 'endpoints/studies.yml'
+  /mailing-list:
+    $ref: 'endpoints/join.mailing.list.yml'
+  /studies/{study}:
+    $ref: 'endpoints/studies.study.yml'
+  /studies/{study}/password-requirements:
+    $ref: 'endpoints/studies.password-requirements.yml'
+  /studies/{study}/suggestions/drugs:
+    $ref: 'endpoints/studies.suggestions.drugs.yml'
+  /user/{user}/profile:
+    $ref: 'endpoints/user.profile.yml'
+  /user/{user}/profile/address:
+    $ref: 'endpoints/user.profile.addresses.yml'
+  /user/{user}/profile/address/verify:
+    $ref: 'endpoints/user.profile.addresses.verify.yml'
+  /user/{user}/profile/address/{address}:
+    $ref: 'endpoints/user.profile.address.yml'
+  /user/{user}/profile/address/default:
+    $ref: 'endpoints/user.profile.address.default.yml'
+  /user/{user}/profile/address/temp/{instance}:
+    $ref: 'endpoints/user.profile.address.temp.yml'
+  /user/{user}/email:
+    $ref: 'endpoints/user.email.yml'
+  /user/{user}/password:
+    $ref: 'endpoints/user.password.yml'
+  /user/{user}/studies/{study}/activities:
+    $ref: 'endpoints/user.studies.activities.yml'
+  /user/{user}/studies/{study}/activities/{instance}:
+    $ref: 'endpoints/user.studies.activity.yml'
+  /user/{user}/studies/{study}/activities/{instance}/answers:
+    $ref: 'endpoints/user.studies.activity.answers.yml'
+  /user/{user}/studies/{study}/consents:
+    $ref: 'endpoints/user.studies.consents.yml'
+  /user/{user}/studies/{study}/consents/{instance}:
+    $ref: 'endpoints/user.studies.consent.yml'
+  /user/{user}/studies/{study}/medical-providers/{institutionType}:
+    $ref: 'endpoints/user.studies.medical-providers.yml'
+  /user/{user}/studies/{study}/medical-providers/{institutionType}/{provider}:
+    $ref: 'endpoints/user.studies.medical-provider.yml'
+  /user/{user}/studies/{study}/participants:
+    $ref: 'endpoints/user.studies.participants.yml'
+  /user/{user}/studies/{study}/prequalifier:
+    $ref: 'endpoints/user.studies.prequalifier.yml'
+  /user/{user}/studies/{study}/announcements:
+    $ref: 'endpoints/user.studies.announcements.yml'
+  /user/{user}/studies/{study}/status:
+    $ref: 'endpoints/user.studies.status.yml'
+  /user/{user}/studies/{study}/workflow:
+    $ref: 'endpoints/user.studies.workflow.yml'
+  /user/{user}/studies/{study}/exit:
+    $ref: 'endpoints/user.studies.exit.yml'
+  /cancers:
+    $ref: 'endpoints/cancers.yml'
+  /autocomplete/institution:
+    $ref: 'endpoints/autocomplete.institution.yml'
+components:
+  schemas:
+    $ref: 'components/schemas.yml'
+  responses:
+    $ref: 'components/responses.yml'
+  requestBodies:
+    $ref: 'components/request-bodies.yml'

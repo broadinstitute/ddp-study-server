@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="baseline-i18n-activity-type-name-trans-table">
+        <createTable tableName="i18n_activity_type_name_trans">
+            <column name="i18n_activity_type_name_trans_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="i18n_activity_type_name_trans_pk"/>
+            </column>
+            <column name="activity_type_id" type="bigint">
+                <constraints nullable="false" references="activity_type(activity_type_id)" foreignKeyName="i18n_atnt_activity_type_fk"/>
+            </column>
+            <column name="language_code_id" type="bigint">
+                <constraints nullable="false" references="language_code(language_code_id)" foreignKeyName="i18n_atnt_language_code_fk"/>
+            </column>
+            <column name="translation_text" type="varchar(500)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-i18n-activity-type-name-trans-uk">
+        <addUniqueConstraint tableName="i18n_activity_type_name_trans" columnNames="activity_type_id, language_code_id"
+                             constraintName="i18n_atnt_activity_type_language_code_uk"/>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-i18n-study-activity-name-trans-table">
+        <createTable tableName="i18n_study_activity_name_trans">
+            <column name="i18n_study_activity_name_trans_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="i18n_study_activity_name_trans_pk"/>
+            </column>
+            <column name="study_activity_id" type="bigint">
+                <constraints nullable="false" references="study_activity(study_activity_id)" foreignKeyName="i18n_sant_study_activity_fk"/>
+            </column>
+            <column name="language_code_id" type="bigint">
+                <constraints nullable="false" references="language_code(language_code_id)" foreignKeyName="i18n_sant_language_code_fk"/>
+            </column>
+            <column name="translation_text" type="varchar(500)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-i18n-study-activity-name-trans-uk">
+        <addUniqueConstraint tableName="i18n_study_activity_name_trans" columnNames="study_activity_id, language_code_id"
+                             constraintName="i18n_sant_study_activity_language_code_uk"/>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-i18n-activity-instance-status-type-name-trans-table">
+        <createTable tableName="i18n_activity_instance_status_type_name_trans">
+            <column name="i18n_activity_instance_status_type_name_trans_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="i18n_activity_instance_status_type_name_trans_pk"/>
+            </column>
+            <column name="activity_instance_status_type_id" type="bigint">
+                <constraints nullable="false" references="activity_instance_status_type(activity_instance_status_type_id)"
+                             foreignKeyName="i18n_aistnt_activity_instance_status_type_fk"/>
+            </column>
+            <column name="language_code_id" type="bigint">
+                <constraints nullable="false" references="language_code(language_code_id)"
+                             foreignKeyName="i18n_aistnt_language_code_fk"/>
+            </column>
+            <column name="translation_text" type="varchar(500)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-i18n-activity-instance-status-type-name-trans-uk">
+        <addUniqueConstraint tableName="i18n_activity_instance_status_type_name_trans"
+                             columnNames="activity_instance_status_type_id, language_code_id"
+                             constraintName="i18n_aistnt_activity_instance_status_type_language_code_uk"/>
+    </changeSet>
+
+</databaseChangeLog>

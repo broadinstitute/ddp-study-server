@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="baseline-date-render-mode-table">
+        <createTable tableName="date_render_mode">
+            <column name="date_render_mode_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="date_render_mode_pk"/>
+            </column>
+            <column name="date_render_mode_code" type="varchar(50)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="date_render_mode_code_uk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-date-question-table">
+        <createTable tableName="date_question">
+            <column name="question_id" type="bigint">
+                <constraints primaryKey="true" primaryKeyName="date_question_pk"
+                             references="question(question_id)" foreignKeyName="date_question_question_fk"/>
+            </column>
+            <column name="date_render_mode_id" type="bigint">
+                <constraints nullable="false" references="date_render_mode(date_render_mode_id)"
+                             foreignKeyName="date_question_date_render_mode_fk"/>
+            </column>
+            <column name="display_calendar" type="boolean">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-date-field-type-table">
+        <createTable tableName="date_field_type">
+            <column name="date_field_type_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="date_field_type_pk"/>
+            </column>
+            <column name="date_field_type_code" type="varchar(50)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="date_field_type_code_uk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-date-question-field-order-table">
+        <createTable tableName="date_question_field_order">
+            <column name="date_question_field_order_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="date_question_field_order_pk"/>
+            </column>
+            <column name="date_question_id" type="bigint">
+                <constraints nullable="false" references="date_question(question_id)"
+                             foreignKeyName="date_question_field_order_date_question_fk"/>
+            </column>
+            <column name="date_field_type_id" type="bigint">
+                <constraints nullable="false" references="date_field_type(date_field_type_id)"
+                             foreignKeyName="date_question_field_order_date_field_type_fk"/>
+            </column>
+            <column name="display_order" type="int">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-date-question-field-order-uk">
+        <addUniqueConstraint tableName="date_question_field_order" columnNames="date_question_id, date_field_type_id"
+                             constraintName="date_question_field_order_date_question_date_field_type_uk"/>
+        <addUniqueConstraint tableName="date_question_field_order" columnNames="date_question_id, display_order"
+                             constraintName="date_question_field_order_date_question_display_order_uk"/>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-date-question-month-picklist-table">
+        <createTable tableName="date_question_month_picklist">
+            <column name="date_question_id" type="bigint">
+                <constraints primaryKey="true" primaryKeyName="date_question_month_picklist_pk"
+                             references="date_question(question_id)" foreignKeyName="date_question_month_picklist_date_question_fk"/>
+            </column>
+            <column name="use_month_names" type="boolean">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-date-question-year-picklist-table">
+        <createTable tableName="date_question_year_picklist">
+            <column name="date_question_id" type="bigint">
+                <constraints primaryKey="true" primaryKeyName="date_question_year_picklist_pk"
+                             references="date_question(question_id)" foreignKeyName="date_question_year_picklist_date_question_fk"/>
+            </column>
+            <column name="years_forward" type="int"/>
+            <column name="years_back" type="int"/>
+            <column name="year_anchor" type="int"/>
+            <column name="first_selected_year" type="int"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-date-answer-table">
+        <createTable tableName="date_answer">
+            <column name="answer_id" type="bigint">
+                <constraints primaryKey="true" primaryKeyName="date_answer_pk"
+                             references="answer(answer_id)" foreignKeyName="date_answer_answer_fk"/>
+            </column>
+            <column name="month" type="int"/>
+            <column name="day" type="int"/>
+            <column name="year" type="int"/>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>

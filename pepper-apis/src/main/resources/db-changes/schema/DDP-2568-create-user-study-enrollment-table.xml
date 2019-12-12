@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="sretsia" id="20181015-create-enrollment-status-type-table">
+        <createTable tableName="enrollment_status_type">
+            <column name="enrollment_status_type_id" type="bigint" autoIncrement="true" startWith="1">
+                 <constraints nullable="false" primaryKey="true" primaryKeyName="est_enrollment_status_type_id_pk"/>
+            </column>
+            <column name="enrollment_status_type_code" type="varchar(100)">
+                 <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="sretsia" id="20181015-create-user-study-enrollment-table">
+        <createTable tableName="user_study_enrollment">
+            <column name="user_study_enrollment_id" type="bigint" autoIncrement="true" startWith="1">
+                 <constraints nullable="false" primaryKey="true" primaryKeyName="use_user_study_enrollment_id_pk"/>
+            </column>
+            <column name="user_id" type="bigint">
+                 <constraints nullable="false" foreignKeyName="use_user_id_u_user_id_fk" references="user(user_id)"/>
+            </column>
+            <column name="study_id" type="bigint">
+                 <constraints nullable="false" foreignKeyName="use_study_id_us_umbrella_study_id_fk" references="umbrella_study(umbrella_study_id)"/>
+            </column>
+            <column name="enrollment_status_type_id" type="bigint">
+                 <constraints nullable="false" foreignKeyName="use_enrollment_status_type_id_fk" references="enrollment_status_type(enrollment_status_type_id)"/>
+            </column>
+            <column name="last_updated" type="bigint">
+                 <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addUniqueConstraint
+            tableName="user_study_enrollment"
+            columnNames="user_id, study_id"
+            constraintName="use_user_id_study_id_uk"
+        />
+    </changeSet>
+
+</databaseChangeLog>

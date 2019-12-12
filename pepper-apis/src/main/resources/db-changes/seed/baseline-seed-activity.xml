@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="baseline-seed-activity-type">
+        <insert tableName="activity_type">
+            <column name="activity_type_code" value="FORMS"/>
+        </insert>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-seed-form-type">
+        <insert tableName="form_type">
+            <column name="form_type_code" value="CONSENT"/>
+        </insert>
+        <insert tableName="form_type">
+            <column name="form_type_code" value="GENERAL"/>
+        </insert>
+        <insert tableName="form_type">
+            <column name="form_type_code" value="PREQUALIFIER"/>
+        </insert>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-seed-block-type">
+        <insert tableName="block_type">
+            <column name="block_type_code" value="COMPONENT"/>
+        </insert>
+        <insert tableName="block_type">
+            <column name="block_type_code" value="CONDITIONAL"/>
+        </insert>
+        <insert tableName="block_type">
+            <column name="block_type_code" value="CONTENT"/>
+        </insert>
+        <insert tableName="block_type">
+            <column name="block_type_code" value="GROUP"/>
+        </insert>
+        <insert tableName="block_type">
+            <column name="block_type_code" value="QUESTION"/>
+        </insert>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-seed-list-style-hint">
+        <insert tableName="list_style_hint">
+            <column name="list_style_hint_code" value="BULLET"/>
+        </insert>
+        <insert tableName="list_style_hint">
+            <column name="list_style_hint_code" value="NONE"/>
+        </insert>
+        <insert tableName="list_style_hint">
+            <column name="list_style_hint_code" value="NUMBER"/>
+        </insert>
+        <insert tableName="list_style_hint">
+            <column name="list_style_hint_code" value="UPPER_ALPHA"/>
+        </insert>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-seed-activity-instance-status-type">
+        <insert tableName="activity_instance_status_type">
+            <column name="activity_instance_status_type_code" value="COMPLETE"/>
+        </insert>
+        <insert tableName="activity_instance_status_type">
+            <column name="activity_instance_status_type_code" value="CREATED"/>
+        </insert>
+        <insert tableName="activity_instance_status_type">
+            <column name="activity_instance_status_type_code" value="IN_PROGRESS"/>
+        </insert>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-seed-consent-mapping-type">
+        <insert tableName="consent_mapping_type">
+            <column name="consent_mapping_code" value="BLOOD"/>
+        </insert>
+        <insert tableName="consent_mapping_type">
+            <column name="consent_mapping_code" value="TISSUE"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

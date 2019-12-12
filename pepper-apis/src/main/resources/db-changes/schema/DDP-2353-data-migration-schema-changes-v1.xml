@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+    <changeSet id="20180919-add-columns-for-angio-data-migration" author="sampath">
+
+
+        <addColumn tableName="user">
+            <column name="legacy_altpid" type="varchar(60)"/>
+            <column name="legacy_shortid" type="varchar(20)"/>
+            <column name="created_at" type="datetime"/>
+            <column name="last_modified" type="datetime"/>
+        </addColumn>
+
+        <addColumn tableName="umbrella_study">
+            <column name="web_base_url" type="varchar(80)"/>
+        </addColumn>
+
+        <addColumn tableName="activity_instance">
+            <column name="legacy_submissionid" type="bigint"/>
+            <column name="legacy_sessionid" type="varchar(60)"/>
+        </addColumn>
+
+        <createTable tableName="user_study_exit">
+            <column name="user_study_exit_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="user_study_exit_pk"/>
+            </column>
+            <column name="participant_user_id" type="bigint">
+                <constraints nullable="false"
+                             foreignKeyName="user_study_exit_fk"
+                             references="user(user_id)"/>
+            </column>
+            <column name="umbrella_study_id" type="bigint">
+                <constraints nullable="false"
+                             foreignKeyName="user_umbrella_study_exit_fk"
+                             references="umbrella_study(umbrella_study_id)"/>/>
+            </column>
+            <column name="exited_at" type="datetime">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+
+    </changeSet>
+
+</databaseChangeLog>

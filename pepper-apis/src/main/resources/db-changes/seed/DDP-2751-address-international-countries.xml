@@ -1,0 +1,1475 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="20181205-rename-country-us-virgin-islands">
+        <update tableName="country_address_info">
+            <column name="name" value="U.S. Virgin Islands"/>
+            <where>code = 'VI'</where>
+        </update>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20181205-add-international-address-countries">
+        <insert tableName="country_address_info">
+            <column name="name" value="Afghanistan"/>
+            <column name="code" value="AF"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Albania"/>
+            <column name="code" value="AL"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Algeria"/>
+            <column name="code" value="DZ"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Andorra"/>
+            <column name="code" value="AD"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Angola"/>
+            <column name="code" value="AO"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Anguilla"/>
+            <column name="code" value="AI"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Antarctica"/>
+            <column name="code" value="AQ"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Antigua and Barbuda"/>
+            <column name="code" value="AG"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Argentina"/>
+            <column name="code" value="AR"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Armenia"/>
+            <column name="code" value="AM"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Aruba"/>
+            <column name="code" value="AW"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Australia"/>
+            <column name="code" value="AU"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Austria"/>
+            <column name="code" value="AT"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Azerbaijan"/>
+            <column name="code" value="AZ"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Bahamas"/>
+            <column name="code" value="BS"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Bahrain"/>
+            <column name="code" value="BH"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Bangladesh"/>
+            <column name="code" value="BD"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Barbados"/>
+            <column name="code" value="BB"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Belarus"/>
+            <column name="code" value="BY"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Belgium"/>
+            <column name="code" value="BE"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Belize"/>
+            <column name="code" value="BZ"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Benin"/>
+            <column name="code" value="BJ"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Bermuda"/>
+            <column name="code" value="BM"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Bhutan"/>
+            <column name="code" value="BT"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Bolivia"/>
+            <column name="code" value="BO"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Bonaire, Sint Eustatius and Saba"/>
+            <column name="code" value="BQ"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Bosnia and Herzegovina"/>
+            <column name="code" value="BA"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Botswana"/>
+            <column name="code" value="BW"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Bouvet Island"/>
+            <column name="code" value="BV"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Brazil"/>
+            <column name="code" value="BR"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="British Indian Ocean Territory"/>
+            <column name="code" value="IO"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="British Virgin Islands"/>
+            <column name="code" value="VG"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Brunei"/>
+            <column name="code" value="BN"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Bulgaria"/>
+            <column name="code" value="BG"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Burkina Faso"/>
+            <column name="code" value="BF"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Burundi"/>
+            <column name="code" value="BI"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Cambodia"/>
+            <column name="code" value="KH"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Cameroon"/>
+            <column name="code" value="CM"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Cape Verde"/>
+            <column name="code" value="CV"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Cayman Islands"/>
+            <column name="code" value="KY"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Central African Republic"/>
+            <column name="code" value="CF"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Chad"/>
+            <column name="code" value="TD"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Chile"/>
+            <column name="code" value="CL"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="China"/>
+            <column name="code" value="CN"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Christmas Island"/>
+            <column name="code" value="CX"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Cocos Islands"/>
+            <column name="code" value="CC"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Colombia"/>
+            <column name="code" value="CO"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Comoros"/>
+            <column name="code" value="KM"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Congo"/>
+            <column name="code" value="CG"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Cook Islands"/>
+            <column name="code" value="CK"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Costa Rica"/>
+            <column name="code" value="CR"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Croatia"/>
+            <column name="code" value="HR"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Cuba"/>
+            <column name="code" value="CU"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Curaçao"/>
+            <column name="code" value="CW"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Cyprus"/>
+            <column name="code" value="CY"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Czech Republic"/>
+            <column name="code" value="CZ"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Côte d'Ivoire"/>
+            <column name="code" value="CI"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Denmark"/>
+            <column name="code" value="DK"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Djibouti"/>
+            <column name="code" value="DJ"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Dominica"/>
+            <column name="code" value="DM"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Dominican Republic"/>
+            <column name="code" value="DO"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Ecuador"/>
+            <column name="code" value="EC"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Egypt"/>
+            <column name="code" value="EG"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="El Salvador"/>
+            <column name="code" value="SV"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Equatorial Guinea"/>
+            <column name="code" value="GQ"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Eritrea"/>
+            <column name="code" value="ER"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Estonia"/>
+            <column name="code" value="EE"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Ethiopia"/>
+            <column name="code" value="ET"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Falkland Islands"/>
+            <column name="code" value="FK"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Faroe Islands"/>
+            <column name="code" value="FO"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Fiji"/>
+            <column name="code" value="FJ"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Finland"/>
+            <column name="code" value="FI"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="France"/>
+            <column name="code" value="FR"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="French Guiana"/>
+            <column name="code" value="GF"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="French Polynesia"/>
+            <column name="code" value="PF"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="French Southern Territories"/>
+            <column name="code" value="TF"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Gabon"/>
+            <column name="code" value="GA"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Gambia"/>
+            <column name="code" value="GM"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Georgia"/>
+            <column name="code" value="GE"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Germany"/>
+            <column name="code" value="DE"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Ghana"/>
+            <column name="code" value="GH"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Gibraltar"/>
+            <column name="code" value="GI"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Greece"/>
+            <column name="code" value="GR"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Greenland"/>
+            <column name="code" value="GL"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Grenada"/>
+            <column name="code" value="GD"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Guadeloupe"/>
+            <column name="code" value="GP"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Guam"/>
+            <column name="code" value="GU"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Guatemala"/>
+            <column name="code" value="GT"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Guernsey"/>
+            <column name="code" value="GG"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Guinea"/>
+            <column name="code" value="GN"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Guinea-Bissau"/>
+            <column name="code" value="GW"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Guyana"/>
+            <column name="code" value="GY"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Haiti"/>
+            <column name="code" value="HT"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Heard Island And McDonald Islands"/>
+            <column name="code" value="HM"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Honduras"/>
+            <column name="code" value="HN"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Hong Kong"/>
+            <column name="code" value="HK"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Hungary"/>
+            <column name="code" value="HU"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Iceland"/>
+            <column name="code" value="IS"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="India"/>
+            <column name="code" value="IN"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Indonesia"/>
+            <column name="code" value="ID"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Iran"/>
+            <column name="code" value="IR"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Iraq"/>
+            <column name="code" value="IQ"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Ireland"/>
+            <column name="code" value="IE"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Isle Of Man"/>
+            <column name="code" value="IM"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Israel"/>
+            <column name="code" value="IL"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Italy"/>
+            <column name="code" value="IT"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Jamaica"/>
+            <column name="code" value="JM"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Japan"/>
+            <column name="code" value="JP"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Jersey"/>
+            <column name="code" value="JE"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Jordan"/>
+            <column name="code" value="JO"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Kazakhstan"/>
+            <column name="code" value="KZ"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Kenya"/>
+            <column name="code" value="KE"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Kiribati"/>
+            <column name="code" value="KI"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Kuwait"/>
+            <column name="code" value="KW"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Kyrgyzstan"/>
+            <column name="code" value="KG"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Laos"/>
+            <column name="code" value="LA"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Latvia"/>
+            <column name="code" value="LV"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Lebanon"/>
+            <column name="code" value="LB"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Lesotho"/>
+            <column name="code" value="LS"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Liberia"/>
+            <column name="code" value="LR"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Libya"/>
+            <column name="code" value="LY"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Liechtenstein"/>
+            <column name="code" value="LI"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Lithuania"/>
+            <column name="code" value="LT"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Luxembourg"/>
+            <column name="code" value="LU"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Macao"/>
+            <column name="code" value="MO"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Macedonia"/>
+            <column name="code" value="MK"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Madagascar"/>
+            <column name="code" value="MG"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Malawi"/>
+            <column name="code" value="MW"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Malaysia"/>
+            <column name="code" value="MY"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Maldives"/>
+            <column name="code" value="MV"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Mali"/>
+            <column name="code" value="ML"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Malta"/>
+            <column name="code" value="MT"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Marshall Islands"/>
+            <column name="code" value="MH"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Martinique"/>
+            <column name="code" value="MQ"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Mauritania"/>
+            <column name="code" value="MR"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Mauritius"/>
+            <column name="code" value="MU"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Mayotte"/>
+            <column name="code" value="YT"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Mexico"/>
+            <column name="code" value="MX"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Micronesia"/>
+            <column name="code" value="FM"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Moldova"/>
+            <column name="code" value="MD"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Monaco"/>
+            <column name="code" value="MC"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Mongolia"/>
+            <column name="code" value="MN"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Montenegro"/>
+            <column name="code" value="ME"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Montserrat"/>
+            <column name="code" value="MS"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Morocco"/>
+            <column name="code" value="MA"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Mozambique"/>
+            <column name="code" value="MZ"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Myanmar"/>
+            <column name="code" value="MM"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Namibia"/>
+            <column name="code" value="NA"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Nauru"/>
+            <column name="code" value="NR"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Nepal"/>
+            <column name="code" value="NP"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Netherlands"/>
+            <column name="code" value="NL"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Netherlands Antilles"/>
+            <column name="code" value="AN"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="New Caledonia"/>
+            <column name="code" value="NC"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="New Zealand"/>
+            <column name="code" value="NZ"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Nicaragua"/>
+            <column name="code" value="NI"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Niger"/>
+            <column name="code" value="NE"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Nigeria"/>
+            <column name="code" value="NG"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Niue"/>
+            <column name="code" value="NU"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Norfolk Island"/>
+            <column name="code" value="NF"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="North Korea"/>
+            <column name="code" value="KP"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Norway"/>
+            <column name="code" value="NO"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Oman"/>
+            <column name="code" value="OM"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Pakistan"/>
+            <column name="code" value="PK"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Palau"/>
+            <column name="code" value="PW"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Palestine"/>
+            <column name="code" value="PS"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Panama"/>
+            <column name="code" value="PA"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Papua New Guinea"/>
+            <column name="code" value="PG"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Paraguay"/>
+            <column name="code" value="PY"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Peru"/>
+            <column name="code" value="PE"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Philippines"/>
+            <column name="code" value="PH"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Pitcairn"/>
+            <column name="code" value="PN"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Poland"/>
+            <column name="code" value="PL"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Portugal"/>
+            <column name="code" value="PT"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Qatar"/>
+            <column name="code" value="QA"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Reunion"/>
+            <column name="code" value="RE"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Romania"/>
+            <column name="code" value="RO"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Russia"/>
+            <column name="code" value="RU"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Rwanda"/>
+            <column name="code" value="RW"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Saint Barthélemy"/>
+            <column name="code" value="BL"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Saint Helena"/>
+            <column name="code" value="SH"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Saint Kitts And Nevis"/>
+            <column name="code" value="KN"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Saint Lucia"/>
+            <column name="code" value="LC"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Saint Martin"/>
+            <column name="code" value="MF"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Saint Pierre And Miquelon"/>
+            <column name="code" value="PM"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Saint Vincent And The Grenadines"/>
+            <column name="code" value="VC"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Samoa"/>
+            <column name="code" value="WS"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="San Marino"/>
+            <column name="code" value="SM"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Sao Tome And Principe"/>
+            <column name="code" value="ST"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Saudi Arabia"/>
+            <column name="code" value="SA"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Senegal"/>
+            <column name="code" value="SN"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Serbia"/>
+            <column name="code" value="RS"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Seychelles"/>
+            <column name="code" value="SC"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Sierra Leone"/>
+            <column name="code" value="SL"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Singapore"/>
+            <column name="code" value="SG"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Sint Maarten (Dutch part)"/>
+            <column name="code" value="SX"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Slovakia"/>
+            <column name="code" value="SK"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Slovenia"/>
+            <column name="code" value="SI"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Solomon Islands"/>
+            <column name="code" value="SB"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Somalia"/>
+            <column name="code" value="SO"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="South Africa"/>
+            <column name="code" value="ZA"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="South Georgia And The South Sandwich Islands"/>
+            <column name="code" value="GS"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="South Korea"/>
+            <column name="code" value="KR"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="South Sudan"/>
+            <column name="code" value="SS"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Spain"/>
+            <column name="code" value="ES"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Sri Lanka"/>
+            <column name="code" value="LK"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Sudan"/>
+            <column name="code" value="SD"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Suriname"/>
+            <column name="code" value="SR"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Svalbard And Jan Mayen"/>
+            <column name="code" value="SJ"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Swaziland"/>
+            <column name="code" value="SZ"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Sweden"/>
+            <column name="code" value="SE"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Switzerland"/>
+            <column name="code" value="CH"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Syria"/>
+            <column name="code" value="SY"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Taiwan"/>
+            <column name="code" value="TW"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Tajikistan"/>
+            <column name="code" value="TJ"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Tanzania"/>
+            <column name="code" value="TZ"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Thailand"/>
+            <column name="code" value="TH"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="The Democratic Republic Of Congo"/>
+            <column name="code" value="CD"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Timor-Leste"/>
+            <column name="code" value="TL"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Togo"/>
+            <column name="code" value="TG"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Tokelau"/>
+            <column name="code" value="TK"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Tonga"/>
+            <column name="code" value="TO"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Trinidad and Tobago"/>
+            <column name="code" value="TT"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Tunisia"/>
+            <column name="code" value="TN"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Turkey"/>
+            <column name="code" value="TR"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Turkmenistan"/>
+            <column name="code" value="TM"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Turks And Caicos Islands"/>
+            <column name="code" value="TC"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Tuvalu"/>
+            <column name="code" value="TV"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Uganda"/>
+            <column name="code" value="UG"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Ukraine"/>
+            <column name="code" value="UA"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="United Arab Emirates"/>
+            <column name="code" value="AE"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="United Kingdom"/>
+            <column name="code" value="GB"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Uruguay"/>
+            <column name="code" value="UY"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Uzbekistan"/>
+            <column name="code" value="UZ"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Vanuatu"/>
+            <column name="code" value="VU"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Vatican"/>
+            <column name="code" value="VA"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Venezuela"/>
+            <column name="code" value="VE"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Vietnam"/>
+            <column name="code" value="VN"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Wallis And Futuna"/>
+            <column name="code" value="WF"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Western Sahara"/>
+            <column name="code" value="EH"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Yemen"/>
+            <column name="code" value="YE"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Zambia"/>
+            <column name="code" value="ZM"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Zimbabwe"/>
+            <column name="code" value="ZW"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Åland Islands"/>
+            <column name="code" value="AX"/>
+            <column name="subnational_division_type_label" value="State/Province/Region"/>
+            <column name="postal_code_label" value="Zip/Postal Code"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

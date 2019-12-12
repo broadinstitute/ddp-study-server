@@ -1,0 +1,41 @@
+parameters:
+  - in: path
+    name: user
+    required: true
+    description: the participant's guid
+    schema:
+      type: string
+  - in: path
+    name: study
+    required: true
+    description: the study's unique identifier
+    schema:
+      type: string
+
+get:
+  operationId: getActivities
+  tags:
+    - Activities
+  summary: summary of a participant's activities
+  description: returns a summary for each activity instance a `user` has created for a specific `study`
+  responses:
+      200:
+        $ref: '../pepper.yml#/components/responses/ActivitiesResponse'
+      default:
+        $ref: '../pepper.yml#/components/responses/ErrorResponse'
+
+post:
+  operationId: createActivity
+  tags:
+    - Activities
+  summary: create a new instance of an activity
+  description: given an `activityCode`, the server will create a new instance of the activity for the specified user and return the `instanceGuid` of the newly created default instance.
+  requestBody:
+    $ref: '../pepper.yml#/components/requestBodies/ActivityCreateRequestBody'
+  responses:
+      200:
+        $ref: '../pepper.yml#/components/responses/ActivityCreateResponse'
+      422:
+        $ref: '../pepper.yml#/components/responses/ActivityCreateErrorResponse'
+      default:
+        $ref: '../pepper.yml#/components/responses/ErrorResponse'

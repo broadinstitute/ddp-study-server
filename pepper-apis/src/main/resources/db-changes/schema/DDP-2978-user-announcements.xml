@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="20181212-user-announcement-table">
+        <createTable tableName="user_announcement">
+            <column name="user_announcement_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="user_announcement_pk"/>
+            </column>
+            <column name="participant_user_id" type="bigint">
+                <constraints nullable="false" references="user(user_id)" foreignKeyName="user_announcement_user_fk"/>
+            </column>
+            <column name="study_id" type="bigint">
+                <constraints nullable="false" references="umbrella_study(umbrella_study_id)" foreignKeyName="user_announcement_study_fk"/>
+            </column>
+            <column name="message_template_id" type="bigint">
+                <constraints nullable="false" references="template(template_id)" foreignKeyName="user_announcement_template_fk"/>
+            </column>
+            <column name="created_at" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20181212-user-announcement-event-action-table">
+        <createTable tableName="user_announcement_event_action">
+            <column name="event_action_id" type="bigint">
+                <constraints primaryKey="true" primaryKeyName="user_announcement_event_action_pk"
+                             references="event_action(event_action_id)" foreignKeyName="user_announcement_event_action_fk"/>
+            </column>
+            <column name="message_template_id" type="bigint">
+                <constraints nullable="false" references="template(template_id)" foreignKeyName="user_announcement_event_action_template_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20181212-user-announcement-event-action-type">
+        <insert tableName="event_action_type">
+            <column name="event_action_type_code" value="ANNOUNCEMENT"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

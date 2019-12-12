@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="baseline-template-type-table">
+        <createTable tableName="template_type">
+            <column name="template_type_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="template_type_pk"/>
+            </column>
+            <column name="template_type_code" type="varchar(45)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="template_type_code_uk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-template-table">
+        <createTable tableName="template">
+            <column name="template_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="template_pk"/>
+            </column>
+            <column name="template_type_id" type="bigint">
+                <constraints nullable="false" references="template_type(template_type_id)" foreignKeyName="template_template_type_fk"/>
+            </column>
+            <column name="template_code" type="varchar(80)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="template_text" type="longtext">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revision_id" type="bigint">
+                <constraints nullable="false" references="revision(revision_id)" foreignKeyName="template_revision_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-template-uk">
+        <addUniqueConstraint tableName="template" columnNames="template_code, revision_id"
+                             constraintName="template_code_revision_uk"/>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-template-variable-table">
+        <createTable tableName="template_variable">
+            <column name="template_variable_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="template_variable_pk"/>
+            </column>
+            <column name="template_id" type="bigint">
+                <constraints nullable="false" references="template(template_id)" foreignKeyName="template_variable_template_fk"/>
+            </column>
+            <column name="variable_name" type="varchar(500)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-template-variable-uk">
+        <addUniqueConstraint tableName="template_variable" columnNames="template_id, variable_name"
+                             constraintName="template_variable_uk"/>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-i18n-template-substitution-table">
+        <createTable tableName="i18n_template_substitution">
+            <column name="i18n_template_substitution_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="i18n_template_substitution_pk"/>
+            </column>
+            <column name="template_variable_id" type="bigint">
+                <constraints nullable="false" references="template_variable(template_variable_id)"
+                             foreignKeyName="i18n_template_substitution_template_variable_fk"/>
+            </column>
+            <column name="language_code_id" type="bigint">
+                <constraints nullable="false" references="language_code(language_code_id)"
+                             foreignKeyName="i18n_template_substitution_language_code_fk"/>
+            </column>
+            <column name="substitution_value" type="longtext">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revision_id" type="bigint">
+                <constraints nullable="false" references="revision(revision_id)"
+                             foreignKeyName="i18n_template_substitution_revision_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-block-content-table">
+        <createTable tableName="block_content">
+            <column name="block_content_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="block_content_pk"/>
+            </column>
+            <column name="block_id" type="bigint">
+                <constraints nullable="false" references="block(block_id)" foreignKeyName="block_content_block_fk"/>
+            </column>
+            <column name="title_template_id" type="bigint">
+                <constraints references="template(template_id)" foreignKeyName="block_content_title_template_fk"/>
+            </column>
+            <column name="body_template_id" type="bigint">
+                <constraints nullable="false" references="template(template_id)" foreignKeyName="block_content_body_template_fk"/>
+            </column>
+            <column name="revision_id" type="bigint">
+                <constraints nullable="false" references="revision(revision_id)" foreignKeyName="block_content_revision_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-block-content-uk">
+        <addUniqueConstraint tableName="block_content" columnNames="block_id, revision_id"
+                             constraintName="block_content_block_revision_uk"/>
+    </changeSet>
+
+</databaseChangeLog>

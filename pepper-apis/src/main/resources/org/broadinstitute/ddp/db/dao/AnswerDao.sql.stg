@@ -1,0 +1,17 @@
+group AnswerDao;
+
+/**
+ * Note: we use left-join here since different answer types will join to different answer ids.
+ */
+deleteAllAnswerValuesByActivityInstanceIds(instanceIds) ::= <<
+delete aa, ba, da, na, ta, pa, ca
+  from answer as a
+  left join agreement_answer as aa on aa.answer_id = a.answer_id
+  left join boolean_answer as ba on ba.answer_id = a.answer_id
+  left join date_answer as da on da.answer_id = a.answer_id
+  left join numeric_answer as na on na.answer_id = a.answer_id
+  left join text_answer as ta on ta.answer_id = a.answer_id
+  left join picklist_option__answer as pa on pa.answer_id = a.answer_id
+  left join composite_answer_item as ca on ca.parent_answer_id = a.answer_id
+ where a.activity_instance_id in (<instanceIds>)
+>>

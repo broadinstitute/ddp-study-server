@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="rnordin" id="20190521-add-pdf-generation-event-action-table">
+        <createTable tableName="pdf_generation_event_action">
+            <column name="event_action_id" type="bigint">
+                <constraints primaryKey="true" primaryKeyName="pdf_generation_event_action_pk"
+                             references="event_action(event_action_id)"
+                             foreignKeyName="pdf_generation_event_action_event_action_fk"/>
+            </column>
+            <column name="pdf_document_configuration_id" type="bigint">
+                <constraints nullable="false" references="pdf_document_configuration(pdf_document_configuration_id)"
+                             foreignKeyName="pdf_generation_event_action_pdf_configuration_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20190529-add-generate-column-to-notification-attachment">
+        <addColumn tableName="user_notification_pdf">
+            <column name="generate_if_missing" type="boolean"/>
+        </addColumn>
+
+        <update tableName="user_notification_pdf">
+            <column name="generate_if_missing" valueBoolean="true"/>
+            <where>generate_if_missing is null</where>
+        </update>
+
+        <addNotNullConstraint tableName="user_notification_pdf" columnName="generate_if_missing" columnDataType="boolean"/>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20190603-add-unique-key-to-pdf-study-filename">
+        <addUniqueConstraint tableName="pdf_document_configuration" columnNames="umbrella_study_id, file_name"
+                             constraintName="pdf_document_config_study_filename_uk"/>
+    </changeSet>
+
+</databaseChangeLog>

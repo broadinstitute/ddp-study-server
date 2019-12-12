@@ -1,0 +1,40 @@
+group DsmOnDemandActivityDao;
+
+queryAllOrderedOnDemandActivitiesByStudyId() ::= <<
+select activity.study_activity_code as activity_code,
+       activity.max_instances_per_user
+  from study_activity as activity
+ where activity.study_id = :studyId
+   and activity.allow_ondemand_trigger = 1
+ order by activity.display_order asc
+>>
+
+/**
+ * Returns all the activity instances triggered by on-demand for a particular study and activity.
+ * This also does a subquery for the instance's latest status, where only the status type is needed.
+ */
+queryAllTriggeredInstancesByStudyIdAndActivityId() ::= <<
+select participant.guid as participant_guid,
+       participant.hruid as participant_hruid,
+       participant.legacy_shortid as legacy_shortid,
+       participant.legacy_altpid,
+       activity.study_activity_code as activity_code,
+       instance.activity_instance_guid as instance_guid,
+       (select stype.activity_instance_status_type_code
+          from activity_instance_status as status
+          join activity_instance_status_type as stype
+            on stype.activity_instance_status_type_id = status.activity_instance_status_type_id
+         where status.activity_instance_id = instance.activity_instance_id
+         order by status.updated_at desc
+         limit 1
+       ) as instance_status,
+       instance.created_at / 1000 as created_at_sec,
+       instance.ondemand_trigger_id as trigger_id
+  from activity_instance as instance
+  join study_activity as activity on activity.study_activity_id = instance.study_activity_id
+  join user as participant on participant.user_id = instance.participant_id
+ where activity.study_id = :studyId
+   and activity.study_activity_id = :activityId
+   and activity.allow_ondemand_trigger = 1
+   and instance.ondemand_trigger_id is not null
+>>

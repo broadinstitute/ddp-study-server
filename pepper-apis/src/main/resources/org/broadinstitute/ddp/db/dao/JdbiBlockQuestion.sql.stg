@@ -1,0 +1,35 @@
+group JdbiBlockQuestion;
+
+queryQuestionInfoByBlockIdAndRevision() ::= <<
+select
+    qt.question_type_code,
+    q.question_id,
+    qsc.stable_id,
+    q.question_prompt_template_id,
+    q.info_header_template_id,
+    q.info_footer_template_id,
+    q.is_restricted,
+    q.is_deprecated,
+    q.revision_id,
+    q.study_activity_id,
+    q.hide_number,
+    rev.start_date as revision_start,
+    rev.end_date as revision_end
+from
+    activity_instance as ai,
+    block__question as b_q,
+    block as b,
+    question as q,
+    question_type as qt,
+    question_stable_code as qsc,
+    revision as rev
+where ai.activity_instance_guid = :instanceGuid
+and b.block_id = :blockId
+and b_q.block_id = b.block_id
+and b_q.question_id = q.question_id
+and q.question_type_id = qt.question_type_id
+and q.question_stable_code_id = qsc.question_stable_code_id
+and q.revision_id = rev.revision_id
+and rev.start_date \<= ai.created_at
+and (rev.end_date is null or ai.created_at \< rev.end_date)
+>>

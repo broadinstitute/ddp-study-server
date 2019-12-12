@@ -1,0 +1,1 @@
+This folder contains scripts and web pages used to customize the Pepper Auth0 configuration.

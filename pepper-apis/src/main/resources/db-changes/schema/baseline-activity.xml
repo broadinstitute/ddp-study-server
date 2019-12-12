@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="baseline-activity-type-table">
+        <createTable tableName="activity_type">
+            <column name="activity_type_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="activity_type_pk"/>
+            </column>
+            <column name="activity_type_code" type="varchar(100)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="activity_type_code_uk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-study-activity-table">
+        <createTable tableName="study_activity">
+            <column name="study_activity_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="study_activity_pk"/>
+            </column>
+            <column name="activity_type_id" type="bigint">
+                <constraints nullable="false" references="activity_type(activity_type_id)"
+                             foreignKeyName="study_activity_activity_type_fk"/>
+            </column>
+            <column name="study_id" type="bigint">
+                <constraints nullable="false" references="umbrella_study(umbrella_study_id)"
+                             foreignKeyName="study_activity_umbrella_study_fk"/>
+            </column>
+            <column name="study_activity_code" type="varchar(80)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="study_activity_code_uk"/>
+            </column>
+            <column name="display_order" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_write_once" type="boolean">
+                <constraints nullable="false"/>
+            </column>
+            <column name="instantiate_upon_registration" type="boolean"/>
+            <column name="max_instances_per_user" type="int"/>
+            <column name="edit_timeout_sec" type="bigint"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-activity-version-table">
+        <createTable tableName="activity_version">
+            <column name="activity_version_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="activity_version_pk"/>
+            </column>
+            <column name="study_activity_id" type="bigint">
+                <constraints nullable="false" references="study_activity(study_activity_id)"
+                             foreignKeyName="activity_version_study_activity_fk"/>
+            </column>
+            <column name="version_tag" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revision_id" type="bigint">
+                <constraints nullable="false" references="revision(revision_id)" foreignKeyName="activity_version_revision_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-activity-version-uk">
+        <addUniqueConstraint tableName="activity_version" columnNames="study_activity_id, version_tag"
+                             constraintName="activity_version_study_activity_version_tag_uk"/>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-activity-condition-table">
+        <createTable tableName="activity_condition">
+            <column name="study_activity_id" type="bigint">
+                <constraints primaryKey="true" primaryKeyName="activity_condition_pk"
+                             references="study_activity(study_activity_id)" foreignKeyName="activity_condition_study_activity_fk"/>
+            </column>
+            <column name="creation_expression_id" type="bigint">
+                <constraints nullable="false" references="expression(expression_id)" foreignKeyName="activity_condition_creation_expression_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-list-style-hint-table">
+        <createTable tableName="list_style_hint">
+            <column name="list_style_hint_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="list_style_hint_pk"/>
+            </column>
+            <column name="list_style_hint_code" type="varchar(45)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="list_style_hint_code_uk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>

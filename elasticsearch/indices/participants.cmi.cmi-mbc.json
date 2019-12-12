@@ -1,0 +1,536 @@
+{
+  "settings": {
+    "index": {
+      "number_of_shards": "3",
+      "number_of_replicas": "0"
+    }
+  },
+  "mappings": {
+    "_doc": {
+      "properties": {
+        "participant_guid": {
+          "type": "keyword"
+        },
+        "participant_hruid": {
+          "type": "keyword"
+        },
+        "legacy_altpid": {
+          "type": "keyword"
+        },
+        "legacy_shortid": {
+          "type": "keyword"
+        },
+        "first_name": {
+          "type": "text"
+        },
+        "last_name": {
+          "type": "text"
+        },
+        "email": {
+          "type": "keyword",
+          "fields": {
+            "text": {
+              "type": "text"
+            }
+          }
+        },
+        "do_not_contact": {
+          "type": "boolean"
+        },
+        "created_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "status": {
+          "type": "keyword"
+        },
+        "status_timestamp": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "PREQUAL_v1": {
+          "type": "keyword"
+        },
+        "PREQUAL_v1_status": {
+          "type": "keyword"
+        },
+        "PREQUAL_v1_created_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "PREQUAL_v1_updated_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "PREQUAL_v1_completed_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "PREQUAL_FIRST_NAME": {
+          "type": "text"
+        },
+        "PREQUAL_LAST_NAME": {
+          "type": "text"
+        },
+        "PREQUAL_SELF_DESCRIBE": {
+          "type": "keyword"
+        },
+        "ABOUTYOU_v1": {
+          "type": "keyword"
+        },
+        "ABOUTYOU_v1_status": {
+          "type": "keyword"
+        },
+        "ABOUTYOU_v1_created_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "ABOUTYOU_v1_updated_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "ABOUTYOU_v1_completed_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "DIAGNOSIS_DATE_MONTH": {
+          "type": "integer"
+        },
+        "DIAGNOSIS_DATE_YEAR": {
+          "type": "integer"
+        },
+        "ADVANCED_DIAGNOSIS_DATE_MONTH": {
+          "type": "integer"
+        },
+        "ADVANCED_DIAGNOSIS_DATE_YEAR": {
+          "type": "integer"
+        },
+        "HR_POSITIVE": {
+          "type": "keyword"
+        },
+        "HER2_POSITIVE": {
+          "type": "keyword"
+        },
+        "TRIPLE_NEGATIVE": {
+          "type": "keyword"
+        },
+        "INFLAMMATORY": {
+          "type": "keyword"
+        },
+        "THERAPIES": {
+          "type": "keyword"
+        },
+        "THERAPIES_LIST": {
+          "type": "text"
+        },
+        "WORKED_THERAPIES": {
+          "type": "keyword"
+        },
+        "WORKED_THERAPIES_LIST": {
+          "type": "text"
+        },
+        "WORKED_THERAPIES_NOTE": {
+          "type": "text"
+        },
+        "LAST_BIOPSY_MONTH": {
+          "type": "integer"
+        },
+        "LAST_BIOPSY_YEAR": {
+          "type": "integer"
+        },
+        "OTHER_COMMENTS": {
+          "type": "text"
+        },
+        "BIRTH_YEAR": {
+          "type": "integer"
+        },
+        "COUNTRY": {
+          "type": "keyword"
+        },
+        "POSTAL_CODE": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword"
+            }
+          }
+        },
+        "HISPANIC": {
+          "type": "keyword"
+        },
+        "RACE": {
+          "type": "text"
+        },
+        "RACE_OTHER_DETAILS": {
+          "type": "text"
+        },
+        "HEARD_FROM": {
+          "type": "text"
+        },
+        "CONSENT_v1": {
+          "type": "keyword"
+        },
+        "CONSENT_v1_status": {
+          "type": "keyword"
+        },
+        "CONSENT_v1_created_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "CONSENT_v1_updated_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "CONSENT_v1_completed_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "CONSENT_BLOOD": {
+          "type": "boolean"
+        },
+        "CONSENT_TISSUE": {
+          "type": "boolean"
+        },
+        "CONSENT_FULLNAME": {
+          "type": "text"
+        },
+        "CONSENT_DOB": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy||strict_date"
+        },
+        "TISSUECONSENT_v1": {
+          "type": "keyword"
+        },
+        "TISSUECONSENT_v1_status": {
+          "type": "keyword"
+        },
+        "TISSUECONSENT_v1_created_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "TISSUECONSENT_v1_updated_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "TISSUECONSENT_v1_completed_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "TISSUECONSENT_FULLNAME": {
+          "type": "text"
+        },
+        "TISSUECONSENT_DOB": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy||strict_date"
+        },
+        "TISSUECONSENT_v2": {
+          "type": "keyword"
+        },
+        "TISSUECONSENT_v2_status": {
+          "type": "keyword"
+        },
+        "TISSUECONSENT_v2_created_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "TISSUECONSENT_v2_updated_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "TISSUECONSENT_v2_completed_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "BLOODCONSENT_v1": {
+          "type": "keyword"
+        },
+        "BLOODCONSENT_v1_status": {
+          "type": "keyword"
+        },
+        "BLOODCONSENT_v1_created_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "BLOODCONSENT_v1_updated_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "BLOODCONSENT_v1_completed_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "BLOODCONSENT_TREATMENT_NOW": {
+          "type": "text"
+        },
+        "BLOODCONSENT_TREATMENT_START_MONTH": {
+          "type": "integer"
+        },
+        "BLOODCONSENT_TREATMENT_START_YEAR": {
+          "type": "integer"
+        },
+        "BLOODCONSENT_TREATMENT_PAST": {
+          "type": "text"
+        },
+        "BLOODCONSENT_ADDRESS": {
+          "type": "text"
+        },
+        "BLOODCONSENT_PHONE": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword"
+            }
+          }
+        },
+        "BLOODCONSENT_FULLNAME": {
+          "type": "text"
+        },
+        "BLOODCONSENT_DOB": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy||strict_date"
+        },
+        "BLOODCONSENT_v2": {
+          "type": "keyword"
+        },
+        "BLOODCONSENT_v2_status": {
+          "type": "keyword"
+        },
+        "BLOODCONSENT_v2_created_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "BLOODCONSENT_v2_updated_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "BLOODCONSENT_v2_completed_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "RELEASE_v1": {
+          "type": "keyword"
+        },
+        "RELEASE_v1_status": {
+          "type": "keyword"
+        },
+        "RELEASE_v1_created_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "RELEASE_v1_updated_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "RELEASE_v1_completed_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "ADDRESS_FULLNAME": {
+          "type": "text"
+        },
+        "ADDRESS_STREET1": {
+          "type": "text"
+        },
+        "ADDRESS_STREET2": {
+          "type": "text"
+        },
+        "ADDRESS_CITY": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword"
+            }
+          }
+        },
+        "ADDRESS_STATE": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword"
+            }
+          }
+        },
+        "ADDRESS_ZIP": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword"
+            }
+          }
+        },
+        "ADDRESS_COUNTRY": {
+          "type": "keyword"
+        },
+        "ADDRESS_PHONE": {
+          "type": "text",
+          "fields": {
+            "keyword": {
+              "type": "keyword"
+            }
+          }
+        },
+        "ADDRESS_PLUSCODE": {
+          "type": "keyword"
+        },
+        "ADDRESS_STATUS": {
+          "type": "keyword"
+        },
+        "PHYSICIAN": {
+          "type": "text"
+        },
+        "INITIAL_BIOPSY": {
+          "type": "text"
+        },
+        "INSTITUTION": {
+          "type": "text"
+        },
+        "RELEASE_AGREEMENT": {
+          "type": "boolean"
+        },
+        "TISSUERELEASE_v1": {
+          "type": "keyword"
+        },
+        "TISSUERELEASE_v1_status": {
+          "type": "keyword"
+        },
+        "TISSUERELEASE_v1_created_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "TISSUERELEASE_v1_updated_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "TISSUERELEASE_v1_completed_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "TISSUERELEASE_AGREEMENT": {
+          "type": "boolean"
+        },
+        "BLOODRELEASE_v1": {
+          "type": "keyword"
+        },
+        "BLOODRELEASE_v1_status": {
+          "type": "keyword"
+        },
+        "BLOODRELEASE_v1_created_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "BLOODRELEASE_v1_updated_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "BLOODRELEASE_v1_completed_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "BLOODRELEASE_AGREEMENT": {
+          "type": "boolean"
+        },
+        "FOLLOWUP_v1": {
+          "type": "keyword"
+        },
+        "FOLLOWUP_v1_status": {
+          "type": "keyword"
+        },
+        "FOLLOWUP_v1_created_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "FOLLOWUP_v1_updated_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "FOLLOWUP_v1_completed_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "CURRENT_CANCER_LOC": {
+          "type": "text"
+        },
+        "CURRENT_CANCER_LOC_OTHER_DETAILS": {
+          "type": "text"
+        },
+        "DIAGNOSIS_CANCER_LOC": {
+          "type": "text"
+        },
+        "DIAGNOSIS_CANCER_LOC_OTHER_DETAILS": {
+          "type": "text"
+        },
+        "ANYTIME_CANCER_LOC": {
+          "type": "text"
+        },
+        "ANYTIME_CANCER_LOC_OTHER_DETAILS": {
+          "type": "text"
+        },
+        "CANCER_IDENTIFICATION": {
+          "type": "text"
+        },
+        "RARE_SUBTYPES": {
+          "type": "text"
+        },
+        "RARE_SUBTYPES_OTHER_DETAILS": {
+          "type": "text"
+        },
+        "CURRENTLY_MEDICATED": {
+          "type": "keyword"
+        },
+        "DK_CURRENT_MED_NAMES": {
+          "type": "keyword"
+        },
+        "CURRENT_MED_LIST": {
+          "type": "text"
+        },
+        "PREVIOUSLY_MEDICATED": {
+          "type": "keyword"
+        },
+        "DK_PAST_MED_NAMES": {
+          "type": "keyword"
+        },
+        "PAST_MED_LIST": {
+          "type": "text"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
+
+    <changeSet id="20190510-create-copy-answer-target-table" author="mocana">
+        <createTable tableName="copy_answer_target">
+            <column name="copy_answer_target_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="copy_answer_target_pk"/>
+            </column>
+            <column name="copy_target" type="varchar(45)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="description" type="varchar(100)">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="20190510-create-copy-answer-event-action" author="mocana">
+        <createTable tableName="copy_answer_event_action">
+            <column name="event_action_id" type="bigint">
+                <constraints primaryKey="true" primaryKeyName="copy_answer_event_action_pk"
+                             references="event_action(event_action_id)" foreignKeyName="copy_answer_event_action_event_action_fk"/>
+            </column>
+            <column name="copy_answer_target_id" type="bigint">
+                <constraints nullable="false" references="copy_answer_target(copy_answer_target_id)" foreignKeyName="copy_answer_event_action_target_fk"/>
+            </column>
+            <column name="source_question_stable_id" type="bigint">
+                <constraints nullable="false" references="question_stable_code(question_stable_code_id)" foreignKeyName="copy_answer_event_action_stable_code_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>

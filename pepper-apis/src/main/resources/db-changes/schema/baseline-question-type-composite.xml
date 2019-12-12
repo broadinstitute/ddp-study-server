@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="baseline-composite-question-table">
+        <createTable tableName="composite_question">
+            <column name="question_id" type="bigint">
+                <constraints primaryKey="true" primaryKeyName="composite_question_pk"
+                             references="question(question_id)" foreignKeyName="composite_question_question_fk"/>
+            </column>
+            <column name="allow_multiple" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="add_button_template_id" type="bigint">
+                <constraints references="template(template_id)" foreignKeyName="composite_question_add_button_template_fk"/>
+            </column>
+            <column name="additional_item_template_id" type="bigint(20)">
+                <constraints references="template(template_id)" foreignKeyName="composite_question_additional_item_template_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-composite-question-nesting-table">
+        <createTable tableName="composite_question__question">
+            <column name="composite_question__question_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="composite_question__question_pk"/>
+            </column>
+            <column name="parent_question_id" type="bigint">
+                <constraints nullable="false" references="composite_question(question_id)"
+                             foreignKeyName="composite_question__question_parent_question_fk"/>
+            </column>
+            <column name="child_question_id" type="bigint">
+                <constraints nullable="false" references="question(question_id)"
+                             foreignKeyName="composite_question__question_child_question_fk"/>
+            </column>
+            <column name="display_order" type="int">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-composite-question-nesting-uk">
+        <addUniqueConstraint tableName="composite_question__question" columnNames="parent_question_id, child_question_id, display_order"
+                             constraintName="composite_question__question_parent_child_order_uk"/>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-composite-answer-item-table">
+        <createTable tableName="composite_answer_item">
+            <column name="composite_answer_item_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="composite_answer_item_pk"/>
+            </column>
+            <column name="parent_answer_id" type="bigint">
+                <constraints nullable="false" references="answer(answer_id)" foreignKeyName="composite_answer_item_parent_answer_fk"/>
+            </column>
+            <column name="child_answer_id" type="bigint">
+                <constraints nullable="false" references="answer(answer_id)" foreignKeyName="composite_answer_item_child_answer_fk"/>
+            </column>
+            <column name="response_order" type="int">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-composite-answer-item-uk">
+        <addUniqueConstraint tableName="composite_answer_item" columnNames="parent_answer_id, child_answer_id, response_order"
+                             constraintName="composite_answer_item_parent_child_order_uk"/>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="20191023-study-governance-policy-table">
+        <createTable tableName="study_governance_policy">
+            <column name="study_governance_policy_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="study_governance_policy_pk"/>
+            </column>
+            <column name="study_id" type="bigint">
+                <constraints nullable="false"
+                             unique="true"
+                             uniqueConstraintName="study_governance_policy_study_uk"
+                             references="umbrella_study(umbrella_study_id)"
+                             foreignKeyName="study_governance_policy_study_fk"/>
+            </column>
+            <column name="should_create_governed_user_expression_id" type="bigint">
+                <constraints nullable="false"
+                             references="expression(expression_id)"
+                             foreignKeyName="study_governance_policy_scgu_expression_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20191023-user-study-governance-cascade-delete">
+        <dropForeignKeyConstraint baseTableName="user_study_governance"
+                                  constraintName="user_study_governance_user_governance_fk"/>
+        <addForeignKeyConstraint constraintName="user_study_governance_user_governance_fk"
+                                 baseTableName="user_study_governance" baseColumnNames="user_governance_id"
+                                 referencedTableName="user_governance" referencedColumnNames="user_governance_id"
+                                 onDelete="CASCADE"/>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20191023-user-study-governance-unique-key">
+        <addUniqueConstraint tableName="user_study_governance"
+                             columnNames="user_governance_id, umbrella_study_id"
+                             constraintName="user_study_governance_governance_study_uk"/>
+    </changeSet>
+
+</databaseChangeLog>

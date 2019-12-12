@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="baseline-seed-institution-type">
+        <insert tableName="institution_type">
+            <column name="institution_type_code" value="INITIAL_BIOPSY"/>
+        </insert>
+        <insert tableName="institution_type">
+            <column name="institution_type_code" value="INSTITUTION"/>
+        </insert>
+        <insert tableName="institution_type">
+            <column name="institution_type_code" value="PHYSICIAN"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

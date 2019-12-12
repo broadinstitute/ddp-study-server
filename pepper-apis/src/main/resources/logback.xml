@@ -1,0 +1,41 @@
+<configuration>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <!-- this filter is here to help prevent sensitive data like PHI from bleeding into stdout -->
+        <filter class="org.broadinstitute.ddp.logging.NonSecureFilter" />
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} %X{LogBreadCrumb} %X{X-Forwarded-For} C:%X{ClientId} S:%X{UserId} [%thread] %-5level %logger{36} %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- appender that sends error messages into slack.  Hook and channel are set in applcation.conf -->
+    <appender name="SLACK" class="org.broadinstitute.ddp.log.SlackAppender">
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>ERROR</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+    </appender>
+
+    <appender name="SECURE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!-- this filter is here to ensure that *only* sensitive data (PHI) ends up in this log -->
+        <filter class="org.broadinstitute.ddp.logging.SecureFilter" />
+        <file>pepper-secure.log</file>
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <!-- rollover daily -->
+            <fileNamePattern>${artifactId}-%d{yyyy-MM-dd}.%i.txt</fileNamePattern>
+            <maxFileSize>10MB</maxFileSize>
+            <maxHistory>60</maxHistory>
+            <totalSizeCap>2GB</totalSizeCap>
+        </rollingPolicy>
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} %X{LogBreadCrumb} %X{X-Forwarded-For} C:%X{ClientId} S:%X{UserId} [%thread] %-5level %logger{36} %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <root level="info">
+        <appender-ref ref="STDOUT" />
+        <appender-ref ref="SECURE" />
+        <appender-ref ref="SLACK" />
+    </root>
+</configuration>

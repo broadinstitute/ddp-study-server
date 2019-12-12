@@ -1,0 +1,32 @@
+ get:
+  operationId: getConsentElection
+  tags:
+    - Consent
+  summary: view an activity consent elections
+  description: returns the consent elections for a specified participant and activity instance
+  parameters:
+    - in: path
+      name: user
+      required: true
+      description: the participant's guid
+      schema:
+        type: string
+    - in: path
+      name: study
+      required: true
+      description: the study's guid
+      schema:
+        type: string
+    - in: path
+      name: instance
+      required: true
+      description: "the unique identifier of a specific instance of an activity"
+      schema:
+        type: string
+  responses:
+      200:
+        $ref: '../pepper.yml#/components/responses/ConsentResponse'
+      404:
+        $ref: '../pepper.yml#/components/responses/ActivityNotFoundErrorResponse'
+      default:
+        $ref: '../pepper.yml#/components/responses/ErrorResponse'

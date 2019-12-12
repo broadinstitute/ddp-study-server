@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="baseline-activity-instance-table">
+        <createTable tableName="activity_instance">
+            <column name="activity_instance_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="activity_instance_pk"/>
+            </column>
+            <column name="activity_instance_guid" type="varchar(10)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="activity_instance_guid_uk"/>
+            </column>
+            <column name="study_activity_id" type="bigint">
+                <constraints nullable="false" references="study_activity(study_activity_id)" foreignKeyName="activity_instance_study_activity_fk"/>
+            </column>
+            <column name="participant_id" type="bigint">
+                <constraints nullable="false" references="user(user_id)" foreignKeyName="activity_instance_participant_user_fk"/>
+            </column>
+            <column name="is_readonly" type="boolean">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_at" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-activity-instance-status-type-table">
+        <createTable tableName="activity_instance_status_type">
+            <column name="activity_instance_status_type_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="activity_instance_status_type_pk"/>
+            </column>
+            <column name="activity_instance_status_type_code" type="varchar(100)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="activity_instance_status_type_code_uk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-activity-instance-status-table">
+        <createTable tableName="activity_instance_status">
+            <column name="activity_instance_status_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="activity_instance_status_pk"/>
+            </column>
+            <column name="activity_instance_id" type="bigint">
+                <constraints nullable="false" references="activity_instance(activity_instance_id)" foreignKeyName="activity_instance_status_activity_instance_fk"/>
+            </column>
+            <column name="activity_instance_status_type_id" type="bigint">
+                <constraints nullable="false" references="activity_instance_status_type(activity_instance_status_type_id)" foreignKeyName="activity_instance_status_status_type_fk"/>
+            </column>
+            <column name="operator_id" type="bigint">
+                <constraints nullable="false" references="user(user_id)" foreignKeyName="activity_instance_status_operator_user_fk"/>
+            </column>
+            <column name="updated_at" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-activity-instance-status-uk">
+        <addUniqueConstraint tableName="activity_instance_status" columnNames="activity_instance_id, updated_at"
+                             constraintName="activity_instance_status_activity_instance_updated_at_uk"/>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,39 @@
+get:
+  operationId: getActivity
+  tags:
+    - Activities
+  summary: fetch a complete activity instance
+  description: |
+    returns the complete version of the specified `activity` instance. This includes any answers the user may have previously saved.
+
+    ### Working with COMPONENT types
+    Some activities include objects identified as `COMPONENTS`. These are used to request that the client collect a potentially complex set of information from a user, and save it to the server. At the moment, the uses for this are to get the participant's mailing address or medical provider details.
+
+    #### Mailing Address
+    This components works in conjunction with the [Mailing Address](#tag/Mailing-Address) operations. In order to save the response from this question, a client should interact with the [getMailingAddress](#operation/getMailingAddress), [updateMailingAddress](#operation/updateMailingAddress), and [createMailingAddress](#operation/createMailingAddress) operations. Before allowing a participant to continue past this step, the client *should* call [verifyMailingAddress](#operation/verifyMailingAddress) in order to confirm that the address entered by the participant can be used as a valid delivery address, and to possibly perform corrections against the entered value.
+
+    _This API allows access to temporary users._
+  parameters:
+    - in: path
+      name: user
+      required: true
+      description: the participant's guid
+      schema:
+        type: string
+    - in: path
+      name: study
+      required: true
+      description: the study's unique identifier
+      schema:
+        type: string
+    - in: path
+      name: instance
+      required: true
+      description: the activity instance guid
+      schema:
+        type: string
+  responses:
+    200:
+      $ref: '../pepper.yml#/components/responses/ActivityDetailResponse'
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'

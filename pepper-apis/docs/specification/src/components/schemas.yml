@@ -1,0 +1,1736 @@
+ActivityType:
+  title: ActivityType
+  type: string
+  enum:
+    - FORMS
+ActivityInstanceStatusType:
+  title: ActivityInstanceStatusType
+  type: string
+  enum:
+    - COMPLETE
+    - CREATED
+    - IN_PROGRESS
+    - TERMINATED
+FormType:
+  title: FormType
+  type: string
+  enum:
+    - CONSENT
+    - GENERAL
+    - PREQUALIFIER
+InstitutionType:
+  title: InstitutionType
+  type: string
+  enum:
+    - INITIAL_BIOPSY
+    - INSTITUTION
+    - PHYSICIAN
+JoinMailingListPayload:
+  type: object
+  title: JoinMailingListPayload
+  required:
+    - firstName
+    - lastName
+    - emailAddress
+  properties:
+    firstName:
+      description: users first name
+      type: string
+      example: John
+    lastName:
+      description: users last name
+      type: string
+      example: Doe
+    emailAddress:
+      description: users email address
+      type: string
+      example: john.doe@example.com
+    info:
+      description: Strings providing context about which umbrella based mailing list the user is interested in. Usually list of diseases
+      type: array
+      minItems: 0
+      example: ['Gauchers disease', 'Hirschsprungs disease']
+      items:
+        type: string
+    umbrellaGuid:
+      description: The umbrella id of the mailing list the user is interested in (one of umbrellaId OR studyGuid but not both is required)
+      example: cmi
+      type: string
+    studyGuid:
+      description: The studyGuid of the mailing list the user is interested in (one of umbrellaId OR studyGuid but not both is required)
+      example: ANGIO
+      type: string
+ListStyle:
+  title: ListStyle
+  type: string
+  default: NONE
+  enum:
+    - NUMBER
+    - BULLET
+    - UPPER_ALPHA
+    - NONE
+NumericType:
+  title: NumericType
+  type: string
+  enum:
+    - INTEGER
+  description: describes what type of numeric value it is
+Presentation:
+  title: Presentation
+  type: string
+  default: DEFAULT
+  enum:
+    - DEFAULT
+    - MERGE
+  description: |
+    a hint for presenting group blocks
+    * `DEFAULT` - should use the default presentation behavior
+    * `MERGE` - should present nested blocks together on the same screen or page, as if merging them
+ValidationType:
+  type: string
+  enum:
+    - COMPLETE
+    - DATE_RANGE
+    - AGE_RANGE
+    - DAY_REQUIRED
+    - LENGTH
+    - MONTH_REQUIRED
+    - NUM_OPTIONS_SELECTED
+    - REGEX
+    - REQUIRED
+    - YEAR_REQUIRED
+Activity:
+  type: object
+  required:
+    - activityType
+    - formType
+    - guid
+    - readonly
+    - status
+    - listStyleHint
+    - sections
+    - lastUpdatedText
+    - lastUpdated
+  properties:
+    activityType:
+      $ref: '../pepper.yml#/components/schemas/ActivityType'
+    formType:
+      $ref: '../pepper.yml#/components/schemas/FormType'
+    guid:
+      type: string
+      description: the unique identifier for this instance of an activity
+    status:
+      type: string
+    readonly:
+      type: boolean
+    listStyleHint:
+      $ref: '../pepper.yml#/components/schemas/ListStyle'
+    introduction:
+      $ref: '../pepper.yml#/components/schemas/Section'
+    sections:
+      type: array
+      items:
+        $ref: '../pepper.yml#/components/schemas/Section'
+    closing:
+      $ref: '../pepper.yml#/components/schemas/Section'
+    subtitle:
+      type: string
+      nullable: true
+      description: |
+        A string to display to the user as a subtitle for the activity. If the
+        `ddp-Content-Style` header is set to `BASIC`, this field will contain
+        unstructured text.
+    readonlyHint:
+      type: string
+      nullable: true
+      description: |
+        A string to display when an activity is in a read-only state (the
+        `readonly` flag is `true`). If the `ddp-Content-Style` header is set to
+        `BASIC`, this field will contain unstructured text.
+    lastUpdatedText:
+      type: string
+      nullable: true
+      description: |
+        A human-readable string that shows when the activity definition was last
+        updated. If the `ddp-Content-Style` header is set to `BASIC`, this field
+        will contain unstructured text.
+    lastUpdated:
+      type: string
+      format: date-time
+      nullable: true
+      description: The date time the activity definition (NOT the instance) was last updated
+Activity.Summary:
+  type: object
+  title: Activity Summary
+  required:
+    - activityCode
+    - activityDashboardName
+    - activityDescription
+    - activityName
+    - activitySubtitle
+    - activitySubtype
+    - activitySummary
+    - activityType
+    - instanceGuid
+    - statusCode
+    - readonly
+    - numQuestions
+    - numQuestionsAnswered
+    - isFollowup
+  properties:
+    activityCode:
+      description: the source activity for this instance
+      example: ABCDEFGH12
+      type: string
+    activityDashboardName:
+      type: string
+    activityDescription:
+      type: string
+    activityName:
+      description: name of the activity
+      example: Medical Release Form
+      type: string
+    activitySubtitle:
+      type: string
+    activitySubtype:
+      $ref: "../pepper.yml#/components/schemas/FormType"
+    activitySummary:
+      type: string
+    activityType:
+      $ref: "../pepper.yml#/components/schemas/ActivityType"
+    createdAt:
+      type: integer
+      description: The creation timestamp of the activity instance, in milliseconds since `1970-01-01T00:00:00Z` (UNIX time)
+    icon:
+      description: a Base64 encoded png or jpg image
+      example: YW55IGN...BwbGVhc3VyZQ==
+      type: string
+    instanceGuid:
+      example: 6B03213FD0
+      type: string
+    numQuestions:
+      description: number of questions in this activity
+      example: 4
+      type: integer
+    numQuestionsAnswered:
+      description: number of questions that have been answered in this activity
+      example: 1
+      type: integer
+    readonly:
+      description: false if the activity can be modified
+      example: false
+      type: boolean
+    statusCode:
+      $ref: "../pepper.yml#/components/schemas/ActivityInstanceStatusType"
+      example: IN_PROGRESS
+    isFollowup:
+      description: true if the activity is generally considered to be an activity that comes after the "main" activities
+      type: boolean
+######
+#
+# Answers
+###
+Answer:
+  type: object
+  required:
+    - answerGuid
+  properties:
+    answerGuid:
+      type: string
+Answer.String:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Answer'
+    - type: object
+      required:
+        - value
+      properties:
+        value:
+          type: string
+          nullable: true
+Answer.Date:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Answer'
+    - type: object
+      required:
+        - value
+      properties:
+        value:
+          $ref: '../pepper.yml#/components/schemas/DateValue'
+Answer.Composite:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Answer'
+    - type: object
+      required:
+        - value
+      properties:
+        value:
+          type: array
+          items:
+            type: array
+            items:
+              anyOf:
+                - $ref: '../pepper.yml#/components/schemas/Answer.Date'
+                - $ref: '../pepper.yml#/components/schemas/Answer.Picklist'
+                - $ref: '../pepper.yml#/components/schemas/Answer.String'
+Answer.Boolean:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Answer'
+    - type: object
+      required:
+        - value
+      properties:
+        value:
+          type: boolean
+Answer.Numeric:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Answer'
+    - type: object
+      discriminator:
+        propertyName: numericType
+        mapping:
+          INTEGER: '../pepper.yml#/components/schemas/Answer.Numeric.Integer'
+      required:
+        - numericType
+      properties:
+        numericType:
+          type: string
+          enum:
+            - INTEGER
+Answer.Numeric.Integer:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Answer.Numeric'
+    - type: object
+      required:
+        - value
+      properties:
+        numericType:
+          type: string
+          default: INTEGER
+          enum:
+            - INTEGER
+        value:
+          type: integer
+          nullable: true
+Answer.Picklist:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Answer'
+    - type: object
+      required:
+        - value
+      properties:
+        value:
+          type: array
+          items:
+            $ref: '../pepper.yml#/components/schemas/SelectedOption'
+SelectedOption:
+  type: object
+  required:
+    - stableId
+    - detail
+  properties:
+    stableId:
+      type: string
+    detail:
+      type: string
+      nullable: true
+DateValue:
+  type: object
+  description: an object which represents a day, month, and year in UTC.
+  properties:
+    day:
+      type: integer
+      nullable: true
+      minimum: 0
+    month:
+      type: integer
+      nullable: true
+      minimum: 0
+    year:
+      type: integer
+      nullable: true
+      minimum: 0
+AnswerSubmission:
+  type: object
+  discriminator:
+    propertyName: value
+  required:
+    - stableId
+    - value
+  properties:
+    stableId:
+      type: string
+      description: question identifier that the answer is for
+    answerGuid:
+      type: string
+      description: the identifier for the answer to update
+AnswerSubmission.Boolean:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/AnswerSubmission'
+    - type: object
+      required:
+        - value
+      properties:
+        value:
+          type: boolean
+AnswerSubmission.Composite:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/AnswerSubmission'
+    - type: object
+      required:
+        - value
+      properties:
+        value:
+          type: array
+          items:
+            type: array
+            items:
+              anyOf:
+                - $ref: '../pepper.yml#/components/schemas/AnswerSubmission.Date'
+                - $ref: '../pepper.yml#/components/schemas/AnswerSubmission.Picklist'
+                - $ref: '../pepper.yml#/components/schemas/AnswerSubmission.String'
+AnswerSubmission.Date:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/AnswerSubmission'
+    - type: object
+      required:
+        - value
+      properties:
+        value:
+          $ref: '../pepper.yml#/components/schemas/DateValue'
+AnswerSubmission.Numeric.Integer:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/AnswerSubmission'
+    - type: object
+      required:
+        - value
+      properties:
+        value:
+          type: integer
+          nullable: true
+AnswerSubmission.Picklist:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/AnswerSubmission'
+    - type: object
+      required:
+        - value
+      properties:
+        value:
+          type: array
+          items:
+            $ref: '../pepper.yml#/components/schemas/SelectedOption'
+AnswerSubmission.String:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/AnswerSubmission'
+    - type: object
+      required:
+        - value
+      properties:
+        value:
+          type: string
+#####
+#
+# Blocks
+#
+#####
+Block:
+  type: object
+  discriminator:
+    propertyName: blockType
+  required:
+    - blockType
+    - blockGuid
+    - shown
+  properties:
+    blockType:
+      type: string
+    blockGuid:
+      type: string
+    shown:
+      type: boolean
+Block.Component:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Block'
+    - type: object
+      required:
+        - html
+      properties:
+        blockType:
+          type: string
+          default: COMPONENT
+          enum:
+            - COMPONENT
+        component:
+          $ref: '../pepper.yml#/components/schemas/Component'
+Block.Conditional:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Block'
+    - type: object
+      properties:
+        blockType:
+          type: string
+          default: CONDITIONAL
+          enum:
+            - CONDITIONAL
+        control:
+          $ref: '../pepper.yml#/components/schemas/Question'
+        nested:
+          type: array
+          items:
+            anyOf:
+              - $ref: '../pepper.yml#/components/schemas/Block.Component'
+              - $ref: '../pepper.yml#/components/schemas/Block.Question'
+              - $ref: '../pepper.yml#/components/schemas/Block.Content'
+Block.Grouped:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Block'
+    - type: object
+      required:
+        - listStyleHint
+        - presentation
+        - nested
+        - title
+      properties:
+        blockType:
+          type: string
+          default: GROUP
+          enum:
+            - GROUP
+        listStyleHint:
+          $ref: '../pepper.yml#/components/schemas/ListStyle'
+        presentation:
+          $ref: '../pepper.yml#/components/schemas/Presentation'
+        title:
+          type: string
+        nested:
+          type: array
+          items:
+            anyOf:
+              - $ref: '../pepper.yml#/components/schemas/Block.Component'
+              - $ref: '../pepper.yml#/components/schemas/Block.Question'
+              - $ref: '../pepper.yml#/components/schemas/Block.Content'
+Block.Question:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Block'
+    - type: object
+      required:
+        - question
+      properties:
+        blockType:
+          type: string
+          default: QUESTION
+          enum:
+            - QUESTION
+        question:
+          $ref: '../pepper.yml#/components/schemas/Question'
+Block.Content:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Block'
+    - type: object
+      required:
+        - body
+      properties:
+        blockType:
+          type: string
+          default: CONTENT
+          enum:
+            - CONTENT
+        title:
+          type: string
+        body:
+          type: string
+#####
+#
+# Components
+#
+#####
+Component:
+  type: object
+  discriminator:
+    propertyName: componentType
+  required:
+    - componentType
+  properties:
+    componentType:
+      type: string
+      enum:
+        - INSTITUTION
+        - MAILING_ADDRESS
+    properties:
+      type: object
+Component.Institution:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Component'
+    - type: object
+      required:
+        - componentType
+        - properties
+      properties:
+        componentType:
+          type: string
+          enum:
+            - INSTITUTION
+        properties:
+          type: object
+          properties:
+            allowMultiple:
+              type: boolean
+            addButtonText:
+              type: string
+            titleText:
+              type: string
+            subtitleText:
+              type: string
+            institutionType:
+              type: string
+            showFields:
+              type: boolean
+Component.MailingAddress:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Component'
+    - type: object
+      title: MailingAddress
+      required:
+        - properties
+      properties:
+        componentType:
+          type: string
+          enum:
+            - INSTITUTION
+ConditionalRule:
+  type: object
+  title: ConditionalRule
+  properties:
+    operator:
+      type: string
+      enum:
+        - HAS
+    value:
+      type: string
+      description: the
+    target:
+      type: string
+      description: the guid of the target block to show or hide
+ConsentModel:
+  type: object
+  title: ConsentModel
+  description: 'A set of elections, and their state, for an associated participant and activity'
+  required:
+    - activityCode
+    - instanceGuid
+    - consented
+    - elections
+  properties:
+    activityCode:
+      type: string
+      example: MY_STUDY_CONSENT
+      description: 'The identifier of the activity template for this set of elections'
+    instanceGuid:
+      type: string
+      example: A883837A15
+      description: 'The activity instance this set of elections is associated with. This may be `null` if one has not been created yet'
+    consented:
+      type: boolean
+      description: '`true` if the participant has completed the associated activity instance, `false` if the activity instance has been created or is in progress, and `null` if there is no associated activity instance'
+    elections:
+      type: array
+      items:
+        $ref: '../pepper.yml#/components/schemas/ElectionModel'
+ElectionModel:
+  type: object
+  title: Election
+  required:
+    - stableId
+    - selected
+  properties:
+    stableId:
+      type: string
+      description: identifier for the specified election
+      example: 'BLOOD_SAMPLE'
+    selected:
+      type: boolean
+      description: '`true` if the participant has consented to this election, `false` if they have not, and `null` if the participant has not yet responded'
+      example: false
+Error.Activity:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Error'
+    - type: object
+      properties:
+        code:
+          type: string
+          enum:
+            - MALFORMED_ACCEPT_LANGUAGE_HEADER
+Error.ActivityCreate:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Error'
+    - type: object
+      properties:
+        code:
+          type: string
+          enum:
+            - TOO_MANY_INSTANCES
+            - UNSATISFIED_PRECONDITION
+Error.ActivityNotFound:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Error'
+    - type: object
+      properties:
+        code:
+          type: string
+          enum:
+            - ACTIVITY_NOT_FOUND
+Error.Answer:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Error'
+    - type: object
+      required:
+        - violation
+      properties:
+        violation:
+          type: object
+          properties:
+            stableId:
+              type: string
+            rule:
+              $ref: '../pepper.yml#/components/schemas/ValidationType'
+        code:
+          type: string
+          enum:
+            - INVALID_REQUEST
+            - BAD_PAYLOAD
+            - ACTIVITY_NOT_FOUND
+            - QUESTION_NOT_FOUND
+            - ANSWER_NOT_FOUND
+            - ANSWER_EXISTS
+            - ANSWER_VALIDATION
+            - ACTIVITY_INSTANCE_IS_READONLY
+Error.Consent:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Error'
+    - type: object
+      properties:
+        code:
+          type: string
+          enum:
+            - ACTIVITY_NOT_FOUND
+Error.ProfileGet:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Error'
+    - type: object
+      properties:
+        code:
+          type: string
+          enum:
+            - MISSING_PROFILE
+Error.ProfileUpdate:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Error'
+    - type: object
+      properties:
+        code:
+          type: string
+          enum:
+            - MISSING_BODY
+            - INVALID_LANGUAGE_PREFERENCE
+            - INVALID_SEX
+            - MISSING_PROFILE
+Error.ProviderNotFound:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Error'
+    - type: object
+      properties:
+        code:
+          type: string
+          enum:
+            - NOT_FOUND
+Error.StudyNotFound:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Error'
+    - type: object
+      properties:
+        code:
+          type: string
+          enum:
+            - STUDY_NOT_FOUND
+Error.UmbrellaNotFound:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Error'
+    - type: object
+      properties:
+        code:
+          type: string
+          enum:
+            - UMBRELLA_NOT_FOUND
+Error:
+  type: object
+  required:
+    - code
+    - message
+  properties:
+    code:
+      type: string
+    message:
+      type: string
+Error.BadPayload:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Error'
+    - type: object
+      properties:
+        code:
+          type: string
+          enum:
+            - BAD_PAYLOAD
+Error.RegisterNotFound:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Error'
+    - type: object
+      properties:
+        code:
+          type: string
+          enum:
+            - STUDY_NOT_FOUND
+            - USER_NOT_FOUND
+Error.RegisterNotValid:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Error'
+    - type: object
+      properties:
+        code:
+          type: string
+          enum:
+            - EXPIRED
+            - NOT_SUPPORTED
+Error.StudyExit:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Error'
+    - type: object
+      properties:
+        code:
+          type: string
+          enum:
+            - OPERATION_NOT_ALLOWED
+            - NOT_SUPPORTED
+Image:
+  type: object
+  required:
+    - height
+    - width
+    - 1x
+  properties:
+    height:
+      type: integer
+      minimum: 0
+    width:
+      type: integer
+      minimum: 0
+    1x:
+      type: string
+Participant:
+  type: object
+  required:
+    - alias
+    - userGuid
+  properties:
+    alias:
+      type: string
+      example: Alice
+    userGuid:
+      type: string
+      example: Y9JJVE1MLN8AIZL8DO7D
+PicklistOption:
+  type: object
+  required:
+    - stableId
+    - allowDetails
+    - optionLabel
+    - exclusive
+    - groupId
+  properties:
+    stableId:
+      type: string
+    groupId:
+      type: string
+      nullable: true
+    allowDetails:
+      type: boolean
+    optionLabel:
+      type: string
+    detailLabel:
+      type: string
+    exclusive:
+      type: boolean
+PrequalifierModel:
+  type: object
+  required:
+    - guid
+    - name
+    - status
+    - typeName
+    - isoLanguageCode
+  properties:
+    guid:
+      type: string
+      example: 6B03213FD0
+    name:
+      type: string
+      example: Join the Basil Research Study
+    status:
+      type: string
+      example: Started
+    typeName:
+      type: string
+      example: Forms
+    isoLanguageCode:
+      type: string
+      example: en
+ProfileModel:
+  type: object
+  properties:
+      birthYear:
+        type: integer
+        example: 1970
+      birthMonth:
+        type: integer
+        example: 1
+      birthDayInMonth:
+        type: integer
+        example: 1
+      sex:
+        type: string
+        enum:
+          - 'MALE'
+          - 'FEMALE'
+          - 'INTERSEX'
+          - 'PREFER_NOT_TO_ANSWER'
+        default: PREFER_NOT_TO_ANSWER
+      preferredLanguage:
+        type: string
+        example: en
+      firstName:
+        type: string
+        example: Foo
+      lastName:
+        type: string
+        example: Barium
+#####
+#
+# Questions
+#
+#####
+Question:
+  type: object
+  discriminator:
+    propertyName: questionType
+  required:
+  - questionType
+  - stableId
+  - prompt
+  - textPrompt
+  properties:
+    questionType:
+      type: string
+    stableId:
+      type: string
+    prompt:
+      type: string
+      description: 'the text that should be displayed for the question. This field should be treated as an HTML fragment.'
+      example: 'What <b>color</b> is the sky?'
+    textPrompt:
+      type: string
+      description: 'the text that should be displayed for the question with all embedded HTML tags flattened and stripped.'
+      example: 'What color is the sky?'
+    additionalInfoHeader:
+      type: string
+      description: a plain text string for additional information to be presented before the user responds to a question
+      example: Select all that apply
+    additionalInfoFooter:
+      type: string
+      description: a plain text string for additional information to be presented after the user reads or responds to a question
+      example: If you had radiation for other cancers, we will ask you about that later
+    validations:
+      type: array
+      items:
+        $ref: '../pepper.yml#/components/schemas/Validation'
+    postConditionals:
+      type: array
+      items:
+        $ref: '../pepper.yml#/components/schemas/ConditionalRule'
+Question.Agreement:
+  allOf:
+  - $ref: '../pepper.yml#/components/schemas/Question'
+  - type: object
+    required:
+      - answers
+    properties:
+      questionType:
+        type: string
+        default: AGREEMENT
+        enum:
+          - AGREEMENT
+      answers:
+        type: array
+        items:
+          $ref: '../pepper.yml#/components/schemas/Answer.Boolean'
+Question.Boolean:
+  allOf:
+  - $ref: '../pepper.yml#/components/schemas/Question'
+  - type: object
+    required:
+      - answers
+      - trueContent
+      - falseContent
+    properties:
+      questionType:
+        type: string
+        default: BOOLEAN
+        enum:
+          - BOOLEAN
+      trueContent:
+        type: string
+        example: 'Yes'
+      falseContent:
+        type: string
+        example: 'NO'
+      answers:
+        type: array
+        items:
+          $ref: '../pepper.yml#/components/schemas/Answer.Boolean'
+Question.Composite:
+  allOf:
+  - $ref: '../pepper.yml#/components/schemas/Question'
+  - type: object
+    required:
+      - allowMultiple
+      - addButtonText
+      - additionalItemText
+      - answers
+      - children
+      - childOrientation
+    properties:
+      questionType:
+        type: string
+        default: COMPOSITE
+        enum:
+          - COMPOSITE
+      allowMultiple:
+        type: boolean
+        default: false
+        description: 'true if the question should allow the addition of multiple entries'
+      addButtonText:
+        type: string
+        description: 'The label to show for the button to add a subsequent entry. This can be ignored if `allowMultiple` is `false`'
+      additionalItemText:
+        type: string
+        description: 'The label to show above entries beyond the initial one'
+      children:
+        type: array
+        description: 'The child questions to present'
+        items:
+          anyOf:
+            - $ref: '../pepper.yml#/components/schemas/Question.Date'
+            - $ref: '../pepper.yml#/components/schemas/Question.Picklist'
+            - $ref: '../pepper.yml#/components/schemas/Question.Text'
+      childOrientation:
+        type: string
+        nullable: true
+        enum:
+          - HORIZONTAL
+          - VERTICAL
+        description: optional indicator of how to layout child questions
+      answers:
+        type: array
+        items:
+          $ref: '../pepper.yml#/components/schemas/Answer.Composite'
+Question.Date:
+  allOf:
+  - $ref: '../pepper.yml#/components/schemas/Question'
+  - type: object
+    required:
+      - answers
+      - displayCalendar
+      - fields
+      - renderMode
+      - useMonthNames
+    properties:
+      questionType:
+        type: string
+        default: DATE
+        enum:
+          - DATE
+      placeholderText:
+        type: string
+        description: if present, this text string can be used as a placeholder hint
+      renderMode:
+        type: string
+      displayCalendar:
+        type: boolean
+      useMonthNames:
+        type: boolean
+      fields:
+        type: array
+        items:
+          type: string
+          enum:
+            - DAY
+            - MONTH
+            - YEAR
+      firstSelectedYear:
+        type: integer
+      startYear:
+        type: integer
+      endYear:
+        type: integer
+      answers:
+        type: array
+        items:
+          $ref: '../pepper.yml#/components/schemas/Answer.Date'
+Question.Numeric:
+  allOf:
+  - $ref: '../pepper.yml#/components/schemas/Question'
+  - type: object
+    required:
+      - answers
+      - numericType
+    properties:
+      questionType:
+        type: string
+        default: NUMERIC
+        enum:
+          - NUMERIC
+      placeholderText:
+        type: string
+        description: if present, this text string can be used as a placeholder hint
+      numericType:
+        $ref: '../pepper.yml#/components/schemas/NumericType'
+      answers:
+        type: array
+        items:
+          $ref: '../pepper.yml#/components/schemas/Answer.Numeric.Integer'
+Question.Picklist:
+  allOf:
+  - $ref: '../pepper.yml#/components/schemas/Question'
+  - type: object
+    required:
+      - selectMode
+      - renderMode
+      - picklistOptions
+      - answers
+    properties:
+      questionType:
+        type: string
+        default: PICKLIST
+        enum:
+          - PICKLIST
+      selectMode:
+        type: string
+        enum:
+          - MULTIPLE
+          - SINGLE
+      renderMode:
+        type: string
+        enum:
+          - LIST
+          - DROPDOWN
+          - CHECKBOX_LIST
+      groups:
+        type: array
+        description: A list of groups used in the `picklistOptions` values. If there are no options which explicity request grouping, this will be an empty array.
+        minItems: 0
+        items:
+          type: object
+          required:
+            - identifier
+            - name
+          properties:
+            identifier:
+              type: string
+            name:
+              type: string
+      picklistLabel:
+        type: string
+      picklistOptions:
+        type: array
+        items:
+          $ref: '../pepper.yml#/components/schemas/PicklistOption'
+      answers:
+        type: array
+        items:
+          $ref: '../pepper.yml#/components/schemas/Answer.Picklist'
+Question.Text:
+  allOf:
+  - $ref: '../pepper.yml#/components/schemas/Question'
+  - type: object
+    required:
+      - answers
+      - inputType
+    properties:
+      questionType:
+        type: string
+        default: TEXT
+        enum:
+          - TEXT
+      placeholderText:
+        type: string
+        nullable: true
+      inputType:
+        type: string
+        enum:
+          - TEXT
+          - ESSAY
+          - SIGNATURE
+      suggestionType:
+        type: string
+        default: NONE
+        enum:
+          - NONE
+          - DRUG
+          - INCLUDED
+      suggestions:
+        description: 'If the suggestionType is INCLUDED, then this is the list of suggestions to use'
+        type: array
+        items:
+          type: string
+      answers:
+        type: array
+        items:
+          $ref: '../pepper.yml#/components/schemas/Answer.String'
+Section:
+  type: object
+  required:
+    - blocks
+  properties:
+    name:
+      type: string
+    icon:
+      $ref: '../pepper.yml#/components/schemas/Image'
+    blocks:
+      type: array
+      items:
+        $ref: '../pepper.yml#/components/schemas/Block'
+Study.Summary:
+  type: object
+  required:
+    - studyGuid
+    - name
+    - participantCount
+  properties:
+    studyGuid:
+      type: string
+    name:
+      type: string
+    participantCount:
+      type: integer
+      minimum: 0
+    registeredCount:
+      type: integer
+      minimum: 0
+    restricted:
+      type: boolean
+    studyEmail:
+        type: string
+Study.Detail:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Study.Summary'
+    - type: object
+      properties:
+        summary:
+          type: string
+#####
+#
+# Question Validation Types
+#
+##
+Validation:
+  type: object
+  discriminator:
+    propertyName: rule
+  required:
+    - rule
+    - message
+  properties:
+    rule:
+      $ref: '../pepper.yml#/components/schemas/ValidationType'
+    message:
+      type: string
+    allowSave:
+      description: Indicates whether the validation rule failing should allow saving corresponding data; if rule evaluates to false and allowSave value is true, client should send data to server anyways. Note data will be eventually validated, just not during initial PATCH.
+      type: boolean
+      default: false
+Validation.Required:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Validation'
+    - type: object
+      properties:
+        rule:
+          type: string
+          default: REQUIRED
+          enum:
+            - REQUIRED
+Validation.Complete:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Validation'
+    - type: object
+      properties:
+        rule:
+          type: string
+          default: COMPLETE
+          enum:
+            - COMPLETE
+Validation.Length:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Validation'
+    - type: object
+      deprecated: true
+      required:
+        - minLength
+        - maxLength
+      properties:
+        rule:
+          type: string
+          default: LENGTH
+          enum:
+            - LENGTH
+        minLength:
+          type: integer
+          minimum: 0
+        maxLength:
+          type: integer
+          minimum: 0
+Validation.RegularExpression:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Validation'
+    - type: object
+      deprecated: true
+      required:
+        - regexPattern
+      properties:
+        rule:
+          type: string
+          default: REGEX
+          enum:
+            - REGEX
+        regexPattern:
+          type: string
+Validation.OptionsSelected:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Validation'
+    - type: object
+      deprecated: true
+      properties:
+        rule:
+          type: string
+          default: NUM_OPTIONS_SELECTED
+          enum:
+            - NUM_OPTIONS_SELECTED
+        minSelections:
+          type: integer
+          minimum: 0
+        maxSelections:
+          type: integer
+          minimum: 0
+Validation.DayRequired:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Validation'
+    - type: object
+      deprecated: true
+      properties:
+        rule:
+          type: string
+          default: DAY_REQUIRED
+          enum:
+            - DAY_REQUIRED
+Validation.MonthRequired:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Validation'
+    - type: object
+      deprecated: true
+      properties:
+        rule:
+          type: string
+          default: MONTH_REQUIRED
+          enum:
+            - MONTH_REQUIRED
+Validation.YearRequired:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Validation'
+    - type: object
+      deprecated: true
+      properties:
+        rule:
+          type: string
+          default: YEAR_REQUIRED
+          enum:
+            - YEAR_REQUIRED
+Validation.DateRange:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Validation'
+    - type: object
+      required:
+        - startDate
+        - endDate
+      properties:
+        rule:
+          type: string
+          default: DATE_RANGE
+          enum:
+            - DATE_RANGE
+        startDate:
+          type: string
+          description: the minimum date required to be considered valid. This value is inclusive. The date format is a full, extended ISO-8601 Calendar date in the format `YYYY-MM-DD` in the UTC time zone.
+          nullable: true
+        endDate:
+          type: string
+          description: the maximum date required to be considered valid. This value is inclusive. The date format is a full, extended ISO-8601 Calendar date in the format `YYYY-MM-DD` in the UTC time zone.
+          nullable: true
+Validation.AgeRange:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Validation'
+    - type: object
+      properties:
+        rule:
+          type: string
+          default: AGE_RANGE
+          enum:
+            - AGE_RANGE
+        minAge:
+          type: integer
+          description: after calculating the number of years since the value of the associated date, minAge defines the minimum acceptable age inclusive.
+          nullable: true
+        maxAge:
+          type: integer
+          description: after calculating the number of years since the value of the associated date, maxAge defines the maximum acceptable age inclusive.
+          nullable: true
+Validation.IntRange:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Validation'
+    - type: object
+      properties:
+        rule:
+          type: string
+          default: INT_RANGE
+          enum:
+            - INT_RANGE
+        min:
+          type: integer
+          nullable: true
+          description: the minimum acceptable number, inclusive
+        max:
+          type: integer
+          nullable: true
+          description: the maximum acceptable number, inclusive
+AnnouncementModel:
+  type: object
+  required:
+    - message
+  properties:
+    message:
+      type: string
+Drug:
+  type: object
+  required:
+    - name
+    - description
+  properties:
+    name:
+      type: string
+      example: ABARELIX (PLENAXIS)
+    description:
+      type: string
+      nullable: true
+Suggestion.Drug:
+  required:
+    - drug
+    - matches
+  type: object
+  properties:
+    drug:
+      $ref: '../pepper.yml#/components/schemas/Drug'
+    matches:
+      type: array
+      description: Contains a list of substring matches for the given `Drug`. The substrings are based within the drug's `name` property.
+      minItems: 0
+      items:
+        $ref: '../pepper.yml#/components/schemas/Suggestion.Match'
+Suggestion.Institution:
+  type: object
+  required:
+    - name
+    - city
+    - state
+  properties:
+    name:
+      type: string
+      example: Brigham And Women's Hospital
+    city:
+      type: string
+      example: Boston
+    state:
+      type: string
+      example: Massachusetts
+Suggestion.Match:
+  type: object
+  required:
+    - offset
+    - length
+  properties:
+    offset:
+      type: integer
+      minimum: 0
+    length:
+      type: integer
+      minimum: 0
+Cancer:
+  type: object
+  properties:
+    name:
+      type: string
+      description: a short name for the cancer
+    description:
+      type: string
+      description: a longer name for the cancer
+MailingAddress:
+  type: object
+  description: a participant's mailing address, to be used for delivery.
+  required:
+    - description
+    - name
+    - street1
+    - city
+    - state
+    - country
+    - zip
+    - phone
+  properties:
+    guid:
+      type: string
+      description: the server-generated unique identifier for the mailing address
+    description:
+      type: string
+      description: the user-entered description for this address
+    name:
+      type: string
+      description: the participant's full name
+    street1:
+      type: string
+      description: the participant's delivery address
+    street2:
+      type: string
+      description: the participant's delivery address
+    city:
+      type: string
+    state:
+      type: string
+    country:
+      type: string
+    zip:
+      type: string
+    phone:
+      type: string
+    plusCode:
+      type: string
+      description: the server-generated PlusCode for the participant's location
+    isDefault:
+      type: boolean
+      description: is this the participant's default address?
+    validationStatus:
+      type: integer
+      description: >
+        ### Address Validation States
+          * **0** - *INVALID_ADDRESS*
+            * The address failed to be validated by EasyPost, and there were no suggestions made. This address may not be able to be used as a delivery address.
+          * **1** - *SUGGESTED_ADDRESS*
+            * The address contains changes from EasyPost to improve deliverability.
+          * **2** - *VALID_ADDRESS*
+            * The originally entered address was successfully validated by EasyPost.
+      enum:
+        - 0
+        - 1
+        - 2
+MedicalProvider:
+  type: object
+  required:
+    - medicalProviderGuid
+  properties:
+    medicalProviderGuid:
+      type: string
+      readOnly: true
+    institutionName:
+      type: string
+    physicianName:
+      type: string
+    city:
+      type: string
+    state:
+      type: string
+### Participant status
+ParticipantStatus:
+  type: object
+  required:
+    - samples
+  properties:
+    mrRequested:
+      type: integer
+    mrReceived:
+      type: integer
+    tissueRequested:
+      type: integer
+    tissueSent:
+      type: integer
+    tissueReceived:
+      type: integer
+    samples:
+      type: array
+      description: Contains a list samples records for the participant
+      minItems: 0
+      items:
+        $ref: '../pepper.yml#/components/schemas/ParticipantStatus.Sample'
+ParticipantStatus.Sample:
+  type: object
+  required:
+    - sent
+  properties:
+    kitType:
+      type: string
+    sent:
+      type: integer
+    trackingId:
+      type: string
+    carrier:
+      type: string
+    received:
+      type: integer
+ParticipantStatusTrackingInfo:
+  type: object
+  required:
+    - medicalRecord
+    - tissueRecord
+    - kits
+  properties:
+    medicalRecord:
+      $ref: '../pepper.yml#/components/schemas/ParticipantStatusTrackingInfo.Record'
+    tissueRecord:
+      $ref: '../pepper.yml#/components/schemas/ParticipantStatusTrackingInfo.Record'
+    kits:
+      type: array
+      description: Contains a list of kits sent to the participant
+      minItems: 0
+      items:
+        $ref: '../pepper.yml#/components/schemas/ParticipantStatusTrackingInfo.Kit'
+ParticipantStatusTrackingInfo.Record:
+  type: object
+  required:
+    - status
+  properties:
+    status:
+      type: string
+      enum:
+        - INELIGIBLE
+        - PENDING
+        - SENT
+        - RECEIVED
+        - UNKNOWN
+    requestedAt:
+      type: integer
+    receivedBackAt:
+      type: integer
+ParticipantStatusTrackingInfo.Kit:
+  type: object
+  required:
+    - sentAt
+  properties:
+    kitType:
+      type: string
+    status:
+      type: string
+      enum:
+        - INELIGIBLE
+        - PENDING
+        - SENT
+        - RECEIVED
+        - UNKNOWN
+    sentAt:
+      type: integer
+    receivedBackAt:
+      type: integer
+    trackingId:
+      type: string
+    shipper:
+      type: string
+### StudyPasswordRequirements
+StudyPasswordRequirements:
+  type: object
+  required:
+    - minLength
+    - isUppercaseLetterRequired
+    - isLowercaseLetterRequired
+    - isSpecialCharacterRequired
+    - isNumberRequired
+  properties:
+    minLength:
+      type: integer
+    isUppercaseLetterRequired:
+      type: boolean
+    isLowercaseLetterRequired:
+      type: boolean
+    isSpecialCharacterRequired:
+      type: boolean
+    isNumberRequired:
+      type: boolean
+    maxIdenticalConsecutiveCharacters:
+      type: integer
+      default: 2
+      minimum: 0
+#####
+#
+# Workflows
+#
+#####
+WorkflowNextSuggestion:
+  type: object
+  discriminator:
+    propertyName: next
+  required:
+    - next
+  properties:
+    next:
+      type: string
+      description: |
+        * `ACTIVITY` - Should show an activity next.
+        * `DASHBOARD` - Indicates end of workflow and should direct to a dashboard if available.
+        * `MAILING_LIST` - Indicates end of workflow and should prompt user to join the study mailing list.
+        * `THANK_YOU` - Indicates end of workflow and a thank you message should be shown.
+        * `UNKNOWN` - No suggestions available.
+      enum:
+        - ACTIVITY
+        - DASHBOARD
+        - MAILING_LIST
+        - THANK_YOU
+        - UNKNOWN
+WorkflowNextSuggestion.Activity:
+  allOf:
+  - $ref: '../pepper.yml#/components/schemas/WorkflowNextSuggestion'
+  - type: object
+    required:
+      - activityCode
+      - instanceGuid
+      - allowUnauthenticated
+    properties:
+      activityCode:
+        type: string
+        description: the identifier of the next activity
+      instanceGuid:
+        type: string
+        description: the identifier of the next activity instance for user
+      allowUnauthenticated:
+        type: boolean
+        description: Whether the next activity allows access to temporary users. If `false`, user will need to authenticate in order to access activity.
+WorkflowNextSuggestion.Static:
+  allOf:
+  - $ref: '../pepper.yml#/components/schemas/WorkflowNextSuggestion'
+  - type: object
+    properties:
+      next:
+        type: string
+        enum:
+          - DASHBOARD
+          - THANK_YOU
+          - UNKNOWN

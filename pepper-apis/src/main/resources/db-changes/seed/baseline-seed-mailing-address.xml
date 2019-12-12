@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="baseline-seed-mailing-address-validation-status">
+        <insert tableName="mailing_address_validation_status">
+            <column name="code" valueNumeric="0"/>
+            <column name="name" value="INVALID"/>
+            <column name="description" value="EasyPost reports address invalid"/>
+        </insert>
+        <insert tableName="mailing_address_validation_status">
+            <column name="code" valueNumeric="1"/>
+            <column name="name" value="SUGGESTED"/>
+            <column name="description" value="Address matches EasyPost suggested address"/>
+        </insert>
+        <insert tableName="mailing_address_validation_status">
+            <column name="code" valueNumeric="2"/>
+            <column name="name" value="VALID"/>
+            <column name="description" value="Address passed EasyPost validation but does not match the address suggested by EasyPost"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

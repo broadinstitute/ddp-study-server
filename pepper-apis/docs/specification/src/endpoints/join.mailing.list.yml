@@ -1,0 +1,15 @@
+post:
+  operationId: joinMailingList
+  tags:
+    - Operator & Participant
+  summary: joinMailingList
+  description: add a user to a studies email list or to a mailing list for a study that does not exist
+  requestBody:
+    $ref: '../pepper.yml#/components/requestBodies/JoinMailingListPayload'
+  responses:
+    204:
+      description: the user was successfully added to the email list
+    400:
+      $ref: '../pepper.yml#/components/responses/JoinMailingListBadPayloadError'
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'

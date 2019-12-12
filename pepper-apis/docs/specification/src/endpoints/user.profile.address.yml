@@ -1,0 +1,48 @@
+parameters:
+  - in: path
+    name: user
+    required: true
+    description: "the user's unique identifier"
+    schema:
+      type: string
+  - in: path
+    name: address
+    required: true
+    description: the unique identifier of the mailing address
+    schema:
+      type: string
+
+get:
+  operationId: getMailingAddress
+  description: fetch the specified saved address for a participant
+  tags:
+    - Mailing Address
+  responses:
+    200:
+      $ref: '../pepper.yml#/components/responses/MailingAddress'
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'
+
+put:
+  operationId: updateMailingAddress
+  description: updates the specified saved address
+  tags:
+    - Mailing Address
+  requestBody:
+    $ref: '../pepper.yml#/components/requestBodies/MailingAddress'
+  responses:
+    204:
+      description: The mailing address was successfully updated
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'
+
+delete:
+  operationId: deleteMailingAddress
+  description: removes the specified saved address for a participant. If this address is the participant's default address, the participant will no longer have a default address set.
+  tags:
+    - Mailing Address
+  responses:
+    204:
+      description: The mailing address was successfully deleted
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'

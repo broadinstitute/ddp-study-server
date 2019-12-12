@@ -1,0 +1,22 @@
+{
+  "name": "pepper-api-spec",
+  "version": "1.0.0",
+  "private": true,
+  "description": "",
+  "dependencies": {
+    "redoc": "^2.0.0-rc.10",
+    "redoc-cli": "^0.8.5",
+    "swagger-cli": "^2.3.0",
+    "speccy": "^0.11.0"
+  },
+  "scripts": {
+    "start": "\"$(npm bin)/redoc-cli\" serve --watch src/pepper.yml",
+    "lint": "npm run generate-bundle && \"$(npm bin)/speccy\" lint --rules=\"rules.yml\" build/pepper.yml",
+    "generate-bundle": "\"$(npm bin)/swagger-cli\" bundle --outfile build/pepper.yml --type yaml src/pepper.yml",
+    "generate-docs": "\"$(npm bin)/redoc-cli\" bundle --output build/pepper.html src/pepper.yml",
+    "generate-openapi-angular-client": "openapi-generator generate  -i  build/pepper.yml -g typescript-angular -o generated-sources/openapi --additional-properties=\"ngVersion=7.0.0\""
+  },
+  "devDependencies": {
+    "@openapitools/openapi-generator-cli": "0.0.16-4.0.3"
+  }
+}

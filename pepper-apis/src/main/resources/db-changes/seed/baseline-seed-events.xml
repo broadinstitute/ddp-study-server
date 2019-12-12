@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="baseline-seed-queued-event-status-type">
+        <insert tableName="queued_event_status_type">
+            <column name="status_type_code" value="PENDING"/>
+        </insert>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-seed-event-trigger-type">
+        <insert tableName="event_trigger_type">
+            <column name="event_trigger_type_code" value="ACTIVITY_STATUS"/>
+        </insert>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-seed-event-action-type">
+        <insert tableName="event_action_type">
+            <column name="event_action_type_code" value="ACTIVITY_INSTANCE_CREATION"/>
+        </insert>
+        <insert tableName="event_action_type">
+            <column name="event_action_type_code" value="NOTIFICATION"/>
+        </insert>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-seed-notification-type">
+        <insert tableName="notification_type">
+            <column name="notification_type_code" value="EMAIL"/>
+        </insert>
+        <insert tableName="notification_type">
+            <column name="notification_type_code" value="MOBILE_PUSH"/>
+        </insert>
+        <insert tableName="notification_type">
+            <column name="notification_type_code" value="SMS"/>
+        </insert>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-seed-notification-service">
+        <insert tableName="notification_service">
+            <column name="service_code" value="SENDGRID"/>
+            <column name="description" value="sendgrid.com service for sending emails"/>
+        </insert>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-seed-message-destination">
+        <insert tableName="message_destination">
+            <column name="gcp_topic" value="PARTICIPANT_NOTIFICATION"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="rnordin" id="20180827-add-umbrella-based-account">
+        <addColumn tableName="client">
+            <column name="auth0_domain" type="varchar(255)"/>
+       </addColumn>
+
+
+        <update tableName="client">
+            <column name="auth0_domain" value="https://ddp-dev.auth0.com/"/>
+        </update>
+
+        <addNotNullConstraint tableName="client" columnName="auth0_domain" columnDataType="varchar(255)"/>
+        <addNotNullConstraint tableName="client" columnName="auth0_signing_secret" columnDataType="varchar(200)"/>
+
+        <addUniqueConstraint tableName="client" columnNames="client_name"/>
+
+    </changeSet>
+</databaseChangeLog>

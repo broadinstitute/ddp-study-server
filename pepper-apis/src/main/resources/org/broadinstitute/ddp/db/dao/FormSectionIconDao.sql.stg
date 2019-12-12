@@ -1,0 +1,31 @@
+group FormSectionIconDao;
+
+querySectionIconAndSourcesById() ::= <<
+select icon.form_section_icon_id,
+       icon.form_section_id,
+       icon.height_points,
+       icon.width_points,
+       state.form_section_state_code,
+       scale.name,
+       src.url
+  from form_section_icon as icon
+  join form_section_state as state on state.form_section_state_id = icon.form_section_state_id
+  left join form_section_icon_source as src on src.form_section_icon_id = icon.form_section_icon_id
+  left join scale_factor as scale on scale.scale_factor_id = src.scale_factor_id
+ where icon.form_section_icon_id = :iconId
+>>
+
+querySectionIconsBySectionId() ::= <<
+select icon.form_section_icon_id,
+       icon.form_section_id,
+       icon.height_points,
+       icon.width_points,
+       state.form_section_state_code,
+       scale.name,
+       src.url
+  from form_section_icon as icon
+  join form_section_state as state on state.form_section_state_id = icon.form_section_state_id
+  left join form_section_icon_source as src on src.form_section_icon_id = icon.form_section_icon_id
+  left join scale_factor as scale on scale.scale_factor_id = src.scale_factor_id
+ where icon.form_section_id = :sectionId
+>>

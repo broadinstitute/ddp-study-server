@@ -1,0 +1,9 @@
+group KitTypeDao;
+
+getAllKitTypes() ::= <<
+    SELECT
+    	kit_type_id,
+        name
+    FROM
+        kit_type
+>>

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="20190717-move-linked-activity-to-notification-action">
+        <addColumn tableName="user_notification_event_action">
+            <column name="linked_activity_id" type="bigint">
+                <constraints nullable="true"
+                             references="study_activity(study_activity_id)"
+                             foreignKeyName="user_notification_event_action_linked_activity_fk"/>
+            </column>
+        </addColumn>
+
+        <sql>
+            UPDATE user_notification_event_action AS act
+              JOIN notification_template AS t ON t.notification_template_id = act.notification_template_id
+               SET act.linked_activity_id = t.linked_activity_id
+             WHERE t.linked_activity_id IS NOT NULL
+        </sql>
+
+        <dropForeignKeyConstraint baseTableName="notification_template" constraintName="notification_template_linked_activity_fk"/>
+        <dropColumn tableName="notification_template" columnName="linked_activity_id"/>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20190717-rename-user-notification-action-template-fk">
+        <dropForeignKeyConstraint baseTableName="user_notification_event_action" constraintName="user_notification_event_action_template_uk"/>
+        <addForeignKeyConstraint constraintName="user_notification_event_action_template_fk"
+                                 baseTableName="user_notification_event_action" baseColumnNames="notification_template_id"
+                                 referencedTableName="notification_template" referencedColumnNames="notification_template_id"/>
+    </changeSet>
+
+</databaseChangeLog>

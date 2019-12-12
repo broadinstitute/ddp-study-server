@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="mocana" id="20190805-age-range-validation-table">
+        <createTable tableName="age_range_validation">
+            <column name="validation_id" type="bigint">
+                <constraints primaryKey="true"
+                             primaryKeyName="age_range_validation_pk"
+                             references="validation(validation_id)"
+                             foreignKeyName="age_range_validation_validation_fk"/>
+            </column>
+            <column name="min_age" type="smallint"/>
+            <column name="max_age" type="smallint"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="mocana" id="20190805-age-range-validation-type">
+        <insert tableName="validation_type">
+            <column name="validation_type_code" value="AGE_RANGE"/>
+        </insert>
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'AGE_RANGE')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'en')"/>
+            <column name="translation_text" value="The age must be within specified values."/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

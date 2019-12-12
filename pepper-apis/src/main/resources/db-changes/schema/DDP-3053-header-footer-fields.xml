@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet id="20190426-question-info-header-footer" author="bskinner">
+        <addColumn tableName="question">
+            <column name="info_header_template_id" type="BIGINT(20)"/>
+            <column name="info_footer_template_id" type="BIGINT(20)"/>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

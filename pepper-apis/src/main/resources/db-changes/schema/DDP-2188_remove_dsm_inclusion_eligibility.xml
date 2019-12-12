@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="rnordin" id="20181023-dsm-inclusion-removal">
+        <sql>
+            INSERT INTO user_study_enrollment (user_id, study_id, enrollment_status_type_id, last_updated)
+            SELECT participant_user_id,
+                    umbrella_study_id,
+                    (SELECT enrollment_status_type_id from enrollment_status_type where enrollment_status_type_code = 'ENROLLED'),
+                    unix_timestamp(last_modified) * 1000
+            FROM dsm_inclusion_eligibility;
+        </sql>
+
+        <dropTable tableName="dsm_inclusion_eligibility"/>
+
+        <insert tableName="event_action_type">
+            <column name="event_action_type_code" value="USER_ENROLLED"/>
+        </insert>
+    </changeSet>
+</databaseChangeLog>

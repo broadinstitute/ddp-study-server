@@ -1,0 +1,101 @@
+parameters:
+  - in: path
+    name: user
+    required: true
+    description: the participant's guid
+    schema:
+      type: string
+  - in: path
+    name: study
+    required: true
+    description: the study's unique identifier
+    schema:
+      type: string
+  - in: path
+    name: instance
+    required: true
+    description: the activity instance guid
+    schema:
+      type: string
+
+patch:
+  operationId: patchAnswers
+  tags:
+    - Activities
+  summary: create or update answers to activity instance
+  description: |
+    Accepts a list of answer submissions or updates and runs server-side
+    validations on them before saving. The request is processed as a single
+    transaction, so if a single answer submission fails then the whole request
+    will fail.
+
+    **Answer Submissions**
+
+    When processing list of answer submissions, a submission with an
+    `answerGuid` will be treated as an update and the referenced answer will
+    be updated accordingly. If `answerGuid` is missing, the server attempts to
+    find and update an existing answer only if the question has a single
+    answer. Otherwise, it responses with `409 Conflict`. The response body
+    will contain more details about what failed.
+
+    **Answer Validations**
+
+    Server-side form validation will only run for the given answers. Use the
+    `PUT` request to run validation on full form. When validation fails, API
+    responses with `422 Unprocessable Entity` to indicate such. The response
+    body will contain more details about which validation rule was violated.
+
+    **Conditional Forms**
+
+    The response will contain the visibility state of form blocks that may
+    have been changed. If there are no blocks with "show-if" logic, then it
+    simply contains an empty object/map. Otherwise, it provides the
+    `blockGuid` and the new visibility state of blocks that are toggle-able.
+
+    _This API allows access to temporary users._
+  requestBody:
+    $ref: '../pepper.yml#/components/requestBodies/ActivityAnswersPatchRequestBody'
+  responses:
+    200:
+      $ref: '../pepper.yml#/components/responses/ActivityAnswersPatchResponse'
+    400:
+      description: answer submissions payload is invalid
+    401:
+      description: missing credentials for user, or temporary user is invalid
+    404:
+      description: activity instance, question, or answer not found
+    409:
+      description: answer already exists for questions, `answerGuid` should be specified
+    422:
+      description: activity instance is read-only or answer submission failed validation
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'
+
+put:
+  operationId: putAnswers
+  tags:
+    - Activities
+  summary: complete an activity instance
+  description: |
+    Indicates to server that user is done with an activity. This API ensures
+    any required questions in an activity is answered, and then transitions
+    the user's activity instance to an appropriate status (i.e. `COMPLETE`).
+
+    Completing an activity may also trigger some server-side post-submission
+    processes, if any are configured for the activity/study. Activities are
+    typically part of a workflow along with other activities, thus this API
+    returns the "next" state of the workflow as a suggestion of where to bring
+    the user next. See the [Workflow API](#tag/Workflow) for more details.
+
+    _This API allows access to temporary users._
+  responses:
+    200:
+      $ref: '../pepper.yml#/components/responses/ActivityAnswersPutResponse'
+    401:
+      description: missing credentials for user, or temporary user is invalid
+    404:
+      description: activity instance not found
+    422:
+      description: activity instance is read-only or required questions not answered yet
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'

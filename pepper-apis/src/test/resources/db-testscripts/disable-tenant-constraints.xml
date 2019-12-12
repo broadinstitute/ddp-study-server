@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet id="DDP-2606-temp-disable-client-study-tenant-constraints" author="andrew">
+
+        <!-- temporarily re-add this column so that existing seed data xml file works -->
+        <addColumn tableName="client">
+            <column name="auth0_domain" type="varchar(255)"/>
+        </addColumn>
+
+        <!-- reset tenant constraints prior to the auth0_tenant table so that seed test data file doesn't need to be
+        changed -->
+        <dropNotNullConstraint tableName="client" columnName="auth0_tenant_id" columnDataType="bigint"/>
+
+        <dropNotNullConstraint tableName="umbrella_study" columnName="auth0_tenant_id" columnDataType="bigint"/>
+
+        <dropUniqueConstraint tableName="user" uniqueColumns="auth0_user_id,auth0_tenant_id" constraintName="user_auth0_tenant_uk"/>
+
+        <dropNotNullConstraint tableName="user" columnName="auth0_tenant_id" columnDataType="bigint"/>
+
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,32 @@
+group WorkflowDao;
+
+queryOrderedActiveNextStateCandidatesByStudyIdAndFromStateId() ::= <<
+select trans.workflow_transition_id,
+       next_state_type.workflow_state_type_code,
+       next_act_state.study_activity_id,
+       expr.expression_text
+  from workflow_transition as trans
+  join workflow_state as next_state on next_state.workflow_state_id = trans.next_state_id
+  join workflow_state_type as next_state_type on next_state_type.workflow_state_type_id = next_state.workflow_state_type_id
+  left join workflow_activity_state as next_act_state on next_act_state.workflow_state_id = next_state.workflow_state_id
+  left join expression as expr on expr.expression_id = trans.precondition_expression_id
+ where trans.umbrella_study_id = :studyId
+   and trans.from_state_id = :fromStateId
+   and trans.is_active
+ order by trans.execution_order asc
+>>
+
+queryActivityCodeAndLatestInstanceGuidByActivityIdAndUserGuid() ::= <<
+select sa.study_activity_code,
+       (select ai.activity_instance_guid
+          from activity_instance as ai
+          join user as u on u.user_id = ai.participant_id
+         where u.guid = :userGuid
+           and ai.study_activity_id = sa.study_activity_id
+         order by ai.created_at desc
+         limit 1
+       ) as activity_instance_guid,
+       sa.allow_unauthenticated
+  from study_activity as sa
+ where sa.study_activity_id = :activityId
+>>

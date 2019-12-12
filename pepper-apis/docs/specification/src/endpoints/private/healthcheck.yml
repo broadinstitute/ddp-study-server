@@ -1,0 +1,16 @@
+get:
+  operationId: getHealthcheck
+  tags:
+    - Admin
+  summary: check the status of the server
+  description: returns the result of a status check on the server
+  parameters:
+    - in: header
+      name: host
+      required: true
+      description: access password for the server
+      schema:
+        type: string
+  responses:
+    '200':
+      $ref: '../../pepper.yml#/components/responses/HealthcheckResponse'

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="20191008-add-numeric-types">
+        <insert tableName="numeric_type">
+            <column name="numeric_type_code" value="INTEGER"/>
+        </insert>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20191008-add-numeric-question-type">
+        <insert tableName="question_type">
+            <column name="question_type_code" value="NUMERIC"/>
+        </insert>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20191008-add-int-range-validation-type">
+        <insert tableName="validation_type">
+            <column name="validation_type_code" value="INT_RANGE"/>
+        </insert>
+
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'INT_RANGE')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'en')"/>
+            <column name="translation_text" value="Minimum or maximum number requirement is not met."/>
+        </insert>
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'INT_RANGE')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'ru')"/>
+            <column name="translation_text" value="Минимальное или максимальное количество не выполняется."/>
+        </insert>
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'INT_RANGE')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'fr')"/>
+            <column name="translation_text" value="Le nombre minimum ou maximum requis n'est pas atteint."/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

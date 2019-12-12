@@ -1,0 +1,407 @@
+ActivitiesResponse:
+  description: contains a summary of each activity for a given participant
+  content:
+    application/json:
+      schema:
+        type: array
+        items:
+          $ref: '../pepper.yml#/components/schemas/Activity.Summary'
+ActivityCreateErrorResponse:
+  description: activity failed to be created
+  content:
+    application/json:
+      schema:
+        $ref: '../pepper.yml#/components/schemas/Error.ActivityCreate'
+ActivityCreateResponse:
+  description: successfully created a new instance of the specified activity
+  content:
+    application/json:
+      schema:
+        type: object
+        required:
+          - instanceGuid
+        properties:
+          instanceGuid:
+            type: string
+            example: ABCDEFGH12
+ActivityDetailResponse:
+  description: the requested activity instance exists, and was successfully retrieved.
+  content:
+    application/json:
+      schema:
+        $ref: '../pepper.yml#/components/schemas/Activity'
+ActivityAnswersPatchResponse:
+  description: successfully created or updated answers
+  content:
+    application/json:
+      schema:
+        type: object
+        required:
+          - answers
+          - blockVisibility
+        properties:
+          answers:
+            type: array
+            description: list of created or updated answer summaries
+            items:
+              type: object
+              required:
+                - stableId
+                - answerGuid
+              properties:
+                stableId:
+                  type: string
+                  description: question identifier that the answer is for
+                answerGuid:
+                  type: string
+                  description: identifier for the answer
+          blockVisibility:
+            type: array
+            description: list of updated block visibilities
+            items:
+              type: object
+              required:
+                - blockGuid
+                - shown
+              properties:
+                blockGuid:
+                  type: string
+                  description: identifier for the block
+                shown:
+                  type: boolean
+                  description: whether block is shown or not
+ActivityAnswersPutResponse:
+  description: successfully completed activity instance
+  content:
+    application/json:
+      schema:
+        type: object
+        required:
+          - workflow
+        properties:
+          workflow:
+            $ref: '../pepper.yml#/components/schemas/WorkflowNextSuggestion'
+AnnouncementsResponse:
+  description: the list of announcement message objects
+  content:
+    application/json:
+      schema:
+        type: array
+        items:
+          $ref: '../pepper.yml#/components/schemas/AnnouncementModel'
+BadPayloadResponse:
+  description: missing or malformed payload
+  content:
+    application/json:
+      schema:
+        $ref: '../pepper.yml#/components/schemas/Error.BadPayload'
+ConsentsResponse:
+  description: "available consents and state of their elections"
+  content:
+    application/json:
+      schema:
+        type: array
+        items:
+          $ref: '../pepper.yml#/components/schemas/ConsentModel'
+ConsentResponse:
+  description: "summary of all available consents and state of their elections"
+  content:
+    application/json:
+      schema:
+        type: array
+        items:
+          $ref: '../pepper.yml#/components/schemas/ConsentModel'
+CreateTempUserResponse:
+  description: information about newly created temporary user
+  content:
+    application/json:
+      schema:
+        type: object
+        required:
+          - userGuid
+          - expiresAt
+        properties:
+          userGuid:
+            type: string
+            description: the temporary user's guid
+          expiresAt:
+            type: string
+            description: timestamp of when this user will expire, in ISO-8601 UTC datetime format
+            example: 2019-04-18T14:09:37Z
+DrugSuggestionResponse:
+  description: list of suggested drugs
+  content:
+    application/json:
+      schema:
+        type: object
+        required:
+          - query
+          - results
+        properties:
+          query:
+            type: string
+            description: the string which was submitted for this set of suggestions. May be `null` if a query was not used.
+            nullable: true
+          results:
+            type: array
+            description: a list of `Drug` suggestions with a possible list of substring matches of the query within the drug's name
+            items:
+              $ref: '../pepper.yml#/components/schemas/Suggestion.Drug'
+ConsentErrorResponse:
+  description: failed to
+  content:
+    application/json:
+      schema:
+        $ref: '../pepper.yml#/components/schemas/Error.Consent'
+ErrorResponse:
+  description: general server error
+  content:
+    application/json:
+      schema:
+        $ref: '../pepper.yml#/components/schemas/Error'
+HealthcheckResponse:
+  description: The current server status
+  content:
+    application/json:
+      schema:
+        type: object
+        required:
+          - result
+          - resultExplanation
+        properties:
+          result:
+            type: integer
+            example: 0
+          resultExplanation:
+            type: string
+            example: Health check succeeded
+GetStudyParticipantsResponse:
+  description: a list of governed participants in a study for an operator
+  content:
+    application/json:
+      schema:
+        type: array
+        items:
+          $ref: '../pepper.yml#/components/schemas/Participant'
+PrequalifierResponse:
+  description: OK
+  content:
+    application/json:
+      schema:
+        $ref: '../pepper.yml#/components/schemas/PrequalifierModel'
+ActivityNotFoundErrorResponse:
+  description: "the requested activity was not"
+  content:
+    application/json:
+      schema:
+        $ref: '../pepper.yml#/components/schemas/Error.ActivityNotFound'
+ProfileGetErrorResponse:
+  description: failed to fetch the requested profile
+  content:
+    application/json:
+      schema:
+        $ref: '../pepper.yml#/components/schemas/Error.ProfileGet'
+ProfileUpdateErrorResponse:
+  description: failed to update the requested profile
+  content:
+    application/json:
+      schema:
+        $ref: '../pepper.yml#/components/schemas/Error.ProfileUpdate'
+ProfileResponse:
+  description: user profile
+  content:
+    application/json:
+      schema:
+        $ref: '../pepper.yml#/components/schemas/ProfileModel'
+RegisterResponse:
+  description: user's Pepper guid
+  content:
+    application/json:
+      schema:
+        type: object
+        required:
+          - ddpUserGuid
+        properties:
+          ddpUserGuid:
+            type: string
+            example: 21RSCVGN2I4NQJAQLU77
+RegisterBadPayloadResponse:
+  description: request payload is missing values or malformed
+  content:
+    application/json:
+      schema:
+        $ref: '../pepper.yml#/components/schemas/Error.BadPayload'
+RegisterNotFoundResponse:
+  description: either study or temporary user (if in request) is not found
+  content:
+    application/json:
+      schema:
+        $ref: '../pepper.yml#/components/schemas/Error.RegisterNotFound'
+RegisterNotValidResponse:
+  description: unable to upgrade temporary user due to it being expired or not supported
+  content:
+    application/json:
+      schema:
+        $ref: '../pepper.yml#/components/schemas/Error.RegisterNotValid'
+StudyDetailResponse:
+  description: detailed information for a study
+  content:
+    application/json:
+      schema:
+        $ref: '../pepper.yml#/components/schemas/Study.Detail'
+StudySummaryResponse:
+  description: summary information for a list of studies
+  content:
+    application/json:
+      schema:
+        type: array
+        items:
+          $ref: '../pepper.yml#/components/schemas/Study.Summary'
+StudyExitErrorResponse:
+  description: unable to create exit request, i.e. user has already made request or the study does not support exit requests
+  content:
+    application/json:
+      schema:
+        $ref: '../pepper.yml#/components/schemas/Error.StudyExit'
+CancersResponse:
+  description: a list of cancer names
+  content:
+    application/json:
+      schema:
+        type: array
+        items:
+          $ref: '../pepper.yml#/components/schemas/Cancer'
+UmbrellaNotFoundErrorResponse:
+  description: the requested study umbrella was not found
+  content:
+    application/json:
+      schema:
+        $ref: '../pepper.yml#/components/schemas/Error.UmbrellaNotFound'
+ProviderNotFoundError:
+  description: the requested medical provider was not found
+  content:
+    application/json:
+      schema:
+        $ref: '../pepper.yml#/components/schemas/Error.ProviderNotFound'
+MailingAddress:
+  description: a participant's mailing address
+  content:
+    application/json:
+      schema:
+        $ref: '../pepper.yml#/components/schemas/MailingAddress'
+MailingAddresses:
+  description: a list of mailing addresses for a participant
+  content:
+    application/json:
+      schema:
+        type: array
+        items:
+          $ref: '../pepper.yml#/components/schemas/MailingAddress'
+JoinMailingListBadPayloadError:
+  description: the caller did not send either umbrella id or study guid
+  content:
+    application/json:
+      schema:
+          $ref: '../pepper.yml#/components/schemas/Error.BadPayload'
+InstitutionSuggestion:
+  description: a list of institution suggestions
+  content:
+    application/json:
+      schema:
+        type: array
+        items:
+          $ref: '../pepper.yml#/components/schemas/Suggestion.Institution'
+MedicalProviderResponse:
+  description: successfully created a new medical provider
+  content:
+    application/json:
+      schema:
+        $ref: '../pepper.yml#/components/schemas/MedicalProvider'
+ParticipantStatusResponse:
+  description: info about the participant's samples and kits
+  content:
+    application/json:
+      schema:
+        $ref: '../pepper.yml#/components/schemas/ParticipantStatusTrackingInfo'
+ListMedicalProviders:
+  description: a list of a participant's saved medical providers
+  content:
+    application/json:
+      schema:
+        type: array
+        items:
+          $ref: '../pepper.yml#/components/schemas/MedicalProvider'
+StudyNotFoundErrorResponse:
+  description: the study is not found
+  content:
+    application/json:
+      schema:
+        $ref: '../pepper.yml#/components/schemas/Error.StudyNotFound'
+StudyPasswordRequirementsResponse:
+  description: an object describing constraints on the study password
+  content:
+    application/json:
+      schema:
+        $ref: '../pepper.yml#/components/schemas/StudyPasswordRequirements'
+UpdateUserLoginDataMalformedEmailOrEmailAlreadyExistsInAuth0ErrorResponse:
+  description: email is malformed or already exists in Auth0
+  content:
+    application/json:
+      schema:
+        $ref: '../pepper.yml#/components/schemas/Error'
+UpdateUserLoginDataTokenNotRecognizedByAuth0ErrorResponse:
+  description: the token is not recognized as valid by Auth0
+  content:
+    application/json:
+      schema:
+        $ref: '../pepper.yml#/components/schemas/Error'
+UpdateUserLoginDataPepperUserNotAssociatedWithAuth0UserErrorResponse:
+  description: the Pepper user is not associated with the Auth0 user
+  content:
+    application/json:
+      schema:
+        $ref: '../pepper.yml#/components/schemas/Error'
+UpdateUserLoginDataUserDoesntExistInPepperErrorResponse:
+  description: the user doesn't exist in Pepper
+  content:
+    application/json:
+      schema:
+        $ref: '../pepper.yml#/components/schemas/Error'
+UpdateUserLoginDataMalformedEmailErrorResponse:
+  description: email is blank or malformed and was rejected by Pepper
+  content:
+    application/json:
+      schema:
+        $ref: '../pepper.yml#/components/schemas/Error'
+UpdateUserLoginDataBlankPasswordErrorResponse:
+  description: password was blank and was rejected by Pepper
+  content:
+    application/json:
+      schema:
+        $ref: '../pepper.yml#/components/schemas/Error'
+UpdateUserLoginDataPasswordRequirementsNotMetErrorResponse:
+  description: the new password is too weak and was rejected by Auth0
+  content:
+    application/json:
+      schema:
+        $ref: '../pepper.yml#/components/schemas/Error'
+WorkflowQueryErrorResponse:
+  description: either `from` query parameter is missing or invalid
+  content:
+    application/json:
+      schema:
+        allOf:
+          - $ref: '../pepper.yml#/components/schemas/Error'
+          - type: object
+            properties:
+              code:
+                type: string
+                enum:
+                  - MISSING_FROM_PARAM
+                  - INVALID_FROM_PARAM
+WorkflowResponse:
+  description: the next state suggestion
+  content:
+    application/json:
+      schema:
+        $ref: '../pepper.yml#/components/schemas/WorkflowNextSuggestion'

@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="20181120-study-pdf-mapping-type-table">
+        <createTable tableName="study_pdf_mapping_type">
+            <column name="study_pdf_mapping_type_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="study_pdf_mapping_type_pk"/>
+            </column>
+            <column name="study_pdf_mapping_type_code" type="varchar(45)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="study_pdf_mapping_type_code_uk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20181120-study-pdf-mapping-table">
+        <createTable tableName="study_pdf_mapping">
+            <column name="study_pdf_mapping_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="study_pdf_mapping_pk"/>
+            </column>
+            <column name="umbrella_study_id" type="bigint">
+                <constraints nullable="false" references="umbrella_study(umbrella_study_id)"
+                             foreignKeyName="study_pdf_mapping_umbrella_study_fk"/>
+            </column>
+            <column name="study_pdf_mapping_type_id" type="bigint">
+                <constraints nullable="false" references="study_pdf_mapping_type(study_pdf_mapping_type_id)"
+                             foreignKeyName="study_pdf_mapping_study_pdf_mapping_type_fk"/>
+            </column>
+            <column name="pdf_document_configuration_id" type="bigint">
+                <constraints nullable="false" references="pdf_document_configuration(pdf_document_configuration_id)"
+                             foreignKeyName="study_pdf_mapping_pdf_document_configuration_fk"/>
+            </column>
+            <column name="study_activity_id" type="bigint">
+                <constraints nullable="false" references="study_activity(study_activity_id)"
+                             foreignKeyName="study_pdf_mapping_study_activity_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20181120-study-pdf-mapping-unique-constraint">
+        <addUniqueConstraint tableName="study_pdf_mapping" columnNames="umbrella_study_id, study_pdf_mapping_type_id"
+                             constraintName="study_pdf_mapping_study_mapping_type_uk"/>
+    </changeSet>
+
+</databaseChangeLog>

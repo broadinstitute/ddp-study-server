@@ -1,0 +1,60 @@
+{{$documentationHost := env "DOCS_PROXIED_HOST"}}
+{{$debug := env "DEBUG"}}
+{{$dir := env "DIR"}}
+{{$image := env "IMAGE"}}
+{{$no_syslog := env "NO_SYSLOG"}}
+
+sqlproxy:
+  image: broadinstitute/cloudsqlproxy:1.11_20180808
+  env_file:
+    - {{$dir}}/sqlproxy.env
+  volumes:
+    - {{$dir}}/sqlproxy-service-account.json:/etc/sqlproxy-service-account.json
+  restart: always
+
+backend:
+  image: broadinstitute/pepper-api-backend:{{$image}}
+  volumes:
+    - {{$dir}}/application.conf:/app/config/application.conf
+    - {{$dir}}/startup.sh:/app/startup.sh
+    - {{$dir}}/post_deploy_smoketest.sh:/app/post_deploy_smoketest.sh
+    - {{$dir}}/fc_keys/ddp-testing.json:/app/fc_keys/ddp-testing.json
+    - {{$dir}}/housekeeping-service-account.json:/app/housekeeping-service-account.json
+  environment:
+    - GOOGLE_APPLICATION_CREDENTIALS=/app/housekeeping-service-account.json
+  links:
+    - sqlproxy:sqlproxy
+{{if eq $debug "true"}}
+  ports:
+    - "9876:9876"
+{{end}}
+{{if ne $no_syslog "true"}}
+  log_driver: "syslog"
+{{end}}
+  command: [sh, /app/startup.sh, "{{$debug}}"]
+
+{{if ne $documentationHost ""}}
+documentation:
+  image: broadinstitute/pepper-docs:{{$image}}
+  {{if eq $debug "true"}}ports:
+    - 8080
+  {{end}}
+{{end}}
+
+nginx:
+  image: broadinstitute/pepper-nginx:{{$image}}
+  volumes:
+    - {{$dir}}/pepper-cert.crt:/app/config/pepper-cert.crt
+    - {{$dir}}/pepper-cert.key:/app/config/pepper-cert.key
+    - {{$dir}}/ddp.conf:/app/config/ddp.conf
+    - {{$dir}}/waf.conf:/app/config/waf.conf
+  links:
+    - backend:backend
+{{if ne $documentationHost ""}}    - documentation
+{{end}}
+  ports:
+    - "80:80"
+    - "443:443"
+{{if ne $no_syslog "true"}}
+  log_driver: "syslog"
+{{end}}

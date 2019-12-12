@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="20181205-add-mailing-address-state-column">
+        <addColumn tableName="mailing_address">
+            <column name="state" type="varchar(100)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20181205-add-temp-mailing-address-state-column">
+        <addColumn tableName="temp_mailing_address">
+            <column name="state" type="varchar(100)"/>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>

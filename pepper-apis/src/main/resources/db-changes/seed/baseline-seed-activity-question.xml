@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="baseline-seed-question-type">
+        <insert tableName="question_type">
+            <column name="question_type_code" value="AGREEMENT"/>
+        </insert>
+        <insert tableName="question_type">
+            <column name="question_type_code" value="BOOLEAN"/>
+        </insert>
+        <insert tableName="question_type">
+            <column name="question_type_code" value="COMPOSITE"/>
+        </insert>
+        <insert tableName="question_type">
+            <column name="question_type_code" value="DATE"/>
+        </insert>
+        <insert tableName="question_type">
+            <column name="question_type_code" value="PICKLIST"/>
+        </insert>
+        <insert tableName="question_type">
+            <column name="question_type_code" value="TEXT"/>
+        </insert>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-seed-question-validation-rule-type">
+        <insert tableName="validation_type">
+            <column name="validation_type_code" value="DATE_AFTER"/>
+        </insert>
+        <insert tableName="validation_type">
+            <column name="validation_type_code" value="DATE_BEFORE"/>
+        </insert>
+        <insert tableName="validation_type">
+            <column name="validation_type_code" value="DAY_REQUIRED"/>
+        </insert>
+        <insert tableName="validation_type">
+            <column name="validation_type_code" value="LENGTH"/>
+        </insert>
+        <insert tableName="validation_type">
+            <column name="validation_type_code" value="MONTH_REQUIRED"/>
+        </insert>
+        <insert tableName="validation_type">
+            <column name="validation_type_code" value="NUM_OPTIONS_SELECTED"/>
+        </insert>
+        <insert tableName="validation_type">
+            <column name="validation_type_code" value="REGEX"/>
+        </insert>
+        <insert tableName="validation_type">
+            <column name="validation_type_code" value="REQUIRED"/>
+        </insert>
+        <insert tableName="validation_type">
+            <column name="validation_type_code" value="YEAR_REQUIRED"/>
+        </insert>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-seed-date-question-render-mode">
+        <insert tableName="date_render_mode">
+            <column name="date_render_mode_code" value="PICKLIST"/>
+        </insert>
+        <insert tableName="date_render_mode">
+            <column name="date_render_mode_code" value="SINGLE_TEXT"/>
+        </insert>
+        <insert tableName="date_render_mode">
+            <column name="date_render_mode_code" value="TEXT"/>
+        </insert>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-seed-date-question-field-type">
+        <insert tableName="date_field_type">
+            <column name="date_field_type_code" value="DAY"/>
+        </insert>
+        <insert tableName="date_field_type">
+            <column name="date_field_type_code" value="MONTH"/>
+        </insert>
+        <insert tableName="date_field_type">
+            <column name="date_field_type_code" value="YEAR"/>
+        </insert>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-seed-picklist-question-select-mode">
+        <insert tableName="picklist_select_mode">
+            <column name="picklist_select_mode_code" value="MULTIPLE"/>
+        </insert>
+        <insert tableName="picklist_select_mode">
+            <column name="picklist_select_mode_code" value="SINGLE"/>
+        </insert>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-seed-picklist-question-render-mode">
+        <insert tableName="picklist_render_mode">
+            <column name="picklist_render_mode_code" value="CHECKBOX_LIST"/>
+        </insert>
+        <insert tableName="picklist_render_mode">
+            <column name="picklist_render_mode_code" value="DROPDOWN"/>
+        </insert>
+        <insert tableName="picklist_render_mode">
+            <column name="picklist_render_mode_code" value="LIST"/>
+        </insert>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-seed-text-question-input-type">
+        <insert tableName="text_question_input_type">
+            <column name="text_question_input_type_code" value="ESSAY"/>
+        </insert>
+        <insert tableName="text_question_input_type">
+            <column name="text_question_input_type_code" value="TEXT"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

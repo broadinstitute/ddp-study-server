@@ -1,0 +1,15 @@
+group JdbiCountry;
+
+queryPrimaryLanguageIdByCountryCode() ::= <<
+    select
+        l.language_code_id
+    from
+        country c,
+        country__language cl,
+        language_code l
+    where
+        c.country_id = cl.country_id
+        and cl.language_code_id = l.language_code_id
+        and cl.primary_language = 1
+        and c.country_code = :countryCode
+>>

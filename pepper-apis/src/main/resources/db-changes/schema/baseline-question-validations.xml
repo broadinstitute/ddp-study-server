@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="baseline-validation-type-table">
+        <createTable tableName="validation_type">
+            <column name="validation_type_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="validation_type_pk"/>
+            </column>
+            <column name="validation_type_code" type="varchar(80)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="validation_type_code_uk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-i18n-validation-msg-trans-table">
+        <createTable tableName="i18n_validation_msg_trans">
+            <column name="i18n_validation_msg_trans_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="i18n_validation_msg_trans_pk"/>
+            </column>
+            <column name="validation_type_id" type="bigint">
+                <constraints nullable="false" references="validation_type(validation_type_id)"
+                             foreignKeyName="i18n_vmt_validation_type_fk"/>
+            </column>
+            <column name="language_code_id" type="bigint">
+                <constraints nullable="false" references="language_code(language_code_id)"
+                             foreignKeyName="i18n_vmt_language_code_fk"/>
+            </column>
+            <column name="translation_text" type="varchar(500)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-i18n-validation-msg-trans-uk">
+        <addUniqueConstraint tableName="i18n_validation_msg_trans" columnNames="validation_type_id, language_code_id"
+                             constraintName="i18n_vmt_validation_type_language_code_uk"/>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-validation-table">
+        <createTable tableName="validation">
+            <column name="validation_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="validation_pk"/>
+            </column>
+            <column name="validation_type_id" type="bigint">
+                <constraints nullable="false" references="validation_type(validation_type_id)"
+                             foreignKeyName="validation_validation_type_fk"/>
+            </column>
+            <column name="correction_hint_template_id" type="bigint">
+                <constraints references="template(template_id)" foreignKeyName="validation_correction_hint_template_fk"/>
+            </column>
+            <column name="revision_id" type="bigint">
+                <constraints nullable="false" references="revision(revision_id)" foreignKeyName="validation_revision_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-question-validation-table">
+        <createTable tableName="question__validation">
+            <column name="question__validation_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="question__validation_pk"/>
+            </column>
+            <column name="question_id" type="bigint">
+                <constraints nullable="false" references="question(question_id)"
+                             foreignKeyName="question__validation_question_fk"/>
+            </column>
+            <column name="validation_id" type="bigint">
+                <constraints nullable="false" references="validation(validation_id)"
+                             foreignKeyName="question__validation_validation_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-question-validation-uk">
+        <addUniqueConstraint tableName="question__validation" columnNames="question_id, validation_id"
+                             constraintName="question__validation_uk"/>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-length-validation-table">
+        <createTable tableName="length_validation">
+            <column name="validation_id" type="bigint">
+                <constraints primaryKey="true" primaryKeyName="length_validation_pk"
+                             references="validation(validation_id)" foreignKeyName="length_validation_validation_fk"/>
+            </column>
+            <column name="min_length" type="int"/>
+            <column name="max_length" type="int"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-num-options-selected-validation-table">
+        <createTable tableName="num_options_selected_validation">
+            <column name="validation_id" type="bigint">
+                <constraints primaryKey="true" primaryKeyName="num_options_selected_validation_pk"
+                             references="validation(validation_id)" foreignKeyName="num_options_selected_validation_validation_fk"/>
+            </column>
+            <column name="min_selections" type="int"/>
+            <column name="max_selections" type="int"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-regex-validation-table">
+        <createTable tableName="regex_validation">
+            <column name="validation_id" type="bigint">
+                <constraints primaryKey="true" primaryKeyName="regex_validation_pk"
+                             references="validation(validation_id)" foreignKeyName="regex_validation_validation_fk"/>
+            </column>
+            <column name="regex_pattern" type="varchar(45)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-relative-date-validation-table">
+        <createTable tableName="relative_date_validation">
+            <column name="validation_id" type="bigint">
+                <constraints primaryKey="true" primaryKeyName="relative_date_validation_pk"
+                             references="validation(validation_id)" foreignKeyName="relative_date_validation_validation_fk"/>
+            </column>
+            <column name="full_date" type="date"/>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>

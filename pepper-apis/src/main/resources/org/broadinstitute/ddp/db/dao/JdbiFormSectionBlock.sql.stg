@@ -1,0 +1,23 @@
+group JdbiFormSectionBlock;
+
+queryOrderedFormBlockDtosBySectionIdsAndInstanceGuid() ::= <<
+select fsb.form_section_id,
+       bt.block_type_code,
+       b.block_id,
+       b.block_guid,
+       e.expression_text
+  from form_section__block as fsb
+  join revision as rev on rev.revision_id = fsb.revision_id
+  join block as b on b.block_id = fsb.block_id
+  join block_type as bt on bt.block_type_id = b.block_type_id
+  left join block__expression as be on be.block_id = b.block_id
+  left join expression as e on e.expression_id = be.expression_id
+  left join revision as be_rev on be_rev.revision_id = be.revision_id
+  join activity_instance as ai on ai.activity_instance_guid = :instanceGuid
+ where fsb.form_section_id in (\<sectionIds\>)
+   and rev.start_date \<= ai.created_at
+   and (rev.end_date is null or ai.created_at \< rev.end_date)
+   and (be.block__expression_id is null or
+       (be_rev.start_date \<= ai.created_at and (be_rev.end_date is null or ai.created_at \< be_rev.end_date)))
+ order by fsb.form_section_id asc, fsb.display_order asc
+>>

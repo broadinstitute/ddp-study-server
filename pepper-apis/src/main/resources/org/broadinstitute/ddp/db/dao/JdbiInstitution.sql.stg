@@ -1,0 +1,38 @@
+group JdbiInstitution;
+
+getSuggestionsByNamePattern() ::= <<
+select
+    distinct
+        i.name as name,
+        c.name as city,
+        csd.name as state
+from
+    institution i
+    join city c on i.city_id = c.city_id
+    join country_subnational_division csd on c.state_id = csd.country_subnational_division_id
+    left join institution__institution_alias iia on
+        iia.institution_id = i.institution_id
+    left join institution_alias ia on
+        ia.institution_alias_id = iia.institution_alias_id
+where
+    i.name like :namePattern or ia.alias like :namePattern
+order by
+    i.name
+>>
+
+getLimitedSuggestionsByAnchoredAndFreeNamePatterns() ::= <<
+select distinct i.name as name,
+       c.name as city,
+       csd.name as state
+  from institution i
+  join city c on i.city_id = c.city_id
+  join country_subnational_division csd on c.state_id = csd.country_subnational_division_id
+  left join institution__institution_alias iia on iia.institution_id = i.institution_id
+  left join institution_alias ia on ia.institution_alias_id = iia.institution_alias_id
+ where (i.name like :anchored
+       or i.name like :free
+       or ia.alias like :anchored
+       or ia.alias like :free)
+order by i.name like :anchored desc, i.name asc
+limit :limit
+>>

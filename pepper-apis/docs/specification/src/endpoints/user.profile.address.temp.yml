@@ -1,0 +1,49 @@
+parameters:
+  - in: path
+    name: user
+    required: true
+    description: "the user's unique identifier"
+    schema:
+      type: string
+  - in: path
+    name: instance
+    required: true
+    description: "the unique identifier of a specific instance of an activity"
+    schema:
+      type: string
+
+get:
+  operationId: getTemporaryMailingAddress
+  summary: fetch the temporary mailing address for a participant
+  description: Fetches the current temporary mailing address for a given participant and study, if one exists.
+  tags:
+    - Mailing Address
+  responses:
+    200:
+      $ref: '../pepper.yml#/components/responses/MailingAddress'
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'
+
+put:
+  operationId: updateTemporaryMailingAddress
+  description: update a participant's temporary mailing address
+  tags:
+    - Mailing Address
+  requestBody:
+    $ref: '../pepper.yml#/components/requestBodies/MailingAddress'
+  responses:
+    204:
+      description: The mailing address was successfully saved
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'
+
+delete:
+  operationId: deleteTemporaryMailingAddress
+  description: removed the temporary mailing address for a participant
+  tags:
+    - Mailing Address
+  responses:
+    204:
+      description: The mailing address was successfully deleted
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'

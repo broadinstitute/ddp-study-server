@@ -1,0 +1,179 @@
+group PexDao;
+
+queryLatestActivityInstanceStatusByUserGuidActivityCodeAndQuestionStableId() ::= <<
+select aist.activity_instance_status_type_code
+  from activity_instance as ai
+  join activity_instance_status as ais on ai.activity_instance_id = ais.activity_instance_id
+  join activity_instance_status_type as aist on ais.activity_instance_status_type_id = aist.activity_instance_status_type_id
+  join study_activity as sa on sa.study_activity_id = ai.study_activity_id
+  join umbrella_study as us on us.umbrella_study_id = sa.study_id
+  join user as u on u.user_id = ai.participant_id
+ where u.guid = :userGuid
+   and us.guid = :studyGuid
+   and sa.study_activity_code = :activityCode
+ order by ais.updated_at desc
+ limit 1
+>>
+
+queryQuestionTypeByUserInstanceAndStudyActivity() ::= <<
+select qt.question_type_code
+  from question as q
+  join question_type as qt on q.question_type_id = qt.question_type_id
+  join question_stable_code as qsc on q.question_stable_code_id = qsc.question_stable_code_id
+  join revision as rev on q.revision_id = rev.revision_id
+  join study_activity as sa on sa.study_activity_id = q.study_activity_id
+  join umbrella_study as us on sa.study_id = us.umbrella_study_id
+  join activity_instance as ai on ai.study_activity_id = sa.study_activity_id
+  join user as u on ai.participant_id = u.user_id
+ where u.guid = :userGuid
+   and us.guid = :studyGuid
+   and sa.study_activity_code = :activityCode
+   and qsc.stable_id = :stableId
+   and rev.start_date \<= ai.created_at
+   and (rev.end_date is null or ai.created_at \< rev.end_date)
+ limit 1
+>>
+
+queryLatestBoolAnswerByUserGuidActivityCodeAndQuestionStableId() ::= <<
+select ba.answer
+  from boolean_answer as ba
+  join answer as a on ba.answer_id = a.answer_id
+  join question as q on a.question_id = q.question_id
+  join question_stable_code as qsc on q.question_stable_code_id = qsc.question_stable_code_id
+  join activity_instance as ai on a.activity_instance_id = ai.activity_instance_id
+  join study_activity as sa on ai.study_activity_id = sa.study_activity_id
+  join user as u on ai.participant_id = u.user_id
+ where u.guid = :userGuid
+   and sa.study_activity_code = :activityCode
+   and sa.study_id = :studyId
+   and qsc.stable_id = :stableId
+ order by ai.created_at desc limit 1
+>>
+
+queryBoolAnswerByStableIdAndActivityInstance() ::= <<
+select ba.answer
+    from boolean_answer as ba
+    join answer as a on ba.answer_id = a.answer_id
+    join question as q on a.question_id = q.question_id
+    join question_stable_code as qsc on q.question_stable_code_id = qsc.question_stable_code_id
+    join activity_instance as ai on ai.activity_instance_id = a.activity_instance_id
+   where ai.activity_instance_guid = :activityInstanceGuid
+     and qsc.stable_id = :stableId
+>>
+
+queryLatestTextAnswerByUserGuidActivityCodeAndQuestionStableId() ::= <<
+select ta.answer
+  from text_answer as ta
+  join answer as a on ta.answer_id = a.answer_id
+  join question as q on a.question_id = q.question_id
+  join question_stable_code as qsc on q.question_stable_code_id = qsc.question_stable_code_id
+  join activity_instance as ai on a.activity_instance_id = ai.activity_instance_id
+  join study_activity as sa on ai.study_activity_id = sa.study_activity_id
+  join user as u on ai.participant_id = u.user_id
+ where u.guid = :userGuid
+   and sa.study_activity_code = :activityCode
+   and sa.study_id = :studyId
+   and qsc.stable_id = :stableId
+ order by ai.created_at desc limit 1
+>>
+
+queryTextAnswerByStableIdAndActivityInstance() ::= <<
+select ta.answer
+    from text_answer as ta
+    join answer as a on ta.answer_id = a.answer_id
+    join question as q on a.question_id = q.question_id
+    join question_stable_code as qsc on q.question_stable_code_id = qsc.question_stable_code_id
+    join activity_instance as ai on ai.activity_instance_id = a.activity_instance_id
+   where ai.activity_instance_guid = :activityInstanceGuid
+     and qsc.stable_id = :stableId
+>>
+
+queryLatestDateAnswerByUserGuidActivityCodeAndQuestionStableId() ::= <<
+select da.year, da.month, da.day
+  from date_answer as da
+  join answer as a on da.answer_id = a.answer_id
+  join question as q on a.question_id = q.question_id
+  join question_stable_code as qsc on q.question_stable_code_id = qsc.question_stable_code_id
+  join activity_instance as ai on a.activity_instance_id = ai.activity_instance_id
+  join study_activity as sa on ai.study_activity_id = sa.study_activity_id
+  join user as u on ai.participant_id = u.user_id
+ where u.guid = :userGuid
+   and sa.study_activity_code = :activityCode
+   and sa.study_id = :studyId
+   and qsc.stable_id = :stableId
+ order by ai.created_at desc limit 1
+>>
+
+queryDateAnswerByStableIdAndActivityInstance() ::= <<
+select da.year, da.month, da.day
+  from date_answer as da
+  join answer as a on da.answer_id = a.answer_id
+  join question as q on a.question_id = q.question_id
+  join question_stable_code as qsc on q.question_stable_code_id = qsc.question_stable_code_id
+  join activity_instance as ai on ai.activity_instance_id = a.activity_instance_id
+ where ai.activity_instance_guid = :activityInstanceGuid
+   and qsc.stable_id = :stableId
+>>
+
+queryLatestPicklistAnswersAsSelectedOptionGroupsByUserInstanceAndStableId() ::= <<
+select group_concat(po.picklist_option_stable_id separator ',') as selected_option_stable_ids
+  from answer as a
+  left join picklist_option__answer as poa on poa.answer_id = a.answer_id
+  left join picklist_option as po on po.picklist_option_id = poa.picklist_option_id
+  join question as q on a.question_id = q.question_id
+  join question_stable_code as qsc on q.question_stable_code_id = qsc.question_stable_code_id
+  join activity_instance as ai on a.activity_instance_id = ai.activity_instance_id
+  join study_activity as sa on ai.study_activity_id = sa.study_activity_id
+  join user as u on ai.participant_id = u.user_id
+ where u.guid = :userGuid
+   and sa.study_activity_code = :activityCode
+   and sa.study_id = :studyId
+   and qsc.stable_id = :stableId
+ group by a.answer_id, a.created_at, ai.created_at, ai.activity_instance_id
+ order by ai.created_at desc, a.created_at desc limit 1
+>>
+
+querySpecificPicklistAnswersAsSelectedOptionGroupsByStableIdAndActivityInstance() ::= <<
+select group_concat(po.picklist_option_stable_id separator ',') as selected_option_stable_ids
+  from answer as a
+  left join picklist_option__answer as poa on poa.answer_id = a.answer_id
+  left join picklist_option as po on po.picklist_option_id = poa.picklist_option_id
+  join question as q on a.question_id = q.question_id
+  join question_stable_code as qsc on q.question_stable_code_id = qsc.question_stable_code_id
+  join activity_instance as ai on ai.activity_instance_id = a.activity_instance_id
+ where ai.activity_instance_guid = :activityInstanceGuid
+   and qsc.stable_id = :stableId
+>>
+
+queryLatestNumericIntegerAnswerByUserGuidActivityCodeAndQuestionStableId() ::= <<
+select na.int_value
+  from numeric_answer as na
+  join answer as a on na.answer_id = a.answer_id
+  join question as q on a.question_id = q.question_id
+  join question_stable_code as qsc on q.question_stable_code_id = qsc.question_stable_code_id
+  join numeric_question as nq on nq.question_id = q.question_id
+  join numeric_type as nt on nt.numeric_type_id = nq.numeric_type_id
+  join activity_instance as ai on a.activity_instance_id = ai.activity_instance_id
+  join study_activity as sa on ai.study_activity_id = sa.study_activity_id
+  join user as u on ai.participant_id = u.user_id
+ where u.guid = :userGuid
+   and sa.study_activity_code = :activityCode
+   and sa.study_id = :studyId
+   and qsc.stable_id = :stableId
+   and nt.numeric_type_code = 'INTEGER'
+ order by ai.created_at desc limit 1
+>>
+
+queryNumericIntegerAnswerByStableIdAndActivityInstance() ::= <<
+select na.answer
+  from numeric_answer as na
+  join answer as a on na.answer_id = a.answer_id
+  join question as q on a.question_id = q.question_id
+  join question_stable_code as qsc on q.question_stable_code_id = qsc.question_stable_code_id
+  join numeric_question as nq on nq.question_id = q.question_id
+  join numeric_type as nt on nt.numeric_type_id = nq.numeric_type_id
+  join activity_instance as ai on ai.activity_instance_id = a.activity_instance_id
+ where ai.activity_instance_guid = :activityInstanceGuid
+   and qsc.stable_id = :stableId
+   and nt.numeric_type_code = 'INTEGER'
+>>

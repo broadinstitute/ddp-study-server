@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="mocana" id="20181115-create-i18n_study_activity_subtitle_trans-table">
+        <createTable tableName="i18n_study_activity_subtitle_trans">
+            <column name="i18n_study_activity_subtitle_trans_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="i18n_study_activity_subtitle_trans_pk"/>
+            </column>
+            <column name="study_activity_id" type="bigint">
+                <constraints nullable="false" references="study_activity(study_activity_id)" foreignKeyName="i18n_sast_study_activity_fk"/>
+            </column>
+            <column name="language_code_id" type="bigint">
+                <constraints nullable="false" references="language_code(language_code_id)" foreignKeyName="i18n_sast_language_code_fk"/>
+            </column>
+            <column name="translation_text" type="varchar(500)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addUniqueConstraint tableName="i18n_study_activity_subtitle_trans" columnNames="study_activity_id, language_code_id"
+                             constraintName="stdy_act_trans_lang_code_uk"/>
+    </changeSet>
+
+</databaseChangeLog>

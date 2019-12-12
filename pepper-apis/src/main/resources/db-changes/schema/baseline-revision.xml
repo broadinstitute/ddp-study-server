@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="baseline-revision-table">
+        <createTable tableName="revision">
+            <column name="revision_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="revision_pk"/>
+            </column>
+            <column name="start_date" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="end_date" type="bigint"/>
+            <column name="changed_by_user_id" type="bigint">
+                <constraints nullable="false" references="user(user_id)" foreignKeyName="revision_changed_by_user_fk"/>
+            </column>
+            <column name="change_reason" type="varchar(1000)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="terminated_by_user_id" type="bigint">
+                <constraints references="user(user_id)" foreignKeyName="revision_terminated_by_user_fk"/>
+            </column>
+            <column name="terminated_reason" type="varchar(1000)"/>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>

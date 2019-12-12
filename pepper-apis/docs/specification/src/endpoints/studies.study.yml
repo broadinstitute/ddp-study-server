@@ -1,0 +1,18 @@
+get:
+  operationId: getStudyDetail
+  tags:
+    - Studies
+  summary: detailed information on a study
+  description: returns a detailed view
+  parameters:
+    - in: path
+      name: study
+      required: true
+      description: the unique identifier for the study
+      schema:
+        type: string
+  responses:
+    200:
+      $ref: '../pepper.yml#/components/responses/StudyDetailResponse'
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'

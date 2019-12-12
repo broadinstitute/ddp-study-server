@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="20191001-add-us-territories-to-country">
+        <insert tableName="country">
+            <column name="country_code" value="pr"/>
+            <column name="country_name" value="Puerto Rico"/>
+        </insert>
+        <insert tableName="country">
+            <column name="country_code" value="gu"/>
+            <column name="country_name" value="Guam"/>
+        </insert>
+        <insert tableName="country">
+            <column name="country_code" value="vi"/>
+            <column name="country_name" value="U.S. Virgin Islands"/>
+        </insert>
+        <insert tableName="country">
+            <column name="country_code" value="mp"/>
+            <column name="country_name" value="Northern Mariana Islands"/>
+        </insert>
+        <insert tableName="country">
+            <column name="country_code" value="as"/>
+            <column name="country_name" value="American Samoa"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

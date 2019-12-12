@@ -1,0 +1,416 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="baseline-seed-country">
+        <insert tableName="country">
+            <column name="country_code" value="us"/>
+            <column name="country_name" value="United States of America"/>
+        </insert>
+        <insert tableName="country">
+            <column name="country_code" value="ru"/>
+            <column name="country_name" value="Russian Federation"/>
+        </insert>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-seed-country-language">
+        <insert tableName="country__language">
+            <column name="country_id" valueComputed="(select country_id from country where country_code = 'us')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'en')"/>
+            <column name="official_language" valueBoolean="true"/>
+            <column name="primary_language" valueBoolean="true"/>
+        </insert>
+        <insert tableName="country__language">
+            <column name="country_id" valueComputed="(select country_id from country where country_code = 'ru')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'ru')"/>
+            <column name="official_language" valueBoolean="true"/>
+            <column name="primary_language" valueBoolean="true"/>
+        </insert>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-seed-country-address-info">
+        <insert tableName="country_address_info">
+            <column name="name" value="Canada"/>
+            <column name="code" value="CA"/>
+            <column name="subnational_division_type_label" value="Province"/>
+            <column name="postal_code_label" value="Postal Code"/>
+            <column name="postal_code_regex" value="[ABCEGHJKLMNPRSTVXY]\d[ABCEGHJKLMNPRSTVWXYZ]( )?\d[ABCEGHJKLMNPRSTVWXYZ]\d"/>
+            <column name="state_code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="United States"/>
+            <column name="code" value="US"/>
+            <column name="subnational_division_type_label" value="State"/>
+            <column name="postal_code_label" value="ZIP"/>
+            <column name="postal_code_regex" value="[0-9]{5}(-[0-9]{4})?"/>
+            <column name="state_code"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="American Samoa"/>
+            <column name="code" value="AS"/>
+            <column name="subnational_division_type_label"/>
+            <column name="postal_code_label" value="ZIP"/>
+            <column name="postal_code_regex" value="[0-9]{5}(-[0-9]{4})?"/>
+            <column name="state_code" value="AS"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Northern Mariana Islands"/>
+            <column name="code" value="MP"/>
+            <column name="subnational_division_type_label"/>
+            <column name="postal_code_label" value="ZIP"/>
+            <column name="postal_code_regex" value="[0-9]{5}(-[0-9]{4})?"/>
+            <column name="state_code" value="MP"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Puerto Rico"/>
+            <column name="code" value="PR"/>
+            <column name="subnational_division_type_label"/>
+            <column name="postal_code_label" value="ZIP"/>
+            <column name="postal_code_regex" value="[0-9]{5}(-[0-9]{4})?"/>
+            <column name="state_code" value="PR"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="United States Minor Outlying Islands"/>
+            <column name="code" value="UM"/>
+            <column name="subnational_division_type_label"/>
+            <column name="postal_code_label" value="ZIP"/>
+            <column name="postal_code_regex" value="[0-9]{5}(-[0-9]{4})?"/>
+            <column name="state_code" value="UM"/>
+        </insert>
+        <insert tableName="country_address_info">
+            <column name="name" value="Virgin Islands, U.S."/>
+            <column name="code" value="VI"/>
+            <column name="subnational_division_type_label"/>
+            <column name="postal_code_label" value="ZIP"/>
+            <column name="postal_code_regex" value="[0-9]{5}(-[0-9]{4})?"/>
+            <column name="state_code" value="VI"/>
+        </insert>
+    </changeSet>
+
+    <changeSet author="yufeng" id="baseline-seed-country-subnational-division">
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'CA')"/>
+            <column name="name" value="Alberta"/>
+            <column name="code" value="AB"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'CA')"/>
+            <column name="name" value="British Columbia"/>
+            <column name="code" value="BC"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'CA')"/>
+            <column name="name" value="Manitoba"/>
+            <column name="code" value="MB"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'CA')"/>
+            <column name="name" value="New Brunswick"/>
+            <column name="code" value="NB"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'CA')"/>
+            <column name="name" value="Newfoundland and Labrador"/>
+            <column name="code" value="NL"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'CA')"/>
+            <column name="name" value="Northwest Territories"/>
+            <column name="code" value="NT"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'CA')"/>
+            <column name="name" value="Nova Scotia"/>
+            <column name="code" value="NS"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'CA')"/>
+            <column name="name" value="Nunavut"/>
+            <column name="code" value="NU"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'CA')"/>
+            <column name="name" value="Ontario"/>
+            <column name="code" value="ON"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'CA')"/>
+            <column name="name" value="Prince Edward Island"/>
+            <column name="code" value="PE"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'CA')"/>
+            <column name="name" value="Quebec"/>
+            <column name="code" value="QC"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'CA')"/>
+            <column name="name" value="Saskatchewan"/>
+            <column name="code" value="SK"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'CA')"/>
+            <column name="name" value="Yukon"/>
+            <column name="code" value="YT"/>
+        </insert>
+
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'US')"/>
+            <column name="name" value="Alabama"/>
+            <column name="code" value="AL"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'US')"/>
+            <column name="name" value="Alaska"/>
+            <column name="code" value="AK"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'US')"/>
+            <column name="name" value="Arizona"/>
+            <column name="code" value="AZ"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'US')"/>
+            <column name="name" value="Arkansas"/>
+            <column name="code" value="AR"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'US')"/>
+            <column name="name" value="California"/>
+            <column name="code" value="CA"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'US')"/>
+            <column name="name" value="Colorado"/>
+            <column name="code" value="CO"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'US')"/>
+            <column name="name" value="Connecticut"/>
+            <column name="code" value="CT"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'US')"/>
+            <column name="name" value="Delaware"/>
+            <column name="code" value="DE"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'US')"/>
+            <column name="name" value="District of Columbia"/>
+            <column name="code" value="DC"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'US')"/>
+            <column name="name" value="Florida"/>
+            <column name="code" value="FL"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'US')"/>
+            <column name="name" value="Georgia"/>
+            <column name="code" value="GA"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'US')"/>
+            <column name="name" value="Hawaii"/>
+            <column name="code" value="HI"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'US')"/>
+            <column name="name" value="Idaho"/>
+            <column name="code" value="ID"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'US')"/>
+            <column name="name" value="Illinois"/>
+            <column name="code" value="IL"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'US')"/>
+            <column name="name" value="Indiana"/>
+            <column name="code" value="IN"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'US')"/>
+            <column name="name" value="Iowa"/>
+            <column name="code" value="IA"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'US')"/>
+            <column name="name" value="Kansas"/>
+            <column name="code" value="KS"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'US')"/>
+            <column name="name" value="Kentucky"/>
+            <column name="code" value="KY"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'US')"/>
+            <column name="name" value="Louisiana"/>
+            <column name="code" value="LA"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'US')"/>
+            <column name="name" value="Maine"/>
+            <column name="code" value="ME"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'US')"/>
+            <column name="name" value="Maryland"/>
+            <column name="code" value="MD"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'US')"/>
+            <column name="name" value="Massachusetts"/>
+            <column name="code" value="MA"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'US')"/>
+            <column name="name" value="Michigan"/>
+            <column name="code" value="MI"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'US')"/>
+            <column name="name" value="Minnesota"/>
+            <column name="code" value="MN"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'US')"/>
+            <column name="name" value="Mississippi"/>
+            <column name="code" value="MS"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'US')"/>
+            <column name="name" value="Missouri"/>
+            <column name="code" value="MO"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'US')"/>
+            <column name="name" value="Montana"/>
+            <column name="code" value="MT"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'US')"/>
+            <column name="name" value="Nebraska"/>
+            <column name="code" value="NE"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'US')"/>
+            <column name="name" value="Nevada"/>
+            <column name="code" value="NV"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'US')"/>
+            <column name="name" value="New Hampshire"/>
+            <column name="code" value="NH"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'US')"/>
+            <column name="name" value="New Jersey"/>
+            <column name="code" value="NJ"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'US')"/>
+            <column name="name" value="New Mexico"/>
+            <column name="code" value="NM"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'US')"/>
+            <column name="name" value="New York"/>
+            <column name="code" value="NY"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'US')"/>
+            <column name="name" value="North Carolina"/>
+            <column name="code" value="NC"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'US')"/>
+            <column name="name" value="North Dakota"/>
+            <column name="code" value="ND"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'US')"/>
+            <column name="name" value="Ohio"/>
+            <column name="code" value="OH"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'US')"/>
+            <column name="name" value="Oklahoma"/>
+            <column name="code" value="OK"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'US')"/>
+            <column name="name" value="Oregon"/>
+            <column name="code" value="OR"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'US')"/>
+            <column name="name" value="Pennsylvania"/>
+            <column name="code" value="PA"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'US')"/>
+            <column name="name" value="Rhode Island"/>
+            <column name="code" value="RI"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'US')"/>
+            <column name="name" value="South Carolina"/>
+            <column name="code" value="SC"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'US')"/>
+            <column name="name" value="South Dakota"/>
+            <column name="code" value="SD"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'US')"/>
+            <column name="name" value="Tennessee"/>
+            <column name="code" value="TN"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'US')"/>
+            <column name="name" value="Texas"/>
+            <column name="code" value="TX"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'US')"/>
+            <column name="name" value="Utah"/>
+            <column name="code" value="UT"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'US')"/>
+            <column name="name" value="Vermont"/>
+            <column name="code" value="VT"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'US')"/>
+            <column name="name" value="Virginia"/>
+            <column name="code" value="VA"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'US')"/>
+            <column name="name" value="Washington"/>
+            <column name="code" value="WA"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'US')"/>
+            <column name="name" value="West Virginia"/>
+            <column name="code" value="WV"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'US')"/>
+            <column name="name" value="Wisconsin"/>
+            <column name="code" value="WI"/>
+        </insert>
+        <insert tableName="country_subnational_division">
+            <column name="country_address_info_id" valueComputed="(select country_address_info_id from country_address_info where code = 'US')"/>
+            <column name="name" value="Wyoming"/>
+            <column name="code" value="WY"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

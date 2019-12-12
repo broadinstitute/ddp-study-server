@@ -1,0 +1,22 @@
+group JdbiBlockNesting;
+
+queryOrderedNestedFormBlockDtosByBlockIdAndInstanceGuid() ::= <<
+select bt.block_type_code,
+       nested.block_id,
+       nested.block_guid,
+       e.expression_text
+  from block_nesting bn
+  join block as nested on nested.block_id = bn.nested_block_id
+  join block_type as bt on bt.block_type_id = nested.block_type_id
+  join revision as rev on rev.revision_id = bn.revision_id
+  left join block__expression as be on be.block_id = nested.block_id
+  left join expression as e on e.expression_id = be.expression_id
+  left join revision as be_rev on be_rev.revision_id = be.revision_id
+  join activity_instance as ai on ai.activity_instance_guid = :instanceGuid
+ where bn.parent_block_id = :blockId
+   and rev.start_date \<= ai.created_at
+   and (rev.end_date is null or ai.created_at \< rev.end_date)
+   and (be.block__expression_id is null or
+       (be_rev.start_date \<= ai.created_at and (be_rev.end_date is null or ai.created_at \< be_rev.end_date)))
+ order by bn.display_order asc
+>>

@@ -1,0 +1,1352 @@
+{
+  "study": {
+    "guid": "cmi-mbc",
+    "survey": [
+      {
+        "name": "aboutyousurvey",
+        "activity_code": "ABOUTYOU",
+        "question_answer_stables": [
+          {
+            "name": "diagnosis_date",
+            "type": "Date",
+            "subelements": [
+              {
+                "name": "year",
+                "type": "integer"
+              },
+              {
+                "name": "month",
+                "type": "integer"
+              }
+            ],
+            "stable_id": "DIAGNOSIS_DATE"
+          },
+          {
+            "name": "mets_date",
+            "type": "Date",
+            "subelements": [
+              {
+                "name": "year",
+                "type": "integer"
+              },
+              {
+                "name": "month",
+                "type": "integer"
+              }
+            ],
+            "stable_id": "ADVANCED_DIAGNOSIS_DATE"
+          },
+          {
+            "name": "last_bx",
+            "type": "Date",
+            "subelements": [
+              {
+                "name": "year",
+                "type": "integer"
+              },
+              {
+                "name": "month",
+                "type": "integer"
+              }
+            ],
+            "stable_id": "LAST_BIOPSY"
+          },
+          {
+            "name": "race",
+            "type": "Picklist",
+            "source_type": "string",
+            "options": [
+              {
+                "name": "AMERICAN_INDIAN",
+                "type": "integer"
+              },
+              {
+                "name": "JAPANESE",
+                "type": "integer"
+              },
+              {
+                "name": "CHINESE",
+                "type": "integer"
+              },
+              {
+                "name": "OTHER_EAST_ASIAN",
+                "type": "integer"
+              },
+              {
+                "name": "SOUTH_EAST_ASIAN",
+                "type": "integer"
+              },
+              {
+                "name": "BLACK",
+                "type": "integer"
+              },
+              {
+                "name": "NATIVE_HAWAIIAN",
+                "type": "integer"
+              },
+              {
+                "name": "WHITE",
+                "type": "integer"
+              },
+              {
+                "name": "PREFER_NOT_ANSWER",
+                "type": "integer"
+              },
+              {
+                "name": "OTHER",
+                "text": "OTHER_TEXT",
+                "type": "string"
+              }
+            ],
+            "stable_id": "RACE"
+          },
+          {
+            "name": "birth_year",
+            "type": "Date",
+            "source_type": "string",
+            "format": "yyyy",
+            "stable_id": "BIRTH_YEAR"
+          },
+          {
+            "name": "country",
+            "type": "Picklist",
+            "source_type": "string",
+            "options": null,
+            "stable_id": "COUNTRY"
+          },
+          {
+            "name": "postal_code",
+            "type": "string",
+            "stable_id": "POSTAL_CODE"
+          },
+          {
+            "name": "therapies_list",
+            "type": "Composite",
+            "children": [
+              {
+                "name": "therapies_two_years_list",
+                "type": "string",
+                "stable_id": "THERAPY_NAME"
+              }
+            ],
+            "stable_id": "THERAPIES_LIST"
+          },
+          {
+            "name": "worked_therapies_list",
+            "type": "Composite",
+            "children": [
+              {
+                "name": "extraordinary_therapies_list",
+                "type": "string",
+                "stable_id": "WORKED_THERAPY_NAME"
+              }
+            ],
+            "stable_id": "WORKED_THERAPIES_LIST"
+          },
+          {
+            "name": "extraordinary_therapies_notes",
+            "type": "string",
+            "stable_id": "WORKED_THERAPIES_NOTE"
+          },
+          {
+            "name": "other_comments",
+            "type": "string",
+            "stable_id": "OTHER_COMMENTS"
+          },
+          {
+            "name": "heard_from",
+            "type": "string",
+            "stable_id": "HEARD_FROM"
+          },
+          {
+            "name": "HER2_status",
+            "type": "Picklist",
+            "source_type": "string",
+            "options": [
+              {
+                "name": "yes",
+                "type": "integer"
+              },
+              {
+                "name": "no",
+                "type": "integer"
+              },
+              {
+                "name": "dk",
+                "type": "integer"
+              }
+            ],
+            "stable_id": "HER2_POSITIVE"
+          },
+          {
+            "name": "extraordinary_therapies_yndk",
+            "type": "Picklist",
+            "source_type": "string",
+            "options": [
+              {
+                "name": "yes",
+                "type": "integer"
+              },
+              {
+                "name": "no",
+                "type": "integer"
+              },
+              {
+                "name": "dk",
+                "type": "integer"
+              }
+            ],
+            "stable_id": "WORKED_THERAPIES"
+          },
+          {
+            "name": "triple_neg_status",
+            "type": "Picklist",
+            "source_type": "string",
+            "options": [
+              {
+                "name": "yes",
+                "type": "integer"
+              },
+              {
+                "name": "no",
+                "type": "integer"
+              },
+              {
+                "name": "dk",
+                "type": "integer"
+              }
+            ],
+            "stable_id": "TRIPLE_NEGATIVE"
+          },
+          {
+            "name": "therapies_two_years_bool",
+            "type": "Picklist",
+            "source_type": "string",
+            "options": [
+              {
+                "name": "yes",
+                "type": "integer"
+              },
+              {
+                "name": "no",
+                "type": "integer"
+              },
+              {
+                "name": "dk",
+                "type": "integer"
+              }
+            ],
+            "stable_id": "THERAPIES"
+          },
+          {
+            "name": "hispanic",
+            "type": "Picklist",
+            "source_type": "string",
+            "options": [
+              {
+                "name": "yes",
+                "type": "integer"
+              },
+              {
+                "name": "no",
+                "type": "integer"
+              },
+              {
+                "name": "dk",
+                "type": "integer"
+              }
+            ],
+            "stable_id": "HISPANIC"
+          },
+          {
+            "name": "inflam_status",
+            "type": "Picklist",
+            "source_type": "string",
+            "options": [
+              {
+                "name": "yes",
+                "type": "integer"
+              },
+              {
+                "name": "no",
+                "type": "integer"
+              },
+              {
+                "name": "dk",
+                "type": "integer"
+              }
+            ],
+            "stable_id": "INFLAMMATORY"
+          },
+          {
+            "name": "horm_rec_status",
+            "type": "Picklist",
+            "source_type": "string",
+            "options": [
+              {
+                "name": "yes",
+                "type": "integer"
+              },
+              {
+                "name": "no",
+                "type": "integer"
+              },
+              {
+                "name": "dk",
+                "type": "integer"
+              }
+            ],
+            "stable_id": "HR_POSITIVE"
+          },
+          {
+            "name": "ddp_created",
+            "type": "Date",
+            "format": "yyyy-MM-dd'T'HH:mm:ss'Z'",
+            "stable_id": null
+          },
+          {
+            "name": "ddp_lastupdated",
+            "type": "Date",
+            "format": "yyyy-MM-dd'T'HH:mm:ss'Z'",
+            "stable_id": null
+          },
+          {
+            "name": "ddp_firstcompleted",
+            "type": "Date",
+            "format": "yyyy-MM-dd'T'HH:mm:ss'Z'",
+            "stable_id": null
+          },
+          {
+            "name": "survey_status",
+            "type": "string",
+            "stable_id": null
+          }
+        ]
+      },
+      {
+        "name": "releasesurvey",
+        "activity_code": "TISSUERELEASE",
+        "question_answer_stables": [
+          {
+            "name": "agreement.agree",
+            "type": "Agreement",
+            "source_type": "integer",
+            "stable_id": "TISSUERELEASE_AGREEMENT"
+          },
+          {
+            "name": "initial_biopsy_institution",
+            "type": "string",
+            "stable_id": null
+          },
+          {
+            "name": "initial_biopsy_city",
+            "type": "string",
+            "stable_id": null
+          },
+          {
+            "name": "initial_biopsy_state",
+            "type": "string",
+            "stable_id": null
+          },
+          {
+            "name": "ddp_created",
+            "type": "Date",
+            "format": "yyyy-MM-dd'T'HH:mm:ss'Z'",
+            "stable_id": null
+          },
+          {
+            "name": "ddp_lastupdated",
+            "type": "Date",
+            "format": "yyyy-MM-dd'T'HH:mm:ss'Z'",
+            "stable_id": null
+          },
+          {
+            "name": "ddp_firstcompleted",
+            "type": "Date",
+            "format": "yyyy-MM-dd'T'HH:mm:ss'Z'",
+            "stable_id": null
+          },
+          {
+            "name": "datstat.submissionid",
+            "type": "string",
+            "stable_id": null
+          },
+          {
+            "name": "datstat.sessionid",
+            "type": "string",
+            "stable_id": null
+          },
+          {
+            "name": "datstat.submissionstatus",
+            "type": "integer",
+            "stable_id": null
+          },
+          {
+            "name": "surveyversion",
+            "type": "string",
+            "stable_id": null
+          },
+          {
+            "name": "street1",
+            "type": "string",
+            "stable_id": null
+          },
+          {
+            "name": "street2",
+            "type": "string",
+            "stable_id": null
+          },
+          {
+            "name": "city",
+            "type": "string",
+            "stable_id": null
+          },
+          {
+            "name": "state",
+            "type": "string",
+            "stable_id": null
+          },
+          {
+            "name": "postal_code",
+            "type": "string",
+            "stable_id": null
+          },
+          {
+            "name": "phone_number",
+            "type": "string",
+            "stable_id": null
+          },
+          {
+            "name": "survey_status",
+            "type": "string",
+            "stable_id": null
+          }
+        ],
+        "physician_list": [
+          "physicianid",
+          "name",
+          "institution",
+          "streetaddress",
+          "city",
+          "state",
+          "zipcode",
+          "phonenumber"
+        ],
+        "institution_list": [
+          "institutionid",
+          "institution",
+          "city",
+          "state"
+        ]
+      },
+      {
+        "name": "bdreleasesurvey",
+        "activity_code": "BLOODRELEASE",
+        "question_answer_stables": [
+          {
+            "name": "fullname",
+            "type": "string",
+            "stable_id": "BLOODRELEASE_FULLNAME"
+          },
+          {
+            "name": "ddp_created",
+            "type": "Date",
+            "format": "yyyy-MM-dd'T'HH:mm:ss'Z'",
+            "stable_id": null
+          },
+          {
+            "name": "ddp_lastupdated",
+            "type": "Date",
+            "format": "yyyy-MM-dd'T'HH:mm:ss'Z'",
+            "stable_id": null
+          },
+          {
+            "name": "ddp_firstcompleted",
+            "type": "Date",
+            "format": "yyyy-MM-dd'T'HH:mm:ss'Z'",
+            "stable_id": null
+          },
+          {
+            "name": "survey_status",
+            "type": "string",
+            "stable_id": null
+          }
+        ],
+        "legacy_fields": [
+        ],
+        "physician_list": [
+          "name",
+          "institution",
+          "streetaddress",
+          "city",
+          "state",
+          "zipcode",
+          "phonenumber",
+          "physicianid"
+        ]
+      },
+      {
+        "name": "consentsurvey",
+        "activity_code": "CONSENT",
+        "question_answer_stables": [
+          {
+            "name": "consent_blood",
+            "type": "Boolean",
+            "source_type": "integer",
+            "stable_id": "CONSENT_BLOOD"
+          },
+          {
+            "name": "consent_tissue",
+            "type": "Boolean",
+            "source_type": "integer",
+            "stable_id": "CONSENT_TISSUE"
+          },
+          {
+            "name": "fullname",
+            "type": "string",
+            "stable_id": "CONSENT_FULLNAME"
+          },
+          {
+            "name": "consent_dob",
+            "type": "Date",
+            "format": "dd-MMM-yy",
+            "stable_id": "CONSENT_DOB"
+          },
+          {
+            "name": "ddp_created",
+            "type": "Date",
+            "format": "yyyy-MM-dd'T'HH:mm:ss'Z'",
+            "stable_id": null
+          },
+          {
+            "name": "ddp_lastupdated",
+            "type": "Date",
+            "format": "yyyy-MM-dd'T'HH:mm:ss'Z'",
+            "stable_id": null
+          },
+          {
+            "name": "ddp_firstcompleted",
+            "type": "Date",
+            "format": "yyyy-MM-dd'T'HH:mm:ss'Z'",
+            "stable_id": null
+          },
+          {
+            "name": "consent_email_sent_dt",
+            "type": "Date",
+            "format": "yyyy-MM-dd'T'HH:mm:ss'Z'",
+            "stable_id": null
+          },
+          {
+            "name": "datstat.submissionid",
+            "type": "string",
+            "stable_id": null
+          },
+          {
+            "name": "ddp_followup",
+            "type": "string",
+            "stable_id": null
+          },
+          {
+            "name": "datstat.sessionid",
+            "type": "string",
+            "stable_id": null
+          },
+          {
+            "name": "datstat.submissionstatus",
+            "type": "integer",
+            "stable_id": null
+          },
+          {
+            "name": "consent_version",
+            "type": "string",
+            "stable_id": null
+          },
+          {
+            "name": "survey_status",
+            "type": "string",
+            "stable_id": null
+          }
+        ],
+        "legacy_fields": [
+          "consent_email_sent_dt"
+        ]
+      },
+      {
+        "name": "tissueconsentsurvey",
+        "activity_code": "TISSUECONSENT",
+        "question_answer_stables": [
+          {
+            "name": "fullname",
+            "type": "string",
+            "stable_id": "TISSUECONSENT_FULLNAME"
+          },
+          {
+            "name": "consent_dob",
+            "type": "Date",
+            "format": "dd-MMM-yy",
+            "stable_id": "TISSUECONSENT_DOB"
+          },
+          {
+            "name": "consent_email_sent_dt",
+            "type": "Date",
+            "format": "yyyy-MM-dd'T'HH:mm:ss'Z'",
+            "stable_id": null
+          },
+          {
+            "name": "ddp_created",
+            "type": "Date",
+            "format": "yyyy-MM-dd'T'HH:mm:ss'Z'",
+            "stable_id": null
+          },
+          {
+            "name": "ddp_lastupdated",
+            "type": "Date",
+            "format": "yyyy-MM-dd'T'HH:mm:ss'Z'",
+            "stable_id": null
+          },
+          {
+            "name": "ddp_lastsubmitted",
+            "type": "Date",
+            "format": "yyyy-MM-dd'T'HH:mm:ss'Z'",
+            "stable_id": null
+          },
+          {
+            "name": "consent_version",
+            "type": "string",
+            "stable_id": null
+          },
+          {
+            "name": "survey_status",
+            "type": "string",
+            "stable_id": null
+          }
+        ],
+        "legacy_fields": [
+          "consent_email_sent_dt"
+        ]
+      },
+      {
+        "name": "bdconsentsurvey",
+        "activity_code": "BLOODCONSENT",
+        "question_answer_stables": [
+          {
+            "name": "treatment_now_text",
+            "type": "string",
+            "stable_id": "BLOODCONSENT_TREATMENT_NOW"
+          },
+          {
+            "name": "treatment_past_text",
+            "type": "string",
+            "stable_id": "BLOODCONSENT_TREATMENT_PAST"
+          },
+          {
+            "name": "treatment_now_start",
+            "type": "Date",
+            "subelements": [
+              {
+                "name": "year",
+                "type": "integer"
+              },
+              {
+                "name": "month",
+                "type": "integer"
+              }
+            ],
+            "stable_id": "BLOODCONSENT_TREATMENT_START"
+          },
+          {
+            "name": "fullname",
+            "type": "string",
+            "stable_id": "BLOODCONSENT_FULLNAME"
+          },
+          {
+            "name": "phone_number",
+            "type": "string",
+            "stable_id": null
+          },
+          {
+            "name": "street1",
+            "type": "string",
+            "stable_id": null
+          },
+          {
+            "name": "street2",
+            "type": "string",
+            "stable_id": null
+          },
+          {
+            "name": "city",
+            "type": "string",
+            "stable_id": null
+          },
+          {
+            "name": "state",
+            "type": "string",
+            "stable_id": null
+          },
+          {
+            "name": "postal_code",
+            "type": "string",
+            "stable_id": null
+          },
+          {
+            "name": "consent_dob",
+            "type": "Date",
+            "format": "dd-MMM-yy",
+            "stable_id": "BLOODCONSENT_DOB"
+          },
+          {
+            "name": "ddp_created",
+            "type": "Date",
+            "format": "yyyy-MM-dd'T'HH:mm:ss'Z'",
+            "stable_id": null
+          },
+          {
+            "name": "ddp_lastupdated",
+            "type": "Date",
+            "format": "yyyy-MM-dd'T'HH:mm:ss'Z'",
+            "stable_id": null
+          },
+          {
+            "name": "ddp_firstcompleted",
+            "type": "Date",
+            "format": "yyyy-MM-dd'T'HH:mm:ss'Z'",
+            "stable_id": null
+          },
+          {
+            "name": "bd_consent_email_dt",
+            "type": "Date",
+            "format": "yyyy-MM-dd'T'HH:mm:ss'Z'",
+            "stable_id": null
+          },
+          {
+            "name": "bd_consent_version",
+            "type": "string",
+            "stable_id": null
+          },
+          {
+            "name": "survey_status",
+            "type": "string",
+            "stable_id": null
+          }
+        ],
+        "legacy_fields": [
+          "bd_consent_email_dt"
+        ]
+      },
+      {
+        "name": "followupsurvey",
+        "activity_code": "FOLLOWUP",
+        "question_answer_stables": [
+          {
+            "name": "current_cancer_location",
+            "type": "Picklist",
+            "options": [
+              {
+                "name": "breast",
+                "type": "integer"
+              },
+              {
+                "name": "AXILLARY_LYMPH_NODES",
+                "type": "integer"
+              },
+              {
+                "name": "OTHER_LYMPH_NODES",
+                "type": "integer"
+              },
+              {
+                "name": "bone",
+                "type": "integer"
+              },
+              {
+                "name": "chest_wall",
+                "type": "integer"
+              },
+              {
+                "name": "liver",
+                "type": "integer"
+              },
+              {
+                "name": "lung",
+                "type": "integer"
+              },
+              {
+                "name": "brain",
+                "type": "integer"
+              },
+              {
+                "name": "pleural_effusion",
+                "type": "integer"
+              },
+              {
+                "name": "ascites",
+                "type": "string"
+              },
+              {
+                "name": "skin",
+                "type": "string"
+              },
+              {
+                "name": "ovary",
+                "type": "string"
+              },
+              {
+                "name": "ned",
+                "type": "string"
+              },
+              {
+                "name": "other",
+                "text": "other_text",
+                "type": "string"
+              },
+              {
+                "name": "dk",
+                "type": "string"
+              }
+            ],
+            "stable_id": "CURRENT_CANCER_LOC"
+          },
+          {
+            "name": "diagnosis_cancer_location",
+            "type": "Picklist",
+            "options": [
+              {
+                "name": "breast",
+                "type": "integer"
+              },
+              {
+                "name": "AXILLARY_LYMPH_NODES",
+                "type": "integer"
+              },
+              {
+                "name": "OTHER_LYMPH_NODES",
+                "type": "integer"
+              },
+              {
+                "name": "bone",
+                "type": "integer"
+              },
+              {
+                "name": "chest_wall",
+                "type": "integer"
+              },
+              {
+                "name": "liver",
+                "type": "integer"
+              },
+              {
+                "name": "lung",
+                "type": "integer"
+              },
+              {
+                "name": "brain",
+                "type": "integer"
+              },
+              {
+                "name": "pleural_effusion",
+                "type": "integer"
+              },
+              {
+                "name": "ascites",
+                "type": "string"
+              },
+              {
+                "name": "skin",
+                "type": "string"
+              },
+              {
+                "name": "ovary",
+                "type": "string"
+              },
+              {
+                "name": "ned",
+                "type": "string"
+              },
+              {
+                "name": "other",
+                "text": "other_text",
+                "type": "string"
+              },
+              {
+                "name": "dk",
+                "type": "string"
+              }
+            ],
+            "stable_id": "DIAGNOSIS_CANCER_LOC"
+          },
+          {
+            "name": "anytime_cancer_location",
+            "type": "Picklist",
+            "options": [
+              {
+                "name": "breast",
+                "type": "integer"
+              },
+              {
+                "name": "AXILLARY_LYMPH_NODES",
+                "type": "integer"
+              },
+              {
+                "name": "OTHER_LYMPH_NODES",
+                "type": "integer"
+              },
+              {
+                "name": "bone",
+                "type": "integer"
+              },
+              {
+                "name": "chest_wall",
+                "type": "integer"
+              },
+              {
+                "name": "liver",
+                "type": "integer"
+              },
+              {
+                "name": "lung",
+                "type": "integer"
+              },
+              {
+                "name": "brain",
+                "type": "integer"
+              },
+              {
+                "name": "pleural_effusion",
+                "type": "integer"
+              },
+              {
+                "name": "ascites",
+                "type": "string"
+              },
+              {
+                "name": "skin",
+                "type": "string"
+              },
+              {
+                "name": "ovary",
+                "type": "string"
+              },
+              {
+                "name": "ned",
+                "type": "string"
+              },
+              {
+                "name": "other",
+                "text": "other_text",
+                "type": "string"
+              },
+              {
+                "name": "dk",
+                "type": "string"
+              }
+            ],
+            "stable_id": "ANYTIME_CANCER_LOC"
+          },
+          {
+            "name": "cancer_identification",
+            "type": "Picklist",
+            "options": [
+              {
+                "name": "idc",
+                "type": "integer"
+              },
+              {
+                "name": "ilc",
+                "type": "integer"
+              },
+              {
+                "name": "idlc",
+                "type": "integer"
+              },
+              {
+                "name": "rare_subtype",
+                "type": "integer"
+              },
+              {
+                "name": "dk",
+                "type": "string"
+              }
+            ],
+            "stable_id": "CANCER_IDENTIFICATION"
+          },
+          {
+            "name": "rare_subtypes",
+            "type": "Picklist",
+            "options": [
+              {
+                "name": "mucinous",
+                "type": "integer"
+              },
+              {
+                "name": "metaplastic",
+                "type": "integer"
+              },
+              {
+                "name": "tubular",
+                "type": "integer"
+              },
+              {
+                "name": "medullary",
+                "type": "integer"
+              },
+              {
+                "name": "papillary",
+                "type": "integer"
+              },
+              {
+                "name": "sarcoma",
+                "type": "integer"
+              },
+              {
+                "name": "lymphoma",
+                "type": "integer"
+              },
+              {
+                "name": "phyllodes",
+                "type": "integer"
+              },
+              {
+                "name": "other",
+                "text": "other_text",
+                "type": "string"
+              },
+              {
+                "name": "dk",
+                "type": "string"
+              }
+            ],
+            "stable_id": "RARE_SUBTYPES"
+          },
+          {
+            "name": "currently_medicated",
+            "type": "Picklist",
+            "source_type": "integer",
+            "options": [
+              {
+                "name": "yes",
+                "type": "integer"
+              },
+              {
+                "name": "no",
+                "type": "integer"
+              },
+              {
+                "name": "dk",
+                "type": "integer"
+              }
+            ],
+            "stable_id": "CURRENTLY_MEDICATED"
+          },
+          {
+            "name": "current_medication_names.dk",
+            "type": "BooleanSpecialPL",
+            "source_type": "integer",
+            "stable_id": "DK_CURRENT_MED_NAMES"
+          },
+          {
+            "name": "current_med_list",
+            "type": "CompositeMedList",
+            "children": [
+              {
+                "name": "drugname",
+                "type": "string",
+                "stable_id": "CURRENT_MED_NAME"
+              },
+              {
+                "name": "drugstart",
+                "type": "Date",
+                "subelements": [
+                  {
+                    "name": "year",
+                    "type": "integer"
+                  },
+                  {
+                    "name": "month",
+                    "type": "integer"
+                  }
+                ],
+                "stable_id": "CURRENT_MED_START"
+              },
+              {
+                "name": "clinicaltrial",
+                "type": "ClinicalTrialPicklist",
+                "stable_id": "CURRENT_MED_CLINICAL_TRIAL"
+              }
+            ],
+            "stable_id": "CURRENT_MED_LIST"
+          },
+          {
+            "name": "previously_medicated",
+            "type": "Picklist",
+            "source_type": "integer",
+            "options": [
+              {
+                "name": "yes",
+                "type": "integer"
+              },
+              {
+                "name": "no",
+                "type": "integer"
+              },
+              {
+                "name": "dk",
+                "type": "integer"
+              }
+            ],
+            "stable_id": "PREVIOUSLY_MEDICATED"
+          },
+          {
+            "name": "previous_medication_names.dk",
+            "type": "BooleanSpecialPL",
+            "source_type": "integer",
+            "stable_id": "DK_PAST_MED_NAMES"
+          },
+          {
+            "name": "previous_med_list",
+            "type": "CompositeMedList",
+            "children": [
+              {
+                "name": "drugname",
+                "type": "string",
+                "stable_id": "PAST_MED_NAME"
+              },
+              {
+                "name": "drugstart",
+                "type": "Date",
+                "subelements": [
+                  {
+                    "name": "year",
+                    "type": "integer"
+                  },
+                  {
+                    "name": "month",
+                    "type": "integer"
+                  }
+                ],
+                "stable_id": "PAST_MED_START"
+              },
+              {
+                "name": "drugend",
+                "type": "Date",
+                "subelements": [
+                  {
+                    "name": "year",
+                    "type": "integer"
+                  },
+                  {
+                    "name": "month",
+                    "type": "integer"
+                  }
+                ],
+                "stable_id": "PAST_MED_END"
+              },
+              {
+                "name": "clinicaltrial",
+                "type": "ClinicalTrialPicklist",
+                "stable_id": "PAST_MED_CLINICAL_TRIAL"
+              }
+            ],
+            "stable_id": "PAST_MED_LIST"
+          },
+          {
+            "name": "ddp_created",
+            "type": "Date",
+            "format": "yyyy-MM-dd'T'HH:mm:ss'Z'",
+            "stable_id": null
+          },
+          {
+            "name": "ddp_lastupdated",
+            "type": "Date",
+            "format": "yyyy-MM-dd'T'HH:mm:ss'Z'",
+            "stable_id": null
+          },
+          {
+            "name": "ddp_firstcompleted",
+            "type": "Date",
+            "format": "yyyy-MM-dd'T'HH:mm:ss'Z'",
+            "stable_id": null
+          },
+          {
+            "name": "ddp_followup",
+            "type": "string",
+            "stable_id": null
+          },
+          {
+            "name": "datstat.submissionid",
+            "type": "string",
+            "stable_id": null
+          },
+          {
+            "name": "datstat.sessionid",
+            "type": "string",
+            "stable_id": null
+          },
+          {
+            "name": "datstat.submissionstatus",
+            "type": "integer",
+            "stable_id": null
+          },
+          {
+            "name": "surveyversion",
+            "type": "string",
+            "stable_id": null
+          },
+          {
+            "name": "ddp_dsmtriggerid",
+            "type": "integer",
+            "stable_id": null
+          },
+          {
+            "name": "survey_status",
+            "type": "string",
+            "stable_id": null
+          }
+        ],
+        "legacy_fields": [
+          "ddp_dsmtriggerid",
+          "ddp_followup"
+        ]
+      }
+    ],
+    "datstatparticipantdata": [
+      {
+        "data": [
+          {
+            "name": "ddp_participant_shortid",
+            "type": "string",
+            "stable_id": null
+          },
+          {
+            "name": "ddp_spit_kit_request_id",
+            "type": "string",
+            "stable_id": null
+          },
+          {
+            "name": "ddp_country",
+            "type": "string",
+            "stable_id": null
+          },
+          {
+            "name": "ddp_portal_url",
+            "type": "string",
+            "stable_id": null
+          },
+          {
+            "name": "ddp_city",
+            "type": "string",
+            "stable_id": null
+          },
+          {
+            "name": "ddp_street1",
+            "type": "string",
+            "stable_id": null
+          },
+          {
+            "name": "ddp_street2",
+            "type": "string",
+            "stable_id": null
+          },
+          {
+            "name": "ddp_address_checked",
+            "type": "string",
+            "stable_id": null
+          },
+          {
+            "name": "ddp_do_not_contact",
+            "type": "string",
+            "stable_id": null
+          },
+          {
+            "name": "ddp_do_not_contact_comment",
+            "type": "string",
+            "stable_id": null
+          },
+          {
+            "name": "ddp_postal_code",
+            "type": "string",
+            "stable_id": null
+          },
+          {
+            "name": "ddp_created",
+            "type": "Date",
+            "format": "yyyy-MM-dd'T'HH:mm:ss'Z'",
+            "stable_id": null
+          },
+          {
+            "name": "ddp_address_valid",
+            "type": "string",
+            "stable_id": null
+          },
+          {
+            "name": "ddp_current_status",
+            "type": "string",
+            "stable_id": null
+          },
+          {
+            "name": "ddp_exited",
+            "type": "string",
+            "stable_id": null
+          },
+          {
+            "name": "ddp_exited_dt",
+            "type": "Date",
+            "format": "yyyy-MM-dd'T'HH:mm:ss'Z'",
+            "stable_id": null
+          },
+          {
+            "name": "ddp_exited_comment",
+            "type": "string",
+            "stable_id": null
+          },
+          {
+            "name": "patient_notes",
+            "type": "string",
+            "stable_id": null
+          },
+          {
+            "name": "ddp_state",
+            "type": "string",
+            "stable_id": null
+          },
+          {
+            "name": "datstat_altpid",
+            "type": "string",
+            "stable_id": null
+          },
+          {
+            "name": "datstat_email",
+            "type": "string",
+            "stable_id": null
+          },
+          {
+            "name": "ddp_lastmodified",
+            "type": "Date",
+            "format": "yyyy-MM-dd'T'HH:mm:ss'Z'",
+            "stable_id": null
+          },
+          {
+            "name": "ddp_firstname",
+            "type": "string",
+            "stable_id": null
+          },
+          {
+            "name": "ddp_lastname",
+            "type": "string",
+            "stable_id": null
+          }
+        ]
+      },
+      {
+        "legacy_fields": [
+          "ddp_exited_reason",
+          "ddp_exited_comment",
+          "ddp_do_not_contact_comment",
+          "patient_notes"
+        ]
+      },
+      {
+        "default_kit_creation_date": "07/01/2015"
+      }
+    ]
+  }
+}

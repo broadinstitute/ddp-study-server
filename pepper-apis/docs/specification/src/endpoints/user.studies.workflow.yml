@@ -1,0 +1,66 @@
+get:
+  operationId: getWorkflow
+  tags:
+    - Workflow
+  summary: get server-side workflow suggestions
+  description: |
+    This API takes a `from` state that indicates which stage of the workflow a
+    user is coming from. The API then figures out where the user should go
+    next using configurations on the server-side, and responds with a
+    sugestion of the next state.
+
+    If the `from` state is `START`, the API will return the "starting
+    activity" of the study, if it is configured. If the `from` state is
+    `ACTIVITY`, the API looks for either `activityCode` or `instanceGuid`, in
+    that order, to figure out which activity the user is coming from.
+
+    _This API allows access to temporary users._
+  parameters:
+    - in: path
+      name: user
+      required: true
+      description: the participant's guid
+      schema:
+        type: string
+    - in: path
+      name: study
+      required: true
+      description: the study's unique identifier
+      schema:
+        type: string
+    - in: query
+      name: from
+      required: true
+      description: |
+        * `ACTIVITY` - Indicates user is coming from an activity.
+        * `RETURN_USER` - Indicates user is returning to the workflow.
+        * `START` - Indicates user is starting the study workflow.
+      schema:
+        type: string
+        enum:
+          - ACTIVITY
+          - RETURN_USER
+          - START
+    - in: query
+      name: activityCode
+      required: false
+      description: the activity identifier where user is coming from
+      schema:
+        type: string
+    - in: query
+      name: instanceGuid
+      required: false
+      description: the activity instance identifier where user is coming from
+      schema:
+        type: string
+  responses:
+      200:
+        $ref: '../pepper.yml#/components/responses/WorkflowResponse'
+      400:
+        $ref: '../pepper.yml#/components/responses/WorkflowQueryErrorResponse'
+      401:
+        description: missing credentials for user, or temporary user is invalid
+      404:
+        $ref: '../pepper.yml#/components/responses/StudyNotFoundErrorResponse'
+      default:
+        $ref: '../pepper.yml#/components/responses/ErrorResponse'

@@ -1,0 +1,21 @@
+post:
+  operationId: registerUser
+  tags:
+    - Admin
+  summary: register a user
+  description: registers a new user or upgrade a temporary user
+  requestBody:
+    $ref: '../../pepper.yml#/components/requestBodies/RegisterRequestBody'
+  responses:
+    200:
+      $ref: '../../pepper.yml#/components/responses/RegisterResponse'
+    400:
+      $ref: '../../pepper.yml#/components/responses/RegisterBadPayloadResponse'
+    401:
+      description: registering user with given client is not allowed
+    404:
+      $ref: '../../pepper.yml#/components/responses/RegisterNotFoundResponse'
+    422:
+      $ref: '../../pepper.yml#/components/responses/RegisterNotValidResponse'
+    default:
+      $ref: '../../pepper.yml#/components/responses/ErrorResponse'

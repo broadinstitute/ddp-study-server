@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="20190301-add-picklist-group-table">
+        <createTable tableName="picklist_group">
+            <column name="picklist_group_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="picklist_group_pk"/>
+            </column>
+            <column name="picklist_question_id" type="bigint">
+                <constraints nullable="false"
+                             references="picklist_question(question_id)"
+                             foreignKeyName="picklist_group_picklist_question_fk"/>
+            </column>
+            <column name="group_stable_id" type="varchar(80)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name_template_id" type="bigint">
+                <constraints nullable="false"
+                             references="template(template_id)"
+                             foreignKeyName="picklist_group_name_template_fk"/>
+            </column>
+            <column name="display_order" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revision_id" type="bigint">
+                <constraints nullable="false"
+                             references="revision(revision_id)"
+                             foreignKeyName="picklist_group_revision_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20190301-picklist-group-unique-constraint">
+        <addUniqueConstraint tableName="picklist_group" columnNames="picklist_question_id, group_stable_id, revision_id"
+                             constraintName="picklist_group_question_group_revision_uk"/>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20190301-add-picklist-group-to-picklist-option-join-table">
+        <createTable tableName="picklist_grouped_option">
+            <column name="picklist_grouped_option_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="picklist_grouped_option_pk"/>
+            </column>
+            <column name="picklist_group_id" type="bigint">
+                <constraints nullable="false"
+                             references="picklist_group(picklist_group_id)"
+                             foreignKeyName="picklist_grouped_option_group_fk"/>
+            </column>
+            <column name="picklist_option_id" type="bigint">
+                <constraints nullable="false"
+                             references="picklist_option(picklist_option_id)"
+                             foreignKeyName="picklist_grouped_option_option_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>
