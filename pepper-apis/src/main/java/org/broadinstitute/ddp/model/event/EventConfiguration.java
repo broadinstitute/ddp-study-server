@@ -16,6 +16,8 @@ public class EventConfiguration {
     private String preconditionExpression;
     private String cancelExpression;
     private Integer maxOccurrencesPerUser;
+    private boolean dispatchToHousekeeping;
+    private Integer postDelaySeconds;
 
     public EventConfiguration(EventConfigurationDto dto) {
         this.eventConfigurationId = dto.getEventConfigurationId();
@@ -24,6 +26,8 @@ public class EventConfiguration {
         this.preconditionExpression = dto.getPreconditionExpression();
         this.cancelExpression = dto.getCancelExpression();
         this.maxOccurrencesPerUser = dto.getMaxOccurrencesPerUser();
+        this.dispatchToHousekeeping = dto.dispatchToHousekeeping();
+        this.postDelaySeconds = dto.getPostDelaySeconds();
 
         switch (eventTriggerType) {
             case ACTIVITY_STATUS:
@@ -121,5 +125,13 @@ public class EventConfiguration {
 
     public Integer getMaxOccurrencesPerUser() {
         return maxOccurrencesPerUser;
+    }
+
+    public boolean dispatchToHousekeeping() {
+        return dispatchToHousekeeping;
+    }
+
+    public Integer getPostDelaySeconds() {
+        return postDelaySeconds;
     }
 }

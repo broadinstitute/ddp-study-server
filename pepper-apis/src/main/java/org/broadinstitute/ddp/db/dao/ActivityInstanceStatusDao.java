@@ -9,6 +9,7 @@ import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceStatusDto;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.event.ActivityInstanceStatusChangeSignal;
+import org.broadinstitute.ddp.model.event.EventSignal;
 import org.broadinstitute.ddp.service.EventService;
 import org.jdbi.v3.sqlobject.CreateSqlObject;
 import org.jdbi.v3.sqlobject.SqlObject;
@@ -178,18 +179,21 @@ public interface ActivityInstanceStatusDao extends SqlObject {
         Long studyId = getJdbiActivity().getStudyIdByActivityId(studyActivityId)
                 .orElseThrow(() -> new DaoException("Umbrella study for the study activity " + studyActivityId + " not found"));
 
-        EventService.getInstance().processEventSignal(
-                getHandle(),
-                new ActivityInstanceStatusChangeSignal(
-                        operatorId,
-                        instanceDto.getParticipantId(),
-                        jdbiUser.getUserGuidById(instanceDto.getParticipantId()),
-                        instanceId,
-                        studyId,
-                        newStatus
-                ));
+        EventSignal eventSignal = new ActivityInstanceStatusChangeSignal(
+                operatorId,
+                instanceDto.getParticipantId(),
+                jdbiUser.getUserGuidById(instanceDto.getParticipantId()),
+                instanceId,
+                studyId,
+                newStatus);
 
-        addStatusTriggerEventsToQueue(operatorId, instanceDto.getParticipantId(), instanceDto, newStatus.name());
+        EventService.getInstance().processSynchronousActionsForEventSignal(
+                getHandle(),
+                eventSignal);
+
+        EventService.getInstance().queueAsynchronousActionsForEventSignal(
+                getHandle(),
+                eventSignal);
 
         return new ActivityInstanceStatusDto(activityInstanceStatusId, newStatusTypeId,
                 instanceDto.getId(), operatorId, epochMilliseconds, newStatus);
@@ -204,24 +208,6 @@ public interface ActivityInstanceStatusDao extends SqlObject {
                 statusDto.getOperatorId(), newTimestampMillis, statusDto.getType());
     }
 
-    /**
-     * Checks if there are any events that should be spawned as a result
-     * of the change in status and if so, queues them
-     *
-     * @param operatorId    user id of the operator
-     * @param participantId user id of the participant
-     * @param instanceDto   the activity instance
-     * @param status        the new status for the activity
-     */
-    default void addStatusTriggerEventsToQueue(long operatorId,
-                                               long participantId,
-                                               ActivityInstanceDto instanceDto,
-                                               String status) {
-        int numEventsQueued = getActivityStatusEventDao().addStatusTriggerEventsToQueue(operatorId, participantId,
-                instanceDto, status);
-        LOG.info("Queued {} events for operator {} on behalf of participant {}", numEventsQueued,
-                operatorId, participantId);
-    }
 
     // Note: this should only be used in tests.
     @SqlUpdate("delete from activity_instance_status where activity_instance_id = "

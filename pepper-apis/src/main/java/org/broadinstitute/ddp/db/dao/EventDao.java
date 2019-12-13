@@ -1,12 +1,13 @@
 package org.broadinstitute.ddp.db.dao;
 
-import static org.broadinstitute.ddp.util.StreamUtils.throwIfEmpty;
-
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import org.broadinstitute.ddp.db.DaoException;
+import org.broadinstitute.ddp.constants.ConfigFile;
+import org.broadinstitute.ddp.constants.SqlConstants;
 import org.broadinstitute.ddp.db.dto.EventConfigurationDto;
 import org.broadinstitute.ddp.db.dto.NotificationDetailsDto;
 import org.broadinstitute.ddp.db.dto.NotificationTemplateSubstitutionDto;
@@ -17,8 +18,11 @@ import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.event.EventConfiguration;
 import org.broadinstitute.ddp.model.event.PdfAttachment;
+import org.jdbi.v3.core.mapper.RowMapper;
+import org.jdbi.v3.core.statement.StatementContext;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
+import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.stringtemplate4.UseStringTemplateSqlLocator;
@@ -29,11 +33,24 @@ public interface EventDao extends SqlObject {
 
     Logger LOG = LoggerFactory.getLogger(EventDao.class);
 
-    default List<EventConfiguration> getEventConfigurationByStudyIdAndTriggerType(long studyId, EventTriggerType eventTriggerType) {
-        return throwIfEmpty(getEventConfigurationDtosForStudyIdAndTriggerType(studyId, eventTriggerType).stream(),
-                () -> new DaoException(String.format("No event configurations found for trigger type:"
-                        + eventTriggerType.toString())))
+    default List<EventConfiguration> getAllEventConfigurationsByStudyIdAndTriggerType(long studyId,
+                                                                                      EventTriggerType eventTriggerType) {
+        return getEventConfigurationDtosForStudyIdAndTriggerType(studyId, eventTriggerType).stream()
                 .map(dto -> new EventConfiguration(dto))
+                .collect(Collectors.toList());
+    }
+
+    default List<EventConfiguration> getSynchronousEventConfigurationsByStudyIdAndTriggerType(long studyId,
+                                                                                              EventTriggerType eventTriggerType) {
+        return getAllEventConfigurationsByStudyIdAndTriggerType(studyId, eventTriggerType).stream()
+                .filter(eventConfiguration -> !eventConfiguration.dispatchToHousekeeping())
+                .collect(Collectors.toList());
+    }
+
+    default List<EventConfiguration> getAsynchronousEventConfigurationsByStudyIdAndTriggerType(long studyId,
+                                                                                               EventTriggerType eventTriggerType) {
+        return getAllEventConfigurationsByStudyIdAndTriggerType(studyId, eventTriggerType).stream()
+                .filter(eventConfiguration -> eventConfiguration.dispatchToHousekeeping())
                 .collect(Collectors.toList());
     }
 
@@ -159,7 +176,7 @@ public interface EventDao extends SqlObject {
      */
     @SqlQuery("getPendingConfigurations")
     @UseStringTemplateSqlLocator
-    @RegisterConstructorMapper(EventConfigurationDto.class)
+    @RegisterRowMapper(EventConfigDtoMapper.class)
     List<QueuedEventDto> getPendingConfigurations();
 
     @SqlQuery("getDsmNotificationConfigurationIds")
@@ -193,5 +210,25 @@ public interface EventDao extends SqlObject {
     @RegisterConstructorMapper(EventConfigurationDto.class)
     List<EventConfigurationDto> getNotificationConfigsForWorkflowState(@Bind("studyGuid") String studyGuid,
                                                                        @Bind("workflowStateId") long workflowStateId);
+
+    class EventConfigDtoMapper implements RowMapper<QueuedEventDto> {
+        @Override
+        public QueuedEventDto map(ResultSet rs, StatementContext ctx) throws SQLException {
+            return new QueuedEventDto(
+                    rs.getLong(SqlConstants.EventConfigurationTable.ID),
+                    rs.getLong(SqlConstants.QueuedEventTable.ID),
+                    rs.getLong(SqlConstants.QueuedEventTable.OPERATOR_USER_ID),
+                    rs.getString(ConfigFile.SqlQuery.PARTICIPANT_GUID),
+                    rs.getString(ConfigFile.SqlQuery.PARTICIPANT_HRUID),
+                    EventActionType.valueOf(rs.getString(SqlConstants.EventActionTypeTable.TYPE)),
+                    "1.0",
+                    (Integer) rs.getObject(SqlConstants.EventConfigurationTable.MAX_OCCURRENCES_PER_USER),
+                    rs.getString(SqlConstants.MessageDestinationTable.PUBSUB_TOPIC),
+                    rs.getString(ConfigFile.SqlQuery.PEX_PRECONDITION),
+                    rs.getString(ConfigFile.SqlQuery.PEX_CANCEL_CONDITION),
+                    rs.getString(ConfigFile.SqlQuery.STUDY_GUID)
+            );
+        }
+    }
 
 }

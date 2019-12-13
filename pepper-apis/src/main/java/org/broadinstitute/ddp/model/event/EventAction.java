@@ -15,7 +15,7 @@ public abstract class EventAction {
 
     public EventAction(EventConfiguration eventConfiguration, EventConfigurationDto dto) {
         this.eventConfiguration = eventConfiguration;
-        this.gcpTopic = MessageDestination.valueOf(dto.getGcpTopic());
+        this.gcpTopic = dto.getGcpTopic() == null ? null : MessageDestination.valueOf(dto.getGcpTopic());
     }
 
     public MessageDestination getGcpTopic() {

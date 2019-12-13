@@ -14,11 +14,11 @@ public class EventConfigurationDto {
     private long eventConfigurationId;
     private EventTriggerType eventTriggerType;
     private EventActionType eventActionType;
-    private int postDelaySeconds;
+    private Integer postDelaySeconds;
     private boolean dispatchToHousekeeping;
     private String preconditionExpression;
     private String cancelExpression;
-    private int maxOccurrencesPerUser;
+    private Integer maxOccurrencesPerUser;
     private String gcpTopic; // FIXME should not be a base field of EventAction
 
     /**
@@ -142,7 +142,7 @@ public class EventConfigurationDto {
         return postDelaySeconds;
     }
 
-    public boolean isDispatchToHousekeeping() {
+    public boolean dispatchToHousekeeping() {
         return dispatchToHousekeeping;
     }
 

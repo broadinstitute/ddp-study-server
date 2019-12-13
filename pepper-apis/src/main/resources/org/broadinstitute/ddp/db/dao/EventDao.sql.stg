@@ -3,7 +3,7 @@ group EventDao;
 /**
  * Returns all event configurations for study/activity and event type
  */
-eventConfigurationLookup ::= <<
+eventConfigurationLookup() ::= <<
 SELECT
      ec.event_configuration_id,
      ett.event_trigger_type_code event_trigger_type,
@@ -22,15 +22,15 @@ SELECT
      ast.study_activity_id as activity_status_trigger_study_activity_id,
      wst.workflow_state_id,
      wst.trigger_automatically,
-     dnet.dsm_notification_event_type_code as dsm_notification_type,
+     dnet.dsm_notification_event_type_code as dsm_notification_event_type,
      ann_act.message_template_id as message_template_id,
      nt.notification_type_code as notification_type,
      ns.service_code as notification_service_type,
      unea.notification_template_id,
      unea.linked_activity_id,
      pea.pdf_document_configuration_id,
-     npdf.generate_if_missing,
-     aica.study_activity_id as activity_id_to_create,
+     unpdf.generate_if_missing,
+     aica.study_activity_id as activity_instance_creation_study_activity_id,
      cp_target.copy_target as copy_answer_target,
      qsc.stable_id as copy_source_question_stable_id
 FROM
@@ -43,6 +43,7 @@ JOIN umbrella_study study on ec.umbrella_study_id = study.umbrella_study_id
 LEFT JOIN message_destination md on ea.message_destination_id = md.message_destination_id
 LEFT JOIN activity_status_trigger ast ON ast.activity_status_trigger_id = ec.event_trigger_id
 LEFT JOIN activity_instance_status_type aist ON ast.activity_instance_status_type_id = aist.activity_instance_status_type_id
+LEFT JOIN activity_instance ai ON ai.study_activity_id = ast.study_activity_id
 LEFT JOIN workflow_state_trigger wst on wst.event_trigger_id = et.event_trigger_id
 LEFT JOIN dsm_notification_trigger dnt ON dnt.dsm_notification_trigger_id = et.event_trigger_type_id
 LEFT JOIN dsm_notification_event_type dnet ON dnet.dsm_notification_event_type_id = dnt.dsm_notification_event_type_id
@@ -51,7 +52,7 @@ LEFT JOIN user_notification_event_action unea on unea.user_notification_event_ac
 LEFT JOIN notification_type nt on nt.notification_type_id = unea.notification_type_id
 LEFT JOIN notification_service ns on ns.notification_service_id = unea.notification_service_id
 LEFT JOIN pdf_generation_event_action as pea on pea.event_action_id = ea.event_action_id
-LEFT JOIN user_notification_pdf unpdf on npdf.user_notification_event_action_id = ea.event_action_id
+LEFT JOIN user_notification_pdf unpdf on unpdf.user_notification_event_action_id = ea.event_action_id
 LEFT JOIN activity_instance_creation_action aica ON aica.activity_instance_creation_action_id = ea.event_action_id
 LEFT JOIN copy_answer_event_action as cp_answer on cp_answer.event_action_id=ea.event_action_id
 LEFT JOIN question_stable_code as qsc on qsc.question_stable_code_id=cp_answer.source_question_stable_id
@@ -62,7 +63,15 @@ getEventConfigurationsForStudyIdAndTriggerType() ::= <<
 <eventConfigurationLookup()>
     where
         ec.umbrella_study_id = :studyId
-        and event_trigger_type = :event_trigger_type
+        and ett.event_trigger_type_code = :eventTriggerType
+        and ec.is_active = 1
+>>
+
+getActivityStatusEventConfigurations() ::= <<
+<eventConfigurationLookup()>
+    where
+        ai.activity_instance_id = :activityInstanceId
+        and aist.activity_instance_status_type_code = :status
         and ec.is_active = 1
 >>
 
@@ -92,7 +101,6 @@ getNotificationConfigsForWorkflowState() ::= <<
     and event_action_type = 'NOTIFICATION'
 >>
 
-
 /**
  * Returns notification events related to workflow states
 */
@@ -102,7 +110,7 @@ getNotificationConfigsForMailingListByEventType() ::= <<
     study.guid = :studyGuid
     and ec.is_active = 1
     and event_action_type = 'NOTIFICATION'
-    and event_trigger_type = :eventTriggerType
+    and ett.event_trigger_type_code = :eventTriggerType
 >>
 
 /**
