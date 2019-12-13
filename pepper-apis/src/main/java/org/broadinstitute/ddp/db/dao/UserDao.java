@@ -146,7 +146,7 @@ public interface UserDao extends SqlObject {
     }
 
     @SqlUpdate("update user set auth0_user_id  = :auth0UserId where guid = :guid")
-    int updateAuth0UserId(@Bind("guid") String guid, @Bind("auth0UserId")  String auth0UserId);
+    int updateAuth0UserId(@Bind("guid") String guid, @Bind("auth0UserId") String auth0UserId);
 
     class UserWithProfileReducer implements LinkedHashMapRowReducer<Long, User> {
         @Override
