@@ -828,10 +828,10 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
 
     @Test
     public void testAccountInvitation() {
-        AtomicReference<User> user = new AtomicReference<>();
+        var user = new AtomicReference<User>();
 
         try {
-            AtomicReference<InvitationDto> invitation = new AtomicReference<>();
+            var invitation = new AtomicReference<InvitationDto>();
 
             // clear the auth0 user id from the test account and send in an invitation-based registration
             TransactionWrapper.useTxn(handle -> {
