@@ -62,6 +62,9 @@ RegisterRequestBody:
           tempUserGuid:
             type: string
             description: if this is present, server will attempt to upgrade the temporary user using the `auth0UserId` given in request
+          invitationId:
+            type: string
+            description: if present, server will associate the presumably account-less user with the auth0UserId after verifying the invitation
 CreateTempUserRequestBody:
   description: client data from Auth0
   required: true
