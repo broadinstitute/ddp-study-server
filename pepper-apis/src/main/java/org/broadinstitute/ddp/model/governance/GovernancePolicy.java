@@ -1,6 +1,18 @@
 package org.broadinstitute.ddp.model.governance;
 
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+import org.broadinstitute.ddp.db.dao.JdbiProfile;
+import org.broadinstitute.ddp.db.dto.UserProfileDto;
+import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.pex.Expression;
+import org.broadinstitute.ddp.pex.PexInterpreter;
+import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.mapper.Nested;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
@@ -14,6 +26,7 @@ public class GovernancePolicy {
     private long studyId;
     private String studyGuid;
     private Expression shouldCreateGovernedUserExpr;
+    private List<AgeOfMajorityRule> aomRules = new ArrayList<>();
 
     @JdbiConstructor
     public GovernancePolicy(@ColumnName("study_governance_policy_id") long id,
@@ -45,5 +58,47 @@ public class GovernancePolicy {
 
     public Expression getShouldCreateGovernedUserExpr() {
         return shouldCreateGovernedUserExpr;
+    }
+
+    public List<AgeOfMajorityRule> getAgeOfMajorityRules() {
+        return List.copyOf(aomRules);
+    }
+
+    public void addAgeOfMajorityRule(AgeOfMajorityRule... rules) {
+        for (AgeOfMajorityRule rule : rules) {
+            if (rule != null) {
+                aomRules.add(rule);
+            }
+        }
+    }
+
+    public boolean shouldCreateGovernedUser(Handle handle, PexInterpreter interpreter, String userGuid) {
+        return interpreter.eval(shouldCreateGovernedUserExpr.getText(), handle, userGuid, null);
+    }
+
+    public Optional<AgeOfMajorityRule> getApplicableAgeOfMajorityRule(Handle handle, PexInterpreter interpreter, String userGuid) {
+        return aomRules.stream()
+                .filter(rule -> interpreter.eval(rule.getCondition(), handle, userGuid, null))
+                .findFirst();
+    }
+
+    public boolean hasReachedAgeOfMajority(Handle handle, PexInterpreter interpreter, String userGuid,
+                                           LocalDate birthDate, LocalDate today) {
+        return getApplicableAgeOfMajorityRule(handle, interpreter, userGuid)
+                .map(rule -> rule.hasReachedAgeOfMajority(birthDate, today))
+                .orElse(false);
+    }
+
+    public boolean hasReachedAgeOfMajority(Handle handle, PexInterpreter interpreter, String userGuid, LocalDate birthDate) {
+        LocalDate today = Instant.now().atZone(ZoneOffset.UTC).toLocalDate();
+        return hasReachedAgeOfMajority(handle, interpreter, userGuid, birthDate, today);
+    }
+
+    public boolean hasReachedAgeOfMajority(Handle handle, PexInterpreter interpreter, String userGuid) {
+        UserProfileDto profileDto = handle.attach(JdbiProfile.class).getUserProfileByUserGuid(userGuid);
+        if (profileDto == null || profileDto.getBirthDate() == null) {
+            throw new DDPException("User with guid " + userGuid + " does not have profile or birth date");
+        }
+        return hasReachedAgeOfMajority(handle, interpreter, userGuid, profileDto.getBirthDate());
     }
 }
