@@ -828,7 +828,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
 
     @Test
     public void testAccountInvitation() {
-        AtomicReference<User> user = new AtomicReference<>();
+        var user = new AtomicReference<User>();
 
         try {
             AtomicReference<InvitationDto> invitation = new AtomicReference<>();
