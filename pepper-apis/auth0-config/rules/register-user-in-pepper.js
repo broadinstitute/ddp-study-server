@@ -95,7 +95,9 @@ function (user, context, callback) {
             console.log('No Registration Mode passed in request');
         }
 
-        if (context.request.body.invitation_id) {
+        if (context.request.query.invitation_id) {
+            pepper_params.invitationId = context.request.query.invitation_id;
+        } else if (context.request.body.invitation_id) {
             pepper_params.invitationId = context.request.body.invitation_id;
         }
 
