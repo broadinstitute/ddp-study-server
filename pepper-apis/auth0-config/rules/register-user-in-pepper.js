@@ -95,6 +95,12 @@ function (user, context, callback) {
             console.log('No Registration Mode passed in request');
         }
 
+        if (context.request.query.invitation_id) {
+            pepper_params.invitationId = context.request.query.invitation_id;
+        } else if (context.request.body.invitation_id) {
+            pepper_params.invitationId = context.request.body.invitation_id;
+        }
+
         console.log(context);
 
         // In order to get a refresh token, the client must go through one of the other methods
