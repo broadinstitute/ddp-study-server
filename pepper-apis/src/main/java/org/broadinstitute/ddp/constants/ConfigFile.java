@@ -80,17 +80,12 @@ public class ConfigFile {
     public static final String QUERY_GOVERNED_PARTICIPANTS_BY_OPERATOR = "governedParticipantsForOperatorQuery";
     public static final String USER_EXISTS_QUERY = "userExistsQuery";
     public static final String PROFILE_EXISTS_QUERY = "profileExistsQuery";
-    public static final String ADD_PROFILE_STMT = "addProfile";
     public static final String GET_USER_ID_FROM_GUID = "getUserIdFromGuidQuery";
     public static final String GET_USER_ID_FROM_HRUID = "getUserIdFromHruidQuery";
-    public static final String GET_PROFILE = "getProfileData";
     public static final String USER_EXISTS_GUID = "userExistsGuidQuery";
     public static final String GOVERNANCE_ALIAS_EXISTS_QUERY = "governanceAliasExistsQuery";
     public static final String GET_ALL_GOV_PARTS_QUERY = "governedParticipantsForOperatorQuery";
     public static final String PATCH_SEX_STMT = "patchSexStmt";
-    public static final String PATCH_BIRTH_YEAR_STMT = "patchBirthYearStmt";
-    public static final String PATCH_BIRTH_MONTH_STMT = "patchBirthMonthStmt";
-    public static final String PATCH_BIRTH_DAY_IN_MONTH_STMT = "patchBirthDayInMonthStmt";
     public static final String PATCH_PREFERRED_LANGUAGE_STMT = "patchPreferredLanguageStmt";
     public static final String USER_GUID_FOR_AUTH0ID_QUERY = "userGuidForAuth0IdQuery";
     public static final String HEALTHCHECK_PASSWORD = "healthcheckPassword";

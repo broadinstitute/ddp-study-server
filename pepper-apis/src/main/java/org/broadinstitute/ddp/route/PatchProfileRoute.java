@@ -19,7 +19,7 @@ import spark.Route;
 
 public class PatchProfileRoute implements Route {
 
-    private static final Logger LOG = LoggerFactory.getLogger(AddProfileRoute.class);
+    private static final Logger LOG = LoggerFactory.getLogger(PatchProfileRoute.class);
     private final UserDao userDao;
 
     public PatchProfileRoute(UserDao userDao) {

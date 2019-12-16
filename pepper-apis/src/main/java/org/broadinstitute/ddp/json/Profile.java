@@ -15,6 +15,7 @@ Payload used when creating an existing user's profile
 
 public class Profile {
 
+    // todo: refactor to use single birth date
     public static final String BIRTH_DAY_IN_MONTH = "birthDayInMonth";
     public static final String BIRTH_MONTH = "birthMonth";
     public static final String BIRTH_YEAR = "birthYear";
@@ -79,13 +80,12 @@ public class Profile {
         return lastName;
     }
 
-    // TODO We should really really really really store birthdate as a date in the database.
     public LocalDate getBirthDate() {
-        LocalDate actualBirthday = LocalDate.of(getBirthYear(),
-                getBirthMonth(),
-                getBirthDayInMonth());
-
-        return actualBirthday;
+        try {
+            return LocalDate.of(getBirthYear(), getBirthMonth(), getBirthDayInMonth());
+        } catch (Exception ignored) {
+            return null;
+        }
     }
 
     public enum Sex {
