@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="20191211-age-of-majority-rule-table">
+        <createTable tableName="age_of_majority_rule">
+            <column name="age_of_majority_rule_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="age_of_majority_rule_pk"/>
+            </column>
+            <column name="study_governance_policy_id" type="bigint">
+                <constraints nullable="false"
+                             references="study_governance_policy(study_governance_policy_id)"
+                             foreignKeyName="age_of_majority_rule_study_governance_policy_fk"
+                             deleteCascade="true"/>
+            </column>
+            <column name="condition_expression" type="varchar(10000)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="age" type="tinyint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="preparation_months" type="smallint">
+                <constraints nullable="true"/>
+            </column>
+            <column name="execution_order" type="int">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>

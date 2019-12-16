@@ -6,23 +6,33 @@ select policy.study_governance_policy_id,
        study.guid              as study_guid,
        scgu.expression_id   as scgu_expression_id,
        scgu.expression_guid as scgu_expression_guid,
-       scgu.expression_text as scgu_expression_text
+       scgu.expression_text as scgu_expression_text,
+       aom.age_of_majority_rule_id    as aom_age_of_majority_rule_id,
+       aom.study_governance_policy_id as aom_study_governance_policy_id,
+       aom.condition_expression       as aom_condition_expression,
+       aom.age                        as aom_age,
+       aom.preparation_months         as aom_preparation_months,
+       aom.execution_order            as aom_execution_order
   from study_governance_policy as policy
   join umbrella_study as study on study.umbrella_study_id = policy.study_id
   join expression as scgu on scgu.expression_id = policy.should_create_governed_user_expression_id
+  left join age_of_majority_rule as aom on aom.study_governance_policy_id = policy.study_governance_policy_id
 >>
 
 queryPolicyById() ::= <<
 <select_all_policies()>
 where policy.study_governance_policy_id = :id
+order by aom.execution_order asc
 >>
 
 queryPolicyByStudyId() ::= <<
 <select_all_policies()>
 where study.umbrella_study_id = :studyId
+order by aom.execution_order asc
 >>
 
 queryPolicyByStudyGuid() ::= <<
 <select_all_policies()>
 where study.guid = :studyGuid
+order by aom.execution_order asc
 >>
