@@ -1,18 +1,18 @@
 package org.broadinstitute.ddp.db.dto;
 
-import java.beans.ConstructorProperties;
+import java.time.LocalDate;
 
 import org.apache.commons.lang3.StringUtils;
+import org.jdbi.v3.core.mapper.reflect.ColumnName;
+import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
 public class UserProfileDto {
 
-    private Long userId;
+    private long userId;
     private String firstName;
     private String lastName;
     private String sex;
-    private Integer birthYear;
-    private Integer birthMonth;
-    private Integer birthDayInMonth;
+    private LocalDate birthDate;
     private Long preferredLanguageId;
     private String preferredLanguageCode;
     private Boolean doNotContact;
@@ -25,46 +25,47 @@ public class UserProfileDto {
      * @return profile object
      */
     public static UserProfileDto withOnlyPreferredLang(long userId, long preferredLanguageId) {
-        return new UserProfileDto(userId, null, null, null, null, null, null,
-                preferredLanguageId, null, null);
+        return new UserProfileDto(userId, null, null, null, null, preferredLanguageId, null, null);
     }
 
-    @ConstructorProperties({"user_id", "first_name", "last_name", "sex", "birth_year", "birth_month", "birth_day",
-            "preferred_language_id", "iso_language_code", "do_not_contact"})
+    @JdbiConstructor
     public UserProfileDto(
-            Long userId, String firstName, String lastName, String sex, Integer birthYear, Integer birthMonth,
-            Integer birthDayInMonth, Long preferredLanguageId, String preferredLanguageCode, Boolean doNotContact
-    ) {
+            @ColumnName("user_id") long userId,
+            @ColumnName("first_name") String firstName,
+            @ColumnName("last_name") String lastName,
+            @ColumnName("sex") String sex,
+            @ColumnName("birth_date") LocalDate birthDate,
+            @ColumnName("preferred_language_id") Long preferredLanguageId,
+            @ColumnName("iso_language_code") String preferredLanguageCode,
+            @ColumnName("do_not_contact") Boolean doNotContact) {
         this.userId = userId;
         this.firstName = StringUtils.trim(firstName);
         this.lastName = StringUtils.trim(lastName);
         this.sex = sex;
-        this.birthYear = birthYear;
-        this.birthMonth = birthMonth;
-        this.birthDayInMonth = birthDayInMonth;
+        this.birthDate = birthDate;
         this.preferredLanguageId = preferredLanguageId;
         this.preferredLanguageCode = preferredLanguageCode;
         this.doNotContact = doNotContact;
     }
 
-    public Long getUserId() {
+    public long getUserId() {
         return userId;
+    }
+
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
     }
 
     public String getSex() {
         return sex;
     }
 
-    public Integer getBirthYear() {
-        return birthYear;
-    }
-
-    public Integer getBirthMonth() {
-        return birthMonth;
-    }
-
-    public Integer getBirthDayInMonth() {
-        return birthDayInMonth;
+    public LocalDate getBirthDate() {
+        return birthDate;
     }
 
     public Long getPreferredLanguageId() {
@@ -77,22 +78,6 @@ public class UserProfileDto {
 
     public boolean hasPreferredLanguage() {
         return StringUtils.isNotBlank(preferredLanguageCode);
-    }
-
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
     }
 
     public Boolean getDoNotContact() {

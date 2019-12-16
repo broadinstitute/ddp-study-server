@@ -106,7 +106,7 @@ public class DataLoaderTest {
     private final String pretendDomain = "fake_domain";
     private final String pretendClientName = "fake_client_name";
     private final String pretendAuth0ClientId = "fake_client_id";
-    private final Long pretendUserId = 51678L;
+    private final long pretendUserId = 51678L;
     private final Long pretendStudyId = 998877L;
     private final Long pretendPepperClientId = 12345L;
     private final Long pretendLanguageCodeId = 67890L;
@@ -595,7 +595,7 @@ public class DataLoaderTest {
         assertEquals("bf9f2701-ac7e-4edd-899e-2cs983ss2adc", kitGuidCaptor.getValue());
         assertEquals(pretendStudyGuid, studyGuidCaptor.getValue());
         assertEquals((Long) pretendSalivaKitTypeId.getId(), kitIdCaptor.getValue());
-        assertEquals(pretendUserId, pepperUserIdCaptor.getValue());
+        assertEquals((Long) pretendUserId, pepperUserIdCaptor.getValue());
         assertEquals((Long) 1451606400L, secondsSinceEpochCaptor.getValue());
     }
 
