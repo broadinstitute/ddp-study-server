@@ -1263,6 +1263,14 @@ Question.Text:
           - TEXT
           - ESSAY
           - SIGNATURE
+          - EMAIL
+      confirmEntry:
+        type: boolean
+      confirmText:
+        type: string
+        nullable: true
+      mismatchMessage:
+        type: string
       suggestionType:
         type: string
         default: NONE

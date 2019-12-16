@@ -42,13 +42,21 @@ public class TextQuestion extends Question<TextAnswer> {
     @SerializedName("confirmEntry")
     private boolean confirmEntry;
 
+    @SerializedName("confirmEntryText")
+    private String confirmEntryText;
+
+    @SerializedName("mismatchMessage")
+    private String mismatchMessage;
+
     private transient Long placeholderTemplateId;
+    private transient Long confirmPromptTemplateId;
 
     public TextQuestion(String stableId, long promptTemplateId, Long placeholderTemplateId,
                         boolean isRestricted, boolean isDeprecated,
                         Long additionalInfoHeaderTemplateId, Long additionalInfoFooterTemplateId, List<TextAnswer> answers,
                         List<Rule<TextAnswer>> validations, TextInputType inputType, SuggestionType suggestionType,
-                        List<String> suggestions, boolean confirmEntry) {
+                        List<String> suggestions, boolean confirmEntry,
+                        Long confirmPrompTemplateId, String mismatchMessage) {
         super(QuestionType.TEXT,
                 stableId,
                 promptTemplateId,
@@ -62,6 +70,8 @@ public class TextQuestion extends Question<TextAnswer> {
         this.inputType = MiscUtil.checkNonNull(inputType, "inputType");
         this.placeholderTemplateId = placeholderTemplateId;
         this.confirmEntry = confirmEntry;
+        this.confirmPromptTemplateId = confirmPrompTemplateId;
+        this.mismatchMessage = mismatchMessage;
         this.suggestionType = Optional.ofNullable(suggestionType).orElse(SuggestionType.NONE);
 
         if (CollectionUtils.isNotEmpty(suggestions)) {
@@ -71,7 +81,8 @@ public class TextQuestion extends Question<TextAnswer> {
 
     public TextQuestion(String stableId, long promptTemplateId, Long placeholderTemplateId, List<TextAnswer> answers,
                         List<Rule<TextAnswer>> validations, TextInputType inputType, SuggestionType suggestionType,
-                        List<String> suggestions, boolean confirmEntry) {
+                        List<String> suggestions, boolean confirmEntry,
+                        Long confirmPromptTemplateId, String mismatchMessage) {
         this(stableId,
                 promptTemplateId,
                 placeholderTemplateId,
@@ -84,7 +95,9 @@ public class TextQuestion extends Question<TextAnswer> {
                 inputType,
                 suggestionType,
                 suggestions,
-                confirmEntry);
+                confirmEntry,
+                confirmPromptTemplateId,
+                mismatchMessage);
     }
 
     public TextQuestion(String stableId, long promptTemplateId, Long placeholderTemplateId,
@@ -101,7 +114,9 @@ public class TextQuestion extends Question<TextAnswer> {
                 inputType,
                 null,
                 null,
-                false);
+                false,
+                null,
+                null);
     }
 
     @Override
@@ -110,6 +125,9 @@ public class TextQuestion extends Question<TextAnswer> {
         // only generate the placeholder template id if it's present
         if (placeholderTemplateId != null) {
             registry.accept(placeholderTemplateId);
+        }
+        if (confirmPromptTemplateId != null) {
+            registry.accept(confirmPromptTemplateId);
         }
     }
 
@@ -125,8 +143,17 @@ public class TextQuestion extends Question<TextAnswer> {
             if (style == ContentStyle.BASIC) {
                 placeholderText = HtmlConverter.getPlainText(placeholderText);
             }
+        } // else a no-op since placeholder is optional
+        if (confirmPromptTemplateId != null) {
+            confirmEntryText = rendered.get(confirmPromptTemplateId);
+            if (confirmEntryText == null) {
+                throw new NoSuchElementException("No rendered template found for confirm entry text with id "
+                        + confirmPromptTemplateId);
+            }
+            if (style == ContentStyle.BASIC) {
+                confirmEntryText = HtmlConverter.getPlainText(confirmEntryText);
+            }
         }
-        // else a no-op since placeholder is optional
 
     }
 

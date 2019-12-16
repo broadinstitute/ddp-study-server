@@ -499,7 +499,9 @@ public interface QuestionDao extends SqlObject {
                 textQuestionDto.getInputType(),
                 textQuestionDto.getSuggestionType(),
                 textQuestionDto.getSuggestions(),
-                textQuestionDto.isConfirmEntry());
+                textQuestionDto.isConfirmEntry(),
+                textQuestionDto.getConfirmPromptTemplateId(),
+                textQuestionDto.getMismatchMessage());
     }
 
     /**
@@ -862,11 +864,18 @@ public interface QuestionDao extends SqlObject {
             placeholderTemplateId = templateDao.insertTemplate(textQuestion.getPlaceholderTemplate(), revisionId);
         }
 
+        Long confirmEntryTemplateId = null;
+        if (textQuestion.getConfirmPromptTemplate() != null) {
+            confirmEntryTemplateId = templateDao.insertTemplate(textQuestion.getConfirmPromptTemplate(), revisionId);
+        }
+
         int numInserted = getJdbiTextQuestion().insert(textQuestion.getQuestionId(),
                 textQuestion.getInputType(),
                 textQuestion.getSuggestionType(),
                 placeholderTemplateId,
-                textQuestion.isConfirmEntry());
+                textQuestion.isConfirmEntry(),
+                confirmEntryTemplateId,
+                textQuestion.getMismatchMessage());
         if (numInserted != 1) {
             throw new DaoException("Inserted " + numInserted + " for text question " + textQuestion.getStableId());
         }
@@ -1290,6 +1299,10 @@ public interface QuestionDao extends SqlObject {
         List<RuleDef> validations = getValidationDao()
                 .findRuleDefsByQuestionIdAndTimestamp(textDto.getId(), timestamp);
 
+        Template confirmPromptTemplate = null;
+        if (textDto.getConfirmPromptTemplateId() != null) {
+            confirmPromptTemplate = getTemplateDao().loadTemplateById(textDto.getConfirmPromptTemplateId());
+        }
         return TextQuestionDef.builder(textDto.getInputType(), textDto.getStableId(), prompt)
                 .setSuggestionType(textDto.getSuggestionType())
                 .setPlaceholderTemplate(Template.text("placeholder"))
@@ -1300,6 +1313,8 @@ public interface QuestionDao extends SqlObject {
                 .setDeprecated(textDto.isDeprecated())
                 .setHideNumber(textDto.shouldHideNumber())
                 .setConfirmEntry(textDto.isConfirmEntry())
+                .setConfirmPromptTemplate(confirmPromptTemplate)
+                .setMismatchMessage(textDto.getMismatchMessage())
                 .addSuggestions(suggestions)
                 .addValidations(validations)
                 .build();

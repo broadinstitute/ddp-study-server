@@ -32,6 +32,13 @@ public final class TextQuestionDef extends QuestionDef {
     @SerializedName("confirmEntry")
     private boolean confirmEntry;
 
+    @Valid
+    @SerializedName("confirmPromptTemplate")
+    private Template confirmPromptTemplate;
+
+    @SerializedName("mismatchMessage")
+    private String mismatchMessage;
+
     public static Builder builder() {
         return new Builder();
     }
@@ -77,7 +84,8 @@ public final class TextQuestionDef extends QuestionDef {
     public TextQuestionDef(String stableId, boolean isRestricted, Template promptTemplate, Template placeholderTemplate,
                            Template additionalInfoHeaderTemplate, Template additionalInfoFooterTemplate,
                            List<RuleDef> validations, TextInputType inputType, SuggestionType suggestionType,
-                           List<String> suggestions, boolean hideNumber, boolean confirmEntry) {
+                           List<String> suggestions, boolean hideNumber, boolean confirmEntry,
+                           Template confirmPromptTemplate, String mismatchMessage) {
         this(stableId,
                 isRestricted,
                 promptTemplate,
@@ -90,6 +98,8 @@ public final class TextQuestionDef extends QuestionDef {
         this.suggestionType = suggestionType;
         this.suggestions = suggestions;
         this.confirmEntry = confirmEntry;
+        this.confirmPromptTemplate = confirmPromptTemplate;
+        this.mismatchMessage = mismatchMessage;
     }
 
     public TextInputType getInputType() {
@@ -112,6 +122,14 @@ public final class TextQuestionDef extends QuestionDef {
         return confirmEntry;
     }
 
+    public String getMismatchMessage() {
+        return mismatchMessage;
+    }
+
+    public Template getConfirmPromptTemplate() {
+        return confirmPromptTemplate;
+    }
+
     public static final class Builder extends AbstractQuestionBuilder<Builder> {
 
         private TextInputType inputType;
@@ -120,6 +138,8 @@ public final class TextQuestionDef extends QuestionDef {
         private Template placeholderTemplate;
         private List<String> suggestions;
         private boolean confirmEntry;
+        private Template confirmPromptTemplate;
+        private String mismatchMessage;
 
         private Builder() {
             // Use static factories.
@@ -150,6 +170,16 @@ public final class TextQuestionDef extends QuestionDef {
             return this;
         }
 
+        public Builder setConfirmPromptTemplate(Template confirmPromptTemplate) {
+            this.confirmPromptTemplate = confirmPromptTemplate;
+            return this;
+        }
+
+        public Builder setMismatchMessage(String mismatchMessage) {
+            this.mismatchMessage = mismatchMessage;
+            return this;
+        }
+
         public Builder addSuggestions(List<String> suggestionsToAdd) {
             if (suggestions == null) {
                 suggestions = new ArrayList<>();
@@ -170,7 +200,9 @@ public final class TextQuestionDef extends QuestionDef {
                                                             suggestionType,
                                                             suggestions,
                                                             hideNumber,
-                                                            confirmEntry);
+                                                            confirmEntry,
+                                                            confirmPromptTemplate,
+                                                            mismatchMessage);
             configure(question);
             return question;
         }
