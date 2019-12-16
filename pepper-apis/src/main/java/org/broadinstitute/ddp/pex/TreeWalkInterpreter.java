@@ -45,6 +45,8 @@ import org.broadinstitute.ddp.pex.lang.PexParser.OrExprContext;
 import org.broadinstitute.ddp.pex.lang.PexParser.PredicateContext;
 import org.broadinstitute.ddp.pex.lang.PexParser.QuestionPredicateContext;
 import org.broadinstitute.ddp.pex.lang.PexParser.QuestionQueryContext;
+import org.broadinstitute.ddp.pex.lang.PexParser.StudyPredicateContext;
+import org.broadinstitute.ddp.pex.lang.PexParser.StudyQueryContext;
 import org.jdbi.v3.core.Handle;
 
 /**
@@ -197,6 +199,16 @@ public class TreeWalkInterpreter implements PexInterpreter {
         } else {
             throw new PexUnsupportedException("Unsupported form predicate: " + predCtx.getText());
         }
+    }
+
+    private boolean evalStudyQuery(InterpreterContext ictx, StudyQueryContext ctx) {
+        String umbrellaStudyGuid = extractString(ctx.study().STR());
+        return applyStudyPredicate(ictx, ctx.studyPredicate(), umbrellaStudyGuid);
+    }
+
+    private boolean applyStudyPredicate(InterpreterContext ictx, StudyPredicateContext predCtx, String umbrellaStudyGuid) {
+        String userGuid = ictx.getUserGuid();
+        return true;
     }
 
     private boolean evalQuestionQuery(InterpreterContext ictx, QuestionQueryContext ctx) {
@@ -517,6 +529,11 @@ public class TreeWalkInterpreter implements PexInterpreter {
         @Override
         public Boolean visitFormQuery(FormQueryContext ctx) {
             return interpreter.evalFormQuery(ictx, ctx);
+        }
+
+        @Override
+        public Boolean visitStudyQuery(StudyQueryContext ctx) {
+            return interpreter.evalStudyQuery(ictx, ctx);
         }
 
         @Override
