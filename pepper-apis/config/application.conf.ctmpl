@@ -43,6 +43,7 @@
     "pdfArchiveUseFilesystem": false,
     "studyExportBucket": "{{$conf.Data.studyExportBucket}}",
     "schedules": {
+        "checkAgeUp": "{{$conf.Data.schedules.checkAgeUp}}",
         "dbBackup": "{{$conf.Data.schedules.dbBackup}}",
         "dbBackupCheck": "{{$conf.Data.schedules.dbBackupCheck}}",
         "drugLoader": "{{$conf.Data.schedules.drugLoader}}",

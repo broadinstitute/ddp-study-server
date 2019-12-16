@@ -201,7 +201,6 @@ public interface JdbiUserStudyEnrollment extends SqlObject {
     );
 
     /**
-     * Consider this method private.
      * Update a user's enrollment status if they already have one, or insert a new status for them if not.
      *
      * @param userGuid                the user guid
@@ -211,7 +210,7 @@ public interface JdbiUserStudyEnrollment extends SqlObject {
      * @param updateTime              the time that we want to record the status was updated at
      * @return the id of the new enrollment status
      */
-    default long changeUserStudyEnrollmentStatus(
+    private long changeUserStudyEnrollmentStatus(
             String userGuid,
             String studyGuid,
             EnrollmentStatusType newEnrollmentStatus,
