@@ -941,6 +941,12 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
         });
     }
 
+    @Test
+    public void testEval_hasAgedUp_true() {
+        String expr = String.format("user.studies[\"%s\"].hasAgedUp()", studyGuid);
+        assertTrue(run(expr));
+    }
+
     private boolean run(String expr) {
         return TransactionWrapper.withTxn(handle -> new TreeWalkInterpreter().eval(expr, handle, userGuid, firstInstanceGuid));
     }
