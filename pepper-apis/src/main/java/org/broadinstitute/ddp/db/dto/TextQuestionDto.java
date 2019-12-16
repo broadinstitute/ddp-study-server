@@ -17,7 +17,7 @@ public final class TextQuestionDto extends QuestionDto {
     private List<String> suggestions;
     private boolean confirmEntry;
     private Long confirmPromptTemplateId;
-    private String mismatchMessage;
+    private Long mismatchMessageTemplateId;
 
     @JdbiConstructor
     public TextQuestionDto(@Nested QuestionDto questionDto,
@@ -26,14 +26,14 @@ public final class TextQuestionDto extends QuestionDto {
                            @ColumnName("placeholder_template_id") Long placeholderTemplateId,
                            @ColumnName("confirm_entry") boolean confirmEntry,
                            @ColumnName("confirm_prompt_template_id") Long confirmPromptTemplateId,
-                           @ColumnName("mismatch_message") String mismatchMessage) {
+                           @ColumnName("mismatch_message_template_id") Long mismatchMessageTemplateId) {
         super(questionDto);
         this.inputType = inputType;
         this.suggestionType = suggestionType;
         this.placeholderTemplateId = placeholderTemplateId;
         this.confirmEntry = confirmEntry;
         this.confirmPromptTemplateId = confirmPromptTemplateId;
-        this.mismatchMessage = mismatchMessage;
+        this.mismatchMessageTemplateId = mismatchMessageTemplateId;
     }
 
     public TextInputType getInputType() {
@@ -63,8 +63,8 @@ public final class TextQuestionDto extends QuestionDto {
         return confirmEntry;
     }
 
-    public String getMismatchMessage() {
-        return mismatchMessage;
+    public Long getMismatchMessageTemplateId() {
+        return mismatchMessageTemplateId;
     }
 
     public Long getConfirmPromptTemplateId() {

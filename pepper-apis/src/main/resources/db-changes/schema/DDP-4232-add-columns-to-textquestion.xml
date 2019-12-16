@@ -16,7 +16,10 @@
                              foreignKeyName="text_question_confirm_prompt_template_fk"/>
             </column>
 
-            <column name="mismatch_message" type="varchar(255)">
+            <column name="mismatch_message_template_id" type="bigint">
+                <constraints nullable="true"
+                             references="template(template_id)"
+                             foreignKeyName="text_question_mismatch_message_template_fk"/>
             </column>
         </addColumn>
 

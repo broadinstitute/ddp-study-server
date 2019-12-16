@@ -36,8 +36,8 @@ public final class TextQuestionDef extends QuestionDef {
     @SerializedName("confirmPromptTemplate")
     private Template confirmPromptTemplate;
 
-    @SerializedName("mismatchMessage")
-    private String mismatchMessage;
+    @SerializedName("mismatchMessageTemplate")
+    private Template mismatchMessageTemplate;
 
     public static Builder builder() {
         return new Builder();
@@ -85,7 +85,7 @@ public final class TextQuestionDef extends QuestionDef {
                            Template additionalInfoHeaderTemplate, Template additionalInfoFooterTemplate,
                            List<RuleDef> validations, TextInputType inputType, SuggestionType suggestionType,
                            List<String> suggestions, boolean hideNumber, boolean confirmEntry,
-                           Template confirmPromptTemplate, String mismatchMessage) {
+                           Template confirmPromptTemplate, Template mismatchMessageTemplate) {
         this(stableId,
                 isRestricted,
                 promptTemplate,
@@ -99,7 +99,7 @@ public final class TextQuestionDef extends QuestionDef {
         this.suggestions = suggestions;
         this.confirmEntry = confirmEntry;
         this.confirmPromptTemplate = confirmPromptTemplate;
-        this.mismatchMessage = mismatchMessage;
+        this.mismatchMessageTemplate = mismatchMessageTemplate;
     }
 
     public TextInputType getInputType() {
@@ -122,8 +122,8 @@ public final class TextQuestionDef extends QuestionDef {
         return confirmEntry;
     }
 
-    public String getMismatchMessage() {
-        return mismatchMessage;
+    public Template getMismatchMessageTemplate() {
+        return mismatchMessageTemplate;
     }
 
     public Template getConfirmPromptTemplate() {
@@ -139,7 +139,7 @@ public final class TextQuestionDef extends QuestionDef {
         private List<String> suggestions;
         private boolean confirmEntry;
         private Template confirmPromptTemplate;
-        private String mismatchMessage;
+        private Template mismatchMessageTemplate;
 
         private Builder() {
             // Use static factories.
@@ -175,8 +175,8 @@ public final class TextQuestionDef extends QuestionDef {
             return this;
         }
 
-        public Builder setMismatchMessage(String mismatchMessage) {
-            this.mismatchMessage = mismatchMessage;
+        public Builder setMismatchMessage(Template mismatchMessageTemplate) {
+            this.mismatchMessageTemplate = mismatchMessageTemplate;
             return this;
         }
 
@@ -202,7 +202,7 @@ public final class TextQuestionDef extends QuestionDef {
                                                             hideNumber,
                                                             confirmEntry,
                                                             confirmPromptTemplate,
-                                                            mismatchMessage);
+                                                            mismatchMessageTemplate);
             configure(question);
             return question;
         }

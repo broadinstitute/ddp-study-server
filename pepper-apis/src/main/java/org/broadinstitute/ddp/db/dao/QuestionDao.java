@@ -501,7 +501,7 @@ public interface QuestionDao extends SqlObject {
                 textQuestionDto.getSuggestions(),
                 textQuestionDto.isConfirmEntry(),
                 textQuestionDto.getConfirmPromptTemplateId(),
-                textQuestionDto.getMismatchMessage());
+                textQuestionDto.getMismatchMessageTemplateId());
     }
 
     /**
@@ -869,13 +869,18 @@ public interface QuestionDao extends SqlObject {
             confirmEntryTemplateId = templateDao.insertTemplate(textQuestion.getConfirmPromptTemplate(), revisionId);
         }
 
+        Long mismatchMessageTemplateId = null;
+        if (textQuestion.getMismatchMessageTemplate() != null) {
+            mismatchMessageTemplateId = templateDao.insertTemplate(textQuestion.getMismatchMessageTemplate(), revisionId);
+        }
+
         int numInserted = getJdbiTextQuestion().insert(textQuestion.getQuestionId(),
                 textQuestion.getInputType(),
                 textQuestion.getSuggestionType(),
                 placeholderTemplateId,
                 textQuestion.isConfirmEntry(),
                 confirmEntryTemplateId,
-                textQuestion.getMismatchMessage());
+                mismatchMessageTemplateId);
         if (numInserted != 1) {
             throw new DaoException("Inserted " + numInserted + " for text question " + textQuestion.getStableId());
         }
@@ -1303,6 +1308,10 @@ public interface QuestionDao extends SqlObject {
         if (textDto.getConfirmPromptTemplateId() != null) {
             confirmPromptTemplate = getTemplateDao().loadTemplateById(textDto.getConfirmPromptTemplateId());
         }
+        Template mismatchMessageTemplate = null;
+        if (textDto.getMismatchMessageTemplateId() != null) {
+            mismatchMessageTemplate = getTemplateDao().loadTemplateById(textDto.getMismatchMessageTemplateId());
+        }
         return TextQuestionDef.builder(textDto.getInputType(), textDto.getStableId(), prompt)
                 .setSuggestionType(textDto.getSuggestionType())
                 .setPlaceholderTemplate(Template.text("placeholder"))
@@ -1314,7 +1323,7 @@ public interface QuestionDao extends SqlObject {
                 .setHideNumber(textDto.shouldHideNumber())
                 .setConfirmEntry(textDto.isConfirmEntry())
                 .setConfirmPromptTemplate(confirmPromptTemplate)
-                .setMismatchMessage(textDto.getMismatchMessage())
+                .setMismatchMessage(mismatchMessageTemplate)
                 .addSuggestions(suggestions)
                 .addValidations(validations)
                 .build();

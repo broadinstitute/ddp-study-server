@@ -1266,11 +1266,12 @@ Question.Text:
           - EMAIL
       confirmEntry:
         type: boolean
-      confirmText:
+      confirmPrompt:
         type: string
         nullable: true
       mismatchMessage:
         type: string
+        nullable: true
       suggestionType:
         type: string
         default: NONE

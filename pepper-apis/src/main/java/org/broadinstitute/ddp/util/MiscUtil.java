@@ -63,7 +63,7 @@ public class MiscUtil {
     }
 
     public static boolean isEmailFormatValid(String email) {
-        String emailRegex = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
+        String emailRegex = "\\S+\\@\\S+\\.\\S+";
         if (StringUtils.isBlank(email)) {
             return false;
         }

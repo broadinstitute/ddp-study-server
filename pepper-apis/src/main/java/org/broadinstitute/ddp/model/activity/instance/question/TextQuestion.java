@@ -42,21 +42,22 @@ public class TextQuestion extends Question<TextAnswer> {
     @SerializedName("confirmEntry")
     private boolean confirmEntry;
 
-    @SerializedName("confirmEntryText")
-    private String confirmEntryText;
+    @SerializedName("confirmPrompt")
+    private String confirmPrompt;
 
     @SerializedName("mismatchMessage")
     private String mismatchMessage;
 
     private transient Long placeholderTemplateId;
     private transient Long confirmPromptTemplateId;
+    private transient Long mismatchMessageTemplateId;
 
     public TextQuestion(String stableId, long promptTemplateId, Long placeholderTemplateId,
                         boolean isRestricted, boolean isDeprecated,
                         Long additionalInfoHeaderTemplateId, Long additionalInfoFooterTemplateId, List<TextAnswer> answers,
                         List<Rule<TextAnswer>> validations, TextInputType inputType, SuggestionType suggestionType,
                         List<String> suggestions, boolean confirmEntry,
-                        Long confirmPrompTemplateId, String mismatchMessage) {
+                        Long confirmPromptTemplateId, Long mismatchMessageTemplateId) {
         super(QuestionType.TEXT,
                 stableId,
                 promptTemplateId,
@@ -70,8 +71,8 @@ public class TextQuestion extends Question<TextAnswer> {
         this.inputType = MiscUtil.checkNonNull(inputType, "inputType");
         this.placeholderTemplateId = placeholderTemplateId;
         this.confirmEntry = confirmEntry;
-        this.confirmPromptTemplateId = confirmPrompTemplateId;
-        this.mismatchMessage = mismatchMessage;
+        this.confirmPromptTemplateId = confirmPromptTemplateId;
+        this.mismatchMessageTemplateId = mismatchMessageTemplateId;
         this.suggestionType = Optional.ofNullable(suggestionType).orElse(SuggestionType.NONE);
 
         if (CollectionUtils.isNotEmpty(suggestions)) {
@@ -82,7 +83,7 @@ public class TextQuestion extends Question<TextAnswer> {
     public TextQuestion(String stableId, long promptTemplateId, Long placeholderTemplateId, List<TextAnswer> answers,
                         List<Rule<TextAnswer>> validations, TextInputType inputType, SuggestionType suggestionType,
                         List<String> suggestions, boolean confirmEntry,
-                        Long confirmPromptTemplateId, String mismatchMessage) {
+                        Long confirmPromptTemplateId, Long mismatchMessageTemplateId) {
         this(stableId,
                 promptTemplateId,
                 placeholderTemplateId,
@@ -97,7 +98,7 @@ public class TextQuestion extends Question<TextAnswer> {
                 suggestions,
                 confirmEntry,
                 confirmPromptTemplateId,
-                mismatchMessage);
+                mismatchMessageTemplateId);
     }
 
     public TextQuestion(String stableId, long promptTemplateId, Long placeholderTemplateId,
@@ -129,6 +130,9 @@ public class TextQuestion extends Question<TextAnswer> {
         if (confirmPromptTemplateId != null) {
             registry.accept(confirmPromptTemplateId);
         }
+        if (mismatchMessageTemplateId != null) {
+            registry.accept(mismatchMessageTemplateId);
+        }
     }
 
     @Override
@@ -144,14 +148,26 @@ public class TextQuestion extends Question<TextAnswer> {
                 placeholderText = HtmlConverter.getPlainText(placeholderText);
             }
         } // else a no-op since placeholder is optional
+
         if (confirmPromptTemplateId != null) {
-            confirmEntryText = rendered.get(confirmPromptTemplateId);
-            if (confirmEntryText == null) {
-                throw new NoSuchElementException("No rendered template found for confirm entry text with id "
+            confirmPrompt = rendered.get(confirmPromptTemplateId);
+            if (confirmPrompt == null) {
+                throw new NoSuchElementException("No rendered template found for confirm prompt with id "
                         + confirmPromptTemplateId);
             }
             if (style == ContentStyle.BASIC) {
-                confirmEntryText = HtmlConverter.getPlainText(confirmEntryText);
+                confirmPrompt = HtmlConverter.getPlainText(confirmPrompt);
+            }
+        }
+
+        if (mismatchMessageTemplateId != null) {
+            mismatchMessage = rendered.get(mismatchMessageTemplateId);
+            if (mismatchMessage == null) {
+                throw new NoSuchElementException("No rendered template found for mismatch message with id "
+                        + mismatchMessageTemplateId);
+            }
+            if (style == ContentStyle.BASIC) {
+                mismatchMessage = HtmlConverter.getPlainText(mismatchMessage);
             }
         }
 
