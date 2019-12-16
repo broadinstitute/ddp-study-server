@@ -206,7 +206,7 @@ public class PatchFormAnswersRoute implements Route {
                     }
 
                     if (question.getQuestionType() == QuestionType.TEXT
-                            && ((TextQuestion)question).getInputType() == TextInputType.TEXT
+                            && ((TextQuestion)question).getInputType() == TextInputType.EMAIL
                             && answer.getValue() != null
                     ) {
                         String value = (String) answer.getValue();
