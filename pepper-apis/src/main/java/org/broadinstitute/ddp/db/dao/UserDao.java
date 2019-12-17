@@ -116,7 +116,7 @@ public interface UserDao extends SqlObject {
         JdbiUser jdbiUser = getJdbiUser();
 
         long now = Instant.now().toEpochMilli();
-        LOG.info("Using timestamp {}ms to find expired temporary users", now);
+        LOG.info("Using timestamp {} ms to find expired temporary users", now);
 
         Set<Long> expiredTempUserIds = findExpiredTemporaryUserIds(now);
         LOG.info("Found {} expired temporary users to delete", expiredTempUserIds.size());
@@ -133,6 +133,12 @@ public interface UserDao extends SqlObject {
             throw new DaoException("Could not delete all activity instances for expired temporary users");
         }
 
+        numDeleted = getHandle().attach(DataExportDao.class).deleteDataSyncRequestsForUsers(expiredTempUserIds);
+        LOG.info("Deleted {} data sync requests", numDeleted);
+
+        numDeleted = getHandle().attach(QueuedEventDao.class).deleteQueuedEventsByUserIds(expiredTempUserIds);
+        LOG.info("Deleted {} queued events", numDeleted);
+
         numDeleted = _deleteAllTempUserRelatedDataByUserIds(expiredTempUserIds);
         LOG.info("Deleted {} rows of various user data (profile, event_counter)", numDeleted);
 
@@ -144,6 +150,9 @@ public interface UserDao extends SqlObject {
 
         return numDeleted;
     }
+
+    @SqlUpdate("update user set auth0_user_id  = :auth0UserId where guid = :guid")
+    int updateAuth0UserId(@Bind("guid") String guid, @Bind("auth0UserId") String auth0UserId);
 
     class UserWithProfileReducer implements LinkedHashMapRowReducer<Long, User> {
         @Override

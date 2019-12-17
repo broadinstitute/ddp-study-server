@@ -5,6 +5,7 @@ import static spark.Spark.halt;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.auth0.exception.Auth0Exception;
 
@@ -17,6 +18,7 @@ import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.ClientDao;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
 import org.broadinstitute.ddp.db.dao.EventDao;
+import org.broadinstitute.ddp.db.dao.InvitationDao;
 import org.broadinstitute.ddp.db.dao.JdbiCountry;
 import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
 import org.broadinstitute.ddp.db.dao.JdbiMailingList;
@@ -28,6 +30,7 @@ import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dto.EventConfigurationDto;
+import org.broadinstitute.ddp.db.dto.InvitationDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.UserProfileDto;
 import org.broadinstitute.ddp.exception.DDPException;
@@ -47,6 +50,7 @@ import org.broadinstitute.ddp.util.Auth0MgmtTokenHelper;
 import org.broadinstitute.ddp.util.Auth0Util;
 import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.ddp.util.ResponseUtil;
+import org.broadinstitute.ddp.util.TimestampUtil;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
@@ -79,7 +83,6 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
         return HttpStatus.SC_BAD_REQUEST;
     }
 
-    // todo arz write route filter that checks secret header
     @Override
     public Object handle(Request request, Response response, UserRegistrationPayload payload) throws Exception {
         checkRequiredPayloadProperties(response, payload);
@@ -87,11 +90,13 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
         var doLocalRegistration = payload.isLocalRegistration();
         String auth0ClientId = payload.getAuth0ClientId();
         String studyGuid = payload.getStudyGuid();
+        String invitationGuid = payload.getInvitationGuid();
+        final var auth0UserId = new AtomicReference<String>();
 
-        LOG.info("Attempting registration with client {} and study {}", auth0ClientId, studyGuid);
+        LOG.info("Attempting registration with client {},  study {}, and invitation ", auth0ClientId, studyGuid, invitationGuid);
 
         return TransactionWrapper.withTxn(handle -> {
-            String auth0UserId = payload.getAuth0UserId();
+            auth0UserId.set(payload.getAuth0UserId());
             String auth0Domain = payload.getAuth0Domain();
             if (doLocalRegistration && StringUtils.isBlank(auth0Domain)) {
                 auth0Domain = ConfigManager.getInstance().getConfig().getConfig(ConfigFile.AUTH0).getString(ConfigFile.DOMAIN);
@@ -119,15 +124,50 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
             if (doLocalRegistration) {
                 auth0RefreshResponse = auth0Util.getRefreshTokenFromCode(payload.getAuth0Code(), auth0ClientId,
                         auth0ClientSecret, payload.getRedirectUri());
-                auth0UserId = Auth0Util.getVerifiedAuth0UserId(auth0RefreshResponse.getIdToken(), auth0Domain);
+                auth0UserId.set(Auth0Util.getVerifiedAuth0UserId(auth0RefreshResponse.getIdToken(), auth0Domain));
                 LOG.info("Successfully exchanged auth0 code for auth0UserId {} for local registration", auth0UserId);
             }
 
-            String ddpUserGuid;
-            User operatorUser = handle.attach(UserDao.class).findUserByAuth0UserId(auth0UserId, study.getAuth0TenantId()).orElse(null);
-            if (operatorUser == null) {
-                LOG.info("Attempting to register new user {} with client {} and study {}", auth0UserId, auth0ClientId, studyGuid);
-                operatorUser = registerUser(response, payload, handle, auth0Domain, auth0ClientId, auth0UserId);
+            String ddpUserGuid = null;
+            var userDao = handle.attach(UserDao.class);
+            User operatorUser = userDao.findUserByAuth0UserId(auth0UserId.get(), study.getAuth0TenantId()).orElse(null);
+
+            if (StringUtils.isNotBlank(invitationGuid) && operatorUser == null) {
+                // when processing an invitation-based registration, we don't create a new user.
+                // instead, we associate the existing user with a new auth0 user id.
+                var invitationDao = handle.attach(InvitationDao.class);
+                var invitationDto = invitationDao.findByInvitationGuid(invitationGuid);
+                InvitationDto invitation = invitationDto.orElseThrow(() -> new DDPException("Could not find invitation "
+                        + invitationGuid + " for user " + auth0UserId));
+
+                // if the invitation is revoked or there's already an account for the user, error out.
+                if (invitation.isVoid()) {
+                    throw new DDPException("Invalid invitation " + invitationGuid + " for user " + auth0UserId);
+                }
+
+                var user = userDao.findUserById(invitation.getUserId()).orElseThrow(() -> new DDPException("Could not find user "
+                        + invitation.getUserId()));
+
+                if (user.hasAuth0Account()) {
+                    throw new DDPException("There is already an account-bearing user for invitation " + invitationGuid);
+                }
+
+                // todo  arz check ageup status and process trigger events
+
+                ddpUserGuid = user.getGuid();
+                LOG.info("Assigning {} to user {} for invitation {}", auth0UserId, user.getGuid(), invitationGuid);
+
+                var numRows = userDao.updateAuth0UserId(user.getGuid(),  auth0UserId.get());
+                invitationDao.updateAcceptedAt(TimestampUtil.now(), invitationGuid);
+
+                if (numRows != 1) {
+                    throw new DDPException("Updated " + numRows + " for " + auth0UserId.get());
+                }
+            } else if (operatorUser == null) {
+                LOG.info("Attempting to register new user {} with client {} and study {}",
+                        auth0UserId, auth0ClientId, studyGuid);
+
+                operatorUser = registerUser(response, payload, handle, auth0Domain, auth0ClientId, auth0UserId.get());
 
                 GovernancePolicy policy = handle.attach(StudyGovernanceDao.class).findPolicyByStudyGuid(studyGuid).orElse(null);
                 User studyUser;
@@ -151,7 +191,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
             }
 
             if (doLocalRegistration) {
-                return saveDDPGuidInAuth0Metadata(mgmtTokenHelper, ddpUserGuid, auth0UserId,
+                return saveDDPGuidInAuth0Metadata(mgmtTokenHelper, ddpUserGuid, auth0UserId.get(),
                         auth0ClientId, auth0ClientSecret, auth0RefreshResponse.getRefreshToken());
             } else {
                 return new UserRegistrationResponse(ddpUserGuid);
@@ -236,8 +276,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                                         GovernancePolicy policy, User operatorUser, StudyClientConfiguration clientConfig) {
         boolean shouldCreateGoverned;
         try {
-            String expression = policy.getShouldCreateGovernedUserExpr().getText();
-            shouldCreateGoverned = interpreter.eval(expression, handle, operatorUser.getGuid(), null);
+            shouldCreateGoverned = policy.shouldCreateGovernedUser(handle, interpreter, operatorUser.getGuid());
         } catch (Exception e) {
             String msg = "Error while evaluating study governance policy for study " + policy.getStudyGuid();
             LOG.warn(msg, e);

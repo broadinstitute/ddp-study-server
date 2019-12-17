@@ -20,6 +20,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.auth0.exception.Auth0Exception;
 import com.auth0.jwt.JWT;
@@ -32,6 +33,7 @@ import org.broadinstitute.ddp.constants.Auth0Constants;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.API;
+import org.broadinstitute.ddp.constants.TestConstants;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
@@ -40,10 +42,14 @@ import org.broadinstitute.ddp.db.dao.ClientDao;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
 import org.broadinstitute.ddp.db.dao.EventActionDao;
 import org.broadinstitute.ddp.db.dao.EventTriggerDao;
+import org.broadinstitute.ddp.db.dao.InvitationDao;
+import org.broadinstitute.ddp.db.dao.InvitationFactory;
+import org.broadinstitute.ddp.db.dao.JdbiAuth0Tenant;
 import org.broadinstitute.ddp.db.dao.JdbiEventConfiguration;
 import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
 import org.broadinstitute.ddp.db.dao.JdbiMailingList;
 import org.broadinstitute.ddp.db.dao.JdbiProfile;
+import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dao.QueuedEventDao;
@@ -51,7 +57,9 @@ import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
+import org.broadinstitute.ddp.db.dto.Auth0TenantDto;
 import org.broadinstitute.ddp.db.dto.EnrollmentStatusDto;
+import org.broadinstitute.ddp.db.dto.InvitationDto;
 import org.broadinstitute.ddp.db.dto.SendgridEmailEventActionDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.UserDto;
@@ -63,6 +71,7 @@ import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.governance.Governance;
 import org.broadinstitute.ddp.model.governance.GovernancePolicy;
+import org.broadinstitute.ddp.model.invitation.InvitationType;
 import org.broadinstitute.ddp.model.pex.Expression;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.model.user.User;
@@ -70,8 +79,10 @@ import org.broadinstitute.ddp.util.Auth0MgmtTokenHelper;
 import org.broadinstitute.ddp.util.Auth0Util;
 import org.broadinstitute.ddp.util.GuidUtils;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
+import org.broadinstitute.ddp.util.TimestampUtil;
 import org.hamcrest.Matchers;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -813,6 +824,57 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
                 .contentType(ContentType.JSON)
                 .body("code", equalTo(ErrorCodes.NOT_SUPPORTED))
                 .body("message", containsString("existing user to upgrade temporary user"));
+    }
+
+    @Test
+    public void testAccountInvitation() {
+        var user = new AtomicReference<User>();
+
+        try {
+            var invitation = new AtomicReference<InvitationDto>();
+
+            // clear the auth0 user id from the test account and send in an invitation-based registration
+            TransactionWrapper.useTxn(handle -> {
+                var userDao = handle.attach(UserDao.class);
+                Auth0TenantDto auth0TenantDto = handle.attach(JdbiAuth0Tenant.class).findByDomain(auth0Domain);
+                user.set(userDao.findUserByAuth0UserId(auth0UserId, auth0TenantDto.getId()).get());
+
+                long studyId = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(TestConstants.TEST_STUDY_GUID).getId();
+                invitation.set(handle.attach(InvitationFactory.class).createInvitation(InvitationType.AGE_UP,
+                        studyId, user.get().getId(), "test+" + System.currentTimeMillis() + "@datadonationplatform.org"));
+
+                handle.attach(InvitationDao.class).clearDates(invitation.get().getInvitationGuid());
+                userDao.updateAuth0UserId(user.get().getGuid(), null);
+            });
+
+            String invitationGuid = invitation.get().getInvitationGuid();
+
+            UserRegistrationPayload payload = new UserRegistrationPayload(auth0UserId, auth0ClientId,
+                    EN_LANG_CODE, tempStudy.getGuid(), auth0Domain, null, null, invitationGuid);
+
+            makeRequestWith(payload).then().assertThat()
+                    .statusCode(200)
+                    .contentType(ContentType.JSON)
+                    .body("ddpUserGuid", Matchers.not(Matchers.isEmptyOrNullString()));
+
+            TransactionWrapper.useTxn(handle -> {
+                var updatedInvitation = handle.attach(InvitationDao.class).findByInvitationGuid(invitationGuid).get();
+                Assert.assertNotNull(updatedInvitation.getAcceptedAt());
+                Assert.assertTrue(updatedInvitation.getAcceptedAt().before(TimestampUtil.now()));
+                User requeriedUser = handle.attach(UserDao.class).findUserByGuid(user.get().getGuid()).get();
+                Assert.assertEquals(auth0UserId, requeriedUser.getAuth0UserId());
+            });
+
+        } finally {
+            // reset the auth0 user id for the test user
+            TransactionWrapper.useTxn(handle -> {
+                var userDao = handle.attach(UserDao.class);
+                var requieriedUser = userDao.findUserByGuid(user.get().getGuid()).get();
+                if (!requieriedUser.hasAuth0Account()) {
+                    userDao.updateAuth0UserId(user.get().getGuid(), auth0UserId);
+                }
+            });
+        }
     }
 
     private Response makeRequestWith(UserRegistrationPayload payload) {

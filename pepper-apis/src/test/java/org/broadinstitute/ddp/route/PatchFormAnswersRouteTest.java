@@ -131,6 +131,7 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
     private static String boolStableId;
     private static String textStableId;
     private static String textStableId2;
+    private static String textStableId3;
     private static String plistSingleSelectSid;
     private static String plistMultiSelectSid;
     private static String dateTextSid;
@@ -191,6 +192,10 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
         textStableId2 = "PATCH_TEXT_Q2_" + timestamp;
         TextQuestionDef t2 = TextQuestionDef.builder(TextInputType.ESSAY, textStableId2, newTemplate()).build();
         FormSectionDef textSection2 = new FormSectionDef(null, TestUtil.wrapQuestions(t2));
+
+        textStableId3 = "PATCH_TEXT_Q3_" + timestamp;
+        TextQuestionDef t3 = TextQuestionDef.builder(TextInputType.EMAIL, textStableId3, newTemplate()).build();
+        FormSectionDef textSection3 = new FormSectionDef(null, TestUtil.wrapQuestions(t3));
 
         plistSingleSelectSid = "PATCH_PLIST_SINGLE_Q_" + timestamp;
         plistSingle_option1_sid = "PLIST_SINGLE_OPT_1_" + timestamp;
@@ -290,7 +295,7 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
                 .addName(new Translation("en", "activity " + code))
                 .addSections(
                         Arrays.asList(
-                                boolSection, textSection, textSection2, plistSection,
+                                boolSection, textSection, textSection2, textSection3, plistSection,
                                 dateSection, compositeSection, essayTextSection, agreementSection,
                                 numericSection
                         )
@@ -769,6 +774,37 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
         AnswerResponse ans = resp.getAnswers().get(0);
         assertEquals(textStableId, ans.getQuestionStableId());
         assertEquals(answerGuid, ans.getAnswerGuid());
+    }
+
+    @Test
+    public void testPatch_updateTextAnswerEmailInput() throws Exception {
+        String answerGuid = TransactionWrapper.withTxn(handle -> {
+            TextAnswer answer = new TextAnswer(null, textStableId3, null, "abc123abc@gmail.com");
+            return createAnswerAndDeferCleanup(handle, answer);
+        });
+
+        PatchAnswerPayload data = new PatchAnswerPayload();
+        data.addSubmission(new AnswerSubmission(textStableId3, answerGuid, new JsonPrimitive("new_abc123abc@gmail.com")));
+
+        Request request = RouteTestUtil.buildAuthorizedPatchRequest(token, url, gson.toJson(data));
+        HttpResponse response = request.execute().returnResponse();
+        assertEquals(200, response.getStatusLine().getStatusCode());
+
+        String json = EntityUtils.toString(response.getEntity());
+        PatchAnswerResponse resp = gson.fromJson(json, PatchAnswerResponse.class);
+        assertEquals(1, resp.getAnswers().size());
+
+        AnswerResponse ans = resp.getAnswers().get(0);
+        assertEquals(textStableId3, ans.getQuestionStableId());
+        assertEquals(answerGuid, ans.getAnswerGuid());
+
+        //invalid email format
+        data = new PatchAnswerPayload();
+        data.addSubmission(new AnswerSubmission(textStableId3, answerGuid, new JsonPrimitive("newabc123abc_invalid@gmail")));
+
+        request = RouteTestUtil.buildAuthorizedPatchRequest(token, url, gson.toJson(data));
+        response = request.execute().returnResponse();
+        assertEquals(422, response.getStatusLine().getStatusCode());
     }
 
     @Test

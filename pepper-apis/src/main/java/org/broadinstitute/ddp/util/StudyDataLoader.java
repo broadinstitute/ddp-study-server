@@ -808,7 +808,7 @@ public class StudyDataLoader {
         UserProfileDto userProfileDto = new UserProfileDto(user.getUserId(),
                 data.getAsJsonObject().get("datstat_firstname").getAsString(),
                 data.getAsJsonObject().get("datstat_lastname").getAsString(),
-                null, null, null, null, languageCodeId,
+                null, null, languageCodeId,
                 DEFAULT_PREFERRED_LANGUAGE_CODE, isDoNotContact);
 
         int numRowsInserted = jdbiProfile.insert(userProfileDto);

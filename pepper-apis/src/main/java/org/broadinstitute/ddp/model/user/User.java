@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.model.user;
 
 import java.time.Instant;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.dto.UserProfileDto;
 import org.broadinstitute.ddp.model.address.MailAddress;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
@@ -150,5 +151,9 @@ public class User {
 
     public boolean isExpired() {
         return expiresAt != null && expiresAt <= Instant.now().toEpochMilli();
+    }
+
+    public boolean hasAuth0Account() {
+        return StringUtils.isNotEmpty(auth0UserId);
     }
 }

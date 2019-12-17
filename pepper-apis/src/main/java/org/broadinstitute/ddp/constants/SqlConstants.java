@@ -20,34 +20,12 @@ public class SqlConstants {
     public static final String ACTIVITY_NAME = "activity_name";
     public static final String ACTIVITY_TYPE_NAME = "activity_type_name";
     public static final String USER_ID = "user_id";
-    // Left for backward compatibility, please refactor and remove (start)
-    public static final String BIRTH_DAY_IN_MONTH = "birth_day_in_month";
-    public static final String BIRTH_MONTH = "birth_month";
-    public static final String BIRTH_YEAR = "birth_year";
-    public static final String SEX = "sex";
-    // Left for backward compatibility, please refactor and remove (end)
     public static final String IS_USER_LOCKED = "is_locked";
-    // Language code column
-    public static final String LANGUAGE_CODE_ID = "language_code_id";
-    public static final String ISO_LANGUAGE_CODE = "iso_language_code";
 
     public static final class ClientTable {
         public static final String ID = "client_id";
         public static final String IS_CLIENT_REVOKED = "is_revoked";
         public static final String WEB_PASSWORD_REDIRECT_URL = "web_password_redirect_url";
-    }
-
-    // User profile columns
-    public static final class UserProfileTable {
-        public static final String USER_ID = "user_id";
-        public static final String BIRTH_DAY_IN_MONTH = "birth_day_in_month";
-        public static final String BIRTH_MONTH = "birth_month";
-        public static final String BIRTH_YEAR = "birth_year";
-        public static final String SEX = "sex";
-        public static final String PREFERRED_LANGUAGE_ID = "preferred_language_id";
-        public static final String FIRST_NAME = "first_name";
-        public static final String LAST_NAME = "last_name";
-        public static final String DO_NOT_CONTACT = "do_not_contact";
     }
 
     public static final class InvitationTable {

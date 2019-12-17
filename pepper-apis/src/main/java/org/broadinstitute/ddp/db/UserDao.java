@@ -6,7 +6,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.time.DateTimeException;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -58,20 +60,15 @@ public class UserDao {
     private final String hasAdminAccessQuery;
     private final String userExistsQuery;
     private final String userGuidForAuth0IdQuery;
-    private final String addProfileStmt;
     private final String profileExistsQuery;
     private final String getUserIdFromGuid;
     private final String getUserIdFromHruid;
     private final String getGuidFromUserId;
-    private final String getProfileStmt;
     private final String userExistsGuidQuery;
     private final String governanceAliasExistsQuery;
     private final String userClientRevocationQuery;
     private final String getAllGovParticipantsQuery;
     private final String patchGenderStmt;
-    private final String patchBirthYearStmt;
-    private final String patchBirthMonthStmt;
-    private final String patchBirthDayInMonthStmt;
     private final String patchPreferredLanguageStmt;
 
     /**
@@ -84,20 +81,15 @@ public class UserDao {
                    String hasAdminAccessQuery,
                    String userExistsQuery,
                    String userGuidForAuth0IdQuery,
-                   String addProfileStmt,
                    String profileExistsQuery,
                    String getUserIdFromGuid,
                    String getUserIdFromHruid,
                    String getGuidFromUserId,
-                   String getProfileStmt,
                    String userExistsGuidQuery,
                    String governanceAliasExistsQuery,
                    String userClientRevocationQuery,
                    String getAllGovParticipantsQuery,
                    String patchGenderStmt,
-                   String patchBirthYearStmt,
-                   String patchBirthMonthStmt,
-                   String patchBirthDayInMonthStmt,
                    String patchPreferredLanguageStmt
     ) {
         this.insertUserStmt = insertUserStmt;
@@ -107,20 +99,15 @@ public class UserDao {
         this.hasAdminAccessQuery = hasAdminAccessQuery;
         this.userExistsQuery = userExistsQuery;
         this.userGuidForAuth0IdQuery = userGuidForAuth0IdQuery;
-        this.addProfileStmt = addProfileStmt;
         this.profileExistsQuery = profileExistsQuery;
         this.getUserIdFromGuid = getUserIdFromGuid;
         this.getUserIdFromHruid = getUserIdFromHruid;
         this.getGuidFromUserId = getGuidFromUserId;
-        this.getProfileStmt = getProfileStmt;
         this.userExistsGuidQuery = userExistsGuidQuery;
         this.governanceAliasExistsQuery = governanceAliasExistsQuery;
         this.userClientRevocationQuery = userClientRevocationQuery;
         this.getAllGovParticipantsQuery = getAllGovParticipantsQuery;
         this.patchGenderStmt = patchGenderStmt;
-        this.patchBirthYearStmt = patchBirthYearStmt;
-        this.patchBirthMonthStmt = patchBirthMonthStmt;
-        this.patchBirthDayInMonthStmt = patchBirthDayInMonthStmt;
         this.patchPreferredLanguageStmt = patchPreferredLanguageStmt;
     }
 
@@ -283,7 +270,7 @@ public class UserDao {
      * @param guid    the user guid
      * @return Profile object with all attributes of new profile
      */
-    public Profile addProfile(Handle handle, Profile profile, String guid) throws SQLException {
+    public Profile addProfile(Handle handle, Profile profile, String guid) {
         String sex = (profile.getSex() == null) ? null : profile.getSex().name();
         String preferredLanguage = profile.getPreferredLanguage();
 
@@ -295,9 +282,7 @@ public class UserDao {
                         profile.getFirstName(),
                         profile.getLastName(),
                         sex,
-                        profile.getBirthYear(),
-                        profile.getBirthMonth(),
-                        profile.getBirthDayInMonth(),
+                        profile.getBirthDate(),
                         jdbiLanguageCode.getLanguageCodeId(preferredLanguage),
                         null,
                         null
@@ -318,36 +303,19 @@ public class UserDao {
      * @return Profile object containing all attributes of retrieved profile
      */
     public Profile getProfile(Handle handle, String guid) {
-        String sexString = "";
-        //default values of a profile should be null
-        Profile.Sex sex;
-        Integer birthDayInMonth = null;
-        Integer birthMonth = null;
-        Integer birthYear = null;
-        String preferredLanguage = null;
-        String firstName = null;
-        String lastName = null;
-
-        try (PreparedStatement stmt = handle.getConnection().prepareStatement(getProfileStmt)) {
-            stmt.setString(1, guid);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    sexString = rs.getString(SqlConstants.SEX);
-                    birthDayInMonth = (Integer) rs.getObject(SqlConstants.BIRTH_DAY_IN_MONTH);
-                    birthMonth = (Integer) rs.getObject(SqlConstants.BIRTH_MONTH);
-                    birthYear = (Integer) rs.getObject(SqlConstants.BIRTH_YEAR);
-                    preferredLanguage = rs.getString(SqlConstants.ISO_LANGUAGE_CODE);
-                    firstName = rs.getString(SqlConstants.UserProfileTable.FIRST_NAME);
-                    lastName = rs.getString(SqlConstants.UserProfileTable.LAST_NAME);
-                } else {
-                    throw new NotFoundException("Could not find profile for user with GUID " + guid);
-                }
-            }
-        } catch (RuntimeException | SQLException e) {
-            throw new DaoException("Could not retrieve profile row for user " + guid, e);
+        UserProfileDto profileDto = handle.attach(JdbiProfile.class).getUserProfileByUserGuid(guid);
+        if (profileDto == null) {
+            throw new DaoException("Could not find profile for user with guid " + guid);
         }
 
-        sex = Profile.Sex.fromString(sexString);
+        LocalDate birthDate = profileDto.getBirthDate();
+        Integer birthYear = birthDate == null ? null : birthDate.getYear();
+        Integer birthMonth = birthDate == null ? null : birthDate.getMonthValue();
+        Integer birthDayInMonth = birthDate == null ? null : birthDate.getDayOfMonth();
+        Profile.Sex sex = Profile.Sex.fromString(profileDto.getSex());
+        String preferredLanguage = profileDto.getPreferredLanguageCode();
+        String firstName = profileDto.getFirstName();
+        String lastName = profileDto.getLastName();
 
         return new Profile(birthDayInMonth, birthMonth, birthYear, sex, preferredLanguage, firstName, lastName);
     }
@@ -378,6 +346,35 @@ public class UserDao {
                 throw new DaoException("Updated " + numRowsUpdated + " rows for " + jsonFieldName + " to "
                                        + columnValue + " for user " + userId);
             }
+        }
+    }
+
+    private LocalDate parseProfileBirthDate(JsonObject payload) {
+        Integer year = null;
+        if (payload.has(Profile.BIRTH_YEAR) && !payload.get(Profile.BIRTH_YEAR).isJsonNull()) {
+            year = payload.get(Profile.BIRTH_YEAR).getAsInt();
+        }
+
+        Integer month = null;
+        if (payload.has(Profile.BIRTH_MONTH) && !payload.get(Profile.BIRTH_MONTH).isJsonNull()) {
+            month = payload.get(Profile.BIRTH_MONTH).getAsInt();
+        }
+
+        Integer day = null;
+        if (payload.has(Profile.BIRTH_DAY_IN_MONTH) && !payload.get(Profile.BIRTH_DAY_IN_MONTH).isJsonNull()) {
+            day = payload.get(Profile.BIRTH_DAY_IN_MONTH).getAsInt();
+        }
+
+        if (year != null && month != null && day != null) {
+            try {
+                return LocalDate.of(year, month, day);
+            } catch (DateTimeException e) {
+                throw new DaoException("Invalid birth date", e);
+            }
+        } else if (year == null && month == null && day == null) {
+            return null;
+        } else {
+            throw new DaoException("Need to provide full birth date");
         }
     }
 
@@ -415,51 +412,6 @@ public class UserDao {
                 }
             }
         }
-        if (profileUpdates.has(Profile.BIRTH_DAY_IN_MONTH)) {
-            Integer birthDayInMonth = null;
-            if (!profileUpdates.get(Profile.BIRTH_DAY_IN_MONTH).isJsonNull()) {
-                birthDayInMonth = (Integer) profileUpdates.get(Profile.BIRTH_DAY_IN_MONTH).getAsInt();
-            }
-            try (PreparedStatement stmt = handle.getConnection().prepareStatement(patchBirthDayInMonthStmt)) {
-                StatementUtils.setInteger(stmt, 1, birthDayInMonth);
-                stmt.setLong(2, userId);
-                int rowsUpdated = stmt.executeUpdate();
-                if (rowsUpdated != 1) {
-                    throw new DaoException("Failed to update birth day in month profile information.  "
-                            + rowsUpdated + " rows were updated");
-                }
-            }
-        }
-        if (profileUpdates.has(Profile.BIRTH_MONTH)) {
-            Integer birthMonth = null;
-            if (!profileUpdates.get(Profile.BIRTH_MONTH).isJsonNull()) {
-                birthMonth = (Integer) profileUpdates.get(Profile.BIRTH_MONTH).getAsInt();
-            }
-            try (PreparedStatement stmt = handle.getConnection().prepareStatement(patchBirthMonthStmt)) {
-                StatementUtils.setInteger(stmt, 1, birthMonth);
-                stmt.setLong(2, userId);
-                int rowsUpdated = stmt.executeUpdate();
-                if (rowsUpdated != 1) {
-                    throw new DaoException("Failed to update birth month profile information.  "
-                            + rowsUpdated + " rows were updated");
-                }
-            }
-        }
-        if (profileUpdates.has(Profile.BIRTH_YEAR)) {
-            Integer birthYear = null;
-            if (!profileUpdates.get(Profile.BIRTH_YEAR).isJsonNull()) {
-                birthYear = (Integer) profileUpdates.get(Profile.BIRTH_YEAR).getAsInt();
-            }
-            try (PreparedStatement stmt = handle.getConnection().prepareStatement(patchBirthYearStmt)) {
-                StatementUtils.setInteger(stmt, 1, birthYear);
-                stmt.setLong(2, userId);
-                int rowsUpdated = stmt.executeUpdate();
-                if (rowsUpdated != 1) {
-                    throw new DaoException("Failed to update birth year profile information.  "
-                            + rowsUpdated + " rows were updated");
-                }
-            }
-        }
         if (profileUpdates.has(Profile.PREFERRED_LANGUAGE)) {
             String preferredLanguage = null;
             if (!profileUpdates.get(Profile.PREFERRED_LANGUAGE).isJsonNull()) {
@@ -484,6 +436,13 @@ public class UserDao {
                 LOG.error("Tried to update preferred language to value not in pepper.");
             }
         }
+
+        LocalDate birthDate = parseProfileBirthDate(profileUpdates);
+        boolean success = handle.attach(JdbiProfile.class).upsertBirthDate(userId, birthDate);
+        if (!success) {
+            throw new DaoException("Could not update birth date for user with guid " + guid);
+        }
+
         return getProfile(handle, guid);
     }
 

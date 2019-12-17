@@ -10,3 +10,8 @@ values (
 <endif>
        :shouldCreateGovernedUserExprId)
 >>
+
+insertAgeOfMajorityRule() ::= <<
+insert into age_of_majority_rule (study_governance_policy_id, condition_expression, age, preparation_months, execution_order)
+values (:policyId, :condition, :age, :prepMonths, :order)
+>>

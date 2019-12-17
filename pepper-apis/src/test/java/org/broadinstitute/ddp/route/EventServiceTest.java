@@ -7,6 +7,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -48,11 +49,15 @@ import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.definition.question.BoolQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
+import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
+import org.broadinstitute.ddp.model.activity.types.DateFieldType;
+import org.broadinstitute.ddp.model.activity.types.DateRenderMode;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.activity.types.TemplateType;
@@ -70,6 +75,7 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -81,7 +87,7 @@ public class EventServiceTest extends IntegrationTestSuite.TestCase {
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static String token;
     private static String url;
-
+    private static String dateQuestionStableId;
     private long dsmInclusionEventActionId;
     private long studyActivityToCreateId;
     private long activityInstanceCreationEventActionId;
@@ -240,10 +246,17 @@ public class EventServiceTest extends IntegrationTestSuite.TestCase {
                     copySourceStableId = "ANS_TEXT_" + timestamp;
                     TextQuestionDef textDef = buildTextQuestionDef(copySourceStableId);
 
+                    dateQuestionStableId = "ANS_DATE_" + timestamp;
+                    DateQuestionDef dateDef = DateQuestionDef
+                            .builder(DateRenderMode.TEXT, dateQuestionStableId, Template.text(""))
+                            .addFields(DateFieldType.MONTH, DateFieldType.DAY, DateFieldType.YEAR)
+                            .build();
+
                     String activityCode = "ANS_ACT_" + timestamp;
                     FormActivityDef form = FormActivityDef.generalFormBuilder(activityCode, "v1", testData.getStudyGuid())
                             .addName(new Translation("en", "test activity"))
                             .addSection(new FormSectionDef(null, TestUtil.wrapQuestions(textDef)))
+                            .addSection(new FormSectionDef(null, TestUtil.wrapQuestions(dateDef)))
                             .build();
 
                     handle.attach(ActivityDao.class).insertActivity(form, RevisionMetadata.now(testData.getTestingUser().getUserId(),
@@ -266,6 +279,21 @@ public class EventServiceTest extends IntegrationTestSuite.TestCase {
                             CopyAnswerTarget.PARTICIPANT_PROFILE_LAST_NAME);
 
                     long eventConfigurationId = jdbiEventConfig.insert(triggerId, actionId,
+                            testData.getStudyId(),
+                            Instant.now().toEpochMilli(),
+                            1,
+                            0,
+                            null,
+                            null,
+                            false,
+                            1);
+
+                    actionId = eventActionDao.insertCopyAnswerAction(
+                            testData.getStudyId(),
+                            dateQuestionStableId,
+                            CopyAnswerTarget.PARTICIPANT_PROFILE_BIRTH_DATE);
+
+                    jdbiEventConfig.insert(triggerId, actionId,
                             testData.getStudyId(),
                             Instant.now().toEpochMilli(),
                             1,
@@ -471,6 +499,33 @@ public class EventServiceTest extends IntegrationTestSuite.TestCase {
         });
     }
 
+    @Test
+    @Ignore
+    public void testCopyAnswerToProfileBirthDate() {
+        TransactionWrapper.useTxn(handle -> {
+            JdbiProfile profileDao = handle.attach(JdbiProfile.class);
+            UserProfileDto originalProfile = profileDao.getUserProfileByUserId(testData.getUserId());
+
+            AnswerDao answerDao = AnswerDao.fromSqlConfig(ConfigFactory.parseResources(ConfigFile.SQL_CONF));
+            DateAnswer expected = new DateAnswer(null, dateQuestionStableId, null, 1987, 3, 14);
+            answerDao.createAnswer(handle, expected, testData.getUserGuid(), copyInstanceGuid);
+
+            LocalDate birthDate = expected.getValue().asLocalDate().get();
+            assertNotEquals(originalProfile.getBirthDate(), birthDate);
+
+            EventService.getInstance().processSynchronousActionsForEventSignal(
+                    handle,
+                    new ActivityInstanceStatusChangeSignal(testData.getUserId(),
+                            testData.getUserId(),
+                            testData.getUserGuid(),
+                            copyInstanceId,
+                            testData.getStudyId(),
+                            InstanceStatusType.COMPLETE));
+
+            UserProfileDto profile = profileDao.getUserProfileByUserId(testData.getUserId());
+            assertEquals(birthDate, profile.getBirthDate());
+        });
+    }
 
     private static final class TestData {
         static String sourceActivityCode;

@@ -11,6 +11,8 @@ import org.broadinstitute.ddp.db.dto.EventConfigurationDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.pex.PexInterpreter;
@@ -87,11 +89,16 @@ public class CopyAnswerEventAction extends EventAction {
             if (answer instanceof TextAnswer) {
                 //we are checking despite what the warning says
                 //noinspection unchecked
-                return (T) ((TextAnswer) answer).getValue();
+                return (T) answer.getValue();
             }
             if (answer instanceof BoolAnswer) {
                 //noinspection unchecked
                 return (T) answer.getValue().toString();
+            }
+        } else if (extractionValueType == DateValue.class) {
+            if (answer instanceof DateAnswer) {
+                //noinspection unchecked
+                return (T) answer.getValue();
             }
         }
         throw new DDPException("Currently unable to convert question of class: " + answer.getClass() + " to a value of class: "
