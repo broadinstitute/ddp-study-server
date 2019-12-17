@@ -4,10 +4,14 @@ import static io.restassured.RestAssured.given;
 import static org.broadinstitute.ddp.constants.RouteConstants.Header.DDP_CONTENT_STYLE;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.isEmptyOrNullString;
+import static org.hamcrest.Matchers.not;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import java.time.Instant;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import io.restassured.http.ContentType;
 import io.restassured.http.Header;
@@ -20,6 +24,7 @@ import org.broadinstitute.ddp.db.dao.JdbiRevision;
 import org.broadinstitute.ddp.db.dao.TemplateDao;
 import org.broadinstitute.ddp.db.dao.UserAnnouncementDao;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
+import org.broadinstitute.ddp.model.user.UserAnnouncement;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.junit.After;
 import org.junit.BeforeClass;
@@ -96,7 +101,7 @@ public class GetUserAnnouncementsRouteTest extends IntegrationTestSuite.TestCase
     @Test
     public void test_singleAnnouncement_deletedAfterRead() {
         TransactionWrapper.useTxn(handle -> handle.attach(UserAnnouncementDao.class)
-                .insert(testData.getUserId(), testData.getStudyId(), msgTemplate.getTemplateId()));
+                .insert(testData.getUserId(), testData.getStudyId(), msgTemplate.getTemplateId(), false));
 
         given().auth().oauth2(token)
                 .pathParam("userGuid", testData.getUserGuid())
@@ -105,6 +110,7 @@ public class GetUserAnnouncementsRouteTest extends IntegrationTestSuite.TestCase
                 .then().assertThat()
                 .statusCode(200).contentType(ContentType.JSON)
                 .body("$.size()", equalTo(1))
+                .body("[0].permanent", equalTo(false))
                 .body("[0].message", equalTo(msgTemplate.getTemplateText()));
 
         TransactionWrapper.useTxn(handle -> {
@@ -125,8 +131,8 @@ public class GetUserAnnouncementsRouteTest extends IntegrationTestSuite.TestCase
             long nowMillis = Instant.now().toEpochMilli();
             UserAnnouncementDao announcementDao = handle.attach(UserAnnouncementDao.class);
 
-            announcementDao.insert(testData.getUserId(), testData.getStudyId(), oldest.getTemplateId(), nowMillis - 1000);
-            announcementDao.insert(testData.getUserId(), testData.getStudyId(), msgTemplate.getTemplateId(), nowMillis);
+            announcementDao.insert("guid1", testData.getUserId(), testData.getStudyId(), oldest.getTemplateId(), false, nowMillis - 1000);
+            announcementDao.insert("guid2", testData.getUserId(), testData.getStudyId(), msgTemplate.getTemplateId(), false, nowMillis);
 
             return oldest;
         });
@@ -165,7 +171,7 @@ public class GetUserAnnouncementsRouteTest extends IntegrationTestSuite.TestCase
     @Test
     public void test_basicContentStyle() {
         TransactionWrapper.useTxn(handle -> handle.attach(UserAnnouncementDao.class)
-                .insert(testData.getUserId(), testData.getStudyId(), msgTemplate.getTemplateId()));
+                .insert(testData.getUserId(), testData.getStudyId(), msgTemplate.getTemplateId(), false));
 
         given().auth().oauth2(token)
                 .pathParam("userGuid", testData.getUserGuid())
@@ -176,5 +182,40 @@ public class GetUserAnnouncementsRouteTest extends IntegrationTestSuite.TestCase
                 .statusCode(200).contentType(ContentType.JSON)
                 .body("$.size()", equalTo(1))
                 .body("[0].message", equalTo(msgPlainText));
+    }
+
+    @Test
+    public void test_permanentAnnouncements_notDeletedAfterRead() {
+        TransactionWrapper.useTxn(handle -> handle.attach(UserAnnouncementDao.class)
+                .insert(testData.getUserId(), testData.getStudyId(), msgTemplate.getTemplateId(), true));
+
+        String guid = given().auth().oauth2(token)
+                .pathParam("userGuid", testData.getUserGuid())
+                .pathParam("studyGuid", testData.getStudyGuid())
+                .when().get(url)
+                .then().assertThat()
+                .statusCode(200).contentType(ContentType.JSON)
+                .body("$.size()", equalTo(1))
+                .body("[0].guid", not(isEmptyOrNullString()))
+                .body("[0].permanent", equalTo(true))
+                .body("[0].message", equalTo(msgTemplate.getTemplateText()))
+                .extract().path("[0].guid");
+
+        TransactionWrapper.useTxn(handle -> {
+            List<UserAnnouncement> found = handle.attach(UserAnnouncementDao.class)
+                    .findAllForParticipantAndStudy(testData.getUserId(), testData.getStudyId())
+                    .collect(Collectors.toList());
+            assertEquals(1, found.size());
+            assertEquals(guid, found.get(0).getGuid());
+        });
+
+        given().auth().oauth2(token)
+                .pathParam("userGuid", testData.getUserGuid())
+                .pathParam("studyGuid", testData.getStudyGuid())
+                .when().get(url)
+                .then().assertThat()
+                .statusCode(200).contentType(ContentType.JSON)
+                .body("$.size()", equalTo(1))
+                .body("[0].guid", equalTo(guid));
     }
 }

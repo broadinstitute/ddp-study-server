@@ -191,7 +191,10 @@ public class EventBuilder {
             long revId = handle.attach(JdbiRevision.class).insertStart(Instant.now().toEpochMilli(), adminUserId, reason);
             handle.attach(TemplateDao.class).insertTemplate(tmpl, revId);
 
-            return actionDao.insertAnnouncementAction(tmpl.getTemplateId());
+            Boolean isPermanent = ConfigUtil.getBoolIfPresent(actionCfg, "permanent");
+            isPermanent = isPermanent == null ? false : isPermanent;
+
+            return actionDao.insertAnnouncementAction(tmpl.getTemplateId(), isPermanent);
         } else if (EventActionType.USER_ENROLLED.name().equals(type)) {
             return actionDao.insertEnrolledAction();
         } else if (EventActionType.COPY_ANSWER.name().equals(type)) {

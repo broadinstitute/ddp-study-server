@@ -1,6 +1,5 @@
 package org.broadinstitute.ddp.model.user;
 
-import java.beans.ConstructorProperties;
 import java.util.NoSuchElementException;
 import java.util.function.Consumer;
 
@@ -8,6 +7,8 @@ import com.google.gson.annotations.SerializedName;
 import org.broadinstitute.ddp.content.ContentStyle;
 import org.broadinstitute.ddp.content.HtmlConverter;
 import org.broadinstitute.ddp.content.Renderable;
+import org.jdbi.v3.core.mapper.reflect.ColumnName;
+import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
 public class UserAnnouncement implements Renderable {
 
@@ -17,20 +18,38 @@ public class UserAnnouncement implements Renderable {
     private transient long msgTemplateId;
     private transient long createdAt;
 
+    @SerializedName("guid")
+    private String guid;
+
+    @SerializedName("permanent")
+    private boolean isPermanent;
+
     @SerializedName("message")
     private String message;
 
-    @ConstructorProperties({"id", "participant_user_id", "study_id", "message_template_id", "created_at"})
-    public UserAnnouncement(long id, long participantUserId, long studyId, long msgTemplateId, long createdAt) {
+    @JdbiConstructor
+    public UserAnnouncement(@ColumnName("user_announcement_id") long id,
+                            @ColumnName("guid") String guid,
+                            @ColumnName("participant_user_id") long participantUserId,
+                            @ColumnName("study_id") long studyId,
+                            @ColumnName("message_template_id") long msgTemplateId,
+                            @ColumnName("is_permanent") boolean isPermanent,
+                            @ColumnName("created_at") long createdAt) {
         this.id = id;
+        this.guid = guid;
         this.participantUserId = participantUserId;
         this.studyId = studyId;
         this.msgTemplateId = msgTemplateId;
+        this.isPermanent = isPermanent;
         this.createdAt = createdAt;
     }
 
     public long getId() {
         return id;
+    }
+
+    public String getGuid() {
+        return guid;
     }
 
     public long getParticipantUserId() {
@@ -43,6 +62,10 @@ public class UserAnnouncement implements Renderable {
 
     public long getMsgTemplateId() {
         return msgTemplateId;
+    }
+
+    public boolean isPermanent() {
+        return isPermanent;
     }
 
     public long getCreatedAt() {

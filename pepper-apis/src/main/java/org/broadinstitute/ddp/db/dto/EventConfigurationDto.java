@@ -18,6 +18,7 @@ public class EventConfigurationDto {
     private Integer maxOccurrencesPerUser;
     private EventActionType eventActionType;
     private long announcementMsgTemplateId;
+    private boolean announcementIsPermanent;
     private CopyAnswerTarget copyAnswerTarget;
     private String copySourceQuestionStableId;
 
@@ -32,6 +33,7 @@ public class EventConfigurationDto {
                                  @Bind("maxOccurrencesPerUser") Integer maxOccurrencesPerUser,
                                  @Bind("eventActionType") EventActionType eventActionType,
                                  @Bind("announcementMsgTemplateId") long announcementMsgTemplateId,
+                                 @Bind("announcementIsPermanent") boolean announcementIsPermanent,
                                  @Bind("copySourceQuestionStableId") String copySourceQuestionStableId,
                                  @Bind("copyAnswerTarget") CopyAnswerTarget copyAnswerTarget) {
         this.triggerType = triggerType;
@@ -44,6 +46,7 @@ public class EventConfigurationDto {
         this.maxOccurrencesPerUser = maxOccurrencesPerUser;
         this.eventActionType = eventActionType;
         this.announcementMsgTemplateId = announcementMsgTemplateId;
+        this.announcementIsPermanent = announcementIsPermanent;
         this.copySourceQuestionStableId = copySourceQuestionStableId;
         this.copyAnswerTarget = copyAnswerTarget;
     }
@@ -103,6 +106,10 @@ public class EventConfigurationDto {
 
     public long getAnnouncementMsgTemplateId() {
         return announcementMsgTemplateId;
+    }
+
+    public boolean getAnnouncementIsPermanent() {
+        return announcementIsPermanent;
     }
 
     public CopyAnswerTarget getCopyAnswerTarget() {

@@ -152,7 +152,7 @@ public class PostActivityStatusChangeHookTest extends IntegrationTestSuite.TestC
 
                     long revId = handle.attach(JdbiRevision.class).insertStart(timestamp, testUserId, "test announcements");
                     announcementMsgTemplateId = handle.attach(TemplateDao.class).insertTemplate(Template.html("<b>thank you!</b>"), revId);
-                    announcementActionId = eventActionDao.insertAnnouncementAction(announcementMsgTemplateId);
+                    announcementActionId = eventActionDao.insertAnnouncementAction(announcementMsgTemplateId, false);
 
                     studyActivityTriggeringActionId = handle.attach(JdbiActivity.class)
                             .findIdByStudyIdAndCode(umbrellaStudyId, TestData.sourceActivityCode).get();

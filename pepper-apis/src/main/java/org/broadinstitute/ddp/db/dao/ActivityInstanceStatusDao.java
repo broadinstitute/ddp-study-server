@@ -357,7 +357,8 @@ public interface ActivityInstanceStatusDao extends SqlObject {
                 }
             } else if (eventConfig.getEventActionType() == EventActionType.ANNOUNCEMENT) {
                 try {
-                    long id = getUserAnnouncementDao().insert(participantId, studyId, eventConfig.getAnnouncementMsgTemplateId());
+                    long id = getUserAnnouncementDao().insert(participantId, studyId,
+                            eventConfig.getAnnouncementMsgTemplateId(), eventConfig.getAnnouncementIsPermanent());
                     LOG.info("Inserted new announcement with id {} for participant id {} and study id {}", id, participantId, studyId);
                 } catch (Exception e) {
                     throw new DaoException(String.format(
