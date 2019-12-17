@@ -103,7 +103,7 @@ public class UserDaoTest extends TxnAwareBaseTest {
 
         assertEquals(1, handle.attach(JdbiProfile.class)
                 .insert(new UserProfileDto(
-                        tempUser.getUserId(), "first", "last", null, null, null, null, langId, "en", false)));
+                        tempUser.getUserId(), "first", "last", null, null, langId, "en", false)));
 
         ActivityInstanceDto instance = handle.attach(ActivityInstanceDao.class)
                 .insertInstance(form.getActivityId(), tempUser.getUserGuid());

@@ -5,6 +5,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 
 import java.time.Instant;
+import java.time.LocalDate;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.db.AnswerDao;
@@ -18,11 +19,15 @@ import org.broadinstitute.ddp.db.dto.UserProfileDto;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
+import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
+import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
+import org.broadinstitute.ddp.model.activity.types.DateFieldType;
+import org.broadinstitute.ddp.model.activity.types.DateRenderMode;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.activity.types.TemplateType;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
@@ -39,6 +44,7 @@ public class CopyAnswerServiceTest extends TxnAwareBaseTest {
     private static CopyAnswerService copyService;
     private static ActivityInstanceDto instance;
     private static String textQuestionStableId;
+    private static String dateQuestionStableId;
 
     @BeforeClass
     public static void setup() {
@@ -55,10 +61,16 @@ public class CopyAnswerServiceTest extends TxnAwareBaseTest {
         textQuestionStableId = "ANS_TEXT_" + timestamp;
         TextQuestionDef textDef = buildTextQuestionDef(textQuestionStableId);
 
+        dateQuestionStableId = "ANS_DATE_" + timestamp;
+        DateQuestionDef dateDef = DateQuestionDef
+                .builder(DateRenderMode.TEXT, dateQuestionStableId, Template.text(""))
+                .addFields(DateFieldType.MONTH, DateFieldType.DAY, DateFieldType.YEAR)
+                .build();
+
         String activityCode = "ANS_ACT_" + timestamp;
         FormActivityDef form = FormActivityDef.generalFormBuilder(activityCode, "v1", data.getStudyGuid())
                 .addName(new Translation("en", "test activity"))
-                .addSection(new FormSectionDef(null, TestUtil.wrapQuestions(textDef)))
+                .addSection(new FormSectionDef(null, TestUtil.wrapQuestions(textDef, dateDef)))
                 .build();
 
         handle.attach(ActivityDao.class).insertActivity(form, RevisionMetadata.now(data.getTestingUser().getUserId(), "insert test "
@@ -99,7 +111,32 @@ public class CopyAnswerServiceTest extends TxnAwareBaseTest {
             UserProfileDto profile = profileDao.getUserProfileByUserId(data.getUserId());
 
             assertEquals(lastNameFromAnswer, profile.getLastName());
+
+            handle.rollback();
         });
     }
 
+    @Test
+    public void testCopyAnswerToProfileBirthDate() {
+        TransactionWrapper.useTxn(handle -> {
+            JdbiProfile profileDao = handle.attach(JdbiProfile.class);
+            UserProfileDto originalProfile = profileDao.getUserProfileByUserId(data.getUserId());
+
+            AnswerDao answerDao = AnswerDao.fromSqlConfig(sqlConfig);
+            DateAnswer expected = new DateAnswer(null, dateQuestionStableId, null, 1987, 3, 14);
+            answerDao.createAnswer(handle, expected, data.getUserGuid(), instanceGuid);
+
+            LocalDate birthDate = expected.getValue().asLocalDate().get();
+            assertNotEquals(originalProfile.getBirthDate(), birthDate);
+
+            EventConfigurationDto eventConfig = new EventConfigurationDto(null, null, 0L, null, null, 0L, null, null,
+                    EventActionType.COPY_ANSWER, 0L, dateQuestionStableId, CopyAnswerTarget.PARTICIPANT_PROFILE_BIRTH_DATE);
+            copyService.copyAnswerValue(eventConfig, instance, 0L, handle);
+
+            UserProfileDto profile = profileDao.getUserProfileByUserId(data.getUserId());
+            assertEquals(birthDate, profile.getBirthDate());
+
+            handle.rollback();
+        });
+    }
 }

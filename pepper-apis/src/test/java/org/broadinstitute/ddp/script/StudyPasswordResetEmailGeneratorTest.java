@@ -11,6 +11,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -33,12 +34,10 @@ public class StudyPasswordResetEmailGeneratorTest extends TxnAwareBaseTest {
         StudyPasswordResetEmailGenerator generator;
         generator = mock(StudyPasswordResetEmailGenerator.class);
         //This is the one that we expect will get an email
-        UserProfileDto profileDto1 = new UserProfileDto(1L, "Hulk", "Hogan", "MALE", 1953,
-                8, 11, 1L, "en", false);
+        UserProfileDto profileDto1 = new UserProfileDto(1L, "Hulk", "Hogan", "MALE", LocalDate.of(1953, 8, 11), 1L, "en", false);
 
         //This one should be filtered out. says do not contact
-        UserProfileDto profileDto2 = new UserProfileDto(1L, "Jerome", "Salinger", "MALE", 1919,
-                1, 1, 1L, "en", true);
+        UserProfileDto profileDto2 = new UserProfileDto(1L, "Jerome", "Salinger", "MALE", LocalDate.of(1919, 1, 1), 1L, "en", true);
         ProfileWithEmail profileWithEmail1 = new ProfileWithEmail(profileDto1, "hulk.hogan@hulkomania.org");
         ProfileWithEmail profileWithEmail2 = new ProfileWithEmail(profileDto2, "jd@nyc.gov");
 
