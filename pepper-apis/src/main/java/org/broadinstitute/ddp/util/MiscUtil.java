@@ -62,6 +62,16 @@ public class MiscUtil {
         }
     }
 
+    public static boolean isEmailFormatValid(String email) {
+        String emailRegex = "\\S+\\@\\S+\\.\\S+";
+        if (StringUtils.isBlank(email)) {
+            return false;
+        }
+
+        Pattern pattern = Pattern.compile(emailRegex);
+        return pattern.matcher(email).matches();
+    }
+
     public static int checkPositiveOrZero(int num, String name) {
         if (num < 0) {
             throw new IllegalArgumentException(name + " must be greater than or equal to zero");
@@ -75,7 +85,7 @@ public class MiscUtil {
 
     /**
      * Given a file, calculates its SHA1 digest and returns its string representation
-     * @param File A file to get a SHA1 digest for
+     * @param file A file to get a SHA1 digest for
      * @return SHA1 digest as a string of hex digits
      */
     public static String calculateSHA1(File file) throws Exception  {
@@ -94,7 +104,7 @@ public class MiscUtil {
 
     /**
      * Given a Class object in the JAR file, returns a File representing this JAR
-     * @param Class A class residing inside the JAR
+     * @param classInsideJar A class residing inside the JAR
      * @return A File that can be later fed to calculateSHA1(), for example
      */
     public static File getJarFileForClass(Class<?> classInsideJar) throws URISyntaxException {
