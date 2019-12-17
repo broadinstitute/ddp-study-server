@@ -67,6 +67,11 @@ getEventConfigurationsForStudyIdAndTriggerType() ::= <<
         and ec.is_active = 1
 >>
 
+getActiveDispatchConfigsByStudyIdAndTrigger() ::= <<
+<getEventConfigurationsForStudyIdAndTriggerType()>
+    and ec.dispatch_to_housekeeping = 1
+>>
+
 getActivityStatusEventConfigurations() ::= <<
 <eventConfigurationLookup()>
     where

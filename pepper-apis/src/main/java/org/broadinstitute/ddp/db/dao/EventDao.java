@@ -76,7 +76,7 @@ public interface EventDao extends SqlObject {
     @SqlQuery("getActiveDispatchConfigsByStudyIdAndTrigger")
     @RegisterConstructorMapper(EventConfigurationDto.class)
     List<EventConfigurationDto> getActiveDispatchConfigsByStudyIdAndTrigger(@Bind("studyId") long studyId,
-                                                                            @Bind("trigger") EventTriggerType trigger);
+                                                                            @Bind("eventTriggerType") EventTriggerType eventTriggerType);
 
     default int addMedicalUpdateTriggeredEventsToQueue(long studyId, long participantId) {
         List<EventConfigurationDto> summaries = getEventConfigurationDtosForStudyIdAndTriggerType(studyId,

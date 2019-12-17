@@ -83,7 +83,7 @@ public class EventConfigurationDto {
                                  boolean dispatchToHousekeeping,
                                  String preconditionExpression,
                                  String cancelExpression,
-                                 int maxOccurrencesPerUser,
+                                 Integer maxOccurrencesPerUser,
                                  String gcpTopic,
                                  InstanceStatusType instanceStatusType,
                                  Long activityStatusTriggerStudyActivityId,
@@ -154,7 +154,7 @@ public class EventConfigurationDto {
         return cancelExpression;
     }
 
-    public int getMaxOccurrencesPerUser() {
+    public Integer getMaxOccurrencesPerUser() {
         return maxOccurrencesPerUser;
     }
 

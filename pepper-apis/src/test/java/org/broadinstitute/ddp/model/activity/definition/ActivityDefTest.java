@@ -55,7 +55,6 @@ public class ActivityDefTest {
     public void testDeserialize_formActivity() {
         FormActivityDef def = FormActivityDef.generalFormBuilder("ACT", "v1", "STUDY")
                 .setListStyleHint(ListStyleHint.UPPER_ALPHA)
-                .setCreationExpr("some pex expr")
                 .setMaxInstancesPerUser(11)
                 .setWriteOnce(true)
                 .setEditTimeoutSec(200L)
@@ -131,7 +130,6 @@ public class ActivityDefTest {
     public void testDeserialize_consentActivity() {
         ConsentActivityDef def = ConsentActivityDef.builder("ACT", "v1", "STUDY", "consent pex expr")
                 .setListStyleHint(ListStyleHint.UPPER_ALPHA)
-                .setCreationExpr("some pex expr")
                 .setMaxInstancesPerUser(11)
                 .setWriteOnce(true)
                 .setEditTimeoutSec(200L)
