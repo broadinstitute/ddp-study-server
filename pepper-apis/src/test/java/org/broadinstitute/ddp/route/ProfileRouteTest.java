@@ -349,6 +349,8 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
         JsonObject updatedProfile = new JsonObject();
         updatedProfile.addProperty(Profile.SEX, (String) null);
         updatedProfile.addProperty(Profile.BIRTH_YEAR, (Long) null);
+        updatedProfile.addProperty(Profile.BIRTH_MONTH, (Long) null);
+        updatedProfile.addProperty(Profile.BIRTH_DAY_IN_MONTH, (Long) null);
         updatedProfile.addProperty(Profile.PREFERRED_LANGUAGE, (String) null);
 
         Response response = RouteTestUtil.buildAuthorizedPatchRequest(token, url, updatedProfile.toString()).execute();
@@ -359,6 +361,8 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
         Profile queriedProfile = gson.fromJson(bodyToString, Profile.class);
         Assert.assertNull(queriedProfile.getSex());
         Assert.assertNull(queriedProfile.getBirthYear());
+        Assert.assertNull(queriedProfile.getBirthMonth());
+        Assert.assertNull(queriedProfile.getBirthDayInMonth());
         Assert.assertNull(queriedProfile.getPreferredLanguage());
     }
 

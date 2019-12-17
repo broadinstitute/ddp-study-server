@@ -47,20 +47,35 @@ public class UserRegistrationPayload {
     @SerializedName("mode")
     private String mode;
 
+    @SerializedName("invitationId")
+    private String invitationGuid;
+
     public UserRegistrationPayload(String auth0UserId, String auth0ClientId, String auth0ClientCountryCode,
                                    String studyGuid, String auth0Domain, String tempUserGuid, String mode) {
-        this(auth0UserId, auth0ClientId, auth0ClientCountryCode, studyGuid, auth0Domain);
+        this(auth0UserId, auth0ClientId, auth0ClientCountryCode, studyGuid, auth0Domain, tempUserGuid, mode, null);
+    }
+
+    public UserRegistrationPayload(String auth0UserId, String auth0ClientId, String auth0ClientCountryCode,
+                                   String studyGuid, String auth0Domain, String tempUserGuid, String mode,
+                                   String invitationGuid) {
+        this(auth0UserId, auth0ClientId, auth0ClientCountryCode, studyGuid, auth0Domain, invitationGuid);
         this.tempUserGuid = tempUserGuid;
         this.mode = mode;
     }
 
     public UserRegistrationPayload(String auth0UserId, String auth0ClientId, String auth0ClientCountryCode,
                                    String studyGuid, String auth0Domain) {
+        this(auth0UserId, auth0ClientId, auth0ClientCountryCode, studyGuid, auth0Domain, null);
+    }
+
+    public UserRegistrationPayload(String auth0UserId, String auth0ClientId, String auth0ClientCountryCode,
+                                   String studyGuid, String auth0Domain, String invitationGuid) {
         this.auth0UserId = auth0UserId;
         this.auth0ClientId = auth0ClientId;
         this.auth0ClientCountryCode = auth0ClientCountryCode;
         this.studyGuid = studyGuid;
         this.auth0Domain = auth0Domain;
+        this.invitationGuid = invitationGuid;
     }
 
     public boolean isLocalRegistration() {
@@ -101,5 +116,9 @@ public class UserRegistrationPayload {
 
     public String getMode() {
         return mode;
+    }
+
+    public String getInvitationGuid() {
+        return invitationGuid;
     }
 }

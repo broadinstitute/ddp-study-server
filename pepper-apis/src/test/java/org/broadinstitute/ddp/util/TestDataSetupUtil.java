@@ -28,7 +28,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.FileInputStream;
 import java.sql.Driver;
-import java.sql.SQLException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -720,7 +719,7 @@ public class TestDataSetupUtil {
             userDao.addProfile(handle,
                     profile,
                     userGuid);
-        } catch (SQLException e) {
+        } catch (Exception e) {
             throw new RuntimeException("Couldn't create test profile! WHY????????", e);
         }
 
