@@ -94,6 +94,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
         String invitationGuid = payload.getInvitationGuid();
         final var auth0UserId = new AtomicReference<String>();
         final PexInterpreter pexInterpreter = new TreeWalkInterpreter();
+        AtomicReference<String> ddpUserGuid = new AtomicReference<>();
 
         LOG.info("Attempting registration with client {},  study {}, and invitation ", auth0ClientId, studyGuid, invitationGuid);
 
@@ -130,7 +131,6 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                 LOG.info("Successfully exchanged auth0 code for auth0UserId {} for local registration", auth0UserId);
             }
 
-            final AtomicReference<String> ddpUserGuid = new AtomicReference<>();
             var userDao = handle.attach(UserDao.class);
             User operatorUser = userDao.findUserByAuth0UserId(auth0UserId.get(), study.getAuth0TenantId()).orElse(null);
 
@@ -154,6 +154,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                     throw new DDPException("There is already an account-bearing user for invitation " + invitationGuid);
                 }
 
+                ddpUserGuid.set(user.getGuid());
                 // verify that there is governance policy configured for the study and that the
                 // user has reached age of majority.
                 handle.attach(StudyGovernanceDao.class).findPolicyByStudyGuid(studyGuid).ifPresentOrElse(policy -> {
@@ -169,13 +170,15 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                         }
                     } else {
                         LOG.error("User {} is not allowed to create an account yet because they have not reached age of majority "
-                                +  " in study {} with invitation {}", ddpUserGuid.get(), studyGuid, invitationGuid);
+                                + " in study {} with invitation {}", ddpUserGuid.get(), studyGuid, invitationGuid);
+                        ResponseUtil.halt422ErrorResponse(response, ErrorCodes.GOVERNANCE_POLICY_VIOLATION);
                     }
                 },
-                    () -> {
-                        LOG.error("No governance policy for study {}.  Why is a client registering user {} with invitation {} ?",
-                                studyGuid, ddpUserGuid, invitationGuid);
-                    }
+                        () -> {
+                            LOG.error("No governance policy for study {}.  Why is a client registering user {} with invitation {} ?",
+                                    studyGuid, auth0UserId, invitationGuid);
+                            ResponseUtil.halt422ErrorResponse(response, ErrorCodes.GOVERNANCE_POLICY_VIOLATION);
+                        }
                 );
 
 

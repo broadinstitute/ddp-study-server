@@ -37,6 +37,8 @@ public class ErrorCodes {
     public static final String INVALID_LANGUAGE_PREFERENCE = "INVALID_LANGUAGE_PREFERENCE";
     public static final String INVALID_SEX = "INVALID_SEX";
 
+    public static final String GOVERNANCE_POLICY_VIOLATION = "GOVERNANCE_POLICY_VIOLATION";
+
     public static final String INVALID_REQUEST = "INVALID_REQUEST";
     public static final String ANSWER_EXISTS = "ANSWER_EXISTS";
     public static final String ANSWER_VALIDATION = "ANSWER_VALIDATION";

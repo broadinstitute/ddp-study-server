@@ -27,4 +27,10 @@ public interface StudyGovernanceSql extends SqlObject {
             @Bind("age") int age,
             @Bind("prepMonths") Integer prepMonths,
             @Bind("order") int order);
+
+    @SqlUpdate("delete from user_study_governance where user_study_governance_id = :policyId")
+    int deletePolicy(@Bind("policyId") long policyId);
+
+    @SqlUpdate("delete from age_of_majority_rule where study_governance_policy_id = :policyId")
+    int deleteRulesForPolicy(@Bind("policyId") long policyId);
 }
