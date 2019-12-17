@@ -20,10 +20,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
+import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
+import org.broadinstitute.ddp.model.governance.GovernancePolicy;
 import org.broadinstitute.ddp.pex.lang.PexBaseVisitor;
 import org.broadinstitute.ddp.pex.lang.PexParser;
 import org.broadinstitute.ddp.pex.lang.PexParser.AndExprContext;
@@ -207,8 +209,10 @@ public class TreeWalkInterpreter implements PexInterpreter {
     }
 
     private boolean applyStudyPredicate(InterpreterContext ictx, StudyPredicateContext predCtx, String umbrellaStudyGuid) {
-        String userGuid = ictx.getUserGuid();
-        return true;
+        Optional<GovernancePolicy> policy = ictx.getHandle().attach(StudyGovernanceDao.class).findPolicyByStudyGuid(umbrellaStudyGuid);
+        return policy.map(
+                p -> p.hasReachedAgeOfMajority(ictx.getHandle(), new TreeWalkInterpreter(), ictx.getUserGuid())
+        ).orElse(false);
     }
 
     private boolean evalQuestionQuery(InterpreterContext ictx, QuestionQueryContext ctx) {
