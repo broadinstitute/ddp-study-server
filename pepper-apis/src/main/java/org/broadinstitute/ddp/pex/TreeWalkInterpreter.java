@@ -210,9 +210,10 @@ public class TreeWalkInterpreter implements PexInterpreter {
 
     private boolean applyStudyPredicate(InterpreterContext ictx, StudyPredicateContext predCtx, String umbrellaStudyGuid) {
         Optional<GovernancePolicy> policy = ictx.getHandle().attach(StudyGovernanceDao.class).findPolicyByStudyGuid(umbrellaStudyGuid);
+        String msg = "Governance policy for " + umbrellaStudyGuid + " doesn't exist";
         return policy.map(
                 p -> p.hasReachedAgeOfMajority(ictx.getHandle(), new TreeWalkInterpreter(), ictx.getUserGuid())
-        ).orElse(false);
+        ).orElseThrow(() -> new PexFetchException(new NoSuchElementException(msg)));
     }
 
     private boolean evalQuestionQuery(InterpreterContext ictx, QuestionQueryContext ctx) {

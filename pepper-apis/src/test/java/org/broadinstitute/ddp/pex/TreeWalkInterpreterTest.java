@@ -948,13 +948,13 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
     }
 
     @Test
-    public void testEval_hasAgedUpWithMissingGovernancePolicyReturnsFalseByDefault() {
+    public void test_givenMissingGovernancePolicy_whenHasAgedUpIsEvaluated_thenItDefaultsToFalse() {
         String expr = String.format("user.studies[\"%s\"].hasAgedUp()", studyGuid);
         assertFalse(run(expr));
     }
 
     @Test
-    public void testEval_hasAgedUpWithUserThatReachedAgeOfMaturityReturnsTrue() {
+    public void test_givenParticipantReachedAgeOfMajority_whenHasAgedUpIsEvaluated_thenItReturnsTrue() {
         TransactionWrapper.useTxn(handle -> {
             handle.attach(JdbiProfile.class).upsertBirthDate(
                     testData.getTestingUser().getUserId(), LocalDate.now().minusYears(20)
@@ -964,6 +964,7 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
                     new AgeOfMajorityRule("true", 18, null)
             );
             StudyGovernanceDao studyGovernanceDao = handle.attach(StudyGovernanceDao.class);
+            studyGovernanceDao.createPolicy(policy);
             String expr = String.format("user.studies[\"%s\"].hasAgedUp()", studyGuid);
             assertTrue(run(handle, expr));
             handle.rollback();
@@ -971,7 +972,7 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
     }
 
     @Test
-    public void testEval_hasAgedUpWithUserThatDidntReachAgeOfMaturityReturnsFalse() {
+    public void test_givenParticipantDidntReachAgeOfMajority_whenHasAgedUpIsEvaluated_thenItReturnsFalse() {
         TransactionWrapper.useTxn(handle -> {
             handle.attach(JdbiProfile.class).upsertBirthDate(
                     testData.getTestingUser().getUserId(), LocalDate.now().minusYears(12)
@@ -981,6 +982,7 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
                     new AgeOfMajorityRule("true", 18, null)
             );
             StudyGovernanceDao studyGovernanceDao = handle.attach(StudyGovernanceDao.class);
+            studyGovernanceDao.createPolicy(policy);
             String expr = String.format("user.studies[\"%s\"].hasAgedUp()", studyGuid);
             assertFalse(run(handle, expr));
             handle.rollback();
