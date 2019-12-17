@@ -964,9 +964,25 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
                     new AgeOfMajorityRule("true", 18, null)
             );
             StudyGovernanceDao studyGovernanceDao = handle.attach(StudyGovernanceDao.class);
-            GovernancePolicy p = studyGovernanceDao.createPolicy(policy);
             String expr = String.format("user.studies[\"%s\"].hasAgedUp()", studyGuid);
             assertTrue(run(handle, expr));
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testEval_hasAgedUpWithUserThatDidntReachAgeOfMaturityReturnsFalse() {
+        TransactionWrapper.useTxn(handle -> {
+            handle.attach(JdbiProfile.class).upsertBirthDate(
+                    testData.getTestingUser().getUserId(), LocalDate.now().minusYears(12)
+            );
+            GovernancePolicy policy = new GovernancePolicy(testData.getStudyId(), new Expression("true"));
+            policy.addAgeOfMajorityRule(
+                    new AgeOfMajorityRule("true", 18, null)
+            );
+            StudyGovernanceDao studyGovernanceDao = handle.attach(StudyGovernanceDao.class);
+            String expr = String.format("user.studies[\"%s\"].hasAgedUp()", studyGuid);
+            assertFalse(run(handle, expr));
             handle.rollback();
         });
     }
