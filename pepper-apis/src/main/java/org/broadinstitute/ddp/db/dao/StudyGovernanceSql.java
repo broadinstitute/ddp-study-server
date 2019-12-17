@@ -17,4 +17,14 @@ public interface StudyGovernanceSql extends SqlObject {
             @Bind("studyId") Long studyId,
             @Bind("studyGuid") String studyGuid,
             @Bind("shouldCreateGovernedUserExprId") long shouldCreateGovernedUserExprId);
+
+    @GetGeneratedKeys
+    @UseStringTemplateSqlLocator
+    @SqlUpdate("insertAgeOfMajorityRule")
+    long insertAgeOfMajorityRule(
+            @Bind("policyId") long policyId,
+            @Bind("condition") String condition,
+            @Bind("age") int age,
+            @Bind("prepMonths") Integer prepMonths,
+            @Bind("order") int order);
 }

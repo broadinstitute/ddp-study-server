@@ -276,8 +276,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                                         GovernancePolicy policy, User operatorUser, StudyClientConfiguration clientConfig) {
         boolean shouldCreateGoverned;
         try {
-            String expression = policy.getShouldCreateGovernedUserExpr().getText();
-            shouldCreateGoverned = interpreter.eval(expression, handle, operatorUser.getGuid(), null);
+            shouldCreateGoverned = policy.shouldCreateGovernedUser(handle, interpreter, operatorUser.getGuid());
         } catch (Exception e) {
             String msg = "Error while evaluating study governance policy for study " + policy.getStudyGuid();
             LOG.warn(msg, e);
