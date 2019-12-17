@@ -947,10 +947,10 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
         });
     }
 
-    @Test
-    public void test_givenMissingGovernancePolicy_whenHasAgedUpIsEvaluated_thenItDefaultsToFalse() {
+    @Test(expected = PexFetchException.class)
+    public void test_givenMissingGovernancePolicy_whenHasAgedUpIsEvaluated_thenItThrowsAnException() {
         String expr = String.format("user.studies[\"%s\"].hasAgedUp()", studyGuid);
-        assertFalse(run(expr));
+        run(expr);
     }
 
     @Test
