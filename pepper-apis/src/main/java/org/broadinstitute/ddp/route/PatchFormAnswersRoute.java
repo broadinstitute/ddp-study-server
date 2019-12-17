@@ -63,12 +63,14 @@ import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOpt
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.instance.question.CompositeQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.Question;
+import org.broadinstitute.ddp.model.activity.instance.question.TextQuestion;
 import org.broadinstitute.ddp.model.activity.instance.validation.ActivityValidationFailure;
 import org.broadinstitute.ddp.model.activity.instance.validation.Rule;
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.activity.types.NumericType;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
+import org.broadinstitute.ddp.model.activity.types.TextInputType;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.security.DDPAuth;
 import org.broadinstitute.ddp.service.ActivityValidationService;
@@ -77,6 +79,7 @@ import org.broadinstitute.ddp.util.ActivityInstanceUtil;
 import org.broadinstitute.ddp.util.FormActivityStatusUtil;
 import org.broadinstitute.ddp.util.GsonPojoValidator;
 import org.broadinstitute.ddp.util.JsonValidationError;
+import org.broadinstitute.ddp.util.MiscUtil;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
 import org.jdbi.v3.core.Handle;
@@ -200,6 +203,16 @@ public class PatchFormAnswersRoute implements Route {
                         LOG.info(msg);
                         ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.BAD_PAYLOAD, msg));
                         return null;
+                    }
+
+                    if (question.getQuestionType() == QuestionType.TEXT
+                            && ((TextQuestion)question).getInputType() == TextInputType.EMAIL
+                            && answer.getValue() != null
+                    ) {
+                        String value = (String) answer.getValue();
+                        if (StringUtils.isNotBlank(value) && !MiscUtil.isEmailFormatValid(value)) {
+                            throw ResponseUtil.haltError(response, 422, new ApiError(ErrorCodes.MALFORMED_EMAIL, "Invalid email"));
+                        }
                     }
 
                     // Run constraint checks before processing validation rules.
