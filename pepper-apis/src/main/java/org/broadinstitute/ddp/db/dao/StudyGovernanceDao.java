@@ -68,20 +68,6 @@ public interface StudyGovernanceDao extends SqlObject {
     @UseRowReducer(PolicyWithAgeOfMajorityRuleReducer.class)
     Optional<GovernancePolicy> findPolicyByStudyGuid(@Bind("studyGuid") String studyGuid);
 
-    /**
-     * Deletes the policy and any related rules.
-     */
-    default void deletePolicy(long policyId) {
-        var studyGovernanceSql = getStudyGovernanceSql();
-        int numRulesDeleted = studyGovernanceSql.deleteRulesForPolicy(policyId);
-        LOG.info("Deleted {} rules for policy {}.", numRulesDeleted, policyId);
-        int numPoliciesDeleted = studyGovernanceSql.deletePolicy(policyId);
-        if (numPoliciesDeleted > 1) {
-            throw new DaoException("Deleted " + numPoliciesDeleted + " instead of a single policy for " + policyId);
-        }
-        LOG.info("Deleted policy {}.", policyId);
-    }
-
     class PolicyWithAgeOfMajorityRuleReducer implements LinkedHashMapRowReducer<Long, GovernancePolicy> {
         @Override
         public void accumulate(Map<Long, GovernancePolicy> container, RowView view) {

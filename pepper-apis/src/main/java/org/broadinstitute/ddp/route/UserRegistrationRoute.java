@@ -168,6 +168,8 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                         if (numRows != 1) {
                             throw new DDPException("Updated " + numRows + " for " + auth0UserId.get());
                         }
+
+                        // todo arz when DDP-4222 lands, trigger events here
                     } else {
                         LOG.error("User {} is not allowed to create an account yet because they have not reached age of majority "
                                 + " in study {} with invitation {}", ddpUserGuid.get(), studyGuid, invitationGuid);
