@@ -29,6 +29,16 @@ public final class TextQuestionDef extends QuestionDef {
     @SerializedName("suggestions")
     private List<String> suggestions;
 
+    @SerializedName("confirmEntry")
+    private boolean confirmEntry;
+
+    @Valid
+    @SerializedName("confirmPromptTemplate")
+    private Template confirmPromptTemplate;
+
+    @SerializedName("mismatchMessageTemplate")
+    private Template mismatchMessageTemplate;
+
     public static Builder builder() {
         return new Builder();
     }
@@ -74,7 +84,8 @@ public final class TextQuestionDef extends QuestionDef {
     public TextQuestionDef(String stableId, boolean isRestricted, Template promptTemplate, Template placeholderTemplate,
                            Template additionalInfoHeaderTemplate, Template additionalInfoFooterTemplate,
                            List<RuleDef> validations, TextInputType inputType, SuggestionType suggestionType,
-                           List<String> suggestions, boolean hideNumber) {
+                           List<String> suggestions, boolean hideNumber, boolean confirmEntry,
+                           Template confirmPromptTemplate, Template mismatchMessageTemplate) {
         this(stableId,
                 isRestricted,
                 promptTemplate,
@@ -86,6 +97,9 @@ public final class TextQuestionDef extends QuestionDef {
                 hideNumber);
         this.suggestionType = suggestionType;
         this.suggestions = suggestions;
+        this.confirmEntry = confirmEntry;
+        this.confirmPromptTemplate = confirmPromptTemplate;
+        this.mismatchMessageTemplate = mismatchMessageTemplate;
     }
 
     public TextInputType getInputType() {
@@ -104,6 +118,18 @@ public final class TextQuestionDef extends QuestionDef {
         return suggestions;
     }
 
+    public boolean isConfirmEntry() {
+        return confirmEntry;
+    }
+
+    public Template getMismatchMessageTemplate() {
+        return mismatchMessageTemplate;
+    }
+
+    public Template getConfirmPromptTemplate() {
+        return confirmPromptTemplate;
+    }
+
     public static final class Builder extends AbstractQuestionBuilder<Builder> {
 
         private TextInputType inputType;
@@ -111,6 +137,9 @@ public final class TextQuestionDef extends QuestionDef {
         private SuggestionType suggestionType;
         private Template placeholderTemplate;
         private List<String> suggestions;
+        private boolean confirmEntry;
+        private Template confirmPromptTemplate;
+        private Template mismatchMessageTemplate;
 
         private Builder() {
             // Use static factories.
@@ -136,6 +165,21 @@ public final class TextQuestionDef extends QuestionDef {
             return self();
         }
 
+        public Builder setConfirmEntry(boolean confirmEntry) {
+            this.confirmEntry = confirmEntry;
+            return this;
+        }
+
+        public Builder setConfirmPromptTemplate(Template confirmPromptTemplate) {
+            this.confirmPromptTemplate = confirmPromptTemplate;
+            return this;
+        }
+
+        public Builder setMismatchMessage(Template mismatchMessageTemplate) {
+            this.mismatchMessageTemplate = mismatchMessageTemplate;
+            return this;
+        }
+
         public Builder addSuggestions(List<String> suggestionsToAdd) {
             if (suggestions == null) {
                 suggestions = new ArrayList<>();
@@ -155,7 +199,10 @@ public final class TextQuestionDef extends QuestionDef {
                                                             inputType,
                                                             suggestionType,
                                                             suggestions,
-                                                            hideNumber);
+                                                            hideNumber,
+                                                            confirmEntry,
+                                                            confirmPromptTemplate,
+                                                            mismatchMessageTemplate);
             configure(question);
             return question;
         }
