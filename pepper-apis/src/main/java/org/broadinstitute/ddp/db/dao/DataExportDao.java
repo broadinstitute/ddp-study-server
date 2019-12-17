@@ -1,11 +1,14 @@
 package org.broadinstitute.ddp.db.dao;
 
 import java.util.List;
+import java.util.Set;
 
 import org.broadinstitute.ddp.export.DataSyncRequest;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.customizer.BindList;
+import org.jdbi.v3.sqlobject.customizer.BindList.EmptyHandling;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
@@ -40,8 +43,11 @@ public interface DataExportDao extends SqlObject {
     List<DataSyncRequest> findLatestDataSyncRequests();
 
     @SqlUpdate("delete from data_sync_request where data_sync_request_id <= :requestId")
-    void deleteDataSyncRequestsAtOrOlderThan(@Bind("requestId") long requestId);
+    int deleteDataSyncRequestsAtOrOlderThan(@Bind("requestId") long requestId);
 
     @SqlUpdate("delete from data_sync_request where user_id = :userId")
-    void deleteDataSyncRequestsForUser(@Bind("userId") long userId);
+    int deleteDataSyncRequestsForUser(@Bind("userId") long userId);
+
+    @SqlUpdate("delete from data_sync_request where user_id in (<userIds>)")
+    int deleteDataSyncRequestsForUsers(@BindList(value = "userIds", onEmpty = EmptyHandling.NULL) Set<Long> userIds);
 }
