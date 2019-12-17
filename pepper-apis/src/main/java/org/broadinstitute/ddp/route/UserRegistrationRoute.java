@@ -45,6 +45,7 @@ import org.broadinstitute.ddp.model.governance.GovernancePolicy;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.pex.PexInterpreter;
+import org.broadinstitute.ddp.pex.TreeWalkInterpreter;
 import org.broadinstitute.ddp.security.StudyClientConfiguration;
 import org.broadinstitute.ddp.util.Auth0MgmtTokenHelper;
 import org.broadinstitute.ddp.util.Auth0Util;
@@ -92,6 +93,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
         String studyGuid = payload.getStudyGuid();
         String invitationGuid = payload.getInvitationGuid();
         final var auth0UserId = new AtomicReference<String>();
+        final PexInterpreter pexInterpreter = new TreeWalkInterpreter();
 
         LOG.info("Attempting registration with client {},  study {}, and invitation ", auth0ClientId, studyGuid, invitationGuid);
 
@@ -128,7 +130,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                 LOG.info("Successfully exchanged auth0 code for auth0UserId {} for local registration", auth0UserId);
             }
 
-            String ddpUserGuid = null;
+            final AtomicReference<String> ddpUserGuid = new AtomicReference<>();
             var userDao = handle.attach(UserDao.class);
             User operatorUser = userDao.findUserByAuth0UserId(auth0UserId.get(), study.getAuth0TenantId()).orElse(null);
 
@@ -152,17 +154,31 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                     throw new DDPException("There is already an account-bearing user for invitation " + invitationGuid);
                 }
 
-                // todo  arz check ageup status and process trigger events
+                // verify that there is governance policy configured for the study and that the
+                // user has reached age of majority.
+                handle.attach(StudyGovernanceDao.class).findPolicyByStudyGuid(studyGuid).ifPresentOrElse(policy -> {
 
-                ddpUserGuid = user.getGuid();
-                LOG.info("Assigning {} to user {} for invitation {}", auth0UserId, user.getGuid(), invitationGuid);
+                    if (policy.hasReachedAgeOfMajority(handle, pexInterpreter, ddpUserGuid.get())) {
+                        LOG.info("Assigning {} to user {} for invitation {}", auth0UserId, user.getGuid(), invitationGuid);
 
-                var numRows = userDao.updateAuth0UserId(user.getGuid(),  auth0UserId.get());
-                invitationDao.updateAcceptedAt(TimestampUtil.now(), invitationGuid);
+                        var numRows = userDao.updateAuth0UserId(user.getGuid(), auth0UserId.get());
+                        invitationDao.updateAcceptedAt(TimestampUtil.now(), invitationGuid);
 
-                if (numRows != 1) {
-                    throw new DDPException("Updated " + numRows + " for " + auth0UserId.get());
-                }
+                        if (numRows != 1) {
+                            throw new DDPException("Updated " + numRows + " for " + auth0UserId.get());
+                        }
+                    } else {
+                        LOG.error("User {} is not allowed to create an account yet because they have not reached age of majority "
+                                +  " in study {} with invitation {}", ddpUserGuid.get(), studyGuid, invitationGuid);
+                    }
+                },
+                    () -> {
+                        LOG.error("No governance policy for study {}.  Why is a client registering user {} with invitation {} ?",
+                                studyGuid, ddpUserGuid, invitationGuid);
+                    }
+                );
+
+
             } else if (operatorUser == null) {
                 LOG.info("Attempting to register new user {} with client {} and study {}",
                         auth0UserId, auth0ClientId, studyGuid);
@@ -184,17 +200,17 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
 
                 unregisterEmailFromStudyMailingList(handle, study, operatorUser, auth0Util, mgmtTokenHelper);
 
-                ddpUserGuid = operatorUser.getGuid();
+                ddpUserGuid.set(operatorUser.getGuid());
             } else {
                 LOG.info("Attempting to register existing user {} with client {} and study {}", auth0UserId, auth0ClientId, studyGuid);
-                ddpUserGuid = handleExistingUser(response, payload, handle, study, operatorUser, auth0Util, mgmtTokenHelper);
+                ddpUserGuid.set(handleExistingUser(response, payload, handle, study, operatorUser, auth0Util, mgmtTokenHelper));
             }
 
             if (doLocalRegistration) {
-                return saveDDPGuidInAuth0Metadata(mgmtTokenHelper, ddpUserGuid, auth0UserId.get(),
+                return saveDDPGuidInAuth0Metadata(mgmtTokenHelper, ddpUserGuid.get(), auth0UserId.get(),
                         auth0ClientId, auth0ClientSecret, auth0RefreshResponse.getRefreshToken());
             } else {
-                return new UserRegistrationResponse(ddpUserGuid);
+                return new UserRegistrationResponse(ddpUserGuid.get());
             }
         });
     }
