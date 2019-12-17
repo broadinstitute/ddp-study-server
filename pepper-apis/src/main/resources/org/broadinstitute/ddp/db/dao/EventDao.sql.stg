@@ -98,7 +98,7 @@ getNotificationConfigsForWorkflowState() ::= <<
     study.guid = :studyGuid
     and wst.workflow_state_id = :workflowStateId
     and ec.is_active = 1
-    and event_action_type = 'NOTIFICATION'
+    and eat.event_action_type_code = 'NOTIFICATION'
 >>
 
 /**
@@ -109,7 +109,7 @@ getNotificationConfigsForMailingListByEventType() ::= <<
     where
     study.guid = :studyGuid
     and ec.is_active = 1
-    and event_action_type = 'NOTIFICATION'
+    and eat.event_action_type_code = 'NOTIFICATION'
     and ett.event_trigger_type_code = :eventTriggerType
 >>
 

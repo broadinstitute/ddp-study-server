@@ -57,7 +57,7 @@ public class CopyAnswerEventAction extends EventAction {
         ValueSetter<T> targetValueSetter = (ValueSetter<T>)
                 CopyAnswerValueSetterDefinitions.findValueSetter(copyAnswerTarget);
 
-        Answer sourceAnswer = getAnswer(activityInstanceGuid, activityInstanceGuid, handle);
+        Answer sourceAnswer = getAnswer(activityInstanceGuid, copySourceQuestionStableId, handle);
 
         if (sourceAnswer == null) {
             LOG.info("There was no answer to copy in activity instance: {} and question stable id: {}", activityInstanceGuid,
