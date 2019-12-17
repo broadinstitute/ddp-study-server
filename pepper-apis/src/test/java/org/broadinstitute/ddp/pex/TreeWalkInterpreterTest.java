@@ -10,6 +10,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -21,6 +22,8 @@ import org.broadinstitute.ddp.db.AnswerDao;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
+import org.broadinstitute.ddp.db.dao.JdbiProfile;
+import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
 import org.broadinstitute.ddp.model.activity.definition.ConditionalBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
@@ -50,6 +53,9 @@ import org.broadinstitute.ddp.model.activity.types.PicklistSelectMode;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.activity.types.TemplateType;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
+import org.broadinstitute.ddp.model.governance.AgeOfMajorityRule;
+import org.broadinstitute.ddp.model.governance.GovernancePolicy;
+import org.broadinstitute.ddp.model.pex.Expression;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.broadinstitute.ddp.util.TestUtil;
 import org.jdbi.v3.core.Handle;
@@ -937,6 +943,48 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
 
             assertTrue("should be true because latest instance is answered", run(handle, expr));
 
+            handle.rollback();
+        });
+    }
+
+    @Test(expected = PexFetchException.class)
+    public void test_givenMissingGovernancePolicy_whenHasAgedUpIsEvaluated_thenItThrowsAnException() {
+        String expr = String.format("user.studies[\"%s\"].hasAgedUp()", studyGuid);
+        run(expr);
+    }
+
+    @Test
+    public void test_givenParticipantReachedAgeOfMajority_whenHasAgedUpIsEvaluated_thenItReturnsTrue() {
+        TransactionWrapper.useTxn(handle -> {
+            handle.attach(JdbiProfile.class).upsertBirthDate(
+                    testData.getTestingUser().getUserId(), LocalDate.now().minusYears(20)
+            );
+            GovernancePolicy policy = new GovernancePolicy(testData.getStudyId(), new Expression("true"));
+            policy.addAgeOfMajorityRule(
+                    new AgeOfMajorityRule("true", 18, null)
+            );
+            StudyGovernanceDao studyGovernanceDao = handle.attach(StudyGovernanceDao.class);
+            studyGovernanceDao.createPolicy(policy);
+            String expr = String.format("user.studies[\"%s\"].hasAgedUp()", studyGuid);
+            assertTrue(run(handle, expr));
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void test_givenParticipantDidntReachAgeOfMajority_whenHasAgedUpIsEvaluated_thenItReturnsFalse() {
+        TransactionWrapper.useTxn(handle -> {
+            handle.attach(JdbiProfile.class).upsertBirthDate(
+                    testData.getTestingUser().getUserId(), LocalDate.now().minusYears(12)
+            );
+            GovernancePolicy policy = new GovernancePolicy(testData.getStudyId(), new Expression("true"));
+            policy.addAgeOfMajorityRule(
+                    new AgeOfMajorityRule("true", 18, null)
+            );
+            StudyGovernanceDao studyGovernanceDao = handle.attach(StudyGovernanceDao.class);
+            studyGovernanceDao.createPolicy(policy);
+            String expr = String.format("user.studies[\"%s\"].hasAgedUp()", studyGuid);
+            assertFalse(run(handle, expr));
             handle.rollback();
         });
     }

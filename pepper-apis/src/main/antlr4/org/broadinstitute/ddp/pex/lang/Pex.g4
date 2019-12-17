@@ -15,6 +15,7 @@ expr : '!' expr          # NotExpr
 query : 'user' '.' study '.' form '.' question '.' 'answers' '.' predicate                   # DefaultLatestAnswerQuery
       | 'user' '.' study '.' form '.' question '.' questionPredicate                         # QuestionQuery
       | 'user' '.' study '.' form '.' formPredicate                                          # FormQuery
+      | 'user' '.' study '.' studyPredicate                                                  # StudyQuery
       | 'user' '.' study '.' form '.' instance '.' question '.' 'answers' '.' predicate      # AnswerQuery
       ;
 
@@ -34,10 +35,13 @@ predicate : 'hasTrue()'     # HasTruePredicate
           | 'value' '(' ')' COMPARE_OPERATOR INT    # NumComparePredicate
           ;
 
-
 // Form predicate functions that operate on a single piece of data
 formPredicate : 'isStatus' '(' STR ( ',' STR )* ')'  # IsStatusPredicate
               | 'hasInstance()'         # HasInstancePredicate
+              ;
+
+// A predicate evaluating to true if a user has aged up (reached the age of maturity) for this study
+studyPredicate : 'hasAgedUp' '(' ')'  # HasAgedUpPredicate
               ;
 
 // Question predicate functions
