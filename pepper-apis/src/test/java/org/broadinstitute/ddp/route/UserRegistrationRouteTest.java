@@ -861,7 +861,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
                 handle.attach(InvitationDao.class).clearDates(invitation.get().getInvitationGuid());
                 userDao.updateAuth0UserId(user.get().getGuid(), null);
 
-                UserProfileDto profile = new UserProfileDto(user.get().getId(),"Foo", "Bar",null,
+                UserProfileDto profile = new UserProfileDto(user.get().getId(), "Foo", "Bar", null,
                         LocalDate.of(1953, 9, 18), null, null, null);
 
                 handle.attach(JdbiProfile.class).insert(profile);
