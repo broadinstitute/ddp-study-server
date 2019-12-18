@@ -224,13 +224,17 @@ public final class PdfTestingUtil {
     }
 
     public static PdfInfo makePhysicianInstitutionPdf() throws Exception {
+        return makePhysicianInstitutionPdf(null);
+    }
+
+    public static PdfInfo makePhysicianInstitutionPdf(TestDataSetupUtil.GeneratedTestData dataToUse) throws Exception {
         PdfInfo pdfInfo = new PdfInfo();
         pdfInfo.getExpectedValuesByInstitutionType().put(InstitutionType.INSTITUTION, new HashMap<>());
         pdfInfo.getExpectedValuesByInstitutionType().put(InstitutionType.INITIAL_BIOPSY, new HashMap<>());
         pdfInfo.getExpectedValuesByInstitutionType().put(InstitutionType.PHYSICIAN, new HashMap<>());
 
         TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, handle -> {
-            pdfInfo.setData(TestDataSetupUtil.generateBasicUserTestData(handle));
+            pdfInfo.setData(dataToUse == null ? TestDataSetupUtil.generateBasicUserTestData(handle) : dataToUse);
             TestDataSetupUtil.setUserEnrollmentStatus(handle, pdfInfo.getData(), EnrollmentStatusType.ENROLLED);
             TestDataSetupUtil.createTestingMailAddress(handle, pdfInfo.getData());
 

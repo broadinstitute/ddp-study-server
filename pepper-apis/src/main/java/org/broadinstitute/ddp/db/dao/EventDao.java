@@ -4,6 +4,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.broadinstitute.ddp.constants.ConfigFile;
@@ -19,12 +20,16 @@ import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.event.EventConfiguration;
 import org.broadinstitute.ddp.model.event.PdfAttachment;
 import org.jdbi.v3.core.mapper.RowMapper;
+import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
+import org.jdbi.v3.core.result.RowView;
 import org.jdbi.v3.core.statement.StatementContext;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
+import org.jdbi.v3.sqlobject.statement.SqlUpdate;
+import org.jdbi.v3.sqlobject.statement.UseRowReducer;
 import org.jdbi.v3.stringtemplate4.UseStringTemplateSqlLocator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,6 +62,7 @@ public interface EventDao extends SqlObject {
     @SqlQuery("getEventConfigurationsForStudyIdAndTriggerType")
     @UseStringTemplateSqlLocator
     @RegisterConstructorMapper(EventConfigurationDto.class)
+    @UseRowReducer(PdfAttachmentReducer.class)
     List<EventConfigurationDto> getEventConfigurationDtosForStudyIdAndTriggerType(@Bind("studyId") long studyId,
                                                                                   @Bind("eventTriggerType")
                                                                                           EventTriggerType eventTriggerType);
@@ -68,6 +74,7 @@ public interface EventDao extends SqlObject {
     @SqlQuery("getActivityStatusEventConfigurations")
     @UseStringTemplateSqlLocator
     @RegisterConstructorMapper(EventConfigurationDto.class)
+    @UseRowReducer(PdfAttachmentReducer.class)
     List<EventConfigurationDto> getEventConfigurationDtosForActivityStatus(@Bind("activityInstanceId") long activityInstanceId,
                                                                            @Bind("status") String activityStatus);
 
@@ -75,6 +82,7 @@ public interface EventDao extends SqlObject {
     @UseStringTemplateSqlLocator
     @SqlQuery("getActiveDispatchConfigsByStudyIdAndTrigger")
     @RegisterConstructorMapper(EventConfigurationDto.class)
+    @UseRowReducer(PdfAttachmentReducer.class)
     List<EventConfigurationDto> getActiveDispatchConfigsByStudyIdAndTrigger(@Bind("studyId") long studyId,
                                                                             @Bind("eventTriggerType") EventTriggerType eventTriggerType);
 
@@ -121,6 +129,12 @@ public interface EventDao extends SqlObject {
         }
         return queuedEvents;
     }
+
+    /**
+     * Used by Study Builder do not delete
+     **/
+    @SqlUpdate("update event_configuration set is_active = :enable where umbrella_study_id = :studyId")
+    int enableAllStudyEvents(@Bind("studyId") long studyId, @Bind("enable") boolean enable);
 
     /**
      * Loads the notification specific information, using eventDto as a base.
@@ -228,6 +242,18 @@ public interface EventDao extends SqlObject {
                     rs.getString(ConfigFile.SqlQuery.PEX_CANCEL_CONDITION),
                     rs.getString(ConfigFile.SqlQuery.STUDY_GUID)
             );
+        }
+    }
+
+    class PdfAttachmentReducer implements LinkedHashMapRowReducer<Long, EventConfigurationDto> {
+        @Override
+        public void accumulate(Map<Long, EventConfigurationDto> container, RowView view) {
+            long eventConfigurationId = view.getColumn(SqlConstants.EventConfigurationTable.ID, Long.class);
+            EventConfigurationDto dto = container.computeIfAbsent(eventConfigurationId, id -> view.getRow(EventConfigurationDto.class));
+            if (view.getColumn("pdf_document_configuration_id", Long.class) != null) {
+                dto.addPdfConfig(view.getColumn("pdf_document_configuration_id", Long.class),
+                        view.getColumn("generate_if_missing", Boolean.class));
+            }
         }
     }
 

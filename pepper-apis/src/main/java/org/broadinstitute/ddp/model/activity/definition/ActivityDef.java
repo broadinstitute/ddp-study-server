@@ -272,7 +272,6 @@ public abstract class ActivityDef {
         protected void configure(ActivityDef activity) {
             activity.activityId = activityId;
             activity.versionId = versionId;
-            ;
             activity.editTimeoutSec = editTimeoutSec;
             activity.allowOndemandTrigger = allowOndemandTrigger;
             activity.excludeFromDisplay = excludeFromDisplay;

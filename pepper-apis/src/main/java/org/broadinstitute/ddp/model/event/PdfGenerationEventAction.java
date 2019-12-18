@@ -1,8 +1,11 @@
 package org.broadinstitute.ddp.model.event;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.ddp.db.dao.QueuedEventDao;
 import org.broadinstitute.ddp.db.dto.EventConfigurationDto;
 import org.broadinstitute.ddp.exception.DDPException;
@@ -13,13 +16,13 @@ import org.slf4j.LoggerFactory;
 
 public class PdfGenerationEventAction extends EventAction {
     private static final Logger LOG = LoggerFactory.getLogger(NotificationEventAction.class);
-    private Long pdfDocumentConfigurationId;
-    private Boolean generateIfMissing;
+
+    // A list of Tuple<pdfDocumentConfigurationId, generateIfMissing>
+    private List<Pair<Long, Boolean>> pdfConfigs = new ArrayList<>();
 
     public PdfGenerationEventAction(EventConfiguration eventConfiguration, EventConfigurationDto dto) {
         super(eventConfiguration, dto);
-        pdfDocumentConfigurationId = dto.getPdfDocumentConfigurationId();
-        generateIfMissing = dto.getGenerateIfMissing();
+        pdfConfigs.addAll(dto.getPdfConfigs());
     }
 
     @Override
@@ -43,5 +46,9 @@ public class PdfGenerationEventAction extends EventAction {
 
         LOG.info("Inserted queued event {} for configuration {}", queuedEventId,
                 eventConfiguration.getEventConfigurationId());
+    }
+
+    public List<Pair<Long, Boolean>> getPdfConfigs() {
+        return pdfConfigs;
     }
 }

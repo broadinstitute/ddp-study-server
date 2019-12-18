@@ -43,7 +43,6 @@ JOIN umbrella_study study on ec.umbrella_study_id = study.umbrella_study_id
 LEFT JOIN message_destination md on ea.message_destination_id = md.message_destination_id
 LEFT JOIN activity_status_trigger ast ON ast.activity_status_trigger_id = ec.event_trigger_id
 LEFT JOIN activity_instance_status_type aist ON ast.activity_instance_status_type_id = aist.activity_instance_status_type_id
-LEFT JOIN activity_instance ai ON ai.study_activity_id = ast.study_activity_id
 LEFT JOIN workflow_state_trigger wst on wst.event_trigger_id = et.event_trigger_id
 LEFT JOIN dsm_notification_trigger dnt ON dnt.dsm_notification_trigger_id = et.event_trigger_type_id
 LEFT JOIN dsm_notification_event_type dnet ON dnet.dsm_notification_event_type_id = dnt.dsm_notification_event_type_id
@@ -74,6 +73,7 @@ getActiveDispatchConfigsByStudyIdAndTrigger() ::= <<
 
 getActivityStatusEventConfigurations() ::= <<
 <eventConfigurationLookup()>
+    LEFT JOIN activity_instance ai ON ai.study_activity_id = ast.study_activity_id
     where
         ai.activity_instance_id = :activityInstanceId
         and aist.activity_instance_status_type_code = :status

@@ -1,5 +1,10 @@
 package org.broadinstitute.ddp.db.dto;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
@@ -63,8 +68,8 @@ public class EventConfigurationDto {
     private Long linkedActivityId;
 
     /* PDF_GENERATION */
-    private Long pdfDocumentConfigurationId;
-    private Boolean generateIfMissing;
+    // A list of Tuple<pdfDocumentConfigurationId, generateIfMissing>
+    private List<Pair<Long, Boolean>> pdfConfigs = new ArrayList<>();
 
     /* ACTIVITY_INSTANCE_CREATION */
     private Long activityInstanceCreationStudyActivityId;
@@ -95,8 +100,6 @@ public class EventConfigurationDto {
                                  NotificationServiceType notificationServiceType,
                                  Long notificationTemplateId,
                                  Long linkedActivityId,
-                                 Long pdfDocumentConfigurationId,
-                                 Boolean generateIfMissing,
                                  Long activityInstanceCreationStudyActivityId,
                                  CopyAnswerTarget copyAnswerTarget,
                                  String copySourceQuestionStableId) {
@@ -119,8 +122,6 @@ public class EventConfigurationDto {
         this.notificationServiceType = notificationServiceType;
         this.notificationTemplateId = notificationTemplateId;
         this.linkedActivityId = linkedActivityId;
-        this.pdfDocumentConfigurationId = pdfDocumentConfigurationId;
-        this.generateIfMissing = generateIfMissing;
         this.activityInstanceCreationStudyActivityId = activityInstanceCreationStudyActivityId;
         this.copyAnswerTarget = copyAnswerTarget;
         this.copySourceQuestionStableId = copySourceQuestionStableId;
@@ -202,10 +203,6 @@ public class EventConfigurationDto {
         return linkedActivityId;
     }
 
-    public Long getPdfDocumentConfigurationId() {
-        return pdfDocumentConfigurationId;
-    }
-
     public Long getActivityInstanceCreationStudyActivityId() {
         return activityInstanceCreationStudyActivityId;
     }
@@ -218,7 +215,11 @@ public class EventConfigurationDto {
         return copySourceQuestionStableId;
     }
 
-    public Boolean getGenerateIfMissing() {
-        return generateIfMissing;
+    public void addPdfConfig(Long pdfDocumentConfigurationId, Boolean generateIfMissing) {
+        pdfConfigs.add(new ImmutablePair<>(pdfDocumentConfigurationId, generateIfMissing));
+    }
+
+    public List<Pair<Long, Boolean>> getPdfConfigs() {
+        return pdfConfigs;
     }
 }
