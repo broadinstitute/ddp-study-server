@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.db.dao;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.broadinstitute.ddp.db.DaoException;
 import org.jdbi.v3.sqlobject.CreateSqlObject;
@@ -56,6 +57,13 @@ public interface QueuedEventDao extends SqlObject {
         jdbiQueuedEvent.deleteQueuedNotificationSubstitutionsByStudyId(studyId);
         jdbiQueuedEvent.deleteQueuedNotificationsByStudyId(studyId);
         return jdbiQueuedEvent.deleteQueuedEventsByStudyId(studyId);
+    }
+
+    default int deleteQueuedEventsByUserIds(Set<Long> userIds) {
+        JdbiQueuedEvent jdbiQueuedEvent = getJdbiQueuedEvent();
+        jdbiQueuedEvent.deleteQueuedNotificationSubstitutionsByUserIds(userIds);
+        jdbiQueuedEvent.deleteQueuedNotificationsByUserIds(userIds);
+        return jdbiQueuedEvent.deleteQueuedEventsByUserIds(userIds);
     }
 
     /**
