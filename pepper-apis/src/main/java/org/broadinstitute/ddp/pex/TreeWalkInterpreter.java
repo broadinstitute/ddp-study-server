@@ -20,10 +20,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
+import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
+import org.broadinstitute.ddp.model.governance.GovernancePolicy;
 import org.broadinstitute.ddp.pex.lang.PexBaseVisitor;
 import org.broadinstitute.ddp.pex.lang.PexParser;
 import org.broadinstitute.ddp.pex.lang.PexParser.AndExprContext;
@@ -45,6 +47,8 @@ import org.broadinstitute.ddp.pex.lang.PexParser.OrExprContext;
 import org.broadinstitute.ddp.pex.lang.PexParser.PredicateContext;
 import org.broadinstitute.ddp.pex.lang.PexParser.QuestionPredicateContext;
 import org.broadinstitute.ddp.pex.lang.PexParser.QuestionQueryContext;
+import org.broadinstitute.ddp.pex.lang.PexParser.StudyPredicateContext;
+import org.broadinstitute.ddp.pex.lang.PexParser.StudyQueryContext;
 import org.jdbi.v3.core.Handle;
 
 /**
@@ -197,6 +201,19 @@ public class TreeWalkInterpreter implements PexInterpreter {
         } else {
             throw new PexUnsupportedException("Unsupported form predicate: " + predCtx.getText());
         }
+    }
+
+    private boolean evalStudyQuery(InterpreterContext ictx, StudyQueryContext ctx) {
+        String umbrellaStudyGuid = extractString(ctx.study().STR());
+        return applyStudyPredicate(ictx, ctx.studyPredicate(), umbrellaStudyGuid);
+    }
+
+    private boolean applyStudyPredicate(InterpreterContext ictx, StudyPredicateContext predCtx, String umbrellaStudyGuid) {
+        Optional<GovernancePolicy> policy = ictx.getHandle().attach(StudyGovernanceDao.class).findPolicyByStudyGuid(umbrellaStudyGuid);
+        String msg = "Governance policy for " + umbrellaStudyGuid + " doesn't exist";
+        return policy.map(
+                p -> p.hasReachedAgeOfMajority(ictx.getHandle(), new TreeWalkInterpreter(), ictx.getUserGuid())
+        ).orElseThrow(() -> new PexFetchException(new NoSuchElementException(msg)));
     }
 
     private boolean evalQuestionQuery(InterpreterContext ictx, QuestionQueryContext ctx) {
@@ -517,6 +534,11 @@ public class TreeWalkInterpreter implements PexInterpreter {
         @Override
         public Boolean visitFormQuery(FormQueryContext ctx) {
             return interpreter.evalFormQuery(ictx, ctx);
+        }
+
+        @Override
+        public Boolean visitStudyQuery(StudyQueryContext ctx) {
+            return interpreter.evalStudyQuery(ictx, ctx);
         }
 
         @Override

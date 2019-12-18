@@ -29,6 +29,7 @@ import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.address.OLCPrecision;
 import org.broadinstitute.ddp.model.dsm.KitType;
+import org.broadinstitute.ddp.model.governance.AgeOfMajorityRule;
 import org.broadinstitute.ddp.model.governance.GovernancePolicy;
 import org.broadinstitute.ddp.model.kit.KitRuleType;
 import org.broadinstitute.ddp.model.pex.Expression;
@@ -334,10 +335,16 @@ public class StudyBuilder {
             GovernancePolicy policy = new GovernancePolicy(
                     studyDto.getId(),
                     new Expression(shouldCreateGovernedUserExprText));
-            policy = handle.attach(StudyGovernanceDao.class).createPolicy(policy);
+            for (Config aomRuleCfg : governanceCfg.getConfigList("ageOfMajorityRules")) {
+                policy.addAgeOfMajorityRule(new AgeOfMajorityRule(
+                        aomRuleCfg.getString("condition"),
+                        aomRuleCfg.getInt("age"),
+                        ConfigUtil.getIntIfPresent(aomRuleCfg, "prepMonths")));
+            }
 
-            LOG.info("Created study governance policy with id={}, shouldCreateGovernedUserExprId={}, shouldCreateGovernedUserExpr='{}'",
-                    policy.getId(), policy.getShouldCreateGovernedUserExpr().getId(), shouldCreateGovernedUserExprText);
+            policy = handle.attach(StudyGovernanceDao.class).createPolicy(policy);
+            LOG.info("Created study governance policy with id={}, shouldCreateGovernedUserExprId={}, numAgeOfMajorityRules={}",
+                    policy.getId(), policy.getShouldCreateGovernedUserExpr().getId(), policy.getAgeOfMajorityRules().size());
         }
     }
 

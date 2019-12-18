@@ -1333,7 +1333,7 @@ public class DataLoader {
         Long languageCodeId = jdbiLanguageCode.getLanguageCodeId(DEFAULT_PREFERRED_LANGUAGE_CODE);
 
         UserProfileDto userProfileDto = new UserProfileDto(user.getUserId(), data.getDatstatFirstname(), data.getDatstatLastname(),
-                null, null, null, null, languageCodeId,
+                null, null, languageCodeId,
                 DEFAULT_PREFERRED_LANGUAGE_CODE, isDoNotContact);
 
         int numRowsInserted = jdbiProfile.insert(userProfileDto);
