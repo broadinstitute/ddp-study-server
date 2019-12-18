@@ -16,8 +16,12 @@ import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.UseRowReducer;
 import org.jdbi.v3.stringtemplate4.UseStringTemplateSqlLocator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public interface StudyGovernanceDao extends SqlObject {
+
+    Logger LOG = LoggerFactory.getLogger(StudyGovernanceDao.class);
 
     @CreateSqlObject
     JdbiExpression getJdbiExpression();
