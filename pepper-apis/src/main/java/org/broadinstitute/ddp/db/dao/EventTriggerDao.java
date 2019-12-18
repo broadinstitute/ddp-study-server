@@ -66,4 +66,8 @@ public interface EventTriggerDao {
     default long insertExitRequestTrigger() {
         return getJdbiEventTrigger().insert(EventTriggerType.EXIT_REQUEST);
     }
+
+    default long insertReachedAOMPrepTrigger() {
+        return getJdbiEventTrigger().insert(EventTriggerType.REACHED_AOM_PREP);
+    }
 }
