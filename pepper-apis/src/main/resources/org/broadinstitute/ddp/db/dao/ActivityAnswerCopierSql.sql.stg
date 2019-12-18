@@ -1,0 +1,44 @@
+group ActivityAnswerCopierSql;
+
+baseActivityAnswerCopy() ::= <<
+insert into answer(answer_guid,question_id,operator_user_id,activity_instance_id,created_at,last_updated_at)
+(select
+:answerGuid,
+dest_q.question_id,
+src_a.operator_user_id,
+dest_ai.activity_instance_id,
+:createdAt,
+:lastUpdatedAt
+from
+/* source questions */
+answer src_a
+join question as src_q on src_q.question_id = src_a.question_id
+join activity_instance as src_ai on src_ai.activity_instance_id = src_a.activity_instance_id and src_ai.activity_instance_id = :sourceActivityInstanceId
+join study_activity as src_act on src_act.study_activity_id = src_ai.study_activity_id
+join question_stable_code as src_q_code on src_q_code.question_stable_code_id = src_q.question_stable_code_id and src_q_code.stable_id = :sourceStableId
+/* destination questions */
+join question_stable_code as dest_q_code on dest_q_code.stable_id = :destinationStableId
+join question as dest_q on dest_q.question_stable_code_id = dest_q_code.question_stable_code_id
+join activity_instance as dest_ai on dest_ai.activity_instance_id = :destinationActivityInstanceId and dest_q.study_activity_id = dest_ai.study_activity_id
+join study_activity as dest_act on dest_act.study_activity_id = dest_ai.study_activity_id
+
+where
+/* find latest answer for the question */
+src_a.last_updated_at = (
+	select max(a2.last_updated_at)
+	from
+    answer a2
+    where
+    a2.question_id = src_a.question_id
+    and
+    a2.operator_user_id = src_a.operator_user_id
+    and
+    a2.activity_instance_id = src_ai.activity_instance_id
+)
+and
+dest_act.study_id = src_act.study_id)
+>>
+
+dateAnswerCopy() ::= <<
+insert into answer(answer_gustufff
+>>
