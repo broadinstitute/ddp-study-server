@@ -19,6 +19,7 @@ public class EventConfigurationDto {
     private EventActionType eventActionType;
     private long announcementMsgTemplateId;
     private boolean announcementIsPermanent;
+    private boolean announcementCreateForProxies;
     private CopyAnswerTarget copyAnswerTarget;
     private String copySourceQuestionStableId;
 
@@ -34,6 +35,7 @@ public class EventConfigurationDto {
                                  @Bind("eventActionType") EventActionType eventActionType,
                                  @Bind("announcementMsgTemplateId") long announcementMsgTemplateId,
                                  @Bind("announcementIsPermanent") boolean announcementIsPermanent,
+                                 @Bind("announcementCreateForProxies") boolean announcementCreateForProxies,
                                  @Bind("copySourceQuestionStableId") String copySourceQuestionStableId,
                                  @Bind("copyAnswerTarget") CopyAnswerTarget copyAnswerTarget) {
         this.triggerType = triggerType;
@@ -47,6 +49,7 @@ public class EventConfigurationDto {
         this.eventActionType = eventActionType;
         this.announcementMsgTemplateId = announcementMsgTemplateId;
         this.announcementIsPermanent = announcementIsPermanent;
+        this.announcementCreateForProxies = announcementCreateForProxies;
         this.copySourceQuestionStableId = copySourceQuestionStableId;
         this.copyAnswerTarget = copyAnswerTarget;
     }
@@ -110,6 +113,10 @@ public class EventConfigurationDto {
 
     public boolean getAnnouncementIsPermanent() {
         return announcementIsPermanent;
+    }
+
+    public boolean getAnnouncementCreateForProxies() {
+        return announcementCreateForProxies;
     }
 
     public CopyAnswerTarget getCopyAnswerTarget() {

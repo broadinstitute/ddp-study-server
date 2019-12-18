@@ -13,7 +13,7 @@ import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 public class UserAnnouncement implements Renderable {
 
     private transient long id;
-    private transient long participantUserId;
+    private transient long userId;
     private transient long studyId;
     private transient long msgTemplateId;
     private transient long createdAt;
@@ -30,14 +30,14 @@ public class UserAnnouncement implements Renderable {
     @JdbiConstructor
     public UserAnnouncement(@ColumnName("user_announcement_id") long id,
                             @ColumnName("guid") String guid,
-                            @ColumnName("participant_user_id") long participantUserId,
+                            @ColumnName("user_id") long userId,
                             @ColumnName("study_id") long studyId,
                             @ColumnName("message_template_id") long msgTemplateId,
                             @ColumnName("is_permanent") boolean isPermanent,
                             @ColumnName("created_at") long createdAt) {
         this.id = id;
         this.guid = guid;
-        this.participantUserId = participantUserId;
+        this.userId = userId;
         this.studyId = studyId;
         this.msgTemplateId = msgTemplateId;
         this.isPermanent = isPermanent;
@@ -52,8 +52,8 @@ public class UserAnnouncement implements Renderable {
         return guid;
     }
 
-    public long getParticipantUserId() {
-        return participantUserId;
+    public long getUserId() {
+        return userId;
     }
 
     public long getStudyId() {

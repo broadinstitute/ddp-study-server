@@ -20,10 +20,16 @@ import org.broadinstitute.ddp.constants.RouteConstants.API;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.content.ContentStyle;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.db.dao.JdbiClientUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiRevision;
+import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dao.TemplateDao;
 import org.broadinstitute.ddp.db.dao.UserAnnouncementDao;
+import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
+import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
+import org.broadinstitute.ddp.model.governance.Governance;
+import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.model.user.UserAnnouncement;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.junit.After;
@@ -52,7 +58,7 @@ public class GetUserAnnouncementsRouteTest extends IntegrationTestSuite.TestCase
             assertNotNull(msgTemplate.getTemplateId());
 
             // Start fresh with no announcements.
-            handle.attach(UserAnnouncementDao.class).deleteAllForParticipantAndStudy(testData.getUserId(), testData.getStudyId());
+            handle.attach(UserAnnouncementDao.class).deleteAllForUserAndStudy(testData.getUserId(), testData.getStudyId());
         });
 
         String endpoint = API.USER_STUDY_ANNOUNCEMENTS
@@ -64,7 +70,7 @@ public class GetUserAnnouncementsRouteTest extends IntegrationTestSuite.TestCase
     @After
     public void cleanup() {
         TransactionWrapper.useTxn(handle -> handle.attach(UserAnnouncementDao.class)
-                .deleteAllForParticipantAndStudy(testData.getUserId(), testData.getStudyId()));
+                .deleteAllForUserAndStudy(testData.getUserId(), testData.getStudyId()));
     }
 
     @Test
@@ -115,7 +121,7 @@ public class GetUserAnnouncementsRouteTest extends IntegrationTestSuite.TestCase
 
         TransactionWrapper.useTxn(handle -> {
             long numFound = handle.attach(UserAnnouncementDao.class)
-                    .findAllForParticipantAndStudy(testData.getUserId(), testData.getStudyId())
+                    .findAllForUserAndStudy(testData.getUserId(), testData.getStudyId())
                     .count();
             assertEquals(0, numFound);
         });
@@ -149,7 +155,7 @@ public class GetUserAnnouncementsRouteTest extends IntegrationTestSuite.TestCase
 
         TransactionWrapper.useTxn(handle -> {
             long numFound = handle.attach(UserAnnouncementDao.class)
-                    .findAllForParticipantAndStudy(testData.getUserId(), testData.getStudyId())
+                    .findAllForUserAndStudy(testData.getUserId(), testData.getStudyId())
                     .count();
             assertEquals(0, numFound);
         });
@@ -203,7 +209,7 @@ public class GetUserAnnouncementsRouteTest extends IntegrationTestSuite.TestCase
 
         TransactionWrapper.useTxn(handle -> {
             List<UserAnnouncement> found = handle.attach(UserAnnouncementDao.class)
-                    .findAllForParticipantAndStudy(testData.getUserId(), testData.getStudyId())
+                    .findAllForUserAndStudy(testData.getUserId(), testData.getStudyId())
                     .collect(Collectors.toList());
             assertEquals(1, found.size());
             assertEquals(guid, found.get(0).getGuid());
@@ -217,5 +223,40 @@ public class GetUserAnnouncementsRouteTest extends IntegrationTestSuite.TestCase
                 .statusCode(200).contentType(ContentType.JSON)
                 .body("$.size()", equalTo(1))
                 .body("[0].guid", equalTo(guid));
+    }
+
+    @Test
+    public void test_formerProxy_stillGetMessages() {
+        StudyDto study = TransactionWrapper.withTxn(handle -> {
+            StudyDto testStudy = TestDataSetupUtil.generateTestStudy(handle, RouteTestUtil.getConfig());
+            handle.attach(JdbiClientUmbrellaStudy.class).insert(testData.getClientId(), testStudy.getId());
+
+            UserGovernanceDao userGovernanceDao = handle.attach(UserGovernanceDao.class);
+            Governance gov = userGovernanceDao.createGovernedUserWithGuidAlias(testData.getClientId(), testData.getUserId());
+            userGovernanceDao.grantGovernedStudy(gov.getId(), testStudy.getId());
+            handle.attach(JdbiUserStudyEnrollment.class)
+                    .changeUserStudyEnrollmentStatus(gov.getGovernedUserId(), testStudy.getId(), EnrollmentStatusType.REGISTERED);
+
+            handle.attach(UserAnnouncementDao.class).insert(gov.getProxyUserId(), testStudy.getId(), msgTemplate.getTemplateId(), true);
+            userGovernanceDao.disableProxy(gov.getId());
+
+            return testStudy;
+        });
+
+        given().auth().oauth2(token)
+                .pathParam("userGuid", testData.getUserGuid())
+                .pathParam("studyGuid", study.getGuid())
+                .when().get(url)
+                .then().assertThat()
+                .statusCode(200).contentType(ContentType.JSON)
+                .body("$.size()", equalTo(1))
+                .body("[0].guid", not(isEmptyOrNullString()))
+                .body("[0].permanent", equalTo(true))
+                .body("[0].message", equalTo(msgTemplate.getTemplateText()));
+
+        TransactionWrapper.useTxn(handle -> {
+            handle.attach(UserAnnouncementDao.class).deleteAllForUserAndStudy(testData.getUserId(), study.getId());
+            handle.attach(UserGovernanceDao.class).deleteAllGovernancesForProxy(testData.getUserId());
+        });
     }
 }

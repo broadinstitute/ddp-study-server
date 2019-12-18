@@ -66,7 +66,7 @@ public class GetUserAnnouncementsRoute implements Route {
             UserAnnouncementDao announcementDao = handle.attach(UserAnnouncementDao.class);
 
             List<UserAnnouncement> announcements = announcementDao
-                    .findAllForParticipantAndStudy(user.getId(), studyDto.getId())
+                    .findAllForUserAndStudy(user.getId(), studyDto.getId())
                     .collect(Collectors.toList());
 
             LOG.info("Found {} announcements for user {} and study {}", announcements.size(), userGuid, studyGuid);

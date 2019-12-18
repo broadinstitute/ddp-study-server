@@ -194,7 +194,10 @@ public class EventBuilder {
             Boolean isPermanent = ConfigUtil.getBoolIfPresent(actionCfg, "permanent");
             isPermanent = isPermanent == null ? false : isPermanent;
 
-            return actionDao.insertAnnouncementAction(tmpl.getTemplateId(), isPermanent);
+            Boolean createForProxies = ConfigUtil.getBoolIfPresent(actionCfg, "createForProxies");
+            createForProxies = createForProxies == null ? false : createForProxies;
+
+            return actionDao.insertAnnouncementAction(tmpl.getTemplateId(), isPermanent, createForProxies);
         } else if (EventActionType.USER_ENROLLED.name().equals(type)) {
             return actionDao.insertEnrolledAction();
         } else if (EventActionType.COPY_ANSWER.name().equals(type)) {

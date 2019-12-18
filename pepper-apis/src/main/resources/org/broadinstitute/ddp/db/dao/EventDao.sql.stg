@@ -231,6 +231,7 @@ SELECT
      eat.event_action_type_code as event_action_type,
      ann_act.message_template_id as announcement_msg_template_id,
      ann_act.is_permanent as announcement_is_permanent,
+     ann_act.create_for_proxies as announcement_create_for_proxies,
      qsc.stable_id as copy_source_question_stableId,
      cp_target.copy_target as copy_answer_target
 FROM

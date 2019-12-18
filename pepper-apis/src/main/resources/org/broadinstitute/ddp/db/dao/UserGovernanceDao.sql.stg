@@ -40,6 +40,12 @@ where participant.guid = :participantGuid
 and s.guid = :studyGuid
 >>
 
+queryGovernancesByParticipantAndStudyIds() ::= <<
+<select_all_governances_with_granted_studies()>
+where participant.user_id = :participantId
+and s.umbrella_study_id = :studyId
+>>
+
 queryGovernancesByStudyGuid() ::= <<
 <select_all_governances_with_granted_studies()>
 where s.guid = :studyGuid

@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.ddp.db.DaoException;
@@ -15,11 +16,13 @@ import org.broadinstitute.ddp.db.dto.ActivityInstanceStatusDto;
 import org.broadinstitute.ddp.db.dto.EventConfigurationDto;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
+import org.broadinstitute.ddp.model.governance.Governance;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.pex.PexException;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.pex.TreeWalkInterpreter;
 import org.broadinstitute.ddp.service.CopyAnswerService;
+import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.sqlobject.CreateSqlObject;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
@@ -356,14 +359,7 @@ public interface ActivityInstanceStatusDao extends SqlObject {
                             + participantId + " in studyId: " + studyId + " to ENROLLED", e);
                 }
             } else if (eventConfig.getEventActionType() == EventActionType.ANNOUNCEMENT) {
-                try {
-                    long id = getUserAnnouncementDao().insert(participantId, studyId,
-                            eventConfig.getAnnouncementMsgTemplateId(), eventConfig.getAnnouncementIsPermanent());
-                    LOG.info("Inserted new announcement with id {} for participant id {} and study id {}", id, participantId, studyId);
-                } catch (Exception e) {
-                    throw new DaoException(String.format(
-                            "Error inserting announcement for participant id %d and study id %d", participantId, studyId));
-                }
+                processAnnouncementAction(getHandle(), participantId, studyId, eventConfig);
             } else if (eventConfig.getEventActionType() == EventActionType.COPY_ANSWER) {
                 boolean successfulCopy = CopyAnswerService.getInstance().copyAnswerValue(eventConfig, instanceDto, operatorId,
                         getHandle());
@@ -373,6 +369,37 @@ public interface ActivityInstanceStatusDao extends SqlObject {
 
             }
 
+        }
+    }
+
+    private void processAnnouncementAction(Handle handle, long participantId, long studyId, EventConfigurationDto eventConfig) {
+        try {
+            UserAnnouncementDao announcementDao = getUserAnnouncementDao();
+            if (eventConfig.getAnnouncementCreateForProxies() == true) {
+                List<Governance> governances = handle.attach(UserGovernanceDao.class)
+                        .findActiveGovernancesByParticipantAndStudyIds(participantId, studyId)
+                        .collect(Collectors.toList());
+                if (!governances.isEmpty()) {
+                    for (var governance : governances) {
+                        long id = announcementDao.insert(governance.getProxyUserId(), studyId,
+                                eventConfig.getAnnouncementMsgTemplateId(), eventConfig.getAnnouncementIsPermanent());
+                        LOG.info("Created new announcement with id {} for proxy id {} (participant id {}) and study id {}",
+                                id, governance.getProxyUserId(), participantId, studyId);
+                    }
+                } else {
+                    LOG.error("Participant with id {} has no active proxies in study id {}."
+                            + " Announcement with event configuration id {} will not be created.",
+                            participantId, studyId, eventConfig.getEventConfigurationId());
+                }
+            } else {
+                long id = announcementDao.insert(participantId, studyId,
+                        eventConfig.getAnnouncementMsgTemplateId(), eventConfig.getAnnouncementIsPermanent());
+                LOG.info("Created new announcement with id {} for participant id {} and study id {}", id, participantId, studyId);
+            }
+        } catch (Exception e) {
+            throw new DaoException(String.format(
+                    "Error while creating announcement for participant id %d, study id %d, event configuration id %d",
+                    participantId, studyId, eventConfig.getEventConfigurationId()));
         }
     }
 

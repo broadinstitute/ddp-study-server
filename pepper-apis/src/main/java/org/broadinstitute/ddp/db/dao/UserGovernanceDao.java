@@ -113,6 +113,19 @@ public interface UserGovernanceDao extends SqlObject {
     }
 
     @UseStringTemplateSqlLocator
+    @SqlQuery("queryGovernancesByParticipantAndStudyIds")
+    @RegisterConstructorMapper(Governance.class)
+    @RegisterConstructorMapper(GrantedStudy.class)
+    @UseRowReducer(GovernanceWithStudiesReducer.class)
+    Stream<Governance> findGovernancesByParticipantAndStudyIds(
+            @Bind("participantId") long participantId,
+            @Bind("studyId") long studyId);
+
+    default Stream<Governance> findActiveGovernancesByParticipantAndStudyIds(long participantId, long studyId) {
+        return findGovernancesByParticipantAndStudyIds(participantId, studyId).filter(Governance::isActive);
+    }
+
+    @UseStringTemplateSqlLocator
     @SqlQuery("queryGovernancesByStudyGuid")
     @RegisterConstructorMapper(Governance.class)
     @RegisterConstructorMapper(GrantedStudy.class)

@@ -152,7 +152,7 @@ public class PostActivityStatusChangeHookTest extends IntegrationTestSuite.TestC
 
                     long revId = handle.attach(JdbiRevision.class).insertStart(timestamp, testUserId, "test announcements");
                     announcementMsgTemplateId = handle.attach(TemplateDao.class).insertTemplate(Template.html("<b>thank you!</b>"), revId);
-                    announcementActionId = eventActionDao.insertAnnouncementAction(announcementMsgTemplateId, false);
+                    announcementActionId = eventActionDao.insertAnnouncementAction(announcementMsgTemplateId, false, false);
 
                     studyActivityTriggeringActionId = handle.attach(JdbiActivity.class)
                             .findIdByStudyIdAndCode(umbrellaStudyId, TestData.sourceActivityCode).get();
@@ -218,7 +218,7 @@ public class PostActivityStatusChangeHookTest extends IntegrationTestSuite.TestC
                     );
 
                     // Start fresh with no announcements.
-                    handle.attach(UserAnnouncementDao.class).deleteAllForParticipantAndStudy(testUserId, umbrellaStudyId);
+                    handle.attach(UserAnnouncementDao.class).deleteAllForUserAndStudy(testUserId, umbrellaStudyId);
 
                     TestDataSetupUtil.setUserEnrollmentStatus(handle, testData, EnrollmentStatusType.REGISTERED);
                 }
@@ -247,7 +247,7 @@ public class PostActivityStatusChangeHookTest extends IntegrationTestSuite.TestC
                     handle.attach(JdbiExpression.class).deleteById(creationExprId);
                     handle.attach(JdbiExpression.class).updateById(precondExprId, "true");
 
-                    handle.attach(UserAnnouncementDao.class).deleteAllForParticipantAndStudy(testUserId, umbrellaStudyId);
+                    handle.attach(UserAnnouncementDao.class).deleteAllForUserAndStudy(testUserId, umbrellaStudyId);
                     TestDataSetupUtil.deleteEnrollmentStatus(handle, testData);
                 }
         );
@@ -259,11 +259,11 @@ public class PostActivityStatusChangeHookTest extends IntegrationTestSuite.TestC
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
         List<UserAnnouncement> res = TransactionWrapper.withTxn(handle -> handle.attach(UserAnnouncementDao.class)
-                .findAllForParticipantAndStudy(testUserId, umbrellaStudyId)
+                .findAllForUserAndStudy(testUserId, umbrellaStudyId)
                 .collect(Collectors.toList()));
 
         assertEquals(1, res.size());
-        assertEquals(testUserId, res.get(0).getParticipantUserId());
+        assertEquals(testUserId, res.get(0).getUserId());
         assertEquals(umbrellaStudyId, res.get(0).getStudyId());
         assertEquals(announcementMsgTemplateId, res.get(0).getMsgTemplateId());
     }

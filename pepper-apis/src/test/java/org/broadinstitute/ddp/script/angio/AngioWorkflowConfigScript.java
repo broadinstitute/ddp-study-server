@@ -142,7 +142,7 @@ public class AngioWorkflowConfigScript extends TxnAwareBaseTest {
             long releaseActId = getActIdOrThrow(handle, RELEASE);
 
             long triggerId = triggerDao.insertStatusTrigger(releaseActId, COMPLETE);
-            long actionId = actionDao.insertAnnouncementAction(thankYouTmpl.getTemplateId(), false);
+            long actionId = actionDao.insertAnnouncementAction(thankYouTmpl.getTemplateId(), false, false);
             long configId = jdbiEventConfig.insert(triggerId, actionId, angioStudyId,
                     Instant.now().toEpochMilli(), 1, 0, null, null, false, 2);
 
