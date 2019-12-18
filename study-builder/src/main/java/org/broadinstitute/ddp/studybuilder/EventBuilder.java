@@ -129,6 +129,10 @@ public class EventBuilder {
             }
         } else if (type == EventTriggerType.EXIT_REQUEST) {
             return triggerDao.insertExitRequestTrigger();
+        } else if (type == EventTriggerType.CHILD_CONTACT) {
+            return triggerDao.insertChildContactTrigger();
+        } else if (type == EventTriggerType.REACHED_AOM_PREP) {
+            return triggerDao.insertReachedAOMPrepTrigger();
         } else {
             throw new DDPException("Unsupported event trigger type " + type);
         }

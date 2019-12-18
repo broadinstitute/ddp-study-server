@@ -8,5 +8,7 @@ public enum EventTriggerType {
     MEDICAL_UPDATE,
     USER_NOT_IN_STUDY,
     USER_REGISTERED,
-    EXIT_REQUEST
+    EXIT_REQUEST,
+    REACHED_AOM_PREP,
+    CHILD_CONTACT
 }

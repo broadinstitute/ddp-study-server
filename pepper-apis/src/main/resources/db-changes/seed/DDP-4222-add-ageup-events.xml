@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="sampath" id="12182019-insert-ageup-events">
+        <insert tableName="event_trigger_type">
+            <column name="event_trigger_type_code" value="REACHED_AOM_PREP"/>
+        </insert>
+        <insert tableName="event_trigger_type">
+            <column name="event_trigger_type_code" value="CHILD_CONTACT"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>
