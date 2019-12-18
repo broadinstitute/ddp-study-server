@@ -21,6 +21,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.auth0.exception.Auth0Exception;
@@ -844,7 +845,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
         var user = new AtomicReference<User>();
 
         AtomicReference<GovernancePolicy> governancePolicy = new AtomicReference<>();
-        AtomicReference<Long> userId = new AtomicReference<>();
+        AtomicBoolean shouldDeleteProfile = new AtomicBoolean();
         try {
             var invitation = new AtomicReference<InvitationDto>();
 
@@ -861,11 +862,20 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
                 handle.attach(InvitationDao.class).clearDates(invitation.get().getInvitationGuid());
                 userDao.updateAuth0UserId(user.get().getGuid(), null);
 
-                UserProfileDto profile = new UserProfileDto(user.get().getId(), "Foo", "Bar", null,
-                        LocalDate.of(1953, 9, 18), null, null, null);
+                JdbiProfile jdbiProfile = handle.attach(JdbiProfile.class);
 
-                handle.attach(JdbiProfile.class).insert(profile);
-                LOG.info("Created profile for user {}", user.get().getGuid());
+                UserProfileDto userProfile = null;
+
+                try {
+                    userProfile = jdbiProfile.getUserProfileByUserId(user.get().getId());
+                } catch (NullPointerException e) {
+                    // old school jdbi way of saying "no row found"
+                    shouldDeleteProfile.set(true);
+                }
+
+                if (userProfile == null || userProfile.getBirthDate() != null) {
+                    jdbiProfile.upsertBirthDate(user.get().getId(), LocalDate.of(1953, 9, 18));
+                }
 
                 var studyGovernanceDao = handle.attach(StudyGovernanceDao.class);
 
@@ -873,8 +883,6 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
                 governancePolicy.set(studyGovernanceDao.createPolicy(governancePolicy.get()));
 
                 LOG.info("Created governance policy {} for study {}", governancePolicy.get().getId(), governancePolicy.get().getStudyId());
-
-
             });
 
             String invitationGuid = invitation.get().getInvitationGuid();
@@ -909,9 +917,8 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
                     handle.attach(StudyGovernanceSql.class).deletePolicy(governancePolicy.get().getId());
                 }
 
-                // remove profile
-                if (userId.get() != null) {
-                    handle.attach(JdbiProfile.class).deleteByUserId(userId.get());
+                if (shouldDeleteProfile.get()) {
+                    handle.attach(JdbiProfile.class).deleteByUserId(user.get().getId());
                 }
             });
         }
