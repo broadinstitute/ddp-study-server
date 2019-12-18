@@ -15,7 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class PdfGenerationEventAction extends EventAction {
-    private static final Logger LOG = LoggerFactory.getLogger(NotificationEventAction.class);
+    private static final Logger LOG = LoggerFactory.getLogger(PdfGenerationEventAction.class);
 
     // A list of Tuple<pdfDocumentConfigurationId, generateIfMissing>
     private List<Pair<Long, Boolean>> pdfConfigs = new ArrayList<>();
