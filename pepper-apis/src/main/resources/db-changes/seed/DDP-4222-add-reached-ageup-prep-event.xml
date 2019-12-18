@@ -4,12 +4,9 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
 
-    <changeSet author="sampath" id="12182019-insert-ageup-events">
+    <changeSet author="sampath" id="12182019-insert-ageup-event">
         <insert tableName="event_trigger_type">
             <column name="event_trigger_type_code" value="REACHED_AOM_PREP"/>
-        </insert>
-        <insert tableName="event_trigger_type">
-            <column name="event_trigger_type_code" value="CHILD_CONTACT"/>
         </insert>
     </changeSet>
 

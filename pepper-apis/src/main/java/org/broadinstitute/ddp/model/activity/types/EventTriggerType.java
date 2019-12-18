@@ -9,6 +9,5 @@ public enum EventTriggerType {
     USER_NOT_IN_STUDY,
     USER_REGISTERED,
     EXIT_REQUEST,
-    REACHED_AOM_PREP,
-    CHILD_CONTACT
+    REACHED_AOM_PREP
 }
