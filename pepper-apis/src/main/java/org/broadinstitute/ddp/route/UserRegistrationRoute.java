@@ -96,7 +96,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
         final PexInterpreter pexInterpreter = new TreeWalkInterpreter();
         AtomicReference<String> ddpUserGuid = new AtomicReference<>();
 
-        LOG.info("Attempting registration with client {},  study {}, and invitation ", auth0ClientId, studyGuid, invitationGuid);
+        LOG.info("Attempting registration with client {},  study {} and invitation {}", auth0ClientId, studyGuid, invitationGuid);
 
         return TransactionWrapper.withTxn(handle -> {
             auth0UserId.set(payload.getAuth0UserId());
@@ -163,11 +163,12 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                         LOG.info("Assigning {} to user {} for invitation {}", auth0UserId, user.getGuid(), invitationGuid);
 
                         var numRows = userDao.updateAuth0UserId(user.getGuid(), auth0UserId.get());
-                        invitationDao.updateAcceptedAt(TimestampUtil.now(), invitationGuid);
+                        LOG.info("User {} has been associated  with auth0 id {}", user.getGuid(), auth0UserId.get());
 
                         if (numRows != 1) {
                             throw new DDPException("Updated " + numRows + " for " + auth0UserId.get());
                         }
+                        invitationDao.updateAcceptedAt(TimestampUtil.now(), invitationGuid);
 
                         // todo arz when DDP-4222 lands, trigger events here
                     } else {

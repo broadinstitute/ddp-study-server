@@ -845,7 +845,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
         var user = new AtomicReference<User>();
 
         AtomicReference<GovernancePolicy> governancePolicy = new AtomicReference<>();
-        AtomicBoolean shouldDeleteProfile = new AtomicBoolean();
+        AtomicBoolean shouldDeleteProfile = new AtomicBoolean(false);
         try {
             var invitation = new AtomicReference<InvitationDto>();
 
@@ -873,7 +873,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
                     shouldDeleteProfile.set(true);
                 }
 
-                if (userProfile == null || userProfile.getBirthDate() != null) {
+                if (userProfile == null || userProfile.getBirthDate() == null) {
                     jdbiProfile.upsertBirthDate(user.get().getId(), LocalDate.of(1953, 9, 18));
                 }
 
