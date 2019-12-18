@@ -1,9 +1,12 @@
 package org.broadinstitute.ddp.db.dao;
 
 import java.util.List;
+import java.util.Set;
 
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.customizer.BindList;
+import org.jdbi.v3.sqlobject.customizer.BindList.EmptyHandling;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
@@ -59,14 +62,27 @@ public interface JdbiQueuedEvent extends SqlObject {
             + "        select e.event_configuration_id from event_configuration as e where e.umbrella_study_id = :studyId)")
     int deleteQueuedNotificationSubstitutionsByStudyId(@Bind("studyId") long studyId);
 
+    @SqlUpdate("delete qnts from queued_event as q"
+            + "   left join queued_notification_template_substitution as qnts on qnts.queued_event_id = q.queued_event_id"
+            + "  where q.operator_user_id in (<userIds>) or q.participant_user_id in (<userIds>)")
+    int deleteQueuedNotificationSubstitutionsByUserIds(@BindList(value = "userIds", onEmpty = EmptyHandling.NULL) Set<Long> userIds);
+
     @SqlUpdate("delete qn from queued_event as q"
             + "   left join queued_notification as qn on qn.queued_event_id = q.queued_event_id"
             + "  where q.event_configuration_id in ("
             + "        select e.event_configuration_id from event_configuration as e where e.umbrella_study_id = :studyId)")
     int deleteQueuedNotificationsByStudyId(@Bind("studyId") long studyId);
 
+    @SqlUpdate("delete qn from queued_event as q"
+            + "   left join queued_notification as qn on qn.queued_event_id = q.queued_event_id"
+            + "  where q.operator_user_id in (<userIds>) or q.participant_user_id in (<userIds>)")
+    int deleteQueuedNotificationsByUserIds(@BindList(value = "userIds", onEmpty = EmptyHandling.NULL) Set<Long> userIds);
+
     @SqlUpdate("delete from queued_event"
             + "  where event_configuration_id in ("
             + "        select e.event_configuration_id from event_configuration as e where e.umbrella_study_id = :studyId)")
     int deleteQueuedEventsByStudyId(@Bind("studyId") long studyId);
+
+    @SqlUpdate("delete from queued_event where operator_user_id in (<userIds>) or participant_user_id in (<userIds>)")
+    int deleteQueuedEventsByUserIds(@BindList(value = "userIds", onEmpty = EmptyHandling.NULL) Set<Long> userIds);
 }
