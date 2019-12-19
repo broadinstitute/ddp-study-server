@@ -72,21 +72,8 @@ Now that all dependencies are installed:
 Lastly, setup your local environment with [checkstyle](docs/setting-up-checkstyle.md)
 to follow established coding conventions.
 
-## api-build.sh  [version] [environment] [dir] [--mode]
-The `api-build.sh` script helps automate a few different steps of the process for both
-local development and in jenkins.  It has four key parameters:
-* `version` is the version of the code, such as `v1`
-* `environment` is the environment against which to build, one of
-    * `dev`,`test`,`staging`, or `prod`
-* `dir` is the local directory from whence `docker-compose` volumes originate.
-    * use `.` for local builds; jenkins uses `/app`
-* `mode` controls what the script does--in additive fashion--one of:
-    * `--config`: renders config files by reading secrets from vaults and writing output to `output-config` and `output-build-config`
-    * `--docker-build`: `config` plus builds backend container
-    * `--test`: all of the above, plus runs the tests
-    * `--docker-push`: all of the above, plus pushes the backend docker image (`broadinstitute/pepper-api-backend` tagged with `$VERSION_$ENV`) to dockerhub
-    * `--nginx`: creates nginx docker image
-    * `--jenkins` does everything (should only be used from jenkins)
+## api-build.sh
+The `api-build.sh` script helps with a few automation steps. Try the `--help` flag for more info.
 
 ### Options when building backend container
 * `DEBUG` when set to `true`, will open up port 9786 and launch the backend with debugging enabled
