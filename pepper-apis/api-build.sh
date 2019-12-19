@@ -221,32 +221,32 @@ function docker_nginx_push {
 }
 
 function print_usage() {
-    echo 'usage: api-build.sh <version> <environment> <dir> <option>...'
-    echo '       api-build.sh [-h, --help]'
+    echo "usage: $NAME <version> <environment> <dir> <option>..."
+    echo "       $NAME [-h, --help]"
 }
 
 function print_help() {
-    cat << 'EOM'
+    cat << EOM
 A script to help automate a few different steps of the process
 for both local development and in CI deployments.
 
-Configurations are rendered into the directories `output-config`
-and `output-build-config`. Docker images, such as
-`broadinstitute/pepper-api-backend`, will be tagged with `$VER_ENV`.
+Configurations are rendered into the directories 'output-config'
+and 'output-build-config'. Docker images, such as
+'broadinstitute/pepper-api-backend', will be tagged with '\$VER_ENV'.
 
 USAGE:
-  api-build.sh <VER> <ENV> <DIR> [OPTIONS...]
+  $NAME <VER> <ENV> <DIR> [OPTIONS...]
 
 VER
-  is the version of the code, should always be `v1`
+  is the version of the code, should always be 'v1'
 
 ENV
   is the environment against which to build, one of
-  `dev`, `test`, `staging`, or `prod`
+  'dev', 'test', 'staging', or 'prod'
 
 DIR
-  is the local directory from whence `docker-compose` volumes originate,
-  use `.` for local builds, `/app` for CI builds
+  is the local directory from whence 'docker-compose' volumes originate,
+  use '.' for local builds, '/app' for CI builds
 
 OPTIONS:
   --config          render local configurations
@@ -265,6 +265,8 @@ EOM
 ###
 #
 # Main
+
+NAME=${0##*/}
 
 if (( $# == 1 )); then
     if [[ "$1" == '-h' ]] || [[  "$1" == '--help' ]]; then

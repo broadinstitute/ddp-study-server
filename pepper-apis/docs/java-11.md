@@ -1,7 +1,8 @@
 # Java 11 and OpenJDK
 
-Here's a short guide on switching to Java 11. You should be using the OpenJDK
-version instead of Oracle's JDK.
+This project uses Java 11. If you're not on 11 yet, here's a short guide on
+switching to Java 11. You should be using the OpenJDK version instead of
+Oracle's JDK.
 
 ## Installing Java 11
 
