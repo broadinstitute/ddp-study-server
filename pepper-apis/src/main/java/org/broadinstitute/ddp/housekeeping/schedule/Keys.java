@@ -7,6 +7,11 @@ import org.quartz.TriggerKey;
  * Consolidation of all the job and trigger keys, to get an overview of what belongs to which group, so we avoid conflicts.
  */
 public class Keys {
+    public static class AgeUp {
+        public static final JobKey CheckJob = JobKey.jobKey("check", "age-up");
+        public static final TriggerKey CheckTrigger = TriggerKey.triggerKey("check", "age-up");
+    }
+
     public static class Cleanup {
         public static final JobKey TempUserJob = JobKey.jobKey("temp-user", "cleanup");
         public static final TriggerKey TempUserTrigger = TriggerKey.triggerKey("temp-user", "cleanup");

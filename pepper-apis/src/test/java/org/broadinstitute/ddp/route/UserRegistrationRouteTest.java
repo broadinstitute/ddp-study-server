@@ -71,6 +71,7 @@ import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.governance.AgeOfMajorityRule;
+import org.broadinstitute.ddp.model.governance.AgeUpCandidate;
 import org.broadinstitute.ddp.model.governance.Governance;
 import org.broadinstitute.ddp.model.governance.GovernancePolicy;
 import org.broadinstitute.ddp.model.invitation.InvitationType;
@@ -486,6 +487,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
         StudyDto testStudy = TransactionWrapper.withTxn(handle -> {
             StudyDto study = TestDataSetupUtil.generateTestStudy(handle, RouteTestUtil.getConfig());
             GovernancePolicy policy = new GovernancePolicy(study.getId(), new Expression("true"));
+            policy.addAgeOfMajorityRule(new AgeOfMajorityRule("true", 21, 4));
             handle.attach(StudyGovernanceDao.class).createPolicy(policy);
             return study;
         });
@@ -552,10 +554,15 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
             assertEquals(instanceDto.getGuid(), instances.get(0).getGuid());
             assertEquals(governedUser.getId(), instances.get(0).getParticipantId());
 
+            StudyGovernanceDao studyGovernanceDao = handle.attach(StudyGovernanceDao.class);
+            Optional<AgeUpCandidate> candidate = studyGovernanceDao.findAgeUpCandidate(testStudy.getId(), governedUser.getId());
+            assertTrue("Governed user should be added as age-up candidate because policy has AoM rules", candidate.isPresent());
+
             // Cleanup data
             instanceDao.deleteByInstanceGuid(instanceDto.getGuid());
             governanceDao.deleteAllGovernancesForProxy(tempUser.getId());
             jdbiEnrollment.deleteByUserGuidStudyGuid(governedUser.getGuid(), testStudy.getGuid());
+            studyGovernanceDao.removeAgeUpCandidates(Set.of(candidate.get().getId()));
         });
     }
 

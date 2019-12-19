@@ -329,6 +329,11 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
         LOG.info("Re-assigned {} queued events in study {} from operator {} to governed user {}",
                 numEventsReassigned, policy.getStudyGuid(), operatorUser.getGuid(), gov.getGovernedUserGuid());
 
+        if (!policy.getAgeOfMajorityRules().isEmpty()) {
+            handle.attach(StudyGovernanceDao.class).addAgeUpCandidate(policy.getStudyId(), governedUser.getId());
+            LOG.info("Added governed user {} as age-up candidate in study {}", governedUser.getGuid(), policy.getStudyGuid());
+        }
+
         return governedUser;
     }
 

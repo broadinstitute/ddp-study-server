@@ -180,4 +180,5 @@
     <include file="db-changes/schema/DDP-4232-add-columns-to-textquestion.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/seed/DDP-4232-add-new-input-type-email.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/seed/DDP-4222-add-reached-ageup-prep-event.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-4227-age-up-candidate.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
