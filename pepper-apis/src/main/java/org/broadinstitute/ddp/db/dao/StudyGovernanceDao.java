@@ -84,12 +84,12 @@ public interface StudyGovernanceDao extends SqlObject {
         getStudyGovernanceSql().insertAgeUpCandidate(studyId, participantUserId);
     }
 
-    default void markAgeUpPrepInitiated(Set<Long> candidateIds) {
-        DBUtils.checkUpdate(candidateIds.size(), getStudyGovernanceSql().updateAgeUpCandidateInitiatedPrepByIds(true, candidateIds));
+    default int markAgeUpPrepInitiated(Set<Long> candidateIds) {
+        return DBUtils.checkUpdate(candidateIds.size(), getStudyGovernanceSql().updateAgeUpCandidateInitiatedPrepByIds(true, candidateIds));
     }
 
-    default void removeAgeUpCandidates(Set<Long> candidateIds) {
-        DBUtils.checkDelete(candidateIds.size(), getStudyGovernanceSql().deleteAgeUpCandidateByIds(candidateIds));
+    default int removeAgeUpCandidates(Set<Long> candidateIds) {
+        return DBUtils.checkDelete(candidateIds.size(), getStudyGovernanceSql().deleteAgeUpCandidateByIds(candidateIds));
     }
 
     @UseStringTemplateSqlLocator

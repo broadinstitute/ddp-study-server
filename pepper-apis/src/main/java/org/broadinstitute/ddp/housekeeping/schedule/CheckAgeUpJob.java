@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.housekeeping.schedule;
 
 import java.time.Instant;
 import java.time.ZoneId;
+import java.util.Collections;
 import java.util.List;
 import java.util.TimeZone;
 import java.util.stream.Collectors;
@@ -89,6 +90,7 @@ public class CheckAgeUpJob implements Job {
         List<GovernancePolicy> policies = handle.attach(StudyGovernanceDao.class)
                 .findAllPolicies()
                 .collect(Collectors.toList());
+        Collections.shuffle(policies);
         for (var policy : policies) {
             if (policy.getAgeOfMajorityRules().isEmpty()) {
                 LOG.info("Study {} has no age-of-majority rules, skipping", policy.getStudyGuid());

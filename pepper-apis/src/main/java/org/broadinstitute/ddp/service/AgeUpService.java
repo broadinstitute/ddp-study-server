@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.service;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -49,6 +50,7 @@ public class AgeUpService {
         List<AgeUpCandidate> potentialCandidates = studyGovernanceDao
                 .findAllAgeUpCandidatesByStudyId(policy.getStudyId())
                 .collect(Collectors.toList());
+        Collections.shuffle(potentialCandidates);
 
         String studyGuid = policy.getStudyGuid();
         Set<Long> exitedCandidates = new HashSet<>();
@@ -94,14 +96,14 @@ public class AgeUpService {
             }
         }
 
-        studyGovernanceDao.markAgeUpPrepInitiated(preppedCandidateIds);
-        LOG.info("Initiated age-of-majority preparation for {} candidates", preppedCandidateIds.size());
+        int numRows = studyGovernanceDao.markAgeUpPrepInitiated(preppedCandidateIds);
+        LOG.info("Initiated age-of-majority preparation for {} candidates", numRows);
 
-        studyGovernanceDao.removeAgeUpCandidates(agedUpCandidateIds);
-        LOG.info("Removed {} already aged up candidates", agedUpCandidateIds.size());
+        numRows = studyGovernanceDao.removeAgeUpCandidates(agedUpCandidateIds);
+        LOG.info("Removed {} already aged up candidates", numRows);
 
-        studyGovernanceDao.removeAgeUpCandidates(exitedCandidates);
-        LOG.info("Removed {} exited age-up candidates", agedUpCandidateIds.size());
+        numRows = studyGovernanceDao.removeAgeUpCandidates(exitedCandidates);
+        LOG.info("Removed {} exited age-up candidates", numRows);
 
         return agedUpCandidateIds.size();
     }

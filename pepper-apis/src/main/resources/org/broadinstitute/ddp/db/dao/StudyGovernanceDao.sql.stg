@@ -56,6 +56,8 @@ select auc.age_up_candidate_id,
          where en.study_id = study.umbrella_study_id
            and en.user_id = participant.user_id
            and valid_to is null
+         order by valid_from desc
+         limit 1
        ) as enrollment_status
   from age_up_candidate as auc
   join umbrella_study as study on study.umbrella_study_id = auc.study_id
