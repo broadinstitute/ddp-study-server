@@ -491,7 +491,7 @@ public class EventServiceTest extends IntegrationTestSuite.TestCase {
                             testData.getUserGuid(),
                             copyInstanceId,
                             testData.getStudyId(),
-                            InstanceStatusType.COMPLETE));
+                            InstanceStatusType.IN_PROGRESS));
 
             UserProfileDto profile = profileDao.getUserProfileByUserId(testData.getUserId());
 

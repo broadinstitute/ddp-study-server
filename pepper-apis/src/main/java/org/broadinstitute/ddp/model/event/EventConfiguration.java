@@ -87,6 +87,10 @@ public class EventConfiguration {
         eventAction.doAction(treeWalkInterpreter, handle, eventSignal);
     }
 
+    public boolean isTriggered(Handle handle, EventSignal eventSignal) {
+        return eventTrigger.isTriggered(handle, eventSignal);
+    }
+
     public void setEventTrigger(EventTrigger eventTrigger) {
         this.eventTrigger = eventTrigger;
     }

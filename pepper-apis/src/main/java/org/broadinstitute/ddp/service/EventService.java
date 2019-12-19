@@ -95,7 +95,9 @@ public class EventService {
                 throw new DaoException("Error evaluating pex expression " + precondExpr, e);
             }
 
-            eventConfig.doAction(pexInterpreter, handle, eventSignal);
+            if (eventConfig.isTriggered(handle, eventSignal)) {
+                eventConfig.doAction(pexInterpreter, handle, eventSignal);
+            }
         }
     }
 

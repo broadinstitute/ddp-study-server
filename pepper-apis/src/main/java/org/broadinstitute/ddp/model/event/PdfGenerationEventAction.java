@@ -1,9 +1,7 @@
 package org.broadinstitute.ddp.model.event;
 
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 
 import org.broadinstitute.ddp.db.dao.QueuedEventDao;
 import org.broadinstitute.ddp.db.dto.EventConfigurationDto;
@@ -16,12 +14,11 @@ import org.slf4j.LoggerFactory;
 public class PdfGenerationEventAction extends EventAction {
     private static final Logger LOG = LoggerFactory.getLogger(PdfGenerationEventAction.class);
 
-    // A list of Tuple<pdfDocumentConfigurationId, generateIfMissing>
-    private List<PdfAttachment> pdfAttachments = new ArrayList<>();
+    private Long pdfGenerationDocumentConfigurationId;
 
     public PdfGenerationEventAction(EventConfiguration eventConfiguration, EventConfigurationDto dto) {
         super(eventConfiguration, dto);
-        pdfAttachments.addAll(dto.getPdfAttachments());
+        pdfGenerationDocumentConfigurationId = dto.getPdfGenerationDocumentConfigurationId();
     }
 
     @Override
@@ -47,7 +44,7 @@ public class PdfGenerationEventAction extends EventAction {
                 eventConfiguration.getEventConfigurationId());
     }
 
-    public List<PdfAttachment> getPdfConfigs() {
-        return pdfAttachments;
+    public Long getPdfGenerationDocumentConfigurationId() {
+        return pdfGenerationDocumentConfigurationId;
     }
 }

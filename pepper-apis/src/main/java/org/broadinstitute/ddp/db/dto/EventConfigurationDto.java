@@ -65,10 +65,11 @@ public class EventConfigurationDto {
     private NotificationServiceType notificationServiceType;
     private Long notificationTemplateId;
     private Long linkedActivityId;
+    private List<PdfAttachment> notificationPdfAttachments = new ArrayList<>();
 
     /* PDF_GENERATION */
-    // A list of Tuple<pdfDocumentConfigurationId, generateIfMissing>
-    private List<PdfAttachment> pdfAttachments = new ArrayList<>();
+    private Long pdfGenerationDocumentConfigurationId;
+
 
     /* ACTIVITY_INSTANCE_CREATION */
     private Long activityInstanceCreationStudyActivityId;
@@ -99,6 +100,7 @@ public class EventConfigurationDto {
                                  NotificationServiceType notificationServiceType,
                                  Long notificationTemplateId,
                                  Long linkedActivityId,
+                                 Long pdfGenerationDocumentConfigurationId,
                                  Long activityInstanceCreationStudyActivityId,
                                  CopyAnswerTarget copyAnswerTarget,
                                  String copySourceQuestionStableId) {
@@ -121,6 +123,7 @@ public class EventConfigurationDto {
         this.notificationServiceType = notificationServiceType;
         this.notificationTemplateId = notificationTemplateId;
         this.linkedActivityId = linkedActivityId;
+        this.pdfGenerationDocumentConfigurationId = pdfGenerationDocumentConfigurationId;
         this.activityInstanceCreationStudyActivityId = activityInstanceCreationStudyActivityId;
         this.copyAnswerTarget = copyAnswerTarget;
         this.copySourceQuestionStableId = copySourceQuestionStableId;
@@ -214,11 +217,15 @@ public class EventConfigurationDto {
         return copySourceQuestionStableId;
     }
 
-    public void addPdfConfig(Long pdfDocumentConfigurationId, Boolean generateIfMissing) {
-        pdfAttachments.add(new PdfAttachment(pdfDocumentConfigurationId, generateIfMissing));
+    public Long getPdfGenerationDocumentConfigurationId() {
+        return pdfGenerationDocumentConfigurationId;
     }
 
-    public List<PdfAttachment> getPdfAttachments() {
-        return pdfAttachments;
+    public void addNotificationPdfAttachments(Long pdfDocumentConfigurationId, Boolean generateIfMissing) {
+        notificationPdfAttachments.add(new PdfAttachment(pdfDocumentConfigurationId, generateIfMissing));
+    }
+
+    public List<PdfAttachment> getNotificationPdfAttachments() {
+        return notificationPdfAttachments;
     }
 }

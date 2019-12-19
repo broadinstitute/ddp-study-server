@@ -1,7 +1,9 @@
 package org.broadinstitute.ddp.model.event;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.broadinstitute.ddp.constants.NotificationTemplateVariables;
@@ -22,6 +24,7 @@ public class NotificationEventAction extends EventAction {
     private NotificationServiceType notificationServiceType;
     private long notificationTemplateId;
     private Long linkedActivityId; // Allowed to be null
+    private List<PdfAttachment> pdfAttachmentList = new ArrayList<>();
 
     public NotificationEventAction(EventConfiguration eventConfiguration, EventConfigurationDto dto) {
         super(eventConfiguration, dto);
@@ -29,6 +32,14 @@ public class NotificationEventAction extends EventAction {
         this.notificationServiceType = dto.getNotificationServiceType();
         this.notificationTemplateId = dto.getNotificationTemplateId();
         this.linkedActivityId = dto.getLinkedActivityId();
+    }
+
+    public void addPdfAttachment(PdfAttachment pdfAttachment) {
+        pdfAttachmentList.add(pdfAttachment);
+    }
+
+    public List<PdfAttachment> getPdfAttachmentList() {
+        return pdfAttachmentList;
     }
 
     @Override

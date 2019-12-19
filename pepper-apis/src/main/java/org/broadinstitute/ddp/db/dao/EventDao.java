@@ -250,8 +250,8 @@ public interface EventDao extends SqlObject {
         public void accumulate(Map<Long, EventConfigurationDto> container, RowView view) {
             long eventConfigurationId = view.getColumn(SqlConstants.EventConfigurationTable.ID, Long.class);
             EventConfigurationDto dto = container.computeIfAbsent(eventConfigurationId, id -> view.getRow(EventConfigurationDto.class));
-            if (view.getColumn("pdf_document_configuration_id", Long.class) != null) {
-                dto.addPdfConfig(view.getColumn("pdf_document_configuration_id", Long.class),
+            if (view.getColumn("user_notification_document_configuration_id", Long.class) != null) {
+                dto.addNotificationPdfAttachments(view.getColumn("user_notification_document_configuration_id", Long.class),
                         view.getColumn("generate_if_missing", Boolean.class));
             }
         }
