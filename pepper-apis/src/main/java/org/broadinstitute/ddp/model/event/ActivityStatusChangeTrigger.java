@@ -23,7 +23,7 @@ public class ActivityStatusChangeTrigger extends EventTrigger {
     public boolean isTriggered(Handle handle, EventSignal eventSignal) {
         if (eventSignal.getEventTriggerType() == EventTriggerType.ACTIVITY_STATUS) {
             ActivityInstanceStatusChangeSignal signal = (ActivityInstanceStatusChangeSignal) eventSignal;
-            return signal.getActivityInstanceIdThatChanged() == activityInstanceId
+            return signal.getActivityIdThatChanged() == activityInstanceId
                     && instanceStatusType == signal.getTargetStatusType();
         } else {
             return true;

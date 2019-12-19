@@ -184,6 +184,7 @@ public interface ActivityInstanceStatusDao extends SqlObject {
                 instanceDto.getParticipantId(),
                 jdbiUser.findByUserId(instanceDto.getParticipantId()).getUserGuid(),
                 instanceId,
+                instanceDto.getActivityId(),
                 studyId,
                 newStatus);
 

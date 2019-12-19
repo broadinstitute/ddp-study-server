@@ -90,6 +90,7 @@ public class ActivityInstanceCreationEventAction extends EventAction {
                 eventSignal.getParticipantId(),
                 eventSignal.getParticipantGuid(),
                 newActivityInstanceId,
+                studyActivityId,
                 eventSignal.getStudyId(),
                 InstanceStatusType.CREATED));
     }

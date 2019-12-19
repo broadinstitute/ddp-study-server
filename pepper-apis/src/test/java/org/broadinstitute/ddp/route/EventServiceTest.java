@@ -87,7 +87,7 @@ public class EventServiceTest extends IntegrationTestSuite.TestCase {
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static String token;
     private static String url;
-    private static String dateQuestionStableId;
+    private String dateQuestionStableId;
     private long dsmInclusionEventActionId;
     private long studyActivityToCreateId;
     private long activityInstanceCreationEventActionId;
@@ -105,6 +105,7 @@ public class EventServiceTest extends IntegrationTestSuite.TestCase {
     private String copySourceStableId;
     private ActivityInstanceDto copySourceActivityInstance;
     private long copyInstanceId;
+    private long copyActivityId;
     private String copyInstanceGuid;
 
     @BeforeClass
@@ -267,6 +268,7 @@ public class EventServiceTest extends IntegrationTestSuite.TestCase {
                             testData.getTestingUser().getUserGuid());
                     copyInstanceGuid = copySourceActivityInstance.getGuid();
                     copyInstanceId = copySourceActivityInstance.getId();
+                    copyActivityId = form.getActivityId();
 
                     long triggerId = handle.attach(JdbiEventTrigger.class).insert(EventTriggerType.ACTIVITY_STATUS);
                     handle.attach(JdbiActivityStatusTrigger.class).insert(triggerId,
@@ -490,8 +492,9 @@ public class EventServiceTest extends IntegrationTestSuite.TestCase {
                             testData.getUserId(),
                             testData.getUserGuid(),
                             copyInstanceId,
+                            copyActivityId,
                             testData.getStudyId(),
-                            InstanceStatusType.IN_PROGRESS));
+                            InstanceStatusType.COMPLETE));
 
             UserProfileDto profile = profileDao.getUserProfileByUserId(testData.getUserId());
 
@@ -519,6 +522,7 @@ public class EventServiceTest extends IntegrationTestSuite.TestCase {
                             testData.getUserId(),
                             testData.getUserGuid(),
                             copyInstanceId,
+                            copyActivityId,
                             testData.getStudyId(),
                             InstanceStatusType.COMPLETE));
 
