@@ -2,16 +2,15 @@ package org.broadinstitute.ddp.model.event;
 
 import java.time.Instant;
 
-import org.broadinstitute.ddp.db.dao.ActivityStatusEventDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstanceStatus;
 import org.broadinstitute.ddp.db.dao.JdbiEventConfigurationOccurrenceCounter;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
-import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.EventConfigurationDto;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.pex.PexInterpreter;
+import org.broadinstitute.ddp.service.EventService;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,7 +29,6 @@ public class ActivityInstanceCreationEventAction extends EventAction {
         JdbiActivityInstance jdbiActivityInstance = handle.attach(JdbiActivityInstance.class);
         JdbiActivityInstanceStatus jdbiActivityInstanceStatus = handle.attach(JdbiActivityInstanceStatus.class);
         JdbiActivity jdbiActivity = handle.attach(JdbiActivity.class);
-        ActivityStatusEventDao activityStatusEventDao = handle.attach(ActivityStatusEventDao.class);
         JdbiEventConfigurationOccurrenceCounter jdbiEventConfigurationOccurrenceCounter =
                 handle.attach(JdbiEventConfigurationOccurrenceCounter.class);
 
@@ -73,14 +71,6 @@ public class ActivityInstanceCreationEventAction extends EventAction {
                 Instant.now().toEpochMilli(),
                 eventSignal.getParticipantId()
         );
-        // queue up any events associated with updating the status to created
-        ActivityInstanceDto createdInstanceDto = jdbiActivityInstance.getByActivityInstanceId(
-                newActivityInstanceId).get();
-        activityStatusEventDao.addStatusTriggerEventsToQueue(eventSignal.getOperatorId(),
-                eventSignal.getParticipantId(),
-                createdInstanceDto,
-                InstanceStatusType.CREATED.name());
-
 
         // Incrementing the counter indicating that the event configuration has been executed
         jdbiEventConfigurationOccurrenceCounter.incNumOccurrences(
@@ -94,6 +84,14 @@ public class ActivityInstanceCreationEventAction extends EventAction {
                 eventSignal.getParticipantId(),
                 eventSignal.getStudyId(),
                 newActivityInstanceId);
+
+        EventService.getInstance().processAllActionsForEventSignal(handle, new ActivityInstanceStatusChangeSignal(
+                eventSignal.getOperatorId(),
+                eventSignal.getParticipantId(),
+                eventSignal.getParticipantGuid(),
+                newActivityInstanceId,
+                eventSignal.getStudyId(),
+                InstanceStatusType.CREATED));
     }
 
     public Long getStudyActivityId() {

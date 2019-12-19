@@ -3,14 +3,13 @@ package org.broadinstitute.ddp.db.dto;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.event.CopyAnswerTarget;
 import org.broadinstitute.ddp.model.event.NotificationServiceType;
 import org.broadinstitute.ddp.model.event.NotificationType;
+import org.broadinstitute.ddp.model.event.PdfAttachment;
 
 /**
  * A DTO representing the event configuration, left joined with possible trigger and action configuration info
@@ -69,7 +68,7 @@ public class EventConfigurationDto {
 
     /* PDF_GENERATION */
     // A list of Tuple<pdfDocumentConfigurationId, generateIfMissing>
-    private List<Pair<Long, Boolean>> pdfConfigs = new ArrayList<>();
+    private List<PdfAttachment> pdfAttachments = new ArrayList<>();
 
     /* ACTIVITY_INSTANCE_CREATION */
     private Long activityInstanceCreationStudyActivityId;
@@ -216,10 +215,10 @@ public class EventConfigurationDto {
     }
 
     public void addPdfConfig(Long pdfDocumentConfigurationId, Boolean generateIfMissing) {
-        pdfConfigs.add(new ImmutablePair<>(pdfDocumentConfigurationId, generateIfMissing));
+        pdfAttachments.add(new PdfAttachment(pdfDocumentConfigurationId, generateIfMissing));
     }
 
-    public List<Pair<Long, Boolean>> getPdfConfigs() {
-        return pdfConfigs;
+    public List<PdfAttachment> getPdfAttachments() {
+        return pdfAttachments;
     }
 }

@@ -134,4 +134,18 @@ public class EventConfiguration {
     public Integer getPostDelaySeconds() {
         return postDelaySeconds;
     }
+
+    @Override
+    public String toString() {
+        return "EventConfiguration{"
+                + "eventConfigurationId=" + eventConfigurationId
+                + ", eventActionType=" + eventActionType
+                + ", eventTriggerType=" + eventTriggerType
+                + ", preconditionExpression='" + preconditionExpression + '\''
+                + ", cancelExpression='" + cancelExpression + '\''
+                + ", maxOccurrencesPerUser=" + maxOccurrencesPerUser
+                + ", dispatchToHousekeeping=" + dispatchToHousekeeping
+                + ", postDelaySeconds=" + postDelaySeconds
+                + '}';
+    }
 }

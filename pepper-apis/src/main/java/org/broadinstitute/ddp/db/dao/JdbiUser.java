@@ -15,9 +15,6 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
 public interface JdbiUser extends SqlObject {
-    @SqlQuery("select guid from user where user_id = :user_id")
-    String getUserGuidById(@Bind("user_id") long userId);
-
     @SqlQuery("select user_id from user where auth0_user_id = :auth0UserId and auth0_tenant_id = :auth0TenantId")
     long getUserIdByAuth0UserId(@Bind("auth0UserId") String auth0UserId, @Bind("auth0TenantId") long auth0TenantId);
 

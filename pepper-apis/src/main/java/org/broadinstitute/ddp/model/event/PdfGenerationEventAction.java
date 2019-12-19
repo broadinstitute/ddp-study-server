@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.ddp.db.dao.QueuedEventDao;
 import org.broadinstitute.ddp.db.dto.EventConfigurationDto;
 import org.broadinstitute.ddp.exception.DDPException;
@@ -18,11 +17,11 @@ public class PdfGenerationEventAction extends EventAction {
     private static final Logger LOG = LoggerFactory.getLogger(PdfGenerationEventAction.class);
 
     // A list of Tuple<pdfDocumentConfigurationId, generateIfMissing>
-    private List<Pair<Long, Boolean>> pdfConfigs = new ArrayList<>();
+    private List<PdfAttachment> pdfAttachments = new ArrayList<>();
 
     public PdfGenerationEventAction(EventConfiguration eventConfiguration, EventConfigurationDto dto) {
         super(eventConfiguration, dto);
-        pdfConfigs.addAll(dto.getPdfConfigs());
+        pdfAttachments.addAll(dto.getPdfAttachments());
     }
 
     @Override
@@ -48,7 +47,7 @@ public class PdfGenerationEventAction extends EventAction {
                 eventConfiguration.getEventConfigurationId());
     }
 
-    public List<Pair<Long, Boolean>> getPdfConfigs() {
-        return pdfConfigs;
+    public List<PdfAttachment> getPdfConfigs() {
+        return pdfAttachments;
     }
 }

@@ -3,7 +3,6 @@ package org.broadinstitute.ddp.service;
 import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
-import org.broadinstitute.ddp.Housekeeping;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.JdbiEventConfigurationOccurrenceCounter;
@@ -17,7 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class EventService {
-    private static final Logger logger = LoggerFactory.getLogger(Housekeeping.class);
+    private static final Logger logger = LoggerFactory.getLogger(EventService.class);
 
     private static volatile EventService instance;
 
@@ -33,9 +32,9 @@ public class EventService {
     }
 
     protected void processEventSignalForEventConfiguration(Handle handle,
-                                                 EventSignal eventSignal,
-                                                 EventConfiguration eventConfig,
-                                                 PexInterpreter pexInterpreter) {
+                                                           EventSignal eventSignal,
+                                                           EventConfiguration eventConfig,
+                                                           PexInterpreter pexInterpreter) {
         {
             logger.info(
                     "Checking pre-condition, cancel condition and num occurances of EventConfiguration: "
@@ -98,6 +97,11 @@ public class EventService {
 
             eventConfig.doAction(pexInterpreter, handle, eventSignal);
         }
+    }
+
+    public void processAllActionsForEventSignal(Handle handle, EventSignal eventSignal) {
+        processSynchronousActionsForEventSignal(handle, eventSignal);
+        queueAsynchronousActionsForEventSignal(handle, eventSignal);
     }
 
     public void processSynchronousActionsForEventSignal(Handle handle, EventSignal eventSignal) {

@@ -182,16 +182,12 @@ public interface ActivityInstanceStatusDao extends SqlObject {
         EventSignal eventSignal = new ActivityInstanceStatusChangeSignal(
                 operatorId,
                 instanceDto.getParticipantId(),
-                jdbiUser.getUserGuidById(instanceDto.getParticipantId()),
+                jdbiUser.findByUserId(instanceDto.getParticipantId()).getUserGuid(),
                 instanceId,
                 studyId,
                 newStatus);
 
-        EventService.getInstance().processSynchronousActionsForEventSignal(
-                getHandle(),
-                eventSignal);
-
-        EventService.getInstance().queueAsynchronousActionsForEventSignal(
+        EventService.getInstance().processAllActionsForEventSignal(
                 getHandle(),
                 eventSignal);
 
