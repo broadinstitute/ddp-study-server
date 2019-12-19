@@ -115,7 +115,7 @@ public class EventConfigurationDto {
         return announcementIsPermanent;
     }
 
-    public boolean getAnnouncementCreateForProxies() {
+    public boolean shouldCreateAnnouncementForProxies() {
         return announcementCreateForProxies;
     }
 

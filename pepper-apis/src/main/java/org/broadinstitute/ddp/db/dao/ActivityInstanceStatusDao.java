@@ -375,7 +375,7 @@ public interface ActivityInstanceStatusDao extends SqlObject {
     private void processAnnouncementAction(Handle handle, long participantId, long studyId, EventConfigurationDto eventConfig) {
         try {
             UserAnnouncementDao announcementDao = getUserAnnouncementDao();
-            if (eventConfig.getAnnouncementCreateForProxies()) {
+            if (eventConfig.shouldCreateAnnouncementForProxies()) {
                 List<Governance> governances = handle.attach(UserGovernanceDao.class)
                         .findActiveGovernancesByParticipantAndStudyIds(participantId, studyId)
                         .collect(Collectors.toList());
