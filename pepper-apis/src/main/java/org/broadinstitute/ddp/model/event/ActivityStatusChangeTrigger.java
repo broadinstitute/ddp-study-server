@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.model.event;
 
 import org.broadinstitute.ddp.db.dto.EventConfigurationDto;
+import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.jdbi.v3.core.Handle;
@@ -26,7 +27,8 @@ public class ActivityStatusChangeTrigger extends EventTrigger {
             return signal.getActivityIdThatChanged() == studyActivityId
                     && instanceStatusType == signal.getTargetStatusType();
         } else {
-            return true;
+            throw new DDPException("Additional engineering required here. ActivityStatusChangeTrigger can only be"
+                    + "triggered by ActivityInstanceStatusChangeSignal");
         }
     }
 

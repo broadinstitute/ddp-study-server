@@ -4,7 +4,7 @@ import org.broadinstitute.ddp.db.dto.EventConfigurationDto;
 import org.jdbi.v3.core.Handle;
 
 
-public class EventTrigger {
+public class EventTrigger<T extends EventSignal> {
     private EventConfigurationDto eventConfigurationDto;
 
     EventTrigger(EventConfigurationDto eventConfigurationDto) {
@@ -15,7 +15,7 @@ public class EventTrigger {
         return eventConfigurationDto;
     }
 
-    public boolean isTriggered(Handle handle, EventSignal eventSignal) {
+    public boolean isTriggered(Handle handle, T eventSignal) {
         return true;
     }
 }
