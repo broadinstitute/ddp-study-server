@@ -13,6 +13,7 @@ import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.AgreementAnswerDto;
 import org.broadinstitute.ddp.db.dto.AnswerDto;
+import org.broadinstitute.ddp.db.dto.ChildAnswerDto;
 import org.broadinstitute.ddp.db.dto.CompositeAnswerSummaryDto;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.model.activity.instance.answer.AgreementAnswer;
@@ -206,7 +207,7 @@ public interface AnswerDao extends SqlObject {
                     CompositeAnswerSummaryDto summaryObj = optionalAnswerSummary.get();
                     CompositeAnswer answer = new CompositeAnswer(summaryObj.getId(), summaryObj.getQuestionStableId(),
                             summaryObj.getGuid());
-                    summaryObj.getChildAnswers().forEach((List<AnswerDto> rowChildDtos) -> {
+                    summaryObj.getChildAnswers().forEach((List<ChildAnswerDto> rowChildDtos) -> {
                         List<Answer> rowOfAnswers = rowChildDtos.stream()
                                 .map(childAnswerDto ->
                                         //updated query gives us the question information if row exists but answer does not

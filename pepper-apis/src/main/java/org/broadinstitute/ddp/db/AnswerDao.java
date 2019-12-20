@@ -29,6 +29,7 @@ import org.broadinstitute.ddp.db.dao.JdbiNumericAnswer;
 import org.broadinstitute.ddp.db.dao.PicklistAnswerDao;
 import org.broadinstitute.ddp.db.dto.AgreementAnswerDto;
 import org.broadinstitute.ddp.db.dto.AnswerDto;
+import org.broadinstitute.ddp.db.dto.ChildAnswerDto;
 import org.broadinstitute.ddp.db.dto.CompositeAnswerSummaryDto;
 import org.broadinstitute.ddp.exception.UnexpectedNumberOfElementsException;
 import org.broadinstitute.ddp.model.activity.instance.answer.AgreementAnswer;
@@ -313,7 +314,7 @@ public class AnswerDao {
         //if they don't it is OK. Create new child answer
         for (int rowIdx = 0; rowIdx < parentAnswerFromUser.getValue().size(); rowIdx++) {
             AnswerRow rowOfUserAnswers = parentAnswerFromUser.getValue().get(rowIdx);
-            final List<AnswerDto> rowOfDbAnswers;
+            final List<ChildAnswerDto> rowOfDbAnswers;
             if (rowIdx < parentFromDb.getChildAnswers().size()) {
                 rowOfDbAnswers = parentFromDb.getChildAnswers().get(rowIdx);
             } else {
@@ -325,7 +326,7 @@ public class AnswerDao {
                     return null;
                 }
                 if (rowOfDbAnswers != null) {
-                    Optional<AnswerDto> matchingAnswerFromDb = rowOfDbAnswers.stream()
+                    Optional<ChildAnswerDto> matchingAnswerFromDb = rowOfDbAnswers.stream()
                             .filter(answerFromDb -> answerFromDb.getQuestionStableId().equals(userAnswer.getQuestionStableId()))
                             .findFirst();
                     if (matchingAnswerFromDb.isPresent() && matchingAnswerFromDb.get().getId() != null) {
@@ -461,7 +462,7 @@ public class AnswerDao {
             CompositeAnswerSummaryDto summaryObj = optionalAnswerSummary.get();
             CompositeAnswer answer = new CompositeAnswer(summaryObj.getId(), summaryObj.getQuestionStableId(),
                     summaryObj.getGuid());
-            summaryObj.getChildAnswers().forEach((List<AnswerDto> rowChildDtos) -> {
+            summaryObj.getChildAnswers().forEach((List<ChildAnswerDto> rowChildDtos) -> {
                 List<Answer> rowOfAnswers = rowChildDtos.stream()
                         .map(childAnswerDto ->
                                 //updated query gives us the question information if row exists but answer does not

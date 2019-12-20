@@ -1,5 +1,93 @@
 group ActivityAnswerCopierSql;
 
+getLatestAnswer() ::= <<
+select
+src_a.answer_id,
+src_qt.question_type_code
+from
+answer src_a
+join question as src_q on src_q.question_id = src_a.question_id
+join question_type src_qt on src_qt.question_type_id = src_q.question_type_id
+join activity_instance as src_ai on src_ai.activity_instance_id = src_a.activity_instance_id and src_ai.activity_instance_id = :activityInstanceId
+join study_activity as src_act on src_act.study_activity_id = src_ai.study_activity_id
+join question_stable_code as src_q_code on src_q_code.question_stable_code_id = src_q.question_stable_code_id and src_q_code.stable_id = :questionStableId
+where
+src_a.last_updated_at = (
+	select max(a2.last_updated_at)
+	from
+    answer a2
+    where
+    a2.question_id = src_a.question_id
+    and
+    a2.operator_user_id = src_a.operator_user_id
+    and
+    a2.activity_instance_id = src_ai.activity_instance_id)
+>>
+
+copyDateAnswer() ::= <<
+insert into date_answer(answer_id, day, month, year)
+(select :destinationAnswerId,
+a.day,
+a.month,
+a.year
+from
+date_answer a
+where
+a.answer_id = :sourceAnswerId)
+>>
+
+copyTextAnswer() ::= <<
+insert into text_answer(answer_id, answer)
+(select :destinationAnswerId,
+a.answer
+from
+text_answer a
+where
+a.answer_id = :sourceAnswerId)
+>>
+
+copyAgreementAnswer() ::= <<
+insert into agreement_answer(answer_id, answer)
+(select :destinationAnswerId,
+a.answer
+from
+agreement_answer a
+where
+a.answer_id = :sourceAnswerId)
+>>
+
+copyBooleanAnswer() ::= <<
+insert into boolean_answer(answer_id, answer)
+(select :destinationAnswerId,
+a.answer
+from
+boolean_answer a
+where
+a.answer_id = :sourceAnswerId)
+>>
+
+copyNumericAnswer() ::= <<
+insert into numeric_answer(answer_id, int_value)
+(select :destinationAnswerId,
+a.int_value
+from
+numeric_answer a
+where
+a.answer_id = :sourceAnswerId)
+>>
+
+
+copyPicklistAnswer() ::= <<
+insert into picklist_option__answer(answer_id, picklist_option_id, detail_text)
+(select :destinationAnswerId,
+a.picklist_option_id,
+a.detail_text
+from
+picklist_option__answer a
+where
+a.answer_id = :sourceAnswerId)
+>>
+
 baseActivityAnswerCopy() ::= <<
 insert into answer(answer_guid,question_id,operator_user_id,activity_instance_id,created_at,last_updated_at)
 (select
@@ -10,35 +98,10 @@ dest_ai.activity_instance_id,
 :createdAt,
 :lastUpdatedAt
 from
-/* source questions */
 answer src_a
-join question as src_q on src_q.question_id = src_a.question_id
-join activity_instance as src_ai on src_ai.activity_instance_id = src_a.activity_instance_id and src_ai.activity_instance_id = :sourceActivityInstanceId
-join study_activity as src_act on src_act.study_activity_id = src_ai.study_activity_id
-join question_stable_code as src_q_code on src_q_code.question_stable_code_id = src_q.question_stable_code_id and src_q_code.stable_id = :sourceStableId
-/* destination questions */
 join question_stable_code as dest_q_code on dest_q_code.stable_id = :destinationStableId
 join question as dest_q on dest_q.question_stable_code_id = dest_q_code.question_stable_code_id
 join activity_instance as dest_ai on dest_ai.activity_instance_id = :destinationActivityInstanceId and dest_q.study_activity_id = dest_ai.study_activity_id
-join study_activity as dest_act on dest_act.study_activity_id = dest_ai.study_activity_id
-
 where
-/* find latest answer for the question */
-src_a.last_updated_at = (
-	select max(a2.last_updated_at)
-	from
-    answer a2
-    where
-    a2.question_id = src_a.question_id
-    and
-    a2.operator_user_id = src_a.operator_user_id
-    and
-    a2.activity_instance_id = src_ai.activity_instance_id
-)
-and
-dest_act.study_id = src_act.study_id)
->>
-
-dateAnswerCopy() ::= <<
-insert into answer(answer_gustufff
+src_a.answer_id = :sourceAnswerId)
 >>

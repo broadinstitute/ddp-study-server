@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.model.activity.instance.answer;
 
+import java.util.Objects;
 import javax.validation.constraints.NotBlank;
 
 import com.google.gson.annotations.SerializedName;
@@ -31,5 +32,23 @@ public class SelectedPicklistOption {
 
     public String getDetailText() {
         return detailText;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        SelectedPicklistOption that = (SelectedPicklistOption) o;
+        return stableId.equals(that.stableId) &&
+                Objects.equals(detailText, that.detailText);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(stableId, detailText);
     }
 }

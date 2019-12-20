@@ -8,13 +8,13 @@ public class CompositeAnswerSummaryDto {
     private long id;
     private String guid;
     private String questionStableId;
-    private List<List<AnswerDto>> childAnswers;
+    private List<List<ChildAnswerDto>> childAnswers;
 
     public CompositeAnswerSummaryDto() {
         this.childAnswers = new ArrayList<>();
     }
 
-    public List<AnswerDto> getLastRowOfChildrenAnswers() {
+    public List<ChildAnswerDto> getLastRowOfChildrenAnswers() {
         if (childAnswers == null) {
             return null;
         } else {
@@ -23,7 +23,7 @@ public class CompositeAnswerSummaryDto {
 
     }
 
-    public List<List<AnswerDto>> getChildAnswers() {
+    public List<List<ChildAnswerDto>> getChildAnswers() {
         return childAnswers;
     }
 

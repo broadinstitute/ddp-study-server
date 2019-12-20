@@ -106,7 +106,7 @@ public interface JdbiAnswer extends SqlObject {
     }
 
     @SqlQuery("select a.answer_id, a.answer_guid, q.question_id,"
-            + "       qsc.stable_id as question_stable_id, qt.question_type_code as question_type"
+            + "       qsc.stable_id as question_stable_id, qt.question_type_code as question_type, a.created_at, a.last_updated_at"
             + " from answer as a"
             + " join question as q on q.question_id = a.question_id"
             + " join question_stable_code as qsc on qsc.question_stable_code_id = q.question_stable_code_id"
@@ -116,7 +116,7 @@ public interface JdbiAnswer extends SqlObject {
     Optional<AnswerDto> findDtoById(@Bind("id") long id);
 
     @SqlQuery("select a.answer_id, a.answer_guid, q.question_id,"
-            + "       qsc.stable_id as question_stable_id, qt.question_type_code as question_type"
+            + "       qsc.stable_id as question_stable_id, qt.question_type_code as question_type, a.created_at, a.last_updated_at"
             + " from answer as a"
             + " join question as q on q.question_id = a.question_id"
             + " join question_stable_code as qsc on qsc.question_stable_code_id = q.question_stable_code_id"

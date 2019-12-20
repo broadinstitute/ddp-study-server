@@ -9,6 +9,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.broadinstitute.ddp.db.dto.AnswerDto;
+import org.broadinstitute.ddp.db.dto.ChildAnswerDto;
 import org.broadinstitute.ddp.db.dto.CompositeAnswerSummaryDto;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.jdbi.v3.sqlobject.SqlObject;
@@ -74,7 +75,7 @@ public interface JdbiCompositeAnswer extends SqlObject {
                             //if this is null it means we are just seeing a row for the question definition
                             if (!rs.wasNull()) {
                                 //could be the outer-join NULL row-order value
-                                List<AnswerDto> lastChildRowAnswerDtos;
+                                List<ChildAnswerDto> lastChildRowAnswerDtos;
                                 if (rowIdx != (currentRowIdx.get())) {
                                     currentRowIdx.set(rowIdx);
                                     lastChildRowAnswerDtos = new ArrayList<>();
@@ -85,16 +86,17 @@ public interface JdbiCompositeAnswer extends SqlObject {
                                 Long childAnswerId = (Long) rs.getObject("child_answer_id");
 
                                 lastChildRowAnswerDtos
-                                        .add(new AnswerDto(childAnswerId,
+                                        .add(new ChildAnswerDto(childAnswerId,
                                                 rs.getString("child_answer_guid"),
                                                 rs.getLong("child_question_id"),
                                                 rs.getString("child_question_stable_id"),
-                                                QuestionType.valueOf(rs.getString("child_question_type_code"))));
-                            }
+                                                QuestionType.valueOf(rs.getString("child_question_type_code")),
+                                                rs.getLong("child_answer_created_at"),
+                                                rs.getLong("child_answer_last_updated_at"),
+                                                (Integer)rs.getObject("row_order")));
+                        }
                             return parentAnswer;
                         });
         return Optional.ofNullable(answerSummary.getGuid() == null ? null : answerSummary);
     }
-
-
 }

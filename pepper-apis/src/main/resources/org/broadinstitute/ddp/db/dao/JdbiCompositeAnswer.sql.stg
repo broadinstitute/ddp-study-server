@@ -13,6 +13,8 @@ SELECT
 	cqt.question_type_code AS child_question_type_code,
 	cqsc.stable_id AS child_question_stable_id,
 	cqq.display_order,
+	ar.created_at child_answer_created_at,
+	ar.last_updated_at as child_answer_last_updated_at,
 	qr.response_order AS row_order
  FROM
 	answer pa
@@ -40,7 +42,7 @@ SELECT
     -- and expected row position
     LEFT JOIN
     (SELECT
-		i.parent_answer_id,ca.question_id,ca.answer_guid,ca.answer_id,i.response_order
+		i.parent_answer_id,ca.question_id,ca.answer_guid,ca.answer_id,i.response_order,ca.created_at,ca.last_updated_at
 	FROM
 		composite_answer_item i
 	LEFT JOIN
