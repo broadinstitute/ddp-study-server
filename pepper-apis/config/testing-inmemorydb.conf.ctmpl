@@ -93,6 +93,7 @@
     "pdfArchiveUseFilesystem": true,
     "studyExportBucket": "ddp-dev-study-exports-testing",
     "schedules": {
+        "checkAgeUp": "0 0 7 ? * * *",
         "dbBackup": "0 30 4,10,14 ? * * *",
         "dbBackupCheck": "0 */30 * ? * *",
         "drugLoader": "0 0 8,20 ? * * *",

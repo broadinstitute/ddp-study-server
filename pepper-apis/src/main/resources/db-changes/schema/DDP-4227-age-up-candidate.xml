@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="20191216-age-up-candidate-table">
+        <createTable tableName="age_up_candidate">
+            <column name="age_up_candidate_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="age_up_candidate_pk"/>
+            </column>
+            <column name="study_id" type="bigint">
+                <constraints nullable="false"
+                             references="umbrella_study(umbrella_study_id)"
+                             foreignKeyName="age_up_candidate_study_fk"/>
+            </column>
+            <column name="participant_user_id" type="bigint">
+                <constraints nullable="false"
+                             references="user(user_id)"
+                             foreignKeyName="age_up_candidate_participant_user_fk"/>
+            </column>
+            <column name="initiated_preparation" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addUniqueConstraint constraintName="age_up_candidate_study_participant_uk"
+                             tableName="age_up_candidate" columnNames="study_id, participant_user_id"/>
+    </changeSet>
+
+</databaseChangeLog>

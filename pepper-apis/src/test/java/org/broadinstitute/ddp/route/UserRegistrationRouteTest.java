@@ -15,11 +15,13 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.auth0.exception.Auth0Exception;
@@ -33,7 +35,6 @@ import org.broadinstitute.ddp.constants.Auth0Constants;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.API;
-import org.broadinstitute.ddp.constants.TestConstants;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
@@ -49,11 +50,11 @@ import org.broadinstitute.ddp.db.dao.JdbiEventConfiguration;
 import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
 import org.broadinstitute.ddp.db.dao.JdbiMailingList;
 import org.broadinstitute.ddp.db.dao.JdbiProfile;
-import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dao.QueuedEventDao;
 import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
+import org.broadinstitute.ddp.db.dao.StudyGovernanceSql;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
@@ -69,6 +70,8 @@ import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
+import org.broadinstitute.ddp.model.governance.AgeOfMajorityRule;
+import org.broadinstitute.ddp.model.governance.AgeUpCandidate;
 import org.broadinstitute.ddp.model.governance.Governance;
 import org.broadinstitute.ddp.model.governance.GovernancePolicy;
 import org.broadinstitute.ddp.model.invitation.InvitationType;
@@ -86,9 +89,13 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testcontainers.shaded.org.apache.http.HttpStatus;
 
 public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
+
+    private static final Logger LOG = LoggerFactory.getLogger(UserRegistrationRouteTest.class);
 
     private static final String EN_LANG_CODE = "en";
 
@@ -480,6 +487,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
         StudyDto testStudy = TransactionWrapper.withTxn(handle -> {
             StudyDto study = TestDataSetupUtil.generateTestStudy(handle, RouteTestUtil.getConfig());
             GovernancePolicy policy = new GovernancePolicy(study.getId(), new Expression("true"));
+            policy.addAgeOfMajorityRule(new AgeOfMajorityRule("true", 21, 4));
             handle.attach(StudyGovernanceDao.class).createPolicy(policy);
             return study;
         });
@@ -546,10 +554,15 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
             assertEquals(instanceDto.getGuid(), instances.get(0).getGuid());
             assertEquals(governedUser.getId(), instances.get(0).getParticipantId());
 
+            StudyGovernanceDao studyGovernanceDao = handle.attach(StudyGovernanceDao.class);
+            Optional<AgeUpCandidate> candidate = studyGovernanceDao.findAgeUpCandidate(testStudy.getId(), governedUser.getId());
+            assertTrue("Governed user should be added as age-up candidate because policy has AoM rules", candidate.isPresent());
+
             // Cleanup data
             instanceDao.deleteByInstanceGuid(instanceDto.getGuid());
             governanceDao.deleteAllGovernancesForProxy(tempUser.getId());
             jdbiEnrollment.deleteByUserGuidStudyGuid(governedUser.getGuid(), testStudy.getGuid());
+            studyGovernanceDao.removeAgeUpCandidates(Set.of(candidate.get().getId()));
         });
     }
 
@@ -826,10 +839,20 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
                 .body("message", containsString("existing user to upgrade temporary user"));
     }
 
+    private GovernancePolicy createGovernancePolicy(long studyId) {
+        GovernancePolicy governancePolicy = new GovernancePolicy(studyId, new Expression("true"));
+
+        governancePolicy.addAgeOfMajorityRule(new AgeOfMajorityRule("true", 0, 0));
+
+        return governancePolicy;
+    }
+
     @Test
     public void testAccountInvitation() {
         var user = new AtomicReference<User>();
 
+        AtomicReference<GovernancePolicy> governancePolicy = new AtomicReference<>();
+        AtomicBoolean shouldDeleteProfile = new AtomicBoolean(false);
         try {
             var invitation = new AtomicReference<InvitationDto>();
 
@@ -839,12 +862,34 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
                 Auth0TenantDto auth0TenantDto = handle.attach(JdbiAuth0Tenant.class).findByDomain(auth0Domain);
                 user.set(userDao.findUserByAuth0UserId(auth0UserId, auth0TenantDto.getId()).get());
 
-                long studyId = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(TestConstants.TEST_STUDY_GUID).getId();
+                long tempStudyId = tempStudy.getId();
                 invitation.set(handle.attach(InvitationFactory.class).createInvitation(InvitationType.AGE_UP,
-                        studyId, user.get().getId(), "test+" + System.currentTimeMillis() + "@datadonationplatform.org"));
+                        tempStudyId, user.get().getId(), "test+" + System.currentTimeMillis() + "@datadonationplatform.org"));
 
                 handle.attach(InvitationDao.class).clearDates(invitation.get().getInvitationGuid());
                 userDao.updateAuth0UserId(user.get().getGuid(), null);
+
+                JdbiProfile jdbiProfile = handle.attach(JdbiProfile.class);
+
+                UserProfileDto userProfile = null;
+
+                try {
+                    userProfile = jdbiProfile.getUserProfileByUserId(user.get().getId());
+                } catch (NullPointerException e) {
+                    // old school jdbi way of saying "no row found"
+                    shouldDeleteProfile.set(true);
+                }
+
+                if (userProfile == null || userProfile.getBirthDate() == null) {
+                    jdbiProfile.upsertBirthDate(user.get().getId(), LocalDate.of(1953, 9, 18));
+                }
+
+                var studyGovernanceDao = handle.attach(StudyGovernanceDao.class);
+
+                governancePolicy.set(createGovernancePolicy(tempStudyId));
+                governancePolicy.set(studyGovernanceDao.createPolicy(governancePolicy.get()));
+
+                LOG.info("Created governance policy {} for study {}", governancePolicy.get().getId(), governancePolicy.get().getStudyId());
             });
 
             String invitationGuid = invitation.get().getInvitationGuid();
@@ -866,12 +911,21 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
             });
 
         } finally {
-            // reset the auth0 user id for the test user
             TransactionWrapper.useTxn(handle -> {
+                // reset the auth0 user id for the test user
                 var userDao = handle.attach(UserDao.class);
                 var requieriedUser = userDao.findUserByGuid(user.get().getGuid()).get();
                 if (!requieriedUser.hasAuth0Account()) {
                     userDao.updateAuth0UserId(user.get().getGuid(), auth0UserId);
+                }
+
+                // remove the governance policy
+                if (governancePolicy.get() != null) {
+                    handle.attach(StudyGovernanceSql.class).deletePolicy(governancePolicy.get().getId());
+                }
+
+                if (shouldDeleteProfile.get()) {
+                    handle.attach(JdbiProfile.class).deleteByUserId(user.get().getId());
                 }
             });
         }

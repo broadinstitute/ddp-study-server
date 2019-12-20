@@ -19,6 +19,11 @@ select policy.study_governance_policy_id,
   left join age_of_majority_rule as aom on aom.study_governance_policy_id = policy.study_governance_policy_id
 >>
 
+queryAllPolicies() ::= <<
+<select_all_policies()>
+order by policy.study_governance_policy_id asc, aom.execution_order asc
+>>
+
 queryPolicyById() ::= <<
 <select_all_policies()>
 where policy.study_governance_policy_id = :id
@@ -35,4 +40,38 @@ queryPolicyByStudyGuid() ::= <<
 <select_all_policies()>
 where study.guid = :studyGuid
 order by aom.execution_order asc
+>>
+
+select_all_age_up_candidates() ::= <<
+select auc.age_up_candidate_id,
+       study.umbrella_study_id as study_id,
+       study.guid              as study_guid,
+       participant.user_id as participant_user_id,
+       participant.guid    as participant_user_guid,
+       profile.birth_date,
+       auc.initiated_preparation,
+       (select et.enrollment_status_type_code
+          from user_study_enrollment as en
+          join enrollment_status_type as et on et.enrollment_status_type_id = en.enrollment_status_type_id
+         where en.study_id = study.umbrella_study_id
+           and en.user_id = participant.user_id
+           and valid_to is null
+         order by valid_from desc
+         limit 1
+       ) as enrollment_status
+  from age_up_candidate as auc
+  join umbrella_study as study on study.umbrella_study_id = auc.study_id
+  join user as participant on participant.user_id = auc.participant_user_id
+  left join user_profile as profile on profile.user_id = participant.user_id
+>>
+
+queryAllAgeUpCandidatesByStudyId() ::= <<
+<select_all_age_up_candidates()>
+where study.umbrella_study_id = :studyId
+>>
+
+queryAgeUpCandidateByStudyIdAndUserId() ::= <<
+<select_all_age_up_candidates()>
+where study.umbrella_study_id = :studyId
+and participant.user_id = :userId
 >>

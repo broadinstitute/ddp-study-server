@@ -2,9 +2,13 @@ package org.broadinstitute.ddp.db.dao;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Stream;
 
+import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.model.governance.AgeOfMajorityRule;
+import org.broadinstitute.ddp.model.governance.AgeUpCandidate;
 import org.broadinstitute.ddp.model.governance.GovernancePolicy;
 import org.broadinstitute.ddp.model.pex.Expression;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
@@ -16,8 +20,12 @@ import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.UseRowReducer;
 import org.jdbi.v3.stringtemplate4.UseStringTemplateSqlLocator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public interface StudyGovernanceDao extends SqlObject {
+
+    Logger LOG = LoggerFactory.getLogger(StudyGovernanceDao.class);
 
     @CreateSqlObject
     JdbiExpression getJdbiExpression();
@@ -39,6 +47,14 @@ public interface StudyGovernanceDao extends SqlObject {
 
         return findPolicyById(policyId).orElseThrow(() -> new DaoException("Could not find study governance policy with id " + policyId));
     }
+
+    @UseStringTemplateSqlLocator
+    @SqlQuery("queryAllPolicies")
+    @RegisterConstructorMapper(Expression.class)
+    @RegisterConstructorMapper(GovernancePolicy.class)
+    @RegisterConstructorMapper(value = AgeOfMajorityRule.class, prefix = "aom")
+    @UseRowReducer(PolicyWithAgeOfMajorityRuleReducer.class)
+    Stream<GovernancePolicy> findAllPolicies();
 
     @UseStringTemplateSqlLocator
     @SqlQuery("queryPolicyById")
@@ -63,6 +79,28 @@ public interface StudyGovernanceDao extends SqlObject {
     @RegisterConstructorMapper(value = AgeOfMajorityRule.class, prefix = "aom")
     @UseRowReducer(PolicyWithAgeOfMajorityRuleReducer.class)
     Optional<GovernancePolicy> findPolicyByStudyGuid(@Bind("studyGuid") String studyGuid);
+
+    default void addAgeUpCandidate(long studyId, long participantUserId) {
+        getStudyGovernanceSql().insertAgeUpCandidate(studyId, participantUserId);
+    }
+
+    default int markAgeUpPrepInitiated(Set<Long> candidateIds) {
+        return DBUtils.checkUpdate(candidateIds.size(), getStudyGovernanceSql().updateAgeUpCandidateInitiatedPrepByIds(true, candidateIds));
+    }
+
+    default int removeAgeUpCandidates(Set<Long> candidateIds) {
+        return DBUtils.checkDelete(candidateIds.size(), getStudyGovernanceSql().deleteAgeUpCandidateByIds(candidateIds));
+    }
+
+    @UseStringTemplateSqlLocator
+    @SqlQuery("queryAllAgeUpCandidatesByStudyId")
+    @RegisterConstructorMapper(AgeUpCandidate.class)
+    Stream<AgeUpCandidate> findAllAgeUpCandidatesByStudyId(@Bind("studyId") long studyId);
+
+    @UseStringTemplateSqlLocator
+    @SqlQuery("queryAgeUpCandidateByStudyIdAndUserId")
+    @RegisterConstructorMapper(AgeUpCandidate.class)
+    Optional<AgeUpCandidate> findAgeUpCandidate(@Bind("studyId") long studyId, @Bind("userId") long participantUserId);
 
     class PolicyWithAgeOfMajorityRuleReducer implements LinkedHashMapRowReducer<Long, GovernancePolicy> {
         @Override
