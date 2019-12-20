@@ -114,6 +114,10 @@ public class JWTConverter {
                         ClientDao clientDao = handle.attach(ClientDao.class);
                         StudyClientConfiguration configuration = clientDao.getConfiguration(auth0ClientId,
                                 auth0Domain);
+                        if (configuration == null) {
+                            throw new DDPTokenException("Could not find configuration with auth0clientId: " + auth0ClientId
+                                    + " auth0Domain: " + auth0Domain);
+                        }
                         jwkProvider = new JwkProviderBuilder(configuration.getAuth0Domain()).cached(100, 3L, TimeUnit.MINUTES).build();
                         jwkProviderMap.put(auth0ClientId, jwkProvider);
                     }

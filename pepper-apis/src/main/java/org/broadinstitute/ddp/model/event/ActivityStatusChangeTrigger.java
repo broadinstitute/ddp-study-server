@@ -33,4 +33,11 @@ public class ActivityStatusChangeTrigger extends EventTrigger {
     public InstanceStatusType getInstanceStatusType() {
         return instanceStatusType;
     }
+
+    @Override
+    public String toString() {
+        return "ActivityStatusChangeTrigger{"
+                + "activityInstanceId=" + activityInstanceId
+                + ", instanceStatusType=" + instanceStatusType + '}';
+    }
 }
