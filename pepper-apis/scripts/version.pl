@@ -2,13 +2,14 @@
 
 # Bumps up the major or/and minor app versions in the POM and the version file
 # Params: flags indicating what version (major, minor, or both) should be bumped up
-# Example: $ perl version.pl --major --minor  # Updates both major and minor version
+# Example: $ perl scripts/version.pl --major --minor  # Updates both major and minor version
 
 use strict;
 use warnings;
 use Getopt::Long;
 
-my $VERSION_FILE = '../pepper-angular/version.txt';
+# Assuming angular sdk repo is checked out locally
+my $VERSION_FILE = '../../ddp-angular/version.txt';
 
 sub get_current_backend_version {
     my $maven_log_regex = '^\\[';

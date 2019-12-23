@@ -220,6 +220,66 @@ function docker_nginx_push {
     docker push "broadinstitute/pepper-nginx:$tag"
 }
 
+function print_usage() {
+    echo "usage: $NAME <version> <environment> <dir> <option>..."
+    echo "       $NAME [-h, --help]"
+}
+
+function print_help() {
+    cat << EOM
+A script to help automate a few different steps of the process
+for both local development and in CI deployments.
+
+Configurations are rendered into the directories 'output-config'
+and 'output-build-config'. Docker images, such as
+'broadinstitute/pepper-api-backend', will be tagged with '\$VER_ENV'.
+
+USAGE:
+  $NAME <VER> <ENV> <DIR> [OPTIONS...]
+
+VER
+  is the version of the code, should always be 'v1'
+
+ENV
+  is the environment against which to build, one of
+  'dev', 'test', 'staging', or 'prod'
+
+DIR
+  is the local directory from whence 'docker-compose' volumes originate,
+  use '.' for local builds, '/app' for CI builds
+
+OPTIONS:
+  --config          render local configurations
+  --docker-build    build docker images
+  --docker-push     build docker images and push to dockerhub
+  -h, --help        print this help message
+  --jenkins         runs CI workflow of build, test, and push docker images,
+                    should only use this in CI environment
+  --jenkins-test    only build docker images and run test suite
+  --local-deploy    build and test docker images for local development
+  --nginx           build and push docker image for nginx
+  --test            build and test docker images locally
+EOM
+}
+
+###
+#
+# Main
+
+NAME=${0##*/}
+
+if (( $# == 1 )); then
+    if [[ "$1" == '-h' ]] || [[  "$1" == '--help' ]]; then
+        print_help
+        exit 0
+    fi
+fi
+
+if (( $# < 4 )); then
+    print_usage
+    exit 1
+fi
+
 OUTDIR=output-config
 BUILD_OUTDIR=output-build-config
 NGINX_PROXIED_HOST=$NGINX_PROXIED_HOST
@@ -238,6 +298,10 @@ shift
 shift
 while [[ -n "$1" ]]; do
     case $1 in
+        -h | --help)
+            print_help
+            exit 0
+        ;;
         --config)
             render_config "local"
         ;;
