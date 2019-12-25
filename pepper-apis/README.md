@@ -1,92 +1,111 @@
-# Backend services for the Data Donation Platform
+# Backend Services for the Data Donation Platform
 
-# REST APIs
+## Requirements
 
-## Java 11
+You'll need a few things to get up and running for local development:
 
-This project uses Java 11, please see the [docs here](docs/java-11.md)
-for more details on setting up Java 11.
+* Java 11 - see the [docs here](docs/java-11.md)
+* Maven - for building the project
+* Python - for running various scripts if needed
+* Ruby - for rendering configuration files from templates
+* Google Cloud SDK - for running pubsub locally
+* Docker - for building images and optionally for running the test suite
+* Vault - for secrets management
 
-## Running the platform locally (Linux)
+### Setting up Google Cloud SDK
 
-Sections below describe different aspects of the platform. However, this section doesn't go deep into
-internals, it's just a set of instructions for quickly making the platform up and running on a local machine.
-If you need to learn more, read 'till the end of the file :)
+We mainly use Google's [pubsub emulator][pubsub] for running Housekeeping
+locally and for tests related to Housekeeping. If you have homebrew, you can
+install the `google-cloud-sdk` cask. Otherwise, follow the instructions
+[here][gcloud-install]. Once the SDK is installed, we can install the emulator:
 
-For testing purposes, the platform can be run locally without involving Docker containers. Before you
-go, please install and configure the dependencies first:
-
-1. Maven - used for building the project
-2. Ruby - used for rendering configuration files from templates
-3. Docker
-    * Install Docker using your package manager
-    * Please note that Docker commands REQUIRE `sudo` under Linux by default
-    * Under OSX, however, you MUST NOT use `sudo`
-    * If you want to avoid using `sudo` or becoming root under Linux, add your user to the `docker` group:
-        * `# usermod -aG docker <username>`
-    * Make sure the Docker daemon is up and running. Start it, if that's not the case
-        * `$ ps -edf | grep dockerd | grep -v grep`
-    * Register a new account on [dockerhub](https://hub.docker.com), using your broad gmail
-    * Email help@broad and ask them to link your dockerhub account to the `kduxengineering` dockerhub group
-    * Log in to Docker using these credentials:
-        * `$ docker login` (use `sudo` on linux, but not osx)
-4. Gitub - a dependency for Vault. You must create a personal access token following [the instructions]
-(https://broadinstitute.atlassian.net/wiki/spaces/DO/pages/113874856/Vault)
-5. Vault - used for authentication
-    *  [Download Vault client](https://www.vaultproject.io/downloads.html)
-    * Unpack Vault and put its sole binary into a software directory (e.g., `/opt/vault`)
-    * Update the PATH variable
-        * `$ echo 'export PATH=/opt/vault/vault:$PATH' >> ~/.bashrc`
-    * Set up the VAULT_ADDR environment variable
-        * `$ echo "export VAULT_ADDR=https://clotho.broadinstitute.org:8200" >> ~/.bashrc`
-    * Authenticate with Vault
-        * `$ vault auth -method=github token=$(cat ~/.github-token)`
-6. Google's [pubsub emulator](https://cloud.google.com/pubsub/docs/emulator).  We need this to run houskeeping locally and for
-tests related to housekeeping.
-
-```
+```bash
 gcloud components install beta --quiet
 gcloud components install pubsub-emulator --quiet
 gcloud components update --quiet
 ```
 
-Now that all dependencies are installed:
+[pubsub]: https://cloud.google.com/pubsub/docs/emulator
+[gcloud-install]: https://cloud.google.com/sdk/docs
 
-1. Clone the DDP repository and step into it
-    ```sh
-    $ cd ~
-    $ mkdir git && cd git
-    $ git clone git@github.com:broadinstitute/ddp.git
-    $ cd ddp/pepper-apis
+### Setting up Docker
+
+If you have homebrew, you can install the `docker` cask. Otherwise, follow the
+instructions [here][docker-install]. The Community Edition should be enough.
+Once you have docker install, make sure the docker daemon is up and running.
+
+If you're on macOS, running docker commands should not require `sudo`. However,
+Linux seems to require `sudo` by default. If you want to avoid using `sudo` or
+becoming root under Linux, try adding your user to the `docker` group:
+
+```bash
+usermod -aG docker <username>
+```
+
+Additionally, if you're at the Broad:
+
+* Register a new account on [dockerhub][], using your broad gmail
+* Email help@broad and ask them to link your dockerhub account to the
+  `kduxengineering` dockerhub group
+* Log in to Docker using these credentials (run `docker login`)
+
+[docker-install]: https://docs.docker.com/install
+[dockerhub]: https://hub.docker.com
+
+### Setting up Vault
+
+If you have homebrew, the `vault` command line tool is available there.
+Otherwise, [download the client][vault-dl] and make the executable available on
+your PATH:
+
+* Unpack vault and put its sole binary into a software directory (e.g., `/opt/vault`)
+* Update the PATH variable
+    * E.g. `echo 'export PATH=/opt/vault/vault:$PATH' >> ~/.bashrc`
+
+Additionally, if you're at the Broad:
+
+* Go to Gitub and create a personal access token (see the instructions [here][gh-vault])
+* Store your token somewhere safe and accessible locally (e.g. `~/.github-token`)
+* Set the `VAULT_ADDR` environment variable
+    * E.g. `echo 'export VAULT_ADDR=https://clotho.broadinstitute.org:8200' >> ~/.bashrc`
+* Authenticate with vault
+    * `vault auth -method=github token=$(cat ~/.github-token)`
+
+[vault-dl]: https://www.vaultproject.io/downloads.html
+[gh-vault]: https://broadinstitute.atlassian.net/wiki/spaces/DO/pages/113874856/Vault
+
+## Getting Started
+
+Sections below describe different aspects of the platform. Thus, this section
+doesn't go deep into internals, it's just a set of instructions for quickly
+making the platform up and running on a local machine. If you need to learn
+more, read 'till the end of the file :)
+
+For testing purposes, the platform can be run locally using a disposable
+database, which is the default.
+
+1. Clone the repository and step into it
+    ```bash
+    git clone git@github.com:broadinstitute/ddp-study-server.git
+    cd ddp-study-server/pepper-apis
     ```
-2. Render the configuration file. IMPORTANT: sudo is necessary because the script executes Docker under the hood
-    * `$ ./api-build.sh v1 dev . --config` (use `sudo` on linux but not osx)
+2. Render the configuration file (if you're on Linux, prepend `sudo` because this invokes docker)
+    * `./api-build.sh v1 dev . --config`
 3. Build the project
-    * `$ mvn -DskipTests=true clean install`
-    * `$ mvn -DskipTests -f parent-pom.xml install`
-4. Run the JAR
-    * `$ java [pile of -D vars copy-pasted from output-build-config/local-java-props.txt] -jar ./target/DataDonationPlatform.jar`
-5. Make sure Jetty has started
-    * `$ telnet localhost 5555`
+    * `mvn -DskipTests clean install`
+    * `mvn -DskipTests -f parent-pom.xml install`
+4. Copy the command-line flags from `output-build-config/local-java-props.txt`
+5. Run the JAR
+    * `java [the copied cmd line flags] -jar ./target/DataDonationPlatform.jar`
+6. Make sure the server has started
+    * `curl -i http://localhost:5555`
+    * You'll get a `404` but at least it verifies the server is responding
 
 Lastly, setup your local environment with [checkstyle](docs/setting-up-checkstyle.md)
 to follow established coding conventions.
 
-## api-build.sh  [version] [environment] [dir] [--mode]
-The `api-build.sh` script helps automate a few different steps of the process for both
-local development and in jenkins.  It has four key parameters:
-* `version` is the version of the code, such as `v1`
-* `environment` is the environment against which to build, one of
-    * `dev`,`test`,`staging`, or `prod`
-* `dir` is the local directory from whence `docker-compose` volumes originate.
-    * use `.` for local builds; jenkins uses `/app`
-* `mode` controls what the script does--in additive fashion--one of:
-    * `--config`: renders config files by reading secrets from vaults and writing output to `output-config` and `output-build-config`
-    * `--docker-build`: `config` plus builds backend container
-    * `--test`: all of the above, plus runs the tests
-    * `--docker-push`: all of the above, plus pushes the backend docker image (`broadinstitute/pepper-api-backend` tagged with `$VERSION_$ENV`) to dockerhub
-    * `--nginx`: creates nginx docker image
-    * `--jenkins` does everything (should only be used from jenkins)
+## api-build.sh
+The `api-build.sh` script helps with a few automation steps. Try the `--help` flag for more info.
 
 ### Options when building backend container
 * `DEBUG` when set to `true`, will open up port 9786 and launch the backend with debugging enabled
