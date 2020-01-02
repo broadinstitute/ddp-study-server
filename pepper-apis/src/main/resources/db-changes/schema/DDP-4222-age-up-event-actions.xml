@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="20200102-create-invitation-event-action-table">
+        <createTable tableName="create_invitation_event_action">
+            <column name="event_action_id" type="bigint">
+                <constraints primaryKey="true" primaryKeyName="create_invitation_event_action_pk"
+                             references="event_action(event_action_id)"
+                             foreignKeyName="create_invitation_event_action_fk"/>
+            </column>
+            <column name="contact_email_question_stable_code_id" type="bigint">
+                <constraints nullable="false"
+                             references="question_stable_code(question_stable_code_id)"
+                             foreignKeyName="create_invitation_event_action_qsc_fk"/>
+            </column>
+            <column name="mark_existing_as_voided" type="boolean">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20200102-event-action-target-activity-table">
+        <createTable tableName="event_action_target_activity">
+            <column name="event_action_target_activity_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="event_action_target_activity_id"/>
+            </column>
+            <column name="event_action_id" type="bigint">
+                <constraints nullable="false"
+                             references="event_action(event_action_id)"
+                             foreignKeyName="event_action_target_activity_action_fk"/>
+            </column>
+            <column name="activity_id" type="bigint">
+                <constraints nullable="false"
+                             references="study_activity(study_activity_id)"
+                             foreignKeyName="event_action_target_activity_activity_fk"/>
+            </column>
+        </createTable>
+        <addUniqueConstraint tableName="event_action_target_activity" columnNames="event_action_id, activity_id"
+                             constraintName="event_action_target_activity_action_activity_uk"/>
+    </changeSet>
+
+</databaseChangeLog>
