@@ -163,6 +163,9 @@ public class ActivityBuilder {
     }
 
     private void insertActivityValidations(Handle handle, Config activityCfg, ActivityDef def, long activityRevisionId) {
+        if (!activityCfg.hasPath("validations")) {
+            return;
+        }
         JdbiActivity jdbiActivity = handle.attach(JdbiActivity.class);
         for (Config validationCfg : activityCfg.getConfigList("validations")) {
             Template errorMessageTemplate = gson.fromJson(ConfigUtil.toJson(validationCfg.getConfig("messageTemplate")), Template.class);
