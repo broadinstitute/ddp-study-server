@@ -39,9 +39,17 @@ public class EventConfiguration {
             case DSM_NOTIFICATION:
                 eventTrigger = new DsmNotificationTrigger(dto);
                 break;
+            case GOVERNED_USER_REGISTERED:
+                // No sub-tables
+            case INVITATION_CREATED:
+                // No sub-tables
             case JOIN_MAILING_LIST:
                 // No sub-tables
             case MEDICAL_UPDATE:
+                // No sub-tables
+            case REACHED_AOM:
+                // No sub-tables
+            case REACHED_AOM_PREP:
                 // No sub-tables
             case USER_NOT_IN_STUDY:
                 // No sub-tables
@@ -69,12 +77,23 @@ public class EventConfiguration {
             case ANNOUNCEMENT:
                 eventAction = new AnnouncementEventAction(this, dto);
                 break;
+            case CREATE_INVITATION:
+                eventAction = new CreateInvitationEventAction(this, dto);
+                break;
             case COPY_ANSWER:
                 eventAction = new CopyAnswerEventAction(this, dto);
+                break;
+            case HIDE_ACTIVITIES:
+                eventAction = new HideActivitiesEventAction(this, dto);
+                break;
+            case MARK_ACTIVITIES_READ_ONLY:
+                eventAction = new MarkActivitiesReadOnlyEventAction(this, dto);
                 break;
             case PDF_GENERATION:
                 eventAction = new PdfGenerationEventAction(this, dto);
                 break;
+            case REVOKE_PROXIES:
+                eventAction = new RevokeProxiesEventAction(this, dto);
             default:
                 throw new DDPException("Event action type: " + eventActionType.name() + " is not properly configured in "
                         + "the EventConfiguration ctor");
