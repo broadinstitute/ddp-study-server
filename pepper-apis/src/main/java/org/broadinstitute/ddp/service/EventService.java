@@ -31,7 +31,7 @@ public class EventService {
         return instance;
     }
 
-    protected void processEventSignalForEventConfiguration(Handle handle,
+    private void processEventSignalForEventConfiguration(Handle handle,
                                                            EventSignal eventSignal,
                                                            EventConfiguration eventConfig,
                                                            PexInterpreter pexInterpreter) {
