@@ -465,7 +465,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                 continue;
             }
 
-            Integer delayBeforePosting = config.getSecondsToWaitBeforePosting();
+            Integer delayBeforePosting = config.getPostDelaySeconds();
             if (delayBeforePosting == null) {
                 delayBeforePosting = 0;
             }

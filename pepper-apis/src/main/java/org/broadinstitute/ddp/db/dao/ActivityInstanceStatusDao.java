@@ -1,25 +1,16 @@
 package org.broadinstitute.ddp.db.dao;
 
-import java.time.Instant;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
-import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.ddp.db.DaoException;
-import org.broadinstitute.ddp.db.dto.ActivityConditionDto;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceStatusDto;
-import org.broadinstitute.ddp.db.dto.EventConfigurationDto;
-import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
-import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
-import org.broadinstitute.ddp.pex.PexException;
-import org.broadinstitute.ddp.pex.PexInterpreter;
-import org.broadinstitute.ddp.pex.TreeWalkInterpreter;
-import org.broadinstitute.ddp.service.CopyAnswerService;
+import org.broadinstitute.ddp.model.event.ActivityInstanceStatusChangeSignal;
+import org.broadinstitute.ddp.model.event.EventSignal;
+import org.broadinstitute.ddp.service.EventService;
 import org.jdbi.v3.sqlobject.CreateSqlObject;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
@@ -54,9 +45,6 @@ public interface ActivityInstanceStatusDao extends SqlObject {
 
     @CreateSqlObject
     JdbiActivity getJdbiActivity();
-
-    @CreateSqlObject
-    JdbiActivityCondition getJdbiActivityCondition();
 
     @CreateSqlObject
     JdbiEventConfigurationOccurrenceCounter getJdbiEventConfigurationOccurrenceCounter();
@@ -116,7 +104,7 @@ public interface ActivityInstanceStatusDao extends SqlObject {
      * whether they match.
      *
      * @param newStatusTypeId id for proposed status code
-     * @param instanceId   id of activity instance
+     * @param instanceId      id of activity instance
      * @return boolean indicating if current status matches proposed status
      */
     default boolean doesCurrentStatusMatchNew(long newStatusTypeId, long instanceId) {
@@ -141,7 +129,7 @@ public interface ActivityInstanceStatusDao extends SqlObject {
      * status change and queues them up for housekeeping.
      *
      * @param instanceId        id of activity instance
-     * @param newStatus        new status of activity instance
+     * @param newStatus         new status of activity instance
      * @param epochMilliseconds time status is updated in milliseconds
      * @param operatorGuid      guid of operator
      * @return the most recent status
@@ -187,13 +175,22 @@ public interface ActivityInstanceStatusDao extends SqlObject {
         ActivityInstanceDto instanceDto = jdbiInstance.getByActivityInstanceId(instanceId)
                 .orElseThrow(() -> new DaoException("Could not find activity instance with id " + instanceId));
 
-        runPostActivityStatusChangeHooks(
+        long studyActivityId = instanceDto.getActivityId();
+        Long studyId = getJdbiActivity().getStudyIdByActivityId(studyActivityId)
+                .orElseThrow(() -> new DaoException("Umbrella study for the study activity " + studyActivityId + " not found"));
+
+        EventSignal eventSignal = new ActivityInstanceStatusChangeSignal(
                 operatorId,
                 instanceDto.getParticipantId(),
-                instanceDto,
-                newStatus.name()
-        );
-        addStatusTriggerEventsToQueue(operatorId, instanceDto.getParticipantId(), instanceDto, newStatus.name());
+                jdbiUser.findByUserId(instanceDto.getParticipantId()).getUserGuid(),
+                instanceId,
+                instanceDto.getActivityId(),
+                studyId,
+                newStatus);
+
+        EventService.getInstance().processAllActionsForEventSignal(
+                getHandle(),
+                eventSignal);
 
         return new ActivityInstanceStatusDto(activityInstanceStatusId, newStatusTypeId,
                 instanceDto.getId(), operatorId, epochMilliseconds, newStatus);
@@ -208,274 +205,6 @@ public interface ActivityInstanceStatusDao extends SqlObject {
                 statusDto.getOperatorId(), newTimestampMillis, statusDto.getType());
     }
 
-    /**
-     * Checks if there are any events that should be spawned as a result
-     * of the change in status and if so, queues them
-     *
-     * @param operatorId    user id of the operator
-     * @param participantId user id of the participant
-     * @param instanceDto   the activity instance
-     * @param status        the new status for the activity
-     */
-    default void addStatusTriggerEventsToQueue(long operatorId,
-                                               long participantId,
-                                               ActivityInstanceDto instanceDto,
-                                               String status) {
-        int numEventsQueued = getActivityStatusEventDao().addStatusTriggerEventsToQueue(operatorId, participantId,
-                instanceDto, status);
-        LOG.info("Queued {} events for operator {} on behalf of participant {}", numEventsQueued,
-                operatorId, participantId);
-    }
-
-    /**
-     * Runs all events that are triggered by an activity status change
-     *
-     * @param operatorId             Id of the operator
-     * @param participantId          Id of the participant
-     * @param instanceDto            The activity instance whose status transition triggers the hooks
-     * @param activityInstanceStatus Activity instance status triggering hooks
-     */
-    default void runPostActivityStatusChangeHooks(
-            long operatorId,
-            long participantId,
-            ActivityInstanceDto instanceDto,
-            String activityInstanceStatus
-    ) {
-        long studyActivityId = instanceDto.getActivityId();
-        Long studyId = getJdbiActivity().getStudyIdByActivityId(studyActivityId)
-                .orElseThrow(() -> new DaoException("Umbrella study for the study activity " + studyActivityId + " not found"));
-
-        List<EventConfigurationDto> eventConfigs = getEventDao()
-                .getEventConfigurationsByStudyIdActivityIdAndStatus(
-                        studyId,
-                        studyActivityId,
-                        activityInstanceStatus,
-                        new HashSet<>(
-                                Arrays.asList(
-                                        EventActionType.ACTIVITY_INSTANCE_CREATION,
-                                        EventActionType.USER_ENROLLED,
-                                        EventActionType.ANNOUNCEMENT,
-                                        EventActionType.COPY_ANSWER)));
-
-        if (!eventConfigs.isEmpty()) {
-            LOG.info(
-                    "{} event configurations found for the study {}, study activity {} and activity instance status {}",
-                    eventConfigs.size(), studyId, studyActivityId, activityInstanceStatus
-            );
-        } else {
-            LOG.info(
-                    "No event configurations found for the study {}, study activity {} and activity instance status {}",
-                    studyId, studyActivityId, activityInstanceStatus
-            );
-            return;
-        }
-
-        PexInterpreter interp = new TreeWalkInterpreter();
-        String participantGuid = getJdbiUser().findByUserId(participantId).getUserGuid();
-
-        // Checking if any event configuration is eligible for the activity instance creation
-        for (EventConfigurationDto eventConfig : eventConfigs) {
-            LOG.info(
-                    "Processing the event configuration with the precondition expression = {},"
-                            + " activity to create = {} and max instances per user = {}",
-                    eventConfig.getPreconditionExpression(),
-                    eventConfig.getActivityIdToCreate(),
-                    eventConfig.getMaxInstancesPerUser()
-            );
-
-            // Checking if the per-user event configuration counter is not exceeded
-            int numOccurrences = getJdbiEventConfigurationOccurrenceCounter()
-                    .getOrCreateNumOccurrences(eventConfig.getEventConfigurationId(), participantId);
-
-            LOG.info(
-                    "Checking if the occurrences per user ({}) hit the threshold ({}) for event configuration (id = {}), user id = {}",
-                    numOccurrences,
-                    eventConfig.getMaxOccurrencesPerUser(),
-                    eventConfig.getEventConfigurationId(),
-                    participantId
-            );
-
-            if (eventConfig.getMaxOccurrencesPerUser() != null && numOccurrences >= eventConfig.getMaxOccurrencesPerUser()) {
-                LOG.info(
-                        "The number of this event's configuration occurrences for the participant (id = {}) is {}"
-                                + " while the allowed maximum number of occurrences per user is {}, skipping the configuration",
-                        participantId, numOccurrences, eventConfig.getMaxOccurrencesPerUser()
-                );
-                continue;
-            }
-
-            String cancelExpr = eventConfig.getCancelExpression();
-            if (StringUtils.isNotBlank(cancelExpr)) {
-                LOG.info("Checking the cancel expression `{}` for the event configuration (id = {})",
-                        cancelExpr, eventConfig.getEventConfigurationId());
-                try {
-                    boolean shouldCancel = interp.eval(cancelExpr, getHandle(), participantGuid, instanceDto.getGuid());
-                    if (shouldCancel) {
-                        LOG.info("Cancel expression `{}` evaluated to TRUE, skipping the configuration", cancelExpr);
-                        continue;
-                    }
-                } catch (PexException e) {
-                    throw new DaoException("Error evaluating cancel expression: " + cancelExpr, e);
-                }
-            }
-
-            // Checking if a precondition expression (if exists) evaluates to TRUE
-            String precondExpr = eventConfig.getPreconditionExpression();
-            LOG.info(
-                    "Checking the precondition expression `{}` for the event configuration (id = {})",
-                    eventConfig.getPreconditionExpression(),
-                    eventConfig.getEventConfigurationId()
-            );
-            try {
-                if (precondExpr != null && !interp.eval(precondExpr, getHandle(),
-                        participantGuid, instanceDto.getGuid())) {
-                    LOG.info("Precondition expression {} evaluated to FALSE, skipping the configuration", precondExpr);
-                    continue;
-                }
-            } catch (PexException e) {
-                throw new DaoException("Error evaluating pex expression " + precondExpr, e);
-            }
-
-            if (eventConfig.getEventActionType() == EventActionType.ACTIVITY_INSTANCE_CREATION) {
-                createActivityEvent(operatorId,
-                        participantId,
-                        instanceDto.getId(),
-                        activityInstanceStatus,
-                        studyActivityId,
-                        studyId,
-                        participantGuid,
-                        eventConfig);
-            } else if (eventConfig.getEventActionType() == EventActionType.USER_ENROLLED) {
-                try {
-                    getUserStudyEnrollmentDao().changeUserStudyEnrollmentStatus(
-                            participantId,
-                            studyId,
-                            EnrollmentStatusType.ENROLLED);
-                } catch (Exception e) {
-                    throw new DaoException("Error updating participantId: "
-                            + participantId + " in studyId: " + studyId + " to ENROLLED", e);
-                }
-            } else if (eventConfig.getEventActionType() == EventActionType.ANNOUNCEMENT) {
-                try {
-                    long id = getUserAnnouncementDao().insert(participantId, studyId, eventConfig.getAnnouncementMsgTemplateId());
-                    LOG.info("Inserted new announcement with id {} for participant id {} and study id {}", id, participantId, studyId);
-                } catch (Exception e) {
-                    throw new DaoException(String.format(
-                            "Error inserting announcement for participant id %d and study id %d", participantId, studyId));
-                }
-            } else if (eventConfig.getEventActionType() == EventActionType.COPY_ANSWER) {
-                boolean successfulCopy = CopyAnswerService.getInstance().copyAnswerValue(eventConfig, instanceDto, operatorId,
-                        getHandle());
-                if (successfulCopy) {
-                    LOG.info("Answer from instance GUID {} succesfully copied", instanceDto.getGuid());
-                }
-
-            }
-
-        }
-    }
-
-    default void createActivityEvent(long operatorId,
-                                     long participantId,
-                                     long activityInstanceId,
-                                     String activityInstanceStatus,
-                                     long studyActivityId,
-                                     Long studyId,
-                                     String participantGuid,
-                                     EventConfigurationDto eventConfig) {
-        PexInterpreter interp = new TreeWalkInterpreter();
-        JdbiActivityInstance jdbiActivityInstance = getJdbiActivityInstance();
-
-        // Checking if the maximum number of activities of this type is hit
-        LOG.info(
-                "Checking if the maximum number of activities (n = {}) for the study activity (id = {}) is hit",
-                eventConfig.getMaxInstancesPerUser(), eventConfig.getActivityIdToCreate()
-        );
-        int numExistingActivities = jdbiActivityInstance.getNumActivitiesForParticipant(
-                eventConfig.getActivityIdToCreate(),
-                participantId
-        );
-        LOG.info(
-                "Found {} existing activity instances for study activity {}",
-                numExistingActivities, eventConfig.getActivityIdToCreate()
-        );
-        if (eventConfig.getMaxInstancesPerUser() != null && numExistingActivities >= eventConfig.getMaxInstancesPerUser()) {
-            LOG.info(
-                    "The number of existing study activities (n = {}) with id = {} is greater than or equal than"
-                            + " the allowed maximum for this study activity (n = {}), skipping the configuration",
-                    numExistingActivities,
-                    eventConfig.getActivityIdToCreate(),
-                    eventConfig.getMaxInstancesPerUser()
-            );
-            return;
-        }
-
-        // Checking if any of the conditions for the activity type evaluates to FALSE
-        LOG.info("Checking if the activity creation expression exists for the study activity {}", studyActivityId);
-        Optional<ActivityConditionDto> activityConditionDto = getJdbiActivityCondition().getById(eventConfig.getActivityIdToCreate());
-        if (activityConditionDto.isPresent()) {
-            String creationExpr = activityConditionDto.get().getCreationExpression();
-            LOG.info("Checking the activity creation expression {}", creationExpr);
-            boolean creationExprResult = true;
-            try {
-                if (creationExpr != null) {
-                    creationExprResult = interp.eval(
-                            creationExpr,
-                            getHandle(),
-                            participantGuid,
-                            getJdbiActivityInstance().getActivityInstanceGuid(activityInstanceId)
-                    );
-                }
-            } catch (PexException e) {
-                throw new DaoException("Error evaluating pex expression " + creationExpr);
-            }
-            if (!creationExprResult) {
-                LOG.info(
-                        "The activity creation expression {} evaluated to FALSE, skipping the configuration",
-                        activityConditionDto.get().getCreationExpression()
-                );
-                return;
-            }
-        } else {
-            LOG.info("No activity creation expression found for the study activity {}", studyActivityId);
-        }
-
-        // All fine, creating an activity instance
-        String activityInstanceGuid = jdbiActivityInstance.generateUniqueGuid();
-        long newActivityInstanceId = jdbiActivityInstance.insert(
-                eventConfig.getActivityIdToCreate(),
-                participantId,
-                activityInstanceGuid,
-                false,
-                Instant.now().toEpochMilli(),
-                null
-        );
-        // Using the low-level facility to avoid infinite recursion
-        getJdbiActivityStatus().insert(
-                newActivityInstanceId,
-                InstanceStatusType.CREATED,
-                Instant.now().toEpochMilli(),
-                participantId
-        );
-        // queue up any events associated with updating the status to created
-        ActivityInstanceDto createdInstanceDto = getHandle().attach(JdbiActivityInstance.class).getByActivityInstanceId(
-                newActivityInstanceId).get();
-        addStatusTriggerEventsToQueue(operatorId, participantId, createdInstanceDto, InstanceStatusType.CREATED.name());
-
-
-        // Incrementing the counter indicating that the event configuration has been executed
-        getJdbiEventConfigurationOccurrenceCounter().incNumOccurrences(
-                eventConfig.getEventConfigurationId(),
-                participantId
-        );
-        LOG.info(
-                "Performed the instantiation of the study activity with the id {} triggered by"
-                        + " the activity instance {} transitioning to the status {}."
-                        + " Operator = {}, participant = {}, study = {}, created activity instance id = {}",
-                eventConfig.getActivityIdToCreate(), activityInstanceId, activityInstanceStatus,
-                operatorId, participantId, studyId, newActivityInstanceId
-        );
-    }
 
     // Note: this should only be used in tests.
     @SqlUpdate("delete from activity_instance_status where activity_instance_id = "
