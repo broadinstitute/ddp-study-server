@@ -499,6 +499,8 @@ public class EventServiceTest extends IntegrationTestSuite.TestCase {
             UserProfileDto profile = profileDao.getUserProfileByUserId(testData.getUserId());
 
             assertEquals(lastNameFromAnswer, profile.getLastName());
+
+            handle.rollback();
         });
     }
 
