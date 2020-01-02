@@ -24,8 +24,8 @@ public class AnnouncementEventAction extends EventAction {
     public AnnouncementEventAction(EventConfiguration eventConfiguration, EventConfigurationDto dto) {
         super(eventConfiguration, dto);
         messageTemplateId = dto.getAnnouncementMsgTemplateId();
-        isPermanent = dto.getAnnouncementIsPermanent();
-        createForProxies = dto.getAnnouncementCreateForProxies();
+        isPermanent = dto.isAnnouncementPermanent();
+        createForProxies = dto.shouldCreateAnnouncementForProxies();
     }
 
     @Override

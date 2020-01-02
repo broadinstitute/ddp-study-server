@@ -59,8 +59,8 @@ public class EventConfigurationDto {
      **/
     /* ANNOUNCEMENT */
     private Long announcementMsgTemplateId;
-    private Boolean announcementIsPermanent;
-    private Boolean announcementCreateForProxies;
+    private Boolean isAnnouncementPermanent;
+    private Boolean createAnnouncementForProxies;
 
     /* NOTIFICATION */
     private NotificationType notificationType;
@@ -123,8 +123,8 @@ public class EventConfigurationDto {
         this.triggerAutomatically = triggerAutomatically;
         this.dsmNotificationEventType = dsmNotificationEventType;
         this.announcementMsgTemplateId = announcementMsgTemplateId;
-        this.announcementIsPermanent = announcementIsPermanent;
-        this.announcementCreateForProxies = announcementCreateForProxies;
+        this.isAnnouncementPermanent = announcementIsPermanent;
+        this.createAnnouncementForProxies = announcementCreateForProxies;
         this.notificationType = notificationType;
         this.notificationServiceType = notificationServiceType;
         this.notificationTemplateId = notificationTemplateId;
@@ -195,12 +195,12 @@ public class EventConfigurationDto {
         return announcementMsgTemplateId;
     }
 
-    public Boolean getAnnouncementIsPermanent() {
-        return announcementIsPermanent;
+    public Boolean isAnnouncementPermanent() {
+        return isAnnouncementPermanent;
     }
 
-    public Boolean getAnnouncementCreateForProxies() {
-        return announcementCreateForProxies;
+    public Boolean shouldCreateAnnouncementForProxies() {
+        return createAnnouncementForProxies;
     }
 
     public NotificationType getNotificationType() {

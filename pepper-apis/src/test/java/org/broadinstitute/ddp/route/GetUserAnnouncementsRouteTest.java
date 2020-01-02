@@ -15,6 +15,8 @@ import java.util.stream.Collectors;
 
 import io.restassured.http.ContentType;
 import io.restassured.http.Header;
+import io.restassured.response.ValidatableResponse;
+import io.restassured.specification.RequestSpecification;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.API;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
@@ -95,12 +97,8 @@ public class GetUserAnnouncementsRouteTest extends IntegrationTestSuite.TestCase
 
     @Test
     public void test_noAnnouncements_returnEmptyList() {
-        given().auth().oauth2(token)
-                .pathParam("userGuid", testData.getUserGuid())
-                .pathParam("studyGuid", testData.getStudyGuid())
-                .when().get(url)
-                .then().assertThat()
-                .statusCode(200).contentType(ContentType.JSON)
+        assertAnnouncementsJson(testData.getUserGuid(), testData.getStudyGuid())
+                .statusCode(200)
                 .body("$.size()", equalTo(0));
     }
 
@@ -109,12 +107,8 @@ public class GetUserAnnouncementsRouteTest extends IntegrationTestSuite.TestCase
         TransactionWrapper.useTxn(handle -> handle.attach(UserAnnouncementDao.class)
                 .insert(testData.getUserId(), testData.getStudyId(), msgTemplate.getTemplateId(), false));
 
-        given().auth().oauth2(token)
-                .pathParam("userGuid", testData.getUserGuid())
-                .pathParam("studyGuid", testData.getStudyGuid())
-                .when().get(url)
-                .then().assertThat()
-                .statusCode(200).contentType(ContentType.JSON)
+        assertAnnouncementsJson(testData.getUserGuid(), testData.getStudyGuid())
+                .statusCode(200)
                 .body("$.size()", equalTo(1))
                 .body("[0].permanent", equalTo(false))
                 .body("[0].message", equalTo(msgTemplate.getTemplateText()));
@@ -143,12 +137,8 @@ public class GetUserAnnouncementsRouteTest extends IntegrationTestSuite.TestCase
             return oldest;
         });
 
-        given().auth().oauth2(token)
-                .pathParam("userGuid", testData.getUserGuid())
-                .pathParam("studyGuid", testData.getStudyGuid())
-                .when().get(url)
-                .then().assertThat()
-                .statusCode(200).contentType(ContentType.JSON)
+        assertAnnouncementsJson(testData.getUserGuid(), testData.getStudyGuid())
+                .statusCode(200)
                 .body("$.size()", equalTo(2))
                 .body("[0].message", equalTo(oldestTemplate.getTemplateText()))
                 .body("[1].message", equalTo(msgTemplate.getTemplateText()));
@@ -163,13 +153,9 @@ public class GetUserAnnouncementsRouteTest extends IntegrationTestSuite.TestCase
 
     @Test
     public void test_malformedContentStyle_returns400() {
-        given().auth().oauth2(token)
-                .pathParam("userGuid", testData.getUserGuid())
-                .pathParam("studyGuid", testData.getStudyGuid())
-                .header(new Header(DDP_CONTENT_STYLE, "foobar"))
-                .when().get(url)
-                .then().assertThat()
-                .statusCode(400).contentType(ContentType.JSON)
+        assertAnnouncementsJson(testData.getUserGuid(), testData.getStudyGuid(), new Header(DDP_CONTENT_STYLE, "foobar"))
+                .statusCode(400)
+                .contentType(ContentType.JSON)
                 .body("code", equalTo(ErrorCodes.MALFORMED_HEADER))
                 .body("message", containsString("foobar"));
     }
@@ -179,13 +165,8 @@ public class GetUserAnnouncementsRouteTest extends IntegrationTestSuite.TestCase
         TransactionWrapper.useTxn(handle -> handle.attach(UserAnnouncementDao.class)
                 .insert(testData.getUserId(), testData.getStudyId(), msgTemplate.getTemplateId(), false));
 
-        given().auth().oauth2(token)
-                .pathParam("userGuid", testData.getUserGuid())
-                .pathParam("studyGuid", testData.getStudyGuid())
-                .header(new Header(DDP_CONTENT_STYLE, ContentStyle.BASIC.name()))
-                .when().get(url)
-                .then().assertThat()
-                .statusCode(200).contentType(ContentType.JSON)
+        assertAnnouncementsJson(testData.getUserGuid(), testData.getStudyGuid(), new Header(DDP_CONTENT_STYLE, ContentStyle.BASIC.name()))
+                .statusCode(200)
                 .body("$.size()", equalTo(1))
                 .body("[0].message", equalTo(msgPlainText));
     }
@@ -195,12 +176,8 @@ public class GetUserAnnouncementsRouteTest extends IntegrationTestSuite.TestCase
         TransactionWrapper.useTxn(handle -> handle.attach(UserAnnouncementDao.class)
                 .insert(testData.getUserId(), testData.getStudyId(), msgTemplate.getTemplateId(), true));
 
-        String guid = given().auth().oauth2(token)
-                .pathParam("userGuid", testData.getUserGuid())
-                .pathParam("studyGuid", testData.getStudyGuid())
-                .when().get(url)
-                .then().assertThat()
-                .statusCode(200).contentType(ContentType.JSON)
+        String guid = assertAnnouncementsJson(testData.getUserGuid(), testData.getStudyGuid())
+                .statusCode(200)
                 .body("$.size()", equalTo(1))
                 .body("[0].guid", not(isEmptyOrNullString()))
                 .body("[0].permanent", equalTo(true))
@@ -215,12 +192,8 @@ public class GetUserAnnouncementsRouteTest extends IntegrationTestSuite.TestCase
             assertEquals(guid, found.get(0).getGuid());
         });
 
-        given().auth().oauth2(token)
-                .pathParam("userGuid", testData.getUserGuid())
-                .pathParam("studyGuid", testData.getStudyGuid())
-                .when().get(url)
-                .then().assertThat()
-                .statusCode(200).contentType(ContentType.JSON)
+        assertAnnouncementsJson(testData.getUserGuid(), testData.getStudyGuid())
+                .statusCode(200)
                 .body("$.size()", equalTo(1))
                 .body("[0].guid", equalTo(guid));
     }
@@ -243,12 +216,8 @@ public class GetUserAnnouncementsRouteTest extends IntegrationTestSuite.TestCase
             return testStudy;
         });
 
-        given().auth().oauth2(token)
-                .pathParam("userGuid", testData.getUserGuid())
-                .pathParam("studyGuid", study.getGuid())
-                .when().get(url)
-                .then().assertThat()
-                .statusCode(200).contentType(ContentType.JSON)
+        assertAnnouncementsJson(testData.getUserGuid(), study.getGuid())
+                .statusCode(200)
                 .body("$.size()", equalTo(1))
                 .body("[0].guid", not(isEmptyOrNullString()))
                 .body("[0].permanent", equalTo(true))
@@ -258,5 +227,17 @@ public class GetUserAnnouncementsRouteTest extends IntegrationTestSuite.TestCase
             handle.attach(UserAnnouncementDao.class).deleteAllForUserAndStudy(testData.getUserId(), study.getId());
             handle.attach(UserGovernanceDao.class).deleteAllGovernancesForProxy(testData.getUserId());
         });
+    }
+
+    private ValidatableResponse assertAnnouncementsJson(String userGuid, String studyGuid, Header... optionalHeaders) {
+        RequestSpecification request = given().auth().oauth2(token)
+                .pathParam("userGuid", userGuid)
+                .pathParam("studyGuid", studyGuid);
+        for (var header : optionalHeaders) {
+            request = request.header(header);
+        }
+        return request.when().get(url)
+                .then().assertThat()
+                .contentType(ContentType.JSON);
     }
 }

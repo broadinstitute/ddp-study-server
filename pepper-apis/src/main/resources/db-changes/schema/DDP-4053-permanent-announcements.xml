@@ -23,7 +23,9 @@
         <renameColumn tableName="user_announcement" oldColumnName="participant_user_id" newColumnName="user_id" columnDataType="bigint"/>
 
         <addColumn tableName="user_announcement">
-            <column name="guid" type="varchar(36)"/>
+            <column name="guid" type="varchar(36)">
+                <constraints unique="true" uniqueConstraintName="user_announcement_guid_uk"/>
+            </column>
             <column name="is_permanent" type="boolean"/>
         </addColumn>
 
