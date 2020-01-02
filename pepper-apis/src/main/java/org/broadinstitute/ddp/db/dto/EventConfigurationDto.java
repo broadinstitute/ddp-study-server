@@ -58,7 +58,9 @@ public class EventConfigurationDto {
      * Actions
      **/
     /* ANNOUNCEMENT */
-    private Long messageTemplateId;
+    private Long announcementMsgTemplateId;
+    private Boolean announcementIsPermanent;
+    private Boolean announcementCreateForProxies;
 
     /* NOTIFICATION */
     private NotificationType notificationType;
@@ -95,7 +97,9 @@ public class EventConfigurationDto {
                                  Long workflowStateId,
                                  Boolean triggerAutomatically,
                                  String dsmNotificationEventType,
-                                 Long messageTemplateId,
+                                 Long announcementMsgTemplateId,
+                                 Boolean announcementIsPermanent,
+                                 Boolean announcementCreateForProxies,
                                  NotificationType notificationType,
                                  NotificationServiceType notificationServiceType,
                                  Long notificationTemplateId,
@@ -118,7 +122,9 @@ public class EventConfigurationDto {
         this.workflowStateId = workflowStateId;
         this.triggerAutomatically = triggerAutomatically;
         this.dsmNotificationEventType = dsmNotificationEventType;
-        this.messageTemplateId = messageTemplateId;
+        this.announcementMsgTemplateId = announcementMsgTemplateId;
+        this.announcementIsPermanent = announcementIsPermanent;
+        this.announcementCreateForProxies = announcementCreateForProxies;
         this.notificationType = notificationType;
         this.notificationServiceType = notificationServiceType;
         this.notificationTemplateId = notificationTemplateId;
@@ -185,8 +191,16 @@ public class EventConfigurationDto {
         return dsmNotificationEventType;
     }
 
-    public Long getMessageTemplateId() {
-        return messageTemplateId;
+    public Long getAnnouncementMsgTemplateId() {
+        return announcementMsgTemplateId;
+    }
+
+    public Boolean getAnnouncementIsPermanent() {
+        return announcementIsPermanent;
+    }
+
+    public Boolean getAnnouncementCreateForProxies() {
+        return announcementCreateForProxies;
     }
 
     public NotificationType getNotificationType() {

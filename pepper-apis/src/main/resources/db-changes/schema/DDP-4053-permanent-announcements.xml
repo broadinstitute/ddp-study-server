@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="20191217-add-permanent-flag-to-announcement-event-action">
+        <addColumn tableName="user_announcement_event_action">
+            <column name="is_permanent" type="boolean"/>
+            <column name="create_for_proxies" type="boolean"/>
+        </addColumn>
+
+        <update tableName="user_announcement_event_action">
+            <column name="is_permanent" valueBoolean="false"/>
+            <column name="create_for_proxies" valueBoolean="false"/>
+        </update>
+
+        <addNotNullConstraint tableName="user_announcement_event_action" columnName="is_permanent" columnDataType="boolean"/>
+        <addNotNullConstraint tableName="user_announcement_event_action" columnName="create_for_proxies" columnDataType="boolean"/>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20191217-permanent-user-announcements">
+        <renameColumn tableName="user_announcement" oldColumnName="participant_user_id" newColumnName="user_id" columnDataType="bigint"/>
+
+        <addColumn tableName="user_announcement">
+            <column name="guid" type="varchar(36)"/>
+            <column name="is_permanent" type="boolean"/>
+        </addColumn>
+
+        <update tableName="user_announcement">
+            <column name="guid" valueComputed="uuid()"/>
+            <column name="is_permanent" valueBoolean="false"/>
+        </update>
+
+        <addNotNullConstraint tableName="user_announcement" columnName="guid" columnDataType="varchar(36)"/>
+        <addNotNullConstraint tableName="user_announcement" columnName="is_permanent" columnDataType="boolean"/>
+    </changeSet>
+
+</databaseChangeLog>

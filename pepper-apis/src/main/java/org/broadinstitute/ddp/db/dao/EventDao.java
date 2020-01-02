@@ -63,9 +63,9 @@ public interface EventDao extends SqlObject {
     @UseStringTemplateSqlLocator
     @RegisterConstructorMapper(EventConfigurationDto.class)
     @UseRowReducer(PdfAttachmentReducer.class)
-    List<EventConfigurationDto> getEventConfigurationDtosForStudyIdAndTriggerType(@Bind("studyId") long studyId,
-                                                                                  @Bind("eventTriggerType")
-                                                                                          EventTriggerType eventTriggerType);
+    List<EventConfigurationDto> getEventConfigurationDtosForStudyIdAndTriggerType(
+            @Bind("studyId") long studyId,
+            @Bind("eventTriggerType") EventTriggerType eventTriggerType);
 
     /**
      * Returns the event configurations for the given
