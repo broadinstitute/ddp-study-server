@@ -17,7 +17,6 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import com.typesafe.config.Config;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.ddp.constants.ConfigFile.SqlQuery;
 import org.broadinstitute.ddp.constants.SqlConstants;
@@ -39,7 +38,6 @@ import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.instance.ActivityInstance;
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
 import org.broadinstitute.ddp.model.activity.types.FormType;
-import org.broadinstitute.ddp.pex.TreeWalkInterpreter;
 import org.broadinstitute.ddp.service.ActivityInstanceCreationValidation;
 import org.broadinstitute.ddp.util.ActivityInstanceUtil;
 import org.broadinstitute.ddp.util.I18nUtil;
@@ -105,7 +103,6 @@ public class ActivityInstanceDao {
                 }
                 Number maxInstancesAllowed = (Number) rs.getObject(SqlQuery.MAX_INSTANCES_PER_USER);
                 Number instancesForUser = (Number) rs.getObject(SqlQuery.NUM_INSTANCES_FOR_USER);
-                String pexPrecondition = rs.getString(SqlQuery.PEX_PRECONDITION);
 
                 if (rs.next()) {
                     throw new DaoException("Too many validation rows for activity code "
@@ -117,9 +114,6 @@ public class ActivityInstanceDao {
 
                 if (maxInstancesAllowed != null) {
                     hasTooManyInstances = (maxInstancesAllowed.intValue() - instancesForUser.intValue()) <= 0;
-                }
-                if (StringUtils.isNotBlank(pexPrecondition)) {
-                    hasUnmetPrecondition = !new TreeWalkInterpreter().eval(pexPrecondition, handle, userGuid, null);
                 }
                 return new ActivityInstanceCreationValidation(hasTooManyInstances, hasUnmetPrecondition);
             }

@@ -127,12 +127,6 @@ public class SqlConstants {
         public static final String TYPE_CODE = "activity_type_code";
     }
 
-    public static final class ActivityConditionTable {
-        public static final String STUDY_ACTIVITY_ID = "study_activity_id";
-        public static final String CREATION_EXPRESSION_ID = "creation_expression_id";
-        public static final String CREATION_EXPRESSION = "creation_expression";
-    }
-
     public static final class FormActivitySettingTable {
         public static final String ID = "form_activity_setting_id";
         public static final String INTRO_SECTION_ID = "introduction_section_id";

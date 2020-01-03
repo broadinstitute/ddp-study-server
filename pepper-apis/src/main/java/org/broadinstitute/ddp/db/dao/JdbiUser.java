@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.Set;
 
 import org.broadinstitute.ddp.db.dto.UserDto;
-import org.jdbi.v3.sqlobject.CreateSqlObject;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
@@ -16,10 +15,6 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
 public interface JdbiUser extends SqlObject {
-
-    @CreateSqlObject
-    JdbiUserStudyEnrollment getJdbiUserStudyEnrollment();
-
     @SqlQuery("select user_id from user where auth0_user_id = :auth0UserId and auth0_tenant_id = :auth0TenantId")
     long getUserIdByAuth0UserId(@Bind("auth0UserId") String auth0UserId, @Bind("auth0TenantId") long auth0TenantId);
 

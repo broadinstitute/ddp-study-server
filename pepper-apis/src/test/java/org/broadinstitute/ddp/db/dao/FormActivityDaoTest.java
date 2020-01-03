@@ -282,24 +282,6 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
     }
 
     @Test
-    public void testInsertActivity_creationPrecondition() {
-        FormActivityDef form = FormActivityDef.formBuilder(FormType.GENERAL, "DUMMY_ACTIVITY", "v1", testData.getStudyGuid())
-                .addName(new Translation("en", "dummy activity"))
-                .setCreationExpr("true && false")
-                .build();
-        TransactionWrapper.useTxn(handle -> {
-            long millis = Instant.now().toEpochMilli();
-            long revId = handle.attach(JdbiRevision.class).insert(testData.getUserId(), millis, null, "testing");
-
-            handle.attach(FormActivityDao.class).insertActivity(form, revId);
-            assertNotNull(form.getActivityId());
-            assertNotNull(form.getCreationExprId());
-
-            handle.rollback();
-        });
-    }
-
-    @Test
     public void testInsertActivity_blockShownExpression() {
         Template tmpl = new Template(TemplateType.TEXT, "tmpl", "test block expr");
         ContentBlockDef block = new ContentBlockDef(tmpl);

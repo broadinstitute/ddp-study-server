@@ -8,7 +8,6 @@ import org.broadinstitute.ddp.constants.TestConstants;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
-import org.broadinstitute.ddp.db.dao.JdbiActivityCondition;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstanceCreationAction;
 import org.broadinstitute.ddp.db.dao.JdbiActivityStatusTrigger;
 import org.broadinstitute.ddp.db.dao.JdbiEventAction;
@@ -37,7 +36,6 @@ public class InsertActivityInstanceAutoCreationSampleDataScript extends TxnAware
     private long eventConfigurationId;
     private long eventActionId;
     private long eventTriggerId;
-    private long activityConditionId;
     private long activityInstanceStatusTypeId;
     private long studyActivityTriggeringActionId;
     private long umbrellaStudyId;
@@ -94,10 +92,6 @@ public class InsertActivityInstanceAutoCreationSampleDataScript extends TxnAware
                             null,
                             false,
                             1
-                    );
-                    activityConditionId = handle.attach(JdbiActivityCondition.class).insert(
-                            studyActivityToCreateId,
-                            creationExprId
                     );
                 }
         );

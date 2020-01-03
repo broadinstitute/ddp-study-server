@@ -59,7 +59,7 @@ import org.slf4j.LoggerFactory;
 @RunWith(Suite.class)
 @SuiteClasses({
         AuthFilterRouteTest.class,
-        PostActivityStatusChangeHookTest.class,
+        EventServiceTest.class,
         CreateActivityInstanceRouteTest.class,
         CreateTemporaryUserRouteTest.class,
         DeleteMedicalProviderRouteTest.class,

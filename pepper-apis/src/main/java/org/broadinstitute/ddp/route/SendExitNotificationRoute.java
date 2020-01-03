@@ -83,7 +83,7 @@ public class SendExitNotificationRoute extends ValidatedJsonInputRoute<StudyExit
             }
 
             List<EventConfigurationDto> eventDtos = handle.attach(EventDao.class)
-                    .getEventConfigSummariesByStudyIdAndTriggerType(studyDto.getId(), EventTriggerType.EXIT_REQUEST);
+                    .getEventConfigurationDtosForStudyIdAndTriggerType(studyDto.getId(), EventTriggerType.EXIT_REQUEST);
 
             if (eventDtos.isEmpty()) {
                 String msg = String.format("Study %s does not support exit requests", studyGuid);

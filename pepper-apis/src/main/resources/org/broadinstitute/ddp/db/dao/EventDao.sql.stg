@@ -1,5 +1,86 @@
 group EventDao;
 
+/**
+ * Returns all event configurations for study/activity and event type
+ */
+eventConfigurationLookup() ::= <<
+SELECT
+     ec.event_configuration_id,
+     ett.event_trigger_type_code event_trigger_type,
+     eat.event_action_type_code event_action_type,
+     ec.post_delay_seconds,
+     ec.dispatch_to_housekeeping,
+     (SELECT
+         e.expression_text from expression e
+     WHERE e.expression_id = ec.precondition_expression_id) as precondition_expression,
+     (SELECT
+         e.expression_text from expression e
+     WHERE e.expression_id = ec.cancel_expression_id) as cancel_expression,
+     ec.max_occurrences_per_user,
+     md.gcp_topic,
+     aist.activity_instance_status_type_code as instance_status_type,
+     ast.study_activity_id as activity_status_trigger_study_activity_id,
+     wst.workflow_state_id,
+     wst.trigger_automatically,
+     dnet.dsm_notification_event_type_code as dsm_notification_event_type,
+     ann_act.message_template_id as message_template_id,
+     nt.notification_type_code as notification_type,
+     ns.service_code as notification_service_type,
+     unea.notification_template_id,
+     unea.linked_activity_id,
+     pea.pdf_document_configuration_id as pdf_generation_document_configuration_id,
+     unpdf.pdf_document_configuration_id as user_notification_document_configuration_id,
+     unpdf.generate_if_missing,
+     aica.study_activity_id as activity_instance_creation_study_activity_id,
+     cp_target.copy_target as copy_answer_target,
+     qsc.stable_id as copy_source_question_stable_id
+FROM
+     event_configuration ec
+JOIN event_trigger et ON ec.event_trigger_id = et.event_trigger_id
+JOIN event_trigger_type ett ON et.event_trigger_type_id = ett.event_trigger_type_id
+JOIN event_action ea ON ec.event_action_id = ea.event_action_id
+JOIN event_action_type eat ON ea.event_action_type_id = eat.event_action_type_id
+JOIN umbrella_study study on ec.umbrella_study_id = study.umbrella_study_id
+LEFT JOIN message_destination md on ea.message_destination_id = md.message_destination_id
+LEFT JOIN activity_status_trigger ast ON ast.activity_status_trigger_id = ec.event_trigger_id
+LEFT JOIN activity_instance_status_type aist ON ast.activity_instance_status_type_id = aist.activity_instance_status_type_id
+LEFT JOIN workflow_state_trigger wst on wst.event_trigger_id = et.event_trigger_id
+LEFT JOIN dsm_notification_trigger dnt ON dnt.dsm_notification_trigger_id = et.event_trigger_type_id
+LEFT JOIN dsm_notification_event_type dnet ON dnet.dsm_notification_event_type_id = dnt.dsm_notification_event_type_id
+LEFT JOIN user_announcement_event_action as ann_act on ann_act.event_action_id = ea.event_action_id
+LEFT JOIN user_notification_event_action unea on unea.user_notification_event_action_id = ea.event_action_id
+LEFT JOIN notification_type nt on nt.notification_type_id = unea.notification_type_id
+LEFT JOIN notification_service ns on ns.notification_service_id = unea.notification_service_id
+LEFT JOIN pdf_generation_event_action as pea on pea.event_action_id = ea.event_action_id
+LEFT JOIN user_notification_pdf unpdf on unpdf.user_notification_event_action_id = ea.event_action_id
+LEFT JOIN activity_instance_creation_action aica ON aica.activity_instance_creation_action_id = ea.event_action_id
+LEFT JOIN copy_answer_event_action as cp_answer on cp_answer.event_action_id=ea.event_action_id
+LEFT JOIN question_stable_code as qsc on qsc.question_stable_code_id=cp_answer.source_question_stable_id
+LEFT JOIN copy_answer_target cp_target on cp_target.copy_answer_target_id=cp_answer.copy_answer_target_id
+>>
+
+getEventConfigurationsForStudyIdAndTriggerType() ::= <<
+<eventConfigurationLookup()>
+    where
+        ec.umbrella_study_id = :studyId
+        and ett.event_trigger_type_code = :eventTriggerType
+        and ec.is_active = 1
+>>
+
+getActiveDispatchConfigsByStudyIdAndTrigger() ::= <<
+<getEventConfigurationsForStudyIdAndTriggerType()>
+    and ec.dispatch_to_housekeeping = 1
+>>
+
+getActivityStatusEventConfigurations() ::= <<
+<eventConfigurationLookup()>
+    LEFT JOIN activity_instance ai ON ai.study_activity_id = ast.study_activity_id
+    where
+        ai.activity_instance_id = :activityInstanceId
+        and aist.activity_instance_status_type_code = :status
+        and ec.is_active = 1
+>>
+
 getNotificationAttachmentDetails() ::= <<
 select
     pdf_cfg.pdf_document_configuration_id,
@@ -15,113 +96,27 @@ select
 >>
 
 /**
- *  Gets event configurations for the activityInstance and status
- */
-getActivityStatusEventConfigurations() ::= <<
-    select
-        cfg.event_configuration_id,
-        trigger_type.event_trigger_type_code,
-        cfg.post_delay_seconds,
-        cfg.dispatch_to_housekeeping,
-        action_type.event_action_type_code
-    from
-        activity_instance_status_type ast,
-        activity_status_trigger stat_trigger,
-        event_configuration cfg,
-        event_trigger t,
-        event_action act,
-        message_destination dest,
-        event_action_type action_type,
-        event_trigger_type trigger_type,
-        umbrella_study study,
-        activity_instance ai
-    where
-        stat_trigger.activity_status_trigger_id = t.event_trigger_id
-        and stat_trigger.activity_instance_status_type_id = ast.activity_instance_status_type_id
-        and stat_trigger.study_activity_id = ai.study_activity_id
-        and ai.activity_instance_id = :activityInstanceId
-        and ast.activity_instance_status_type_code = :status
-        and study.umbrella_study_id = cfg.umbrella_study_id
-        and cfg.is_active = 1
-        and trigger_type.event_trigger_type_id = t.event_trigger_type_id
-        and action_type.event_action_type_id = act.event_action_type_id
-        and dest.message_destination_id = act.message_destination_id
-        and act.event_action_id = cfg.event_action_id
-        and cfg.event_trigger_id = t.event_trigger_id
->>
-
-getActiveDispatchedEventConfigSummariesByStudyIdAndTriggerType() ::= <<
-select cfg.event_configuration_id,
-       trigger_type.event_trigger_type_code,
-       action_type.event_action_type_code,
-       cfg.post_delay_seconds
-  from event_configuration as cfg
-  join event_trigger as t on t.event_trigger_id = cfg.event_trigger_id
-  join event_trigger_type as trigger_type on trigger_type.event_trigger_type_id = t.event_trigger_type_id
-  join event_action as act on act.event_action_id = cfg.event_action_id
-  join event_action_type as action_type on action_type.event_action_type_id = act.event_action_type_id
- where cfg.umbrella_study_id = :studyId
-   and trigger_type.event_trigger_type_code = :triggerType
-   and act.message_destination_id is not null
-   and cfg.dispatch_to_housekeeping = 1
-   and cfg.is_active = 1
->>
-
-/**
  * Returns notification events related to workflow states
 */
 getNotificationConfigsForWorkflowState() ::= <<
-    select
-        cfg.event_configuration_id,
-        trigger_type.event_trigger_type_code,
-        cfg.post_delay_seconds,
-        cfg.dispatch_to_housekeeping,
-        ns.service_code,
-        action_type.event_action_type_code
-    from umbrella_study study
-    join event_configuration cfg on cfg.umbrella_study_id = study.umbrella_study_id
-    join event_trigger t on t.event_trigger_id = cfg.event_trigger_id
-    join event_action act on act.event_action_id = cfg.event_action_id
-    join event_trigger_type trigger_type on trigger_type.event_trigger_type_id = t.event_trigger_type_id
-    join event_action_type action_type on action_type.event_action_type_id = act.event_action_type_id
-    join message_destination dest on dest.message_destination_id = act.message_destination_id
-    join user_notification_event_action notification_action on notification_action.user_notification_event_action_id = act.event_action_id
-    join notification_service ns on ns.notification_service_id = notification_action.notification_service_id
-    join workflow_state_trigger wst on wst.event_trigger_id = t.event_trigger_id
-    join workflow_state ws on wst.workflow_state_id = ws.workflow_state_id
+<eventConfigurationLookup()>
     where
     study.guid = :studyGuid
-    and ws.workflow_state_id = :workflowStateId
-    and cfg.is_active = 1
-    and action_type.event_action_type_code = 'NOTIFICATION'
+    and wst.workflow_state_id = :workflowStateId
+    and ec.is_active = 1
+    and eat.event_action_type_code = 'NOTIFICATION'
 >>
-
 
 /**
  * Returns notification events related to workflow states
 */
 getNotificationConfigsForMailingListByEventType() ::= <<
-    select
-        cfg.event_configuration_id,
-        trigger_type.event_trigger_type_code,
-        cfg.post_delay_seconds,
-        cfg.dispatch_to_housekeeping,
-        ns.service_code,
-        action_type.event_action_type_code
-    from umbrella_study study
-    join event_configuration cfg on cfg.umbrella_study_id = study.umbrella_study_id
-    join event_trigger t on t.event_trigger_id = cfg.event_trigger_id
-    join event_action act on act.event_action_id = cfg.event_action_id
-    join event_trigger_type trigger_type on trigger_type.event_trigger_type_id = t.event_trigger_type_id
-    join event_action_type action_type on action_type.event_action_type_id = act.event_action_type_id
-    join message_destination dest on dest.message_destination_id = act.message_destination_id
-    join user_notification_event_action notification_action on notification_action.user_notification_event_action_id = act.event_action_id
-    join notification_service ns on ns.notification_service_id = notification_action.notification_service_id
+<eventConfigurationLookup()>
     where
     study.guid = :studyGuid
-    and cfg.is_active = 1
-    and action_type.event_action_type_code = 'NOTIFICATION'
-    and trigger_type.event_trigger_type_code = :eventTriggerType
+    and ec.is_active = 1
+    and eat.event_action_type_code = 'NOTIFICATION'
+    and ett.event_trigger_type_code = :eventTriggerType
 >>
 
 /**
@@ -209,66 +204,6 @@ and
 sub.queued_event_id = qn.queued_event_id
 and
 q.queued_event_id = :queuedEventId
->>
-
-/**
- * Returns all event configurations for study/activity and event type
- */
-getEventConfigurations(actionTypes) ::= <<
-SELECT
-     ett.event_trigger_type_code trigger_type,
-     ec.post_delay_seconds seconds_to_wait_before_posting,
-     ec.event_configuration_id,
-     (SELECT
-         e.expression_text from expression e
-     WHERE e.expression_id = ec.precondition_expression_id) as precondition_expression,
-     (SELECT
-         e.expression_text from expression e
-     WHERE e.expression_id = ec.cancel_expression_id) as cancel_expression,
-     aica.study_activity_id as activity_id_to_create,
-     sa.max_instances_per_user,
-     ec.max_occurrences_per_user,
-     eat.event_action_type_code as event_action_type,
-     ann_act.message_template_id as announcement_msg_template_id,
-     qsc.stable_id as copy_source_question_stableId,
-     cp_target.copy_target as copy_answer_target
-FROM
-     event_configuration ec
-JOIN event_action ea ON ec.event_action_id = ea.event_action_id
-JOIN event_action_type eat ON ea.event_action_type_id = eat.event_action_type_id
-JOIN activity_status_trigger ast ON ast.activity_status_trigger_id = ec.event_trigger_id
-JOIN event_trigger et ON ec.event_trigger_id = et.event_trigger_id
-JOIN event_trigger_type ett ON et.event_trigger_type_id = ett.event_trigger_type_id
-LEFT JOIN activity_instance_creation_action aica ON aica.activity_instance_creation_action_id = ea.event_action_id
-LEFT JOIN study_activity sa ON aica.study_activity_id = sa.study_activity_id
-LEFT JOIN user_announcement_event_action as ann_act on ann_act.event_action_id = ea.event_action_id
-LEFT JOIN copy_answer_event_action as cp_answer on cp_answer.event_action_id=ea.event_action_id
-LEFT JOIN question_stable_code as qsc on qsc.question_stable_code_id=cp_answer.source_question_stable_id
-LEFT JOIN copy_answer_target cp_target on cp_target.copy_answer_target_id=cp_answer.copy_answer_target_id
-JOIN activity_instance_status_type aist ON ast.activity_instance_status_type_id = aist.activity_instance_status_type_id
-WHERE
-     ec.dispatch_to_housekeeping = 0
-     AND ec.is_active = 1
-     AND ec.umbrella_study_id = :studyId
-     AND ast.study_activity_id = :activityId
-     AND aist.activity_instance_status_type_code = :activityInstanceStatus
-     AND eat.event_action_type_code in (<actionTypes>)
->>
-
-getActiveDispatchConfigsByStudyIdAndTrigger() ::= <<
-SELECT ec.event_configuration_id,
-       ec.post_delay_seconds,
-       ett.event_trigger_type_code,
-       eat.event_action_type_code
-  FROM event_configuration AS ec
-  JOIN event_trigger AS et ON ec.event_trigger_id = et.event_trigger_id
-  JOIN event_trigger_type AS ett ON et.event_trigger_type_id = ett.event_trigger_type_id
-  JOIN event_action AS ea ON ec.event_action_id = ea.event_action_id
-  JOIN event_action_type AS eat ON ea.event_action_type_id = eat.event_action_type_id
- WHERE ec.umbrella_study_id = :studyId
-   AND ett.event_trigger_type_code = :trigger
-   AND ec.dispatch_to_housekeeping = 1
-   AND ec.is_active = 1
 >>
 
 /**
