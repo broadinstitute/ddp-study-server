@@ -35,12 +35,14 @@ public class HideActivitiesEventActionTest extends TxnAwareBaseTest {
     public void test_noTargetActivityInstances() {
         TransactionWrapper.useTxn(handle -> {
             FormActivityDef activity = newTestActivity(handle);
+
             var signal = new EventSignal(testData.getUserId(), testData.getUserId(), testData.getUserGuid(),
                     testData.getStudyId(), EventTriggerType.GOVERNED_USER_REGISTERED);
             var action = new HideActivitiesEventAction(null, Set.of(activity.getActivityId()));
             action.doAction(null, handle, signal);
-            handle.rollback();
             // all good!
+
+            handle.rollback();
         });
     }
 
