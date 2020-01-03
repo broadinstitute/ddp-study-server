@@ -75,7 +75,6 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -184,7 +183,7 @@ public class EventServiceTest extends IntegrationTestSuite.TestCase {
 
                     long revId = handle.attach(JdbiRevision.class).insertStart(timestamp, testUserId, "test announcements");
                     announcementMsgTemplateId = handle.attach(TemplateDao.class).insertTemplate(Template.html("<b>thank you!</b>"), revId);
-                    announcementActionId = eventActionDao.insertAnnouncementAction(announcementMsgTemplateId);
+                    announcementActionId = eventActionDao.insertAnnouncementAction(announcementMsgTemplateId, false, false);
 
                     studyActivityTriggeringActionId = handle.attach(JdbiActivity.class)
                             .findIdByStudyIdAndCode(umbrellaStudyId, TestData.sourceActivityCode).get();
@@ -307,7 +306,7 @@ public class EventServiceTest extends IntegrationTestSuite.TestCase {
 
 
                     // Start fresh with no announcements.
-                    handle.attach(UserAnnouncementDao.class).deleteAllForParticipantAndStudy(testUserId, umbrellaStudyId);
+                    handle.attach(UserAnnouncementDao.class).deleteAllForUserAndStudy(testUserId, umbrellaStudyId);
 
                     TestDataSetupUtil.setUserEnrollmentStatus(handle, testData, EnrollmentStatusType.REGISTERED);
                 }
@@ -334,7 +333,7 @@ public class EventServiceTest extends IntegrationTestSuite.TestCase {
                     handle.attach(EventActionDao.class).deleteAnnouncementAction(announcementActionId);
                     handle.attach(JdbiExpression.class).deleteById(creationExprId);
                     handle.attach(JdbiExpression.class).updateById(precondExprId, "true");
-                    handle.attach(UserAnnouncementDao.class).deleteAllForParticipantAndStudy(testUserId, umbrellaStudyId);
+                    handle.attach(UserAnnouncementDao.class).deleteAllForUserAndStudy(testUserId, umbrellaStudyId);
                     TestDataSetupUtil.deleteEnrollmentStatus(handle, testData);
                 }
         );
@@ -346,11 +345,11 @@ public class EventServiceTest extends IntegrationTestSuite.TestCase {
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
         List<UserAnnouncement> res = TransactionWrapper.withTxn(handle -> handle.attach(UserAnnouncementDao.class)
-                .findAllForParticipantAndStudy(testUserId, umbrellaStudyId)
+                .findAllForUserAndStudy(testUserId, umbrellaStudyId)
                 .collect(Collectors.toList()));
 
         assertEquals(1, res.size());
-        assertEquals(testUserId, res.get(0).getParticipantUserId());
+        assertEquals(testUserId, res.get(0).getUserId());
         assertEquals(umbrellaStudyId, res.get(0).getStudyId());
         assertEquals(announcementMsgTemplateId, res.get(0).getMsgTemplateId());
     }
@@ -505,7 +504,6 @@ public class EventServiceTest extends IntegrationTestSuite.TestCase {
     }
 
     @Test
-    @Ignore
     public void testCopyAnswerToProfileBirthDate() {
         TransactionWrapper.useTxn(handle -> {
             JdbiProfile profileDao = handle.attach(JdbiProfile.class);
@@ -530,6 +528,8 @@ public class EventServiceTest extends IntegrationTestSuite.TestCase {
 
             UserProfileDto profile = profileDao.getUserProfileByUserId(testData.getUserId());
             assertEquals(birthDate, profile.getBirthDate());
+
+            handle.rollback();
         });
     }
 
