@@ -148,10 +148,6 @@ public interface EventActionDao extends SqlObject {
         return actionId;
     }
 
-    default long insertRevokeProxiesAction() {
-        return getJdbiEventAction().insert(null, EventActionType.REVOKE_PROXIES);
-    }
-
     default long insertCopyAnswerAction(long studyId, String copySourceStableCode, CopyAnswerTarget copyTarget) {
         long actionId = getJdbiEventAction().insert(null, EventActionType.COPY_ANSWER);
         JdbiQuestionStableCode jdbiQuestionStableCode = getHandle().attach(JdbiQuestionStableCode.class);
@@ -181,6 +177,14 @@ public interface EventActionDao extends SqlObject {
         numDeleted = getJdbiEventAction().deleteById(eventActionId);
         if (numDeleted != 1) {
             throw new DaoException("Could not delete announcement event action id " + eventActionId);
+        }
+    }
+
+    default long insertStaticAction(EventActionType type) {
+        if (type.isStatic()) {
+            return getJdbiEventAction().insert(null, type);
+        } else {
+            throw new DaoException("Event action type " + type + " requires attributes other than the type");
         }
     }
 }

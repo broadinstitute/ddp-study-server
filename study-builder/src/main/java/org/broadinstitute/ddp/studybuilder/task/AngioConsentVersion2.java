@@ -25,7 +25,6 @@ import com.typesafe.config.Config;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceStatusDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
-import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstanceStatus;
 import org.broadinstitute.ddp.db.dao.JdbiBlockContent;
 import org.broadinstitute.ddp.db.dao.JdbiDateAnswer;
@@ -741,7 +740,7 @@ public class AngioConsentVersion2 implements CustomTask {
                 + "   and enroll.valid_to is null"
                 + "   and (up.do_not_contact is null or up.do_not_contact != true)"
                 + "   and ai.created_at < :timestamp")
-        @RegisterRowMapper(JdbiActivityInstance.ActivityInstanceRowMapper.class)
+        @RegisterConstructorMapper(ActivityInstanceDto.class)
         Stream<ActivityInstanceDto> findReplaceableInstancesForEligibleUsers(@Bind("activityId") long activityId,
                                                                              @Bind("timestamp") long timestamp);
 

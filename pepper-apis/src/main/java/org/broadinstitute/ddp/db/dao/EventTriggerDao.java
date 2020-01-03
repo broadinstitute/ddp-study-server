@@ -40,39 +40,15 @@ public interface EventTriggerDao {
         return triggerId;
     }
 
+    default long insertMailingListTrigger() {
+        return getJdbiEventTrigger().insert(EventTriggerType.JOIN_MAILING_LIST);
+    }
+
     default long insertDsmNotificationTrigger(String dsmEventType) {
         long triggerId = getJdbiEventTrigger().insert(EventTriggerType.DSM_NOTIFICATION);
         Long dsmEventTypeId = getJdbiDsmNotificationEventType().findIdByCode(dsmEventType).get();
         getJdbiDsmNotificationTrigger().insert(triggerId, dsmEventTypeId);
         return triggerId;
-    }
-
-    default long insertExitRequestTrigger() {
-        return getJdbiEventTrigger().insert(EventTriggerType.EXIT_REQUEST);
-    }
-
-    default long insertGovernedUserRegisteredTrigger() {
-        return getJdbiEventTrigger().insert(EventTriggerType.GOVERNED_USER_REGISTERED);
-    }
-
-    default long insertInvitationCreatedTrigger() {
-        return getJdbiEventTrigger().insert(EventTriggerType.INVITATION_CREATED);
-    }
-
-    default long insertMailingListTrigger() {
-        return getJdbiEventTrigger().insert(EventTriggerType.JOIN_MAILING_LIST);
-    }
-
-    default long insertMedicalUpdateTrigger() {
-        return getJdbiEventTrigger().insert(EventTriggerType.MEDICAL_UPDATE);
-    }
-
-    default long insertReachedAOMTrigger() {
-        return getJdbiEventTrigger().insert(EventTriggerType.REACHED_AOM);
-    }
-
-    default long insertReachedAOMPrepTrigger() {
-        return getJdbiEventTrigger().insert(EventTriggerType.REACHED_AOM_PREP);
     }
 
     default long insertUserNotInStudyTrigger() {
@@ -81,5 +57,17 @@ public interface EventTriggerDao {
 
     default long insertUserRegisteredTrigger() {
         return getJdbiEventTrigger().insert(EventTriggerType.USER_REGISTERED);
+    }
+
+    default long insertExitRequestTrigger() {
+        return getJdbiEventTrigger().insert(EventTriggerType.EXIT_REQUEST);
+    }
+
+    default long insertStaticTrigger(EventTriggerType type) {
+        if (type.isStatic()) {
+            return getJdbiEventTrigger().insert(type);
+        } else {
+            throw new DaoException("Event trigger type " + type + " requires attributes other than the type");
+        }
     }
 }
