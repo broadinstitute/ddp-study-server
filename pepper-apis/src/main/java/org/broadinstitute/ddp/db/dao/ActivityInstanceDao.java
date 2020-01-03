@@ -32,6 +32,7 @@ import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
+import org.jdbi.v3.sqlobject.customizer.BindList.EmptyHandling;
 import org.jdbi.v3.sqlobject.customizer.Define;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
@@ -148,6 +149,14 @@ public interface ActivityInstanceDao extends SqlObject {
         return new ActivityInstanceDto(instanceId, instanceGuid, activityId, participantId,
                 createdAtMillis, null, isReadOnly, initialStatus.name(), null, false);
     }
+
+    @SqlUpdate("update activity_instance"
+            + "    set is_readonly = true"
+            + "  where participant_id = :participantId"
+            + "    and study_activity_id in (<activityIds>)")
+    int markReadOnlyByActivityIds(
+            @Bind("participantId") long participantId,
+            @BindList(value = "activityIds", onEmpty = EmptyHandling.NULL) Set<Long> activityIds);
 
     @SqlUpdate("update activity_instance as ai"
             + "   join study_activity as act on act.study_activity_id = ai.study_activity_id"

@@ -30,6 +30,7 @@ public class RevokeProxiesEventActionTest extends TxnAwareBaseTest {
             var signal = new EventSignal(testData.getUserId(), testData.getUserId(), testData.getUserGuid(),
                     testData.getStudyId(), EventTriggerType.GOVERNED_USER_REGISTERED);
             new RevokeProxiesEventAction(null, null).doAction(null, handle, signal);
+            handle.rollback();
             // all good!
         });
     }
