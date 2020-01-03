@@ -114,6 +114,8 @@ public class FormInstanceDao {
                 Long lastUpdatedTemplateId = (Long)rs.getObject(FormActivitySettingTable.LAST_UPDATED_TEXT_TEMPLATE_ID);
                 LocalDateTime lastUpdated = rs.getObject(FormActivitySettingTable.LAST_UPDATED, LocalDateTime.class);
                 boolean isFollowup = rs.getBoolean(StudyActivityTable.IS_FOLLOWUP);
+                boolean isHidden = rs.getBoolean(ActivityInstanceTable.IS_HIDDEN);
+                // todo: handle isHidden
                 form = new FormInstance(
                         instanceId,
                         activityId,

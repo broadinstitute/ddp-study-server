@@ -94,6 +94,7 @@ public class EventConfiguration {
                 break;
             case REVOKE_PROXIES:
                 eventAction = new RevokeProxiesEventAction(this, dto);
+                break;
             default:
                 throw new DDPException("Event action type: " + eventActionType.name() + " is not properly configured in "
                         + "the EventConfiguration ctor");

@@ -340,6 +340,8 @@ public class ActivityInstanceDao {
                             createdAtMillis, statusTypeCode, isActivityWriteOnce, isActivityInstanceReadonly);
                     long createdAt = rs.getLong(SqlConstants.ActivityInstanceTable.CREATED_AT);
                     boolean isFollowup = rs.getBoolean(SqlConstants.StudyActivityTable.IS_FOLLOWUP);
+                    boolean isHidden = rs.getBoolean(SqlConstants.ActivityInstanceTable.IS_HIDDEN);
+                    // todo: handle isHidden
 
                     ActivityInstanceSummary activityInstanceSummary = new ActivityInstanceSummary(
                             activityCode,

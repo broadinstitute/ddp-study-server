@@ -117,7 +117,7 @@ public interface ActivityInstanceDao extends SqlObject {
         statusDao.insertStatus(instanceId, initialStatus, createdAtMillis, operatorGuid);
 
         return new ActivityInstanceDto(instanceId, instanceGuid, activityId, participantId,
-                createdAtMillis, null, isReadOnly, initialStatus.name(), onDemandTriggerId, false);
+                createdAtMillis, null, isReadOnly, false, initialStatus.name(), onDemandTriggerId, false);
     }
 
     /**
@@ -147,14 +147,18 @@ public interface ActivityInstanceDao extends SqlObject {
         //statusDao.insertStatus(instanceId, initialStatus, createdAtMillis, operatorGuid);
 
         return new ActivityInstanceDto(instanceId, instanceGuid, activityId, participantId,
-                createdAtMillis, null, isReadOnly, initialStatus.name(), null, false);
+                createdAtMillis, null, isReadOnly, false, initialStatus.name(), null, false);
     }
 
-    @SqlUpdate("update activity_instance"
-            + "    set is_readonly = true"
-            + "  where participant_id = :participantId"
-            + "    and study_activity_id in (<activityIds>)")
+    @SqlUpdate("update activity_instance set is_readonly = true"
+            + "  where participant_id = :participantId and study_activity_id in (<activityIds>)")
     int markReadOnlyByActivityIds(
+            @Bind("participantId") long participantId,
+            @BindList(value = "activityIds", onEmpty = EmptyHandling.NULL) Set<Long> activityIds);
+
+    @SqlUpdate("update activity_instance set is_hidden = true"
+            + "  where participant_id = :participantId and study_activity_id in (<activityIds>)")
+    int markHiddenByActivityIds(
             @Bind("participantId") long participantId,
             @BindList(value = "activityIds", onEmpty = EmptyHandling.NULL) Set<Long> activityIds);
 
