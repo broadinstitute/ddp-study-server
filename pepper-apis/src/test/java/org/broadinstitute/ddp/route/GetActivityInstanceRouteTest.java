@@ -20,6 +20,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import com.google.gson.Gson;
@@ -234,6 +235,13 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
         });
     }
 
+    private static ValidatableResponse testFor200() {
+        return given().auth().oauth2(token)
+                .pathParam("instanceGuid", instanceDto.getGuid())
+                .when().get(url).then().assertThat()
+                .statusCode(200).contentType(ContentType.JSON);
+    }
+
     @Test
     public void testGet_activityNotFound() throws Exception {
         String testUrl = url.replace("{instanceGuid}", "not-an-activity-guid");
@@ -360,7 +368,6 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
                 .body("sections[0].blocks[1].displayNumber", equalTo(1))
                 .body("sections[1].blocks[0].displayNumber", equalTo(3));
     }
-
 
     @Test
     public void testGet_textAnswerWithType() {
@@ -626,8 +633,8 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
             TransactionWrapper.useTxn(handle -> {
                 handle.attach(JdbiActivity.class).insertValidation(
                         RouteTestUtil.createActivityValidationDto(
-                            activity,
-                            "false", "Should never fail", List.of(txt1.getStableId())
+                                activity,
+                                "false", "Should never fail", List.of(txt1.getStableId())
                         ),
                         testData.getUserId(),
                         testData.getStudyId(),
@@ -635,7 +642,7 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
                 );
             });
             testFor200()
-                .body("sections[1].blocks[0].question.validationFailures", is(nullValue()));
+                    .body("sections[1].blocks[0].question.validationFailures", is(nullValue()));
         } finally {
             TransactionWrapper.useTxn(handle -> {
                 handle.attach(JdbiActivity.class).deleteValidationsByCode(activityId);
@@ -649,8 +656,8 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
             TransactionWrapper.useTxn(handle -> {
                 handle.attach(JdbiActivity.class).insertValidation(
                         RouteTestUtil.createActivityValidationDto(
-                            activity,
-                            "true", "Should always fail", List.of(txt1.getStableId())
+                                activity,
+                                "true", "Should always fail", List.of(txt1.getStableId())
                         ),
                         testData.getUserId(),
                         testData.getStudyId(),
@@ -658,8 +665,8 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
                 );
             });
             testFor200()
-                .body("sections[1].blocks[0].question.validationFailures", not(is(nullValue())))
-                .body("sections[1].blocks[0].question.validationFailures.size()", equalTo(1));
+                    .body("sections[1].blocks[0].question.validationFailures", not(is(nullValue())))
+                    .body("sections[1].blocks[0].question.validationFailures.size()", equalTo(1));
         } finally {
             TransactionWrapper.useTxn(handle -> {
                 handle.attach(JdbiActivity.class).deleteValidationsByCode(activityId);
@@ -667,15 +674,24 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
         }
     }
 
-    private static ValidatableResponse testFor200() {
-        return given().auth().oauth2(token)
-                .pathParam("instanceGuid", instanceDto.getGuid())
-                .when().get(url).then().assertThat()
-                .statusCode(200).contentType(ContentType.JSON);
+    @Test
+    public void test_whenIsHidden_thenNotFound() {
+        TransactionWrapper.useTxn(handle -> assertEquals(1, handle.attach(ActivityInstanceDao.class)
+                .bulkUpdateIsHiddenByActivityIds(testData.getUserId(), true, Set.of(activity.getActivityId()))));
+        try {
+            given().auth().oauth2(token)
+                    .pathParam("instanceGuid", instanceDto.getGuid())
+                    .when().get(url).then().assertThat()
+                    .statusCode(422).contentType(ContentType.JSON)
+                    .body("code", equalTo(ErrorCodes.OPERATION_NOT_ALLOWED))
+                    .body("message", containsString("is hidden"));
+        } finally {
+            TransactionWrapper.useTxn(handle -> assertEquals(1, handle.attach(ActivityInstanceDao.class)
+                    .bulkUpdateIsHiddenByActivityIds(testData.getUserId(), false, Set.of(activity.getActivityId()))));
+        }
     }
 
     private Response testFor200AndExtractResponse() {
         return testFor200().and().extract().response();
     }
-
 }

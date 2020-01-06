@@ -56,7 +56,7 @@ public class ActivityInstanceDaoTest extends TxnAwareBaseTest {
             ActivityInstanceDto instanceDto = dao.insertInstance(form.getActivityId(), testData.getUserGuid());
             assertTrue(instanceDto.getId() >= 0);
             assertNotNull(instanceDto.getGuid());
-            assertEquals(InstanceStatusType.CREATED.name(), instanceDto.getStatusTypeCode());
+            assertEquals(InstanceStatusType.CREATED, instanceDto.getStatusType());
             assertEquals(1, statusDao.getAllStatuses(instanceDto.getId()).size());
 
             ActivityInstanceDto actual = jdbiInstance
@@ -86,7 +86,7 @@ public class ActivityInstanceDaoTest extends TxnAwareBaseTest {
 
             assertTrue(instanceDto.getId() >= 0);
             assertNotNull(instanceDto.getGuid());
-            assertEquals(InstanceStatusType.CREATED.name(), instanceDto.getStatusTypeCode());
+            assertEquals(InstanceStatusType.CREATED, instanceDto.getStatusType());
             assertEquals(1, statusDao.getAllStatuses(instanceDto.getId()).size());
 
             ActivityInstanceDto actual = jdbiInstance.getByActivityInstanceId(instanceDto.getId()).get();

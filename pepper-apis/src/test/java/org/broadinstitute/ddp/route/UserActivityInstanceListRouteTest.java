@@ -8,6 +8,7 @@ import static org.junit.Assert.assertNotNull;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
@@ -61,6 +62,7 @@ import org.junit.Test;
 
 public class UserActivityInstanceListRouteTest extends IntegrationTestSuite.TestCase {
 
+    private static final String DUMMY_SUMMARY_FOR_CREATED = "Dummy summary for CREATED";
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static FormActivityDef prequal;
     private static String prequal1Guid;
@@ -70,7 +72,6 @@ public class UserActivityInstanceListRouteTest extends IntegrationTestSuite.Test
     private static long answerId;
     private static AnswerDao answerDao;
     private static Gson gson;
-    private static final String DUMMY_SUMMARY_FOR_CREATED = "Dummy summary for CREATED";
 
     @BeforeClass
     public static void setup() {
@@ -301,5 +302,21 @@ public class UserActivityInstanceListRouteTest extends IntegrationTestSuite.Test
             TransactionWrapper.useTxn(handle -> assertEquals(1, handle.attach(JdbiActivity.class)
                     .updateExcludeFromDisplayById(prequal.getActivityId(), false)));
         }
+    }
+
+    @Test
+    public void test_whenActivityInstanceIsHidden_thenNotReturned() {
+        TransactionWrapper.useTxn(handle -> assertEquals(1, handle.attach(ActivityInstanceDao.class)
+                .bulkUpdateIsHiddenByActivityIds(testData.getUserId(), true, Set.of(prequal.getActivityId()))));
+
+        String body = given().auth().oauth2(token)
+                .when().get(url)
+                .then().assertThat()
+                .statusCode(200).contentType(ContentType.JSON)
+                .and().extract().body().asString();
+
+        ActivityInstanceSummary[] activities = gson.fromJson(body, ActivityInstanceSummary[].class);
+
+        assertEquals("should not have any activity instances since it's hidden", 0, activities.length);
     }
 }

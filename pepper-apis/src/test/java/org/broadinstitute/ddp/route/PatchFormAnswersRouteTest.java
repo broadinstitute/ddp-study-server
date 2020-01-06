@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -376,6 +377,20 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
         String json = EntityUtils.toString(response.getEntity());
         ApiError resp = gson.fromJson(json, ApiError.class);
         assertEquals(ErrorCodes.ACTIVITY_NOT_FOUND, resp.getCode());
+    }
+
+    @Test
+    public void testPatch_activityInstanceIsHidden() {
+        TransactionWrapper.useTxn(handle -> assertEquals(1, handle.attach(ActivityInstanceDao.class)
+                .bulkUpdateIsHiddenByActivityIds(testData.getUserId(), true, Set.of(activity.getActivityId()))));
+
+        AnswerSubmission submission = new AnswerSubmission(numericIntegerSid, null, gson.toJsonTree(10));
+        PatchAnswerPayload data = new PatchAnswerPayload(List.of(submission));
+        givenAnswerPatchRequest(instanceGuid, data)
+                .then().assertThat()
+                .statusCode(422).contentType(ContentType.JSON)
+                .body("code", equalTo(ErrorCodes.OPERATION_NOT_ALLOWED))
+                .body("message", containsString("is hidden"));
     }
 
     private void assert400AndBadPayloadResponse(String uri, String payload) throws Exception {
@@ -1631,7 +1646,7 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
             String answerGuid = TransactionWrapper.withTxn(handle -> {
                 handle.attach(JdbiActivity.class).insertValidation(
                         RouteTestUtil.createActivityValidationDto(
-                            activity, "false", "Should never fail", List.of(textStableId)
+                                activity, "false", "Should never fail", List.of(textStableId)
                         ),
                         testData.getUserId(),
                         testData.getStudyId(),
@@ -1643,8 +1658,8 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
             PatchAnswerPayload data = new PatchAnswerPayload();
             data.addSubmission(new AnswerSubmission(textStableId, answerGuid, new JsonPrimitive("hi there")));
             givenAnswerPatchRequest(instanceGuid, data)
-                .then().assertThat()
-                .statusCode(200).contentType(ContentType.JSON);
+                    .then().assertThat()
+                    .statusCode(200).contentType(ContentType.JSON);
         } finally {
             TransactionWrapper.useTxn(handle -> {
                 handle.attach(JdbiActivity.class).deleteValidationsByCode(activity.getActivityId());
@@ -1670,11 +1685,11 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
             PatchAnswerPayload data = new PatchAnswerPayload();
             data.addSubmission(new AnswerSubmission(textStableId, answerGuid, new JsonPrimitive("hi there")));
             givenAnswerPatchRequest(instanceGuid, data)
-                .then().assertThat()
-                .statusCode(200).contentType(ContentType.JSON)
-                .body("validationFailures", is(notNullValue()))
-                .body("validationFailures.size()", equalTo(1))
-                .body("answers.size()", equalTo(1));
+                    .then().assertThat()
+                    .statusCode(200).contentType(ContentType.JSON)
+                    .body("validationFailures", is(notNullValue()))
+                    .body("validationFailures.size()", equalTo(1))
+                    .body("answers.size()", equalTo(1));
         } finally {
             TransactionWrapper.useTxn(handle -> {
                 handle.attach(JdbiActivity.class).deleteValidationsByCode(activity.getActivityId());

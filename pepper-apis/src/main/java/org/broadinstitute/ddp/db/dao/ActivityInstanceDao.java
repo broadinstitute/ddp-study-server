@@ -75,8 +75,8 @@ public interface ActivityInstanceDao extends SqlObject {
     }
 
     /**
-     * Creates a new activity instance of the given activity for the given participant, on behalf of the given operator.
-     * Guid is generated internally.
+     * Creates a new activity instance of the given activity for the given participant, on behalf of the given operator. Guid is generated
+     * internally.
      *
      * @param activityId      the associated activity
      * @param operatorGuid    the user that created this instance
@@ -116,21 +116,20 @@ public interface ActivityInstanceDao extends SqlObject {
                 createdAtMillis, onDemandTriggerId);
         statusDao.insertStatus(instanceId, initialStatus, createdAtMillis, operatorGuid);
 
-        return new ActivityInstanceDto(instanceId, instanceGuid, activityId, participantId,
-                createdAtMillis, null, isReadOnly, false, initialStatus.name(), onDemandTriggerId, false);
+        return jdbiInstance.getByActivityInstanceId(instanceId).orElse(null);
     }
 
     /**
      * Creates a new activity instance of the given activity for the migration participant, on behalf of the given operator.
      *
-     * @param activityId        the associated activity
-     * @param operatorGuid      the user that created this instance
-     * @param participantGuid   the user this instance is for
-     * @param initialStatus     the starting status
-     * @param isReadOnly        whether read only or not
-     * @param createdAtMillis   the creation timestamp in milliseconds
-     * @param submissionId      submission ID from migrated data
-     * @param sessionId         session ID from migrated data
+     * @param activityId      the associated activity
+     * @param operatorGuid    the user that created this instance
+     * @param participantGuid the user this instance is for
+     * @param initialStatus   the starting status
+     * @param isReadOnly      whether read only or not
+     * @param createdAtMillis the creation timestamp in milliseconds
+     * @param submissionId    submission ID from migrated data
+     * @param sessionId       session ID from migrated data
      * @return newly created activity instance
      */
     default ActivityInstanceDto insertInstance(long activityId, String operatorGuid, String participantGuid,
@@ -146,8 +145,7 @@ public interface ActivityInstanceDao extends SqlObject {
                 isReadOnly, createdAtMillis, submissionId, sessionId, legacyVersion);
         //statusDao.insertStatus(instanceId, initialStatus, createdAtMillis, operatorGuid);
 
-        return new ActivityInstanceDto(instanceId, instanceGuid, activityId, participantId,
-                createdAtMillis, null, isReadOnly, false, initialStatus.name(), null, false);
+        return jdbiInstance.getByActivityInstanceId(instanceId).orElse(null);
     }
 
     @SqlUpdate("update activity_instance set is_readonly = :isReadOnly"

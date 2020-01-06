@@ -74,7 +74,7 @@ public class UserActivityInstanceListRoute implements Route {
         Map<String, List<ActivityInstanceSummary>> summariesByActivityCode = summaries
                 .stream()
                 .collect(Collectors.groupingBy(ActivityInstanceSummary::getActivityCode, Collectors.toList()));
-        for (List<ActivityInstanceSummary> summariesWithTheSameCode: summariesByActivityCode.values()) {
+        for (List<ActivityInstanceSummary> summariesWithTheSameCode : summariesByActivityCode.values()) {
             // No need to bother with no items, no need to number the single item
             if (summariesWithTheSameCode.size() <= 1) {
                 continue;
@@ -91,6 +91,8 @@ public class UserActivityInstanceListRoute implements Route {
     }
 
     private List<ActivityInstanceSummary> filterActivityInstancesFromDisplay(List<ActivityInstanceSummary> summaries) {
-        return summaries.stream().filter(instance -> !instance.isExcludeFromDisplay()).collect(Collectors.toList());
+        return summaries.stream()
+                .filter(instance -> !instance.isExcludeFromDisplay() && !instance.isHidden())
+                .collect(Collectors.toList());
     }
 }

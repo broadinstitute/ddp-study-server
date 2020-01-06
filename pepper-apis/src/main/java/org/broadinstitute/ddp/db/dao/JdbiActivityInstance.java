@@ -77,6 +77,11 @@ public interface JdbiActivityInstance extends SqlObject {
     @SqlUpdate("delete from activity_instance where activity_instance_id = :id")
     int delete(@Bind long id);
 
+    @SqlQuery("queryById")
+    @UseStringTemplateSqlLocator
+    @RegisterConstructorMapper(ActivityInstanceDto.class)
+    Optional<ActivityInstanceDto> getByActivityInstanceId(@Bind("activityInstanceId") long activityInstanceId);
+
     @SqlQuery("queryByGuid")
     @UseStringTemplateSqlLocator
     @RegisterConstructorMapper(ActivityInstanceDto.class)
@@ -95,11 +100,6 @@ public interface JdbiActivityInstance extends SqlObject {
     @SqlUpdate("update activity_instance set first_completed_at = :timestamp"
             + " where activity_instance_id = :id and first_completed_at is null")
     int updateFirstCompletedAtIfNotSet(@Bind("id") long instanceId, @Bind("timestamp") long firstCompletedAtMillis);
-
-    @SqlQuery("queryById")
-    @UseStringTemplateSqlLocator
-    @RegisterConstructorMapper(ActivityInstanceDto.class)
-    Optional<ActivityInstanceDto> getByActivityInstanceId(@Bind("activityInstanceId") long activityInstanceId);
 
     @SqlQuery(
             "SELECT ai.study_activity_id FROM activity_instance AS ai"

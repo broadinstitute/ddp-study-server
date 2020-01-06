@@ -56,6 +56,7 @@ public class ActivityInstanceSummary implements TranslatedSummary {
     private transient String isoLanguageCode;
     private transient String activityTypeName;
     private transient boolean excludeFromDisplay;
+    private transient boolean isHidden;
 
     /**
      * Instantiates ActivityInstanceSummary object.
@@ -76,6 +77,7 @@ public class ActivityInstanceSummary implements TranslatedSummary {
             String isoLanguageCode,
             String activityTypeName,
             boolean excludeFromDisplay,
+            boolean isHidden,
             long createdAt,
             boolean isFollowup
     ) {
@@ -96,6 +98,7 @@ public class ActivityInstanceSummary implements TranslatedSummary {
         this.isoLanguageCode = isoLanguageCode;
         this.activityTypeName = activityTypeName;
         this.excludeFromDisplay = excludeFromDisplay;
+        this.isHidden = isHidden;
         this.createdAt = createdAt;
         this.isFollowup = isFollowup;
     }
@@ -168,6 +171,10 @@ public class ActivityInstanceSummary implements TranslatedSummary {
 
     public boolean isExcludeFromDisplay() {
         return excludeFromDisplay;
+    }
+
+    public boolean isHidden() {
+        return isHidden;
     }
 
     public int getNumQuestions() {
