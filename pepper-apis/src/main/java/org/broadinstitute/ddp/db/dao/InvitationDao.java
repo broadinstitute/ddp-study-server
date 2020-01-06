@@ -36,7 +36,7 @@ public interface InvitationDao extends SqlObject {
     int updateAcceptedAt(@Bind("acceptedAt") Timestamp acceptedAt, @Bind("invitationGuid") String invitationGuid);
 
     @SqlUpdate("update invitation set voided_at = :voidedAt where study_id = :studyId and user_id = :userId")
-    int voidAllExistingInvitations(@Bind("studyId") long studyId, @Bind("userId") long userId, @Bind("voidedAt") Timestamp voidedAt);
+    int bulkUpdateVoidedAt(@Bind("studyId") long studyId, @Bind("userId") long userId, @Bind("voidedAt") Timestamp voidedAt);
 
     /**
      * Sets nullable date columns to null for the given invitation.  Convenience for testing.

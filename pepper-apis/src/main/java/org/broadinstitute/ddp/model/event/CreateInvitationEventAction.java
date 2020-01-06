@@ -27,9 +27,7 @@ public class CreateInvitationEventAction extends EventAction {
     private boolean markExistingAsVoided;
 
     public CreateInvitationEventAction(EventConfiguration eventConfiguration, EventConfigurationDto dto) {
-        super(eventConfiguration, dto);
-        contactEmailQuestionStableId = dto.getContactEmailQuestionStableId();
-        markExistingAsVoided = dto.shouldMarkExistingInvitationsAsVoided();
+        this(eventConfiguration, dto.getContactEmailQuestionStableId(), dto.shouldMarkExistingInvitationsAsVoided());
     }
 
     public CreateInvitationEventAction(EventConfiguration eventConfiguration,
@@ -55,7 +53,7 @@ public class CreateInvitationEventAction extends EventAction {
         if (markExistingAsVoided) {
             Timestamp now = TimestampUtil.now();
             int numVoided = handle.attach(InvitationDao.class)
-                    .voidAllExistingInvitations(signal.getStudyId(), signal.getParticipantId(), now);
+                    .bulkUpdateVoidedAt(signal.getStudyId(), signal.getParticipantId(), now);
             LOG.info("Marked {} existing invitations as voided at {}", numVoided, now.toInstant());
         }
 

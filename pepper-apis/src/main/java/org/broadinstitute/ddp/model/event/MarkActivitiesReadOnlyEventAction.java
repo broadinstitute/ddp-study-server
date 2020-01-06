@@ -20,10 +20,7 @@ public class MarkActivitiesReadOnlyEventAction extends EventAction {
     private Set<Long> targetActivityIds = new HashSet<>();
 
     public MarkActivitiesReadOnlyEventAction(EventConfiguration eventConfiguration, EventConfigurationDto dto) {
-        super(eventConfiguration, dto);
-        if (dto.getTargetActivityIds() != null) {
-            targetActivityIds.addAll(dto.getTargetActivityIds());
-        }
+        this(eventConfiguration, dto.getTargetActivityIds());
     }
 
     public MarkActivitiesReadOnlyEventAction(EventConfiguration eventConfiguration, Set<Long> targetActivityIds) {
@@ -36,7 +33,7 @@ public class MarkActivitiesReadOnlyEventAction extends EventAction {
     @Override
     public void doAction(PexInterpreter interpreter, Handle handle, EventSignal signal) {
         int numUpdated = handle.attach(ActivityInstanceDao.class)
-                .markReadOnlyByActivityIds(signal.getParticipantId(), targetActivityIds);
+                .bulkUpdateReadOnlyByActivityIds(signal.getParticipantId(), true, targetActivityIds);
         LOG.info("Marked {} activity instances read-only for participant {} and target activities {}",
                 numUpdated, signal.getParticipantGuid(), targetActivityIds);
     }

@@ -20,10 +20,7 @@ public class HideActivitiesEventAction extends EventAction {
     private Set<Long> targetActivityIds = new HashSet<>();
 
     public HideActivitiesEventAction(EventConfiguration eventConfiguration, EventConfigurationDto dto) {
-        super(eventConfiguration, dto);
-        if (dto.getTargetActivityIds() != null) {
-            targetActivityIds.addAll(dto.getTargetActivityIds());
-        }
+        this(eventConfiguration, dto.getTargetActivityIds());
     }
 
     public HideActivitiesEventAction(EventConfiguration eventConfiguration, Set<Long> targetActivityIds) {
@@ -36,7 +33,7 @@ public class HideActivitiesEventAction extends EventAction {
     @Override
     public void doAction(PexInterpreter interpreter, Handle handle, EventSignal signal) {
         int numUpdated = handle.attach(ActivityInstanceDao.class)
-                .markHiddenByActivityIds(signal.getParticipantId(), targetActivityIds);
+                .bulkUpdateIsHiddenByActivityIds(signal.getParticipantId(), true, targetActivityIds);
         LOG.info("Marked {} activity instances hidden for participant {} and target activities {}",
                 numUpdated, signal.getParticipantGuid(), targetActivityIds);
     }

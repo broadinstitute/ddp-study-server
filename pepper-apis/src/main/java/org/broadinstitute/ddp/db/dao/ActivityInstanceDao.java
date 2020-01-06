@@ -150,16 +150,18 @@ public interface ActivityInstanceDao extends SqlObject {
                 createdAtMillis, null, isReadOnly, false, initialStatus.name(), null, false);
     }
 
-    @SqlUpdate("update activity_instance set is_readonly = true"
+    @SqlUpdate("update activity_instance set is_readonly = :isReadOnly"
             + "  where participant_id = :participantId and study_activity_id in (<activityIds>)")
-    int markReadOnlyByActivityIds(
+    int bulkUpdateReadOnlyByActivityIds(
             @Bind("participantId") long participantId,
+            @Bind("isReadOnly") boolean isReadOnly,
             @BindList(value = "activityIds", onEmpty = EmptyHandling.NULL) Set<Long> activityIds);
 
-    @SqlUpdate("update activity_instance set is_hidden = true"
+    @SqlUpdate("update activity_instance set is_hidden = :isHidden"
             + "  where participant_id = :participantId and study_activity_id in (<activityIds>)")
-    int markHiddenByActivityIds(
+    int bulkUpdateIsHiddenByActivityIds(
             @Bind("participantId") long participantId,
+            @Bind("isHidden") boolean isHidden,
             @BindList(value = "activityIds", onEmpty = EmptyHandling.NULL) Set<Long> activityIds);
 
     @SqlUpdate("update activity_instance as ai"
