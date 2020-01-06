@@ -97,9 +97,9 @@ public interface EventActionDao extends SqlObject {
         return getJdbiEventAction().insert(null, EventActionType.USER_ENROLLED);
     }
 
-    default long insertAnnouncementAction(long msgTemplateId) {
+    default long insertAnnouncementAction(long msgTemplateId, boolean isPermanent, boolean createForProxies) {
         long actionId = getJdbiEventAction().insert(null, EventActionType.ANNOUNCEMENT);
-        int numInserted = getJdbiUserAnnouncementEventAction().insert(actionId, msgTemplateId);
+        int numInserted = getJdbiUserAnnouncementEventAction().insert(actionId, msgTemplateId, isPermanent, createForProxies);
         if (numInserted != 1) {
             throw new DaoException("Could not insert announcement event action with template id " + msgTemplateId);
         }
