@@ -3,7 +3,7 @@ get:
   tags:
     - Announcements
   summary: retrieve announcement messages
-  description: Returns the announcement message objects. Note that currently, messages are automatically deleted once retrieved.
+  description: Returns the announcement message objects. Note that currently, messages are automatically deleted once retrieved if they are not permanent.
   parameters:
     - in: path
       name: user
