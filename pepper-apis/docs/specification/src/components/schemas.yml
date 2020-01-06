@@ -1522,6 +1522,7 @@ AnnouncementModel:
   properties:
     guid:
       type: string
+      format: uuid
       description: an identifier for this message
       example: c8716864-3cd8-4a4b-8736-d2eec9756ad9
     permanent:
