@@ -749,28 +749,6 @@ Error.ActivityNotFound:
           type: string
           enum:
             - ACTIVITY_NOT_FOUND
-Error.Answer:
-  allOf:
-    - $ref: '../pepper.yml#/components/schemas/Error'
-    - type: object
-      required:
-        - validationFailures
-      properties:
-        code:
-          type: string
-          enum:
-            - INVALID_REQUEST
-            - BAD_PAYLOAD
-            - ACTIVITY_NOT_FOUND
-            - QUESTION_NOT_FOUND
-            - ANSWER_NOT_FOUND
-            - ANSWER_EXISTS
-            - ANSWER_VALIDATION
-            - ACTIVITY_INSTANCE_IS_READONLY
-        validationFailures:
-          type: array
-          items:
-            $ref: '../pepper.yml#/components/schemas/ValidationFailure'
 ValidationFailure:
   type: object
   required:
@@ -852,6 +830,117 @@ Error:
       type: string
     message:
       type: string
+Error.ActivityAnswersPatchBadPayload:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Error'
+    - type: object
+      properties:
+        code:
+          type: string
+          enum:
+            - BAD_PAYLOAD
+            - INVALID_REQUEST
+            - NO_SUCH_ELEMENT
+            - REQUIRED_PARAMETER_MISSING
+            - UNEXPECTED_NUMBER_OF_ELEMENTS
+Error.ActivityAnswersPatchExists:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Error'
+    - type: object
+      required:
+        - stableId
+      properties:
+        code:
+          type: string
+          enum:
+            - ANSWER_EXISTS
+        stableId:
+          type: string
+          description: identifier of question with existing answer
+Error.ActivityAnswersPatchInvalid:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Error'
+    - type: object
+      properties:
+        code:
+          type: string
+          enum:
+            - ACTIVITY_INSTANCE_IS_READONLY
+            - ANSWER_VALIDATION
+            - MALFORMED_EMAIL
+            - OPERATION_NOT_ALLOWED
+        violations:
+          type: array
+          description: list of question validation types an answer has failed to satisfy
+          items:
+            type: object
+            required:
+              - stableId
+              - rules
+            properties:
+              stableId:
+                type: string
+                description: identifier of question
+              rules:
+                type: array
+                items:
+                  $ref: '../pepper.yml#/components/schemas/ValidationType'
+Error.ActivityAnswersPatchNotFound:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Error'
+    - type: object
+      properties:
+        code:
+          type: string
+          enum:
+            - ACTIVITY_NOT_FOUND
+            - ANSWER_NOT_FOUND
+            - QUESTION_NOT_FOUND
+            - STUDY_NOT_FOUND
+            - USER_NOT_FOUND
+Error.ActivityAnswersPutInvalid:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Error'
+    - type: object
+      properties:
+        code:
+          type: string
+          enum:
+            - ACTIVITY_INSTANCE_IS_READONLY
+            - ACTIVITY_VALIDATION
+            - OPERATION_NOT_ALLOWED
+            - QUESTION_REQUIREMENTS_NOT_MET
+Error.ActivityAnswersPutNotFound:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Error'
+    - type: object
+      properties:
+        code:
+          type: string
+          enum:
+            - ACTIVITY_NOT_FOUND
+            - STUDY_NOT_FOUND
+            - USER_NOT_FOUND
+Error.ActivityDetailHidden:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Error'
+    - type: object
+      properties:
+        code:
+          type: string
+          enum:
+            - OPERATION_NOT_ALLOWED
+Error.ActivityDetailNotFound:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Error'
+    - type: object
+      properties:
+        code:
+          type: string
+          enum:
+            - ACTIVITY_NOT_FOUND
+            - STUDY_NOT_FOUND
+            - USER_NOT_FOUND
 Error.BadPayload:
   allOf:
     - $ref: '../pepper.yml#/components/schemas/Error'
