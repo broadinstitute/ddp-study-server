@@ -93,15 +93,11 @@ public class NotificationEventAction extends EventAction {
                         .stream()
                         .filter(invite -> !invite.isVoid())
                         .max(Comparator.comparing(InvitationDto::getCreatedAt))
-                        .orElse(null);
-                if (invitationDto == null) {
-                    throw new DDPException(String.format(
-                            "Could not find any non-voided invitations for participant %s and study %d",
-                            signal.getParticipantGuid(), signal.getStudyId()));
-                } else {
-                    LOG.info("Found latest non-voided invitation {} for participant {} and study {}",
-                            invitationDto.getInvitationGuid(), signal.getParticipantGuid(), signal.getStudyId());
-                }
+                        .orElseThrow(() -> new DDPException(String.format(
+                                "Could not find any non-voided invitations for participant %s and study %d",
+                                signal.getParticipantGuid(), signal.getStudyId())));
+                LOG.info("Found latest non-voided invitation {} for participant {} and study {}",
+                        invitationDto.getInvitationGuid(), signal.getParticipantGuid(), signal.getStudyId());
             }
 
             int numUpdated = handle.attach(JdbiQueuedNotification.class)
