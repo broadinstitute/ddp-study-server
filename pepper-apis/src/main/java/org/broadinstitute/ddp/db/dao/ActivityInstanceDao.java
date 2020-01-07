@@ -116,7 +116,8 @@ public interface ActivityInstanceDao extends SqlObject {
                 createdAtMillis, onDemandTriggerId);
         statusDao.insertStatus(instanceId, initialStatus, createdAtMillis, operatorGuid);
 
-        return jdbiInstance.getByActivityInstanceId(instanceId).orElse(null);
+        return jdbiInstance.getByActivityInstanceId(instanceId).orElseThrow(() ->
+                new DaoException("Could not find newly created activity instance with id " + instanceId));
     }
 
     /**
@@ -145,7 +146,8 @@ public interface ActivityInstanceDao extends SqlObject {
                 isReadOnly, createdAtMillis, submissionId, sessionId, legacyVersion);
         //statusDao.insertStatus(instanceId, initialStatus, createdAtMillis, operatorGuid);
 
-        return jdbiInstance.getByActivityInstanceId(instanceId).orElse(null);
+        return jdbiInstance.getByActivityInstanceId(instanceId).orElseThrow(() ->
+                new DaoException("Could not find newly created activity instance with id " + instanceId));
     }
 
     @SqlUpdate("update activity_instance set is_readonly = :isReadOnly"

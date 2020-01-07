@@ -37,7 +37,7 @@ where ai.activity_instance_id = :activityInstanceId
 
 queryByUserGuidAndInstanceGuid() ::= <<
 <select_all_instances()>
-join user as u on u.user_id = ai.participant_id
+ join user as u on u.user_id = ai.participant_id
 where ai.activity_instance_guid = :instanceGuid
   and u.guid = :userGuid
 >>
