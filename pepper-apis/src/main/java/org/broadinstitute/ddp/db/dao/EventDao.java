@@ -62,7 +62,7 @@ public interface EventDao extends SqlObject {
     @SqlQuery("getEventConfigurationsForStudyIdAndTriggerType")
     @UseStringTemplateSqlLocator
     @RegisterConstructorMapper(EventConfigurationDto.class)
-    @UseRowReducer(PdfAttachmentReducer.class)
+    @UseRowReducer(EventConfigurationActionReducer.class)
     List<EventConfigurationDto> getEventConfigurationDtosForStudyIdAndTriggerType(
             @Bind("studyId") long studyId,
             @Bind("eventTriggerType") EventTriggerType eventTriggerType);
@@ -74,7 +74,7 @@ public interface EventDao extends SqlObject {
     @SqlQuery("getActivityStatusEventConfigurations")
     @UseStringTemplateSqlLocator
     @RegisterConstructorMapper(EventConfigurationDto.class)
-    @UseRowReducer(PdfAttachmentReducer.class)
+    @UseRowReducer(EventConfigurationActionReducer.class)
     List<EventConfigurationDto> getEventConfigurationDtosForActivityStatus(@Bind("activityInstanceId") long activityInstanceId,
                                                                            @Bind("status") String activityStatus);
 
@@ -82,7 +82,7 @@ public interface EventDao extends SqlObject {
     @UseStringTemplateSqlLocator
     @SqlQuery("getActiveDispatchConfigsByStudyIdAndTrigger")
     @RegisterConstructorMapper(EventConfigurationDto.class)
-    @UseRowReducer(PdfAttachmentReducer.class)
+    @UseRowReducer(EventConfigurationActionReducer.class)
     List<EventConfigurationDto> getActiveDispatchConfigsByStudyIdAndTrigger(@Bind("studyId") long studyId,
                                                                             @Bind("eventTriggerType") EventTriggerType eventTriggerType);
 
@@ -245,16 +245,22 @@ public interface EventDao extends SqlObject {
         }
     }
 
-    class PdfAttachmentReducer implements LinkedHashMapRowReducer<Long, EventConfigurationDto> {
+    class EventConfigurationActionReducer implements LinkedHashMapRowReducer<Long, EventConfigurationDto> {
         @Override
         public void accumulate(Map<Long, EventConfigurationDto> container, RowView view) {
             long eventConfigurationId = view.getColumn(SqlConstants.EventConfigurationTable.ID, Long.class);
             EventConfigurationDto dto = container.computeIfAbsent(eventConfigurationId, id -> view.getRow(EventConfigurationDto.class));
-            if (view.getColumn("user_notification_document_configuration_id", Long.class) != null) {
-                dto.addNotificationPdfAttachments(view.getColumn("user_notification_document_configuration_id", Long.class),
+
+            Long userNotificationDocumentConfigurationId = view.getColumn("user_notification_document_configuration_id", Long.class);
+            if (userNotificationDocumentConfigurationId != null) {
+                dto.addNotificationPdfAttachment(userNotificationDocumentConfigurationId,
                         view.getColumn("generate_if_missing", Boolean.class));
+            }
+
+            Long targetActivityId = view.getColumn("target_activity_id", Long.class);
+            if (targetActivityId != null) {
+                dto.addTargetActivityId(targetActivityId);
             }
         }
     }
-
 }

@@ -35,7 +35,13 @@ SELECT
      unpdf.generate_if_missing,
      aica.study_activity_id as activity_instance_creation_study_activity_id,
      cp_target.copy_target as copy_answer_target,
-     qsc.stable_id as copy_source_question_stable_id
+     qsc.stable_id as copy_source_question_stable_id,
+     ciea.contact_email_question_stable_code_id as contact_email_question_stable_code_id,
+     (select stable_id from question_stable_code
+       where question_stable_code_id = ciea.contact_email_question_stable_code_id
+     ) as contact_email_question_stable_id,
+     ciea.mark_existing_as_voided as mark_existing_invitations_as_voided,
+     eata.activity_id as target_activity_id
 FROM
      event_configuration ec
 JOIN event_trigger et ON ec.event_trigger_id = et.event_trigger_id
@@ -59,6 +65,8 @@ LEFT JOIN activity_instance_creation_action aica ON aica.activity_instance_creat
 LEFT JOIN copy_answer_event_action as cp_answer on cp_answer.event_action_id=ea.event_action_id
 LEFT JOIN question_stable_code as qsc on qsc.question_stable_code_id=cp_answer.source_question_stable_id
 LEFT JOIN copy_answer_target cp_target on cp_target.copy_answer_target_id=cp_answer.copy_answer_target_id
+LEFT JOIN create_invitation_event_action as ciea on ciea.event_action_id = ea.event_action_id
+LEFT JOIN event_action_target_activity as eata on eata.event_action_id = ea.event_action_id
 >>
 
 getEventConfigurationsForStudyIdAndTriggerType() ::= <<
