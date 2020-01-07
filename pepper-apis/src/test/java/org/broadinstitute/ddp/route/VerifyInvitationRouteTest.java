@@ -71,7 +71,8 @@ public class VerifyInvitationRouteTest extends IntegrationTestSuite.TestCase {
                 HttpStatus.SC_OK, response.returnResponse().getStatusLine().getStatusCode());
 
         TransactionWrapper.useTxn(handle -> {
-            InvitationDto requeriedInvitation = handle.attach(InvitationDao.class).findByInvitationGuid(invitation.getGuid()).get();
+            InvitationDto requeriedInvitation = handle.attach(InvitationDao.class)
+                    .findByInvitationGuid(invitation.getInvitationGuid()).get();
             assertNotNull(requeriedInvitation.getVerifiedAt());
             assertTrue(requeriedInvitation.getCreatedAt().before(new Timestamp(System.currentTimeMillis())));
         });

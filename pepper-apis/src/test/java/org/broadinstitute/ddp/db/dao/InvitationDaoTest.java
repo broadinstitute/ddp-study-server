@@ -50,7 +50,7 @@ public class InvitationDaoTest extends TxnAwareBaseTest {
             assertEquals(acceptedAt, requeriedInvitation.getAcceptedAt());
             assertEquals(verifiedAt, requeriedInvitation.getVerifiedAt());
             assertEquals(voidedAt, requeriedInvitation.getVoidedAt());
-            assertEquals(invitation.getGuid(), requeriedInvitation.getGuid());
+            assertEquals(invitation.getInvitationGuid(), requeriedInvitation.getInvitationGuid());
             assertEquals(email, requeriedInvitation.getContactEmail());
         });
     }

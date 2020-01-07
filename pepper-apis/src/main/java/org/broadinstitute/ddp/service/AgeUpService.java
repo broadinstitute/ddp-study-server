@@ -12,6 +12,8 @@ import java.util.stream.Collectors;
 
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
+import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
+import org.broadinstitute.ddp.model.event.EventSignal;
 import org.broadinstitute.ddp.model.governance.AgeOfMajorityRule;
 import org.broadinstitute.ddp.model.governance.AgeUpCandidate;
 import org.broadinstitute.ddp.model.governance.GovernancePolicy;
@@ -90,11 +92,23 @@ public class AgeUpService {
             if (agedUp) {
                 LOG.info("Age-up candidate {} in study {} has reached age-of-majority", userGuid, studyGuid);
                 jdbiEnrollment.changeUserStudyEnrollmentStatus(userGuid, studyGuid, EnrollmentStatusType.CONSENT_SUSPENDED);
-                // todo: trigger event service with REACHED_AOM signal
+                EventSignal signal = new EventSignal(
+                        candidate.getParticipantUserId(),
+                        candidate.getParticipantUserId(),
+                        candidate.getParticipantUserGuid(),
+                        policy.getStudyId(),
+                        EventTriggerType.REACHED_AOM);
+                EventService.getInstance().processAllActionsForEventSignal(handle, signal);
                 agedUpCandidateIds.add(candidate.getId());
             } else if (!candidate.hasInitiatedPrep() && shouldPrepForAgeUp) {
                 LOG.info("Age-up candidate {} in study {} has reached preparation for age-of-majority", userGuid, studyGuid);
-                // todo: trigger event service with REACHED_AOM_PREP signal
+                EventSignal signal = new EventSignal(
+                        candidate.getParticipantUserId(),
+                        candidate.getParticipantUserId(),
+                        candidate.getParticipantUserGuid(),
+                        policy.getStudyId(),
+                        EventTriggerType.REACHED_AOM_PREP);
+                EventService.getInstance().processAllActionsForEventSignal(handle, signal);
                 preppedCandidateIds.add(candidate.getId());
             }
         }
