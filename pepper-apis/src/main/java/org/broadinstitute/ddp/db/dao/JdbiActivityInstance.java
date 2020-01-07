@@ -51,8 +51,8 @@ public interface JdbiActivityInstance extends SqlObject {
             + "activity_instance_id = :activityInstanceId")
     String getActivityInstanceGuid(@Bind("activityInstanceId") long activityInstanceId);
 
-    @SqlUpdate("insert into activity_instance (study_activity_id,participant_id,activity_instance_guid,is_readonly,is_hidden,"
-            + "created_at,ondemand_trigger_id) values(:activityId,:participantId,:guid,:isReadOnly,false,:createdAt,:triggerId)")
+    @SqlUpdate("insert into activity_instance (study_activity_id,participant_id,activity_instance_guid,is_readonly,"
+            + "created_at,ondemand_trigger_id) values(:activityId,:participantId,:guid,:isReadOnly,:createdAt,:triggerId)")
     @GetGeneratedKeys
     long insert(@Bind("activityId") long activityId,
                 @Bind("participantId") long participantId,
@@ -61,9 +61,9 @@ public interface JdbiActivityInstance extends SqlObject {
                 @Bind("createdAt") long createdAtMillis,
                 @Bind("triggerId") Long onDemandTriggerId);
 
-    @SqlUpdate("insert into activity_instance (study_activity_id,participant_id,activity_instance_guid,is_readonly,is_hidden,"
+    @SqlUpdate("insert into activity_instance (study_activity_id,participant_id,activity_instance_guid,is_readonly,"
             + "created_at, legacy_submissionid,legacy_sessionid,legacy_version) values(:activityId,:participantId,:guid,"
-            + ":isReadOnly,false,:createdAt,:submissionId,:sessionId,:legacyVersion)")
+            + ":isReadOnly,:createdAt,:submissionId,:sessionId,:legacyVersion)")
     @GetGeneratedKeys
     long insertLegacyInstance(@Bind("activityId") long activityId,
                               @Bind("participantId") long participantId,

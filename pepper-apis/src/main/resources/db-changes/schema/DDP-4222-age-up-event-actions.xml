@@ -44,12 +44,10 @@
 
     <changeSet author="yufeng" id="20200102-add-is-hidden-column-to-activity-instance">
         <addColumn tableName="activity_instance">
-            <column name="is_hidden" type="boolean"/>
+            <column name="is_hidden" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
         </addColumn>
-        <update tableName="activity_instance">
-            <column name="is_hidden" valueBoolean="false"/>
-        </update>
-        <addNotNullConstraint tableName="activity_instance" columnName="is_hidden" columnDataType="boolean"/>
     </changeSet>
 
 </databaseChangeLog>
