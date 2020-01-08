@@ -59,10 +59,6 @@ public class InvitationDto {
 
     }
 
-    public String getGuid() {
-        return invitationGuid;
-    }
-
     public Long getInvitationId() {
         return invitationId;
     }
@@ -121,5 +117,9 @@ public class InvitationDto {
 
     private boolean isVerified() {
         return verifiedAt != null;
+    }
+
+    public boolean isAccepted() {
+        return acceptedAt != null;
     }
 }
