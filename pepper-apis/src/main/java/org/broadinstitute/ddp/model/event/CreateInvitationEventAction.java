@@ -47,7 +47,7 @@ public class CreateInvitationEventAction extends EventAction {
     InvitationCreatedSignal run(Handle handle, EventSignal signal) {
         String contactEmail = fetchContactEmail(handle, signal);
         if (!MiscUtil.isEmailFormatValid(contactEmail)) {
-            throw new DDPException("Answer contact email is not a valid email");
+            throw new DDPException("Contact email answer '" + contactEmail + "' is not a valid email");
         }
 
         if (markExistingAsVoided) {
