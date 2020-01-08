@@ -12,7 +12,6 @@ import java.util.Set;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.AgreementAnswerDto;
-import org.broadinstitute.ddp.db.dto.AnswerDto;
 import org.broadinstitute.ddp.db.dto.ChildAnswerDto;
 import org.broadinstitute.ddp.db.dto.CompositeAnswerSummaryDto;
 import org.broadinstitute.ddp.db.dto.QuestionDto;

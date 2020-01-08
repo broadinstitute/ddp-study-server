@@ -8,7 +8,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.broadinstitute.ddp.db.dto.AnswerDto;
 import org.broadinstitute.ddp.db.dto.ChildAnswerDto;
 import org.broadinstitute.ddp.db.dto.CompositeAnswerSummaryDto;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;

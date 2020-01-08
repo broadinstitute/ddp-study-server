@@ -1,9 +1,6 @@
 package org.broadinstitute.ddp.db.dao;
 
-import static java.util.Collections.emptyList;
-import static org.broadinstitute.ddp.db.dao.ActivityAnswerCopierSql.*;
 import static org.broadinstitute.ddp.util.GuidUtils.UPPER_ALPHA_NUMERIC;
-import static org.hamcrest.Matchers.contains;
 import static org.junit.Assert.assertNotNull;
 
 import java.time.Instant;
@@ -16,7 +13,7 @@ import java.util.Optional;
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.db.dao.ActivityAnswerCopierSql.CompositeAnswerCopier.CompositeAnswerCopyConfiguration;
+import org.broadinstitute.ddp.db.dao.copyanswer.CompositeAnswerCopyConfiguration;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.AnswerDto;
 import org.broadinstitute.ddp.db.dto.PicklistOptionDto;
@@ -40,17 +37,11 @@ import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.definition.validation.RequiredRuleDef;
-import org.broadinstitute.ddp.model.activity.definition.validation.RuleDef;
-import org.broadinstitute.ddp.model.activity.instance.answer.AgreementAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.AnswerRow;
-import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
-import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
-import org.broadinstitute.ddp.model.activity.instance.question.CompositeQuestion;
 import org.broadinstitute.ddp.model.activity.types.DateFieldType;
 import org.broadinstitute.ddp.model.activity.types.DateRenderMode;
 import org.broadinstitute.ddp.model.activity.types.FormType;
@@ -311,15 +302,15 @@ public class ActivityAnswerCopierSqlTest extends TxnAwareBaseTest {
             long compositeAnswerId = jdbiAnswer.insertBaseAnswer(compositeQuestionDef.getQuestionId(), testUser.getUserGuid(),
                     sourceActivityInstance.getId());
 
-            // insert two child rows,
+            // insert two child rows
             TextAnswer firstChild = newTextAnswer(compositeQuestionDef.getChildren().get(0), sourceActivityInstance.getId(), jdbiAnswer,
                     jdbiTextAnswer, "first");
 
             TextAnswer secondChild = newTextAnswer(compositeQuestionDef.getChildren().get(1), sourceActivityInstance.getId(), jdbiAnswer,
                     jdbiTextAnswer, "second");
 
-            jdbiCompositeAnswer.insertChildAnswerItems(compositeAnswerId, Arrays.asList(firstChild.getAnswerId(), secondChild.getAnswerId()),
-                    Arrays.asList(1,2));
+            jdbiCompositeAnswer.insertChildAnswerItems(compositeAnswerId, Arrays.asList(firstChild.getAnswerId(),
+                    secondChild.getAnswerId()), Arrays.asList(1, 2));
 
             compositeAnswer = answerDao.getAnswerByIdAndType(compositeAnswerId, QuestionType.COMPOSITE);
 
@@ -337,7 +328,7 @@ public class ActivityAnswerCopierSqlTest extends TxnAwareBaseTest {
     }
 
     @Test
-    public void testBaseAnswerCopy() {
+    public void testCopyForAllQuestionTypes() {
         CompositeAnswerCopyConfiguration compositeCopyConfig = new CompositeAnswerCopyConfiguration();
 
         // for our tests, since we're copying data between instances of the same activity definition,
@@ -389,8 +380,6 @@ public class ActivityAnswerCopierSqlTest extends TxnAwareBaseTest {
 
             Answer copiedAnswer = handle.attach(AnswerDao.class).getAnswerByIdAndType(copiedAnswerId, sourceQuestionDef.getQuestionType());
 
-            // todo arz remove changes to equals and use matchers?  will need this for composites
-
             if (sourceAnswer.getQuestionType() == QuestionType.COMPOSITE) {
                 numNewAnswersExpected += ((CompositeAnswer)sourceAnswer).getValue().size();
 
@@ -416,10 +405,6 @@ public class ActivityAnswerCopierSqlTest extends TxnAwareBaseTest {
 
             } else {
                 Assert.assertEquals(sourceAnswer.getValue(), copiedAnswer.getValue());
-            }
-
-            if (sourceAnswer instanceof CompositeAnswer) {
-
             }
         }
 

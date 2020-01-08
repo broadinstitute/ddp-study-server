@@ -43,8 +43,7 @@ public class SelectedPicklistOption {
             return false;
         }
         SelectedPicklistOption that = (SelectedPicklistOption) o;
-        return stableId.equals(that.stableId) &&
-                Objects.equals(detailText, that.detailText);
+        return stableId.equals(that.stableId) && Objects.equals(detailText, that.detailText);
     }
 
     @Override
