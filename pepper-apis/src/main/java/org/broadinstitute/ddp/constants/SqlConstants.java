@@ -105,6 +105,7 @@ public class SqlConstants {
         public static final String STUDY_ACTIVITY_ID = "study_activity_id";
         public static final String CREATED_AT = "created_at";
         public static final String IS_READONLY = "is_readonly";
+        public static final String IS_HIDDEN = "is_hidden";
         public static final String ONDEMAND_TRIGGER_ID = "ondemand_trigger_id";
         public static final String FIRST_COMPLETED_AT = "first_completed_at";
     }

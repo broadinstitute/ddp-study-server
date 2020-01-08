@@ -32,3 +32,36 @@ select a.answer_id
         where participant_id = u.user_id
           and study_activity_id = ai.study_activity_id)
 >>
+
+queryAnswerIdByQuestionStableIdAndLatestInstance() ::= <<
+select a.answer_id
+  from answer as a
+  join activity_instance as ai on ai.activity_instance_id = a.activity_instance_id
+  join study_activity as act on act.study_activity_id = ai.study_activity_id
+  join question as q on q.question_id = a.question_id
+  join question_stable_code as qsc
+       on qsc.question_stable_code_id = q.question_stable_code_id
+       and qsc.umbrella_study_id = act.study_id
+ where ai.participant_id = :userId
+   and qsc.umbrella_study_id = :studyId
+   and qsc.stable_id = :stableId
+   and ai.created_at = (
+       select max(created_at)
+         from activity_instance
+        where participant_id = ai.participant_id
+          and study_activity_id = act.study_activity_id)
+>>
+
+queryAnswerIdByQuestionStableIdAndInstanceId() ::= <<
+select a.answer_id
+  from answer as a
+  join activity_instance as ai on ai.activity_instance_id = a.activity_instance_id
+  join study_activity as act on act.study_activity_id = ai.study_activity_id
+  join question as q on q.question_id = a.question_id
+  join question_stable_code as qsc
+       on qsc.question_stable_code_id = q.question_stable_code_id
+       and qsc.umbrella_study_id = act.study_id
+ where ai.participant_id = :userId
+   and ai.activity_instance_id = :instanceId
+   and qsc.stable_id = :stableId
+>>

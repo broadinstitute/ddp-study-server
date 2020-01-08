@@ -3,7 +3,9 @@ package org.broadinstitute.ddp.db.dao;
 import static org.broadinstitute.ddp.model.event.MessageDestination.PARTICIPANT_NOTIFICATION;
 
 import java.util.Optional;
+import java.util.Set;
 
+import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dto.CopyAnswerEventActionDto;
 import org.broadinstitute.ddp.db.dto.SendgridEmailEventActionDto;
@@ -49,16 +51,22 @@ public interface EventActionDao extends SqlObject {
     @CreateSqlObject
     JdbiCopyAnswerEventAction getJdbiCopyAnswerEventAction();
 
+    @CreateSqlObject
+    EventActionSql getEventActionSql();
+
+    default long insertInvitationEmailNotificationAction(SendgridEmailEventActionDto sendgridTemplateDto) {
+        return insertNotificationAction(sendgridTemplateDto, NotificationType.INVITATION_EMAIL);
+    }
 
     default long insertStudyNotificationAction(SendgridEmailEventActionDto sendgridTemplateDto) {
-        return _insertNotificationAction(sendgridTemplateDto, NotificationType.STUDY_EMAIL);
+        return insertNotificationAction(sendgridTemplateDto, NotificationType.STUDY_EMAIL);
     }
 
     default long insertNotificationAction(SendgridEmailEventActionDto eventAction) {
-        return _insertNotificationAction(eventAction, NotificationType.EMAIL);
+        return insertNotificationAction(eventAction, NotificationType.EMAIL);
     }
 
-    default long _insertNotificationAction(SendgridEmailEventActionDto eventAction, NotificationType notificationType) {
+    private long insertNotificationAction(SendgridEmailEventActionDto eventAction, NotificationType notificationType) {
         long messageDestinationId = getMessageDestinationDao().findByTopic(PARTICIPANT_NOTIFICATION);
         long notificationServiceId = getNotificationServiceDao().findByType(NotificationServiceType.SENDGRID);
         long notificationTypeId = getNotificationTypeDao().findByType(notificationType);
@@ -106,6 +114,30 @@ public interface EventActionDao extends SqlObject {
         return actionId;
     }
 
+    default long insertCreateInvitationAction(long studyId, String contactEmailQuestionStableId, boolean markExistingAsVoided) {
+        long actionId = getJdbiEventAction().insert(null, EventActionType.CREATE_INVITATION);
+        long stableCodeId = getHandle().attach(JdbiQuestionStableCode.class)
+                .getIdForStableId(contactEmailQuestionStableId, studyId)
+                .orElseThrow(() -> new DaoException("Could not find question stable code id for stableId "
+                        + contactEmailQuestionStableId + " and studyId " + studyId));
+        DBUtils.checkInsert(1, getEventActionSql().insertCreateInvitationAction(actionId, stableCodeId, markExistingAsVoided));
+        return actionId;
+    }
+
+    default long insertHideActivitiesAction(Set<Long> activityIds) {
+        long actionId = getJdbiEventAction().insert(null, EventActionType.HIDE_ACTIVITIES);
+        long[] ids = getEventActionSql().insertTargetActivities(actionId, activityIds);
+        DBUtils.checkInsert(activityIds.size(), ids.length);
+        return actionId;
+    }
+
+    default long insertMarkActivitiesReadOnlyAction(Set<Long> activityIds) {
+        long actionId = getJdbiEventAction().insert(null, EventActionType.MARK_ACTIVITIES_READ_ONLY);
+        long[] ids = getEventActionSql().insertTargetActivities(actionId, activityIds);
+        DBUtils.checkInsert(activityIds.size(), ids.length);
+        return actionId;
+    }
+
     default long insertPdfGenerationAction(long pdfConfigurationId) {
         long messageDestinationId = getMessageDestinationDao().findByTopic(PARTICIPANT_NOTIFICATION);
         long actionId = getJdbiEventAction().insert(messageDestinationId, EventActionType.PDF_GENERATION);
@@ -145,6 +177,14 @@ public interface EventActionDao extends SqlObject {
         numDeleted = getJdbiEventAction().deleteById(eventActionId);
         if (numDeleted != 1) {
             throw new DaoException("Could not delete announcement event action id " + eventActionId);
+        }
+    }
+
+    default long insertStaticAction(EventActionType type) {
+        if (type.isStatic()) {
+            return getJdbiEventAction().insert(null, type);
+        } else {
+            throw new DaoException("Event action type " + type + " requires attributes other than the type");
         }
     }
 }
