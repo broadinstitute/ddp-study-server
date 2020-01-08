@@ -77,7 +77,7 @@ public class CreateInvitationEventActionTest extends TxnAwareBaseTest {
     @Test
     public void test_contactEmailAnswerIsNotValidEmail() {
         thrown.expect(DDPException.class);
-        thrown.expectMessage(containsString("contact email is not a valid email"));
+        thrown.expectMessage(containsString("not a valid email"));
 
         TransactionWrapper.useTxn(handle -> {
             FormActivityDef activity = newContactEmailActivity(handle);

@@ -71,7 +71,8 @@ public class PubSubMessageBuilder {
         if (pendingEvent.getActionType() == EventActionType.NOTIFICATION) {
             QueuedNotificationDto queuedNotificationDto = (QueuedNotificationDto) pendingEvent;
             if (NotificationType.EMAIL == queuedNotificationDto.getNotificationType()
-                    || NotificationType.STUDY_EMAIL == queuedNotificationDto.getNotificationType()) {
+                    || NotificationType.STUDY_EMAIL == queuedNotificationDto.getNotificationType()
+                    || NotificationType.INVITATION_EMAIL == queuedNotificationDto.getNotificationType()) {
                 Collection<String> sendToList = new HashSet<>();
 
                 // todo techdebt: set email field in QueuedEventDao instead of querying it here. make a list of
@@ -206,7 +207,7 @@ public class PubSubMessageBuilder {
                 messageJson = gson.toJson(notificationMessage);
             } else {
                 throw new MessageBuilderException("Unknown notification type "
-                        + queuedNotificationDto.getNotificationServiceType()
+                        + queuedNotificationDto.getNotificationType()
                         + " for queued event " + pendingEvent.getQueuedEventId());
             }
 
