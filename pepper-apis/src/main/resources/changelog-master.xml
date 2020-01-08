@@ -183,4 +183,6 @@
     <include file="db-changes/seed/DDP-4222-add-reached-ageup-prep-event.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-4227-age-up-candidate.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-4053-permanent-announcements.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-4222-age-up-event-actions.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/seed/DDP-4222-age-up-event-types.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

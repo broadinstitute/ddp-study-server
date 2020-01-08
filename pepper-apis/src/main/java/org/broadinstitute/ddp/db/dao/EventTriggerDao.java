@@ -55,10 +55,6 @@ public interface EventTriggerDao {
         return getJdbiEventTrigger().insert(EventTriggerType.USER_NOT_IN_STUDY);
     }
 
-    default long insertMedicalUpdateTrigger() {
-        return getJdbiEventTrigger().insert(EventTriggerType.MEDICAL_UPDATE);
-    }
-
     default long insertUserRegisteredTrigger() {
         return getJdbiEventTrigger().insert(EventTriggerType.USER_REGISTERED);
     }
@@ -67,7 +63,11 @@ public interface EventTriggerDao {
         return getJdbiEventTrigger().insert(EventTriggerType.EXIT_REQUEST);
     }
 
-    default long insertReachedAOMPrepTrigger() {
-        return getJdbiEventTrigger().insert(EventTriggerType.REACHED_AOM_PREP);
+    default long insertStaticTrigger(EventTriggerType type) {
+        if (type.isStatic()) {
+            return getJdbiEventTrigger().insert(type);
+        } else {
+            throw new DaoException("Event trigger type " + type + " requires attributes other than the type");
+        }
     }
 }

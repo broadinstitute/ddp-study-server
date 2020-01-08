@@ -1,7 +1,9 @@
 package org.broadinstitute.ddp.db.dto;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
@@ -83,6 +85,17 @@ public class EventConfigurationDto {
     private CopyAnswerTarget copyAnswerTarget;
     private String copySourceQuestionStableId;
 
+    /* CREATE_INVITATION */
+    private Long contactEmailQuestionStableCodeId;
+    private String contactEmailQuestionStableId;
+    private Boolean markExistingInvitationsAsVoided;
+
+    /* MARK_ACTIVITIES_READ_ONLY, HIDE_ACTIVITIES */
+    private Set<Long> targetActivityIds = new HashSet<>();
+
+    /* REVOKE_PROXIES */
+    // No sub-table
+
     public EventConfigurationDto(long eventConfigurationId,
                                  EventTriggerType eventTriggerType,
                                  EventActionType eventActionType,
@@ -107,7 +120,10 @@ public class EventConfigurationDto {
                                  Long pdfGenerationDocumentConfigurationId,
                                  Long activityInstanceCreationStudyActivityId,
                                  CopyAnswerTarget copyAnswerTarget,
-                                 String copySourceQuestionStableId) {
+                                 String copySourceQuestionStableId,
+                                 Long contactEmailQuestionStableCodeId,
+                                 String contactEmailQuestionStableId,
+                                 Boolean markExistingInvitationsAsVoided) {
         this.eventConfigurationId = eventConfigurationId;
         this.eventTriggerType = eventTriggerType;
         this.eventActionType = eventActionType;
@@ -133,6 +149,9 @@ public class EventConfigurationDto {
         this.activityInstanceCreationStudyActivityId = activityInstanceCreationStudyActivityId;
         this.copyAnswerTarget = copyAnswerTarget;
         this.copySourceQuestionStableId = copySourceQuestionStableId;
+        this.contactEmailQuestionStableCodeId = contactEmailQuestionStableCodeId;
+        this.contactEmailQuestionStableId = contactEmailQuestionStableId;
+        this.markExistingInvitationsAsVoided = markExistingInvitationsAsVoided;
     }
 
     public long getEventConfigurationId() {
@@ -235,11 +254,31 @@ public class EventConfigurationDto {
         return pdfGenerationDocumentConfigurationId;
     }
 
-    public void addNotificationPdfAttachments(Long pdfDocumentConfigurationId, Boolean generateIfMissing) {
+    public void addNotificationPdfAttachment(Long pdfDocumentConfigurationId, Boolean generateIfMissing) {
         notificationPdfAttachments.add(new PdfAttachment(pdfDocumentConfigurationId, generateIfMissing));
     }
 
     public List<PdfAttachment> getNotificationPdfAttachments() {
         return notificationPdfAttachments;
+    }
+
+    public Long getContactEmailQuestionStableCodeId() {
+        return contactEmailQuestionStableCodeId;
+    }
+
+    public String getContactEmailQuestionStableId() {
+        return contactEmailQuestionStableId;
+    }
+
+    public Boolean shouldMarkExistingInvitationsAsVoided() {
+        return markExistingInvitationsAsVoided;
+    }
+
+    public void addTargetActivityId(long activityId) {
+        targetActivityIds.add(activityId);
+    }
+
+    public Set<Long> getTargetActivityIds() {
+        return targetActivityIds;
     }
 }

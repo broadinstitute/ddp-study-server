@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="20200102-add-age-up-event-trigger-types">
+        <insert tableName="event_trigger_type">
+            <column name="event_trigger_type_code" value="REACHED_AOM"/>
+        </insert>
+        <insert tableName="event_trigger_type">
+            <column name="event_trigger_type_code" value="INVITATION_CREATED"/>
+        </insert>
+        <insert tableName="event_trigger_type">
+            <column name="event_trigger_type_code" value="GOVERNED_USER_REGISTERED"/>
+        </insert>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20200102-add-age-up-event-action-types">
+        <insert tableName="event_action_type">
+            <column name="event_action_type_code" value="CREATE_INVITATION"/>
+        </insert>
+        <insert tableName="event_action_type">
+            <column name="event_action_type_code" value="MARK_ACTIVITIES_READ_ONLY"/>
+        </insert>
+        <insert tableName="event_action_type">
+            <column name="event_action_type_code" value="HIDE_ACTIVITIES"/>
+        </insert>
+        <insert tableName="event_action_type">
+            <column name="event_action_type_code" value="REVOKE_PROXIES"/>
+        </insert>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20200102-invitation-email-notification-type">
+        <insert tableName="notification_type">
+            <column name="notification_type_code" value="INVITATION_EMAIL"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>
