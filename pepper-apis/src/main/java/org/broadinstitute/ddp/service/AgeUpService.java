@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.service;
 
+import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
@@ -25,14 +26,16 @@ public class AgeUpService {
 
     private static final Logger LOG = LoggerFactory.getLogger(AgeUpService.class);
 
-    private LocalDate overriddenToday;
+    private final Clock clock;
 
-    LocalDate getToday() {
-        return overriddenToday == null ? Instant.now().atZone(ZoneOffset.UTC).toLocalDate() : overriddenToday;
+    public AgeUpService() {
+        // This is the clock `Instant.now()` uses.
+        this(Clock.systemUTC());
     }
 
-    void setToday(LocalDate overriddenToday) {
-        this.overriddenToday = overriddenToday;
+    // Use this constructor and a fixed clock for testing purposes.
+    AgeUpService(Clock clock) {
+        this.clock = clock;
     }
 
     /**
@@ -80,7 +83,7 @@ public class AgeUpService {
                 continue;
             }
 
-            LocalDate today = getToday();
+            LocalDate today = Instant.now(clock).atZone(ZoneOffset.UTC).toLocalDate();
             boolean agedUp = rule.hasReachedAgeOfMajority(candidate.getBirthDate(), today);
             boolean shouldPrepForAgeUp = rule.hasReachedAgeOfMajorityPrep(candidate.getBirthDate(), today).orElse(false);
 
