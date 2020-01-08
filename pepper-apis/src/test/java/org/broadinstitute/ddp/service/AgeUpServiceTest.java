@@ -3,7 +3,10 @@ package org.broadinstitute.ddp.service;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -32,12 +35,13 @@ public class AgeUpServiceTest extends TxnAwareBaseTest {
 
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static PexInterpreter interpreter = new TreeWalkInterpreter();
-    private static AgeUpService service = new AgeUpService();
+    private static AgeUpService service;
 
     @BeforeClass
     public static void setup() {
         testData = TransactionWrapper.withTxn(TestDataSetupUtil::generateBasicUserTestData);
-        service.setToday(LocalDate.of(2020, 3, 14));
+        Instant fixedDate = LocalDate.of(2020, 3, 14).atStartOfDay(ZoneOffset.UTC).toInstant();
+        service = new AgeUpService(Clock.fixed(fixedDate, ZoneOffset.UTC));
     }
 
     @Test
