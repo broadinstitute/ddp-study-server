@@ -75,11 +75,17 @@ getEventConfigurationsForStudyIdAndTriggerType() ::= <<
         ec.umbrella_study_id = :studyId
         and ett.event_trigger_type_code = :eventTriggerType
         and ec.is_active = 1
+    order by ec.execution_order asc, ec.event_configuration_id asc
 >>
 
 getActiveDispatchConfigsByStudyIdAndTrigger() ::= <<
-<getEventConfigurationsForStudyIdAndTriggerType()>
-    and ec.dispatch_to_housekeeping = 1
+<eventConfigurationLookup()>
+    where
+        ec.umbrella_study_id = :studyId
+        and ett.event_trigger_type_code = :eventTriggerType
+        and ec.is_active = 1
+        and ec.dispatch_to_housekeeping = 1
+    order by ec.execution_order asc, ec.event_configuration_id asc
 >>
 
 getActivityStatusEventConfigurations() ::= <<
@@ -89,6 +95,7 @@ getActivityStatusEventConfigurations() ::= <<
         ai.activity_instance_id = :activityInstanceId
         and aist.activity_instance_status_type_code = :status
         and ec.is_active = 1
+    order by ec.execution_order asc, ec.event_configuration_id asc
 >>
 
 getNotificationAttachmentDetails() ::= <<
@@ -115,6 +122,7 @@ getNotificationConfigsForWorkflowState() ::= <<
     and wst.workflow_state_id = :workflowStateId
     and ec.is_active = 1
     and eat.event_action_type_code = 'NOTIFICATION'
+    order by ec.execution_order asc, ec.event_configuration_id asc
 >>
 
 /**
@@ -127,6 +135,7 @@ getNotificationConfigsForMailingListByEventType() ::= <<
     and ec.is_active = 1
     and eat.event_action_type_code = 'NOTIFICATION'
     and ett.event_trigger_type_code = :eventTriggerType
+    order by ec.execution_order asc, ec.event_configuration_id asc
 >>
 
 /**
