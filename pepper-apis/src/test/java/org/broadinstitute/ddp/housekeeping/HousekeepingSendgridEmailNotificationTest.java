@@ -178,7 +178,6 @@ public class HousekeepingSendgridEmailNotificationTest extends HousekeepingTest 
     private void moveStatusToInProgressAndThenToComplete() {
         TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, handle -> {
             ActivityInstanceStatusDao statusDao = handle.attach(ActivityInstanceStatusDao.class);
-
             statusDao.insertStatus(testActivityInstance.getId(),
                     InstanceStatusType.IN_PROGRESS,
                     Instant.now().toEpochMilli(),

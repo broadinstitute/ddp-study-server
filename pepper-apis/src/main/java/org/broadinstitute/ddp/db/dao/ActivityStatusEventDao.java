@@ -36,11 +36,11 @@ public interface ActivityStatusEventDao extends SqlObject {
                                               ActivityInstanceDto instanceDto, String status) {
         int numEventsQueued = 0;
         List<EventConfigurationDto> eventConfigs = getEventDao()
-                .getEventConfigurationsForActivityStatus(instanceDto.getId(), status);
+                .getEventConfigurationDtosForActivityStatus(instanceDto.getId(), status);
         JdbiQueuedEvent jdbiQueuedEvent = getHandle().attach(JdbiQueuedEvent.class);
         QueuedEventDao queuedEventDao = getHandle().attach(QueuedEventDao.class);
         for (EventConfigurationDto eventConfig : eventConfigs) {
-            Integer delayBeforePosting = eventConfig.getSecondsToWaitBeforePosting();
+            Integer delayBeforePosting = eventConfig.getPostDelaySeconds();
             if (delayBeforePosting == null) {
                 delayBeforePosting = 0;
             }

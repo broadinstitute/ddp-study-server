@@ -1,19 +1,8 @@
 package org.broadinstitute.ddp.db.dao;
 
-import static org.broadinstitute.ddp.constants.SqlConstants.ActivityInstanceStatusTypeTable.ACTIVITY_STATUS_TYPE_CODE;
-import static org.broadinstitute.ddp.constants.SqlConstants.ActivityInstanceTable.CREATED_AT;
-import static org.broadinstitute.ddp.constants.SqlConstants.ActivityInstanceTable.FIRST_COMPLETED_AT;
 import static org.broadinstitute.ddp.constants.SqlConstants.ActivityInstanceTable.GUID;
-import static org.broadinstitute.ddp.constants.SqlConstants.ActivityInstanceTable.ID;
-import static org.broadinstitute.ddp.constants.SqlConstants.ActivityInstanceTable.IS_READONLY;
-import static org.broadinstitute.ddp.constants.SqlConstants.ActivityInstanceTable.ONDEMAND_TRIGGER_ID;
-import static org.broadinstitute.ddp.constants.SqlConstants.ActivityInstanceTable.PARTICIPANT_ID;
-import static org.broadinstitute.ddp.constants.SqlConstants.ActivityInstanceTable.STUDY_ACTIVITY_ID;
 import static org.broadinstitute.ddp.constants.SqlConstants.ActivityInstanceTable.TABLE_NAME;
-import static org.broadinstitute.ddp.constants.SqlConstants.StudyActivityTable.ALLOW_UNAUTHENTICATED;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 
@@ -22,11 +11,8 @@ import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceStatusChangeDto;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
-import org.jdbi.v3.core.mapper.RowMapper;
-import org.jdbi.v3.core.statement.StatementContext;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
-import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
@@ -93,12 +79,12 @@ public interface JdbiActivityInstance extends SqlObject {
 
     @SqlQuery("queryByGuid")
     @UseStringTemplateSqlLocator
-    @RegisterRowMapper(ActivityInstanceRowMapper.class)
+    @RegisterConstructorMapper(ActivityInstanceDto.class)
     Optional<ActivityInstanceDto> getByActivityInstanceGuid(@Bind("activityInstanceGuid") String activityInstanceGuid);
 
     @UseStringTemplateSqlLocator
     @SqlQuery("queryByUserGuidAndInstanceGuid")
-    @RegisterRowMapper(ActivityInstanceRowMapper.class)
+    @RegisterConstructorMapper(ActivityInstanceDto.class)
     Optional<ActivityInstanceDto> getByUserAndInstanceGuids(@Bind("userGuid") String userGuid,
                                                             @Bind("instanceGuid") String instanceGuid);
 
@@ -112,7 +98,7 @@ public interface JdbiActivityInstance extends SqlObject {
 
     @SqlQuery("queryById")
     @UseStringTemplateSqlLocator
-    @RegisterRowMapper(ActivityInstanceRowMapper.class)
+    @RegisterConstructorMapper(ActivityInstanceDto.class)
     Optional<ActivityInstanceDto> getByActivityInstanceId(@Bind("activityInstanceId") long activityInstanceId);
 
     @SqlQuery(
@@ -139,14 +125,14 @@ public interface JdbiActivityInstance extends SqlObject {
 
     @UseStringTemplateSqlLocator
     @SqlQuery("queryAllByUserGuidAndActivityCode")
-    @RegisterRowMapper(ActivityInstanceRowMapper.class)
+    @RegisterConstructorMapper(ActivityInstanceDto.class)
     List<ActivityInstanceDto> findAllByUserGuidAndActivityCode(@Bind("userGuid") String userGuid,
                                                                @Bind("activityCode") String activityCode,
                                                                @Bind("studyId") long studyId);
 
     @UseStringTemplateSqlLocator
     @SqlQuery("queryAllByUserIdAndStudyId")
-    @RegisterRowMapper(ActivityInstanceRowMapper.class)
+    @RegisterConstructorMapper(ActivityInstanceDto.class)
     List<ActivityInstanceDto> findAllByUserIdAndStudyId(@Bind("userId") long userId, @Bind("studyId") long studyId);
 
     @SqlQuery("select ai.activity_instance_guid "
@@ -221,22 +207,4 @@ public interface JdbiActivityInstance extends SqlObject {
             + "   and u.guid = :userGuid"
             + " order by ai.created_at desc limit 1")
     Optional<String> findLatestInstanceGuidByUserGuidAndActivityId(@Bind("userGuid") String userGuid, @Bind("activityId") long activityId);
-
-    class ActivityInstanceRowMapper implements RowMapper<ActivityInstanceDto> {
-        @Override
-        public ActivityInstanceDto map(ResultSet rs, StatementContext ctx) throws SQLException {
-            return new ActivityInstanceDto(
-                    rs.getLong(ID),
-                    rs.getString(GUID),
-                    rs.getLong(STUDY_ACTIVITY_ID),
-                    rs.getLong(PARTICIPANT_ID),
-                    rs.getLong(CREATED_AT),
-                    (Long) rs.getObject(FIRST_COMPLETED_AT),
-                    rs.getBoolean(IS_READONLY),
-                    rs.getString(ACTIVITY_STATUS_TYPE_CODE),
-                    (Long) rs.getObject(ONDEMAND_TRIGGER_ID),
-                    rs.getBoolean(ALLOW_UNAUTHENTICATED)
-            );
-        }
-    }
 }

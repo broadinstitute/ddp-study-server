@@ -2,7 +2,6 @@ package org.broadinstitute.ddp.route;
 
 import static io.restassured.RestAssured.given;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -10,7 +9,6 @@ import java.sql.SQLException;
 import java.time.Instant;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Optional;
 
 import com.google.gson.Gson;
 import io.restassured.http.ContentType;
@@ -31,7 +29,6 @@ import org.broadinstitute.ddp.json.ActivityInstanceCreationResponse;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.types.FormType;
-import org.broadinstitute.ddp.model.pex.Expression;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.hamcrest.Matchers;
 import org.jdbi.v3.core.Handle;
@@ -45,13 +42,9 @@ import org.slf4j.LoggerFactory;
 public class CreateActivityInstanceRouteTest extends IntegrationTestSuite.TestCase {
 
     private static final Logger LOG = LoggerFactory.getLogger(CreateActivityInstanceRouteTest.class);
-
+    private static final Collection<String> activityInstancesToDelete = new HashSet<>();
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static String ACTIVITY_CODE;
-    private static String PRE_COND_GUID;
-
-    private static final Collection<String> activityInstancesToDelete = new HashSet<>();
-
     private static String token;
 
     private static String url;
@@ -66,16 +59,10 @@ public class CreateActivityInstanceRouteTest extends IntegrationTestSuite.TestCa
             url = RouteTestUtil.getTestingBaseUrl() + endpoint;
 
             FormActivityDef activityDef = setupActivityDefinition(handle);
-            activityDef.setCreationExpr("true");
             activityDef.setMaxInstancesPerUser(1);
             insertTestActivity(handle, activityDef);
 
-            Optional<Expression> expressionDto = handle.attach(JdbiExpression.class).getById(activityDef.getCreationExprId());
-            assertTrue("conditional expression not inserted for test activity " + activityDef.getActivityCode(),
-                    expressionDto.isPresent());
-
             ACTIVITY_CODE = activityDef.getActivityCode();
-            PRE_COND_GUID = expressionDto.get().getGuid();
             token = testData.getTestingUser().getToken();
         });
     }
@@ -85,20 +72,20 @@ public class CreateActivityInstanceRouteTest extends IntegrationTestSuite.TestCa
         long millis = Instant.now().toEpochMilli();
         String changeReason = "test for " + CreateActivityInstanceRouteTest.class.getName();
         long revId = handle.attach(JdbiRevision.class).insert(testData.getUserId(),
-                                                              millis,
-                                                              null,
-                                                              changeReason);
+                millis,
+                null,
+                changeReason);
         handle.attach(FormActivityDao.class).insertActivity(act, revId);
         assertNotNull(act.getActivityId());
     }
 
     private static FormActivityDef setupActivityDefinition(Handle handle) {
         String activityCode = DBUtils.uniqueStandardGuid(handle, SqlConstants.StudyActivityTable.TABLE_NAME,
-                                                         SqlConstants.StudyActivityTable.CODE);
+                SqlConstants.StudyActivityTable.CODE);
         FormActivityDef activityDef = FormActivityDef.formBuilder(FormType.PREQUALIFIER,
-                                                                  activityCode,
-                                                                  "v1",
-                                                                  testData.getStudyGuid())
+                activityCode,
+                "v1",
+                testData.getStudyGuid())
                 .addName(new Translation("en", "CreateActivityInstanceRouteTest testing"))
                 .build();
         return activityDef;
@@ -112,8 +99,8 @@ public class CreateActivityInstanceRouteTest extends IntegrationTestSuite.TestCa
                     "delete from activity_instance where activity_instance_guid = ?");
                     PreparedStatement deleteStatus = handle.getConnection().prepareStatement(
                             "delete from activity_instance_status where activity_instance_id ="
-                                 + " (select activity_instance_id from activity_instance "
-                                 + "where activity_instance_guid = ?)")) {
+                                    + " (select activity_instance_id from activity_instance "
+                                    + "where activity_instance_guid = ?)")) {
                 for (String instanceGuid : activityInstancesToDelete) {
                     deleteStatus.setString(1, instanceGuid);
                     deleteStatus.executeUpdate();
@@ -128,7 +115,6 @@ public class CreateActivityInstanceRouteTest extends IntegrationTestSuite.TestCa
             }
             // Reset activity precondition
             JdbiExpression exprDao = handle.attach(JdbiExpression.class);
-            Assert.assertEquals(1, exprDao.updateByGuid(PRE_COND_GUID, "true"));
         });
         activityInstancesToDelete.clear();
     }
@@ -188,34 +174,5 @@ public class CreateActivityInstanceRouteTest extends IntegrationTestSuite.TestCa
                 .statusCode(422)
                 .contentType(ContentType.JSON)
                 .body("code", Matchers.equalTo(ErrorCodes.TOO_MANY_INSTANCES));
-    }
-
-    @Test
-    public void testCreateActivityFailsWhenPexExpressionNotMet() {
-        String precondition = "false";
-        TransactionWrapper.useTxn(handle -> handle.attach(JdbiExpression.class)
-                .updateByGuid(PRE_COND_GUID, precondition));
-
-        createActivityInstance(ACTIVITY_CODE)
-                .then().assertThat()
-                .statusCode(422)
-                .contentType(ContentType.JSON)
-                .body("code", Matchers.equalTo(ErrorCodes.UNSATISFIED_PRECONDITION));
-    }
-
-    @Test
-    public void testCreateActivityWhenPexExpressionMet() {
-        String precondition = "true && (false || true)";
-        TransactionWrapper.useTxn(handle -> handle.attach(JdbiExpression.class)
-                .updateByGuid(PRE_COND_GUID, precondition));
-
-        String instanceGuid = createActivityInstance(ACTIVITY_CODE)
-                .then().assertThat()
-                .statusCode(200)
-                .contentType(ContentType.JSON)
-                .and().extract().path("instanceGuid");
-
-        Assert.assertNotNull(instanceGuid);
-        activityInstancesToDelete.add(instanceGuid);
     }
 }

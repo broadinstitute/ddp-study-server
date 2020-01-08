@@ -189,6 +189,7 @@ public class AnswerDao {
      */
     public List<Answer> getAnswersForQuestion(Handle handle, String formInstanceGuid,
                                               String stableId, Long languageCodeId) {
+        // FIXME we no longer need forminstanceGuid. StableId is enough
         List<Long> answerIds = new ArrayList<>();
         List<QuestionType> questionTypes = new ArrayList<>();
 

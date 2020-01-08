@@ -10,7 +10,6 @@ import org.broadinstitute.ddp.model.activity.definition.i18n.SummaryTranslation;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.FormType;
-import org.broadinstitute.ddp.model.pex.Expression;
 import org.jdbi.v3.sqlobject.CreateSqlObject;
 import org.jdbi.v3.sqlobject.SqlObject;
 
@@ -24,9 +23,6 @@ public interface FormActivityDao extends SqlObject {
 
     @CreateSqlObject
     JdbiActivityVersion getJdbiActivityVersion();
-
-    @CreateSqlObject
-    JdbiActivityCondition getJdbiActivityCondition();
 
     @CreateSqlObject
     JdbiStudyActivityNameTranslation getJdbiStudyActivityNameTranslation();
@@ -105,18 +101,6 @@ public interface FormActivityDao extends SqlObject {
 
         long versionId = jdbiVersion.insert(activity.getActivityId(), activity.getVersionTag(), revisionId);
         activity.setVersionId(versionId);
-
-        if (activity.getCreationExpr() != null) {
-            if (activity.getCreationExprId() != null) {
-                throw new IllegalStateException("Creation expr id already set to " + activity.getCreationExprId());
-            }
-            Expression expr = getJdbiExpression().insertExpression(activity.getCreationExpr());
-            activity.setCreationExprId(expr.getId());
-            int numRows = getJdbiActivityCondition().insert(activityId, expr.getId());
-            if (numRows != 1) {
-                throw new DaoException("Inserted " + numRows + " for activity " + activityId + " creation expression");
-            }
-        }
 
         for (Translation name : activity.getTranslatedNames()) {
             jdbiActNameTranslation.insert(activityId,

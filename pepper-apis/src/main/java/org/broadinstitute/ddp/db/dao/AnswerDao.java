@@ -141,6 +141,28 @@ public interface AnswerDao extends SqlObject {
         return numAnswerRowsDeleted;
     }
 
+    @UseStringTemplateSqlLocator
+    @SqlQuery("queryAnswerIdByQuestionStableIdAndLatestInstance")
+    Optional<Long> findAnswerIdByQuestionStableIdAndLatestInstance(
+            @Bind("userId") long userId,
+            @Bind("studyId") long studyId,
+            @Bind("stableId") String questionStableId);
+
+    @UseStringTemplateSqlLocator
+    @SqlQuery("queryAnswerIdByQuestionStableIdAndInstanceId")
+    Optional<Long> findAnswerIdByQuestionStableIdAndInstanceId(
+            @Bind("userId") long userId,
+            @Bind("instanceId") long instanceId,
+            @Bind("stableId") String questionStableId);
+
+    default Optional<Answer> findAnswerForQuestionAndLatestInstance(long userId, long studyId, String questionStableId) {
+        return findAnswerIdByQuestionStableIdAndLatestInstance(userId, studyId, questionStableId).map(this::getAnswerById);
+    }
+
+    default Optional<Answer> findAnswerForQuestionAndInstance(long userId, long instanceId, String questionStableId) {
+        return findAnswerIdByQuestionStableIdAndInstanceId(userId, instanceId, questionStableId).map(this::getAnswerById);
+    }
+
     /**
      * Get answer by id. Automatically looks up type.
      *

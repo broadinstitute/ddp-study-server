@@ -4,7 +4,8 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.SqlConstants;
@@ -16,16 +17,19 @@ import org.broadinstitute.ddp.db.dto.QueuedNotificationDto;
 import org.broadinstitute.ddp.db.dto.QueuedPdfGenerationDto;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
+import org.broadinstitute.ddp.model.event.EventConfiguration;
 import org.broadinstitute.ddp.model.event.PdfAttachment;
 import org.jdbi.v3.core.mapper.RowMapper;
+import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
+import org.jdbi.v3.core.result.RowView;
 import org.jdbi.v3.core.statement.StatementContext;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
-import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
+import org.jdbi.v3.sqlobject.statement.UseRowReducer;
 import org.jdbi.v3.stringtemplate4.UseStringTemplateSqlLocator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,52 +38,64 @@ public interface EventDao extends SqlObject {
 
     Logger LOG = LoggerFactory.getLogger(EventDao.class);
 
+    default List<EventConfiguration> getAllEventConfigurationsByStudyIdAndTriggerType(long studyId,
+                                                                                      EventTriggerType eventTriggerType) {
+        return getEventConfigurationDtosForStudyIdAndTriggerType(studyId, eventTriggerType).stream()
+                .map(dto -> new EventConfiguration(dto))
+                .collect(Collectors.toList());
+    }
+
+    default List<EventConfiguration> getSynchronousEventConfigurationsByStudyIdAndTriggerType(long studyId,
+                                                                                              EventTriggerType eventTriggerType) {
+        return getAllEventConfigurationsByStudyIdAndTriggerType(studyId, eventTriggerType).stream()
+                .filter(eventConfiguration -> !eventConfiguration.dispatchToHousekeeping())
+                .collect(Collectors.toList());
+    }
+
+    default List<EventConfiguration> getAsynchronousEventConfigurationsByStudyIdAndTriggerType(long studyId,
+                                                                                               EventTriggerType eventTriggerType) {
+        return getAllEventConfigurationsByStudyIdAndTriggerType(studyId, eventTriggerType).stream()
+                .filter(eventConfiguration -> eventConfiguration.dispatchToHousekeeping())
+                .collect(Collectors.toList());
+    }
+
+    @SqlQuery("getEventConfigurationsForStudyIdAndTriggerType")
+    @UseStringTemplateSqlLocator
+    @RegisterConstructorMapper(EventConfigurationDto.class)
+    @UseRowReducer(EventConfigurationActionReducer.class)
+    List<EventConfigurationDto> getEventConfigurationDtosForStudyIdAndTriggerType(
+            @Bind("studyId") long studyId,
+            @Bind("eventTriggerType") EventTriggerType eventTriggerType);
+
     /**
      * Returns the event configurations for the given
      * activity instance and status
      */
     @SqlQuery("getActivityStatusEventConfigurations")
     @UseStringTemplateSqlLocator
-    @RegisterRowMapper(EventConfigurationDtoMapper.class)
-    List<EventConfigurationDto> getEventConfigurationsForActivityStatus(@Bind("activityInstanceId") long activityInstanceId,
-                                                                        @Bind("status") String activityStatus);
-
-    /**
-     * Returns the event configurations for the given study id, activity id and activity instance status
-     * This method is used by runPostActivityStatusChangeHooks() when a certain activityId in a studyId
-     * changes its status to activityInstanceStatus and a check is performed to find if there's an
-     * event configuration triggering the activity instance creation
-     */
-    @SqlQuery("getEventConfigurations")
-    @UseStringTemplateSqlLocator
     @RegisterConstructorMapper(EventConfigurationDto.class)
-    List<EventConfigurationDto> getEventConfigurationsByStudyIdActivityIdAndStatus(
-            @Bind("studyId") long studyId,
-            @Bind("activityId") long activityId,
-            @Bind("activityInstanceStatus") String activityInstanceStatus,
-            @BindList(value = "actionTypes", onEmpty = BindList.EmptyHandling.NULL) Set<EventActionType> actionTypes);
+    @UseRowReducer(EventConfigurationActionReducer.class)
+    List<EventConfigurationDto> getEventConfigurationDtosForActivityStatus(@Bind("activityInstanceId") long activityInstanceId,
+                                                                           @Bind("status") String activityStatus);
+
 
     @UseStringTemplateSqlLocator
     @SqlQuery("getActiveDispatchConfigsByStudyIdAndTrigger")
-    @RegisterRowMapper(EventConfigurationDtoMapper.class)
+    @RegisterConstructorMapper(EventConfigurationDto.class)
+    @UseRowReducer(EventConfigurationActionReducer.class)
     List<EventConfigurationDto> getActiveDispatchConfigsByStudyIdAndTrigger(@Bind("studyId") long studyId,
-                                                                            @Bind("trigger") EventTriggerType trigger);
-
-    @UseStringTemplateSqlLocator
-    @SqlQuery("getActiveDispatchedEventConfigSummariesByStudyIdAndTriggerType")
-    @RegisterRowMapper(EventConfigurationDtoMapper.class)
-    List<EventConfigurationDto> getEventConfigSummariesByStudyIdAndTriggerType(@Bind("studyId") long studyId,
-                                                                               @Bind("triggerType") EventTriggerType triggerType);
+                                                                            @Bind("eventTriggerType") EventTriggerType eventTriggerType);
 
     default int addMedicalUpdateTriggeredEventsToQueue(long studyId, long participantId) {
-        List<EventConfigurationDto> summaries = getEventConfigSummariesByStudyIdAndTriggerType(studyId, EventTriggerType.MEDICAL_UPDATE);
+        List<EventConfigurationDto> summaries = getEventConfigurationDtosForStudyIdAndTriggerType(studyId,
+                EventTriggerType.MEDICAL_UPDATE);
 
         QueuedEventDao queuedEventDao = getHandle().attach(QueuedEventDao.class);
         int numEventsQueued = 0;
 
         for (EventConfigurationDto summary : summaries) {
             long queuedEventId = queuedEventDao.addToQueue(summary.getEventConfigurationId(),
-                    null, participantId, summary.getSecondsToWaitBeforePosting());
+                    null, participantId, summary.getPostDelaySeconds());
             LOG.info("Inserted queued event id={} for eventConfigurationId={}", queuedEventId, summary.getEventConfigurationId());
             numEventsQueued++;
         }
@@ -115,6 +131,12 @@ public interface EventDao extends SqlObject {
     }
 
     /**
+     * Used by Study Builder do not delete
+     **/
+    @SqlUpdate("update event_configuration set is_active = :enable where umbrella_study_id = :studyId")
+    int enableAllStudyEvents(@Bind("studyId") long studyId, @Bind("enable") boolean enable);
+
+    /**
      * Loads the notification specific information, using eventDto as a base.
      */
     default QueuedNotificationDto getNotificationDtoForQueuedEvent(QueuedEventDto eventDto) {
@@ -146,7 +168,8 @@ public interface EventDao extends SqlObject {
     @SqlQuery("getTemplateSubstitutionsForQueuedNotification")
     @UseStringTemplateSqlLocator
     @RegisterConstructorMapper(NotificationTemplateSubstitutionDto.class)
-    List<NotificationTemplateSubstitutionDto> getTemplateSubstitutionsForQueuedNotification(@Bind("queuedEventId") long queuedEventId);
+    List<NotificationTemplateSubstitutionDto> getTemplateSubstitutionsForQueuedNotification(@Bind("queuedEventId")
+                                                                                                    long queuedEventId);
 
     @SqlQuery("getNotificationDetailsForQueuedEvent")
     @UseStringTemplateSqlLocator
@@ -186,7 +209,7 @@ public interface EventDao extends SqlObject {
      */
     @SqlQuery("getNotificationConfigsForMailingListByEventType")
     @UseStringTemplateSqlLocator
-    @RegisterRowMapper(EventConfigurationDtoMapper.class)
+    @RegisterConstructorMapper(EventConfigurationDto.class)
     List<EventConfigurationDto> getNotificationConfigsForMailingListByEventType(@Bind("studyGuid") String studyGuid,
                                                                                 @Bind("eventTriggerType")
                                                                                         EventTriggerType eventTriggerType);
@@ -198,28 +221,11 @@ public interface EventDao extends SqlObject {
      */
     @SqlQuery("getNotificationConfigsForWorkflowState")
     @UseStringTemplateSqlLocator
-    @RegisterRowMapper(EventConfigurationDtoMapper.class)
+    @RegisterConstructorMapper(EventConfigurationDto.class)
     List<EventConfigurationDto> getNotificationConfigsForWorkflowState(@Bind("studyGuid") String studyGuid,
                                                                        @Bind("workflowStateId") long workflowStateId);
 
-    @SqlUpdate("update event_configuration set is_active = :enable where umbrella_study_id = :studyId")
-    int enableAllStudyEvents(@Bind("studyId") long studyId, @Bind("enable") boolean enable);
-
-    class EventConfigurationDtoMapper implements RowMapper<EventConfigurationDto> {
-
-        @Override
-        public EventConfigurationDto map(ResultSet rs, StatementContext ctx) throws SQLException {
-            EventTriggerType eventTriggerType = EventTriggerType.valueOf(rs.getString(SqlConstants
-                    .EventTriggerTypeTable.TYPE_CODE));
-            return new EventConfigurationDto(eventTriggerType,
-                    (Integer) rs.getObject(SqlConstants.EventConfigurationTable.POST_DELAY_SECONDS),
-                    rs.getLong(SqlConstants.EventConfigurationTable.ID),
-                    EventActionType.valueOf(rs.getString(SqlConstants.EventActionTypeTable.TYPE)));
-        }
-    }
-
     class EventConfigDtoMapper implements RowMapper<QueuedEventDto> {
-
         @Override
         public QueuedEventDto map(ResultSet rs, StatementContext ctx) throws SQLException {
             return new QueuedEventDto(
@@ -239,4 +245,22 @@ public interface EventDao extends SqlObject {
         }
     }
 
+    class EventConfigurationActionReducer implements LinkedHashMapRowReducer<Long, EventConfigurationDto> {
+        @Override
+        public void accumulate(Map<Long, EventConfigurationDto> container, RowView view) {
+            long eventConfigurationId = view.getColumn(SqlConstants.EventConfigurationTable.ID, Long.class);
+            EventConfigurationDto dto = container.computeIfAbsent(eventConfigurationId, id -> view.getRow(EventConfigurationDto.class));
+
+            Long userNotificationDocumentConfigurationId = view.getColumn("user_notification_document_configuration_id", Long.class);
+            if (userNotificationDocumentConfigurationId != null) {
+                dto.addNotificationPdfAttachment(userNotificationDocumentConfigurationId,
+                        view.getColumn("generate_if_missing", Boolean.class));
+            }
+
+            Long targetActivityId = view.getColumn("target_activity_id", Long.class);
+            if (targetActivityId != null) {
+                dto.addTargetActivityId(targetActivityId);
+            }
+        }
+    }
 }

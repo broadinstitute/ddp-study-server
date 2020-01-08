@@ -51,9 +51,6 @@ public abstract class ActivityDef {
     @SerializedName("editTimeoutSec")
     protected Long editTimeoutSec;
 
-    @SerializedName("creationExpr")
-    protected String creationExpr;
-
     @SerializedName("allowOndemandTrigger")
     protected boolean allowOndemandTrigger;
 
@@ -92,16 +89,6 @@ public abstract class ActivityDef {
 
     protected transient Long activityId;
     protected transient Long versionId;
-    protected transient Long creationExprId;
-
-    /**
-     * Get a tag that should be unique enough to identify an activity at a certain version.
-     *
-     * @return a tag string
-     */
-    public static String getTag(String activityCode, String versionTag) {
-        return activityCode + "_" + versionTag;
-    }
 
     ActivityDef(
             ActivityType activityType,
@@ -137,6 +124,15 @@ public abstract class ActivityDef {
         this.translatedSummaries = translatedSummaries;
         this.readonlyHintTemplate = readonlyHintTemplate;
         this.isFollowup = isFollowup;
+    }
+
+    /**
+     * Get a tag that should be unique enough to identify an activity at a certain version.
+     *
+     * @return a tag string
+     */
+    public static String getTag(String activityCode, String versionTag) {
+        return activityCode + "_" + versionTag;
     }
 
     public String getTag() {
@@ -177,14 +173,6 @@ public abstract class ActivityDef {
 
     public Long getEditTimeoutSec() {
         return editTimeoutSec;
-    }
-
-    public String getCreationExpr() {
-        return creationExpr;
-    }
-
-    public void setCreationExpr(String creationExpression) {
-        this.creationExpr = creationExpression;
     }
 
     public List<Translation> getTranslatedNames() {
@@ -228,14 +216,6 @@ public abstract class ActivityDef {
         return this;
     }
 
-    public Long getCreationExprId() {
-        return creationExprId;
-    }
-
-    public void setCreationExprId(Long creationExprId) {
-        this.creationExprId = creationExprId;
-    }
-
     public boolean isOndemandTriggerAllowed() {
         return allowOndemandTrigger;
     }
@@ -264,12 +244,10 @@ public abstract class ActivityDef {
         protected String studyGuid;
         protected Long activityId = null;
         protected Long versionId = null;
-        protected Long creationExprId = null;
         protected Integer maxInstancesPerUser = null;
         protected int displayOrder = 0;
         protected boolean writeOnce = false;
         protected Long editTimeoutSec = null;
-        protected String creationExpr = null;
         protected boolean allowOndemandTrigger = false;
         protected boolean excludeFromDisplay = false;
         protected boolean allowUnauthenticated = false;
@@ -294,8 +272,6 @@ public abstract class ActivityDef {
         protected void configure(ActivityDef activity) {
             activity.activityId = activityId;
             activity.versionId = versionId;
-            activity.creationExprId = creationExprId;
-            activity.creationExpr = creationExpr;
             activity.editTimeoutSec = editTimeoutSec;
             activity.allowOndemandTrigger = allowOndemandTrigger;
             activity.excludeFromDisplay = excludeFromDisplay;
@@ -329,11 +305,6 @@ public abstract class ActivityDef {
             return self();
         }
 
-        public T setCreationExprId(Long creationExprId) {
-            this.creationExprId = creationExprId;
-            return self();
-        }
-
         public T setMaxInstancesPerUser(Integer maxInstancesPerUser) {
             this.maxInstancesPerUser = maxInstancesPerUser;
             return self();
@@ -351,11 +322,6 @@ public abstract class ActivityDef {
 
         public T setEditTimeoutSec(Long editTimeoutSec) {
             this.editTimeoutSec = editTimeoutSec;
-            return self();
-        }
-
-        public T setCreationExpr(String creationExpr) {
-            this.creationExpr = creationExpr;
             return self();
         }
 

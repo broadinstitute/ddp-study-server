@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.google.gson.Gson;
@@ -43,6 +44,7 @@ public class EventBuilder {
     private static final Logger LOG = LoggerFactory.getLogger(EventBuilder.class);
     private static final String ACTION_SENDGRID_EMAIL = "SENDGRID_EMAIL";
     private static final String ACTION_STUDY_EMAIL = "STUDY_EMAIL";
+    private static final String ACTION_INVITATION_EMAIL = "INVITATION_EMAIL";
     public static final String ACTIVITY_CODE_FIELD = "activityCode";
     public static final String WORKFLOW_STATE_FIELD = "state";
 
@@ -101,14 +103,6 @@ public class EventBuilder {
         } else if (type == EventTriggerType.DSM_NOTIFICATION) {
             String dsmEvent = triggerCfg.getString("dsmEvent");
             return triggerDao.insertDsmNotificationTrigger(dsmEvent);
-        } else if (type == EventTriggerType.JOIN_MAILING_LIST) {
-            return triggerDao.insertMailingListTrigger();
-        } else if (type == EventTriggerType.USER_NOT_IN_STUDY) {
-            return triggerDao.insertUserNotInStudyTrigger();
-        } else if (type == EventTriggerType.MEDICAL_UPDATE) {
-            return triggerDao.insertMedicalUpdateTrigger();
-        } else if (type == EventTriggerType.USER_REGISTERED) {
-            return triggerDao.insertUserRegisteredTrigger();
         } else if (type == EventTriggerType.WORKFLOW_STATE) {
             if (triggerCfg.hasPath(ACTIVITY_CODE_FIELD)) {
                 String activityCode = triggerCfg.getString(ACTIVITY_CODE_FIELD);
@@ -127,12 +121,8 @@ public class EventBuilder {
             } else {
                 throw new DDPException("Trigger type for " + type + " has no activity code or workflow state");
             }
-        } else if (type == EventTriggerType.EXIT_REQUEST) {
-            return triggerDao.insertExitRequestTrigger();
-        } else if (type == EventTriggerType.REACHED_AOM_PREP) {
-            return triggerDao.insertReachedAOMPrepTrigger();
         } else {
-            throw new DDPException("Unsupported event trigger type " + type);
+            return triggerDao.insertStaticTrigger(type);
         }
     }
 
@@ -140,7 +130,7 @@ public class EventBuilder {
         EventActionDao actionDao = handle.attach(EventActionDao.class);
         String type = actionCfg.getString("type");
 
-        if (ACTION_SENDGRID_EMAIL.equals(type) || ACTION_STUDY_EMAIL.equals(type)) {
+        if (ACTION_SENDGRID_EMAIL.equals(type) || ACTION_STUDY_EMAIL.equals(type) || ACTION_INVITATION_EMAIL.equals(type)) {
             String emailTemplate = actionCfg.getString("emailTemplate");
             String language = actionCfg.getString("language");
             SendgridEmailEventActionDto actionDto = new SendgridEmailEventActionDto(emailTemplate, language);
@@ -154,6 +144,8 @@ public class EventBuilder {
             long actionId;
             if (ACTION_STUDY_EMAIL.equals(type)) {
                 actionId = actionDao.insertStudyNotificationAction(actionDto);
+            } else if (ACTION_INVITATION_EMAIL.equals(type)) {
+                actionId = actionDao.insertInvitationEmailNotificationAction(actionDto);
             } else {
                 actionId = actionDao.insertNotificationAction(actionDto);
             }
@@ -191,15 +183,35 @@ public class EventBuilder {
             long revId = handle.attach(JdbiRevision.class).insertStart(Instant.now().toEpochMilli(), adminUserId, reason);
             handle.attach(TemplateDao.class).insertTemplate(tmpl, revId);
 
-            return actionDao.insertAnnouncementAction(tmpl.getTemplateId());
-        } else if (EventActionType.USER_ENROLLED.name().equals(type)) {
-            return actionDao.insertEnrolledAction();
+            Boolean isPermanent = ConfigUtil.getBoolIfPresent(actionCfg, "permanent");
+            isPermanent = isPermanent == null ? false : isPermanent;
+
+            Boolean createForProxies = ConfigUtil.getBoolIfPresent(actionCfg, "createForProxies");
+            createForProxies = createForProxies == null ? false : createForProxies;
+
+            return actionDao.insertAnnouncementAction(tmpl.getTemplateId(), isPermanent, createForProxies);
         } else if (EventActionType.COPY_ANSWER.name().equals(type)) {
             String copySourceQuestionStableId = actionCfg.getString("copySourceQuestionStableId");
             CopyAnswerTarget copyTarget = actionCfg.getEnum(CopyAnswerTarget.class, "copyTarget");
             return actionDao.insertCopyAnswerAction(studyDto.getId(), copySourceQuestionStableId, copyTarget);
+        } else if (EventActionType.CREATE_INVITATION.name().equals(type)) {
+            boolean markExistingAsVoided = actionCfg.getBoolean("markExistingAsVoided");
+            String contactEmailQuestionStableId = actionCfg.getString("contactEmailQuestionStableId");
+            return actionDao.insertCreateInvitationAction(studyDto.getId(), contactEmailQuestionStableId, markExistingAsVoided);
+        } else if (EventActionType.HIDE_ACTIVITIES.name().equals(type)) {
+            Set<Long> activityIds = actionCfg.getStringList("activityCodes")
+                    .stream()
+                    .map(activtyCode -> ActivityBuilder.findActivityId(handle, studyDto.getId(), activtyCode))
+                    .collect(Collectors.toSet());
+            return actionDao.insertHideActivitiesAction(activityIds);
+        } else if (EventActionType.MARK_ACTIVITIES_READ_ONLY.name().equals(type)) {
+            Set<Long> activityIds = actionCfg.getStringList("activityCodes")
+                    .stream()
+                    .map(activtyCode -> ActivityBuilder.findActivityId(handle, studyDto.getId(), activtyCode))
+                    .collect(Collectors.toSet());
+            return actionDao.insertMarkActivitiesReadOnlyAction(activityIds);
         } else {
-            throw new DDPException("Unsupported event action type " + type);
+            return actionDao.insertStaticAction(EventActionType.valueOf(type));
         }
     }
 
@@ -227,7 +239,7 @@ public class EventBuilder {
 
     private String actionAsStr(Config actionCfg) {
         String type = actionCfg.getString("type");
-        if (ACTION_SENDGRID_EMAIL.equals(type) || ACTION_STUDY_EMAIL.equals(type)) {
+        if (ACTION_SENDGRID_EMAIL.equals(type) || ACTION_STUDY_EMAIL.equals(type) || ACTION_INVITATION_EMAIL.equals(type)) {
             String tmpl = actionCfg.getString("emailTemplate");
             List<String> pdfNames = new ArrayList<>();
             for (Config pdfAttachment : actionCfg.getConfigList("pdfAttachments")) {
@@ -244,7 +256,17 @@ public class EventBuilder {
         } else if (EventActionType.COPY_ANSWER.name().equals(type)) {
             String copySourceQuestionStableId = actionCfg.getString("copySourceQuestionStableId");
             CopyAnswerTarget copyTarget = actionCfg.getEnum(CopyAnswerTarget.class, "copyTarget");
-            return String.format("COPY_ANSWER/%s/%s", copySourceQuestionStableId, copyTarget);
+            return String.format("%s/%s/%s", type, copySourceQuestionStableId, copyTarget);
+        } else if (EventActionType.CREATE_INVITATION.name().equals(type)) {
+            boolean markExistingAsVoided = actionCfg.getBoolean("markExistingAsVoided");
+            String contactEmailQuestionStableId = actionCfg.getString("contactEmailQuestionStableId");
+            return String.format("%s/%s/%b", type, contactEmailQuestionStableId, markExistingAsVoided);
+        } else if (EventActionType.HIDE_ACTIVITIES.name().equals(type)) {
+            List<String> activityCodes = actionCfg.getStringList("activityCodes");
+            return String.format("%s/%s", type, String.join(",", activityCodes));
+        } else if (EventActionType.MARK_ACTIVITIES_READ_ONLY.name().equals(type)) {
+            List<String> activityCodes = actionCfg.getStringList("activityCodes");
+            return String.format("%s/%s", type, String.join(",", activityCodes));
         } else {
             return type;
         }
