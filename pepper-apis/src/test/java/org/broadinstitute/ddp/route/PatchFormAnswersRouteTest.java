@@ -388,8 +388,8 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
         PatchAnswerPayload data = new PatchAnswerPayload(List.of(submission));
         givenAnswerPatchRequest(instanceGuid, data)
                 .then().assertThat()
-                .statusCode(422).contentType(ContentType.JSON)
-                .body("code", equalTo(ErrorCodes.OPERATION_NOT_ALLOWED))
+                .statusCode(404).contentType(ContentType.JSON)
+                .body("code", equalTo(ErrorCodes.ACTIVITY_NOT_FOUND))
                 .body("message", containsString("is hidden"));
     }
 

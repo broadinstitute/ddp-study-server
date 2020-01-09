@@ -908,7 +908,6 @@ Error.ActivityAnswersPutInvalid:
           enum:
             - ACTIVITY_INSTANCE_IS_READONLY
             - ACTIVITY_VALIDATION
-            - OPERATION_NOT_ALLOWED
             - QUESTION_REQUIREMENTS_NOT_MET
 Error.ActivityAnswersPutNotFound:
   allOf:
@@ -921,15 +920,6 @@ Error.ActivityAnswersPutNotFound:
             - ACTIVITY_NOT_FOUND
             - STUDY_NOT_FOUND
             - USER_NOT_FOUND
-Error.ActivityDetailHidden:
-  allOf:
-    - $ref: '../pepper.yml#/components/schemas/Error'
-    - type: object
-      properties:
-        code:
-          type: string
-          enum:
-            - OPERATION_NOT_ALLOWED
 Error.ActivityDetailNotFound:
   allOf:
     - $ref: '../pepper.yml#/components/schemas/Error'

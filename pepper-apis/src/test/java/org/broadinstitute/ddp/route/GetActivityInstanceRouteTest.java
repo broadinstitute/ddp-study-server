@@ -682,8 +682,8 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
             given().auth().oauth2(token)
                     .pathParam("instanceGuid", instanceDto.getGuid())
                     .when().get(url).then().assertThat()
-                    .statusCode(422).contentType(ContentType.JSON)
-                    .body("code", equalTo(ErrorCodes.OPERATION_NOT_ALLOWED))
+                    .statusCode(404).contentType(ContentType.JSON)
+                    .body("code", equalTo(ErrorCodes.ACTIVITY_NOT_FOUND))
                     .body("message", containsString("is hidden"));
         } finally {
             TransactionWrapper.useTxn(handle -> assertEquals(1, handle.attach(ActivityInstanceDao.class)

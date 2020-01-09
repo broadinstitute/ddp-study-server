@@ -24,24 +24,6 @@ ActivityCreateResponse:
           instanceGuid:
             type: string
             example: ABCDEFGH12
-ActivityDetailResponse:
-  description: the requested activity instance exists, and was successfully retrieved.
-  content:
-    application/json:
-      schema:
-        $ref: '../pepper.yml#/components/schemas/Activity'
-ActivityDetailHiddenResponse:
-  description: the requested activity instance is hidden and cannot be retrieved
-  content:
-    application/json:
-      schema:
-        $ref: '../pepper.yml#/components/schemas/Error.ActivityDetailHidden'
-ActivityDetailNotFoundResponse:
-  description: the requested activity instance for user and study does not exist
-  content:
-    application/json:
-      schema:
-        $ref: '../pepper.yml#/components/schemas/Error.ActivityDetailNotFound'
 ActivityAnswersPatchResponse:
   description: successfully created or updated answers, along with any activity validation failures
   content:
@@ -100,7 +82,7 @@ ActivityAnswersPatchExistsResponse:
       schema:
         $ref: '../pepper.yml#/components/schemas/Error.ActivityAnswersPatchExists'
 ActivityAnswersPatchInvalidResponse:
-  description: activity instance is read-only, is hidden, or answer submission failed validation
+  description: activity instance is read-only or answer submission failed validation
   content:
     application/json:
       schema:
@@ -123,7 +105,7 @@ ActivityAnswersPutResponse:
           workflow:
             $ref: '../pepper.yml#/components/schemas/WorkflowNextSuggestion'
 ActivityAnswersPutInvalidResponse:
-  description: activity instance is read-only, is hidden, required questions not answered yet, or there are validation errors
+  description: activity instance is read-only, required questions not answered yet, or there are validation errors
   content:
     application/json:
       schema:
@@ -134,6 +116,18 @@ ActivityAnswersPutNotFoundResponse:
     application/json:
       schema:
         $ref: '../pepper.yml#/components/schemas/Error.ActivityAnswersPutNotFound'
+ActivityDetailResponse:
+  description: the requested activity instance exists, and was successfully retrieved
+  content:
+    application/json:
+      schema:
+        $ref: '../pepper.yml#/components/schemas/Activity'
+ActivityDetailNotFoundResponse:
+  description: the requested activity instance for user and study does not exist
+  content:
+    application/json:
+      schema:
+        $ref: '../pepper.yml#/components/schemas/Error.ActivityDetailNotFound'
 AnnouncementsResponse:
   description: the list of announcement message objects
   content:

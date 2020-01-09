@@ -140,8 +140,8 @@ public class RouteUtil {
             String msg = "Could not find activity instance with guid " + instanceGuid;
             throw ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.ACTIVITY_NOT_FOUND, msg));
         } else if (instanceDto.isHidden()) {
-            String msg = "Activity instance " + instanceGuid + " is hidden";
-            throw ResponseUtil.haltError(response, 422, new ApiError(ErrorCodes.OPERATION_NOT_ALLOWED, msg));
+            String msg = "Activity instance " + instanceGuid + " is hidden and cannot be retrieved or interacted with";
+            throw ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.ACTIVITY_NOT_FOUND, msg));
         } else if (user.isTemporary() && !instanceDto.isAllowUnauthenticated()) {
             String msg = "Activity instance " + instanceGuid + " not accessible to unauthenticated users";
             throw ResponseUtil.haltError(response, 401, new ApiError(ErrorCodes.OPERATION_NOT_ALLOWED, msg));
