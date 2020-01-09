@@ -73,4 +73,8 @@ public class NotificationTemplateVariables {
      */
     public static final String DDP_STUDY_GUID = "-ddp.study.guid-";
 
+    /**
+     * The invitation guid
+     */
+    public static final String DDP_INVITATION_ID = "-ddp.invitationId-";
 }

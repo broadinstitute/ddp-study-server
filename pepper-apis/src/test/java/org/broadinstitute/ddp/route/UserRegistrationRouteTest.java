@@ -70,6 +70,8 @@ import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
+import org.broadinstitute.ddp.model.activity.types.EventActionType;
+import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.governance.AgeOfMajorityRule;
 import org.broadinstitute.ddp.model.governance.AgeUpCandidate;
 import org.broadinstitute.ddp.model.governance.Governance;
@@ -85,7 +87,6 @@ import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.broadinstitute.ddp.util.TimestampUtil;
 import org.hamcrest.Matchers;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -852,6 +853,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
         var user = new AtomicReference<User>();
 
         AtomicReference<GovernancePolicy> governancePolicy = new AtomicReference<>();
+        AtomicReference<StudyDto> testStudy = new AtomicReference<>();
         AtomicBoolean shouldDeleteProfile = new AtomicBoolean(false);
         try {
             var invitation = new AtomicReference<InvitationDto>();
@@ -862,9 +864,10 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
                 Auth0TenantDto auth0TenantDto = handle.attach(JdbiAuth0Tenant.class).findByDomain(auth0Domain);
                 user.set(userDao.findUserByAuth0UserId(auth0UserId, auth0TenantDto.getId()).get());
 
-                long tempStudyId = tempStudy.getId();
+                testStudy.set(TestDataSetupUtil.generateTestStudy(handle, RouteTestUtil.getConfig()));
+                long testStudyId = testStudy.get().getId();
                 invitation.set(handle.attach(InvitationFactory.class).createInvitation(InvitationType.AGE_UP,
-                        tempStudyId, user.get().getId(), "test+" + System.currentTimeMillis() + "@datadonationplatform.org"));
+                        testStudyId, user.get().getId(), "test+" + System.currentTimeMillis() + "@datadonationplatform.org"));
 
                 handle.attach(InvitationDao.class).clearDates(invitation.get().getInvitationGuid());
                 userDao.updateAuth0UserId(user.get().getGuid(), null);
@@ -886,16 +889,23 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
 
                 var studyGovernanceDao = handle.attach(StudyGovernanceDao.class);
 
-                governancePolicy.set(createGovernancePolicy(tempStudyId));
+                governancePolicy.set(createGovernancePolicy(testStudyId));
                 governancePolicy.set(studyGovernanceDao.createPolicy(governancePolicy.get()));
-
                 LOG.info("Created governance policy {} for study {}", governancePolicy.get().getId(), governancePolicy.get().getStudyId());
+
+                // Create a downstream non-dispatched event that sets user study status to enrolled
+                long triggerId = handle.attach(EventTriggerDao.class)
+                        .insertStaticTrigger(EventTriggerType.GOVERNED_USER_REGISTERED);
+                long actionId = handle.attach(EventActionDao.class)
+                        .insertStaticAction(EventActionType.USER_ENROLLED);
+                handle.attach(JdbiEventConfiguration.class).insert(triggerId, actionId, testStudy.get().getId(),
+                        Instant.now().toEpochMilli(), null, 0, null, null, false, 1);
             });
 
             String invitationGuid = invitation.get().getInvitationGuid();
 
             UserRegistrationPayload payload = new UserRegistrationPayload(auth0UserId, auth0ClientId,
-                    EN_LANG_CODE, tempStudy.getGuid(), auth0Domain, null, null, invitationGuid);
+                    EN_LANG_CODE, testStudy.get().getGuid(), auth0Domain, null, null, invitationGuid);
 
             makeRequestWith(payload).then().assertThat()
                     .statusCode(200)
@@ -904,10 +914,17 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
 
             TransactionWrapper.useTxn(handle -> {
                 var updatedInvitation = handle.attach(InvitationDao.class).findByInvitationGuid(invitationGuid).get();
-                Assert.assertNotNull(updatedInvitation.getAcceptedAt());
-                Assert.assertTrue(updatedInvitation.getAcceptedAt().before(TimestampUtil.now()));
+                assertNotNull(updatedInvitation.getAcceptedAt());
+                assertTrue(updatedInvitation.getAcceptedAt().before(TimestampUtil.now()));
+
                 User requeriedUser = handle.attach(UserDao.class).findUserByGuid(user.get().getGuid()).get();
-                Assert.assertEquals(auth0UserId, requeriedUser.getAuth0UserId());
+                assertEquals(auth0UserId, requeriedUser.getAuth0UserId());
+
+                EnrollmentStatusType status = handle.attach(JdbiUserStudyEnrollment.class)
+                        .getEnrollmentStatusByUserAndStudyIds(user.get().getId(), testStudy.get().getId())
+                        .orElse(null);
+                assertNotNull("downstream event for setting status should have been triggered", status);
+                assertEquals(EnrollmentStatusType.ENROLLED, status);
             });
 
         } finally {
@@ -926,6 +943,11 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
 
                 if (shouldDeleteProfile.get()) {
                     handle.attach(JdbiProfile.class).deleteByUserId(user.get().getId());
+                }
+
+                if (testStudy.get() != null) {
+                    handle.attach(JdbiUserStudyEnrollment.class)
+                            .deleteByUserGuidStudyGuid(user.get().getGuid(), testStudy.get().getGuid());
                 }
             });
         }

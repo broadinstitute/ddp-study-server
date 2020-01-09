@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.auth0.exception.Auth0Exception;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ConfigFile;
@@ -40,6 +39,7 @@ import org.broadinstitute.ddp.json.UserRegistrationResponse;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
+import org.broadinstitute.ddp.model.event.EventSignal;
 import org.broadinstitute.ddp.model.governance.Governance;
 import org.broadinstitute.ddp.model.governance.GovernancePolicy;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
@@ -47,6 +47,7 @@ import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.pex.TreeWalkInterpreter;
 import org.broadinstitute.ddp.security.StudyClientConfiguration;
+import org.broadinstitute.ddp.service.EventService;
 import org.broadinstitute.ddp.util.Auth0MgmtTokenHelper;
 import org.broadinstitute.ddp.util.Auth0Util;
 import org.broadinstitute.ddp.util.ConfigManager;
@@ -145,6 +146,8 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                 // if the invitation is revoked or there's already an account for the user, error out.
                 if (invitation.isVoid()) {
                     throw new DDPException("Invalid invitation " + invitationGuid + " for user " + auth0UserId);
+                } else if (invitation.isAccepted()) {
+                    throw new DDPException("Invitation " + invitationGuid + " has already been accepted");
                 }
 
                 var user = userDao.findUserById(invitation.getUserId()).orElseThrow(() -> new DDPException("Could not find user "
@@ -158,19 +161,20 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                 // verify that there is governance policy configured for the study and that the
                 // user has reached age of majority.
                 handle.attach(StudyGovernanceDao.class).findPolicyByStudyGuid(studyGuid).ifPresentOrElse(policy -> {
-
                     if (policy.hasReachedAgeOfMajority(handle, pexInterpreter, ddpUserGuid.get())) {
                         LOG.info("Assigning {} to user {} for invitation {}", auth0UserId, user.getGuid(), invitationGuid);
 
                         var numRows = userDao.updateAuth0UserId(user.getGuid(), auth0UserId.get());
-                        LOG.info("User {} has been associated  with auth0 id {}", user.getGuid(), auth0UserId.get());
-
                         if (numRows != 1) {
                             throw new DDPException("Updated " + numRows + " for " + auth0UserId.get());
                         }
+                        LOG.info("User {} has been associated with auth0 id {}", user.getGuid(), auth0UserId.get());
+
                         invitationDao.updateAcceptedAt(TimestampUtil.now(), invitationGuid);
 
-                        // todo arz when DDP-4222 lands, trigger events here
+                        EventSignal signal = new EventSignal(user.getId(), user.getId(), user.getGuid(),
+                                study.getId(), EventTriggerType.GOVERNED_USER_REGISTERED);
+                        EventService.getInstance().processAllActionsForEventSignal(handle, signal);
                     } else {
                         LOG.error("User {} is not allowed to create an account yet because they have not reached age of majority "
                                 + " in study {} with invitation {}", ddpUserGuid.get(), studyGuid, invitationGuid);
