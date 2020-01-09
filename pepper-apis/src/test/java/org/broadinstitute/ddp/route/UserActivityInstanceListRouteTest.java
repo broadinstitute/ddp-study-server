@@ -308,15 +308,19 @@ public class UserActivityInstanceListRouteTest extends IntegrationTestSuite.Test
     public void test_whenActivityInstanceIsHidden_thenNotReturned() {
         TransactionWrapper.useTxn(handle -> assertEquals(1, handle.attach(ActivityInstanceDao.class)
                 .bulkUpdateIsHiddenByActivityIds(testData.getUserId(), true, Set.of(prequal.getActivityId()))));
+        try {
+            String body = given().auth().oauth2(token)
+                    .when().get(url)
+                    .then().assertThat()
+                    .statusCode(200).contentType(ContentType.JSON)
+                    .and().extract().body().asString();
 
-        String body = given().auth().oauth2(token)
-                .when().get(url)
-                .then().assertThat()
-                .statusCode(200).contentType(ContentType.JSON)
-                .and().extract().body().asString();
+            ActivityInstanceSummary[] activities = gson.fromJson(body, ActivityInstanceSummary[].class);
 
-        ActivityInstanceSummary[] activities = gson.fromJson(body, ActivityInstanceSummary[].class);
-
-        assertEquals("should not have any activity instances since it's hidden", 0, activities.length);
+            assertEquals("should not have any activity instances since it's hidden", 0, activities.length);
+        } finally {
+            TransactionWrapper.useTxn(handle -> handle.attach(ActivityInstanceDao.class)
+                    .bulkUpdateIsHiddenByActivityIds(testData.getUserId(), false, Set.of(prequal.getActivityId())));
+        }
     }
 }
