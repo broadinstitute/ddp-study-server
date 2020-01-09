@@ -73,22 +73,6 @@ public interface AnswerDao extends SqlObject {
     @CreateSqlObject
     JdbiAnswer getJdbiAnswer();
 
-    /**
-     * Finds the answer id to specified question in the last-created activity instance of the specified activity. Useful in cases where we
-     * just need to know if there is an answer or not instead of needing all the data about the answer itself.
-     *
-     * @param userGuid         the user guid
-     * @param activityId       the activity id
-     * @param questionStableId the question stable id
-     * @return answer id if exists, empty otherwise
-     */
-    @UseStringTemplateSqlLocator
-    @SqlQuery("queryAnswerIdForQuestionInLatestInstance")
-    Optional<Long> findAnswerIdForQuestionInLatestInstance(
-            @Bind("userGuid") String userGuid,
-            @Bind("activityId") long activityId,
-            @Bind("questionStableId") String questionStableId);
-
     @SqlQuery(" select da.year, da.month, da.day "
             + " from activity_instance as ai "
             + " join answer as a on ai.activity_instance_id = a.activity_instance_id "
@@ -176,6 +160,13 @@ public interface AnswerDao extends SqlObject {
     default Optional<Answer> findAnswerForQuestionAndInstance(long userId, long instanceId, String questionStableId) {
         return findAnswerIdByQuestionStableIdAndInstanceId(userId, instanceId, questionStableId).map(this::getAnswerById);
     }
+
+    @UseStringTemplateSqlLocator
+    @SqlQuery("queryAnswerForQuestionAndInstanceId")
+    @UseRowReducer(AnswerWithValueReducer.class)
+    Optional<Answer> findAnswerForQuestionAndInstanceId(
+            @Bind("instanceId") long instanceId,
+            @Bind("questionStableId") String questionStableId);
 
     /**
      * Get answer by id. Automatically looks up type.

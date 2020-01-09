@@ -19,10 +19,14 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
+import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
+import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
+import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.governance.GovernancePolicy;
@@ -234,9 +238,27 @@ public class TreeWalkInterpreter implements PexInterpreter {
 
     private boolean applyQuestionPredicate(InterpreterContext ictx, long activityId, String stableId, QuestionPredicateContext predCtx) {
         if (predCtx instanceof PexParser.IsAnsweredPredicateContext) {
-            return ictx.getHandle().attach(AnswerDao.class)
-                    .findAnswerIdForQuestionInLatestInstance(ictx.getUserGuid(), activityId, stableId)
-                    .isPresent();
+            Long instanceId = ictx.getHandle().attach(JdbiActivityInstance.class)
+                    .findLatestInstanceIdByUserGuidAndActivityId(ictx.getUserGuid(), activityId)
+                    .orElse(null);
+            if (instanceId == null) {
+                return false;
+            }
+
+            Answer answer = ictx.getHandle().attach(AnswerDao.class)
+                    .findAnswerForQuestionAndInstanceId(instanceId, stableId)
+                    .orElse(null);
+            if (answer == null || answer.getValue() == null) {
+                return false;
+            }
+
+            if (answer.getQuestionType() == QuestionType.PICKLIST) {
+                return ((PicklistAnswer) answer).getValue().size() > 0;
+            } else if (answer.getQuestionType() == QuestionType.TEXT) {
+                return !((TextAnswer) answer).getValue().isBlank();
+            } else {
+                return true;
+            }
         } else {
             throw new PexUnsupportedException("Unsupported question predicate: " + predCtx.getText());
         }

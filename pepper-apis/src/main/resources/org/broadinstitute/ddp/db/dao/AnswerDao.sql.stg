@@ -64,6 +64,20 @@ where ans.answer_guid = :guid
 <all_answers_order_by()>
 >>
 
+queryAnswerForQuestionAndInstanceId() ::= <<
+<all_answers_select()>
+where ai.activity_instance_id = :instanceId
+  and (qsc.stable_id = :questionStableId
+      or ans.question_id in (
+         select child_question_id from composite_question__question where parent_question_id in (
+                select question_id from question where question_stable_code_id = (
+                       select question_stable_code_id from question_stable_code where stable_id = :questionStableId
+                )
+         )
+      ))
+<all_answers_order_by()>
+>>
+
 /**
  * Note: we use left-join here since different answer types will join to different answer ids.
  */
@@ -78,23 +92,6 @@ delete aa, ba, da, na, ta, pa, ca
   left join picklist_option__answer as pa on pa.answer_id = a.answer_id
   left join composite_answer_item as ca on ca.parent_answer_id = a.answer_id
  where a.activity_instance_id in (<instanceIds>)
->>
-
-queryAnswerIdForQuestionInLatestInstance() ::= <<
-select a.answer_id
-  from activity_instance as ai
-  join user as u on u.user_id = ai.participant_id
-  left join answer as a on a.activity_instance_id = ai.activity_instance_id
-  left join question as q on q.question_id = a.question_id
-  left join question_stable_code as qsc on qsc.question_stable_code_id = q.question_stable_code_id
- where u.guid = :userGuid
-   and ai.study_activity_id = :activityId
-   and qsc.stable_id = :questionStableId
-   and ai.created_at = (
-       select max(created_at)
-         from activity_instance
-        where participant_id = u.user_id
-          and study_activity_id = ai.study_activity_id)
 >>
 
 queryAnswerIdByQuestionStableIdAndLatestInstance() ::= <<

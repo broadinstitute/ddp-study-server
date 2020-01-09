@@ -947,6 +947,74 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
         });
     }
 
+    @Test
+    public void testEval_questionQuery_isAnswered_nonNullAnswer() {
+        String expr = String.format(
+                "user.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"].isAnswered()",
+                studyGuid, activityCode, numericStableId);
+        assertFalse("should be false because question is not answered yet", run(expr));
+
+        TransactionWrapper.useTxn(handle -> {
+            var answer = new NumericIntegerAnswer(null, numericStableId, null, 25L);
+            var answerDao = AnswerDao.fromSqlConfig(sqlConfig);
+            answerDao.createAnswer(handle, answer, userGuid, firstInstanceGuid);
+            assertFalse("should be false because first instance is not latest", run(handle, expr));
+
+            answer = new NumericIntegerAnswer(null, numericStableId, null, null);
+            answerDao.createAnswer(handle, answer, userGuid, secondInstanceGuid);
+            assertFalse("should be false because answer is null", run(handle, expr));
+
+            var newAnswer = new NumericIntegerAnswer(null, textStableId, null, 50L);
+            answerDao.updateAnswerById(handle, secondInstanceGuid, answer.getAnswerId(), newAnswer, userGuid);
+            assertTrue("should be true because answer is non-null", run(handle, expr));
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testEval_questionQuery_isAnswered_picklistNonEmpty() {
+        String expr = String.format(
+                "user.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"].isAnswered()",
+                studyGuid, activityCode, picklistStableId);
+        assertFalse("should be false because question is not answered yet", run(expr));
+
+        TransactionWrapper.useTxn(handle -> {
+            var answer = new PicklistAnswer(null, picklistStableId, null, List.of());
+            var answerDao = AnswerDao.fromSqlConfig(sqlConfig);
+            answerDao.createAnswer(handle, answer, userGuid, secondInstanceGuid);
+            assertFalse("should be false because picklist selection is empty", run(handle, expr));
+
+            var newAnswer = new PicklistAnswer(null, picklistStableId, null, List.of(
+                    new SelectedPicklistOption("OPTION_YES")));
+            answerDao.updateAnswerById(handle, secondInstanceGuid, answer.getAnswerId(), newAnswer, userGuid);
+            assertTrue("should be true because picklist selection is non-empty", run(handle, expr));
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testEval_questionQuery_isAnswered_textNonEmpty() {
+        String expr = String.format(
+                "user.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"].isAnswered()",
+                studyGuid, activityCode, textStableId);
+        assertFalse("should be false because question is not answered yet", run(expr));
+
+        TransactionWrapper.useTxn(handle -> {
+            var answer = new TextAnswer(null, textStableId, null, "");
+            var answerDao = AnswerDao.fromSqlConfig(sqlConfig);
+            answerDao.createAnswer(handle, answer, userGuid, secondInstanceGuid);
+            assertFalse("should be false because text answer is empty", run(handle, expr));
+
+            var newAnswer = new TextAnswer(null, textStableId, null, "abc");
+            answerDao.updateAnswerById(handle, secondInstanceGuid, answer.getAnswerId(), newAnswer, userGuid);
+            assertTrue("should be true because text answer is non-empty", run(handle, expr));
+
+            handle.rollback();
+        });
+    }
+
     @Test(expected = PexFetchException.class)
     public void test_givenMissingGovernancePolicy_whenHasAgedUpIsEvaluated_thenItThrowsAnException() {
         String expr = String.format("user.studies[\"%s\"].hasAgedUp()", studyGuid);
