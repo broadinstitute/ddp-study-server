@@ -218,7 +218,7 @@ public class ActivityInstanceStatusDaoTest extends TxnAwareBaseTest {
         Optional<ActivityInstanceDto> dto = jdbiInstance.getByActivityInstanceId(instanceId);
 
         assertTrue(dto.isPresent());
-        assertNull("manually created instance should not have status", dto.get().getStatusTypeCode());
+        assertNull("manually created instance should not have status", dto.get().getStatusType());
 
         return dto.get();
     }
