@@ -5,15 +5,21 @@ import static org.broadinstitute.ddp.constants.RouteConstants.BEARER;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-
 import javax.annotation.Nonnull;
 
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.content.ContentStyle;
+import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
+import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
+import org.broadinstitute.ddp.db.dao.UserDao;
+import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
+import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.filter.TokenConverterFilter;
 import org.broadinstitute.ddp.json.errors.ApiError;
+import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.security.DDPAuth;
+import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
@@ -29,8 +35,7 @@ public class RouteUtil {
     private static final int STUDY_GUID_IDX = 5;
 
     /**
-     * Returns the {@link org.broadinstitute.ddp.security.DDPAuth auth object}
-     * associated with this request.  Will always be non-null.
+     * Returns the {@link org.broadinstitute.ddp.security.DDPAuth auth object} associated with this request.  Will always be non-null.
      */
     @Nonnull
     public static DDPAuth getDDPAuth(Request req) {
@@ -46,8 +51,7 @@ public class RouteUtil {
     }
 
     /**
-     * Gets the internal guid of the client for this request.
-     * May be null.
+     * Gets the internal guid of the client for this request. May be null.
      */
     public static String getClientGuid(Request req) {
         return getDDPAuth(req).getClient();
@@ -58,8 +62,8 @@ public class RouteUtil {
     }
 
     /**
-     * Helper to parse out the content style header. The default is returned if header is missing, and the request is
-     * halted with an error response if the given style is invalid.
+     * Helper to parse out the content style header. The default is returned if header is missing, and the request is halted with an error
+     * response if the given style is invalid.
      *
      * @param request      the request
      * @param response     the response
@@ -99,5 +103,50 @@ public class RouteUtil {
             studyGuid = parts.get(STUDY_GUID_IDX);
         }
         return studyGuid;
+    }
+
+    /**
+     * Get the activity instance, ensuring the study/user/instance exists and the instance is accessible. Otherwise, will set the
+     * appropriate route response.
+     *
+     * @param response        the route response
+     * @param handle          the database handle
+     * @param participantGuid the user guid
+     * @param studyGuid       the study guid
+     * @param instanceGuid    the activity instance guid
+     * @return the activity instance dto
+     */
+    public static ActivityInstanceDto findAccessibleInstanceOrHalt(Response response, Handle handle,
+                                                                   String participantGuid, String studyGuid, String instanceGuid) {
+        StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
+        if (studyDto == null) {
+            String msg = "Could not find study with guid " + participantGuid;
+            throw ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.STUDY_NOT_FOUND, msg));
+        }
+        User user = handle.attach(UserDao.class).findUserByGuid(participantGuid)
+                .orElseThrow(() -> {
+                    String msg = "Could not find user with guid " + participantGuid;
+                    return ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.USER_NOT_FOUND, msg));
+                });
+        ActivityInstanceDto instanceDto = handle.attach(JdbiActivityInstance.class)
+                .getByActivityInstanceGuid(instanceGuid)
+                .orElseThrow(() -> {
+                    String msg = "Could not find activity instance with guid " + instanceGuid;
+                    return ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.ACTIVITY_NOT_FOUND, msg));
+                });
+
+        if (instanceDto.getStudyId() != studyDto.getId() || instanceDto.getParticipantId() != user.getId()) {
+            LOG.warn("Activity instance {} does not belong to participant {} in study {}", instanceGuid, participantGuid, studyGuid);
+            String msg = "Could not find activity instance with guid " + instanceGuid;
+            throw ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.ACTIVITY_NOT_FOUND, msg));
+        } else if (instanceDto.isHidden()) {
+            String msg = "Activity instance " + instanceGuid + " is hidden and cannot be retrieved or interacted with";
+            throw ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.ACTIVITY_NOT_FOUND, msg));
+        } else if (user.isTemporary() && !instanceDto.isAllowUnauthenticated()) {
+            String msg = "Activity instance " + instanceGuid + " not accessible to unauthenticated users";
+            throw ResponseUtil.haltError(response, 401, new ApiError(ErrorCodes.OPERATION_NOT_ALLOWED, msg));
+        }
+
+        return instanceDto;
     }
 }

@@ -59,15 +59,15 @@ patch:
     200:
       $ref: '../pepper.yml#/components/responses/ActivityAnswersPatchResponse'
     400:
-      description: answer submissions payload is invalid
+      $ref: '../pepper.yml#/components/responses/ActivityAnswersPatchBadPayloadResponse'
     401:
-      description: missing credentials for user, or temporary user is invalid
+      description: missing credentials or temporary user is invalid
     404:
-      description: activity instance, question, or answer not found
+      $ref: '../pepper.yml#/components/responses/ActivityAnswersPatchNotFoundResponse'
     409:
-      description: answer already exists for questions, `answerGuid` should be specified
+      $ref: '../pepper.yml#/components/responses/ActivityAnswersPatchExistsResponse'
     422:
-      $ref: '../pepper.yml#/components/responses/ActivityAnswersPatchErrorResponse'
+      $ref: '../pepper.yml#/components/responses/ActivityAnswersPatchInvalidResponse'
     default:
       $ref: '../pepper.yml#/components/responses/ErrorResponse'
 
@@ -92,10 +92,10 @@ put:
     200:
       $ref: '../pepper.yml#/components/responses/ActivityAnswersPutResponse'
     401:
-      description: missing credentials for user, or temporary user is invalid
+      description: missing credentials or temporary user is invalid
     404:
-      description: activity instance not found
+      $ref: '../pepper.yml#/components/responses/ActivityAnswersPutNotFoundResponse'
     422:
-      description: activity instance is read-only or required questions not answered yet or there are validation errors
+      $ref: '../pepper.yml#/components/responses/ActivityAnswersPutInvalidResponse'
     default:
       $ref: '../pepper.yml#/components/responses/ErrorResponse'
