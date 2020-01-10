@@ -15,7 +15,7 @@ public class PatchAnswerResponse {
     @SerializedName("blockVisibility")
     private List<BlockVisibility> blockVisibilities = new ArrayList<>();
     @SerializedName("validationFailures")
-    public List<ActivityValidationFailure> validationFailures;
+    public List<ActivityValidationFailure> validationFailures = new ArrayList<>();
 
     public PatchAnswerResponse() {}
 
@@ -40,6 +40,6 @@ public class PatchAnswerResponse {
     }
 
     public void addValidationFailures(List<ActivityValidationFailure> validationFailures) {
-        this.validationFailures = validationFailures;
+        this.validationFailures.addAll(validationFailures);
     }
 }
