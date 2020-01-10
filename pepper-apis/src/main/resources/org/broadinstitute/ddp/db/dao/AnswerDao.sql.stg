@@ -1,5 +1,69 @@
 group AnswerDao;
 
+all_answers_select() ::= <<
+select ans.answer_id,
+       ans.answer_guid,
+       (select question_type_code from question_type where question_type_id = q.question_type_id) as question_type,
+       qsc.stable_id as question_stable_id,
+       aa.answer as aa_value,
+       ba.answer as ba_value,
+       ta.answer as ta_value,
+       da.year   as da_year,
+       da.month  as da_month,
+       da.day    as da_day,
+       nt.numeric_type_code as na_numeric_type,
+       na.int_value         as na_int_value,
+       po.picklist_option_stable_id as pa_option_stable_id,
+       pa.detail_text               as pa_detail_text,
+       cq.allow_multiple   as ca_allow_multiple,
+       cq.unwrap_on_export as ca_unwrap_on_export,
+       ca.child_answer_id  as ca_child_answer_id,
+       ca.response_order   as ca_child_row,
+       (select display_order from composite_question__question
+         where parent_question_id = ans.question_id
+           and child_question_id = (select question_id from answer where answer_id = ca.child_answer_id)
+       ) as ca_child_col,
+       coalesce((select 1 from composite_answer_item where child_answer_id = ans.answer_id), 0) as is_child_answer
+  from answer as ans
+  join activity_instance as ai on ans.activity_instance_id = ai.activity_instance_id
+  join user as u on u.user_id = ai.participant_id
+  join question as q on q.question_id = ans.question_id
+  join question_stable_code as qsc on qsc.question_stable_code_id = q.question_stable_code_id
+  left join composite_question as cq on cq.question_id = q.question_id
+  left join numeric_question as nq on nq.question_id = q.question_id
+  left join numeric_type as nt on nt.numeric_type_id = nq.numeric_type_id
+  left join agreement_answer as aa on aa.answer_id = ans.answer_id
+  left join boolean_answer as ba on ba.answer_id = ans.answer_id
+  left join text_answer as ta on ta.answer_id = ans.answer_id
+  left join date_answer as da on da.answer_id = ans.answer_id
+  left join numeric_answer as na on na.answer_id = ans.answer_id
+  left join picklist_option__answer as pa on pa.answer_id = ans.answer_id
+  left join picklist_option as po on po.picklist_option_id = pa.picklist_option_id
+  left join composite_answer_item as ca on ca.parent_answer_id = ans.answer_id
+>>
+
+// Important: sort the child answers first so we have them in memory when we get to the composite parent answers.
+all_answers_order_by() ::= <<
+order by is_child_answer desc, po.display_order asc, ca_child_row asc, ca_child_col asc
+>>
+
+queryAnswerById() ::= <<
+<all_answers_select()>
+where ans.answer_id = :id
+   or ans.answer_id in (
+      select child_answer_id from composite_answer_item where parent_answer_id = :id)
+<all_answers_order_by()>
+>>
+
+queryAnswerByGuid() ::= <<
+<all_answers_select()>
+where ans.answer_guid = :guid
+   or ans.answer_id in (
+      select child_answer_id from composite_answer_item where parent_answer_id = (
+             select answer_id from answer where answer_guid = :guid))
+<all_answers_order_by()>
+>>
+
 /**
  * Note: we use left-join here since different answer types will join to different answer ids.
  */
