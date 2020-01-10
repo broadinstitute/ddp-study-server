@@ -18,4 +18,9 @@ public class EventTrigger<T extends EventSignal> {
     public boolean isTriggered(Handle handle, T eventSignal) {
         return true;
     }
+
+    @Override
+    public String toString() {
+        return "EventTrigger{type=" + eventConfigurationDto.getEventTriggerType() + '}';
+    }
 }

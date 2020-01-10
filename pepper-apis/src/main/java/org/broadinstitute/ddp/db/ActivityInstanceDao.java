@@ -51,7 +51,6 @@ public class ActivityInstanceDao {
 
     private static final Logger LOG = LoggerFactory.getLogger(ActivityInstanceDao.class);
 
-    private static String ACTIVITY_TYPE_BY_GUIDS_QUERY;
     private static String TRANSLATED_SUMMARY_BY_GUID_QUERY;
     private static String INSTANCE_ID_BY_GUID_QUERY;
     private static String INSTANCE_SUMMARIES_FOR_USER;
@@ -72,7 +71,6 @@ public class ActivityInstanceDao {
      * Given {@code sqlConfig}, load relevant SQL queries.
      */
     public static void loadSqlCommands(Config sqlConfig) {
-        ACTIVITY_TYPE_BY_GUIDS_QUERY = sqlConfig.getString(ActivityInstanceSql.ACTIVITY_TYPE_BY_GUIDS_QUERY);
         TRANSLATED_SUMMARY_BY_GUID_QUERY = sqlConfig.getString(ActivityInstanceSql.TRANSLATED_SUMMARY_BY_GUID_QUERY);
         INSTANCE_ID_BY_GUID_QUERY = sqlConfig.getString(ActivityInstanceSql.INSTANCE_ID_BY_GUID_QUERY);
         INSTANCE_SUMMARIES_FOR_USER = sqlConfig.getString(ActivityInstanceSql.INSTANCE_SUMMARIES_FOR_USER_QUERY);
@@ -143,40 +141,6 @@ public class ActivityInstanceDao {
             throw new DaoException("Could not find instance guid for user guid " + userGuid
                     + " and activity code " + activityCode, e);
         }
-    }
-
-    /**
-     * Get type of given activity. Requires that the activity belongs to the given user and study.
-     *
-     * @param handle               the database connection
-     * @param userGuid             the participant user guid
-     * @param studyGuid            the study guid
-     * @param activityInstanceGuid the activity instance guid
-     * @return activity type, or null if activity is not found or not belong to user/study
-     */
-    public ActivityType getActivityTypeByGuids(Handle handle, String userGuid,
-                                               String studyGuid, String activityInstanceGuid) {
-        ActivityType activityType = null;
-        try (PreparedStatement stmt = handle.getConnection().prepareStatement(ACTIVITY_TYPE_BY_GUIDS_QUERY)) {
-            stmt.setString(1, userGuid);
-            stmt.setString(2, studyGuid);
-            stmt.setString(3, activityInstanceGuid);
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                activityType = ActivityType.valueOf(rs.getString(ActivityTypeTable.TYPE_CODE));
-                if (rs.next()) {
-                    throw new RuntimeException("More than one activity found using instance guid "
-                            + activityInstanceGuid);
-                }
-            } else {
-                LOG.info("Activity type not found for instance guid {}, user guid {}, study guid {}",
-                        activityInstanceGuid, userGuid, studyGuid);
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException("Cannot determine activity type for activity instance "
-                    + activityInstanceGuid, e);
-        }
-        return activityType;
     }
 
     /**
@@ -340,6 +304,7 @@ public class ActivityInstanceDao {
                             createdAtMillis, statusTypeCode, isActivityWriteOnce, isActivityInstanceReadonly);
                     long createdAt = rs.getLong(SqlConstants.ActivityInstanceTable.CREATED_AT);
                     boolean isFollowup = rs.getBoolean(SqlConstants.StudyActivityTable.IS_FOLLOWUP);
+                    boolean isHidden = rs.getBoolean(SqlConstants.ActivityInstanceTable.IS_HIDDEN);
 
                     ActivityInstanceSummary activityInstanceSummary = new ActivityInstanceSummary(
                             activityCode,
@@ -357,6 +322,7 @@ public class ActivityInstanceDao {
                             languageCode,
                             activityTypeName,
                             excludeFromDisplay,
+                            isHidden,
                             createdAt,
                             isFollowup
                     );

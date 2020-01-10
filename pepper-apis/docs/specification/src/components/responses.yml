@@ -1,5 +1,5 @@
 ActivitiesResponse:
-  description: contains a summary of each activity for a given participant
+  description: list of activity summaries for participant
   content:
     application/json:
       schema:
@@ -24,14 +24,8 @@ ActivityCreateResponse:
           instanceGuid:
             type: string
             example: ABCDEFGH12
-ActivityDetailResponse:
-  description: the requested activity instance exists, and was successfully retrieved.
-  content:
-    application/json:
-      schema:
-        $ref: '../pepper.yml#/components/schemas/Activity'
 ActivityAnswersPatchResponse:
-  description: successfully created or updated answers
+  description: successfully created or updated answers, along with any activity validation failures
   content:
     application/json:
       schema:
@@ -75,12 +69,30 @@ ActivityAnswersPatchResponse:
             type: array
             items:
               $ref: '../pepper.yml#/components/schemas/ValidationFailure'
-ActivityAnswersPatchErrorResponse:
+ActivityAnswersPatchBadPayloadResponse:
+  description: answer submissions payload is invalid
+  content:
+    application/json:
+      schema:
+        $ref: '../pepper.yml#/components/schemas/Error.ActivityAnswersPatchBadPayload'
+ActivityAnswersPatchExistsResponse:
+  description: answer already exists for question, `answerGuid` should be specified
+  content:
+    application/json:
+      schema:
+        $ref: '../pepper.yml#/components/schemas/Error.ActivityAnswersPatchExists'
+ActivityAnswersPatchInvalidResponse:
   description: activity instance is read-only or answer submission failed validation
   content:
     application/json:
       schema:
-        $ref: '../pepper.yml#/components/schemas/Error.Answer'
+        $ref: '../pepper.yml#/components/schemas/Error.ActivityAnswersPatchInvalid'
+ActivityAnswersPatchNotFoundResponse:
+  description: activity instance, question, or answer is not found
+  content:
+    application/json:
+      schema:
+        $ref: '../pepper.yml#/components/schemas/Error.ActivityAnswersPatchNotFound'
 ActivityAnswersPutResponse:
   description: successfully completed activity instance
   content:
@@ -92,6 +104,30 @@ ActivityAnswersPutResponse:
         properties:
           workflow:
             $ref: '../pepper.yml#/components/schemas/WorkflowNextSuggestion'
+ActivityAnswersPutInvalidResponse:
+  description: activity instance is read-only, required questions not answered yet, or there are validation errors
+  content:
+    application/json:
+      schema:
+        $ref: '../pepper.yml#/components/schemas/Error.ActivityAnswersPutInvalid'
+ActivityAnswersPutNotFoundResponse:
+  description: activity instance for user and study is not found
+  content:
+    application/json:
+      schema:
+        $ref: '../pepper.yml#/components/schemas/Error.ActivityAnswersPutNotFound'
+ActivityDetailResponse:
+  description: the requested activity instance exists, and was successfully retrieved
+  content:
+    application/json:
+      schema:
+        $ref: '../pepper.yml#/components/schemas/Activity'
+ActivityDetailNotFoundResponse:
+  description: the requested activity instance for user and study does not exist
+  content:
+    application/json:
+      schema:
+        $ref: '../pepper.yml#/components/schemas/Error.ActivityDetailNotFound'
 AnnouncementsResponse:
   description: the list of announcement message objects
   content:

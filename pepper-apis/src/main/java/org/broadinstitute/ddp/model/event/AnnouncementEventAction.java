@@ -57,7 +57,7 @@ public class AnnouncementEventAction extends EventAction {
         } catch (Exception e) {
             throw new DDPException(String.format(
                     "Error while creating announcement for participant id %d, study id %d, event configuration id %d",
-                    participantId, studyId, eventConfiguration.getEventConfigurationId()));
+                    participantId, studyId, eventConfiguration.getEventConfigurationId()), e);
         }
     }
 }

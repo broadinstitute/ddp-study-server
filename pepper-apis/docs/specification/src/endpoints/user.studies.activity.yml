@@ -35,5 +35,9 @@ get:
   responses:
     200:
       $ref: '../pepper.yml#/components/responses/ActivityDetailResponse'
+    401:
+      description: missing credentials or temporary user is invalid
+    404:
+      $ref: '../pepper.yml#/components/responses/ActivityDetailNotFoundResponse'
     default:
       $ref: '../pepper.yml#/components/responses/ErrorResponse'

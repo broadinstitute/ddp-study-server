@@ -32,6 +32,7 @@ import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
+import org.jdbi.v3.sqlobject.customizer.BindList.EmptyHandling;
 import org.jdbi.v3.sqlobject.customizer.Define;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
@@ -74,8 +75,8 @@ public interface ActivityInstanceDao extends SqlObject {
     }
 
     /**
-     * Creates a new activity instance of the given activity for the given participant, on behalf of the given operator.
-     * Guid is generated internally.
+     * Creates a new activity instance of the given activity for the given participant, on behalf of the given operator. Guid is generated
+     * internally.
      *
      * @param activityId      the associated activity
      * @param operatorGuid    the user that created this instance
@@ -115,21 +116,21 @@ public interface ActivityInstanceDao extends SqlObject {
                 createdAtMillis, onDemandTriggerId);
         statusDao.insertStatus(instanceId, initialStatus, createdAtMillis, operatorGuid);
 
-        return new ActivityInstanceDto(instanceId, instanceGuid, activityId, participantId,
-                createdAtMillis, null, isReadOnly, initialStatus.name(), onDemandTriggerId, false);
+        return jdbiInstance.getByActivityInstanceId(instanceId).orElseThrow(() ->
+                new DaoException("Could not find newly created activity instance with id " + instanceId));
     }
 
     /**
      * Creates a new activity instance of the given activity for the migration participant, on behalf of the given operator.
      *
-     * @param activityId        the associated activity
-     * @param operatorGuid      the user that created this instance
-     * @param participantGuid   the user this instance is for
-     * @param initialStatus     the starting status
-     * @param isReadOnly        whether read only or not
-     * @param createdAtMillis   the creation timestamp in milliseconds
-     * @param submissionId      submission ID from migrated data
-     * @param sessionId         session ID from migrated data
+     * @param activityId      the associated activity
+     * @param operatorGuid    the user that created this instance
+     * @param participantGuid the user this instance is for
+     * @param initialStatus   the starting status
+     * @param isReadOnly      whether read only or not
+     * @param createdAtMillis the creation timestamp in milliseconds
+     * @param submissionId    submission ID from migrated data
+     * @param sessionId       session ID from migrated data
      * @return newly created activity instance
      */
     default ActivityInstanceDto insertInstance(long activityId, String operatorGuid, String participantGuid,
@@ -145,9 +146,23 @@ public interface ActivityInstanceDao extends SqlObject {
                 isReadOnly, createdAtMillis, submissionId, sessionId, legacyVersion);
         //statusDao.insertStatus(instanceId, initialStatus, createdAtMillis, operatorGuid);
 
-        return new ActivityInstanceDto(instanceId, instanceGuid, activityId, participantId,
-                createdAtMillis, null, isReadOnly, initialStatus.name(), null, false);
+        return jdbiInstance.getByActivityInstanceId(instanceId).orElseThrow(() ->
+                new DaoException("Could not find newly created activity instance with id " + instanceId));
     }
+
+    @SqlUpdate("update activity_instance set is_readonly = :isReadOnly"
+            + "  where participant_id = :participantId and study_activity_id in (<activityIds>)")
+    int bulkUpdateReadOnlyByActivityIds(
+            @Bind("participantId") long participantId,
+            @Bind("isReadOnly") boolean isReadOnly,
+            @BindList(value = "activityIds", onEmpty = EmptyHandling.NULL) Set<Long> activityIds);
+
+    @SqlUpdate("update activity_instance set is_hidden = :isHidden"
+            + "  where participant_id = :participantId and study_activity_id in (<activityIds>)")
+    int bulkUpdateIsHiddenByActivityIds(
+            @Bind("participantId") long participantId,
+            @Bind("isHidden") boolean isHidden,
+            @BindList(value = "activityIds", onEmpty = EmptyHandling.NULL) Set<Long> activityIds);
 
     @SqlUpdate("update activity_instance as ai"
             + "   join study_activity as act on act.study_activity_id = ai.study_activity_id"

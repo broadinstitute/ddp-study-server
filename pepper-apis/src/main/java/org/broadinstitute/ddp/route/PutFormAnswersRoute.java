@@ -1,7 +1,6 @@
 package org.broadinstitute.ddp.route;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.broadinstitute.ddp.constants.ErrorCodes;
@@ -10,11 +9,7 @@ import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.db.FormInstanceDao;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
-import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
-import org.broadinstitute.ddp.db.dao.JdbiUser;
-import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
-import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.json.PutAnswersResponse;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.json.workflow.WorkflowResponse;
@@ -61,28 +56,16 @@ public class PutFormAnswersRoute implements Route {
     public Object handle(Request request, Response response) {
         String userGuid = request.params(PathParam.USER_GUID);
         String studyGuid = request.params(PathParam.STUDY_GUID);
-        String activityInstanceGuid = request.params(PathParam.INSTANCE_GUID);
+        String instanceGuid = request.params(PathParam.INSTANCE_GUID);
 
         DDPAuth ddpAuth = RouteUtil.getDDPAuth(request);
         String operatorGuid = ddpAuth.getOperator() != null ? ddpAuth.getOperator() : userGuid;
 
-        LOG.info("Completing form for user {}, operator {}, activity instance {}",
-                userGuid, operatorGuid, activityInstanceGuid);
+        LOG.info("Completing form for user {}, operator {}, activity instance {}", userGuid, operatorGuid, instanceGuid);
 
         PutAnswersResponse resp = TransactionWrapper.withTxn(
                 handle -> {
-                    UserDto userDto = handle.attach(JdbiUser.class).findByUserGuid(userGuid);
-                    if (userDto.isTemporary()) {
-                        Optional<ActivityInstanceDto> activityInstanceDto =
-                                handle.attach(JdbiActivityInstance.class).getByActivityInstanceGuid(activityInstanceGuid);
-                        if (!activityInstanceDto.isPresent()) {
-                            String msg = "Activity instance " + activityInstanceGuid + " is not found";
-                            ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.ACTIVITY_NOT_FOUND, msg));
-                        } else if (!activityInstanceDto.get().isAllowUnauthenticated()) {
-                            String msg = "Activity instance " + activityInstanceGuid + " not accessible to unauthenticated users";
-                            ResponseUtil.haltError(response, 401, new ApiError(ErrorCodes.OPERATION_NOT_ALLOWED, msg));
-                        }
-                    }
+                    RouteUtil.findAccessibleInstanceOrHalt(response, handle, userGuid, studyGuid, instanceGuid);
 
                     String isoLangCode = ddpAuth.getPreferredLanguage();
                     if (isoLangCode == null) {
@@ -90,34 +73,31 @@ public class PutFormAnswersRoute implements Route {
                     }
                     long langCodeId = handle.attach(JdbiLanguageCode.class).getLanguageCodeId(isoLangCode);
 
-                    FormInstance form = formInstanceDao.getBaseFormByGuid(handle, activityInstanceGuid, isoLangCode);
+                    FormInstance form = formInstanceDao.getBaseFormByGuid(handle, instanceGuid, isoLangCode);
                     if (form == null) {
                         String msg = String.format("Could not find activity instance %s for user %s using language %s",
-                                activityInstanceGuid, userGuid, isoLangCode);
+                                instanceGuid, userGuid, isoLangCode);
                         LOG.warn(msg);
-                        ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.ACTIVITY_NOT_FOUND, msg));
-                        return null;
+                        throw ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.ACTIVITY_NOT_FOUND, msg));
                     }
 
                     if (form.isReadonly()) {
-                        String msg = "Activity instance " + activityInstanceGuid + " is read-only, cannot update activity";
+                        String msg = "Activity instance " + instanceGuid + " is read-only, cannot update activity";
                         LOG.info(msg);
-                        ResponseUtil.haltError(response, 422, new ApiError(ErrorCodes.ACTIVITY_INSTANCE_IS_READONLY, msg));
-                        return null;
+                        throw ResponseUtil.haltError(response, 422, new ApiError(ErrorCodes.ACTIVITY_INSTANCE_IS_READONLY, msg));
                     }
 
                     formInstanceDao.loadAllSectionsForForm(handle, form, langCodeId);
-                    form.updateBlockStatuses(handle, interpreter, userGuid, activityInstanceGuid);
+                    form.updateBlockStatuses(handle, interpreter, userGuid, instanceGuid);
 
                     if (!form.isComplete()) {
                         String msg = "The status cannot be set to COMPLETE because the question requirements are not met";
                         LOG.info(msg);
-                        ResponseUtil.haltError(response, 422, new ApiError(ErrorCodes.QUESTION_REQUIREMENTS_NOT_MET, msg));
-                        return null;
+                        throw ResponseUtil.haltError(response, 422, new ApiError(ErrorCodes.QUESTION_REQUIREMENTS_NOT_MET, msg));
                     }
 
                     List<ActivityValidationFailure> validationFailures = actValidationService.validate(
-                            handle, interpreter, userGuid, activityInstanceGuid, form.getActivityId(), langCodeId
+                            handle, interpreter, userGuid, instanceGuid, form.getActivityId(), langCodeId
                     );
                     if (!validationFailures.isEmpty()) {
                         String msg = "Activity validation failed";
@@ -128,7 +108,7 @@ public class PutFormAnswersRoute implements Route {
                     }
 
                     FormActivityStatusUtil.updateFormActivityStatus(
-                            handle, InstanceStatusType.COMPLETE, activityInstanceGuid, operatorGuid
+                            handle, InstanceStatusType.COMPLETE, instanceGuid, operatorGuid
                     );
 
                     WorkflowState fromState = new ActivityState(form.getActivityId());

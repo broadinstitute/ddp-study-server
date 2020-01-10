@@ -6,7 +6,6 @@ package org.broadinstitute.ddp.constants;
 public class SqlFile {
 
     public static final class ActivityInstanceSql {
-        public static final String ACTIVITY_TYPE_BY_GUIDS_QUERY = "activityInstance.queryActivityTypeByGuids";
         public static final String TRANSLATED_SUMMARY_BY_GUID_QUERY = "activityInstance.queryTranslatedSummaryByGuid";
         public static final String INSTANCE_ID_BY_GUID_QUERY = "activityInstance.queryIdByGuid";
         public static final String INSTANCE_SUMMARIES_FOR_USER_QUERY = "listUserActivitiesQuery";

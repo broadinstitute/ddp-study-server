@@ -16,6 +16,7 @@ import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
+import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowReducer;
 import org.jdbi.v3.stringtemplate4.UseStringTemplateSqlLocator;
 
@@ -55,6 +56,14 @@ public interface UserGovernanceDao extends SqlObject {
     default void disableProxy(long governanceId) {
         DBUtils.checkUpdate(1, getUserGovernanceSql().updateGovernanceIsActiveById(governanceId, false));
     }
+
+    @SqlUpdate("update user_governance as ug"
+            + "   join user_study_governance as usg on usg.user_governance_id = ug.user_governance_id"
+            + "    set ug.is_active = false"
+            + "  where usg.umbrella_study_id = :studyId"
+            + "    and ug.participant_user_id = :participantId"
+            + "    and ug.is_active = true")
+    int disableActiveProxies(@Bind("participantId") long participantId, @Bind("studyId") long studyId);
 
     default long grantGovernedStudy(long governanceId, long studyId) {
         return getUserGovernanceSql().insertStudyGovernanceByStudyId(governanceId, studyId);
@@ -130,8 +139,7 @@ public interface UserGovernanceDao extends SqlObject {
     @RegisterConstructorMapper(Governance.class)
     @RegisterConstructorMapper(GrantedStudy.class)
     @UseRowReducer(GovernanceWithStudiesReducer.class)
-    Stream<Governance> findGovernancesByStudyGuid(
-            @Bind("studyGuid") String studyGuid);
+    Stream<Governance> findGovernancesByStudyGuid(@Bind("studyGuid") String studyGuid);
 
     default Stream<Governance> findActiveGovernancesByStudyGuid(String studyGuid) {
         return findGovernancesByStudyGuid(studyGuid).filter((Governance::isActive));
