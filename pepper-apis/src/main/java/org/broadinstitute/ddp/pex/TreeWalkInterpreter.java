@@ -246,7 +246,7 @@ public class TreeWalkInterpreter implements PexInterpreter {
             }
 
             Answer answer = ictx.getHandle().attach(AnswerDao.class)
-                    .findAnswerForInstanceIdAndQuestionStableId(instanceId, stableId)
+                    .findAnswerByInstanceIdAndQuestionStableId(instanceId, stableId)
                     .orElse(null);
             if (answer == null || answer.getValue() == null) {
                 return false;

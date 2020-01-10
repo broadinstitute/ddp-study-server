@@ -248,9 +248,9 @@ public interface AnswerDao extends SqlObject {
     Optional<Answer> findAnswerByGuid(@Bind("guid") String answerGuid);
 
     @UseStringTemplateSqlLocator
-    @SqlQuery("queryAnswerForInstanceIdAndQuestionStableId")
+    @SqlQuery("queryAnswerByInstanceIdAndQuestionStableId")
     @UseRowReducer(AnswerWithValueReducer.class)
-    Optional<Answer> findAnswerForInstanceIdAndQuestionStableId(
+    Optional<Answer> findAnswerByInstanceIdAndQuestionStableId(
             @Bind("instanceId") long instanceId,
             @Bind("questionStableId") String questionStableId);
 

@@ -64,7 +64,7 @@ where ans.answer_guid = :guid
 <all_answers_order_by()>
 >>
 
-queryAnswerForInstanceIdAndQuestionStableId() ::= <<
+queryAnswerByInstanceIdAndQuestionStableId() ::= <<
 <all_answers_select()>
  join study_activity as act on act.study_activity_id = ai.study_activity_id
 where ai.activity_instance_id = :instanceId
