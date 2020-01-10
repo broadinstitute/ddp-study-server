@@ -64,15 +64,17 @@ where ans.answer_guid = :guid
 <all_answers_order_by()>
 >>
 
-queryAnswerForQuestionAndInstanceId() ::= <<
+queryAnswerForInstanceIdAndQuestionStableId() ::= <<
 <all_answers_select()>
+ join study_activity as act on act.study_activity_id = ai.study_activity_id
 where ai.activity_instance_id = :instanceId
-  and (qsc.stable_id = :questionStableId
+  and ((qsc.stable_id = :questionStableId and qsc.umbrella_study_id = act.study_id)
       or ans.question_id in (
          select child_question_id from composite_question__question where parent_question_id in (
-                select question_id from question where question_stable_code_id = (
-                       select question_stable_code_id from question_stable_code where stable_id = :questionStableId
-                )
+           select question_id from question where question_stable_code_id = (
+             select question_stable_code_id from question_stable_code
+              where stable_id = :questionStableId and umbrella_study_id = act.study_id
+           )
          )
       ))
 <all_answers_order_by()>

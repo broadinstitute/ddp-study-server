@@ -161,13 +161,6 @@ public interface AnswerDao extends SqlObject {
         return findAnswerIdByQuestionStableIdAndInstanceId(userId, instanceId, questionStableId).map(this::getAnswerById);
     }
 
-    @UseStringTemplateSqlLocator
-    @SqlQuery("queryAnswerForQuestionAndInstanceId")
-    @UseRowReducer(AnswerWithValueReducer.class)
-    Optional<Answer> findAnswerForQuestionAndInstanceId(
-            @Bind("instanceId") long instanceId,
-            @Bind("questionStableId") String questionStableId);
-
     /**
      * Get answer by id. Automatically looks up type.
      *
@@ -253,6 +246,13 @@ public interface AnswerDao extends SqlObject {
     @SqlQuery("queryAnswerByGuid")
     @UseRowReducer(AnswerWithValueReducer.class)
     Optional<Answer> findAnswerByGuid(@Bind("guid") String answerGuid);
+
+    @UseStringTemplateSqlLocator
+    @SqlQuery("queryAnswerForInstanceIdAndQuestionStableId")
+    @UseRowReducer(AnswerWithValueReducer.class)
+    Optional<Answer> findAnswerForInstanceIdAndQuestionStableId(
+            @Bind("instanceId") long instanceId,
+            @Bind("questionStableId") String questionStableId);
 
     class AnswerWithValueReducer implements LinkedHashMapRowReducer<Long, Answer> {
         private Map<Long, Answer> childAnswers = new HashMap<>();
