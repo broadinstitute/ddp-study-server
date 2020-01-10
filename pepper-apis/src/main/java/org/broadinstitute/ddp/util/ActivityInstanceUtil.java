@@ -13,7 +13,8 @@ public class ActivityInstanceUtil {
 
     /**
      * Checks if an activity instance is read-only
-     * @param handle JDBI handle
+     *
+     * @param handle               JDBI handle
      * @param activityInstanceGuid GUID of the activity instance to check
      * @return The result of the check
      */
@@ -31,15 +32,16 @@ public class ActivityInstanceUtil {
         ActivityDto activityDto = jdbiActivity.queryActivityById(studyActivityId);
 
         return computeReadonly(activityDto.isWriteOnce(), activityDto.getEditTimeoutSec(),
-                activityInstanceDto.getStatusTypeCode(), activityInstanceDto.getCreatedAtMillis());
+                activityInstanceDto.getStatusType(), activityInstanceDto.getCreatedAtMillis());
     }
 
     /**
      * A faster version of the isReadonly that does not touch the db
-     * @param editTimeoutSec The period after which the activity instance becomes stale
-     * @param createdAtMillis The milliseconds since epoch when activity instance was created
-     * @param statusTypeCode Current status of the activity instance
-     * @param isActivityWriteOnce The flag indicating whether the activity in write once
+     *
+     * @param editTimeoutSec             The period after which the activity instance becomes stale
+     * @param createdAtMillis            The milliseconds since epoch when activity instance was created
+     * @param statusTypeCode             Current status of the activity instance
+     * @param isActivityWriteOnce        The flag indicating whether the activity in write once
      * @param isActivityInstanceReadonly The flag indicating whether the activity instance is r/o
      * @return The result of the check
      */
@@ -54,12 +56,13 @@ public class ActivityInstanceUtil {
         if (isActivityInstanceReadonly) {
             return true;
         }
-        return computeReadonly(isActivityWriteOnce, editTimeoutSec, statusTypeCode, createdAtMillis);
+        return computeReadonly(isActivityWriteOnce, editTimeoutSec, InstanceStatusType.valueOf(statusTypeCode), createdAtMillis);
     }
 
-    private static boolean computeReadonly(boolean isActivityWriteOnce, Long editTimeoutSec, String statusTypeCode, long createdAtMillis) {
+    private static boolean computeReadonly(boolean isActivityWriteOnce, Long editTimeoutSec,
+                                           InstanceStatusType statusType, long createdAtMillis) {
         // Write-once activities become read-only once they are complete
-        if (isActivityWriteOnce && InstanceStatusType.COMPLETE.name().equalsIgnoreCase(statusTypeCode)) {
+        if (isActivityWriteOnce && InstanceStatusType.COMPLETE.equals(statusType)) {
             return true;
         }
 
