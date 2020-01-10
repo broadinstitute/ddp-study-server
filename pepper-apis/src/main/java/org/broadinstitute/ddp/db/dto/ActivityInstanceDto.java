@@ -1,5 +1,7 @@
 package org.broadinstitute.ddp.db.dto;
 
+import org.broadinstitute.ddp.model.activity.types.ActivityType;
+import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
@@ -7,12 +9,14 @@ public class ActivityInstanceDto {
 
     private long id;
     private String guid;
+    private long studyId;
     private long activityId;
     private long participantId;
     private long createdAtMillis;
     private boolean isReadonly;
     private boolean isHidden;
-    private String statusTypeCode;
+    private InstanceStatusType statusType;
+    private ActivityType activityType;
     private Long onDemandTriggerId;
     private long submissionId;
     private String sessionId;
@@ -23,53 +27,31 @@ public class ActivityInstanceDto {
     public ActivityInstanceDto(
             @ColumnName("activity_instance_id") long id,
             @ColumnName("activity_instance_guid") String guid,
+            @ColumnName("study_id") long studyId,
             @ColumnName("study_activity_id") long activityId,
             @ColumnName("participant_id") long participantId,
             @ColumnName("created_at") long createdAtMillis,
             @ColumnName("first_completed_at") Long firstCompletedAt,
             @ColumnName("is_readonly") boolean isReadonly,
             @ColumnName("is_hidden") boolean isHidden,
-            @ColumnName("activity_instance_status_type_code") String statusTypeCode,
+            @ColumnName("activity_instance_status_type") InstanceStatusType statusType,
+            @ColumnName("activity_type") ActivityType activityType,
             @ColumnName("ondemand_trigger_id") Long onDemandTriggerId,
             @ColumnName("allow_unauthenticated") boolean allowUnauthenticated
     ) {
         this.id = id;
         this.guid = guid;
+        this.studyId = studyId;
         this.activityId = activityId;
         this.participantId = participantId;
         this.createdAtMillis = createdAtMillis;
         this.firstCompletedAt = firstCompletedAt;
         this.isReadonly = isReadonly;
         this.isHidden = isHidden;
-        this.statusTypeCode = statusTypeCode;
+        this.statusType = statusType;
+        this.activityType = activityType;
         this.onDemandTriggerId = onDemandTriggerId;
         this.allowUnauthenticated = allowUnauthenticated;
-    }
-
-    /**
-     * Instantiate ActivityInstanceDto object.
-     */
-    public ActivityInstanceDto(long id,
-                               String guid,
-                               long activityId,
-                               long participantId,
-                               long createdAtMillis,
-                               Long firstCompletedAt,
-                               boolean isReadonly,
-                               String statusTypeCode,
-                               long submissionId,
-                               String sessionId) {
-        this.id = id;
-        this.guid = guid;
-        this.activityId = activityId;
-        this.participantId = participantId;
-        this.createdAtMillis = createdAtMillis;
-        this.firstCompletedAt = firstCompletedAt;
-        this.isReadonly = isReadonly;
-        this.isHidden = false;
-        this.statusTypeCode = statusTypeCode;
-        this.submissionId = submissionId;
-        this.sessionId = sessionId;
     }
 
     public long getId() {
@@ -78,6 +60,10 @@ public class ActivityInstanceDto {
 
     public String getGuid() {
         return guid;
+    }
+
+    public long getStudyId() {
+        return studyId;
     }
 
     public long getActivityId() {
@@ -104,8 +90,12 @@ public class ActivityInstanceDto {
         return isHidden;
     }
 
-    public String getStatusTypeCode() {
-        return statusTypeCode;
+    public InstanceStatusType getStatusType() {
+        return statusType;
+    }
+
+    public ActivityType getActivityType() {
+        return activityType;
     }
 
     public Long getOnDemandTriggerId() {

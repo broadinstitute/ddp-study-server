@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -235,7 +236,24 @@ public class PutFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
                 .when().put(urlTemplate).then().assertThat()
                 .statusCode(404).contentType(ContentType.JSON)
                 .body("code", equalTo(ErrorCodes.ACTIVITY_NOT_FOUND))
-                .body("message", containsString("activity instance ABC123XYZ"));
+                .body("message", containsString("activity instance with guid ABC123XYZ"));
+    }
+
+    @Test
+    public void testActivityInstanceIsHidden() {
+        ActivityInstanceDto instanceDto = TransactionWrapper.withTxn(handle -> {
+            ActivityInstanceDto dto = insertNewInstanceAndDeferCleanup(handle, form.getActivityId());
+            assertEquals(1, handle.attach(ActivityInstanceDao.class)
+                    .bulkUpdateIsHiddenByActivityIds(testData.getUserId(), true, Set.of(form.getActivityId())));
+            return dto;
+        });
+
+        given().auth().oauth2(token)
+                .pathParam("instanceGuid", instanceDto.getGuid())
+                .when().put(urlTemplate).then().assertThat()
+                .statusCode(404).contentType(ContentType.JSON)
+                .body("code", equalTo(ErrorCodes.ACTIVITY_NOT_FOUND))
+                .body("message", containsString("is hidden"));
     }
 
     @Test

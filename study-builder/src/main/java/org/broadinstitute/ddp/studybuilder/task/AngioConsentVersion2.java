@@ -603,7 +603,7 @@ public class AngioConsentVersion2 implements CustomTask {
             }
 
             String instanceUpdatedAt = "";
-            if (InstanceStatusType.IN_PROGRESS.name().equals(instance.getStatusTypeCode())) {
+            if (InstanceStatusType.IN_PROGRESS.equals(instance.getStatusType())) {
                 instanceUpdatedAt = instanceStatusDao
                         .getLatestStatus(instance.getGuid(), InstanceStatusType.IN_PROGRESS)
                         .map(status -> Instant.ofEpochMilli(status.getUpdatedAt()).toString())
@@ -639,7 +639,7 @@ public class AngioConsentVersion2 implements CustomTask {
                     userDto.getUserGuid(), userDto.getUserHruid(), userDto.getLegacyAltPid(), userDto.getLegacyShortId(),
                     email,
                     String.valueOf(instance.getId()), instance.getGuid(),
-                    instance.getStatusTypeCode(), Instant.ofEpochMilli(instance.getCreatedAtMillis()).toString(), instanceUpdatedAt,
+                    instance.getStatusType().name(), Instant.ofEpochMilli(instance.getCreatedAtMillis()).toString(), instanceUpdatedAt,
                     String.valueOf(answers.size()),
                     Instant.ofEpochMilli(timestamp).toString(),
                     gson.toJson(instance), gson.toJson(answers)
@@ -720,12 +720,14 @@ public class AngioConsentVersion2 implements CustomTask {
         @RegisterConstructorMapper(BlockContentDto.class)
         BlockContentDto findContentBlockByBodyText(@Bind("activityId") long activityId, @Bind("text") String bodyTemplateText);
 
-        @SqlQuery("select ai.*, stat_type.activity_instance_status_type_code, act.allow_unauthenticated"
+        @SqlQuery("select ai.*, stat_type.activity_instance_status_type_code as activity_instance_status_type,"
+                + "       act_type.activity_type_code as activity_type, act.allow_unauthenticated, act.study_id"
                 + "  from activity_instance as ai"
                 + "  join activity_instance_status as stat on stat.activity_instance_id = ai.activity_instance_id"
                 + "  join activity_instance_status_type as stat_type"
                 + "       on stat_type.activity_instance_status_type_id = stat.activity_instance_status_type_id"
                 + "  join study_activity as act on act.study_activity_id = ai.study_activity_id"
+                + "  join activity_type as act_type on act_type.activity_type_id = act.activity_type_id"
                 + "  join user as u on u.user_id = ai.participant_id"
                 + "  join user_profile as up on up.user_id = u.user_id"
                 + "  join user_study_enrollment as enroll on enroll.user_id = u.user_id"

@@ -367,14 +367,14 @@ public class DataDonationPlatform {
         post(API.USER_ACTIVITIES, new CreateActivityInstanceRoute(activityInstanceDao), responseSerializer);
         get(
                 API.USER_ACTIVITIES_INSTANCE,
-                new GetActivityInstanceRoute(actInstService, activityValidationService, activityInstanceDao, interpreter),
+                new GetActivityInstanceRoute(actInstService, activityValidationService, interpreter),
                 responseSerializer
         );
 
         // User activity answers routes
         FormActivityService formService = new FormActivityService(interpreter);
         patch(API.USER_ACTIVITY_ANSWERS,
-                new PatchFormAnswersRoute(formService, activityValidationService, activityInstanceDao, answerDao, interpreter),
+                new PatchFormAnswersRoute(formService, activityValidationService, answerDao, interpreter),
                 responseSerializer);
         put(
                 API.USER_ACTIVITY_ANSWERS,
