@@ -10,6 +10,7 @@ import java.util.Optional;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
@@ -64,7 +65,7 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
             TestFormActivity act = TestFormActivity.builder()
                     .withAgreementQuestion(true)
                     .build(handle, testData.getUserId(), testData.getStudyGuid());
-            String instanceGuid = createInstance(handle, act.getDef().getActivityId());
+            String instanceGuid = createInstance(handle, act.getDef().getActivityId()).getGuid();
 
             var answer = new AgreementAnswer(null, act.getAgreementQuestion().getStableId(), null, true);
             oldAnswerDao.createAnswer(handle, answer, testData.getUserGuid(), instanceGuid);
@@ -86,7 +87,7 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
             TestFormActivity act = TestFormActivity.builder()
                     .withBoolQuestion(true)
                     .build(handle, testData.getUserId(), testData.getStudyGuid());
-            String instanceGuid = createInstance(handle, act.getDef().getActivityId());
+            String instanceGuid = createInstance(handle, act.getDef().getActivityId()).getGuid();
 
             var answer = new BoolAnswer(null, act.getBoolQuestion().getStableId(), null, true);
             oldAnswerDao.createAnswer(handle, answer, testData.getUserGuid(), instanceGuid);
@@ -108,7 +109,7 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
             TestFormActivity act = TestFormActivity.builder()
                     .withTextQuestion(true)
                     .build(handle, testData.getUserId(), testData.getStudyGuid());
-            String instanceGuid = createInstance(handle, act.getDef().getActivityId());
+            String instanceGuid = createInstance(handle, act.getDef().getActivityId()).getGuid();
 
             var answer = new TextAnswer(null, act.getTextQuestion().getStableId(), null, "itsAnAnswer");
             oldAnswerDao.createAnswer(handle, answer, testData.getUserGuid(), instanceGuid);
@@ -130,7 +131,7 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
             TestFormActivity act = TestFormActivity.builder()
                     .withDateFullQuestion(true)
                     .build(handle, testData.getUserId(), testData.getStudyGuid());
-            String instanceGuid = createInstance(handle, act.getDef().getActivityId());
+            String instanceGuid = createInstance(handle, act.getDef().getActivityId()).getGuid();
 
             var answer = new DateAnswer(null, act.getDateFullQuestion().getStableId(), null, 2018, 10, 24);
             oldAnswerDao.createAnswer(handle, answer, testData.getUserGuid(), instanceGuid);
@@ -152,7 +153,7 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
             TestFormActivity act = TestFormActivity.builder()
                     .withNumericIntQuestion(true)
                     .build(handle, testData.getUserId(), testData.getStudyGuid());
-            String instanceGuid = createInstance(handle, act.getDef().getActivityId());
+            String instanceGuid = createInstance(handle, act.getDef().getActivityId()).getGuid();
 
             var answer = new NumericIntegerAnswer(null, act.getNumericIntQuestion().getStableId(), null, 25L);
             oldAnswerDao.createAnswer(handle, answer, testData.getUserGuid(), instanceGuid);
@@ -177,7 +178,7 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
                             new PicklistOptionDef("PO1", Template.text("po1")),
                             new PicklistOptionDef("PO2", Template.text("po2"), Template.text("details")))
                     .build(handle, testData.getUserId(), testData.getStudyGuid());
-            String instanceGuid = createInstance(handle, act.getDef().getActivityId());
+            String instanceGuid = createInstance(handle, act.getDef().getActivityId()).getGuid();
 
             PicklistAnswer answer = new PicklistAnswer(null, act.getPicklistSingleListQuestion().getStableId(), null,
                     List.of(new SelectedPicklistOption("PO2", "some details")));
@@ -212,7 +213,7 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
             TestFormActivity act = TestFormActivity.builder()
                     .withCompositeQuestion(true, childDate, childText)
                     .build(handle, testData.getUserId(), testData.getStudyGuid());
-            String instanceGuid = createInstance(handle, act.getDef().getActivityId());
+            String instanceGuid = createInstance(handle, act.getDef().getActivityId()).getGuid();
 
             CompositeAnswer answer = new CompositeAnswer(null, act.getCompositeQuestion().getStableId(), null);
             answer.addRowOfChildAnswers(
@@ -249,12 +250,21 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
     }
 
     @Test
+    public void testFindAnswerByGuid_notFound() {
+        TransactionWrapper.useTxn(handle -> {
+            Optional<Answer> result = handle.attach(AnswerDao.class).findAnswerByGuid("abcxyz");
+            assertTrue(result.isEmpty());
+            handle.rollback();
+        });
+    }
+
+    @Test
     public void testFindAnswerByGuid() {
         TransactionWrapper.useTxn(handle -> {
             TestFormActivity act = TestFormActivity.builder()
                     .withBoolQuestion(true)
                     .build(handle, testData.getUserId(), testData.getStudyGuid());
-            String instanceGuid = createInstance(handle, act.getDef().getActivityId());
+            String instanceGuid = createInstance(handle, act.getDef().getActivityId()).getGuid();
 
             var answer = new BoolAnswer(null, act.getBoolQuestion().getStableId(), null, true);
             oldAnswerDao.createAnswer(handle, answer, testData.getUserGuid(), instanceGuid);
@@ -270,9 +280,101 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
         });
     }
 
-    private String createInstance(Handle handle, long activityId) {
-        return handle.attach(ActivityInstanceDao.class)
-                .insertInstance(activityId, testData.getUserGuid())
-                .getGuid();
+    @Test
+    public void testFindAnswerByInstanceIdAndQuestionStableId_notFound() {
+        TransactionWrapper.useTxn(handle -> {
+            TestFormActivity act = TestFormActivity.builder()
+                    .withBoolQuestion(true)
+                    .build(handle, testData.getUserId(), testData.getStudyGuid());
+            ActivityInstanceDto instanceDto = createInstance(handle, act.getDef().getActivityId());
+
+            AnswerDao answerDao = handle.attach(AnswerDao.class);
+            Optional<Answer> result = answerDao.findAnswerByInstanceIdAndQuestionStableId(123456L, "abcxyz");
+            assertTrue(result.isEmpty());
+
+            result = answerDao.findAnswerByInstanceIdAndQuestionStableId(instanceDto.getId(), "abcxyz");
+            assertTrue(result.isEmpty());
+
+            result = answerDao.findAnswerByInstanceIdAndQuestionStableId(instanceDto.getId(), act.getBoolQuestion().getStableId());
+            assertTrue(result.isEmpty());
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testFindAnswerByInstanceIdAndQuestionStableId_bool() {
+        TransactionWrapper.useTxn(handle -> {
+            TestFormActivity act = TestFormActivity.builder()
+                    .withBoolQuestion(true)
+                    .build(handle, testData.getUserId(), testData.getStudyGuid());
+            ActivityInstanceDto instanceDto = createInstance(handle, act.getDef().getActivityId());
+
+            var answer = new BoolAnswer(null, act.getBoolQuestion().getStableId(), null, true);
+            oldAnswerDao.createAnswer(handle, answer, testData.getUserGuid(), instanceDto.getGuid());
+            Answer actual = handle.attach(AnswerDao.class)
+                    .findAnswerByInstanceIdAndQuestionStableId(instanceDto.getId(), act.getBoolQuestion().getStableId())
+                    .orElse(null);
+
+            assertNotNull(actual);
+            assertEquals(QuestionType.BOOLEAN, actual.getQuestionType());
+            assertTrue(((BoolAnswer) actual).getValue());
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testFindAnswerByInstanceIdAndQuestionStableId_composite() {
+        TransactionWrapper.useTxn(handle -> {
+            DateQuestionDef childDate = DateQuestionDef
+                    .builder(DateRenderMode.TEXT, "CDATE" + Instant.now().toEpochMilli(), Template.text("child date"))
+                    .addFields(DateFieldType.YEAR, DateFieldType.MONTH, DateFieldType.DAY)
+                    .build();
+            TextQuestionDef childText = TextQuestionDef
+                    .builder(TextInputType.TEXT, "CTEXT" + Instant.now().toEpochMilli(), Template.text("child text"))
+                    .build();
+
+            TestFormActivity act = TestFormActivity.builder()
+                    .withCompositeQuestion(true, childDate, childText)
+                    .build(handle, testData.getUserId(), testData.getStudyGuid());
+            ActivityInstanceDto instanceDto = createInstance(handle, act.getDef().getActivityId());
+
+            CompositeAnswer answer = new CompositeAnswer(null, act.getCompositeQuestion().getStableId(), null);
+            answer.addRowOfChildAnswers(
+                    new DateAnswer(null, childDate.getStableId(), null, new DateValue(2018, 10, 24)));
+            answer.addRowOfChildAnswers(
+                    new DateAnswer(null, childDate.getStableId(), null, new DateValue(2020, 3, 14)),
+                    new TextAnswer(null, childText.getStableId(), null, "row 2 col 2"));
+
+            oldAnswerDao.createAnswer(handle, answer, testData.getUserGuid(), instanceDto.getGuid());
+            Answer actual = handle.attach(AnswerDao.class)
+                    .findAnswerByInstanceIdAndQuestionStableId(instanceDto.getId(), act.getCompositeQuestion().getStableId())
+                    .orElse(null);
+
+            assertNotNull(actual);
+            assertEquals(QuestionType.COMPOSITE, actual.getQuestionType());
+
+            var rows = ((CompositeAnswer) actual).getValue();
+            assertEquals(2, rows.size());
+            assertEquals(1, rows.get(0).getValues().size());
+            assertEquals(2, rows.get(1).getValues().size());
+
+            var row1 = rows.get(0).getValues();
+            assertEquals(QuestionType.DATE, row1.get(0).getQuestionType());
+            assertEquals(new DateValue(2018, 10, 24), row1.get(0).getValue());
+
+            var row2 = rows.get(1).getValues();
+            assertEquals(QuestionType.DATE, row2.get(0).getQuestionType());
+            assertEquals(new DateValue(2020, 3, 14), row2.get(0).getValue());
+            assertEquals(QuestionType.TEXT, row2.get(1).getQuestionType());
+            assertEquals("row 2 col 2", row2.get(1).getValue());
+
+            handle.rollback();
+        });
+    }
+
+    private ActivityInstanceDto createInstance(Handle handle, long activityId) {
+        return handle.attach(ActivityInstanceDao.class).insertInstance(activityId, testData.getUserGuid());
     }
 }
