@@ -73,22 +73,6 @@ public interface AnswerDao extends SqlObject {
     @CreateSqlObject
     JdbiAnswer getJdbiAnswer();
 
-    /**
-     * Finds the answer id to specified question in the last-created activity instance of the specified activity. Useful in cases where we
-     * just need to know if there is an answer or not instead of needing all the data about the answer itself.
-     *
-     * @param userGuid         the user guid
-     * @param activityId       the activity id
-     * @param questionStableId the question stable id
-     * @return answer id if exists, empty otherwise
-     */
-    @UseStringTemplateSqlLocator
-    @SqlQuery("queryAnswerIdForQuestionInLatestInstance")
-    Optional<Long> findAnswerIdForQuestionInLatestInstance(
-            @Bind("userGuid") String userGuid,
-            @Bind("activityId") long activityId,
-            @Bind("questionStableId") String questionStableId);
-
     @SqlQuery(" select da.year, da.month, da.day "
             + " from activity_instance as ai "
             + " join answer as a on ai.activity_instance_id = a.activity_instance_id "
@@ -262,6 +246,13 @@ public interface AnswerDao extends SqlObject {
     @SqlQuery("queryAnswerByGuid")
     @UseRowReducer(AnswerWithValueReducer.class)
     Optional<Answer> findAnswerByGuid(@Bind("guid") String answerGuid);
+
+    @UseStringTemplateSqlLocator
+    @SqlQuery("queryAnswerByInstanceIdAndQuestionStableId")
+    @UseRowReducer(AnswerWithValueReducer.class)
+    Optional<Answer> findAnswerByInstanceIdAndQuestionStableId(
+            @Bind("instanceId") long instanceId,
+            @Bind("questionStableId") String questionStableId);
 
     class AnswerWithValueReducer implements LinkedHashMapRowReducer<Long, Answer> {
         private Map<Long, Answer> childAnswers = new HashMap<>();
