@@ -145,6 +145,14 @@ public class StudyBuilder {
         numRows = helper.renamePdfConfigurations(studyDto.getId());
         LOG.info("renamed {} pdf configurations", numRows);
 
+        // Remove the governance policy
+        StudyGovernanceDao studyGovernanceDao = handle.attach(StudyGovernanceDao.class);
+        studyGovernanceDao.findPolicyByStudyId(studyDto.getId()).ifPresent(policy -> {
+            studyGovernanceDao.removePolicy(policy.getId());
+            LOG.info("removed governance policy with id {} and {} age-of-majority rules",
+                    policy.getId(), policy.getAgeOfMajorityRules().size());
+        });
+
         // Normalize and make new guid unique.
         String newGuid = studyDto.getGuid().replace("_", "-") + studyDto.getId();
 

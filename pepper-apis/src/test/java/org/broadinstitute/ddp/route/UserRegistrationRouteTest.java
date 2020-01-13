@@ -54,7 +54,6 @@ import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dao.QueuedEventDao;
 import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
-import org.broadinstitute.ddp.db.dao.StudyGovernanceSql;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
@@ -938,7 +937,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
 
                 // remove the governance policy
                 if (governancePolicy.get() != null) {
-                    handle.attach(StudyGovernanceSql.class).deletePolicy(governancePolicy.get().getId());
+                    handle.attach(StudyGovernanceDao.class).removePolicy(governancePolicy.get().getId());
                 }
 
                 if (shouldDeleteProfile.get()) {
