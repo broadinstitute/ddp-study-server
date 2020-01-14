@@ -44,6 +44,11 @@
             <column name="copy_configuration_id" type="bigint" autoIncrement="true" startWith="1">
                 <constraints primaryKey="true" primaryKeyName="copy_configuration_pk"/>
             </column>
+            <column name="study_id" type="bigint">
+                <constraints nullable="false"
+                             references="umbrella_study(umbrella_study_id)"
+                             foreignKeyName="copy_configuration_study_fk"/>
+            </column>
         </createTable>
 
         <createTable tableName="copy_configuration_pair">
@@ -116,7 +121,8 @@
         <createProcedure procedureName="backfill_copy_action_configurations">
             CREATE PROCEDURE backfill_copy_action_configurations()
             BEGIN
-                DECLARE event_id, question_sid, target_id BIGINT;
+                DECLARE study_id BIGINT;
+                DECLARE action_id, question_sid, target_id BIGINT;
                 DECLARE cfg_id, source_loc_id, target_loc_id BIGINT;
 
                 DECLARE done INT DEFAULT FALSE;
@@ -127,14 +133,17 @@
 
                 OPEN actions;
                 read_loop: LOOP
-                    FETCH FROM actions INTO event_id, question_sid, target_id;
+                    FETCH FROM actions INTO action_id, question_sid, target_id;
                     IF done THEN LEAVE read_loop; END IF;
 
-                    INSERT INTO copy_configuration () VALUES ();
+                    SELECT umbrella_study_id INTO study_id FROM event_configuration
+                     WHERE event_action_id = action_id;
+
+                    INSERT INTO copy_configuration (study_id) VALUES (study_id);
                     SET cfg_id = LAST_INSERT_ID();
 
                     INSERT INTO copy_location (copy_location_type_id)
-                    SELECT copy_location_type_id FROM copy_location_type WHERE copy_location_type_code = 'QUESTION_ANSWER';
+                    SELECT copy_location_type_id FROM copy_location_type WHERE copy_location_type_code = 'ANSWER';
                     SET source_loc_id = LAST_INSERT_ID();
 
                     INSERT INTO copy_answer_location (copy_location_id, question_stable_code_id)
@@ -148,7 +157,7 @@
                     INSERT INTO copy_configuration_pair (copy_configuration_id, source_location_id, target_location_id, execution_order)
                     VALUES (cfg_id, source_loc_id, target_loc_id, 1);
 
-                    UPDATE copy_answer_event_action SET copy_configuration_id = cfg_id WHERE event_action_id = event_id;
+                    UPDATE copy_answer_event_action SET copy_configuration_id = cfg_id WHERE event_action_id = action_id;
                 END LOOP;
                 CLOSE actions;
             END
