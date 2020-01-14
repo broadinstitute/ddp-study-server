@@ -8,7 +8,7 @@ import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dto.SendgridEmailEventActionDto;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
-import org.broadinstitute.ddp.model.event.CopyConfiguration;
+import org.broadinstitute.ddp.model.copy.CopyConfiguration;
 import org.broadinstitute.ddp.model.event.NotificationServiceType;
 import org.broadinstitute.ddp.model.event.NotificationType;
 import org.jdbi.v3.sqlobject.CreateSqlObject;

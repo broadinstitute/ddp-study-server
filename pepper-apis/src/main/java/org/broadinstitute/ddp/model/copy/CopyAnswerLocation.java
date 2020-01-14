@@ -1,4 +1,4 @@
-package org.broadinstitute.ddp.model.event;
+package org.broadinstitute.ddp.model.copy;
 
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;

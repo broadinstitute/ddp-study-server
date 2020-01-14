@@ -1,4 +1,4 @@
-package org.broadinstitute.ddp.model.event;
+package org.broadinstitute.ddp.model.copy;
 
 public enum CopyLocationType {
     ANSWER,

@@ -3,7 +3,7 @@ package org.broadinstitute.ddp.db.dao;
 import java.util.List;
 import java.util.Set;
 
-import org.broadinstitute.ddp.model.event.CopyLocationType;
+import org.broadinstitute.ddp.model.copy.CopyLocationType;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
