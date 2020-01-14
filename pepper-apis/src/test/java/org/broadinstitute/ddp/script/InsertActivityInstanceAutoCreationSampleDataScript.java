@@ -7,8 +7,8 @@ import org.broadinstitute.ddp.constants.SqlConstants;
 import org.broadinstitute.ddp.constants.TestConstants;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.db.dao.EventActionSql;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
-import org.broadinstitute.ddp.db.dao.JdbiActivityInstanceCreationAction;
 import org.broadinstitute.ddp.db.dao.JdbiActivityStatusTrigger;
 import org.broadinstitute.ddp.db.dao.JdbiEventAction;
 import org.broadinstitute.ddp.db.dao.JdbiEventConfiguration;
@@ -55,9 +55,10 @@ public class InsertActivityInstanceAutoCreationSampleDataScript extends TxnAware
                             .getIdByGuid(TestConstants.TEST_STUDY_GUID).get();
                     studyActivityToCreateId = handle.attach(JdbiActivity.class).findIdByStudyIdAndCode(umbrellaStudyId,
                             TestData.ACTIVITY_TO_CREATE_CODE).get();
-                    handle.attach(JdbiActivityInstanceCreationAction.class).insert(
+                    handle.attach(EventActionSql.class).insertActivityInstanceCreationAction(
                             eventActionId,
-                            studyActivityToCreateId
+                            studyActivityToCreateId,
+                            null
                     );
 
                     eventTriggerId = handle.attach(JdbiEventTrigger.class).insert(EventTriggerType.ACTIVITY_STATUS);

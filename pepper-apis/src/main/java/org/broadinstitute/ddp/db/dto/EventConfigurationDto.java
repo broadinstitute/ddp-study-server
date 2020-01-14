@@ -8,7 +8,6 @@ import java.util.Set;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
-import org.broadinstitute.ddp.model.event.CopyLocationType;
 import org.broadinstitute.ddp.model.event.NotificationServiceType;
 import org.broadinstitute.ddp.model.event.NotificationType;
 import org.broadinstitute.ddp.model.event.PdfAttachment;
@@ -77,13 +76,13 @@ public class EventConfigurationDto {
 
     /* ACTIVITY_INSTANCE_CREATION */
     private Long activityInstanceCreationStudyActivityId;
+    private Long activityInstanceCreationCopyConfigurationId;
 
     /* USER_ENROLLED */
     // No sub-table
 
     /* COPY_ANSWER */
-    private CopyLocationType copyAnswerTarget;
-    private String copySourceQuestionStableId;
+    private Long copyActionCopyConfigurationId;
 
     /* CREATE_INVITATION */
     private Long contactEmailQuestionStableCodeId;
@@ -119,8 +118,8 @@ public class EventConfigurationDto {
                                  Long linkedActivityId,
                                  Long pdfGenerationDocumentConfigurationId,
                                  Long activityInstanceCreationStudyActivityId,
-                                 CopyLocationType copyAnswerTarget,
-                                 String copySourceQuestionStableId,
+                                 Long activityInstanceCreationCopyConfigurationId,
+                                 Long copyActionCopyConfigurationId,
                                  Long contactEmailQuestionStableCodeId,
                                  String contactEmailQuestionStableId,
                                  Boolean markExistingInvitationsAsVoided) {
@@ -147,8 +146,8 @@ public class EventConfigurationDto {
         this.linkedActivityId = linkedActivityId;
         this.pdfGenerationDocumentConfigurationId = pdfGenerationDocumentConfigurationId;
         this.activityInstanceCreationStudyActivityId = activityInstanceCreationStudyActivityId;
-        this.copyAnswerTarget = copyAnswerTarget;
-        this.copySourceQuestionStableId = copySourceQuestionStableId;
+        this.activityInstanceCreationCopyConfigurationId = activityInstanceCreationCopyConfigurationId;
+        this.copyActionCopyConfigurationId = copyActionCopyConfigurationId;
         this.contactEmailQuestionStableCodeId = contactEmailQuestionStableCodeId;
         this.contactEmailQuestionStableId = contactEmailQuestionStableId;
         this.markExistingInvitationsAsVoided = markExistingInvitationsAsVoided;
@@ -242,12 +241,12 @@ public class EventConfigurationDto {
         return activityInstanceCreationStudyActivityId;
     }
 
-    public CopyLocationType getCopyAnswerTarget() {
-        return copyAnswerTarget;
+    public Long getActivityInstanceCreationCopyConfigurationId() {
+        return activityInstanceCreationCopyConfigurationId;
     }
 
-    public String getCopySourceQuestionStableId() {
-        return copySourceQuestionStableId;
+    public Long getCopyActionCopyConfigurationId() {
+        return copyActionCopyConfigurationId;
     }
 
     public Long getPdfGenerationDocumentConfigurationId() {

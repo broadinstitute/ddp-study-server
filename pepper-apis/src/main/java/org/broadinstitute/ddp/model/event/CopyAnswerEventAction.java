@@ -22,14 +22,12 @@ import org.slf4j.LoggerFactory;
 
 public class CopyAnswerEventAction extends EventAction {
     private static final Logger LOG = LoggerFactory.getLogger(CopyAnswerEventAction.class);
-    private CopyLocationType copyAnswerTarget;
-    private String copySourceQuestionStableId;
+    private long copyConfigurationId;
     private AnswerDao answerDao;
 
     public CopyAnswerEventAction(EventConfiguration eventConfiguration, EventConfigurationDto dto) {
         super(eventConfiguration, dto);
-        this.copyAnswerTarget = dto.getCopyAnswerTarget();
-        copySourceQuestionStableId = dto.getCopySourceQuestionStableId();
+        copyConfigurationId = dto.getCopyActionCopyConfigurationId();
         answerDao = AnswerDao.fromSqlConfig(ConfigFactory.load(ConfigFile.SQL_CONFIG_FILE));
     }
 
@@ -49,20 +47,21 @@ public class CopyAnswerEventAction extends EventAction {
         String activityInstanceGuid = jdbiActivityInstance
                 .getActivityInstanceGuid(activityInstanceStatusChangeSignal.getActivityInstanceIdThatChanged());
 
-        copyAnswerValue(eventSignal, activityInstanceGuid, handle);
+        // todo: query for copy config and process
+        // copyAnswerValue(eventSignal, activityInstanceGuid, handle);
     }
 
     public <T> boolean copyAnswerValue(EventSignal eventSignal, String activityInstanceGuid, Handle handle) {
         // this OK. Just sets up the base type
         //noinspection unchecked
         ValueSetter<T> targetValueSetter = (ValueSetter<T>)
-                CopyAnswerValueSetterDefinitions.findValueSetter(copyAnswerTarget);
+                CopyAnswerValueSetterDefinitions.findValueSetter(null);
 
-        Answer sourceAnswer = getAnswer(activityInstanceGuid, copySourceQuestionStableId, handle);
+        Answer sourceAnswer = getAnswer(activityInstanceGuid, null, handle);
 
         if (sourceAnswer == null) {
             LOG.info("There was no answer to copy in activity instance: {} and question stable id: {}", activityInstanceGuid,
-                    copySourceQuestionStableId);
+                    null);
             return false;
         }
         T sourceAnswerValue = extractValueFromAnswer(sourceAnswer, targetValueSetter.getValueType());
@@ -104,11 +103,7 @@ public class CopyAnswerEventAction extends EventAction {
                 + extractionValueType.getName());
     }
 
-    public CopyLocationType getCopyAnswerTarget() {
-        return copyAnswerTarget;
-    }
-
-    public String getCopySourceQuestionStableId() {
-        return copySourceQuestionStableId;
+    public long getCopyConfigurationId() {
+        return copyConfigurationId;
     }
 }
