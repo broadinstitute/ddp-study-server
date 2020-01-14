@@ -26,7 +26,7 @@ import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
-import org.broadinstitute.ddp.model.event.CopyLocationType;
+import org.broadinstitute.ddp.model.event.CopyAnswerTarget;
 import org.broadinstitute.ddp.model.pdf.PdfConfigInfo;
 import org.broadinstitute.ddp.model.workflow.ActivityState;
 import org.broadinstitute.ddp.model.workflow.StateType;
@@ -41,12 +41,13 @@ import org.slf4j.LoggerFactory;
 
 public class EventBuilder {
 
-    public static final String ACTIVITY_CODE_FIELD = "activityCode";
-    public static final String WORKFLOW_STATE_FIELD = "state";
     private static final Logger LOG = LoggerFactory.getLogger(EventBuilder.class);
     private static final String ACTION_SENDGRID_EMAIL = "SENDGRID_EMAIL";
     private static final String ACTION_STUDY_EMAIL = "STUDY_EMAIL";
     private static final String ACTION_INVITATION_EMAIL = "INVITATION_EMAIL";
+    public static final String ACTIVITY_CODE_FIELD = "activityCode";
+    public static final String WORKFLOW_STATE_FIELD = "state";
+
     private Gson gson;
     private GsonPojoValidator validator;
     private Config cfg;
@@ -191,7 +192,7 @@ public class EventBuilder {
             return actionDao.insertAnnouncementAction(tmpl.getTemplateId(), isPermanent, createForProxies);
         } else if (EventActionType.COPY_ANSWER.name().equals(type)) {
             String copySourceQuestionStableId = actionCfg.getString("copySourceQuestionStableId");
-            CopyLocationType copyTarget = actionCfg.getEnum(CopyLocationType.class, "copyTarget");
+            CopyAnswerTarget copyTarget = actionCfg.getEnum(CopyAnswerTarget.class, "copyTarget");
             return actionDao.insertCopyAnswerAction(studyDto.getId(), copySourceQuestionStableId, copyTarget);
         } else if (EventActionType.CREATE_INVITATION.name().equals(type)) {
             boolean markExistingAsVoided = actionCfg.getBoolean("markExistingAsVoided");
@@ -254,7 +255,7 @@ public class EventBuilder {
             return String.format("%s/%s", type, activityCode);
         } else if (EventActionType.COPY_ANSWER.name().equals(type)) {
             String copySourceQuestionStableId = actionCfg.getString("copySourceQuestionStableId");
-            CopyLocationType copyTarget = actionCfg.getEnum(CopyLocationType.class, "copyTarget");
+            CopyAnswerTarget copyTarget = actionCfg.getEnum(CopyAnswerTarget.class, "copyTarget");
             return String.format("%s/%s/%s", type, copySourceQuestionStableId, copyTarget);
         } else if (EventActionType.CREATE_INVITATION.name().equals(type)) {
             boolean markExistingAsVoided = actionCfg.getBoolean("markExistingAsVoided");

@@ -12,7 +12,6 @@ import java.util.Optional;
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.exception.OperationNotAllowedException;
 import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
@@ -46,7 +45,7 @@ public class CopyConfigurationDaoTest extends TxnAwareBaseTest {
 
     @Test
     public void testCreateCopyConfig_notSupported_nonAnswerSource() {
-        thrown.expect(OperationNotAllowedException.class);
+        thrown.expect(DaoException.class);
         thrown.expectMessage(containsString("only answer source locations"));
         TransactionWrapper.useTxn(handle -> {
             var config = new CopyConfiguration(testData.getStudyId(), List.of(new CopyConfigurationPair(
@@ -60,7 +59,7 @@ public class CopyConfigurationDaoTest extends TxnAwareBaseTest {
 
     @Test
     public void testCreateCopyConfig_notSupported_compositeToNonAnswerTarget() {
-        thrown.expect(OperationNotAllowedException.class);
+        thrown.expect(DaoException.class);
         thrown.expectMessage(containsString("from source composite to target composite"));
         TransactionWrapper.useTxn(handle -> {
             TestFormActivity act = TestFormActivity.builder()
@@ -77,8 +76,8 @@ public class CopyConfigurationDaoTest extends TxnAwareBaseTest {
 
     @Test
     public void testCreateCopyConfig_notSupported_nonCompositeSourceToCompositeTarget() {
-        thrown.expect(OperationNotAllowedException.class);
-        thrown.expectMessage(containsString("from source composite to target composite"));
+        thrown.expect(DaoException.class);
+        thrown.expectMessage(containsString("between questions of the same type"));
         TransactionWrapper.useTxn(handle -> {
             TestFormActivity act = TestFormActivity.builder()
                     .withTextQuestion(true)
@@ -104,6 +103,24 @@ public class CopyConfigurationDaoTest extends TxnAwareBaseTest {
             var config = new CopyConfiguration(testData.getStudyId(), List.of(new CopyConfigurationPair(
                     new CopyAnswerLocation(act.getCompositeQuestion().getStableId()),
                     new CopyAnswerLocation(act.getCompositeQuestion().getStableId()),
+                    List.of())));
+            handle.attach(CopyConfigurationDao.class).createCopyConfig(config);
+            fail("expected exception not thrown");
+        });
+    }
+
+    @Test
+    public void testCreateCopyConfig_notSupported_mismatchedQuestionTypes() {
+        thrown.expect(DaoException.class);
+        thrown.expectMessage(containsString("between questions of the same type"));
+        TransactionWrapper.useTxn(handle -> {
+            TestFormActivity act = TestFormActivity.builder()
+                    .withBoolQuestion(true)
+                    .withTextQuestion(true)
+                    .build(handle, testData.getUserId(), testData.getStudyGuid());
+            var config = new CopyConfiguration(testData.getStudyId(), List.of(new CopyConfigurationPair(
+                    new CopyAnswerLocation(act.getBoolQuestion().getStableId()),
+                    new CopyAnswerLocation(act.getTextQuestion().getStableId()),
                     List.of())));
             handle.attach(CopyConfigurationDao.class).createCopyConfig(config);
             fail("expected exception not thrown");
