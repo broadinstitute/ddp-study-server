@@ -10,7 +10,7 @@ import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dto.CopyAnswerEventActionDto;
 import org.broadinstitute.ddp.db.dto.SendgridEmailEventActionDto;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
-import org.broadinstitute.ddp.model.event.CopyAnswerTarget;
+import org.broadinstitute.ddp.model.event.CopyLocationType;
 import org.broadinstitute.ddp.model.event.NotificationServiceType;
 import org.broadinstitute.ddp.model.event.NotificationType;
 import org.jdbi.v3.sqlobject.CreateSqlObject;
@@ -148,7 +148,7 @@ public interface EventActionDao extends SqlObject {
         return actionId;
     }
 
-    default long insertCopyAnswerAction(long studyId, String copySourceStableCode, CopyAnswerTarget copyTarget) {
+    default long insertCopyAnswerAction(long studyId, String copySourceStableCode, CopyLocationType copyTarget) {
         long actionId = getJdbiEventAction().insert(null, EventActionType.COPY_ANSWER);
         JdbiQuestionStableCode jdbiQuestionStableCode = getHandle().attach(JdbiQuestionStableCode.class);
         Optional<Long> stableCodeDbId = jdbiQuestionStableCode.getIdForStableId(copySourceStableCode, studyId);

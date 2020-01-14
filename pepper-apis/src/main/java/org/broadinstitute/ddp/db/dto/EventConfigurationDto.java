@@ -8,7 +8,7 @@ import java.util.Set;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
-import org.broadinstitute.ddp.model.event.CopyAnswerTarget;
+import org.broadinstitute.ddp.model.event.CopyLocationType;
 import org.broadinstitute.ddp.model.event.NotificationServiceType;
 import org.broadinstitute.ddp.model.event.NotificationType;
 import org.broadinstitute.ddp.model.event.PdfAttachment;
@@ -82,7 +82,7 @@ public class EventConfigurationDto {
     // No sub-table
 
     /* COPY_ANSWER */
-    private CopyAnswerTarget copyAnswerTarget;
+    private CopyLocationType copyAnswerTarget;
     private String copySourceQuestionStableId;
 
     /* CREATE_INVITATION */
@@ -119,7 +119,7 @@ public class EventConfigurationDto {
                                  Long linkedActivityId,
                                  Long pdfGenerationDocumentConfigurationId,
                                  Long activityInstanceCreationStudyActivityId,
-                                 CopyAnswerTarget copyAnswerTarget,
+                                 CopyLocationType copyAnswerTarget,
                                  String copySourceQuestionStableId,
                                  Long contactEmailQuestionStableCodeId,
                                  String contactEmailQuestionStableId,
@@ -242,7 +242,7 @@ public class EventConfigurationDto {
         return activityInstanceCreationStudyActivityId;
     }
 
-    public CopyAnswerTarget getCopyAnswerTarget() {
+    public CopyLocationType getCopyAnswerTarget() {
         return copyAnswerTarget;
     }
 

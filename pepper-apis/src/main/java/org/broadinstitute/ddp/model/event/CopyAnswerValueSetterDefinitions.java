@@ -41,7 +41,7 @@ public class CopyAnswerValueSetterDefinitions {
             (newLastName, participantId, operatorId, handle) -> handle.attach(JdbiProfile.class)
                     .upsertLastName(operatorId, newLastName);
 
-    public static ValueSetter<?> findValueSetter(CopyAnswerTarget targetEnum) {
+    public static ValueSetter<?> findValueSetter(CopyLocationType targetEnum) {
         switch (targetEnum) {
             case PARTICIPANT_PROFILE_BIRTH_DATE:
                 return PARTICIPANT_PROFILE_BIRTH_DATE_SETTER;
@@ -54,7 +54,7 @@ public class CopyAnswerValueSetterDefinitions {
             case OPERATOR_PROFILE_FIRST_NAME:
                 return OPERATOR_PROFILE_FIRST_NAME_SETTER;
             default:
-                throw new DDPException("Could not find CopyAnswerTarget definition for:" + targetEnum);
+                throw new DDPException("Could not find CopyLocationType definition for:" + targetEnum);
         }
     }
 }
