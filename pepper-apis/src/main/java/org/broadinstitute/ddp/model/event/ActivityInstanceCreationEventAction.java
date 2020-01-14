@@ -18,10 +18,12 @@ import org.slf4j.LoggerFactory;
 public class ActivityInstanceCreationEventAction extends EventAction {
     private static final Logger LOG = LoggerFactory.getLogger(ActivityInstanceCreationEventAction.class);
     private long studyActivityId;
+    private Long copyConfigurationId;
 
     public ActivityInstanceCreationEventAction(EventConfiguration eventConfiguration, EventConfigurationDto dto) {
         super(eventConfiguration, dto);
-        this.studyActivityId = dto.getActivityInstanceCreationStudyActivityId();
+        studyActivityId = dto.getActivityInstanceCreationStudyActivityId();
+        copyConfigurationId = dto.getActivityInstanceCreationCopyConfigurationId();
     }
 
     @Override
@@ -85,6 +87,8 @@ public class ActivityInstanceCreationEventAction extends EventAction {
                 eventSignal.getStudyId(),
                 newActivityInstanceId);
 
+        // todo: if present, query for copy config and process
+
         EventService.getInstance().processAllActionsForEventSignal(handle, new ActivityInstanceStatusChangeSignal(
                 eventSignal.getOperatorId(),
                 eventSignal.getParticipantId(),
@@ -95,7 +99,11 @@ public class ActivityInstanceCreationEventAction extends EventAction {
                 InstanceStatusType.CREATED));
     }
 
-    public Long getStudyActivityId() {
+    public long getStudyActivityId() {
         return studyActivityId;
+    }
+
+    public Long getCopyConfigurationId() {
+        return copyConfigurationId;
     }
 }
