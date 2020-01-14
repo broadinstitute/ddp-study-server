@@ -11,7 +11,6 @@ import java.util.Set;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
-import org.broadinstitute.ddp.exception.OperationNotAllowedException;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.copy.CompositeCopyConfigurationPair;
 import org.broadinstitute.ddp.model.copy.CopyAnswerLocation;
@@ -48,24 +47,21 @@ public interface CopyConfigurationDao extends SqlObject {
 
     private long createCopyPair(long studyId, long configId, CopyConfigurationPair pair) {
         if (pair.getSource().getType() != CopyLocationType.ANSWER) {
-            throw new OperationNotAllowedException("Currently only answer source locations are supported");
+            throw new DaoException("Currently only answer source locations are supported");
         }
-        var source = (CopyAnswerLocation) pair.getSource();
 
+        var compositeToComposite = false;
         var jdbiQuestion = getHandle().attach(JdbiQuestion.class);
+
+        var source = (CopyAnswerLocation) pair.getSource();
         QuestionDto sourceQuestionDto = jdbiQuestion
                 .getLatestQuestionDtoByQuestionStableIdAndUmbrellaStudyId(source.getQuestionStableId(), studyId)
                 .orElseThrow(() -> new DaoException(String.format(
                         "Could not find source question with stable id %s in study %d",
                         source.getQuestionStableId(), studyId)));
         if (sourceQuestionDto.getType() == QuestionType.COMPOSITE && pair.getTarget().getType() != CopyLocationType.ANSWER) {
-            throw new OperationNotAllowedException(
-                    "Currently only support copying from source composite to target composite questions");
+            throw new DaoException("Currently only support copying from source composite to target composite questions");
         }
-
-        long sourceLocId = createCopyLocation(studyId, source);
-        long targetLocId = createCopyLocation(studyId, pair.getTarget());
-        long pairId = getCopyConfigurationSql().insertCopyConfigPair(configId, sourceLocId, targetLocId, pair.getOrder());
 
         if (pair.getTarget().getType() == CopyLocationType.ANSWER) {
             var target = (CopyAnswerLocation) pair.getTarget();
@@ -74,16 +70,23 @@ public interface CopyConfigurationDao extends SqlObject {
                     .orElseThrow(() -> new DaoException(String.format(
                             "Could not find target question with stable id %s in study %d",
                             target.getQuestionStableId(), studyId)));
-            if (targetQuestionDto.getType() == QuestionType.COMPOSITE) {
-                if (sourceQuestionDto.getType() != QuestionType.COMPOSITE) {
-                    throw new OperationNotAllowedException(
-                            "Currently only support copying from source composite to target composite questions");
-                }
-                if (pair.getCompositeChildLocations().isEmpty()) {
-                    throw new DaoException("Missing composite child question pairs");
-                }
-                createCompositeCopyPairs(studyId, pairId, pair.getCompositeChildLocations());
+            if (sourceQuestionDto.getType() != targetQuestionDto.getType()) {
+                throw new DaoException("Currently only support copying answers between questions of the same type");
             }
+            if (targetQuestionDto.getType() == QuestionType.COMPOSITE) {
+                compositeToComposite = true;
+            }
+        }
+
+        long sourceLocId = createCopyLocation(studyId, source);
+        long targetLocId = createCopyLocation(studyId, pair.getTarget());
+        long pairId = getCopyConfigurationSql().insertCopyConfigPair(configId, sourceLocId, targetLocId, pair.getOrder());
+
+        if (compositeToComposite) {
+            if (pair.getCompositeChildLocations().isEmpty()) {
+                throw new DaoException("Missing composite child question pairs");
+            }
+            createCompositeCopyPairs(studyId, pairId, pair.getCompositeChildLocations());
         }
 
         return pairId;
