@@ -185,4 +185,5 @@
     <include file="db-changes/schema/DDP-4053-permanent-announcements.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-4222-age-up-event-actions.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/seed/DDP-4222-age-up-event-types.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-4276-restructure-copy-answer.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
