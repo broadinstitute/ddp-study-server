@@ -1,4 +1,4 @@
-package org.broadinstitute.ddp.model.event;
+package org.broadinstitute.ddp.model.copy;
 
 import java.util.ArrayList;
 import java.util.List;
