@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.model.event;
 import org.broadinstitute.ddp.db.dao.JdbiProfile;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
+import org.broadinstitute.ddp.model.copy.CopyLocationType;
 
 public class CopyAnswerValueSetterDefinitions {
 
