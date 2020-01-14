@@ -1,7 +1,7 @@
 package org.broadinstitute.ddp.db.dao;
 
 import org.broadinstitute.ddp.db.dto.CopyAnswerEventActionDto;
-import org.broadinstitute.ddp.model.event.CopyAnswerTarget;
+import org.broadinstitute.ddp.model.event.CopyLocationType;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
@@ -13,7 +13,7 @@ public interface JdbiCopyAnswerEventAction extends SqlObject {
             + " VALUES (:actionId, (SELECT copy_answer_target_id FROM copy_answer_target WHERE copy_target=:answerTarget),"
             + ":questionStableCodeDbId)")
     int insert(@Bind("actionId") long eventActionId, @Bind("questionStableCodeDbId") long sourceQuestionStableId,
-               @Bind("answerTarget") CopyAnswerTarget answerTarget);
+               @Bind("answerTarget") CopyLocationType answerTarget);
 
     @SqlUpdate("delete from copy_answer_event_action where event_action_id = :actionId")
     int deleteById(@Bind("actionId") long eventActionId);

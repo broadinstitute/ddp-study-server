@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 
 public class CopyAnswerEventAction extends EventAction {
     private static final Logger LOG = LoggerFactory.getLogger(CopyAnswerEventAction.class);
-    private CopyAnswerTarget copyAnswerTarget;
+    private CopyLocationType copyAnswerTarget;
     private String copySourceQuestionStableId;
     private AnswerDao answerDao;
 
@@ -48,7 +48,6 @@ public class CopyAnswerEventAction extends EventAction {
                 (ActivityInstanceStatusChangeSignal) eventSignal;
         String activityInstanceGuid = jdbiActivityInstance
                 .getActivityInstanceGuid(activityInstanceStatusChangeSignal.getActivityInstanceIdThatChanged());
-
 
         copyAnswerValue(eventSignal, activityInstanceGuid, handle);
     }
@@ -105,7 +104,7 @@ public class CopyAnswerEventAction extends EventAction {
                 + extractionValueType.getName());
     }
 
-    public CopyAnswerTarget getCopyAnswerTarget() {
+    public CopyLocationType getCopyAnswerTarget() {
         return copyAnswerTarget;
     }
 

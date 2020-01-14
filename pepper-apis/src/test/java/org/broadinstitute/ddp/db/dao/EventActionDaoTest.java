@@ -17,7 +17,7 @@ import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.TemplateType;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
-import org.broadinstitute.ddp.model.event.CopyAnswerTarget;
+import org.broadinstitute.ddp.model.event.CopyLocationType;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.broadinstitute.ddp.util.TestUtil;
 import org.jdbi.v3.core.Handle;
@@ -65,9 +65,9 @@ public class EventActionDaoTest extends TxnAwareBaseTest {
     public void testInsertCopyAnswerEventAction() {
         TransactionWrapper.useTxn(handle -> {
             EventActionDao eventActionDao = handle.attach(EventActionDao.class);
-            CopyAnswerTarget copyTarget = CopyAnswerTarget.PARTICIPANT_PROFILE_LAST_NAME;
+            CopyLocationType copyTarget = CopyLocationType.PARTICIPANT_PROFILE_LAST_NAME;
             long savedId = eventActionDao.insertCopyAnswerAction(data.getStudyId(), textQuestionStableCode,
-                    CopyAnswerTarget.PARTICIPANT_PROFILE_LAST_NAME);
+                    CopyLocationType.PARTICIPANT_PROFILE_LAST_NAME);
             CopyAnswerEventActionDto savedAction = eventActionDao.findCopyAnswerAction(savedId);
 
             assertNotNull(savedAction);

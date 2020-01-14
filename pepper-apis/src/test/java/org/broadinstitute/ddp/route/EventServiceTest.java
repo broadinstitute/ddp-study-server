@@ -63,7 +63,7 @@ import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.activity.types.TemplateType;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
 import org.broadinstitute.ddp.model.event.ActivityInstanceStatusChangeSignal;
-import org.broadinstitute.ddp.model.event.CopyAnswerTarget;
+import org.broadinstitute.ddp.model.event.CopyLocationType;
 import org.broadinstitute.ddp.model.pex.Expression;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.model.user.UserAnnouncement;
@@ -277,7 +277,7 @@ public class EventServiceTest extends IntegrationTestSuite.TestCase {
                     long actionId = eventActionDao.insertCopyAnswerAction(
                             testData.getStudyId(),
                             copySourceStableId,
-                            CopyAnswerTarget.PARTICIPANT_PROFILE_LAST_NAME);
+                            CopyLocationType.PARTICIPANT_PROFILE_LAST_NAME);
 
                     long eventConfigurationId = jdbiEventConfig.insert(triggerId, actionId,
                             testData.getStudyId(),
@@ -292,7 +292,7 @@ public class EventServiceTest extends IntegrationTestSuite.TestCase {
                     actionId = eventActionDao.insertCopyAnswerAction(
                             testData.getStudyId(),
                             dateQuestionStableId,
-                            CopyAnswerTarget.PARTICIPANT_PROFILE_BIRTH_DATE);
+                            CopyLocationType.PARTICIPANT_PROFILE_BIRTH_DATE);
 
                     jdbiEventConfig.insert(triggerId, actionId,
                             testData.getStudyId(),
