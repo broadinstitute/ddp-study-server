@@ -8,6 +8,7 @@ import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -551,7 +552,7 @@ public class DataExporter {
         StudyExtract studyExtract = new StudyExtract(activities, studyPdfConfigs, configPdfVersions, participantProxyGuids);
 
         Map<String, String> participantRecords = prepareParticipantRecordsForJSONExport(
-                studyExtract, dataset, exportStructuredDocument, handle
+                studyExtract, dataset, exportStructuredDocument, handle, new MedicalRecordService(ConsentService.createInstance())
         );
 
         try (RestHighLevelClient client = ElasticsearchServiceUtil.getClientForElasticsearchCloud(cfg)) {
@@ -586,14 +587,18 @@ public class DataExporter {
             StudyExtract studyExtract,
             List<Participant> participants,
             boolean exportStructuredDocument,
-            Handle handle
+            Handle handle,
+            MedicalRecordService medicalRecordService
     ) {
         Map<String, String> participantsRecords = new HashMap<>();
         for (Participant extract : participants) {
             try {
                 String elasticSearchDocument = null;
                 if (exportStructuredDocument) {
-                    elasticSearchDocument = formatParticipantToStructuredJSON(studyExtract, extract, handle);
+                    elasticSearchDocument = formatParticipantToStructuredJSON(studyExtract,
+                            extract,
+                            handle,
+                            medicalRecordService);
                 } else {
                     elasticSearchDocument = formatParticipantToFlatJSON(studyExtract.getActivities(), extract);
                 }
@@ -611,8 +616,8 @@ public class DataExporter {
     /**
      * For a given participant, setup their information in the correct format for export.
      *
-     * @param activities         the list of activity data for a study
-     * @param extract            the participant data for the study
+     * @param activities the list of activity data for a study
+     * @param extract    the participant data for the study
      * @return
      */
     private String formatParticipantToFlatJSON(List<ActivityExtract> activities,
@@ -658,7 +663,8 @@ public class DataExporter {
     private String formatParticipantToStructuredJSON(
             StudyExtract studyExtract,
             Participant participant,
-            Handle handle
+            Handle handle,
+            MedicalRecordService medicalRecordService
     ) {
         EnrollmentStatusDto statusDto = participant.getStatus();
         User user = participant.getUser();
@@ -718,13 +724,26 @@ public class DataExporter {
         }
 
         // Retrieving information to compute the dsm record
-        MedicalRecordService medicalRecordService = new MedicalRecordService(ConsentService.createInstance());
         DateValue diagnosisDate = medicalRecordService.getDateOfDiagnosis(handle, user.getId(), statusDto.getStudyId()).orElse(null);
         DateValue birthDate = medicalRecordService.getDateOfBirth(handle, user.getId(), statusDto.getStudyId()).orElse(null);
         MedicalRecordService.ParticipantConsents consents = medicalRecordService
                 .fetchBloodAndTissueConsents(handle, user.getId(), userGuid, statusDto.getStudyId(), studyGuid);
-        DsmComputedRecord dsmComputedRecord = new DsmComputedRecord(birthDate, diagnosisDate,
-                consents.hasConsentedToBloodDraw(), consents.hasConsentedToTissueSample(), pdfConfigRecords);
+
+        LocalDate dateOfMajority = null;
+        if (birthDate != null) {
+            LocalDate localBirthDate = birthDate.asLocalDate().orElse(null);
+            if (localBirthDate != null) {
+                dateOfMajority = participant.getAgeOfMajorityRule().getDateOfMajority(localBirthDate);
+            }
+        }
+
+        DsmComputedRecord dsmComputedRecord =
+                new DsmComputedRecord(birthDate,
+                        dateOfMajority,
+                        diagnosisDate,
+                        consents.hasConsentedToBloodDraw(),
+                        consents.hasConsentedToTissueSample(),
+                        pdfConfigRecords);
 
         List<String> proxies = studyExtract.getParticipantProxyGuids().get(user.getGuid());
         if (proxies == null) {
@@ -744,8 +763,8 @@ public class DataExporter {
     }
 
     private List<PdfConfigInfo> findPdfConfigsForStudyUser(List<PdfConfigInfo> studyConfigs,
-                                                          Map<Long, List<PdfVersion>> configPdfVersions,
-                                                          Map<String, Set<String>> userActivityVersions) {
+                                                           Map<Long, List<PdfVersion>> configPdfVersions,
+                                                           Map<String, Set<String>> userActivityVersions) {
 
         List<PdfConfigInfo> userPdfConfigs = new ArrayList<>();
 
@@ -965,7 +984,7 @@ public class DataExporter {
         }
 
         CSVWriter writer = new CSVWriter(output);
-        writer.writeNext(headers.toArray(new String[] {}), false);
+        writer.writeNext(headers.toArray(new String[]{}), false);
 
         int total = participants.size();
         int numWritten = 0;
@@ -1002,7 +1021,7 @@ public class DataExporter {
                 continue;
             }
 
-            writer.writeNext(row.toArray(new String[] {}), false);
+            writer.writeNext(row.toArray(new String[]{}), false);
             numWritten += 1;
 
             LOG.info("[export] ({}/{}) participant {} for study {}:"

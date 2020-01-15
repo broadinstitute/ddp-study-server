@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import org.broadinstitute.ddp.db.dto.EnrollmentStatusDto;
 import org.broadinstitute.ddp.db.dto.MedicalProviderDto;
 import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
+import org.broadinstitute.ddp.model.governance.AgeOfMajorityRule;
 import org.broadinstitute.ddp.model.user.User;
 
 /**
@@ -24,6 +25,7 @@ public class Participant {
     // todo: better models for status and medical providers
     private EnrollmentStatusDto status;
     private List<MedicalProviderDto> providers;
+    private AgeOfMajorityRule ageOfMajorityRule;
 
     public Participant(EnrollmentStatusDto status, User user) {
         this.status = status;
@@ -48,6 +50,10 @@ public class Participant {
         providers.add(providerDto);
     }
 
+    public void addAOMRule(AgeOfMajorityRule ageOfMajorityRule) {
+        this.ageOfMajorityRule = ageOfMajorityRule;
+    }
+
     public List<ActivityResponse> getAllResponses() {
         return responses.values().stream()
                 .flatMap(Collection::stream)
@@ -64,5 +70,9 @@ public class Participant {
 
     public void addResponse(ActivityResponse response) {
         responses.computeIfAbsent(response.getActivityTag(), tag -> new ArrayList<>()).add(response);
+    }
+
+    public AgeOfMajorityRule getAgeOfMajorityRule() {
+        return ageOfMajorityRule;
     }
 }
