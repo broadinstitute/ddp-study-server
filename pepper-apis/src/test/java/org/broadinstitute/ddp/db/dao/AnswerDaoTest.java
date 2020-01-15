@@ -2,426 +2,379 @@ package org.broadinstitute.ddp.db.dao;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.time.Instant;
-import java.time.LocalDate;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
-import org.broadinstitute.ddp.db.AnswerDao;
-import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
-import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
-import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
-import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
-import org.broadinstitute.ddp.model.activity.definition.question.AgreementQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.BoolQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.DatePicklistDef;
+import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
-import org.broadinstitute.ddp.model.activity.definition.validation.DateRangeRuleDef;
-import org.broadinstitute.ddp.model.activity.definition.validation.LengthRuleDef;
-import org.broadinstitute.ddp.model.activity.definition.validation.RequiredRuleDef;
 import org.broadinstitute.ddp.model.activity.instance.answer.AgreementAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
-import org.broadinstitute.ddp.model.activity.instance.answer.AnswerRow;
 import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
+import org.broadinstitute.ddp.model.activity.instance.answer.NumericAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.NumericIntegerAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
-import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.DateFieldType;
 import org.broadinstitute.ddp.model.activity.types.DateRenderMode;
-import org.broadinstitute.ddp.model.activity.types.PicklistRenderMode;
+import org.broadinstitute.ddp.model.activity.types.NumericType;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
-import org.broadinstitute.ddp.model.activity.types.TemplateType;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
-import org.broadinstitute.ddp.util.TestUtil;
+import org.broadinstitute.ddp.util.TestFormActivity;
 import org.jdbi.v3.core.Handle;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 public class AnswerDaoTest extends TxnAwareBaseTest {
 
     private static TestDataSetupUtil.GeneratedTestData testData;
-    private static AnswerDao oldAnswerDao;
-    @org.junit.Rule
-    public ExpectedException thrown = ExpectedException.none();
-    private String sid;
-    private Template prompt;
-    private Template placeholder;
+    private static org.broadinstitute.ddp.db.AnswerDao oldAnswerDao;
 
     @BeforeClass
     public static void setup() {
         TransactionWrapper.useTxn(handle -> {
             testData = TestDataSetupUtil.generateBasicUserTestData(handle);
-            oldAnswerDao = AnswerDao.fromSqlConfig(sqlConfig);
+            oldAnswerDao = org.broadinstitute.ddp.db.AnswerDao.fromSqlConfig(sqlConfig);
         });
     }
 
-    @Before
-    public void refresh() {
-        sid = "QID" + Instant.now().toEpochMilli();
-        prompt = new Template(TemplateType.TEXT, null, "dummy prompt");
-        placeholder = new Template(TemplateType.TEXT, null, "dummy placeholder");
-    }
-
     @Test
-    public void testGetAnswerByIdAndType_bool_success() {
+    public void testFindAnswerById_notFound() {
         TransactionWrapper.useTxn(handle -> {
-            Template trueTmpl = new Template(TemplateType.TEXT, null, "yup");
-            Template falseTmpl = new Template(TemplateType.TEXT, null, "nope");
-            RequiredRuleDef rule = new RequiredRuleDef(null);
-            BoolQuestionDef question = BoolQuestionDef.builder(sid, prompt, trueTmpl, falseTmpl)
-                    .addValidation(rule)
-                    .build();
-
-            FormActivityDef formActivityDef = buildSingleSectionForm(testData.getStudyGuid(), question);
-            String activityInstanceGuid = buildActivityInstance(handle, formActivityDef);
-
-            BoolAnswer answer = new BoolAnswer(null, sid, null, true);
-            String answerGuid = oldAnswerDao.createAnswer(handle, answer, testData.getUserGuid(), activityInstanceGuid);
-            long answerId = handle.attach(JdbiAnswer.class).findDtoByGuid(answerGuid).get().getId();
-
-            Answer returnedAnswer = handle.attach(org.broadinstitute.ddp.db.dao.AnswerDao.class)
-                    .getAnswerByIdAndType(answerId, QuestionType.BOOLEAN);
-
-            assertEquals(QuestionType.BOOLEAN, returnedAnswer.getQuestionType());
-            BoolAnswer boolAnswer = (BoolAnswer) returnedAnswer;
-            assertTrue(boolAnswer.getValue());
-
+            Optional<Answer> result = handle.attach(AnswerDao.class).findAnswerById(123456L);
+            assertTrue(result.isEmpty());
             handle.rollback();
         });
     }
 
-    private long setUpPicklistTests(Handle handle) {
-        Template label = Template.text("picklist label");
-        Template opt1Tmpl = Template.text("option 1");
-        PicklistOptionDef option1 = new PicklistOptionDef("PO1", opt1Tmpl);
-        Template opt2Tmpl = Template.text("option 2");
-        Template opt2Details = Template.text("details here");
-        PicklistOptionDef option2 = new PicklistOptionDef("PO2", opt2Tmpl, opt2Details);
-        RequiredRuleDef rule = new RequiredRuleDef(null);
-        PicklistQuestionDef question = PicklistQuestionDef.buildSingleSelect(PicklistRenderMode.DROPDOWN, sid, prompt)
-                .setLabel(label)
-                .addOption(option1)
-                .addOption(option2)
-                .addValidation(rule)
-                .build();
-
-        FormActivityDef formActivityDef = buildSingleSectionForm(testData.getStudyGuid(), question);
-        String activityInstanceGuid = buildActivityInstance(handle, formActivityDef);
-
-        PicklistAnswer answer = new PicklistAnswer(null, sid, null,
-                Arrays.asList(new SelectedPicklistOption("PO1", null)));
-        String answerGuid = oldAnswerDao.createAnswer(handle, answer, testData.getUserGuid(), activityInstanceGuid);
-        return handle.attach(JdbiAnswer.class).findDtoByGuid(answerGuid).get().getId();
-    }
-
     @Test
-    public void testGetAnswerByIdAndType_picklist_success() {
+    public void testFindAnswerById_agreement() {
         TransactionWrapper.useTxn(handle -> {
-            long answerId = setUpPicklistTests(handle);
-            Answer returnedAnswer = handle.attach(org.broadinstitute.ddp.db.dao.AnswerDao.class)
-                    .getAnswerByIdAndType(answerId, QuestionType.PICKLIST);
+            TestFormActivity act = TestFormActivity.builder()
+                    .withAgreementQuestion(true)
+                    .build(handle, testData.getUserId(), testData.getStudyGuid());
+            String instanceGuid = createInstance(handle, act.getDef().getActivityId()).getGuid();
 
-            assertEquals(QuestionType.PICKLIST, returnedAnswer.getQuestionType());
-            PicklistAnswer picklistAnswer = (PicklistAnswer) returnedAnswer;
-            assertEquals(1, picklistAnswer.getValue().size());
-            assertEquals("PO1", picklistAnswer.getValue().get(0).getStableId());
-            assertNull(picklistAnswer.getValue().get(0).getDetailText());
+            var answer = new AgreementAnswer(null, act.getAgreementQuestion().getStableId(), null, true);
+            oldAnswerDao.createAnswer(handle, answer, testData.getUserGuid(), instanceGuid);
+            Answer actual = handle.attach(AnswerDao.class)
+                    .findAnswerById(answer.getAnswerId())
+                    .orElse(null);
+
+            assertNotNull(actual);
+            assertEquals(QuestionType.AGREEMENT, actual.getQuestionType());
+            assertTrue(((AgreementAnswer) actual).getValue());
 
             handle.rollback();
         });
     }
 
     @Test
-    public void testGetAnswerByIdAndType_picklist_cantFindById() {
+    public void testFindAnswerById_bool() {
         TransactionWrapper.useTxn(handle -> {
-            long answerId = setUpPicklistTests(handle) + 1;
+            TestFormActivity act = TestFormActivity.builder()
+                    .withBoolQuestion(true)
+                    .build(handle, testData.getUserId(), testData.getStudyGuid());
+            String instanceGuid = createInstance(handle, act.getDef().getActivityId()).getGuid();
 
-            thrown.expect(DaoException.class);
-            thrown.expectMessage("Could not find picklist answer with id " + answerId);
-            handle.attach(org.broadinstitute.ddp.db.dao.AnswerDao.class)
-                    .getAnswerByIdAndType(answerId, QuestionType.PICKLIST);
+            var answer = new BoolAnswer(null, act.getBoolQuestion().getStableId(), null, true);
+            oldAnswerDao.createAnswer(handle, answer, testData.getUserGuid(), instanceGuid);
+            Answer actual = handle.attach(AnswerDao.class)
+                    .findAnswerById(answer.getAnswerId())
+                    .orElse(null);
+
+            assertNotNull(actual);
+            assertEquals(QuestionType.BOOLEAN, actual.getQuestionType());
+            assertTrue(((BoolAnswer) actual).getValue());
 
             handle.rollback();
         });
     }
 
     @Test
-    public void testGetAnswerByIdAndType_text_success() {
+    public void testFindAnswerById_text() {
         TransactionWrapper.useTxn(handle -> {
-            RequiredRuleDef rule = new RequiredRuleDef(null);
-            TextQuestionDef question = TextQuestionDef.builder(TextInputType.TEXT, sid, prompt)
-                    .setPlaceholderTemplate(placeholder)
-                    .addValidation(rule)
-                    .build();
+            TestFormActivity act = TestFormActivity.builder()
+                    .withTextQuestion(true)
+                    .build(handle, testData.getUserId(), testData.getStudyGuid());
+            String instanceGuid = createInstance(handle, act.getDef().getActivityId()).getGuid();
 
-            FormActivityDef formActivityDef = buildSingleSectionForm(testData.getStudyGuid(), question);
-            String activityInstanceGuid = buildActivityInstance(handle, formActivityDef);
+            var answer = new TextAnswer(null, act.getTextQuestion().getStableId(), null, "itsAnAnswer");
+            oldAnswerDao.createAnswer(handle, answer, testData.getUserGuid(), instanceGuid);
+            Answer actual = handle.attach(AnswerDao.class)
+                    .findAnswerById(answer.getAnswerId())
+                    .orElse(null);
 
-            TextAnswer answer = new TextAnswer(null, sid, null, "itsAnAnswer");
-            String answerGuid = oldAnswerDao.createAnswer(handle, answer, testData.getUserGuid(), activityInstanceGuid);
-            long answerId = handle.attach(JdbiAnswer.class).findDtoByGuid(answerGuid).get().getId();
-
-            Answer returnedAnswer = handle.attach(org.broadinstitute.ddp.db.dao.AnswerDao.class)
-                    .getAnswerByIdAndType(answerId, QuestionType.TEXT);
-
-            assertEquals(QuestionType.TEXT, returnedAnswer.getQuestionType());
-            TextAnswer textAnswer = (TextAnswer) returnedAnswer;
-            assertEquals("itsAnAnswer", textAnswer.getValue());
-
-            handle.rollback();
-        });
-    }
-
-    private long setUpDateWithPicklistTests(Handle handle) {
-        DateRangeRuleDef rule = new DateRangeRuleDef(Template.text("Pi Day to today"),
-                LocalDate.of(2018, 3, 14), null, true);
-        DatePicklistDef datePicklistDef = new DatePicklistDef(true, 3, 80, null, 1988);
-        DateQuestionDef question = DateQuestionDef.builder(DateRenderMode.PICKLIST, sid, prompt)
-                .addFields(DateFieldType.DAY, DateFieldType.MONTH, DateFieldType.YEAR)
-                .addValidation(rule)
-                .setPicklistDef(datePicklistDef)
-                .build();
-
-        FormActivityDef formActivityDef = buildSingleSectionForm(testData.getStudyGuid(), question);
-        String activityInstanceGuid = buildActivityInstance(handle, formActivityDef);
-
-        DateAnswer answer = new DateAnswer(null, sid, null, new DateValue(2018, 10, 10));
-        String answerGuid = oldAnswerDao.createAnswer(handle, answer, testData.getUserGuid(), activityInstanceGuid);
-        return handle.attach(JdbiAnswer.class).findDtoByGuid(answerGuid).get().getId();
-    }
-
-    @Test
-    public void testGetAnswerByIdAndType_date_picklist_success() {
-        TransactionWrapper.useTxn(handle -> {
-            long answerId = setUpDateWithPicklistTests(handle);
-
-            Answer returnedAnswer = handle.attach(org.broadinstitute.ddp.db.dao.AnswerDao.class)
-                    .getAnswerByIdAndType(answerId, QuestionType.DATE);
-
-            assertEquals(QuestionType.DATE, returnedAnswer.getQuestionType());
-            assertEquals(new DateValue(2018, 10, 10), returnedAnswer.getValue());
+            assertNotNull(actual);
+            assertEquals(QuestionType.TEXT, actual.getQuestionType());
+            assertEquals(answer.getValue(), ((TextAnswer) actual).getValue());
 
             handle.rollback();
         });
     }
 
     @Test
-    public void testGetAnswerByIdAndType_date_picklist_cantFindById() {
+    public void testFindAnswerById_date() {
         TransactionWrapper.useTxn(handle -> {
-            long answerId = setUpDateWithPicklistTests(handle) + 1;
+            TestFormActivity act = TestFormActivity.builder()
+                    .withDateFullQuestion(true)
+                    .build(handle, testData.getUserId(), testData.getStudyGuid());
+            String instanceGuid = createInstance(handle, act.getDef().getActivityId()).getGuid();
 
-            thrown.expect(DaoException.class);
-            thrown.expectMessage("Could not find date answer with id " + answerId);
-            handle.attach(org.broadinstitute.ddp.db.dao.AnswerDao.class)
-                    .getAnswerByIdAndType(answerId, QuestionType.DATE);
+            var answer = new DateAnswer(null, act.getDateFullQuestion().getStableId(), null, 2018, 10, 24);
+            oldAnswerDao.createAnswer(handle, answer, testData.getUserGuid(), instanceGuid);
+            Answer actual = handle.attach(AnswerDao.class)
+                    .findAnswerById(answer.getAnswerId())
+                    .orElse(null);
+
+            assertNotNull(actual);
+            assertEquals(QuestionType.DATE, actual.getQuestionType());
+            assertEquals(new DateValue(2018, 10, 24), actual.getValue());
 
             handle.rollback();
         });
     }
 
     @Test
-    public void testGetAnswerByIdAndType_date_singleText_success() {
+    public void testFindAnswerById_numericInteger() {
         TransactionWrapper.useTxn(handle -> {
-            RequiredRuleDef rule = new RequiredRuleDef(null);
-            DateQuestionDef question = DateQuestionDef.builder(DateRenderMode.SINGLE_TEXT, sid, prompt)
-                    .addFields(DateFieldType.MONTH, DateFieldType.YEAR)
-                    .addValidation(rule)
-                    .build();
+            TestFormActivity act = TestFormActivity.builder()
+                    .withNumericIntQuestion(true)
+                    .build(handle, testData.getUserId(), testData.getStudyGuid());
+            String instanceGuid = createInstance(handle, act.getDef().getActivityId()).getGuid();
 
-            FormActivityDef formActivityDef = buildSingleSectionForm(testData.getStudyGuid(), question);
-            String activityInstanceGuid = buildActivityInstance(handle, formActivityDef);
+            var answer = new NumericIntegerAnswer(null, act.getNumericIntQuestion().getStableId(), null, 25L);
+            oldAnswerDao.createAnswer(handle, answer, testData.getUserGuid(), instanceGuid);
+            Answer actual = handle.attach(AnswerDao.class)
+                    .findAnswerById(answer.getAnswerId())
+                    .orElse(null);
 
-            DateAnswer answer = new DateAnswer(null, sid, null, new DateValue(2018, 10, 10));
-            String answerGuid = oldAnswerDao.createAnswer(handle, answer, testData.getUserGuid(), activityInstanceGuid);
-            long answerId = handle.attach(JdbiAnswer.class).findDtoByGuid(answerGuid).get().getId();
-
-            Answer returnedAnswer = handle.attach(org.broadinstitute.ddp.db.dao.AnswerDao.class)
-                    .getAnswerByIdAndType(answerId, QuestionType.DATE);
-
-            assertEquals(QuestionType.DATE, returnedAnswer.getQuestionType());
-            assertEquals(new DateValue(2018, 10, 10), returnedAnswer.getValue());
+            assertNotNull(actual);
+            assertEquals(QuestionType.NUMERIC, actual.getQuestionType());
+            assertEquals(NumericType.INTEGER, ((NumericAnswer) actual).getNumericType());
+            assertEquals((Long) 25L, ((NumericIntegerAnswer) actual).getValue());
 
             handle.rollback();
         });
     }
 
     @Test
-    public void testGetAnswerByIdAndType_date_text_success() {
+    public void testFindAnswerById_picklist() {
         TransactionWrapper.useTxn(handle -> {
-            RequiredRuleDef rule = new RequiredRuleDef(null);
-            DateQuestionDef question = DateQuestionDef.builder(DateRenderMode.TEXT, sid, prompt)
-                    .addFields(DateFieldType.MONTH, DateFieldType.YEAR)
-                    .addValidation(rule)
-                    .build();
+            TestFormActivity act = TestFormActivity.builder()
+                    .withPicklistSingleList(true,
+                            new PicklistOptionDef("PO1", Template.text("po1")),
+                            new PicklistOptionDef("PO2", Template.text("po2"), Template.text("details")))
+                    .build(handle, testData.getUserId(), testData.getStudyGuid());
+            String instanceGuid = createInstance(handle, act.getDef().getActivityId()).getGuid();
 
-            FormActivityDef formActivityDef = buildSingleSectionForm(testData.getStudyGuid(), question);
-            String activityInstanceGuid = buildActivityInstance(handle, formActivityDef);
+            PicklistAnswer answer = new PicklistAnswer(null, act.getPicklistSingleListQuestion().getStableId(), null,
+                    List.of(new SelectedPicklistOption("PO2", "some details")));
+            oldAnswerDao.createAnswer(handle, answer, testData.getUserGuid(), instanceGuid);
+            Answer actual = handle.attach(AnswerDao.class)
+                    .findAnswerById(answer.getAnswerId())
+                    .orElse(null);
 
-            DateAnswer answer = new DateAnswer(null, sid, null, new DateValue(2018, 10, 10));
-            String answerGuid = oldAnswerDao.createAnswer(handle, answer, testData.getUserGuid(), activityInstanceGuid);
-            long answerId = handle.attach(JdbiAnswer.class).findDtoByGuid(answerGuid).get().getId();
+            assertNotNull(actual);
+            assertEquals(QuestionType.PICKLIST, actual.getQuestionType());
 
-            Answer returnedAnswer = handle.attach(org.broadinstitute.ddp.db.dao.AnswerDao.class)
-                    .getAnswerByIdAndType(answerId, QuestionType.DATE);
-
-            assertEquals(QuestionType.DATE, returnedAnswer.getQuestionType());
-            assertEquals(new DateValue(2018, 10, 10), returnedAnswer.getValue());
-
-            handle.rollback();
-        });
-    }
-
-    private long setUpAgreementTests(Handle handle) {
-        Template agreeTmpl = Template.text("agreement");
-        Template header = Template.text("header");
-        Template footer = Template.text("footer");
-        RequiredRuleDef rule = new RequiredRuleDef(null);
-        AgreementQuestionDef question = new AgreementQuestionDef(sid,
-                                                                    false,
-                                                                    agreeTmpl,
-                                                                    header,
-                                                                    footer,
-                                                                    Arrays.asList(rule),
-                                                                    true);
-
-        FormActivityDef formActivityDef = buildSingleSectionForm(testData.getStudyGuid(), question);
-        String activityInstanceGuid = buildActivityInstance(handle, formActivityDef);
-
-        AgreementAnswer answer = new AgreementAnswer(null, sid, null, true);
-        String answerGuid = oldAnswerDao.createAnswer(handle, answer, testData.getUserGuid(), activityInstanceGuid);
-        return handle.attach(JdbiAnswer.class).findDtoByGuid(answerGuid).get().getId();
-    }
-
-    @Test
-    public void testGetAnswerByIdAndType_agreement_success() {
-        TransactionWrapper.useTxn(handle -> {
-            long answerId = setUpAgreementTests(handle);
-
-            Answer returnedAnswer = handle.attach(org.broadinstitute.ddp.db.dao.AnswerDao.class)
-                    .getAnswerByIdAndType(answerId, QuestionType.AGREEMENT);
-
-            assertEquals(QuestionType.AGREEMENT, returnedAnswer.getQuestionType());
-            assertTrue((boolean) returnedAnswer.getValue());
+            var selected = ((PicklistAnswer) actual).getValue();
+            assertEquals(1, selected.size());
+            assertEquals("PO2", selected.get(0).getStableId());
+            assertEquals("some details", selected.get(0).getDetailText());
 
             handle.rollback();
         });
     }
 
     @Test
-    public void testGetAnswerByIdAndType_agreement_cantFindById() {
+    public void testFindAnswerById_composite() {
         TransactionWrapper.useTxn(handle -> {
-            long answerId = setUpAgreementTests(handle) + 1;
-
-            thrown.expect(DaoException.class);
-            thrown.expectMessage("Could not find agreement answer with id " + answerId);
-            handle.attach(org.broadinstitute.ddp.db.dao.AnswerDao.class)
-                    .getAnswerByIdAndType(answerId, QuestionType.AGREEMENT);
-
-            handle.rollback();
-        });
-    }
-
-    @Test
-    public void testGetAnswerByIdAndType_composite_success() {
-        TransactionWrapper.useTxn(handle -> {
-            Template datePrompt = new Template(TemplateType.TEXT, null, "date prompt");
-            String dateStableId = "CHILD_DATE" + Instant.now().toEpochMilli();
-            DateQuestionDef dateQuestion = DateQuestionDef.builder(DateRenderMode.SINGLE_TEXT, dateStableId, datePrompt)
+            DateQuestionDef childDate = DateQuestionDef
+                    .builder(DateRenderMode.TEXT, "CDATE" + Instant.now().toEpochMilli(), Template.text("child date"))
                     .addFields(DateFieldType.YEAR, DateFieldType.MONTH, DateFieldType.DAY)
-                    .setDisplayCalendar(true)
+                    .build();
+            TextQuestionDef childText = TextQuestionDef
+                    .builder(TextInputType.TEXT, "CTEXT" + Instant.now().toEpochMilli(), Template.text("child text"))
                     .build();
 
-            LengthRuleDef lengthRule = new LengthRuleDef(null, 5, 300);
-            Template textPrompt = new Template(TemplateType.TEXT, null, "text prompt");
-            String textStableId = "CHILD_TEXT" + Instant.now().toEpochMilli();
-            TextQuestionDef textQuestion = TextQuestionDef.builder(TextInputType.TEXT, textStableId, textPrompt)
-                    .addValidation(lengthRule)
-                    .build();
+            TestFormActivity act = TestFormActivity.builder()
+                    .withCompositeQuestion(true, childDate, childText)
+                    .build(handle, testData.getUserId(), testData.getStudyGuid());
+            String instanceGuid = createInstance(handle, act.getDef().getActivityId()).getGuid();
 
-            Template addButtonTextTemplate = new Template(TemplateType.TEXT, null, "Add Button");
-            Template additionalItemTemplate = new Template(TemplateType.TEXT, null, "Another Item");
-            CompositeQuestionDef question = CompositeQuestionDef.builder()
-                    .setStableId(sid)
-                    .setPrompt(prompt)
-                    .addChildrenQuestions(dateQuestion, textQuestion)
-                    .setAllowMultiple(true)
-                    .setAddButtonTemplate(addButtonTextTemplate)
-                    .setAdditionalItemTemplate(additionalItemTemplate)
-                    .build();
+            CompositeAnswer answer = new CompositeAnswer(null, act.getCompositeQuestion().getStableId(), null);
+            answer.addRowOfChildAnswers(
+                    new DateAnswer(null, childDate.getStableId(), null, new DateValue(2018, 10, 24)));
+            answer.addRowOfChildAnswers(
+                    new DateAnswer(null, childDate.getStableId(), null, new DateValue(2020, 3, 14)),
+                    new TextAnswer(null, childText.getStableId(), null, "row 2 col 2"));
 
-            FormActivityDef formActivityDef = buildSingleSectionForm(testData.getStudyGuid(), question);
-            String activityInstanceGuid = buildActivityInstance(handle, formActivityDef);
+            oldAnswerDao.createAnswer(handle, answer, testData.getUserGuid(), instanceGuid);
+            Answer actual = handle.attach(AnswerDao.class)
+                    .findAnswerById(answer.getAnswerId())
+                    .orElse(null);
 
-            DateValue dateValue = new DateValue(2018, 10, 10);
-            DateAnswer da = new DateAnswer(null, dateStableId, null, dateValue);
-            String textValue = "text!";
-            TextAnswer ta = new TextAnswer(null, textStableId, null, textValue);
-            CompositeAnswer compAnswer = new CompositeAnswer(null, sid, null);
-            compAnswer.addRowOfChildAnswers(da, ta);
+            assertNotNull(actual);
+            assertEquals(QuestionType.COMPOSITE, actual.getQuestionType());
 
-            String answerGuid = oldAnswerDao.createAnswer(handle, compAnswer, testData.getUserGuid(), activityInstanceGuid);
-            assertNotNull(answerGuid);
-            long answerId = handle.attach(JdbiAnswer.class).findDtoByGuid(answerGuid).get().getId();
+            var rows = ((CompositeAnswer) actual).getValue();
+            assertEquals(2, rows.size());
+            assertEquals(1, rows.get(0).getValues().size());
+            assertEquals(2, rows.get(1).getValues().size());
 
-            Answer returnedAnswer = handle.attach(org.broadinstitute.ddp.db.dao.AnswerDao.class)
-                    .getAnswerByIdAndType(answerId, QuestionType.COMPOSITE);
+            var row1 = rows.get(0).getValues();
+            assertEquals(QuestionType.DATE, row1.get(0).getQuestionType());
+            assertEquals(new DateValue(2018, 10, 24), row1.get(0).getValue());
 
-            assertEquals(QuestionType.COMPOSITE, returnedAnswer.getQuestionType());
-            CompositeAnswer compositeAnswer = (CompositeAnswer) returnedAnswer;
-
-            assertEquals(1, compositeAnswer.getValue().size());
-            List<AnswerRow> childAnswers = compositeAnswer.getValue();
-            assertEquals(2, childAnswers.get(0).getValues().size());
-
-            AnswerRow firstRowOfAnswers = childAnswers.get(0);
-
-            assertTrue(firstRowOfAnswers.getValues().get(0) instanceof DateAnswer);
-            DateAnswer dateAnswer = (DateAnswer) firstRowOfAnswers.getValues().get(0);
-            assertNotNull(firstRowOfAnswers.getValues().get(0).getAnswerId());
-            assertNotNull(firstRowOfAnswers.getValues().get(0).getAnswerGuid());
-            assertEquals(dateValue, dateAnswer.getValue());
-
-            assertTrue(firstRowOfAnswers.getValues().get(1) instanceof TextAnswer);
-            TextAnswer textAnswer = (TextAnswer) firstRowOfAnswers.getValues().get(1);
-            assertNotNull(firstRowOfAnswers.getValues().get(1).getAnswerId());
-            assertNotNull(firstRowOfAnswers.getValues().get(1).getAnswerGuid());
-            assertEquals(textValue, textAnswer.getValue());
+            var row2 = rows.get(1).getValues();
+            assertEquals(QuestionType.DATE, row2.get(0).getQuestionType());
+            assertEquals(new DateValue(2020, 3, 14), row2.get(0).getValue());
+            assertEquals(QuestionType.TEXT, row2.get(1).getQuestionType());
+            assertEquals("row 2 col 2", row2.get(1).getValue());
 
             handle.rollback();
         });
     }
 
-
-    private FormActivityDef buildSingleSectionForm(String studyGuid, QuestionDef... questions) {
-        return FormActivityDef.generalFormBuilder("ACT" + Instant.now().toEpochMilli(), "v1", studyGuid)
-                .addName(new Translation("en", "activity"))
-                .addSection(new FormSectionDef(null, TestUtil.wrapQuestions(questions)))
-                .build();
+    @Test
+    public void testFindAnswerByGuid_notFound() {
+        TransactionWrapper.useTxn(handle -> {
+            Optional<Answer> result = handle.attach(AnswerDao.class).findAnswerByGuid("abcxyz");
+            assertTrue(result.isEmpty());
+            handle.rollback();
+        });
     }
 
-    private String buildActivityInstance(Handle handle, FormActivityDef form) {
-        ActivityVersionDto version1 = handle.attach(ActivityDao.class)
-                .insertActivity(form, RevisionMetadata.now(testData.getUserId(), "test"));
-        return TestDataSetupUtil
-                .generateTestFormActivityInstanceForUser(handle, version1.getActivityId(), testData.getUserGuid()).getGuid();
+    @Test
+    public void testFindAnswerByGuid() {
+        TransactionWrapper.useTxn(handle -> {
+            TestFormActivity act = TestFormActivity.builder()
+                    .withBoolQuestion(true)
+                    .build(handle, testData.getUserId(), testData.getStudyGuid());
+            String instanceGuid = createInstance(handle, act.getDef().getActivityId()).getGuid();
+
+            var answer = new BoolAnswer(null, act.getBoolQuestion().getStableId(), null, true);
+            oldAnswerDao.createAnswer(handle, answer, testData.getUserGuid(), instanceGuid);
+            Answer actual = handle.attach(AnswerDao.class)
+                    .findAnswerByGuid(answer.getAnswerGuid())
+                    .orElse(null);
+
+            assertNotNull(actual);
+            assertEquals(QuestionType.BOOLEAN, actual.getQuestionType());
+            assertTrue(((BoolAnswer) actual).getValue());
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testFindAnswerByInstanceIdAndQuestionStableId_notFound() {
+        TransactionWrapper.useTxn(handle -> {
+            TestFormActivity act = TestFormActivity.builder()
+                    .withBoolQuestion(true)
+                    .build(handle, testData.getUserId(), testData.getStudyGuid());
+            ActivityInstanceDto instanceDto = createInstance(handle, act.getDef().getActivityId());
+
+            AnswerDao answerDao = handle.attach(AnswerDao.class);
+            Optional<Answer> result = answerDao.findAnswerByInstanceIdAndQuestionStableId(123456L, "abcxyz");
+            assertTrue(result.isEmpty());
+
+            result = answerDao.findAnswerByInstanceIdAndQuestionStableId(instanceDto.getId(), "abcxyz");
+            assertTrue(result.isEmpty());
+
+            result = answerDao.findAnswerByInstanceIdAndQuestionStableId(instanceDto.getId(), act.getBoolQuestion().getStableId());
+            assertTrue(result.isEmpty());
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testFindAnswerByInstanceIdAndQuestionStableId_bool() {
+        TransactionWrapper.useTxn(handle -> {
+            TestFormActivity act = TestFormActivity.builder()
+                    .withBoolQuestion(true)
+                    .build(handle, testData.getUserId(), testData.getStudyGuid());
+            ActivityInstanceDto instanceDto = createInstance(handle, act.getDef().getActivityId());
+
+            var answer = new BoolAnswer(null, act.getBoolQuestion().getStableId(), null, true);
+            oldAnswerDao.createAnswer(handle, answer, testData.getUserGuid(), instanceDto.getGuid());
+            Answer actual = handle.attach(AnswerDao.class)
+                    .findAnswerByInstanceIdAndQuestionStableId(instanceDto.getId(), act.getBoolQuestion().getStableId())
+                    .orElse(null);
+
+            assertNotNull(actual);
+            assertEquals(QuestionType.BOOLEAN, actual.getQuestionType());
+            assertTrue(((BoolAnswer) actual).getValue());
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testFindAnswerByInstanceIdAndQuestionStableId_composite() {
+        TransactionWrapper.useTxn(handle -> {
+            DateQuestionDef childDate = DateQuestionDef
+                    .builder(DateRenderMode.TEXT, "CDATE" + Instant.now().toEpochMilli(), Template.text("child date"))
+                    .addFields(DateFieldType.YEAR, DateFieldType.MONTH, DateFieldType.DAY)
+                    .build();
+            TextQuestionDef childText = TextQuestionDef
+                    .builder(TextInputType.TEXT, "CTEXT" + Instant.now().toEpochMilli(), Template.text("child text"))
+                    .build();
+
+            TestFormActivity act = TestFormActivity.builder()
+                    .withCompositeQuestion(true, childDate, childText)
+                    .build(handle, testData.getUserId(), testData.getStudyGuid());
+            ActivityInstanceDto instanceDto = createInstance(handle, act.getDef().getActivityId());
+
+            CompositeAnswer answer = new CompositeAnswer(null, act.getCompositeQuestion().getStableId(), null);
+            answer.addRowOfChildAnswers(
+                    new DateAnswer(null, childDate.getStableId(), null, new DateValue(2018, 10, 24)));
+            answer.addRowOfChildAnswers(
+                    new DateAnswer(null, childDate.getStableId(), null, new DateValue(2020, 3, 14)),
+                    new TextAnswer(null, childText.getStableId(), null, "row 2 col 2"));
+
+            oldAnswerDao.createAnswer(handle, answer, testData.getUserGuid(), instanceDto.getGuid());
+            Answer actual = handle.attach(AnswerDao.class)
+                    .findAnswerByInstanceIdAndQuestionStableId(instanceDto.getId(), act.getCompositeQuestion().getStableId())
+                    .orElse(null);
+
+            assertNotNull(actual);
+            assertEquals(QuestionType.COMPOSITE, actual.getQuestionType());
+
+            var rows = ((CompositeAnswer) actual).getValue();
+            assertEquals(2, rows.size());
+            assertEquals(1, rows.get(0).getValues().size());
+            assertEquals(2, rows.get(1).getValues().size());
+
+            var row1 = rows.get(0).getValues();
+            assertEquals(QuestionType.DATE, row1.get(0).getQuestionType());
+            assertEquals(new DateValue(2018, 10, 24), row1.get(0).getValue());
+
+            var row2 = rows.get(1).getValues();
+            assertEquals(QuestionType.DATE, row2.get(0).getQuestionType());
+            assertEquals(new DateValue(2020, 3, 14), row2.get(0).getValue());
+            assertEquals(QuestionType.TEXT, row2.get(1).getQuestionType());
+            assertEquals("row 2 col 2", row2.get(1).getValue());
+
+            handle.rollback();
+        });
+    }
+
+    private ActivityInstanceDto createInstance(Handle handle, long activityId) {
+        return handle.attach(ActivityInstanceDao.class).insertInstance(activityId, testData.getUserGuid());
     }
 }

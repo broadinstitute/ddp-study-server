@@ -48,6 +48,10 @@ public interface StudyGovernanceDao extends SqlObject {
         return findPolicyById(policyId).orElseThrow(() -> new DaoException("Could not find study governance policy with id " + policyId));
     }
 
+    default void removePolicy(long policyId) {
+        DBUtils.checkDelete(1, getStudyGovernanceSql().deletePolicy(policyId));
+    }
+
     @UseStringTemplateSqlLocator
     @SqlQuery("queryAllPolicies")
     @RegisterConstructorMapper(Expression.class)
