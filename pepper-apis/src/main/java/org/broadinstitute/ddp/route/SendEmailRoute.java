@@ -27,9 +27,11 @@ import org.broadinstitute.ddp.json.workflow.WorkflowResponse;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.workflow.StaticState;
 import org.broadinstitute.ddp.model.workflow.WorkflowState;
+import org.broadinstitute.ddp.security.DDPAuth;
 import org.broadinstitute.ddp.service.WorkflowService;
 import org.broadinstitute.ddp.util.Auth0MgmtTokenHelper;
 import org.broadinstitute.ddp.util.Auth0Util;
+import org.broadinstitute.ddp.util.RouteUtil;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,10 +51,10 @@ public class SendEmailRoute extends ValidatedJsonInputRoute<SendEmailPayload> {
 
     @Override
     public Object handle(Request request, Response response, SendEmailPayload payload) throws Exception {
+        DDPAuth ddpAuth = RouteUtil.getDDPAuth(request);
         String email = payload.getEmail();
-
         String studyGuid = request.params(RouteConstants.PathParam.STUDY_GUID);
-
+        String operatorGuid = ddpAuth.getOperator();
 
         TransactionWrapper.useTxn(handle -> {
             LOG.info("Handling email resend for {} in study {}", email, studyGuid);
