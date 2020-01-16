@@ -117,7 +117,7 @@ public class AngioRestructureConsent implements CustomTask {
 
         String signatureStableId = dataCfg.getConfig(key).getString("signatureStableId");
         TextQuestionDto signature = jdbiQuestion
-                .getLatestQuestionDtoByQuestionStableIdAndUmbrellaStudyId(signatureStableId, studyDto.getId())
+                .findLatestDtoByStudyIdAndQuestionStableId(studyDto.getId(), signatureStableId)
                 .map(QuestionDto::getId)
                 .flatMap(jdbiTextQuestion::findDtoByQuestionId)
                 .orElseThrow(() -> new DDPException("Could not find question " + signatureStableId));
@@ -129,7 +129,7 @@ public class AngioRestructureConsent implements CustomTask {
 
         String dobStableId = dataCfg.getConfig(key).getString("dobStableId");
         QuestionDto dob = jdbiQuestion
-                .getLatestQuestionDtoByQuestionStableIdAndUmbrellaStudyId(dobStableId, studyDto.getId())
+                .findLatestDtoByStudyIdAndQuestionStableId(studyDto.getId(), dobStableId)
                 .orElseThrow(() -> new DDPException("Could not find question " + dobStableId));
         helper.updateTemplateSubstitutionValue(dob.getPromptTemplateId(), dataCfg.getString("dobPrompt"));
         helper.detachQuestionFromBothSectionAndBlock(dob.getId());
