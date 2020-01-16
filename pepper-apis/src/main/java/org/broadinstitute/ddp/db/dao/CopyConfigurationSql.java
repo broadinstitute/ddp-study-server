@@ -1,6 +1,5 @@
 package org.broadinstitute.ddp.db.dao;
 
-import java.util.List;
 import java.util.Set;
 
 import org.broadinstitute.ddp.model.copy.CopyLocationType;
@@ -9,9 +8,7 @@ import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.customizer.BindList.EmptyHandling;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
-import org.jdbi.v3.sqlobject.statement.SqlBatch;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
-import org.jdbi.v3.stringtemplate4.UseStringTemplateSqlLocator;
 
 public interface CopyConfigurationSql extends SqlObject {
 
@@ -46,40 +43,6 @@ public interface CopyConfigurationSql extends SqlObject {
             @Bind("sourceLocId") long sourceLocId,
             @Bind("targetLocId") long targetLocId,
             @Bind("order") int order);
-
-    @GetGeneratedKeys
-    @UseStringTemplateSqlLocator
-    @SqlUpdate("insertCompositeCopyConfigPair")
-    long insertCompositeCopyConfigPair(
-            @Bind("pairId") long pairId,
-            @Bind("sourceChildStableCodeId") long sourceChildStableCodeId,
-            @Bind("targetChildStableCodeId") long targetChildStableCodeId);
-
-    @GetGeneratedKeys
-    @UseStringTemplateSqlLocator
-    @SqlBatch("insertCompositeCopyConfigPair")
-    long[] bulkInsertCompositeCopyConfigPair(
-            @Bind("pairId") long pairId,
-            @Bind("sourceChildStableCodeId") List<Long> sourceChildStableCodeIds,
-            @Bind("targetChildStableCodeId") List<Long> targetChildStableCodeIds);
-
-    @GetGeneratedKeys
-    @UseStringTemplateSqlLocator
-    @SqlUpdate("insertCompositeCopyConfigPairByQuestionStableIds")
-    long insertCompositeCopyConfigPairByQuestionStableIds(
-            @Bind("pairId") long pairId,
-            @Bind("studyId") long studyId,
-            @Bind("sourceChildStableId") String sourceChildStableId,
-            @Bind("targetChildStableId") String targetChildStableId);
-
-    @GetGeneratedKeys
-    @UseStringTemplateSqlLocator
-    @SqlBatch("insertCompositeCopyConfigPairByQuestionStableIds")
-    long[] bulkInsertCompositeCopyConfigPairByQuestionStableIds(
-            @Bind("pairId") long pairId,
-            @Bind("studyId") long studyId,
-            @Bind("sourceChildStableId") List<String> sourceChildStableIds,
-            @Bind("targetChildStableId") List<String> targetChildStableIds);
 
     @SqlUpdate("delete from copy_configuration where copy_configuration_id = :id")
     int deleteCopyConfig(@Bind("id") long configId);

@@ -1,7 +1,5 @@
 package org.broadinstitute.ddp.db.dao;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -12,7 +10,6 @@ import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
-import org.broadinstitute.ddp.model.copy.CompositeCopyConfigurationPair;
 import org.broadinstitute.ddp.model.copy.CopyAnswerLocation;
 import org.broadinstitute.ddp.model.copy.CopyConfiguration;
 import org.broadinstitute.ddp.model.copy.CopyConfigurationPair;
@@ -47,49 +44,36 @@ public interface CopyConfigurationDao extends SqlObject {
 
     private long createCopyPair(long studyId, long configId, CopyConfigurationPair pair) {
         if (pair.getSource().getType() != CopyLocationType.ANSWER) {
-            throw new DaoException("Currently only answer source locations are supported");
-        }
-
-        var compositeToComposite = false;
-        var jdbiQuestion = getHandle().attach(JdbiQuestion.class);
-
-        var source = (CopyAnswerLocation) pair.getSource();
-        QuestionDto sourceQuestionDto = jdbiQuestion
-                .getLatestQuestionDtoByQuestionStableIdAndUmbrellaStudyId(source.getQuestionStableId(), studyId)
-                .orElseThrow(() -> new DaoException(String.format(
-                        "Could not find source question with stable id %s in study %d",
-                        source.getQuestionStableId(), studyId)));
-        if (sourceQuestionDto.getType() == QuestionType.COMPOSITE && pair.getTarget().getType() != CopyLocationType.ANSWER) {
-            throw new DaoException("Currently only support copying from source composite to target composite questions");
+            throw new DaoException("Currently only support answer source locations");
         }
 
         if (pair.getTarget().getType() == CopyLocationType.ANSWER) {
+            var jdbiQuestion = getHandle().attach(JdbiQuestion.class);
+            var source = (CopyAnswerLocation) pair.getSource();
+            QuestionDto sourceQuestionDto = jdbiQuestion
+                    .getLatestQuestionDtoByQuestionStableIdAndUmbrellaStudyId(source.getQuestionStableId(), studyId)
+                    .orElseThrow(() -> new DaoException(String.format(
+                            "Could not find source question with stable id %s in study %d",
+                            source.getQuestionStableId(), studyId)));
             var target = (CopyAnswerLocation) pair.getTarget();
             QuestionDto targetQuestionDto = jdbiQuestion
                     .getLatestQuestionDtoByQuestionStableIdAndUmbrellaStudyId(target.getQuestionStableId(), studyId)
                     .orElseThrow(() -> new DaoException(String.format(
                             "Could not find target question with stable id %s in study %d",
                             target.getQuestionStableId(), studyId)));
+
             if (sourceQuestionDto.getType() != targetQuestionDto.getType()) {
-                throw new DaoException("Currently only support copying answers between questions of the same type");
-            }
-            if (targetQuestionDto.getType() == QuestionType.COMPOSITE) {
-                compositeToComposite = true;
+                throw new DaoException("Currently no support for copying answers between different question types");
+            } else if (sourceQuestionDto.getType() == QuestionType.COMPOSITE) {
+                throw new DaoException("Currently no support for copying answers for top-level composite question,"
+                        + "configure copying for individual child questions instead");
             }
         }
 
-        long sourceLocId = createCopyLocation(studyId, source);
+        long sourceLocId = createCopyLocation(studyId, pair.getSource());
         long targetLocId = createCopyLocation(studyId, pair.getTarget());
-        long pairId = getCopyConfigurationSql().insertCopyConfigPair(configId, sourceLocId, targetLocId, pair.getOrder());
 
-        if (compositeToComposite) {
-            if (pair.getCompositeChildLocations().isEmpty()) {
-                throw new DaoException("Missing composite child question pairs");
-            }
-            createCompositeCopyPairs(studyId, pairId, pair.getCompositeChildLocations());
-        }
-
-        return pairId;
+        return getCopyConfigurationSql().insertCopyConfigPair(configId, sourceLocId, targetLocId, pair.getOrder());
     }
 
     private long createCopyLocation(long studyId, CopyLocation loc) {
@@ -97,30 +81,15 @@ public interface CopyConfigurationDao extends SqlObject {
         long locId = copyConfigSql.insertCopyLocation(loc.getType());
         if (loc.getType() == CopyLocationType.ANSWER) {
             var ansLoc = (CopyAnswerLocation) loc;
-            DBUtils.checkInsert(1, copyConfigSql
-                    .insertCopyAnswerLocationByQuestionStableId(locId, studyId, ansLoc.getQuestionStableId()));
+            DBUtils.checkInsert(1, copyConfigSql.insertCopyAnswerLocationByQuestionStableId(
+                    locId, studyId, ansLoc.getQuestionStableId()));
         }
         return locId;
     }
 
-    private long[] createCompositeCopyPairs(long studyId, long pairId, List<CompositeCopyConfigurationPair> compositePairs) {
-        List<String> sourceChildStableIds = new ArrayList<>();
-        List<String> targetChildStableIds = new ArrayList<>();
-        for (var compositePair : compositePairs) {
-            sourceChildStableIds.add(compositePair.getSourceChildQuestionStableId());
-            targetChildStableIds.add(compositePair.getTargetChildQuestionStableId());
-        }
-
-        long[] ids = getCopyConfigurationSql()
-                .bulkInsertCompositeCopyConfigPairByQuestionStableIds(pairId, studyId, sourceChildStableIds, targetChildStableIds);
-        DBUtils.checkInsert(compositePairs.size(), ids.length);
-
-        return ids;
-    }
-
     default void removeCopyConfig(long configId) {
         CopyConfiguration config = findCopyConfigById(configId)
-                .orElseThrow(() -> new DaoException("Could not find copy configuration with id " + configId));
+                .orElseThrow(() -> new DaoException("Copy configuration with id " + configId + " does not exist"));
 
         Set<Long> locationIds = new HashSet<>();
         for (var pair : config.getPairs()) {
@@ -136,32 +105,24 @@ public interface CopyConfigurationDao extends SqlObject {
     @UseStringTemplateSqlLocator
     @SqlQuery("queryCopyConfigById")
     @RegisterConstructorMapper(CopyConfiguration.class)
-    @RegisterConstructorMapper(CompositeCopyConfigurationPair.class)
     @UseRowReducer(CopyConfigurationWithPairsReducer.class)
     Optional<CopyConfiguration> findCopyConfigById(@Bind("id") long configId);
 
     class CopyConfigurationWithPairsReducer implements LinkedHashMapRowReducer<Long, CopyConfiguration> {
-        private Map<Long, CopyConfigurationPair> pairsContainer = new HashMap<>();
 
         @Override
         public void accumulate(Map<Long, CopyConfiguration> container, RowView view) {
             long id = view.getColumn("copy_configuration_id", Long.class);
-            CopyConfiguration config = container.computeIfAbsent(id, key -> view.getRow(CopyConfiguration.class));
+            CopyConfiguration config = container
+                    .computeIfAbsent(id, key -> view.getRow(CopyConfiguration.class));
 
             long pairId = view.getColumn("copy_configuration_pair_id", Long.class);
-            CopyConfigurationPair pair = pairsContainer.computeIfAbsent(pairId, key -> {
-                CopyLocation source = reduceLocation(view, "source");
-                CopyLocation target = reduceLocation(view, "target");
-                int order = view.getColumn("execution_order", Integer.class);
-                var copyPair = new CopyConfigurationPair(pairId, source, target, order);
-                config.addPairs(List.of(copyPair));
-                return copyPair;
-            });
+            CopyLocation source = reduceLocation(view, "source");
+            CopyLocation target = reduceLocation(view, "target");
+            int order = view.getColumn("execution_order", Integer.class);
+            var pair = new CopyConfigurationPair(pairId, source, target, order);
 
-            Long compPairId = view.getColumn("composite_copy_configuration_pair_id", Long.class);
-            if (compPairId != null) {
-                pair.addCompositeChildLocations(List.of(view.getRow(CompositeCopyConfigurationPair.class)));
-            }
+            config.addPairs(List.of(pair));
         }
 
         private CopyLocation reduceLocation(RowView view, String prefix) {

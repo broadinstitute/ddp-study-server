@@ -18,7 +18,6 @@ import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.types.DateFieldType;
 import org.broadinstitute.ddp.model.activity.types.DateRenderMode;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
-import org.broadinstitute.ddp.model.copy.CompositeCopyConfigurationPair;
 import org.broadinstitute.ddp.model.copy.CopyAnswerLocation;
 import org.broadinstitute.ddp.model.copy.CopyConfiguration;
 import org.broadinstitute.ddp.model.copy.CopyConfigurationPair;
@@ -46,64 +45,11 @@ public class CopyConfigurationDaoTest extends TxnAwareBaseTest {
     @Test
     public void testCreateCopyConfig_notSupported_nonAnswerSource() {
         thrown.expect(DaoException.class);
-        thrown.expectMessage(containsString("only answer source locations"));
+        thrown.expectMessage(containsString("answer source locations"));
         TransactionWrapper.useTxn(handle -> {
             var config = new CopyConfiguration(testData.getStudyId(), List.of(new CopyConfigurationPair(
                     new CopyLocation(CopyLocationType.PARTICIPANT_PROFILE_FIRST_NAME),
-                    new CopyLocation(CopyLocationType.PARTICIPANT_PROFILE_LAST_NAME),
-                    List.of())));
-            handle.attach(CopyConfigurationDao.class).createCopyConfig(config);
-            fail("expected exception not thrown");
-        });
-    }
-
-    @Test
-    public void testCreateCopyConfig_notSupported_compositeToNonAnswerTarget() {
-        thrown.expect(DaoException.class);
-        thrown.expectMessage(containsString("from source composite to target composite"));
-        TransactionWrapper.useTxn(handle -> {
-            TestFormActivity act = TestFormActivity.builder()
-                    .withCompositeQuestion(true, TextQuestionDef.builder(TextInputType.TEXT, "c1", Template.text("child")).build())
-                    .build(handle, testData.getUserId(), testData.getStudyGuid());
-            var config = new CopyConfiguration(testData.getStudyId(), List.of(new CopyConfigurationPair(
-                    new CopyAnswerLocation(act.getCompositeQuestion().getStableId()),
-                    new CopyLocation(CopyLocationType.PARTICIPANT_PROFILE_LAST_NAME),
-                    List.of())));
-            handle.attach(CopyConfigurationDao.class).createCopyConfig(config);
-            fail("expected exception not thrown");
-        });
-    }
-
-    @Test
-    public void testCreateCopyConfig_notSupported_nonCompositeSourceToCompositeTarget() {
-        thrown.expect(DaoException.class);
-        thrown.expectMessage(containsString("between questions of the same type"));
-        TransactionWrapper.useTxn(handle -> {
-            TestFormActivity act = TestFormActivity.builder()
-                    .withTextQuestion(true)
-                    .withCompositeQuestion(true, TextQuestionDef.builder(TextInputType.TEXT, "c1", Template.text("child")).build())
-                    .build(handle, testData.getUserId(), testData.getStudyGuid());
-            var config = new CopyConfiguration(testData.getStudyId(), List.of(new CopyConfigurationPair(
-                    new CopyAnswerLocation(act.getTextQuestion().getStableId()),
-                    new CopyAnswerLocation(act.getCompositeQuestion().getStableId()),
-                    List.of())));
-            handle.attach(CopyConfigurationDao.class).createCopyConfig(config);
-            fail("expected exception not thrown");
-        });
-    }
-
-    @Test
-    public void testCreateCopyConfig_notSupported_missingCompositePairs() {
-        thrown.expect(DaoException.class);
-        thrown.expectMessage(containsString("composite child question pairs"));
-        TransactionWrapper.useTxn(handle -> {
-            TestFormActivity act = TestFormActivity.builder()
-                    .withCompositeQuestion(true, TextQuestionDef.builder(TextInputType.TEXT, "c1", Template.text("child")).build())
-                    .build(handle, testData.getUserId(), testData.getStudyGuid());
-            var config = new CopyConfiguration(testData.getStudyId(), List.of(new CopyConfigurationPair(
-                    new CopyAnswerLocation(act.getCompositeQuestion().getStableId()),
-                    new CopyAnswerLocation(act.getCompositeQuestion().getStableId()),
-                    List.of())));
+                    new CopyLocation(CopyLocationType.PARTICIPANT_PROFILE_LAST_NAME))));
             handle.attach(CopyConfigurationDao.class).createCopyConfig(config);
             fail("expected exception not thrown");
         });
@@ -112,7 +58,7 @@ public class CopyConfigurationDaoTest extends TxnAwareBaseTest {
     @Test
     public void testCreateCopyConfig_notSupported_mismatchedQuestionTypes() {
         thrown.expect(DaoException.class);
-        thrown.expectMessage(containsString("between questions of the same type"));
+        thrown.expectMessage(containsString("between different question types"));
         TransactionWrapper.useTxn(handle -> {
             TestFormActivity act = TestFormActivity.builder()
                     .withBoolQuestion(true)
@@ -120,8 +66,23 @@ public class CopyConfigurationDaoTest extends TxnAwareBaseTest {
                     .build(handle, testData.getUserId(), testData.getStudyGuid());
             var config = new CopyConfiguration(testData.getStudyId(), List.of(new CopyConfigurationPair(
                     new CopyAnswerLocation(act.getBoolQuestion().getStableId()),
-                    new CopyAnswerLocation(act.getTextQuestion().getStableId()),
-                    List.of())));
+                    new CopyAnswerLocation(act.getTextQuestion().getStableId()))));
+            handle.attach(CopyConfigurationDao.class).createCopyConfig(config);
+            fail("expected exception not thrown");
+        });
+    }
+
+    @Test
+    public void testCreateCopyConfig_notSupported_topLevelComposite() {
+        thrown.expect(DaoException.class);
+        thrown.expectMessage(containsString("top-level composite question"));
+        TransactionWrapper.useTxn(handle -> {
+            TestFormActivity act = TestFormActivity.builder()
+                    .withCompositeQuestion(true, TextQuestionDef.builder(TextInputType.TEXT, "c1", Template.text("child")).build())
+                    .build(handle, testData.getUserId(), testData.getStudyGuid());
+            var config = new CopyConfiguration(testData.getStudyId(), List.of(new CopyConfigurationPair(
+                    new CopyAnswerLocation(act.getCompositeQuestion().getStableId()),
+                    new CopyAnswerLocation(act.getCompositeQuestion().getStableId()))));
             handle.attach(CopyConfigurationDao.class).createCopyConfig(config);
             fail("expected exception not thrown");
         });
@@ -136,8 +97,7 @@ public class CopyConfigurationDaoTest extends TxnAwareBaseTest {
 
             var config = new CopyConfiguration(testData.getStudyId(), List.of(new CopyConfigurationPair(
                     new CopyAnswerLocation(act.getTextQuestion().getStableId()),
-                    new CopyLocation(CopyLocationType.PARTICIPANT_PROFILE_FIRST_NAME),
-                    List.of())));
+                    new CopyLocation(CopyLocationType.PARTICIPANT_PROFILE_FIRST_NAME))));
 
             CopyConfiguration actual = handle.attach(CopyConfigurationDao.class).createCopyConfig(config);
 
@@ -147,7 +107,6 @@ public class CopyConfigurationDaoTest extends TxnAwareBaseTest {
 
             CopyConfigurationPair actualPair = actual.getPairs().get(0);
             assertTrue(actualPair.getId() > 0);
-            assertTrue(actualPair.getCompositeChildLocations().isEmpty());
 
             CopyLocation actualSource = actualPair.getSource();
             assertTrue(actualSource.getId() > 0);
@@ -173,12 +132,10 @@ public class CopyConfigurationDaoTest extends TxnAwareBaseTest {
             var config = new CopyConfiguration(testData.getStudyId(), List.of(
                     new CopyConfigurationPair(
                             new CopyAnswerLocation(act.getTextQuestion().getStableId()),
-                            new CopyLocation(CopyLocationType.PARTICIPANT_PROFILE_FIRST_NAME),
-                            List.of()),
+                            new CopyLocation(CopyLocationType.PARTICIPANT_PROFILE_FIRST_NAME)),
                     new CopyConfigurationPair(
                             new CopyAnswerLocation(act.getTextQuestion().getStableId()),
-                            new CopyLocation(CopyLocationType.OPERATOR_PROFILE_FIRST_NAME),
-                            List.of())));
+                            new CopyLocation(CopyLocationType.OPERATOR_PROFILE_FIRST_NAME))));
 
             CopyConfiguration actual = handle.attach(CopyConfigurationDao.class).createCopyConfig(config);
 
@@ -198,47 +155,37 @@ public class CopyConfigurationDaoTest extends TxnAwareBaseTest {
     }
 
     @Test
-    public void testCreateAndFindCopyConfig_compositePairs() {
+    public void testCreateAndFindCopyConfig_compositeChild() {
         TransactionWrapper.useTxn(handle -> {
-            TestFormActivity act1 = TestFormActivity.builder()
+            TestFormActivity.builder()
                     .withCompositeQuestion(true,
                             DateQuestionDef.builder(DateRenderMode.TEXT, "c1a", Template.text("")).addFields(DateFieldType.YEAR).build(),
                             TextQuestionDef.builder(TextInputType.TEXT, "c2a", Template.text("")).build())
                     .build(handle, testData.getUserId(), testData.getStudyGuid());
-            TestFormActivity act2 = TestFormActivity.builder()
+            TestFormActivity.builder()
                     .withCompositeQuestion(true,
                             DateQuestionDef.builder(DateRenderMode.TEXT, "c1b", Template.text("")).addFields(DateFieldType.YEAR).build(),
                             TextQuestionDef.builder(TextInputType.TEXT, "c2b", Template.text("")).build())
                     .build(handle, testData.getUserId(), testData.getStudyGuid());
 
             var config = new CopyConfiguration(testData.getStudyId(), List.of(
-                    new CopyConfigurationPair(
-                            new CopyAnswerLocation(act1.getCompositeQuestion().getStableId()),
-                            new CopyAnswerLocation(act2.getCompositeQuestion().getStableId()),
-                            List.of(new CompositeCopyConfigurationPair("c1a", "c1b"),
-                                    new CompositeCopyConfigurationPair("c2a", "c2b")))));
+                    new CopyConfigurationPair(new CopyAnswerLocation("c1a"), new CopyAnswerLocation("c1b")),
+                    new CopyConfigurationPair(new CopyAnswerLocation("c2a"), new CopyAnswerLocation("c2b"))));
 
             CopyConfiguration actual = handle.attach(CopyConfigurationDao.class).createCopyConfig(config);
 
             assertNotNull(actual);
-            assertEquals(1, actual.getPairs().size());
+            assertEquals(2, actual.getPairs().size());
 
-            CopyConfigurationPair pair = actual.getPairs().get(0);
-            assertEquals(2, pair.getCompositeChildLocations().size());
+            CopyConfigurationPair pair1 = actual.getPairs().get(0);
+            assertTrue(pair1.getId() > 0);
+            assertEquals("c1a", ((CopyAnswerLocation) pair1.getSource()).getQuestionStableId());
+            assertEquals("c1b", ((CopyAnswerLocation) pair1.getTarget()).getQuestionStableId());
 
-            CompositeCopyConfigurationPair comp1 = pair.getCompositeChildLocations().get(0);
-            assertTrue(comp1.getId() > 0);
-            assertTrue(comp1.getSourceChildQuestionStableCodeId() > 0);
-            assertEquals("c1a", comp1.getSourceChildQuestionStableId());
-            assertTrue(comp1.getTargetChildQuestionStableCodeId() > 0);
-            assertEquals("c1b", comp1.getTargetChildQuestionStableId());
-
-            CompositeCopyConfigurationPair comp2 = pair.getCompositeChildLocations().get(1);
-            assertTrue(comp2.getId() > 0);
-            assertTrue(comp2.getSourceChildQuestionStableCodeId() > 0);
-            assertEquals("c2a", comp2.getSourceChildQuestionStableId());
-            assertTrue(comp2.getTargetChildQuestionStableCodeId() > 0);
-            assertEquals("c2b", comp2.getTargetChildQuestionStableId());
+            CopyConfigurationPair pair2 = actual.getPairs().get(1);
+            assertTrue(pair2.getId() > 0);
+            assertEquals("c2a", ((CopyAnswerLocation) pair2.getSource()).getQuestionStableId());
+            assertEquals("c2b", ((CopyAnswerLocation) pair2.getTarget()).getQuestionStableId());
 
             handle.rollback();
         });
@@ -262,8 +209,7 @@ public class CopyConfigurationDaoTest extends TxnAwareBaseTest {
 
             var config = new CopyConfiguration(testData.getStudyId(), List.of(new CopyConfigurationPair(
                     new CopyAnswerLocation(act.getTextQuestion().getStableId()),
-                    new CopyLocation(CopyLocationType.PARTICIPANT_PROFILE_FIRST_NAME),
-                    List.of())));
+                    new CopyLocation(CopyLocationType.PARTICIPANT_PROFILE_FIRST_NAME))));
 
             CopyConfigurationDao copyConfigurationDao = handle.attach(CopyConfigurationDao.class);
             CopyConfiguration actual = copyConfigurationDao.createCopyConfig(config);
@@ -280,7 +226,7 @@ public class CopyConfigurationDaoTest extends TxnAwareBaseTest {
     @Test
     public void testRemoveCopyConfig_notFound() {
         thrown.expect(DaoException.class);
-        thrown.expectMessage(containsString("Could not find"));
+        thrown.expectMessage(containsString("does not exist"));
         TransactionWrapper.useTxn(handle -> {
             handle.attach(CopyConfigurationDao.class).removeCopyConfig(123456L);
             fail("expected exception not thrown");
