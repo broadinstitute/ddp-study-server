@@ -165,6 +165,15 @@ public interface ActivityInstanceDao extends SqlObject {
     @SqlQuery("select activity_instance_id from activity_instance where participant_id in (<userIds>)")
     Set<Long> findAllInstanceIdsByUserIds(@BindList(value = "userIds", onEmpty = BindList.EmptyHandling.NULL) Set<Long> userIds);
 
+    @SqlQuery("select activity_instance_id from activity_instance ai"
+            + " join study_activity as sa on sa.study_activity_id = ai.study_activity_id"
+            + " join umbrella_study s on s.umbrella_study_id = sa.study_id"
+            + " join user u on u.user_id = ai.participant_id"
+            + " where s.guid = :studyGuid and u.guid = :userGuid")
+    Set<Long> findActivityInstanceIdsByStudyAndUser(
+            @Bind("studyGuid") String studyGuid,
+            @Bind("userGuid") String userGuid);
+
     /**
      * Helper that only deletes an activity instance and its associated status(es).
      */

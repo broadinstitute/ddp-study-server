@@ -17,7 +17,6 @@ import org.broadinstitute.ddp.model.event.EventSignal;
 import org.broadinstitute.ddp.model.governance.AgeOfMajorityRule;
 import org.broadinstitute.ddp.model.governance.AgeUpCandidate;
 import org.broadinstitute.ddp.model.governance.GovernancePolicy;
-import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.pex.PexException;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.jdbi.v3.core.Handle;
@@ -91,7 +90,7 @@ public class AgeUpService {
 
             if (agedUp) {
                 LOG.info("Age-up candidate {} in study {} has reached age-of-majority", userGuid, studyGuid);
-                jdbiEnrollment.changeUserStudyEnrollmentStatus(userGuid, studyGuid, EnrollmentStatusType.CONSENT_SUSPENDED);
+                jdbiEnrollment.suspendUserStudyConsent(userGuid, studyGuid);
                 EventSignal signal = new EventSignal(
                         candidate.getParticipantUserId(),
                         candidate.getParticipantUserId(),

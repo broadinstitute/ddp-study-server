@@ -91,9 +91,9 @@ public class GetActivityInstanceRoute implements Route {
                     // To-do: change this to just "if (enrollmentStatus.get() == EnrollmentStatusType.EXITED_BEFORE_ENROLLMENT)) {...}"
                     // when every user registered in the system will become enrolled automatically
                     // When it is implemented, the check for the enrollment status presence is not needed
-                    if (enrollmentStatus.isPresent() && enrollmentStatus.get().shouldMarkActivitiesReadOnly()) {
-                        activityInstance.makeReadonly();
-                    }
+                    //if (enrollmentStatus.isPresent() && enrollmentStatus.get().shouldMarkActivitiesReadOnly()) {
+                    //    activityInstance.makeReadonly();
+                    //}
                     // end To-do
                     JdbiLanguageCode jdbiLanguageCode = handle.attach(JdbiLanguageCode.class);
                     Long languageCodeId = jdbiLanguageCode.getLanguageCodeId(isoLangCode);

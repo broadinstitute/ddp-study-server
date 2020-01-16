@@ -30,6 +30,9 @@ public interface JdbiUserStudyEnrollment extends SqlObject {
     @CreateSqlObject
     JdbiUmbrellaStudy getJdbiUmbrellaStudy();
 
+    @CreateSqlObject
+    ActivityInstanceDao getActivityInstanceDao();
+
     default List<EnrollmentStatusDto> findByStudyGuid(String studyGuid) {
         return findByStudyGuidAfterOrEqualToInstant(studyGuid, 0);
     }
@@ -306,6 +309,18 @@ public interface JdbiUserStudyEnrollment extends SqlObject {
                                                  EnrollmentStatusType newEnrollmentStatus) {
         return changeUserStudyEnrollmentStatus(userId, studyId, newEnrollmentStatus, null);
     }
+
+    default long suspendUserStudyConsent(String userGuid, String studyGuid) {
+        //update EnrollmentStatus to EnrollmentStatusType.CONSENT_SUSPENDED
+        //Update All existing activity instances as read-only
+        long id = changeUserStudyEnrollmentStatus(
+                userGuid, studyGuid, EnrollmentStatusType.CONSENT_SUSPENDED, null);
+        Set<Long> instanceIds = getActivityInstanceDao().findActivityInstanceIdsByStudyAndUser(studyGuid, userGuid);
+        long userId = getJdbiUser().getUserIdByGuid(userGuid);
+        getActivityInstanceDao().bulkUpdateReadOnlyByActivityIds(userId, true, instanceIds);
+        return id;
+    }
+
 
     /**
      * Special case of changing a user's enrollment status. Sets desired enrollment status depending on
