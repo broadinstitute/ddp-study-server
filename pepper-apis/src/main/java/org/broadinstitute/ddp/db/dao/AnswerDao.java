@@ -2,7 +2,10 @@ package org.broadinstitute.ddp.db.dao;
 
 import static java.util.stream.Collectors.toList;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -14,9 +17,19 @@ import org.broadinstitute.ddp.db.dto.CompositeAnswerSummaryDto;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.model.activity.instance.answer.AgreementAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
+import org.broadinstitute.ddp.model.activity.instance.answer.AnswerRow;
+import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
+import org.broadinstitute.ddp.model.activity.instance.answer.NumericIntegerAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
+import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
+import org.broadinstitute.ddp.model.activity.types.NumericType;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
+import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
+import org.jdbi.v3.core.result.RowView;
 import org.jdbi.v3.sqlobject.CreateSqlObject;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
@@ -24,6 +37,7 @@ import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
+import org.jdbi.v3.sqlobject.statement.UseRowReducer;
 import org.jdbi.v3.stringtemplate4.UseStringTemplateSqlLocator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,22 +72,6 @@ public interface AnswerDao extends SqlObject {
 
     @CreateSqlObject
     JdbiAnswer getJdbiAnswer();
-
-    /**
-     * Finds the answer id to specified question in the last-created activity instance of the specified activity. Useful in cases where we
-     * just need to know if there is an answer or not instead of needing all the data about the answer itself.
-     *
-     * @param userGuid         the user guid
-     * @param activityId       the activity id
-     * @param questionStableId the question stable id
-     * @return answer id if exists, empty otherwise
-     */
-    @UseStringTemplateSqlLocator
-    @SqlQuery("queryAnswerIdForQuestionInLatestInstance")
-    Optional<Long> findAnswerIdForQuestionInLatestInstance(
-            @Bind("userGuid") String userGuid,
-            @Bind("activityId") long activityId,
-            @Bind("questionStableId") String questionStableId);
 
     @SqlQuery(" select da.year, da.month, da.day "
             + " from activity_instance as ai "
@@ -236,5 +234,122 @@ public interface AnswerDao extends SqlObject {
     default int deleteAllByInstanceIds(Set<Long> instanceIds) {
         _deleteAllAnswerValuesByInstanceIds(instanceIds);
         return _deleteAllAnswersByInstanceIds(instanceIds);
+    }
+
+
+    @UseStringTemplateSqlLocator
+    @SqlQuery("queryAnswerById")
+    @UseRowReducer(AnswerWithValueReducer.class)
+    Optional<Answer> findAnswerById(@Bind("id") long answerId);
+
+    @UseStringTemplateSqlLocator
+    @SqlQuery("queryAnswerByGuid")
+    @UseRowReducer(AnswerWithValueReducer.class)
+    Optional<Answer> findAnswerByGuid(@Bind("guid") String answerGuid);
+
+    @UseStringTemplateSqlLocator
+    @SqlQuery("queryAnswerByInstanceIdAndQuestionStableId")
+    @UseRowReducer(AnswerWithValueReducer.class)
+    Optional<Answer> findAnswerByInstanceIdAndQuestionStableId(
+            @Bind("instanceId") long instanceId,
+            @Bind("questionStableId") String questionStableId);
+
+    class AnswerWithValueReducer implements LinkedHashMapRowReducer<Long, Answer> {
+        private Map<Long, Answer> childAnswers = new HashMap<>();
+
+        @Override
+        public void accumulate(Map<Long, Answer> container, RowView view) {
+            reduce(container, view);
+        }
+
+        /**
+         * Same as accumulate, but also returns the answer that was reduced from the row.
+         *
+         * @param container mapping of answer id to answer object
+         * @param view      the row view
+         * @return reduced answer, or null if row is for a child answer
+         */
+        public Answer reduce(Map<Long, Answer> container, RowView view) {
+            long answerId = view.getColumn("answer_id", Long.class);
+            var answerGuid = view.getColumn("answer_guid", String.class);
+            var questionStableId = view.getColumn("question_stable_id", String.class);
+            var type = QuestionType.valueOf(view.getColumn("question_type", String.class));
+            boolean isChildAnswer = view.getColumn("is_child_answer", Boolean.class);
+
+            Answer answer;
+            switch (type) {
+                case AGREEMENT:
+                    answer = new AgreementAnswer(answerId, questionStableId, answerGuid, view.getColumn("aa_value", Boolean.class));
+                    break;
+                case BOOLEAN:
+                    answer = new BoolAnswer(answerId, questionStableId, answerGuid, view.getColumn("ba_value", Boolean.class));
+                    break;
+                case TEXT:
+                    answer = new TextAnswer(answerId, questionStableId, answerGuid, view.getColumn("ta_value", String.class));
+                    break;
+                case DATE:
+                    answer = new DateAnswer(answerId, questionStableId, answerGuid,
+                            view.getColumn("da_year", Integer.class),
+                            view.getColumn("da_month", Integer.class),
+                            view.getColumn("da_day", Integer.class));
+                    break;
+                case NUMERIC:
+                    var numericType = NumericType.valueOf(view.getColumn("na_numeric_type", String.class));
+                    if (numericType == NumericType.INTEGER) {
+                        answer = new NumericIntegerAnswer(answerId, questionStableId, answerGuid,
+                                view.getColumn("na_int_value", Long.class));
+                    } else {
+                        throw new DaoException("Unhandled numeric answer type " + numericType);
+                    }
+                    break;
+                case PICKLIST:
+                    var map = isChildAnswer ? childAnswers : container;
+                    answer = map.computeIfAbsent(answerId, id ->
+                            new PicklistAnswer(answerId, questionStableId, answerGuid, new ArrayList<>()));
+                    var optionStableId = view.getColumn("pa_option_stable_id", String.class);
+                    if (optionStableId != null) {
+                        var option = new SelectedPicklistOption(optionStableId, view.getColumn("pa_detail_text", String.class));
+                        ((PicklistAnswer) answer).getValue().add(option);
+                    }
+                    break;
+                case COMPOSITE:
+                    answer = container.computeIfAbsent(answerId, id -> {
+                        var ans = new CompositeAnswer(answerId, questionStableId, answerGuid);
+                        ans.setAllowMultiple(view.getColumn("ca_allow_multiple", Boolean.class));
+                        ans.setUnwrapOnExport(view.getColumn("ca_unwrap_on_export", Boolean.class));
+                        return ans;
+                    });
+                    Long childAnswerId = view.getColumn("ca_child_answer_id", Long.class);
+                    if (childAnswerId != null) {
+                        Answer childAnswer = childAnswers.get(childAnswerId);
+                        if (childAnswer == null) {
+                            throw new DaoException(String.format(
+                                    "Could not find child answer with id=%d for composite answer %d", childAnswerId, answerId));
+                        }
+                        int childRow = view.getColumn("ca_child_row", Integer.class); // zero-indexed row number
+                        int childCol = view.getColumn("ca_child_col", Integer.class); // zero-indexed column number
+                        List<AnswerRow> rows = ((CompositeAnswer) answer).getValue();
+                        while (rows.size() < childRow + 1) {
+                            rows.add(new AnswerRow());
+                        }
+                        List<Answer> row = rows.get(childRow).getValues();
+                        while (row.size() < childCol + 1) {
+                            row.add(null);
+                        }
+                        row.set(childCol, childAnswer);
+                    }
+                    break;
+                default:
+                    throw new DaoException("Unhandled answer type " + type);
+            }
+
+            if (isChildAnswer) {
+                childAnswers.put(answerId, answer);
+                return null;
+            } else {
+                container.put(answerId, answer);
+                return answer;
+            }
+        }
     }
 }

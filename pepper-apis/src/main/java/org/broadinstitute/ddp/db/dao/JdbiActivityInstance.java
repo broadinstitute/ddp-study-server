@@ -201,6 +201,13 @@ public interface JdbiActivityInstance extends SqlObject {
             + " order by ai.created_at desc limit 1")
     Optional<String> findLatestInstanceGuidByUserIdAndActivityId(@Bind("userId") long userId, @Bind("activityId") long activityId);
 
+    @SqlQuery("select ai.activity_instance_id from activity_instance as ai"
+            + "  join user as u on u.user_id = ai.participant_id"
+            + " where ai.study_activity_id = :activityId"
+            + "   and u.guid = :userGuid"
+            + " order by ai.created_at desc limit 1")
+    Optional<Long> findLatestInstanceIdByUserGuidAndActivityId(@Bind("userGuid") String userGuid, @Bind("activityId") long activityId);
+
     @SqlQuery("select ai.activity_instance_guid from activity_instance as ai"
             + "  join user as u on u.user_id = ai.participant_id"
             + " where ai.study_activity_id = :activityId"
