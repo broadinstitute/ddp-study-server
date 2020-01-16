@@ -11,7 +11,7 @@ public enum EnrollmentStatusType {
     ENROLLED(true, false, false,  true),
     EXITED_BEFORE_ENROLLMENT(false, true, true, false),
     EXITED_AFTER_ENROLLMENT(false, true, true, false),
-    CONSENT_SUSPENDED(true, false, true, true);
+    CONSENT_SUSPENDED(true, false, false, true);
 
     private final boolean shouldReceiveCommunications;
 
