@@ -23,18 +23,18 @@ public class DsmComputedRecord {
     @SerializedName("pdfs")
     private List<PdfConfigRecord> pdfConfigRecords;
 
-    private transient DateValue birthDate;
+    private transient LocalDate birthDate;
     private transient LocalDate ageOfMajorityDate;
     private transient DateValue diagnosisDate;
 
-    public DsmComputedRecord(DateValue birthDate, LocalDate ageOfMajorityDate, DateValue diagnosisDate,
+    public DsmComputedRecord(LocalDate birthDate, LocalDate ageOfMajorityDate, DateValue diagnosisDate,
                              boolean hasConsentedToBloodDraw, boolean hasConsentedToTissueSample,
                              List<PdfConfigRecord> pdfConfigRecords) {
         this(birthDate, ageOfMajorityDate, diagnosisDate, hasConsentedToBloodDraw, hasConsentedToTissueSample);
         this.pdfConfigRecords = pdfConfigRecords;
     }
 
-    public DsmComputedRecord(DateValue birthDate, LocalDate ageOfMajorityDate, DateValue diagnosisDate,
+    public DsmComputedRecord(LocalDate birthDate, LocalDate ageOfMajorityDate, DateValue diagnosisDate,
                              boolean hasConsentedToBloodDraw, boolean hasConsentedToTissueSample) {
         this.birthDate = birthDate;
         this.ageOfMajorityDate = ageOfMajorityDate;
@@ -43,7 +43,7 @@ public class DsmComputedRecord {
         this.hasConsentedToTissueSample = hasConsentedToTissueSample;
 
         if (birthDate != null) {
-            this.dateOfBirth = birthDate.asLocalDate().map(LocalDate::toString).orElse(null);
+            this.dateOfBirth = birthDate.toString();
         }
 
         if (ageOfMajorityDate != null) {

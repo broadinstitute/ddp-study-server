@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.model.study;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -10,7 +11,7 @@ import java.util.stream.Collectors;
 import org.broadinstitute.ddp.db.dto.EnrollmentStatusDto;
 import org.broadinstitute.ddp.db.dto.MedicalProviderDto;
 import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
-import org.broadinstitute.ddp.model.governance.AgeOfMajorityRule;
+import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.user.User;
 
 /**
@@ -25,7 +26,9 @@ public class Participant {
     // todo: better models for status and medical providers
     private EnrollmentStatusDto status;
     private List<MedicalProviderDto> providers;
-    private AgeOfMajorityRule ageOfMajorityRule;
+    private LocalDate dateOfMajority;
+    private LocalDate birthDate;
+    private DateValue dateOfDiagnosis;
 
     public Participant(EnrollmentStatusDto status, User user) {
         this.status = status;
@@ -50,8 +53,20 @@ public class Participant {
         providers.add(providerDto);
     }
 
-    public void addAOMRule(AgeOfMajorityRule ageOfMajorityRule) {
-        this.ageOfMajorityRule = ageOfMajorityRule;
+    public LocalDate getBirthDate() {
+        return birthDate;
+    }
+
+    public void setBirthDate(LocalDate birthDate) {
+        this.birthDate = birthDate;
+    }
+
+    public DateValue getDateOfDiagnosis() {
+        return dateOfDiagnosis;
+    }
+
+    public void setDateOfDiagnosis(DateValue dateOfDiagnosis) {
+        this.dateOfDiagnosis = dateOfDiagnosis;
     }
 
     public List<ActivityResponse> getAllResponses() {
@@ -72,7 +87,11 @@ public class Participant {
         responses.computeIfAbsent(response.getActivityTag(), tag -> new ArrayList<>()).add(response);
     }
 
-    public AgeOfMajorityRule getAgeOfMajorityRule() {
-        return ageOfMajorityRule;
+    public LocalDate getDateOfMajority() {
+        return dateOfMajority;
+    }
+
+    public void setDateOfMajority(LocalDate dateOfMajority) {
+        this.dateOfMajority = dateOfMajority;
     }
 }

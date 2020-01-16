@@ -40,6 +40,7 @@ import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
 import org.broadinstitute.ddp.db.dao.JdbiStudyActivityNameTranslation;
 import org.broadinstitute.ddp.db.dao.ParticipantDao;
 import org.broadinstitute.ddp.db.dao.PdfDao;
+import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
@@ -95,11 +96,15 @@ import org.broadinstitute.ddp.model.activity.types.InstitutionType;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.address.MailAddress;
 import org.broadinstitute.ddp.model.address.OLCPrecision;
+import org.broadinstitute.ddp.model.governance.AgeOfMajorityRule;
 import org.broadinstitute.ddp.model.governance.Governance;
+import org.broadinstitute.ddp.model.governance.GovernancePolicy;
 import org.broadinstitute.ddp.model.pdf.PdfConfigInfo;
 import org.broadinstitute.ddp.model.pdf.PdfVersion;
 import org.broadinstitute.ddp.model.study.Participant;
 import org.broadinstitute.ddp.model.user.User;
+import org.broadinstitute.ddp.pex.PexInterpreter;
+import org.broadinstitute.ddp.pex.TreeWalkInterpreter;
 import org.broadinstitute.ddp.service.ConsentService;
 import org.broadinstitute.ddp.service.MedicalRecordService;
 import org.broadinstitute.ddp.service.OLCService;
@@ -549,11 +554,20 @@ public class DataExporter {
             });
         }
 
-        StudyExtract studyExtract = new StudyExtract(activities, studyPdfConfigs, configPdfVersions, participantProxyGuids);
+        MedicalRecordService medicalRecordService = new MedicalRecordService(ConsentService.createInstance());
+        GovernancePolicy governancePolicy = handle.attach(StudyGovernanceDao.class)
+                .findPolicyByStudyId(studyDto.getId()).orElse(null);
+
+        enrichWithDSMEventDates(handle, medicalRecordService, governancePolicy, studyDto.getId(), dataset);
+
+        StudyExtract studyExtract = new StudyExtract(activities,
+                studyPdfConfigs,
+                configPdfVersions,
+                participantProxyGuids);
+
 
         Map<String, String> participantRecords = prepareParticipantRecordsForJSONExport(
-                studyExtract, dataset, exportStructuredDocument, handle, new MedicalRecordService(ConsentService.createInstance())
-        );
+                studyExtract, dataset, exportStructuredDocument, handle, medicalRecordService);
 
         try (RestHighLevelClient client = ElasticsearchServiceUtil.getClientForElasticsearchCloud(cfg)) {
             BulkRequest bulkRequest = new BulkRequest().timeout("2m");
@@ -574,6 +588,41 @@ public class DataExporter {
                 LOG.error(bulkResponse.buildFailureMessage());
             }
         }
+    }
+
+    void enrichWithDSMEventDates(Handle handle,
+                                 MedicalRecordService medicalRecordService,
+                                 GovernancePolicy governancePolicy,
+                                 long studyId,
+                                 List<Participant> dataset) {
+
+        PexInterpreter pexInterpreter = new TreeWalkInterpreter();
+
+        dataset.forEach(participant -> {
+            DateValue diagnosisDate = medicalRecordService
+                    .getDateOfDiagnosis(handle, participant.getUser().getId(), studyId).orElse(null);
+            DateValue birthDate = medicalRecordService
+                    .getDateOfBirth(handle, participant.getUser().getId(), studyId).orElse(null);
+
+            LocalDate dateOfMajority = null;
+            if (governancePolicy != null) {
+                AgeOfMajorityRule aomRule = governancePolicy.getApplicableAgeOfMajorityRule(handle,
+                        pexInterpreter,
+                        participant.getUser().getGuid())
+                        .orElse(null);
+
+                if (birthDate != null && aomRule != null) {
+                    LocalDate localBirthDate = birthDate.asLocalDate().orElse(null);
+                    if (localBirthDate != null) {
+                        dateOfMajority = aomRule.getDateOfMajority(localBirthDate);
+                    }
+                }
+            }
+
+            participant.setBirthDate(birthDate.asLocalDate().orElse(null));
+            participant.setDateOfDiagnosis(diagnosisDate);
+            participant.setDateOfMajority(dateOfMajority);
+        });
     }
 
     /**
@@ -724,23 +773,13 @@ public class DataExporter {
         }
 
         // Retrieving information to compute the dsm record
-        DateValue diagnosisDate = medicalRecordService.getDateOfDiagnosis(handle, user.getId(), statusDto.getStudyId()).orElse(null);
-        DateValue birthDate = medicalRecordService.getDateOfBirth(handle, user.getId(), statusDto.getStudyId()).orElse(null);
         MedicalRecordService.ParticipantConsents consents = medicalRecordService
                 .fetchBloodAndTissueConsents(handle, user.getId(), userGuid, statusDto.getStudyId(), studyGuid);
 
-        LocalDate dateOfMajority = null;
-        if (birthDate != null) {
-            LocalDate localBirthDate = birthDate.asLocalDate().orElse(null);
-            if (localBirthDate != null) {
-                dateOfMajority = participant.getAgeOfMajorityRule().getDateOfMajority(localBirthDate);
-            }
-        }
-
         DsmComputedRecord dsmComputedRecord =
-                new DsmComputedRecord(birthDate,
-                        dateOfMajority,
-                        diagnosisDate,
+                new DsmComputedRecord(participant.getBirthDate(),
+                        participant.getDateOfMajority(),
+                        participant.getDateOfDiagnosis(),
                         consents.hasConsentedToBloodDraw(),
                         consents.hasConsentedToTissueSample(),
                         pdfConfigRecords);

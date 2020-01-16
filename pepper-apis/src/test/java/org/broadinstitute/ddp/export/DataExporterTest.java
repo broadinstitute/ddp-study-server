@@ -12,6 +12,7 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.lang.reflect.Type;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -77,9 +78,11 @@ import org.broadinstitute.ddp.model.activity.types.TemplateType;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
 import org.broadinstitute.ddp.model.address.MailAddress;
 import org.broadinstitute.ddp.model.governance.AgeOfMajorityRule;
+import org.broadinstitute.ddp.model.governance.GovernancePolicy;
 import org.broadinstitute.ddp.model.study.Participant;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.model.user.User;
+import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.service.DsmAddressValidationStatus;
 import org.broadinstitute.ddp.service.MedicalRecordService;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
@@ -101,7 +104,10 @@ public class DataExporterTest extends TxnAwareBaseTest {
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static String TEST_USER_GUID = "blah-guid";
     private MedicalRecordService mockMedicalRecordService;
+    private GovernancePolicy mockGovernancePolicy;
     private DataExporter exporter;
+    LocalDate testDateOfMajority = LocalDate.now();
+    DateValue testBirthdate = new DateValue(1978, 5, 16);
 
     @BeforeClass
     public static void setup() {
@@ -120,10 +126,19 @@ public class DataExporterTest extends TxnAwareBaseTest {
         exporter = new DataExporter(cfg);
         mockMedicalRecordService = Mockito.mock(MedicalRecordService.class);
         Mockito.when(mockMedicalRecordService.getDateOfBirth(Mockito.any(Handle.class),
-                Mockito.anyLong(), Mockito.anyLong())).thenReturn(Optional.of(new DateValue(1978, 5, 16)));
+                Mockito.anyLong(), Mockito.anyLong())).thenReturn(Optional.of(testBirthdate));
         Mockito.when(mockMedicalRecordService.fetchBloodAndTissueConsents(Mockito.any(Handle.class),
                 Mockito.anyLong(), Mockito.anyString(), Mockito.anyLong(), Mockito.anyString()))
                 .thenReturn(new MedicalRecordService.ParticipantConsents(true, true));
+
+        AgeOfMajorityRule ageOfMajorityRule = Mockito.mock(AgeOfMajorityRule.class);
+
+        mockGovernancePolicy = Mockito.mock(GovernancePolicy.class);
+        Mockito.when(mockGovernancePolicy.getApplicableAgeOfMajorityRule(Mockito.any(Handle.class),
+                Mockito.any(PexInterpreter.class),
+                Mockito.anyString())).thenReturn(Optional.of(ageOfMajorityRule));
+
+        Mockito.when(ageOfMajorityRule.getDateOfMajority(Mockito.any(LocalDate.class))).thenReturn(testDateOfMajority);
 
     }
 
@@ -243,6 +258,43 @@ public class DataExporterTest extends TxnAwareBaseTest {
 
             handle.rollback();
         });
+    }
+
+    @Test
+    public void testEnrichWithDSMEventDates() {
+        Participant participant = new Participant(
+                new EnrollmentStatusDto(0L,
+                        testData.getUserId(),
+                        testData.getUserGuid(),
+                        testData.getStudyId(),
+                        testData.getStudyGuid(),
+                        EnrollmentStatusType.ENROLLED,
+                        Instant.now().toEpochMilli(),
+                        null),
+                new User(testData.getUserId(),
+                        testData.getUserGuid(),
+                        null,
+                        null,
+                        null,
+                        false,
+                        0L,
+                        0L,
+                        null,
+                        0,
+                        0,
+                        0L));
+
+        assertNull(participant.getBirthDate());
+        assertNull(participant.getDateOfMajority());
+
+        TransactionWrapper.useTxn(handle -> exporter.enrichWithDSMEventDates(handle,
+                mockMedicalRecordService,
+                mockGovernancePolicy,
+                testData.getStudyId(),
+                Collections.singletonList(participant)));
+
+        assertEquals(testBirthdate.asLocalDate().orElse(null), participant.getBirthDate());
+        assertEquals(testDateOfMajority, participant.getDateOfMajority());
     }
 
     @Test
@@ -473,7 +525,6 @@ public class DataExporterTest extends TxnAwareBaseTest {
                         studyExtract, participants, exportStructuredDocument, handle, mockMedicalRecordService
                 )
         );
-        assertTrue(result.get("blah-guid").contains("\"dateOfMajority\":\"1997-05-16\""));
         assertEquals(1, result.size());
     }
 
@@ -610,7 +661,6 @@ public class DataExporterTest extends TxnAwareBaseTest {
             participant.addProvider(new MedicalProviderDto(null, UUID.randomUUID().toString(),
                     testData.getUserId(), testData.getStudyId(),
                     InstitutionType.PHYSICIAN, "inst a", "dr. a", "boston", "ma", null, null, null, null));
-            participant.addAOMRule(new AgeOfMajorityRule("true", 19, 4));
             if (!emptyActivity) {
                 FormResponse instance = new FormResponse(1L, "instance-guid-xyz", 1L, false, timestamp, firstCompletedAt, 1L, "ACT", "v1",
                         new ActivityInstanceStatusDto(2L, 2L, 1L, 1L, lastUpdatedAt, InstanceStatusType.COMPLETE));

@@ -13,8 +13,6 @@ import org.broadinstitute.ddp.model.address.MailAddress;
 import org.broadinstitute.ddp.model.study.Participant;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.model.user.User;
-import org.broadinstitute.ddp.pex.PexInterpreter;
-import org.broadinstitute.ddp.pex.TreeWalkInterpreter;
 import org.broadinstitute.ddp.service.DsmAddressValidationStatus;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
 import org.jdbi.v3.core.result.RowView;
@@ -34,9 +32,6 @@ public interface ParticipantDao extends SqlObject {
     @CreateSqlObject
     ActivityInstanceDao getActivityInstanceDao();
 
-    @CreateSqlObject
-    StudyGovernanceDao getStudyGovernanceDao();
-
 
     default Stream<Participant> findParticipantsWithFullData(long studyId) {
         Set<Long> userIds = new HashSet<>();
@@ -50,13 +45,6 @@ public interface ParticipantDao extends SqlObject {
                 .findFormResponsesWithAnswersByUserIds(studyId, participants.keySet())
                 .forEach(resp -> participants.get(resp.getParticipantId()).addResponse(resp));
 
-        PexInterpreter pexInterpreter = new TreeWalkInterpreter();
-        getStudyGovernanceDao().findPolicyByStudyId(studyId).ifPresent(governancePolicy -> {
-            participants.values().forEach(participant -> participant.addAOMRule(governancePolicy
-                    .getApplicableAgeOfMajorityRule(getHandle(), pexInterpreter, participant.getUser().getGuid())
-                    .orElse(null)));
-
-        });
         return participants.values().stream();
     }
 
@@ -66,13 +54,6 @@ public interface ParticipantDao extends SqlObject {
         getActivityInstanceDao()
                 .findFormResponsesWithAnswersByUserIds(studyId, participants.keySet())
                 .forEach(resp -> participants.get(resp.getParticipantId()).addResponse(resp));
-        PexInterpreter pexInterpreter = new TreeWalkInterpreter();
-        getStudyGovernanceDao().findPolicyByStudyId(studyId).ifPresent(governancePolicy -> {
-            participants.values().forEach(participant -> participant.addAOMRule(governancePolicy
-                    .getApplicableAgeOfMajorityRule(getHandle(), pexInterpreter, participant.getUser().getGuid())
-                    .orElse(null)));
-
-        });
         return participants.values().stream();
     }
 
@@ -82,13 +63,6 @@ public interface ParticipantDao extends SqlObject {
         getActivityInstanceDao()
                 .findFormResponsesWithAnswersByUserIds(studyId, participants.keySet())
                 .forEach(resp -> participants.get(resp.getParticipantId()).addResponse(resp));
-        PexInterpreter pexInterpreter = new TreeWalkInterpreter();
-        getStudyGovernanceDao().findPolicyByStudyId(studyId).ifPresent(governancePolicy -> {
-            participants.values().forEach(participant -> participant.addAOMRule(governancePolicy
-                    .getApplicableAgeOfMajorityRule(getHandle(), pexInterpreter, participant.getUser().getGuid())
-                    .orElse(null)));
-
-        });
         return participants.values().stream();
     }
 
