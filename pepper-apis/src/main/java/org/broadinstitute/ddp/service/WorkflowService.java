@@ -4,9 +4,13 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
+import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
+import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.WorkflowDao;
+import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.json.workflow.WorkflowResponse;
+import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.workflow.ActivityState;
 import org.broadinstitute.ddp.model.workflow.NextStateCandidate;
 import org.broadinstitute.ddp.model.workflow.StateType;
@@ -74,5 +78,30 @@ public class WorkflowService {
             }
         }
         return WorkflowResponse.unknown();
+    }
+
+    private void createActivityInstanceIfMissing(
+            Handle handle,
+            WorkflowState fromState,
+            WorkflowState nextState,
+            String operatorGuid,
+            String userGuid
+    ) {
+        if (nextState.getType() != StateType.ACTIVITY) {
+            return;
+        }
+        ActivityState activityState = (ActivityState) nextState;
+        String instanceGuid = handle.attach(JdbiActivityInstance.class)
+                .findLatestInstanceGuidByUserGuidAndActivityId(userGuid, activityState.getActivityId())
+                .orElse(null);
+        boolean activityInstanceIsMissing = instanceGuid == null;
+        if (activityInstanceIsMissing) {
+            ActivityInstanceDto instanceDto = handle.attach(ActivityInstanceDao.class)
+                    .insertInstance(activityState.getActivityId(), operatorGuid, userGuid, InstanceStatusType.CREATED, false);
+            LOG.info("Created start activity instance with guid '{}' for user guid '{}' using operator guid '{}' and activity id {}",
+                    instanceDto.getGuid(), userGuid, operatorGuid, activityState.getActivityId());
+        } else {
+            LOG.info("User guid '{}' already has activity instance with guid '{}', nothing to create", userGuid, instanceGuid);
+        }
     }
 }
