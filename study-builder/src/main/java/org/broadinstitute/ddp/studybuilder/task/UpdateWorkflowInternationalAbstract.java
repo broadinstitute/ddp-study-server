@@ -74,7 +74,7 @@ abstract class UpdateWorkflowInternationalAbstract implements CustomTask {
         }
 
         QuestionDto questionDto = handle.attach(JdbiQuestion.class)
-                .getLatestQuestionDtoByQuestionStableIdAndUmbrellaStudyId("COUNTRY", studyDto.getId())
+                .findLatestDtoByStudyIdAndQuestionStableId(studyDto.getId(), "COUNTRY")
                 .orElseThrow(() -> new RuntimeException("Couldn't find country question"));
 
         handle.attach(QuestionDao.class).addRequiredRule(questionDto.getId(), new RequiredRuleDef(Template.text("Country is required")),

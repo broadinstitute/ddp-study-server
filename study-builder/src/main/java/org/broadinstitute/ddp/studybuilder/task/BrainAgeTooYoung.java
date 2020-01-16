@@ -62,7 +62,7 @@ public class BrainAgeTooYoung implements CustomTask {
         String consentDOBStableId = dataCfg.getString("dobQuestionStableId");
 
         QuestionDto questionDto = handle.attach(JdbiQuestion.class)
-                .getLatestQuestionDtoByQuestionStableIdAndUmbrellaStudyId(consentDOBStableId, studyDto.getId())
+                .findLatestDtoByStudyIdAndQuestionStableId(studyDto.getId(), consentDOBStableId)
                 .orElseThrow(() -> new DDPException("Could not find question " + consentDOBStableId));
 
         AgeRangeRuleDef rule = gson.fromJson(ConfigUtil.toJson(dataCfg.getConfig("ageRangeRule")), AgeRangeRuleDef.class);

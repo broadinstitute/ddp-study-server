@@ -1,7 +1,6 @@
 package org.broadinstitute.ddp.db.dao;
 
 import java.time.Instant;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -11,7 +10,6 @@ import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
 import org.broadinstitute.ddp.model.activity.instance.FormResponse;
-import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
 import org.jdbi.v3.core.result.RowView;
@@ -41,6 +39,8 @@ public interface ActivityInstanceDao extends SqlObject {
     @CreateSqlObject
     AnswerDao getAnswerDao();
 
+    @CreateSqlObject
+    ActivityInstanceSql getActivityInstanceSql();
 
     /**
      * Convenience method to create new activity instance when both operator and participant is the same, and using defaults.
@@ -206,33 +206,44 @@ public interface ActivityInstanceDao extends SqlObject {
             @BindList(value = "activityIds", onEmpty = BindList.EmptyHandling.NULL) Set<Long> activityIds);
 
     default Stream<FormResponse> findFormResponsesWithAnswersByUserIds(long studyId, Set<Long> userIds) {
-        return _findFormResponsesWithAnswersByStudyIdAndUsersWithActivitiesLimit(studyId, false, true, userIds, null, false, null);
+        return getActivityInstanceSql()
+                .findFormResponsesWithAnswersByStudyIdAndUsersWithActivityCodes(
+                        studyId, false, true, userIds, null, false, null);
     }
 
     default Stream<FormResponse> findFormResponsesWithAnswersByUserGuids(long studyId, Set<String> userGuids) {
-        return _findFormResponsesWithAnswersByStudyIdAndUsersWithActivitiesLimit(studyId, false, false, null, userGuids, false, null);
+        return getActivityInstanceSql()
+                .findFormResponsesWithAnswersByStudyIdAndUsersWithActivityCodes(
+                        studyId, false, false, null, userGuids, false, null);
+    }
+
+    default Stream<FormResponse> findFormResponsesSubsetWithAnswersByUserGuids(Set<String> userGuids, Set<Long> activityIds) {
+        return getActivityInstanceSql()
+                .findFormResponsesWithAnswersByUsersAndActivityIds(
+                        false, null, userGuids, activityIds);
     }
 
     default Stream<FormResponse> findFormResponsesSubsetWithAnswersByUserGuids(long studyId,
                                                                                Set<String> userGuids,
                                                                                Set<String> activityCodes) {
-        return _findFormResponsesWithAnswersByStudyIdAndUsersWithActivitiesLimit(
-                studyId, false, false, null, userGuids, true, activityCodes);
+        return getActivityInstanceSql()
+                .findFormResponsesWithAnswersByStudyIdAndUsersWithActivityCodes(
+                        studyId, false, false, null, userGuids, true, activityCodes);
     }
 
-    @UseStringTemplateSqlLocator
-    @SqlQuery("bulkQueryFormResponsesSubsetWithAnswersByStudyId")
-    @RegisterConstructorMapper(value = FormResponse.class, prefix = "a")
-    @UseRowReducer(FormResponsesWithAnswersForUsersReducer.class)
-    Stream<FormResponse> _findFormResponsesWithAnswersByStudyIdAndUsersWithActivitiesLimit(
-            @Bind("studyId") long studyId,
-            @Define("selectAll") boolean selectAll,
-            @Define("byId") boolean byId,
-            @BindList(value = "userIds", onEmpty = BindList.EmptyHandling.NULL) Set<Long> userIds,
-            @BindList(value = "userGuids", onEmpty = BindList.EmptyHandling.NULL) Set<String> userGuids,
-            @Define("limitActivities") boolean limitActivities,
-            @BindList(value = "activityCodes", onEmpty = BindList.EmptyHandling.NULL) Set<String> activityCodes);
+    default Stream<FormResponse> findFormResponsesSubsetWithAnswersByUserId(long userId, Set<Long> activityIds) {
+        return findFormResponsesSubsetWithAnswersByUserIds(Set.of(userId), activityIds);
+    }
 
+    default Stream<FormResponse> findFormResponsesSubsetWithAnswersByUserIds(Set<Long> userIds, Set<Long> activityIds) {
+        return getActivityInstanceSql()
+                .findFormResponsesWithAnswersByUsersAndActivityIds(
+                        true, userIds, null, activityIds);
+    }
+
+    default Stream<FormResponse> findFormResponsesSubsetWithAnswersByUserGuid(String userGuid, Set<Long> activityIds) {
+        return findFormResponsesSubsetWithAnswersByUserGuids(Set.of(userGuid), activityIds);
+    }
 
     class BaseActivityResponsesReducer implements LinkedHashMapRowReducer<Long, ActivityResponse> {
         @Override
@@ -240,24 +251,6 @@ public interface ActivityInstanceDao extends SqlObject {
             // Only supports form activities now.
             FormResponse instance = view.getRow(FormResponse.class);
             container.put(instance.getId(), instance);
-        }
-    }
-
-    class FormResponsesWithAnswersForUsersReducer implements LinkedHashMapRowReducer<Long, FormResponse> {
-        private Map<Long, Answer> answerContainer = new HashMap<>();
-        private AnswerDao.AnswerWithValueReducer answerReducer = new AnswerDao.AnswerWithValueReducer();
-
-        @Override
-        public void accumulate(Map<Long, FormResponse> container, RowView view) {
-            long instanceId = view.getColumn("a_instance_id", Long.class);
-            FormResponse response = container.computeIfAbsent(instanceId, id -> view.getRow(FormResponse.class));
-            Long answerId = view.getColumn("answer_id", Long.class);
-            if (answerId != null) {
-                Answer answer = answerReducer.reduce(answerContainer, view);
-                if (answer != null) {
-                    response.putAnswer(answer);
-                }
-            }
         }
     }
 }
