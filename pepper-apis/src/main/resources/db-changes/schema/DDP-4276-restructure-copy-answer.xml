@@ -75,28 +75,6 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-
-        <createTable tableName="composite_copy_configuration_pair">
-            <column name="composite_copy_configuration_pair_id" type="bigint" autoIncrement="true" startWith="1">
-                <constraints primaryKey="true" primaryKeyName="composite_copy_configuration_pair_pk"/>
-            </column>
-            <column name="copy_configuration_pair_id" type="bigint">
-                <constraints nullable="false"
-                             references="copy_configuration_pair(copy_configuration_pair_id)"
-                             foreignKeyName="composite_copy_configuration_pair_copy_config_pair_fk"
-                             deleteCascade="true"/>
-            </column>
-            <column name="source_child_question_stable_code_id" type="bigint">
-                <constraints nullable="false"
-                             references="question_stable_code(question_stable_code_id)"
-                             foreignKeyName="composite_copy_configuration_pair_source_qsid_fk"/>
-            </column>
-            <column name="target_child_question_stable_code_id" type="bigint">
-                <constraints nullable="false"
-                             references="question_stable_code(question_stable_code_id)"
-                             foreignKeyName="composite_copy_configuration_pair_target_qsid_fk"/>
-            </column>
-        </createTable>
     </changeSet>
 
     <changeSet author="yufeng" id="20200110-seed-copy-location-types">
@@ -151,7 +129,7 @@
 
                     INSERT INTO copy_location (copy_location_type_id)
                     SELECT copy_location_type_id FROM copy_location_type
-                     WHERE copy_location_type_code = (select copy_target from copy_answer_target where copy_answer_target_id = target_id);
+                     WHERE copy_location_type_code = (SELECT copy_target FROM copy_answer_target WHERE copy_answer_target_id = target_id);
                     SET target_loc_id = LAST_INSERT_ID();
 
                     INSERT INTO copy_configuration_pair (copy_configuration_id, source_location_id, target_location_id, execution_order)

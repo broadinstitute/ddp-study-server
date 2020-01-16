@@ -20,23 +20,13 @@ select cfg.copy_configuration_id,
        tgt_ans.question_stable_code_id as target_question_stable_code_id,
        (select stable_id from question_stable_code
          where question_stable_code_id = tgt_ans.question_stable_code_id
-       ) as target_question_stable_id,
-       comp.composite_copy_configuration_pair_id,
-       comp.source_child_question_stable_code_id,
-       (select stable_id from question_stable_code
-         where question_stable_code_id = comp.source_child_question_stable_code_id
-       ) as source_child_question_stable_id,
-       comp.target_child_question_stable_code_id,
-       (select stable_id from question_stable_code
-         where question_stable_code_id = comp.target_child_question_stable_code_id
-       ) as target_child_question_stable_id
+       ) as target_question_stable_id
   from copy_configuration as cfg
   join copy_configuration_pair as pair on pair.copy_configuration_id = cfg.copy_configuration_id
   join copy_location as src on src.copy_location_id = pair.source_location_id
   join copy_location as tgt on tgt.copy_location_id = pair.target_location_id
   left join copy_answer_location as src_ans on src_ans.copy_location_id = src.copy_location_id
   left join copy_answer_location as tgt_ans on tgt_ans.copy_location_id = tgt.copy_location_id
-  left join composite_copy_configuration_pair as comp on comp.copy_configuration_pair_id = pair.copy_configuration_pair_id
 >>
 
 all_configs_order_by() ::= <<
