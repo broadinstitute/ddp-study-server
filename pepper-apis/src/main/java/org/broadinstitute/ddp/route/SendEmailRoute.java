@@ -89,10 +89,13 @@ public class SendEmailRoute extends ValidatedJsonInputRoute<SendEmailPayload> {
                 String participantGuid = userDto.getUserGuid();
                 // verify that returned state is an activity state or done state
 
-                Optional<WorkflowState> nextState = workflowService.suggestNextState(handle,
+                Optional<WorkflowState> nextState = workflowService.suggestNextState(
+                        handle,
+                        operatorGuid,
                         participantGuid,
                         studyGuid,
-                        StaticState.returningUser());
+                        StaticState.returningUser()
+                );
                 if (nextState.isPresent()) {
                     WorkflowResponse workflowResponse = workflowService.buildStateResponse(handle, participantGuid,
                             nextState.get());

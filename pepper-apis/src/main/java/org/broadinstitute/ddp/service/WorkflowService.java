@@ -32,7 +32,13 @@ public class WorkflowService {
         this.interpreter = interpreter;
     }
 
-    public Optional<WorkflowState> suggestNextState(Handle handle, String userGuid, String studyGuid, WorkflowState fromState) {
+    public Optional<WorkflowState> suggestNextState(
+            Handle handle,
+            String operatorGuid,
+            String userGuid,
+            String studyGuid,
+            WorkflowState fromState
+    ) {
         long studyId = handle.attach(JdbiUmbrellaStudy.class)
                 .getIdByGuid(studyGuid)
                 .orElseThrow(() -> new NoSuchElementException("Cannot find study " + studyGuid));
@@ -63,7 +69,12 @@ public class WorkflowService {
             }
         }
 
-        return Optional.ofNullable(next);
+        Optional<WorkflowState> nextState = Optional.ofNullable(next);
+        nextState.ifPresent(nextWfState -> {
+            createActivityInstanceIfMissing(handle, fromState, nextWfState, operatorGuid, userGuid);
+        });
+
+        return nextState;
     }
 
     public WorkflowResponse buildStateResponse(Handle handle, String userGuid, WorkflowState state) {

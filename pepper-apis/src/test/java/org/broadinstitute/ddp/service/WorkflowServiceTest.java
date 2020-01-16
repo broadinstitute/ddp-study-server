@@ -52,6 +52,7 @@ import org.junit.rules.ExpectedException;
 public class WorkflowServiceTest extends TxnAwareBaseTest {
 
     private static TestDataSetupUtil.GeneratedTestData data;
+    private static String operatorGuid;
     private static String userGuid;
     private static String studyGuid;
     private static long studyId;
@@ -86,6 +87,7 @@ public class WorkflowServiceTest extends TxnAwareBaseTest {
                     mgmtSecret,
                     sendgridApiKey);
             userGuid = data.getUserGuid();
+            operatorGuid = data.getUserGuid();
             studyGuid = data.getStudyGuid();
             studyId = data.getStudyId();
         });
@@ -104,7 +106,7 @@ public class WorkflowServiceTest extends TxnAwareBaseTest {
     @Test
     public void testSuggestNextState_noTransitions() {
         TransactionWrapper.useTxn(handle -> {
-            Optional<WorkflowState> actual = service.suggestNextState(handle, userGuid, studyGuid, StaticState.start());
+            Optional<WorkflowState> actual = service.suggestNextState(handle, operatorGuid, userGuid, studyGuid, StaticState.start());
             assertNotNull(actual);
             assertFalse(actual.isPresent());
         });
@@ -119,7 +121,7 @@ public class WorkflowServiceTest extends TxnAwareBaseTest {
             WorkflowTransition t1 = new WorkflowTransition(studyId, StaticState.start(), actState, "true", 100);
             insertTransitions(handle, t1);
 
-            Optional<WorkflowState> actual = service.suggestNextState(handle, userGuid, studyGuid, StaticState.done());
+            Optional<WorkflowState> actual = service.suggestNextState(handle, operatorGuid, userGuid, studyGuid, StaticState.done());
             assertNotNull(actual);
             assertFalse(actual.isPresent());
 
@@ -138,7 +140,7 @@ public class WorkflowServiceTest extends TxnAwareBaseTest {
             insertTransitions(handle, t1, t2);
             turnOffTransition(handle, t1);
 
-            Optional<WorkflowState> actual = service.suggestNextState(handle, userGuid, studyGuid, StaticState.start());
+            Optional<WorkflowState> actual = service.suggestNextState(handle, operatorGuid, userGuid, studyGuid, StaticState.start());
             assertNotNull(actual);
             assertTrue(actual.isPresent());
             assertTrue(actState.matches(actual.get()));
@@ -157,7 +159,7 @@ public class WorkflowServiceTest extends TxnAwareBaseTest {
             WorkflowTransition t2 = new WorkflowTransition(studyId, StaticState.start(), actState, "true", 100);
             insertTransitions(handle, t1, t2);
 
-            Optional<WorkflowState> actual = service.suggestNextState(handle, userGuid, studyGuid, StaticState.start());
+            Optional<WorkflowState> actual = service.suggestNextState(handle, operatorGuid, userGuid, studyGuid, StaticState.start());
             assertNotNull(actual);
             assertTrue(actual.isPresent());
             assertTrue(actState.matches(actual.get()));
@@ -177,7 +179,7 @@ public class WorkflowServiceTest extends TxnAwareBaseTest {
             WorkflowTransition t2 = new WorkflowTransition(studyId, StaticState.start(), actState, "true", 100);
             insertTransitions(handle, t1, t2);
 
-            Optional<WorkflowState> actual = service.suggestNextState(handle, userGuid, studyGuid, StaticState.start());
+            Optional<WorkflowState> actual = service.suggestNextState(handle, operatorGuid, userGuid, studyGuid, StaticState.start());
             assertNotNull(actual);
             assertTrue(actual.isPresent());
             assertTrue(actState.matches(actual.get()));
@@ -196,7 +198,7 @@ public class WorkflowServiceTest extends TxnAwareBaseTest {
             WorkflowTransition t2 = new WorkflowTransition(studyId, StaticState.start(), actState, "true", 1);
             insertTransitions(handle, t1, t2);
 
-            Optional<WorkflowState> actual = service.suggestNextState(handle, userGuid, studyGuid, StaticState.start());
+            Optional<WorkflowState> actual = service.suggestNextState(handle, operatorGuid, userGuid, studyGuid, StaticState.start());
             assertNotNull(actual);
             assertTrue(actual.isPresent());
             assertTrue(actState.matches(actual.get()));
@@ -217,19 +219,19 @@ public class WorkflowServiceTest extends TxnAwareBaseTest {
             insertTransitions(handle, t1, t2);
 
             WorkflowState from = StaticState.start();
-            Optional<WorkflowState> actual = service.suggestNextState(handle, userGuid, studyGuid, from);
+            Optional<WorkflowState> actual = service.suggestNextState(handle, operatorGuid, userGuid, studyGuid, from);
             assertNotNull(actual);
             assertTrue(actual.isPresent());
             assertTrue(actState.matches(actual.get()));
 
             from = actState;
-            actual = service.suggestNextState(handle, userGuid, studyGuid, from);
+            actual = service.suggestNextState(handle, operatorGuid, userGuid, studyGuid, from);
             assertNotNull(actual);
             assertTrue(actual.isPresent());
             assertTrue(StaticState.done().matches(actual.get()));
 
             from = StaticState.done();
-            actual = service.suggestNextState(handle, userGuid, studyGuid, from);
+            actual = service.suggestNextState(handle, operatorGuid, userGuid, studyGuid, from);
             assertNotNull(actual);
             assertFalse(actual.isPresent());
 
