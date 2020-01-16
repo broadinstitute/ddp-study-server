@@ -1,11 +1,15 @@
 package org.broadinstitute.ddp.db.dao;
 
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Stream;
 
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.customizer.BindList;
+import org.jdbi.v3.sqlobject.customizer.BindList.EmptyHandling;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
@@ -51,10 +55,18 @@ public interface JdbiQuestion extends SqlObject {
 
     // study-builder
     @UseStringTemplateSqlLocator
-    @SqlQuery("queryLatestQuestionDtoByQuestionStableIdAndUmbrellaStudyId")
+    @SqlQuery("queryLatestDtoByStudyIdAndQuestionStableId")
     @RegisterConstructorMapper(QuestionDto.class)
-    Optional<QuestionDto> getLatestQuestionDtoByQuestionStableIdAndUmbrellaStudyId(@Bind("questionStableId") String questionStableId,
-                                                                                   @Bind ("umbrellaStudyId") long umbrellaStudyId);
+    Optional<QuestionDto> findLatestDtoByStudyIdAndQuestionStableId(
+            @Bind("studyId") long studyId,
+            @Bind("questionStableId") String questionStableId);
+
+    @UseStringTemplateSqlLocator
+    @SqlQuery("queryLatestDtosByStudyIdAndQuestionStableIds")
+    @RegisterConstructorMapper(QuestionDto.class)
+    Stream<QuestionDto> findLatestDtosByStudyIdAndQuestionStableIds(
+            @Bind("studyId") long studyId,
+            @BindList(value = "questionStableIds", onEmpty = EmptyHandling.NULL) Set<String> questionStableId);
 
     @SqlUpdate("update question set revision_id = :revisionId where question_id = :questionId")
     int updateRevisionIdById(@Bind("questionId") long questionId, @Bind("revisionId") long revisionId);

@@ -51,13 +51,13 @@ public interface CopyConfigurationDao extends SqlObject {
             var jdbiQuestion = getHandle().attach(JdbiQuestion.class);
             var source = (CopyAnswerLocation) pair.getSource();
             QuestionDto sourceQuestionDto = jdbiQuestion
-                    .getLatestQuestionDtoByQuestionStableIdAndUmbrellaStudyId(source.getQuestionStableId(), studyId)
+                    .findLatestDtoByStudyIdAndQuestionStableId(studyId, source.getQuestionStableId())
                     .orElseThrow(() -> new DaoException(String.format(
                             "Could not find source question with stable id %s in study %d",
                             source.getQuestionStableId(), studyId)));
             var target = (CopyAnswerLocation) pair.getTarget();
             QuestionDto targetQuestionDto = jdbiQuestion
-                    .getLatestQuestionDtoByQuestionStableIdAndUmbrellaStudyId(target.getQuestionStableId(), studyId)
+                    .findLatestDtoByStudyIdAndQuestionStableId(studyId, target.getQuestionStableId())
                     .orElseThrow(() -> new DaoException(String.format(
                             "Could not find target question with stable id %s in study %d",
                             target.getQuestionStableId(), studyId)));
