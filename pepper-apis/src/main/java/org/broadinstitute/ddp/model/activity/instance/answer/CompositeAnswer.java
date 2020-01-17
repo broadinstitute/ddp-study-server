@@ -33,7 +33,7 @@ public class CompositeAnswer extends Answer<List<AnswerRow>> {
 
     @Override
     public void setValue(List<AnswerRow> value) {
-        this.values = value;
+        this.values = new ArrayList<>(value);
     }
 
     public void addRowOfChildAnswers(List<Answer> valuesInSingleRow) {

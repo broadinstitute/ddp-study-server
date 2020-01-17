@@ -68,7 +68,8 @@ select ai.activity_instance_id   as a_instance_id,
   left join composite_answer_item as ca on ca.parent_answer_id = ans.answer_id
 >>
 
-// Sort by participant, then instance, then composite child answers.
+// Sort by participant then instance so each user's data is close together.
+// The other sorts are necessary to properly reduce answers.
 all_form_instance_responses_with_latest_status_and_answers_order_by() ::= <<
 order by ai.participant_id asc,
       ai.activity_instance_id asc,
@@ -76,6 +77,16 @@ order by ai.participant_id asc,
       po.display_order asc,
       ca_child_row asc,
       ca_child_col asc
+>>
+
+queryFormResponseWithAnswers(byId) ::= <<
+<all_form_instance_responses_with_latest_status_and_answers_select()>
+<if(byId)>
+  where ai.activity_instance_id = :instanceId
+<else>
+  where ai.activity_instance_guid = :instanceGuid
+<endif>
+<all_form_instance_responses_with_latest_status_and_answers_order_by()>
 >>
 
 bulkQueryFormResponsesSubsetWithAnswersByStudyId(selectAll, byId, userIds, userGuids, limitActivities, activityCodes) ::= <<
