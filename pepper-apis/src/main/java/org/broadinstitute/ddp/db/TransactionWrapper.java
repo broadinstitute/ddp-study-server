@@ -7,13 +7,8 @@ import java.util.concurrent.TimeUnit;
 
 import com.typesafe.config.Config;
 
-import org.apache.commons.dbcp2.DriverManagerConnectionFactory;
-import org.apache.commons.dbcp2.PoolableConnection;
-import org.apache.commons.dbcp2.PoolableConnectionFactory;
-import org.apache.commons.dbcp2.PoolingDataSource;
-import org.apache.commons.pool2.ObjectPool;
-import org.apache.commons.pool2.impl.GenericObjectPool;
-import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.util.ConfigManager;
@@ -51,7 +46,7 @@ public class TransactionWrapper {
      */
     private static final int PASSWORD_ROTATION_MAX_RETRIES = 2;
 
-    private PoolingDataSource dataSource;
+    private HikariDataSource dataSource;
     private final String dbUrl;
     private final Jdbi jdbi;
 
@@ -166,10 +161,10 @@ public class TransactionWrapper {
                 String dbUrl = dbConfig.getDbUrl();
                 if (transactionWrapper.maxConnections != maxConnections || !transactionWrapper.dbUrl.equals(dbUrl)) {
                     throw new RuntimeException("init() has already been called with "
-                                               + transactionWrapper.maxConnections + " and "
-                                               + transactionWrapper.dbUrl + "; " +  "you cannot re-initialize "
-                                               + "it with different params " + maxConnections
-                                               + " and " + dbUrl);
+                            + transactionWrapper.maxConnections + " and "
+                            + transactionWrapper.dbUrl + "; " +  "you cannot re-initialize "
+                            + "it with different params " + maxConnections
+                            + " and " + dbUrl);
                 } else {
                     LOG.warn("TransactionWrapper has already been initialized.");
                 }
@@ -342,11 +337,27 @@ public class TransactionWrapper {
         }
     }
 
+    private HikariDataSource createDataSource(int maxConnections, String dbUrl) {
+        HikariConfig config = new HikariConfig();
+        config.setJdbcUrl(dbUrl);
+        config.addDataSourceProperty("cachePrepStmts", "true");
+        config.addDataSourceProperty("prepStmtCacheSize", "250");
+        config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
+        config.setAutoCommit(true); // will be managed by jdbi, which expects autcommit to be enabled initially
+        config.setTransactionIsolation("TRANSACTION_READ_COMMITTED");
+        config.setMaximumPoolSize(maxConnections);
+        config.setConnectionTimeout(250);
+
+        HikariDataSource ds = new HikariDataSource(config);
+        return ds;
+    }
+
+
+    /*
     public static PoolingDataSource<PoolableConnection> createDataSource(int maxConnections, String dbUrl) {
         org.apache.commons.dbcp2.ConnectionFactory connectionFactory = new DriverManagerConnectionFactory(dbUrl, null);
         PoolableConnectionFactory poolableConnectionFactory = new PoolableConnectionFactory(connectionFactory, null);
         poolableConnectionFactory.setDefaultAutoCommit(true); // will be managed by jdbi
-
         GenericObjectPoolConfig poolConfig = new GenericObjectPoolConfig();
         poolConfig.setMaxTotal(maxConnections);
         poolConfig.setTestOnBorrow(false);
@@ -355,15 +366,15 @@ public class TransactionWrapper {
         poolConfig.setMinIdle(5);
         poolConfig.setMinEvictableIdleTimeMillis(TimeUnit.MINUTES.toMillis(5));
         poolConfig.setTimeBetweenEvictionRunsMillis(TimeUnit.HOURS.toMillis(1));
-
         poolableConnectionFactory.setValidationQueryTimeout(1);
         poolableConnectionFactory.setMaxConnLifetimeMillis(TimeUnit.HOURS.toMillis(3));
-
         ObjectPool<PoolableConnection> connectionPool = new GenericObjectPool<>(poolableConnectionFactory, poolConfig);
         poolableConnectionFactory.setPool(connectionPool);
         return new PoolingDataSource<>(connectionPool);
     }
+    */
 
 
 
 }
+
