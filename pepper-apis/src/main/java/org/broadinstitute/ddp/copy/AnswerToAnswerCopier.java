@@ -1,17 +1,20 @@
 package org.broadinstitute.ddp.copy;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Map;
+import java.util.Optional;
 
 import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.JdbiCompositeAnswer;
 import org.broadinstitute.ddp.db.dao.JdbiCompositeQuestion;
+import org.broadinstitute.ddp.db.dto.CompositeQuestionDto;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.instance.FormResponse;
 import org.broadinstitute.ddp.model.activity.instance.answer.AgreementAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
+import org.broadinstitute.ddp.model.activity.instance.answer.AnswerRow;
 import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
@@ -34,6 +37,7 @@ public class AnswerToAnswerCopier {
     private final JdbiCompositeQuestion jdbiCompositeQuestion;
     private final JdbiCompositeAnswer jdbiCompositeAnswer;
     private final AnswerDao answerDao;
+    private final Map<Long, CompositeQuestionDto> parentDtosByChildId = new HashMap<>();
 
     public AnswerToAnswerCopier(Handle handle, long operatorId) {
         this.handle = handle;
@@ -46,72 +50,82 @@ public class AnswerToAnswerCopier {
     public void copy(FormResponse sourceInstance, QuestionDto sourceQuestion,
                      FormResponse targetInstance, QuestionDto targetQuestion) {
         Answer sourceAnswer = sourceInstance.getAnswer(sourceQuestion.getStableId());
-        if (sourceAnswer == null) {
-            Answer parentAnswer = jdbiCompositeQuestion
-                    .findParentDtoByChildQuestionId(sourceQuestion.getId())
+        if (sourceAnswer != null) {
+            copySourceAnswer(sourceAnswer, targetInstance, targetQuestion);
+        } else {
+            Answer parentAnswer = retrieveParentQuestion(sourceQuestion)
                     .map(parentDto -> (CompositeAnswer) sourceInstance.getAnswer(parentDto.getStableId()))
                     .orElse(null);
-            if (parentAnswer == null) {
+            if (parentAnswer != null) {
+                copyFromParentAnswer((CompositeAnswer) parentAnswer, sourceQuestion, targetInstance, targetQuestion);
+            } else {
                 LOG.info("No source answer to copy from activity instance {} and question {}",
                         sourceInstance.getGuid(), sourceQuestion.getStableId());
-            } else {
-                QuestionDto targetParentQuestion = jdbiCompositeQuestion
-                        .findParentDtoByChildQuestionId(targetQuestion.getId())
-                        .orElseThrow(() -> new DDPException(
-                                "Could not find parent composite question for target question " + targetQuestion.getStableId()));
-                copyFromParentAnswer((CompositeAnswer) parentAnswer, sourceQuestion, targetInstance, targetParentQuestion, targetQuestion);
             }
-        } else {
-            copySourceAnswer(sourceAnswer, targetInstance, targetQuestion);
         }
     }
 
+    public Optional<CompositeQuestionDto> retrieveParentQuestion(QuestionDto childQuestion) {
+        CompositeQuestionDto parentDto = parentDtosByChildId.get(childQuestion.getId());
+        if (parentDto == null) {
+            parentDto = jdbiCompositeQuestion
+                    .findParentDtoByChildQuestionId(childQuestion.getId())
+                    .orElse(null);
+            if (parentDto != null) {
+                for (var childDto : parentDto.getChildQuestions()) {
+                    parentDtosByChildId.put(childDto.getId(), parentDto);
+                }
+            }
+        }
+        return Optional.ofNullable(parentDto);
+    }
+
     private void copyFromParentAnswer(CompositeAnswer parentAnswer, QuestionDto sourceQuestion,
-                                      FormResponse targetInstance, QuestionDto targetParentQuestion, QuestionDto targetQuestion) {
-        // Find the source child answer in each row
-        List<Answer> sourceAnswers = parentAnswer.getValue().stream()
-                .map(row -> row.getValues().stream()
-                        .filter(child -> sourceQuestion.getStableId().equals(child.getQuestionStableId()))
-                        .findFirst()
-                        .orElse(null))
-                .collect(Collectors.toList());
+                                      FormResponse targetInstance, QuestionDto targetQuestion) {
+        QuestionDto targetParentQuestion = retrieveParentQuestion(targetQuestion)
+                .orElseThrow(() -> new DDPException(
+                        "Could not find parent composite question for target question " + targetQuestion.getStableId()));
 
         // Find the target composite answer, creating it if it doesn't exist
-        CompositeAnswer targetParentAnswer = (CompositeAnswer) targetInstance.getAnswer(targetParentQuestion.getStableId());
-        if (targetParentAnswer == null) {
+        Answer result = targetInstance.getAnswer(targetParentQuestion.getStableId());
+        if (result == null) {
             CompositeAnswer ans = new CompositeAnswer(null, targetParentQuestion.getStableId(), null);
-            targetParentAnswer = (CompositeAnswer) answerDao
-                    .createAnswer(operatorId, targetInstance.getId(), targetParentQuestion.getId(), ans);
+            result = answerDao.createAnswer(operatorId, targetInstance.getId(), targetParentQuestion.getId(), ans);
+            targetInstance.putAnswer(result);
+        }
+        CompositeAnswer targetParentAnswer = (CompositeAnswer) result;
+
+        // Line up the rows between source and target composite answers
+        List<AnswerRow> sourceRows = parentAnswer.getValue();
+        List<AnswerRow> targetRows = targetParentAnswer.getValue();
+        while (targetRows.size() < sourceRows.size()) {
+            targetRows.add(new AnswerRow());
         }
 
-        // Find the target child answer in each row
-        List<Answer> targetAnswers = targetParentAnswer.getValue().stream()
-                .map(row -> row.getValues().stream()
-                        .filter(child -> targetQuestion.getStableId().equals(child.getQuestionStableId()))
-                        .findFirst()
-                        .orElse(null))
-                .collect(Collectors.toList());
-
-        // Line up the source and target lists so they have the same number of rows
-        targetAnswers = new ArrayList<>(targetAnswers);
-        while (targetAnswers.size() < sourceAnswers.size()) {
-            targetAnswers.add(null);
-        }
-
-        for (int i = 0; i < sourceAnswers.size(); i++) {
-            Answer sourceChild = sourceAnswers.get(i);
-            if (sourceChild == null) {
-                continue;
+        for (int rowIdx = 0; rowIdx < sourceRows.size(); rowIdx++) {
+            // Line up the columns between source and target rows
+            List<Answer> sourceRow = sourceRows.get(rowIdx).getValues();
+            List<Answer> targetRow = targetRows.get(rowIdx).getValues();
+            while (targetRow.size() < sourceRow.size()) {
+                targetRow.add(null);
             }
-            Answer targetChild = targetAnswers.get(i);
-            if (targetChild == null) {
-                targetChild = createTargetAnswer(sourceChild, targetInstance.getId(), targetQuestion);
-                jdbiCompositeAnswer.insertChildAnswerItems(
-                        targetParentAnswer.getAnswerId(),
-                        List.of(targetChild.getAnswerId()),
-                        List.of(i));
-            } else {
-                updateTargetAnswer(sourceChild, targetInstance.getId(), targetChild);
+
+            for (int colIdx = 0; colIdx < sourceRow.size(); colIdx++) {
+                Answer sourceChild = sourceRow.get(colIdx);
+                if (sourceChild == null || !sourceChild.getQuestionStableId().equals(sourceQuestion.getStableId())) {
+                    continue;
+                }
+                Answer targetChild = targetRow.get(colIdx);
+                if (targetChild == null) {
+                    targetChild = createTargetAnswer(sourceChild, targetInstance.getId(), targetQuestion);
+                    jdbiCompositeAnswer.insertChildAnswerItems(
+                            targetParentAnswer.getAnswerId(),
+                            List.of(targetChild.getAnswerId()),
+                            List.of(rowIdx));
+                } else {
+                    targetChild = updateTargetAnswer(sourceChild, targetInstance.getId(), targetChild);
+                }
+                targetRow.set(colIdx, targetChild);
             }
         }
     }
@@ -136,7 +150,7 @@ public class AnswerToAnswerCopier {
             boolean value = ((BoolAnswer) sourceAnswer).getValue();
             targetAnswer = new BoolAnswer(null, targetQuestion.getStableId(), null, value);
         } else if (type == QuestionType.COMPOSITE) {
-            targetAnswer = null; // todo
+            throw new DDPException("Copying from top-level composite is not supported");
         } else if (type == QuestionType.DATE) {
             DateValue value = ((DateAnswer) sourceAnswer).getValue();
             targetAnswer = new DateAnswer(null, targetQuestion.getStableId(), null, value);
@@ -150,7 +164,7 @@ public class AnswerToAnswerCopier {
             String value = ((TextAnswer) sourceAnswer).getValue();
             targetAnswer = new TextAnswer(null, targetQuestion.getStableId(), null, value);
         } else {
-            throw new DDPException("Unhandled answer type for copying " + type);
+            throw new DDPException("Unhandled copying for answer type " + type);
         }
         return answerDao.createAnswer(operatorId, targetInstanceId, targetQuestion.getId(), targetAnswer);
     }

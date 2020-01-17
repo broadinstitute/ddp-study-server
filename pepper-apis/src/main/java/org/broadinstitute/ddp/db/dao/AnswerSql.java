@@ -47,6 +47,9 @@ public interface AnswerSql extends SqlObject {
     int insertDateValue(long answerId, Integer year, Integer month, Integer day);
 
     default int insertDateValue(long answerId, DateValue value) {
+        if (value == null) {
+            value = new DateValue(null, null, null);
+        }
         return insertDateValue(answerId, value.getYear(), value.getMonth(), value.getDay());
     }
 

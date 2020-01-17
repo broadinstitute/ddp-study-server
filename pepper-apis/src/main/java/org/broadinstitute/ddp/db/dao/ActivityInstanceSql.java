@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.db.dao;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -19,6 +20,15 @@ import org.jdbi.v3.sqlobject.statement.UseRowReducer;
 import org.jdbi.v3.stringtemplate4.UseStringTemplateSqlLocator;
 
 public interface ActivityInstanceSql extends SqlObject {
+
+    @UseStringTemplateSqlLocator
+    @SqlQuery("queryFormResponseWithAnswers")
+    @RegisterConstructorMapper(value = FormResponse.class, prefix = "a")
+    @UseRowReducer(FormResponsesWithAnswersForUsersReducer.class)
+    Optional<FormResponse> findFormResponseWithAnswers(
+            @Define("byId") boolean byId,
+            @Bind("instanceId") Long instanceId,
+            @Bind("instanceGuid") String instanceGuid);
 
     @UseStringTemplateSqlLocator
     @SqlQuery("bulkQueryFormResponsesSubsetWithAnswersByStudyId")
