@@ -90,7 +90,7 @@ public class AgeUpService {
 
             if (agedUp) {
                 LOG.info("Age-up candidate {} in study {} has reached age-of-majority", userGuid, studyGuid);
-                jdbiEnrollment.suspendUserStudyConsent(userGuid, studyGuid);
+                jdbiEnrollment.suspendUserStudyConsent(candidate.getParticipantUserId(), policy.getStudyId());
                 EventSignal signal = new EventSignal(
                         candidate.getParticipantUserId(),
                         candidate.getParticipantUserId(),
