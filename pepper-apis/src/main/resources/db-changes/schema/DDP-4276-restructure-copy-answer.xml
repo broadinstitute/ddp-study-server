@@ -165,4 +165,11 @@
             </column>
         </addColumn>
     </changeSet>
+
+    <changeSet author="yufeng" id="20200110-expand-answer-timestamps-to-millis">
+        <update tableName="answer">
+            <column name="created_at" valueComputed="created_at * 1000"/>
+            <column name="last_updated_at" valueComputed="last_updated_at * 1000"/>
+        </update>
+    </changeSet>
 </databaseChangeLog>

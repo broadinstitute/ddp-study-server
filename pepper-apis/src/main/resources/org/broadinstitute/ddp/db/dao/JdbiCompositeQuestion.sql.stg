@@ -56,15 +56,16 @@ where p.question_id = :questionId
 
 queryDtoAndChildrenDtosByActivityInstanceGuidAndStableId() ::= <<
 <all_parent_and_child_dtos_select()>
-  join study_activity as act on act.study_id = pq.study_activity_id
+  join study_activity as act on act.study_activity_id = pq.study_activity_id
   join activity_instance as ai on ai.study_activity_id = act.study_activity_id
  where ai.activity_instance_guid = :activityInstanceGuid
    and pqsc.stable_id = :questionStableId
 <all_parent_and_child_dtos_order_by()>
 >>
 
-queryParentDtoByChildQuestionId() ::= <<
+queryParentDtoAndChildDtosByChildQuestionId() ::= <<
 <all_parent_and_child_dtos_select()>
-where c.child_question_id = :childQuestionId
+where p.question_id = (
+      select parent_question_id from composite_question__question where child_question_id = :childQuestionId)
 <all_parent_and_child_dtos_order_by()>
 >>

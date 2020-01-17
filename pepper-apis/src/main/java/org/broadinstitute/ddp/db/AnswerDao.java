@@ -533,7 +533,7 @@ public class AnswerDao {
      */
     private Answer createBasicAnswer(Handle handle, Answer answer, String operatorGuid, String formInstanceGuid) {
         String guid = DBUtils.uniqueStandardGuid(handle, AnswerTable.TABLE_NAME, AnswerTable.GUID);
-        long timestamp = Instant.now().getEpochSecond();
+        long timestamp = Instant.now().toEpochMilli();
         try (PreparedStatement stmt = handle.getConnection()
                 .prepareStatement(createAnswerStmt, Statement.RETURN_GENERATED_KEYS)) {
             stmt.setString(1, answer.getQuestionStableId());

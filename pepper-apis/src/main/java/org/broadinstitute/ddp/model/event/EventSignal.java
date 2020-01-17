@@ -40,4 +40,14 @@ public class EventSignal {
     public long getStudyId() {
         return studyId;
     }
+
+    @Override
+    public String toString() {
+        return "EventSignal{"
+                + "triggerType=" + eventTriggerType
+                + ", studyId=" + studyId
+                + ", operatorId=" + operatorId
+                + ", participantId=" + participantId
+                + '}';
+    }
 }
