@@ -2,12 +2,16 @@ package org.broadinstitute.ddp.model.event;
 
 import java.time.Instant;
 
+import org.broadinstitute.ddp.copy.CopyExecutor;
+import org.broadinstitute.ddp.db.dao.CopyConfigurationDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstanceStatus;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.EventConfigurationDto;
+import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
+import org.broadinstitute.ddp.model.copy.CopyConfiguration;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.service.EventService;
 import org.jdbi.v3.core.Handle;
@@ -15,7 +19,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ActivityInstanceCreationEventAction extends EventAction {
+
     private static final Logger LOG = LoggerFactory.getLogger(ActivityInstanceCreationEventAction.class);
+
     private long studyActivityId;
     private Long copyConfigurationId;
 
@@ -25,8 +31,14 @@ public class ActivityInstanceCreationEventAction extends EventAction {
         copyConfigurationId = dto.getActivityInstanceCreationCopyConfigurationId();
     }
 
+    public ActivityInstanceCreationEventAction(EventConfiguration eventConfiguration, long studyActivityId, Long copyConfigurationId) {
+        super(eventConfiguration, null);
+        this.studyActivityId = studyActivityId;
+        this.copyConfigurationId = copyConfigurationId;
+    }
+
     @Override
-    public void doAction(PexInterpreter pexInterpreter, Handle handle, EventSignal eventSignal) {
+    public void doAction(PexInterpreter interpreter, Handle handle, EventSignal signal) {
         JdbiActivityInstance jdbiActivityInstance = handle.attach(JdbiActivityInstance.class);
         JdbiActivityInstanceStatus jdbiActivityInstanceStatus = handle.attach(JdbiActivityInstanceStatus.class);
         JdbiActivity jdbiActivity = handle.attach(JdbiActivity.class);
@@ -39,7 +51,7 @@ public class ActivityInstanceCreationEventAction extends EventAction {
 
         int numExistingActivities = jdbiActivityInstance.getNumActivitiesForParticipant(
                 studyActivityId,
-                eventSignal.getParticipantId());
+                signal.getParticipantId());
         LOG.info("Found {} existing activity instances for study activity {}", numExistingActivities, studyActivityId);
 
         if (activityDto.getMaxInstancesPerUser() != null && numExistingActivities >= activityDto.getMaxInstancesPerUser()) {
@@ -57,7 +69,7 @@ public class ActivityInstanceCreationEventAction extends EventAction {
         String activityInstanceGuid = jdbiActivityInstance.generateUniqueGuid();
         long newActivityInstanceId = jdbiActivityInstance.insert(
                 studyActivityId,
-                eventSignal.getParticipantId(),
+                signal.getParticipantId(),
                 activityInstanceGuid,
                 false,
                 Instant.now().toEpochMilli(),
@@ -68,26 +80,37 @@ public class ActivityInstanceCreationEventAction extends EventAction {
                 newActivityInstanceId,
                 InstanceStatusType.CREATED,
                 Instant.now().toEpochMilli(),
-                eventSignal.getParticipantId()
+                signal.getParticipantId()
         );
 
         LOG.info("Performed the instantiation of the study activity with the id {} triggered by"
                         + " {} Operator = {}, participant = {}, study = {}, created activity instance id = {}",
-                studyActivityId, eventSignal.toString(),
-                eventSignal.getOperatorId(),
-                eventSignal.getParticipantId(),
-                eventSignal.getStudyId(),
+                studyActivityId, signal.toString(),
+                signal.getOperatorId(),
+                signal.getParticipantId(),
+                signal.getStudyId(),
                 newActivityInstanceId);
 
-        // todo: if present, query for copy config and process
+        if (copyConfigurationId != null) {
+            CopyConfiguration config = handle.attach(CopyConfigurationDao.class)
+                    .findCopyConfigById(copyConfigurationId)
+                    .orElseThrow(() -> new DDPException("Could not find copy configuration with id " + copyConfigurationId));
+
+            var executor = new CopyExecutor();
+            executor.withTargetInstanceId(newActivityInstanceId);
+            LOG.info("Using newly created activity instance {} as target for copying", newActivityInstanceId);
+
+            executor.execute(handle, signal.getOperatorId(), signal.getParticipantId(), config);
+            LOG.info("Finished executing copy configuration {} for newly created activity instance", copyConfigurationId);
+        }
 
         EventService.getInstance().processAllActionsForEventSignal(handle, new ActivityInstanceStatusChangeSignal(
-                eventSignal.getOperatorId(),
-                eventSignal.getParticipantId(),
-                eventSignal.getParticipantGuid(),
+                signal.getOperatorId(),
+                signal.getParticipantId(),
+                signal.getParticipantGuid(),
                 newActivityInstanceId,
                 studyActivityId,
-                eventSignal.getStudyId(),
+                signal.getStudyId(),
                 InstanceStatusType.CREATED));
     }
 

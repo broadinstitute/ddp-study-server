@@ -8,10 +8,10 @@ import static org.junit.Assert.assertTrue;
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
-import org.broadinstitute.ddp.db.AnswerDao;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
@@ -27,11 +27,12 @@ import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
+import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.activity.types.PicklistRenderMode;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
-import org.jdbi.v3.core.Handle;
+import org.broadinstitute.ddp.util.TestFormActivity;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -51,9 +52,10 @@ public class ActivityInstanceDaoTest extends TxnAwareBaseTest {
             ActivityInstanceStatusDao statusDao = handle.attach(ActivityInstanceStatusDao.class);
             JdbiActivityInstance jdbiInstance = handle.attach(JdbiActivityInstance.class);
 
-            FormActivityDef form = setupDummyActivity(handle, testData.getStudyGuid());
+            TestFormActivity act = TestFormActivity.builder()
+                    .build(handle, testData.getUserId(), testData.getStudyGuid());
 
-            ActivityInstanceDto instanceDto = dao.insertInstance(form.getActivityId(), testData.getUserGuid());
+            ActivityInstanceDto instanceDto = dao.insertInstance(act.getDef().getActivityId(), testData.getUserGuid());
             assertTrue(instanceDto.getId() >= 0);
             assertNotNull(instanceDto.getGuid());
             assertEquals(InstanceStatusType.CREATED, instanceDto.getStatusType());
@@ -127,8 +129,9 @@ public class ActivityInstanceDaoTest extends TxnAwareBaseTest {
             answer.addRowOfChildAnswers(new PicklistAnswer(null, "picklist", null,
                     singletonList(new SelectedPicklistOption("op1"))));
 
-            String answerGuid = AnswerDao.fromSqlConfig(sqlConfig)
-                    .createAnswer(handle, answer, testData.getUserGuid(), instanceDto.getGuid());
+            String answerGuid = handle.attach(AnswerDao.class)
+                    .createAnswer(testData.getUserId(), instanceDto.getId(), answer)
+                    .getAnswerGuid();
 
             List<FormResponse> actual = dao
                     .findFormResponsesWithAnswersByUserGuids(testData.getStudyId(), new HashSet<>(singletonList(testData.getUserGuid())))
@@ -153,11 +156,36 @@ public class ActivityInstanceDaoTest extends TxnAwareBaseTest {
         });
     }
 
-    private FormActivityDef setupDummyActivity(Handle handle, String studyGuid) {
-        FormActivityDef form = FormActivityDef.generalFormBuilder("ACT", "v1", studyGuid)
-                .addName(new Translation("en", "dummy activity"))
-                .build();
-        handle.attach(ActivityDao.class).insertActivity(form, RevisionMetadata.now(testData.getUserId(), "test"));
-        return form;
+    @Test
+    public void testFindFormResponsesSubsetWithAnswersByUserId() {
+        TransactionWrapper.useTxn(handle -> {
+            ActivityInstanceDao dao = handle.attach(ActivityInstanceDao.class);
+
+            TestFormActivity act1 = TestFormActivity.builder()
+                    .build(handle, testData.getUserId(), testData.getStudyGuid());
+            dao.insertInstance(act1.getDef().getActivityId(), testData.getUserGuid());
+
+            TestFormActivity act2 = TestFormActivity.builder()
+                    .withTextQuestion(true)
+                    .build(handle, testData.getUserId(), testData.getStudyGuid());
+            long activity2Id = act2.getDef().getActivityId();
+            long instance2Id = dao.insertInstance(activity2Id, testData.getUserGuid()).getId();
+
+            var answer = new TextAnswer(null, act2.getTextQuestion().getStableId(), null, "my-text");
+            answer = (TextAnswer) handle.attach(AnswerDao.class)
+                    .createAnswer(testData.getUserId(), instance2Id, answer);
+
+            List<FormResponse> actual = dao
+                    .findFormResponsesSubsetWithAnswersByUserId(testData.getUserId(), Set.of(activity2Id))
+                    .collect(Collectors.toList());
+            assertEquals(1, actual.size());
+
+            FormResponse resp = actual.get(0);
+            assertEquals(activity2Id, resp.getActivityId());
+            assertEquals(1, resp.getAnswers().size());
+            assertEquals(answer.getAnswerGuid(), resp.getAnswers().get(0).getAnswerGuid());
+
+            handle.rollback();
+        });
     }
 }

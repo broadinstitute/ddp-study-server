@@ -40,40 +40,25 @@ import org.junit.Test;
 public class AnswerDaoTest extends TxnAwareBaseTest {
 
     private static TestDataSetupUtil.GeneratedTestData testData;
-    private static org.broadinstitute.ddp.db.AnswerDao oldAnswerDao;
 
     @BeforeClass
     public static void setup() {
-        TransactionWrapper.useTxn(handle -> {
-            testData = TestDataSetupUtil.generateBasicUserTestData(handle);
-            oldAnswerDao = org.broadinstitute.ddp.db.AnswerDao.fromSqlConfig(sqlConfig);
-        });
+        testData = TransactionWrapper.withTxn(TestDataSetupUtil::generateBasicUserTestData);
     }
 
     @Test
-    public void testFindAnswerById_notFound() {
-        TransactionWrapper.useTxn(handle -> {
-            Optional<Answer> result = handle.attach(AnswerDao.class).findAnswerById(123456L);
-            assertTrue(result.isEmpty());
-            handle.rollback();
-        });
-    }
-
-    @Test
-    public void testFindAnswerById_agreement() {
+    public void testCreateAnswer_agreement() {
         TransactionWrapper.useTxn(handle -> {
             TestFormActivity act = TestFormActivity.builder()
                     .withAgreementQuestion(true)
                     .build(handle, testData.getUserId(), testData.getStudyGuid());
-            String instanceGuid = createInstance(handle, act.getDef().getActivityId()).getGuid();
+            long instanceId = createInstance(handle, act.getDef().getActivityId()).getId();
 
             var answer = new AgreementAnswer(null, act.getAgreementQuestion().getStableId(), null, true);
-            oldAnswerDao.createAnswer(handle, answer, testData.getUserGuid(), instanceGuid);
             Answer actual = handle.attach(AnswerDao.class)
-                    .findAnswerById(answer.getAnswerId())
-                    .orElse(null);
+                    .createAnswer(testData.getUserId(), instanceId, answer);
 
-            assertNotNull(actual);
+            assertTrue(actual.getAnswerId() > 0);
             assertEquals(QuestionType.AGREEMENT, actual.getQuestionType());
             assertTrue(((AgreementAnswer) actual).getValue());
 
@@ -82,20 +67,18 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
     }
 
     @Test
-    public void testFindAnswerById_bool() {
+    public void testCreateAnswer_bool() {
         TransactionWrapper.useTxn(handle -> {
             TestFormActivity act = TestFormActivity.builder()
                     .withBoolQuestion(true)
                     .build(handle, testData.getUserId(), testData.getStudyGuid());
-            String instanceGuid = createInstance(handle, act.getDef().getActivityId()).getGuid();
+            long instanceId = createInstance(handle, act.getDef().getActivityId()).getId();
 
             var answer = new BoolAnswer(null, act.getBoolQuestion().getStableId(), null, true);
-            oldAnswerDao.createAnswer(handle, answer, testData.getUserGuid(), instanceGuid);
             Answer actual = handle.attach(AnswerDao.class)
-                    .findAnswerById(answer.getAnswerId())
-                    .orElse(null);
+                    .createAnswer(testData.getUserId(), instanceId, answer);
 
-            assertNotNull(actual);
+            assertTrue(actual.getAnswerId() > 0);
             assertEquals(QuestionType.BOOLEAN, actual.getQuestionType());
             assertTrue(((BoolAnswer) actual).getValue());
 
@@ -104,20 +87,18 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
     }
 
     @Test
-    public void testFindAnswerById_text() {
+    public void testCreateAnswer_text() {
         TransactionWrapper.useTxn(handle -> {
             TestFormActivity act = TestFormActivity.builder()
                     .withTextQuestion(true)
                     .build(handle, testData.getUserId(), testData.getStudyGuid());
-            String instanceGuid = createInstance(handle, act.getDef().getActivityId()).getGuid();
+            long instanceId = createInstance(handle, act.getDef().getActivityId()).getId();
 
             var answer = new TextAnswer(null, act.getTextQuestion().getStableId(), null, "itsAnAnswer");
-            oldAnswerDao.createAnswer(handle, answer, testData.getUserGuid(), instanceGuid);
             Answer actual = handle.attach(AnswerDao.class)
-                    .findAnswerById(answer.getAnswerId())
-                    .orElse(null);
+                    .createAnswer(testData.getUserId(), instanceId, answer);
 
-            assertNotNull(actual);
+            assertTrue(actual.getAnswerId() > 0);
             assertEquals(QuestionType.TEXT, actual.getQuestionType());
             assertEquals(answer.getValue(), ((TextAnswer) actual).getValue());
 
@@ -126,20 +107,18 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
     }
 
     @Test
-    public void testFindAnswerById_date() {
+    public void testCreateAnswer_date() {
         TransactionWrapper.useTxn(handle -> {
             TestFormActivity act = TestFormActivity.builder()
                     .withDateFullQuestion(true)
                     .build(handle, testData.getUserId(), testData.getStudyGuid());
-            String instanceGuid = createInstance(handle, act.getDef().getActivityId()).getGuid();
+            long instanceId = createInstance(handle, act.getDef().getActivityId()).getId();
 
             var answer = new DateAnswer(null, act.getDateFullQuestion().getStableId(), null, 2018, 10, 24);
-            oldAnswerDao.createAnswer(handle, answer, testData.getUserGuid(), instanceGuid);
             Answer actual = handle.attach(AnswerDao.class)
-                    .findAnswerById(answer.getAnswerId())
-                    .orElse(null);
+                    .createAnswer(testData.getUserId(), instanceId, answer);
 
-            assertNotNull(actual);
+            assertTrue(actual.getAnswerId() > 0);
             assertEquals(QuestionType.DATE, actual.getQuestionType());
             assertEquals(new DateValue(2018, 10, 24), actual.getValue());
 
@@ -148,20 +127,18 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
     }
 
     @Test
-    public void testFindAnswerById_numericInteger() {
+    public void testCreateAnswer_numericInteger() {
         TransactionWrapper.useTxn(handle -> {
             TestFormActivity act = TestFormActivity.builder()
                     .withNumericIntQuestion(true)
                     .build(handle, testData.getUserId(), testData.getStudyGuid());
-            String instanceGuid = createInstance(handle, act.getDef().getActivityId()).getGuid();
+            long instanceId = createInstance(handle, act.getDef().getActivityId()).getId();
 
             var answer = new NumericIntegerAnswer(null, act.getNumericIntQuestion().getStableId(), null, 25L);
-            oldAnswerDao.createAnswer(handle, answer, testData.getUserGuid(), instanceGuid);
             Answer actual = handle.attach(AnswerDao.class)
-                    .findAnswerById(answer.getAnswerId())
-                    .orElse(null);
+                    .createAnswer(testData.getUserId(), instanceId, answer);
 
-            assertNotNull(actual);
+            assertTrue(actual.getAnswerId() > 0);
             assertEquals(QuestionType.NUMERIC, actual.getQuestionType());
             assertEquals(NumericType.INTEGER, ((NumericAnswer) actual).getNumericType());
             assertEquals((Long) 25L, ((NumericIntegerAnswer) actual).getValue());
@@ -171,23 +148,21 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
     }
 
     @Test
-    public void testFindAnswerById_picklist() {
+    public void testCreateAnswer_picklist() {
         TransactionWrapper.useTxn(handle -> {
             TestFormActivity act = TestFormActivity.builder()
                     .withPicklistSingleList(true,
                             new PicklistOptionDef("PO1", Template.text("po1")),
                             new PicklistOptionDef("PO2", Template.text("po2"), Template.text("details")))
                     .build(handle, testData.getUserId(), testData.getStudyGuid());
-            String instanceGuid = createInstance(handle, act.getDef().getActivityId()).getGuid();
+            long instanceId = createInstance(handle, act.getDef().getActivityId()).getId();
 
             PicklistAnswer answer = new PicklistAnswer(null, act.getPicklistSingleListQuestion().getStableId(), null,
                     List.of(new SelectedPicklistOption("PO2", "some details")));
-            oldAnswerDao.createAnswer(handle, answer, testData.getUserGuid(), instanceGuid);
             Answer actual = handle.attach(AnswerDao.class)
-                    .findAnswerById(answer.getAnswerId())
-                    .orElse(null);
+                    .createAnswer(testData.getUserId(), instanceId, answer);
 
-            assertNotNull(actual);
+            assertTrue(actual.getAnswerId() > 0);
             assertEquals(QuestionType.PICKLIST, actual.getQuestionType());
 
             var selected = ((PicklistAnswer) actual).getValue();
@@ -200,7 +175,7 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
     }
 
     @Test
-    public void testFindAnswerById_composite() {
+    public void testCreateAnswer_composite() {
         TransactionWrapper.useTxn(handle -> {
             DateQuestionDef childDate = DateQuestionDef
                     .builder(DateRenderMode.TEXT, "CDATE" + Instant.now().toEpochMilli(), Template.text("child date"))
@@ -213,7 +188,7 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
             TestFormActivity act = TestFormActivity.builder()
                     .withCompositeQuestion(true, childDate, childText)
                     .build(handle, testData.getUserId(), testData.getStudyGuid());
-            String instanceGuid = createInstance(handle, act.getDef().getActivityId()).getGuid();
+            long instanceId = createInstance(handle, act.getDef().getActivityId()).getId();
 
             CompositeAnswer answer = new CompositeAnswer(null, act.getCompositeQuestion().getStableId(), null);
             answer.addRowOfChildAnswers(
@@ -222,12 +197,10 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
                     new DateAnswer(null, childDate.getStableId(), null, new DateValue(2020, 3, 14)),
                     new TextAnswer(null, childText.getStableId(), null, "row 2 col 2"));
 
-            oldAnswerDao.createAnswer(handle, answer, testData.getUserGuid(), instanceGuid);
             Answer actual = handle.attach(AnswerDao.class)
-                    .findAnswerById(answer.getAnswerId())
-                    .orElse(null);
+                    .createAnswer(testData.getUserId(), instanceId, answer);
 
-            assertNotNull(actual);
+            assertTrue(actual.getAnswerId() > 0);
             assertEquals(QuestionType.COMPOSITE, actual.getQuestionType());
 
             var rows = ((CompositeAnswer) actual).getValue();
@@ -250,6 +223,35 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
     }
 
     @Test
+    public void testCreateAnswer_usingQuestionId() {
+        TransactionWrapper.useTxn(handle -> {
+            TestFormActivity act = TestFormActivity.builder()
+                    .withBoolQuestion(true)
+                    .build(handle, testData.getUserId(), testData.getStudyGuid());
+            long instanceId = createInstance(handle, act.getDef().getActivityId()).getId();
+
+            var answer = new BoolAnswer(null, act.getBoolQuestion().getStableId(), null, true);
+            Answer actual = handle.attach(AnswerDao.class)
+                    .createAnswer(testData.getUserId(), instanceId, act.getBoolQuestion().getQuestionId(), answer);
+
+            assertTrue(actual.getAnswerId() > 0);
+            assertEquals(QuestionType.BOOLEAN, actual.getQuestionType());
+            assertTrue(((BoolAnswer) actual).getValue());
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testFindAnswerById_notFound() {
+        TransactionWrapper.useTxn(handle -> {
+            Optional<Answer> result = handle.attach(AnswerDao.class).findAnswerById(123456L);
+            assertTrue(result.isEmpty());
+            handle.rollback();
+        });
+    }
+
+    @Test
     public void testFindAnswerByGuid_notFound() {
         TransactionWrapper.useTxn(handle -> {
             Optional<Answer> result = handle.attach(AnswerDao.class).findAnswerByGuid("abcxyz");
@@ -264,13 +266,12 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
             TestFormActivity act = TestFormActivity.builder()
                     .withBoolQuestion(true)
                     .build(handle, testData.getUserId(), testData.getStudyGuid());
-            String instanceGuid = createInstance(handle, act.getDef().getActivityId()).getGuid();
+            long instanceId = createInstance(handle, act.getDef().getActivityId()).getId();
 
             var answer = new BoolAnswer(null, act.getBoolQuestion().getStableId(), null, true);
-            oldAnswerDao.createAnswer(handle, answer, testData.getUserGuid(), instanceGuid);
-            Answer actual = handle.attach(AnswerDao.class)
-                    .findAnswerByGuid(answer.getAnswerGuid())
-                    .orElse(null);
+            var answerDao = handle.attach(AnswerDao.class);
+            String guid = answerDao.createAnswer(testData.getUserId(), instanceId, answer).getAnswerGuid();
+            Answer actual = answerDao.findAnswerByGuid(guid).orElse(null);
 
             assertNotNull(actual);
             assertEquals(QuestionType.BOOLEAN, actual.getQuestionType());
@@ -286,16 +287,16 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
             TestFormActivity act = TestFormActivity.builder()
                     .withBoolQuestion(true)
                     .build(handle, testData.getUserId(), testData.getStudyGuid());
-            ActivityInstanceDto instanceDto = createInstance(handle, act.getDef().getActivityId());
+            long instanceId = createInstance(handle, act.getDef().getActivityId()).getId();
 
             AnswerDao answerDao = handle.attach(AnswerDao.class);
             Optional<Answer> result = answerDao.findAnswerByInstanceIdAndQuestionStableId(123456L, "abcxyz");
             assertTrue(result.isEmpty());
 
-            result = answerDao.findAnswerByInstanceIdAndQuestionStableId(instanceDto.getId(), "abcxyz");
+            result = answerDao.findAnswerByInstanceIdAndQuestionStableId(instanceId, "abcxyz");
             assertTrue(result.isEmpty());
 
-            result = answerDao.findAnswerByInstanceIdAndQuestionStableId(instanceDto.getId(), act.getBoolQuestion().getStableId());
+            result = answerDao.findAnswerByInstanceIdAndQuestionStableId(instanceId, act.getBoolQuestion().getStableId());
             assertTrue(result.isEmpty());
 
             handle.rollback();
@@ -308,12 +309,13 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
             TestFormActivity act = TestFormActivity.builder()
                     .withBoolQuestion(true)
                     .build(handle, testData.getUserId(), testData.getStudyGuid());
-            ActivityInstanceDto instanceDto = createInstance(handle, act.getDef().getActivityId());
+            long instanceId = createInstance(handle, act.getDef().getActivityId()).getId();
 
             var answer = new BoolAnswer(null, act.getBoolQuestion().getStableId(), null, true);
-            oldAnswerDao.createAnswer(handle, answer, testData.getUserGuid(), instanceDto.getGuid());
-            Answer actual = handle.attach(AnswerDao.class)
-                    .findAnswerByInstanceIdAndQuestionStableId(instanceDto.getId(), act.getBoolQuestion().getStableId())
+            var answerDao = handle.attach(AnswerDao.class);
+            answerDao.createAnswer(testData.getUserId(), instanceId, answer);
+            Answer actual = answerDao
+                    .findAnswerByInstanceIdAndQuestionStableId(instanceId, act.getBoolQuestion().getStableId())
                     .orElse(null);
 
             assertNotNull(actual);
@@ -338,7 +340,7 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
             TestFormActivity act = TestFormActivity.builder()
                     .withCompositeQuestion(true, childDate, childText)
                     .build(handle, testData.getUserId(), testData.getStudyGuid());
-            ActivityInstanceDto instanceDto = createInstance(handle, act.getDef().getActivityId());
+            long instanceId = createInstance(handle, act.getDef().getActivityId()).getId();
 
             CompositeAnswer answer = new CompositeAnswer(null, act.getCompositeQuestion().getStableId(), null);
             answer.addRowOfChildAnswers(
@@ -347,9 +349,10 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
                     new DateAnswer(null, childDate.getStableId(), null, new DateValue(2020, 3, 14)),
                     new TextAnswer(null, childText.getStableId(), null, "row 2 col 2"));
 
-            oldAnswerDao.createAnswer(handle, answer, testData.getUserGuid(), instanceDto.getGuid());
-            Answer actual = handle.attach(AnswerDao.class)
-                    .findAnswerByInstanceIdAndQuestionStableId(instanceDto.getId(), act.getCompositeQuestion().getStableId())
+            var answerDao = handle.attach(AnswerDao.class);
+            answerDao.createAnswer(testData.getUserId(), instanceId, answer);
+            Answer actual = answerDao
+                    .findAnswerByInstanceIdAndQuestionStableId(instanceId, act.getCompositeQuestion().getStableId())
                     .orElse(null);
 
             assertNotNull(actual);
