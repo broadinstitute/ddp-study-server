@@ -12,12 +12,14 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.lang.reflect.Type;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -59,6 +61,8 @@ import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
 import org.broadinstitute.ddp.model.activity.instance.FormResponse;
 import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.activity.instance.answer.NumericIntegerAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
@@ -73,17 +77,23 @@ import org.broadinstitute.ddp.model.activity.types.PicklistSelectMode;
 import org.broadinstitute.ddp.model.activity.types.TemplateType;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
 import org.broadinstitute.ddp.model.address.MailAddress;
+import org.broadinstitute.ddp.model.governance.AgeOfMajorityRule;
+import org.broadinstitute.ddp.model.governance.GovernancePolicy;
 import org.broadinstitute.ddp.model.study.Participant;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.model.user.User;
+import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.service.DsmAddressValidationStatus;
+import org.broadinstitute.ddp.service.MedicalRecordService;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.broadinstitute.ddp.util.TestUtil;
+import org.jdbi.v3.core.Handle;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -93,7 +103,11 @@ public class DataExporterTest extends TxnAwareBaseTest {
 
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static String TEST_USER_GUID = "blah-guid";
+    private MedicalRecordService mockMedicalRecordService;
+    private GovernancePolicy mockGovernancePolicy;
     private DataExporter exporter;
+    LocalDate testDateOfMajority = LocalDate.now();
+    DateValue testBirthdate = new DateValue(1978, 5, 16);
 
     @BeforeClass
     public static void setup() {
@@ -110,6 +124,22 @@ public class DataExporterTest extends TxnAwareBaseTest {
     @Before
     public void setupTest() {
         exporter = new DataExporter(cfg);
+        mockMedicalRecordService = Mockito.mock(MedicalRecordService.class);
+        Mockito.when(mockMedicalRecordService.getDateOfBirth(Mockito.any(Handle.class),
+                Mockito.anyLong(), Mockito.anyLong())).thenReturn(Optional.of(testBirthdate));
+        Mockito.when(mockMedicalRecordService.fetchBloodAndTissueConsents(Mockito.any(Handle.class),
+                Mockito.anyLong(), Mockito.anyString(), Mockito.anyLong(), Mockito.anyString()))
+                .thenReturn(new MedicalRecordService.ParticipantConsents(true, true));
+
+        AgeOfMajorityRule ageOfMajorityRule = Mockito.mock(AgeOfMajorityRule.class);
+
+        mockGovernancePolicy = Mockito.mock(GovernancePolicy.class);
+        Mockito.when(mockGovernancePolicy.getApplicableAgeOfMajorityRule(Mockito.any(Handle.class),
+                Mockito.any(PexInterpreter.class),
+                Mockito.anyString())).thenReturn(Optional.of(ageOfMajorityRule));
+
+        Mockito.when(ageOfMajorityRule.getDateOfMajority(Mockito.any(LocalDate.class))).thenReturn(testDateOfMajority);
+
     }
 
     @Test
@@ -231,6 +261,43 @@ public class DataExporterTest extends TxnAwareBaseTest {
     }
 
     @Test
+    public void testEnrichWithDSMEventDates() {
+        Participant participant = new Participant(
+                new EnrollmentStatusDto(0L,
+                        testData.getUserId(),
+                        testData.getUserGuid(),
+                        testData.getStudyId(),
+                        testData.getStudyGuid(),
+                        EnrollmentStatusType.ENROLLED,
+                        Instant.now().toEpochMilli(),
+                        null),
+                new User(testData.getUserId(),
+                        testData.getUserGuid(),
+                        null,
+                        null,
+                        null,
+                        false,
+                        0L,
+                        0L,
+                        null,
+                        0,
+                        0,
+                        0L));
+
+        assertNull(participant.getBirthDate());
+        assertNull(participant.getDateOfMajority());
+
+        TransactionWrapper.useTxn(handle -> exporter.enrichWithDSMEventDates(handle,
+                mockMedicalRecordService,
+                mockGovernancePolicy,
+                testData.getStudyId(),
+                Collections.singletonList(participant)));
+
+        assertEquals(testBirthdate.asLocalDate().orElse(null), participant.getBirthDate());
+        assertEquals(testDateOfMajority, participant.getDateOfMajority());
+    }
+
+    @Test
     public void testExtractActivityDefinitions() {
         TransactionWrapper.useTxn(handle -> {
             PicklistQuestionDef picklistDef = PicklistQuestionDef.builder().setStableId("TEST_PLQ")
@@ -332,7 +399,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
             //check Composite Question
             Assert.assertTrue(esDoc.contains("{\"stableId\":\"TEST_COMPOSITEQ\",\"allowMultiple\":true,\"questionType\":\"COMPOSITE\","
                     + "\"questionText\":\"Comp1\",\"childQuestions\":[{\"stableId\":\"TEST_CHILD_TEXTQ\",\"questionType\":\"TEXT\","
-                    + "\"questionText\":\"text prompt\"},{\"stableId\":\"TEST_CHILD_DATEQ\",\"questionType\":\"DATE\"," 
+                    + "\"questionText\":\"text prompt\"},{\"stableId\":\"TEST_CHILD_DATEQ\",\"questionType\":\"DATE\","
                     + "\"questionText\":\"date prompt\"}]}]"));
 
             handle.rollback();
@@ -350,8 +417,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
         boolean exportStructuredDocument = false;
         Map<String, String> result = TransactionWrapper.withTxn(handle ->
                 exporter.prepareParticipantRecordsForJSONExport(
-                        studyExtract, participants, exportStructuredDocument, handle
-                )
+                        studyExtract, participants, exportStructuredDocument, handle, mockMedicalRecordService)
         );
         assertEquals(1, result.size());
 
@@ -366,14 +432,14 @@ public class DataExporterTest extends TxnAwareBaseTest {
         List<String> headers = Arrays.asList("participant_guid", "participant_hruid", "legacy_altpid", "legacy_shortid",
                 "first_name", "last_name", "email", "do_not_contact", "created_at", "status", "status_timestamp",
                 "ACT_v1", "ACT_v1_status", "ACT_v1_created_at", "ACT_v1_updated_at", "ACT_v1_completed_at",
-                "Q_BOOL", "Q_TEXT", "Q_NUMERIC",
+                "Q_BIRTHDAY_DAY", "Q_BIRTHDAY_MONTH", "Q_BIRTHDAY_YEAR", "Q_BOOL", "Q_TEXT", "Q_NUMERIC",
                 "ADDRESS_FULLNAME", "ADDRESS_STREET1", "ADDRESS_STREET2", "ADDRESS_CITY", "ADDRESS_STATE",
                 "ADDRESS_ZIP", "ADDRESS_COUNTRY", "ADDRESS_PHONE", "ADDRESS_PLUSCODE", "ADDRESS_STATUS", "PHYSICIAN");
 
         List<String> answers = Arrays.asList(TEST_USER_GUID, "blah-hruid", "blah-legacy-altpid", "blah-shortid",
                 "first-foo", "last-bar", "test@datadonationplatform.org", "true", "10/18/2018 20:18:01", "ENROLLED", "10/18/2018 20:18:01",
                 "", "", "", "", "", "", "", "",
-                "", "", "", "", "", "", "", "", "", "", "");
+                "", "", "", "", "", "", "", "", "", "", "", "", "", "");
 
         Map<String, String> expected = IntStream.range(0, Math.min(headers.size(), answers.size()))
                 .boxed()
@@ -406,16 +472,16 @@ public class DataExporterTest extends TxnAwareBaseTest {
         List<String> headers = Arrays.asList("participant_guid", "participant_hruid", "legacy_altpid", "legacy_shortid",
                 "first_name", "last_name", "email", "do_not_contact", "created_at", "status", "status_timestamp",
                 "ACT_v1", "ACT_v1_status", "ACT_v1_created_at", "ACT_v1_updated_at", "ACT_v1_completed_at",
-                "Q_BOOL", "Q_TEXT", "Q_NUMERIC",
+                "Q_BIRTHDAY_DAY", "Q_BIRTHDAY_MONTH", "Q_BIRTHDAY_YEAR", "Q_BOOL", "Q_TEXT", "Q_NUMERIC",
                 "ADDRESS_FULLNAME", "ADDRESS_STREET1", "ADDRESS_STREET2", "ADDRESS_CITY", "ADDRESS_STATE",
                 "ADDRESS_ZIP", "ADDRESS_COUNTRY", "ADDRESS_PHONE", "ADDRESS_STATUS", "PHYSICIAN", "ADDRESS_PLUSCODE");
         List<String> answers = Arrays.asList(TEST_USER_GUID, "blah-hruid", "blah-legacy-altpid", "blah-shortid",
                 "first-foo", "last-bar", "test@datadonationplatform.org", "true", "10/18/2018 20:18:01",
                 "ENROLLED", "10/18/2018 20:18:01",
                 "instance-guid-xyz", "COMPLETE", "10/18/2018 20:18:01", "10/18/2018 20:18:21", "10/18/2018 20:18:11",
-                "true", "john smith", "25",
+                "16", "05", "1978", "true", "john smith", "25",
                 "foo bar", "85 Main St", "Apt 2", "Boston", "MA", "02115", "US", "6171112233", "INVALID",
-                "dr. a;inst a;boston;ma", "87JC9WFP+HV");
+                "dr. a;inst a;boston;ma", "87JC9WFP+HV", "");
 
         Map<String, String> expected = IntStream.range(0, Math.min(headers.size(), answers.size()))
                 .boxed()
@@ -439,7 +505,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
         boolean exportStructuredDocument = false;
         Map<String, String> result = TransactionWrapper.withTxn(handle ->
                 exporter.prepareParticipantRecordsForJSONExport(
-                        studyExtract, participants, exportStructuredDocument, handle
+                        studyExtract, participants, exportStructuredDocument, handle, mockMedicalRecordService
                 )
         );
         assertEquals(1, result.size());
@@ -456,7 +522,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
         StudyExtract studyExtract = new StudyExtract(activities, Collections.EMPTY_LIST, Collections.EMPTY_MAP, Collections.EMPTY_MAP);
         Map<String, String> result = TransactionWrapper.withTxn(handle ->
                 exporter.prepareParticipantRecordsForJSONExport(
-                        studyExtract, participants, exportStructuredDocument, handle
+                        studyExtract, participants, exportStructuredDocument, handle, mockMedicalRecordService
                 )
         );
         assertEquals(1, result.size());
@@ -471,7 +537,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
         StudyExtract studyExtract = new StudyExtract(activities, Collections.EMPTY_LIST, Collections.EMPTY_MAP, Collections.EMPTY_MAP);
         Map<String, String> result = TransactionWrapper.withTxn(handle ->
                 exporter.prepareParticipantRecordsForJSONExport(
-                        studyExtract, participants, exportStructuredDocument, handle
+                        studyExtract, participants, exportStructuredDocument, handle, mockMedicalRecordService
                 )
         );
         assertEquals(1, result.size());
@@ -494,26 +560,25 @@ public class DataExporterTest extends TxnAwareBaseTest {
         CSVReader reader = new CSVReader(new StringReader(output));
         Iterator<String[]> iter = reader.iterator();
 
-        String[] expected = new String[] {
+        String[] expected = new String[]{
                 "participant_guid", "participant_hruid", "legacy_altpid", "legacy_shortid",
                 "first_name", "last_name", "email", "do_not_contact", "created_at", "status", "status_timestamp",
                 "ACT_v1", "ACT_v1_status", "ACT_v1_created_at", "ACT_v1_updated_at", "ACT_v1_completed_at",
-                "Q_BOOL", "Q_TEXT", "Q_NUMERIC",
+                "Q_BIRTHDAY_DAY", "Q_BIRTHDAY_MONTH", "Q_BIRTHDAY_YEAR", "Q_BOOL", "Q_TEXT", "Q_NUMERIC",
                 "ADDRESS_FULLNAME", "ADDRESS_STREET1", "ADDRESS_STREET2", "ADDRESS_CITY", "ADDRESS_STATE",
                 "ADDRESS_ZIP", "ADDRESS_COUNTRY", "ADDRESS_PHONE", "ADDRESS_PLUSCODE", "ADDRESS_STATUS", "PHYSICIAN"};
         String[] actual = iter.next();
         assertArrayEquals(expected, actual);
 
-        expected = new String[] {
+        expected = new String[]{
                 TEST_USER_GUID, "blah-hruid", "blah-legacy-altpid", "blah-shortid",
                 "first-foo", "last-bar", "test@datadonationplatform.org", "true", "10/18/2018 20:18:01", "ENROLLED", "10/18/2018 20:18:01",
                 "instance-guid-xyz", "COMPLETE", "10/18/2018 20:18:01", "10/18/2018 20:18:21", "10/18/2018 20:18:11",
-                "true", "john smith", "25",
+                "16", "05", "1978", "true", "john smith", "25",
                 "foo bar", "85 Main St", "Apt 2", "Boston", "MA", "02115", "US", "6171112233",
                 "87JC9WFP+HV", "INVALID", "dr. a;inst a;boston;ma"};
         actual = iter.next();
         assertArrayEquals(expected, actual);
-
         assertFalse(iter.hasNext());
     }
 
@@ -523,13 +588,13 @@ public class DataExporterTest extends TxnAwareBaseTest {
         List<ActivityExtract> activities = dataExporterTestData.getActivities();
 
         Map<String, Object> mappings = exporter.exportStudyDataMappings(activities);
-        String[] actual = mappings.keySet().toArray(new String[] {});
+        String[] actual = mappings.keySet().toArray(new String[]{});
 
-        String[] expected = new String[] {
+        String[] expected = new String[]{
                 "participant_guid", "participant_hruid", "legacy_altpid", "legacy_shortid",
                 "first_name", "last_name", "email", "do_not_contact", "created_at", "status", "status_timestamp",
                 "ACT_v1", "ACT_v1_status", "ACT_v1_created_at", "ACT_v1_updated_at", "ACT_v1_completed_at",
-                "Q_BOOL", "Q_TEXT", "Q_NUMERIC",
+                "Q_BIRTHDAY_DAY", "Q_BIRTHDAY_MONTH", "Q_BIRTHDAY_YEAR", "Q_BOOL", "Q_TEXT", "Q_NUMERIC",
                 "ADDRESS_FULLNAME", "ADDRESS_STREET1", "ADDRESS_STREET2", "ADDRESS_CITY", "ADDRESS_STATE",
                 "ADDRESS_ZIP", "ADDRESS_COUNTRY", "ADDRESS_PHONE", "ADDRESS_PLUSCODE", "ADDRESS_STATUS", "PHYSICIAN"};
 
@@ -556,6 +621,11 @@ public class DataExporterTest extends TxnAwareBaseTest {
 
             FormActivityDef def = FormActivityDef.generalFormBuilder("ACT", "v1", testData.getStudyGuid())
                     .addName(new Translation("en", "activity"))
+                    .addSection(new FormSectionDef(null, Arrays.asList(new QuestionBlockDef(
+                            DateQuestionDef.builder(DateRenderMode.SINGLE_TEXT, "Q_BIRTHDAY", Template.text(""))
+                                    .addFields(DateFieldType.DAY, DateFieldType.MONTH, DateFieldType.YEAR)
+                                    .build()
+                    ))))
                     .addSection(new FormSectionDef(null, Arrays.asList(
                             new QuestionBlockDef(BoolQuestionDef
                                     .builder("Q_BOOL", Template.text(""), Template.text(""), Template.text(""))
@@ -597,6 +667,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
                 instance.putAnswer(new BoolAnswer(1L, "Q_BOOL", "guid", true));
                 instance.putAnswer(new TextAnswer(2L, "Q_TEXT", "guid", "john smith"));
                 instance.putAnswer(new NumericIntegerAnswer(3L, "Q_NUMERIC", "guid", 25L));
+                instance.putAnswer(new DateAnswer(4L, "Q_BIRTHDAY", "guid", new DateValue(1978, 5, 16)));
                 participant.addResponse(instance);
             }
 

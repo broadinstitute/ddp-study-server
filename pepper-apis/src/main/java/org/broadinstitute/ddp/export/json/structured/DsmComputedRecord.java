@@ -10,6 +10,8 @@ public class DsmComputedRecord {
 
     @SerializedName("dateOfBirth")
     private String dateOfBirth;
+    @SerializedName("dateOfMajority")
+    private String dateOfMajority;
     @SerializedName("diagnosisYear")
     private Integer diagnosisYear;
     @SerializedName("diagnosisMonth")
@@ -21,25 +23,31 @@ public class DsmComputedRecord {
     @SerializedName("pdfs")
     private List<PdfConfigRecord> pdfConfigRecords;
 
-    private transient DateValue birthDate;
+    private transient LocalDate birthDate;
+    private transient LocalDate ageOfMajorityDate;
     private transient DateValue diagnosisDate;
 
-    public DsmComputedRecord(DateValue birthDate, DateValue diagnosisDate,
+    public DsmComputedRecord(LocalDate birthDate, LocalDate ageOfMajorityDate, DateValue diagnosisDate,
                              boolean hasConsentedToBloodDraw, boolean hasConsentedToTissueSample,
                              List<PdfConfigRecord> pdfConfigRecords) {
-        this(birthDate, diagnosisDate, hasConsentedToBloodDraw, hasConsentedToTissueSample);
+        this(birthDate, ageOfMajorityDate, diagnosisDate, hasConsentedToBloodDraw, hasConsentedToTissueSample);
         this.pdfConfigRecords = pdfConfigRecords;
     }
 
-    public DsmComputedRecord(DateValue birthDate, DateValue diagnosisDate,
+    public DsmComputedRecord(LocalDate birthDate, LocalDate ageOfMajorityDate, DateValue diagnosisDate,
                              boolean hasConsentedToBloodDraw, boolean hasConsentedToTissueSample) {
         this.birthDate = birthDate;
+        this.ageOfMajorityDate = ageOfMajorityDate;
         this.diagnosisDate = diagnosisDate;
         this.hasConsentedToBloodDraw = hasConsentedToBloodDraw;
         this.hasConsentedToTissueSample = hasConsentedToTissueSample;
 
         if (birthDate != null) {
-            this.dateOfBirth = birthDate.asLocalDate().map(LocalDate::toString).orElse(null);
+            this.dateOfBirth = birthDate.toString();
+        }
+
+        if (ageOfMajorityDate != null) {
+            this.dateOfMajority = ageOfMajorityDate.toString();
         }
 
         if (diagnosisDate != null) {

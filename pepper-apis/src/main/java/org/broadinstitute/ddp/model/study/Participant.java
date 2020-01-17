@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.model.study;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -10,6 +11,7 @@ import java.util.stream.Collectors;
 import org.broadinstitute.ddp.db.dto.EnrollmentStatusDto;
 import org.broadinstitute.ddp.db.dto.MedicalProviderDto;
 import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
+import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.user.User;
 
 /**
@@ -24,6 +26,9 @@ public class Participant {
     // todo: better models for status and medical providers
     private EnrollmentStatusDto status;
     private List<MedicalProviderDto> providers;
+    private LocalDate dateOfMajority;
+    private LocalDate birthDate;
+    private DateValue dateOfDiagnosis;
 
     public Participant(EnrollmentStatusDto status, User user) {
         this.status = status;
@@ -48,6 +53,22 @@ public class Participant {
         providers.add(providerDto);
     }
 
+    public LocalDate getBirthDate() {
+        return birthDate;
+    }
+
+    public void setBirthDate(LocalDate birthDate) {
+        this.birthDate = birthDate;
+    }
+
+    public DateValue getDateOfDiagnosis() {
+        return dateOfDiagnosis;
+    }
+
+    public void setDateOfDiagnosis(DateValue dateOfDiagnosis) {
+        this.dateOfDiagnosis = dateOfDiagnosis;
+    }
+
     public List<ActivityResponse> getAllResponses() {
         return responses.values().stream()
                 .flatMap(Collection::stream)
@@ -64,5 +85,13 @@ public class Participant {
 
     public void addResponse(ActivityResponse response) {
         responses.computeIfAbsent(response.getActivityTag(), tag -> new ArrayList<>()).add(response);
+    }
+
+    public LocalDate getDateOfMajority() {
+        return dateOfMajority;
+    }
+
+    public void setDateOfMajority(LocalDate dateOfMajority) {
+        this.dateOfMajority = dateOfMajority;
     }
 }
