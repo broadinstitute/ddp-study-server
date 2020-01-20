@@ -385,6 +385,26 @@ public class WorkflowServiceTest extends TxnAwareBaseTest {
     }
 
     @Test
+    public void test_givenNonZeroMaxInstPerUser_andNextActivityDoesntHaveInst_whenSuggestNextStateCalled_thenInstIsCreated() {
+        TransactionWrapper.useTxn(handle -> {
+            FormActivityDef form1 = insertNewActivity(handle);
+            FormActivityDef form2 = insertNewActivity(handle);
+            handle.attach(JdbiActivity.class).updateMaxInstancesPerUserById(form2.getActivityId(), 5);
+            ActivityState actState1 = new ActivityState(form1.getActivityId());
+            ActivityState actState2 = new ActivityState(form2.getActivityId());
+            WorkflowTransition t1 = new WorkflowTransition(studyId, actState1, actState2, "true", 1);
+            insertTransitions(handle, t1);
+
+            service.suggestNextState(handle, operatorGuid, userGuid, studyGuid, actState1);
+
+            Optional<String> latestInstanceGuid = handle.attach(JdbiActivityInstance.class)
+                    .findLatestInstanceGuidByUserGuidAndActivityId(userGuid, form2.getActivityId());
+            assertTrue(latestInstanceGuid.isPresent());
+            handle.rollback();
+        });
+    }
+
+    @Test
     public void test_givenZeroMaxInstPerUser_andNextActivityDoesntHaveInst_whenSuggestNextStateCalled_thenInstIsntCreated() {
         TransactionWrapper.useTxn(handle -> {
             FormActivityDef form1 = insertNewActivity(handle);
