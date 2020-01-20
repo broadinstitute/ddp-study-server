@@ -5,9 +5,11 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
+import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.WorkflowDao;
+import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.json.workflow.WorkflowResponse;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
@@ -102,6 +104,10 @@ public class WorkflowService {
             return;
         }
         ActivityState activityState = (ActivityState) nextState;
+        ActivityDto activityDto = handle.attach(JdbiActivity.class).queryActivityById(activityState.getActivityId());
+        if (activityDto.getMaxInstancesPerUser() != null && activityDto.getMaxInstancesPerUser() == 0) {
+            return;
+        }
         String instanceGuid = handle.attach(JdbiActivityInstance.class)
                 .findLatestInstanceGuidByUserGuidAndActivityId(userGuid, activityState.getActivityId())
                 .orElse(null);
