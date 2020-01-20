@@ -25,6 +25,8 @@ import org.broadinstitute.ddp.constants.TestConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
+import org.broadinstitute.ddp.db.dao.JdbiActivity;
+import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiWorkflowTransition;
 import org.broadinstitute.ddp.db.dao.WorkflowDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
@@ -357,6 +359,64 @@ public class WorkflowServiceTest extends TxnAwareBaseTest {
             assertEquals(StateType.ACTIVITY.name(), activityResponse.getNext());
             assertEquals(form.getActivityCode(), activityResponse.getActivityCode());
             assertTrue(activityResponse.isAllowUnauthenticated());
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void test_givenNullMaxInstPerUser_andNextActivityDoesntHaveInst_whenSuggestNextStateCalled_thenInstIsCreated() {
+        TransactionWrapper.useTxn(handle -> {
+            FormActivityDef form1 = insertNewActivity(handle);
+            FormActivityDef form2 = insertNewActivity(handle);
+            handle.attach(JdbiActivity.class).updateMaxInstancesPerUserById(form2.getActivityId(), null);
+
+            ActivityState actState1 = new ActivityState(form1.getActivityId());
+            ActivityState actState2 = new ActivityState(form2.getActivityId());
+
+            WorkflowTransition t1 = new WorkflowTransition(studyId, actState1, actState2, "true", 1);
+            insertTransitions(handle, t1);
+
+            Optional<WorkflowState> nextState = service.suggestNextState(handle, operatorGuid, userGuid, studyGuid, actState1);
+            assertTrue(nextState.isPresent());
+            WorkflowResponse workflowResponse = service.buildStateResponse(handle, userGuid, nextState.get());
+
+            assertNotNull(workflowResponse);
+
+            String createdInstanceGuid = ((WorkflowActivityResponse)workflowResponse).getInstanceGuid();
+            Optional<String> latestInstanceGuid = handle.attach(JdbiActivityInstance.class)
+                    .findLatestInstanceGuidByUserGuidAndActivityId(userGuid, form2.getActivityId());
+            assertTrue(latestInstanceGuid.isPresent());
+            assertEquals(createdInstanceGuid, latestInstanceGuid.get());
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void test_givenZeroMaxInstPerUser_andNextActivityDoesntHaveInst_whenSuggestNextStateCalled_thenInstIsntCreated() {
+        TransactionWrapper.useTxn(handle -> {
+            FormActivityDef form1 = insertNewActivity(handle);
+            FormActivityDef form2 = insertNewActivity(handle);
+            handle.attach(JdbiActivity.class).updateMaxInstancesPerUserById(form2.getActivityId(), 0);
+
+            ActivityState actState1 = new ActivityState(form1.getActivityId());
+            ActivityState actState2 = new ActivityState(form2.getActivityId());
+
+            WorkflowTransition t1 = new WorkflowTransition(studyId, actState1, actState2, "true", 1);
+            insertTransitions(handle, t1);
+
+            Optional<WorkflowState> nextState = service.suggestNextState(handle, operatorGuid, userGuid, studyGuid, actState1);
+            assertTrue(nextState.isPresent());
+            WorkflowResponse workflowResponse = service.buildStateResponse(handle, userGuid, nextState.get());
+
+            assertNotNull(workflowResponse);
+
+            String createdInstanceGuid = ((WorkflowActivityResponse)workflowResponse).getInstanceGuid();
+            assertNull(createdInstanceGuid);
+            Optional<String> latestInstanceGuid = handle.attach(JdbiActivityInstance.class)
+                    .findLatestInstanceGuidByUserGuidAndActivityId(userGuid, form2.getActivityId());
+            assertFalse(latestInstanceGuid.isPresent());
 
             handle.rollback();
         });
