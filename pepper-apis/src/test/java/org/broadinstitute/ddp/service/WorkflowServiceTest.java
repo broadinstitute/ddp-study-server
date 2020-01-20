@@ -370,25 +370,16 @@ public class WorkflowServiceTest extends TxnAwareBaseTest {
             FormActivityDef form1 = insertNewActivity(handle);
             FormActivityDef form2 = insertNewActivity(handle);
             handle.attach(JdbiActivity.class).updateMaxInstancesPerUserById(form2.getActivityId(), null);
-
             ActivityState actState1 = new ActivityState(form1.getActivityId());
             ActivityState actState2 = new ActivityState(form2.getActivityId());
-
             WorkflowTransition t1 = new WorkflowTransition(studyId, actState1, actState2, "true", 1);
             insertTransitions(handle, t1);
 
-            Optional<WorkflowState> nextState = service.suggestNextState(handle, operatorGuid, userGuid, studyGuid, actState1);
-            assertTrue(nextState.isPresent());
-            WorkflowResponse workflowResponse = service.buildStateResponse(handle, userGuid, nextState.get());
+            service.suggestNextState(handle, operatorGuid, userGuid, studyGuid, actState1);
 
-            assertNotNull(workflowResponse);
-
-            String createdInstanceGuid = ((WorkflowActivityResponse)workflowResponse).getInstanceGuid();
             Optional<String> latestInstanceGuid = handle.attach(JdbiActivityInstance.class)
                     .findLatestInstanceGuidByUserGuidAndActivityId(userGuid, form2.getActivityId());
             assertTrue(latestInstanceGuid.isPresent());
-            assertEquals(createdInstanceGuid, latestInstanceGuid.get());
-
             handle.rollback();
         });
     }
@@ -399,25 +390,16 @@ public class WorkflowServiceTest extends TxnAwareBaseTest {
             FormActivityDef form1 = insertNewActivity(handle);
             FormActivityDef form2 = insertNewActivity(handle);
             handle.attach(JdbiActivity.class).updateMaxInstancesPerUserById(form2.getActivityId(), 0);
-
             ActivityState actState1 = new ActivityState(form1.getActivityId());
             ActivityState actState2 = new ActivityState(form2.getActivityId());
-
             WorkflowTransition t1 = new WorkflowTransition(studyId, actState1, actState2, "true", 1);
             insertTransitions(handle, t1);
 
-            Optional<WorkflowState> nextState = service.suggestNextState(handle, operatorGuid, userGuid, studyGuid, actState1);
-            assertTrue(nextState.isPresent());
-            WorkflowResponse workflowResponse = service.buildStateResponse(handle, userGuid, nextState.get());
+            service.suggestNextState(handle, operatorGuid, userGuid, studyGuid, actState1);
 
-            assertNotNull(workflowResponse);
-
-            String createdInstanceGuid = ((WorkflowActivityResponse)workflowResponse).getInstanceGuid();
-            assertNull(createdInstanceGuid);
             Optional<String> latestInstanceGuid = handle.attach(JdbiActivityInstance.class)
                     .findLatestInstanceGuidByUserGuidAndActivityId(userGuid, form2.getActivityId());
             assertFalse(latestInstanceGuid.isPresent());
-
             handle.rollback();
         });
     }
@@ -428,18 +410,17 @@ public class WorkflowServiceTest extends TxnAwareBaseTest {
             FormActivityDef form1 = insertNewActivity(handle);
             FormActivityDef form2 = insertNewActivity(handle);
             ActivityInstanceDto newInstance = insertNewInstance(handle, form2.getActivityId());
-
             ActivityState actState1 = new ActivityState(form1.getActivityId());
             ActivityState actState2 = new ActivityState(form2.getActivityId());
-
             WorkflowTransition t1 = new WorkflowTransition(studyId, actState1, actState2, "true", 1);
             insertTransitions(handle, t1);
+
             service.suggestNextState(handle, operatorGuid, userGuid, studyGuid, actState1);
+
             Optional<String> latestInstanceGuid = handle.attach(JdbiActivityInstance.class)
                     .findLatestInstanceGuidByUserGuidAndActivityId(userGuid, form2.getActivityId());
             assertTrue(latestInstanceGuid.isPresent());
             assertEquals(newInstance.getGuid(), latestInstanceGuid.get());
-
             handle.rollback();
         });
     }
