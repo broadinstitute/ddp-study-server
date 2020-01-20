@@ -422,6 +422,27 @@ public class WorkflowServiceTest extends TxnAwareBaseTest {
         });
     }
 
+    @Test
+    public void test_givenNextActivityAlreadyHasInstance_whenSuggestNextStateCalled_thenInstanceIsntCreated() {
+        TransactionWrapper.useTxn(handle -> {
+            FormActivityDef form1 = insertNewActivity(handle);
+            FormActivityDef form2 = insertNewActivity(handle);
+            ActivityInstanceDto newInstance = insertNewInstance(handle, form2.getActivityId());
+
+            ActivityState actState1 = new ActivityState(form1.getActivityId());
+            ActivityState actState2 = new ActivityState(form2.getActivityId());
+
+            WorkflowTransition t1 = new WorkflowTransition(studyId, actState1, actState2, "true", 1);
+            insertTransitions(handle, t1);
+            Optional<String> latestInstanceGuid = handle.attach(JdbiActivityInstance.class)
+                    .findLatestInstanceGuidByUserGuidAndActivityId(userGuid, form2.getActivityId());
+            assertTrue(latestInstanceGuid.isPresent());
+            assertEquals(newInstance.getGuid(), latestInstanceGuid.get());
+
+            handle.rollback();
+        });
+    }
+
     private FormActivityDef insertNewActivity(Handle handle) {
         return insertNewActivity(handle, null);
     }
