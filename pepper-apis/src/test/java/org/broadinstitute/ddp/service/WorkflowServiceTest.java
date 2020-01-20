@@ -365,7 +365,7 @@ public class WorkflowServiceTest extends TxnAwareBaseTest {
     }
 
     @Test
-    public void test_givenNullMaxInstPerUser_andNextActivityDoesntHaveInst_whenSuggestNextStateCalled_thenInstIsCreated() {
+    public void test_givenNullMaxInstPerUser_andNextActDoesntHaveInstance_whenSuggestNextStateIsCalled_thenInstanceIsCreated() {
         TransactionWrapper.useTxn(handle -> {
             FormActivityDef form1 = insertNewActivity(handle);
             FormActivityDef form2 = insertNewActivity(handle);
@@ -385,7 +385,7 @@ public class WorkflowServiceTest extends TxnAwareBaseTest {
     }
 
     @Test
-    public void test_givenNonZeroMaxInstPerUser_andNextActivityDoesntHaveInst_whenSuggestNextStateCalled_thenInstIsCreated() {
+    public void test_givenNonZeroMaxInstPerUser_andNextActDoesntHaveInstance_whenSuggestNextStateIsCalled_thenInstanceIsCreated() {
         TransactionWrapper.useTxn(handle -> {
             FormActivityDef form1 = insertNewActivity(handle);
             FormActivityDef form2 = insertNewActivity(handle);
@@ -405,7 +405,7 @@ public class WorkflowServiceTest extends TxnAwareBaseTest {
     }
 
     @Test
-    public void test_givenZeroMaxInstPerUser_andNextActivityDoesntHaveInst_whenSuggestNextStateCalled_thenInstIsntCreated() {
+    public void test_givenZeroMaxInstPerUser_andNextActDoesntHaveInstance_whenSuggestNextStateIsCalled_thenInstanceIsNotCreated() {
         TransactionWrapper.useTxn(handle -> {
             FormActivityDef form1 = insertNewActivity(handle);
             FormActivityDef form2 = insertNewActivity(handle);
@@ -425,7 +425,7 @@ public class WorkflowServiceTest extends TxnAwareBaseTest {
     }
 
     @Test
-    public void test_givenNextActivityAlreadyHasInstance_whenSuggestNextStateCalled_thenInstanceIsntCreated() {
+    public void test_givenNextActivityAlreadyHasInstance_whenSuggestNextStateIsCalled_thenInstanceIsNotCreated() {
         TransactionWrapper.useTxn(handle -> {
             FormActivityDef form1 = insertNewActivity(handle);
             FormActivityDef form2 = insertNewActivity(handle);
