@@ -434,6 +434,7 @@ public class WorkflowServiceTest extends TxnAwareBaseTest {
 
             WorkflowTransition t1 = new WorkflowTransition(studyId, actState1, actState2, "true", 1);
             insertTransitions(handle, t1);
+            service.suggestNextState(handle, operatorGuid, userGuid, studyGuid, actState1);
             Optional<String> latestInstanceGuid = handle.attach(JdbiActivityInstance.class)
                     .findLatestInstanceGuidByUserGuidAndActivityId(userGuid, form2.getActivityId());
             assertTrue(latestInstanceGuid.isPresent());
