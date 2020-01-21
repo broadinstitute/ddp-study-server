@@ -5,7 +5,6 @@ import java.time.Instant;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstanceStatus;
-import org.broadinstitute.ddp.db.dao.JdbiEventConfigurationOccurrenceCounter;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.EventConfigurationDto;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
@@ -29,8 +28,6 @@ public class ActivityInstanceCreationEventAction extends EventAction {
         JdbiActivityInstance jdbiActivityInstance = handle.attach(JdbiActivityInstance.class);
         JdbiActivityInstanceStatus jdbiActivityInstanceStatus = handle.attach(JdbiActivityInstanceStatus.class);
         JdbiActivity jdbiActivity = handle.attach(JdbiActivity.class);
-        JdbiEventConfigurationOccurrenceCounter jdbiEventConfigurationOccurrenceCounter =
-                handle.attach(JdbiEventConfigurationOccurrenceCounter.class);
 
         ActivityDto activityDto = jdbiActivity.queryActivityById(studyActivityId);
 
@@ -72,11 +69,6 @@ public class ActivityInstanceCreationEventAction extends EventAction {
                 eventSignal.getParticipantId()
         );
 
-        // Incrementing the counter indicating that the event configuration has been executed
-        jdbiEventConfigurationOccurrenceCounter.incNumOccurrences(
-                eventConfiguration.getEventConfigurationId(),
-                eventSignal.getParticipantId()
-        );
         LOG.info("Performed the instantiation of the study activity with the id {} triggered by"
                         + " {} Operator = {}, participant = {}, study = {}, created activity instance id = {}",
                 studyActivityId, eventSignal.toString(),
