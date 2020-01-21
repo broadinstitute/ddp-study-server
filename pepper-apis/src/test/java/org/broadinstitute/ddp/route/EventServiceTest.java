@@ -340,6 +340,30 @@ public class EventServiceTest extends IntegrationTestSuite.TestCase {
     }
 
     @Test
+    public void testEventNotExecutedAgainWhenCounterIsReached() throws IOException {
+        HttpResponse response = createTestPatchAnswerPayloadAndExecuteRequest();
+        Assert.assertEquals(200, response.getStatusLine().getStatusCode());
+
+        // Do another triggering
+        TransactionWrapper.useTxn(handle -> {
+            ActivityInstanceStatusChangeSignal signal = new ActivityInstanceStatusChangeSignal(
+                    testUserId, testUserId, testData.getUserGuid(),
+                    TestData.activityInstanceId, studyActivityTriggeringActionId,
+                    umbrellaStudyId, InstanceStatusType.IN_PROGRESS);
+            EventService.getInstance().processAllActionsForEventSignal(handle, signal);
+        });
+
+        List<UserAnnouncement> res = TransactionWrapper.withTxn(handle -> handle.attach(UserAnnouncementDao.class)
+                .findAllForUserAndStudy(testUserId, umbrellaStudyId)
+                .collect(Collectors.toList()));
+
+        assertEquals("there should only be one announcement created", 1, res.size());
+        assertEquals(testUserId, res.get(0).getUserId());
+        assertEquals(umbrellaStudyId, res.get(0).getStudyId());
+        assertEquals(announcementMsgTemplateId, res.get(0).getMsgTemplateId());
+    }
+
+    @Test
     public void testAnnouncementAction_messageGetsAdded() throws IOException {
         HttpResponse response = createTestPatchAnswerPayloadAndExecuteRequest();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
