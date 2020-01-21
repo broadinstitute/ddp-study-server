@@ -156,16 +156,6 @@
         <dropTable tableName="copy_answer_target"/>
     </changeSet>
 
-    <changeSet author="yufeng" id="20200110-add-copy-configuration-to-activity-instance-creation-event">
-        <addColumn tableName="activity_instance_creation_action">
-            <column name="copy_configuration_id" type="bigint">
-                <constraints nullable="true"
-                             references="copy_configuration(copy_configuration_id)"
-                             foreignKeyName="activity_instance_creation_action_copy_config_fk"/>
-            </column>
-        </addColumn>
-    </changeSet>
-
     <changeSet author="yufeng" id="20200110-expand-answer-timestamps-to-millis">
         <update tableName="answer">
             <column name="created_at" valueComputed="created_at * 1000"/>

@@ -76,7 +76,6 @@ public class EventConfigurationDto {
 
     /* ACTIVITY_INSTANCE_CREATION */
     private Long activityInstanceCreationStudyActivityId;
-    private Long activityInstanceCreationCopyConfigurationId;
 
     /* USER_ENROLLED */
     // No sub-table
@@ -118,7 +117,6 @@ public class EventConfigurationDto {
                                  Long linkedActivityId,
                                  Long pdfGenerationDocumentConfigurationId,
                                  Long activityInstanceCreationStudyActivityId,
-                                 Long activityInstanceCreationCopyConfigurationId,
                                  Long copyActionCopyConfigurationId,
                                  Long contactEmailQuestionStableCodeId,
                                  String contactEmailQuestionStableId,
@@ -146,7 +144,6 @@ public class EventConfigurationDto {
         this.linkedActivityId = linkedActivityId;
         this.pdfGenerationDocumentConfigurationId = pdfGenerationDocumentConfigurationId;
         this.activityInstanceCreationStudyActivityId = activityInstanceCreationStudyActivityId;
-        this.activityInstanceCreationCopyConfigurationId = activityInstanceCreationCopyConfigurationId;
         this.copyActionCopyConfigurationId = copyActionCopyConfigurationId;
         this.contactEmailQuestionStableCodeId = contactEmailQuestionStableCodeId;
         this.contactEmailQuestionStableId = contactEmailQuestionStableId;
@@ -239,10 +236,6 @@ public class EventConfigurationDto {
 
     public Long getActivityInstanceCreationStudyActivityId() {
         return activityInstanceCreationStudyActivityId;
-    }
-
-    public Long getActivityInstanceCreationCopyConfigurationId() {
-        return activityInstanceCreationCopyConfigurationId;
     }
 
     public Long getCopyActionCopyConfigurationId() {

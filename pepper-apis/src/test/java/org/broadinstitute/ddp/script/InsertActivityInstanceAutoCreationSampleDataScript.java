@@ -57,8 +57,7 @@ public class InsertActivityInstanceAutoCreationSampleDataScript extends TxnAware
                             TestData.ACTIVITY_TO_CREATE_CODE).get();
                     handle.attach(EventActionSql.class).insertActivityInstanceCreationAction(
                             eventActionId,
-                            studyActivityToCreateId,
-                            null
+                            studyActivityToCreateId
                     );
 
                     eventTriggerId = handle.attach(JdbiEventTrigger.class).insert(EventTriggerType.ACTIVITY_STATUS);
