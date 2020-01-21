@@ -21,15 +21,10 @@ import org.jdbi.v3.core.Handle;
 
 public class CopyExecutor {
 
-    private Long preferredSourceInstanceId;
-    private Long preferredTargetInstanceId;
+    private Long triggeredInstanceId;
 
-    public void withSourceInstanceId(long instanceId) {
-        this.preferredSourceInstanceId = instanceId;
-    }
-
-    public void withTargetInstanceId(long instanceId) {
-        this.preferredTargetInstanceId = instanceId;
+    public void withTriggeredInstanceId(long instanceId) {
+        this.triggeredInstanceId = instanceId;
     }
 
     public void execute(Handle handle, long operatorId, long participantId, CopyConfiguration config) {
@@ -102,8 +97,7 @@ public class CopyExecutor {
                         return;
                     }
 
-                    boolean keepCurrent = (preferredSourceInstanceId != null && current.getId() == preferredSourceInstanceId)
-                            || (preferredTargetInstanceId != null && current.getId() == preferredTargetInstanceId);
+                    boolean keepCurrent = (triggeredInstanceId != null && current.getId() == triggeredInstanceId);
                     if (!keepCurrent && response.getCreatedAt() > current.getCreatedAt()) {
                         container.put(activityId, response);
                     }

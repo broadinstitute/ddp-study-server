@@ -39,9 +39,9 @@ public class AnswerToAnswerCopier {
     private final AnswerDao answerDao;
     private final Map<Long, CompositeQuestionDto> parentDtosByChildId = new HashMap<>();
 
-    public AnswerToAnswerCopier(Handle handle, long operatorId) {
+    public AnswerToAnswerCopier(Handle handle, long operatorIdForNewAnswers) {
         this.handle = handle;
-        this.operatorId = operatorId;
+        this.operatorId = operatorIdForNewAnswers;
         this.jdbiCompositeQuestion = handle.attach(JdbiCompositeQuestion.class);
         this.jdbiCompositeAnswer = handle.attach(JdbiCompositeAnswer.class);
         this.answerDao = handle.attach(AnswerDao.class);
