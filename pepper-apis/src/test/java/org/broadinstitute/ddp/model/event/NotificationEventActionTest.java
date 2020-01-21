@@ -180,7 +180,7 @@ public class NotificationEventActionTest extends TxnAwareBaseTest {
                 null, null, null, MessageDestination.PARTICIPANT_NOTIFICATION.name(),
                 null, null, null, null, null, null, null, null,
                 notificationType, serviceType, templateId, linkedActivityId,
-                null, null, null, null, null, null, null);
+                null, null, null, null, null, null);
     }
 
     private long insertInvitationEmailEventConfiguration(Handle handle, EventTriggerType staticTriggerType) {

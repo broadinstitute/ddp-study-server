@@ -177,11 +177,7 @@ public class EventBuilder {
         } else if (EventActionType.ACTIVITY_INSTANCE_CREATION.name().equals(type)) {
             String activityCode = actionCfg.getString(ACTIVITY_CODE_FIELD);
             long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
-            CopyConfiguration config = null;
-            if (actionCfg.hasPath("copyConfigPairs")) {
-                config = buildCopyConfiguration(studyDto.getId(), List.copyOf(actionCfg.getConfigList("copyConfigPairs")));
-            }
-            return actionDao.insertInstanceCreationAction(activityId, config);
+            return actionDao.insertInstanceCreationAction(activityId);
         } else if (EventActionType.ANNOUNCEMENT.name().equals(type)) {
             Config msgCfg = actionCfg.getConfig("msgTemplate");
             Template tmpl = gson.fromJson(ConfigUtil.toJson(msgCfg), Template.class);
@@ -279,11 +275,7 @@ public class EventBuilder {
             return String.format("%s/%s", type, pdfName);
         } else if (EventActionType.ACTIVITY_INSTANCE_CREATION.name().equals(type)) {
             String activityCode = actionCfg.getString(ACTIVITY_CODE_FIELD);
-            int numPairs = 0;
-            if (actionCfg.hasPath("copyConfigPairs")) {
-                numPairs = actionCfg.getConfigList("copyConfigPairs").size();
-            }
-            return String.format("%s/%s/%d copy pairs", type, activityCode, numPairs);
+            return String.format("%s/%s", type, activityCode);
         } else if (EventActionType.COPY_ANSWER.name().equals(type)) {
             int numPairs = actionCfg.getConfigList("copyConfigPairs").size();
             return String.format("%s/%d copy pairs", type, numPairs);

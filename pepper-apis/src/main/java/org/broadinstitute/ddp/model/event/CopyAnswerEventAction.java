@@ -37,8 +37,8 @@ public class CopyAnswerEventAction extends EventAction {
         if (signal.getEventTriggerType() == EventTriggerType.ACTIVITY_STATUS) {
             var activitySignal = (ActivityInstanceStatusChangeSignal) signal;
             long instanceId = activitySignal.getActivityInstanceIdThatChanged();
-            executor.withSourceInstanceId(instanceId);
-            LOG.info("Using activity instance {} as source for copying", instanceId);
+            executor.withTriggeredInstanceId(instanceId);
+            LOG.info("Using activity instance {} as the triggered instance for copying", instanceId);
         }
 
         executor.execute(handle, signal.getOperatorId(), signal.getParticipantId(), config);

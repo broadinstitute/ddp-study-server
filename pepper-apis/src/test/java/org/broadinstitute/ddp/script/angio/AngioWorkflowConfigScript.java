@@ -196,7 +196,7 @@ public class AngioWorkflowConfigScript extends TxnAwareBaseTest {
 
             // About You completion triggers Consent
             long triggerId = triggerDao.insertStatusTrigger(aboutYouActId, InstanceStatusType.COMPLETE);
-            long actionId = actionDao.insertInstanceCreationAction(consentActId, null);
+            long actionId = actionDao.insertInstanceCreationAction(consentActId);
             long configId = jdbiEventConfig.insert(triggerId, actionId, angioStudyId,
                     Instant.now().toEpochMilli(), 1, null, null, null, false, 1);
             LOG.info("Created instance creation event configuration with id {} using trigger activity {} and target activity {}",
@@ -204,7 +204,7 @@ public class AngioWorkflowConfigScript extends TxnAwareBaseTest {
 
             // Consent completion triggers Release
             triggerId = triggerDao.insertStatusTrigger(consentActId, InstanceStatusType.COMPLETE);
-            actionId = actionDao.insertInstanceCreationAction(releaseActId, null);
+            actionId = actionDao.insertInstanceCreationAction(releaseActId);
             configId = jdbiEventConfig.insert(triggerId, actionId, angioStudyId,
                     Instant.now().toEpochMilli(), 1, null, null, null, false, 1);
             LOG.info("Created instance creation event configuration with id {} using trigger activity {} and target activity {}",
