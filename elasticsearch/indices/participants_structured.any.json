@@ -243,6 +243,11 @@
               "ignore_malformed": false,
               "format": "strict_year_month_day"
             },
+            "dateOfMajority": {
+              "type": "date",
+              "ignore_malformed": false,
+              "format": "strict_year_month_day"
+            },
             "diagnosisYear": {
               "type": "integer"
             },
