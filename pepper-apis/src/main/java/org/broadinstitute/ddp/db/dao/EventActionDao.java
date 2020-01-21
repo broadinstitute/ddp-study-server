@@ -87,10 +87,9 @@ public interface EventActionDao extends SqlObject {
         return eventActionId;
     }
 
-    default long insertInstanceCreationAction(long targetActivityId, CopyConfiguration config) {
+    default long insertInstanceCreationAction(long targetActivityId) {
         long actionId = getJdbiEventAction().insert(null, EventActionType.ACTIVITY_INSTANCE_CREATION);
-        Long configId = config == null ? null : getCopyConfigurationDao().createCopyConfig(config).getId();
-        int numRowsInserted = getEventActionSql().insertActivityInstanceCreationAction(actionId, targetActivityId, configId);
+        int numRowsInserted = getEventActionSql().insertActivityInstanceCreationAction(actionId, targetActivityId);
         if (numRowsInserted != 1) {
             throw new DaoException("Could not insert activity instance creation event for target activity id " + targetActivityId);
         }

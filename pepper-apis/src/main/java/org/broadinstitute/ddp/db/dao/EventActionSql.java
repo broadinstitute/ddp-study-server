@@ -10,13 +10,9 @@ import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
 public interface EventActionSql extends SqlObject {
 
-    @SqlUpdate("insert into activity_instance_creation_action"
-            + "        (activity_instance_creation_action_id, study_activity_id, copy_configuration_id)"
-            + " values (:actionId, :activityId, :copyConfigId)")
-    int insertActivityInstanceCreationAction(
-            @Bind("actionId") long eventActionId,
-            @Bind("activityId") long activityId,
-            @Bind("copyConfigId") Long copyConfigId);
+    @SqlUpdate("insert into activity_instance_creation_action (activity_instance_creation_action_id, study_activity_id)"
+            + " values (:actionId, :activityId)")
+    int insertActivityInstanceCreationAction(@Bind("actionId") long eventActionId, @Bind("activityId") long activityId);
 
     @SqlUpdate("insert into copy_answer_event_action (event_action_id, copy_configuration_id) values (:actionId, :copyConfigId)")
     int insertCopyAnswerAction(@Bind("actionId") long eventActionId, @Bind("copyConfigId") long copyConfigId);

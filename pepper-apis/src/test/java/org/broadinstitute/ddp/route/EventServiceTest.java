@@ -144,7 +144,7 @@ public class EventServiceTest extends IntegrationTestSuite.TestCase {
 
                     studyActivityToCreateId = handle.attach(JdbiActivity.class).findIdByStudyIdAndCode(umbrellaStudyId,
                             TestData.targetActivityCode).get();
-                    activityInstanceCreationEventActionId = eventActionDao.insertInstanceCreationAction(studyActivityToCreateId, null);
+                    activityInstanceCreationEventActionId = eventActionDao.insertInstanceCreationAction(studyActivityToCreateId);
 
                     dsmInclusionEventActionId = eventActionDao.insertEnrolledAction();
 
