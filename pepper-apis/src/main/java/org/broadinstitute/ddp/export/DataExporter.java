@@ -21,6 +21,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -601,8 +602,14 @@ public class DataExporter {
         dataset.forEach(participant -> {
             DateValue diagnosisDate = medicalRecordService
                     .getDateOfDiagnosis(handle, participant.getUser().getId(), studyId).orElse(null);
-            DateValue birthDate = medicalRecordService
-                    .getDateOfBirth(handle, participant.getUser().getId(), studyId).orElse(null);
+
+            // First grab from the profile, if it's not there then look in activity data using medical-record service
+            LocalDate birthDate = Optional.ofNullable(participant.getUser().getProfile())
+                    .map(UserProfileDto::getBirthDate)
+                    .or(() -> medicalRecordService
+                            .getDateOfBirth(handle, participant.getUser().getId(), studyId)
+                            .flatMap(DateValue::asLocalDate))
+                    .orElse(null);
 
             LocalDate dateOfMajority = null;
             if (governancePolicy != null) {
@@ -612,14 +619,11 @@ public class DataExporter {
                         .orElse(null);
 
                 if (birthDate != null && aomRule != null) {
-                    LocalDate localBirthDate = birthDate.asLocalDate().orElse(null);
-                    if (localBirthDate != null) {
-                        dateOfMajority = aomRule.getDateOfMajority(localBirthDate);
-                    }
+                    dateOfMajority = aomRule.getDateOfMajority(birthDate);
                 }
             }
 
-            participant.setBirthDate(birthDate.asLocalDate().orElse(null));
+            participant.setBirthDate(birthDate);
             participant.setDateOfDiagnosis(diagnosisDate);
             participant.setDateOfMajority(dateOfMajority);
         });
