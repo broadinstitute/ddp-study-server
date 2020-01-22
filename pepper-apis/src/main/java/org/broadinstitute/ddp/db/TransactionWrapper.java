@@ -3,10 +3,10 @@ package org.broadinstitute.ddp.db;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 import com.typesafe.config.Config;
-
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import org.broadinstitute.ddp.constants.ConfigFile;
@@ -171,6 +171,10 @@ public class TransactionWrapper {
             }
             gTxnWrapper.put(dbConfig.getDb(), new TransactionWrapper(dbConfig.getMaxConnections(), dbConfig.getDbUrl()));
         }
+        // We are setting local timezone to UTC with expectation that it will be same on server
+        // if timezones don't match, times and dates might be miscalculated/improperly converted by JDBC connector
+        // https://bugs.mysql.com/bug.php?id=91112
+        TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
         isInitialized = true;
     }
 
@@ -348,8 +352,7 @@ public class TransactionWrapper {
         config.setMaximumPoolSize(maxConnections);
         config.setConnectionTimeout(250);
 
-        HikariDataSource ds = new HikariDataSource(config);
-        return ds;
+        return new HikariDataSource(config);
     }
 
 
