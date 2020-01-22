@@ -51,7 +51,7 @@ public class TransactionWrapperTest {
             LOG.info("Wait interrupted", e);
         }
         testDbUrl = MySqlTestContainerUtil.getFullJdbcTestUrl(dbContainer);
-        LiquibaseUtil.runChangeLog(new com.mysql.jdbc.Driver(), testDbUrl, "src/test/resources/db-testscripts/txnwrappertest.xml");
+        LiquibaseUtil.runChangeLog(new com.mysql.cj.jdbc.Driver(), testDbUrl, "src/test/resources/db-testscripts/txnwrappertest.xml");
         TransactionWrapper.reset();
     }
 
@@ -280,7 +280,8 @@ public class TransactionWrapperTest {
                 return null;
             });
         } catch (DDPException e) {
-            assertTrue(e.getCause().getMessage().matches(".*Pool exhausted"));
+            assertTrue("Got " + e.getCause().getMessage() + " instead of expected regex", e.getCause().getMessage()
+                    .matches(".*Connection is not available.*"));
         }
     }
 
@@ -389,7 +390,7 @@ public class TransactionWrapperTest {
                 });
             });
         } catch (DDPException e) {
-            assertTrue(e.getCause().getMessage().matches(".*Pool exhausted"));
+            assertTrue(e.getCause().getMessage().matches(".*Connection is not available.*"));
         }
     }
 }

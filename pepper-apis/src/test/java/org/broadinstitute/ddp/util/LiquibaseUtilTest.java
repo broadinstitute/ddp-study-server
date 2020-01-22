@@ -32,7 +32,7 @@ public class LiquibaseUtilTest {
     @Before
     public void setup() throws SQLException {
         dbContainer.start();
-        driver = new com.mysql.jdbc.Driver();
+        driver = new com.mysql.cj.jdbc.Driver();
         testDbUrl = MySqlTestContainerUtil.getFullJdbcTestUrl(dbContainer);
         TransactionWrapper.reset();
         TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, 1, testDbUrl));
