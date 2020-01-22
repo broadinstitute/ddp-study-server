@@ -45,7 +45,7 @@ public interface JdbiActivityInstance extends SqlObject {
 
     @SqlQuery("select activity_instance_id from activity_instance where "
             + "activity_instance_guid = :activityInstanceGuid")
-    long getActivityInstanceId(String activityInstanceGuid);
+    long getActivityInstanceId(@Bind("activityInstanceGuid") String activityInstanceGuid);
 
     @SqlQuery("select activity_instance_guid from activity_instance where "
             + "activity_instance_id = :activityInstanceId")
