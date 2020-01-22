@@ -31,6 +31,7 @@ import com.typesafe.config.Config;
 import io.restassured.http.ContentType;
 import io.restassured.mapper.ObjectMapperType;
 import io.restassured.response.Response;
+import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.Auth0Constants;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.ErrorCodes;
@@ -91,7 +92,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.testcontainers.shaded.org.apache.http.HttpStatus;
+
 
 public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
 
