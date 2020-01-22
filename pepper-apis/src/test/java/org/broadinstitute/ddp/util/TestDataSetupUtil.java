@@ -518,7 +518,7 @@ public class TestDataSetupUtil {
         scripts.add(BASELINE_SEED_TEST_DATA);
         scripts.add(MIGRATE_LEGACY_STUDY_CLIENT_TENANT_AND_ENABLE_CONSTRAINTS);
         try {
-            Driver driver = new com.mysql.jdbc.Driver();
+            Driver driver = new com.mysql.cj.jdbc.Driver();
 
             for (String script : scripts) {
                 LOG.info("Running legacy test setup script {}", script);
