@@ -1,0 +1,32 @@
+{
+  "indices": [
+    {
+      "names": ["activity_definition.prion.*"],
+      "privileges": ["read", "view_index_metadata"],
+      "field_security": {
+        "grant": ["*"]
+      }
+    },
+    {
+      "names": ["participants_structured.prion.*"],
+      "privileges": ["read", "view_index_metadata"],
+      "field_security": {
+        "grant": ["*"]
+      }
+    },
+    {
+      "names": ["participants.prion.*"],
+      "privileges": ["read", "view_index_metadata"],
+      "field_security": {
+        "grant": ["*"]
+      }
+    },
+    {
+      "names": ["users.prion.*"],
+      "privileges": ["read", "view_index_metadata"],
+      "field_security": {
+        "grant": ["*"]
+      }
+    }
+  ]
+}
