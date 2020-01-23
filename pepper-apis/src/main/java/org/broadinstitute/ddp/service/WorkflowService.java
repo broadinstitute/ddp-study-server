@@ -8,11 +8,14 @@ import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
+import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.WorkflowDao;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.json.workflow.WorkflowResponse;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
+import org.broadinstitute.ddp.model.event.ActivityInstanceStatusChangeSignal;
+import org.broadinstitute.ddp.model.event.EventSignal;
 import org.broadinstitute.ddp.model.workflow.ActivityState;
 import org.broadinstitute.ddp.model.workflow.NextStateCandidate;
 import org.broadinstitute.ddp.model.workflow.StateType;
@@ -73,7 +76,7 @@ public class WorkflowService {
 
         Optional<WorkflowState> nextState = Optional.ofNullable(next);
         nextState.ifPresent(nextWfState -> {
-            createActivityInstanceIfMissing(handle, fromState, nextWfState, operatorGuid, userGuid);
+            createActivityInstanceIfMissing(handle, fromState, nextWfState, operatorGuid, userGuid, studyId);
         });
 
         return nextState;
@@ -98,7 +101,8 @@ public class WorkflowService {
             WorkflowState fromState,
             WorkflowState nextState,
             String operatorGuid,
-            String userGuid
+            String userGuid,
+            long studyId
     ) {
         if (nextState.getType() != StateType.ACTIVITY) {
             return;
@@ -117,8 +121,46 @@ public class WorkflowService {
                     .insertInstance(activityState.getActivityId(), operatorGuid, userGuid, InstanceStatusType.CREATED, false);
             LOG.info("Created start activity instance with guid '{}' for user guid '{}' using operator guid '{}' and activity id {}",
                     instanceDto.getGuid(), userGuid, operatorGuid, activityState.getActivityId());
+            processActionsForActivityCreationSignal(
+                    handle,
+                    operatorGuid,
+                    instanceDto.getParticipantId(),
+                    userGuid,
+                    instanceDto.getId(),
+                    activityState.getActivityId(),
+                    studyId
+            );
+            LOG.info(
+                    "Processed actions for the activity instance {} of activity {} triggered by the creation signal",
+                    instanceDto.getGuid(),
+                    activityState.getActivityId()
+            );
         } else {
             LOG.info("User guid '{}' already has activity instance with guid '{}', nothing to create", userGuid, instanceGuid);
         }
+    }
+
+    private void processActionsForActivityCreationSignal(
+            Handle handle,
+            String operatorGuid,
+            long participantId,
+            String participantGuid,
+            long instanceId,
+            long activityId,
+            long studyId
+    ) {
+        // The DAO method returns optional while the column in "study_activity.study_id" is NOT NULL
+        // This means that "Optional<Long>" can be replaced with just "long"
+        long operatorId = handle.attach(JdbiUser.class).getUserIdByGuid(operatorGuid);
+        EventSignal activityCreationSignal = new ActivityInstanceStatusChangeSignal(
+                operatorId,
+                participantId,
+                participantGuid,
+                instanceId,
+                activityId,
+                studyId,
+                InstanceStatusType.CREATED
+        );
+        EventService.getInstance().processAllActionsForEventSignal(handle, activityCreationSignal);
     }
 }
