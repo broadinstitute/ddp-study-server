@@ -161,6 +161,6 @@ public class WorkflowService {
                 studyId,
                 InstanceStatusType.CREATED
         );
-        EventService.getInstance().processAllActionsForEventSignal(handle, activityCreationSignal);
+        EventService.getInstance().processSynchronousActionsForEventSignal(handle, activityCreationSignal);
     }
 }
