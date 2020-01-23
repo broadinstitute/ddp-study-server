@@ -25,8 +25,12 @@ import org.broadinstitute.ddp.constants.TestConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
+import org.broadinstitute.ddp.db.dao.EventActionDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
+import org.broadinstitute.ddp.db.dao.JdbiActivityStatusTrigger;
+import org.broadinstitute.ddp.db.dao.JdbiEventConfiguration;
+import org.broadinstitute.ddp.db.dao.JdbiEventTrigger;
 import org.broadinstitute.ddp.db.dao.JdbiWorkflowTransition;
 import org.broadinstitute.ddp.db.dao.WorkflowDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
@@ -35,6 +39,8 @@ import org.broadinstitute.ddp.json.workflow.WorkflowResponse;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
+import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
+import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.workflow.ActivityState;
 import org.broadinstitute.ddp.model.workflow.StateType;
 import org.broadinstitute.ddp.model.workflow.StaticState;
@@ -441,6 +447,48 @@ public class WorkflowServiceTest extends TxnAwareBaseTest {
                     .findLatestInstanceGuidByUserGuidAndActivityId(userGuid, form2.getActivityId());
             assertTrue(latestInstanceGuid.isPresent());
             assertEquals(newInstance.getGuid(), latestInstanceGuid.get());
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void test_givenInstanceCreationTriggersAnotherEvent_whenSuggestNextStateIsCalled_thenThatEventGetsProcessed() {
+        TransactionWrapper.useTxn(handle -> {
+            FormActivityDef activityTransitionedFrom = insertNewActivity(handle);
+            // The activity whose instance will be created when Workflow transitions from the "from" activity
+            FormActivityDef activityTransitionedTo = insertNewActivity(handle);
+            // The activity whose instance will be created by EventService when a "to" instance is created by Workflow
+            FormActivityDef triggeredFormActivity = insertNewActivity(handle);
+            // activityTransitionedFrom --> activityTransitionedTo transition with a precondition expr that is always true
+            insertTransitions(
+                    handle,
+                    new WorkflowTransition(
+                            studyId,
+                            new ActivityState(activityTransitionedFrom.getActivityId()),
+                            new ActivityState(activityTransitionedTo.getActivityId()),
+                            "true",
+                             1
+                    )
+            );
+            // Setting up an event that will make EventService create a new activity instance
+            long triggerId = handle.attach(JdbiEventTrigger.class).insert(EventTriggerType.ACTIVITY_STATUS);
+            handle.attach(JdbiActivityStatusTrigger.class).insert(
+                    triggerId, activityTransitionedTo.getActivityId(), InstanceStatusType.CREATED
+            );
+            EventActionDao eventActionDao = handle.attach(EventActionDao.class);
+            long actionId = eventActionDao.insertInstanceCreationAction(triggeredFormActivity.getActivityId());
+            JdbiEventConfiguration jdbiEventConfig = handle.attach(JdbiEventConfiguration.class);
+            long eventConfigurationId = jdbiEventConfig.insert(
+                    triggerId, actionId, data.getStudyId(), Instant.now().toEpochMilli(), 1, 0, null, null, false, 1
+            );
+
+            service.suggestNextState(
+                    handle, operatorGuid, userGuid, studyGuid, new ActivityState(activityTransitionedFrom.getActivityId())
+            );
+
+            Optional<String> latestInstanceGuid = handle.attach(JdbiActivityInstance.class)
+                    .findLatestInstanceGuidByUserGuidAndActivityId(userGuid, triggeredFormActivity.getActivityId());
+            assertTrue(latestInstanceGuid.isPresent());
             handle.rollback();
         });
     }
