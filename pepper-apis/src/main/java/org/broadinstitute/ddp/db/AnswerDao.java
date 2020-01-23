@@ -686,7 +686,7 @@ public class AnswerDao {
      * @param operatorGuid the operator who made the change
      */
     private void updateBasicAnswerById(Handle handle, long id, String operatorGuid) {
-        long timestamp = Instant.now().getEpochSecond();
+        long timestamp = Instant.now().toEpochMilli();
         try (PreparedStatement stmt = handle.getConnection().prepareStatement(updateAnswerByIdStmt)) {
             stmt.setString(1, operatorGuid);
             stmt.setLong(2, timestamp);
