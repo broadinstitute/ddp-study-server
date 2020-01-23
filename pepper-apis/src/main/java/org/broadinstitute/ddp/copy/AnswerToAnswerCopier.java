@@ -123,7 +123,8 @@ public class AnswerToAnswerCopier {
                             List.of(targetChild.getAnswerId()),
                             List.of(rowIdx));
                 } else {
-                    targetChild = updateTargetAnswer(sourceChild, targetInstance.getId(), targetChild);
+                    throw new DDPException("Target answer for question " + targetChild.getQuestionStableId()
+                            + " exists and updating is currently not supported");
                 }
                 targetRow.set(colIdx, targetChild);
             }
@@ -135,7 +136,8 @@ public class AnswerToAnswerCopier {
         if (targetAnswer == null) {
             targetAnswer = createTargetAnswer(sourceAnswer, targetInstance.getId(), targetQuestion);
         } else {
-            targetAnswer = updateTargetAnswer(sourceAnswer, targetInstance.getId(), targetAnswer);
+            throw new DDPException("Target answer for question " + targetAnswer.getQuestionStableId()
+                    + " exists and updating is currently not supported");
         }
         targetInstance.putAnswer(targetAnswer);
     }
@@ -167,10 +169,5 @@ public class AnswerToAnswerCopier {
             throw new DDPException("Unhandled copying for answer type " + type);
         }
         return answerDao.createAnswer(operatorId, targetInstanceId, targetQuestion.getId(), targetAnswer);
-    }
-
-    private Answer updateTargetAnswer(Answer sourAnswer, long targetInstanceId, Answer targetAnswer) {
-        throw new DDPException("Target answer for question " + targetAnswer.getQuestionStableId()
-                + " exists and updating is currently not supported");
     }
 }
