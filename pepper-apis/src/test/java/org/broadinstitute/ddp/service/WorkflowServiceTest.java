@@ -10,6 +10,8 @@ import static org.junit.Assert.assertTrue;
 
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -373,18 +375,15 @@ public class WorkflowServiceTest extends TxnAwareBaseTest {
     @Test
     public void test_givenNullMaxInstPerUser_andNextActDoesntHaveInstance_whenSuggestNextStateIsCalled_thenInstanceIsCreated() {
         TransactionWrapper.useTxn(handle -> {
-            FormActivityDef form1 = insertNewActivity(handle);
-            FormActivityDef form2 = insertNewActivity(handle);
-            handle.attach(JdbiActivity.class).updateMaxInstancesPerUserById(form2.getActivityId(), null);
-            ActivityState actState1 = new ActivityState(form1.getActivityId());
-            ActivityState actState2 = new ActivityState(form2.getActivityId());
-            WorkflowTransition t1 = new WorkflowTransition(studyId, actState1, actState2, "true", 1);
-            insertTransitions(handle, t1);
-
-            service.suggestNextState(handle, operatorGuid, userGuid, studyGuid, actState1);
+            Map<String, Long> actParticipatingInTransition = setupActivitiesAndTransitionBetweenThem(handle);
+            service.suggestNextState(
+                    handle, operatorGuid, userGuid, studyGuid, new ActivityState(
+                            actParticipatingInTransition.get("activityTransitionedFromId")
+                    )
+            );
 
             Optional<String> latestInstanceGuid = handle.attach(JdbiActivityInstance.class)
-                    .findLatestInstanceGuidByUserGuidAndActivityId(userGuid, form2.getActivityId());
+                    .findLatestInstanceGuidByUserGuidAndActivityId(userGuid, actParticipatingInTransition.get("activityTransitionedToId"));
             assertTrue(latestInstanceGuid.isPresent());
             handle.rollback();
         });
@@ -393,18 +392,19 @@ public class WorkflowServiceTest extends TxnAwareBaseTest {
     @Test
     public void test_givenNonZeroMaxInstPerUser_andNextActDoesntHaveInstance_whenSuggestNextStateIsCalled_thenInstanceIsCreated() {
         TransactionWrapper.useTxn(handle -> {
-            FormActivityDef form1 = insertNewActivity(handle);
-            FormActivityDef form2 = insertNewActivity(handle);
-            handle.attach(JdbiActivity.class).updateMaxInstancesPerUserById(form2.getActivityId(), 5);
-            ActivityState actState1 = new ActivityState(form1.getActivityId());
-            ActivityState actState2 = new ActivityState(form2.getActivityId());
-            WorkflowTransition t1 = new WorkflowTransition(studyId, actState1, actState2, "true", 1);
-            insertTransitions(handle, t1);
-
-            service.suggestNextState(handle, operatorGuid, userGuid, studyGuid, actState1);
+            Map<String, Long> actParticipatingInTransition = setupActivitiesAndTransitionBetweenThem(handle);
+            handle.attach(JdbiActivity.class).updateMaxInstancesPerUserById(
+                    actParticipatingInTransition.get("activityTransitionedToId"),
+                    5
+            );
+            service.suggestNextState(
+                    handle, operatorGuid, userGuid, studyGuid, new ActivityState(
+                            actParticipatingInTransition.get("activityTransitionedFromId")
+                    )
+            );
 
             Optional<String> latestInstanceGuid = handle.attach(JdbiActivityInstance.class)
-                    .findLatestInstanceGuidByUserGuidAndActivityId(userGuid, form2.getActivityId());
+                    .findLatestInstanceGuidByUserGuidAndActivityId(userGuid, actParticipatingInTransition.get("activityTransitionedToId"));
             assertTrue(latestInstanceGuid.isPresent());
             handle.rollback();
         });
@@ -413,18 +413,19 @@ public class WorkflowServiceTest extends TxnAwareBaseTest {
     @Test
     public void test_givenZeroMaxInstPerUser_andNextActDoesntHaveInstance_whenSuggestNextStateIsCalled_thenInstanceIsNotCreated() {
         TransactionWrapper.useTxn(handle -> {
-            FormActivityDef form1 = insertNewActivity(handle);
-            FormActivityDef form2 = insertNewActivity(handle);
-            handle.attach(JdbiActivity.class).updateMaxInstancesPerUserById(form2.getActivityId(), 0);
-            ActivityState actState1 = new ActivityState(form1.getActivityId());
-            ActivityState actState2 = new ActivityState(form2.getActivityId());
-            WorkflowTransition t1 = new WorkflowTransition(studyId, actState1, actState2, "true", 1);
-            insertTransitions(handle, t1);
-
-            service.suggestNextState(handle, operatorGuid, userGuid, studyGuid, actState1);
+            Map<String, Long> actParticipatingInTransition = setupActivitiesAndTransitionBetweenThem(handle);
+            handle.attach(JdbiActivity.class).updateMaxInstancesPerUserById(
+                    actParticipatingInTransition.get("activityTransitionedToId"),
+                    0
+            );
+            service.suggestNextState(
+                    handle, operatorGuid, userGuid, studyGuid, new ActivityState(
+                            actParticipatingInTransition.get("activityTransitionedFromId")
+                    )
+            );
 
             Optional<String> latestInstanceGuid = handle.attach(JdbiActivityInstance.class)
-                    .findLatestInstanceGuidByUserGuidAndActivityId(userGuid, form2.getActivityId());
+                    .findLatestInstanceGuidByUserGuidAndActivityId(userGuid, actParticipatingInTransition.get("activityTransitionedToId"));
             assertFalse(latestInstanceGuid.isPresent());
             handle.rollback();
         });
@@ -433,18 +434,16 @@ public class WorkflowServiceTest extends TxnAwareBaseTest {
     @Test
     public void test_givenNextActivityAlreadyHasInstance_whenSuggestNextStateIsCalled_thenInstanceIsNotCreated() {
         TransactionWrapper.useTxn(handle -> {
-            FormActivityDef form1 = insertNewActivity(handle);
-            FormActivityDef form2 = insertNewActivity(handle);
-            ActivityInstanceDto newInstance = insertNewInstance(handle, form2.getActivityId());
-            ActivityState actState1 = new ActivityState(form1.getActivityId());
-            ActivityState actState2 = new ActivityState(form2.getActivityId());
-            WorkflowTransition t1 = new WorkflowTransition(studyId, actState1, actState2, "true", 1);
-            insertTransitions(handle, t1);
-
-            service.suggestNextState(handle, operatorGuid, userGuid, studyGuid, actState1);
+            Map<String, Long> actParticipatingInTransition = setupActivitiesAndTransitionBetweenThem(handle);
+            ActivityInstanceDto newInstance = insertNewInstance(handle, actParticipatingInTransition.get("activityTransitionedToId"));
+            service.suggestNextState(
+                    handle, operatorGuid, userGuid, studyGuid, new ActivityState(
+                            actParticipatingInTransition.get("activityTransitionedFromId")
+                    )
+            );
 
             Optional<String> latestInstanceGuid = handle.attach(JdbiActivityInstance.class)
-                    .findLatestInstanceGuidByUserGuidAndActivityId(userGuid, form2.getActivityId());
+                    .findLatestInstanceGuidByUserGuidAndActivityId(userGuid, actParticipatingInTransition.get("activityTransitionedToId"));
             assertTrue(latestInstanceGuid.isPresent());
             assertEquals(newInstance.getGuid(), latestInstanceGuid.get());
             handle.rollback();
@@ -454,26 +453,13 @@ public class WorkflowServiceTest extends TxnAwareBaseTest {
     @Test
     public void test_givenInstanceCreationTriggersAnotherEvent_whenSuggestNextStateIsCalled_thenThatEventGetsProcessed() {
         TransactionWrapper.useTxn(handle -> {
-            FormActivityDef activityTransitionedFrom = insertNewActivity(handle);
-            // The activity whose instance will be created when Workflow transitions from the "from" activity
-            FormActivityDef activityTransitionedTo = insertNewActivity(handle);
-            // The activity whose instance will be created by EventService when a "to" instance is created by Workflow
+            Map<String, Long> actParticipatingInTransition = setupActivitiesAndTransitionBetweenThem(handle);
+            // Setting up an event that will make EventService create a new activity instance
             FormActivityDef triggeredFormActivity = insertNewActivity(handle);
             // activityTransitionedFrom --> activityTransitionedTo transition with a precondition expr that is always true
-            insertTransitions(
-                    handle,
-                    new WorkflowTransition(
-                            studyId,
-                            new ActivityState(activityTransitionedFrom.getActivityId()),
-                            new ActivityState(activityTransitionedTo.getActivityId()),
-                            "true",
-                             1
-                    )
-            );
-            // Setting up an event that will make EventService create a new activity instance
             long triggerId = handle.attach(JdbiEventTrigger.class).insert(EventTriggerType.ACTIVITY_STATUS);
             handle.attach(JdbiActivityStatusTrigger.class).insert(
-                    triggerId, activityTransitionedTo.getActivityId(), InstanceStatusType.CREATED
+                    triggerId, actParticipatingInTransition.get("activityTransitionedToId"), InstanceStatusType.CREATED
             );
             EventActionDao eventActionDao = handle.attach(EventActionDao.class);
             long actionId = eventActionDao.insertInstanceCreationAction(triggeredFormActivity.getActivityId());
@@ -483,7 +469,9 @@ public class WorkflowServiceTest extends TxnAwareBaseTest {
             );
 
             service.suggestNextState(
-                    handle, operatorGuid, userGuid, studyGuid, new ActivityState(activityTransitionedFrom.getActivityId())
+                    handle, operatorGuid, userGuid, studyGuid, new ActivityState(
+                            actParticipatingInTransition.get("activityTransitionedFromId")
+                    )
             );
 
             Optional<String> latestInstanceGuid = handle.attach(JdbiActivityInstance.class)
@@ -491,6 +479,27 @@ public class WorkflowServiceTest extends TxnAwareBaseTest {
             assertTrue(latestInstanceGuid.isPresent());
             handle.rollback();
         });
+    }
+
+    private Map<String, Long> setupActivitiesAndTransitionBetweenThem(Handle handle) {
+        Map<String, Long> actParticipatingInTransition = new HashMap<>();
+        FormActivityDef activityTransitionedFrom = insertNewActivity(handle);
+        // The activity whose instance will be created when Workflow transitions from the "from" activity
+        FormActivityDef activityTransitionedTo = insertNewActivity(handle);
+        // The activity whose instance will be created by EventService when a "to" instance is created by Workflow
+        insertTransitions(
+                handle,
+                new WorkflowTransition(
+                        studyId,
+                        new ActivityState(activityTransitionedFrom.getActivityId()),
+                        new ActivityState(activityTransitionedTo.getActivityId()),
+                        "true",
+                         1
+                )
+        );
+        actParticipatingInTransition.put("activityTransitionedFromId", activityTransitionedFrom.getActivityId());
+        actParticipatingInTransition.put("activityTransitionedToId", activityTransitionedTo.getActivityId());
+        return actParticipatingInTransition;
     }
 
     private FormActivityDef insertNewActivity(Handle handle) {
