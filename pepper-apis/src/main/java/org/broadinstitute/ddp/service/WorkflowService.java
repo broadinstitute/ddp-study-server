@@ -149,8 +149,6 @@ public class WorkflowService {
             long activityId,
             long studyId
     ) {
-        // The DAO method returns optional while the column in "study_activity.study_id" is NOT NULL
-        // This means that "Optional<Long>" can be replaced with just "long"
         long operatorId = handle.attach(JdbiUser.class).getUserIdByGuid(operatorGuid);
         EventSignal activityCreationSignal = new ActivityInstanceStatusChangeSignal(
                 operatorId,
