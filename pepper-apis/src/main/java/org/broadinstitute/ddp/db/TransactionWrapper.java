@@ -75,7 +75,7 @@ public class TransactionWrapper {
             dbConfigs.add(new DbConfiguration(conn.getKey(), maxConnections, dbUrl));
         }
         reset();
-        init(dbConfigs.toArray(new DbConfiguration[0]));
+        init(TimeZone.getDefault().getID(), dbConfigs.toArray(new DbConfiguration[0]));
     }
 
 
@@ -153,7 +153,7 @@ public class TransactionWrapper {
         }
     }
 
-    public static synchronized void init(DbConfiguration...dbConfigs) {
+    public static synchronized void init(String defaultTimeZoneName, DbConfiguration...dbConfigs) {
         for (DbConfiguration dbConfig : dbConfigs) {
             if (gTxnWrapper.containsKey(dbConfig.getDb())) {
                 TransactionWrapper transactionWrapper = gTxnWrapper.get(dbConfig.getDb());
@@ -171,10 +171,17 @@ public class TransactionWrapper {
             }
             gTxnWrapper.put(dbConfig.getDb(), new TransactionWrapper(dbConfig.getMaxConnections(), dbConfig.getDbUrl()));
         }
-        // We are setting local timezone to UTC with expectation that it will be same on server
+        // We are setting the VMs default timezone expectation that it will be same on server
+        // or at least specified in DB connection URL
         // if timezones don't match, times and dates might be miscalculated/improperly converted by JDBC connector
         // https://bugs.mysql.com/bug.php?id=91112
-        TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
+        LOG.info("Setting default time zone to: {}", defaultTimeZoneName);
+        TimeZone defaultTimeZone = TimeZone.getTimeZone(defaultTimeZoneName);
+        if (defaultTimeZone == null) {
+            throw new RuntimeException(String.format("Could not find a Time zone with name: %s", defaultTimeZoneName));
+        }
+        TimeZone.setDefault(defaultTimeZone);
+
         isInitialized = true;
     }
 
@@ -223,7 +230,7 @@ public class TransactionWrapper {
             String dbUrl = cfg.getString(db.getDbUrlConfigKey());
             dbConfigs.add(new DbConfiguration(db, cfg.getInt(db.getDbPoolSizeConfigKey()), dbUrl));
         }
-        init(dbConfigs.toArray(new DbConfiguration[0]));
+        init(TimeZone.getDefault().getID(), dbConfigs.toArray(new DbConfiguration[0]));
     }
 
     /**
@@ -347,6 +354,7 @@ public class TransactionWrapper {
         config.addDataSourceProperty("cachePrepStmts", "true");
         config.addDataSourceProperty("prepStmtCacheSize", "250");
         config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
+        config.addDataSourceProperty("cacheServerConfiguration", "true");
         config.setAutoCommit(true); // will be managed by jdbi, which expects autcommit to be enabled initially
         config.setTransactionIsolation("TRANSACTION_READ_COMMITTED");
         config.setMaximumPoolSize(maxConnections);
