@@ -1,130 +1,71 @@
 group JdbiCompositeQuestion;
 
+all_parent_and_child_dtos_select() ::= <<
+select pq.question_id                  p_question_id,
+       (select question_type_code from question_type where question_type_id = pq.question_type_id) p_question_type_code,
+       pqsc.stable_id                  p_stable_id,
+       pq.study_activity_id            p_study_activity_id,
+       pq.question_prompt_template_id  p_question_prompt_template_id,
+       pq.info_header_template_id      p_info_header_template_id,
+       pq.info_footer_template_id      p_info_footer_template_id,
+       pq.is_restricted                p_is_restricted,
+       pq.is_deprecated                p_is_deprecated,
+       pq.hide_number                  p_hide_number,
+       pq.revision_id                  p_revision_id,
+       prev.start_date                 p_revision_start,
+       prev.end_date                   p_revision_end,
+       p.allow_multiple                p_allow_multiple,
+       p.unwrap_on_export              p_unwrap_on_export,
+       p.add_button_template_id        p_add_button_template_id,
+       p.additional_item_template_id   p_additional_item_template_id,
+       ot.orientation_type_code        p_child_orientation,
+       c.child_question_id             c_question_id,
+       (select question_type_code from question_type where question_type_id = cq.question_type_id) c_question_type_code,
+       cqsc.stable_id                  c_stable_id,
+       cq.study_activity_id            c_study_activity_id,
+       cq.question_prompt_template_id  c_question_prompt_template_id,
+       cq.info_header_template_id      c_info_header_template_id,
+       cq.info_footer_template_id      c_info_footer_template_id,
+       cq.is_restricted                c_is_restricted,
+       cq.is_deprecated                c_is_deprecated,
+       cq.hide_number                  c_hide_number,
+       cq.revision_id                  c_revision_id,
+       crev.start_date                 c_revision_start,
+       crev.end_date                   c_revision_end
+  from composite_question as p
+  join question as pq on pq.question_id = p.question_id
+  join question_stable_code as pqsc on pq.question_stable_code_id = pqsc.question_stable_code_id
+  join revision as prev on prev.revision_id = pq.revision_id
+  left join orientation_type as ot on ot.orientation_type_id = p.child_orientation_type_id
+  left join (composite_question__question as c
+       join question as cq on c.child_question_id = cq.question_id
+       join question_stable_code as cqsc on cq.question_stable_code_id = cqsc.question_stable_code_id
+       join revision as crev on crev.revision_id = cq.revision_id
+       ) on p.question_id = c.parent_question_id
+>>
+
+all_parent_and_child_dtos_order_by() ::= <<
+order by c.display_order
+>>
+
 queryDtoAndChildrenDtosByQuestionId() ::= <<
-SELECT
-    p.question_id                   p_question_id,
-    p.allow_multiple                p_allow_multiple,
-    p.unwrap_on_export              p_unwrap_on_export,
-    p.add_button_template_id        p_add_button_template_id,
-    p.additional_item_template_id   p_additional_item_template_id,
-    ot.orientation_type_code        p_child_orientation,
-    pqt.question_type_code          p_question_type_code,
-    pqsc.stable_id                  p_stable_id,
-    pq.question_prompt_template_id  p_question_prompt_template_id,
-    pq.info_header_template_id      p_info_header_template_id,
-    pq.info_footer_template_id      p_info_footer_template_id,
-    pq.study_activity_id            p_study_activity_id,
-    pq.is_restricted                p_is_restricted,
-    pq.is_deprecated                p_is_deprecated,
-    pq.hide_number                  p_hide_number,
-    pq.revision_id                  p_revision_id,
-    prev.start_date                 p_revision_start,
-    prev.end_date                   p_revision_end,
-    c.child_question_id             c_question_id,
-    cqt.question_type_code          c_question_type_code,
-    cqsc.stable_id                  c_stable_id,
-    cq.question_prompt_template_id  c_question_prompt_template_id,
-    cq.info_header_template_id      c_info_header_template_id,
-    cq.info_footer_template_id      c_info_footer_template_id,
-    cq.study_activity_id            c_study_activity_id,
-    cq.is_restricted                c_is_restricted,
-    cq.is_deprecated                c_is_deprecated,
-    cq.hide_number                  c_hide_number,
-    cq.revision_id                  c_revision_id,
-    crev.start_date                 c_revision_start,
-    crev.end_date                   c_revision_end
-FROM
-    composite_question p
-        LEFT JOIN
-    orientation_type as ot on ot.orientation_type_id = p.child_orientation_type_id
-        JOIN
-    question pq on pq.question_id = p.question_id
-        JOIN
-    question_type pqt on pqt.question_type_id = pq.question_type_id
-        JOIN
-    question_stable_code pqsc on pqsc.question_stable_code_id = pq.question_stable_code_id
-        JOIN
-    revision prev on prev.revision_id = pq.revision_id
-        LEFT JOIN
-    (composite_question__question c
-            JOIN
-        question cq on c.child_question_id = cq.question_id
-            JOIN
-        revision crev on crev.revision_id = cq.revision_id
-            JOIN
-        question_stable_code cqsc on cq.question_stable_code_id = cqsc.question_stable_code_id
-            JOIN
-        question_type cqt on cq.question_type_id = cqt.question_type_id)
-            ON c.parent_question_id = p.question_id
-WHERE
-    p.question_id = :questionId
-ORDER BY
-    c.display_order
+<all_parent_and_child_dtos_select()>
+where p.question_id = :questionId
+<all_parent_and_child_dtos_order_by()>
 >>
 
 queryDtoAndChildrenDtosByActivityInstanceGuidAndStableId() ::= <<
-SELECT
-    p.question_id                   p_question_id,
-    p.allow_multiple                p_allow_multiple,
-    p.unwrap_on_export              p_unwrap_on_export,
-    p.add_button_template_id        p_add_button_template_id,
-    p.additional_item_template_id   p_additional_item_template_id,
-    ot.orientation_type_code        p_child_orientation,
-    pqt.question_type_code          p_question_type_code,
-    pqsc.stable_id                  p_stable_id,
-    pq.question_prompt_template_id  p_question_prompt_template_id,
-    pq.info_header_template_id      p_info_header_template_id,
-    pq.info_footer_template_id      p_info_footer_template_id,
-    pq.study_activity_id            p_study_activity_id,
-    pq.is_restricted                p_is_restricted,
-    pq.is_deprecated                p_is_deprecated,
-    pq.hide_number                  p_hide_number,
-    pq.revision_id                  p_revision_id,
-    prev.start_date                 p_revision_start,
-    prev.end_date                   p_revision_end,
-    c.child_question_id             c_question_id,
-    cqt.question_type_code          c_question_type_code,
-    cqsc.stable_id                  c_stable_id,
-    cq.question_prompt_template_id  c_question_prompt_template_id,
-    cq.info_header_template_id      c_info_header_template_id,
-    cq.info_footer_template_id      c_info_footer_template_id,
-    cq.study_activity_id            c_study_activity_id,
-    cq.is_restricted                c_is_restricted,
-    cq.is_deprecated                c_is_deprecated,
-    cq.hide_number                  c_hide_number,
-    cq.revision_id                  c_revision_id,
-    crev.start_date                 c_revision_start,
-    crev.end_date                   c_revision_end
-FROM
-    composite_question p
-        LEFT JOIN
-    orientation_type as ot on ot.orientation_type_id = p.child_orientation_type_id
-        JOIN
-    question pq on pq.question_id = p.question_id
-        JOIN
-    question_type pqt on pqt.question_type_id = pq.question_type_id
-        JOIN
-    question_stable_code pqsc on pq.question_stable_code_id = pqsc.question_stable_code_id
-        JOIN
-    revision prev on prev.revision_id = pq.revision_id
-        JOIN
-    study_activity sa on sa.study_id = pqsc.umbrella_study_id
-        JOIN
-    activity_instance as ai ON ai.study_activity_id = sa.study_activity_id
-        LEFT JOIN
-    (composite_question__question c
-            JOIN
-        question cq on c.child_question_id = cq.question_id
-            JOIN
-        revision crev on crev.revision_id = cq.revision_id
-            JOIN
-        question_stable_code cqsc on cq.question_stable_code_id = cqsc.question_stable_code_id
-            JOIN
-        question_type cqt on cq.question_type_id = cqt.question_type_id)
-            on pq.question_id = c.parent_question_id
-WHERE
-    ai.activity_instance_guid = :activityInstanceGuid
-    AND pqsc.stable_id = :questionStableId
-ORDER BY
-    c.display_order
+<all_parent_and_child_dtos_select()>
+  join study_activity as act on act.study_activity_id = pq.study_activity_id
+  join activity_instance as ai on ai.study_activity_id = act.study_activity_id
+ where ai.activity_instance_guid = :activityInstanceGuid
+   and pqsc.stable_id = :questionStableId
+<all_parent_and_child_dtos_order_by()>
+>>
+
+queryParentDtoAndChildDtosByChildQuestionId() ::= <<
+<all_parent_and_child_dtos_select()>
+where p.question_id = (
+      select parent_question_id from composite_question__question where child_question_id = :childQuestionId)
+<all_parent_and_child_dtos_order_by()>
 >>

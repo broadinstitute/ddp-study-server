@@ -1,14 +1,15 @@
 package org.broadinstitute.ddp.db.dao;
 
-import static java.util.stream.Collectors.toList;
-
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
+import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.AgreementAnswerDto;
@@ -45,6 +46,8 @@ import org.slf4j.LoggerFactory;
 public interface AnswerDao extends SqlObject {
 
     Logger LOG = LoggerFactory.getLogger(AnswerDao.class);
+    String TABLE_NAME = "answer";
+    String GUID_COLUMN = "answer_guid";
 
     @CreateSqlObject
     JdbiPicklistOptionAnswer getJdbiPicklistOptionAnswer();
@@ -72,6 +75,9 @@ public interface AnswerDao extends SqlObject {
 
     @CreateSqlObject
     JdbiAnswer getJdbiAnswer();
+
+    @CreateSqlObject
+    AnswerSql getAnswerSql();
 
     @SqlQuery(" select da.year, da.month, da.day "
             + " from activity_instance as ai "
@@ -212,7 +218,7 @@ public interface AnswerDao extends SqlObject {
                                         //updated query gives us the question information if row exists but answer does not
                                         //check for null then
                                         childAnswerDto.getId() == null ? null : getAnswerById(childAnswerDto.getId()))
-                                .collect(toList());
+                                .collect(Collectors.toList());
                         answer.addRowOfChildAnswers(rowOfAnswers);
                     });
                     return answer;
@@ -236,6 +242,63 @@ public interface AnswerDao extends SqlObject {
         return _deleteAllAnswersByInstanceIds(instanceIds);
     }
 
+
+    default Answer createAnswer(long operatorId, long instanceId, long questionId, Answer answer) {
+        String guid = DBUtils.uniqueStandardGuid(getHandle(), TABLE_NAME, GUID_COLUMN);
+        long now = Instant.now().toEpochMilli();
+        long id = getAnswerSql().insertAnswer(guid, operatorId, instanceId, questionId, now, now);
+        createAnswerValue(operatorId, instanceId, id, answer);
+        return findAnswerById(id).orElseThrow(() -> new DaoException("Could not find answer with id " + id));
+    }
+
+    default Answer createAnswer(long operatorId, long instanceId, Answer answer) {
+        String guid = DBUtils.uniqueStandardGuid(getHandle(), TABLE_NAME, GUID_COLUMN);
+        long now = Instant.now().toEpochMilli();
+        long id = getAnswerSql().insertAnswerByQuestionStableId(guid, operatorId, instanceId, answer.getQuestionStableId(), now, now);
+        createAnswerValue(operatorId, instanceId, id, answer);
+        return findAnswerById(id).orElseThrow(() -> new DaoException("Could not find answer with id " + id));
+    }
+
+    private void createAnswerValue(long operatorId, long instanceId, long answerId, Answer answer) {
+        var answerSql = getAnswerSql();
+        var type = answer.getQuestionType();
+        if (type == QuestionType.AGREEMENT) {
+            boolean value = ((AgreementAnswer) answer).getValue();
+            DBUtils.checkInsert(1, answerSql.insertAgreementValue(answerId, value));
+        } else if (type == QuestionType.BOOLEAN) {
+            boolean value = ((BoolAnswer) answer).getValue();
+            DBUtils.checkInsert(1, answerSql.insertBoolValue(answerId, value));
+        } else if (type == QuestionType.COMPOSITE) {
+            createAnswerCompositeValue(operatorId, instanceId, answerId, (CompositeAnswer) answer);
+        } else if (type == QuestionType.DATE) {
+            DateValue value = ((DateAnswer) answer).getValue();
+            DBUtils.checkInsert(1, answerSql.insertDateValue(answerId, value));
+        } else if (type == QuestionType.NUMERIC) {
+            Long value = ((NumericIntegerAnswer) answer).getValue();
+            DBUtils.checkInsert(1, answerSql.insertNumericIntValue(answerId, value));
+        } else if (type == QuestionType.PICKLIST) {
+            createAnswerPicklistValue(instanceId, answerId, (PicklistAnswer) answer);
+        } else if (type == QuestionType.TEXT) {
+            String value = ((TextAnswer) answer).getValue();
+            DBUtils.checkInsert(1, answerSql.insertTextValue(answerId, value));
+        } else {
+            throw new DaoException("Unhandled answer type " + type);
+        }
+    }
+
+    private void createAnswerCompositeValue(long operatorId, long instanceId, long answerId, CompositeAnswer answer) {
+        List<List<Long>> childAnswerIds = answer.getValue().stream()
+                .map(row -> row.getValues().stream()
+                        .map(child -> child == null ? null : createAnswer(operatorId, instanceId, child).getAnswerId())
+                        .collect(Collectors.toList()))
+                .collect(Collectors.toList());
+        getJdbiCompositeAnswer().insertChildAnswerItems(answerId, childAnswerIds);
+    }
+
+    private void createAnswerPicklistValue(long instanceId, long answerId, PicklistAnswer answer) {
+        String instanceGuid = getHandle().attach(JdbiActivityInstance.class).getActivityInstanceGuid(instanceId);
+        getPicklistAnswerDao().assignOptionsToAnswerId(answerId, answer.getValue(), instanceGuid);
+    }
 
     @UseStringTemplateSqlLocator
     @SqlQuery("queryAnswerById")

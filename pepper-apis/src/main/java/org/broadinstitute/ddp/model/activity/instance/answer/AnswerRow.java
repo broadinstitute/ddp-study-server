@@ -17,7 +17,7 @@ public class AnswerRow {
     }
 
     public AnswerRow(List<Answer> rowOfAnswers) {
-        this.values = rowOfAnswers;
+        this.values = new ArrayList<>(rowOfAnswers);
     }
 
     public List<Answer> getValues() {
