@@ -20,9 +20,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
+import org.broadinstitute.ddp.db.dao.JdbiProfile;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
+import org.broadinstitute.ddp.db.dto.UserProfileDto;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
@@ -54,6 +56,8 @@ import org.broadinstitute.ddp.pex.lang.PexParser.QuestionQueryContext;
 import org.broadinstitute.ddp.pex.lang.PexParser.StudyPredicateContext;
 import org.broadinstitute.ddp.pex.lang.PexParser.StudyQueryContext;
 import org.jdbi.v3.core.Handle;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A tree walking interpreter for pex.
@@ -66,6 +70,7 @@ import org.jdbi.v3.core.Handle;
  */
 public class TreeWalkInterpreter implements PexInterpreter {
 
+    private static final Logger LOG = LoggerFactory.getLogger(TreeWalkInterpreter.class);
     private static final PexFetcher fetcher = new PexFetcher();
 
     @Override
@@ -212,12 +217,27 @@ public class TreeWalkInterpreter implements PexInterpreter {
         return applyStudyPredicate(ictx, ctx.studyPredicate(), umbrellaStudyGuid);
     }
 
-    private boolean applyStudyPredicate(InterpreterContext ictx, StudyPredicateContext predCtx, String umbrellaStudyGuid) {
-        Optional<GovernancePolicy> policy = ictx.getHandle().attach(StudyGovernanceDao.class).findPolicyByStudyGuid(umbrellaStudyGuid);
-        String msg = "Governance policy for " + umbrellaStudyGuid + " doesn't exist";
-        return policy.map(
-                p -> p.hasReachedAgeOfMajority(ictx.getHandle(), new TreeWalkInterpreter(), ictx.getUserGuid())
-        ).orElseThrow(() -> new PexFetchException(new NoSuchElementException(msg)));
+    private boolean applyStudyPredicate(InterpreterContext ictx, StudyPredicateContext predCtx, String studyGuid) {
+        if (predCtx instanceof PexParser.HasAgedUpPredicateContext) {
+            GovernancePolicy policy = ictx.getHandle().attach(StudyGovernanceDao.class)
+                    .findPolicyByStudyGuid(studyGuid)
+                    .orElse(null);
+            if (policy == null) {
+                throw new PexFetchException(new NoSuchElementException("Governance policy for " + studyGuid + " does not exist"));
+            }
+
+            String userGuid = ictx.getUserGuid();
+            UserProfileDto profileDto = ictx.getHandle().attach(JdbiProfile.class).getUserProfileByUserGuid(userGuid);
+            if (profileDto == null || profileDto.getBirthDate() == null) {
+                LOG.warn("User {} in study {} does not have profile or birth date to evaluate age-up policy, defaulting to false",
+                        userGuid, studyGuid);
+                return false;
+            }
+
+            return policy.hasReachedAgeOfMajority(ictx.getHandle(), new TreeWalkInterpreter(), userGuid, profileDto.getBirthDate());
+        } else {
+            throw new PexUnsupportedException("Unsupported study predicate: " + predCtx.getText());
+        }
     }
 
     private boolean evalQuestionQuery(InterpreterContext ictx, QuestionQueryContext ctx) {
