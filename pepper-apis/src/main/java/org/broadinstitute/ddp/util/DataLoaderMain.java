@@ -198,8 +198,9 @@ public class DataLoaderMain {
         LiquibaseUtil.runLiquibase(dbUrl, TransactionWrapper.DB.APIS);
 
         int maxConnections = cfg.getInt(ConfigFile.NUM_POOLED_CONNECTIONS);
+        String defaultTimeZoneName = cfg.getString(ConfigFile.DEFAULT_TIMEZONE);
         TransactionWrapper.reset();
-        TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, maxConnections,
+        TransactionWrapper.init(defaultTimeZoneName, new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, maxConnections,
                 dbUrl));
 
         DBUtils.loadDaoSqlCommands(sqlConfig);

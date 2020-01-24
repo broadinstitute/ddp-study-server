@@ -105,7 +105,8 @@ public class OLCBackfillScript {
 
         int maxConnections = cfg.getInt(ConfigFile.NUM_POOLED_CONNECTIONS);
         TransactionWrapper.reset();
-        TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, maxConnections,
+        TransactionWrapper.init(cfg.getString(ConfigFile.DEFAULT_TIMEZONE),
+                new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, maxConnections,
                 dbUrl));
 
         DBUtils.loadDaoSqlCommands(sqlConfig);

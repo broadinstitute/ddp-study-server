@@ -67,7 +67,7 @@ public class TransactionWrapperTest {
 
     @Before
     public void initPool() {
-        TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, 1, testDbUrl));
+        TransactionWrapper.init("UTC", new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, 1, testDbUrl));
     }
 
     @After
@@ -82,7 +82,7 @@ public class TransactionWrapperTest {
         int maxPoolSize = 1;
         synchronized (TransactionWrapper.class) {
             TransactionWrapper.reset();
-            TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS,
+            TransactionWrapper.init("UTC", new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS,
                     maxPoolSize, testDbUrl));
             final AtomicBoolean gotPoolExhaustedError = new AtomicBoolean(false);
 
@@ -255,7 +255,7 @@ public class TransactionWrapperTest {
     @Test
     public void testJdbi_withTxn_multipleConnections() {
         TransactionWrapper.reset();
-        TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, 2, testDbUrl));
+        TransactionWrapper.init("UTC", new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, 2, testDbUrl));
         boolean res = TransactionWrapper.withTxn(handle -> {
             String name = handle.select(TEST_QUERY).mapTo(String.class).findOnly();
             String name2 = TransactionWrapper.withTxn(
@@ -269,7 +269,7 @@ public class TransactionWrapperTest {
     @Test
     public void testJdbi_withTxn_outOfConnections() {
         TransactionWrapper.reset();
-        TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, 1, testDbUrl));
+        TransactionWrapper.init("UTC", new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, 1, testDbUrl));
         try {
             TransactionWrapper.withTxn(handle -> {
                 handle.select(TEST_QUERY).mapTo(String.class).findOnly();
@@ -367,7 +367,7 @@ public class TransactionWrapperTest {
     @Test
     public void testJdbi_useTxn_multipleConnections() {
         TransactionWrapper.reset();
-        TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, 2, testDbUrl));
+        TransactionWrapper.init("UTC", new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, 2, testDbUrl));
         TransactionWrapper.useTxn(handle -> {
             String name = handle.select(TEST_QUERY).mapTo(String.class).findOnly();
             TransactionWrapper.useTxn(h -> {
@@ -381,7 +381,7 @@ public class TransactionWrapperTest {
     @Test
     public void testJdbi_useTxn_outOfConnections() {
         TransactionWrapper.reset();
-        TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, 1, testDbUrl));
+        TransactionWrapper.init("UTC", new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, 1, testDbUrl));
         try {
             TransactionWrapper.useTxn(handle -> {
                 handle.select(TEST_QUERY).mapTo(String.class).findOnly();

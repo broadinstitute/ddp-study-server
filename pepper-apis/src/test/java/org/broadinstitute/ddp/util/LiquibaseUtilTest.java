@@ -35,7 +35,7 @@ public class LiquibaseUtilTest {
         driver = new com.mysql.cj.jdbc.Driver();
         testDbUrl = MySqlTestContainerUtil.getFullJdbcTestUrl(dbContainer);
         TransactionWrapper.reset();
-        TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, 1, testDbUrl));
+        TransactionWrapper.init("UTC", new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, 1, testDbUrl));
     }
 
     @After

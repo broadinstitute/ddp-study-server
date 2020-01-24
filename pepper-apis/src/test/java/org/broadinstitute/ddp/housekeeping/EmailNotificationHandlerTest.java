@@ -94,9 +94,10 @@ public class EmailNotificationHandlerTest extends TxnAwareBaseTest {
 
         LiquibaseUtil.runLiquibase(pepperDbUrl, TransactionWrapper.DB.APIS);
         LiquibaseUtil.runLiquibase(housekeepingDbUrl, TransactionWrapper.DB.HOUSEKEEPING);
+        String defaultTimeZoneName = cfg.getString(ConfigFile.DEFAULT_TIMEZONE);
 
         TransactionWrapper.reset();
-        TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS,
+        TransactionWrapper.init(defaultTimeZoneName, new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS,
                         maxPepperConnections, pepperDbUrl),
                 new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.HOUSEKEEPING,
                         maxHousekeepingConnections, housekeepingDbUrl));

@@ -71,7 +71,9 @@ public class UserAdminCLI {
         String encryptionSecret = cfg.getConfig(ConfigFile.AUTH0).getString(ConfigFile.ENCRYPTION_SECRET);
         String dbUrl = cfg.getString(ConfigFile.DB_URL);
 
-        TransactionWrapper.init(
+        String defaultTimeZoneName = cfg.getString(ConfigFile.DEFAULT_TIMEZONE);
+
+        TransactionWrapper.init(defaultTimeZoneName,
                 new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, 1, dbUrl));
         try {
             TransactionWrapper.useTxn(handle -> {

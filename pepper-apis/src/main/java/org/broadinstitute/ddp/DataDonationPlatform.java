@@ -20,6 +20,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -244,7 +245,7 @@ public class DataDonationPlatform {
         String dbUrl = cfg.getString(ConfigFile.DB_URL);
         LOG.info("Using db {}", dbUrl);
 
-        TransactionWrapper.init(
+        TransactionWrapper.init(cfg.getString(ConfigFile.DEFAULT_TIMEZONE),
                 new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, maxConnections, dbUrl));
 
         threadPool(-1, -1, requestThreadTimeout);

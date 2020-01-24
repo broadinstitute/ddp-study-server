@@ -179,7 +179,8 @@ public class Housekeeping {
         KitCheckDao kitCheckDao = new KitCheckDao();
 
         if (!TransactionWrapper.isInitialized()) {
-            TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.HOUSEKEEPING,
+            String defaultTimeZoneName = cfg.getString(ConfigFile.DEFAULT_TIMEZONE);
+            TransactionWrapper.init(defaultTimeZoneName, new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.HOUSEKEEPING,
                             maxConnections, housekeepingDbUrl),
                     new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS,
                             maxConnections, apisDbUrl));

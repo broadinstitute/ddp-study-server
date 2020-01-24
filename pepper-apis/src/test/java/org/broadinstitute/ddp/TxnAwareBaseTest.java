@@ -26,9 +26,10 @@ public abstract class TxnAwareBaseTest extends ConfigAwareBaseTest {
 
         int maxConnections = cfg.getInt(ConfigFile.NUM_POOLED_CONNECTIONS);
         String dbUrl = cfg.getString(TransactionWrapper.DB.APIS.getDbUrlConfigKey());
+        String defaultTimeZoneName = cfg.getString(ConfigFile.DEFAULT_TIMEZONE);
         LOG.info("Initializing db pool for " + dbUrl);
         TransactionWrapper.reset();
-        TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, maxConnections,
+        TransactionWrapper.init(defaultTimeZoneName, new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, maxConnections,
                                                                        dbUrl));
         LiquibaseUtil.runLiquibase(dbUrl, TransactionWrapper.DB.APIS);
 
