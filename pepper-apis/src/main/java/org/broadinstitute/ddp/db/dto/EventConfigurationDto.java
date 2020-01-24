@@ -8,7 +8,6 @@ import java.util.Set;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
-import org.broadinstitute.ddp.model.event.CopyAnswerTarget;
 import org.broadinstitute.ddp.model.event.NotificationServiceType;
 import org.broadinstitute.ddp.model.event.NotificationType;
 import org.broadinstitute.ddp.model.event.PdfAttachment;
@@ -82,8 +81,7 @@ public class EventConfigurationDto {
     // No sub-table
 
     /* COPY_ANSWER */
-    private CopyAnswerTarget copyAnswerTarget;
-    private String copySourceQuestionStableId;
+    private Long copyActionCopyConfigurationId;
 
     /* CREATE_INVITATION */
     private Long contactEmailQuestionStableCodeId;
@@ -119,8 +117,7 @@ public class EventConfigurationDto {
                                  Long linkedActivityId,
                                  Long pdfGenerationDocumentConfigurationId,
                                  Long activityInstanceCreationStudyActivityId,
-                                 CopyAnswerTarget copyAnswerTarget,
-                                 String copySourceQuestionStableId,
+                                 Long copyActionCopyConfigurationId,
                                  Long contactEmailQuestionStableCodeId,
                                  String contactEmailQuestionStableId,
                                  Boolean markExistingInvitationsAsVoided) {
@@ -147,8 +144,7 @@ public class EventConfigurationDto {
         this.linkedActivityId = linkedActivityId;
         this.pdfGenerationDocumentConfigurationId = pdfGenerationDocumentConfigurationId;
         this.activityInstanceCreationStudyActivityId = activityInstanceCreationStudyActivityId;
-        this.copyAnswerTarget = copyAnswerTarget;
-        this.copySourceQuestionStableId = copySourceQuestionStableId;
+        this.copyActionCopyConfigurationId = copyActionCopyConfigurationId;
         this.contactEmailQuestionStableCodeId = contactEmailQuestionStableCodeId;
         this.contactEmailQuestionStableId = contactEmailQuestionStableId;
         this.markExistingInvitationsAsVoided = markExistingInvitationsAsVoided;
@@ -242,12 +238,8 @@ public class EventConfigurationDto {
         return activityInstanceCreationStudyActivityId;
     }
 
-    public CopyAnswerTarget getCopyAnswerTarget() {
-        return copyAnswerTarget;
-    }
-
-    public String getCopySourceQuestionStableId() {
-        return copySourceQuestionStableId;
+    public Long getCopyActionCopyConfigurationId() {
+        return copyActionCopyConfigurationId;
     }
 
     public Long getPdfGenerationDocumentConfigurationId() {

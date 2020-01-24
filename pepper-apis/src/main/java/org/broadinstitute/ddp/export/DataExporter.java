@@ -8,6 +8,7 @@ import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -20,6 +21,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -39,6 +41,7 @@ import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
 import org.broadinstitute.ddp.db.dao.JdbiStudyActivityNameTranslation;
 import org.broadinstitute.ddp.db.dao.ParticipantDao;
 import org.broadinstitute.ddp.db.dao.PdfDao;
+import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
@@ -94,11 +97,15 @@ import org.broadinstitute.ddp.model.activity.types.InstitutionType;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.address.MailAddress;
 import org.broadinstitute.ddp.model.address.OLCPrecision;
+import org.broadinstitute.ddp.model.governance.AgeOfMajorityRule;
 import org.broadinstitute.ddp.model.governance.Governance;
+import org.broadinstitute.ddp.model.governance.GovernancePolicy;
 import org.broadinstitute.ddp.model.pdf.PdfConfigInfo;
 import org.broadinstitute.ddp.model.pdf.PdfVersion;
 import org.broadinstitute.ddp.model.study.Participant;
 import org.broadinstitute.ddp.model.user.User;
+import org.broadinstitute.ddp.pex.PexInterpreter;
+import org.broadinstitute.ddp.pex.TreeWalkInterpreter;
 import org.broadinstitute.ddp.service.ConsentService;
 import org.broadinstitute.ddp.service.MedicalRecordService;
 import org.broadinstitute.ddp.service.OLCService;
@@ -548,11 +555,20 @@ public class DataExporter {
             });
         }
 
-        StudyExtract studyExtract = new StudyExtract(activities, studyPdfConfigs, configPdfVersions, participantProxyGuids);
+        MedicalRecordService medicalRecordService = new MedicalRecordService(ConsentService.createInstance());
+        GovernancePolicy governancePolicy = handle.attach(StudyGovernanceDao.class)
+                .findPolicyByStudyId(studyDto.getId()).orElse(null);
+
+        enrichWithDSMEventDates(handle, medicalRecordService, governancePolicy, studyDto.getId(), dataset);
+
+        StudyExtract studyExtract = new StudyExtract(activities,
+                studyPdfConfigs,
+                configPdfVersions,
+                participantProxyGuids);
+
 
         Map<String, String> participantRecords = prepareParticipantRecordsForJSONExport(
-                studyExtract, dataset, exportStructuredDocument, handle
-        );
+                studyExtract, dataset, exportStructuredDocument, handle, medicalRecordService);
 
         try (RestHighLevelClient client = ElasticsearchServiceUtil.getClientForElasticsearchCloud(cfg)) {
             BulkRequest bulkRequest = new BulkRequest().timeout("2m");
@@ -575,6 +591,44 @@ public class DataExporter {
         }
     }
 
+    void enrichWithDSMEventDates(Handle handle,
+                                 MedicalRecordService medicalRecordService,
+                                 GovernancePolicy governancePolicy,
+                                 long studyId,
+                                 List<Participant> dataset) {
+
+        PexInterpreter pexInterpreter = new TreeWalkInterpreter();
+
+        dataset.forEach(participant -> {
+            DateValue diagnosisDate = medicalRecordService
+                    .getDateOfDiagnosis(handle, participant.getUser().getId(), studyId).orElse(null);
+
+            // First grab from the profile, if it's not there then look in activity data using medical-record service
+            LocalDate birthDate = Optional.ofNullable(participant.getUser().getProfile())
+                    .map(UserProfileDto::getBirthDate)
+                    .or(() -> medicalRecordService
+                            .getDateOfBirth(handle, participant.getUser().getId(), studyId)
+                            .flatMap(DateValue::asLocalDate))
+                    .orElse(null);
+
+            LocalDate dateOfMajority = null;
+            if (governancePolicy != null) {
+                AgeOfMajorityRule aomRule = governancePolicy.getApplicableAgeOfMajorityRule(handle,
+                        pexInterpreter,
+                        participant.getUser().getGuid())
+                        .orElse(null);
+
+                if (birthDate != null && aomRule != null) {
+                    dateOfMajority = aomRule.getDateOfMajority(birthDate);
+                }
+            }
+
+            participant.setBirthDate(birthDate);
+            participant.setDateOfDiagnosis(diagnosisDate);
+            participant.setDateOfMajority(dateOfMajority);
+        });
+    }
+
     /**
      * Convert the given dataset to the given output using JSON formatting.
      *
@@ -586,14 +640,18 @@ public class DataExporter {
             StudyExtract studyExtract,
             List<Participant> participants,
             boolean exportStructuredDocument,
-            Handle handle
+            Handle handle,
+            MedicalRecordService medicalRecordService
     ) {
         Map<String, String> participantsRecords = new HashMap<>();
         for (Participant extract : participants) {
             try {
                 String elasticSearchDocument = null;
                 if (exportStructuredDocument) {
-                    elasticSearchDocument = formatParticipantToStructuredJSON(studyExtract, extract, handle);
+                    elasticSearchDocument = formatParticipantToStructuredJSON(studyExtract,
+                            extract,
+                            handle,
+                            medicalRecordService);
                 } else {
                     elasticSearchDocument = formatParticipantToFlatJSON(studyExtract.getActivities(), extract);
                 }
@@ -611,8 +669,8 @@ public class DataExporter {
     /**
      * For a given participant, setup their information in the correct format for export.
      *
-     * @param activities         the list of activity data for a study
-     * @param extract            the participant data for the study
+     * @param activities the list of activity data for a study
+     * @param extract    the participant data for the study
      * @return
      */
     private String formatParticipantToFlatJSON(List<ActivityExtract> activities,
@@ -658,7 +716,8 @@ public class DataExporter {
     private String formatParticipantToStructuredJSON(
             StudyExtract studyExtract,
             Participant participant,
-            Handle handle
+            Handle handle,
+            MedicalRecordService medicalRecordService
     ) {
         EnrollmentStatusDto statusDto = participant.getStatus();
         User user = participant.getUser();
@@ -718,13 +777,16 @@ public class DataExporter {
         }
 
         // Retrieving information to compute the dsm record
-        MedicalRecordService medicalRecordService = new MedicalRecordService(ConsentService.createInstance());
-        DateValue diagnosisDate = medicalRecordService.getDateOfDiagnosis(handle, user.getId(), statusDto.getStudyId()).orElse(null);
-        DateValue birthDate = medicalRecordService.getDateOfBirth(handle, user.getId(), statusDto.getStudyId()).orElse(null);
         MedicalRecordService.ParticipantConsents consents = medicalRecordService
                 .fetchBloodAndTissueConsents(handle, user.getId(), userGuid, statusDto.getStudyId(), studyGuid);
-        DsmComputedRecord dsmComputedRecord = new DsmComputedRecord(birthDate, diagnosisDate,
-                consents.hasConsentedToBloodDraw(), consents.hasConsentedToTissueSample(), pdfConfigRecords);
+
+        DsmComputedRecord dsmComputedRecord =
+                new DsmComputedRecord(participant.getBirthDate(),
+                        participant.getDateOfMajority(),
+                        participant.getDateOfDiagnosis(),
+                        consents.hasConsentedToBloodDraw(),
+                        consents.hasConsentedToTissueSample(),
+                        pdfConfigRecords);
 
         List<String> proxies = studyExtract.getParticipantProxyGuids().get(user.getGuid());
         if (proxies == null) {
@@ -744,8 +806,8 @@ public class DataExporter {
     }
 
     private List<PdfConfigInfo> findPdfConfigsForStudyUser(List<PdfConfigInfo> studyConfigs,
-                                                          Map<Long, List<PdfVersion>> configPdfVersions,
-                                                          Map<String, Set<String>> userActivityVersions) {
+                                                           Map<Long, List<PdfVersion>> configPdfVersions,
+                                                           Map<String, Set<String>> userActivityVersions) {
 
         List<PdfConfigInfo> userPdfConfigs = new ArrayList<>();
 
@@ -965,7 +1027,7 @@ public class DataExporter {
         }
 
         CSVWriter writer = new CSVWriter(output);
-        writer.writeNext(headers.toArray(new String[] {}), false);
+        writer.writeNext(headers.toArray(new String[]{}), false);
 
         int total = participants.size();
         int numWritten = 0;
@@ -1002,7 +1064,7 @@ public class DataExporter {
                 continue;
             }
 
-            writer.writeNext(row.toArray(new String[] {}), false);
+            writer.writeNext(row.toArray(new String[]{}), false);
             numWritten += 1;
 
             LOG.info("[export] ({}/{}) participant {} for study {}:"

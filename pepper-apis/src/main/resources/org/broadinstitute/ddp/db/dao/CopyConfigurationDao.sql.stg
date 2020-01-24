@@ -1,0 +1,40 @@
+group CopyConfigurationDao;
+
+all_configs_select() ::= <<
+select cfg.copy_configuration_id,
+       cfg.study_id,
+       pair.copy_configuration_pair_id,
+       pair.execution_order,
+       src.copy_location_id as source_copy_location_id,
+       (select copy_location_type_code from copy_location_type
+         where copy_location_type_id = src.copy_location_type_id
+       ) as source_copy_location_type,
+       src_ans.question_stable_code_id as source_question_stable_code_id,
+       (select stable_id from question_stable_code
+         where question_stable_code_id = src_ans.question_stable_code_id
+       ) as source_question_stable_id,
+       tgt.copy_location_id as target_copy_location_id,
+       (select copy_location_type_code from copy_location_type
+         where copy_location_type_id = tgt.copy_location_type_id
+       ) as target_copy_location_type,
+       tgt_ans.question_stable_code_id as target_question_stable_code_id,
+       (select stable_id from question_stable_code
+         where question_stable_code_id = tgt_ans.question_stable_code_id
+       ) as target_question_stable_id
+  from copy_configuration as cfg
+  join copy_configuration_pair as pair on pair.copy_configuration_id = cfg.copy_configuration_id
+  join copy_location as src on src.copy_location_id = pair.source_location_id
+  join copy_location as tgt on tgt.copy_location_id = pair.target_location_id
+  left join copy_answer_location as src_ans on src_ans.copy_location_id = src.copy_location_id
+  left join copy_answer_location as tgt_ans on tgt_ans.copy_location_id = tgt.copy_location_id
+>>
+
+all_configs_order_by() ::= <<
+order by pair.execution_order asc
+>>
+
+queryCopyConfigById() ::= <<
+<all_configs_select()>
+where cfg.copy_configuration_id = :id
+<all_configs_order_by()>
+>>

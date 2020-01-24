@@ -57,6 +57,13 @@ public interface JdbiCompositeQuestion extends SqlObject {
             @Bind("activityInstanceGuid") String activityInstanceGuid,
             @Bind("questionStableId") String questionStableId);
 
+    @UseStringTemplateSqlLocator
+    @SqlQuery("queryParentDtoAndChildDtosByChildQuestionId")
+    @RegisterConstructorMapper(value = CompositeQuestionDto.class, prefix = "p")
+    @RegisterConstructorMapper(value = QuestionDto.class, prefix = "c")
+    @UseRowReducer(RowReducer.class)
+    Optional<CompositeQuestionDto> findParentDtoByChildQuestionId(@Bind("childQuestionId") long childQuestionId);
+
     class RowReducer implements LinkedHashMapRowReducer<Long, CompositeQuestionDto> {
         @Override
         public void accumulate(Map<Long, CompositeQuestionDto> map, RowView rowView) {

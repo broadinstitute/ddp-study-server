@@ -44,6 +44,7 @@ public class TestFormActivity {
     private DateQuestionDef dateFullQuestion;
     private NumericQuestionDef numericIntQuestion;
     private PicklistQuestionDef picklistSingleListQuestion;
+    private PicklistQuestionDef picklistMultiListQuestion;
     private TextQuestionDef textQuestion;
 
     public static Builder builder() {
@@ -82,6 +83,10 @@ public class TestFormActivity {
         return picklistSingleListQuestion;
     }
 
+    public PicklistQuestionDef getPicklistMultiListQuestion() {
+        return picklistMultiListQuestion;
+    }
+
     public TextQuestionDef getTextQuestion() {
         return textQuestion;
     }
@@ -93,6 +98,7 @@ public class TestFormActivity {
         private boolean withNumericIntQuestion = false;
         private boolean withTextQuestion = false;
         private List<PicklistOptionDef> picklistSingleListOptions = null;
+        private List<PicklistOptionDef> picklistMultiListOptions = null;
         private List<QuestionDef> compositeChildQuestions = null;
 
         private Builder() {
@@ -133,6 +139,15 @@ public class TestFormActivity {
                 picklistSingleListOptions = List.of(options);
             } else {
                 picklistSingleListOptions = null;
+            }
+            return this;
+        }
+
+        public Builder withPicklistMultiList(boolean include, PicklistOptionDef... options) {
+            if (include) {
+                picklistMultiListOptions = List.of(options);
+            } else {
+                picklistMultiListOptions = null;
             }
             return this;
         }
@@ -206,10 +221,18 @@ public class TestFormActivity {
             var picklistBlocks = new ArrayList<FormBlockDef>();
             if (picklistSingleListOptions != null) {
                 var question = PicklistQuestionDef
-                        .buildSingleSelect(PicklistRenderMode.LIST, "PL" + Instant.now().toEpochMilli(), Template.text("picklist prompt"))
+                        .buildSingleSelect(PicklistRenderMode.LIST, "PL" + Instant.now().toEpochMilli(), Template.text("pl single prompt"))
                         .addOptions(List.copyOf(picklistSingleListOptions))
                         .build();
                 result.picklistSingleListQuestion = question;
+                picklistBlocks.add(new QuestionBlockDef(question));
+            }
+            if (picklistMultiListOptions != null) {
+                var question = PicklistQuestionDef
+                        .buildMultiSelect(PicklistRenderMode.LIST, "PL" + Instant.now().toEpochMilli(), Template.text("pl multi prompt"))
+                        .addOptions(List.copyOf(picklistMultiListOptions))
+                        .build();
+                result.picklistMultiListQuestion = question;
                 picklistBlocks.add(new QuestionBlockDef(question));
             }
             if (!picklistBlocks.isEmpty()) {
