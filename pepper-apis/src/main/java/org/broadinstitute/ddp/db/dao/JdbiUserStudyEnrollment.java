@@ -30,6 +30,9 @@ public interface JdbiUserStudyEnrollment extends SqlObject {
     @CreateSqlObject
     JdbiUmbrellaStudy getJdbiUmbrellaStudy();
 
+    @CreateSqlObject
+    ActivityInstanceDao getActivityInstanceDao();
+
     default List<EnrollmentStatusDto> findByStudyGuid(String studyGuid) {
         return findByStudyGuidAfterOrEqualToInstant(studyGuid, 0);
     }
@@ -305,6 +308,16 @@ public interface JdbiUserStudyEnrollment extends SqlObject {
                                                  long studyId,
                                                  EnrollmentStatusType newEnrollmentStatus) {
         return changeUserStudyEnrollmentStatus(userId, studyId, newEnrollmentStatus, null);
+    }
+
+    default long suspendUserStudyConsent(long userId, long studyId) {
+        //update EnrollmentStatus to EnrollmentStatusType.CONSENT_SUSPENDED
+        //Update All existing activity instances as read-only
+        long id = changeUserStudyEnrollmentStatus(
+                userId, studyId, EnrollmentStatusType.CONSENT_SUSPENDED, null);
+        Set<Long> instanceIds = getActivityInstanceDao().findAllInstanceIdsByUserIdAndStudyId(userId, studyId);
+        getActivityInstanceDao().bulkUpdateReadOnlyByActivityIds(userId, true, instanceIds);
+        return id;
     }
 
     /**

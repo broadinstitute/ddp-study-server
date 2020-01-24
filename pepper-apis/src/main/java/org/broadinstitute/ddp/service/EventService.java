@@ -97,8 +97,13 @@ public class EventService {
                     throw new DaoException("Error evaluating pex expression " + precondExpr, e);
                 }
 
-
                 eventConfig.doAction(pexInterpreter, handle, eventSignal);
+
+                // Incrementing the counter indicating that the event configuration has been executed
+                handle.attach(JdbiEventConfigurationOccurrenceCounter.class).incNumOccurrences(
+                        eventConfig.getEventConfigurationId(),
+                        eventSignal.getParticipantId()
+                );
             }
         }
     }
