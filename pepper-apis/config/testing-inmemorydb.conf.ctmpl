@@ -12,6 +12,7 @@
     # If set to true, tests will use MySQL from Docker container and dbUrl and housekeepingDbUrl will be ignored
     "useDisposableTestDbs": true,
     "maxConnections": 50,
+    "defaultTimezone": "{{$testingConf.Data.defaultTimezone}}",
     "port": 5555,
     "doLiquibase": true,
     "threadTimeout": 30000,

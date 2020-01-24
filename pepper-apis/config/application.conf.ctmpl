@@ -12,6 +12,7 @@
 
 {
     "dbUrl": "{{$conf.Data.dbUrl}}",
+    "defaultTimezone": "{{$conf.Data.defaultTimezone}}",
     "maxConnections": {{$conf.Data.maxConnections}},
     "housekeepingDbUrl": "{{$conf.Data.housekeepingDbUrl}}",
     "housekeepingMaxConnections": {{$conf.Data.housekeepingMaxConnections}},
