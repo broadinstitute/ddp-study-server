@@ -51,7 +51,6 @@ import org.apache.commons.io.IOUtils;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.SqlConstants;
 import org.broadinstitute.ddp.constants.TestConstants;
-import org.broadinstitute.ddp.db.AnswerDao;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.StudyActivityMappingDao;
@@ -60,6 +59,7 @@ import org.broadinstitute.ddp.db.UserDao;
 import org.broadinstitute.ddp.db.UserDaoFactory;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
+import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.ClientDao;
 import org.broadinstitute.ddp.db.dao.EventActionDao;
 import org.broadinstitute.ddp.db.dao.FormActivityDao;
@@ -813,28 +813,23 @@ public class TestDataSetupUtil {
             assert (hasGivenInformedConsent);
         }
 
-        Config sqlConfig = ConfigFactory.parseResources(ConfigFile.SQL_CONF);
-        AnswerDao answerDao = AnswerDao.fromSqlConfig(sqlConfig);
-        if (hasGivenInformedConsent) {
-            // Now define your answers
-            ActivityInstanceDto instance = handle.attach(ActivityInstanceDao.class).insertInstance(generatedTestData.getConsentActivityId(),
-                    generatedTestData.getUserGuid());
-            generatedTestData.setConsentActivityInstanceGuid(instance.getGuid());
+        ActivityInstanceDto instance = handle.attach(ActivityInstanceDao.class).insertInstance(generatedTestData.getConsentActivityId(),
+                generatedTestData.getUserGuid());
+        generatedTestData.setConsentActivityInstanceGuid(instance.getGuid());
 
+        AnswerDao answerDao = handle.attach(AnswerDao.class);
+        if (hasGivenInformedConsent) {
             Answer informedConsentAnswer = new TextAnswer(null, generatedTestData.getSignatureQuestionStableId(), null,
                     generatedTestData.getProfile().getFirstName() + " " + generatedTestData.getProfile().getLastName());
-            answerDao.createAnswer(handle,
-                    informedConsentAnswer, generatedTestData.getUserGuid(), generatedTestData.getConsentActivityInstanceGuid());
+            answerDao.createAnswer(generatedTestData.getUserId(), instance.getId(), informedConsentAnswer);
 
             Answer bloodAnswer = new BoolAnswer(null, generatedTestData.getBloodQuestionStableId(), null,
                     hasConsentedToBlood);
-            answerDao.createAnswer(handle, bloodAnswer, generatedTestData.getUserGuid(),
-                    generatedTestData.getConsentActivityInstanceGuid());
+            answerDao.createAnswer(generatedTestData.getUserId(), instance.getId(), bloodAnswer);
 
             Answer tissueAnswer = new BoolAnswer(null, generatedTestData.getTissueQuestionStableId(),
                     null, hasConsentedToTissue);
-            answerDao.createAnswer(handle, tissueAnswer, generatedTestData.getUserGuid(),
-                    generatedTestData.getConsentActivityInstanceGuid());
+            answerDao.createAnswer(generatedTestData.getUserId(), instance.getId(), tissueAnswer);
 
             FormActivityStatusUtil.updateFormActivityStatus(handle, InstanceStatusType.COMPLETE,
                     generatedTestData.getConsentActivityInstanceGuid(), generatedTestData.getUserGuid());
@@ -842,8 +837,7 @@ public class TestDataSetupUtil {
 
         Answer birthDateAnswer = new DateAnswer(null, generatedTestData.getDateOfBirthStableId(), null,
                 birthYear, birthMonth, birthDay);
-        answerDao.createAnswer(handle, birthDateAnswer, generatedTestData.getUserGuid(),
-                generatedTestData.getConsentActivityInstanceGuid());
+        answerDao.createAnswer(generatedTestData.getUserId(), instance.getId(), birthDateAnswer);
     }
 
     public static void answerAboutYou(Handle handle,
@@ -853,10 +847,6 @@ public class TestDataSetupUtil {
             throw new Exception("You need to define an aboutYou activity in the generatedTestData");
         }
 
-        Config sqlConfig = ConfigFactory.parseResources(ConfigFile.SQL_CONF);
-        AnswerDao answerDao = AnswerDao.fromSqlConfig(sqlConfig);
-
-        // Now define your answers
         ActivityInstanceDto instance = handle.attach(ActivityInstanceDao.class).insertInstance(generatedTestData.getAboutYouActivityId(),
                 generatedTestData.getUserGuid());
         generatedTestData.setAboutYouActivityInstanceGuid(instance.getGuid());
@@ -864,8 +854,7 @@ public class TestDataSetupUtil {
         DateAnswer dateOfDiagnosisAnswer = new DateAnswer(null, generatedTestData.getDateOfDiagnosisStableId(),
                 null, DateValue.fromMillisSinceEpoch(diagnosisMillisSinceEpoch));
 
-        answerDao.createAnswer(handle,
-                dateOfDiagnosisAnswer, generatedTestData.getUserGuid(), generatedTestData.getAboutYouActivityInstanceGuid());
+        handle.attach(AnswerDao.class).createAnswer(generatedTestData.getUserId(), instance.getId(), dateOfDiagnosisAnswer);
 
         FormActivityStatusUtil.updateFormActivityStatus(handle, InstanceStatusType.COMPLETE,
                 generatedTestData.getAboutYouActivityInstanceGuid(), generatedTestData.getUserGuid());

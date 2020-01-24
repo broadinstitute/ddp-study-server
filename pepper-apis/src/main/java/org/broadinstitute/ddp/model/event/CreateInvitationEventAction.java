@@ -77,11 +77,11 @@ public class CreateInvitationEventAction extends EventAction {
             ActivityInstanceStatusChangeSignal statusChangeSignal = (ActivityInstanceStatusChangeSignal) signal;
             long instanceId = statusChangeSignal.getActivityInstanceIdThatChanged();
             LOG.info("Attempting to fetch contact email answer using triggered signal {}", statusChangeSignal);
-            answer = answerDao.findAnswerForQuestionAndInstance(
-                    signal.getParticipantId(), instanceId, contactEmailQuestionStableId).orElse(null);
+            answer = answerDao.findAnswerByInstanceIdAndQuestionStableId(
+                    instanceId, contactEmailQuestionStableId).orElse(null);
         } else {
             LOG.info("Attempting to fetch latest contact email answer");
-            answer = answerDao.findAnswerForQuestionAndLatestInstance(
+            answer = answerDao.findAnswerByLatestInstanceAndQuestionStableId(
                     signal.getParticipantId(), signal.getStudyId(), contactEmailQuestionStableId).orElse(null);
         }
 

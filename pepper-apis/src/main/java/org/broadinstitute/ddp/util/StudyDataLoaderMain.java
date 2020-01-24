@@ -42,11 +42,11 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.constants.ConfigFile;
-import org.broadinstitute.ddp.db.AnswerDao;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceStatusDao;
+import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
@@ -66,8 +66,6 @@ public class StudyDataLoaderMain {
     private static final String DATA_GC_ID = "broad-ddp-angio";
     private static final String DEFAULT_MIGRATION_REPORT_PATH = "/tmp/migration_reports";
     private static final String USAGE = "StudyDataLoaderMain [-h, --help] [OPTIONS] study-guid";
-    private static Config sqlConfig = ConfigFactory.parseResources(ConfigFile.SQL_CONF);
-    private static AnswerDao answerDao = AnswerDao.fromSqlConfig(sqlConfig);
     private static List<String> altPidUserList;
     private List<StudyMigrationRun> migrationRunReport;
     private String reportFileName;
@@ -561,6 +559,8 @@ public class StudyDataLoaderMain {
                     hasRelease = (sourceData.get("releasesurvey") != null && !sourceData.get("releasesurvey").isJsonNull());
                     hasBloodRelease = (sourceData.get("bdreleasesurvey") != null && !sourceData.get("bdreleasesurvey").isJsonNull());
                     hasFollowup = (sourceData.get("followupsurvey") != null && !sourceData.get("followupsurvey").isJsonNull());
+
+                    var answerDao = handle.attach(AnswerDao.class);
 
                     if (hasAboutYou) {
                         String activityCode = mappingData.get("aboutyousurvey").getAsJsonObject().get("activity_code").getAsString();

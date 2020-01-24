@@ -18,12 +18,13 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
-import org.broadinstitute.ddp.db.AnswerDao;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
+import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.JdbiProfile;
 import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
+import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.model.activity.definition.ConditionalBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
@@ -50,7 +51,6 @@ import org.broadinstitute.ddp.model.activity.types.DateRenderMode;
 import org.broadinstitute.ddp.model.activity.types.NumericType;
 import org.broadinstitute.ddp.model.activity.types.PicklistRenderMode;
 import org.broadinstitute.ddp.model.activity.types.PicklistSelectMode;
-import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.activity.types.TemplateType;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
 import org.broadinstitute.ddp.model.governance.AgeOfMajorityRule;
@@ -70,8 +70,8 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
     private static String userGuid;
     private static String studyGuid;
     private static String activityCode;
-    private static String firstInstanceGuid;
-    private static String secondInstanceGuid;
+    private static ActivityInstanceDto firstInstance;
+    private static ActivityInstanceDto secondInstance;
     private static String boolStableId;
     private static String textStableId;
     private static String dateStableId;
@@ -155,8 +155,8 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
         assertNotNull(form.getActivityId());
 
         ActivityInstanceDao activityInstanceDao = handle.attach(ActivityInstanceDao.class);
-        firstInstanceGuid = activityInstanceDao.insertInstance(form.getActivityId(), userGuid).getGuid();
-        secondInstanceGuid = activityInstanceDao.insertInstance(form.getActivityId(), userGuid).getGuid();
+        firstInstance = activityInstanceDao.insertInstance(form.getActivityId(), userGuid);
+        secondInstance = activityInstanceDao.insertInstance(form.getActivityId(), userGuid);
     }
 
     @Test
@@ -250,9 +250,7 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
 
             SelectedPicklistOption option = new SelectedPicklistOption("OPTION_NO");
             PicklistAnswer answer = new PicklistAnswer(null, picklistStableId, null, Collections.singletonList(option));
-            AnswerDao answerDao = AnswerDao.fromSqlConfig(sqlConfig);
-            answerDao.createAnswer(handle, answer, userGuid, firstInstanceGuid);
-            assertNotNull(answer.getAnswerId());
+            handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), firstInstance.getId(), answer);
 
             // Should still satisfy expression
             assertTrue(run(handle, expr));
@@ -279,9 +277,7 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
 
         TransactionWrapper.useTxn(handle -> {
             TextAnswer answer = new TextAnswer(null, conditionalNestedStableId, null, "some answer");
-            AnswerDao answerDao = AnswerDao.fromSqlConfig(sqlConfig);
-            answerDao.createAnswer(handle, answer, userGuid, firstInstanceGuid);
-            assertNotNull(answer.getAnswerId());
+            handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), firstInstance.getId(), answer);
 
             assertTrue(run(handle, String.format(
                     "user.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"].answers.hasText()",
@@ -306,9 +302,7 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
                 studyGuid, activityCode, boolStableId);
         TransactionWrapper.useTxn(handle -> {
             BoolAnswer answer = new BoolAnswer(null, boolStableId, null, true);
-            AnswerDao answerDao = AnswerDao.fromSqlConfig(sqlConfig);
-            answerDao.createAnswer(handle, answer, userGuid, firstInstanceGuid);
-            assertNotNull(answer.getAnswerId());
+            handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), firstInstance.getId(), answer);
 
             assertTrue(run(handle, expr));
 
@@ -323,9 +317,7 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
                 studyGuid, activityCode, boolStableId);
         TransactionWrapper.useTxn(handle -> {
             BoolAnswer answer = new BoolAnswer(null, boolStableId, null, false);
-            AnswerDao answerDao = AnswerDao.fromSqlConfig(sqlConfig);
-            answerDao.createAnswer(handle, answer, userGuid, firstInstanceGuid);
-            assertNotNull(answer.getAnswerId());
+            handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), firstInstance.getId(), answer);
 
             assertTrue(run(handle, expr));
 
@@ -341,29 +333,27 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
                 studyGuid, activityCode, dateStableId);
         LocalDateTime rightNow = LocalDateTime.now();
         TransactionWrapper.useTxn(handle -> {
+            var answerDao = handle.attach(AnswerDao.class);
 
             // verify an age that is old enough
-            DateAnswer oldEnoughAnswer = new DateAnswer(null, dateStableId, null, new DateValue(
-                    rightNow.getYear() - minAge, rightNow.getMonthValue(), rightNow.getDayOfMonth()));
-            AnswerDao answerDao = AnswerDao.fromSqlConfig(sqlConfig);
-            String answerGuid = answerDao.createAnswer(handle, oldEnoughAnswer, userGuid, firstInstanceGuid);
-            assertNotNull(oldEnoughAnswer.getAnswerId());
+            var oldEnoughAnswer = answerDao.createAnswer(testData.getUserId(), firstInstance.getId(),
+                    new DateAnswer(null, dateStableId, null, new DateValue(
+                            rightNow.getYear() - minAge, rightNow.getMonthValue(), rightNow.getDayOfMonth())));
 
             assertTrue(run(handle, expr));
 
             // verify age that is not old enough
-            long answerId = answerDao.getAnswerIdByGuids(handle, firstInstanceGuid, answerGuid);
-            DateAnswer notOldEnoughAnswer = new DateAnswer(answerId, dateStableId, null, new DateValue(
+            long answerId = oldEnoughAnswer.getAnswerId();
+            var notOldEnoughAnswer = new DateAnswer(answerId, dateStableId, null, new DateValue(
                     rightNow.getYear() - (minAge - 1), rightNow.getMonthValue(), rightNow.getDayOfMonth()));
 
-            answerDao.updateAnswerById(handle, firstInstanceGuid, answerId, notOldEnoughAnswer, userGuid);
+            answerDao.updateAnswer(testData.getUserId(), answerId, notOldEnoughAnswer);
 
             assertFalse(run(handle, expr));
 
             // verify that a missing date is considered false in the context of having a minimal age
-            answerDao.deleteAnswerByIdAndType(handle, answerId, QuestionType.DATE);
+            answerDao.deleteAnswer(answerId);
             assertFalse(run(handle, expr));
-
 
             handle.rollback();
         });
@@ -378,9 +368,7 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
         TransactionWrapper.useTxn(handle -> {
             DateAnswer answer = new DateAnswer(null, dateStableId, null, new DateValue(rightNow.getYear(),
                     rightNow.getMonthValue(), rightNow.getDayOfMonth()));
-            AnswerDao answerDao = AnswerDao.fromSqlConfig(sqlConfig);
-            answerDao.createAnswer(handle, answer, userGuid, firstInstanceGuid);
-            assertNotNull(answer.getAnswerId());
+            handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), firstInstance.getId(), answer);
 
             assertTrue(run(handle, expr));
 
@@ -395,9 +383,7 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
                 studyGuid, activityCode, textStableId);
         TransactionWrapper.useTxn(handle -> {
             TextAnswer answer = new TextAnswer(null, textStableId, null, "test");
-            AnswerDao answerDao = AnswerDao.fromSqlConfig(sqlConfig);
-            answerDao.createAnswer(handle, answer, userGuid, firstInstanceGuid);
-            assertNotNull(answer.getAnswerId());
+            handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), firstInstance.getId(), answer);
 
             assertTrue(run(handle, expr));
 
@@ -429,9 +415,7 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
         TransactionWrapper.useTxn(handle -> {
             SelectedPicklistOption option = new SelectedPicklistOption("OPTION_NO");
             PicklistAnswer answer = new PicklistAnswer(null, picklistStableId, null, Collections.singletonList(option));
-            AnswerDao answerDao = AnswerDao.fromSqlConfig(sqlConfig);
-            answerDao.createAnswer(handle, answer, userGuid, firstInstanceGuid);
-            assertNotNull(answer.getAnswerId());
+            handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), firstInstance.getId(), answer);
 
             assertFalse(run(handle, expr));
 
@@ -449,9 +433,7 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
             selected.add(new SelectedPicklistOption("OPTION_NO"));
             selected.add(new SelectedPicklistOption("OPTION_NA"));
             PicklistAnswer answer = new PicklistAnswer(null, picklistStableId, null, selected);
-            AnswerDao answerDao = AnswerDao.fromSqlConfig(sqlConfig);
-            answerDao.createAnswer(handle, answer, userGuid, firstInstanceGuid);
-            assertNotNull(answer.getAnswerId());
+            handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), firstInstance.getId(), answer);
 
             assertFalse(run(handle, expr));
 
@@ -467,9 +449,7 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
         TransactionWrapper.useTxn(handle -> {
             SelectedPicklistOption option = new SelectedPicklistOption("OPTION_YES");
             PicklistAnswer answer = new PicklistAnswer(null, picklistStableId, null, Collections.singletonList(option));
-            AnswerDao answerDao = AnswerDao.fromSqlConfig(sqlConfig);
-            answerDao.createAnswer(handle, answer, userGuid, firstInstanceGuid);
-            assertNotNull(answer.getAnswerId());
+            handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), firstInstance.getId(), answer);
 
             assertTrue(run(handle, expr));
 
@@ -493,9 +473,7 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
         TransactionWrapper.useTxn(handle -> {
             SelectedPicklistOption option = new SelectedPicklistOption("OPTION_YES");
             PicklistAnswer answer = new PicklistAnswer(null, picklistStableId, null, Collections.singletonList(option));
-            AnswerDao answerDao = AnswerDao.fromSqlConfig(sqlConfig);
-            answerDao.createAnswer(handle, answer, userGuid, firstInstanceGuid);
-            assertNotNull(answer.getAnswerId());
+            handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), firstInstance.getId(), answer);
 
             assertTrue(run(handle, expr));
 
@@ -511,9 +489,7 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
         TransactionWrapper.useTxn(handle -> {
             SelectedPicklistOption option = new SelectedPicklistOption("OPTION_NA");
             PicklistAnswer answer = new PicklistAnswer(null, picklistStableId, null, Collections.singletonList(option));
-            AnswerDao answerDao = AnswerDao.fromSqlConfig(sqlConfig);
-            answerDao.createAnswer(handle, answer, userGuid, firstInstanceGuid);
-            assertNotNull(answer.getAnswerId());
+            handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), firstInstance.getId(), answer);
 
             assertFalse(run(handle, expr));
 
@@ -536,9 +512,7 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
                 studyGuid, activityCode, numericStableId);
         TransactionWrapper.useTxn(handle -> {
             NumericAnswer answer = new NumericIntegerAnswer(null, numericStableId, null, null);
-            AnswerDao answerDao = AnswerDao.fromSqlConfig(sqlConfig);
-            answerDao.createAnswer(handle, answer, userGuid, firstInstanceGuid);
-            assertNotNull(answer.getAnswerId());
+            handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), firstInstance.getId(), answer);
 
             assertFalse(run(handle, expr));
 
@@ -552,14 +526,13 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
                 "user.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"].answers.value() < 18",
                 studyGuid, activityCode, numericStableId);
         TransactionWrapper.useTxn(handle -> {
-            NumericIntegerAnswer answer = new NumericIntegerAnswer(null, numericStableId, null, 7L);
-            AnswerDao answerDao = AnswerDao.fromSqlConfig(sqlConfig);
-            answerDao.createAnswer(handle, answer, userGuid, firstInstanceGuid);
-            assertNotNull(answer.getAnswerId());
+            var answerDao = handle.attach(AnswerDao.class);
+            var answer = (NumericIntegerAnswer) answerDao.createAnswer(testData.getUserId(), firstInstance.getId(),
+                    new NumericIntegerAnswer(null, numericStableId, null, 7L));
             assertTrue(run(handle, expr));
 
             answer.setValue(21L);
-            answerDao.updateAnswerById(handle, firstInstanceGuid, answer.getAnswerId(), answer, userGuid);
+            answerDao.updateAnswer(testData.getUserId(), answer.getAnswerId(), answer);
             assertFalse(run(handle, expr));
 
             handle.rollback();
@@ -572,18 +545,17 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
                 "user.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"].answers.value() <= 18",
                 studyGuid, activityCode, numericStableId);
         TransactionWrapper.useTxn(handle -> {
-            NumericIntegerAnswer answer = new NumericIntegerAnswer(null, numericStableId, null, 7L);
-            AnswerDao answerDao = AnswerDao.fromSqlConfig(sqlConfig);
-            answerDao.createAnswer(handle, answer, userGuid, firstInstanceGuid);
-            assertNotNull(answer.getAnswerId());
+            var answerDao = handle.attach(AnswerDao.class);
+            var answer = (NumericIntegerAnswer) answerDao.createAnswer(testData.getUserId(), firstInstance.getId(),
+                    new NumericIntegerAnswer(null, numericStableId, null, 7L));
             assertTrue(run(handle, expr));
 
             answer.setValue(18L);
-            answerDao.updateAnswerById(handle, firstInstanceGuid, answer.getAnswerId(), answer, userGuid);
+            answerDao.updateAnswer(testData.getUserId(), answer.getAnswerId(), answer);
             assertTrue(run(handle, expr));
 
             answer.setValue(21L);
-            answerDao.updateAnswerById(handle, firstInstanceGuid, answer.getAnswerId(), answer, userGuid);
+            answerDao.updateAnswer(testData.getUserId(), answer.getAnswerId(), answer);
             assertFalse(run(handle, expr));
 
             handle.rollback();
@@ -596,14 +568,13 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
                 "user.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"].answers.value() > 18",
                 studyGuid, activityCode, numericStableId);
         TransactionWrapper.useTxn(handle -> {
-            NumericIntegerAnswer answer = new NumericIntegerAnswer(null, numericStableId, null, 21L);
-            AnswerDao answerDao = AnswerDao.fromSqlConfig(sqlConfig);
-            answerDao.createAnswer(handle, answer, userGuid, firstInstanceGuid);
-            assertNotNull(answer.getAnswerId());
+            AnswerDao answerDao = handle.attach(AnswerDao.class);
+            var answer = (NumericIntegerAnswer) answerDao.createAnswer(testData.getUserId(), firstInstance.getId(),
+                    new NumericIntegerAnswer(null, numericStableId, null, 21L));
             assertTrue(run(handle, expr));
 
             answer.setValue(7L);
-            answerDao.updateAnswerById(handle, firstInstanceGuid, answer.getAnswerId(), answer, userGuid);
+            answerDao.updateAnswer(testData.getUserId(), answer.getAnswerId(), answer);
             assertFalse(run(handle, expr));
 
             handle.rollback();
@@ -616,18 +587,17 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
                 "user.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"].answers.value() >= 18",
                 studyGuid, activityCode, numericStableId);
         TransactionWrapper.useTxn(handle -> {
-            NumericIntegerAnswer answer = new NumericIntegerAnswer(null, numericStableId, null, 21L);
-            AnswerDao answerDao = AnswerDao.fromSqlConfig(sqlConfig);
-            answerDao.createAnswer(handle, answer, userGuid, firstInstanceGuid);
-            assertNotNull(answer.getAnswerId());
+            var answerDao = handle.attach(AnswerDao.class);
+            var answer = (NumericIntegerAnswer) answerDao.createAnswer(testData.getUserId(), firstInstance.getId(),
+                    new NumericIntegerAnswer(null, numericStableId, null, 21L));
             assertTrue(run(handle, expr));
 
             answer.setValue(18L);
-            answerDao.updateAnswerById(handle, firstInstanceGuid, answer.getAnswerId(), answer, userGuid);
+            answerDao.updateAnswer(testData.getUserId(), answer.getAnswerId(), answer);
             assertTrue(run(handle, expr));
 
             answer.setValue(7L);
-            answerDao.updateAnswerById(handle, firstInstanceGuid, answer.getAnswerId(), answer, userGuid);
+            answerDao.updateAnswer(testData.getUserId(), answer.getAnswerId(), answer);
             assertFalse(run(handle, expr));
 
             handle.rollback();
@@ -640,14 +610,13 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
                 "user.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"].answers.value() == 18",
                 studyGuid, activityCode, numericStableId);
         TransactionWrapper.useTxn(handle -> {
-            NumericIntegerAnswer answer = new NumericIntegerAnswer(null, numericStableId, null, 7L);
-            AnswerDao answerDao = AnswerDao.fromSqlConfig(sqlConfig);
-            answerDao.createAnswer(handle, answer, userGuid, firstInstanceGuid);
-            assertNotNull(answer.getAnswerId());
+            var answerDao = handle.attach(AnswerDao.class);
+            var answer = (NumericIntegerAnswer) answerDao.createAnswer(testData.getUserId(), firstInstance.getId(),
+                    new NumericIntegerAnswer(null, numericStableId, null, 7L));
             assertFalse(run(handle, expr));
 
             answer.setValue(18L);
-            answerDao.updateAnswerById(handle, firstInstanceGuid, answer.getAnswerId(), answer, userGuid);
+            answerDao.updateAnswer(testData.getUserId(), answer.getAnswerId(), answer);
             assertTrue(run(handle, expr));
 
             handle.rollback();
@@ -660,14 +629,13 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
                 "user.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"].answers.value() != 18",
                 studyGuid, activityCode, numericStableId);
         TransactionWrapper.useTxn(handle -> {
-            NumericIntegerAnswer answer = new NumericIntegerAnswer(null, numericStableId, null, 7L);
-            AnswerDao answerDao = AnswerDao.fromSqlConfig(sqlConfig);
-            answerDao.createAnswer(handle, answer, userGuid, firstInstanceGuid);
-            assertNotNull(answer.getAnswerId());
+            var answerDao = handle.attach(AnswerDao.class);
+            var answer = (NumericIntegerAnswer) answerDao.createAnswer(testData.getUserId(), firstInstance.getId(),
+                    new NumericIntegerAnswer(null, numericStableId, null, 7L));
             assertTrue(run(handle, expr));
 
             answer.setValue(18L);
-            answerDao.updateAnswerById(handle, firstInstanceGuid, answer.getAnswerId(), answer, userGuid);
+            answerDao.updateAnswer(testData.getUserId(), answer.getAnswerId(), answer);
             assertFalse(run(handle, expr));
 
             handle.rollback();
@@ -774,13 +742,11 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
 
     private void testEval_textAnswerQuery(String expr, boolean expectedTestResult) {
         TransactionWrapper.useTxn(handle -> {
-            TextAnswer answer = new TextAnswer(null, textStableId, null, "test");
-            AnswerDao answerDao = AnswerDao.fromSqlConfig(sqlConfig);
-            answerDao.createAnswer(handle, answer, userGuid, firstInstanceGuid);
-            assertNotNull(answer.getAnswerId());
+            var answerDao = handle.attach(AnswerDao.class);
+            var answer = new TextAnswer(null, textStableId, null, "test");
+            answerDao.createAnswer(testData.getUserId(), firstInstance.getId(), answer);
             answer = new TextAnswer(null, textStableId, null, null);
-            answerDao.createAnswer(handle, answer, userGuid, secondInstanceGuid);
-            assertNotNull(answer.getAnswerId());
+            answerDao.createAnswer(testData.getUserId(), secondInstance.getId(), answer);
 
             assertEquals(expectedTestResult, run(handle, expr));
 
@@ -807,15 +773,13 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
     private void testEval_dateAnswerQuery(String expr, boolean expectedTestResult) {
         LocalDateTime rightNow = LocalDateTime.now();
         TransactionWrapper.useTxn(handle -> {
-            DateAnswer answer = new DateAnswer(null, dateStableId, null, new DateValue(rightNow.getYear(),
+            var answerDao = handle.attach(AnswerDao.class);
+            var answer = new DateAnswer(null, dateStableId, null, new DateValue(rightNow.getYear(),
                     rightNow.getMonthValue(), rightNow.getDayOfMonth()));
-            AnswerDao answerDao = AnswerDao.fromSqlConfig(sqlConfig);
-            answerDao.createAnswer(handle, answer, userGuid, firstInstanceGuid);
-            assertNotNull(answer.getAnswerId());
+            answerDao.createAnswer(testData.getUserId(), firstInstance.getId(), answer);
             answer = new DateAnswer(null, dateStableId, null, new DateValue(rightNow.getYear(),
                     rightNow.getMonthValue(), rightNow.getDayOfMonth()));
-            answerDao.createAnswer(handle, answer, userGuid, secondInstanceGuid);
-            assertNotNull(answer.getAnswerId());
+            answerDao.createAnswer(testData.getUserId(), secondInstance.getId(), answer);
 
             assertEquals(expectedTestResult, run(handle, expr));
 
@@ -841,13 +805,11 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
 
     private void testEval_boolAnswerQuery(String expr, boolean expectedTestResult) {
         TransactionWrapper.useTxn(handle -> {
-            BoolAnswer answer = new BoolAnswer(null, boolStableId, null, true);
-            AnswerDao answerDao = AnswerDao.fromSqlConfig(sqlConfig);
-            answerDao.createAnswer(handle, answer, userGuid, firstInstanceGuid);
-            assertNotNull(answer.getAnswerId());
+            var answerDao = handle.attach(AnswerDao.class);
+            var answer = new BoolAnswer(null, boolStableId, null, true);
+            answerDao.createAnswer(testData.getUserId(), firstInstance.getId(), answer);
             answer = new BoolAnswer(null, boolStableId, null, false);
-            answerDao.createAnswer(handle, answer, userGuid, secondInstanceGuid);
-            assertNotNull(answer.getAnswerId());
+            answerDao.createAnswer(testData.getUserId(), secondInstance.getId(), answer);
 
             assertEquals(expectedTestResult, run(handle, expr));
 
@@ -884,13 +846,11 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
             List<SelectedPicklistOption> selected = new ArrayList<>();
             selected.add(new SelectedPicklistOption("OPTION_NO"));
             selected.add(new SelectedPicklistOption("OPTION_NA"));
-            PicklistAnswer answer = new PicklistAnswer(null, picklistStableId, null, selected);
-            AnswerDao answerDao = AnswerDao.fromSqlConfig(sqlConfig);
-            answerDao.createAnswer(handle, answer, userGuid, firstInstanceGuid);
-            assertNotNull(answer.getAnswerId());
+            var answer = new PicklistAnswer(null, picklistStableId, null, selected);
+            var answerDao = handle.attach(AnswerDao.class);
+            answerDao.createAnswer(testData.getUserId(), firstInstance.getId(), answer);
             answer = new PicklistAnswer(null, picklistStableId, null, selected.subList(0, 1));
-            answerDao.createAnswer(handle, answer, userGuid, secondInstanceGuid);
-            assertNotNull(answer.getAnswerId());
+            answerDao.createAnswer(testData.getUserId(), secondInstance.getId(), answer);
 
             assertEquals(expectedTestResult, run(handle, expr));
 
@@ -932,14 +892,14 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
         assertFalse("should be false because question is not answered yet", run(expr));
 
         TransactionWrapper.useTxn(handle -> {
-            BoolAnswer answer = new BoolAnswer(null, boolStableId, null, false);
-            AnswerDao answerDao = AnswerDao.fromSqlConfig(sqlConfig);
-            answerDao.createAnswer(handle, answer, userGuid, firstInstanceGuid);
+            var answerDao = handle.attach(AnswerDao.class);
+            var answer = new BoolAnswer(null, boolStableId, null, false);
+            answerDao.createAnswer(testData.getUserId(), firstInstance.getId(), answer);
 
             assertFalse("should be false because first instance is not latest", run(handle, expr));
 
             answer = new BoolAnswer(null, boolStableId, null, false);
-            answerDao.createAnswer(handle, answer, userGuid, secondInstanceGuid);
+            answerDao.createAnswer(testData.getUserId(), secondInstance.getId(), answer);
 
             assertTrue("should be true because latest instance is answered", run(handle, expr));
 
@@ -955,17 +915,17 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
         assertFalse("should be false because question is not answered yet", run(expr));
 
         TransactionWrapper.useTxn(handle -> {
+            var answerDao = handle.attach(AnswerDao.class);
             var answer = new NumericIntegerAnswer(null, numericStableId, null, 25L);
-            var answerDao = AnswerDao.fromSqlConfig(sqlConfig);
-            answerDao.createAnswer(handle, answer, userGuid, firstInstanceGuid);
+            answerDao.createAnswer(testData.getUserId(), firstInstance.getId(), answer);
             assertFalse("should be false because first instance is not latest", run(handle, expr));
 
-            answer = new NumericIntegerAnswer(null, numericStableId, null, null);
-            answerDao.createAnswer(handle, answer, userGuid, secondInstanceGuid);
+            answer = (NumericIntegerAnswer) answerDao.createAnswer(testData.getUserId(), secondInstance.getId(),
+                    new NumericIntegerAnswer(null, numericStableId, null, null));
             assertFalse("should be false because answer is null", run(handle, expr));
 
             var newAnswer = new NumericIntegerAnswer(null, textStableId, null, 50L);
-            answerDao.updateAnswerById(handle, secondInstanceGuid, answer.getAnswerId(), newAnswer, userGuid);
+            answerDao.updateAnswer(testData.getUserId(), answer.getAnswerId(), newAnswer);
             assertTrue("should be true because answer is non-null", run(handle, expr));
 
             handle.rollback();
@@ -980,14 +940,14 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
         assertFalse("should be false because question is not answered yet", run(expr));
 
         TransactionWrapper.useTxn(handle -> {
-            var answer = new PicklistAnswer(null, picklistStableId, null, List.of());
-            var answerDao = AnswerDao.fromSqlConfig(sqlConfig);
-            answerDao.createAnswer(handle, answer, userGuid, secondInstanceGuid);
+            var answerDao = handle.attach(AnswerDao.class);
+            var answer = answerDao.createAnswer(testData.getUserId(), secondInstance.getId(),
+                    new PicklistAnswer(null, picklistStableId, null, List.of()));
             assertFalse("should be false because picklist selection is empty", run(handle, expr));
 
             var newAnswer = new PicklistAnswer(null, picklistStableId, null, List.of(
                     new SelectedPicklistOption("OPTION_YES")));
-            answerDao.updateAnswerById(handle, secondInstanceGuid, answer.getAnswerId(), newAnswer, userGuid);
+            answerDao.updateAnswer(testData.getUserId(), answer.getAnswerId(), newAnswer);
             assertTrue("should be true because picklist selection is non-empty", run(handle, expr));
 
             handle.rollback();
@@ -1002,13 +962,13 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
         assertFalse("should be false because question is not answered yet", run(expr));
 
         TransactionWrapper.useTxn(handle -> {
-            var answer = new TextAnswer(null, textStableId, null, "");
-            var answerDao = AnswerDao.fromSqlConfig(sqlConfig);
-            answerDao.createAnswer(handle, answer, userGuid, secondInstanceGuid);
+            var answerDao = handle.attach(AnswerDao.class);
+            var answer = answerDao.createAnswer(testData.getUserId(), secondInstance.getId(),
+                    new TextAnswer(null, textStableId, null, ""));
             assertFalse("should be false because text answer is empty", run(handle, expr));
 
             var newAnswer = new TextAnswer(null, textStableId, null, "abc");
-            answerDao.updateAnswerById(handle, secondInstanceGuid, answer.getAnswerId(), newAnswer, userGuid);
+            answerDao.updateAnswer(testData.getUserId(), answer.getAnswerId(), newAnswer);
             assertTrue("should be true because text answer is non-empty", run(handle, expr));
 
             handle.rollback();
@@ -1058,10 +1018,10 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
     }
 
     private boolean run(String expr) {
-        return TransactionWrapper.withTxn(handle -> new TreeWalkInterpreter().eval(expr, handle, userGuid, firstInstanceGuid));
+        return TransactionWrapper.withTxn(handle -> new TreeWalkInterpreter().eval(expr, handle, userGuid, firstInstance.getGuid()));
     }
 
     private boolean run(Handle handle, String expr) {
-        return new TreeWalkInterpreter().eval(expr, handle, userGuid, firstInstanceGuid);
+        return new TreeWalkInterpreter().eval(expr, handle, userGuid, firstInstance.getGuid());
     }
 }

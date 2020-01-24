@@ -49,11 +49,10 @@ import com.auth0.net.AuthRequest;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.typesafe.config.Config;
-
 import org.broadinstitute.ddp.constants.ConfigFile;
-import org.broadinstitute.ddp.db.AnswerDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceStatusDao;
+import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.DsmKitRequestDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
@@ -299,6 +298,11 @@ public class DataLoaderTest {
         )).thenCallRealMethod();
 
         AnswerDao mockAnswerDao = mock(AnswerDao.class);
+        when(mockAnswerDao.createAnswer(
+                anyString(),
+                anyString(),
+                any(CompositeAnswer.class)
+        )).thenReturn(new CompositeAnswer(1L, "composite", "guid"));
 
         mockDataLoader.loadAboutYouSurveyData(
                 mockHandle,
@@ -522,10 +526,9 @@ public class DataLoaderTest {
 
         ArgumentCaptor<CompositeAnswer> compositeAnswerArgumentCaptor = ArgumentCaptor.forClass(CompositeAnswer.class);
         verify(mockAnswerDao).createAnswer(
-                any(Handle.class),
-                compositeAnswerArgumentCaptor.capture(),
                 anyString(),
-                anyString()
+                anyString(),
+                compositeAnswerArgumentCaptor.capture()
         );
 
 

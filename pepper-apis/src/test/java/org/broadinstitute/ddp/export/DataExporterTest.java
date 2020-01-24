@@ -29,11 +29,11 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.opencsv.CSVReader;
 import org.broadinstitute.ddp.TxnAwareBaseTest;
-import org.broadinstitute.ddp.db.AnswerDao;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceStatusDao;
+import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.JdbiMailAddress;
 import org.broadinstitute.ddp.db.dao.JdbiMedicalProvider;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
@@ -103,11 +103,11 @@ public class DataExporterTest extends TxnAwareBaseTest {
 
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static String TEST_USER_GUID = "blah-guid";
+    LocalDate testDateOfMajority = LocalDate.now();
+    DateValue testBirthdate = new DateValue(1978, 5, 16);
     private MedicalRecordService mockMedicalRecordService;
     private GovernancePolicy mockGovernancePolicy;
     private DataExporter exporter;
-    LocalDate testDateOfMajority = LocalDate.now();
-    DateValue testBirthdate = new DateValue(1978, 5, 16);
 
     @BeforeClass
     public static void setup() {
@@ -206,8 +206,8 @@ public class DataExporterTest extends TxnAwareBaseTest {
                     .insertInstance(def.getActivityId(), testData.getUserGuid());
 
             // Answer deprecated question
-            AnswerDao answerDao = AnswerDao.fromSqlConfig(sqlConfig);
-            answerDao.createAnswer(handle, new TextAnswer(null, "Q_TEXT", null, "my value"), testData.getUserGuid(), instanceDto.getGuid());
+            handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), instanceDto.getId(),
+                    new TextAnswer(null, "Q_TEXT", null, "my value"));
 
             // Complete the instance
             long completeTimestamp = Instant.now().toEpochMilli();
@@ -560,7 +560,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
         CSVReader reader = new CSVReader(new StringReader(output));
         Iterator<String[]> iter = reader.iterator();
 
-        String[] expected = new String[]{
+        String[] expected = new String[] {
                 "participant_guid", "participant_hruid", "legacy_altpid", "legacy_shortid",
                 "first_name", "last_name", "email", "do_not_contact", "created_at", "status", "status_timestamp",
                 "ACT_v1", "ACT_v1_status", "ACT_v1_created_at", "ACT_v1_updated_at", "ACT_v1_completed_at",
@@ -570,7 +570,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
         String[] actual = iter.next();
         assertArrayEquals(expected, actual);
 
-        expected = new String[]{
+        expected = new String[] {
                 TEST_USER_GUID, "blah-hruid", "blah-legacy-altpid", "blah-shortid",
                 "first-foo", "last-bar", "test@datadonationplatform.org", "true", "10/18/2018 20:18:01", "ENROLLED", "10/18/2018 20:18:01",
                 "instance-guid-xyz", "COMPLETE", "10/18/2018 20:18:01", "10/18/2018 20:18:21", "10/18/2018 20:18:11",
@@ -588,9 +588,9 @@ public class DataExporterTest extends TxnAwareBaseTest {
         List<ActivityExtract> activities = dataExporterTestData.getActivities();
 
         Map<String, Object> mappings = exporter.exportStudyDataMappings(activities);
-        String[] actual = mappings.keySet().toArray(new String[]{});
+        String[] actual = mappings.keySet().toArray(new String[] {});
 
-        String[] expected = new String[]{
+        String[] expected = new String[] {
                 "participant_guid", "participant_hruid", "legacy_altpid", "legacy_shortid",
                 "first_name", "last_name", "email", "do_not_contact", "created_at", "status", "status_timestamp",
                 "ACT_v1", "ACT_v1_status", "ACT_v1_created_at", "ACT_v1_updated_at", "ACT_v1_completed_at",

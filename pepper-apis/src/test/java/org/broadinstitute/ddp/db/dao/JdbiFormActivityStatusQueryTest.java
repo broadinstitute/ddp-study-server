@@ -11,7 +11,6 @@ import java.util.Collections;
 import java.util.List;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
-import org.broadinstitute.ddp.db.AnswerDao;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.JdbiFormActivityStatusQuery.FormQuestionRequirementStatus;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
@@ -113,8 +112,7 @@ public class JdbiFormActivityStatusQueryTest extends TxnAwareBaseTest {
             }
 
             // Answer the question.
-            AnswerDao answerDao = AnswerDao.fromSqlConfig(sqlConfig);
-            answerDao.createAnswer(handle, answer, testData.getUserGuid(), instanceDto.getGuid());
+            handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), instanceDto.getId(), answer);
 
             // Should meet requirements.
             reqs = jdbiStatusQuery.queryByActivityInstanceGuid(instanceDto.getGuid());

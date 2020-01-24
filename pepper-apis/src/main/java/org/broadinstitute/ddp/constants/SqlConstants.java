@@ -193,64 +193,8 @@ public class SqlConstants {
         public static final String HIDE_QUESTION_NUMBER = "hide_number";
     }
 
-    public static final class QuestionStableCodeTable {
-        public static final String ID = "question_stable_code_id";
-        public static final String STABLE_ID = "stable_id";
-    }
-
     public static final class QuestionTypeTable {
         public static final String CODE = "question_type_code";
-    }
-
-    public static final class BooleanQuestionTable {
-        public static final String QUESTION_ID = "question_id";
-        public static final String TRUE_TEMPLATE_ID = "true_template_id";
-        public static final String FALSE_TEMPLATE_ID = "false_template_id";
-    }
-
-    public static final class PicklistOptionTable {
-        public static final String ID = "picklist_option_id";
-        public static final String STABLE_ID = "picklist_option_stable_id";
-        public static final String OPTION_LABEL_TEMPLATE_ID = "option_label_template_id";
-        public static final String DETAIL_LABEL_TEMPLATE_ID = "detail_label_template_id";
-        public static final String ALLOW_DETAILS = "allow_details";
-        public static final String IS_EXCLUSIVE = "is_exclusive";
-        public static final String DISPLAY_ORDER = "display_order";
-        public static final String REVISION_ID = "revision_id";
-    }
-
-    public static final class PicklistOptionAnswerTable {
-        public static final String DETAIL_TEXT = "detail_text";
-    }
-
-    public static final class PicklistSelectModeTable {
-        public static final String CODE = "picklist_select_mode_code";
-    }
-
-    public static final class PicklistRenderModeTable {
-        public static final String CODE = "picklist_render_mode_code";
-    }
-
-    public static final class PicklistQuestionTable {
-        public static final String QUESTION_ID = "question_id";
-        public static final String PICKLIST_LABEL_TEMPLATE_ID = "picklist_label_template_id";
-    }
-
-    public static final class TextQuestionTable {
-        public static final String INPUT_TYPE = "input_type";
-        public static final String SUGGESTION_TYPE_CODE = "suggestion_type_code";
-        public static final String PLACEHOLDER_TEMPLATE_ID = "placeholder_template_id";
-    }
-
-    public static final class AgreementQuestionTable {
-        public static final String QUESTION_ID = "question_id";
-    }
-
-    public static final class AnswerTable {
-        public static final String TABLE_NAME = "answer";
-        public static final String ID = "answer_id";
-        public static final String GUID = "answer_guid";
-        public static final String ANSWER = "answer";
     }
 
     public static final class ValidationTable {
@@ -347,14 +291,6 @@ public class SqlConstants {
         public static final String ID = "expression_id";
         public static final String GUID = "expression_guid";
         public static final String TEXT = "expression_text";
-    }
-
-    public static final class DateQuestionTable {
-        public static final String DISPLAY_CALENDAR = "display_calendar";
-    }
-
-    public static final class DateRenderModeTable {
-        public static final String CODE = "date_render_mode_code";
     }
 
     public static final class DateQuestionMonthPicklistTable {

@@ -18,7 +18,6 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
-import org.broadinstitute.ddp.db.AnswerDao;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.QuestionStableIdExistsException;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -643,14 +642,9 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
         ActivityInstanceDto activityInstanceDto = TestDataSetupUtil
                 .generateTestFormActivityInstanceForUser(handle, version1.getActivityId(), testData.getUserGuid());
 
-        TextAnswer answer = new TextAnswer(null, sid, null, "itsAnAnswer");
-        JdbiAnswer jdbiAnswer = handle.attach(JdbiAnswer.class);
-        long answerId = jdbiAnswer.insertBaseAnswer(question.getQuestionId(),
-                testData.getUserGuid(),
-                activityInstanceDto.getId());
-        handle.attach(JdbiTextAnswer.class).insert(answerId, answer.getValue());
-        answer.setAnswerId(answerId);
-        answer.setAnswerGuid(jdbiAnswer.findDtoById(answerId).get().getGuid());
+        TextAnswer answer = (TextAnswer) handle.attach(AnswerDao.class)
+                .createAnswer(testData.getUserId(), activityInstanceDto.getId(),
+                        new TextAnswer(null, sid, null, "itsAnAnswer"));
 
         List<Long> answers = new ArrayList<>(Arrays.asList(answer.getAnswerId()));
 
@@ -946,14 +940,9 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
                     .insertActivity(form, RevisionMetadata.now(testData.getUserId(), "test"));
             ActivityInstanceDto activityInstanceDto = TestDataSetupUtil
                     .generateTestFormActivityInstanceForUser(handle, version1.getActivityId(), testData.getUserGuid());
-            BoolAnswer answer = new BoolAnswer(null, sid, null, true);
-            JdbiAnswer jdbiAnswer = handle.attach(JdbiAnswer.class);
-            long answerId = jdbiAnswer.insertBaseAnswer(question.getQuestionId(),
-                    testData.getUserGuid(),
-                    activityInstanceDto.getId());
-            handle.attach(JdbiBooleanAnswer.class).insert(answerId, answer.getValue());
-            answer.setAnswerId(answerId);
-            answer.setAnswerGuid(jdbiAnswer.findDtoById(answerId).get().getGuid());
+            BoolAnswer answer = (BoolAnswer) handle.attach(AnswerDao.class)
+                    .createAnswer(testData.getUserId(), activityInstanceDto.getId(),
+                            new BoolAnswer(null, sid, null, true));
 
             QuestionDto questionDto = handle.attach(JdbiQuestion.class)
                     .getQuestionDtoById(question.getQuestionId()).get();
@@ -1041,19 +1030,9 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             ActivityInstanceDto activityInstanceDto = TestDataSetupUtil
                     .generateTestFormActivityInstanceForUser(handle, version1.getActivityId(), testData.getUserGuid());
 
-            PicklistAnswer answer = new PicklistAnswer(null, sid, null,
-                    Arrays.asList(new SelectedPicklistOption("PO1", null)));
-            JdbiAnswer jdbiAnswer = handle.attach(JdbiAnswer.class);
-            long answerId = jdbiAnswer.insertBaseAnswer(question.getQuestionId(),
-                    testData.getUserGuid(),
-                    activityInstanceDto.getId());
-            handle.attach(JdbiPicklistOptionAnswer.class).insert(
-                    handle.attach(JdbiPicklistOption.class)
-                            .getByStableId(question.getQuestionId(), "PO1", activityInstanceDto.getGuid())
-                            .get().getId(),
-                    answerId);
-            answer.setAnswerId(answerId);
-            answer.setAnswerGuid(jdbiAnswer.findDtoById(answerId).get().getGuid());
+            PicklistAnswer answer = (PicklistAnswer) handle.attach(AnswerDao.class)
+                    .createAnswer(testData.getUserId(), activityInstanceDto.getId(),
+                            new PicklistAnswer(null, sid, null, List.of(new SelectedPicklistOption("PO1"))));
 
             QuestionDto questionDto = handle.attach(JdbiQuestion.class)
                     .getQuestionDtoById(question.getQuestionId()).get();
@@ -1236,13 +1215,13 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
 
             QuestionDto questionDto = handle.attach(JdbiQuestion.class)
                     .getQuestionDtoById(genericQuestionData.getQuestion().getQuestionId()).get();
-            
+
             questionDto = new QuestionDto(questionDto.getType(), questionDto.getId() + 1,
-                            questionDto.getStableId(), questionDto.getPromptTemplateId(),
-                            questionDto.getAdditionalInfoHeaderTemplateId(), questionDto.getAdditionalInfoFooterTemplateId(),
-                            questionDto.getActivityId(), questionDto.isRestricted(), questionDto.isDeprecated(),
-                            questionDto.shouldHideNumber(), questionDto.getRevisionId(),
-                            questionDto.getRevisionStart(), questionDto.getRevisionEnd());
+                    questionDto.getStableId(), questionDto.getPromptTemplateId(),
+                    questionDto.getAdditionalInfoHeaderTemplateId(), questionDto.getAdditionalInfoFooterTemplateId(),
+                    questionDto.getActivityId(), questionDto.isRestricted(), questionDto.isDeprecated(),
+                    questionDto.shouldHideNumber(), questionDto.getRevisionId(),
+                    questionDto.getRevisionStart(), questionDto.getRevisionEnd());
 
             thrown.expect(DaoException.class);
             thrown.expectMessage("Could not find text question for id " + questionDto.getId());
@@ -1344,14 +1323,9 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             ActivityInstanceDto activityInstanceDto = TestDataSetupUtil
                     .generateTestFormActivityInstanceForUser(handle, version1.getActivityId(), testData.getUserGuid());
 
-            DateAnswer answer = new DateAnswer(null, sid, null, new DateValue(2018, 10, 10));
-            JdbiAnswer jdbiAnswer = handle.attach(JdbiAnswer.class);
-            long answerId = jdbiAnswer.insertBaseAnswer(question.getQuestionId(),
-                    testData.getUserGuid(),
-                    activityInstanceDto.getId());
-            handle.attach(JdbiDateAnswer.class).insertAnswer(answerId, answer.getValue());
-            answer.setAnswerId(answerId);
-            answer.setAnswerGuid(jdbiAnswer.findDtoById(answerId).get().getGuid());
+            DateAnswer answer = (DateAnswer) handle.attach(AnswerDao.class)
+                    .createAnswer(testData.getUserId(), activityInstanceDto.getId(),
+                            new DateAnswer(null, sid, null, new DateValue(2018, 10, 10)));
 
             QuestionDto questionDto = handle.attach(JdbiQuestion.class)
                     .getQuestionDtoById(question.getQuestionId()).get();
@@ -1407,14 +1381,9 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
                     .generateTestFormActivityInstanceForUser(handle, version1.getActivityId(), testData.getUserGuid());
 
             DateValue dateValue = new DateValue(2018, 10, 10);
-            DateAnswer answer = new DateAnswer(null, sid, null, dateValue);
-            JdbiAnswer jdbiAnswer = handle.attach(JdbiAnswer.class);
-            long answerId = jdbiAnswer.insertBaseAnswer(question.getQuestionId(),
-                    testData.getUserGuid(),
-                    activityInstanceDto.getId());
-            handle.attach(JdbiDateAnswer.class).insertAnswer(answerId, answer.getValue());
-            answer.setAnswerId(answerId);
-            answer.setAnswerGuid(jdbiAnswer.findDtoById(answerId).get().getGuid());
+            DateAnswer answer = (DateAnswer) handle.attach(AnswerDao.class)
+                    .createAnswer(testData.getUserId(), activityInstanceDto.getId(),
+                            new DateAnswer(null, sid, null, dateValue));
 
             QuestionDto questionDto = handle.attach(JdbiQuestion.class)
                     .getQuestionDtoById(question.getQuestionId()).get();
@@ -1463,14 +1432,9 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             ActivityInstanceDto activityInstanceDto = TestDataSetupUtil
                     .generateTestFormActivityInstanceForUser(handle, version1.getActivityId(), testData.getUserGuid());
 
-            DateAnswer answer = new DateAnswer(null, sid, null, new DateValue(2018, 10, 10));
-            JdbiAnswer jdbiAnswer = handle.attach(JdbiAnswer.class);
-            long answerId = jdbiAnswer.insertBaseAnswer(question.getQuestionId(),
-                    testData.getUserGuid(),
-                    activityInstanceDto.getId());
-            handle.attach(JdbiDateAnswer.class).insertAnswer(answerId, answer.getValue());
-            answer.setAnswerId(answerId);
-            answer.setAnswerGuid(jdbiAnswer.findDtoById(answerId).get().getGuid());
+            DateAnswer answer = (DateAnswer) handle.attach(AnswerDao.class)
+                    .createAnswer(testData.getUserId(), activityInstanceDto.getId(),
+                            new DateAnswer(null, sid, null, new DateValue(2018, 10, 10)));
 
             QuestionDto questionDto = handle.attach(JdbiQuestion.class)
                     .getQuestionDtoById(question.getQuestionId()).get();
@@ -1514,13 +1478,13 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
 
             QuestionDto questionDto = handle.attach(JdbiQuestion.class)
                     .getQuestionDtoById(question.getQuestionId()).get();
-            
+
             questionDto = new QuestionDto(questionDto.getType(), questionDto.getId() + 1,
-                            questionDto.getStableId(), questionDto.getPromptTemplateId(),
-                            questionDto.getAdditionalInfoHeaderTemplateId(), questionDto.getAdditionalInfoFooterTemplateId(),
-                            questionDto.getActivityId(), questionDto.isRestricted(), questionDto.isDeprecated(),
-                            questionDto.shouldHideNumber(), questionDto.getRevisionId(),
-                            questionDto.getRevisionStart(), questionDto.getRevisionEnd());
+                    questionDto.getStableId(), questionDto.getPromptTemplateId(),
+                    questionDto.getAdditionalInfoHeaderTemplateId(), questionDto.getAdditionalInfoFooterTemplateId(),
+                    questionDto.getActivityId(), questionDto.isRestricted(), questionDto.isDeprecated(),
+                    questionDto.shouldHideNumber(), questionDto.getRevisionId(),
+                    questionDto.getRevisionStart(), questionDto.getRevisionEnd());
 
             thrown.expect(DaoException.class);
             thrown.expectMessage("Could not find date question for id " + questionDto.getId());
@@ -1544,9 +1508,8 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             ActivityInstanceDto instanceDto = TestDataSetupUtil
                     .generateTestFormActivityInstanceForUser(handle, version1.getActivityId(), testData.getUserGuid());
 
-            NumericAnswer answer = new NumericIntegerAnswer(null, sid, null, 25L);
-            AnswerDao answerDao = AnswerDao.fromSqlConfig(sqlConfig);
-            answerDao.createAnswer(handle, answer, testData.getUserGuid(), instanceDto.getGuid());
+            handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), instanceDto.getId(),
+                    new NumericIntegerAnswer(null, sid, null, 25L));
 
             NumericQuestionDto questionDto = handle.attach(JdbiNumericQuestion.class)
                     .findDtoByQuestionId(questionDef.getQuestionId()).get();
@@ -1586,12 +1549,12 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             Template footer = Template.text("footer");
             RequiredRuleDef rule = new RequiredRuleDef(null);
             AgreementQuestionDef question = new AgreementQuestionDef(sid,
-                                                                    false,
-                                                                    agreeTmpl,
-                                                                    header,
-                                                                    footer,
-                                                                    Arrays.asList(rule),
-                                                                    true
+                    false,
+                    agreeTmpl,
+                    header,
+                    footer,
+                    Arrays.asList(rule),
+                    true
             );
             FormActivityDef form = buildSingleSectionForm(testData.getStudyGuid(), question);
 
@@ -1600,14 +1563,9 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             ActivityInstanceDto activityInstanceDto = TestDataSetupUtil
                     .generateTestFormActivityInstanceForUser(handle, version1.getActivityId(), testData.getUserGuid());
 
-            AgreementAnswer answer = new AgreementAnswer(null, sid, null, true);
-            JdbiAnswer jdbiAnswer = handle.attach(JdbiAnswer.class);
-            long answerId = jdbiAnswer.insertBaseAnswer(question.getQuestionId(),
-                    testData.getUserGuid(),
-                    activityInstanceDto.getId());
-            handle.attach(JdbiAgreementAnswer.class).insert(answerId, answer.getValue());
-            answer.setAnswerId(answerId);
-            answer.setAnswerGuid(jdbiAnswer.findDtoById(answerId).get().getGuid());
+            AgreementAnswer answer = (AgreementAnswer) handle.attach(AnswerDao.class)
+                    .createAnswer(testData.getUserId(), activityInstanceDto.getId(),
+                            new AgreementAnswer(null, sid, null, true));
 
             QuestionDto questionDto = handle.attach(JdbiQuestion.class)
                     .getQuestionDtoById(question.getQuestionId()).get();
@@ -1630,7 +1588,6 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             handle.rollback();
         });
     }
-
 
     @Test
     public void testGetCompositeQuestion_success() {
@@ -1675,20 +1632,17 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             CompositeAnswer compAnswer = new CompositeAnswer(null, sid, null);
             compAnswer.addRowOfChildAnswers(da, ta);
 
-            AnswerDao answerDao = AnswerDao.fromSqlConfig(sqlConfig);
-
-            String compGuid = answerDao.createAnswer(handle, compAnswer,
-                    testData.getUserGuid(), activityInstanceDto.getGuid());
-            assertNotNull(compGuid);
-            Long compId = answerDao.getAnswerIdByGuids(handle, activityInstanceDto.getGuid(), compGuid);
-            assertNotNull(compId);
+            Answer ans = handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), activityInstanceDto.getId(), compAnswer);
+            assertNotNull(ans);
+            assertNotNull(ans.getAnswerId());
+            assertNotNull(ans.getAnswerGuid());
 
             QuestionDto questionDto = handle.attach(JdbiQuestion.class)
                     .getQuestionDtoById(questionDef.getQuestionId()).get();
 
             Question question = handle.attach(QuestionDao.class).getCompositeQuestion(questionDto,
                     activityInstanceDto.getGuid(),
-                    Arrays.asList(compAnswer.getAnswerId()),
+                    List.of(ans.getAnswerId()),
                     Collections.emptyList(),
                     langCodeId);
             assertEquals(QuestionType.COMPOSITE, question.getQuestionType());
@@ -1784,36 +1738,32 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             CompositeAnswer compAnswer = new CompositeAnswer(null, sid, null);
             compAnswer.addRowOfChildAnswers(da, ta);
 
-            AnswerDao answerDao = AnswerDao.fromSqlConfig(sqlConfig);
-
-            String compGuid = answerDao.createAnswer(handle, compAnswer,
-                    testData.getUserGuid(), activityInstanceDto.getGuid());
-            assertNotNull(compGuid);
-            Long compId = answerDao.getAnswerIdByGuids(handle, activityInstanceDto.getGuid(), compGuid);
-            assertNotNull(compId);
+            Answer ans = handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), activityInstanceDto.getId(), compAnswer);
+            assertNotNull(ans);
+            assertNotNull(ans.getAnswerId());
+            assertNotNull(ans.getAnswerGuid());
 
             QuestionDto questionDto = handle.attach(JdbiQuestion.class)
                     .getQuestionDtoById(questionDef.getQuestionId()).get();
-            
+
             questionDto = new QuestionDto(questionDto.getType(), questionDto.getId() + 1,
-                            questionDto.getStableId(), questionDto.getPromptTemplateId(),
-                            questionDto.getAdditionalInfoHeaderTemplateId(), questionDto.getAdditionalInfoFooterTemplateId(),
-                            questionDto.getActivityId(), questionDto.isRestricted(), questionDto.isDeprecated(),
-                            questionDto.shouldHideNumber(), questionDto.getRevisionId(),
-                            questionDto.getRevisionStart(), questionDto.getRevisionEnd());
+                    questionDto.getStableId(), questionDto.getPromptTemplateId(),
+                    questionDto.getAdditionalInfoHeaderTemplateId(), questionDto.getAdditionalInfoFooterTemplateId(),
+                    questionDto.getActivityId(), questionDto.isRestricted(), questionDto.isDeprecated(),
+                    questionDto.shouldHideNumber(), questionDto.getRevisionId(),
+                    questionDto.getRevisionStart(), questionDto.getRevisionEnd());
 
             thrown.expect(DaoException.class);
             thrown.expectMessage("Could not find composite question using question id " + questionDto.getId());
             handle.attach(QuestionDao.class).getCompositeQuestion(questionDto,
                     activityInstanceDto.getGuid(),
-                    Arrays.asList(compAnswer.getAnswerId()),
+                    List.of(ans.getAnswerId()),
                     Collections.emptyList(),
                     langCodeId);
 
             handle.rollback();
         });
     }
-
 
     private FormActivityDef buildSingleSectionForm(String studyGuid, QuestionDef... questions) {
         return FormActivityDef.generalFormBuilder("ACT" + Instant.now().toEpochMilli(), "v1", studyGuid)

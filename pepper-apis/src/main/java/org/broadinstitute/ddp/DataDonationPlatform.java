@@ -29,7 +29,6 @@ import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.API;
 import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.db.ActivityInstanceDao;
-import org.broadinstitute.ddp.db.AnswerDao;
 import org.broadinstitute.ddp.db.CancerStore;
 import org.broadinstitute.ddp.db.ConsentElectionDao;
 import org.broadinstitute.ddp.db.DBUtils;
@@ -251,7 +250,6 @@ public class DataDonationPlatform {
 
         UserDao userDao = UserDaoFactory.createFromSqlConfig(sqlConfig);
 
-        final AnswerDao answerDao = AnswerDao.fromSqlConfig(sqlConfig);
         SectionBlockDao sectionBlockDao = new SectionBlockDao(new I18nContentRenderer());
 
         FormInstanceDao formInstanceDao = FormInstanceDao.fromDaoAndConfig(sectionBlockDao, sqlConfig);
@@ -374,7 +372,7 @@ public class DataDonationPlatform {
         // User activity answers routes
         FormActivityService formService = new FormActivityService(interpreter);
         patch(API.USER_ACTIVITY_ANSWERS,
-                new PatchFormAnswersRoute(formService, activityValidationService, answerDao, interpreter),
+                new PatchFormAnswersRoute(formService, activityValidationService, interpreter),
                 responseSerializer);
         put(
                 API.USER_ACTIVITY_ANSWERS,

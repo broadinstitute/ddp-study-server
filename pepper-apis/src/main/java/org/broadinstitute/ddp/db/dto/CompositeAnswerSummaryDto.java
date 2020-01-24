@@ -8,6 +8,7 @@ public class CompositeAnswerSummaryDto {
     private long id;
     private String guid;
     private String questionStableId;
+    private long activityInstanceId;
     private List<List<AnswerDto>> childAnswers;
 
     public CompositeAnswerSummaryDto() {
@@ -49,5 +50,13 @@ public class CompositeAnswerSummaryDto {
 
     public void setQuestionStableId(String questionStableId) {
         this.questionStableId = questionStableId;
+    }
+
+    public long getActivityInstanceId() {
+        return activityInstanceId;
+    }
+
+    public void setActivityInstanceId(long activityInstanceId) {
+        this.activityInstanceId = activityInstanceId;
     }
 }

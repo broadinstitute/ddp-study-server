@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="20200123-answer-cascade-delete">
+        <dropForeignKeyConstraint baseTableName="agreement_answer" constraintName="agreement_answer_answer_fk"/>
+        <addForeignKeyConstraint baseTableName="agreement_answer" baseColumnNames="answer_id"
+                                 referencedTableName="answer" referencedColumnNames="answer_id"
+                                 constraintName="agreement_answer_answer_fk" onDelete="CASCADE"/>
+
+        <dropForeignKeyConstraint baseTableName="boolean_answer" constraintName="boolean_answer_answer_fk"/>
+        <addForeignKeyConstraint baseTableName="boolean_answer" baseColumnNames="answer_id"
+                                 referencedTableName="answer" referencedColumnNames="answer_id"
+                                 constraintName="boolean_answer_answer_fk" onDelete="CASCADE"/>
+
+        <dropForeignKeyConstraint baseTableName="date_answer" constraintName="date_answer_answer_fk"/>
+        <addForeignKeyConstraint baseTableName="date_answer" baseColumnNames="answer_id"
+                                 referencedTableName="answer" referencedColumnNames="answer_id"
+                                 constraintName="date_answer_answer_fk" onDelete="CASCADE"/>
+
+        <dropForeignKeyConstraint baseTableName="numeric_answer" constraintName="numeric_answer_answer_fk"/>
+        <addForeignKeyConstraint baseTableName="numeric_answer" baseColumnNames="answer_id"
+                                 referencedTableName="answer" referencedColumnNames="answer_id"
+                                 constraintName="numeric_answer_answer_fk" onDelete="CASCADE"/>
+
+        <dropForeignKeyConstraint baseTableName="text_answer" constraintName="text_answer_answer_fk"/>
+        <addForeignKeyConstraint baseTableName="text_answer" baseColumnNames="answer_id"
+                                 referencedTableName="answer" referencedColumnNames="answer_id"
+                                 constraintName="text_answer_answer_fk" onDelete="CASCADE"/>
+
+        <dropForeignKeyConstraint baseTableName="picklist_option__answer" constraintName="picklist_option__answer_answer_fk"/>
+        <addForeignKeyConstraint baseTableName="picklist_option__answer" baseColumnNames="answer_id"
+                                 referencedTableName="answer" referencedColumnNames="answer_id"
+                                 constraintName="picklist_option__answer_answer_fk" onDelete="CASCADE"/>
+
+        <dropForeignKeyConstraint baseTableName="composite_answer_item" constraintName="composite_answer_item_parent_answer_fk"/>
+        <addForeignKeyConstraint baseTableName="composite_answer_item" baseColumnNames="parent_answer_id"
+                                 referencedTableName="answer" referencedColumnNames="answer_id"
+                                 constraintName="composite_answer_item_parent_answer_fk" onDelete="CASCADE"/>
+    </changeSet>
+</databaseChangeLog>

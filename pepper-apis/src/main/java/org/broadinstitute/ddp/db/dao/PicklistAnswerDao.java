@@ -5,7 +5,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.broadinstitute.ddp.db.DaoException;
@@ -13,7 +12,6 @@ import org.broadinstitute.ddp.db.dto.AnswerDto;
 import org.broadinstitute.ddp.db.dto.PicklistOptionDto;
 import org.broadinstitute.ddp.db.dto.PicklistQuestionDto;
 import org.broadinstitute.ddp.exception.OperationNotAllowedException;
-import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
 import org.broadinstitute.ddp.model.activity.types.PicklistSelectMode;
 import org.jdbi.v3.sqlobject.CreateSqlObject;
@@ -26,25 +24,13 @@ public interface PicklistAnswerDao extends SqlObject {
     Logger LOG = LoggerFactory.getLogger(PicklistAnswerDao.class);
 
     @CreateSqlObject
-    JdbiAnswer getJdbiAnswer();
-
-    @CreateSqlObject
     JdbiPicklistOption getJdbiPicklistOption();
-
-    @CreateSqlObject
-    JdbiPicklistOptionAnswer getJdbiPicklistOptionAnswer();
 
     @CreateSqlObject
     JdbiPicklistQuestion getJdbiPicklistQuestion();
 
-
-    default Optional<PicklistAnswer> findByAnswerId(long answerId) {
-        return getJdbiAnswer().findDtoById(answerId)
-                .map(answerDto -> {
-                    List<SelectedPicklistOption> selected = getJdbiPicklistOptionAnswer().findAllSelectedOptionsByAnswerId(answerId);
-                    return new PicklistAnswer(answerId, answerDto.getQuestionStableId(), answerDto.getGuid(), selected);
-                });
-    }
+    @CreateSqlObject
+    AnswerSql getAnswerSql();
 
 
     default void assignOptionsToAnswerId(long answerId, List<SelectedPicklistOption> selected, String instanceGuid) {
@@ -53,7 +39,7 @@ public interface PicklistAnswerDao extends SqlObject {
             return;
         }
 
-        AnswerDto answerDto = getJdbiAnswer().findDtoById(answerId)
+        AnswerDto answerDto = getAnswerSql().findDtoById(answerId)
                 .orElseThrow(() -> new NoSuchElementException("Could not find answer with id " + answerId));
 
         PicklistQuestionDto questionDto = getJdbiPicklistQuestion().findDtoByQuestionId(answerDto.getQuestionId())
@@ -94,13 +80,9 @@ public interface PicklistAnswerDao extends SqlObject {
             selectedIds.add(dto.getId());
         }
 
-        long[] ids = getJdbiPicklistOptionAnswer().bulkInsert(answerId, selectedIds, detailTexts);
+        long[] ids = getAnswerSql().bulkInsertPicklistSelected(answerId, selectedIds, detailTexts);
         if (ids.length != selected.size()) {
             throw new DaoException("Not all selected picklist options were assigned to answer " + answerId);
         }
-    }
-
-    default int unassignOptionsFromAnswerId(long answerId) {
-        return getJdbiPicklistOptionAnswer().deleteAllByAnswerId(answerId);
     }
 }

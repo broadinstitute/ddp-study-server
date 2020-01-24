@@ -34,11 +34,11 @@ import com.typesafe.config.Config;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.SqlConstants.MedicalProviderTable;
-import org.broadinstitute.ddp.db.AnswerDao;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceStatusDao;
+import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.ClientDao;
 import org.broadinstitute.ddp.db.dao.DsmKitRequestDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
@@ -1037,7 +1037,7 @@ public class DataLoader {
                         compositeAnswer.addRowOfChildAnswers(innerAnswer);
                     });
 
-            return answerDao.createAnswer(handle, compositeAnswer, participantGuid, instanceGuid);
+            return answerDao.createAnswer(participantGuid, instanceGuid, compositeAnswer).getAnswerGuid();
         }
         return null;
     }
@@ -1145,7 +1145,7 @@ public class DataLoader {
                     value.getMonth(),
                     value.getDay());
         }
-        return answerDao.createAnswer(handle, answer, participantGuid, instanceGuid);
+        return answerDao.createAnswer(participantGuid, instanceGuid, answer).getAnswerGuid();
     }
 
     public String answerDateQuestion(Handle handle, String pepperQuestionStableId, String participantGuid, String instanceGuid,
@@ -1158,7 +1158,7 @@ public class DataLoader {
                     value.getMonthValue(),
                     value.getDayOfMonth());
         }
-        return answerDao.createAnswer(handle, answer, participantGuid, instanceGuid);
+        return answerDao.createAnswer(participantGuid, instanceGuid, answer).getAnswerGuid();
     }
 
     public String answerTextQuestion(Handle handle,
@@ -1168,7 +1168,7 @@ public class DataLoader {
                                      String value, AnswerDao answerDao) {
         if (value != null) {
             Answer answer = new TextAnswer(null, pepperQuestionStableId, null, value);
-            return answerDao.createAnswer(handle, answer, participantGuid, instanceGuid);
+            return answerDao.createAnswer(participantGuid, instanceGuid, answer).getAnswerGuid();
         }
         return null;
     }
@@ -1180,7 +1180,7 @@ public class DataLoader {
                                         Integer value, AnswerDao answerDao) throws Exception {
         if (value != null) {
             Answer answer = new BoolAnswer(null, pepperQuestionStableId, null, getBooleanValue(value));
-            return answerDao.createAnswer(handle, answer, participantGuid, instanceGuid);
+            return answerDao.createAnswer(participantGuid, instanceGuid, answer).getAnswerGuid();
         }
         return null;
     }
@@ -1192,7 +1192,7 @@ public class DataLoader {
                                           Boolean value, AnswerDao answerDao) throws Exception {
         if (value != null) {
             Answer answer = new AgreementAnswer(null, pepperQuestionStableId, null, value);
-            return answerDao.createAnswer(handle, answer, participantGuid, instanceGuid);
+            return answerDao.createAnswer(participantGuid, instanceGuid, answer).getAnswerGuid();
         }
         return null;
     }
@@ -1200,8 +1200,7 @@ public class DataLoader {
     public String answerPickListQuestion(Handle handle, String questionStableId, String participantGuid, String instanceGuid,
                                          List<SelectedPicklistOption> selectedPicklistOptions, AnswerDao answerDao) {
         Answer answer = new PicklistAnswer(null, questionStableId, null, selectedPicklistOptions);
-
-        return answerDao.createAnswer(handle, answer, participantGuid, instanceGuid);
+        return answerDao.createAnswer(participantGuid, instanceGuid, answer).getAnswerGuid();
     }
 
     private SelectedPicklistOption getCountry(AboutYouSurvey aboutYouSurvey) throws Exception {

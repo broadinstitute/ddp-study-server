@@ -11,18 +11,21 @@ public class AnswerDto {
     private long questionId;
     private String questionStableId;
     private QuestionType questionType;
+    private long activityInstanceId;
 
     @JdbiConstructor
     public AnswerDto(@ColumnName("answer_id") Long id,
                      @ColumnName("answer_guid") String guid,
                      @ColumnName("question_id") long questionId,
                      @ColumnName("question_stable_id") String questionStableId,
-                     @ColumnName("question_type") QuestionType questionType) {
+                     @ColumnName("question_type") QuestionType questionType,
+                     @ColumnName("activity_instance_id") long activityInstanceId) {
         this.id = id;
         this.guid = guid;
         this.questionId = questionId;
         this.questionStableId = questionStableId;
         this.questionType = questionType;
+        this.activityInstanceId = activityInstanceId;
     }
 
     public Long getId() {
@@ -43,5 +46,9 @@ public class AnswerDto {
 
     public QuestionType getQuestionType() {
         return questionType;
+    }
+
+    public long getActivityInstanceId() {
+        return activityInstanceId;
     }
 }
