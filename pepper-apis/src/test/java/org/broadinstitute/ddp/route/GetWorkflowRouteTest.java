@@ -3,8 +3,10 @@ package org.broadinstitute.ddp.route;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.isEmptyOrNullString;
 import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
@@ -151,6 +153,28 @@ public class GetWorkflowRouteTest extends IntegrationTestSuite.TestCase {
     }
 
     @Test
+    public void testGet_fromActivityState_acceptsInstanceGuid() {
+        TransactionWrapper.useTxn(handle -> {
+            ActivityState current = new ActivityState(fromActivity.getActivityId());
+            ActivityState next = new ActivityState(nextActivity.getActivityId());
+            WorkflowTransition t1 = new WorkflowTransition(studyId, current, next, "true", 1);
+            insertTransitionsAndDeferCleanup(handle, t1);
+        });
+
+        ActivityInstanceDto fromInstance = TransactionWrapper.withTxn(handle ->
+                insertNewInstanceAndDeferCleanup(handle, fromActivity.getActivityId()));
+
+        given().auth().oauth2(token)
+                .queryParam(QueryParam.FROM, StateType.ACTIVITY)
+                .queryParam(QueryParam.INSTANCE_GUID, fromInstance.getGuid())
+                .when().get(url).then().assertThat()
+                .statusCode(200).contentType(ContentType.JSON)
+                .body("next", equalTo(StateType.ACTIVITY.name()))
+                .body("activityCode", equalTo(nextActivity.getActivityCode()))
+                .body("instanceGuid", is(notNullValue()));
+    }
+
+    @Test
     public void testGet_fromActivityState_prefersActivityCodeOverInstanceGuid() {
         TransactionWrapper.useTxn(handle -> {
             ActivityState current = new ActivityState(fromActivity.getActivityId());
@@ -245,32 +269,6 @@ public class GetWorkflowRouteTest extends IntegrationTestSuite.TestCase {
 
         instanceGuidsToDelete.add(instanceGuid);
     }
-
-    @Test
-    public void testGetStart_createsInstanceOfAnyActivityIfNoneExists() {
-        TransactionWrapper.useTxn(handle -> {
-            ActivityState current = new ActivityState(fromActivity.getActivityId());
-            ActivityState next = new ActivityState(nextActivity.getActivityId());
-            WorkflowTransition t1 = new WorkflowTransition(studyId, current, next, "true", 1);
-            insertTransitionsAndDeferCleanup(handle, t1);
-        });
-
-        ActivityInstanceDto fromInstance = TransactionWrapper.withTxn(handle ->
-                insertNewInstanceAndDeferCleanup(handle, fromActivity.getActivityId()));
-
-        String instanceGuid = given().auth().oauth2(token)
-                .queryParam(QueryParam.FROM, StateType.ACTIVITY)
-                .queryParam(QueryParam.INSTANCE_GUID, fromInstance.getGuid())
-                .when().get(url).then().assertThat()
-                .statusCode(200).contentType(ContentType.JSON)
-                .body("next", equalTo(StateType.ACTIVITY.name()))
-                .body("activityCode", equalTo(nextActivity.getActivityCode()))
-                .body("instanceGuid", not(isEmptyOrNullString()))
-                .and().extract().path("instanceGuid");
-
-        instanceGuidsToDelete.add(instanceGuid);
-    }
-
 
     private ActivityInstanceDto insertNewInstanceAndDeferCleanup(Handle handle, long activityId) {
         ActivityInstanceDto dto = handle.attach(ActivityInstanceDao.class)
