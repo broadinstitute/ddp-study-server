@@ -1,0 +1,117 @@
+group ActivityInstanceSql;
+
+all_form_instance_responses_with_latest_status_and_answers_select() ::= <<
+select ai.activity_instance_id   as a_instance_id,
+       ai.activity_instance_guid as a_instance_guid,
+       ai.participant_id         as a_participant_id,
+       ai.is_readonly            as a_is_readonly,
+       ai.created_at             as a_created_at,
+       ai.first_completed_at     as a_first_completed_at,
+       act.study_activity_id     as a_activity_id,
+       act.study_activity_code   as a_activity_code,
+       (select ver.version_tag
+          from activity_version as ver
+          join revision as rev on rev.revision_id = ver.revision_id
+         where ver.study_activity_id = ai.study_activity_id
+           and rev.start_date \<= ai.created_at
+           and (rev.end_date is null or ai.created_at \< rev.end_date)
+       ) as a_activity_version_tag,
+       ais.activity_instance_status_id      as a_activity_instance_status_id,
+       ais.activity_instance_id             as a_activity_instance_id,
+       ais.operator_id                      as a_operator_id,
+       ais.updated_at                       as a_updated_at,
+       ais.activity_instance_status_type_id as a_activity_instance_status_type_id,
+       (select activity_instance_status_type_code
+          from activity_instance_status_type
+         where activity_instance_status_type_id = ais.activity_instance_status_type_id
+       ) as a_activity_instance_status_type_code,
+       ans.answer_id,
+       ans.answer_guid,
+       (select question_type_code from question_type where question_type_id = q.question_type_id) as question_type,
+       (select stable_id from question_stable_code where question_stable_code_id = q.question_stable_code_id) as question_stable_id,
+       aa.answer as aa_value,
+       ba.answer as ba_value,
+       ta.answer as ta_value,
+       da.year   as da_year,
+       da.month  as da_month,
+       da.day    as da_day,
+       nt.numeric_type_code as na_numeric_type,
+       na.int_value         as na_int_value,
+       po.picklist_option_stable_id as pa_option_stable_id,
+       pa.detail_text               as pa_detail_text,
+       cq.allow_multiple   as ca_allow_multiple,
+       cq.unwrap_on_export as ca_unwrap_on_export,
+       ca.child_answer_id  as ca_child_answer_id,
+       ca.response_order   as ca_child_row,
+       (select display_order from composite_question__question
+         where parent_question_id = ans.question_id
+           and child_question_id = (select question_id from answer where answer_id = ca.child_answer_id)
+       ) as ca_child_col,
+       coalesce((select 1 from composite_answer_item where child_answer_id = ans.answer_id), 0) as is_child_answer
+  from activity_instance as ai
+  join activity_instance_status as ais on ais.activity_instance_id = ai.activity_instance_id
+       and ais.updated_at = (select max(s2.updated_at) from activity_instance_status as s2 where s2.activity_instance_id = ai.activity_instance_id)
+  join study_activity as act on act.study_activity_id = ai.study_activity_id
+  join user as u on u.user_id = ai.participant_id
+  left join answer as ans on ans.activity_instance_id = ai.activity_instance_id
+  left join question as q on q.question_id = ans.question_id
+  left join composite_question as cq on cq.question_id = q.question_id
+  left join numeric_question as nq on nq.question_id = q.question_id
+  left join numeric_type as nt on nt.numeric_type_id = nq.numeric_type_id
+  left join agreement_answer as aa on aa.answer_id = ans.answer_id
+  left join boolean_answer as ba on ba.answer_id = ans.answer_id
+  left join text_answer as ta on ta.answer_id = ans.answer_id
+  left join date_answer as da on da.answer_id = ans.answer_id
+  left join numeric_answer as na on na.answer_id = ans.answer_id
+  left join picklist_option__answer as pa on pa.answer_id = ans.answer_id
+  left join picklist_option as po on po.picklist_option_id = pa.picklist_option_id
+  left join composite_answer_item as ca on ca.parent_answer_id = ans.answer_id
+>>
+
+// Sort by participant then instance so each user's data is close together.
+// The other sorts are necessary to properly reduce answers.
+all_form_instance_responses_with_latest_status_and_answers_order_by() ::= <<
+order by ai.participant_id asc,
+      ai.activity_instance_id asc,
+      is_child_answer desc,
+      po.display_order asc,
+      ca_child_row asc,
+      ca_child_col asc
+>>
+
+queryFormResponseWithAnswers(byId) ::= <<
+<all_form_instance_responses_with_latest_status_and_answers_select()>
+<if(byId)>
+  where ai.activity_instance_id = :instanceId
+<else>
+  where ai.activity_instance_guid = :instanceGuid
+<endif>
+<all_form_instance_responses_with_latest_status_and_answers_order_by()>
+>>
+
+bulkQueryFormResponsesSubsetWithAnswersByStudyId(selectAll, byId, userIds, userGuids, limitActivities, activityCodes) ::= <<
+<all_form_instance_responses_with_latest_status_and_answers_select()>
+where act.study_id = :studyId
+<if(!selectAll)>
+  <if(byId)>
+    and u.user_id in (<userIds>)
+  <else>
+    and u.guid in (<userGuids>)
+  <endif>
+<endif>
+<if(limitActivities)>
+  and act.study_activity_code in (<activityCodes>)
+<endif>
+<all_form_instance_responses_with_latest_status_and_answers_order_by()>
+>>
+
+bulkQueryFormResponsesWithAnswersByUsersAndActivityIds(byId, userIds, userGuids, activityIds) ::= <<
+<all_form_instance_responses_with_latest_status_and_answers_select()>
+where act.study_activity_id in (<activityIds>)
+<if(byId)>
+  and u.user_id in (<userIds>)
+<else>
+  and u.guid in (<userGuids>)
+<endif>
+<all_form_instance_responses_with_latest_status_and_answers_order_by()>
+>>

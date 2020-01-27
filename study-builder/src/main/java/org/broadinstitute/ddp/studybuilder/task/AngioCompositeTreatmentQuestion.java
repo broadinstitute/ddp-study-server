@@ -72,7 +72,7 @@ public class AngioCompositeTreatmentQuestion implements CustomTask {
         String newQuestionStableId = dataCfg.getString("newQuestionStableId");
 
         QuestionDto oldQuestionDto = jdbiQuestion
-                .getLatestQuestionDtoByQuestionStableIdAndUmbrellaStudyId(oldQuestionStableId, studyDto.getId())
+                .findLatestDtoByStudyIdAndQuestionStableId(studyDto.getId(), oldQuestionStableId)
                 .orElseThrow(() -> new DDPException("Could not find question " + oldQuestionStableId));
 
         helper.updateQuestionStableId(oldQuestionDto.getId(), newQuestionStableId);

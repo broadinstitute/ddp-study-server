@@ -2,15 +2,13 @@ package org.broadinstitute.ddp.db.dao;
 
 import static org.broadinstitute.ddp.model.event.MessageDestination.PARTICIPANT_NOTIFICATION;
 
-import java.util.Optional;
 import java.util.Set;
 
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
-import org.broadinstitute.ddp.db.dto.CopyAnswerEventActionDto;
 import org.broadinstitute.ddp.db.dto.SendgridEmailEventActionDto;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
-import org.broadinstitute.ddp.model.event.CopyAnswerTarget;
+import org.broadinstitute.ddp.model.copy.CopyConfiguration;
 import org.broadinstitute.ddp.model.event.NotificationServiceType;
 import org.broadinstitute.ddp.model.event.NotificationType;
 import org.jdbi.v3.sqlobject.CreateSqlObject;
@@ -26,9 +24,6 @@ public interface EventActionDao extends SqlObject {
 
     @CreateSqlObject
     JdbiEventAction getJdbiEventAction();
-
-    @CreateSqlObject
-    JdbiActivityInstanceCreationAction getJdbiActivityInstanceCreationAction();
 
     @CreateSqlObject
     JdbiMessageDestination getMessageDestinationDao();
@@ -49,10 +44,10 @@ public interface EventActionDao extends SqlObject {
     JdbiPdfGenerationEventAction getJdbiPdfGenerationEventAction();
 
     @CreateSqlObject
-    JdbiCopyAnswerEventAction getJdbiCopyAnswerEventAction();
+    EventActionSql getEventActionSql();
 
     @CreateSqlObject
-    EventActionSql getEventActionSql();
+    CopyConfigurationDao getCopyConfigurationDao();
 
     default long insertInvitationEmailNotificationAction(SendgridEmailEventActionDto sendgridTemplateDto) {
         return insertNotificationAction(sendgridTemplateDto, NotificationType.INVITATION_EMAIL);
@@ -94,7 +89,7 @@ public interface EventActionDao extends SqlObject {
 
     default long insertInstanceCreationAction(long targetActivityId) {
         long actionId = getJdbiEventAction().insert(null, EventActionType.ACTIVITY_INSTANCE_CREATION);
-        int numRowsInserted = getJdbiActivityInstanceCreationAction().insert(actionId, targetActivityId);
+        int numRowsInserted = getEventActionSql().insertActivityInstanceCreationAction(actionId, targetActivityId);
         if (numRowsInserted != 1) {
             throw new DaoException("Could not insert activity instance creation event for target activity id " + targetActivityId);
         }
@@ -148,24 +143,14 @@ public interface EventActionDao extends SqlObject {
         return actionId;
     }
 
-    default long insertCopyAnswerAction(long studyId, String copySourceStableCode, CopyAnswerTarget copyTarget) {
+    default long insertCopyAnswerAction(CopyConfiguration config) {
         long actionId = getJdbiEventAction().insert(null, EventActionType.COPY_ANSWER);
-        JdbiQuestionStableCode jdbiQuestionStableCode = getHandle().attach(JdbiQuestionStableCode.class);
-        Optional<Long> stableCodeDbId = jdbiQuestionStableCode.getIdForStableId(copySourceStableCode, studyId);
-        if (!stableCodeDbId.isPresent()) {
-            throw new DaoException("Could not find question stable db id for stable id:" + copySourceStableCode
-                    + " and studyId " + studyId);
-        }
-        int numInserted = getJdbiCopyAnswerEventAction().insert(actionId, stableCodeDbId.get(), copyTarget);
+        long configId = getCopyConfigurationDao().createCopyConfig(config).getId();
+        int numInserted = getEventActionSql().insertCopyAnswerAction(actionId, configId);
         if (numInserted != 1) {
-            throw new DaoException("Could not insert copy event action with target:" + copyTarget + " and source stable id: "
-                    + copySourceStableCode);
+            throw new DaoException("Could not insert copy event action with copy configuration id " + configId);
         }
         return actionId;
-    }
-
-    default CopyAnswerEventActionDto findCopyAnswerAction(long eventId) {
-        return getJdbiCopyAnswerEventAction().findById(eventId);
     }
 
     default void deleteAnnouncementAction(long eventActionId) {
