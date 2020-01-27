@@ -375,7 +375,7 @@ public class WorkflowServiceTest extends TxnAwareBaseTest {
     @Test
     public void test_givenNullMaxInstPerUser_andNextActDoesntHaveInstance_whenSuggestNextStateIsCalled_thenInstanceIsCreated() {
         TransactionWrapper.useTxn(handle -> {
-            Map<String, Long> actParticipatingInTransition = setupActivitiesAndTransitionBetweenThem(handle);
+            Map<String, Long> actParticipatingInTransition = setupActivitiesAndCreateTransitionBetweenThem(handle);
             service.suggestNextState(
                     handle, operatorGuid, userGuid, studyGuid, new ActivityState(
                             actParticipatingInTransition.get("activityTransitionedFromId")
@@ -392,7 +392,7 @@ public class WorkflowServiceTest extends TxnAwareBaseTest {
     @Test
     public void test_givenNonZeroMaxInstPerUser_andNextActDoesntHaveInstance_whenSuggestNextStateIsCalled_thenInstanceIsCreated() {
         TransactionWrapper.useTxn(handle -> {
-            Map<String, Long> actParticipatingInTransition = setupActivitiesAndTransitionBetweenThem(handle);
+            Map<String, Long> actParticipatingInTransition = setupActivitiesAndCreateTransitionBetweenThem(handle);
             handle.attach(JdbiActivity.class).updateMaxInstancesPerUserById(
                     actParticipatingInTransition.get("activityTransitionedToId"),
                     5
@@ -413,7 +413,7 @@ public class WorkflowServiceTest extends TxnAwareBaseTest {
     @Test
     public void test_givenZeroMaxInstPerUser_andNextActDoesntHaveInstance_whenSuggestNextStateIsCalled_thenInstanceIsNotCreated() {
         TransactionWrapper.useTxn(handle -> {
-            Map<String, Long> actParticipatingInTransition = setupActivitiesAndTransitionBetweenThem(handle);
+            Map<String, Long> actParticipatingInTransition = setupActivitiesAndCreateTransitionBetweenThem(handle);
             handle.attach(JdbiActivity.class).updateMaxInstancesPerUserById(
                     actParticipatingInTransition.get("activityTransitionedToId"),
                     0
@@ -434,7 +434,7 @@ public class WorkflowServiceTest extends TxnAwareBaseTest {
     @Test
     public void test_givenNextActivityAlreadyHasInstance_whenSuggestNextStateIsCalled_thenInstanceIsNotCreated() {
         TransactionWrapper.useTxn(handle -> {
-            Map<String, Long> actParticipatingInTransition = setupActivitiesAndTransitionBetweenThem(handle);
+            Map<String, Long> actParticipatingInTransition = setupActivitiesAndCreateTransitionBetweenThem(handle);
             ActivityInstanceDto newInstance = insertNewInstance(handle, actParticipatingInTransition.get("activityTransitionedToId"));
             service.suggestNextState(
                     handle, operatorGuid, userGuid, studyGuid, new ActivityState(
@@ -453,7 +453,7 @@ public class WorkflowServiceTest extends TxnAwareBaseTest {
     @Test
     public void test_givenInstanceCreationTriggersAnotherEvent_whenSuggestNextStateIsCalled_thenThatEventGetsProcessed() {
         TransactionWrapper.useTxn(handle -> {
-            Map<String, Long> actParticipatingInTransition = setupActivitiesAndTransitionBetweenThem(handle);
+            Map<String, Long> actParticipatingInTransition = setupActivitiesAndCreateTransitionBetweenThem(handle);
             // Setting up an event that will make EventService create a new activity instance
             FormActivityDef triggeredFormActivity = insertNewActivity(handle);
             // activityTransitionedFrom --> activityTransitionedTo transition with a precondition expr that is always true
@@ -481,7 +481,7 @@ public class WorkflowServiceTest extends TxnAwareBaseTest {
         });
     }
 
-    private Map<String, Long> setupActivitiesAndTransitionBetweenThem(Handle handle) {
+    private Map<String, Long> setupActivitiesAndCreateTransitionBetweenThem(Handle handle) {
         Map<String, Long> actParticipatingInTransition = new HashMap<>();
         FormActivityDef activityTransitionedFrom = insertNewActivity(handle);
         // The activity whose instance will be created when Workflow transitions from the "from" activity
