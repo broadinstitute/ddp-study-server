@@ -84,7 +84,6 @@ public class TransactionWrapper {
     }
 
     private TransactionWrapper(int maxConnections, String dbUrl, DB db) {
-        LOG.info("Initializing db  " + dbUrl + " with pool size " + maxConnections);
         this.dbUrl = dbUrl;
         this.maxConnections = maxConnections;
         if (dataSource != null) {
