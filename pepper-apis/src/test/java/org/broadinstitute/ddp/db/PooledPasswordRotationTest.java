@@ -24,8 +24,6 @@ public class PooledPasswordRotationTest extends TxnAwareBaseTest  {
 
     private static final String BOGUS_TEST_PASSWORD = "bogus-test-password";
 
-    private static Config originalConfig; // the config file used when the test starts.  is restored after test completes
-
     private static Config configWithUpdatedPassword; // the temporary config file used during this test
 
     private static String originalConfigFileContents;
@@ -39,7 +37,6 @@ public class PooledPasswordRotationTest extends TxnAwareBaseTest  {
         ConfigManager originalConfigManager = ConfigManager.getInstance();
         originalConfigPlusTestDbValues = originalConfigManager.getConfig();
         originalConfigOverrides = originalConfigManager.getOverrides();
-        originalConfig = ConfigManager.parseConfig();
         originalConfigFileContents = ConfigManager.readConfigFile();
         configWithUpdatedPassword = MySqlTestContainerUtil.overrideConfigFileDbPasswords(BOGUS_TEST_PASSWORD);
     }
@@ -52,12 +49,6 @@ public class PooledPasswordRotationTest extends TxnAwareBaseTest  {
     private void changePassword(Handle handle, String newPassword) {
         handle.execute("set password = password(?)", newPassword);
         handle.execute("flush privileges");
-
-        // in the real world, pooled connections will not immediately pickup the need
-        // for new credentials.  They will eventually connect with different credentials
-        // based on connection expiration configuration.  Here we force the pool
-        // to get into this state.
-        TransactionWrapper.invalidateAllConnections();
     }
 
     /**
@@ -75,6 +66,7 @@ public class PooledPasswordRotationTest extends TxnAwareBaseTest  {
         // write out the original config file plus the dynamically substituted testcontainer db config values
         // otherwise, automatic reread-the-config code will fail and leave the txnwrapper in an unrecoverable state
         ConfigManager.rewriteConfigFile(originalConfigPlusTestDbValues);
+        TransactionWrapper.evictAllConnections();
 
         try {
             TransactionWrapper.useTxn(handle -> {
@@ -88,11 +80,15 @@ public class PooledPasswordRotationTest extends TxnAwareBaseTest  {
         // since we are dealing with a connection pool, first we should
         // reload connections so that any new connection picks up the new password
         ConfigManager.rewriteConfigFile(configWithUpdatedPassword);
-        TransactionWrapper.reloadDbPoolConfiguration();
+        TransactionWrapper.reloadDbPoolConfiguration(false);
 
-        TransactionWrapper.useTxn(handle -> {
-            LOG.info("Successfully updated password");
-        });
+        try {
+            TransactionWrapper.useTxn(handle -> {
+                LOG.info("Successfully updated password");
+            });
+        } catch (Exception  e)  {
+            LOG.error("Failed to get a connection after updating the config file with new password", e);
+        }
     }
 
     /**
@@ -101,23 +97,26 @@ public class PooledPasswordRotationTest extends TxnAwareBaseTest  {
      * pickup the original credentials
      */
     @After
-    public void restoreConfiguration() {
+    public void restoreConfiguration() throws IOException {
         try {
             String originalPassword = MySqlTestContainerUtil
                     .parseDbUrlPassword(originalConfigPlusTestDbValues.getString(ConfigFile.DB_URL))
                     .orElseThrow(() -> new DDPException("no original password in original config!"));
             TransactionWrapper.useTxn(h -> changePassword(h, originalPassword));
-            // restore the original config file
-            ConfigManager.rewriteConfigFile(originalConfigFileContents);
-            // re-apply overrides
-            ConfigManager configManager = ConfigManager.getInstance();
-            for (Map.Entry<String, String> override : originalConfigOverrides.entrySet()) {
-                configManager.overrideValue(override.getKey(), override.getValue());
-            }
-            TransactionWrapper.reloadDbPoolConfiguration();
-            LOG.info("Reset test database password.");
         } catch (Exception e) {
             LOG.error("Restoring password failed.  Expect many downstream tests to fail.", e);
         }
+
+        // restore the original config file
+        ConfigManager.rewriteConfigFile(originalConfigFileContents);
+        LOG.info("Restored config file after password rotation test");
+
+        // re-apply overrides
+        ConfigManager configManager = ConfigManager.getInstance();
+        for (Map.Entry<String, String> override : originalConfigOverrides.entrySet()) {
+            configManager.overrideValue(override.getKey(), override.getValue());
+        }
+        TransactionWrapper.reloadDbPoolConfiguration(true);
+        LOG.info("Reset test database config file to its original state.");
     }
 }
