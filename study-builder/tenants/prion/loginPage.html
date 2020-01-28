@@ -7,6 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
     <link href="https://fonts.googleapis.com/css?family=Raleway:300i,300,400,500,700" rel="stylesheet">
     <link id="app-favicon" rel="icon" type="image/x-icon" href="https://dev.prionregistry.org/assets/favicon.ico">
+    <script src="https://kit.fontawesome.com/6ff953c590.js" crossorigin="anonymous"></script>
 </head>
 <body>
 
@@ -131,6 +132,77 @@
         padding-right: 30px;
         padding-top:10px;
     }
+
+    .auth0-lock-input-block.auth0-lock-input-email::before {
+        content: "Email Address*";
+        position: absolute;
+        color: #333;
+        font-family: 'Raleway', sans-serif !important;
+        font-size: 0.9rem;
+        font-weight: 400;
+        top: -23px;
+    }
+
+    .BottomMargin30 {
+        margin-bottom: 30px !important;
+    }
+
+    .Input-label {
+        color: rgb(51, 51, 51);
+        font-size: 0.9rem;
+        font-weight: 400;
+        margin-bottom: 0;
+        margin-right: 10px
+    }
+
+    .Color--green {
+        color: #82B547 !important;
+        font-size: 15px;
+        font-weight: 900;
+    }
+
+    .tooltip {
+        box-sizing: border-box !important;
+        display: inline-block !important;
+        font-stretch: 100%;
+        position: absolute;
+    }
+
+    .tooltip .tooltiptext {
+        background-color: #efefef !important;
+        color: #717174;
+        font-family: 'Raleway', sans-serif !important;
+        font-size: 0.7rem;
+        width: 250px !important;
+        visibility: hidden;
+        position: absolute;
+        z-index: 1;
+        opacity: 0;
+        transition: opacity 0.3s;
+        font-weight: 400;
+        line-height: 1.42857143;
+        border-radius: 4px;
+        padding: 3px 8px;
+        left: -125px;
+        top: -60px;
+    }
+
+    .tooltip .tooltiptext::after {
+        content: "";
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        margin-left: -5px;
+        border-width: 5px;
+        border-style: solid;
+        border-color: #efefef transparent transparent transparent;
+    }
+
+    .tooltip:hover .tooltiptext {
+        visibility: visible;
+        opacity: 1;
+    }
+
 </style>
 
 <script>
@@ -171,7 +243,7 @@
     languageDictionary = { title: title,signupTitle: title, lastLoginInstructions: 'Last time you signed in with',
     loginAtLabel: 'Sign in at %s', loginLabel: 'Sign In', loginSubmitLabel: 'Sign In', loginWithLabel: 'Sign in with %s',
     signUpTitle: ' ', signUpLabel: 'Join Us', signUpSubmitLabel: 'Join Us',
-        databaseSignUpInstructions: '<h2>Join Us</h2> <h5>Do you or a relative of yours have prion disease? Tell us about it and join us making a difference...</h5> <h5>You can register in the platform using your email address and creating a password. We will use this account to communicate with you regarding the Prion Registry.</h5>',
+        databaseSignUpInstructions: '<h2>Join Us</h2> <h5>Do you or a relative of yours have prion disease? Tell us about it and join us making a difference...</h5> <h5 class="BottomMargin30">You can register in the platform using your email address and creating a password. We will use this account to communicate with you regarding the Prion Registry.</h5>',
     blankErrorHint: "Please fill out this field."};
     languageDictionary.error = languageDictionary.error || {};
     languageDictionary.error.signUp = languageDictionary.error.signUp || {};
@@ -250,6 +322,17 @@
                         alreadyRegistered.innerText = 'If you have already registered, sign in here.';
                         document.getElementsByClassName('auth0-global-message')[0].children[0].appendChild(alreadyRegistered);
                     }
+                }
+            }
+            if (!document.getElementById('ddp-password-hint')) {
+                 //Add password prompt and hint
+                var passwordHint = document.createElement('div');
+                passwordHint.innerHTML = '<div id="ddp-password-hint"><label class="Input-label">Password*</label>' +
+                    '                    <i class="fa fa-question-circle Color--green tooltip" aria-hidden="true">' +
+                    '<span class="tooltiptext">Password must be at least 8 characters long and contain at least one number, one upper case letter, and one lower case letter.</span></i></div>'
+                var passwordBlock = document.getElementsByClassName('auth0-lock-input-show-password')[0];
+                if (passwordBlock) {
+                    passwordBlock.insertBefore(passwordHint, passwordBlock.childNodes[0]);
                 }
             }
             if (!document.getElementById('ddp-header')) {
