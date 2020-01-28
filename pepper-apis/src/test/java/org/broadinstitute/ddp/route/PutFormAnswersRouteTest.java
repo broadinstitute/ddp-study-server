@@ -6,7 +6,6 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
@@ -460,7 +459,7 @@ public class PutFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
     }
 
     @Test
-    public void testWorkflowResponse_activityStateSuggestion_providesActivityCode() {
+    public void testWorkflowResponse_activityStateSuggestion_providesActivityCodeAndInstanceGuid() {
         FormActivityDef expectedActivity = TransactionWrapper.withTxn(handle -> {
             FormActivityDef another = insertNewActivity(handle);
             ActivityState currentState = new ActivityState(form.getActivityId());
@@ -481,7 +480,7 @@ public class PutFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
                 .body("workflow", is(notNullValue()))
                 .body("workflow.next", equalTo(StateType.ACTIVITY.name()))
                 .body("workflow.activityCode", equalTo(expectedActivityCode))
-                .body("workflow.instanceGuid", is(nullValue()));
+                .body("workflow.instanceGuid", is(notNullValue()));
     }
 
     @Test

@@ -113,7 +113,7 @@ public class PutFormAnswersRoute implements Route {
 
                     WorkflowState fromState = new ActivityState(form.getActivityId());
                     WorkflowResponse workflowResp = workflowService
-                            .suggestNextState(handle, userGuid, studyGuid, fromState)
+                            .suggestNextState(handle, operatorGuid, userGuid, studyGuid, fromState)
                             .map(nextState -> {
                                 LOG.info("Suggesting user {} to next state {}", userGuid, nextState);
                                 return workflowService.buildStateResponse(handle, userGuid, nextState);

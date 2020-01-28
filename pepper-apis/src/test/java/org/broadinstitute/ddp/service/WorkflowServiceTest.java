@@ -10,6 +10,8 @@ import static org.junit.Assert.assertTrue;
 
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
@@ -25,6 +27,12 @@ import org.broadinstitute.ddp.constants.TestConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
+import org.broadinstitute.ddp.db.dao.EventActionDao;
+import org.broadinstitute.ddp.db.dao.JdbiActivity;
+import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
+import org.broadinstitute.ddp.db.dao.JdbiActivityStatusTrigger;
+import org.broadinstitute.ddp.db.dao.JdbiEventConfiguration;
+import org.broadinstitute.ddp.db.dao.JdbiEventTrigger;
 import org.broadinstitute.ddp.db.dao.JdbiWorkflowTransition;
 import org.broadinstitute.ddp.db.dao.WorkflowDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
@@ -33,6 +41,8 @@ import org.broadinstitute.ddp.json.workflow.WorkflowResponse;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
+import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
+import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.workflow.ActivityState;
 import org.broadinstitute.ddp.model.workflow.StateType;
 import org.broadinstitute.ddp.model.workflow.StaticState;
@@ -52,6 +62,7 @@ import org.junit.rules.ExpectedException;
 public class WorkflowServiceTest extends TxnAwareBaseTest {
 
     private static TestDataSetupUtil.GeneratedTestData data;
+    private static String operatorGuid;
     private static String userGuid;
     private static String studyGuid;
     private static long studyId;
@@ -86,6 +97,7 @@ public class WorkflowServiceTest extends TxnAwareBaseTest {
                     mgmtSecret,
                     sendgridApiKey);
             userGuid = data.getUserGuid();
+            operatorGuid = data.getUserGuid();
             studyGuid = data.getStudyGuid();
             studyId = data.getStudyId();
         });
@@ -104,7 +116,7 @@ public class WorkflowServiceTest extends TxnAwareBaseTest {
     @Test
     public void testSuggestNextState_noTransitions() {
         TransactionWrapper.useTxn(handle -> {
-            Optional<WorkflowState> actual = service.suggestNextState(handle, userGuid, studyGuid, StaticState.start());
+            Optional<WorkflowState> actual = service.suggestNextState(handle, operatorGuid, userGuid, studyGuid, StaticState.start());
             assertNotNull(actual);
             assertFalse(actual.isPresent());
         });
@@ -119,7 +131,7 @@ public class WorkflowServiceTest extends TxnAwareBaseTest {
             WorkflowTransition t1 = new WorkflowTransition(studyId, StaticState.start(), actState, "true", 100);
             insertTransitions(handle, t1);
 
-            Optional<WorkflowState> actual = service.suggestNextState(handle, userGuid, studyGuid, StaticState.done());
+            Optional<WorkflowState> actual = service.suggestNextState(handle, operatorGuid, userGuid, studyGuid, StaticState.done());
             assertNotNull(actual);
             assertFalse(actual.isPresent());
 
@@ -138,7 +150,7 @@ public class WorkflowServiceTest extends TxnAwareBaseTest {
             insertTransitions(handle, t1, t2);
             turnOffTransition(handle, t1);
 
-            Optional<WorkflowState> actual = service.suggestNextState(handle, userGuid, studyGuid, StaticState.start());
+            Optional<WorkflowState> actual = service.suggestNextState(handle, operatorGuid, userGuid, studyGuid, StaticState.start());
             assertNotNull(actual);
             assertTrue(actual.isPresent());
             assertTrue(actState.matches(actual.get()));
@@ -157,7 +169,7 @@ public class WorkflowServiceTest extends TxnAwareBaseTest {
             WorkflowTransition t2 = new WorkflowTransition(studyId, StaticState.start(), actState, "true", 100);
             insertTransitions(handle, t1, t2);
 
-            Optional<WorkflowState> actual = service.suggestNextState(handle, userGuid, studyGuid, StaticState.start());
+            Optional<WorkflowState> actual = service.suggestNextState(handle, operatorGuid, userGuid, studyGuid, StaticState.start());
             assertNotNull(actual);
             assertTrue(actual.isPresent());
             assertTrue(actState.matches(actual.get()));
@@ -177,7 +189,7 @@ public class WorkflowServiceTest extends TxnAwareBaseTest {
             WorkflowTransition t2 = new WorkflowTransition(studyId, StaticState.start(), actState, "true", 100);
             insertTransitions(handle, t1, t2);
 
-            Optional<WorkflowState> actual = service.suggestNextState(handle, userGuid, studyGuid, StaticState.start());
+            Optional<WorkflowState> actual = service.suggestNextState(handle, operatorGuid, userGuid, studyGuid, StaticState.start());
             assertNotNull(actual);
             assertTrue(actual.isPresent());
             assertTrue(actState.matches(actual.get()));
@@ -196,7 +208,7 @@ public class WorkflowServiceTest extends TxnAwareBaseTest {
             WorkflowTransition t2 = new WorkflowTransition(studyId, StaticState.start(), actState, "true", 1);
             insertTransitions(handle, t1, t2);
 
-            Optional<WorkflowState> actual = service.suggestNextState(handle, userGuid, studyGuid, StaticState.start());
+            Optional<WorkflowState> actual = service.suggestNextState(handle, operatorGuid, userGuid, studyGuid, StaticState.start());
             assertNotNull(actual);
             assertTrue(actual.isPresent());
             assertTrue(actState.matches(actual.get()));
@@ -217,19 +229,19 @@ public class WorkflowServiceTest extends TxnAwareBaseTest {
             insertTransitions(handle, t1, t2);
 
             WorkflowState from = StaticState.start();
-            Optional<WorkflowState> actual = service.suggestNextState(handle, userGuid, studyGuid, from);
+            Optional<WorkflowState> actual = service.suggestNextState(handle, operatorGuid, userGuid, studyGuid, from);
             assertNotNull(actual);
             assertTrue(actual.isPresent());
             assertTrue(actState.matches(actual.get()));
 
             from = actState;
-            actual = service.suggestNextState(handle, userGuid, studyGuid, from);
+            actual = service.suggestNextState(handle, operatorGuid, userGuid, studyGuid, from);
             assertNotNull(actual);
             assertTrue(actual.isPresent());
             assertTrue(StaticState.done().matches(actual.get()));
 
             from = StaticState.done();
-            actual = service.suggestNextState(handle, userGuid, studyGuid, from);
+            actual = service.suggestNextState(handle, operatorGuid, userGuid, studyGuid, from);
             assertNotNull(actual);
             assertFalse(actual.isPresent());
 
@@ -358,6 +370,136 @@ public class WorkflowServiceTest extends TxnAwareBaseTest {
 
             handle.rollback();
         });
+    }
+
+    @Test
+    public void test_givenNullMaxInstPerUser_andNextActDoesntHaveInstance_whenSuggestNextStateIsCalled_thenInstanceIsCreated() {
+        TransactionWrapper.useTxn(handle -> {
+            Map<String, Long> actParticipatingInTransition = setupActivitiesAndCreateTransitionBetweenThem(handle);
+            service.suggestNextState(
+                    handle, operatorGuid, userGuid, studyGuid, new ActivityState(
+                            actParticipatingInTransition.get("activityTransitionedFromId")
+                    )
+            );
+
+            Optional<String> latestInstanceGuid = handle.attach(JdbiActivityInstance.class)
+                    .findLatestInstanceGuidByUserGuidAndActivityId(userGuid, actParticipatingInTransition.get("activityTransitionedToId"));
+            assertTrue(latestInstanceGuid.isPresent());
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void test_givenNonZeroMaxInstPerUser_andNextActDoesntHaveInstance_whenSuggestNextStateIsCalled_thenInstanceIsCreated() {
+        TransactionWrapper.useTxn(handle -> {
+            Map<String, Long> actParticipatingInTransition = setupActivitiesAndCreateTransitionBetweenThem(handle);
+            handle.attach(JdbiActivity.class).updateMaxInstancesPerUserById(
+                    actParticipatingInTransition.get("activityTransitionedToId"),
+                    5
+            );
+            service.suggestNextState(
+                    handle, operatorGuid, userGuid, studyGuid, new ActivityState(
+                            actParticipatingInTransition.get("activityTransitionedFromId")
+                    )
+            );
+
+            Optional<String> latestInstanceGuid = handle.attach(JdbiActivityInstance.class)
+                    .findLatestInstanceGuidByUserGuidAndActivityId(userGuid, actParticipatingInTransition.get("activityTransitionedToId"));
+            assertTrue(latestInstanceGuid.isPresent());
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void test_givenZeroMaxInstPerUser_andNextActDoesntHaveInstance_whenSuggestNextStateIsCalled_thenInstanceIsNotCreated() {
+        TransactionWrapper.useTxn(handle -> {
+            Map<String, Long> actParticipatingInTransition = setupActivitiesAndCreateTransitionBetweenThem(handle);
+            handle.attach(JdbiActivity.class).updateMaxInstancesPerUserById(
+                    actParticipatingInTransition.get("activityTransitionedToId"),
+                    0
+            );
+            service.suggestNextState(
+                    handle, operatorGuid, userGuid, studyGuid, new ActivityState(
+                            actParticipatingInTransition.get("activityTransitionedFromId")
+                    )
+            );
+
+            Optional<String> latestInstanceGuid = handle.attach(JdbiActivityInstance.class)
+                    .findLatestInstanceGuidByUserGuidAndActivityId(userGuid, actParticipatingInTransition.get("activityTransitionedToId"));
+            assertFalse(latestInstanceGuid.isPresent());
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void test_givenNextActivityAlreadyHasInstance_whenSuggestNextStateIsCalled_thenInstanceIsNotCreated() {
+        TransactionWrapper.useTxn(handle -> {
+            Map<String, Long> actParticipatingInTransition = setupActivitiesAndCreateTransitionBetweenThem(handle);
+            ActivityInstanceDto newInstance = insertNewInstance(handle, actParticipatingInTransition.get("activityTransitionedToId"));
+            service.suggestNextState(
+                    handle, operatorGuid, userGuid, studyGuid, new ActivityState(
+                            actParticipatingInTransition.get("activityTransitionedFromId")
+                    )
+            );
+
+            Optional<String> latestInstanceGuid = handle.attach(JdbiActivityInstance.class)
+                    .findLatestInstanceGuidByUserGuidAndActivityId(userGuid, actParticipatingInTransition.get("activityTransitionedToId"));
+            assertTrue(latestInstanceGuid.isPresent());
+            assertEquals(newInstance.getGuid(), latestInstanceGuid.get());
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void test_givenInstanceCreationTriggersAnotherEvent_whenSuggestNextStateIsCalled_thenThatEventGetsProcessed() {
+        TransactionWrapper.useTxn(handle -> {
+            Map<String, Long> actParticipatingInTransition = setupActivitiesAndCreateTransitionBetweenThem(handle);
+            // Setting up an event that will make EventService create a new activity instance
+            FormActivityDef triggeredFormActivity = insertNewActivity(handle);
+            // activityTransitionedFrom --> activityTransitionedTo transition with a precondition expr that is always true
+            long triggerId = handle.attach(JdbiEventTrigger.class).insert(EventTriggerType.ACTIVITY_STATUS);
+            handle.attach(JdbiActivityStatusTrigger.class).insert(
+                    triggerId, actParticipatingInTransition.get("activityTransitionedToId"), InstanceStatusType.CREATED
+            );
+            EventActionDao eventActionDao = handle.attach(EventActionDao.class);
+            long actionId = eventActionDao.insertInstanceCreationAction(triggeredFormActivity.getActivityId());
+            JdbiEventConfiguration jdbiEventConfig = handle.attach(JdbiEventConfiguration.class);
+            long eventConfigurationId = jdbiEventConfig.insert(
+                    triggerId, actionId, data.getStudyId(), Instant.now().toEpochMilli(), 1, 0, null, null, false, 1
+            );
+
+            service.suggestNextState(
+                    handle, operatorGuid, userGuid, studyGuid, new ActivityState(
+                            actParticipatingInTransition.get("activityTransitionedFromId")
+                    )
+            );
+
+            Optional<String> latestInstanceGuid = handle.attach(JdbiActivityInstance.class)
+                    .findLatestInstanceGuidByUserGuidAndActivityId(userGuid, triggeredFormActivity.getActivityId());
+            assertTrue(latestInstanceGuid.isPresent());
+            handle.rollback();
+        });
+    }
+
+    private Map<String, Long> setupActivitiesAndCreateTransitionBetweenThem(Handle handle) {
+        Map<String, Long> actParticipatingInTransition = new HashMap<>();
+        FormActivityDef activityTransitionedFrom = insertNewActivity(handle);
+        // The activity whose instance will be created when Workflow transitions from the "from" activity
+        FormActivityDef activityTransitionedTo = insertNewActivity(handle);
+        // The activity whose instance will be created by EventService when a "to" instance is created by Workflow
+        insertTransitions(
+                handle,
+                new WorkflowTransition(
+                        studyId,
+                        new ActivityState(activityTransitionedFrom.getActivityId()),
+                        new ActivityState(activityTransitionedTo.getActivityId()),
+                        "true",
+                         1
+                )
+        );
+        actParticipatingInTransition.put("activityTransitionedFromId", activityTransitionedFrom.getActivityId());
+        actParticipatingInTransition.put("activityTransitionedToId", activityTransitionedTo.getActivityId());
+        return actParticipatingInTransition;
     }
 
     private FormActivityDef insertNewActivity(Handle handle) {

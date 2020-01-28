@@ -6,7 +6,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.isEmptyOrNullString;
 import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.nullValue;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
@@ -171,7 +171,7 @@ public class GetWorkflowRouteTest extends IntegrationTestSuite.TestCase {
                 .statusCode(200).contentType(ContentType.JSON)
                 .body("next", equalTo(StateType.ACTIVITY.name()))
                 .body("activityCode", equalTo(nextActivity.getActivityCode()))
-                .body("instanceGuid", is(nullValue()));
+                .body("instanceGuid", is(notNullValue()));
     }
 
     @Test

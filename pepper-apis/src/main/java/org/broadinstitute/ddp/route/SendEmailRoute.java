@@ -50,9 +50,7 @@ public class SendEmailRoute extends ValidatedJsonInputRoute<SendEmailPayload> {
     @Override
     public Object handle(Request request, Response response, SendEmailPayload payload) throws Exception {
         String email = payload.getEmail();
-
         String studyGuid = request.params(RouteConstants.PathParam.STUDY_GUID);
-
 
         TransactionWrapper.useTxn(handle -> {
             LOG.info("Handling email resend for {} in study {}", email, studyGuid);
@@ -86,11 +84,14 @@ public class SendEmailRoute extends ValidatedJsonInputRoute<SendEmailPayload> {
                 }
                 String participantGuid = userDto.getUserGuid();
                 // verify that returned state is an activity state or done state
-
-                Optional<WorkflowState> nextState = workflowService.suggestNextState(handle,
+                String operatorGuid = participantGuid;
+                Optional<WorkflowState> nextState = workflowService.suggestNextState(
+                        handle,
+                        operatorGuid,
                         participantGuid,
                         studyGuid,
-                        StaticState.returningUser());
+                        StaticState.returningUser()
+                );
                 if (nextState.isPresent()) {
                     WorkflowResponse workflowResponse = workflowService.buildStateResponse(handle, participantGuid,
                             nextState.get());

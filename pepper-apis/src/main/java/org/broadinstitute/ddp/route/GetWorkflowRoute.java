@@ -5,14 +5,12 @@ import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.constants.RouteConstants.QueryParam;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.json.workflow.WorkflowResponse;
-import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.workflow.ActivityState;
 import org.broadinstitute.ddp.model.workflow.StateType;
 import org.broadinstitute.ddp.model.workflow.StaticState;
@@ -72,11 +70,7 @@ public class GetWorkflowRoute implements Route {
             LOG.info("Finding suggestions using 'from' state {}", fromState);
 
             return workflowService
-                    .suggestNextState(handle, userGuid, studyGuid, fromState)
-                    .map(nextState -> {
-                        checkAndCreateStartActivityInstance(handle, fromState, nextState, operatorGuid, userGuid);
-                        return nextState;
-                    })
+                    .suggestNextState(handle, operatorGuid, userGuid, studyGuid, fromState)
                     .map(nextState -> {
                         LOG.info("Returning next state suggestion {}", nextState);
                         return workflowService.buildStateResponse(handle, userGuid, nextState);
@@ -86,25 +80,6 @@ public class GetWorkflowRoute implements Route {
                         return WorkflowResponse.unknown();
                     });
         });
-    }
-
-    private void checkAndCreateStartActivityInstance(Handle handle, WorkflowState fromState, WorkflowState nextState,
-                                                     String operatorGuid, String userGuid) {
-        if (fromState.getType() == StateType.START && nextState.getType() == StateType.ACTIVITY) {
-            ActivityState activityState = (ActivityState) nextState;
-            String instanceGuid = handle.attach(JdbiActivityInstance.class)
-                    .findLatestInstanceGuidByUserGuidAndActivityId(userGuid, activityState.getActivityId())
-                    .orElse(null);
-
-            if (instanceGuid == null) {
-                ActivityInstanceDto instanceDto = handle.attach(ActivityInstanceDao.class)
-                        .insertInstance(activityState.getActivityId(), operatorGuid, userGuid, InstanceStatusType.CREATED, false);
-                LOG.info("Created start activity instance with guid '{}' for user guid '{}' using operator guid '{}' and activity id {}",
-                        instanceDto.getGuid(), userGuid, operatorGuid, activityState.getActivityId());
-            } else {
-                LOG.info("User guid '{}' already has start activity instance with guid '{}'", userGuid, instanceGuid);
-            }
-        }
     }
 
     private void haltWithMissingFromState(Response response, String msg) {
