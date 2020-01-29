@@ -27,7 +27,6 @@ import org.broadinstitute.ddp.db.dao.ActivityInstanceStatusDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstanceStatus;
 import org.broadinstitute.ddp.db.dao.JdbiBlockContent;
-import org.broadinstitute.ddp.db.dao.JdbiDateAnswer;
 import org.broadinstitute.ddp.db.dao.JdbiFormActivitySetting;
 import org.broadinstitute.ddp.db.dao.JdbiRevision;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
@@ -56,7 +55,6 @@ import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
 import org.jdbi.v3.core.result.RowView;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
-import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
@@ -767,7 +765,6 @@ public class AngioConsentVersion2 implements CustomTask {
                 + " where a.activity_instance_id = :instanceId")
         @RegisterConstructorMapper(value = BoolAnswer.class, prefix = "ba")
         @RegisterConstructorMapper(TextAnswer.class)
-        @RegisterRowMapper(JdbiDateAnswer.DateAnswerInfoMapper.class)
         @UseRowReducer(AnswerRowReducer.class)
         List<Answer> findAnswersForInstance(@Bind("instanceId") long instanceId);
 
@@ -787,7 +784,13 @@ public class AngioConsentVersion2 implements CustomTask {
                         container.put(answerId, row.getRow(TextAnswer.class));
                         break;
                     case DATE:
-                        container.put(answerId, row.getRow(DateAnswer.class));
+                        container.put(answerId, new DateAnswer(
+                                answerId,
+                                row.getColumn("question_stable_id", String.class),
+                                row.getColumn("answer_guid", String.class),
+                                row.getColumn("year", Integer.class),
+                                row.getColumn("month", Integer.class),
+                                row.getColumn("day", Integer.class)));
                         break;
                     default:
                         throw new DDPException("Unexpected answer type while fetching answers: " + type);

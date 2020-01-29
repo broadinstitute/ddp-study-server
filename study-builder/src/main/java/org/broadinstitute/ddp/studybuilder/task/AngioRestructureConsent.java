@@ -12,7 +12,7 @@ import com.google.gson.Gson;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.broadinstitute.ddp.db.DBUtils;
-import org.broadinstitute.ddp.db.dao.JdbiAnswer;
+import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.JdbiBlock;
 import org.broadinstitute.ddp.db.dao.JdbiBlockGroupHeader;
 import org.broadinstitute.ddp.db.dao.JdbiBlockNesting;
@@ -97,8 +97,8 @@ public class AngioRestructureConsent implements CustomTask {
         JdbiBlockQuestion jdbiBlockQuestion = handle.attach(JdbiBlockQuestion.class);
         JdbiBlockGroupHeader jdbiBlockGroupHeader = handle.attach(JdbiBlockGroupHeader.class);
         JdbiBlockNesting jdbiBlockNesting = handle.attach(JdbiBlockNesting.class);
-        JdbiAnswer jdbiAnswer = handle.attach(JdbiAnswer.class);
         JdbiCompositeAnswer jdbiCompositeAnswer = handle.attach(JdbiCompositeAnswer.class);
+        AnswerDao answerDao = handle.attach(AnswerDao.class);
 
         String activityCode = dataCfg.getConfig(key).getString("activityCode");
         long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
@@ -170,8 +170,9 @@ public class AngioRestructureConsent implements CustomTask {
             instanceCount.incrementAndGet();
             if (info.hasEitherAnswer()) {
                 String answerGuid = DBUtils.uniqueStandardGuid(handle, "answer", "answer_guid");
-                long parentAnswerId = jdbiAnswer.insert(composite.getQuestionId(), info.userGuid, info.instanceId,
-                        info.getEarliestAnswerCreatedAt(), info.getEarliestAnswerUpdatedAt(), answerGuid);
+                long parentAnswerId = answerDao.getAnswerSql().insertAnswer(
+                        answerGuid, info.userId, info.instanceId, composite.getQuestionId(),
+                        info.getEarliestAnswerCreatedAt(), info.getEarliestAnswerUpdatedAt());
 
                 List<List<Long>> childAnswerIds = Collections.singletonList(Arrays.asList(info.signatureAnswerId, info.dobAnswerId));
                 jdbiCompositeAnswer.insertChildAnswerItems(parentAnswerId, childAnswerIds);
@@ -186,6 +187,7 @@ public class AngioRestructureConsent implements CustomTask {
     private interface SqlHelper extends SqlObject {
 
         @SqlQuery("select ai.activity_instance_id,"
+                + "       u.user_id as user_id,"
                 + "       u.guid as user_guid,"
                 + "       sig_ans.answer_id as sig_answer_id,"
                 + "       sig_ans.created_at as sig_created_at,"
@@ -360,6 +362,7 @@ public class AngioRestructureConsent implements CustomTask {
 
     public static class InstanceInfo {
         final long instanceId;
+        final long userId;
         final String userGuid;
         final Long signatureAnswerId;
         final Long signatureCreatedAt;
@@ -370,7 +373,8 @@ public class AngioRestructureConsent implements CustomTask {
 
         @JdbiConstructor
         public InstanceInfo(@ColumnName("activity_instance_id") long instanceId,
-                            @ColumnName("userGuid") String userGuid,
+                            @ColumnName("user_id") long userId,
+                            @ColumnName("user_guid") String userGuid,
                             @ColumnName("sig_answer_id") Long signatureAnswerId,
                             @ColumnName("sig_created_at") Long signatureCreatedAt,
                             @ColumnName("sig_updated_at") Long signatureUpdatedAt,
@@ -378,6 +382,7 @@ public class AngioRestructureConsent implements CustomTask {
                             @ColumnName("dob_created_at") Long dobCreatedAt,
                             @ColumnName("dob_updated_at") Long dobUpdatedAt) {
             this.instanceId = instanceId;
+            this.userId = userId;
             this.userGuid = userGuid;
             this.signatureAnswerId = signatureAnswerId;
             this.signatureCreatedAt = signatureCreatedAt;
