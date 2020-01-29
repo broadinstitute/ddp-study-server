@@ -16,24 +16,22 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import com.google.gson.Gson;
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
 import io.restassured.http.ContentType;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.util.EntityUtils;
-import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.RouteConstants.API;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
-import org.broadinstitute.ddp.db.AnswerDao;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
+import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
 import org.broadinstitute.ddp.db.dao.JdbiStudyActivityDashboardNameTranslation;
+import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.json.activity.ActivityInstanceSummary;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
@@ -49,10 +47,8 @@ import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
 import org.broadinstitute.ddp.model.activity.types.FormType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
-import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.activity.types.TemplateType;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
-import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.jdbi.v3.core.Handle;
 import org.junit.AfterClass;
@@ -70,15 +66,11 @@ public class UserActivityInstanceListRouteTest extends IntegrationTestSuite.Test
     private static String token;
     private static String url;
     private static long answerId;
-    private static AnswerDao answerDao;
     private static Gson gson;
 
     @BeforeClass
     public static void setup() {
         gson = new Gson();
-        Config cfg = ConfigManager.getInstance().getConfig();
-        Config sqlConfig = ConfigFactory.parseResources(ConfigFile.SQL_CONF);
-        answerDao = AnswerDao.fromSqlConfig(sqlConfig);
         TransactionWrapper.useTxn(handle -> {
             testData = TestDataSetupUtil.generateBasicUserTestData(handle);
             token = testData.getTestingUser().getToken();
@@ -120,20 +112,20 @@ public class UserActivityInstanceListRouteTest extends IntegrationTestSuite.Test
                 RevisionMetadata.now(testData.getUserId(), "add " + code));
 
         assertNotNull(prequal.getActivityId());
-        prequal1Guid = handle.attach(ActivityInstanceDao.class)
-                .insertInstance(prequal.getActivityId(), userGuid)
-                .getGuid();
+        ActivityInstanceDto instanceDto = handle.attach(ActivityInstanceDao.class)
+                .insertInstance(prequal.getActivityId(), userGuid);
+        prequal1Guid = instanceDto.getGuid();
 
         Answer answer = new BoolAnswer(null, toggleQuestionStableId, null, true);
-        answerDao.createAnswer(handle, answer, userGuid, prequal1Guid);
-        answerId = answer.getAnswerId();
-
+        answerId = handle.attach(AnswerDao.class)
+                .createAnswer(testData.getUserId(), instanceDto.getId(), answer)
+                .getAnswerId();
     }
 
     @AfterClass
     public static void cleanup() {
         TransactionWrapper.useTxn(handle -> {
-            answerDao.deleteAnswerByIdAndType(handle, answerId, QuestionType.BOOLEAN);
+            handle.attach(AnswerDao.class).deleteAnswer(answerId);
             handle.attach(ActivityInstanceDao.class).deleteByInstanceGuid(prequal1Guid);
         });
     }

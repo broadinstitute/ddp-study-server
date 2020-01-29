@@ -81,16 +81,10 @@ public interface QuestionDao extends SqlObject {
     JdbiQuestion getJdbiQuestion();
 
     @CreateSqlObject
-    JdbiAnswer getJdbiAnswer();
-
-    @CreateSqlObject
     JdbiQuestionType getJdbiQuestionType();
 
     @CreateSqlObject
     JdbiBooleanQuestion getJdbiBooleanQuestion();
-
-    @CreateSqlObject
-    JdbiBooleanAnswer getJdbiBooleanAnswer();
 
     @CreateSqlObject
     JdbiTextQuestion getJdbiTextQuestion();
@@ -99,13 +93,7 @@ public interface QuestionDao extends SqlObject {
     JdbiTextQuestionSuggestion getJdbiTextQuestionSuggestion();
 
     @CreateSqlObject
-    JdbiTextQuestionInputType getJdbiTextQuestionInputType();
-
-    @CreateSqlObject
     JdbiDateQuestion getJdbiDateQuestion();
-
-    @CreateSqlObject
-    JdbiDateAnswer getJdbiDateAnswer();
 
     @CreateSqlObject
     JdbiDateQuestionFieldOrder getJdbiDateQuestionFieldOrder();
@@ -151,18 +139,6 @@ public interface QuestionDao extends SqlObject {
 
     @CreateSqlObject
     JdbiAgreementQuestion getJdbiAgreementQuestion();
-
-    @CreateSqlObject
-    JdbiAgreementAnswer getJdbiAgreementAnswer();
-
-    @CreateSqlObject
-    JdbiPicklistOptionAnswer getJdbiPicklistOptionAnswer();
-
-    @CreateSqlObject
-    JdbiPicklistOption getJdbiPicklistOption();
-
-    @CreateSqlObject
-    JdbiTextAnswer getJdbiTextAnswer();
 
     @CreateSqlObject
     AnswerDao getAnswerDao();
@@ -323,7 +299,8 @@ public interface QuestionDao extends SqlObject {
 
         List<Long> answerIds = new ArrayList<>();
         if (retrieveAnswers) {
-            answerIds = getJdbiAnswer().findAnswerIdsByInstanceGuidAndQuestionId(activityInstanceGuid, dto.getId());
+            answerIds = List.copyOf(getAnswerDao().getAnswerSql()
+                    .findAnswerIdsByInstanceGuidAndQuestionId(activityInstanceGuid, dto.getId()));
         }
 
         List<Rule> untypedRules = getValidationDao().getValidationRules(dto.getId(), langCodeId);
@@ -378,7 +355,8 @@ public interface QuestionDao extends SqlObject {
 
         AnswerDao answerDao = getAnswerDao();
         List<BoolAnswer> boolAnswers = answerIds.stream()
-                .map(answerId -> (BoolAnswer) answerDao.getAnswerById(answerId))
+                .map(answerId -> (BoolAnswer) answerDao.findAnswerById(answerId)
+                        .orElseThrow(() -> new DaoException("Could not find boolean answer with id " + answerId)))
                 .collect(toList());
 
         List<Rule<BoolAnswer>> rules = untypedRules
@@ -412,7 +390,8 @@ public interface QuestionDao extends SqlObject {
 
         AnswerDao answerDao = getAnswerDao();
         List<PicklistAnswer> picklistAnswers = answerIds.stream()
-                .map(answerId -> (PicklistAnswer) answerDao.getAnswerById(answerId))
+                .map(answerId -> (PicklistAnswer) answerDao.findAnswerById(answerId)
+                        .orElseThrow(() -> new DaoException("Could not find picklist answer with id " + answerId)))
                 .collect(toList());
 
         List<Rule<PicklistAnswer>> rules = untypedRules
@@ -480,7 +459,8 @@ public interface QuestionDao extends SqlObject {
 
         AnswerDao answerDao = getAnswerDao();
         List<TextAnswer> textAnswers = answerIds.stream()
-                .map(answerId -> (TextAnswer) answerDao.getAnswerById(answerId))
+                .map(answerId -> (TextAnswer) answerDao.findAnswerById(answerId)
+                        .orElseThrow(() -> new DaoException("Could not find text answer with id " + answerId)))
                 .collect(toList());
 
         List<Rule<TextAnswer>> rules = untypedRules
@@ -521,7 +501,8 @@ public interface QuestionDao extends SqlObject {
 
         AnswerDao answerDao = getAnswerDao();
         List<DateAnswer> dateAnswers = answerIds.stream()
-                .map(answerId -> (DateAnswer) answerDao.getAnswerById(answerId))
+                .map(answerId -> (DateAnswer) answerDao.findAnswerById(answerId)
+                        .orElseThrow(() -> new DaoException("Could not find date answer with id " + answerId)))
                 .collect(toList());
 
         List<Rule<DateAnswer>> rules = untypedRules
@@ -573,7 +554,8 @@ public interface QuestionDao extends SqlObject {
 
         AnswerDao answerDao = getAnswerDao();
         List<NumericAnswer> answers = answerIds.stream()
-                .map(answerId -> (NumericAnswer) answerDao.getAnswerById(answerId))
+                .map(answerId -> (NumericAnswer) answerDao.findAnswerById(answerId)
+                        .orElseThrow(() -> new DaoException("Could not find numeric answer with id " + answerId)))
                 .collect(toList());
 
         List<Rule<NumericAnswer>> rules = untypedRules.stream()
@@ -606,7 +588,8 @@ public interface QuestionDao extends SqlObject {
                                                    List<Rule> untypedRules) {
         AnswerDao answerDao = getAnswerDao();
         List<AgreementAnswer> agreementAnswers = answerIds.stream()
-                .map(answerId -> (AgreementAnswer) answerDao.getAnswerById(answerId))
+                .map(answerId -> (AgreementAnswer) answerDao.findAnswerById(answerId)
+                        .orElseThrow(() -> new DaoException("Could not find agreement answer with id " + answerId)))
                 .collect(toList());
 
         List<Rule<AgreementAnswer>> rules = untypedRules
@@ -646,7 +629,8 @@ public interface QuestionDao extends SqlObject {
 
         AnswerDao answerDao = getAnswerDao();
         List<CompositeAnswer> compositeAnswers = answerIds.stream()
-                .map(answerId -> (CompositeAnswer) answerDao.getAnswerById(answerId))
+                .map(answerId -> (CompositeAnswer) answerDao.findAnswerById(answerId)
+                        .orElseThrow(() -> new DaoException("Could not find composite answer with id " + answerId)))
                 .collect(toList());
         LOG.info("Found {} answers for question {} in form instance {}",
                 answerIds.size(), dto.getStableId(), activityInstanceGuid);

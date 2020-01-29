@@ -10,7 +10,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
-import org.broadinstitute.ddp.db.dao.AnswerDao;
+import org.broadinstitute.ddp.db.dao.AnswerSql;
 import org.broadinstitute.ddp.db.dao.JdbiActivityMapping;
 import org.broadinstitute.ddp.json.consent.ConsentSummary;
 import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
@@ -45,7 +45,7 @@ public class MedicalRecordService {
      * @return first non-null date-of-diagnosis value, empty if none exists
      */
     public Optional<DateValue> getDateOfDiagnosis(Handle handle, long participantUserId, long studyId) {
-        AnswerDao answerDao = handle.attach(AnswerDao.class);
+        var answerSql = handle.attach(AnswerSql.class);
 
         Map<Long, StudyActivityMapping> mappings = handle.attach(JdbiActivityMapping.class)
                 .getActivityMappingForStudyAndActivityType(studyId, ActivityMappingType.DATE_OF_DIAGNOSIS)
@@ -55,8 +55,8 @@ public class MedicalRecordService {
                 .findBaseResponsesByStudyAndUserIds(studyId, Set.of(participantUserId), true, mappings.keySet())
                 .filter(instance -> instance.getFirstCompletedAt() != null)
                 .sorted(Comparator.comparing(ActivityResponse::getFirstCompletedAt).reversed())
-                .flatMap(instance -> answerDao
-                        .findLatestDateAnswerByQuestionStableIdAndUserId(
+                .flatMap(instance -> answerSql
+                        .findLatestDateValueByQuestionStableIdAndUserId(
                                 mappings.get(instance.getActivityId()).getSubActivityStableId(), participantUserId, studyId)
                         .stream()
                 ).findFirst();
@@ -72,7 +72,7 @@ public class MedicalRecordService {
      * @return first non-null date-of-birth value, empty if none exists
      */
     public Optional<DateValue> getDateOfBirth(Handle handle, long participantUserId, long studyId) {
-        AnswerDao answerDao = handle.attach(AnswerDao.class);
+        var answerSql = handle.attach(AnswerSql.class);
 
         Map<Long, StudyActivityMapping> mappings = handle.attach(JdbiActivityMapping.class)
                 .getActivityMappingForStudyAndActivityType(studyId, ActivityMappingType.DATE_OF_BIRTH)
@@ -82,8 +82,8 @@ public class MedicalRecordService {
                 .findBaseResponsesByStudyAndUserIds(studyId, Set.of(participantUserId), true, mappings.keySet())
                 .filter(instance -> instance.getFirstCompletedAt() != null)
                 .sorted(Comparator.comparing(ActivityResponse::getFirstCompletedAt).reversed())
-                .flatMap(instance -> answerDao
-                        .findLatestDateAnswerByQuestionStableIdAndUserId(
+                .flatMap(instance -> answerSql
+                        .findLatestDateValueByQuestionStableIdAndUserId(
                                 mappings.get(instance.getActivityId()).getSubActivityStableId(), participantUserId, studyId)
                         .stream()
                 ).findFirst();

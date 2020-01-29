@@ -7,6 +7,7 @@ SELECT
 	pa.answer_guid AS parent_answer_guid,
 	pq.question_id AS parent_question_id,
 	pqsc.stable_id AS parent_question_stable_id,
+	pa.activity_instance_id as parent_activity_instance_id,
 	ar.answer_id AS child_answer_id,
 	ar.answer_guid AS child_answer_guid,
 	cqq.child_question_id AS child_question_id,

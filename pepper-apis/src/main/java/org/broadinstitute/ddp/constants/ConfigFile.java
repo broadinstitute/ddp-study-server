@@ -148,23 +148,12 @@ public class ConfigFile {
     public static final String DSM_JWT_SECRET = "dsmJwtSecret";
     public static final String USE_DISPOSABLE_TEST_DB = "useDisposableTestDbs";
 
-    public static final class QuestionQueries {
-        public static final String BOOL_INFO_BY_QUESTION_ID_QUERY = "questions.boolInfoByQuestionIdQuery";
-        public static final String TEXT_INFO_BY_QUESTION_ID_QUERY = "questions.textInfoByQuestionIdQuery";
-    }
-
     public static final class SqlQuery {
         public static final String ACTIVITY_INSTANCE_GUID_AND_PARTICIPANT_ID_BY_STUDY_GUID =
                 "studyActivity.queryActivityInstanceGuidAndParticipantId";
         public static final String VALID_STUDY_QUERY = "studyActivity.queryValidStudy";
 
         public static final String FORM_ACTIVITY_BY_GUID = "activities.formActivityByGuidQuery";
-
-        public static final String ANSWERS_FOR_QUESTION = "answers.queryAllByFormGuidAndQuestionStableId";
-        public static final String ANSWER_GUIDS_FOR_QUESTION = "answers.queryGuidsByFormGuidAndQuestionStableId";
-        public static final String BOOL_ANSWER_BY_ID = "answers.queryBoolAnswerById";
-        public static final String TEXT_ANSWER_BY_ID = "answers.queryTextAnswerById";
-        public static final String ANSWER_ID_BY_GUIDS = "answers.queryAnswerIdByGuids";
 
         public static final String VALIDATIONS_FOR_QUESTION = "validations.queryAllByQuestionAndLangId";
 
@@ -183,18 +172,6 @@ public class ConfigFile {
 
         // needed to disambiguate cases where there are multiple different guids in a resulset
         public static final String STUDY_GUID = "study_guid";
-    }
-
-    public static final class SqlStmt {
-        public static final String CREATE_ANSWER = "answers.createAnswerStmt";
-        public static final String CREATE_BOOL_ANSWER = "answers.createBoolAnswerStmt";
-        public static final String CREATE_TEXT_ANSWER = "answers.createTextAnswerStmt";
-        public static final String UPDATE_ANSWER_BY_ID = "answers.updateAnswerByIdStmt";
-        public static final String UPDATE_BOOL_ANSWER_BY_ID = "answers.updateBoolAnswerByIdStmt";
-        public static final String UPDATE_TEXT_ANSWER_BY_ID = "answers.updateTextAnswerByIdStmt";
-        public static final String DELETE_ANSWER_BY_ID = "answers.deleteAnswerByIdStmt";
-        public static final String DELETE_BOOL_ANSWER_BY_ID = "answers.deleteBoolAnswerByIdStmt";
-        public static final String DELETE_TEXT_ANSWER_BY_ID = "answers.deleteTextAnswerByIdStmt";
     }
 
     /**

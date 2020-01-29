@@ -47,7 +47,7 @@ all_answers_order_by() ::= <<
 order by is_child_answer desc, po.display_order asc, ca_child_row asc, ca_child_col asc
 >>
 
-queryAnswerById() ::= <<
+findAnswerById() ::= <<
 <all_answers_select()>
 where ans.answer_id = :id
    or ans.answer_id in (
@@ -55,7 +55,7 @@ where ans.answer_id = :id
 <all_answers_order_by()>
 >>
 
-queryAnswerByGuid() ::= <<
+findAnswerByGuid() ::= <<
 <all_answers_select()>
 where ans.answer_guid = :guid
    or ans.answer_id in (
@@ -64,7 +64,7 @@ where ans.answer_guid = :guid
 <all_answers_order_by()>
 >>
 
-queryAnswerByInstanceIdAndQuestionStableId() ::= <<
+findAnswerByInstanceIdAndQuestionStableId() ::= <<
 <all_answers_select()>
  join study_activity as act on act.study_activity_id = ai.study_activity_id
 where ai.activity_instance_id = :instanceId
@@ -79,51 +79,31 @@ where ai.activity_instance_id = :instanceId
 <all_answers_order_by()>
 >>
 
-/**
- * Note: we use left-join here since different answer types will join to different answer ids.
- */
-deleteAllAnswerValuesByActivityInstanceIds(instanceIds) ::= <<
-delete aa, ba, da, na, ta, pa, ca
-  from answer as a
-  left join agreement_answer as aa on aa.answer_id = a.answer_id
-  left join boolean_answer as ba on ba.answer_id = a.answer_id
-  left join date_answer as da on da.answer_id = a.answer_id
-  left join numeric_answer as na on na.answer_id = a.answer_id
-  left join text_answer as ta on ta.answer_id = a.answer_id
-  left join picklist_option__answer as pa on pa.answer_id = a.answer_id
-  left join composite_answer_item as ca on ca.parent_answer_id = a.answer_id
- where a.activity_instance_id in (<instanceIds>)
+findAnswerByInstanceGuidAndQuestionStableId() ::= <<
+<all_answers_select()>
+ join study_activity as act on act.study_activity_id = ai.study_activity_id
+where ai.activity_instance_guid = :instanceGuid
+  and ((qsc.stable_id = :questionStableId and qsc.umbrella_study_id = act.study_id)
+      or ans.question_id in (
+         select cqq.child_question_id
+           from composite_question__question as cqq
+           join question as pq on pq.question_id = cqq.parent_question_id
+           join question_stable_code as pqsc on pqsc.question_stable_code_id = pq.question_stable_code_id
+          where pqsc.stable_id = :questionStableId
+            and pqsc.umbrella_study_id = act.study_id))
+<all_answers_order_by()>
 >>
 
-queryAnswerIdByQuestionStableIdAndLatestInstance() ::= <<
-select a.answer_id
-  from answer as a
-  join activity_instance as ai on ai.activity_instance_id = a.activity_instance_id
-  join study_activity as act on act.study_activity_id = ai.study_activity_id
-  join question as q on q.question_id = a.question_id
-  join question_stable_code as qsc
-       on qsc.question_stable_code_id = q.question_stable_code_id
-       and qsc.umbrella_study_id = act.study_id
- where ai.participant_id = :userId
-   and qsc.umbrella_study_id = :studyId
-   and qsc.stable_id = :stableId
-   and ai.created_at = (
-       select max(created_at)
-         from activity_instance
-        where participant_id = ai.participant_id
-          and study_activity_id = act.study_activity_id)
->>
-
-queryAnswerIdByQuestionStableIdAndInstanceId() ::= <<
-select a.answer_id
-  from answer as a
-  join activity_instance as ai on ai.activity_instance_id = a.activity_instance_id
-  join study_activity as act on act.study_activity_id = ai.study_activity_id
-  join question as q on q.question_id = a.question_id
-  join question_stable_code as qsc
-       on qsc.question_stable_code_id = q.question_stable_code_id
-       and qsc.umbrella_study_id = act.study_id
- where ai.participant_id = :userId
-   and ai.activity_instance_id = :instanceId
-   and qsc.stable_id = :stableId
+findAnswerByLatestInstanceAndQuestionStableId() ::= <<
+<all_answers_select()>
+ join study_activity as act on act.study_activity_id = ai.study_activity_id
+where ai.participant_id = :userId
+  and qsc.umbrella_study_id = :studyId
+  and qsc.stable_id = :questionStableId
+  and ai.created_at = (
+      select max(created_at)
+        from activity_instance
+       where participant_id = ai.participant_id
+         and study_activity_id = act.study_activity_id)
+<all_answers_order_by()>
 >>

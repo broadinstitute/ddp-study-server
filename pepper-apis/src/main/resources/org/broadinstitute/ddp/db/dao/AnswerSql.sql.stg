@@ -1,0 +1,50 @@
+group AnswerSql;
+
+insertAnswerByQuestionStableId() ::= <<
+insert into answer (answer_guid, operator_user_id, activity_instance_id, created_at, last_updated_at, question_id)
+values (:guid, :operatorId, :instanceId, :createdAt, :updatedAt,
+       (select question_id from question as q
+          join question_stable_code as qsc on q.question_stable_code_id = qsc.question_stable_code_id
+          join revision as rev on q.revision_id = rev.revision_id
+          join activity_instance as ai on q.study_activity_id = ai.study_activity_id
+         where qsc.stable_id = :questionStableId
+           and ai.activity_instance_id = :instanceId
+           and rev.start_date \<= ai.created_at
+           and (rev.end_date is null or ai.created_at \< rev.end_date)))
+>>
+
+all_answer_dtos_select() ::= <<
+select a.*,
+       qsc.stable_id as question_stable_id,
+       qt.question_type_code as question_type
+  from answer as a
+  join question as q on q.question_id = a.question_id
+  join question_type as qt on qt.question_type_id = q.question_type_id
+  join question_stable_code as qsc on qsc.question_stable_code_id = q.question_stable_code_id
+>>
+
+findDtoById() ::= <<
+<all_answer_dtos_select()> where a.answer_id = :id
+>>
+
+findDtoByGuid() ::= <<
+<all_answer_dtos_select()> where a.answer_guid = :guid
+>>
+
+findLatestDateValueByQuestionStableIdAndUserId() ::= <<
+select da.year, da.month, da.day
+  from activity_instance as ai
+  join answer as a on ai.activity_instance_id = a.activity_instance_id
+  join date_answer as da on a.answer_id = da.answer_id
+  join user as u on ai.participant_id = u.user_id
+  join question as q on a.question_id = q.question_id
+  join question_stable_code as qsc on qsc.question_stable_code_id = q.question_stable_code_id
+  join umbrella_study as us on qsc.umbrella_study_id = us.umbrella_study_id
+  join revision as rev on rev.revision_id = q.revision_id
+ where u.user_id = :userId
+   and rev.start_date \<= ai.created_at
+   and (rev.end_date is null or ai.created_at \< rev.end_date)
+   and qsc.stable_id = :questionStableId
+   and us.umbrella_study_id = :studyId
+ order by ai.created_at desc limit 1
+>>

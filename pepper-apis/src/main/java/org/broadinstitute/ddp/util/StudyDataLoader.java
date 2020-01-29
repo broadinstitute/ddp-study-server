@@ -36,11 +36,11 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.SqlConstants.MedicalProviderTable;
-import org.broadinstitute.ddp.db.AnswerDao;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceStatusDao;
+import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.DsmKitRequestDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
@@ -673,7 +673,7 @@ public class StudyDataLoader {
                     value.getMonth(),
                     value.getDay());
         }
-        return answerDao.createAnswer(handle, answer, participantGuid, instanceGuid);
+        return answerDao.createAnswer(participantGuid, instanceGuid, answer).getAnswerGuid();
     }
 
     public String answerTextQuestion(Handle handle,
@@ -684,8 +684,7 @@ public class StudyDataLoader {
         String guid = null;
         if (value != null) {
             Answer answer = new TextAnswer(null, pepperQuestionStableId, null, value);
-
-            guid = answerDao.createAnswer(handle, answer, participantGuid, instanceGuid);
+            guid = answerDao.createAnswer(participantGuid, instanceGuid, answer).getAnswerGuid();
         }
         return guid;
     }
@@ -697,7 +696,7 @@ public class StudyDataLoader {
                                         Boolean value, AnswerDao answerDao) throws Exception {
         if (value != null) {
             Answer answer = new BoolAnswer(null, pepperQuestionStableId, null, value);
-            return answerDao.createAnswer(handle, answer, participantGuid, instanceGuid);
+            return answerDao.createAnswer(participantGuid, instanceGuid, answer).getAnswerGuid();
         }
         return null;
     }
@@ -709,7 +708,7 @@ public class StudyDataLoader {
                                           Boolean value, AnswerDao answerDao) throws Exception {
         if (value != null) {
             Answer answer = new AgreementAnswer(null, pepperQuestionStableId, null, value);
-            return answerDao.createAnswer(handle, answer, participantGuid, instanceGuid);
+            return answerDao.createAnswer(participantGuid, instanceGuid, answer).getAnswerGuid();
         }
         return null;
     }
@@ -717,8 +716,7 @@ public class StudyDataLoader {
     public String answerPickListQuestion(Handle handle, String questionStableId, String participantGuid, String instanceGuid,
                                          List<SelectedPicklistOption> selectedPicklistOptions, AnswerDao answerDao) {
         Answer answer = new PicklistAnswer(null, questionStableId, null, selectedPicklistOptions);
-
-        return answerDao.createAnswer(handle, answer, participantGuid, instanceGuid);
+        return answerDao.createAnswer(participantGuid, instanceGuid, answer).getAnswerGuid();
     }
 
     public String answerCompositeQuestion(Handle handle,
@@ -727,18 +725,18 @@ public class StudyDataLoader {
                                           String instanceGuid,
                                           List<String> nestedGuids, List<Integer> compositeAnswerOrders, AnswerDao answerDao) {
 
-        Answer answer = new CompositeAnswer(null, pepperQuestionStableId, null);
-        String guid = answerDao.createAnswer(handle, answer, participantGuid, instanceGuid);
+        Answer parentAnswer = answerDao.createAnswer(participantGuid, instanceGuid,
+                new CompositeAnswer(null, pepperQuestionStableId, null));
         List<Long> childrenAnswerIds = new ArrayList<>();
 
+        var jdbiCompositeAnswer = handle.attach(JdbiCompositeAnswer.class);
         if (CollectionUtils.isNotEmpty(nestedGuids)) {
             for (String childGuid : nestedGuids) {
-                childrenAnswerIds.add(answerDao.getAnswerIdByGuids(handle, instanceGuid, childGuid));
+                childrenAnswerIds.add(answerDao.getAnswerSql().findDtoByGuid(childGuid).get().getId());
             }
-            Long parentAnswerId = answerDao.getAnswerIdByGuids(handle, instanceGuid, guid);
-            handle.attach(JdbiCompositeAnswer.class).insertChildAnswerItems(parentAnswerId, childrenAnswerIds, compositeAnswerOrders);
+            jdbiCompositeAnswer.insertChildAnswerItems(parentAnswer.getAnswerId(), childrenAnswerIds, compositeAnswerOrders);
         }
-        return guid;
+        return parentAnswer.getAnswerGuid();
     }
 
     public UserDto createLegacyPepperUser(JdbiUser userDao, JdbiClient clientDao,

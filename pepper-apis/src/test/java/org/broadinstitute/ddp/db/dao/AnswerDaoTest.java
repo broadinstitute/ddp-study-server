@@ -1,8 +1,12 @@
 package org.broadinstitute.ddp.db.dao;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.time.Instant;
 import java.util.List;
@@ -11,6 +15,7 @@ import java.util.Optional;
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
+import org.broadinstitute.ddp.exception.OperationNotAllowedException;
 import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
@@ -35,11 +40,16 @@ import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.broadinstitute.ddp.util.TestFormActivity;
 import org.jdbi.v3.core.Handle;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
 
 public class AnswerDaoTest extends TxnAwareBaseTest {
 
     private static TestDataSetupUtil.GeneratedTestData testData;
+
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
 
     @BeforeClass
     public static void setup() {
@@ -47,108 +57,158 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
     }
 
     @Test
-    public void testCreateAnswer_agreement() {
+    public void testCreateUpdateDelete_agreement() {
         TransactionWrapper.useTxn(handle -> {
             TestFormActivity act = TestFormActivity.builder()
                     .withAgreementQuestion(true)
                     .build(handle, testData.getUserId(), testData.getStudyGuid());
             long instanceId = createInstance(handle, act.getDef().getActivityId()).getId();
 
-            var answer = new AgreementAnswer(null, act.getAgreementQuestion().getStableId(), null, true);
-            Answer actual = handle.attach(AnswerDao.class)
-                    .createAnswer(testData.getUserId(), instanceId, answer);
+            var answerDao = handle.attach(AnswerDao.class);
+            var created = answerDao.createAnswer(testData.getUserId(), instanceId,
+                    new AgreementAnswer(null, act.getAgreementQuestion().getStableId(), null, true));
 
-            assertTrue(actual.getAnswerId() > 0);
-            assertEquals(QuestionType.AGREEMENT, actual.getQuestionType());
-            assertTrue(((AgreementAnswer) actual).getValue());
+            assertTrue(created.getAnswerId() > 0);
+            assertEquals(QuestionType.AGREEMENT, created.getQuestionType());
+            assertTrue(((AgreementAnswer) created).getValue());
+
+            var updated = answerDao.updateAnswer(testData.getUserId(), created.getAnswerId(),
+                    new AgreementAnswer(null, act.getAgreementQuestion().getStableId(), null, false));
+
+            assertEquals(created.getAnswerId(), updated.getAnswerId());
+            assertEquals(created.getAnswerGuid(), updated.getAnswerGuid());
+            assertFalse(((AgreementAnswer) updated).getValue());
+
+            answerDao.deleteAnswer(created.getAnswerId());
+            assertFalse(answerDao.findAnswerById(created.getAnswerId()).isPresent());
 
             handle.rollback();
         });
     }
 
     @Test
-    public void testCreateAnswer_bool() {
+    public void testCreateUpdateDelete_bool() {
         TransactionWrapper.useTxn(handle -> {
             TestFormActivity act = TestFormActivity.builder()
                     .withBoolQuestion(true)
                     .build(handle, testData.getUserId(), testData.getStudyGuid());
             long instanceId = createInstance(handle, act.getDef().getActivityId()).getId();
 
-            var answer = new BoolAnswer(null, act.getBoolQuestion().getStableId(), null, true);
-            Answer actual = handle.attach(AnswerDao.class)
-                    .createAnswer(testData.getUserId(), instanceId, answer);
+            var answerDao = handle.attach(AnswerDao.class);
+            var created = answerDao.createAnswer(testData.getUserId(), instanceId,
+                    new BoolAnswer(null, act.getBoolQuestion().getStableId(), null, true));
 
-            assertTrue(actual.getAnswerId() > 0);
-            assertEquals(QuestionType.BOOLEAN, actual.getQuestionType());
-            assertTrue(((BoolAnswer) actual).getValue());
+            assertTrue(created.getAnswerId() > 0);
+            assertEquals(QuestionType.BOOLEAN, created.getQuestionType());
+            assertTrue(((BoolAnswer) created).getValue());
+
+            var updated = answerDao.updateAnswer(testData.getUserId(), created.getAnswerId(),
+                    new BoolAnswer(null, act.getBoolQuestion().getStableId(), null, false));
+
+            assertEquals(created.getAnswerId(), updated.getAnswerId());
+            assertEquals(created.getAnswerGuid(), updated.getAnswerGuid());
+            assertFalse(((BoolAnswer) updated).getValue());
+
+            answerDao.deleteAnswer(created.getAnswerId());
+            assertFalse(answerDao.findAnswerById(created.getAnswerId()).isPresent());
 
             handle.rollback();
         });
     }
 
     @Test
-    public void testCreateAnswer_text() {
+    public void testCreateUpdateDelete_text() {
         TransactionWrapper.useTxn(handle -> {
             TestFormActivity act = TestFormActivity.builder()
                     .withTextQuestion(true)
                     .build(handle, testData.getUserId(), testData.getStudyGuid());
             long instanceId = createInstance(handle, act.getDef().getActivityId()).getId();
 
-            var answer = new TextAnswer(null, act.getTextQuestion().getStableId(), null, "itsAnAnswer");
-            Answer actual = handle.attach(AnswerDao.class)
-                    .createAnswer(testData.getUserId(), instanceId, answer);
+            AnswerDao answerDao = handle.attach(AnswerDao.class);
+            var created = answerDao.createAnswer(testData.getUserId(), instanceId,
+                    new TextAnswer(null, act.getTextQuestion().getStableId(), null, "old"));
 
-            assertTrue(actual.getAnswerId() > 0);
-            assertEquals(QuestionType.TEXT, actual.getQuestionType());
-            assertEquals(answer.getValue(), ((TextAnswer) actual).getValue());
+            assertTrue(created.getAnswerId() > 0);
+            assertEquals(QuestionType.TEXT, created.getQuestionType());
+            assertEquals("old", created.getValue());
+
+            var updated = answerDao.updateAnswer(testData.getUserId(), created.getAnswerId(),
+                    new TextAnswer(null, act.getTextQuestion().getStableId(), null, "new"));
+
+            assertEquals(created.getAnswerId(), updated.getAnswerId());
+            assertEquals(created.getAnswerGuid(), updated.getAnswerGuid());
+            assertEquals("new", updated.getValue());
+
+            answerDao.deleteAnswer(created.getAnswerId());
+            assertFalse(answerDao.findAnswerById(created.getAnswerId()).isPresent());
 
             handle.rollback();
         });
     }
 
     @Test
-    public void testCreateAnswer_date() {
+    public void testCreateUpdateDelete_date() {
         TransactionWrapper.useTxn(handle -> {
             TestFormActivity act = TestFormActivity.builder()
                     .withDateFullQuestion(true)
                     .build(handle, testData.getUserId(), testData.getStudyGuid());
             long instanceId = createInstance(handle, act.getDef().getActivityId()).getId();
 
-            var answer = new DateAnswer(null, act.getDateFullQuestion().getStableId(), null, 2018, 10, 24);
-            Answer actual = handle.attach(AnswerDao.class)
-                    .createAnswer(testData.getUserId(), instanceId, answer);
+            AnswerDao answerDao = handle.attach(AnswerDao.class);
+            var created = answerDao.createAnswer(testData.getUserId(), instanceId,
+                    new DateAnswer(null, act.getDateFullQuestion().getStableId(), null, 2018, 10, 24));
 
-            assertTrue(actual.getAnswerId() > 0);
-            assertEquals(QuestionType.DATE, actual.getQuestionType());
-            assertEquals(new DateValue(2018, 10, 24), actual.getValue());
+            assertTrue(created.getAnswerId() > 0);
+            assertEquals(QuestionType.DATE, created.getQuestionType());
+            assertEquals(new DateValue(2018, 10, 24), created.getValue());
+
+            var updated = answerDao.updateAnswer(testData.getUserId(), created.getAnswerId(),
+                    new DateAnswer(null, act.getDateFullQuestion().getStableId(), null, 2020, 4, null));
+
+            assertEquals(created.getAnswerId(), updated.getAnswerId());
+            assertEquals(created.getAnswerGuid(), updated.getAnswerGuid());
+            assertEquals(new DateValue(2020, 4, null), updated.getValue());
+
+            answerDao.deleteAnswer(created.getAnswerId());
+            assertFalse(answerDao.findAnswerById(created.getAnswerId()).isPresent());
 
             handle.rollback();
         });
     }
 
     @Test
-    public void testCreateAnswer_numericInteger() {
+    public void testCreateUpdateDelete_numericInteger() {
         TransactionWrapper.useTxn(handle -> {
             TestFormActivity act = TestFormActivity.builder()
                     .withNumericIntQuestion(true)
                     .build(handle, testData.getUserId(), testData.getStudyGuid());
             long instanceId = createInstance(handle, act.getDef().getActivityId()).getId();
 
-            var answer = new NumericIntegerAnswer(null, act.getNumericIntQuestion().getStableId(), null, 25L);
-            Answer actual = handle.attach(AnswerDao.class)
-                    .createAnswer(testData.getUserId(), instanceId, answer);
+            AnswerDao answerDao = handle.attach(AnswerDao.class);
+            var created = answerDao.createAnswer(testData.getUserId(), instanceId,
+                    new NumericIntegerAnswer(null, act.getNumericIntQuestion().getStableId(), null, 25L));
 
-            assertTrue(actual.getAnswerId() > 0);
-            assertEquals(QuestionType.NUMERIC, actual.getQuestionType());
-            assertEquals(NumericType.INTEGER, ((NumericAnswer) actual).getNumericType());
-            assertEquals((Long) 25L, ((NumericIntegerAnswer) actual).getValue());
+            assertTrue(created.getAnswerId() > 0);
+            assertEquals(QuestionType.NUMERIC, created.getQuestionType());
+            assertEquals(NumericType.INTEGER, ((NumericAnswer) created).getNumericType());
+            assertEquals(25L, created.getValue());
+
+            var updated = answerDao.updateAnswer(testData.getUserId(), created.getAnswerId(),
+                    new NumericIntegerAnswer(null, act.getNumericIntQuestion().getStableId(), null, 100L));
+
+            assertEquals(created.getAnswerId(), updated.getAnswerId());
+            assertEquals(created.getAnswerGuid(), updated.getAnswerGuid());
+            assertEquals(100L, updated.getValue());
+
+            answerDao.deleteAnswer(created.getAnswerId());
+            assertFalse(answerDao.findAnswerById(created.getAnswerId()).isPresent());
 
             handle.rollback();
         });
     }
 
     @Test
-    public void testCreateAnswer_picklist() {
+    public void testCreateUpdateDelete_picklist() {
         TransactionWrapper.useTxn(handle -> {
             TestFormActivity act = TestFormActivity.builder()
                     .withPicklistSingleList(true,
@@ -157,25 +217,39 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
                     .build(handle, testData.getUserId(), testData.getStudyGuid());
             long instanceId = createInstance(handle, act.getDef().getActivityId()).getId();
 
-            PicklistAnswer answer = new PicklistAnswer(null, act.getPicklistSingleListQuestion().getStableId(), null,
-                    List.of(new SelectedPicklistOption("PO2", "some details")));
-            Answer actual = handle.attach(AnswerDao.class)
-                    .createAnswer(testData.getUserId(), instanceId, answer);
+            AnswerDao answerDao = handle.attach(AnswerDao.class);
+            var created = answerDao.createAnswer(testData.getUserId(), instanceId,
+                    new PicklistAnswer(null, act.getPicklistSingleListQuestion().getStableId(), null, List.of(
+                            new SelectedPicklistOption("PO1"))));
 
-            assertTrue(actual.getAnswerId() > 0);
-            assertEquals(QuestionType.PICKLIST, actual.getQuestionType());
+            assertTrue(created.getAnswerId() > 0);
+            assertEquals(QuestionType.PICKLIST, created.getQuestionType());
 
-            var selected = ((PicklistAnswer) actual).getValue();
+            var selected = ((PicklistAnswer) created).getValue();
+            assertEquals(1, selected.size());
+            assertEquals("PO1", selected.get(0).getStableId());
+
+            var updated = answerDao.updateAnswer(testData.getUserId(), created.getAnswerId(),
+                    new PicklistAnswer(null, act.getPicklistSingleListQuestion().getStableId(), null, List.of(
+                            new SelectedPicklistOption("PO2", "details2"))));
+
+            assertEquals(created.getAnswerId(), updated.getAnswerId());
+            assertEquals(created.getAnswerGuid(), updated.getAnswerGuid());
+
+            selected = ((PicklistAnswer) updated).getValue();
             assertEquals(1, selected.size());
             assertEquals("PO2", selected.get(0).getStableId());
-            assertEquals("some details", selected.get(0).getDetailText());
+            assertEquals("details2", selected.get(0).getDetailText());
+
+            answerDao.deleteAnswer(created.getAnswerId());
+            assertFalse(answerDao.findAnswerById(created.getAnswerId()).isPresent());
 
             handle.rollback();
         });
     }
 
     @Test
-    public void testCreateAnswer_composite() {
+    public void testCreateUpdateDelete_composite() {
         TransactionWrapper.useTxn(handle -> {
             DateQuestionDef childDate = DateQuestionDef
                     .builder(DateRenderMode.TEXT, "CDATE" + Instant.now().toEpochMilli(), Template.text("child date"))
@@ -190,6 +264,8 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
                     .build(handle, testData.getUserId(), testData.getStudyGuid());
             long instanceId = createInstance(handle, act.getDef().getActivityId()).getId();
 
+            // create
+
             CompositeAnswer answer = new CompositeAnswer(null, act.getCompositeQuestion().getStableId(), null);
             answer.addRowOfChildAnswers(
                     new DateAnswer(null, childDate.getStableId(), null, new DateValue(2018, 10, 24)));
@@ -197,13 +273,13 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
                     new DateAnswer(null, childDate.getStableId(), null, new DateValue(2020, 3, 14)),
                     new TextAnswer(null, childText.getStableId(), null, "row 2 col 2"));
 
-            Answer actual = handle.attach(AnswerDao.class)
-                    .createAnswer(testData.getUserId(), instanceId, answer);
+            AnswerDao answerDao = handle.attach(AnswerDao.class);
+            var created = answerDao.createAnswer(testData.getUserId(), instanceId, answer);
 
-            assertTrue(actual.getAnswerId() > 0);
-            assertEquals(QuestionType.COMPOSITE, actual.getQuestionType());
+            assertTrue(created.getAnswerId() > 0);
+            assertEquals(QuestionType.COMPOSITE, created.getQuestionType());
 
-            var rows = ((CompositeAnswer) actual).getValue();
+            var rows = ((CompositeAnswer) created).getValue();
             assertEquals(2, rows.size());
             assertEquals(1, rows.get(0).getValues().size());
             assertEquals(2, rows.get(1).getValues().size());
@@ -217,6 +293,56 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
             assertEquals(new DateValue(2020, 3, 14), row2.get(0).getValue());
             assertEquals(QuestionType.TEXT, row2.get(1).getQuestionType());
             assertEquals("row 2 col 2", row2.get(1).getValue());
+
+            long row1Child1Id = row1.get(0).getAnswerId();
+            long row2Child1Id = row2.get(0).getAnswerId();
+            long row2Child2Id = row2.get(1).getAnswerId();
+
+            // update
+
+            answer = new CompositeAnswer(null, act.getCompositeQuestion().getStableId(), null);
+            answer.addRowOfChildAnswers(
+                    new TextAnswer(null, childText.getStableId(), null, "row 1 col 2"));
+            answer.addRowOfChildAnswers(
+                    new DateAnswer(null, childDate.getStableId(), null, new DateValue(2020, 9, null)),
+                    new TextAnswer(null, childText.getStableId(), null, "row 2 col 2"));
+
+            var updated = answerDao.updateAnswer(testData.getUserId(), created.getAnswerId(), answer);
+
+            assertEquals(created.getAnswerId(), updated.getAnswerId());
+            assertEquals(created.getAnswerGuid(), updated.getAnswerGuid());
+
+            rows = ((CompositeAnswer) updated).getValue();
+            assertEquals("updated composite should still have same rows", 2, rows.size());
+            assertEquals(2, rows.get(0).getValues().size());
+            assertEquals(2, rows.get(1).getValues().size());
+
+            row1 = rows.get(0).getValues();
+            assertNull("updated composite row 1 col 1 should not have a child answer", row1.get(0));
+            assertNotEquals("updated composite row 1 child should be a different answer",
+                    (Long) row1Child1Id, row1.get(1).getAnswerId());
+            assertEquals(QuestionType.TEXT, row1.get(1).getQuestionType());
+            assertEquals("row 1 col 2", row1.get(1).getValue());
+            assertFalse("old row 1 child should be deleted", answerDao.findAnswerById(row1Child1Id).isPresent());
+            row1Child1Id = row1.get(1).getAnswerId();
+
+            row2 = rows.get(1).getValues();
+            assertEquals((Long) row2Child1Id, row2.get(0).getAnswerId());
+            assertEquals(QuestionType.DATE, row2.get(0).getQuestionType());
+            assertEquals("updated composite row 2 child 1 should be updated",
+                    new DateValue(2020, 9, null), row2.get(0).getValue());
+            assertEquals((Long) row2Child2Id, row2.get(1).getAnswerId());
+            assertEquals(QuestionType.TEXT, row2.get(1).getQuestionType());
+            assertEquals("updated composite row 2 child 2 should be the same",
+                    "row 2 col 2", row2.get(1).getValue());
+
+            // delete
+
+            answerDao.deleteAnswer(created.getAnswerId());
+            assertFalse(answerDao.findAnswerById(created.getAnswerId()).isPresent());
+            assertFalse("child answers should be deleted", answerDao.findAnswerById(row1Child1Id).isPresent());
+            assertFalse(answerDao.findAnswerById(row2Child1Id).isPresent());
+            assertFalse(answerDao.findAnswerById(row2Child2Id).isPresent());
 
             handle.rollback();
         });
@@ -239,6 +365,26 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
             assertTrue(((BoolAnswer) actual).getValue());
 
             handle.rollback();
+        });
+    }
+
+    @Test
+    public void testCreateAnswer_picklist_detailsNotAllowed() {
+        thrown.expect(OperationNotAllowedException.class);
+        thrown.expectMessage("PO1 does not allow details");
+        TransactionWrapper.useTxn(handle -> {
+            TestFormActivity act = TestFormActivity.builder()
+                    .withPicklistSingleList(true,
+                            new PicklistOptionDef("PO1", Template.text("po1")),
+                            new PicklistOptionDef("PO2", Template.text("po2"), Template.text("details")))
+                    .build(handle, testData.getUserId(), testData.getStudyGuid());
+            long instanceId = createInstance(handle, act.getDef().getActivityId()).getId();
+
+            PicklistAnswer answer = new PicklistAnswer(null, act.getPicklistSingleListQuestion().getStableId(), null,
+                    List.of(new SelectedPicklistOption("PO1", "some details")));
+            handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), instanceId, answer);
+
+            fail("expected exception not thrown");
         });
     }
 
@@ -372,6 +518,45 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
             assertEquals(new DateValue(2020, 3, 14), row2.get(0).getValue());
             assertEquals(QuestionType.TEXT, row2.get(1).getQuestionType());
             assertEquals("row 2 col 2", row2.get(1).getValue());
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testFindAnswerByLatestInstanceAndQuestionStableId_notFound() {
+        TransactionWrapper.useTxn(handle -> {
+            Optional<Answer> result = handle.attach(AnswerDao.class)
+                    .findAnswerByLatestInstanceAndQuestionStableId(1L, 2L, "abcxyz");
+            assertTrue(result.isEmpty());
+        });
+    }
+
+    @Test
+    public void testFindAnswerByLatestInstanceAndQuestionStableId() {
+        TransactionWrapper.useTxn(handle -> {
+            TestFormActivity act = TestFormActivity.builder()
+                    .withBoolQuestion(true)
+                    .build(handle, testData.getUserId(), testData.getStudyGuid());
+
+            // Create old instance
+            long instance1 = createInstance(handle, act.getDef().getActivityId()).getId();
+            var answerDao = handle.attach(AnswerDao.class);
+            answerDao.createAnswer(testData.getUserId(), instance1,
+                    new BoolAnswer(null, act.getBoolQuestion().getStableId(), null, false));
+
+            // Create latest instance
+            long instance2 = createInstance(handle, act.getDef().getActivityId()).getId();
+            answerDao.createAnswer(testData.getUserId(), instance2,
+                    new BoolAnswer(null, act.getBoolQuestion().getStableId(), null, true));
+
+            Answer actual = answerDao.findAnswerByLatestInstanceAndQuestionStableId(
+                    testData.getUserId(), testData.getStudyId(), act.getBoolQuestion().getStableId())
+                    .orElse(null);
+
+            assertNotNull(actual);
+            assertEquals(QuestionType.BOOLEAN, actual.getQuestionType());
+            assertTrue("should be answer from latest instance", ((BoolAnswer) actual).getValue());
 
             handle.rollback();
         });

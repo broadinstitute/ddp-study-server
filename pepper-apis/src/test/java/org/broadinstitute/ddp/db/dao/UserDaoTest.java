@@ -9,7 +9,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
-import org.broadinstitute.ddp.db.AnswerDao;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.UserDaoFactory;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
@@ -108,10 +107,8 @@ public class UserDaoTest extends TxnAwareBaseTest {
         ActivityInstanceDto instance = handle.attach(ActivityInstanceDao.class)
                 .insertInstance(form.getActivityId(), tempUser.getUserGuid());
 
-        AnswerDao answerDao = AnswerDao.fromSqlConfig(sqlConfig);
-        assertNotNull(answerDao.createAnswer(handle,
-                new TextAnswer(null, textSid, null, "ans"),
-                tempUser.getUserGuid(), instance.getGuid()));
+        assertNotNull(handle.attach(AnswerDao.class)
+                .createAnswer(tempUser.getUserId(), instance.getId(), new TextAnswer(null, textSid, null, "ans")));
     }
 
     private void ensureDataExists(Handle handle, UserDto userDto) {
@@ -122,8 +119,8 @@ public class UserDaoTest extends TxnAwareBaseTest {
                 .findAllByUserIdAndStudyId(userDto.getUserId(), testData.getStudyId());
 
         assertEquals(1, instances.size());
-        assertEquals(1, AnswerDao.fromSqlConfig(sqlConfig)
-                .getAnswerGuidsForQuestion(handle, instances.get(0).getGuid(), textSid)
-                .size());
+        assertTrue(handle.attach(AnswerDao.class)
+                .findAnswerByInstanceIdAndQuestionStableId(instances.get(0).getId(), textSid)
+                .isPresent());
     }
 }

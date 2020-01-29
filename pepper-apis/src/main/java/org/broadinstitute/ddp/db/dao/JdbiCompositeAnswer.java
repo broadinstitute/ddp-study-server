@@ -69,6 +69,7 @@ public interface JdbiCompositeAnswer extends SqlObject {
                                 parentAnswer.setId(rs.getLong("parent_answer_id"));
                                 parentAnswer.setGuid(rs.getString("parent_answer_guid"));
                                 parentAnswer.setQuestionStableId(rs.getString("parent_question_stable_id"));
+                                parentAnswer.setActivityInstanceId(rs.getLong("parent_activity_instance_id"));
                             }
                             int rowIdx = rs.getInt("row_order");
                             //if this is null it means we are just seeing a row for the question definition
@@ -89,7 +90,8 @@ public interface JdbiCompositeAnswer extends SqlObject {
                                                 rs.getString("child_answer_guid"),
                                                 rs.getLong("child_question_id"),
                                                 rs.getString("child_question_stable_id"),
-                                                QuestionType.valueOf(rs.getString("child_question_type_code"))));
+                                                QuestionType.valueOf(rs.getString("child_question_type_code")),
+                                                rs.getLong("parent_activity_instance_id")));
                             }
                             return parentAnswer;
                         });
