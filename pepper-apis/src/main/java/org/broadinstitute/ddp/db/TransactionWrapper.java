@@ -358,7 +358,7 @@ public class TransactionWrapper {
         config.setAutoCommit(true); // will be managed by jdbi, which expects autcommit to be enabled initially
         config.setTransactionIsolation("TRANSACTION_READ_COMMITTED");
         config.setMaximumPoolSize(maxConnections);
-        config.setConnectionTimeout(250);
+        config.setConnectionTimeout(1000);
 
         return new HikariDataSource(config);
     }
