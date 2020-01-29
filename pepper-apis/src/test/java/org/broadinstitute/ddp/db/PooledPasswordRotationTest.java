@@ -66,7 +66,7 @@ public class PooledPasswordRotationTest extends TxnAwareBaseTest  {
         // write out the original config file plus the dynamically substituted testcontainer db config values
         // otherwise, automatic reread-the-config code will fail and leave the txnwrapper in an unrecoverable state
         ConfigManager.rewriteConfigFile(originalConfigPlusTestDbValues);
-        TransactionWrapper.evictAllConnections();
+        TransactionWrapper.closePool();
 
         try {
             TransactionWrapper.useTxn(handle -> {

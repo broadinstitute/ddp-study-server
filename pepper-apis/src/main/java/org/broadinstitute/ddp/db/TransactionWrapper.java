@@ -8,7 +8,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.typesafe.config.Config;
 import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.pool.HikariPool;
+import com.zaxxer.hikari.HikariDataSource;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.exception.InvalidConfigurationException;
@@ -49,7 +49,7 @@ public class TransactionWrapper {
 
     public static final String COULD_NOT_GET_CONNECTION = "Could not get a connection from the pool";
 
-    private HikariPool dataSource;
+    private HikariDataSource dataSource;
     private final String dbUrl;
     private final Jdbi jdbi;
 
@@ -64,7 +64,6 @@ public class TransactionWrapper {
 
         APIS(ConfigFile.DB_URL, ConfigFile.NUM_POOLED_CONNECTIONS),
         HOUSEKEEPING(ConfigFile.HOUSEKEEPING_DB_URL, ConfigFile.HOUSEKEEPING_NUM_POOLED_CONNECTIONS);
-
 
         private final String dbUrlConfigKey;
         private final String poolSizeConfigKey;
@@ -87,10 +86,10 @@ public class TransactionWrapper {
         this.dbUrl = dbUrl;
         this.maxConnections = maxConnections;
         if (dataSource != null) {
-            dataSource.softEvictConnections();
+            dataSource.close();
         }
         dataSource = createDataSource(maxConnections, dbUrl, db);
-        jdbi = Jdbi.create(dataSource.getUnwrappedDataSource());
+        jdbi = Jdbi.create(dataSource);
         jdbi.installPlugin(new SqlObjectPlugin());
     }
 
@@ -101,7 +100,7 @@ public class TransactionWrapper {
         LOG.warn("reset() should only be called in the context of testing");
         for (TransactionWrapper transactionWrapper : gTxnWrapper.values()) {
             try {
-                transactionWrapper.dataSource.shutdown();
+                transactionWrapper.dataSource.close();
             } catch (Exception e) {
                 LOG.error("Trouble while closing datasource for {}", transactionWrapper.dbUrl, e);
             }
@@ -114,9 +113,9 @@ public class TransactionWrapper {
      * Should only be called during testing to force connection pool
      * to create new connections on operations.
      */
-    public static synchronized void evictAllConnections() {
+    public static synchronized void closePool() {
         for (Map.Entry<DB, TransactionWrapper> db : gTxnWrapper.entrySet()) {
-            db.getValue().dataSource.softEvictConnections();
+            db.getValue().dataSource.close();
         }
     }
 
@@ -369,7 +368,7 @@ public class TransactionWrapper {
         }
     }
 
-    private HikariPool createDataSource(int maxConnections, String dbUrl, DB db) {
+    private HikariDataSource createDataSource(int maxConnections, String dbUrl, DB db) {
         HikariConfig config = new HikariConfig();
         config.setJdbcUrl(dbUrl);
         config.addDataSourceProperty("cachePrepStmts", "true");
@@ -386,7 +385,7 @@ public class TransactionWrapper {
 
         // todo arz leverage allowPoolSuspension and mxbeans to fully  automate password rotation
 
-        return new HikariPool(config);
+        return new HikariDataSource(config);
     }
 
 
