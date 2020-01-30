@@ -63,7 +63,7 @@ public interface AnswerDao extends SqlObject {
     // Convenience method for creating answers using guids. Prefer the other method that takes ids.
     default Answer createAnswer(String operatorGuid, String instanceGuid, Answer answer) {
         long operatorId = getHandle().attach(JdbiUser.class).getUserIdByGuid(operatorGuid);
-        long instanceId = getHandle().attach(JdbiActivityInstance.class).getActivityIdByGuid(instanceGuid);
+        long instanceId = getHandle().attach(JdbiActivityInstance.class).getActivityInstanceId(instanceGuid);
         return createAnswer(operatorId, instanceId, answer);
     }
 
