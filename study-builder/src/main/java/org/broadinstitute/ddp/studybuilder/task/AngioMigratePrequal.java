@@ -16,10 +16,9 @@ import java.util.stream.Stream;
 import com.opencsv.CSVWriter;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import org.broadinstitute.ddp.constants.ConfigFile;
-import org.broadinstitute.ddp.db.AnswerDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceStatusDao;
+import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
@@ -180,8 +179,7 @@ public class AngioMigratePrequal implements CustomTask {
         ActivityInstanceDao instanceDao = handle.attach(ActivityInstanceDao.class);
         ActivityInstanceStatusDao instanceStatusDao = handle.attach(ActivityInstanceStatusDao.class);
 
-        // Watch out. This is loading `sql.conf` resource file bundled with `pepper-apis` dependency.
-        AnswerDao answerDao = AnswerDao.fromSqlConfig(ConfigFactory.load(ConfigFile.SQL_CONFIG_FILE));
+        AnswerDao answerDao = handle.attach(AnswerDao.class);
 
         LOG.info("Backfilling prequal data for existing users...");
 
@@ -217,12 +215,12 @@ public class AngioMigratePrequal implements CustomTask {
                     InstanceStatusType.CREATED, false, now);
 
             TextAnswer firstNameAnswer = new TextAnswer(null, Q_FIRST_NAME, null, user.firstName);
-            answerDao.createAnswer(handle, firstNameAnswer, user.userGuid, instance.getGuid());
+            answerDao.createAnswer(user.userId, instance.getId(), firstNameAnswer);
 
             TextAnswer lastNameAnswer = new TextAnswer(null, Q_LAST_NAME, null, user.lastName);
-            answerDao.createAnswer(handle, lastNameAnswer, user.userGuid, instance.getGuid());
+            answerDao.createAnswer(user.userId, instance.getId(), lastNameAnswer);
 
-            answerDao.createAnswer(handle, selfDescribeAnswer, user.userGuid, instance.getGuid());
+            answerDao.createAnswer(user.userId, instance.getId(), selfDescribeAnswer);
 
             // There's a unique constraint on updated_at timestamp, so use a new one.
             ActivityInstanceStatusDto completedStatusDto = instanceStatusDao.insertStatus(instance.getId(), InstanceStatusType.COMPLETE,
