@@ -33,6 +33,9 @@ public class EventConfigurationDto {
     private InstanceStatusType instanceStatusType;
     private Long activityStatusTriggerStudyActivityId;
 
+    /* CONSENT_SUSPENDED */
+    // No sub-table
+
     /* WORKFLOW_STATE */
     private Long workflowStateId;
     private Boolean triggerAutomatically;
