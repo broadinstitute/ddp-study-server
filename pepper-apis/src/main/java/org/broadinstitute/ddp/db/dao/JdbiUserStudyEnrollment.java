@@ -311,13 +311,7 @@ public interface JdbiUserStudyEnrollment extends SqlObject {
     }
 
     default long suspendUserStudyConsent(long userId, long studyId) {
-        //update EnrollmentStatus to EnrollmentStatusType.CONSENT_SUSPENDED
-        //Update All existing activity instances as read-only
-        long id = changeUserStudyEnrollmentStatus(
-                userId, studyId, EnrollmentStatusType.CONSENT_SUSPENDED, null);
-        Set<Long> instanceIds = getActivityInstanceDao().findAllInstanceIdsByUserIdAndStudyId(userId, studyId);
-        getActivityInstanceDao().bulkUpdateReadOnlyByActivityIds(userId, true, instanceIds);
-        return id;
+        return changeUserStudyEnrollmentStatus(userId, studyId, EnrollmentStatusType.CONSENT_SUSPENDED, null);
     }
 
     /**

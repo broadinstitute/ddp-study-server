@@ -102,6 +102,13 @@ public class AgeUpService {
                 try {
                     TransactionWrapper.useSavepoint(named(SP_STATUS, studyGuid, userGuid), handle, h -> {
                         jdbiEnrollment.suspendUserStudyConsent(candidate.getParticipantUserId(), policy.getStudyId());
+                        EventSignal signal = new EventSignal(
+                                candidate.getParticipantUserId(),
+                                candidate.getParticipantUserId(),
+                                candidate.getParticipantUserGuid(),
+                                policy.getStudyId(),
+                                EventTriggerType.CONSENT_SUSPENDED);
+                        EventService.getInstance().processAllActionsForEventSignal(handle, signal);
                     });
                 } catch (Exception e) {
                     LOG.error("Candidate {} in study {} has reached age-of-majority"
