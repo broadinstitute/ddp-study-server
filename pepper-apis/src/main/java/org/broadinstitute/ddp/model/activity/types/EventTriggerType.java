@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.model.activity.types;
 
 public enum EventTriggerType {
     ACTIVITY_STATUS(false),
+    CONSENT_SUSPENDED(true),
     DSM_NOTIFICATION(false),
     EXIT_REQUEST(true),
     GOVERNED_USER_REGISTERED(true),
