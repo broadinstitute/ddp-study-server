@@ -17,7 +17,6 @@ import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.pex.TreeWalkInterpreter;
 import org.broadinstitute.ddp.service.AgeUpService;
 import org.broadinstitute.ddp.util.ConfigUtil;
-import org.jdbi.v3.core.Handle;
 import org.quartz.CronScheduleBuilder;
 import org.quartz.DisallowConcurrentExecution;
 import org.quartz.Job;
@@ -75,7 +74,7 @@ public class CheckAgeUpJob implements Job {
         try {
             LOG.info("Running job '{}'", getKey());
             long start = Instant.now().toEpochMilli();
-            TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, this::run);
+            run();
             long elapsed = Instant.now().toEpochMilli() - start;
             LOG.info("Job '{}' completed in {} ms", getKey(), elapsed);
         } catch (Exception e) {
@@ -84,12 +83,13 @@ public class CheckAgeUpJob implements Job {
         }
     }
 
-    private void run(Handle handle) {
+    private void run() {
         AgeUpService service = new AgeUpService();
         PexInterpreter interpreter = new TreeWalkInterpreter();
-        List<GovernancePolicy> policies = handle.attach(StudyGovernanceDao.class)
-                .findAllPolicies()
-                .collect(Collectors.toList());
+        List<GovernancePolicy> policies = TransactionWrapper.withTxn(TransactionWrapper.DB.APIS, handle ->
+                handle.attach(StudyGovernanceDao.class)
+                        .findAllPolicies()
+                        .collect(Collectors.toList()));
         Collections.shuffle(policies);
         for (var policy : policies) {
             if (policy.getAgeOfMajorityRules().isEmpty()) {
@@ -98,7 +98,8 @@ public class CheckAgeUpJob implements Job {
             }
             try {
                 LOG.info("Running age-up check for study {}", policy.getStudyGuid());
-                service.runAgeUpCheck(handle, interpreter, policy);
+                // Perform check for each study within a transaction so any unhandled errors for study will not affect other studies.
+                TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, handle -> service.runAgeUpCheck(handle, interpreter, policy));
                 LOG.info("Finished age-up check for study {}", policy.getStudyGuid());
             } catch (DDPException e) {
                 LOG.error("Error while checking age-up for study {}, continuing", policy.getStudyGuid(), e);
