@@ -187,4 +187,5 @@
     <include file="db-changes/seed/DDP-4222-age-up-event-types.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-4276-restructure-copy-answer.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/answer-cascade-delete.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/seed/consent-suspended-event-trigger.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
