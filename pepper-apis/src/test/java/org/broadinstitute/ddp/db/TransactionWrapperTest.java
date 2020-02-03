@@ -51,7 +51,7 @@ public class TransactionWrapperTest {
             LOG.info("Wait interrupted", e);
         }
         testDbUrl = MySqlTestContainerUtil.getFullJdbcTestUrl(dbContainer);
-        LiquibaseUtil.runChangeLog(new com.mysql.cj.jdbc.Driver(), testDbUrl, "src/test/resources/db-testscripts/txnwrappertest.xml");
+        LiquibaseUtil.runChangeLog(testDbUrl, "src/test/resources/db-testscripts/txnwrappertest.xml");
         TransactionWrapper.reset();
     }
 
@@ -95,11 +95,11 @@ public class TransactionWrapperTest {
                     }
                     assertEquals(1, numRows);
                     try {
-                        TransactionWrapper.withTxn((handle2) -> {
-                            return null;
+                        TransactionWrapper.useTxn((handle2) -> {
+                            LOG.info("Got connection when we shouldn't have");
                         });
                     } catch (Exception e) {
-                        gotPoolExhaustedError.set(e.getCause().getMessage().toLowerCase().contains("pool"));
+                        gotPoolExhaustedError.set(e.getMessage().toLowerCase().contains("pool"));
                     }
                 } catch (SQLException e) {
                     LOG.error("Trouble making first connection", e);
@@ -280,8 +280,7 @@ public class TransactionWrapperTest {
                 return null;
             });
         } catch (DDPException e) {
-            assertTrue("Got " + e.getCause().getMessage() + " instead of expected regex", e.getCause().getMessage()
-                    .matches(".*Connection is not available.*"));
+            assertTrue(e.getMessage().equals(TransactionWrapper.COULD_NOT_GET_CONNECTION));
         }
     }
 
@@ -390,7 +389,7 @@ public class TransactionWrapperTest {
                 });
             });
         } catch (DDPException e) {
-            assertTrue(e.getCause().getMessage().matches(".*Connection is not available.*"));
+            assertTrue(e.getMessage().equals(TransactionWrapper.COULD_NOT_GET_CONNECTION));
         }
     }
 }

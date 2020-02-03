@@ -6,8 +6,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import java.sql.Driver;
-import java.sql.SQLException;
 import java.util.List;
 
 import liquibase.exception.MigrationFailedException;
@@ -23,16 +21,14 @@ public class LiquibaseUtilTest {
 
     private static final String DB_SCRIPTS_DIR = "src/test/resources/db-testscripts";
 
-    private Driver driver;
     private String testDbUrl;
 
     // since we are testing migration-related actions, we want a separate db here, not the usual pepper dbs
     private final MySQLContainer dbContainer = new MySQLContainer(MYSQL_VERSION);
 
     @Before
-    public void setup() throws SQLException {
+    public void setup() {
         dbContainer.start();
-        driver = new com.mysql.cj.jdbc.Driver();
         testDbUrl = MySqlTestContainerUtil.getFullJdbcTestUrl(dbContainer);
         TransactionWrapper.reset();
         TransactionWrapper.init("UTC", new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, 1, testDbUrl));
@@ -47,7 +43,7 @@ public class LiquibaseUtilTest {
     @Test
     public void testSuccessfulMigration() {
         String script = DB_SCRIPTS_DIR + "/liquibase-migrate-success.xml";
-        LiquibaseUtil.runChangeLog(driver, testDbUrl, script);
+        LiquibaseUtil.runChangeLog(testDbUrl, script);
         TransactionWrapper.useTxn(handle -> {
             List<String> names = handle.select("select name from test_table").mapTo(String.class).list();
             assertEquals(1, names.size());
@@ -58,10 +54,10 @@ public class LiquibaseUtilTest {
     @Test
     public void testSuccessfulRollbackWhenChangeSetFails() {
         String script = DB_SCRIPTS_DIR + "/liquibase-migrate-success.xml";
-        LiquibaseUtil.runChangeLog(driver, testDbUrl, script);
+        LiquibaseUtil.runChangeLog(testDbUrl, script);
         try {
             script = DB_SCRIPTS_DIR + "/liquibase-migrate-rollback-success.xml";
-            LiquibaseUtil.runChangeLog(driver, testDbUrl, script);
+            LiquibaseUtil.runChangeLog(testDbUrl, script);
             fail("Expected migrations to fail and trigger rollback");
         } catch (DDPException e) {
             assertTrue(e.getMessage().contains("migrations"));
@@ -79,10 +75,10 @@ public class LiquibaseUtilTest {
     @Test
     public void testFailedRollbackWhenChangeSetFails() {
         String script = DB_SCRIPTS_DIR + "/liquibase-migrate-success.xml";
-        LiquibaseUtil.runChangeLog(driver, testDbUrl, script);
+        LiquibaseUtil.runChangeLog(testDbUrl, script);
         try {
             script = DB_SCRIPTS_DIR + "/liquibase-migrate-rollback-faulty.xml";
-            LiquibaseUtil.runChangeLog(driver, testDbUrl, script);
+            LiquibaseUtil.runChangeLog(testDbUrl, script);
             fail("Expected migrations to fail and trigger rollback");
         } catch (DDPException e) {
             assertTrue(e.getMessage().contains("migrations"));
