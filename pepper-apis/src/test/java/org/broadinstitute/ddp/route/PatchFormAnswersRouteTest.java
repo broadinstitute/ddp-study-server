@@ -977,8 +977,8 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
 
     @Test
     public void testPatch_picklistAnswer_optionDetails_overLengthLimit() {
-        String details = StringUtils.repeat("0123456789", 25) + "123456";
-        assertEquals(256, details.length());
+        String details = StringUtils.repeat("0123456789", 50) + "123456";
+        assertEquals(506, details.length());
 
         PatchAnswerPayload payload = createPicklistPayload(plistSingleSelectSid, null,
                 new SelectedPicklistOption(plistSingle_option2_sid, details));
@@ -987,7 +987,7 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
                 .then().assertThat()
                 .statusCode(400).contentType(ContentType.JSON)
                 .body("code", equalTo(ErrorCodes.BAD_PAYLOAD))
-                .body("message", containsString("length must be between 0 and 255"));
+                .body("message", containsString("length must be between 0 and 500"));
     }
 
     @Test
