@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import com.typesafe.config.Config;
-
 import org.apache.commons.dbcp2.DriverManagerConnectionFactory;
 import org.apache.commons.dbcp2.PoolableConnection;
 import org.apache.commons.dbcp2.PoolableConnectionFactory;
@@ -339,6 +338,31 @@ public class TransactionWrapper {
             h.useTransaction(callback);
         } catch (ConnectionException e) {
             throw new DDPException("Unable to get a connection from data source", e);
+        }
+    }
+
+    /**
+     * Use the given handle within a savepoint. This manages creating/releasing/rolling back the savepoint. The callback will be given the
+     * same handle passed in after a savepoint has been started, so the argument can be ignored if desired.
+     *
+     * @param name     the name for the savepoint
+     * @param handle   the database handle
+     * @param callback accepts the handle with a savepoint started
+     * @param <X>      type of exception thrown by callback
+     * @throws X exception thrown by callback and rethrown after cleaning up savepoint
+     */
+    public static <X extends Exception> void useSavepoint(String name, Handle handle, HandleConsumer<X> callback) throws X {
+        try {
+            handle.savepoint(name);
+            callback.useHandle(handle);
+            handle.release(name);
+        } catch (Exception original) {
+            try {
+                handle.rollbackToSavepoint(name);
+            } catch (Exception e) {
+                LOG.error("Error rolling back savepoint {}", name, e);
+            }
+            throw original;
         }
     }
 
