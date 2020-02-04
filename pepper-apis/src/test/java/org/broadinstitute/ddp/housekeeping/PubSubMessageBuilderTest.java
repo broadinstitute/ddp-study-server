@@ -20,6 +20,7 @@ import org.broadinstitute.ddp.db.dto.QueuedEventDto;
 import org.broadinstitute.ddp.db.dto.QueuedNotificationDto;
 import org.broadinstitute.ddp.housekeeping.message.NotificationMessage;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
+import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.event.NotificationServiceType;
 import org.broadinstitute.ddp.model.event.NotificationType;
 import org.broadinstitute.ddp.model.governance.Governance;
@@ -45,10 +46,12 @@ public class PubSubMessageBuilderTest extends TxnAwareBaseTest {
         PubSubMessageBuilder builder = new PubSubMessageBuilder(cfg);
 
         QueuedEventDto event = new QueuedNotificationDto(
-                new QueuedEventDto(1L, 1L, null, testData.getUserGuid(), testData.getUserHruid(),
-                        EventActionType.NOTIFICATION, "1.0", null, "topic", null, null, testData.getStudyGuid()),
-                new NotificationDetailsDto(NotificationType.EMAIL, NotificationServiceType.SENDGRID, "apiKey",
-                        "fromName", "fromEmail", "salutation", "first", "last", "template", null, "url", null));
+                new QueuedEventDto(1L, testData.getUserId(), testData.getUserGuid(), testData.getUserHruid(),
+                        1L, EventTriggerType.REACHED_AOM, EventActionType.NOTIFICATION, null, null,
+                        "topic", null, null, testData.getStudyGuid()),
+                new NotificationDetailsDto(NotificationType.EMAIL, NotificationServiceType.SENDGRID,
+                        "template", null, null, "url", "apiKey", "fromName", "fromEmail",
+                        "salutation", "first", "last"));
 
         PubsubMessage msg = TransactionWrapper.withTxn(handle -> builder.createMessage("test", event, handle));
         assertEquals("test", msg.getAttributesOrThrow(DDP_MESSAGE_ID));
@@ -68,10 +71,12 @@ public class PubSubMessageBuilderTest extends TxnAwareBaseTest {
             userGovernanceDao.grantGovernedStudy(gov.getId(), testData.getStudyId());
 
             QueuedEventDto event = new QueuedNotificationDto(
-                    new QueuedEventDto(1L, 1L, testData.getUserId(), gov.getGovernedUserGuid(), "hruid",
-                            EventActionType.NOTIFICATION, "1.0", null, "topic", null, null, testData.getStudyGuid()),
-                    new NotificationDetailsDto(NotificationType.EMAIL, NotificationServiceType.SENDGRID, "apiKey",
-                            "fromName", "fromEmail", "salutation", "first", "last", "template", null, "url", null));
+                    new QueuedEventDto(1L, testData.getUserId(), gov.getGovernedUserGuid(), "hruid",
+                            1L, EventTriggerType.REACHED_AOM, EventActionType.NOTIFICATION, null, null,
+                            "topic", null, null, testData.getStudyGuid()),
+                    new NotificationDetailsDto(NotificationType.EMAIL, NotificationServiceType.SENDGRID,
+                            "template", null, null, "url", "apiKey", "fromName", "fromEmail",
+                            "salutation", "first", "last"));
 
             PubsubMessage msg = new PubSubMessageBuilder(cfg).createMessage("test", event, handle);
             assertEquals("test", msg.getAttributesOrThrow(DDP_MESSAGE_ID));
@@ -104,10 +109,12 @@ public class PubSubMessageBuilderTest extends TxnAwareBaseTest {
             User operator = handle.attach(UserDao.class).createUser(testData.getClientId(), null);
 
             QueuedEventDto event = new QueuedNotificationDto(
-                    new QueuedEventDto(1L, 1L, operator.getId(), gov.getGovernedUserGuid(), "hruid",
-                            EventActionType.NOTIFICATION, "1.0", null, "topic", null, null, testData.getStudyGuid()),
-                    new NotificationDetailsDto(NotificationType.EMAIL, NotificationServiceType.SENDGRID, "apiKey",
-                            "fromName", "fromEmail", "salutation", "first", "last", "template", null, "url", null));
+                    new QueuedEventDto(1L, operator.getId(), gov.getGovernedUserGuid(), "hruid",
+                            1L, EventTriggerType.REACHED_AOM, EventActionType.NOTIFICATION, null, null,
+                            "topic", null, null, testData.getStudyGuid()),
+                    new NotificationDetailsDto(NotificationType.EMAIL, NotificationServiceType.SENDGRID,
+                            "template", null, null, "url", "apiKey", "fromName", "fromEmail",
+                            "salutation", "first", "last"));
 
             PubsubMessage msg = new PubSubMessageBuilder(cfg).createMessage("test", event, handle);
             assertEquals("test", msg.getAttributesOrThrow(DDP_MESSAGE_ID));

@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.db.dto;
 
 import com.google.gson.annotations.SerializedName;
+import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
 public class NotificationTemplateSubstitutionDto {
@@ -12,7 +13,9 @@ public class NotificationTemplateSubstitutionDto {
     private final String value;
 
     @JdbiConstructor
-    public NotificationTemplateSubstitutionDto(String variableName, String value) {
+    public NotificationTemplateSubstitutionDto(
+            @ColumnName("substitution_variable_name") String variableName,
+            @ColumnName("substitution_value") String value) {
         this.variableName = variableName;
         this.value = value;
     }
