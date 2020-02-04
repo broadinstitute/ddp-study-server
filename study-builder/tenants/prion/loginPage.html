@@ -97,6 +97,28 @@
         margin-right: 0 !important;
     }
 
+    .auth0-lock-form div div {
+        display: flex;
+        flex-flow: column;
+    }
+
+    .auth0-lock-input-first_name {
+        order: 2;
+    }
+
+    .auth0-lock-input-last_name {
+        order: 3;
+    }
+
+    .auth0-lock-input-email {
+        order: 4;
+        margin-top: 10px;
+    }
+
+    .auth0-lock-input-show-password {
+        order: 5;
+    }
+
     .auth0-lock.auth0-lock .auth0-lock-submit {
         padding-left: 30px;
         padding-right: 30px;
@@ -133,25 +155,12 @@
         padding-top:10px;
     }
 
-    .auth0-lock-input-block.auth0-lock-input-email::before {
-        content: "Email Address*";
-        position: absolute;
-        color: #333;
-        font-family: 'Raleway', sans-serif !important;
-        font-size: 0.9rem;
-        font-weight: 400;
-        top: -23px;
-    }
-
-    .BottomMargin30 {
-        margin-bottom: 30px !important;
-    }
-
     .Input-label {
         color: rgb(51, 51, 51);
         font-size: 0.9rem;
         font-weight: 400;
-        margin-bottom: 0;
+        margin-bottom: 10px;
+        margin-top: 10px;
         margin-right: 10px;
         font-family: 'Raleway', sans-serif !important;
     }
@@ -166,7 +175,7 @@
         box-sizing: border-box !important;
         display: inline-block !important;
         font-stretch: 100%;
-        position: absolute;
+        margin-top: 10px;
     }
 
     .tooltip .tooltiptext {
@@ -184,7 +193,7 @@
         line-height: 1.42857143;
         border-radius: 4px;
         padding: 3px 8px;
-        left: -125px;
+        left: -46px;
         top: -60px;
     }
 
@@ -208,6 +217,18 @@
         font-family: 'Raleway', sans-serif !important;
     }
 
+    .flex-row {
+        flex-flow: row !important;
+        display: flex !important;
+    }
+
+    .NoTopMargin {
+        margin-top: 0 !important;
+    }
+
+    .auth0-lock-input-wrap {
+        padding-left: 0 !important;
+    }
 </style>
 
 <script>
@@ -248,7 +269,7 @@
     languageDictionary = { title: title,signupTitle: title, lastLoginInstructions: 'Last time you signed in with',
     loginAtLabel: 'Sign in at %s', loginLabel: 'Sign In', loginSubmitLabel: 'Sign In', loginWithLabel: 'Sign in with %s',
     signUpTitle: ' ', signUpLabel: 'Join Us', signUpSubmitLabel: 'Join Us',
-        databaseSignUpInstructions: '<h2>Join Us</h2> <h5>Do you or a relative of yours have prion disease? Tell us about it and join us making a difference...</h5> <h5 class="BottomMargin30">You can register in the platform using your email address and creating a password. We will use this account to communicate with you regarding the Prion Registry.</h5>',
+        databaseSignUpInstructions: '<h2>Join Us</h2> <h5>Do you or a relative of yours have prion disease? Tell us about it and join us making a difference...</h5> <h5>You can register in the platform using your email address and creating a password. We will use this account to communicate with you regarding the Prion Registry.</h5>',
     blankErrorHint: "Please fill out this field."};
     languageDictionary.error = languageDictionary.error || {};
     languageDictionary.error.signUp = languageDictionary.error.signUp || {};
@@ -354,7 +375,7 @@
             if (!document.getElementById('ddp-password-hint')) {
                  //Add password prompt and hint
                 var passwordHint = document.createElement('div');
-                passwordHint.innerHTML = '<div id="ddp-password-hint"><label class="Input-label">Password*</label>' +
+                passwordHint.innerHTML = '<div id="ddp-password-hint" class="flex-row"><label class="Input-label">Password*</label>' +
                     '                    <i class="fa fa-question-circle Color--green tooltip" aria-hidden="true">' +
                     '<span class="tooltiptext">Password must be at least 8 characters long and contain at least one number, one upper case letter, and one lower case letter.</span></i></div>'
                 var passwordBlock = document.getElementsByClassName('auth0-lock-input-show-password')[0];
@@ -362,10 +383,19 @@
                     passwordBlock.insertBefore(passwordHint, passwordBlock.childNodes[0]);
                 }
             }
+            if (!document.getElementById('ddp-email-prompt')) {
+                //Add first name prompt
+                var emailPrompt = document.createElement('div');
+                emailPrompt.innerHTML = '<div id="ddp-email-prompt"><label class="Input-label">Email Address*</label></div>';
+                var emailBlock = document.getElementsByClassName('auth0-lock-input-email')[0];
+                if (emailBlock) {
+                    emailBlock.insertBefore(emailPrompt, emailBlock.childNodes[0]);
+                }
+            }
             if (!document.getElementById('ddp-first-name-prompt')) {
                 //Add first name prompt
                 var firstNamePrompt = document.createElement('div');
-                firstNamePrompt.innerHTML = '<div id="ddp-first-name-prompt"><label class="Input-label">First Name*</label></div>';
+                firstNamePrompt.innerHTML = '<div id="ddp-first-name-prompt"><label class="Input-label NoTopMargin">First Name*</label></div>';
                 var firstNameBlock = document.getElementsByClassName('auth0-lock-input-first_name')[0];
                 if (firstNameBlock) {
                     firstNameBlock.insertBefore(firstNamePrompt, firstNameBlock.childNodes[0]);
