@@ -152,7 +152,8 @@
         font-size: 0.9rem;
         font-weight: 400;
         margin-bottom: 0;
-        margin-right: 10px
+        margin-right: 10px;
+        font-family: 'Raleway', sans-serif !important;
     }
 
     .Color--green {
@@ -201,6 +202,10 @@
     .tooltip:hover .tooltiptext {
         visibility: visible;
         opacity: 1;
+    }
+
+    span {
+        font-family: 'Raleway', sans-serif !important;
     }
 
 </style>
@@ -254,6 +259,28 @@
     languageDictionary.lastLoginInstructions = 'Last time you signed in with';
     var loginHint = config.extraParams.login_hint;
     var realOptions = {
+        additionalSignUpFields: [
+            {
+                name: "first_name",
+                placeholder: "First Name",
+                validator: function(first_name) {
+                    return {
+                        valid: first_name.length > 0,
+                        hint: "Please fill out this field."
+                    };
+                }
+            },
+            {
+                name: "last_name",
+                placeholder: "Last Name",
+                validator: function(last_name) {
+                    return {
+                        valid: last_name.length > 0,
+                        hint: "Please fill out this field."
+                    };
+                }
+            }
+        ],
         avatar: null,
         auth: {
             redirectUrl: config.callbackURL,
@@ -333,6 +360,24 @@
                 var passwordBlock = document.getElementsByClassName('auth0-lock-input-show-password')[0];
                 if (passwordBlock) {
                     passwordBlock.insertBefore(passwordHint, passwordBlock.childNodes[0]);
+                }
+            }
+            if (!document.getElementById('ddp-first-name-prompt')) {
+                //Add first name prompt
+                var firstNamePrompt = document.createElement('div');
+                firstNamePrompt.innerHTML = '<div id="ddp-first-name-prompt"><label class="Input-label">First Name*</label></div>';
+                var firstNameBlock = document.getElementsByClassName('auth0-lock-input-first_name')[0];
+                if (firstNameBlock) {
+                    firstNameBlock.insertBefore(firstNamePrompt, firstNameBlock.childNodes[0]);
+                }
+            }
+            if (!document.getElementById('ddp-last-name-prompt')) {
+                //Add last name prompt
+                var lastNamePrompt = document.createElement('div');
+                lastNamePrompt.innerHTML = '<div id="ddp-last-name-prompt"><label class="Input-label">Last Name*</label></div>';
+                var lastNameBlock = document.getElementsByClassName('auth0-lock-input-last_name')[0];
+                if (lastNameBlock) {
+                    lastNameBlock.insertBefore(lastNamePrompt, lastNameBlock.childNodes[0]);
                 }
             }
             if (!document.getElementById('ddp-header')) {
