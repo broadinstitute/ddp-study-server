@@ -62,8 +62,8 @@ public class ActivityDefTest {
                 .setAllowOndemandTrigger(true)
                 .setReadonlyHintTemplate(Template.html("its readonly!"))
                 .addName(new Translation("en", "a name"))
+                .addTitle(new Translation("en", "a title"))
                 .addSubtitle(new Translation("en", "a subtle subtitle"))
-                .addDashboardName(new Translation("en", "a brand new name"))
                 .addDescription(new Translation("en", "only description it needs"))
                 .addSummary(new SummaryTranslation("en", "created is new", InstanceStatusType.CREATED))
                 .setIntroduction(new FormSectionDef("top", new ArrayList<>()))
@@ -88,18 +88,18 @@ public class ActivityDefTest {
         assertEquals(def.getReadonlyHintTemplate().getTemplateType(), actual.getReadonlyHintTemplate().getTemplateType());
         assertEquals(def.getReadonlyHintTemplate().getTemplateText(), actual.getReadonlyHintTemplate().getTemplateText());
 
-        assertEquals(1, actual.getTranslatedNames().size());
-        assertEquals(def.getTranslatedNames().get(0).getLanguageCode(), actual.getTranslatedNames().get(0).getLanguageCode());
-        assertEquals(def.getTranslatedNames().get(0).getText(), actual.getTranslatedNames().get(0).getText());
+        assertEquals(1, actual.getTranslatedTitles().size());
+        assertEquals(def.getTranslatedTitles().get(0).getLanguageCode(), actual.getTranslatedTitles().get(0).getLanguageCode());
+        assertEquals(def.getTranslatedTitles().get(0).getText(), actual.getTranslatedTitles().get(0).getText());
 
         assertEquals(1, actual.getTranslatedSubtitles().size());
         assertEquals(def.getTranslatedSubtitles().get(0).getLanguageCode(), actual.getTranslatedSubtitles().get(0).getLanguageCode());
         assertEquals(def.getTranslatedSubtitles().get(0).getText(), actual.getTranslatedSubtitles().get(0).getText());
 
-        assertEquals(1, actual.getTranslatedDashboardNames().size());
-        assertEquals(def.getTranslatedDashboardNames().get(0).getLanguageCode(),
-                actual.getTranslatedDashboardNames().get(0).getLanguageCode());
-        assertEquals(def.getTranslatedDashboardNames().get(0).getText(), actual.getTranslatedDashboardNames().get(0).getText());
+        assertEquals(1, actual.getTranslatedNames().size());
+        assertEquals(def.getTranslatedNames().get(0).getLanguageCode(),
+                actual.getTranslatedNames().get(0).getLanguageCode());
+        assertEquals(def.getTranslatedNames().get(0).getText(), actual.getTranslatedNames().get(0).getText());
 
         assertEquals(1, actual.getTranslatedDescriptions().size());
         assertEquals(def.getTranslatedDescriptions().get(0).getLanguageCode(), actual.getTranslatedDescriptions().get(0).getLanguageCode());
@@ -108,7 +108,7 @@ public class ActivityDefTest {
         assertEquals(1, actual.getTranslatedSummaries().size());
         assertEquals(def.getTranslatedSummaries().get(0).getLanguageCode(), actual.getTranslatedSummaries().get(0).getLanguageCode());
         assertEquals(def.getTranslatedSummaries().get(0).getText(), actual.getTranslatedSummaries().get(0).getText());
-        assertEquals(def.getTranslatedSummaries().get(0).getStatusCode(), actual.getTranslatedSummaries().get(0).getStatusCode());
+        assertEquals(def.getTranslatedSummaries().get(0).getStatusType(), actual.getTranslatedSummaries().get(0).getStatusType());
 
         assertEquals(def.getActivityType(), actual.getActivityType());
         FormActivityDef form = (FormActivityDef) actual;
@@ -137,8 +137,8 @@ public class ActivityDefTest {
                 .setAllowOndemandTrigger(true)
                 .setReadonlyHintTemplate(Template.html("its readonly!"))
                 .addName(new Translation("en", "a name"))
+                .addTitle(new Translation("en", "a title"))
                 .addSubtitle(new Translation("en", "a subtle subtitle"))
-                .addDashboardName(new Translation("en", "a brand new name"))
                 .addDescription(new Translation("en", "only description it needs"))
                 .addSummary(new SummaryTranslation("en", "created is new", InstanceStatusType.CREATED))
                 .setIntroduction(new FormSectionDef("top", new ArrayList<>()))
@@ -164,18 +164,18 @@ public class ActivityDefTest {
         assertEquals(def.getReadonlyHintTemplate().getTemplateType(), actual.getReadonlyHintTemplate().getTemplateType());
         assertEquals(def.getReadonlyHintTemplate().getTemplateText(), actual.getReadonlyHintTemplate().getTemplateText());
 
-        assertEquals(1, actual.getTranslatedNames().size());
-        assertEquals(def.getTranslatedNames().get(0).getLanguageCode(), actual.getTranslatedNames().get(0).getLanguageCode());
-        assertEquals(def.getTranslatedNames().get(0).getText(), actual.getTranslatedNames().get(0).getText());
+        assertEquals(1, actual.getTranslatedTitles().size());
+        assertEquals(def.getTranslatedTitles().get(0).getLanguageCode(), actual.getTranslatedTitles().get(0).getLanguageCode());
+        assertEquals(def.getTranslatedTitles().get(0).getText(), actual.getTranslatedTitles().get(0).getText());
 
         assertEquals(1, actual.getTranslatedSubtitles().size());
         assertEquals(def.getTranslatedSubtitles().get(0).getLanguageCode(), actual.getTranslatedSubtitles().get(0).getLanguageCode());
         assertEquals(def.getTranslatedSubtitles().get(0).getText(), actual.getTranslatedSubtitles().get(0).getText());
 
-        assertEquals(1, actual.getTranslatedDashboardNames().size());
-        assertEquals(def.getTranslatedDashboardNames().get(0).getLanguageCode(),
-                actual.getTranslatedDashboardNames().get(0).getLanguageCode());
-        assertEquals(def.getTranslatedDashboardNames().get(0).getText(), actual.getTranslatedDashboardNames().get(0).getText());
+        assertEquals(1, actual.getTranslatedNames().size());
+        assertEquals(def.getTranslatedNames().get(0).getLanguageCode(),
+                actual.getTranslatedNames().get(0).getLanguageCode());
+        assertEquals(def.getTranslatedNames().get(0).getText(), actual.getTranslatedNames().get(0).getText());
 
         assertEquals(1, actual.getTranslatedDescriptions().size());
         assertEquals(def.getTranslatedDescriptions().get(0).getLanguageCode(), actual.getTranslatedDescriptions().get(0).getLanguageCode());
@@ -184,7 +184,7 @@ public class ActivityDefTest {
         assertEquals(1, actual.getTranslatedSummaries().size());
         assertEquals(def.getTranslatedSummaries().get(0).getLanguageCode(), actual.getTranslatedSummaries().get(0).getLanguageCode());
         assertEquals(def.getTranslatedSummaries().get(0).getText(), actual.getTranslatedSummaries().get(0).getText());
-        assertEquals(def.getTranslatedSummaries().get(0).getStatusCode(), actual.getTranslatedSummaries().get(0).getStatusCode());
+        assertEquals(def.getTranslatedSummaries().get(0).getStatusType(), actual.getTranslatedSummaries().get(0).getStatusType());
 
         assertEquals(def.getActivityType(), actual.getActivityType());
         ConsentActivityDef consent = (ConsentActivityDef) actual;

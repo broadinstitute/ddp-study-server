@@ -11,20 +11,22 @@ public class ActivityInstanceSummary implements TranslatedSummary {
     @SerializedName("instanceGuid")
     private String activityInstanceGuid;
 
-    @SerializedName("activityName")
+    // todo: rename to `activityName`
+    @SerializedName("activityDashboardName")
     private String activityName;
 
-    @SerializedName("activityDashboardName")
-    private String activityDashboardName;
+    // todo: rename to `activityTitle`
+    @SerializedName("activityName")
+    private String activityTitle;
 
-    @SerializedName("activitySummary")
-    private String activitySummary;
+    @SerializedName("activitySubtitle")
+    private String activitySubtitle;
 
     @SerializedName("activityDescription")
     private String activityDescription;
 
-    @SerializedName("activitySubtitle")
-    private String activitySubtitle;
+    @SerializedName("activitySummary")
+    private String activitySummary;
 
     @SerializedName("statusCode")
     private String statusTypeCode;
@@ -65,10 +67,10 @@ public class ActivityInstanceSummary implements TranslatedSummary {
             String activityCode,
             String activityInstanceGuid,
             String activityName,
-            String activityDashboardName,
-            String activitySummary,
-            String activityDescription,
+            String activityTitle,
             String activitySubtitle,
+            String activityDescription,
+            String activitySummary,
             String activityType,
             String formTypeCode,
             String statusTypeCode,
@@ -84,10 +86,10 @@ public class ActivityInstanceSummary implements TranslatedSummary {
         this.activityCode = activityCode;
         this.activityInstanceGuid = activityInstanceGuid;
         this.activityName = activityName;
-        this.activityDashboardName = activityDashboardName;
-        this.activitySummary = activitySummary;
-        this.activityDescription = activityDescription;
+        this.activityTitle = activityTitle;
         this.activitySubtitle = activitySubtitle;
+        this.activityDescription = activityDescription;
+        this.activitySummary = activitySummary;
         this.activityType = activityType;
         if (StringUtils.isNotBlank(formTypeCode)) {
             this.activitySubType = formTypeCode;
@@ -116,20 +118,24 @@ public class ActivityInstanceSummary implements TranslatedSummary {
         return activityName;
     }
 
-    public String getActivityDashboardName() {
-        return activityDashboardName;
+    public void setActivityName(String activityName) {
+        this.activityName = activityName;
     }
 
-    public String getActivitySummary() {
-        return activitySummary;
+    public String getActivityTitle() {
+        return activityTitle;
+    }
+
+    public String getActivitySubtitle() {
+        return activitySubtitle;
     }
 
     public String getActivityDescription() {
         return activityDescription;
     }
 
-    public String getActivitySubtitle() {
-        return activitySubtitle;
+    public String getActivitySummary() {
+        return activitySummary;
     }
 
     public String getStatusTypeCode() {
@@ -163,10 +169,6 @@ public class ActivityInstanceSummary implements TranslatedSummary {
 
     public long getCreatedAt() {
         return createdAt;
-    }
-
-    public void setActivityDashboardName(String activityDashboardName) {
-        this.activityDashboardName = activityDashboardName;
     }
 
     public boolean isExcludeFromDisplay() {

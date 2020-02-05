@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="20200204-add-i18n-study-activity-table">
+        <createTable tableName="i18n_study_activity">
+            <column name="i18n_study_activity_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="i18n_study_activity_pk"/>
+            </column>
+            <column name="study_activity_id" type="bigint">
+                <constraints nullable="false"
+                             references="study_activity(study_activity_id)"
+                             foreignKeyName="i18n_study_activity_study_activity_fk"/>
+            </column>
+            <column name="language_code_id" type="bigint">
+                <constraints nullable="false"
+                             references="language_code(language_code_id)"
+                             foreignKeyName="i18n_study_activity_language_code_fk"/>
+            </column>
+            <column name="name" type="varchar(500)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="title" type="varchar(500)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="subtitle" type="varchar(500)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="description" type="varchar(500)">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+        <addUniqueConstraint tableName="i18n_study_activity" columnNames="study_activity_id, language_code_id"
+                             constraintName="i18n_study_activity_activity_language_uk"/>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20200204-consolidate-activity-i18n">
+        <sql>
+            insert into i18n_study_activity
+                   (study_activity_id, language_code_id, name, title, subtitle, description)
+            select title.study_activity_id,
+                   title.language_code_id,
+                   coalesce(dashboard.translation_text, title.translation_text),
+                   title.translation_text,
+                   subtitle.translation_text,
+                   description.translation_text
+              from i18n_study_activity_name_trans as title
+              left join i18n_study_activity_subtitle_trans as subtitle
+                   on subtitle.study_activity_id = title.study_activity_id
+                   and subtitle.language_code_id = title.language_code_id
+              left join i18n_study_activity_description_trans as description
+                   on description.study_activity_id = title.study_activity_id
+                   and description.language_code_id = title.language_code_id
+              left join i18n_study_activity_dashboard_name_trans as dashboard
+                   on dashboard.study_activity_id = title.study_activity_id
+                   and dashboard.language_code_id = title.language_code_id
+        </sql>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20200204-cleanup-activity-i18n-tables">
+        <dropTable tableName="i18n_study_activity_name_trans"/>
+        <dropTable tableName="i18n_study_activity_subtitle_trans"/>
+        <dropTable tableName="i18n_study_activity_description_trans"/>
+        <dropTable tableName="i18n_study_activity_dashboard_name_trans"/>
+    </changeSet>
+
+</databaseChangeLog>

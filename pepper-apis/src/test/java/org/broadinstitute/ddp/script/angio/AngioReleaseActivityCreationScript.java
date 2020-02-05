@@ -114,13 +114,13 @@ public class AngioReleaseActivityCreationScript extends TxnAwareBaseTest {
         FormSectionDef mainSection = new FormSectionDef("angio_release_body" + NUANCE, mainSectionBlocks);
 
         releaseActivityBuilder.addName(new Translation("en", "Medical Release Form"));
+        releaseActivityBuilder.addTitle(new Translation("en", "Medical Release Form"));
         releaseActivityBuilder.addSubtitle(new Translation("en", "<div>"
                 + "<span>If you have any questions, please email us at</span>"
                 + "<a href=\"mailto:info@ascproject.org\" class=\"HeaderLink\"> info@ascproject.org </a>"
                 + "<span>or call us at</span>"
                 + "<a href=\"tel:857-500-6264\" class=\"HeaderLink\"> 857-500-6264</a>."
                 + "</div>"));
-        releaseActivityBuilder.addDashboardName(new Translation("en", "Medical Release Form"));
         releaseActivityBuilder.setDisplayOrder(3);
         releaseActivityBuilder.setMaxInstancesPerUser(1);
         releaseActivityBuilder.setIntroduction(buildIntroSection());

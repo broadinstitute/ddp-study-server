@@ -29,8 +29,6 @@ import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
-import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
-import org.broadinstitute.ddp.db.dao.JdbiStudyActivityDashboardNameTranslation;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.json.activity.ActivityInstanceSummary;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
@@ -104,7 +102,7 @@ public class UserActivityInstanceListRouteTest extends IntegrationTestSuite.Test
         toggledBlock.setShownExpr(expr);
 
         prequal = FormActivityDef.formBuilder(FormType.PREQUALIFIER, code, "v1", testData.getStudyGuid())
-                .addName(new Translation("en", "activity " + code))
+                .addName(new Translation("en", "Test prequal"))
                 .addSummary(new SummaryTranslation("en", DUMMY_SUMMARY_FOR_CREATED, InstanceStatusType.CREATED))
                 .addSection(new FormSectionDef(null, Arrays.asList(controlBlock, toggledBlock)))
                 .build();
@@ -215,18 +213,9 @@ public class UserActivityInstanceListRouteTest extends IntegrationTestSuite.Test
 
     @Test
     public void testWhenJustOneInstanceExists_itIsNotNumbered() throws Exception {
-        long dashboardNameId = TransactionWrapper.withTxn(handle -> {
-            long languageCodeId = handle.attach(JdbiLanguageCode.class).getLanguageCodeId("en");
-            return handle.attach(JdbiStudyActivityDashboardNameTranslation.class).insert(
-                    prequal.getActivityId(), languageCodeId, "Test prequal"
-            );
-        });
         List<ActivityInstanceSummary> userActivities = getUserActivities();
-        Matcher matcher = Pattern.compile("\\d$").matcher(userActivities.get(0).getActivityDashboardName());
+        Matcher matcher = Pattern.compile("\\d$").matcher(userActivities.get(0).getActivityName());
         Assert.assertFalse("The single summary in a group should not be numbered", matcher.find());
-        TransactionWrapper.useTxn(handle -> {
-            handle.attach(JdbiStudyActivityDashboardNameTranslation.class).deleteById(dashboardNameId);
-        });
     }
 
     @Test
@@ -236,19 +225,13 @@ public class UserActivityInstanceListRouteTest extends IntegrationTestSuite.Test
                     .insertInstance(prequal.getActivityId(), userGuid)
                     .getGuid();
         });
-        long dashboardNameId = TransactionWrapper.withTxn(handle -> {
-            long languageCodeId = handle.attach(JdbiLanguageCode.class).getLanguageCodeId("en");
-            return handle.attach(JdbiStudyActivityDashboardNameTranslation.class).insert(
-                    prequal.getActivityId(), languageCodeId, "Test prequal"
-            );
-        });
         List<ActivityInstanceSummary> userActivities = getUserActivities();
         Assert.assertEquals("The number of instances didn't match the expectation", 2, userActivities.size());
         ActivityInstanceSummary firstPrequal = userActivities
                 .stream()
                 .filter(p -> p.getActivityInstanceGuid().equals(prequal1Guid))
                 .collect(Collectors.toList()).get(0);
-        Matcher matcher = Pattern.compile("\\d$").matcher(firstPrequal.getActivityDashboardName());
+        Matcher matcher = Pattern.compile("\\d$").matcher(firstPrequal.getActivityName());
         Assert.assertFalse("The first summary in a group should not be numbered", matcher.find());
         ActivityInstanceSummary mostRecentPrequal = userActivities
                 .stream()
@@ -256,21 +239,19 @@ public class UserActivityInstanceListRouteTest extends IntegrationTestSuite.Test
                 .collect(Collectors.toList()).get(0);
         Assert.assertTrue(
                 "Numbering does not respect the instance creation date",
-                mostRecentPrequal.getActivityDashboardName().endsWith("#2")
+                mostRecentPrequal.getActivityName().endsWith("#2")
         );
         TransactionWrapper.useTxn(handle -> {
-            handle.attach(JdbiStudyActivityDashboardNameTranslation.class).deleteById(dashboardNameId);
             handle.attach(ActivityInstanceDao.class).deleteByInstanceGuid(prequal2Guid);
         });
     }
 
     @Test
-    public void testWhenDashboardNameIsMissing_itGetsDefaultedToActivityName() throws Exception {
+    public void testWhenTitleIsMissing_itGetsDefaultedToEmptyString() throws Exception {
         List<ActivityInstanceSummary> userActivities = getUserActivities();
-        Assert.assertEquals(
-                "Missing dashboard name was not defaulted to activity name",
-                userActivities.get(0).getActivityName(),
-                userActivities.get(0).getActivityDashboardName()
+        Assert.assertTrue(
+                "Missing title was not defaulted to empty string",
+                userActivities.get(0).getActivityTitle().isBlank()
         );
     }
 

@@ -48,7 +48,8 @@ public class GetPrequalifierInstanceRouteTest extends IntegrationTestSuite.TestC
     private static void setupPrequalActivityAndInstance(Handle handle) {
         String code = "PREQUAL_ROUTE_ACT" + Instant.now().toEpochMilli();
         FormActivityDef prequal = FormActivityDef.formBuilder(FormType.PREQUALIFIER, code, "v1", testData.getStudyGuid())
-                .addName(new Translation("en", "activity " + code))
+                .addName(new Translation("en", "activity name"))
+                .addTitle(new Translation("en", "activity " + code))
                 .addSubtitle(new Translation("en", "subtitle " + code))
                 .build();
         handle.attach(ActivityDao.class).insertActivity(prequal, RevisionMetadata.now(testData.getUserId(), "add " + code));

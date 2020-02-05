@@ -89,9 +89,9 @@ public class FormInstanceDaoTest extends TxnAwareBaseTest {
             FormInstance enInst = dao.getBaseFormByGuid(handle, instanceGuid, "en");
             assertNotNull(enInst);
             assertNull(enInst.getSubtitle());
-            testTranslation(formDef, FormActivityDef::getTranslatedNames, enInst.getName(),  "en");
+            testTranslation(formDef, FormActivityDef::getTranslatedTitles, enInst.getTitle(),  "en");
             FormInstance ruInst = dao.getBaseFormByGuid(handle, instanceGuid, "ru");
-            testTranslation(formDef, FormActivityDef::getTranslatedNames, ruInst.getName(),  "ru");
+            testTranslation(formDef, FormActivityDef::getTranslatedTitles, ruInst.getTitle(),  "ru");
             handle.rollback();
         });
     }
@@ -115,11 +115,11 @@ public class FormInstanceDaoTest extends TxnAwareBaseTest {
             String expectedValue,
             String languageCode
     ) {
-        List<Translation> subtitleTranslations =
+        List<Translation> translations =
                 formDefListMethod.apply(form).stream().filter(st -> st.getLanguageCode().equals(languageCode)).collect(toList());
-        assertEquals(1, subtitleTranslations.size());
+        assertEquals(1, translations.size());
         assertNotNull(expectedValue);
-        assertEquals(subtitleTranslations.get(0).getText(), expectedValue);
+        assertEquals(translations.get(0).getText(), expectedValue);
     }
 
     @Test
@@ -131,7 +131,7 @@ public class FormInstanceDaoTest extends TxnAwareBaseTest {
             FormInstance inst = dao.getTranslatedFormByGuid(handle, instanceGuid, "en", ContentStyle.STANDARD);
             assertNotNull(form);
             assertEquals(FormType.GENERAL, inst.getFormType());
-            assertEquals("test activity", inst.getName());
+            assertEquals("test activity", inst.getTitle());
             assertEquals(instanceGuid, inst.getGuid());
             assertEquals("New", inst.getStatus());
             assertTrue(form.getSections().isEmpty());
@@ -148,8 +148,10 @@ public class FormInstanceDaoTest extends TxnAwareBaseTest {
 
     private FormActivityDef insertDummyActivityWithoutSubtitle(Handle handle, String userGuid, String studyGuid) {
         FormActivityDef form = FormActivityDef.generalFormBuilder("ACT" + Instant.now().toEpochMilli(), "v1", studyGuid)
-                .addName(new Translation("en", "test activity"))
-                .addName(new Translation("ru", "тестовая деятельность"))
+                .addName(new Translation("en", "activity name"))
+                .addName(new Translation("ru", "activity name"))
+                .addTitle(new Translation("en", "test activity"))
+                .addTitle(new Translation("ru", "тестовая деятельность"))
                 .build();
         long userId = handle.attach(JdbiUser.class).getUserIdByGuid(userGuid);
         handle.attach(ActivityDao.class).insertActivity(form, RevisionMetadata.now(userId, "add test activity"));
@@ -166,8 +168,10 @@ public class FormInstanceDaoTest extends TxnAwareBaseTest {
         );
         template.addVariable(templateVariable);
         FormActivityDef form = FormActivityDef.generalFormBuilder("ACT" + Instant.now().toEpochMilli(), "v1", studyGuid)
-                .addName(new Translation("en", "test activity"))
-                .addName(new Translation("ru", "тестовая деятельность"))
+                .addName(new Translation("en", "activity name"))
+                .addName(new Translation("ru", "activity name"))
+                .addTitle(new Translation("en", "test activity"))
+                .addTitle(new Translation("ru", "тестовая деятельность"))
                 .addSubtitle(new Translation("en", "test subtitle"))
                 .addSubtitle(new Translation("ru", "тестовый субтитр"))
                 .setReadonlyHintTemplate(template)
