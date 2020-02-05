@@ -23,6 +23,8 @@ import org.broadinstitute.ddp.security.DDPAuth;
 import org.broadinstitute.ddp.util.I18nUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
 
+import org.jdbi.v3.core.Handle;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,21 +59,30 @@ public class UserActivityInstanceListRoute implements Route {
         LOG.info("Looking up activity instances for user {} in study {}", userGuid, studyGuid);
         DDPAuth ddpAuth = RouteUtil.getDDPAuth(request);
         String acceptLanguageHeader = request.headers(RouteConstants.ACCEPT_LANGUAGE);
-        List<LanguageRange> acceptLanguages = StringUtils.isNotEmpty(acceptLanguageHeader)
-                ? LanguageRange.parse(acceptLanguageHeader) : new ArrayList<>();
         return TransactionWrapper.withTxn(
                 handle -> {
-                    Set<Locale> localesSupportedByStudy = handle.attach(StudyDao.class).getSupportedLocalesByGuid(studyGuid);
-                    Locale userLocale = I18nUtil.resolvePreferredLanguage(
-                            ddpAuth.getPreferredLocale(), acceptLanguages, localesSupportedByStudy
+                    Locale preferredUserLanguage = resolvePreferredUserLanguage(
+                            handle, acceptLanguageHeader, ddpAuth.getPreferredLocale(), studyGuid
                     );
                     List<ActivityInstanceSummary> summaries = activityInstanceDao.listActivityInstancesForUser(
-                            handle, userGuid, studyGuid, userLocale.getLanguage()
+                            handle, userGuid, studyGuid, preferredUserLanguage.getLanguage()
                     );
                     performActivityInstanceNumbering(summaries);
                     return filterActivityInstancesFromDisplay(summaries);
                 }
         );
+    }
+
+    /**
+     * Figures out a preferred user language taking into account the language weights
+     * from Accept-Language header, information from the user profile and languages
+     * supported by the study
+     */
+    private Locale resolvePreferredUserLanguage(Handle handle, String acceptLanguageHeader, Locale preferredLocale, String studyGuid) {
+        List<LanguageRange> acceptLanguages = StringUtils.isNotEmpty(acceptLanguageHeader)
+                ? LanguageRange.parse(acceptLanguageHeader) : new ArrayList<>();
+        Set<Locale> localesSupportedByStudy = handle.attach(StudyDao.class).getSupportedLocalesByGuid(studyGuid);
+        return I18nUtil.resolvePreferredLanguage(preferredLocale, acceptLanguages, localesSupportedByStudy);
     }
 
     /**
