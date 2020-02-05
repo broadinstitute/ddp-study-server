@@ -1,11 +1,12 @@
 package org.broadinstitute.ddp.route;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 import org.broadinstitute.ddp.constants.ErrorCodes;
+import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
-import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.db.FormInstanceDao;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
@@ -25,8 +26,10 @@ import org.broadinstitute.ddp.service.WorkflowService;
 import org.broadinstitute.ddp.util.FormActivityStatusUtil;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import spark.Request;
 import spark.Response;
 import spark.Route;
@@ -60,6 +63,7 @@ public class PutFormAnswersRoute implements Route {
 
         DDPAuth ddpAuth = RouteUtil.getDDPAuth(request);
         String operatorGuid = ddpAuth.getOperator() != null ? ddpAuth.getOperator() : userGuid;
+        String acceptLanguageHeader = request.headers(RouteConstants.ACCEPT_LANGUAGE);
 
         LOG.info("Completing form for user {}, operator {}, activity instance {}", userGuid, operatorGuid, instanceGuid);
 
@@ -67,10 +71,10 @@ public class PutFormAnswersRoute implements Route {
                 handle -> {
                     RouteUtil.findAccessibleInstanceOrHalt(response, handle, userGuid, studyGuid, instanceGuid);
 
-                    String isoLangCode = ddpAuth.getPreferredLanguage();
-                    if (isoLangCode == null) {
-                        isoLangCode = I18nContentRenderer.DEFAULT_LANGUAGE_CODE;
-                    }
+                    Locale preferredUserLanguage = RouteUtil.resolvePreferredUserLanguage(
+                            handle, acceptLanguageHeader, ddpAuth.getPreferredLocale(), studyGuid
+                    );
+                    String isoLangCode = preferredUserLanguage.getLanguage();
                     long langCodeId = handle.attach(JdbiLanguageCode.class).getLanguageCodeId(isoLangCode);
 
                     FormInstance form = formInstanceDao.getBaseFormByGuid(handle, instanceGuid, isoLangCode);
