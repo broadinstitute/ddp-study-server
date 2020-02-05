@@ -8,30 +8,31 @@ public class UserActivity implements TranslatedSummary {
 
     @SerializedName("guid")
     private String guid;
+    // todo: rename to `title`
     @SerializedName("name")
-    private String name;
+    private String title;
+    @SerializedName("subtitle")
+    private String subtitle;
     @SerializedName("typeName")
     private String typeName;
     @SerializedName("status")
     private String status;
     @SerializedName("isoLanguageCode")
     private String isoLanguageCode;
-    @SerializedName("subtitle")
-    private String subtitle;
 
     /**
      * Instantiate UserActivity object.
      */
     public UserActivity(
             String guid,
-            String name,
+            String title,
             String subtitle,
             String typeName,
             String status,
             String isoLanguageCode
     ) {
         this.guid = guid;
-        this.name = name;
+        this.title = title;
         this.subtitle = subtitle;
         this.typeName = typeName;
         this.status = status;
@@ -48,8 +49,8 @@ public class UserActivity implements TranslatedSummary {
         return isoLanguageCode;
     }
 
-    public String getName() {
-        return name;
+    public String getTitle() {
+        return title;
     }
 
     public String getSubtitle() {

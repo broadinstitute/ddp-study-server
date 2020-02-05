@@ -77,8 +77,8 @@ public class FormActivityDef extends ActivityDef {
             int displayOrder,
             boolean writeOnce,
             List<Translation> translatedNames,
+            List<Translation> translatedTitles,
             List<Translation> translatedSubtitles,
-            List<Translation> translatedDashboardNames,
             List<Translation> translatedDescriptions,
             List<SummaryTranslation> translatedSummaries,
             Template readonlyHintTemplate,
@@ -98,8 +98,8 @@ public class FormActivityDef extends ActivityDef {
                 displayOrder,
                 writeOnce,
                 translatedNames,
+                translatedTitles,
                 translatedSubtitles,
-                translatedDashboardNames,
                 translatedDescriptions,
                 translatedSummaries,
                 readonlyHintTemplate,
@@ -139,6 +139,18 @@ public class FormActivityDef extends ActivityDef {
 
     public LocalDateTime getLastUpdated() {
         return lastUpdated;
+    }
+
+    public List<FormSectionDef> getAllSections() {
+        List<FormSectionDef> allSections = new ArrayList<>();
+        if (introduction != null) {
+            allSections.add(introduction);
+        }
+        allSections.addAll(sections);
+        if (closing != null) {
+            allSections.add(closing);
+        }
+        return allSections;
     }
 
     // Note: this builder is named a bit differently so we don't clash with builders in subclasses.
@@ -218,10 +230,10 @@ public class FormActivityDef extends ActivityDef {
                     displayOrder,
                     writeOnce,
                     names,
+                    titles,
                     subtitles,
-                    dashboardNames,
                     descriptions,
-                    dashboardSummaries,
+                    summaries,
                     readonlyHintTemplate,
                     introduction,
                     sections,
@@ -236,17 +248,5 @@ public class FormActivityDef extends ActivityDef {
             form.closing = closing;
             return form;
         }
-    }
-
-    public List<FormSectionDef> getAllSections() {
-        List<FormSectionDef> allSections = new ArrayList<>();
-        if (introduction != null) {
-            allSections.add(introduction);
-        }
-        allSections.addAll(sections);
-        if (closing != null) {
-            allSections.add(closing);
-        }
-        return allSections;
     }
 }

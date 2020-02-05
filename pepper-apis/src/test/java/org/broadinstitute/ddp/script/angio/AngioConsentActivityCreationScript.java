@@ -773,13 +773,13 @@ public class AngioConsentActivityCreationScript extends TxnAwareBaseTest {
 
         ConsentActivityDef consent = ConsentActivityDef.builder(ACTIVITY_CODE, "v1", STUDY_GUID, consentExpr)
                 .addName(new Translation("en", "Research Consent Form"))
+                .addTitle(new Translation("en", "Research Consent Form"))
                 .addSubtitle(new Translation("en", "<div>"
                         + "<span>If you have any questions, please email us at</span>"
                         + "<a href='mailto:info@ascproject.org' class='HeaderLink'> info@ascproject.org </a>"
                         + "<span>or call us at</span>"
                         + "<a href=\"tel:857-500-6264\" class=\"HeaderLink\"> 857-500-6264</a>."
                         + "</div>"))
-                .addDashboardName(new Translation("en", "Research Consent Form"))
                 .setListStyleHint(ListStyleHint.NONE)
                 .setDisplayOrder(2)
                 .setWriteOnce(true)

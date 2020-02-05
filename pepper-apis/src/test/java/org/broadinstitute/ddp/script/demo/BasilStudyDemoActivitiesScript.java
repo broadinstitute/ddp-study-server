@@ -111,8 +111,8 @@ public class BasilStudyDemoActivitiesScript extends TxnAwareBaseTest {
             + "saliva. We will store your sample until the genetic testing is successfully completed.";
     private static final String SIGNATURE = "Signature";
     private static final String DATE_OF_BIRTH = "Date of Birth";
-    private static final String MAIN_CONSENT = "Main Consent";
-    private static final String MAIN_CONSENT_DASHBOARD_NAME = "Consent (Main)";
+    private static final String MAIN_CONSENT_NAME = "Consent (Main)";
+    private static final String MAIN_CONSENT_TITLE = "Main Consent";
     private static final String MAIN_CONSENT_DESCRIPTION = "This activity is about getting the participant's consent";
     private static final String MAIN_CONSENT_DASHBOARD_SUMMARY = "This activity is about getting the participant's consent";
 
@@ -373,14 +373,14 @@ public class BasilStudyDemoActivitiesScript extends TxnAwareBaseTest {
                 FormSectionDef formSection = new FormSectionDef(sectionCode, blocks);
                 formSections.add(formSection);
 
-                List<Translation> activityTranslatedNames = new ArrayList<>();
-                activityTranslatedNames.add(new Translation("en", MAIN_CONSENT));
-                List<Translation> dashboardNames = new ArrayList<>();
-                dashboardNames.add(new Translation("en", MAIN_CONSENT_DASHBOARD_NAME));
+                List<Translation> names = new ArrayList<>();
+                names.add(new Translation("en", MAIN_CONSENT_NAME));
+                List<Translation> titles = new ArrayList<>();
+                titles.add(new Translation("en", MAIN_CONSENT_TITLE));
                 List<Translation> descriptions = new ArrayList<>();
                 descriptions.add(new Translation("en", MAIN_CONSENT_DESCRIPTION));
-                List<SummaryTranslation> dashboardSummaries = new ArrayList<>();
-                dashboardNames.add(new SummaryTranslation("en", MAIN_CONSENT_DASHBOARD_SUMMARY, InstanceStatusType.CREATED));
+                List<SummaryTranslation> summaries = new ArrayList<>();
+                summaries.add(new SummaryTranslation("en", MAIN_CONSENT_DASHBOARD_SUMMARY, InstanceStatusType.CREATED));
 
                 // consent condition
                 String atLeast21Expression = String.format(PEX_STUDY_ACTIVITY_QUESTION_BASE + ".hasTrue()",
@@ -409,11 +409,11 @@ public class BasilStudyDemoActivitiesScript extends TxnAwareBaseTest {
                         1,
                         100,
                         false,
-                        activityTranslatedNames,
+                        names,
+                        titles,
                         null,
-                        dashboardNames,
                         descriptions,
-                        dashboardSummaries,
+                        summaries,
                         readonlyHint,
                         formSections,
                         consentCondition,

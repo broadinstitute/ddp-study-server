@@ -63,17 +63,17 @@ public class JdbiActivityTest extends TxnAwareBaseTest {
         long revId = handle.attach(JdbiRevision.class).insert(userId, millis, null, "test");
 
         List<Translation> names = Collections.singletonList(new Translation("en", "dummy activity"));
+        List<Translation> titles = Collections.singletonList(new Translation("en", "dummy title"));
         List<Translation> subtitles = Collections.singletonList(new Translation("en", "dummy subtitle"));
-        List<Translation> dashboardNames = Collections.singletonList(new Translation("en", "dummy dashboard name"));
         List<Translation> descriptions = Collections.singletonList(new Translation("en", "dummy description"));
-        List<SummaryTranslation> dashboardSummaries = Collections.singletonList(
+        List<SummaryTranslation> summaries = Collections.singletonList(
                 new SummaryTranslation("en", "dummy dashboard summary", InstanceStatusType.CREATED)
         );
         List<FormSectionDef> sections = Collections.emptyList();
         Template readonlyHint = Template.html("Please contact your organization");
         FormActivityDef form = new FormActivityDef(
                 FormType.GENERAL, activityCode, "v1", studyGuid, 1, 1, false,
-                names, subtitles, dashboardNames, descriptions, dashboardSummaries,
+                names, titles, subtitles, descriptions, summaries,
                 readonlyHint, null, sections, null, null, null, false
         );
         handle.attach(FormActivityDao.class).insertActivity(form, revId);

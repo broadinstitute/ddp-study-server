@@ -74,8 +74,8 @@ public class SqlConstants {
         public static final String INSTANTIATE_UPON_REGISTRATION = "instantiate_upon_registration";
         public static final String MAX_INSTANCES_PER_USER = "max_instances_per_user";
         public static final String NAME_TRANS = "activity_name_trans";
+        public static final String TITLE_TRANS = "activity_title_trans";
         public static final String SUBTITLE_TRANS = "activity_subtitle_trans";
-        public static final String DASHBOARD_NAME_TRANS = "activity_dashboard_name_trans";
         public static final String DESCRIPTION_TRANS = "activity_description_trans";
         public static final String SUMMARY_TRANS = "activity_summary_trans";
         public static final String EDIT_TIMEOUT_SEC = "edit_timeout_sec";
@@ -96,7 +96,7 @@ public class SqlConstants {
     public static final class ActivityInstanceTable {
         public static final String TABLE_NAME = "activity_instance";
         public static final String GUID = "activity_instance_guid";
-        public static final String NAME = "activity_name";
+        public static final String TITLE = "activity_title";
         public static final String SUBTITLE = "activity_subtitle";
         public static final String TYPE_NAME = "activity_type_name";
         public static final String STATUS_TYPE_NAME = "activity_instance_status_type_name";
