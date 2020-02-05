@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -18,11 +19,13 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
+
 import org.broadinstitute.ddp.constants.ErrorCodes;
+import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
-import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
@@ -82,9 +85,12 @@ import org.broadinstitute.ddp.util.JsonValidationError;
 import org.broadinstitute.ddp.util.MiscUtil;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
+
 import org.jdbi.v3.core.Handle;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import spark.Request;
 import spark.Response;
 import spark.Route;
@@ -119,6 +125,7 @@ public class PatchFormAnswersRoute implements Route {
 
         DDPAuth ddpAuth = RouteUtil.getDDPAuth(request);
         String operatorGuid = ddpAuth.getOperator() != null ? ddpAuth.getOperator() : participantGuid;
+        String acceptLanguageHeader = request.headers(RouteConstants.ACCEPT_LANGUAGE);
 
         LOG.info("Attempting to patch answers for activity instance {}", instanceGuid);
 
@@ -158,8 +165,10 @@ public class PatchFormAnswersRoute implements Route {
             var jdbiQuestion = handle.attach(JdbiQuestion.class);
             var answerDao = handle.attach(AnswerDao.class);
 
-            String isoLanguageCode = ddpAuth.getPreferredLanguage() != null
-                    ? ddpAuth.getPreferredLanguage() : I18nContentRenderer.DEFAULT_LANGUAGE_CODE;
+            Locale preferredUserLanguage = RouteUtil.resolvePreferredUserLanguage(
+                    handle, acceptLanguageHeader, ddpAuth.getPreferredLocale(), studyGuid
+            );
+            String isoLanguageCode = preferredUserLanguage.getLanguage();
             JdbiLanguageCode jdbiLanguageCode = handle.attach(JdbiLanguageCode.class);
             Long languageCodeId = jdbiLanguageCode.getLanguageCodeId(isoLanguageCode);
 
