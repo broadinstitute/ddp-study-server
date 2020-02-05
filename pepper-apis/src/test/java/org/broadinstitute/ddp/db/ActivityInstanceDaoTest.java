@@ -195,9 +195,9 @@ public class ActivityInstanceDaoTest extends TxnAwareBaseTest {
             String savedSubtitle = form.getTranslatedSubtitles().get(0).getText();
             assertNotNull(savedSubtitle);
             assertEquals(savedSubtitle, summary.get(0).getActivitySubtitle());
-            String name = form.getTranslatedTitles().get(0).getText();
-            assertNotNull(name);
-            assertEquals(name, summary.get(0).getActivityTitle());
+            String title = form.getTranslatedTitles().get(0).getText();
+            assertNotNull(title);
+            assertEquals(title, summary.get(0).getActivityTitle());
 
             handle.rollback();
         });
@@ -215,9 +215,9 @@ public class ActivityInstanceDaoTest extends TxnAwareBaseTest {
 
             assertNull(summary.get(0).getActivitySubtitle());
 
-            String originalName = form.getTranslatedTitles().get(0).getText();
-            assertNotNull(originalName);
-            assertEquals(originalName, summary.get(0).getActivityTitle());
+            String originalTitle = form.getTranslatedTitles().get(0).getText();
+            assertNotNull(originalTitle);
+            assertEquals(originalTitle, summary.get(0).getActivityTitle());
 
             handle.rollback();
         });
