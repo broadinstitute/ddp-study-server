@@ -2,10 +2,14 @@ package org.broadinstitute.ddp.route;
 
 import static org.broadinstitute.ddp.util.ResponseUtil.halt400ErrorResponse;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
+import java.util.Locale.LanguageRange;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
@@ -13,11 +17,15 @@ import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.db.dao.StudyDao;
 import org.broadinstitute.ddp.json.activity.ActivityInstanceSummary;
 import org.broadinstitute.ddp.security.DDPAuth;
+import org.broadinstitute.ddp.util.I18nUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import spark.Request;
 import spark.Response;
 import spark.Route;
@@ -48,10 +56,17 @@ public class UserActivityInstanceListRoute implements Route {
         }
         LOG.info("Looking up activity instances for user {} in study {}", userGuid, studyGuid);
         DDPAuth ddpAuth = RouteUtil.getDDPAuth(request);
+        String acceptLanguageHeader = request.headers(RouteConstants.ACCEPT_LANGUAGE);
+        List<LanguageRange> acceptLanguages = StringUtils.isNotEmpty(acceptLanguageHeader)
+                ? LanguageRange.parse(acceptLanguageHeader) : new ArrayList<>();
         return TransactionWrapper.withTxn(
                 handle -> {
+                    Set<Locale> localesSupportedByStudy = handle.attach(StudyDao.class).getSupportedLocalesByGuid(studyGuid);
+                    Locale userLocale = I18nUtil.resolvePreferredLanguage(
+                            ddpAuth.getPreferredLocale(), acceptLanguages, localesSupportedByStudy
+                    );
                     List<ActivityInstanceSummary> summaries = activityInstanceDao.listActivityInstancesForUser(
-                            handle, userGuid, studyGuid, ddpAuth.getPreferredLanguage()
+                            handle, userGuid, studyGuid, userLocale.getLanguage()
                     );
                     performActivityInstanceNumbering(summaries);
                     return filterActivityInstancesFromDisplay(summaries);
