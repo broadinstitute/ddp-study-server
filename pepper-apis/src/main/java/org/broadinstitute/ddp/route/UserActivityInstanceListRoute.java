@@ -2,28 +2,22 @@ package org.broadinstitute.ddp.route;
 
 import static org.broadinstitute.ddp.util.ResponseUtil.halt400ErrorResponse;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
-import java.util.Locale.LanguageRange;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
+
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.db.dao.StudyDao;
 import org.broadinstitute.ddp.json.activity.ActivityInstanceSummary;
 import org.broadinstitute.ddp.security.DDPAuth;
-import org.broadinstitute.ddp.util.I18nUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
-
-import org.jdbi.v3.core.Handle;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -61,7 +55,7 @@ public class UserActivityInstanceListRoute implements Route {
         String acceptLanguageHeader = request.headers(RouteConstants.ACCEPT_LANGUAGE);
         return TransactionWrapper.withTxn(
                 handle -> {
-                    Locale preferredUserLanguage = resolvePreferredUserLanguage(
+                    Locale preferredUserLanguage = RouteUtil.resolvePreferredUserLanguage(
                             handle, acceptLanguageHeader, ddpAuth.getPreferredLocale(), studyGuid
                     );
                     List<ActivityInstanceSummary> summaries = activityInstanceDao.listActivityInstancesForUser(
@@ -71,18 +65,6 @@ public class UserActivityInstanceListRoute implements Route {
                     return filterActivityInstancesFromDisplay(summaries);
                 }
         );
-    }
-
-    /**
-     * Figures out a preferred user language taking into account the language weights
-     * from Accept-Language header, information from the user profile and languages
-     * supported by the study
-     */
-    private Locale resolvePreferredUserLanguage(Handle handle, String acceptLanguageHeader, Locale preferredLocale, String studyGuid) {
-        List<LanguageRange> acceptLanguages = StringUtils.isNotEmpty(acceptLanguageHeader)
-                ? LanguageRange.parse(acceptLanguageHeader) : new ArrayList<>();
-        Set<Locale> localesSupportedByStudy = handle.attach(StudyDao.class).getSupportedLocalesByGuid(studyGuid);
-        return I18nUtil.resolvePreferredLanguage(preferredLocale, acceptLanguages, localesSupportedByStudy);
     }
 
     /**
