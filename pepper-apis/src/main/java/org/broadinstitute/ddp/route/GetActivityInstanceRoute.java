@@ -1,13 +1,14 @@
 package org.broadinstitute.ddp.route;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.content.ContentStyle;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -31,9 +32,12 @@ import org.broadinstitute.ddp.security.DDPAuth;
 import org.broadinstitute.ddp.service.ActivityInstanceService;
 import org.broadinstitute.ddp.service.ActivityValidationService;
 import org.broadinstitute.ddp.util.RouteUtil;
+
 import org.jdbi.v3.core.Handle;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import spark.Request;
 import spark.Response;
 import spark.Route;
@@ -63,6 +67,7 @@ public class GetActivityInstanceRoute implements Route {
         String studyGuid = request.params(PathParam.STUDY_GUID);
         String instanceGuid = request.params(PathParam.INSTANCE_GUID);
         DDPAuth ddpAuth = RouteUtil.getDDPAuth(request);
+        String acceptLanguageHeader = request.headers(RouteConstants.ACCEPT_LANGUAGE);
 
         LOG.info("Attempting to retrieve activity instance {} for participant {} in study {}", instanceGuid, userGuid, studyGuid);
 
@@ -73,38 +78,37 @@ public class GetActivityInstanceRoute implements Route {
             ContentStyle style = RouteUtil.parseContentStyleHeaderOrHalt(request, response, ContentStyle.STANDARD);
             LOG.info("Using ddp content style {} to format activity content", style);
 
-            String preferredIsoLanguageCode = ddpAuth.getPreferredLanguage();
-            List<String> isoLangCodes = Arrays.asList(preferredIsoLanguageCode, DEFAULT_ISO_LANGUAGE_CODE);
-
             Optional<EnrollmentStatusType> enrollmentStatus = handle.attach(JdbiUserStudyEnrollment.class)
                     .getEnrollmentStatusByUserAndStudyGuids(userGuid, studyGuid);
-            // Return an activity instance translated to the first available language
-            LOG.info("Attempting to find a translation for the following languages: {}", isoLangCodes);
-            for (String isoLangCode : isoLangCodes) {
-                Optional<ActivityInstance> inst = actInstService.getTranslatedActivity(
-                        handle, userGuid, instanceDto.getActivityType(), instanceGuid, isoLangCode, style
-                );
-                if (inst.isPresent()) {
-                    LOG.info("Found a translation to the '{}' language code for the activity instance with GUID {}",
-                            isoLangCode, instanceGuid);
-                    ActivityInstance activityInstance = inst.get();
-                    // To-do: change this to just "if (enrollmentStatus.get() == EnrollmentStatusType.EXITED_BEFORE_ENROLLMENT)) {...}"
-                    // when every user registered in the system will become enrolled automatically
-                    // When it is implemented, the check for the enrollment status presence is not needed
-                    if (enrollmentStatus.isPresent() && enrollmentStatus.get().shouldMarkActivitiesReadOnly()) {
-                        activityInstance.makeReadonly();
-                    }
-                    // end To-do
-                    JdbiLanguageCode jdbiLanguageCode = handle.attach(JdbiLanguageCode.class);
-                    Long languageCodeId = jdbiLanguageCode.getLanguageCodeId(isoLangCode);
-                    return validateActivityInstance(handle, activityInstance, userGuid, languageCodeId);
-                } else {
-                    LOG.info("Failed to find a translation to the '{}' language code for the activity instance "
-                            + "with GUID {}, keep on searching", isoLangCode, instanceGuid);
-                }
+
+            Locale preferredUserLanguage = RouteUtil.resolvePreferredUserLanguage(
+                    handle, acceptLanguageHeader, ddpAuth.getPreferredLocale(), studyGuid
+            );
+            String isoLangCode = preferredUserLanguage.getLanguage();
+
+            LOG.info("Attempting to find a translation for the following language: {}", isoLangCode);
+            Optional<ActivityInstance> inst = actInstService.getTranslatedActivity(
+                    handle, userGuid, instanceDto.getActivityType(), instanceGuid, isoLangCode, style
+            );
+            if (!inst.isPresent()) {
+                LOG.info("Failed to find a translation to the '{}' language code for the activity instance "
+                        + "with GUID {}", isoLangCode, instanceGuid);
+                throw new DDPException("Unable to find activity instance " + instanceGuid + " of type " + instanceDto.getActivityType());
             }
 
-            throw new DDPException("Unable to find activity instance " + instanceGuid + " of type " + instanceDto.getActivityType());
+            LOG.info("Found a translation to the '{}' language code for the activity instance with GUID {}",
+                    isoLangCode, instanceGuid);
+            ActivityInstance activityInstance = inst.get();
+            // To-do: change this to just "if (enrollmentStatus.get() == EnrollmentStatusType.EXITED_BEFORE_ENROLLMENT)) {...}"
+            // when every user registered in the system will become enrolled automatically
+            // When it is implemented, the check for the enrollment status presence is not needed
+            if (enrollmentStatus.isPresent() && enrollmentStatus.get().shouldMarkActivitiesReadOnly()) {
+                activityInstance.makeReadonly();
+            }
+            // end To-do
+            JdbiLanguageCode jdbiLanguageCode = handle.attach(JdbiLanguageCode.class);
+            Long languageCodeId = jdbiLanguageCode.getLanguageCodeId(isoLangCode);
+            return validateActivityInstance(handle, activityInstance, userGuid, languageCodeId);
         });
     }
 
