@@ -35,6 +35,7 @@ import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.DaoException;
+import org.broadinstitute.ddp.db.dao.AnswerHistoryDao;
 import org.broadinstitute.ddp.db.dao.FormActivityDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
@@ -746,7 +747,7 @@ public class DataExporter {
             for (ActivityResponse instance : instances) {
                 ActivityInstanceStatusDto lastStatus = instance.getLatestStatus();
                 List<QuestionRecord> questionsAnswers = createQuestionRecordsForActivity(activityExtract.getDefinition(),
-                        instance, participant);
+                        instance, participant, handle);
                 ActivityInstanceRecord activityInstanceRecord = new ActivityInstanceRecord(
                         instance.getActivityVersionTag(),
                         instance.getActivityCode(),
@@ -830,7 +831,7 @@ public class DataExporter {
      * @return A flat list of question records
      */
     private List<QuestionRecord> createQuestionRecordsForActivity(ActivityDef definition, ActivityResponse response,
-                                                                  Participant participant) {
+                                                                  Participant participant, Handle handle) {
         List<QuestionRecord> questionRecords = new ArrayList<>();
 
         if (definition.getActivityType() != ActivityType.FORMS) {
@@ -902,11 +903,11 @@ public class DataExporter {
                     ((CompositeAnswer) instance.getAnswer(composite.getStableId())).getValue().stream()
                             .flatMap(row -> row.getValues().stream())
                             .forEach(instance::putAnswer);
-                    composite.getChildren().forEach(child -> questionRecords.add(createRecordForQuestion(child, instance)));
+                    composite.getChildren().forEach(child -> questionRecords.add(createRecordForQuestion(handle, child, instance)));
                     continue;
                 }
             }
-            questionRecords.add(createRecordForQuestion(question, instance));
+            questionRecords.add(createRecordForQuestion(handle, question, instance));
         }
 
         return questionRecords.stream().filter(Objects::nonNull).collect(Collectors.toList());
@@ -944,7 +945,7 @@ public class DataExporter {
      * @param instance The activity instance that has answers
      * @return A question record, or null if it's an unanswered deprecated question that should be skipped for export
      */
-    private QuestionRecord createRecordForQuestion(QuestionDef question, FormResponse instance) {
+    private QuestionRecord createRecordForQuestion(Handle handle, QuestionDef question, FormResponse instance) {
         if (question.isDeprecated() && !instance.hasAnswer(question.getStableId())) {
             return null;
         }
@@ -952,18 +953,20 @@ public class DataExporter {
         if (answer == null) {
             return null;
         }
+        List<Answer> history = handle.attach(AnswerHistoryDao.class).findHistoryByAnswerId(answer.getAnswerId());
         QuestionType type = answer.getQuestionType();
         if (type == QuestionType.DATE) {
             DateValue value = (DateValue) answer.getValue();
-            return new DateQuestionRecord(question.getStableId(), value);
+            return new DateQuestionRecord(question.getStableId(), value, history);
         } else if (answer.getQuestionType() == QuestionType.PICKLIST) {
             List<SelectedPicklistOption> selected = ((PicklistAnswer) answer).getValue();
-            return new PicklistQuestionRecord(question.getStableId(), selected);
+            return new PicklistQuestionRecord(question.getStableId(), selected, history);
         } else if (answer.getQuestionType() == QuestionType.COMPOSITE) {
+            // todo
             List<AnswerRow> rows = ((CompositeAnswer) answer).getValue();
             return new CompositeQuestionRecord(question.getStableId(), rows);
         } else {
-            return new SimpleQuestionRecord(type, question.getStableId(), answer.getValue());
+            return new SimpleQuestionRecord(type, question.getStableId(), answer.getValue(), history);
         }
     }
 

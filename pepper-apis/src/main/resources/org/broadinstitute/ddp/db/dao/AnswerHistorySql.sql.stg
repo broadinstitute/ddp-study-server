@@ -1,0 +1,57 @@
+group AnswerHistorySql;
+
+saveBaseAnswer() ::= <<
+insert into answer_history (
+       answer_id, answer_guid, question_id, question_type, activity_instance_id,
+       operator_user_id, created_at, updated_at, is_child_answer)
+select ans.answer_id,
+       ans.answer_guid,
+       q.question_id,
+       (select question_type_code from question_type where question_type_id = q.question_type_id),
+       ans.activity_instance_id,
+       ans.operator_user_id,
+       ans.created_at,
+       ans.last_updated_at,
+       coalesce((select 1 from composite_answer_item where child_answer_id = ans.answer_id), 0)
+  from answer as ans
+  join question as q on q.question_id = ans.question_id
+ where ans.answer_id = :answerId
+>>
+
+saveAnswerWithSimpleValue() ::= <<
+insert into answer_history (
+       answer_id, answer_guid, question_id, question_type, activity_instance_id,
+       operator_user_id, created_at, updated_at, is_child_answer,
+       bool_value, text_value, numeric_int_value,
+       date_year, date_month, date_day)
+select ans.answer_id,
+       ans.answer_guid,
+       q.question_id,
+       (select question_type_code from question_type where question_type_id = q.question_type_id),
+       ans.activity_instance_id,
+       ans.operator_user_id,
+       ans.created_at,
+       ans.last_updated_at,
+       coalesce((select 1 from composite_answer_item where child_answer_id = ans.answer_id), 0),
+       coalesce(aa.answer, ba.answer),
+       ta.answer,
+       na.int_value,
+       da.year,
+       da.month,
+       da.day
+  from answer as ans
+  join question as q on q.question_id = ans.question_id
+  left join agreement_answer as aa on aa.answer_id = ans.answer_id
+  left join boolean_answer   as ba on ba.answer_id = ans.answer_id
+  left join text_answer      as ta on ta.answer_id = ans.answer_id
+  left join numeric_answer   as na on na.answer_id = ans.answer_id
+  left join date_answer      as da on da.answer_id = ans.answer_id
+ where ans.answer_id = :answerId
+>>
+
+saveAnswerPicklistValue() ::= <<
+insert into picklist_answer_history (answer_history_id, picklist_option_id, detail_text)
+select :answerHistId, pa.picklist_option_id, pa.detail_text
+  from picklist_option__answer as pa
+ where pa.answer_id = :answerId
+>>

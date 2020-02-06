@@ -48,6 +48,9 @@ public interface AnswerDao extends SqlObject {
     String GUID_COLUMN = "answer_guid";
 
     @CreateSqlObject
+    AnswerHistoryDao getAnswerHistoryDao();
+
+    @CreateSqlObject
     PicklistAnswerDao getPicklistAnswerDao();
 
     @CreateSqlObject
@@ -133,6 +136,9 @@ public interface AnswerDao extends SqlObject {
     //
 
     default Answer updateAnswer(long operatorId, long answerId, Answer newAnswer) {
+        long answerHistId = getAnswerHistoryDao().saveAnswer(answerId);
+        LOG.info("Saved answer with id {} into answer history with history id {}", answerId, answerHistId);
+
         long now = Instant.now().toEpochMilli();
         DBUtils.checkUpdate(1, getAnswerSql().updateAnswerById(answerId, operatorId, now));
         updateAnswerValue(operatorId, answerId, newAnswer);

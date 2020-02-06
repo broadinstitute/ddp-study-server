@@ -13,6 +13,7 @@ public abstract class Answer<T> implements Answerable<T> {
 
     protected transient Long answerId;
     protected transient String questionStableId;
+    protected transient long updatedAt;
 
     Answer(QuestionType type, Long answerId, String questionStableId, String answerGuid) {
         this.type = type;
@@ -44,5 +45,13 @@ public abstract class Answer<T> implements Answerable<T> {
 
     public void setAnswerGuid(String answerGuid) {
         this.answerGuid = answerGuid;
+    }
+
+    public long getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(long updatedAt) {
+        this.updatedAt = updatedAt;
     }
 }

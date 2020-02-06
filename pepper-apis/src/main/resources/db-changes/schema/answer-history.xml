@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="20200206-add-answer-history-tables">
+        <createTable tableName="answer_history">
+            <column name="answer_history_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="answer_history_pk"/>
+            </column>
+            <column name="answer_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="answer_guid" type="varchar(10)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="question_id" type="bigint">
+                <constraints nullable="false"
+                             references="question(question_id)"
+                             foreignKeyName="answer_history_question_fk"/>
+            </column>
+            <column name="question_type" type="varchar(80)">
+                <constraints nullable="false"
+                             references="question_type(question_type_code)"
+                             foreignKeyName="answer_history_question_type_code_fk"/>
+            </column>
+            <column name="activity_instance_id" type="bigint">
+                <constraints nullable="false"
+                             references="activity_instance(activity_instance_id)"
+                             foreignKeyName="answer_history_activity_instance_fk"/>
+            </column>
+            <column name="operator_user_id" type="bigint">
+                <constraints nullable="false"
+                             references="user(user_id)"
+                             foreignKeyName="answer_history_operator_user_fk"/>
+            </column>
+            <column name="created_at" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_child_answer" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
+            <column name="bool_value" type="boolean"/>
+            <column name="text_value" type="varchar(10000)"/>
+            <column name="numeric_int_value" type="bigint"/>
+            <column name="date_year" type="int"/>
+            <column name="date_month" type="int"/>
+            <column name="date_day" type="int"/>
+        </createTable>
+
+        <createTable tableName="picklist_answer_history">
+            <column name="picklist_answer_history_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="picklist_answer_history_pk"/>
+            </column>
+            <column name="answer_history_id" type="bigint">
+                <constraints nullable="false"
+                             references="answer_history(answer_history_id)"
+                             foreignKeyName="picklist_answer_history_ans_hist_fk"
+                             deleteCascade="true"/>
+            </column>
+            <column name="picklist_option_id" type="bigint">
+                <constraints nullable="false"
+                             references="picklist_option(picklist_option_id)"
+                             foreignKeyName="picklist_answer_history_picklist_option_fk"/>
+            </column>
+            <column name="detail_text" type="varchar(500)"/>
+        </createTable>
+
+        <createTable tableName="composite_answer_history">
+            <column name="composite_answer_history_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="composite_answer_history_pk"/>
+            </column>
+            <column name="parent_answer_history_id" type="bigint">
+                <constraints nullable="false"
+                             references="answer_history(answer_history_id)"
+                             foreignKeyName="composite_answer_history_parent_ans_hist_fk"
+                             deleteCascade="true"/>
+            </column>
+            <column name="child_answer_history_id" type="bigint">
+                <constraints nullable="false"
+                             references="answer_history(answer_history_id)"
+                             foreignKeyName="composite_answer_history_child_ans_hist_fk"/>
+            </column>
+            <column name="row_order" type="int">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>

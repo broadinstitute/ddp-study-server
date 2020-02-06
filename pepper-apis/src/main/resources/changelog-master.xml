@@ -189,4 +189,5 @@
     <include file="db-changes/schema/answer-cascade-delete.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/seed/consent-suspended-event-trigger.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-4363-increase-detail-limit.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/answer-history.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
