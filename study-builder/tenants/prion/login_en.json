@@ -8,7 +8,7 @@
   "loginWithLabel": "Sign in with %s",
   "signUpLabel": "Join Us",
   "signUpSubmitLabel": "Join Us",
-  "databaseSignUpInstructions": "<h2>Join Us</h2> <h5>Do you or a relative of yours have prion disease? Tell us about it and join us making a difference...</h5> <h5>You can register in the platform using your email address and creating a password. We will use this account to communicate with you regarding the Prion Registry.</h5>",
+  "databaseSignUpInstructions": "<h2>Join Us</h2> <h5>Do you or a relative of yours have prion disease? Tell us about it and join us making a difference...</h5> <h5>Please fill out the form below to register. We will use this account to communicate with you regarding the Prion Registry.</h5>",
   "blankErrorHint": "Please fill out this field.",
   "userExists": "If you have already registered, sign in here.",
   "forgotPassword": "If you have previously registered, please check your email to reset your password.",
