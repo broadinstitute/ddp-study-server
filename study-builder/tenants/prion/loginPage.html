@@ -289,25 +289,38 @@
 
     languageDictionary = {
         title: ' ',
-        signUpTitle: ' ',
-        loginTitle: ' ',
-        forgotPasswordTitle: ' ',
-        lastLoginInstructions: 'Last time you signed in with',
-        loginAtLabel: 'Sign in at %s',
-        loginLabel: 'Sign In',
-        loginSubmitLabel: 'Sign In',
-        loginWithLabel: 'Sign in with %s',
-        signUpLabel: 'Join Us',
-        signUpSubmitLabel: 'Join Us',
-        databaseSignUpInstructions: '<h2>Join Us</h2> <h5>Do you or a relative of yours have prion disease? Tell us about it and join us making a difference...</h5> <h5>Please fill out the form below to register. We will use this account to communicate with you regarding the Prion Registry.</h5>',
         blankErrorHint: "Please fill out this field.",
         emailInputPlaceholder: "   ",
         passwordInputPlaceholder: "    ",
-        forgotPasswordAction: "Forgot your password?"
+        lastLoginInstructions: 'Last time you signed in with',
+        signUpTitle: ' ',
+        loginAtLabel: 'Sign in at %s',
+        signUpLabel: 'Join Us',
+        signUpSubmitLabel: 'Join Us',
+        databaseSignUpInstructions: '<h2>Join Us</h2> <h5>Do you or a relative of yours have prion disease? Tell us about it and join us making a difference...</h5> <h5>Please fill out the form below to register. We will use this account to communicate with you regarding the Prion Registry.</h5>',
+        loginTitle: ' ',
+        loginLabel: 'Sign In',
+        loginSubmitLabel: 'Sign In',
+        loginWithLabel: 'Sign in with %s',
+        forgotPasswordTitle: ' ',
+        forgotPasswordAction: "Forgot your password?",
+        forgotPasswordInstructions: '<h2>Forgot your password?</h2> <h5>Please enter your email address and we will send you password reset instructions.</h5>',
+        forgotPasswordSubmitLabel: 'Submit',
+        firstNameHint: 'Please fill out this field.',
+        lastNameHint: 'Please fill out this field.',
+        alreadyRegisteredText: 'Already registered? Sign In here',
+        passwordTooltipText: 'Password must be at least 8 characters long and contain at least one number, one upper case letter, and one lower case letter.',
+        loginDescriptionText: 'You can log into the Prion Registry using your email account.',
+        emailPrompt: 'Email Address*',
+        passwordPrompt: 'Password*',
+        firstNamePrompt: 'First Name*',
+        lastNamePrompt: 'Last Name*',
+        registerMessageText: 'Don\'t have an account? Join us here',
+        passwordResetSuccessMessage: 'Already registered? Sign In here'
     };
     languageDictionary.error = languageDictionary.error || {};
     languageDictionary.error.signUp = languageDictionary.error.signUp || {};
-    languageDictionary.error.signUp.user_exists = 'If you have already registered, sign in here.';
+    languageDictionary.error.signUp.user_exists = languageDictionary.alreadyRegisteredText;
     languageDictionary.success = {
         forgotPassword: "If you have previously registered, please check your email to reset your password."
     };
@@ -320,7 +333,7 @@
                 validator: function(first_name) {
                     return {
                         valid: first_name.length > 0,
-                        hint: "Please fill out this field."
+                        hint: languageDictionary.firstNameHint
                     };
                 }
             },
@@ -330,7 +343,7 @@
                 validator: function(last_name) {
                     return {
                         valid: last_name.length > 0,
-                        hint: "Please fill out this field."
+                        hint: languageDictionary.lastNameHint
                     };
                 }
             }
@@ -401,7 +414,7 @@
                         alreadyRegistered.setAttribute('href', loginUrl);
                         alreadyRegistered.setAttribute('style','color:black');
                         alreadyRegistered.setAttribute('id','ddp-already-registered');
-                        alreadyRegistered.innerText = 'If you have already registered, sign in here.';
+                        alreadyRegistered.innerText = languageDictionary.alreadyRegisteredText;
                         document.getElementsByClassName('auth0-global-message')[0].children[0].appendChild(alreadyRegistered);
                     }
                 }
@@ -410,12 +423,12 @@
                  //Add password prompt and hint
                 var passwordHint = document.createElement('div');
                 if (mode === 'signup'){
-                    passwordHint.innerHTML = '<div id="ddp-password-hint"><label class="Input-label">Password*</label>' +
+                    passwordHint.innerHTML = '<div id="ddp-password-hint"><label class="Input-label">' + languageDictionary.passwordPrompt + '</label>' +
                         '                    <i class="fa fa-question-circle Color--green tooltip" aria-hidden="true">' +
-                        '<span class="tooltiptext">Password must be at least 8 characters long and contain at least one number, one upper case letter, and one lower case letter.</span></i></div>';
+                        '<span class="tooltiptext">' + languageDictionary.passwordTooltipText + '</span></i></div>';
                 }
                 else {
-                    passwordHint.innerHTML = '<div id="ddp-password-hint" class="nonSignUpHint"><label class="Input-label TopMargin10">Password*</label></div>';
+                    passwordHint.innerHTML = '<div id="ddp-password-hint" class="nonSignUpHint"><label class="Input-label TopMargin10">' + languageDictionary.passwordPrompt + '</label></div>';
                 }
 
                 var passwordBlock = document.getElementsByClassName('auth0-lock-input-show-password')[0];
@@ -427,7 +440,7 @@
                 // If we are logging in, add some instructions
                 if (mode === 'login' && !document.getElementsByClassName('auth0-lock-back-button')[0]) {
                     var loginInstructions = document.createElement('div');
-                    loginInstructions.innerHTML = '<div id="ddp-login-instructions"><h2 class="loginHeader">Sign In</h2> <h5 class="loginText">You can log into the Prion Registry using your email account.</h5></div>';
+                    loginInstructions.innerHTML = '<div id="ddp-login-instructions"><h2 class="loginHeader">' + languageDictionary.loginLabel + '</h2> <h5 class="loginText">' + languageDictionary.loginDescriptionText + '</h5></div>';
                     var beforeBlock = document.getElementsByClassName('auth0-lock-input-email')[0];
                     if (beforeBlock) {
                         beforeBlock.parentElement.insertBefore(loginInstructions, beforeBlock);
@@ -436,7 +449,7 @@
 
                 //Add first name prompt
                 var emailPrompt = document.createElement('div');
-                emailPrompt.innerHTML = '<div id="ddp-email-prompt"><label class="Input-label">Email Address*</label></div>';
+                emailPrompt.innerHTML = '<div id="ddp-email-prompt"><label class="Input-label">' + languageDictionary.emailPrompt + '</label></div>';
                 var emailBlock = document.getElementsByClassName('auth0-lock-input-email')[0];
                 if (emailBlock) {
                     emailBlock.insertBefore(emailPrompt, emailBlock.childNodes[0]);
@@ -445,7 +458,7 @@
             if (!document.getElementById('ddp-first-name-prompt')) {
                 //Add first name prompt
                 var firstNamePrompt = document.createElement('div');
-                firstNamePrompt.innerHTML = '<div id="ddp-first-name-prompt"><label class="Input-label NoTopMargin">First Name*</label></div>';
+                firstNamePrompt.innerHTML = '<div id="ddp-first-name-prompt"><label class="Input-label NoTopMargin">' + languageDictionary.firstNamePrompt + '</label></div>';
                 var firstNameBlock = document.getElementsByClassName('auth0-lock-input-first_name')[0];
                 if (firstNameBlock) {
                     firstNameBlock.insertBefore(firstNamePrompt, firstNameBlock.childNodes[0]);
@@ -454,7 +467,7 @@
             if (!document.getElementById('ddp-last-name-prompt')) {
                 //Add last name prompt
                 var lastNamePrompt = document.createElement('div');
-                lastNamePrompt.innerHTML = '<div id="ddp-last-name-prompt"><label class="Input-label">Last Name*</label></div>';
+                lastNamePrompt.innerHTML = '<div id="ddp-last-name-prompt"><label class="Input-label">' + languageDictionary.lastNamePrompt + '</label></div>';
                 var lastNameBlock = document.getElementsByClassName('auth0-lock-input-last_name')[0];
                 if (lastNameBlock) {
                     lastNameBlock.insertBefore(lastNamePrompt, lastNameBlock.childNodes[0]);
@@ -524,7 +537,7 @@
                     if (showSignUpHelp) {
                         var registerMessage = document.createElement('p');
                         registerMessage.setAttribute('style','margin-top:0;margin-bottom:5px');
-                        registerMessage.innerHTML =  "<a class='auth0-lock-alternative-link' href='" + registerUrl + "'>Don't have an account? Join us here</a>.";
+                        registerMessage.innerHTML =  "<a class='auth0-lock-alternative-link' href='" + registerUrl + "'>" + languageDictionary.registerMessageText + "</a>.";
                         registerMessageWrapper.appendChild(registerMessage);
                         if (lockForm) {
                             lockForm[0].appendChild(registerMessageWrapper);
@@ -542,7 +555,7 @@
                     var loginLink = document.createElement('a');
                     loginLink.setAttribute('class', 'auth0-lock-alternative-link');
                     loginLink.setAttribute('href', loginUrl);
-                    loginLink.innerText = 'Already registered? Sign In here';
+                    loginLink.innerText = languageDictionary.alreadyRegisteredText;
                     var switchToLogin = document.createElement('p');
                     switchToLogin.setAttribute('style','text-align:left;margin-top:15px;margin-bottom:5px');
                     switchToLogin.innerText = '';
@@ -556,7 +569,7 @@
                         resetPasswordWrapper.setAttribute('id','ddp-pwd');
                         resetPasswordWrapper.setAttribute('style','margin-top:0px;');
                         var resetPasswordText = document.createElement("div");
-                        resetPasswordText.innerText = "Password reset successfully.  Please sign in with your new password.";
+                        resetPasswordText.innerText = languageDictionary.passwordResetSuccessMessage;
                         resetPasswordWrapper.appendChild(resetPasswordText);
                         document.getElementsByClassName('auth0-lock-content')[0].prepend(resetPasswordWrapper);
                     }
