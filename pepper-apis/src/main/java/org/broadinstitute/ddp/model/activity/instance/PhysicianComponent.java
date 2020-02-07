@@ -12,6 +12,7 @@ public final class PhysicianComponent extends PhysicianInstitutionComponent {
                               String subtitleText,
                               InstitutionType institutionType,
                               boolean showFields,
+                              boolean required,
                               boolean hideNumber) {
         super(ComponentType.PHYSICIAN,
                 allowMultiple,
@@ -20,6 +21,7 @@ public final class PhysicianComponent extends PhysicianInstitutionComponent {
                 subtitleText,
                 institutionType,
                 showFields,
+                required,
                 hideNumber);
     }
 }

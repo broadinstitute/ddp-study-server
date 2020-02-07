@@ -666,15 +666,15 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
 
             componentSection.getBlocks().add(new PhysicianComponentDef(true,
                     Template.text("button"), Template.text("title"), Template.text("subtitle"),
-                    InstitutionType.PHYSICIAN, true));
+                    InstitutionType.PHYSICIAN, true, false));
 
             componentSection.getBlocks().add(new InstitutionComponentDef(true,
                     Template.text("button"), Template.text("title"), Template.text("subtitle"),
-                    InstitutionType.INITIAL_BIOPSY, true));
+                    InstitutionType.INITIAL_BIOPSY, true, false));
 
             componentSection.getBlocks().add(new InstitutionComponentDef(true,
                     Template.text("button"), Template.text("title"), Template.text("subtitle"),
-                    InstitutionType.INSTITUTION, true));
+                    InstitutionType.INSTITUTION, true, false));
 
             FormSectionDef conditionalSection = new FormSectionDef(null, new ArrayList<>());
 

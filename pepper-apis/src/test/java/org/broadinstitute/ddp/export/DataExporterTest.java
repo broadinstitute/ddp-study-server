@@ -638,7 +638,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
                                     .build()))))
                     .addSection(new FormSectionDef(null, Arrays.asList(
                             new MailingAddressComponentDef(null, null),
-                            new PhysicianComponentDef(true, null, null, null, InstitutionType.PHYSICIAN, true))))
+                            new PhysicianComponentDef(true, null, null, null, InstitutionType.PHYSICIAN, true, false))))
                     .build();
             ActivityVersionDto versionDto = new ActivityVersionDto(1L, 1L, "v1", 1L, timestamp, null);
             activities = List.of(new ActivityExtract(def, versionDto));

@@ -195,7 +195,7 @@ public class ActivityResponseCollectorTest {
                         new QuestionBlockDef(TextQuestionDef.builder(TextInputType.TEXT, "DEPRECATED", tmpl)
                                 .setDeprecated(true).build()))))
                 .addSection(new FormSectionDef(null, Arrays.asList(
-                        new PhysicianComponentDef(true, tmpl, tmpl, tmpl, InstitutionType.PHYSICIAN, true))))
+                        new PhysicianComponentDef(true, tmpl, tmpl, tmpl, InstitutionType.PHYSICIAN, true, false))))
                 .addSection(new FormSectionDef(null, Arrays.asList(condBlockDef)))
                 .addSection(new FormSectionDef(null, Arrays.asList(groupBlockDef)))
                 .build();
