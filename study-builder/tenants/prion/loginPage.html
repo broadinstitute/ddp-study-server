@@ -244,6 +244,20 @@
         }
     }
 
+    .nonSignUpHint {
+        padding-top: 10px;
+    }
+
+    .loginHeader {
+        line-height: 1.8;
+    }
+
+    .auth0-lock.auth0-lock .auth0-lock-form .auth0-lock-alternative .auth0-lock-alternative-link {
+        color: #717174;
+        font-size: 0.75rem;
+        line-height: 1.42857143;
+    }
+
 </style>
 
 <script>
@@ -253,7 +267,6 @@
     var mode = config.extraParams.mode;
     var headerLogo = 'https://dev.prionregistry.org/assets/images/prion-logo.svg';
     var studyColor = '#DDDDDD';
-    var title = 'Welcome!';
 
     var mainUrl = '';
     var authLoc = Math.max(config.callbackURL.indexOf('/auth'), config.callbackURL.indexOf('/login-landing'));
@@ -262,13 +275,6 @@
     }
     else {
         mainUrl = config.callbackURL.substring(0,authLoc);
-    }
-
-    if (mode === 'login') {
-        title = 'Sign In';
-    }
-    else if (mode === 'signup') {
-        title = 'Join Us!';
     }
 
     var loginUrl = mainUrl + '/login-landing/login';
@@ -281,18 +287,30 @@
     var showPasswordRecentText = false;
     var doNotShowRegLink = false;
 
-    languageDictionary = { title: title,signupTitle: title, lastLoginInstructions: 'Last time you signed in with',
-    loginAtLabel: 'Sign in at %s', loginLabel: 'Sign In', loginSubmitLabel: 'Sign In', loginWithLabel: 'Sign in with %s',
-    signUpTitle: ' ', signUpLabel: 'Join Us', signUpSubmitLabel: 'Join Us',
+    languageDictionary = {
+        title: ' ',
+        signUpTitle: ' ',
+        loginTitle: ' ',
+        forgotPasswordTitle: ' ',
+        lastLoginInstructions: 'Last time you signed in with',
+        loginAtLabel: 'Sign in at %s',
+        loginLabel: 'Sign In',
+        loginSubmitLabel: 'Sign In',
+        loginWithLabel: 'Sign in with %s',
+        signUpLabel: 'Join Us',
+        signUpSubmitLabel: 'Join Us',
         databaseSignUpInstructions: '<h2>Join Us</h2> <h5>Do you or a relative of yours have prion disease? Tell us about it and join us making a difference...</h5> <h5>Please fill out the form below to register. We will use this account to communicate with you regarding the Prion Registry.</h5>',
-    blankErrorHint: "Please fill out this field.", emailInputPlaceholder: "   ", passwordInputPlaceholder: "    "};
+        blankErrorHint: "Please fill out this field.",
+        emailInputPlaceholder: "   ",
+        passwordInputPlaceholder: "    ",
+        forgotPasswordAction: "Forgot your password?"
+    };
     languageDictionary.error = languageDictionary.error || {};
     languageDictionary.error.signUp = languageDictionary.error.signUp || {};
     languageDictionary.error.signUp.user_exists = 'If you have already registered, sign in here.';
     languageDictionary.success = {
         forgotPassword: "If you have previously registered, please check your email to reset your password."
     };
-    languageDictionary.lastLoginInstructions = 'Last time you signed in with';
     var loginHint = config.extraParams.login_hint;
     var realOptions = {
         additionalSignUpFields: [
@@ -391,15 +409,31 @@
             if (!document.getElementById('ddp-password-hint')) {
                  //Add password prompt and hint
                 var passwordHint = document.createElement('div');
-                passwordHint.innerHTML = '<div id="ddp-password-hint"><label class="Input-label">Password*</label>' +
-                    '                    <i class="fa fa-question-circle Color--green tooltip" aria-hidden="true">' +
-                    '<span class="tooltiptext">Password must be at least 8 characters long and contain at least one number, one upper case letter, and one lower case letter.</span></i></div>'
+                if (mode === 'signup'){
+                    passwordHint.innerHTML = '<div id="ddp-password-hint"><label class="Input-label">Password*</label>' +
+                        '                    <i class="fa fa-question-circle Color--green tooltip" aria-hidden="true">' +
+                        '<span class="tooltiptext">Password must be at least 8 characters long and contain at least one number, one upper case letter, and one lower case letter.</span></i></div>';
+                }
+                else {
+                    passwordHint.innerHTML = '<div id="ddp-password-hint" class="nonSignUpHint"><label class="Input-label TopMargin10">Password*</label></div>';
+                }
+
                 var passwordBlock = document.getElementsByClassName('auth0-lock-input-show-password')[0];
                 if (passwordBlock) {
                     passwordBlock.insertBefore(passwordHint, passwordBlock.childNodes[0]);
                 }
             }
             if (!document.getElementById('ddp-email-prompt')) {
+                // If we are logging in, add some instructions
+                if (mode === 'login' && !document.getElementsByClassName('auth0-lock-back-button')[0]) {
+                    var loginInstructions = document.createElement('div');
+                    loginInstructions.innerHTML = '<div id="ddp-login-instructions"><h2 class="loginHeader">Sign In</h2> <h5 class="loginText">You can log into the Prion Registry using your email account.</h5></div>';
+                    var beforeBlock = document.getElementsByClassName('auth0-lock-input-email')[0];
+                    if (beforeBlock) {
+                        beforeBlock.parentElement.insertBefore(loginInstructions, beforeBlock);
+                    }
+                }
+
                 //Add first name prompt
                 var emailPrompt = document.createElement('div');
                 emailPrompt.innerHTML = '<div id="ddp-email-prompt"><label class="Input-label">Email Address*</label></div>';
@@ -426,7 +460,7 @@
                     lastNameBlock.insertBefore(lastNamePrompt, lastNameBlock.childNodes[0]);
                 }
             }
-            if (!document.getElementById('ddp-moved') && document.getElementById('ddp-email-prompt') &&
+            if (!document.getElementById('ddp-moved') && mode === 'signup' && document.getElementById('ddp-email-prompt') &&
                 document.getElementById('ddp-first-name-prompt') &&
                 document.getElementById('ddp-last-name-prompt') && document.getElementById('ddp-password-hint') &&
                 document.getElementsByClassName('auth0-lock-input-email') &&
@@ -453,7 +487,7 @@
                 document.lastChild.appendChild(moved);
 
             }
-            if (!document.getElementById('ddp-set-focus')) {
+            if (!document.getElementById('ddp-set-focus') && mode === 'signup') {
                 var toFocus = document.getElementsByClassName('auth0-lock-input')[0];
                 if (toFocus) {
                     toFocus.focus();
@@ -489,8 +523,8 @@
                     registerMessageWrapper.setAttribute('style','margin-top:0;font-size: small;text-align: left;');
                     if (showSignUpHelp) {
                         var registerMessage = document.createElement('p');
-                        registerMessage.setAttribute('style','margin-bottom:0;');
-                        registerMessage.innerHTML =  "If you haven't registered yet, please <a class='auth0-lock-alternative-link' href='" + registerUrl + "'>do so here</a>.";
+                        registerMessage.setAttribute('style','margin-top:0;margin-bottom:5px');
+                        registerMessage.innerHTML =  "<a class='auth0-lock-alternative-link' href='" + registerUrl + "'>Don't have an account? Join us here</a>.";
                         registerMessageWrapper.appendChild(registerMessage);
                         if (lockForm) {
                             lockForm[0].appendChild(registerMessageWrapper);
