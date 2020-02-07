@@ -97,28 +97,6 @@
         margin-right: 0 !important;
     }
 
-    .auth0-lock-form div div {
-        display: flex;
-        flex-flow: column;
-    }
-
-    .auth0-lock-input-first_name {
-        order: 2;
-    }
-
-    .auth0-lock-input-last_name {
-        order: 3;
-    }
-
-    .auth0-lock-input-email {
-        order: 4;
-        margin-top: 10px;
-    }
-
-    .auth0-lock-input-show-password {
-        order: 5;
-    }
-
     .auth0-lock.auth0-lock .auth0-lock-submit {
         padding-left: 30px;
         padding-right: 30px;
@@ -155,12 +133,16 @@
         padding-top:10px;
     }
 
+    .auth0-lock-password-strength {
+        display: none;
+    }
+
     .Input-label {
         color: rgb(51, 51, 51);
         font-size: 0.9rem;
         font-weight: 400;
         margin-bottom: 10px;
-        margin-top: 10px;
+        margin-top: 0;
         margin-right: 10px;
         font-family: 'Raleway', sans-serif !important;
     }
@@ -229,6 +211,39 @@
     .auth0-lock-input-wrap {
         padding-left: 0 !important;
     }
+
+    .auth0-lock-error-msg:after {
+        content: unset;
+    }
+
+    .auth0-lock-input-block.auth0-lock-input-show-password .auth0-lock-input-block.auth0-lock-input-password.auth0-lock-error::after {
+        content: "Please fill out this field.";
+        font-family: 'Raleway', sans-serif;
+        font-size: 12px;
+        color: #f00;
+    }
+
+    .auth0-lock-input-block.auth0-lock-input-email {
+        margin-bottom: 0 !important;
+    }
+
+    @media (min-width: 481px) {
+        .auth0-lock-error-msg span {
+            padding: unset !important;
+        }
+
+        .auth0-lock-error-msg {
+            color: #f00;
+            background: none !important;
+            box-shadow: none !important;
+            position: relative !important;
+            left: unset !important;
+            border-radius: unset !important;
+            top: unset !important;
+            margin: 5px 0 0 0 !important;
+        }
+    }
+
 </style>
 
 <script>
@@ -269,8 +284,8 @@
     languageDictionary = { title: title,signupTitle: title, lastLoginInstructions: 'Last time you signed in with',
     loginAtLabel: 'Sign in at %s', loginLabel: 'Sign In', loginSubmitLabel: 'Sign In', loginWithLabel: 'Sign in with %s',
     signUpTitle: ' ', signUpLabel: 'Join Us', signUpSubmitLabel: 'Join Us',
-        databaseSignUpInstructions: '<h2>Join Us</h2> <h5>Do you or a relative of yours have prion disease? Tell us about it and join us making a difference...</h5> <h5>You can register in the platform using your email address and creating a password. We will use this account to communicate with you regarding the Prion Registry.</h5>',
-    blankErrorHint: "Please fill out this field."};
+        databaseSignUpInstructions: '<h2>Join Us</h2> <h5>Do you or a relative of yours have prion disease? Tell us about it and join us making a difference...</h5> <h5>Please fill out the form below to register. We will use this account to communicate with you regarding the Prion Registry.</h5>',
+    blankErrorHint: "Please fill out this field.", emailInputPlaceholder: "   ", passwordInputPlaceholder: "    "};
     languageDictionary.error = languageDictionary.error || {};
     languageDictionary.error.signUp = languageDictionary.error.signUp || {};
     languageDictionary.error.signUp.user_exists = 'If you have already registered, sign in here.';
@@ -283,7 +298,7 @@
         additionalSignUpFields: [
             {
                 name: "first_name",
-                placeholder: "First Name",
+                placeholder: "  ",
                 validator: function(first_name) {
                     return {
                         valid: first_name.length > 0,
@@ -293,7 +308,7 @@
             },
             {
                 name: "last_name",
-                placeholder: "Last Name",
+                placeholder: "   ",
                 validator: function(last_name) {
                     return {
                         valid: last_name.length > 0,
@@ -303,6 +318,7 @@
             }
         ],
         avatar: null,
+        autofocus: false,
         auth: {
             redirectUrl: config.callbackURL,
             responseType: (config.internalOptions || {}).response_type ||
@@ -375,7 +391,7 @@
             if (!document.getElementById('ddp-password-hint')) {
                  //Add password prompt and hint
                 var passwordHint = document.createElement('div');
-                passwordHint.innerHTML = '<div id="ddp-password-hint" class="flex-row"><label class="Input-label">Password*</label>' +
+                passwordHint.innerHTML = '<div id="ddp-password-hint"><label class="Input-label">Password*</label>' +
                     '                    <i class="fa fa-question-circle Color--green tooltip" aria-hidden="true">' +
                     '<span class="tooltiptext">Password must be at least 8 characters long and contain at least one number, one upper case letter, and one lower case letter.</span></i></div>'
                 var passwordBlock = document.getElementsByClassName('auth0-lock-input-show-password')[0];
@@ -408,6 +424,46 @@
                 var lastNameBlock = document.getElementsByClassName('auth0-lock-input-last_name')[0];
                 if (lastNameBlock) {
                     lastNameBlock.insertBefore(lastNamePrompt, lastNameBlock.childNodes[0]);
+                }
+            }
+            if (!document.getElementById('ddp-moved') && document.getElementById('ddp-email-prompt') &&
+                document.getElementById('ddp-first-name-prompt') &&
+                document.getElementById('ddp-last-name-prompt') && document.getElementById('ddp-password-hint') &&
+                document.getElementsByClassName('auth0-lock-input-email') &&
+                document.getElementsByClassName('auth0-lock-input-email')[0]) {
+
+                //Reorder elements to make first name and last name come before email address and password
+                //Get the email address block
+                var emailAddressBlock = document.getElementsByClassName('auth0-lock-input-email')[0];
+
+                //Get the parent of the email address block
+                var parentBlock = emailAddressBlock.parentElement;
+
+                //Move the first name block before the email address block
+                firstNameBlock = document.getElementsByClassName('auth0-lock-input-first_name')[0];
+                parentBlock.insertBefore(firstNameBlock, emailAddressBlock);
+
+                //Move the last name block before the email address block
+                lastNameBlock = document.getElementsByClassName('auth0-lock-input-last_name')[0];
+                parentBlock.insertBefore(lastNameBlock, emailAddressBlock);
+
+                //Add an element to the bottom to indicate that we changed the order
+                var moved = document.createElement('div');
+                moved.innerHTML = '<div id="ddp-moved"></div>';
+                document.lastChild.appendChild(moved);
+
+            }
+            if (!document.getElementById('ddp-set-focus')) {
+                //TODO: TEMP
+                console.log('about to focus');
+
+                var toFocus = document.getElementsByClassName('auth0-lock-input')[0];
+                if (toFocus) {
+                    toFocus.focus();
+                    var focused = document.createElement('div');
+                    focused.innerHTML = '<div id="ddp-set-focus"></div>';
+                    document.lastChild.appendChild(focused);
+                    toFocus.focus();
                 }
             }
             if (!document.getElementById('ddp-header')) {
@@ -479,7 +535,6 @@
     };
     lock.on('show',function() {
         addHelp();
-        if(realOptions.prefill && realOptions.prefill.email){
             var getInputElement = function(name) {
                 return document.getElementsByName(name)[0];
             };
@@ -491,17 +546,15 @@
                 return document.querySelector(':focus');
             };
             var intervalId = setInterval(function() {
-                var pwdElement = getInputElement('password');
-                var emailElement = getInputElement('email');
-                if(pwdElement && emailElement && emailElement.value.trim()){
-                    setFocus(pwdElement);
+                var firstNameElement = getInputElement('first_name');
+                if(firstNameElement){
+                    setFocus(firstNameElement);
                     var elementWithFocus = getElementWithFocus();
-                    if(elementWithFocus && elementWithFocus.name && pwdElement.name === elementWithFocus.name){
+                    if(elementWithFocus && elementWithFocus.name && firstNameElement.name === elementWithFocus.name){
                         clearInterval(intervalId);
                     }
                 }
             }, 200);
-        }
     });
     lock.on('forgot_password ready', function() {
     });
