@@ -6,6 +6,9 @@
 
     <changeSet author="sretsia" id="20200502-create-study-language-table">
         <createTable tableName="study_language">
+            <column name="study_language_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="sl_pk"/>
+            </column>
             <column name="umbrella_study_id" type="bigint">
                 <constraints nullable="false" foreignKeyName="sl_study_id_us_study_id_fk" references="umbrella_study(umbrella_study_id)"/>
             </column>
@@ -13,6 +16,6 @@
                 <constraints nullable="false" foreignKeyName="sl_lang_code_id_lc_lang_code_id_fk" references="language_code(language_code_id)"/>
             </column>
         </createTable>
-        <addPrimaryKey tableName="study_language" columnNames="umbrella_study_id, language_code_id" constraintName="sl_pk"/>
+        <addUniqueConstraint tableName="study_language" columnNames="umbrella_study_id, language_code_id" constraintName="sl_uk"/>
     </changeSet>
 </databaseChangeLog>
