@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.content.ContentStyle;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -66,7 +65,6 @@ public class GetActivityInstanceRoute implements Route {
         String studyGuid = request.params(PathParam.STUDY_GUID);
         String instanceGuid = request.params(PathParam.INSTANCE_GUID);
         DDPAuth ddpAuth = RouteUtil.getDDPAuth(request);
-        String acceptLanguageHeader = request.headers(RouteConstants.ACCEPT_LANGUAGE);
 
         LOG.info("Attempting to retrieve activity instance {} for participant {} in study {}", instanceGuid, userGuid, studyGuid);
 

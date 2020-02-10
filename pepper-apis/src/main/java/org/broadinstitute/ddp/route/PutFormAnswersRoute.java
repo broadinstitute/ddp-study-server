@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.broadinstitute.ddp.constants.ErrorCodes;
-import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.db.FormInstanceDao;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -62,7 +61,6 @@ public class PutFormAnswersRoute implements Route {
 
         DDPAuth ddpAuth = RouteUtil.getDDPAuth(request);
         String operatorGuid = ddpAuth.getOperator() != null ? ddpAuth.getOperator() : userGuid;
-        String acceptLanguageHeader = request.headers(RouteConstants.ACCEPT_LANGUAGE);
 
         LOG.info("Completing form for user {}, operator {}, activity instance {}", userGuid, operatorGuid, instanceGuid);
 

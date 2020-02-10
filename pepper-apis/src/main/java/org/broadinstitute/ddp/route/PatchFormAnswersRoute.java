@@ -23,7 +23,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 
 import org.broadinstitute.ddp.constants.ErrorCodes;
-import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
@@ -124,7 +123,6 @@ public class PatchFormAnswersRoute implements Route {
 
         DDPAuth ddpAuth = RouteUtil.getDDPAuth(request);
         String operatorGuid = ddpAuth.getOperator() != null ? ddpAuth.getOperator() : participantGuid;
-        String acceptLanguageHeader = request.headers(RouteConstants.ACCEPT_LANGUAGE);
 
         LOG.info("Attempting to patch answers for activity instance {}", instanceGuid);
 

@@ -52,7 +52,6 @@ public class UserActivityInstanceListRoute implements Route {
         }
         LOG.info("Looking up activity instances for user {} in study {}", userGuid, studyGuid);
         DDPAuth ddpAuth = RouteUtil.getDDPAuth(request);
-        String acceptLanguageHeader = request.headers(RouteConstants.ACCEPT_LANGUAGE);
         return TransactionWrapper.withTxn(
                 handle -> {
                     LanguageDto preferredUserLanguage = RouteUtil.getUserLanguage(request);

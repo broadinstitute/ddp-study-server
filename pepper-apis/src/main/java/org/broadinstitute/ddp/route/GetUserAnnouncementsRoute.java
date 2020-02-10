@@ -8,7 +8,6 @@ import java.util.stream.Collectors;
 import org.apache.http.HttpStatus;
 
 import org.broadinstitute.ddp.constants.ErrorCodes;
-import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.content.ContentStyle;
 import org.broadinstitute.ddp.content.I18nContentRenderer;
@@ -51,7 +50,6 @@ public class GetUserAnnouncementsRoute implements Route {
         LOG.info("Attempting to retrieve announcements for user {} and study {}", userGuid, studyGuid);
 
         ContentStyle style = RouteUtil.parseContentStyleHeaderOrHalt(request, response, ContentStyle.STANDARD);
-        String acceptLanguageHeader = request.headers(RouteConstants.ACCEPT_LANGUAGE);
 
         return TransactionWrapper.withTxn(handle -> {
             LanguageDto preferredUserLanguage = RouteUtil.getUserLanguage(request);
