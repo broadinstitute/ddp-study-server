@@ -1,3 +1,0 @@
-export CONFIG_OPTS="-Dconfig.file=output-build-config/testing-inmemorydb.conf"
-
-java $CONFIG_OPTS -cp target/DataDonationPlatform.jar org.broadinstitute.ddp.util.OLCBackfillScript -o addressesModifiedIds.txt
