@@ -36,11 +36,9 @@ import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.JdbiMessageDestination;
 import org.broadinstitute.ddp.db.dao.JdbiQueuedEvent;
-import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.QueuedEventDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dto.QueuedEventDto;
-import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.db.housekeeping.dao.JdbiEvent;
 import org.broadinstitute.ddp.db.housekeeping.dao.JdbiMessage;
 import org.broadinstitute.ddp.db.housekeeping.dao.KitCheckDao;
@@ -567,6 +565,7 @@ public class Housekeeping {
                             } catch (MissingUserException e) {
                                 LOG.error("We have a message for which we no longer have a user, "
                                         + "ack-ing and skipping it: ", e);
+                                consumer.ack();
                             } catch (MessageHandlingException e) {
                                 LOG.error("Trouble processing message", e);
                                 if (e.shouldRetry()) {
@@ -589,11 +588,8 @@ public class Housekeeping {
     }
 
     private static boolean checkUserExists(String participantGuid) {
-        return TransactionWrapper.withTxn(TransactionWrapper.DB.APIS, apihandle -> {
-            UserDto userDto = apihandle.attach(JdbiUser.class).findByUserGuid(participantGuid);
-
-            return userDto != null;
-        });
+        return TransactionWrapper.withTxn(TransactionWrapper.DB.APIS, apihandle ->
+                apihandle.attach(UserDao.class).findUserByGuid(participantGuid).isPresent());
     }
 
     /**
