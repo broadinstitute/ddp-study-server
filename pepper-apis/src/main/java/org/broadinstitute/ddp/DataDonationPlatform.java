@@ -43,6 +43,7 @@ import org.broadinstitute.ddp.filter.AddDDPAuthLoggingFilter;
 import org.broadinstitute.ddp.filter.DsmAuthFilter;
 import org.broadinstitute.ddp.filter.ExcludePathFilterWrapper;
 import org.broadinstitute.ddp.filter.HttpHeaderMDCFilter;
+import org.broadinstitute.ddp.filter.LanguageResolutionFilter;
 import org.broadinstitute.ddp.filter.MDCAttributeRemovalFilter;
 import org.broadinstitute.ddp.filter.MDCLogBreadCrumbFilter;
 import org.broadinstitute.ddp.filter.TokenConverterFilter;
@@ -273,6 +274,8 @@ public class DataDonationPlatform {
                 MDC.put(MDC_STUDY, RouteUtil.parseStudyGuid(request.pathInfo()));
             }
         });
+
+        before(API.BASE + "/*", new LanguageResolutionFilter());
 
         enableCORS("*", String.join(",", CORS_HTTP_METHODS), String.join(",", CORS_HTTP_HEADERS));
         setupCatchAllErrorHandling();

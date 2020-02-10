@@ -32,13 +32,8 @@ import spark.Response;
  */
 public class LanguageResolutionFilter implements Filter {
 
-    private StudyDao studyDao;
     public static final String USER_LANGUAGE = "USER_LANGUAGE";
     private static final Logger LOG = LoggerFactory.getLogger(LanguageResolutionFilter.class);
-
-    public LanguageResolutionFilter(StudyDao studyDao) {
-        this.studyDao = studyDao;
-    }
 
     @Override
     public void handle(Request request, Response response) {
