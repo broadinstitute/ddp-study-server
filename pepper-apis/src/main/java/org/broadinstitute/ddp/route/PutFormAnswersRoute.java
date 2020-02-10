@@ -1,7 +1,6 @@
 package org.broadinstitute.ddp.route;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.stream.Collectors;
 
 import org.broadinstitute.ddp.constants.ErrorCodes;
@@ -10,7 +9,7 @@ import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.db.FormInstanceDao;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
-import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
+import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.json.PutAnswersResponse;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.json.workflow.WorkflowResponse;
@@ -71,9 +70,9 @@ public class PutFormAnswersRoute implements Route {
                 handle -> {
                     RouteUtil.findAccessibleInstanceOrHalt(response, handle, userGuid, studyGuid, instanceGuid);
 
-                    Locale preferredUserLanguage = RouteUtil.getUserLanguage(request);
-                    String isoLangCode = preferredUserLanguage.getLanguage();
-                    long langCodeId = handle.attach(JdbiLanguageCode.class).getLanguageCodeId(isoLangCode);
+                    LanguageDto preferredUserLanguage = RouteUtil.getUserLanguage(request);
+                    String isoLangCode = preferredUserLanguage.getIsoCode();
+                    long langCodeId = preferredUserLanguage.getId();
 
                     FormInstance form = formInstanceDao.getBaseFormByGuid(handle, instanceGuid, isoLangCode);
                     if (form == null) {

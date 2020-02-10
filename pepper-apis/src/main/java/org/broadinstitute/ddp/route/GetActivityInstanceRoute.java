@@ -3,7 +3,6 @@ package org.broadinstitute.ddp.route;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -12,9 +11,9 @@ import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.content.ContentStyle;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
+import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.instance.ActivityInstance;
 import org.broadinstitute.ddp.model.activity.instance.ConditionalBlock;
@@ -81,8 +80,8 @@ public class GetActivityInstanceRoute implements Route {
             Optional<EnrollmentStatusType> enrollmentStatus = handle.attach(JdbiUserStudyEnrollment.class)
                     .getEnrollmentStatusByUserAndStudyGuids(userGuid, studyGuid);
 
-            Locale preferredUserLanguage = RouteUtil.getUserLanguage(request);
-            String isoLangCode = preferredUserLanguage.getLanguage();
+            LanguageDto preferredUserLanguage = RouteUtil.getUserLanguage(request);
+            String isoLangCode = preferredUserLanguage.getIsoCode();
 
             LOG.info("Attempting to find a translation for the following language: {}", isoLangCode);
             Optional<ActivityInstance> inst = actInstService.getTranslatedActivity(
@@ -104,8 +103,7 @@ public class GetActivityInstanceRoute implements Route {
                 activityInstance.makeReadonly();
             }
             // end To-do
-            JdbiLanguageCode jdbiLanguageCode = handle.attach(JdbiLanguageCode.class);
-            Long languageCodeId = jdbiLanguageCode.getLanguageCodeId(isoLangCode);
+            Long languageCodeId = preferredUserLanguage.getId();
             return validateActivityInstance(handle, activityInstance, userGuid, languageCodeId);
         });
     }

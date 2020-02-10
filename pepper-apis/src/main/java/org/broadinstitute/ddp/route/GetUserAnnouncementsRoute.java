@@ -1,7 +1,6 @@
 package org.broadinstitute.ddp.route;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -14,10 +13,10 @@ import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.content.ContentStyle;
 import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.UserAnnouncementDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
+import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.user.User;
@@ -55,8 +54,8 @@ public class GetUserAnnouncementsRoute implements Route {
         String acceptLanguageHeader = request.headers(RouteConstants.ACCEPT_LANGUAGE);
 
         return TransactionWrapper.withTxn(handle -> {
-            Locale preferredUserLanguage = RouteUtil.getUserLanguage(request);
-            String langCode = preferredUserLanguage.getLanguage();
+            LanguageDto preferredUserLanguage = RouteUtil.getUserLanguage(request);
+            String langCode = preferredUserLanguage.getIsoCode();
 
             LOG.info("Using ddp content style {} and language code {} to render announcement messages", style, langCode);
             StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
@@ -83,7 +82,7 @@ public class GetUserAnnouncementsRoute implements Route {
 
             if (!announcements.isEmpty()) {
                 try {
-                    long langCodeId = handle.attach(JdbiLanguageCode.class).getLanguageCodeId(langCode);
+                    long langCodeId = preferredUserLanguage.getId();
                     renderer.bulkRenderAndApply(handle, announcements, style, langCodeId);
                 } catch (NoSuchElementException e) {
                     ApiError err = new ApiError(ErrorCodes.SERVER_ERROR, String.format(

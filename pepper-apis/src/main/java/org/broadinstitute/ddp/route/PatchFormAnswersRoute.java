@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -31,7 +30,6 @@ import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiCompositeQuestion;
-import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
 import org.broadinstitute.ddp.db.dao.JdbiNumericQuestion;
 import org.broadinstitute.ddp.db.dao.JdbiQuestion;
 import org.broadinstitute.ddp.db.dao.QuestionDao;
@@ -39,6 +37,7 @@ import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.AnswerDto;
 import org.broadinstitute.ddp.db.dto.CompositeQuestionDto;
+import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.db.dto.NumericQuestionDto;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.exception.DDPException;
@@ -165,10 +164,9 @@ public class PatchFormAnswersRoute implements Route {
             var jdbiQuestion = handle.attach(JdbiQuestion.class);
             var answerDao = handle.attach(AnswerDao.class);
 
-            Locale preferredUserLanguage = RouteUtil.getUserLanguage(request);
-            String isoLanguageCode = preferredUserLanguage.getLanguage();
-            JdbiLanguageCode jdbiLanguageCode = handle.attach(JdbiLanguageCode.class);
-            Long languageCodeId = jdbiLanguageCode.getLanguageCodeId(isoLanguageCode);
+            LanguageDto preferredUserLanguage = RouteUtil.getUserLanguage(request);
+            String isoLanguageCode = preferredUserLanguage.getIsoCode();
+            Long languageCodeId = preferredUserLanguage.getId();
 
             try {
                 Map<String, List<Rule>> failedRulesByQuestion = new HashMap<>();

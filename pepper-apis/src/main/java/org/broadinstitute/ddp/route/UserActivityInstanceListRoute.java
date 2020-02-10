@@ -5,7 +5,6 @@ import static org.broadinstitute.ddp.util.ResponseUtil.halt400ErrorResponse;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -15,6 +14,7 @@ import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.json.activity.ActivityInstanceSummary;
 import org.broadinstitute.ddp.security.DDPAuth;
 import org.broadinstitute.ddp.util.RouteUtil;
@@ -55,9 +55,9 @@ public class UserActivityInstanceListRoute implements Route {
         String acceptLanguageHeader = request.headers(RouteConstants.ACCEPT_LANGUAGE);
         return TransactionWrapper.withTxn(
                 handle -> {
-                    Locale preferredUserLanguage = RouteUtil.getUserLanguage(request);
+                    LanguageDto preferredUserLanguage = RouteUtil.getUserLanguage(request);
                     List<ActivityInstanceSummary> summaries = activityInstanceDao.listActivityInstancesForUser(
-                            handle, userGuid, studyGuid, preferredUserLanguage.getLanguage()
+                            handle, userGuid, studyGuid, preferredUserLanguage.getIsoCode()
                     );
                     performActivityInstanceNumbering(summaries);
                     return filterActivityInstancesFromDisplay(summaries);
