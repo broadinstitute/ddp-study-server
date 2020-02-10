@@ -91,7 +91,7 @@
 
     .auth0-lock.auth0-lock.auth0-lock-opened .auth0-lock-widget,
     .auth0-lock-widget-container, .auth0-lock-center{
-        height: 100% !important;
+        min-height: 100% !important;
         width: 100% !important;
         margin-left: 0 !important;
         margin-right: 0 !important;
@@ -101,11 +101,11 @@
         padding-left: 30px;
         padding-right: 30px;
         padding-top:10px;
-        width:calc(100% - 60px);
+        width:calc(100% - 100px);
         box-sizing: border-box;
         background-color: #82B547 !important;
-        margin-left:30px !important;
-        margin-right: 30px !important;
+        margin-left: 50px !important;
+        margin-right: 50px !important;
         display: block !important;
     }
 
@@ -122,15 +122,15 @@
 
     .auth0-lock-view-content {
         background-color: #ffffff;
-        margin-left: 30px !important;
-        margin-right: 30px !important;
+        margin-left: 50px !important;
+        margin-right: 50px !important;
     }
 
     .auth0-lock-content {
         max-width: 804px;
-        padding-left: 30px;
-        padding-right: 30px;
-        padding-top:10px;
+        padding-left: 45px !important;
+        padding-right: 45px !important;
+        padding-top: 10px ;
     }
 
     .auth0-lock-password-strength {
@@ -278,7 +278,7 @@
     }
 
     var loginUrl = mainUrl + '/login-landing/login';
-    var registerUrl = mainUrl;
+    var registerUrl = mainUrl + '/redirect-join';
 
     var connection = config.connection;
     var prompt = !prompt;
@@ -513,7 +513,13 @@
             if (!document.getElementById('ddp-header')) {
                 // tweak the header
                 var header = document.createElement('div');
-                header.innerHTML = '<div id="ddp-header" style="display:flex;flex-direction:row;justify-content: flex-start;align-items:center;padding-top:30px;padding-bottom:20px;"><a href="' + mainUrl + '"><img class="auth0-lock-header-logo" src="' + headerLogo + '"></a></div></div>';
+                header.innerHTML = '<div id="ddp-header" style="display:flex;flex-direction:row;' +
+                    'justify-content: flex-start;align-items:center;padding-top:30px;padding-bottom:20px;">' +
+                    '<a href="' + mainUrl + '"><img class="auth0-lock-header-logo" src="' + headerLogo + '"></a>' +
+                    '<div class="navdiv" style="justify-content: flex-end"><ul class="nav navbar-nav navbar-right NoMargin">' +
+                    '<li class="Nav-item"><a href="' + mainUrl + '/learn-more">Learn More</a></li>' +
+                    '<li class="Nav-item"><a href="' + mainUrl + '/login-landing/login">Sign In</a></li>' +
+                    '<li class="Nav-item"><a href="' + mainUrl + '/redirect-join">Join Us</a></li></ul></div></div>';
                 var auth0LockHeader = document.getElementsByClassName('auth0-lock-header-logo')[0];
                 if (auth0LockHeader) {
                     console.log('parent' + auth0LockHeader.parentElement);
