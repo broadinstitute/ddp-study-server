@@ -88,9 +88,13 @@ public class GetActivityInstanceRoute implements Route {
                     handle, userGuid, instanceDto.getActivityType(), instanceGuid, isoLangCode, style
             );
             if (!inst.isPresent()) {
-                LOG.info("Failed to find a translation to the '{}' language code for the activity instance "
-                        + "with GUID {}", isoLangCode, instanceGuid);
-                throw new DDPException("Unable to find activity instance " + instanceGuid + " of type " + instanceDto.getActivityType());
+                String errMsg = String.format(
+                        "Unable to find activity instance %s of type '%s' in '%s'",
+                        instanceGuid,
+                        instanceDto.getActivityType(),
+                        isoLangCode
+                );
+                throw new DDPException(errMsg);
             }
 
             LOG.info("Found a translation to the '{}' language code for the activity instance with GUID {}",

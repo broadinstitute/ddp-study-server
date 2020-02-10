@@ -65,7 +65,7 @@ public class LanguageResolutionFilter implements Filter {
 
             TransactionWrapper.useTxn(
                     handle -> {
-                        Set<LanguageDto> languagesSupportedByStudy = handle.attach(StudyDao.class).getSupportedLanguagesByGuid(studyGuid);
+                        Set<LanguageDto> languagesSupportedByStudy = handle.attach(StudyDao.class).findSupportedLanguagesByGuid(studyGuid);
                         Map<Locale, LanguageDto> supportedStudyLocaleToLang = languagesSupportedByStudy.stream()
                                 .collect(Collectors.toMap(LanguageDto::toLocale, lang -> lang));
                         Locale preferredLocale = I18nUtil.resolvePreferredLanguage(

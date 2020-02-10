@@ -34,5 +34,5 @@ public interface StudyDao extends SqlObject {
             + " inner join umbrella_study us on sl.umbrella_study_id = us.umbrella_study_id where us.guid = :studyGuid"
     )
     @RegisterConstructorMapper(LanguageDto.class)
-    Set<LanguageDto> getSupportedLanguagesByGuid(@Bind("studyGuid") String studyGuid);
+    Set<LanguageDto> findSupportedLanguagesByGuid(@Bind("studyGuid") String studyGuid);
 }
