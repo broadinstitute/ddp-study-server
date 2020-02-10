@@ -135,7 +135,7 @@ public class JoinMailingListRouteTest extends IntegrationTestSuite.TestCase {
         AtomicBoolean queuedEmail = new AtomicBoolean(false);
         TransactionWrapper.useTxn(handle -> {
             EventDao eventDao = handle.attach(EventDao.class);
-            List<QueuedEventDto> queuedEvents = eventDao.getQueuedEvents();
+            List<QueuedEventDto> queuedEvents = eventDao.findPublishableQueuedEvents();
 
             for (QueuedEventDto queuedEvent : queuedEvents) {
                 if (queuedEvent instanceof QueuedNotificationDto) {

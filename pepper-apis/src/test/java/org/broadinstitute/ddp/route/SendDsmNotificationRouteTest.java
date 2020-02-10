@@ -84,7 +84,8 @@ public class SendDsmNotificationRouteTest extends DsmRouteTest {
      */
     @Test
     public void testCreateDsmNotificationWithLegacyAltPid_Success() throws Exception {
-        int numStartingQueuedEvents = TransactionWrapper.withTxn(handle -> handle.attach(EventDao.class).getQueuedEvents().size());
+        int numStartingQueuedEvents = TransactionWrapper.withTxn(handle ->
+                handle.attach(EventDao.class).findPublishableQueuedEvents().size());
 
         LOG.info("testCreateDsmNotification_Success");
         DsmNotificationEvent dsmEvent = makeDsmNotificationEvent(JdbiDsmNotificationEventType.SALIVA_RECEIVED);
@@ -97,7 +98,7 @@ public class SendDsmNotificationRouteTest extends DsmRouteTest {
 
     private void checkifNotificationQueued(int numStartingQueuedEvents) {
         TransactionWrapper.useTxn(handle -> {
-            List<QueuedEventDto> pendingEvents = handle.attach(EventDao.class).getQueuedEvents();
+            List<QueuedEventDto> pendingEvents = handle.attach(EventDao.class).findPublishableQueuedEvents();
             boolean foundQueuedTemplate = false;
             for (QueuedEventDto pendingEvent : pendingEvents) {
                 if (pendingEvent instanceof QueuedNotificationDto) {
@@ -123,7 +124,7 @@ public class SendDsmNotificationRouteTest extends DsmRouteTest {
     @Test
     public void testCreateDsmNotification_Success() throws Exception {
         int numStartingQueuedEvents = TransactionWrapper.withTxn(handle -> {
-            return handle.attach(EventDao.class).getQueuedEvents().size();
+            return handle.attach(EventDao.class).findPublishableQueuedEvents().size();
         });
 
         LOG.info("testCreateDsmNotification_Success");
