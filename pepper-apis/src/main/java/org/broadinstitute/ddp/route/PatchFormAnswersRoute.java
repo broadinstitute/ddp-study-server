@@ -165,9 +165,7 @@ public class PatchFormAnswersRoute implements Route {
             var jdbiQuestion = handle.attach(JdbiQuestion.class);
             var answerDao = handle.attach(AnswerDao.class);
 
-            Locale preferredUserLanguage = RouteUtil.resolvePreferredUserLanguage(
-                    handle, acceptLanguageHeader, ddpAuth.getPreferredLocale(), studyGuid
-            );
+            Locale preferredUserLanguage = RouteUtil.getUserLanguage(request);
             String isoLanguageCode = preferredUserLanguage.getLanguage();
             JdbiLanguageCode jdbiLanguageCode = handle.attach(JdbiLanguageCode.class);
             Long languageCodeId = jdbiLanguageCode.getLanguageCodeId(isoLanguageCode);

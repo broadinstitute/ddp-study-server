@@ -2,26 +2,21 @@ package org.broadinstitute.ddp.util;
 
 import static org.broadinstitute.ddp.constants.RouteConstants.BEARER;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
-import java.util.Locale.LanguageRange;
-import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
-
-import org.apache.commons.lang3.StringUtils;
 
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.content.ContentStyle;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
-import org.broadinstitute.ddp.db.dao.StudyDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
+import org.broadinstitute.ddp.filter.LanguageResolutionFilter;
 import org.broadinstitute.ddp.filter.TokenConverterFilter;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.user.User;
@@ -54,6 +49,10 @@ public class RouteUtil {
             ddpAuth = new DDPAuth();
         }
         return ddpAuth;
+    }
+
+    public static Locale getUserLanguage(Request req) {
+        return req.attribute(LanguageResolutionFilter.USER_LANGUAGE);
     }
 
     public static String makeAuthBearerHeader(String headerValue) {
@@ -158,19 +157,5 @@ public class RouteUtil {
         }
 
         return instanceDto;
-    }
-
-    /**
-     * Figures out a preferred user language taking into account the language weights
-     * from Accept-Language header, information from the user profile and languages
-     * supported by the study.
-     */
-    public static Locale resolvePreferredUserLanguage(
-            Handle handle, String acceptLanguageHeader, Locale preferredLocale, String studyGuid
-    ) {
-        List<LanguageRange> acceptLanguages = StringUtils.isNotEmpty(acceptLanguageHeader)
-                ? LanguageRange.parse(acceptLanguageHeader) : new ArrayList<>();
-        Set<Locale> localesSupportedByStudy = handle.attach(StudyDao.class).getSupportedLocalesByGuid(studyGuid);
-        return I18nUtil.resolvePreferredLanguage(preferredLocale, acceptLanguages, localesSupportedByStudy);
     }
 }

@@ -81,9 +81,7 @@ public class GetActivityInstanceRoute implements Route {
             Optional<EnrollmentStatusType> enrollmentStatus = handle.attach(JdbiUserStudyEnrollment.class)
                     .getEnrollmentStatusByUserAndStudyGuids(userGuid, studyGuid);
 
-            Locale preferredUserLanguage = RouteUtil.resolvePreferredUserLanguage(
-                    handle, acceptLanguageHeader, ddpAuth.getPreferredLocale(), studyGuid
-            );
+            Locale preferredUserLanguage = RouteUtil.getUserLanguage(request);
             String isoLangCode = preferredUserLanguage.getLanguage();
 
             LOG.info("Attempting to find a translation for the following language: {}", isoLangCode);

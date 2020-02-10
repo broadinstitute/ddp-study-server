@@ -55,9 +55,7 @@ public class UserActivityInstanceListRoute implements Route {
         String acceptLanguageHeader = request.headers(RouteConstants.ACCEPT_LANGUAGE);
         return TransactionWrapper.withTxn(
                 handle -> {
-                    Locale preferredUserLanguage = RouteUtil.resolvePreferredUserLanguage(
-                            handle, acceptLanguageHeader, ddpAuth.getPreferredLocale(), studyGuid
-                    );
+                    Locale preferredUserLanguage = RouteUtil.getUserLanguage(request);
                     List<ActivityInstanceSummary> summaries = activityInstanceDao.listActivityInstancesForUser(
                             handle, userGuid, studyGuid, preferredUserLanguage.getLanguage()
                     );

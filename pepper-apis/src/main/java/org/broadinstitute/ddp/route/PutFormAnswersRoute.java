@@ -71,9 +71,7 @@ public class PutFormAnswersRoute implements Route {
                 handle -> {
                     RouteUtil.findAccessibleInstanceOrHalt(response, handle, userGuid, studyGuid, instanceGuid);
 
-                    Locale preferredUserLanguage = RouteUtil.resolvePreferredUserLanguage(
-                            handle, acceptLanguageHeader, ddpAuth.getPreferredLocale(), studyGuid
-                    );
+                    Locale preferredUserLanguage = RouteUtil.getUserLanguage(request);
                     String isoLangCode = preferredUserLanguage.getLanguage();
                     long langCodeId = handle.attach(JdbiLanguageCode.class).getLanguageCodeId(isoLangCode);
 

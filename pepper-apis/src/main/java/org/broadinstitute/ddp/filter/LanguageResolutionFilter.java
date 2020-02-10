@@ -54,7 +54,7 @@ public class LanguageResolutionFilter implements Filter {
             Locale preferredLanguage =  I18nUtil.resolvePreferredLanguage(
                     RouteUtil.getDDPAuth(request).getPreferredLocale(), acceptLanguages, localesSupportedByStudy
             );
-            request.attribute(USER_LANGUAGE, preferredLanguage.getLanguage());
+            request.attribute(USER_LANGUAGE, preferredLanguage);
         } catch (Exception e) {
             LOG.error("Error while figuring out the user language", e);
             halt(401);

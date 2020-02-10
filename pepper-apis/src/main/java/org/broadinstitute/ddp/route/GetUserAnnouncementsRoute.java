@@ -55,9 +55,7 @@ public class GetUserAnnouncementsRoute implements Route {
         String acceptLanguageHeader = request.headers(RouteConstants.ACCEPT_LANGUAGE);
 
         return TransactionWrapper.withTxn(handle -> {
-            Locale preferredUserLanguage = RouteUtil.resolvePreferredUserLanguage(
-                    handle, acceptLanguageHeader, ddpAuth.getPreferredLocale(), studyGuid
-            );
+            Locale preferredUserLanguage = RouteUtil.getUserLanguage(request);
             String langCode = preferredUserLanguage.getLanguage();
 
             LOG.info("Using ddp content style {} and language code {} to render announcement messages", style, langCode);
