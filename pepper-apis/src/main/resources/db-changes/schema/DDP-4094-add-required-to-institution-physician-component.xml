@@ -8,6 +8,7 @@
 
         <addColumn tableName="institution_physician_component">
             <column name="required" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"/>
             </column>
         </addColumn>
 
