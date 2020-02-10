@@ -265,7 +265,7 @@ public class Housekeeping {
                                     .findUserByGuid(pendingEvent.getParticipantGuid())
                                     .orElse(null);
                             if (participant == null) {
-                                LOG.warn("Could not find participant {} for queued event {}, skipping",
+                                LOG.error("Could not find participant {} for publishing queued event {}, skipping",
                                         pendingEvent.getParticipantGuid(), pendingEvent.getQueuedEventId());
                                 continue;
                             } else if (participant.isTemporary()) {
