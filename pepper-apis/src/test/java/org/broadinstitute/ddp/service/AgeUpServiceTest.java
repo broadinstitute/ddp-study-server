@@ -12,7 +12,6 @@ import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
@@ -210,13 +209,6 @@ public class AgeUpServiceTest extends TxnAwareBaseTest {
             assertEquals("should have only completed 1 candidate",
                     1, service.runAgeUpCheck(handle, interpreter, policy));
 
-            try {
-                // Wait for events to be ready
-                TimeUnit.SECONDS.sleep(1);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-
             List<AgeUpCandidate> candidates = handle.attach(StudyGovernanceDao.class)
                     .findAllAgeUpCandidatesByStudyId(testData.getStudyId())
                     .collect(Collectors.toList());
@@ -227,7 +219,7 @@ public class AgeUpServiceTest extends TxnAwareBaseTest {
                     .getEnrollmentStatusByUserAndStudyIds(user1.getId(), testData.getStudyId());
             assertEquals("should persist changes for first candidate",
                     EnrollmentStatusType.CONSENT_SUSPENDED, status.get());
-            List<QueuedEventDto> events = handle.attach(EventDao.class).getQueuedEvents();
+            List<QueuedEventDto> events = handle.attach(EventDao.class).findAllQueuedEvents();
             assertTrue("should have an event for first candidate", events.stream()
                     .anyMatch(event -> event.getParticipantGuid().equals(user1.getGuid())));
 

@@ -64,10 +64,10 @@ public class SecondStudyDemoActivitiesScript extends TxnAwareBaseTest {
     private static final String REQUIRED_NOTE = "<p><em>* Required field</em></p>";
 
     private static final String PREQUAL_ACT_CODE = "Z8EEFS6BFF";
-    private static final String PREQUAL_ACT_NAME = "Join the movement: tell us about yourself";
-    private static final String PREQUAL_ACT_DASHBOARD_NAME = "About you";
+    private static final String PREQUAL_ACT_NAME = "About you";
+    private static final String PREQUAL_ACT_TITLE = "Join the movement: tell us about yourself";
     private static final String PREQUAL_ACT_DESCRIPTION = "This form allows to understand if you're qualified for the study";
-    private static final String PREQUAL_TITLE = "<h1>" + PREQUAL_ACT_NAME + "</h1>";
+    private static final String PREQUAL_TITLE = "<h1>" + PREQUAL_ACT_TITLE + "</h1>";
     private static final String PREQUAL_INFO = "<br/>"
             + "<p>Complete the form below to tell us about yourself and your cancer. Our goal"
             + " is to perform many different studies within the metastatic/advanced prostate cancer community."
@@ -88,14 +88,14 @@ public class SecondStudyDemoActivitiesScript extends TxnAwareBaseTest {
             + " but I want to stay informed about the Metastatic Prostate Cancer Project.";
 
     private static final String CONSENT_ACT_CODE = "RDEFOAMTPO";
-    private static final String CONSENT_ACT_NAME = "Research Consent Form";
-    private static final String CONSENT_ACT_DASHBOARD_NAME = "Consent Form";
+    private static final String CONSENT_ACT_NAME = "Consent Form";
+    private static final String CONSENT_ACT_TITLE = "Research Consent Form";
     private static final String CONSENT_ACT_DESCRIPTION = "By filling a Consent Form you agree to participate in the study"
             + " and accept its terms and conditions";
     private static final String CONSENT_ACT_DASHBOARD_SUMMARY = "This form is required to get the participant consent";
     private static final String PREQUAL_ACT_DASHBOARD_SUMMARY =
             "This form is required to figure out if the user qualifies for the study";
-    private static final String CONSENT_TITLE = "<h1>" + CONSENT_ACT_NAME + "</h1>";
+    private static final String CONSENT_TITLE = "<h1>" + CONSENT_ACT_TITLE + "</h1>";
     private static final String CONSENT_KEY_POINTS = "<h2>Key Points</h2>"
             + "<p><strong>\"The Metastatic Prostate Cancer Project\"</strong> is a patient-driven"
             + " movement that empowers prostate cancer patients to directly transform research and treatment of"
@@ -286,9 +286,9 @@ public class SecondStudyDemoActivitiesScript extends TxnAwareBaseTest {
                 new FormSectionDef(null, Arrays.asList(titleBlock, infoBlock)),
                 new FormSectionDef(null, Arrays.asList(firstNameQuestion, lastNameQuestion, diagQuestion, noteBlock)));
         List<Translation> names = Collections.singletonList(new Translation("en", PREQUAL_ACT_NAME));
-        List<Translation> dashboardNames = Collections.singletonList(new Translation("en", PREQUAL_ACT_DASHBOARD_NAME));
+        List<Translation> titles = Collections.singletonList(new Translation("en", PREQUAL_ACT_TITLE));
         List<Translation> descriptions = Collections.singletonList(new Translation("en", PREQUAL_ACT_DESCRIPTION));
-        List<SummaryTranslation> dashboardSummaries = Collections.singletonList(
+        List<SummaryTranslation> summaries = Collections.singletonList(
                 new SummaryTranslation("en", PREQUAL_ACT_DASHBOARD_SUMMARY, InstanceStatusType.CREATED)
         );
 
@@ -297,8 +297,8 @@ public class SecondStudyDemoActivitiesScript extends TxnAwareBaseTest {
         Template readonlyHint = Template.html("Please contact your organization regarding the required changes");
         FormActivityDef prequal = new FormActivityDef(
                 FormType.PREQUALIFIER, PREQUAL_ACT_CODE, "v1", STUDY_GUID,
-                instancesAllowed, order, false, names, null, dashboardNames,
-                descriptions, dashboardSummaries, readonlyHint, null, sections, null, null, null, false
+                instancesAllowed, order, false, names, titles, null, descriptions,
+                summaries, readonlyHint, null, sections, null, null, null, false
         );
 
         TransactionWrapper.useTxn(handle -> {
@@ -432,9 +432,9 @@ public class SecondStudyDemoActivitiesScript extends TxnAwareBaseTest {
 
         List<FormSectionDef> sections = Arrays.asList(keySection, introSection, signSection);
         List<Translation> names = Collections.singletonList(new Translation("en", CONSENT_ACT_NAME));
-        List<Translation> dashboardNames = Collections.singletonList(new Translation("en", CONSENT_ACT_DASHBOARD_NAME));
+        List<Translation> titles = Collections.singletonList(new Translation("en", CONSENT_ACT_TITLE));
         List<Translation> descriptions = Collections.singletonList(new Translation("en", CONSENT_ACT_DESCRIPTION));
-        List<SummaryTranslation> dashboardSummaries = Collections.singletonList(
+        List<SummaryTranslation> summaries = Collections.singletonList(
                 new SummaryTranslation("en", CONSENT_ACT_DASHBOARD_SUMMARY, InstanceStatusType.CREATED)
         );
 
@@ -447,7 +447,7 @@ public class SecondStudyDemoActivitiesScript extends TxnAwareBaseTest {
         Template readonlyHint = Template.html("Please contact your organization regarding the required changes");
         ConsentActivityDef consent = new ConsentActivityDef(
                 CONSENT_ACT_CODE, "v1", STUDY_GUID, instancesAllowed, order,
-                false, names, null, dashboardNames, descriptions, dashboardSummaries,
+                false, names, titles, null, descriptions, summaries,
                 readonlyHint, sections, consentExpr, elections, null, null, null, null, false
         );
 

@@ -33,12 +33,12 @@ import com.typesafe.config.Config;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.ddp.constants.ConfigFile;
+import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dao.FormActivityDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
-import org.broadinstitute.ddp.db.dao.JdbiStudyActivityNameTranslation;
 import org.broadinstitute.ddp.db.dao.ParticipantDao;
 import org.broadinstitute.ddp.db.dao.PdfDao;
 import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
@@ -78,6 +78,7 @@ import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
 import org.broadinstitute.ddp.model.activity.definition.GroupBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.PhysicianInstitutionComponentDef;
 import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
+import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
@@ -344,10 +345,12 @@ public class DataExporter {
         Map<String, Object> allActivityDefs = new HashMap<>();
         //Object is List<Map<String, Object>>
 
-        JdbiStudyActivityNameTranslation dao = handle.attach(JdbiStudyActivityNameTranslation.class);
-        String activityName;
         for (ActivityExtract activity : activityExtracts) {
-            activityName = dao.getActivityNameByStudyAndActivityCode(studyDto.getGuid(), activity.getDefinition().getActivityCode(), "en");
+            String activityName = activity.getDefinition().getTranslatedNames().stream()
+                    .filter(name -> name.getLanguageCode().equals(I18nContentRenderer.DEFAULT_LANGUAGE_CODE))
+                    .map(Translation::getText)
+                    .findFirst()
+                    .orElse("");
             ActivityResponseCollector formatter = new ActivityResponseCollector(activity.getDefinition());
             Map<String, Object> activityDefinitions = new HashMap<>();
             activityDefinitions.put("studyGuid", studyDto.getGuid());
@@ -1027,7 +1030,7 @@ public class DataExporter {
         }
 
         CSVWriter writer = new CSVWriter(output);
-        writer.writeNext(headers.toArray(new String[]{}), false);
+        writer.writeNext(headers.toArray(new String[] {}), false);
 
         int total = participants.size();
         int numWritten = 0;
@@ -1064,7 +1067,7 @@ public class DataExporter {
                 continue;
             }
 
-            writer.writeNext(row.toArray(new String[]{}), false);
+            writer.writeNext(row.toArray(new String[] {}), false);
             numWritten += 1;
 
             LOG.info("[export] ({}/{}) participant {} for study {}:"

@@ -1,12 +1,17 @@
 package org.broadinstitute.ddp.db.dao;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.model.activity.definition.ConsentActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
-import org.broadinstitute.ddp.model.activity.definition.i18n.SummaryTranslation;
+import org.broadinstitute.ddp.model.activity.definition.i18n.ActivityI18nDetail;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.FormType;
@@ -25,28 +30,7 @@ public interface FormActivityDao extends SqlObject {
     JdbiActivityVersion getJdbiActivityVersion();
 
     @CreateSqlObject
-    JdbiStudyActivityNameTranslation getJdbiStudyActivityNameTranslation();
-
-    @CreateSqlObject
-    JdbiStudyActivitySubtitleTranslation getJdbiStudyActivitySubtitleTranslation();
-
-    @CreateSqlObject
-    JdbiStudyActivityDashboardNameTranslation getJdbiStudyActivityDashboardNameTranslation();
-
-    @CreateSqlObject
-    JdbiStudyActivityDescriptionTranslation getJdbiStudyActivityDescriptionTranslation();
-
-    @CreateSqlObject
-    JdbiStudyActivitySummaryTranslation getJdbiStudyActivitySummaryTranslation();
-
-    @CreateSqlObject
-    JdbiLanguageCode getJdbiLanguageCode();
-
-    @CreateSqlObject
     JdbiExpression getJdbiExpression();
-
-    @CreateSqlObject
-    JdbiListStyleHint getJdbiListStyleHint();
 
     @CreateSqlObject
     JdbiFormActivitySetting getJdbiFormActivitySetting();
@@ -55,18 +39,20 @@ public interface FormActivityDao extends SqlObject {
     JdbiFormActivityFormSection getJdbiFormActivityFormSection();
 
     @CreateSqlObject
+    ActivityI18nDao getActivityI18nDao();
+
+    @CreateSqlObject
     SectionBlockDao getSectionBlockDao();
 
     @CreateSqlObject
     TemplateDao getTemplateDao();
 
     /**
-     * Create new form activity by inserting all related data for activity definition. Use this to create the first
-     * version of an activity.
+     * Create new form activity by inserting all related data for activity definition. Use this to create the first version of an activity.
      *
      * <p>See {@link ActivityDao#insertActivity(FormActivityDef, RevisionMetadata)} for a more convenient way for
-     * inserting, and {@link ConsentActivityDao#insertActivity(ConsentActivityDef, long)} specifically for consent
-     * activities. Changing content should be done with the appropriate add/disable methods.
+     * inserting, and {@link ConsentActivityDao#insertActivity(ConsentActivityDef, long)} specifically for consent activities. Changing
+     * content should be done with the appropriate add/disable methods.
      *
      * @param activity   the activity to create, without generated things like ids
      * @param revisionId the revision to use, will be shared for all created data
@@ -81,12 +67,7 @@ public interface FormActivityDao extends SqlObject {
 
         JdbiActivity jdbiActivity = getJdbiActivity();
         JdbiActivityVersion jdbiVersion = getJdbiActivityVersion();
-        JdbiStudyActivityNameTranslation jdbiActNameTranslation = getJdbiStudyActivityNameTranslation();
-        JdbiStudyActivitySubtitleTranslation jdbiActSubtitleTranslation = getJdbiStudyActivitySubtitleTranslation();
-        JdbiStudyActivityDashboardNameTranslation jdbiActDashboardNameTranslation = getJdbiStudyActivityDashboardNameTranslation();
-        JdbiStudyActivityDescriptionTranslation jdbiActDescriptionTranslation = getJdbiStudyActivityDescriptionTranslation();
-        JdbiStudyActivitySummaryTranslation jdbiActSummaryTranslation = getJdbiStudyActivitySummaryTranslation();
-        JdbiLanguageCode jdbiLang = getJdbiLanguageCode();
+        ActivityI18nDao activityI18nDao = getActivityI18nDao();
         SectionBlockDao sectionBlockDao = getSectionBlockDao();
         TemplateDao templateDao = getTemplateDao();
 
@@ -102,36 +83,31 @@ public interface FormActivityDao extends SqlObject {
         long versionId = jdbiVersion.insert(activity.getActivityId(), activity.getVersionTag(), revisionId);
         activity.setVersionId(versionId);
 
-        for (Translation name : activity.getTranslatedNames()) {
-            jdbiActNameTranslation.insert(activityId,
-                    jdbiLang.getLanguageCodeId(name.getLanguageCode()), name.getText());
-        }
-        for (Translation subtitle : activity.getTranslatedSubtitles()) {
-            jdbiActSubtitleTranslation.insert(activityId,
-                    jdbiLang.getLanguageCodeId(subtitle.getLanguageCode()), subtitle.getText());
+        Map<String, String> names = activity.getTranslatedNames().stream()
+                .collect(Collectors.toMap(Translation::getLanguageCode, Translation::getText));
+        Map<String, String> titles = activity.getTranslatedTitles().stream()
+                .collect(Collectors.toMap(Translation::getLanguageCode, Translation::getText));
+        Map<String, String> subtitles = activity.getTranslatedSubtitles().stream()
+                .collect(Collectors.toMap(Translation::getLanguageCode, Translation::getText));
+        Map<String, String> descriptions = activity.getTranslatedDescriptions().stream()
+                .collect(Collectors.toMap(Translation::getLanguageCode, Translation::getText));
 
-        }
-        for (Translation dashboardName : activity.getTranslatedDashboardNames()) {
-            jdbiActDashboardNameTranslation.insert(
+        List<ActivityI18nDetail> details = new ArrayList<>();
+        for (var entry : names.entrySet()) {
+            String isoLangCode = entry.getKey();
+            String name = entry.getValue();
+            details.add(new ActivityI18nDetail(
                     activityId,
-                    jdbiLang.getLanguageCodeId(dashboardName.getLanguageCode()), dashboardName.getText()
-            );
+                    isoLangCode,
+                    name,
+                    titles.getOrDefault(isoLangCode, null),
+                    subtitles.getOrDefault(isoLangCode, null),
+                    descriptions.getOrDefault(isoLangCode, null)
+            ));
         }
-        for (SummaryTranslation summary : activity.getTranslatedSummaries()) {
-            jdbiActSummaryTranslation.insert(
-                    activityId,
-                    summary.getStatusCode(),
-                    jdbiLang.getLanguageCodeId(summary.getLanguageCode()),
-                    summary.getText()
-            );
-        }
-        for (Translation description : activity.getTranslatedDescriptions()) {
-            jdbiActDescriptionTranslation.insert(
-                    activityId,
-                    jdbiLang.getLanguageCodeId(description.getLanguageCode()),
-                    description.getText()
-            );
-        }
+
+        activityI18nDao.insertDetails(details);
+        activityI18nDao.insertSummaries(activityId, activity.getTranslatedSummaries());
 
         FormType formType = activity.getFormType();
         int numRows = jdbiActivity.insertFormActivity(activityId, jdbiActivity.getFormTypeId(formType));
@@ -186,8 +162,29 @@ public interface FormActivityDao extends SqlObject {
                 .setEditTimeoutSec(activityDto.getEditTimeoutSec())
                 .setAllowOndemandTrigger(activityDto.isOndemandTriggerAllowed());
 
-        // todo: query name, translations, templates
-        builder.addName(new Translation("en", ""));
+        List<Translation> names = new ArrayList<>();
+        List<Translation> titles = new ArrayList<>();
+        List<Translation> subtitles = new ArrayList<>();
+        List<Translation> descriptions = new ArrayList<>();
+        getActivityI18nDao().findDetailsByActivityId(activityDto.getActivityId()).forEach(detail -> {
+            String isoLangCode = detail.getIsoLangCode();
+            names.add(new Translation(isoLangCode, detail.getName()));
+            if (detail.getTitle() != null) {
+                titles.add(new Translation(isoLangCode, detail.getTitle()));
+            }
+            if (detail.getSubtitle() != null) {
+                subtitles.add(new Translation(isoLangCode, detail.getSubtitle()));
+            }
+            if (detail.getDescription() != null) {
+                descriptions.add(new Translation(isoLangCode, detail.getDescription()));
+            }
+        });
+        builder.addNames(names);
+        builder.addTitles(titles);
+        builder.addSubtitles(subtitles);
+        builder.addDescriptions(descriptions);
+
+        // todo: query other translations, templates, etc
 
         getJdbiFormActivitySetting()
                 .findSettingDtoByActivityIdAndTimestamp(activityDto.getActivityId(), revisionStart)

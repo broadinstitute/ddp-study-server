@@ -38,6 +38,7 @@ import org.broadinstitute.ddp.db.dao.JdbiMessageDestination;
 import org.broadinstitute.ddp.db.dao.JdbiQueuedEvent;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.QueuedEventDao;
+import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dto.QueuedEventDto;
 import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.db.housekeeping.dao.JdbiEvent;
@@ -62,6 +63,7 @@ import org.broadinstitute.ddp.housekeeping.schedule.StudyExportToBucketJob;
 import org.broadinstitute.ddp.housekeeping.schedule.StudyExportToESJob;
 import org.broadinstitute.ddp.housekeeping.schedule.TemporaryUserCleanupJob;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
+import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.monitoring.PointsReducerFactory;
 import org.broadinstitute.ddp.monitoring.StackdriverCustomMetric;
 import org.broadinstitute.ddp.monitoring.StackdriverMetricsTracker;
@@ -253,11 +255,26 @@ public class Housekeeping {
                     JdbiQueuedEvent queuedEventDao = apisHandle.attach(JdbiQueuedEvent.class);
                     // first query the full list of pending events, shuffled to avoid event starvation
                     LOG.info("Querying pending events");
-                    List<QueuedEventDto> pendingEvents = eventDao.getQueuedEvents();
+                    List<QueuedEventDto> pendingEvents = eventDao.findPublishableQueuedEvents();
                     LOG.info("Found {} events that may be publishable", pendingEvents.size());
                     Collections.shuffle(pendingEvents);
 
                     for (QueuedEventDto pendingEvent : pendingEvents) {
+                        if (pendingEvent.getParticipantGuid() != null) {
+                            User participant = apisHandle.attach(UserDao.class)
+                                    .findUserByGuid(pendingEvent.getParticipantGuid())
+                                    .orElse(null);
+                            if (participant == null) {
+                                LOG.error("Could not find participant {} for publishing queued event {}, skipping",
+                                        pendingEvent.getParticipantGuid(), pendingEvent.getQueuedEventId());
+                                continue;
+                            } else if (participant.isTemporary()) {
+                                LOG.warn("Participant {} for queued event {} is a temporary user, skipping",
+                                        pendingEvent.getParticipantGuid(), pendingEvent.getQueuedEventId());
+                                continue;
+                            }
+                        }
+
                         String pendingEventId = pendingEvent.getDdpEventId();
                         boolean shouldCancel = false;
                         if (StringUtils.isNotBlank(pendingEvent.getCancelCondition())) {

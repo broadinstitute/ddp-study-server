@@ -2,99 +2,87 @@ package org.broadinstitute.ddp.db.dto;
 
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
+import org.jdbi.v3.core.mapper.reflect.ColumnName;
+import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
 /**
- * An event that has been queued for dispatch
- * to pubsub.
+ * An event that has been queued for dispatch to pubsub.
  */
 public class QueuedEventDto {
+
+    private final String housekeepingVersion = "1.0";
     private final String ddpEventId;
-    private EventTriggerType triggerType;
-    private String triggerStatus;
-    private long secondsPostDelay;
-    private long eventConfigurationId;
     private long queuedEventId;
     private Long operatorUserId;
-    private String pubSubTopic;
     private String participantGuid;
     private String participantHruid;
-    private EventActionType eventActionType;
-    private String housekeepingVersion;
+    private long eventConfigurationId;
+    private EventTriggerType triggerType;
+    private EventActionType actionType;
+    private Long postDelaySeconds;
     private Integer maxOccurrencesPerUser;
-    private String cancelCondition;
+    private String pubSubTopic;
     private String precondition;
+    private String cancelCondition;
     private String studyGuid;
 
-    /**
-     * Instantiates QueuedEventDto object.
-     */
+    @JdbiConstructor
     public QueuedEventDto(
-            long eventConfigurationId,
-            long queuedEventId,
-            Long operatorUserId,
-            String participantGuid,
-            String participantHruid,
-            EventActionType eventActionType,
-            String housekeepingVersion,
-            Integer maxOccurrencesPerUser,
-            String pubSubTopic,
-            String precondition,
-            String cancelCondition,
-            String studyGuid
-    ) {
-        this.eventConfigurationId = eventConfigurationId;
+            @ColumnName("queued_event_id") long queuedEventId,
+            @ColumnName("operator_id") Long operatorUserId,
+            @ColumnName("participant_guid") String participantGuid,
+            @ColumnName("participant_hruid") String participantHruid,
+            @ColumnName("event_configuration_id") long eventConfigurationId,
+            @ColumnName("event_trigger_type") EventTriggerType triggerType,
+            @ColumnName("event_action_type") EventActionType actionType,
+            @ColumnName("post_delay_seconds") Long postDelaySeconds,
+            @ColumnName("max_occurrences_per_user") Integer maxOccurrencesPerUser,
+            @ColumnName("gcp_topic") String pubSubTopic,
+            @ColumnName("precondition") String precondition,
+            @ColumnName("cancel_condition") String cancelCondition,
+            @ColumnName("study_guid") String studyGuid) {
+        ddpEventId = eventConfigurationId + "." + participantGuid;
         this.queuedEventId = queuedEventId;
         this.operatorUserId = operatorUserId;
         this.participantGuid = participantGuid;
         this.participantHruid = participantHruid;
-        this.eventActionType = eventActionType;
-        this.housekeepingVersion = housekeepingVersion;
+        this.eventConfigurationId = eventConfigurationId;
+        this.triggerType = triggerType;
+        this.actionType = actionType;
+        this.postDelaySeconds = postDelaySeconds;
         this.maxOccurrencesPerUser = maxOccurrencesPerUser;
         this.pubSubTopic = pubSubTopic;
-        ddpEventId = eventConfigurationId + "." + participantGuid;
         this.precondition = precondition;
         this.cancelCondition = cancelCondition;
         this.studyGuid = studyGuid;
+    }
+
+    public QueuedEventDto(QueuedEventDto other) {
+        this(other.getQueuedEventId(),
+                other.getOperatorUserId(),
+                other.getParticipantGuid(),
+                other.getParticipantHruid(),
+                other.getEventConfigurationId(),
+                other.getTriggerType(),
+                other.getActionType(),
+                other.getPostDelaySeconds(),
+                other.getMaxOccurrencesPerUser(),
+                other.getPubSubTopic(),
+                other.getPrecondition(),
+                other.getCancelCondition(),
+                other.getStudyGuid());
+    }
+
+    public String getHousekeepingVersion() {
+        return housekeepingVersion;
     }
 
     public String getDdpEventId() {
         return ddpEventId;
     }
 
-    public EventTriggerType getTriggerType() {
-        return triggerType;
-    }
-
-    public String getTriggerStatus() {
-        return triggerStatus;
-    }
-
-    public long getSecondsPostDelay() {
-        return secondsPostDelay;
-    }
-
-    public long getEventConfigurationId() {
-        return eventConfigurationId;
-    }
-
-    public EventActionType getActionType() {
-        return eventActionType;
-    }
-
-    public Integer getMaxOccurrencesPerUser() {
-        return maxOccurrencesPerUser;
-    }
-
-    public String getPubSubTopic() {
-        return pubSubTopic;
-    }
-
     public long getQueuedEventId() {
         return queuedEventId;
-    }
-
-    public String getCancelCondition() {
-        return cancelCondition;
     }
 
     public Long getOperatorUserId() {
@@ -109,19 +97,39 @@ public class QueuedEventDto {
         return participantHruid;
     }
 
+    public long getEventConfigurationId() {
+        return eventConfigurationId;
+    }
+
+    public EventTriggerType getTriggerType() {
+        return triggerType;
+    }
+
+    public EventActionType getActionType() {
+        return actionType;
+    }
+
+    public Long getPostDelaySeconds() {
+        return postDelaySeconds;
+    }
+
+    public Integer getMaxOccurrencesPerUser() {
+        return maxOccurrencesPerUser;
+    }
+
+    public String getPubSubTopic() {
+        return pubSubTopic;
+    }
+
     public String getPrecondition() {
         return precondition;
     }
 
+    public String getCancelCondition() {
+        return cancelCondition;
+    }
+
     public String getStudyGuid() {
         return studyGuid;
-    }
-
-    public void setStudyGuid(String studyGuid) {
-        this.studyGuid = studyGuid;
-    }
-
-    public String getHousekeepingVersion() {
-        return housekeepingVersion;
     }
 }
