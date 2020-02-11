@@ -52,6 +52,11 @@ public class LanguageResolutionFilter implements Filter {
             // make any sense outside of the study context
             boolean supportedLanguagesCanBeDetected = studyGuid != null;
             if (!supportedLanguagesCanBeDetected) {
+                LOG.warn(
+                        "Supported languages can't be detected because the filter is invoked"
+                        + " before the route that is outside of the study context. Path = {}",
+                        request.url()
+                );
                 return;
             }
             LOG.info("The supported languages can be detected for the study {}", studyGuid);
