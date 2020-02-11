@@ -8,6 +8,18 @@
     <link href="https://fonts.googleapis.com/css?family=Raleway:300i,300,400,500,700" rel="stylesheet">
     <link id="app-favicon" rel="icon" type="image/x-icon" href="https://storage.googleapis.com/dev-prion-assets/images/favicon.ico">
     <script src="https://kit.fontawesome.com/6ff953c590.js" crossorigin="anonymous"></script>
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+    <!-- Optional theme -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
 </head>
 <body>
 
@@ -23,15 +35,20 @@
 <script src="https://cdn.auth0.com/js/lock/11.9/lock.min.js"></script>
 
 <style type="text/css">
+    @media only screen and (min-width: 1026px) {
+        html {
+            font-size: 18px !important;
+        }
+    }
     html,
     body {
         margin: 0;
         padding: 0 !important;
         height: 100%;
-        font-size: 16px;
+        font-size: 15px;
         background-color:#f9f3e8;
     }
-    body {
+    body, a {
         font-family: 'Raleway', sans-serif !important;
     }
     h2 {
@@ -40,15 +57,17 @@
         font-weight: 500 !important;
         margin-bottom: 15px !important;
         text-align: left !important;
+        margin-top: 20px !important;
+        color: #333 !important;
     }
     h5 {
         font-size: 1rem;
         font-family: 'Raleway', sans-serif;
         line-height: 1.5rem;
         font-weight: 400 !important;
-        color: #000000 !important;
+        color: #333 !important;
         margin-top: 0 !important;
-        margin-bottom: 15px !important;
+        margin-bottom: 10px !important;
         text-align: left !important;
     }
     p {
@@ -59,14 +78,43 @@
         display: block !important;
         color: #000000 !important;
     }
+
+    i.fa {
+        font-family: 'Font Awesome 5 Pro' !important;
+        display: inline-block !important;
+        position: unset;
+        opacity: unset;
+    }
+
+    .NoMargin {
+        margin: 0 !important;
+    }
+
+    .NoTopMargin {
+        margin-top: 0 !important;
+    }
+
+    .TopPaddingTen {
+        padding-top: 10px;
+    }
+
+    .auth0-lock-back-button {
+        z-index: 2000 !important;
+    }
+
     .auth0-lock .auth0-lock-opened-in-frame .auth0-lock-with-tabs {
         height:available !important;
     }
+
     .auth0-lock-header-welcome, .auth0-lock-header{
         background-color: #F2B815 !important;
         border-top-left-radius: 0 !important;
         border-top-right-radius: 0 !important;
         padding: 0 !important;
+    }
+
+    .auth0-lock.auth0-lock, .auth0-lock.auth0-lock * {
+        box-sizing: border-box !important;
     }
 
     .auth0-lock.auth0-lock .auth0-lock-header-bg {
@@ -77,7 +125,6 @@
         text-align: left;
         margin-left: 80px !important;
         height: 55px !important;
-
     }
 
     .auth0-lock.auth0-lock .auth0-lock-header {
@@ -104,9 +151,56 @@
         width:calc(100% - 100px);
         box-sizing: border-box;
         background-color: #82B547 !important;
-        margin-left: 50px !important;
-        margin-right: 50px !important;
+        margin-left: 50px ;
+        margin-right: 50px ;
         display: block !important;
+    }
+
+    @media only screen and (max-width: 767px) {
+        .auth0-lock.auth0-lock .auth0-lock-submit {
+            margin-left: 0px ;
+            margin-right: 0px ;
+            width: 100% ;
+        }
+    }
+
+    @media only screen and (max-width: 992px) and (min-width: 768px) {
+        .auth0-lock.auth0-lock .auth0-lock-submit {
+            margin-left: 25px ;
+            margin-right: 25px ;
+            width: calc(100% - 50px) ;
+        }
+    }
+
+    .auth0-lock-view-content {
+        background-color: #ffffff;
+        margin-left: 50px;
+        margin-right: 50px;
+    }
+
+    @media only screen and (max-width: 767px) {
+        .auth0-lock-view-content {
+            margin-left: 0px;
+            margin-right: 0px;
+        }
+    }
+
+    @media only screen and (max-width: 992px) and (min-width: 768px) {
+        .auth0-lock-view-content {
+            margin-left: 25px;
+            margin-right: 25px;
+        }
+    }
+
+    .auth0-lock-content {
+        max-width: 804px;
+        padding-left: 45px !important;
+        padding-right: 45px !important;
+        padding-top: 30px !important;
+    }
+
+    .auth0-lock.auth0-lock.auth0-lock-opened.auth0-lock-with-tabs .auth0-lock-body-content {
+        padding-top: unset !important;
     }
 
     .auth0-lock-alternative-link {
@@ -118,19 +212,6 @@
 
     .auth0-lock-alternative-link:hover {
         color: #82B547;
-    }
-
-    .auth0-lock-view-content {
-        background-color: #ffffff;
-        margin-left: 50px !important;
-        margin-right: 50px !important;
-    }
-
-    .auth0-lock-content {
-        max-width: 804px;
-        padding-left: 45px !important;
-        padding-right: 45px !important;
-        padding-top: 10px ;
     }
 
     .auth0-lock-password-strength {
@@ -204,8 +285,10 @@
         display: flex !important;
     }
 
-    .NoTopMargin {
-        margin-top: 0 !important;
+    .auth0-lock.auth0-lock .auth0-lock-form .auth0-lock-alternative .auth0-lock-alternative-link {
+        color: #717174;
+        font-size: 0.75rem;
+        line-height: 1.42857143;
     }
 
     .auth0-lock-input-wrap {
@@ -244,19 +327,243 @@
         }
     }
 
-    .nonSignUpHint {
-        padding-top: 10px;
+    /* Header */
+    .auth0-lock.auth0-lock .auth0-lock-header {
+        height: unset;
+        text-align: unset;
+        font-size: 15px !important;
+        font-family: 'Raleway', sans-serif !important;
+        background-color: #F2B815 !important;
+        border-top-left-radius: 0 !important;
+        border-top-right-radius: 0 !important;
+        padding: 0 !important;
+    }
+
+    .auth0-lock.auth0-lock .auth0-lock-header-bg {
+        height: 1% !important;
+    }
+
+    .auth0-lock-header-logo {
+        text-align: left;
+        margin-left: 80px !important;
+        height: 55px !important;
+    }
+
+    .auth0-lock-input-block.auth0-lock-input-email {
+        margin-top: 30px !important;
     }
 
     .loginHeader {
-        line-height: 1.8;
+        line-height: 1.1 !important;
+        margin-top: 20px !important;
     }
 
-    .auth0-lock.auth0-lock .auth0-lock-form .auth0-lock-alternative .auth0-lock-alternative-link {
-        color: #717174;
-        font-size: 0.75rem;
-        line-height: 1.42857143;
+    .Header {
+        height: auto;
+        width: 100%;
+        z-index: 1000;
     }
+
+    .Header-background {
+        position: relative;
+        padding: 30px 80px 20px 80px;
+        margin: 0;
+        background: #F2B816 none;
+        border-radius: 0;
+        border: none;
+        -webkit-box-shadow: none;
+        box-shadow: none;
+        z-index: 100;
+        width: 100%;
+    }
+
+    @media only screen and (max-width: 992px) {
+        .Header-background {
+            padding: 25px 0 0 0 !important;
+        }
+        .navbar-header {
+            padding: 0 25px 25px 25px !important;
+        }
+        .navbar-collapse {
+            padding: 0 25px 10px 25px !important;
+        }
+    }
+
+    .Header-logo img {
+        height: 55px;
+    }
+
+    .Header-hamburger {
+        padding: 9px 10px !important;
+        margin: 8px 0 0 8px !important;
+        background-color: transparent ;
+        background-image: none;
+        border: 2px solid #ffffff !important;
+        border-radius: 4px;
+        transition: all 0.5s ease;
+    }
+
+    .Header-hamburger .icon-bar,
+    .Header-hamburger:hover .icon-bar,
+    .Header-hamburger:focus .icon-bar,
+    .Header-hamburger:active .icon-bar {
+        background-color: #ffffff !important;
+    }
+
+    .Header-hamburger:hover {
+        background-color: transparent !important;
+        box-shadow: 2px 2px 4px #a88838;
+    }
+
+    .Header-hamburger:focus {
+        background-color: transparent !important;
+    }
+
+    .Header-collapse {
+        padding: 0;
+        overflow-x: visible;
+        border-top: none;
+        -webkit-box-shadow: none;
+        box-shadow: none;
+    }
+
+    .Header-collapse.in,
+    .Header-collapse.collapsing {
+        overflow: hidden;
+    }
+
+    .Header-collapse.in,
+    .Header-collapse.collapsing {
+        /*background: rgba(0, 0, 0, 0.4);*/
+        background: #F2B816;
+    }
+
+    .Header-collapse.in li.Nav-item,
+    .Header-collapse.collapsing li.Nav-item {
+        display: block;
+        width: 100%;
+        float: right;
+        text-align: right;
+    }
+
+    .Header-collapse.in li.Nav-item-JoinUs,
+    .Header-collapse.collapsing li.Nav-item-JoinUs {
+        width: auto;
+        text-align: center;
+        padding-top: 10px !important;
+    }
+
+    .Nav ul {
+        list-style: none;
+        float: right;
+    }
+
+    .Nav-item {
+        display: inline;
+        padding: 0 0 0 30px !important;
+        font-weight: 500;
+    }
+
+    #JoinUs {
+        padding: 12px 30px !important;
+    }
+
+    button[data-ddp-test="signInButton"], button[data-ddp-test="signOutButton"] {
+        margin-top: 0;
+    }
+
+    .Nav-itemLink {
+        cursor: pointer;
+        color: #ffffff !important;
+        font-size: 1rem;
+        line-height: 3.2rem !important;
+        text-shadow: none;
+        padding: 0 !important;
+        transition: all 0.3s ease-in-out;
+    }
+
+    .Nav-itemLink--active {
+        font-weight: 700;
+        color: #a88838 !important;
+    }
+
+    .Nav-itemLink:hover {
+        color: #a88838 !important;
+    }
+
+    @media only screen and (max-width: 1025px) {
+        .Header-nav {
+            margin: 0;
+        }
+
+        .Header-logo {
+            margin: 0;
+        }
+    }
+
+    a,
+    button {
+        text-decoration: none !important;
+        outline: 0 !important;
+    }
+
+    a:hover,
+    a:active,
+    a:focus {
+        outline: 0;
+    }
+
+    .Button {
+        border-radius: 2px;
+        font-weight: 500;
+        font-size: 1rem;
+        padding: 12px 30px;
+        margin-bottom: 15px;
+        cursor: pointer;
+        transition: all 0.3s ease-in-out;
+        text-align: center;
+        margin-top: 5px;
+    }
+
+    .Button:hover {
+        box-shadow: 1px 1px 5px #9E9E9E;
+    }
+
+    .Button--secondaryWhite,
+    .Button--secondaryWhite:active,
+    .Button--secondaryWhite:focus {
+        border-radius: 3px;
+        background-color: transparent !important;
+        border: 2px solid #ffffff;
+        color: #ffffff !important;
+    }
+
+    .Button--right {
+        float: right !important;
+        margin: 0 0 0 15px;
+    }
+
+    .Button--right .Icon {
+        padding: 0 0 0 5px;
+        font-size: 0.8rem;
+    }
+
+    .Button--left {
+        float: left !important;
+        margin: 0 15px 0 0;
+    }
+
+    .Button--left .Icon {
+        padding: 0 5px 0 0;
+        font-size: 0.8rem;
+    }
+
+    .Button--active {
+        font-weight: 700;
+        color: #a88838 !important;
+        border: 2px solid #a88838 !important;
+    }
+
 
 </style>
 
@@ -297,14 +604,14 @@
         loginAtLabel: 'Sign in at %s',
         signUpLabel: 'Join Us',
         signUpSubmitLabel: 'Join Us',
-        databaseSignUpInstructions: '<h2>Join Us</h2> <h5>Do you or a relative of yours have prion disease? Tell us about it and join us making a difference...</h5> <h5>Please fill out the form below to register. We will use this account to communicate with you regarding the Prion Registry.</h5>',
+        databaseSignUpInstructions: '<h2 class="Auth0Title">Join Us</h2> <h5>Do you or a relative of yours have prion disease? Tell us about it and join us making a difference...</h5> <h5>Please fill out the form below to register. We will use this account to communicate with you regarding the Prion Registry.</h5>',
         loginTitle: ' ',
         loginLabel: 'Sign In',
         loginSubmitLabel: 'Sign In',
         loginWithLabel: 'Sign in with %s',
         forgotPasswordTitle: ' ',
         forgotPasswordAction: "Forgot your password?",
-        forgotPasswordInstructions: '<h2>Forgot your password?</h2> <h5>Please enter your email address and we will send you password reset instructions.</h5>',
+        forgotPasswordInstructions: '<h2 class="Auth0Title">Forgot your password?</h2> <h5>Please enter your email address and we will send you password reset instructions.</h5>',
         forgotPasswordSubmitLabel: 'Submit',
         firstNameHint: 'Please fill out this field.',
         lastNameHint: 'Please fill out this field.',
@@ -316,7 +623,11 @@
         firstNamePrompt: 'First Name*',
         lastNamePrompt: 'Last Name*',
         registerMessageText: 'Don\'t have an account? Join us here',
-        passwordResetSuccessMessage: 'Already registered? Sign In here'
+        passwordResetSuccessMessage: 'Already registered? Sign In here',
+        logoAlt: 'Prion Registry Logo',
+        learnMore: "Learn More",
+        signIn: "Sign In",
+        joinUs: "Join Us"
     };
     languageDictionary.error = languageDictionary.error || {};
     languageDictionary.error.signUp = languageDictionary.error.signUp || {};
@@ -420,7 +731,7 @@
                 }
             }
             if (!document.getElementById('ddp-password-hint')) {
-                 //Add password prompt and hint
+                //Add password prompt and hint
                 var passwordHint = document.createElement('div');
                 if (mode === 'signup'){
                     passwordHint.innerHTML = '<div id="ddp-password-hint"><label class="Input-label">' + languageDictionary.passwordPrompt + '</label>' +
@@ -428,7 +739,7 @@
                         '<span class="tooltiptext">' + languageDictionary.passwordTooltipText + '</span></i></div>';
                 }
                 else {
-                    passwordHint.innerHTML = '<div id="ddp-password-hint" class="nonSignUpHint"><label class="Input-label TopMargin10">' + languageDictionary.passwordPrompt + '</label></div>';
+                    passwordHint.innerHTML = '<div id="ddp-password-hint" class="TopPaddingTen"><label class="Input-label TopMargin10">' + languageDictionary.passwordPrompt + '</label></div>';
                 }
 
                 var passwordBlock = document.getElementsByClassName('auth0-lock-input-show-password')[0];
@@ -512,14 +823,42 @@
             }
             if (!document.getElementById('ddp-header')) {
                 // tweak the header
+                var signInClass = 'Nav-itemLink';
+                var joinUsClass = 'Button Button--secondaryWhite';
+
+                if (mode === 'signup') {
+                    joinUsClass = 'Button Button--active';
+                }
+                if (mode === 'login' && !document.getElementsByClassName('auth0-lock-back-button')[0]) {
+                    signInClass = 'Nav-itemLink Nav-itemLink--active';
+                }
+
                 var header = document.createElement('div');
-                header.innerHTML = '<div id="ddp-header" style="display:flex;flex-direction:row;' +
-                    'justify-content: flex-start;align-items:center;padding-top:30px;padding-bottom:20px;">' +
-                    '<a href="' + mainUrl + '"><img class="auth0-lock-header-logo" src="' + headerLogo + '"></a>' +
-                    '<div class="navdiv" style="justify-content: flex-end"><ul class="nav navbar-nav navbar-right NoMargin">' +
-                    '<li class="Nav-item"><a href="' + mainUrl + '/learn-more">Learn More</a></li>' +
-                    '<li class="Nav-item"><a href="' + mainUrl + '/login-landing/login">Sign In</a></li>' +
-                    '<li class="Nav-item"><a href="' + mainUrl + '/redirect-join">Join Us</a></li></ul></div></div>';
+                header.innerHTML='<header class="Header" id="ddp-header"><nav class="navbar navbar-default Header-background">' +
+                    '<div class="navbar-header">' +
+                    '<button type="button" class="navbar-toggle collapsed Header-hamburger" data-toggle="collapse" ' +
+                    'data-target="#menu" aria-expanded="false">' +
+                    '<span class="sr-only"></span>' +
+                    '<span class="icon-bar"></span>' +
+                    '<span class="icon-bar"></span>' +
+                    '<span class="icon-bar"></span>' +
+                    '</button>' +
+                    '<a class="Header-logo" href="' + mainUrl + '">' +
+                    '<img src="' + headerLogo + '" alt="' + languageDictionary.logoAlt + '"></a>' +
+                    '</div>' +
+                    '<div class="collapse navbar-collapse Header-collapse" id="menu">' +
+                    '<ul class="nav navbar-nav navbar-right NoMargin">' +
+                    '<li class="Nav-item"><a href="' + mainUrl + '/learn-more" class="Nav-itemLink">' +
+                    languageDictionary.learnMore + '</a></li>' +
+                    '<li class="Nav-item"><a href="' + mainUrl + '/login-landing/login" class="' + signInClass + '" id="SignIn">' +
+                    languageDictionary.signIn + '</a></li>' +
+                    '<li class="Nav-item Nav-item-JoinUs">' +
+                    '<a class="' + joinUsClass + '" href="' + mainUrl + '/redirect-join" id="JoinUs">' + languageDictionary.joinUs + '</a>' +
+                    '</li>' +
+                    '</ul>' +
+                    '</div>' +
+                    '</nav></header>';
+
                 var auth0LockHeader = document.getElementsByClassName('auth0-lock-header-logo')[0];
                 if (auth0LockHeader) {
                     console.log('parent' + auth0LockHeader.parentElement);
@@ -529,6 +868,14 @@
                         ? headerWelcome.childNodes[0]
                         : null);
                 }
+            }
+            else if (mode === 'login' && document.getElementsByClassName('auth0-lock-back-button')[0] && document.getElementsByClassName('Nav-itemLink--active')[0]) {
+                var signInElem = document.getElementsByClassName('Nav-itemLink--active')[0];
+                signInElem.setAttribute('class', 'Nav-itemLink');
+            }
+            else if (mode === 'login' && !document.getElementsByClassName('auth0-lock-back-button')[0] && !document.getElementsByClassName('Nav-itemLink--active')[0]) {
+                signInElem = document.getElementById('SignIn');
+                signInElem.setAttribute('class', 'Nav-itemLink Nav-itemLink--active');
             }
             if (!document.getElementById('ddp-help')) {
                 var lockForm = document.getElementsByClassName('auth0-lock-form');
@@ -585,26 +932,26 @@
     };
     lock.on('show',function() {
         addHelp();
-            var getInputElement = function(name) {
-                return document.getElementsByName(name)[0];
-            };
-            var setFocus = function(theElement) {
-                theElement.focus();
-                return true;
-            };
-            var getElementWithFocus = function() {
-                return document.querySelector(':focus');
-            };
-            var intervalId = setInterval(function() {
-                var firstNameElement = getInputElement('first_name');
-                if(firstNameElement){
-                    setFocus(firstNameElement);
-                    var elementWithFocus = getElementWithFocus();
-                    if(elementWithFocus && elementWithFocus.name && firstNameElement.name === elementWithFocus.name){
-                        clearInterval(intervalId);
-                    }
+        var getInputElement = function(name) {
+            return document.getElementsByName(name)[0];
+        };
+        var setFocus = function(theElement) {
+            theElement.focus();
+            return true;
+        };
+        var getElementWithFocus = function() {
+            return document.querySelector(':focus');
+        };
+        var intervalId = setInterval(function() {
+            var firstNameElement = getInputElement('first_name');
+            if(firstNameElement){
+                setFocus(firstNameElement);
+                var elementWithFocus = getElementWithFocus();
+                if(elementWithFocus && elementWithFocus.name && firstNameElement.name === elementWithFocus.name){
+                    clearInterval(intervalId);
                 }
-            }, 200);
+            }
+        }, 200);
     });
     lock.on('forgot_password ready', function() {
     });
