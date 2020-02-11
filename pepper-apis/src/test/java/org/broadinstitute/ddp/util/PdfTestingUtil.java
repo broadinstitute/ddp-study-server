@@ -93,7 +93,6 @@ import org.broadinstitute.ddp.model.pdf.PdfVersion;
 import org.broadinstitute.ddp.model.pdf.PhysicianInstitutionTemplate;
 import org.broadinstitute.ddp.model.pdf.ProfileSubstitution;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
-import org.broadinstitute.ddp.script.InsertInstitutionAndMedicalProviderSampleDataScript;
 import org.broadinstitute.ddp.service.PdfGenerationService;
 import org.jdbi.v3.core.Handle;
 
@@ -110,7 +109,7 @@ public final class PdfTestingUtil {
     public static final String MAILING_ADDRESS_PHONE_FIELD_VALUE = "phone";
     public static final String MAILING_ADDRESS_ZIP_FIELD_VALUE = "zip";
     public static final String MAILING_ADDRESS_COUNTRY_FIELD_VALUE = "country";
-    public static final String MAILING_ADDRESS_FILE_PATH = "src/main/resources/ReleaseForm_firstPage.pdf";
+    public static final String MAILING_ADDRESS_FILE_PATH = "src/test/resources/ReleaseForm_firstPage.pdf";
     public static final String TEXT_ANSWER = "blue";
     public static final DateValue TESTING_DATE = new DateValue(2018, 10, 3);
     public static final String ANOTHER_DATE = "anotherDate";
@@ -327,14 +326,10 @@ public final class PdfTestingUtil {
                 pdfInfo.getMedicalProviderRowsToDelete().add(generatedGuid);
 
                 // put the vars we're using into the map to assert against them during subclass tests
-                String institutionName = InsertInstitutionAndMedicalProviderSampleDataScript.TestMedicalProviderData
-                        .INSTITUTION_NAME + nameIndex;
+                String institutionName = TestMedicalProviderData.INSTITUTION_NAME + nameIndex;
                 String physicianName = NON_ASCII_NAME + nameIndex;
-                String city = InsertInstitutionAndMedicalProviderSampleDataScript.TestMedicalProviderData.INSTITUTION_CITY
-                        + nameIndex;
-                String state = InsertInstitutionAndMedicalProviderSampleDataScript.TestMedicalProviderData.INSTITUTION_STATE
-                        + nameIndex;
-
+                String city = TestMedicalProviderData.INSTITUTION_CITY + nameIndex;
+                String state = TestMedicalProviderData.INSTITUTION_STATE + nameIndex;
 
                 Map<String, String> expectedPdfSubstitutions = new HashMap<>();
 
@@ -369,11 +364,10 @@ public final class PdfTestingUtil {
             //adding extra physician row to make sure can reuse single input stream to render the templates for multiple dtos
             fieldPostFix = "_1";
             Map<String, String> physicianValues = pdfInfo.getExpectedValuesByInstitutionType().get(InstitutionType.PHYSICIAN);
-            String institutionName = InsertInstitutionAndMedicalProviderSampleDataScript.TestMedicalProviderData
-                    .INSTITUTION_NAME;
+            String institutionName = TestMedicalProviderData.INSTITUTION_NAME;
             String physicianName = "Doctor Nick";
-            String city = InsertInstitutionAndMedicalProviderSampleDataScript.TestMedicalProviderData.INSTITUTION_CITY;
-            String state = InsertInstitutionAndMedicalProviderSampleDataScript.TestMedicalProviderData.INSTITUTION_STATE;
+            String city = TestMedicalProviderData.INSTITUTION_CITY;
+            String state = TestMedicalProviderData.INSTITUTION_STATE;
             physicianValues.put(NAME_FIELD_NAME + fieldPostFix, physicianName);
             physicianValues.put(INSTITUTION_FIELD_NAME + fieldPostFix, institutionName);
             physicianValues.put(CITY_FIELD_NAME + fieldPostFix, city);
@@ -673,6 +667,15 @@ public final class PdfTestingUtil {
     }
 
     private PdfTestingUtil() {
+    }
+
+    public static final class TestMedicalProviderData {
+        public static final String GUID = "BBAB095933";
+        public static final InstitutionType INSTITUTION_TYPE = InstitutionType.INSTITUTION;
+        public static final String INSTITUTION_NAME = "Princeton-Plainsboro Teaching Hospital";
+        public static final String PHYSICIAN_NAME = "House MD";
+        public static final String INSTITUTION_CITY = "West Windsor Township";
+        public static final String INSTITUTION_STATE = "New Jersey";
     }
 
     public static class PdfDbInfo {

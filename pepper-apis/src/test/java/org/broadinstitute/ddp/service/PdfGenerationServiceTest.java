@@ -1,9 +1,9 @@
 package org.broadinstitute.ddp.service;
 
-import static org.broadinstitute.ddp.script.InsertInstitutionAndMedicalProviderSampleDataScript.TestMedicalProviderData.INSTITUTION_CITY;
-import static org.broadinstitute.ddp.script.InsertInstitutionAndMedicalProviderSampleDataScript.TestMedicalProviderData.INSTITUTION_NAME;
-import static org.broadinstitute.ddp.script.InsertInstitutionAndMedicalProviderSampleDataScript.TestMedicalProviderData.INSTITUTION_STATE;
 import static org.broadinstitute.ddp.service.PdfGenerationService.UNCHECKED_VALUE;
+import static org.broadinstitute.ddp.util.PdfTestingUtil.TestMedicalProviderData.INSTITUTION_CITY;
+import static org.broadinstitute.ddp.util.PdfTestingUtil.TestMedicalProviderData.INSTITUTION_NAME;
+import static org.broadinstitute.ddp.util.PdfTestingUtil.TestMedicalProviderData.INSTITUTION_STATE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;

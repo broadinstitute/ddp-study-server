@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Ignore
+// Useful script to help migrate existing studies.
 public class AngioAuth0PasswordResetEmailScript extends TxnAwareBaseTest {
     private static final Logger LOG = LoggerFactory.getLogger(AngioAuth0PasswordResetEmailScript.class);
     private static final String STUDY_GUID = "ANGIO";
