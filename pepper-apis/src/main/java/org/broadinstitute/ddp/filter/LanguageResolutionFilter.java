@@ -1,7 +1,5 @@
 package org.broadinstitute.ddp.filter;
 
-import static spark.Spark.halt;
-
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
@@ -86,7 +84,6 @@ public class LanguageResolutionFilter implements Filter {
             );
         } catch (Exception e) {
             LOG.error("Error while figuring out the user language", e);
-            halt(401);
         }
     }
 }
