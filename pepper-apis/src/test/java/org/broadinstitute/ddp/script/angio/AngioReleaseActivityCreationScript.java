@@ -204,7 +204,7 @@ public class AngioReleaseActivityCreationScript extends TxnAwareBaseTest {
         Template titleTmpl = generateTextTemplate("angio_release_physician_title" + NUANCE, "Your Physicians' Names");
         Template addButtonTmpl = generateTextTemplate("angio_release_physician_button" + NUANCE, "+ ADD ANOTHER PHYSICIAN");
 
-        return new PhysicianComponentDef(true, addButtonTmpl, titleTmpl, null, InstitutionType.PHYSICIAN, true);
+        return new PhysicianComponentDef(true, addButtonTmpl, titleTmpl, null, InstitutionType.PHYSICIAN, true, false);
     }
 
     private InstitutionComponentDef createInitialBiopsyComponent() {
@@ -212,7 +212,7 @@ public class AngioReleaseActivityCreationScript extends TxnAwareBaseTest {
         Template subtitleTmpl = generateTextTemplate("angio_release_initial_biopsy_subtitle" + NUANCE,
                 "Where was your initial biopsy for angiosarcoma performed?");
 
-        return new InstitutionComponentDef(false, null, titleTmpl, subtitleTmpl, InstitutionType.INITIAL_BIOPSY, true);
+        return new InstitutionComponentDef(false, null, titleTmpl, subtitleTmpl, InstitutionType.INITIAL_BIOPSY, true, false);
     }
 
     private InstitutionComponentDef createOtherInstitutionsComponent() {
@@ -220,7 +220,7 @@ public class AngioReleaseActivityCreationScript extends TxnAwareBaseTest {
                 "Where were any other biopsies or surgeries for your angiosarcoma performed?");
         Template addButtonTmpl = generateTextTemplate("angio_release_others_button" + NUANCE, "+ ADD ANOTHER INSTITUTION");
 
-        return new InstitutionComponentDef(true, addButtonTmpl, titleTmpl, null, InstitutionType.INSTITUTION, false);
+        return new InstitutionComponentDef(true, addButtonTmpl, titleTmpl, null, InstitutionType.INSTITUTION, false, false);
     }
 
     public static ActivityInstanceDto saveActivity(Handle handle, FormActivityDef activityDef,

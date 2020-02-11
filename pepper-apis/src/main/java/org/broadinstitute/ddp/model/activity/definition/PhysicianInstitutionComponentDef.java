@@ -25,13 +25,16 @@ public abstract class PhysicianInstitutionComponentDef extends ComponentBlockDef
 
     private boolean showFields;
 
+    private boolean required;
+
     protected PhysicianInstitutionComponentDef(ComponentType physicianOrInstitution,
                                                boolean allowMultiple,
                                                Template addButtonTemplate,
                                                Template titleTemplate,
                                                Template subtitleTemplate,
                                                InstitutionType institutionType,
-                                               boolean showFields) {
+                                               boolean showFields,
+                                               boolean required) {
         super(physicianOrInstitution);
         if (physicianOrInstitution != ComponentType.PHYSICIAN && physicianOrInstitution != ComponentType.INSTITUTION) {
             throw new IllegalArgumentException("Physician/Institution component must be either "
@@ -43,6 +46,7 @@ public abstract class PhysicianInstitutionComponentDef extends ComponentBlockDef
         this.subtitleTemplate = subtitleTemplate;
         this.institutionType = institutionType;
         this.showFields = showFields;
+        this.required = required;
     }
 
     public boolean allowMultiple() {
@@ -67,5 +71,9 @@ public abstract class PhysicianInstitutionComponentDef extends ComponentBlockDef
 
     public boolean showFields() {
         return showFields;
+    }
+
+    public boolean isRequired() {
+        return required;
     }
 }

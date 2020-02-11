@@ -618,6 +618,8 @@ Component.Physician:
                 - PHYSICIAN
             showFieldsInitially:
               type: boolean
+            required:
+              type: boolean
 Component.Institution:
   allOf:
     - $ref: '../pepper.yml#/components/schemas/Component'
@@ -647,6 +649,8 @@ Component.Institution:
                 - INITIAL_BIOPSY
                 - INSTITUTION
             showFieldsInitially:
+              type: boolean
+            required:
               type: boolean
 Component.MailingAddress:
   allOf:
