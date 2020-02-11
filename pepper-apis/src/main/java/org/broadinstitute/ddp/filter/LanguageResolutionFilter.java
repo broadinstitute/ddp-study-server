@@ -45,7 +45,7 @@ public class LanguageResolutionFilter implements Filter {
         try {
             String acceptLanguageHeader = request.headers(RouteConstants.ACCEPT_LANGUAGE);
             Matcher matcher = Pattern.compile("/studies/(\\w+)").matcher(request.url());
-            String studyGuid = matcher.find() ? matcher.group(0) : null;
+            String studyGuid = matcher.find() ? matcher.group(1) : null;
             // The "supported languages" notion is an attribute of a study, thus is doesn't
             // make any sense outside of the study context
             boolean supportedLanguagesCanBeDetected = studyGuid != null;
