@@ -64,8 +64,9 @@ public class LanguageResolutionFilter implements Filter {
                         Locale preferredLocale = I18nUtil.resolvePreferredLanguage(
                                 RouteUtil.getDDPAuth(request).getPreferredLocale(), acceptLanguages, supportedStudyLocaleToLang.keySet()
                         );
-                        // If we are lucky, the preferred language will be among the list of supported languages and we'll spare a db call
-                        // Otherwise, we will have to look into the db to get the id of the fallback language
+                        // If we are lucky, the preferred language will be among the list
+                        // of supported languages and we'll spare a db call. Otherwise, we
+                        // will have to look into the db to get the id of the fallback language
                         LanguageDto preferredLanguage = Optional.ofNullable(supportedStudyLocaleToLang.get(preferredLocale))
                                 .orElseGet(
                                         () -> new LanguageDto(
