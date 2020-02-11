@@ -64,8 +64,6 @@
 
     var mode = config.extraParams.mode;
     var study_guid = config.extraParams.study_guid;
-    var angio = 'ANGIO';
-    var brain = 'cmi-brain';
     var headerLogo = 'https://joincountmein.org/js/compiled/logo-count-me-in.svg';
     var headerText = "Count Me In";
     var studyColor = '#DDDDDD';
@@ -82,19 +80,23 @@
     var loginUrl = config.callbackURL + '/login';
 
     var registerUrl = '';
-    if (study_guid.toUpperCase() === angio) {
+    if (study_guid.toLowerCase() === 'angio') {
         // arz fixme to read from client var
         registerUrl = 'https://dev.ascproject.org/count-me-in';
-        // todo arz move to gcp bucket
-        headerLogo = 'https://storage.googleapis.com/angio-assets/angiosarcoma-project-isotype.png';
+        headerLogo = 'https://storage.googleapis.com/cmi-study-dev-assets/angio/angiosarcoma-project-isotype.png';
         headerText = 'Angiosarcoma Project';
         studyColor = '#ED933A';
         studyHelpEmail = 'info@ascproject.org';
     } else if (study_guid === 'cmi-brain') {
         registerUrl = 'https://dev.braincancerproject.org/count-me-in';
-        studyColor = 'rgb(24, 130, 194)';
         headerText = 'Brain Cancer Project';
-        headerLogo = 'https://storage.googleapis.com/brain-assets/brain-stripe.png';
+        headerLogo = 'https://storage.googleapis.com/cmi-study-dev-assets/brain/brain-stripe.png';
+        studyColor = 'rgb(24, 130, 194)';
+    } else if (study_guid === 'cmi-mbc') {
+        registerUrl = 'https://dev.mbcproject.org/count-me-in';
+        headerText = '';
+        headerLogo = 'https://storage.googleapis.com/cmi-study-dev-assets/mbc/project-logo.png';
+        studyColor = '#2bb673';
     } else if (study_guid.toLowerCase() === 'cmi-osteo') {
         registerUrl = 'https://dev.osproject.org/count-me-in';
         studyColor = '#7154FF';
@@ -107,6 +109,7 @@
     } else {
         console.log('No configuration for ' + study_guid + ', will use defaults');
     }
+
     var connection = config.connection;
     var prompt = !prompt;
     var languageDictionary;
