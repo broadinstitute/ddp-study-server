@@ -275,7 +275,7 @@ public class DataDonationPlatform {
             }
         });
 
-        before(API.BASE + "/*", new LanguageResolutionFilter());
+        before(API.BASE + "/user/*/studies/*", new LanguageResolutionFilter());
 
         enableCORS("*", String.join(",", CORS_HTTP_METHODS), String.join(",", CORS_HTTP_HEADERS));
         setupCatchAllErrorHandling();
