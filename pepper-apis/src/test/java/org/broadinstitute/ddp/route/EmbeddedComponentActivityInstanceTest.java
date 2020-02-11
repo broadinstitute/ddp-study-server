@@ -73,7 +73,8 @@ public class EmbeddedComponentActivityInstanceTest extends IntegrationTestSuite.
                 titleTemplate,
                 subtitleTemplate,
                 institutionType,
-                showFields);
+                showFields,
+                false);
 
         return institutionComponentDef;
     }
@@ -105,7 +106,8 @@ public class EmbeddedComponentActivityInstanceTest extends IntegrationTestSuite.
                 titleTemplate,
                 null,
                 institutionType,
-                showFields);
+                showFields,
+                false);
         return physicianComponentDef;
     }
 

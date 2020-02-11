@@ -30,18 +30,19 @@ public class MedicalProviderFormatterTest {
 
     @Test
     public void testMappings_singleProperty() {
-        Map<String, Object> actual = fmt.mappings(new PhysicianComponentDef(true, tmpl, tmpl, tmpl, InstitutionType.PHYSICIAN, true));
+        Map<String, Object> actual = fmt.mappings(new PhysicianComponentDef(true, tmpl, tmpl, tmpl, InstitutionType.PHYSICIAN,
+                true, false));
         assertNotNull(actual);
         assertEquals(1, actual.size());
         assertTrue(actual.containsKey("PHYSICIAN"));
         assertEquals("text", ((Map) actual.get("PHYSICIAN")).get("type"));
 
-        actual = fmt.mappings(new InstitutionComponentDef(true, tmpl, tmpl, tmpl, InstitutionType.INITIAL_BIOPSY, true));
+        actual = fmt.mappings(new InstitutionComponentDef(true, tmpl, tmpl, tmpl, InstitutionType.INITIAL_BIOPSY, true, false));
         assertEquals(1, actual.size());
         assertTrue(actual.containsKey("INITIAL_BIOPSY"));
         assertEquals("text", ((Map) actual.get("INITIAL_BIOPSY")).get("type"));
 
-        actual = fmt.mappings(new InstitutionComponentDef(true, tmpl, tmpl, tmpl, InstitutionType.INSTITUTION, true));
+        actual = fmt.mappings(new InstitutionComponentDef(true, tmpl, tmpl, tmpl, InstitutionType.INSTITUTION, true, false));
         assertEquals(1, actual.size());
         assertTrue(actual.containsKey("INSTITUTION"));
         assertEquals("text", ((Map) actual.get("INSTITUTION")).get("type"));
@@ -49,16 +50,16 @@ public class MedicalProviderFormatterTest {
 
     @Test
     public void testHeaders_singleColumn() {
-        List<String> actual = fmt.headers(new PhysicianComponentDef(true, tmpl, tmpl, tmpl, InstitutionType.PHYSICIAN, true));
+        List<String> actual = fmt.headers(new PhysicianComponentDef(true, tmpl, tmpl, tmpl, InstitutionType.PHYSICIAN, true, false));
         assertNotNull(actual);
         assertEquals(1, actual.size());
         assertEquals("PHYSICIAN", actual.get(0));
 
-        actual = fmt.headers(new InstitutionComponentDef(true, tmpl, tmpl, tmpl, InstitutionType.INITIAL_BIOPSY, true));
+        actual = fmt.headers(new InstitutionComponentDef(true, tmpl, tmpl, tmpl, InstitutionType.INITIAL_BIOPSY, true, false));
         assertEquals(1, actual.size());
         assertEquals("INITIAL_BIOPSY", actual.get(0));
 
-        actual = fmt.headers(new InstitutionComponentDef(true, tmpl, tmpl, tmpl, InstitutionType.INSTITUTION, true));
+        actual = fmt.headers(new InstitutionComponentDef(true, tmpl, tmpl, tmpl, InstitutionType.INSTITUTION, true, false));
         assertEquals(1, actual.size());
         assertEquals("INSTITUTION", actual.get(0));
     }

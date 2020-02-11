@@ -16,6 +16,7 @@ public abstract class PhysicianInstitutionComponent extends FormComponent {
     public static final String SUBTITLE_TEXT = "subtitleText";
     public static final String INSTITUTION_TYPE = "institutionType";
     public static final String SHOW_FIELDS = "showFieldsInitially";
+    public static final String REQUIRED = "required";
 
     // fields are marked transient so that gson does not deserialize them.  instead,
     // they are added to the parameters list, which is serialized.
@@ -31,6 +32,8 @@ public abstract class PhysicianInstitutionComponent extends FormComponent {
 
     private transient boolean showFields;
 
+    private transient boolean required;
+
     protected PhysicianInstitutionComponent(ComponentType physicianOrInstitution,
                                             boolean allowMultiple,
                                             String addButtonText,
@@ -38,6 +41,7 @@ public abstract class PhysicianInstitutionComponent extends FormComponent {
                                             String subtitleText,
                                             InstitutionType institutionType,
                                             boolean showFields,
+                                            boolean required,
                                             boolean hideNumber) {
         super(physicianOrInstitution);
         if (physicianOrInstitution != ComponentType.PHYSICIAN && physicianOrInstitution != ComponentType.INSTITUTION) {
@@ -51,6 +55,7 @@ public abstract class PhysicianInstitutionComponent extends FormComponent {
         this.institutionType = institutionType;
         this.showFields = showFields;
         this.hideDisplayNumber = hideNumber;
+        this.required = required;
         initParametersMap();
     }
 
@@ -61,6 +66,7 @@ public abstract class PhysicianInstitutionComponent extends FormComponent {
         parameters.put(SUBTITLE_TEXT, subtitleText);
         parameters.put(INSTITUTION_TYPE, institutionType.name());
         parameters.put(SHOW_FIELDS, showFields);
+        parameters.put(REQUIRED, required);
     }
 
     public InstitutionType getInstitutionType() {

@@ -11,7 +11,9 @@ public final class InstitutionComponentDef extends PhysicianInstitutionComponent
                                    Template titleTemplate,
                                    Template subtitleTemplate,
                                    InstitutionType institutionType,
-                                   boolean showFields) {
-        super(ComponentType.INSTITUTION, allowMultiple, addButtonTemplate, titleTemplate, subtitleTemplate, institutionType, showFields);
+                                   boolean showFields,
+                                   boolean required) {
+        super(ComponentType.INSTITUTION, allowMultiple, addButtonTemplate, titleTemplate, subtitleTemplate, institutionType,
+                showFields, required);
     }
 }
