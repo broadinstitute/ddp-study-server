@@ -65,12 +65,12 @@ public abstract class ActivityDef {
     protected List<@Valid @NotNull Translation> translatedNames;
 
     @NotNull
-    @SerializedName("translatedSubtitles")
-    protected List<@Valid @NotNull Translation> translatedSubtitles;
+    @SerializedName("translatedTitles")
+    protected List<@Valid @NotNull Translation> translatedTitles;
 
     @NotNull
-    @SerializedName("translatedDashboardNames")
-    protected List<@Valid @NotNull Translation> translatedDashboardNames;
+    @SerializedName("translatedSubtitles")
+    protected List<@Valid @NotNull Translation> translatedSubtitles;
 
     @NotNull
     @SerializedName("translatedDescriptions")
@@ -99,8 +99,8 @@ public abstract class ActivityDef {
             int displayOrder,
             boolean writeOnce,
             List<Translation> translatedNames,
+            List<Translation> translatedTitles,
             List<Translation> translatedSubtitles,
-            List<Translation> translatedDashboardNames,
             List<Translation> translatedDescriptions,
             List<SummaryTranslation> translatedSummaries,
             Template readonlyHintTemplate,
@@ -118,8 +118,8 @@ public abstract class ActivityDef {
         } else {
             throw new IllegalArgumentException("Need at least one name translation");
         }
+        this.translatedTitles = translatedTitles;
         this.translatedSubtitles = translatedSubtitles;
-        this.translatedDashboardNames = translatedDashboardNames;
         this.translatedDescriptions = translatedDescriptions;
         this.translatedSummaries = translatedSummaries;
         this.readonlyHintTemplate = readonlyHintTemplate;
@@ -179,12 +179,12 @@ public abstract class ActivityDef {
         return translatedNames;
     }
 
-    public List<Translation> getTranslatedSubtitles() {
-        return translatedSubtitles;
+    public List<Translation> getTranslatedTitles() {
+        return translatedTitles;
     }
 
-    public List<Translation> getTranslatedDashboardNames() {
-        return translatedDashboardNames;
+    public List<Translation> getTranslatedSubtitles() {
+        return translatedSubtitles;
     }
 
     public List<Translation> getTranslatedDescriptions() {
@@ -252,10 +252,10 @@ public abstract class ActivityDef {
         protected boolean excludeFromDisplay = false;
         protected boolean allowUnauthenticated = false;
         protected List<Translation> names = new ArrayList<>();
+        protected List<Translation> titles = new ArrayList<>();
         protected List<Translation> subtitles = new ArrayList<>();
-        protected List<Translation> dashboardNames = new ArrayList<>();
         protected List<Translation> descriptions = new ArrayList<>();
-        protected List<SummaryTranslation> dashboardSummaries = new ArrayList<>();
+        protected List<SummaryTranslation> summaries = new ArrayList<>();
         protected Template readonlyHintTemplate;
         protected boolean isFollowup;
 
@@ -355,6 +355,21 @@ public abstract class ActivityDef {
             return self();
         }
 
+        public T addTitle(Translation title) {
+            this.titles.add(title);
+            return self();
+        }
+
+        public T addTitles(Collection<Translation> titles) {
+            this.titles.addAll(titles);
+            return self();
+        }
+
+        public T clearTitles() {
+            this.titles.clear();
+            return self();
+        }
+
         public T addSubtitle(Translation subtitle) {
             this.subtitles.add(subtitle);
             return self();
@@ -367,21 +382,6 @@ public abstract class ActivityDef {
 
         public T clearSubtitles() {
             this.subtitles.clear();
-            return self();
-        }
-
-        public T addDashboardName(Translation dashboardName) {
-            this.dashboardNames.add(dashboardName);
-            return self();
-        }
-
-        public T addDashboardNames(Collection<Translation> dashboardNames) {
-            this.dashboardNames.addAll(dashboardNames);
-            return self();
-        }
-
-        public T clearDashboardNames() {
-            this.dashboardNames.clear();
             return self();
         }
 
@@ -401,17 +401,17 @@ public abstract class ActivityDef {
         }
 
         public T addSummary(SummaryTranslation summary) {
-            this.dashboardSummaries.add(summary);
+            this.summaries.add(summary);
             return self();
         }
 
-        public T addSummaries(Collection<SummaryTranslation> dashboardSummaries) {
-            this.dashboardSummaries.addAll(dashboardSummaries);
+        public T addSummaries(Collection<SummaryTranslation> summaries) {
+            this.summaries.addAll(summaries);
             return self();
         }
 
         public T clearSummaries() {
-            this.dashboardSummaries.clear();
+            this.summaries.clear();
             return self();
         }
 

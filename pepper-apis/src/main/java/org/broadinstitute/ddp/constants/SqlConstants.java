@@ -74,8 +74,8 @@ public class SqlConstants {
         public static final String INSTANTIATE_UPON_REGISTRATION = "instantiate_upon_registration";
         public static final String MAX_INSTANCES_PER_USER = "max_instances_per_user";
         public static final String NAME_TRANS = "activity_name_trans";
+        public static final String TITLE_TRANS = "activity_title_trans";
         public static final String SUBTITLE_TRANS = "activity_subtitle_trans";
-        public static final String DASHBOARD_NAME_TRANS = "activity_dashboard_name_trans";
         public static final String DESCRIPTION_TRANS = "activity_description_trans";
         public static final String SUMMARY_TRANS = "activity_summary_trans";
         public static final String EDIT_TIMEOUT_SEC = "edit_timeout_sec";
@@ -96,7 +96,7 @@ public class SqlConstants {
     public static final class ActivityInstanceTable {
         public static final String TABLE_NAME = "activity_instance";
         public static final String GUID = "activity_instance_guid";
-        public static final String NAME = "activity_name";
+        public static final String TITLE = "activity_title";
         public static final String SUBTITLE = "activity_subtitle";
         public static final String TYPE_NAME = "activity_type_name";
         public static final String STATUS_TYPE_NAME = "activity_instance_status_type_name";
@@ -319,43 +319,7 @@ public class SqlConstants {
     }
 
     public static final class EventConfigurationTable {
-
         public static final String ID = "event_configuration_id";
-        public static final String MAX_OCCURRENCES_PER_USER = "max_occurrences_per_user";
-        public static final String POST_DELAY_SECONDS = "post_delay_seconds";
-        public static final String DISPATCH_TO_HOUSEKEEPING = "dispatch_to_housekeeping";
-        public static final String PRECONDITION_EXPRESSION = "precondition_expression";
-        public static final String ACTIVITY_TO_CREATE = "activity_id_to_create";
-    }
-
-    public static final class QueuedEventTable {
-        public static final String ID = "queued_event_id";
-        public static final String OPERATOR_USER_ID = "operator_user_id";
-    }
-
-    public static final class EventActionTypeTable {
-        public static final String TYPE = "event_action_type_code";
-    }
-
-    public static final class MessageDestinationTable {
-
-        public static final String PUBSUB_TOPIC = "gcp_topic";
-    }
-
-    public static final class NotificationServiceTable {
-        public static final String SERVICE_CODE = "service_code";
-    }
-
-    public static final class NotificationTypeTable {
-        public static final String NOTIFICATION_TYPE_CODE = "notification_type_code";
-    }
-
-    public static final class NotificationTemplateTable {
-        public static final String TEMPLATE_KEY = "template_key";
-    }
-
-    public static final class EventTriggerTypeTable {
-        public static final String TYPE_CODE = "event_trigger_type_code";
     }
 
     public static final class MedicalProviderTable {

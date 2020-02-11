@@ -117,7 +117,7 @@ public class SendEmailRouteTest extends IntegrationTestSuite.TestCase {
         postResendAndAssert200(payload);
 
         TransactionWrapper.useTxn(handle -> {
-            List<QueuedEventDto> pendingEvents = handle.attach(EventDao.class).getQueuedEvents();
+            List<QueuedEventDto> pendingEvents = handle.attach(EventDao.class).findPublishableQueuedEvents();
             int numQueuedEvents = 0;
             for (QueuedEventDto pendingEvent : pendingEvents) {
                 if (pendingEvent.getEventConfigurationId() == insertedKnownUserEventConfigId) {
@@ -155,7 +155,7 @@ public class SendEmailRouteTest extends IntegrationTestSuite.TestCase {
         postResendAndAssert200(payload);
 
         TransactionWrapper.useTxn(handle -> {
-            List<QueuedEventDto> pendingEvents = handle.attach(EventDao.class).getQueuedEvents();
+            List<QueuedEventDto> pendingEvents = handle.attach(EventDao.class).findPublishableQueuedEvents();
             int numQueuedEvents = 0;
             for (QueuedEventDto pendingEvent : pendingEvents) {
                 if (pendingEvent.getEventConfigurationId() == insertedUnknownUserEventConfigId) {
@@ -183,7 +183,7 @@ public class SendEmailRouteTest extends IntegrationTestSuite.TestCase {
     }
 
     private int getNumPendingEventsInSeparateTransaction() {
-        return TransactionWrapper.withTxn(handle -> handle.attach(EventDao.class).getPendingConfigurations().size());
+        return TransactionWrapper.withTxn(handle -> handle.attach(EventDao.class).findPublishableQueuedEvents().size());
     }
 
     private static WorkflowState setUpWorkflow(Handle handle, long activityId) {

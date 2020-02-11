@@ -122,7 +122,7 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
         TransactionWrapper.useTxn(handle -> {
             FormInstance inst = runInsertAndFetchInstance(handle, form, testData.getUserGuid());
 
-            assertEquals("Template Activity", inst.getName());
+            assertEquals("Template Activity", inst.getTitle());
             assertEquals(FormType.GENERAL, inst.getFormType());
 
             FormBlock block = inst.getBodySections().get(0).getBlocks().get(0);
@@ -162,7 +162,7 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
         TransactionWrapper.useTxn(handle -> {
             FormInstance inst = runInsertAndFetchInstance(handle, form, testData.getUserGuid());
 
-            assertEquals("Boolean Activity", inst.getName());
+            assertEquals("Boolean Activity", inst.getTitle());
             BoolQuestion question = unwrapSingleBlockQuestion(inst, BoolQuestion.class);
 
             assertEquals(DUMMY_QSID, question.getStableId());
@@ -211,7 +211,7 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
         TransactionWrapper.useTxn(handle -> {
             FormInstance inst = runInsertAndFetchInstance(handle, form, testData.getUserGuid());
 
-            assertEquals("Text Activity", inst.getName());
+            assertEquals("Text Activity", inst.getTitle());
             TextQuestion question = unwrapSingleBlockQuestion(inst, TextQuestion.class);
 
             assertEquals(DUMMY_QSID, question.getStableId());
@@ -328,11 +328,12 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
         });
     }
 
-    private FormActivityDef buildSingleBlockForm(String studyGuid, String name, FormBlockDef block) {
+    private FormActivityDef buildSingleBlockForm(String studyGuid, String title, FormBlockDef block) {
         return FormActivityDef.formBuilder(FormType.GENERAL, "ACTIVITY" + System.currentTimeMillis(), "v1", studyGuid)
                 .setMaxInstancesPerUser(1)
                 .setDisplayOrder(1)
-                .addName(new Translation("en", name))
+                .addName(new Translation("en", "activity name"))
+                .addTitle(new Translation("en", title))
                 .addSection(new FormSectionDef(null, Collections.singletonList(block)))
                 .build();
     }
@@ -394,7 +395,7 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
                     new QuestionBlockDef(picklistQuestion));
             FormInstance inst = runInsertAndFetchInstance(handle, form, testData.getUserGuid());
 
-            assertEquals("Picklist Activity", inst.getName());
+            assertEquals("Picklist Activity", inst.getTitle());
             PicklistQuestion question = unwrapSingleBlockQuestion(inst, PicklistQuestion.class);
 
             assertEquals(DUMMY_QSID, question.getStableId());
@@ -477,7 +478,7 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
             FormActivityDef form = buildSingleBlockForm(testData.getStudyGuid(), "Date Activity", new QuestionBlockDef(dateQuestion));
             FormInstance inst = runInsertAndFetchInstance(handle, form, testData.getUserGuid());
 
-            assertEquals("Date Activity", inst.getName());
+            assertEquals("Date Activity", inst.getTitle());
             DateQuestion question = unwrapSingleBlockQuestion(inst, DateQuestion.class);
 
             assertEquals(DUMMY_QSID, question.getStableId());

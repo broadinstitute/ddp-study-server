@@ -1,0 +1,15 @@
+group ActivityI18nDao;
+
+select_all_i18n_details() ::= <<
+select i18n.*, lang.iso_language_code
+  from i18n_study_activity as i18n
+  join language_code as lang on lang.language_code_id = i18n.language_code_id
+>>
+
+findDetailById() ::= <<
+<select_all_i18n_details()> where i18n_study_activity_id = :id
+>>
+
+findDetailsByActivityId() ::= <<
+<select_all_i18n_details()> where study_activity_id = :activityId
+>>

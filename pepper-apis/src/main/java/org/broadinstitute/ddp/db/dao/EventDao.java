@@ -1,13 +1,10 @@
 package org.broadinstitute.ddp.db.dao;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
-import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.SqlConstants;
 import org.broadinstitute.ddp.db.dto.EventConfigurationDto;
 import org.broadinstitute.ddp.db.dto.NotificationDetailsDto;
@@ -19,13 +16,10 @@ import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.event.EventConfiguration;
 import org.broadinstitute.ddp.model.event.PdfAttachment;
-import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
 import org.jdbi.v3.core.result.RowView;
-import org.jdbi.v3.core.statement.StatementContext;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
-import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
@@ -68,8 +62,7 @@ public interface EventDao extends SqlObject {
             @Bind("eventTriggerType") EventTriggerType eventTriggerType);
 
     /**
-     * Returns the event configurations for the given
-     * activity instance and status
+     * Returns the event configurations for the given activity instance and status
      */
     @SqlQuery("getActivityStatusEventConfigurations")
     @UseStringTemplateSqlLocator
@@ -103,95 +96,50 @@ public interface EventDao extends SqlObject {
         return numEventsQueued;
     }
 
-
     /**
-     * Clients should consider shuffling returned list to avoid
-     * "bad apple" messages that cause flow to block at the same
-     * point in the queue and thus starve everything that comes
-     * after the bad apple
-     *
-     * @return
+     * Clients should consider shuffling returned list to avoid "bad apple" messages that cause flow to block at the same point in the queue
+     * and thus starve everything that comes after the bad apple.
      */
-    default List<QueuedEventDto> getQueuedEvents() {
-        List<QueuedEventDto> queuedEvents = new ArrayList<>();
+    @UseStringTemplateSqlLocator
+    @SqlQuery("findPublishableQueuedEvents")
+    @RegisterConstructorMapper(QueuedEventDto.class)
+    @RegisterConstructorMapper(QueuedNotificationDto.class)
+    @RegisterConstructorMapper(NotificationDetailsDto.class)
+    @RegisterConstructorMapper(NotificationTemplateSubstitutionDto.class)
+    @RegisterConstructorMapper(QueuedPdfGenerationDto.class)
+    @UseRowReducer(QueuedEventDtoReducer.class)
+    List<QueuedEventDto> findPublishableQueuedEvents();
 
-        // do basic query to get generic queued event details
-        List<QueuedEventDto> pendingEvents = getPendingConfigurations();
-        for (QueuedEventDto pendingEvent : pendingEvents) {
-            if (pendingEvent.getActionType() == EventActionType.NOTIFICATION) {
-                QueuedNotificationDto queuedNotification = getNotificationDtoForQueuedEvent(pendingEvent);
-                queuedEvents.add(queuedNotification);
-            } else if (pendingEvent.getActionType() == EventActionType.PDF_GENERATION) {
-                queuedEvents.add(getGeneratePdfDtoForQueuedEvent(pendingEvent));
-            } else {
-                queuedEvents.add(pendingEvent);
-            }
-        }
-        return queuedEvents;
-    }
+    @UseStringTemplateSqlLocator
+    @SqlQuery("findAllQueuedEvents")
+    @RegisterConstructorMapper(QueuedEventDto.class)
+    @RegisterConstructorMapper(QueuedNotificationDto.class)
+    @RegisterConstructorMapper(NotificationDetailsDto.class)
+    @RegisterConstructorMapper(NotificationTemplateSubstitutionDto.class)
+    @RegisterConstructorMapper(QueuedPdfGenerationDto.class)
+    @UseRowReducer(QueuedEventDtoReducer.class)
+    @RegisterConstructorMapper(QueuedEventDto.class)
+    List<QueuedEventDto> findAllQueuedEvents();
 
-    /**
-     * Used by Study Builder do not delete
-     **/
+    @UseStringTemplateSqlLocator
+    @SqlQuery("findQueuedEventById")
+    @RegisterConstructorMapper(QueuedEventDto.class)
+    @RegisterConstructorMapper(QueuedNotificationDto.class)
+    @RegisterConstructorMapper(NotificationDetailsDto.class)
+    @RegisterConstructorMapper(NotificationTemplateSubstitutionDto.class)
+    @RegisterConstructorMapper(QueuedPdfGenerationDto.class)
+    @UseRowReducer(QueuedEventDtoReducer.class)
+    @RegisterConstructorMapper(QueuedEventDto.class)
+    Optional<QueuedEventDto> findQueuedEventById(@Bind("id") long queuedEventId);
+
+    // Used by Study Builder do not delete
     @SqlUpdate("update event_configuration set is_active = :enable where umbrella_study_id = :studyId")
     int enableAllStudyEvents(@Bind("studyId") long studyId, @Bind("enable") boolean enable);
-
-    /**
-     * Loads the notification specific information, using eventDto as a base.
-     */
-    default QueuedNotificationDto getNotificationDtoForQueuedEvent(QueuedEventDto eventDto) {
-        // get the substitutions (if any) and wire up a new notification dto
-        List<NotificationTemplateSubstitutionDto> templateSubstitutions =
-                getTemplateSubstitutionsForQueuedNotification(eventDto.getQueuedEventId());
-        NotificationDetailsDto notificationDetailsDto = getNotificationDetailsDtoForQueuedEvent(eventDto
-                        .getQueuedEventId(),
-                eventDto.getParticipantGuid());
-        notificationDetailsDto.setTemplateSubstitutions(templateSubstitutions);
-
-        return new QueuedNotificationDto(eventDto, notificationDetailsDto);
-    }
-
-    /**
-     * Loads the pdf generation specific information, using eventDto as a base.
-     */
-    default QueuedPdfGenerationDto getGeneratePdfDtoForQueuedEvent(QueuedEventDto eventDto) {
-        long pdfDocumentConfigurationId = getPdfConfigIdFromEventActionByEventConfigId(eventDto.getEventConfigurationId());
-        return new QueuedPdfGenerationDto(eventDto, pdfDocumentConfigurationId);
-    }
-
-    @SqlQuery("select act.pdf_document_configuration_id"
-            + "  from pdf_generation_event_action as act"
-            + "  join event_configuration as e on e.event_action_id = act.event_action_id"
-            + " where e.event_configuration_id = :eventConfigId")
-    long getPdfConfigIdFromEventActionByEventConfigId(@Bind("eventConfigId") long eventConfigId);
-
-    @SqlQuery("getTemplateSubstitutionsForQueuedNotification")
-    @UseStringTemplateSqlLocator
-    @RegisterConstructorMapper(NotificationTemplateSubstitutionDto.class)
-    List<NotificationTemplateSubstitutionDto> getTemplateSubstitutionsForQueuedNotification(@Bind("queuedEventId")
-                                                                                                    long queuedEventId);
-
-    @SqlQuery("getNotificationDetailsForQueuedEvent")
-    @UseStringTemplateSqlLocator
-    @RegisterConstructorMapper(NotificationDetailsDto.class)
-    NotificationDetailsDto getNotificationDetailsDtoForQueuedEvent(@Bind("queuedEventId") long queuedEventId,
-                                                                   @Bind("userGuid") String userGuid);
 
     @UseStringTemplateSqlLocator
     @SqlQuery("getNotificationAttachmentDetails")
     @RegisterConstructorMapper(PdfAttachment.class)
     List<PdfAttachment> getPdfAttachmentsForEvent(@Bind("eventConfigId") long eventConfigurationId);
-
-    /**
-     * Consider using {@link #getQueuedEvents()} instead, as it has
-     * more fully formed objects.
-     *
-     * @return
-     */
-    @SqlQuery("getPendingConfigurations")
-    @UseStringTemplateSqlLocator
-    @RegisterRowMapper(EventConfigDtoMapper.class)
-    List<QueuedEventDto> getPendingConfigurations();
 
     @SqlQuery("getDsmNotificationConfigurationIds")
     @UseStringTemplateSqlLocator
@@ -202,8 +150,7 @@ public interface EventDao extends SqlObject {
     );
 
     /**
-     * Gets the configurations associated with notifications that
-     * should be sent when someone joins a study's mailing list
+     * Gets the configurations associated with notifications that should be sent when someone joins a study's mailing list
      *
      * @param studyGuid guid for the study
      */
@@ -216,8 +163,7 @@ public interface EventDao extends SqlObject {
 
 
     /**
-     * Returns the notification event configurations for the given
-     * study and workflow state.
+     * Returns the notification event configurations for the given study and workflow state.
      */
     @SqlQuery("getNotificationConfigsForWorkflowState")
     @UseStringTemplateSqlLocator
@@ -225,25 +171,9 @@ public interface EventDao extends SqlObject {
     List<EventConfigurationDto> getNotificationConfigsForWorkflowState(@Bind("studyGuid") String studyGuid,
                                                                        @Bind("workflowStateId") long workflowStateId);
 
-    class EventConfigDtoMapper implements RowMapper<QueuedEventDto> {
-        @Override
-        public QueuedEventDto map(ResultSet rs, StatementContext ctx) throws SQLException {
-            return new QueuedEventDto(
-                    rs.getLong(SqlConstants.EventConfigurationTable.ID),
-                    rs.getLong(SqlConstants.QueuedEventTable.ID),
-                    rs.getLong(SqlConstants.QueuedEventTable.OPERATOR_USER_ID),
-                    rs.getString(ConfigFile.SqlQuery.PARTICIPANT_GUID),
-                    rs.getString(ConfigFile.SqlQuery.PARTICIPANT_HRUID),
-                    EventActionType.valueOf(rs.getString(SqlConstants.EventActionTypeTable.TYPE)),
-                    "1.0",
-                    (Integer) rs.getObject(SqlConstants.EventConfigurationTable.MAX_OCCURRENCES_PER_USER),
-                    rs.getString(SqlConstants.MessageDestinationTable.PUBSUB_TOPIC),
-                    rs.getString(ConfigFile.SqlQuery.PEX_PRECONDITION),
-                    rs.getString(ConfigFile.SqlQuery.PEX_CANCEL_CONDITION),
-                    rs.getString(ConfigFile.SqlQuery.STUDY_GUID)
-            );
-        }
-    }
+    //
+    // reducers
+    //
 
     class EventConfigurationActionReducer implements LinkedHashMapRowReducer<Long, EventConfigurationDto> {
         @Override
@@ -261,6 +191,34 @@ public interface EventDao extends SqlObject {
             if (targetActivityId != null) {
                 dto.addTargetActivityId(targetActivityId);
             }
+        }
+    }
+
+    class QueuedEventDtoReducer implements LinkedHashMapRowReducer<Long, QueuedEventDto> {
+        @Override
+        public void accumulate(Map<Long, QueuedEventDto> container, RowView view) {
+            QueuedEventDto queuedDto;
+            var actionType = EventActionType.valueOf(view.getColumn("event_action_type", String.class));
+
+            if (actionType == EventActionType.NOTIFICATION) {
+                long id = view.getColumn("queued_event_id", Long.class);
+                String varName = view.getColumn("substitution_variable_name", String.class);
+
+                var notificationDto = (QueuedNotificationDto) container
+                        .computeIfAbsent(id, key -> view.getRow(QueuedNotificationDto.class));
+                if (varName != null) {
+                    var substitution = view.getRow(NotificationTemplateSubstitutionDto.class);
+                    notificationDto.addTemplateSubstitutions(substitution);
+                }
+
+                queuedDto = notificationDto;
+            } else if (actionType == EventActionType.PDF_GENERATION) {
+                queuedDto = view.getRow(QueuedPdfGenerationDto.class);
+            } else {
+                queuedDto = view.getRow(QueuedEventDto.class);
+            }
+
+            container.put(queuedDto.getQueuedEventId(), queuedDto);
         }
     }
 }

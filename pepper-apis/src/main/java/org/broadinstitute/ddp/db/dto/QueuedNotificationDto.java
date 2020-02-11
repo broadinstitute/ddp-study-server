@@ -1,28 +1,21 @@
 package org.broadinstitute.ddp.db.dto;
 
-import java.util.Collection;
+import java.util.List;
 
 import org.broadinstitute.ddp.model.event.NotificationServiceType;
 import org.broadinstitute.ddp.model.event.NotificationType;
+import org.jdbi.v3.core.mapper.Nested;
+import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
 public class QueuedNotificationDto extends QueuedEventDto {
 
     private NotificationDetailsDto notificationDetailsDto;
 
-    public QueuedNotificationDto(QueuedEventDto pendingEvent,
-                                 NotificationDetailsDto notificationDetails) {
-        super(pendingEvent.getEventConfigurationId(),
-                pendingEvent.getQueuedEventId(),
-                pendingEvent.getOperatorUserId(),
-                pendingEvent.getParticipantGuid(),
-                pendingEvent.getParticipantHruid(),
-                pendingEvent.getActionType(),
-                pendingEvent.getHousekeepingVersion(),
-                pendingEvent.getMaxOccurrencesPerUser(),
-                pendingEvent.getPubSubTopic(),
-                pendingEvent.getPrecondition(),
-                pendingEvent.getCancelCondition(),
-                pendingEvent.getStudyGuid());
+    @JdbiConstructor
+    public QueuedNotificationDto(
+            @Nested QueuedEventDto pendingEvent,
+            @Nested NotificationDetailsDto notificationDetails) {
+        super(pendingEvent);
         this.notificationDetailsDto = notificationDetails;
     }
 
@@ -31,7 +24,23 @@ public class QueuedNotificationDto extends QueuedEventDto {
     }
 
     public NotificationServiceType getNotificationServiceType() {
-        return notificationDetailsDto.getNotificationServiceType();
+        return notificationDetailsDto.getServiceType();
+    }
+
+    public String getTemplateKey() {
+        return notificationDetailsDto.getTemplateKey();
+    }
+
+    public Long getLinkedActivityId() {
+        return notificationDetailsDto.getLinkedActivityId();
+    }
+
+    public String getToEmail() {
+        return notificationDetailsDto.getToEmailAddress();
+    }
+
+    public String getWebBaseUrl() {
+        return notificationDetailsDto.getWebBaseUrl();
     }
 
     public String getApiKey() {
@@ -50,37 +59,21 @@ public class QueuedNotificationDto extends QueuedEventDto {
         return notificationDetailsDto.getDefaultSalutation();
     }
 
-    public String getTemplateKey() {
-        return notificationDetailsDto.getTemplateKey();
+    public String getParticipantFirstName() {
+        return notificationDetailsDto.getParticipantFirstName();
     }
 
-    public Long getLinkedActivityId() {
-        return notificationDetailsDto.getLinkedActivityId();
+    public String getParticipantLastName() {
+        return notificationDetailsDto.getParticipantLastName();
     }
 
-    public String getUserFirstName() {
-        return notificationDetailsDto.getUserFirstName();
-    }
-
-    public String getUserLastName() {
-        return notificationDetailsDto.getUserLastName();
-    }
-
-    public Collection<NotificationTemplateSubstitutionDto> getTemplateSubstitutions() {
+    public List<NotificationTemplateSubstitutionDto> getTemplateSubstitutions() {
         return notificationDetailsDto.getTemplateSubstitutions();
     }
 
     public void addTemplateSubstitutions(NotificationTemplateSubstitutionDto... substitutions) {
         for (NotificationTemplateSubstitutionDto substitution : substitutions) {
-            notificationDetailsDto.getTemplateSubstitutions().add(substitution);
+            notificationDetailsDto.addTemplateSubstitution(substitution);
         }
-    }
-
-    public String getWebBaseUrl() {
-        return notificationDetailsDto.getWebBaseUrl();
-    }
-
-    public String getToEmail() {
-        return notificationDetailsDto.getToEmailAddress();
     }
 }

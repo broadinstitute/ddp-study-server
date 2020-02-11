@@ -90,7 +90,7 @@ public class FormInstanceDao {
 
             if (rs.next()) {
                 FormType formType = FormType.valueOf(rs.getString(FormTypeTable.CODE));
-                String name = rs.getString(ActivityInstanceTable.NAME);
+                String title = rs.getString(ActivityInstanceTable.TITLE);
                 String subtitle = rs.getString(ActivityInstanceTable.SUBTITLE);
                 String status = rs.getString(ActivityInstanceTable.STATUS_TYPE_NAME);
                 String activityCode = rs.getString(StudyActivityTable.CODE);
@@ -114,15 +114,14 @@ public class FormInstanceDao {
                 Long lastUpdatedTemplateId = (Long)rs.getObject(FormActivitySettingTable.LAST_UPDATED_TEXT_TEMPLATE_ID);
                 LocalDateTime lastUpdated = rs.getObject(FormActivitySettingTable.LAST_UPDATED, LocalDateTime.class);
                 boolean isFollowup = rs.getBoolean(StudyActivityTable.IS_FOLLOWUP);
-                boolean isHidden = rs.getBoolean(ActivityInstanceTable.IS_HIDDEN);
-                // todo: handle isHidden
+
                 form = new FormInstance(
                         instanceId,
                         activityId,
                         activityCode,
                         formType,
                         instanceGuid,
-                        name,
+                        title,
                         subtitle,
                         status,
                         isReadonly,
