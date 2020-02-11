@@ -54,7 +54,8 @@ public class LanguageResolutionFilter implements Filter {
             if (!supportedLanguagesCanBeDetected) {
                 LOG.warn(
                         "Supported languages can't be detected because the filter is invoked"
-                        + " before the route that is outside of the study context. Path = {}",
+                        + " before the route that is outside of the study context. Please"
+                        + " remount the filter under '/user/*/studies/*' instead. Current path = {}",
                         request.url()
                 );
                 return;
