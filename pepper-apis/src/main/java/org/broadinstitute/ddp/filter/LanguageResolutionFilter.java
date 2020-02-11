@@ -21,6 +21,8 @@ import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.util.I18nUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
 
+import org.jdbi.v3.core.Handle;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,33 +55,36 @@ public class LanguageResolutionFilter implements Filter {
                 return;
             }
             LOG.info("The supported languages can be detected for the study {}", studyGuid);
-            List<LanguageRange> acceptLanguages = StringUtils.isNotEmpty(acceptLanguageHeader)
-                    ? LanguageRange.parse(acceptLanguageHeader) : Collections.emptyList();
-
-            TransactionWrapper.useTxn(
-                    handle -> {
-                        Set<LanguageDto> languagesSupportedByStudy = handle.attach(StudyDao.class).findSupportedLanguagesByGuid(studyGuid);
-                        Map<Locale, LanguageDto> supportedStudyLocaleToLang = languagesSupportedByStudy.stream()
-                                .collect(Collectors.toMap(LanguageDto::toLocale, lang -> lang));
-                        Locale preferredLocale = I18nUtil.resolvePreferredLanguage(
-                                RouteUtil.getDDPAuth(request).getPreferredLocale(), acceptLanguages, supportedStudyLocaleToLang.keySet()
-                        );
-                        // If we are lucky, the preferred language will be among the list
-                        // of supported languages and we'll spare a db call. Otherwise, we
-                        // will have to look into the db to get the id of the fallback language
-                        LanguageDto preferredLanguage = Optional.ofNullable(supportedStudyLocaleToLang.get(preferredLocale))
-                                .orElseGet(
-                                        () -> new LanguageDto(
-                                                handle.attach(JdbiLanguageCode.class).getLanguageCodeId(preferredLocale.getLanguage()),
-                                                preferredLocale.getLanguage()
-                                        )
-                                );
-                        request.attribute(USER_LANGUAGE, preferredLanguage);
-                        LOG.info("Added the preferred user language {} to the attribute store", preferredLocale.getLanguage());
-                    }
+            Locale ddpAuthPreferredLocale = RouteUtil.getDDPAuth(request).getPreferredLocale();
+            LanguageDto preferredLanguage = TransactionWrapper.withTxn(
+                    handle -> getPreferredLanguage(handle, acceptLanguageHeader, ddpAuthPreferredLocale, studyGuid)
             );
+            request.attribute(USER_LANGUAGE, preferredLanguage);
+            LOG.info("Added the preferred user language {} to the attribute store", preferredLanguage.getIsoCode());
         } catch (Exception e) {
             LOG.error("Error while figuring out the user language", e);
         }
+    }
+
+    public LanguageDto getPreferredLanguage(Handle handle, String acceptLanguageHeader, Locale ddpAuthPreferredLocale, String studyGuid) {
+        List<LanguageRange> acceptLanguages = StringUtils.isNotEmpty(acceptLanguageHeader)
+                ? LanguageRange.parse(acceptLanguageHeader) : Collections.emptyList();
+        Set<LanguageDto> languagesSupportedByStudy = handle.attach(StudyDao.class).findSupportedLanguagesByGuid(studyGuid);
+        Map<Locale, LanguageDto> supportedStudyLocaleToLang = languagesSupportedByStudy.stream()
+                .collect(Collectors.toMap(LanguageDto::toLocale, lang -> lang));
+        Locale preferredLocale = I18nUtil.resolvePreferredLanguage(
+                ddpAuthPreferredLocale, acceptLanguages, supportedStudyLocaleToLang.keySet()
+        );
+        // If we are lucky, the preferred language will be among the list
+        // of supported languages and we'll spare a db call. Otherwise, we
+        // will have to look into the db to get the id of the fallback language
+        LanguageDto preferredLanguage = Optional.ofNullable(supportedStudyLocaleToLang.get(preferredLocale))
+                .orElseGet(
+                        () -> new LanguageDto(
+                                handle.attach(JdbiLanguageCode.class).getLanguageCodeId(preferredLocale.getLanguage()),
+                                preferredLocale.getLanguage()
+                        )
+                );
+        return preferredLanguage;
     }
 }
