@@ -64,30 +64,32 @@ public interface ComponentDao extends SqlObject {
             String titleText = null;
             if (institutionDto.getTitleTemplateId() != null) {
                 titleText = i18nRenderer.renderContent(getHandle(), institutionDto.getTitleTemplateId(),
-                                                        languageCodeId);
+                        languageCodeId);
             }
             String subtitleText = null;
             if (institutionDto.getSubtitleTemplateId() != null) {
                 subtitleText = i18nRenderer.renderContent(getHandle(), institutionDto.getSubtitleTemplateId(),
-                                                       languageCodeId);
+                        languageCodeId);
             }
 
             if (isInstitution) {
                 formComponent = new InstitutionComponent(institutionDto.getAllowMultiple(),
-                                                         buttonText,
-                                                         titleText,
-                                                         subtitleText,
-                                                         institutionDto.getInstitutionType(),
-                                                         institutionDto.showFields(),
-                                                         componentDto.shouldHideNumber());
+                        buttonText,
+                        titleText,
+                        subtitleText,
+                        institutionDto.getInstitutionType(),
+                        institutionDto.showFields(),
+                        institutionDto.isRequired(),
+                        componentDto.shouldHideNumber());
             } else if (isPhysician) {
                 formComponent = new PhysicianComponent(institutionDto.getAllowMultiple(),
-                                                       buttonText,
-                                                       titleText,
-                                                       subtitleText,
-                                                       institutionDto.getInstitutionType(),
-                                                       institutionDto.showFields(),
-                                                       componentDto.shouldHideNumber());
+                        buttonText,
+                        titleText,
+                        subtitleText,
+                        institutionDto.getInstitutionType(),
+                        institutionDto.showFields(),
+                        institutionDto.isRequired(),
+                        componentDto.shouldHideNumber());
             } else {
                 throw new DaoException("Unknown component type " + componentDto.getComponentType());
             }
@@ -144,15 +146,16 @@ public interface ComponentDao extends SqlObject {
         }
 
         int numRows = jdbiInstitutionPhysicianComponent.insert(componentId,
-                                                               compDef.allowMultiple(),
-                                                               addButtonTemplateId,
-                                                               titleTemplateId,
-                                                               subtitleTemplateId,
-                                                               institutionTypeId,
-                                                               compDef.showFields());
+                compDef.allowMultiple(),
+                addButtonTemplateId,
+                titleTemplateId,
+                subtitleTemplateId,
+                institutionTypeId,
+                compDef.showFields(),
+                compDef.isRequired());
         if (numRows != 1) {
             throw new DaoException("Inserted " + numRows + " rows for institution/physician component " + componentId
-                                           + " in block " + blockId);
+                    + " in block " + blockId);
         }
 
         LOG.info("Inserted institution component {}", componentId);
@@ -223,10 +226,10 @@ public interface ComponentDao extends SqlObject {
         PhysicianInstitutionComponentDef comp;
         if (compDto.getInstitutionType() == InstitutionType.PHYSICIAN) {
             comp = new PhysicianComponentDef(compDto.getAllowMultiple(), buttonTmpl, titleTmpl, subtitleTmpl,
-                    compDto.getInstitutionType(), compDto.showFields());
+                    compDto.getInstitutionType(), compDto.showFields(), compDto.isRequired());
         } else {
             comp = new InstitutionComponentDef(compDto.getAllowMultiple(), buttonTmpl, titleTmpl, subtitleTmpl,
-                    compDto.getInstitutionType(), compDto.showFields());
+                    compDto.getInstitutionType(), compDto.showFields(), compDto.isRequired());
         }
         comp.setHideNumber(componentDto.shouldHideNumber());
         return comp;
