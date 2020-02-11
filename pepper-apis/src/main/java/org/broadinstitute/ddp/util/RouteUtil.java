@@ -16,7 +16,7 @@ import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
-import org.broadinstitute.ddp.filter.LanguageResolutionFilter;
+import org.broadinstitute.ddp.filter.StudyLanguageResolutionFilter;
 import org.broadinstitute.ddp.filter.TokenConverterFilter;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.user.User;
@@ -52,7 +52,7 @@ public class RouteUtil {
     }
 
     public static LanguageDto getUserLanguage(Request req) {
-        return req.attribute(LanguageResolutionFilter.USER_LANGUAGE);
+        return req.attribute(StudyLanguageResolutionFilter.USER_LANGUAGE);
     }
 
     public static String makeAuthBearerHeader(String headerValue) {

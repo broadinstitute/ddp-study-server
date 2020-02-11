@@ -37,10 +37,10 @@ import spark.Response;
  * supported by the study. Puts that language into the attribute storage to make
  * it available later in all routes interested in fetching translated entities
  */
-public class LanguageResolutionFilter implements Filter {
+public class StudyLanguageResolutionFilter implements Filter {
 
     public static final String USER_LANGUAGE = "USER_LANGUAGE";
-    private static final Logger LOG = LoggerFactory.getLogger(LanguageResolutionFilter.class);
+    private static final Logger LOG = LoggerFactory.getLogger(StudyLanguageResolutionFilter.class);
 
     @Override
     public void handle(Request request, Response response) {

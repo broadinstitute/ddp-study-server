@@ -43,9 +43,9 @@ import org.broadinstitute.ddp.filter.AddDDPAuthLoggingFilter;
 import org.broadinstitute.ddp.filter.DsmAuthFilter;
 import org.broadinstitute.ddp.filter.ExcludePathFilterWrapper;
 import org.broadinstitute.ddp.filter.HttpHeaderMDCFilter;
-import org.broadinstitute.ddp.filter.LanguageResolutionFilter;
 import org.broadinstitute.ddp.filter.MDCAttributeRemovalFilter;
 import org.broadinstitute.ddp.filter.MDCLogBreadCrumbFilter;
+import org.broadinstitute.ddp.filter.StudyLanguageResolutionFilter;
 import org.broadinstitute.ddp.filter.TokenConverterFilter;
 import org.broadinstitute.ddp.filter.UserAuthCheckFilter;
 import org.broadinstitute.ddp.json.errors.ApiError;
@@ -275,7 +275,7 @@ public class DataDonationPlatform {
             }
         });
 
-        before(API.BASE + "/user/*/studies/*", new LanguageResolutionFilter());
+        before(API.BASE + "/user/*/studies/*", new StudyLanguageResolutionFilter());
 
         enableCORS("*", String.join(",", CORS_HTTP_METHODS), String.join(",", CORS_HTTP_HEADERS));
         setupCatchAllErrorHandling();
