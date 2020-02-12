@@ -10,6 +10,8 @@ import org.broadinstitute.ddp.db.dao.JdbiStudyLanguage;
 import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 
+import org.jdbi.v3.core.Handle;
+
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -30,7 +32,7 @@ public class StudyLanguageResolutionFilterTest extends TxnAwareBaseTest {
     public void test_whenStudySupportsLanguageInUserProfile_andNoLanguageHeaderIsSpecified_thenWeChooseOneFromProfile() {
         TransactionWrapper.useTxn(
                 handle -> {
-                    handle.attach(JdbiStudyLanguage.class).insert(testData.getStudyGuid(), LANG_RU);
+                    enableLanguageSupportForStudy(handle, testData.getStudyGuid(), LANG_RU);
                     String acceptLanguageHeader = null;
                     LanguageDto languageDto = new StudyLanguageResolutionFilter().getPreferredLanguage(
                             handle, acceptLanguageHeader, Locale.forLanguageTag(LANG_RU), testData.getStudyGuid()
@@ -45,8 +47,7 @@ public class StudyLanguageResolutionFilterTest extends TxnAwareBaseTest {
     public void test_whenStudyDoesntSupportLanguageInUserProfile_andNoLanguageHeaderIsSpecified_thenWeFallBackToDefaultOne() {
         TransactionWrapper.useTxn(
                 handle -> {
-                    long ruLanguageId = handle.attach(JdbiLanguageCode.class).getLanguageCodeId(LANG_RU);
-                    handle.attach(JdbiProfile.class).updatePreferredLangId(testData.getTestingUser().getUserId(), ruLanguageId);
+                    setPreferredLanguageInUserProfile(handle, testData.getTestingUser().getUserId(), LANG_RU);
                     String acceptLanguageHeader = null;
                     LanguageDto languageDto = new StudyLanguageResolutionFilter().getPreferredLanguage(
                             handle, acceptLanguageHeader, Locale.forLanguageTag(LANG_RU), testData.getStudyGuid()
@@ -75,7 +76,7 @@ public class StudyLanguageResolutionFilterTest extends TxnAwareBaseTest {
     public void test_whenBothLanguageInUserProfile_andLanguageHeaderAreSpecfied_thenLanguageInHeaderTakesPrecedence() {
         TransactionWrapper.useTxn(
                 handle -> {
-                    handle.attach(JdbiStudyLanguage.class).insert(testData.getStudyGuid(), LANG_RU);
+                    enableLanguageSupportForStudy(handle, testData.getStudyGuid(), LANG_RU);
                     String acceptLanguageHeader = LANG_HEADER_RU;
                     LanguageDto languageDto = new StudyLanguageResolutionFilter().getPreferredLanguage(
                             handle, acceptLanguageHeader, Locale.forLanguageTag(LANG_EN), testData.getStudyGuid()
@@ -90,7 +91,7 @@ public class StudyLanguageResolutionFilterTest extends TxnAwareBaseTest {
     public void test_whenStudyDoesntSupportLanguageInLanguageHeader_thenWeResortToLanguageInUserProfile() {
         TransactionWrapper.useTxn(
                 handle -> {
-                    handle.attach(JdbiStudyLanguage.class).insert(testData.getStudyGuid(), LANG_EN);
+                    enableLanguageSupportForStudy(handle, testData.getStudyGuid(), LANG_EN);
                     String acceptLanguageHeader = LANG_HEADER_RU;
                     LanguageDto languageDto = new StudyLanguageResolutionFilter().getPreferredLanguage(
                             handle, acceptLanguageHeader, Locale.forLanguageTag(LANG_EN), testData.getStudyGuid()
@@ -99,5 +100,14 @@ public class StudyLanguageResolutionFilterTest extends TxnAwareBaseTest {
                     handle.rollback();
                 }
         );
+    }
+
+    private void enableLanguageSupportForStudy(Handle handle, String studyGuid, String isoLanguageCode) {
+        handle.attach(JdbiStudyLanguage.class).insert(studyGuid, isoLanguageCode);
+    }
+
+    private void setPreferredLanguageInUserProfile(Handle handle, long userId, String isoLanguageCode) {
+        long languageId = handle.attach(JdbiLanguageCode.class).getLanguageCodeId(isoLanguageCode);
+        handle.attach(JdbiProfile.class).updatePreferredLangId(userId, languageId);
     }
 }
