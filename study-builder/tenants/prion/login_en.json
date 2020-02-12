@@ -26,5 +26,7 @@
   "successForgotPassword": "If you have previously registered, please check your email to reset your password.",
   "learnMore": "Learn More",
   "signIn": "Sign In",
-  "joinUs": "Join Us"
+  "joinUs": "Join Us",
+  "home": "Home",
+  "backToTop": "Back to top"
 }
