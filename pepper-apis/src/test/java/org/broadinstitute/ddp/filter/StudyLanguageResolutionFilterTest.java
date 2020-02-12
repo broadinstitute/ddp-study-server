@@ -44,7 +44,7 @@ public class StudyLanguageResolutionFilterTest extends TxnAwareBaseTest {
     }
 
     @Test
-    public void test_whenStudyDoesntSupportLanguageInUserProfile_andNoLanguageHeaderIsSpecified_thenWeFallBackToDefaultOne() {
+    public void test_whenStudyDoesNotSupportLanguageInUserProfile_andNoLanguageHeaderIsSpecified_thenWeFallBackToDefaultOne() {
         TransactionWrapper.useTxn(
                 handle -> {
                     String acceptLanguageHeader = null;
@@ -58,7 +58,7 @@ public class StudyLanguageResolutionFilterTest extends TxnAwareBaseTest {
     }
 
     @Test
-    public void test_whenStudyDoesntSupportLanguageInLanguageHeader_thenWeFallBackToDefaultOne() {
+    public void test_whenStudyDoesNotSupportLanguageInLanguageHeader_thenWeFallBackToDefaultOne() {
         TransactionWrapper.useTxn(
                 handle -> {
                     String acceptLanguageHeader = LANG_HEADER_FR;
