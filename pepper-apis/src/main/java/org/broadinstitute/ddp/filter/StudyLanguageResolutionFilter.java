@@ -41,13 +41,15 @@ public class StudyLanguageResolutionFilter implements Filter {
 
     public static final String USER_LANGUAGE = "USER_LANGUAGE";
     private static final Logger LOG = LoggerFactory.getLogger(StudyLanguageResolutionFilter.class);
+    private static final String STUDY_GUID_REGEX = "/studies/(\\w+)";
+    private static final int STUDY_GUID_INDEX = 1;
 
     @Override
     public void handle(Request request, Response response) {
         try {
             String acceptLanguageHeader = request.headers(RouteConstants.ACCEPT_LANGUAGE);
-            Matcher matcher = Pattern.compile("/studies/(\\w+)").matcher(request.url());
-            String studyGuid = matcher.find() ? matcher.group(1) : null;
+            Matcher matcher = Pattern.compile(STUDY_GUID_REGEX).matcher(request.url());
+            String studyGuid = matcher.find() ? matcher.group(STUDY_GUID_INDEX) : null;
             // The "supported languages" notion is an attribute of a study, thus is doesn't
             // make any sense outside of the study context
             boolean supportedLanguagesCanBeDetected = studyGuid != null;
