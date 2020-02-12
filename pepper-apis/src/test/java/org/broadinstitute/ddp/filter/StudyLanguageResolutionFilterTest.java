@@ -4,8 +4,6 @@ import java.util.Locale;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
-import org.broadinstitute.ddp.db.dao.JdbiProfile;
 import org.broadinstitute.ddp.db.dao.JdbiStudyLanguage;
 import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
@@ -21,7 +19,9 @@ public class StudyLanguageResolutionFilterTest extends TxnAwareBaseTest {
 
     private static final String LANG_EN = "en";
     private static final String LANG_RU = "ru";
+    private static final String LANG_FR = "fr";
     private static final String LANG_HEADER_RU = "Accept-Language: ru-RU, ru";
+    private static final String LANG_HEADER_FR = "Accept-Language: fr-FR, fr";
 
     @BeforeClass
     public static void setupClass() {
@@ -47,7 +47,6 @@ public class StudyLanguageResolutionFilterTest extends TxnAwareBaseTest {
     public void test_whenStudyDoesntSupportLanguageInUserProfile_andNoLanguageHeaderIsSpecified_thenWeFallBackToDefaultOne() {
         TransactionWrapper.useTxn(
                 handle -> {
-                    setPreferredLanguageInUserProfile(handle, testData.getTestingUser().getUserId(), LANG_RU);
                     String acceptLanguageHeader = null;
                     LanguageDto languageDto = new StudyLanguageResolutionFilter().getPreferredLanguage(
                             handle, acceptLanguageHeader, Locale.forLanguageTag(LANG_RU), testData.getStudyGuid()
@@ -62,7 +61,7 @@ public class StudyLanguageResolutionFilterTest extends TxnAwareBaseTest {
     public void test_whenStudyDoesntSupportLanguageInLanguageHeader_thenWeFallBackToDefaultOne() {
         TransactionWrapper.useTxn(
                 handle -> {
-                    String acceptLanguageHeader = "Accept-Language: fr-FR, fr";
+                    String acceptLanguageHeader = LANG_HEADER_FR;
                     LanguageDto languageDto = new StudyLanguageResolutionFilter().getPreferredLanguage(
                             handle, acceptLanguageHeader, Locale.forLanguageTag(LANG_RU), testData.getStudyGuid()
                     );
@@ -73,13 +72,14 @@ public class StudyLanguageResolutionFilterTest extends TxnAwareBaseTest {
     }
 
     @Test
-    public void test_whenBothLanguageInUserProfile_andLanguageHeaderAreSpecfied_thenLanguageInHeaderTakesPrecedence() {
+    public void test_whenBothLangInUserProfile_andLangHeaderAreSpecfiedAndSupported_thenLanguageInHeaderTakesPrecedence() {
         TransactionWrapper.useTxn(
                 handle -> {
                     enableLanguageSupportForStudy(handle, testData.getStudyGuid(), LANG_RU);
+                    enableLanguageSupportForStudy(handle, testData.getStudyGuid(), LANG_FR);
                     String acceptLanguageHeader = LANG_HEADER_RU;
                     LanguageDto languageDto = new StudyLanguageResolutionFilter().getPreferredLanguage(
-                            handle, acceptLanguageHeader, Locale.forLanguageTag(LANG_EN), testData.getStudyGuid()
+                            handle, acceptLanguageHeader, Locale.forLanguageTag(LANG_FR), testData.getStudyGuid()
                     );
                     Assert.assertEquals(LANG_RU, languageDto.getIsoCode());
                     handle.rollback();
@@ -88,15 +88,15 @@ public class StudyLanguageResolutionFilterTest extends TxnAwareBaseTest {
     }
 
     @Test
-    public void test_whenStudyDoesntSupportLanguageInLanguageHeader_thenWeResortToLanguageInUserProfile() {
+    public void test_whenStudyDoesNotSupportLanguageInLanguageHeader_thenWeResortToLanguageInUserProfile() {
         TransactionWrapper.useTxn(
                 handle -> {
-                    enableLanguageSupportForStudy(handle, testData.getStudyGuid(), LANG_EN);
+                    enableLanguageSupportForStudy(handle, testData.getStudyGuid(), LANG_FR);
                     String acceptLanguageHeader = LANG_HEADER_RU;
                     LanguageDto languageDto = new StudyLanguageResolutionFilter().getPreferredLanguage(
-                            handle, acceptLanguageHeader, Locale.forLanguageTag(LANG_EN), testData.getStudyGuid()
+                            handle, acceptLanguageHeader, Locale.forLanguageTag(LANG_FR), testData.getStudyGuid()
                     );
-                    Assert.assertEquals(LANG_EN, languageDto.getIsoCode());
+                    Assert.assertEquals(LANG_FR, languageDto.getIsoCode());
                     handle.rollback();
                 }
         );
@@ -104,10 +104,5 @@ public class StudyLanguageResolutionFilterTest extends TxnAwareBaseTest {
 
     private void enableLanguageSupportForStudy(Handle handle, String studyGuid, String isoLanguageCode) {
         handle.attach(JdbiStudyLanguage.class).insert(studyGuid, isoLanguageCode);
-    }
-
-    private void setPreferredLanguageInUserProfile(Handle handle, long userId, String isoLanguageCode) {
-        long languageId = handle.attach(JdbiLanguageCode.class).getLanguageCodeId(isoLanguageCode);
-        handle.attach(JdbiProfile.class).updatePreferredLangId(userId, languageId);
     }
 }
