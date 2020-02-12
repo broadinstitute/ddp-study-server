@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.service;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -18,7 +19,9 @@ import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.EventActionDao;
+import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.EventTriggerDao;
+import org.broadinstitute.ddp.db.dao.InvitationFactory;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiEventConfiguration;
 import org.broadinstitute.ddp.db.dao.JdbiProfile;
@@ -26,6 +29,8 @@ import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
+import org.broadinstitute.ddp.db.dto.QueuedEventDto;
+import org.broadinstitute.ddp.db.dto.SendgridEmailEventActionDto;
 import org.broadinstitute.ddp.db.dto.UserProfileDto;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
@@ -34,6 +39,7 @@ import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.governance.AgeOfMajorityRule;
 import org.broadinstitute.ddp.model.governance.AgeUpCandidate;
 import org.broadinstitute.ddp.model.governance.GovernancePolicy;
+import org.broadinstitute.ddp.model.invitation.InvitationType;
 import org.broadinstitute.ddp.model.pex.Expression;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.model.user.User;
@@ -70,6 +76,8 @@ public class AgeUpServiceTest extends TxnAwareBaseTest {
         TransactionWrapper.useTxn(handle -> {
             User user1 = createAgeUpTestCandidate(handle, EnrollmentStatusType.REGISTERED, null);
             User user2 = createAgeUpTestCandidate(handle, EnrollmentStatusType.REGISTERED, LocalDate.of(2000, 1, 14));
+            handle.attach(InvitationFactory.class)
+                    .createInvitation(InvitationType.AGE_UP, testData.getStudyId(), user2.getId(), "test@datadonationplatform.org");
 
             GovernancePolicy policy = new GovernancePolicy(1L, testData.getStudyId(), testData.getStudyGuid(), new Expression("true"));
             policy.addAgeOfMajorityRule(new AgeOfMajorityRule("true", 20, null));
@@ -124,6 +132,12 @@ public class AgeUpServiceTest extends TxnAwareBaseTest {
 
             GovernancePolicy policy = new GovernancePolicy(1L, testData.getStudyId(), testData.getStudyGuid(), new Expression("true"));
             policy.addAgeOfMajorityRule(new AgeOfMajorityRule("true", 20, null));
+            assertEquals("should be skipped since there's no invitation",
+                    0, service.runAgeUpCheck(handle, interpreter, policy));
+
+            // Create invitation so they're ready for age-up
+            handle.attach(InvitationFactory.class)
+                    .createInvitation(InvitationType.AGE_UP, testData.getStudyId(), user1.getId(), "test@datadonationplatform.org");
             assertEquals(1, service.runAgeUpCheck(handle, interpreter, policy));
 
             List<AgeUpCandidate> candidates = handle.attach(StudyGovernanceDao.class)
@@ -169,6 +183,52 @@ public class AgeUpServiceTest extends TxnAwareBaseTest {
 
             assertTrue("activity instance should have been made read-only", handle.attach(JdbiActivityInstance.class)
                     .getByActivityInstanceId(instanceDto.getId()).get().isReadonly());
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testRunAgeUpCheck_errorInOneCandidateDoesNotAffectAnother() {
+        TransactionWrapper.useTxn(handle -> {
+            User user1 = createAgeUpTestCandidate(handle, EnrollmentStatusType.REGISTERED, LocalDate.of(2000, 1, 14));
+            User user2 = createAgeUpTestCandidate(handle, EnrollmentStatusType.REGISTERED, LocalDate.of(2000, 1, 24));
+            handle.attach(InvitationFactory.class)
+                    .createInvitation(InvitationType.AGE_UP, testData.getStudyId(), user1.getId(), "test@datadonationplatform.org");
+
+            // Setup downstream event which will fail for second candidate
+            long triggerId = handle.attach(EventTriggerDao.class)
+                    .insertStaticTrigger(EventTriggerType.REACHED_AOM_PREP);
+            long actionId = handle.attach(EventActionDao.class)
+                    .insertInvitationEmailNotificationAction(new SendgridEmailEventActionDto("template", "en"));
+            handle.attach(JdbiEventConfiguration.class).insert(triggerId, actionId, testData.getStudyId(),
+                    Instant.now().toEpochMilli(), null, 0, null, null, true, 1);
+
+            GovernancePolicy policy = new GovernancePolicy(1L, testData.getStudyId(), testData.getStudyGuid(), new Expression("true"));
+            policy.addAgeOfMajorityRule(new AgeOfMajorityRule("true", 20, 4));
+            assertEquals("should have only completed 1 candidate",
+                    1, service.runAgeUpCheck(handle, interpreter, policy));
+
+            List<AgeUpCandidate> candidates = handle.attach(StudyGovernanceDao.class)
+                    .findAllAgeUpCandidatesByStudyId(testData.getStudyId())
+                    .collect(Collectors.toList());
+            assertEquals(1, candidates.size());
+            assertEquals(user2.getId(), candidates.get(0).getParticipantUserId());
+
+            Optional<EnrollmentStatusType> status = handle.attach(JdbiUserStudyEnrollment.class)
+                    .getEnrollmentStatusByUserAndStudyIds(user1.getId(), testData.getStudyId());
+            assertEquals("should persist changes for first candidate",
+                    EnrollmentStatusType.CONSENT_SUSPENDED, status.get());
+            List<QueuedEventDto> events = handle.attach(EventDao.class).findAllQueuedEvents();
+            assertTrue("should have an event for first candidate", events.stream()
+                    .anyMatch(event -> event.getParticipantGuid().equals(user1.getGuid())));
+
+            status = handle.attach(JdbiUserStudyEnrollment.class)
+                    .getEnrollmentStatusByUserAndStudyIds(user2.getId(), testData.getStudyId());
+            assertEquals("should still change status for second candidate",
+                    EnrollmentStatusType.CONSENT_SUSPENDED, status.get());
+            assertFalse("should not have an event for second candidate", events.stream()
+                    .anyMatch(event -> event.getParticipantGuid().equals(user2.getGuid())));
 
             handle.rollback();
         });

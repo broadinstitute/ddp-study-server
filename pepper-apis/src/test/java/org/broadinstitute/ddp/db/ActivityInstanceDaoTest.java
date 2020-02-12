@@ -127,9 +127,9 @@ public class ActivityInstanceDaoTest extends TxnAwareBaseTest {
             BiFunction<List<Translation>, String, Optional<Translation>> transFinder = (translations, langCode) ->
                     translations.stream().filter(each -> each.getLanguageCode().equals(langCode)).findFirst();
 
-            Optional<Translation> optionalNameRussianTranslation = transFinder.apply(form.getTranslatedNames(), "ru");
-            assertTrue(optionalNameRussianTranslation.isPresent());
-            assertEquals(optionalNameRussianTranslation.get().getText(), summary.getName());
+            Optional<Translation> optionalTitleRussianTranslation = transFinder.apply(form.getTranslatedTitles(), "ru");
+            assertTrue(optionalTitleRussianTranslation.isPresent());
+            assertEquals(optionalTitleRussianTranslation.get().getText(), summary.getTitle());
 
             Optional<Translation> optionalSubtitleRussianTranslation = transFinder.apply(form.getTranslatedSubtitles(), "ru");
             assertTrue(optionalSubtitleRussianTranslation.isPresent());
@@ -156,9 +156,9 @@ public class ActivityInstanceDaoTest extends TxnAwareBaseTest {
             BiFunction<List<Translation>, String, Optional<Translation>> transFinder = (translations, langCode) ->
                     translations.stream().filter(each -> each.getLanguageCode().equals(langCode)).findFirst();
 
-            Optional<Translation> optionalNameRussianTranslation = transFinder.apply(form.getTranslatedNames(), "ru");
-            assertTrue(optionalNameRussianTranslation.isPresent());
-            assertEquals(optionalNameRussianTranslation.get().getText(), summary.getName());
+            Optional<Translation> optionalTitleRussianTranslation = transFinder.apply(form.getTranslatedTitles(), "ru");
+            assertTrue(optionalTitleRussianTranslation.isPresent());
+            assertEquals(optionalTitleRussianTranslation.get().getText(), summary.getTitle());
 
             Optional<Translation> optionalSubtitleRussianTranslation = transFinder.apply(form.getTranslatedSubtitles(), "ru");
             assertFalse(optionalSubtitleRussianTranslation.isPresent());
@@ -195,9 +195,9 @@ public class ActivityInstanceDaoTest extends TxnAwareBaseTest {
             String savedSubtitle = form.getTranslatedSubtitles().get(0).getText();
             assertNotNull(savedSubtitle);
             assertEquals(savedSubtitle, summary.get(0).getActivitySubtitle());
-            String name = form.getTranslatedNames().get(0).getText();
-            assertNotNull(name);
-            assertEquals(name, summary.get(0).getActivityName());
+            String title = form.getTranslatedTitles().get(0).getText();
+            assertNotNull(title);
+            assertEquals(title, summary.get(0).getActivityTitle());
 
             handle.rollback();
         });
@@ -215,9 +215,9 @@ public class ActivityInstanceDaoTest extends TxnAwareBaseTest {
 
             assertNull(summary.get(0).getActivitySubtitle());
 
-            String originalName = form.getTranslatedNames().get(0).getText();
-            assertNotNull(originalName);
-            assertEquals(originalName, summary.get(0).getActivityName());
+            String originalTitle = form.getTranslatedTitles().get(0).getText();
+            assertNotNull(originalTitle);
+            assertEquals(originalTitle, summary.get(0).getActivityTitle());
 
             handle.rollback();
         });
@@ -322,7 +322,8 @@ public class ActivityInstanceDaoTest extends TxnAwareBaseTest {
 
     private FormActivityDef insertNewActivity(Handle handle, String userGuid, String studyGuid) {
         FormActivityDef form = FormActivityDef.generalFormBuilder("ACT" + Instant.now().toEpochMilli(), "v1", studyGuid)
-                .addName(new Translation("en", "test activity"))
+                .addName(new Translation("en", "activity name"))
+                .addTitle(new Translation("en", "test activity"))
                 .addSubtitle(new Translation("en", "test subtitle"))
                 .build();
         handle.attach(ActivityDao.class).insertActivity(form, RevisionMetadata.now(data.getUserId(), "add test activity"));
@@ -332,7 +333,8 @@ public class ActivityInstanceDaoTest extends TxnAwareBaseTest {
 
     private FormActivityDef insertNewActivityWithoutSubtitle(Handle handle, String userGuid, String studyGuid) {
         FormActivityDef form = FormActivityDef.generalFormBuilder("ACT" + Instant.now().toEpochMilli(), "v1", studyGuid)
-                .addName(new Translation("en", "test activity"))
+                .addName(new Translation("en", "activity name"))
+                .addTitle(new Translation("en", "test activity"))
                 .build();
         handle.attach(ActivityDao.class).insertActivity(form, RevisionMetadata.now(data.getUserId(), "add test activity"));
         assertNotNull(form.getActivityId());
@@ -349,15 +351,19 @@ public class ActivityInstanceDaoTest extends TxnAwareBaseTest {
 
     private FormActivityDef buildActivityWithPreferredLanguageWithoutSubtitle(String studyGuid) {
         return FormActivityDef.generalFormBuilder("ACT" + Instant.now().toEpochMilli(), "v1", studyGuid)
-                .addName(new Translation("ru", "Тестовая активити"))
-                .addName(new Translation("en", "test activity"))
+                .addName(new Translation("ru", "activity name"))
+                .addName(new Translation("en", "activity name"))
+                .addTitle(new Translation("ru", "Тестовая активити"))
+                .addTitle(new Translation("en", "test activity"))
                 .build();
     }
 
     private FormActivityDef buildActivityWithPreferredLanguage(String studyGuid) {
         return FormActivityDef.generalFormBuilder("ACT" + Instant.now().toEpochMilli(), "v1", studyGuid)
-                .addName(new Translation("ru", "Тестовая активити"))
-                .addName(new Translation("en", "test activity"))
+                .addName(new Translation("ru", "activity name"))
+                .addName(new Translation("en", "activity name"))
+                .addTitle(new Translation("ru", "Тестовая активити"))
+                .addTitle(new Translation("en", "test activity"))
                 .addSubtitle(new Translation("ru", "подзаголовок"))
                 .addSubtitle(new Translation("en", "subtitle"))
                 .build();

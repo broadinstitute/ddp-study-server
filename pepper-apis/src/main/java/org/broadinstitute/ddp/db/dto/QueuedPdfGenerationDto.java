@@ -1,23 +1,18 @@
 package org.broadinstitute.ddp.db.dto;
 
+import org.jdbi.v3.core.mapper.Nested;
+import org.jdbi.v3.core.mapper.reflect.ColumnName;
+import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
+
 public class QueuedPdfGenerationDto extends QueuedEventDto {
 
     private long pdfDocumentConfigurationId;
 
-    public QueuedPdfGenerationDto(QueuedEventDto pendingEvent,
-                                  long pdfDocumentConfigurationId) {
-        super(pendingEvent.getEventConfigurationId(),
-                pendingEvent.getQueuedEventId(),
-                pendingEvent.getOperatorUserId(),
-                pendingEvent.getParticipantGuid(),
-                pendingEvent.getParticipantHruid(),
-                pendingEvent.getActionType(),
-                pendingEvent.getHousekeepingVersion(),
-                pendingEvent.getMaxOccurrencesPerUser(),
-                pendingEvent.getPubSubTopic(),
-                pendingEvent.getPrecondition(),
-                pendingEvent.getCancelCondition(),
-                pendingEvent.getStudyGuid());
+    @JdbiConstructor
+    public QueuedPdfGenerationDto(
+            @Nested QueuedEventDto pendingEvent,
+            @ColumnName("pdf_document_configuration_id") long pdfDocumentConfigurationId) {
+        super(pendingEvent);
         this.pdfDocumentConfigurationId = pdfDocumentConfigurationId;
     }
 

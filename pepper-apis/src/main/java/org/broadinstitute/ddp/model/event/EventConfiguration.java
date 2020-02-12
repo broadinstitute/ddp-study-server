@@ -39,6 +39,8 @@ public class EventConfiguration {
             case DSM_NOTIFICATION:
                 eventTrigger = new DsmNotificationTrigger(dto);
                 break;
+            case CONSENT_SUSPENDED:
+                // No sub-tables
             case GOVERNED_USER_REGISTERED:
                 // No sub-tables
             case INVITATION_CREATED:

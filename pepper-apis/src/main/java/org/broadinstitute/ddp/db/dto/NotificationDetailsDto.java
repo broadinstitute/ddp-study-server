@@ -10,74 +10,70 @@ import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
 public class NotificationDetailsDto {
 
-    private List<NotificationTemplateSubstitutionDto> templateSubstitutions;
-
     private NotificationType notificationType;
-
-    private NotificationServiceType notificationServiceType;
-
-    private String apiKey;
-
-    private String studyFromName;
-
-    private String studyFromEmail;
-
-    private String defaultSalutation;
-
+    private NotificationServiceType serviceType;
     private String templateKey;
-
     private Long linkedActivityId;
-
-    private String userFirstName;
-
-    private String userLastName;
-
-    private String webBaseUrl;
-
     private String toEmailAddress;
+    private String webBaseUrl;
+    private String apiKey;
+    private String studyFromName;
+    private String studyFromEmail;
+    private String defaultSalutation;
+    private String participantFirstName;
+    private String participantLastName;
+    private List<NotificationTemplateSubstitutionDto> templateSubstitutions = new ArrayList<>();
 
     @JdbiConstructor
-    public NotificationDetailsDto(@ColumnName("notification_type_code") NotificationType notificationType,
-                                  @ColumnName("service_code") NotificationServiceType notificationServiceType,
-                                  @ColumnName("api_key") String apiKey,
-                                  @ColumnName("from_name") String studyFromName,
-                                  @ColumnName("from_email") String studyFromEmail,
-                                  @ColumnName("defaultSalutation") String defaultSalutation,
-                                  @ColumnName("first_name") String userFirstName,
-                                  @ColumnName("last_name") String userLastName,
-                                  @ColumnName("template_key") String templateKey,
-                                  @ColumnName("linked_activity_id") Long linkedActivityId,
-                                  @ColumnName("web_base_url") String webBaseUrl,
-                                  @ColumnName("email_address") String toEmailAddress) {
+    public NotificationDetailsDto(
+            @ColumnName("notification_type") NotificationType notificationType,
+            @ColumnName("service_type") NotificationServiceType serviceType,
+            @ColumnName("template_key") String templateKey,
+            @ColumnName("linked_activity_id") Long linkedActivityId,
+            @ColumnName("to_email_address") String toEmailAddress,
+            @ColumnName("study_web_base_url") String webBaseUrl,
+            @ColumnName("sendgrid_api_key") String apiKey,
+            @ColumnName("sendgrid_from_name") String studyFromName,
+            @ColumnName("sendgrid_from_email") String studyFromEmail,
+            @ColumnName("sendgrid_default_salutation") String defaultSalutation,
+            @ColumnName("participant_first_name") String participantFirstName,
+            @ColumnName("participant_last_name") String participantLastName) {
         this.notificationType = notificationType;
-        this.notificationServiceType = notificationServiceType;
+        this.serviceType = serviceType;
+        this.templateKey = templateKey;
+        this.linkedActivityId = linkedActivityId;
+        this.toEmailAddress = toEmailAddress;
+        this.webBaseUrl = webBaseUrl;
         this.apiKey = apiKey;
         this.studyFromName = studyFromName;
         this.studyFromEmail = studyFromEmail;
         this.defaultSalutation = defaultSalutation;
-        this.userFirstName = userFirstName;
-        this.userLastName = userLastName;
-        this.templateKey = templateKey;
-        this.linkedActivityId = linkedActivityId;
-        this.webBaseUrl = webBaseUrl;
-        this.toEmailAddress = toEmailAddress;
-        this.templateSubstitutions = new ArrayList<>();
-    }
-
-    public void setTemplateSubstitutions(List<NotificationTemplateSubstitutionDto> templateSubstitutions) {
-        this.templateSubstitutions = templateSubstitutions;
-    }
-
-    public List<NotificationTemplateSubstitutionDto> getTemplateSubstitutions() {
-        return templateSubstitutions;
+        this.participantFirstName = participantFirstName;
+        this.participantLastName = participantLastName;
     }
 
     public NotificationType getNotificationType() {
         return notificationType;
     }
 
-    public NotificationServiceType getNotificationServiceType() {
-        return notificationServiceType;
+    public NotificationServiceType getServiceType() {
+        return serviceType;
+    }
+
+    public String getTemplateKey() {
+        return templateKey;
+    }
+
+    public Long getLinkedActivityId() {
+        return linkedActivityId;
+    }
+
+    public String getToEmailAddress() {
+        return toEmailAddress;
+    }
+
+    public String getWebBaseUrl() {
+        return webBaseUrl;
     }
 
     public String getApiKey() {
@@ -96,27 +92,21 @@ public class NotificationDetailsDto {
         return defaultSalutation;
     }
 
-    public String getUserFirstName() {
-        return userFirstName;
+    public String getParticipantFirstName() {
+        return participantFirstName;
     }
 
-    public String getUserLastName() {
-        return userLastName;
+    public String getParticipantLastName() {
+        return participantLastName;
     }
 
-    public String getTemplateKey() {
-        return templateKey;
+    public List<NotificationTemplateSubstitutionDto> getTemplateSubstitutions() {
+        return templateSubstitutions;
     }
 
-    public Long getLinkedActivityId() {
-        return linkedActivityId;
-    }
-
-    public String getWebBaseUrl() {
-        return webBaseUrl;
-    }
-
-    public String getToEmailAddress() {
-        return toEmailAddress;
+    public void addTemplateSubstitution(NotificationTemplateSubstitutionDto substitution) {
+        if (substitution != null) {
+            templateSubstitutions.add(substitution);
+        }
     }
 }

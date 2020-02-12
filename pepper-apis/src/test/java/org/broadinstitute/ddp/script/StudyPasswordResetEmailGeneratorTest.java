@@ -23,10 +23,11 @@ import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.db.dto.UserProfileDto;
 import org.broadinstitute.ddp.util.Auth0Util;
 import org.jdbi.v3.core.Handle;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
 
-
+@Ignore
 public class StudyPasswordResetEmailGeneratorTest extends TxnAwareBaseTest {
 
     @Test

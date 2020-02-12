@@ -187,5 +187,9 @@
     <include file="db-changes/seed/DDP-4222-age-up-event-types.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-4276-restructure-copy-answer.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/answer-cascade-delete.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/seed/consent-suspended-event-trigger.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-4363-increase-detail-limit.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-4094-add-required-to-institution-physician-component.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-4378-normalize-activity-name.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-4366-study-language-table.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

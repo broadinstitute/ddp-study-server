@@ -36,10 +36,9 @@ import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.JdbiMessageDestination;
 import org.broadinstitute.ddp.db.dao.JdbiQueuedEvent;
-import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.QueuedEventDao;
+import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dto.QueuedEventDto;
-import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.db.housekeeping.dao.JdbiEvent;
 import org.broadinstitute.ddp.db.housekeeping.dao.JdbiMessage;
 import org.broadinstitute.ddp.db.housekeeping.dao.KitCheckDao;
@@ -62,6 +61,7 @@ import org.broadinstitute.ddp.housekeeping.schedule.StudyExportToBucketJob;
 import org.broadinstitute.ddp.housekeeping.schedule.StudyExportToESJob;
 import org.broadinstitute.ddp.housekeeping.schedule.TemporaryUserCleanupJob;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
+import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.monitoring.PointsReducerFactory;
 import org.broadinstitute.ddp.monitoring.StackdriverCustomMetric;
 import org.broadinstitute.ddp.monitoring.StackdriverMetricsTracker;
@@ -253,11 +253,26 @@ public class Housekeeping {
                     JdbiQueuedEvent queuedEventDao = apisHandle.attach(JdbiQueuedEvent.class);
                     // first query the full list of pending events, shuffled to avoid event starvation
                     LOG.info("Querying pending events");
-                    List<QueuedEventDto> pendingEvents = eventDao.getQueuedEvents();
+                    List<QueuedEventDto> pendingEvents = eventDao.findPublishableQueuedEvents();
                     LOG.info("Found {} events that may be publishable", pendingEvents.size());
                     Collections.shuffle(pendingEvents);
 
                     for (QueuedEventDto pendingEvent : pendingEvents) {
+                        if (pendingEvent.getParticipantGuid() != null) {
+                            User participant = apisHandle.attach(UserDao.class)
+                                    .findUserByGuid(pendingEvent.getParticipantGuid())
+                                    .orElse(null);
+                            if (participant == null) {
+                                LOG.error("Could not find participant {} for publishing queued event {}, skipping",
+                                        pendingEvent.getParticipantGuid(), pendingEvent.getQueuedEventId());
+                                continue;
+                            } else if (participant.isTemporary()) {
+                                LOG.warn("Participant {} for queued event {} is a temporary user, skipping",
+                                        pendingEvent.getParticipantGuid(), pendingEvent.getQueuedEventId());
+                                continue;
+                            }
+                        }
+
                         String pendingEventId = pendingEvent.getDdpEventId();
                         boolean shouldCancel = false;
                         if (StringUtils.isNotBlank(pendingEvent.getCancelCondition())) {
@@ -550,6 +565,7 @@ public class Housekeeping {
                             } catch (MissingUserException e) {
                                 LOG.error("We have a message for which we no longer have a user, "
                                         + "ack-ing and skipping it: ", e);
+                                consumer.ack();
                             } catch (MessageHandlingException e) {
                                 LOG.error("Trouble processing message", e);
                                 if (e.shouldRetry()) {
@@ -572,11 +588,8 @@ public class Housekeeping {
     }
 
     private static boolean checkUserExists(String participantGuid) {
-        return TransactionWrapper.withTxn(TransactionWrapper.DB.APIS, apihandle -> {
-            UserDto userDto = apihandle.attach(JdbiUser.class).findByUserGuid(participantGuid);
-
-            return userDto != null;
-        });
+        return TransactionWrapper.withTxn(TransactionWrapper.DB.APIS, apihandle ->
+                apihandle.attach(UserDao.class).findUserByGuid(participantGuid).isPresent());
     }
 
     /**

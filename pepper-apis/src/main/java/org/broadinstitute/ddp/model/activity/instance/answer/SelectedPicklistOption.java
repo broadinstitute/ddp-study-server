@@ -12,7 +12,7 @@ public class SelectedPicklistOption {
     @SerializedName("stableId")
     private String stableId;
 
-    @Length(max = 255)
+    @Length(max = 500)
     @SerializedName("detail")
     private String detailText;
 

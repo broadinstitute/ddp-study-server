@@ -89,8 +89,8 @@ public class UserActivityInstanceListRoute implements Route {
             // Number items within each group. The 1st item is not numbered so numbers start with 2
             for (int i = 1, numberWithinGroup = 2; i < summariesWithTheSameCode.size(); ++i, ++numberWithinGroup) {
                 ActivityInstanceSummary summary = summariesWithTheSameCode.get(i);
-                String dashboardName = summary.getActivityDashboardName();
-                summary.setActivityDashboardName(dashboardName + " #" + numberWithinGroup);
+                String dashboardName = summary.getActivityName();
+                summary.setActivityName(dashboardName + " #" + numberWithinGroup);
             }
         }
     }

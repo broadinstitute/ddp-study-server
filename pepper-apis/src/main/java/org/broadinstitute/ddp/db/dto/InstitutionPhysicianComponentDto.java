@@ -12,6 +12,7 @@ public class InstitutionPhysicianComponentDto {
     private Long buttonTemplateId;
     private boolean allowMultiple;
     private boolean showFields;
+    private boolean required;
 
     @JdbiConstructor
     public InstitutionPhysicianComponentDto(@ColumnName("institution_type") InstitutionType institutionType,
@@ -19,13 +20,15 @@ public class InstitutionPhysicianComponentDto {
                                             @ColumnName("subtitle_template_id") Long subtitleTemplateId,
                                             @ColumnName("add_button_template_id") Long buttonTemplateId,
                                             @ColumnName("allow_multiple") boolean allowMultiple,
-                                            @ColumnName("show_fields_initially") boolean showFields) {
+                                            @ColumnName("show_fields_initially") boolean showFields,
+                                            @ColumnName("required") boolean required) {
         this.institutionType = institutionType;
         this.titleTemplateId = titleTemplateId;
         this.subtitleTemplateId = subtitleTemplateId;
         this.buttonTemplateId = buttonTemplateId;
         this.allowMultiple = allowMultiple;
         this.showFields = showFields;
+        this.required = required;
     }
 
     public InstitutionType getInstitutionType() {
@@ -50,5 +53,9 @@ public class InstitutionPhysicianComponentDto {
 
     public boolean showFields() {
         return showFields;
+    }
+
+    public boolean isRequired() {
+        return required;
     }
 }

@@ -25,6 +25,7 @@ import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dao.QueuedEventDao;
 import org.broadinstitute.ddp.db.dao.StudyDao;
 import org.broadinstitute.ddp.db.dto.NotificationTemplateSubstitutionDto;
+import org.broadinstitute.ddp.db.dto.QueuedNotificationDto;
 import org.broadinstitute.ddp.db.dto.SendgridEmailEventActionDto;
 import org.broadinstitute.ddp.json.study.StudyExitRequestPayload;
 import org.broadinstitute.ddp.model.study.StudyExitRequest;
@@ -219,7 +220,9 @@ public class SendExitNotificationRouteTest extends IntegrationTestSuite.TestCase
 
                 long queuedId = res.get(0);
                 List<NotificationTemplateSubstitutionDto> subs = handle.attach(EventDao.class)
-                        .getTemplateSubstitutionsForQueuedNotification(queuedId);
+                        .findQueuedEventById(queuedId)
+                        .map(eventDto -> ((QueuedNotificationDto) eventDto).getTemplateSubstitutions())
+                        .orElse(List.of());
                 assertFalse(subs.isEmpty());
                 assertTrue(subs.stream().anyMatch(sub ->
                         NotificationTemplateVariables.DDP_PARTICIPANT_EXIT_NOTES.equals(sub.getVariableName())

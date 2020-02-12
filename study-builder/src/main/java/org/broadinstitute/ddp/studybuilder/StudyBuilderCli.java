@@ -46,6 +46,7 @@ public class StudyBuilderCli {
         Options options = new Options();
         options.addOption("h", "help", false, "print this help message");
         options.addOption(null, "vars", true, "study variables file");
+        options.addOption(null, "substitutions", true, "study-wide substitutions file");
         options.addOption(null, "dry-run", false, "run study setup or custom task without saving");
         options.addOption(null, "only-activity", true, "only run activity setup for given activity code");
         options.addOption(null, "only-workflow", false, "only run workflow setup");
@@ -86,6 +87,16 @@ public class StudyBuilderCli {
             log("using study variables file: %s", varsFile);
         }
 
+        Config subsCfg = ConfigFactory.empty();
+        if (cmd.hasOption("substitutions")) {
+            String subsFile = cmd.getOptionValue("substitutions");
+            subsCfg = ConfigFactory.parseFile(new File(subsFile));
+            log("using substitutions file: %s", subsFile);
+        }
+
+        // Merge the configs. Substitutions have higher priority, and we fallback to vars, i.e. substitutions override keys in vars.
+        varsCfg = subsCfg.withFallback(varsCfg);
+
         Path cfgPath = resolvePathToStudyConfigFile(positional[0]);
         if (cfgPath == null) {
             log("could not resolve study config filepath using argument: " + positional[0]);
@@ -95,7 +106,7 @@ public class StudyBuilderCli {
         Config studyCfg = ConfigFactory.parseFile(cfgPath.toFile());
         log("using study configuration file: %s", cfgPath);
 
-        log("resolving study configuration using vars...");
+        log("resolving study configuration...");
         studyCfg = studyCfg.resolveWith(varsCfg);
 
         boolean isDryRun = cmd.hasOption("dry-run");

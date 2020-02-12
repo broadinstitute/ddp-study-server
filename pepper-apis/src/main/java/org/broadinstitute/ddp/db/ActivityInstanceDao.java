@@ -159,12 +159,12 @@ public class ActivityInstanceDao {
             List<UserActivity> userActivities = handle.createQuery(TRANSLATED_SUMMARY_BY_GUID_QUERY)
                     .bind(0, activityInstanceGuid)
                     .registerRowMapper(UserActivity.class, (rs, ctx) -> {
-                        String name = rs.getString(ActivityInstanceTable.NAME);
+                        String title = rs.getString(ActivityInstanceTable.TITLE);
                         String subtitle = rs.getString(ActivityInstanceTable.SUBTITLE);
                         String type = rs.getString(ActivityInstanceTable.TYPE_NAME);
                         String status = rs.getString(ActivityInstanceTable.STATUS_TYPE_NAME);
                         String isoLangCode = rs.getString(LanguageCodeTable.CODE);
-                        return new UserActivity(activityInstanceGuid, name, subtitle, type, status, isoLangCode);
+                        return new UserActivity(activityInstanceGuid, title, subtitle, type, status, isoLangCode);
                     })
                     .collectInto(new GenericType<List<UserActivity>>() {
                     });
@@ -276,12 +276,14 @@ public class ActivityInstanceDao {
                 while (rs.next()) {
                     String activityCode = rs.getString(SqlConstants.StudyActivityTable.CODE);
                     String activityName = rs.getString(SqlConstants.StudyActivityTable.NAME_TRANS);
-                    String activityDashboardName = rs.getString(SqlConstants.StudyActivityTable.DASHBOARD_NAME_TRANS);
-                    String activitySummary = rs.getString(
-                            SqlConstants.StudyActivityTable.SUMMARY_TRANS
-                    );
-                    String activityDescription = rs.getString(SqlConstants.StudyActivityTable.DESCRIPTION_TRANS);
+                    String activityTitle = rs.getString(SqlConstants.StudyActivityTable.TITLE_TRANS);
                     String activitySubtitle = rs.getString(SqlConstants.StudyActivityTable.SUBTITLE_TRANS);
+                    String activityDescription = rs.getString(SqlConstants.StudyActivityTable.DESCRIPTION_TRANS);
+                    String activitySummary = rs.getString(SqlConstants.StudyActivityTable.SUMMARY_TRANS);
+
+                    // If there's no title, leave it empty.
+                    activityTitle = (activityTitle == null ? "" : activityTitle);
+
                     boolean isActivityWriteOnce = rs.getBoolean(SqlConstants.StudyActivityTable.IS_WRITE_ONCE);
                     String activityInstanceGuid = rs.getString(ActivityInstanceTable.GUID);
                     String activityTypeCode = rs.getString(ActivityTypeTable.TYPE_CODE);
@@ -310,10 +312,10 @@ public class ActivityInstanceDao {
                             activityCode,
                             activityInstanceGuid,
                             activityName,
-                            activityDashboardName != null ? activityDashboardName : activityName,
-                            activitySummary,
-                            activityDescription,
+                            activityTitle,
                             activitySubtitle,
+                            activityDescription,
+                            activitySummary,
                             activityTypeCode,
                             formTypeCode,
                             statusTypeCode,

@@ -15,7 +15,7 @@ public interface CustomTask {
      *
      * @param cfgPath  the path to study config file
      * @param studyCfg the study configuration
-     * @param varsCfg  the secrets/variables configuration for study
+     * @param varsCfg  the secrets/variables/substitutions configuration for study
      */
     void init(Path cfgPath, Config studyCfg, Config varsCfg);
 

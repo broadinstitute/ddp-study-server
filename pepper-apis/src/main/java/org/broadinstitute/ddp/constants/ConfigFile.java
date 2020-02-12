@@ -164,14 +164,6 @@ public class ConfigFile {
 
         public static final String MAX_INSTANCES_PER_USER = "max_instances_per_user";
         public static final String NUM_INSTANCES_FOR_USER = "num_instances_for_user";
-        public static final String PEX_PRECONDITION = "pex_precondition";
-        public static final String PEX_CANCEL_CONDITION = "pex_cancel_condition";
-
-        public static final String PARTICIPANT_GUID = "participant_guid";
-        public static final String PARTICIPANT_HRUID = "participant_hruid";
-
-        // needed to disambiguate cases where there are multiple different guids in a resulset
-        public static final String STUDY_GUID = "study_guid";
     }
 
     /**
