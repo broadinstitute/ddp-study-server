@@ -10,9 +10,17 @@ tags:
   - name: Admin
     description: administrative & internal calls
   - name: Activities
-    description: view and update survey responses
+    description: >
+      View and update survey responses. Activities will be translated to the preferred language
+      if the study supports that language or will be provided in the fallback language. The preferred
+      language can be specified in the "Accept-Language" header or, if missing, is taken from the user
+      profile. The header contents always override the language from the profile.
   - name: Announcements
-    description: messages from a study to participants
+    description: >
+      Messages from a study to participants. Will be translated to the preferred language
+      if the study supports that language or will be provided in the fallback language. The preferred
+      language can be specified in the "Accept-Language" header or, if missing, is taken from the user
+      profile. The header contents always override the language from the profile.
   - name: Consent
     description: view and updates study consent elections
   - name: Invitations
