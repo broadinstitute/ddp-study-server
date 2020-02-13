@@ -524,7 +524,7 @@ public class TestDataSetupUtil {
             for (String script : scripts) {
                 LOG.info("Running legacy test setup script {}", script);
                 String dbUrl = cfg.getString(TransactionWrapper.DB.APIS.getDbUrlConfigKey());
-                LiquibaseUtil.runChangeLog(driver, dbUrl, script);
+                LiquibaseUtil.runChangeLog(dbUrl, script);
             }
         } catch (Exception e) {
             LOG.error("Failed to insert static test account data", e);
