@@ -34,7 +34,7 @@ public class StudyLanguageResolutionFilterTest extends TxnAwareBaseTest {
                 handle -> {
                     enableLanguageSupportForStudy(handle, testData.getStudyGuid(), LANG_RU);
                     String acceptLanguageHeader = null;
-                    LanguageDto languageDto = new StudyLanguageResolutionFilter().getPreferredLanguage(
+                    LanguageDto languageDto = StudyLanguageResolutionFilter.getPreferredLanguage(
                             handle, acceptLanguageHeader, Locale.forLanguageTag(LANG_RU), testData.getStudyGuid()
                     );
                     Assert.assertEquals(LANG_RU, languageDto.getIsoCode());
@@ -48,7 +48,7 @@ public class StudyLanguageResolutionFilterTest extends TxnAwareBaseTest {
         TransactionWrapper.useTxn(
                 handle -> {
                     String acceptLanguageHeader = null;
-                    LanguageDto languageDto = new StudyLanguageResolutionFilter().getPreferredLanguage(
+                    LanguageDto languageDto = StudyLanguageResolutionFilter.getPreferredLanguage(
                             handle, acceptLanguageHeader, Locale.forLanguageTag(LANG_RU), testData.getStudyGuid()
                     );
                     Assert.assertEquals(LANG_EN, languageDto.getIsoCode());
@@ -62,7 +62,7 @@ public class StudyLanguageResolutionFilterTest extends TxnAwareBaseTest {
         TransactionWrapper.useTxn(
                 handle -> {
                     String acceptLanguageHeader = LANG_HEADER_FR;
-                    LanguageDto languageDto = new StudyLanguageResolutionFilter().getPreferredLanguage(
+                    LanguageDto languageDto = StudyLanguageResolutionFilter.getPreferredLanguage(
                             handle, acceptLanguageHeader, Locale.forLanguageTag(LANG_RU), testData.getStudyGuid()
                     );
                     Assert.assertEquals(LANG_EN, languageDto.getIsoCode());
@@ -78,7 +78,7 @@ public class StudyLanguageResolutionFilterTest extends TxnAwareBaseTest {
                     enableLanguageSupportForStudy(handle, testData.getStudyGuid(), LANG_RU);
                     enableLanguageSupportForStudy(handle, testData.getStudyGuid(), LANG_FR);
                     String acceptLanguageHeader = LANG_HEADER_RU;
-                    LanguageDto languageDto = new StudyLanguageResolutionFilter().getPreferredLanguage(
+                    LanguageDto languageDto = StudyLanguageResolutionFilter.getPreferredLanguage(
                             handle, acceptLanguageHeader, Locale.forLanguageTag(LANG_FR), testData.getStudyGuid()
                     );
                     Assert.assertEquals(LANG_RU, languageDto.getIsoCode());
@@ -93,13 +93,22 @@ public class StudyLanguageResolutionFilterTest extends TxnAwareBaseTest {
                 handle -> {
                     enableLanguageSupportForStudy(handle, testData.getStudyGuid(), LANG_FR);
                     String acceptLanguageHeader = LANG_HEADER_RU;
-                    LanguageDto languageDto = new StudyLanguageResolutionFilter().getPreferredLanguage(
+                    LanguageDto languageDto = StudyLanguageResolutionFilter.getPreferredLanguage(
                             handle, acceptLanguageHeader, Locale.forLanguageTag(LANG_FR), testData.getStudyGuid()
                     );
                     Assert.assertEquals(LANG_FR, languageDto.getIsoCode());
                     handle.rollback();
                 }
         );
+    }
+
+    @Test
+    public void test_whenCreateContentLanguageHeaderFromLocaleIsCalled_thenItReturnsCorrectHeader() {
+        Locale locale = Locale.forLanguageTag("en-GB");
+        String header = StudyLanguageResolutionFilter.createContentLanguageHeaderFromLocale(locale);
+        Assert.assertEquals("en", locale.getLanguage());
+        Assert.assertEquals("GB", locale.getCountry());
+        Assert.assertEquals("en-GB", header);
     }
 
     private void enableLanguageSupportForStudy(Handle handle, String studyGuid, String isoLanguageCode) {
