@@ -6,15 +6,15 @@
 
     <!-- This file is used for testing in LiquibaseUtilTest. -->
 
-    <changeSet author="yufeng" id="insert-data-successful">
-        <insert tableName="test_table">
+    <changeSet author="yufeng" id="liquibase-rollback-fail-insert">
+        <insert tableName="liquibase_test_table">
             <column name="name">another</column>
         </insert>
         <comment>No auto-rollback and no manual rollback specified.</comment>
     </changeSet>
 
-    <changeSet author="yufeng" id="faulty-sql">
-        <insert tableName="non_existing_table">
+    <changeSet author="yufeng" id="liquibase-rollback-fail-faulty-sql">
+        <insert tableName="liquibase_non_existing_table">
             <column name="name">blah</column>
         </insert>
     </changeSet>
