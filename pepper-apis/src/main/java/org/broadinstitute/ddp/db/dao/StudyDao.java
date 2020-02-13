@@ -36,10 +36,11 @@ public interface StudyDao extends SqlObject {
     @RegisterConstructorMapper(LanguageDto.class)
     Set<LanguageDto> findSupportedLanguagesByGuid(@Bind("studyGuid") String studyGuid);
 
+    @GetGeneratedKeys
     @SqlUpdate(
             "insert into study_language(umbrella_study_id, language_code_id) values ("
             + " (select umbrella_study_id from umbrella_study where guid = :studyGuid),"
             + " (select language_code_id from language_code where iso_language_code = :isoCode))"
     )
-    int addSupportedLanguage(@Bind("studyGuid") String umbrellaStudyGuid, @Bind("isoCode") String isoLanguageCode);
+    long addSupportedLanguage(@Bind("studyGuid") String umbrellaStudyGuid, @Bind("isoCode") String isoLanguageCode);
 }
