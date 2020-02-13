@@ -1,11 +1,11 @@
 package org.broadinstitute.ddp.filter;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Locale.LanguageRange;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -39,6 +39,8 @@ import spark.Response;
  */
 public class StudyLanguageResolutionFilter implements Filter {
 
+    private static Map<Locale, LanguageDto> localeToLanguage = new HashMap<>();
+
     public static final String USER_LANGUAGE = "USER_LANGUAGE";
     private static final Logger LOG = LoggerFactory.getLogger(StudyLanguageResolutionFilter.class);
     private static final String STUDY_GUID_REGEX = "/studies/(\\w+)";
@@ -51,7 +53,7 @@ public class StudyLanguageResolutionFilter implements Filter {
             Matcher matcher = Pattern.compile(STUDY_GUID_REGEX).matcher(request.url());
             String studyGuid = matcher.find() ? matcher.group(STUDY_GUID_INDEX) : null;
             // The "supported languages" notion is an attribute of a study, thus is doesn't
-            // make any sense outside of the study context
+            // make any sense outside of the study context, so we issue a warning
             boolean supportedLanguagesCanBeDetected = studyGuid != null;
             if (!supportedLanguagesCanBeDetected) {
                 LOG.warn(
@@ -80,14 +82,13 @@ public class StudyLanguageResolutionFilter implements Filter {
         Set<LanguageDto> languagesSupportedByStudy = handle.attach(StudyDao.class).findSupportedLanguagesByGuid(studyGuid);
         Map<Locale, LanguageDto> supportedStudyLocaleToLang = languagesSupportedByStudy.stream()
                 .collect(Collectors.toMap(LanguageDto::toLocale, lang -> lang));
+        localeToLanguage.putAll(supportedStudyLocaleToLang);
         Locale preferredLocale = I18nUtil.resolvePreferredLanguage(
                 ddpAuthPreferredLocale, acceptLanguages, supportedStudyLocaleToLang.keySet()
         );
-        // If we are lucky, the preferred language will be among the list
-        // of supported languages and we'll spare a db call. Otherwise, we
-        // will have to look into the db to get the id of the fallback language
-        LanguageDto preferredLanguage = Optional.ofNullable(supportedStudyLocaleToLang.get(preferredLocale)).orElseGet(
-                () -> handle.attach(JdbiLanguageCode.class).findLanguageDtoByCode(preferredLocale.getLanguage())
+        LanguageDto preferredLanguage = localeToLanguage.computeIfAbsent(
+                preferredLocale,
+                locale -> handle.attach(JdbiLanguageCode.class).findLanguageDtoByCode(locale.getLanguage())
         );
         return preferredLanguage;
     }
