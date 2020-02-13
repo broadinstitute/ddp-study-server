@@ -17,6 +17,7 @@
     "threadTimeout": 30000,
     "dsmBaseUrl": "http://localhost:9555",
     "dsmJwtSecret": "Dsm test secret!",
+    "dsmJwtSigner": "org.broadinstitute.kdux",
     "dbApiInstance": "pepper-dev",
     "dbDsmInstance": "dev-dsm",
     "dbHousekeepingInstance": "housekeeping-dev1",

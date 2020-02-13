@@ -27,6 +27,8 @@ public class ParticipantStatusTrackingInfo {
     @SerializedName("kits")
     private List<Kit> kits;
 
+    private transient String userGuid;
+
     private RecordStatus figureOutMedicalRecordStatus(
             String userGuid,
             String entityName,
@@ -56,6 +58,7 @@ public class ParticipantStatusTrackingInfo {
             EnrollmentStatusType enrollmentStatusType,
             String userGuid
     ) {
+        this.userGuid = userGuid;
         this.medicalRecord = new MedicalRecord(
                 figureOutMedicalRecordStatus(
                         userGuid,
@@ -100,6 +103,10 @@ public class ParticipantStatusTrackingInfo {
         }
 
         this.kits = kits;
+    }
+
+    public String getUserGuid() {
+        return userGuid;
     }
 
     public List<Kit> getKits() {

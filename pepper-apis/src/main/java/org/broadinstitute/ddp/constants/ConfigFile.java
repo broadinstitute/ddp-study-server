@@ -146,6 +146,7 @@ public class ConfigFile {
 
     public static final String DSM_BASE_URL = "dsmBaseUrl";
     public static final String DSM_JWT_SECRET = "dsmJwtSecret";
+    public static final String DSM_JWT_SIGNER = "dsmJwtSigner";
     public static final String USE_DISPOSABLE_TEST_DB = "useDisposableTestDbs";
 
     public static final class SqlQuery {

@@ -71,10 +71,11 @@
 {{end}}{{end}}
     "elasticsearchUsername": "pepper_backend",
     "elasticsearchBatchSize": 100,
-    "dsmJwtSecret": "{{$dsm_conf.Data.portal.jwtDdpSecret}}",
     "dbDsmInstance": "{{$conf.Data.dbDsmInstance}}",
     "dbApiInstance": "{{$conf.Data.dbApiInstance}}",
     "dbHousekeepingInstance": "{{$conf.Data.dbHousekeepingInstance}}",
+    "dsmJwtSecret": "{{$dsm_conf.Data.portal.jwtDdpSecret}}",
+    "dsmJwtSigner": "org.broadinstitute.kdux",
     {{if eq $environment "dev"}}
         "baseTestUrl": "https://pepper-dev.datadonationplatform.org",
         "baseWebDriverUrl": "https://basil-dev.datadonationplatform.org",

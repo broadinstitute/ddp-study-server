@@ -1184,6 +1184,11 @@ public class TestDataSetupUtil {
         }
     }
 
+    public static void deleteStudyEnrollmentStatuses(Handle handle, GeneratedTestData testData) {
+        handle.attach(JdbiUserStudyEnrollment.class)
+                .deleteByUserGuidStudyGuid(testData.getUserGuid(), testData.getStudyGuid());
+    }
+
     public static class GeneratedTestData {
         private Auth0Util.TestingUser testingUser;
         private StudyDto study;

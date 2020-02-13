@@ -24,6 +24,8 @@ import java.util.Map;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.apache.http.entity.ContentType;
+import org.broadinstitute.ddp.client.ClientResponse;
+import org.broadinstitute.ddp.client.DsmClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.API;
@@ -134,8 +136,6 @@ import org.broadinstitute.ddp.service.ActivityValidationService;
 import org.broadinstitute.ddp.service.AddressService;
 import org.broadinstitute.ddp.service.CancerService;
 import org.broadinstitute.ddp.service.ConsentService;
-import org.broadinstitute.ddp.service.DsmCancerListService;
-import org.broadinstitute.ddp.service.DsmParticipantStatusService;
 import org.broadinstitute.ddp.service.FireCloudExportService;
 import org.broadinstitute.ddp.service.FormActivityService;
 import org.broadinstitute.ddp.service.MedicalRecordService;
@@ -145,7 +145,6 @@ import org.broadinstitute.ddp.service.PdfService;
 import org.broadinstitute.ddp.service.WorkflowService;
 import org.broadinstitute.ddp.transformers.SimpleJsonTransformer;
 import org.broadinstitute.ddp.util.ConfigManager;
-import org.broadinstitute.ddp.util.DsmDrugLoader;
 import org.broadinstitute.ddp.util.LiquibaseUtil;
 import org.broadinstitute.ddp.util.LogbackConfigurationPrinter;
 import org.broadinstitute.ddp.util.RouteUtil;
@@ -437,14 +436,12 @@ public class DataDonationPlatform {
         get(API.CANCER_SUGGESTION, new GetCancerSuggestionsRoute(CancerStore.getInstance()), responseSerializer);
 
         // Routes calling DSM
-        URL dsmBaseUrl = null;
         try {
-            dsmBaseUrl = new URL(cfg.getString(ConfigFile.DSM_BASE_URL));
+            new URL(cfg.getString(ConfigFile.DSM_BASE_URL));
         } catch (MalformedURLException e) {
             throw new RuntimeException("Invalid DSM URL {}.  DSM-related routes will fail.", e);
         }
-        DsmParticipantStatusService dsmParticipantStatusService = new DsmParticipantStatusService(dsmBaseUrl);
-        get(API.PARTICIPANT_STATUS, new GetDsmParticipantStatusRoute(dsmParticipantStatusService), responseSerializer);
+        get(API.PARTICIPANT_STATUS, new GetDsmParticipantStatusRoute(new DsmClient(cfg)), responseSerializer);
         get(API.STUDY_PASSWORD_REQUIREMENTS, new GetStudyPasswordRequirementsRoute(), responseSerializer);
 
         patch(
@@ -461,15 +458,27 @@ public class DataDonationPlatform {
         post(API.VERIFY_INVITATION, new VerifyInvitationRoute(), responseSerializer);
 
         Runnable runnable = () -> {
-            //load drug list
-            DsmDrugLoader drugLoader = new DsmDrugLoader();
-            drugLoader.fetchAndLoadDrugs(cfg.getString(ConfigFile.DSM_BASE_URL), cfg.getString(ConfigFile.DSM_JWT_SECRET));
+            var dsm = new DsmClient(cfg);
 
-            //load cancer list
-            DsmCancerListService service = new DsmCancerListService(cfg.getString(ConfigFile.DSM_BASE_URL));
-            List<String> cancerNames = service.fetchCancerList(cfg.getString(ConfigFile.DSM_JWT_SECRET));
-            CancerStore.getInstance().populate(cancerNames);
-            LOG.info("Loaded {} cancers into pepper.", cancerNames == null ? 0 : cancerNames.size());
+            // initialize drug list
+            ClientResponse<List<String>> resp = dsm.listDrugs();
+            if (resp.getStatusCode() == 200) {
+                List<String> drugNames = resp.getBody();
+                DrugStore.getInstance().populateDrugList(drugNames);
+                LOG.info("Loaded {} drugs into pepper", drugNames == null ? 0 : drugNames.size());
+            } else {
+                LOG.error("Could not initialize DSM drug list, got response status code {}", resp.getStatusCode());
+            }
+
+            // initialize cancer list
+            resp = dsm.listCancers();
+            if (resp.getStatusCode() == 200) {
+                List<String> cancerNames = resp.getBody();
+                CancerStore.getInstance().populate(cancerNames);
+                LOG.info("Loaded {} cancers into pepper", cancerNames == null ? 0 : cancerNames.size());
+            } else {
+                LOG.error("Could not initialize DSM cancer list, got response status code {}", resp.getStatusCode());
+            }
         };
 
         boolean runScheduler = cfg.getBoolean(ConfigFile.RUN_SCHEDULER);
