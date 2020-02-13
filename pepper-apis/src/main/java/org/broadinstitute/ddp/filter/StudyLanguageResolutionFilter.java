@@ -66,24 +66,31 @@ public class StudyLanguageResolutionFilter implements Filter {
             }
             LOG.info("The supported languages can be detected for the study {}", studyGuid);
             Locale ddpAuthPreferredLocale = RouteUtil.getDDPAuth(request).getPreferredLocale();
-            LanguageDto preferredLanguage = TransactionWrapper.withTxn(
-                    handle -> StudyLanguageResolutionFilter.getPreferredLanguage(
-                            handle, acceptLanguageHeader, ddpAuthPreferredLocale, studyGuid
-                    )
+            TransactionWrapper.useTxn(
+                    handle -> {
+                        Locale preferredLocale = StudyLanguageResolutionFilter.getPreferredLocale(
+                                handle, acceptLanguageHeader, ddpAuthPreferredLocale, studyGuid
+                        );
+                        LanguageDto preferredLanguage = StudyLanguageResolutionFilter.convertLocaleToLanguageDto(
+                                handle, preferredLocale
+                        );
+                        request.attribute(USER_LANGUAGE, preferredLanguage);
+                        LOG.info("Added the preferred user language {} to the attribute store", preferredLanguage.getIsoCode());
+                    }
             );
-            request.attribute(USER_LANGUAGE, preferredLanguage);
-            LOG.info("Added the preferred user language {} to the attribute store", preferredLanguage.getIsoCode());
         } catch (Exception e) {
             LOG.error("Error while figuring out the user language", e);
         }
     }
 
-    /**
-     * Takes information required for figuring out the preferred language
-     * Returns the preferred language (see the filter description). Uses a
-     * trivial cache avoid multiple DB trips for the fallback language
-     */
     static LanguageDto getPreferredLanguage(Handle handle, String acceptLanguageHeader, Locale ddpAuthPreferredLocale, String studyGuid) {
+        Locale preferredLocale = StudyLanguageResolutionFilter.getPreferredLocale(
+                handle, acceptLanguageHeader, ddpAuthPreferredLocale, studyGuid
+        );
+        return StudyLanguageResolutionFilter.convertLocaleToLanguageDto(handle, preferredLocale);
+    }
+
+    private static Locale getPreferredLocale(Handle handle, String acceptLanguageHeader, Locale ddpAuthPreferredLocale, String studyGuid) {
         List<LanguageRange> acceptLanguages = StringUtils.isNotEmpty(acceptLanguageHeader)
                 ? LanguageRange.parse(acceptLanguageHeader) : Collections.emptyList();
         Set<LanguageDto> languagesSupportedByStudy = handle.attach(StudyDao.class).findSupportedLanguagesByGuid(studyGuid);
@@ -93,6 +100,10 @@ public class StudyLanguageResolutionFilter implements Filter {
         Locale preferredLocale = I18nUtil.resolvePreferredLanguage(
                 ddpAuthPreferredLocale, acceptLanguages, supportedStudyLocaleToLang.keySet()
         );
+        return preferredLocale;
+    }
+
+    private static LanguageDto convertLocaleToLanguageDto(Handle handle, Locale preferredLocale) {
         LanguageDto preferredLanguage = localeToLanguage.computeIfAbsent(
                 preferredLocale,
                 locale -> handle.attach(JdbiLanguageCode.class).findLanguageDtoByCode(locale.getLanguage())
