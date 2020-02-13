@@ -50,6 +50,7 @@
         font-size: 15px;
         background-color:#f9f3e8;
     }
+
     body, a {
         font-family: 'Raleway', sans-serif !important;
     }
@@ -91,6 +92,9 @@
     button {
         text-decoration: none !important;
         outline: 0 !important;
+    }
+
+    button {
         max-width: 804px;
     }
 
@@ -286,6 +290,7 @@
         margin-left: 50px;
         margin-right: 50px;
         padding: 30px 45px 1px;
+        min-height: calc(100vh - 248px);
     }
 
     @media only screen and (max-width: 767px) {
@@ -573,10 +578,14 @@
         width: 100%;
         min-height: 130px;
         padding: 30px 50px 10px;
+        margin: 0 0 0 0;
         z-index: 2;
         background-color: #f9f3e8;
-        margin: 0 0 0 0;
         clear: both;
+    }
+
+    .Footer > * {
+        vertical-align: bottom;
     }
 
     .Footer-logo img {
@@ -596,8 +605,8 @@
 
     @media only screen and (max-width: 767px) and (min-width: 451px) {
         .Footer {
-            padding: 10px 25px;
-            min-height: 200px;
+            padding: 30px 25px 10px 25px;
+            min-height: 230px;
         }
         .Footer-logo img {
             margin-left: 0;
@@ -606,7 +615,7 @@
 
     @media only screen and (max-width: 992px) and (min-width: 768px) {
         .Footer {
-            padding: 5px 25px;
+            padding: 30px 25px 30px 25px;
         }
         .Footer-logo img {
             margin-left: 0;
@@ -617,6 +626,8 @@
         font-size: 0.9rem !important;
         color: #727272;
         margin-top: 10px;
+        text-rendering: unset;
+        width: 100%; /*TODO*/
     }
 
     .Footer-link{
@@ -626,27 +637,37 @@
         cursor: pointer;
         text-align: right;
         transition: color 0.2s linear;
-        padding-left: 30px;
         align-items: unset;
-        background-attachment: unset;
-        background-clip: unset;
         border: none;
         border-image-width: 0;
+        padding-left: 30px;
+    }
+
+    @media only screen and (max-width: 767px) {
+        .Footer-text,
+        .Footer-link {
+            display: block;
+            float: left !important;
+            text-align: left;
+            padding-left: 0;
+            width: 100%;
+        }
+        .Footer-text {
+            margin-top: 20px;
+        }
     }
 
     .Footer-link:hover{
         color: #82B547 !important;
     }
 
-    button.Footer-link {
-        background: transparent;
-        border: none;
-        padding: 0;
-    }
-
     .Footer-arrow {
         font-size: 0.5rem;
-        margin: 0 5px 5px 0;
+        margin: 0 5px 5px 30px;
+        line-height: 9px; /*TODO*/
+        width: 8.36px; /*TODO*/
+        font-family: 'FontAwesome'; /*TODO*/
+        font-weight: 400; /*TODO*/
     }
 
     @media only screen and (max-width: 767px) {
@@ -672,38 +693,8 @@
         margin-top: 10px;
     }
 
-    .Footer-link {
-        font-weight: 500;
-        color: #727272;
-        display: inline;
-        cursor: pointer;
-        text-align: right;
-        transition: color 0.2s linear;
-        padding-left: 30px;
-    }
-
-    .Footer-link:hover {
-        color: #82B547;
-    }
-
-    button.Footer-link {
-        background: transparent;
-        border: none;
-        padding: 0;
-    }
-
-    @media only screen and (max-width: 767px) {
-        .Footer-text,
-        .Footer-link {
-            display: block;
-            float: left !important;
-            text-align: left;
-            padding-left: 0;
-            width: 100%;
-        }
-        .Footer-text {
-            margin-top: 20px;
-        }
+    .FooterLinksDiv {
+        font-family: 'Raleway', sans-serif;
     }
 
     .Float--right {
@@ -712,6 +703,40 @@
 
     .backToTopText {
         font-weight: 500 !important;
+    }
+
+    .backToTopLink {
+        border: none;
+        padding: 0;
+        align-items: flex-start;
+        background-clip: border-box;
+        background-origin: padding-box;
+        background-position-x: 0%;
+        background-position-y: 0%;
+        background: transparent none no-repeat scroll;
+        background-size: auto;
+        border-image-width: 1;
+        display: inline-block;
+        font-stretch: 100%;
+        font-style: normal;
+        font-variant-caps: normal;
+        font-variant-east-asian: normal;
+        font-variant-ligatures: normal;
+        font-variant-numeric: normal;
+        letter-spacing: normal;
+        margin: 0px;
+        overflow-x: visible;
+        overflow-y: visible;
+        padding-bottom: 0px;
+        padding-left: 0px !important;
+        padding-right: 0px;
+        padding-top: 0px;
+        text-indent: 0px;
+        text-rendering: auto !important;
+        text-shadow: none;
+        text-transform: none;
+        word-spacing: 0px;
+        writing-mode: horizontal-tb;
     }
 
 </style>
@@ -775,10 +800,13 @@
         passwordResetSuccessMessage: 'Already registered? Sign In here',
         logoAlt: 'Prion Registry Logo',
         learnMore: "Learn More",
+        learnMoreNonBreak: "Learn&nbsp;More",
         signIn: "Sign In",
+        signInNonBreak: "Sign&nbsp;In",
         joinUs: "Join Us",
+        joinUsNonBreak: "Join&nbsp;Us",
         home: "Home",
-        backToTop: "Back to top"
+        backToTop: "Back&nbsp;to&nbsp;top"
     };
     languageDictionary.error = languageDictionary.error || {};
     languageDictionary.error.signUp = languageDictionary.error.signUp || {};
@@ -1029,13 +1057,13 @@
                     '<div class="col-lg-6 col-md-4 col-sm-4 col-xs-12 Footer-logo NoPadding"><a href="' + mainUrl + '">' +
                     '<img src="https://storage.googleapis.com/dev-prion-assets/images/project-logo-dark.svg" ' +
                     'alt="' + languageDictionary.logoAlt + '"></a></div>' +
-                    '<div class="col-lg-6 col-md-4 col-sm-8 col-xs-12 NoPadding">' +
+                    '<div class="col-lg-6 col-md-4 col-sm-8 col-xs-12 NoPadding FooterLinksDiv">' +
                     '<p class="Footer-text Float--right">' +
-                    '<a href="' + mainUrl + '" class="Footer-link">' + languageDictionary.home + '</a>' +
-                    '<a href="' + mainUrl + '/learn-more" class="Footer-link">' + languageDictionary.learnMore + '</a>' +
-                    '<a href="' + mainUrl + '/redirect-join" class="Footer-link">' + languageDictionary.joinUs + '</a>' +
-                    '<a href="' + mainUrl + '/login-landing/login" class="Footer-link">' + languageDictionary.signIn + '</a>' +
-                    '<a href="#top" class="Footer-link"><i class="fas fa-arrow-up Footer-arrow"></i>' +
+                    '<a href="' + mainUrl + '" class="Footer-link">' + languageDictionary.home + ' </a>' +
+                    '<a href="' + mainUrl + '/learn-more" class="Footer-link">' + languageDictionary.learnMore + ' </a>' +
+                    '<a href="' + mainUrl + '/redirect-join" class="Footer-link">' + languageDictionary.joinUs + ' </a>' +
+                    '<a href="' + mainUrl + '/login-landing/login" class="Footer-link">' + languageDictionary.signIn + ' </a>' +
+                    '<a href="#top" class="Footer-link backToTopLink"><i class="fas fa-arrow-up Footer-arrow"></i>' +
                     '<span class="backToTopText">' + languageDictionary.backToTop + '</span></a>' +
                     '</p></div></footer>';
 
