@@ -67,7 +67,9 @@ public class StudyLanguageResolutionFilter implements Filter {
             LOG.info("The supported languages can be detected for the study {}", studyGuid);
             Locale ddpAuthPreferredLocale = RouteUtil.getDDPAuth(request).getPreferredLocale();
             LanguageDto preferredLanguage = TransactionWrapper.withTxn(
-                    handle -> getPreferredLanguage(handle, acceptLanguageHeader, ddpAuthPreferredLocale, studyGuid)
+                    handle -> StudyLanguageResolutionFilter.getPreferredLanguage(
+                            handle, acceptLanguageHeader, ddpAuthPreferredLocale, studyGuid
+                    )
             );
             request.attribute(USER_LANGUAGE, preferredLanguage);
             LOG.info("Added the preferred user language {} to the attribute store", preferredLanguage.getIsoCode());
@@ -76,7 +78,12 @@ public class StudyLanguageResolutionFilter implements Filter {
         }
     }
 
-    public LanguageDto getPreferredLanguage(Handle handle, String acceptLanguageHeader, Locale ddpAuthPreferredLocale, String studyGuid) {
+    /**
+     * Takes information required for figuring out the preferred language
+     * Returns the preferred language (see the filter description). Uses a
+     * trivial cache avoid multiple DB trips for the fallback language
+     */
+    static LanguageDto getPreferredLanguage(Handle handle, String acceptLanguageHeader, Locale ddpAuthPreferredLocale, String studyGuid) {
         List<LanguageRange> acceptLanguages = StringUtils.isNotEmpty(acceptLanguageHeader)
                 ? LanguageRange.parse(acceptLanguageHeader) : Collections.emptyList();
         Set<LanguageDto> languagesSupportedByStudy = handle.attach(StudyDao.class).findSupportedLanguagesByGuid(studyGuid);
