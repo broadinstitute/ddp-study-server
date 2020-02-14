@@ -76,8 +76,14 @@ public class StudyLanguageResolutionFilter implements Filter {
                         );
                         request.attribute(USER_LANGUAGE, preferredLanguage);
                         LOG.info("Added the preferred user language {} to the attribute store", preferredLanguage.getIsoCode());
-                        String contentLanguageHeader = StudyLanguageResolutionFilter.createContentLanguageHeaderFromLocale(preferredLocale);
-                        response.header(RouteConstants.CONTENT_LANGUAGE, contentLanguageHeader);
+                        boolean routeIsInStudyContext = request.attribute(USER_LANGUAGE) != null;
+                        boolean isContentLanguageHeaderRelevant = routeIsInStudyContext && response.status() == 200;
+                        if (isContentLanguageHeaderRelevant) {
+                            String contentLanguageHeader = StudyLanguageResolutionFilter.createContentLanguageHeaderFromLocale(
+                                    preferredLocale
+                            );
+                            response.header(RouteConstants.CONTENT_LANGUAGE, contentLanguageHeader);
+                        }
                     }
             );
         } catch (Exception e) {
