@@ -1,14 +1,12 @@
 package org.broadinstitute.ddp.route;
 
 import org.apache.http.entity.ContentType;
-import org.broadinstitute.ddp.client.ClientResponse;
 import org.broadinstitute.ddp.client.DsmClient;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.json.errors.ApiError;
-import org.broadinstitute.ddp.model.dsm.ParticipantStatus;
 import org.broadinstitute.ddp.model.dsm.ParticipantStatusTrackingInfo;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.util.ResponseUtil;
@@ -62,12 +60,13 @@ public class GetDsmParticipantStatusRoute implements Route {
                     throw ResponseUtil.haltError(404, new ApiError(ErrorCodes.NOT_FOUND, errMsg));
                 }));
 
-        ClientResponse<ParticipantStatus> resp = dsm.getParticipantStatus(studyGuid, userGuid, token);
-        LOG.info("DSM call completed, study={} and participant={}, status={}", studyGuid, userGuid, resp.getStatusCode());
+        var result = dsm.getParticipantStatus(studyGuid, userGuid, token);
+        result.runIfThrown(e -> LOG.error("Failed to fetch participant status from DSM", e));
+        LOG.info("DSM call completed, study={} and participant={}, status={}", studyGuid, userGuid, result.getStatusCode());
 
-        if (resp.getStatusCode() == 200) {
-            return new ParticipantStatusTrackingInfo(resp.getBody(), status, userGuid);
-        } else if (resp.getStatusCode() == 404) {
+        if (result.getStatusCode() == 200) {
+            return new ParticipantStatusTrackingInfo(result.getBody(), status, userGuid);
+        } else if (result.getStatusCode() == 404) {
             String errMsg = "Participant " + userGuid + " or study " + studyGuid + " not found";
             LOG.warn(errMsg);
             throw ResponseUtil.haltError(404, new ApiError(ErrorCodes.NOT_FOUND, errMsg));
@@ -76,7 +75,7 @@ public class GetDsmParticipantStatusRoute implements Route {
             // all unrecognized statuses caused by DSM interaction into HTTP 500
             String errMsg = "Something went wrong with DSM interaction while trying to fetch the status "
                     + " for the study " + studyGuid + " and participant " + userGuid
-                    + ". The returned HTTP status is " + resp.getStatusCode();
+                    + ". The returned HTTP status is " + result.getStatusCode();
             LOG.error(errMsg);
             throw ResponseUtil.haltError(500, new ApiError(ErrorCodes.SERVER_ERROR, errMsg));
         }

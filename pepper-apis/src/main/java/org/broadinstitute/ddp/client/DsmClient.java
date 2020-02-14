@@ -1,20 +1,27 @@
 package org.broadinstitute.ddp.client;
 
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Type;
+import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.List;
 
+import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.JWTCreationException;
 import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.typesafe.config.Config;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
-import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.dsm.ParticipantStatus;
 import org.broadinstitute.ddp.util.Auth0Util;
 import org.broadinstitute.ddp.util.RouteUtil;
@@ -36,81 +43,107 @@ public class DsmClient {
     private static final Logger LOG = LoggerFactory.getLogger(DsmClient.class);
     private static final Gson gson = new Gson();
 
-    private final String baseUrl;
-    private final String jwtSecret;
+    private final URI baseUrl;
+    private final Algorithm algorithm;
     private final String jwtSigner;
     private final HttpClient client;
 
     public DsmClient(Config cfg) {
+        this(cfg, HttpClient.newHttpClient());
+    }
+
+    public DsmClient(Config cfg, HttpClient client) {
         this(cfg.getString(ConfigFile.DSM_BASE_URL),
                 cfg.getString(ConfigFile.DSM_JWT_SECRET),
-                cfg.getString(ConfigFile.DSM_JWT_SIGNER));
+                cfg.getString(ConfigFile.DSM_JWT_SIGNER),
+                client);
     }
 
     public DsmClient(String baseUrl, String jwtSecret, String jwtSigner) {
-        this.baseUrl = baseUrl;
-        this.jwtSecret = jwtSecret;
+        this(baseUrl, jwtSecret, jwtSigner, HttpClient.newHttpClient());
+    }
+
+    /**
+     * Instantiate a new DSM client.
+     *
+     * @param baseUrl   the base url
+     * @param jwtSecret the secret for creating auth token
+     * @param jwtSigner the signer for creating auth token
+     * @param client    the http client
+     * @throws IllegalArgumentException if url or secret is invalid
+     */
+    public DsmClient(String baseUrl, String jwtSecret, String jwtSigner, HttpClient client) {
+        try {
+            this.baseUrl = new URL(baseUrl).toURI();
+        } catch (MalformedURLException | URISyntaxException e) {
+            throw new IllegalArgumentException("Invalid DSM base url", e);
+        }
+
+        try {
+            this.algorithm = Algorithm.HMAC256(jwtSecret);
+        } catch (UnsupportedEncodingException e) {
+            throw new IllegalArgumentException("Invalid DSM JWT secret", e);
+        }
+
         this.jwtSigner = jwtSigner;
-        this.client = HttpClient.newHttpClient();
+        this.client = client;
     }
 
     private String generateToken() {
-        try {
-            return Auth0Util.generateShortLivedJwtToken(jwtSecret, jwtSigner);
-        } catch (Exception e) {
-            throw new DDPException("Failed to generate DSM JWT token", e);
-        }
+        return Auth0Util.generateShortLivedJwtToken(algorithm, jwtSigner);
     }
 
     /**
      * Fetches list of cancer names in DSM.
      *
-     * @return cancer names
+     * @return result with cancer names
      */
-    public ClientResponse<List<String>> listCancers() {
-        var request = HttpRequest.newBuilder()
-                .uri(URI.create(baseUrl + API_CANCERS))
-                .header(RouteConstants.AUTHORIZATION, RouteUtil.makeAuthBearerHeader(generateToken()))
-                .timeout(Duration.ofSeconds(DEFAULT_TIMEOUT_SECS))
-                .build();
+    public ApiResult<List<String>, Void> listCancers() {
         try {
+            String auth = RouteUtil.makeAuthBearerHeader(generateToken());
+            var request = HttpRequest.newBuilder()
+                    .uri(baseUrl.resolve(API_CANCERS))
+                    .header(RouteConstants.AUTHORIZATION, auth)
+                    .timeout(Duration.ofSeconds(DEFAULT_TIMEOUT_SECS))
+                    .build();
             var response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            if (response.statusCode() == 200) {
+            int statusCode = response.statusCode();
+            if (statusCode == 200) {
                 Type type = new TypeToken<List<String>>() {}.getType();
                 List<String> names = gson.fromJson(response.body(), type);
-                return new ClientResponse<>(response.statusCode(), names);
+                return ApiResult.ok(statusCode, names);
             } else {
-                return new ClientResponse<>(response.statusCode(), null);
+                return ApiResult.err(statusCode, null);
             }
-        } catch (Exception e) {
-            LOG.error("Failed to fetch DSM cancers", e);
-            return new ClientResponse<>(500, null);
+        } catch (JWTCreationException | IOException | InterruptedException | JsonSyntaxException e) {
+            return ApiResult.<List<String>, Void>err(500, null).attachThrown(e);
         }
     }
 
     /**
      * Fetches list of drug names in DSM.
      *
-     * @return drug names
+     * @return result with drug names
      */
-    public ClientResponse<List<String>> listDrugs() {
-        var request = HttpRequest.newBuilder()
-                .uri(URI.create(baseUrl + API_DRUGS))
-                .header(RouteConstants.AUTHORIZATION, RouteUtil.makeAuthBearerHeader(generateToken()))
-                .timeout(Duration.ofSeconds(DEFAULT_TIMEOUT_SECS))
-                .build();
+    public ApiResult<List<String>, Void> listDrugs() {
         try {
+            String auth = RouteUtil.makeAuthBearerHeader(generateToken());
+            var request = HttpRequest.newBuilder()
+                    .uri(baseUrl.resolve(API_DRUGS))
+                    .header(RouteConstants.AUTHORIZATION, auth)
+                    .timeout(Duration.ofSeconds(DEFAULT_TIMEOUT_SECS))
+                    .build();
             var response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            if (response.statusCode() == 200) {
+            int statusCode = response.statusCode();
+            if (statusCode == 200) {
                 Type type = new TypeToken<List<String>>() {}.getType();
                 List<String> names = new Gson().fromJson(response.body(), type);
-                return new ClientResponse<>(response.statusCode(), names);
+                return ApiResult.ok(statusCode, names);
             } else {
-                return new ClientResponse<>(response.statusCode(), null);
+                return ApiResult.err(statusCode, null);
             }
-        } catch (Exception e) {
-            LOG.error("Failed to fetch DSM drugs", e);
-            return new ClientResponse<>(500, null);
+        } catch (JWTCreationException | IOException | InterruptedException | JsonSyntaxException e) {
+            return ApiResult.<List<String>, Void>err(500, null).attachThrown(e);
         }
     }
 
@@ -121,28 +154,29 @@ public class DsmClient {
      * @param studyGuid the study guid
      * @param userGuid  the user guid or alt-pid
      * @param token     the user's JWT token
-     * @return status info
+     * @return result with status info
      */
-    public ClientResponse<ParticipantStatus> getParticipantStatus(String studyGuid, String userGuid, String token) {
+    public ApiResult<ParticipantStatus, Void> getParticipantStatus(String studyGuid, String userGuid, String token) {
         String path = API_PARTICIPANT_STATUS
                 .replace(PathParam.STUDY_GUID, studyGuid)
                 .replace(PathParam.USER_GUID, userGuid);
-        var request = HttpRequest.newBuilder()
-                .uri(URI.create(baseUrl + path))
-                .header(RouteConstants.AUTHORIZATION, RouteUtil.makeAuthBearerHeader(token))
-                .timeout(Duration.ofSeconds(DEFAULT_TIMEOUT_SECS))
-                .build();
         try {
+            String auth = RouteUtil.makeAuthBearerHeader(token);
+            var request = HttpRequest.newBuilder()
+                    .uri(baseUrl.resolve(path))
+                    .header(RouteConstants.AUTHORIZATION, auth)
+                    .timeout(Duration.ofSeconds(DEFAULT_TIMEOUT_SECS))
+                    .build();
             var response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            if (response.statusCode() == 200) {
-                ParticipantStatus result = new Gson().fromJson(response.body(), ParticipantStatus.class);
-                return new ClientResponse<>(response.statusCode(), result);
+            int statusCode = response.statusCode();
+            if (statusCode == 200) {
+                ParticipantStatus status = new Gson().fromJson(response.body(), ParticipantStatus.class);
+                return ApiResult.ok(statusCode, status);
             } else {
-                return new ClientResponse<>(response.statusCode(), null);
+                return ApiResult.err(statusCode, null);
             }
-        } catch (Exception e) {
-            LOG.error("Failed to fetch participant status from DSM", e);
-            return new ClientResponse<>(500, null);
+        } catch (JWTCreationException | IOException | InterruptedException | JsonSyntaxException e) {
+            return ApiResult.<ParticipantStatus, Void>err(500, null).attachThrown(e);
         }
     }
 }

@@ -2,11 +2,9 @@ package org.broadinstitute.ddp.schedule;
 
 import java.time.Instant;
 import java.time.ZoneId;
-import java.util.List;
 import java.util.TimeZone;
 
 import com.typesafe.config.Config;
-import org.broadinstitute.ddp.client.ClientResponse;
 import org.broadinstitute.ddp.client.DsmClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.housekeeping.schedule.Keys;
@@ -67,13 +65,16 @@ public class DsmDrugLoaderJob implements Job {
         try {
             LOG.info("Running job '{}'", getKey());
             long start = Instant.now().toEpochMilli();
+
             var dsm = new DsmClient(ConfigManager.getInstance().getConfig());
-            ClientResponse<List<String>> resp = dsm.listDrugs();
-            if (resp.getStatusCode() == 200) {
-                DrugStore.getInstance().populateDrugList(resp.getBody());
+            var result = dsm.listDrugs();
+            if (result.getStatusCode() == 200) {
+                DrugStore.getInstance().populateDrugList(result.getBody());
             } else {
-                LOG.error("Could not fetch DSM drug list, got response status code {}", resp.getStatusCode());
+                LOG.error("Could not fetch DSM drug list, got response status code {}",
+                        result.getStatusCode(), result.getThrown());
             }
+
             long elapsed = Instant.now().toEpochMilli() - start;
             LOG.info("Completed job '{}' in {}ms", getKey(), elapsed);
         } catch (Exception e) {

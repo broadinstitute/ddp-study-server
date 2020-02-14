@@ -12,7 +12,7 @@ import java.util.List;
 
 import com.google.gson.Gson;
 import com.typesafe.config.Config;
-import org.broadinstitute.ddp.client.ClientResponse;
+import org.broadinstitute.ddp.client.ApiResult;
 import org.broadinstitute.ddp.client.DsmClient;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -24,6 +24,7 @@ import org.broadinstitute.ddp.model.dsm.ParticipantStatusTrackingInfo.RecordStat
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import spark.HaltException;
@@ -33,6 +34,9 @@ public class GetDsmParticipantStatusRouteTest extends IntegrationTestSuite.TestC
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static Gson gson = new Gson();
     private static Config cfg;
+
+    private DsmClient mockDsm;
+    private GetDsmParticipantStatusRoute route;
 
     @BeforeClass
     public static void setup() {
@@ -48,17 +52,20 @@ public class GetDsmParticipantStatusRouteTest extends IntegrationTestSuite.TestC
         TransactionWrapper.useTxn(handle -> TestDataSetupUtil.deleteStudyEnrollmentStatuses(handle, testData));
     }
 
+    @Before
+    public void init() {
+        mockDsm = mock(DsmClient.class);
+        route = new GetDsmParticipantStatusRoute(mockDsm);
+    }
+
     @Test
     public void testProcess_returnStatusInfo() {
         var expected = new ParticipantStatus(1L, 2L, 3L, 4L, 5L, List.of(
                 new ParticipantStatus.Sample("BLOOD", 6L, 7L, 8L, "tracking9", "carrier10")));
 
-        DsmClient mockClient = mock(DsmClient.class);
-        when(mockClient
-                .getParticipantStatus(testData.getStudyGuid(), testData.getUserGuid(), "token"))
-                .thenReturn(new ClientResponse<>(200, expected));
+        when(mockDsm.getParticipantStatus(testData.getStudyGuid(), testData.getUserGuid(), "token"))
+                .thenReturn(ApiResult.ok(200, expected));
 
-        var route = new GetDsmParticipantStatusRoute(mockClient);
         ParticipantStatusTrackingInfo actual = route.process(testData.getStudyGuid(), testData.getUserGuid(), "token");
 
         assertNotNull(actual);
@@ -74,7 +81,6 @@ public class GetDsmParticipantStatusRouteTest extends IntegrationTestSuite.TestC
     @Test
     public void testProcess_whenStudyNotExist_then404() {
         try {
-            var route = new GetDsmParticipantStatusRoute(new DsmClient(cfg));
             route.process("abcxyz", testData.getUserGuid(), "token");
             fail("expected exception not thrown");
         } catch (HaltException halted) {
@@ -89,7 +95,6 @@ public class GetDsmParticipantStatusRouteTest extends IntegrationTestSuite.TestC
     @Test
     public void testProcess_whenUserNotExist_then404() {
         try {
-            var route = new GetDsmParticipantStatusRoute(new DsmClient(cfg));
             route.process(testData.getUserGuid(), "abcxyz", "token");
             fail("expected exception not thrown");
         } catch (HaltException halted) {
@@ -106,7 +111,6 @@ public class GetDsmParticipantStatusRouteTest extends IntegrationTestSuite.TestC
         TransactionWrapper.useTxn(handle -> {
             StudyDto study2 = TestDataSetupUtil.generateTestStudy(handle, cfg);
             try {
-                var route = new GetDsmParticipantStatusRoute(new DsmClient(cfg));
                 route.process(study2.getGuid(), testData.getUserGuid(), "token");
                 fail("expected exception not thrown");
             } catch (HaltException halted) {
@@ -123,12 +127,8 @@ public class GetDsmParticipantStatusRouteTest extends IntegrationTestSuite.TestC
 
     @Test
     public void testProcess_whenClientErrors_then500() {
-        DsmClient mockClient = mock(DsmClient.class);
-        when(mockClient
-                .getParticipantStatus(testData.getStudyGuid(), testData.getUserGuid(), "token"))
-                .thenReturn(new ClientResponse<>(403, null));
-
-        var route = new GetDsmParticipantStatusRoute(mockClient);
+        when(mockDsm.getParticipantStatus(testData.getStudyGuid(), testData.getUserGuid(), "token"))
+                .thenReturn(ApiResult.err(403, null));
 
         try {
             route.process(testData.getStudyGuid(), testData.getUserGuid(), "token");
@@ -139,10 +139,9 @@ public class GetDsmParticipantStatusRouteTest extends IntegrationTestSuite.TestC
             assertEquals(ErrorCodes.SERVER_ERROR, err.getCode());
         }
 
-        reset(mockClient);
-        when(mockClient
-                .getParticipantStatus(testData.getStudyGuid(), testData.getUserGuid(), "token"))
-                .thenReturn(new ClientResponse<>(502, null));
+        reset(mockDsm);
+        when(mockDsm.getParticipantStatus(testData.getStudyGuid(), testData.getUserGuid(), "token"))
+                .thenReturn(ApiResult.err(502, null));
 
         try {
             route.process(testData.getStudyGuid(), testData.getUserGuid(), "token");

@@ -2,11 +2,9 @@ package org.broadinstitute.ddp.schedule;
 
 import java.time.Instant;
 import java.time.ZoneId;
-import java.util.List;
 import java.util.TimeZone;
 
 import com.typesafe.config.Config;
-import org.broadinstitute.ddp.client.ClientResponse;
 import org.broadinstitute.ddp.client.DsmClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.CancerStore;
@@ -68,13 +66,18 @@ public class DsmCancerLoaderJob implements Job {
         try {
             LOG.info("Running job '{}'", getKey());
             long start = Instant.now().toEpochMilli();
+
             var dsm = new DsmClient(ConfigManager.getInstance().getConfig());
-            ClientResponse<List<String>> resp = dsm.listCancers();
-            if (resp.getStatusCode() == 200) {
-                CancerStore.getInstance().populate(resp.getBody());
+            var result = dsm.listCancers();
+            if (result.getStatusCode() == 200) {
+                CancerStore.getInstance().populate(result.getBody());
+            } else if (result.hasThrown()) {
+                LOG.error("Failed to fetch DSM cancers", result.getThrown());
             } else {
-                LOG.error("Could not fetch DSM cancer list, got response status code {}", resp.getStatusCode());
+                LOG.error("Could not fetch DSM cancer list, got response status code {}",
+                        result.getStatusCode(), result.getThrown());
             }
+
             long elapsed = Instant.now().toEpochMilli() - start;
             LOG.info("Completed job '{}' in {}ms", getKey(), elapsed);
         } catch (Exception e) {

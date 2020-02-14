@@ -13,8 +13,6 @@ import static spark.Spark.stop;
 import static spark.Spark.threadPool;
 
 import java.io.File;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -24,7 +22,6 @@ import java.util.Map;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.apache.http.entity.ContentType;
-import org.broadinstitute.ddp.client.ClientResponse;
 import org.broadinstitute.ddp.client.DsmClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.ErrorCodes;
@@ -436,11 +433,6 @@ public class DataDonationPlatform {
         get(API.CANCER_SUGGESTION, new GetCancerSuggestionsRoute(CancerStore.getInstance()), responseSerializer);
 
         // Routes calling DSM
-        try {
-            new URL(cfg.getString(ConfigFile.DSM_BASE_URL));
-        } catch (MalformedURLException e) {
-            throw new RuntimeException("Invalid DSM URL {}.  DSM-related routes will fail.", e);
-        }
         get(API.PARTICIPANT_STATUS, new GetDsmParticipantStatusRoute(new DsmClient(cfg)), responseSerializer);
         get(API.STUDY_PASSWORD_REQUIREMENTS, new GetStudyPasswordRequirementsRoute(), responseSerializer);
 
@@ -461,23 +453,25 @@ public class DataDonationPlatform {
             var dsm = new DsmClient(cfg);
 
             // initialize drug list
-            ClientResponse<List<String>> resp = dsm.listDrugs();
-            if (resp.getStatusCode() == 200) {
-                List<String> drugNames = resp.getBody();
+            var result = dsm.listDrugs();
+            if (result.getStatusCode() == 200) {
+                List<String> drugNames = result.getBody();
                 DrugStore.getInstance().populateDrugList(drugNames);
                 LOG.info("Loaded {} drugs into pepper", drugNames == null ? 0 : drugNames.size());
             } else {
-                LOG.error("Could not initialize DSM drug list, got response status code {}", resp.getStatusCode());
+                LOG.error("Could not initialize DSM drug list, got response status code {}",
+                        result.getStatusCode(), result.getThrown());
             }
 
             // initialize cancer list
-            resp = dsm.listCancers();
-            if (resp.getStatusCode() == 200) {
-                List<String> cancerNames = resp.getBody();
+            result = dsm.listCancers();
+            if (result.getStatusCode() == 200) {
+                List<String> cancerNames = result.getBody();
                 CancerStore.getInstance().populate(cancerNames);
                 LOG.info("Loaded {} cancers into pepper", cancerNames == null ? 0 : cancerNames.size());
             } else {
-                LOG.error("Could not initialize DSM cancer list, got response status code {}", resp.getStatusCode());
+                LOG.error("Could not initialize DSM cancer list, got response status code {}",
+                        result.getStatusCode(), result.getThrown());
             }
         };
 
