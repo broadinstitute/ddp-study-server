@@ -6,19 +6,19 @@
 
     <!-- This file is used for testing in LiquibaseUtilTest. -->
 
-    <changeSet author="yufeng" id="insert-data-successful">
-        <insert tableName="test_table">
+    <changeSet author="yufeng" id="liquibase-rollback-success-insert">
+        <insert tableName="liquibase_test_table">
             <column name="name">another</column>
         </insert>
         <rollback>
-            <delete tableName="test_table">
+            <delete tableName="liquibase_test_table">
                 <where>name = 'another'</where>
             </delete>
         </rollback>
     </changeSet>
 
-    <changeSet author="yufeng" id="faulty-sql">
-        <insert tableName="non_existing_table">
+    <changeSet author="yufeng" id="liquibase-rollback-success-faulty-sql">
+        <insert tableName="liquibase_non_existing_table">
             <column name="name">blah</column>
         </insert>
     </changeSet>
