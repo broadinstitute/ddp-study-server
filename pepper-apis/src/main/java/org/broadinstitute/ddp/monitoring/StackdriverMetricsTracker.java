@@ -285,7 +285,9 @@ public class StackdriverMetricsTracker {
      * to epochTimeMillis
      */
     public void addPoint(long value, long epochTimeMillis) {
-        metricSeriesPoints.queuePoint(metricsSeries, value, epochTimeMillis);
+        if (DO_STACKDRIVER) {
+            metricSeriesPoints.queuePoint(metricsSeries, value, epochTimeMillis);
+        }
     }
 
     /**
