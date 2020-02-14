@@ -87,7 +87,7 @@ public class StudyLanguageResolutionFilter implements Filter {
 
     static String createContentLanguageHeaderFromLocale(Locale locale) {
         // E.g. "en-US"
-        return String.format("%s-%s", locale.getLanguage(), locale.getCountry());
+        return locale.toLanguageTag();
     }
 
     static LanguageDto getPreferredLanguage(Handle handle, String acceptLanguageHeader, Locale ddpAuthPreferredLocale, String studyGuid) {
