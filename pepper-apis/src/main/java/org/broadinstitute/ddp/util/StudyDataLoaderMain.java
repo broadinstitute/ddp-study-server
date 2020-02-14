@@ -63,7 +63,7 @@ import org.slf4j.LoggerFactory;
 public class StudyDataLoaderMain {
 
     private static final Logger LOG = LoggerFactory.getLogger(StudyDataLoaderMain.class);
-    private static final String DATA_GC_ID = "broad-ddp-angio";
+    private static final String DATA_GC_ID = "broad-ddp-mbc";
     private static final String DEFAULT_MIGRATION_REPORT_PATH = "/tmp/migration_reports";
     private static final String USAGE = "StudyDataLoaderMain [-h, --help] [OPTIONS] study-guid";
     private static List<String> altPidUserList;
@@ -294,6 +294,7 @@ public class StudyDataLoaderMain {
         JsonElement aboutyouSurveyData = surveyData.getAsJsonObject().get("aboutyousurvey");
         JsonElement consentSurveyData = surveyData.getAsJsonObject().get("consentsurvey");
         JsonElement bdconsentSurveyData = surveyData.getAsJsonObject().get("bdconsentsurvey");
+        JsonElement combinedConsentSurveyData = surveyData.getAsJsonObject().get("combinedconsentsurvey");
         JsonElement followupSurveyData = surveyData.getAsJsonObject().get("followupsurvey");
 
         surveyDataMap.put("datstatparticipantdata", datstatParticipantData);
@@ -302,6 +303,7 @@ public class StudyDataLoaderMain {
         surveyDataMap.put("aboutyousurvey", aboutyouSurveyData);
         surveyDataMap.put("consentsurvey", consentSurveyData);
         surveyDataMap.put("bdconsentsurvey", bdconsentSurveyData);
+        surveyDataMap.put("combinedconsentsurvey", combinedConsentSurveyData);
         surveyDataMap.put("followupsurvey", followupSurveyData);
         return surveyDataMap;
     }
@@ -556,6 +558,7 @@ public class StudyDataLoaderMain {
                     hasAboutYou = (sourceData.get("aboutyousurvey") != null && !sourceData.get("aboutyousurvey").isJsonNull());
                     hasTissueConsent = (sourceData.get("consentsurvey") != null && !sourceData.get("consentsurvey").isJsonNull());
                     hasBloodConsent = (sourceData.get("bdconsentsurvey") != null && !sourceData.get("bdconsentsurvey").isJsonNull());
+                    hasConsent = (sourceData.get("combinedconsentsurvey") != null && !sourceData.get("combinedconsentsurvey").isJsonNull());
                     hasRelease = (sourceData.get("releasesurvey") != null && !sourceData.get("releasesurvey").isJsonNull());
                     hasBloodRelease = (sourceData.get("bdreleasesurvey") != null && !sourceData.get("bdreleasesurvey").isJsonNull());
                     hasFollowup = (sourceData.get("followupsurvey") != null && !sourceData.get("followupsurvey").isJsonNull());
@@ -576,20 +579,23 @@ public class StudyDataLoaderMain {
                                 answerDao);
                     }
 
-                    /*if (hasConsent) {
-                        String activityCode = mappingData.get("consentsurvey").getAsJsonObject().get("activity_code").getAsString();
-                        SActivityInstanceDto instanceDto = dataLoader.createActivityInstance(surveyDataMap.get("consentsurvey"),
+                    if (hasConsent) {
+                        //For MBC just create activity
+                        //String activityCode = mappingData.get("consentsurvey").getAsJsonObject().get("activity_code").getAsString();
+                        String activityCode = "CONSENT";
+
+                        ActivityInstanceDto instanceDto = dataLoader.createActivityInstance(sourceData.get("combinedconsentsurvey"),
                                 userGuid, studyId,
                                 activityCode, createdAt,
-                                //CONSENT_ACTIVITY_CODE, createdAt,
                                 jdbiActivity,
                                 activityInstanceDao,
                                 activityInstanceStatusDao);
-                        dataLoader.loadConsentSurveyData(handle, surveyDataMap.get("consentsurvey"),
-                                mappingDataMap.get("consentsurvey"),
+
+                        /*dataLoader.loadConsentSurveyData(handle, sourceData.get("combinedconsentsurvey"),
+                                mappingData.get("consentsurvey"),
                                 studyDto, userDto, instanceDto,
-                                answerDao);
-                    }*/
+                                answerDao);*/
+                    }
 
                     if (hasTissueConsent) {
                         String activityCode = mappingData.get("tissueconsentsurvey").getAsJsonObject().get("activity_code").getAsString();

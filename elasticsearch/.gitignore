@@ -1,3 +1,4 @@
 output-config/
 output-users/
 **/users.json
+!templates/users.json
