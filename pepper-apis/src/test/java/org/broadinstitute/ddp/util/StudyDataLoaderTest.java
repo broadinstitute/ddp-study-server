@@ -860,7 +860,7 @@ public class StudyDataLoaderTest {
         ActivityInstanceDto instanceDto = new ActivityInstanceDto(1L, pretendInstanceGuid, 1L, 1L, 1L,
                 1L, 1L, true, false, null, null, null, true);
 
-        doCallRealMethod().when(mockDataLoader).loadConsentSurveyData(
+        doCallRealMethod().when(mockDataLoader).loadTissueConsentSurveyData(
                 any(Handle.class),
                 any(JsonElement.class),
                 any(JsonElement.class),
@@ -870,7 +870,7 @@ public class StudyDataLoaderTest {
                 any(AnswerDao.class));
 
         AnswerDao mockAnswerDao = mock(AnswerDao.class);
-        mockDataLoader.loadConsentSurveyData(mockHandle,
+        mockDataLoader.loadTissueConsentSurveyData(mockHandle,
                 sourceDataMap.get("consentsurvey"),
                 mappingData.get("tissueconsentsurvey"),
                 studyDto,
