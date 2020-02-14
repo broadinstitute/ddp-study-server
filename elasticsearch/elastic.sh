@@ -17,7 +17,13 @@ print_usage() {
 print_help() {
   cat << 'EOM'
 USAGE:
-  elastic.sh [OPTIONS] <COMMAND> <ARGS>...
+  elastic.sh [OPTIONS] <VER> <ENV> <COMMAND> <ARGS>...
+
+VER:
+  the version, i.e. v1
+
+ENV:
+  the environment, i.e. local/dev/test/staging/prod
 
 OPTIONS:
   -h, --help    print this help message
@@ -26,11 +32,11 @@ COMMANDS:
   create-index <INDEX_FILE>
     create the index pointed to by the given file
 
-  create-templated-index <INDEX_FILE> <INDEX_NAME>
-    create the index but use the given name for name substitution
-
   upload-role <ROLE_FILE>
     create/update the role pointed to by the given file
+
+  upload-template <INDEX_TEMPLATE_FILE>
+    create/update the index template pointed to by the given file
 
   upload-user <USER_FILE> <USER_NAME>
     finds the user in the given file and create/update it
@@ -74,6 +80,17 @@ create_index() {
     -d "@$index_file"
 }
 
+upload_template() {
+  local template_file="$1"
+  local template_name="${template_file##*/}"
+  template_name="${template_name%.json}"
+
+  curl -s -X PUT "$BASE_URL/_template/$template_name?pretty" \
+    -H "Authorization: Basic $CREDENTIALS" \
+    -H 'Content-Type: application/json' \
+    -d "@$template_file"
+}
+
 upload_user() {
   local user_file="$1"
   local user_name="$2"
@@ -115,8 +132,8 @@ main() {
     create-index)
       create_index "$4"
       ;;
-    create-templated-index)
-      create_index "$4" "$5"
+    upload-template)
+      upload_template "$4"
       ;;
     upload-user)
       upload_user "$4" "$5"
