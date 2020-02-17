@@ -41,6 +41,10 @@ public class StudyLanguageContentTypeSettingFilter implements Filter {
                 );
                 return;
             }
+            boolean isContentLanguageHeaderRelevant = preferredLanguageIsSpecified && response.status() == 200;
+            if (!isContentLanguageHeaderRelevant) {
+                return;
+            }
             Locale preferredLocale = Locale.forLanguageTag(preferredLanguage.getIsoCode());
             String contentLanguageHeader = createHeaderFromLocale(preferredLocale);
             response.header(RouteConstants.CONTENT_LANGUAGE, contentLanguageHeader);
