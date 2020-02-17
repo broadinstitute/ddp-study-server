@@ -76,24 +76,11 @@ public class StudyLanguageResolutionFilter implements Filter {
                         );
                         request.attribute(USER_LANGUAGE, preferredLanguage);
                         LOG.info("Added the preferred user language {} to the attribute store", preferredLanguage.getIsoCode());
-                        boolean routeIsInStudyContext = request.attribute(USER_LANGUAGE) != null;
-                        boolean isContentLanguageHeaderRelevant = routeIsInStudyContext && response.status() == 200;
-                        if (isContentLanguageHeaderRelevant) {
-                            String contentLanguageHeader = StudyLanguageResolutionFilter.createContentLanguageHeaderFromLocale(
-                                    preferredLocale
-                            );
-                            response.header(RouteConstants.CONTENT_LANGUAGE, contentLanguageHeader);
-                        }
                     }
             );
         } catch (Exception e) {
             LOG.error("Error while figuring out the user language", e);
         }
-    }
-
-    static String createContentLanguageHeaderFromLocale(Locale locale) {
-        // E.g. "en-US"
-        return locale.toLanguageTag();
     }
 
     static LanguageDto getPreferredLanguage(Handle handle, String acceptLanguageHeader, Locale ddpAuthPreferredLocale, String studyGuid) {

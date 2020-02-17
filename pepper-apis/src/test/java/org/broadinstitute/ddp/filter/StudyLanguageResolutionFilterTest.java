@@ -102,15 +102,6 @@ public class StudyLanguageResolutionFilterTest extends TxnAwareBaseTest {
         );
     }
 
-    @Test
-    public void test_whenCreateContentLanguageHeaderFromLocaleIsCalled_thenItReturnsCorrectHeader() {
-        Locale locale = Locale.forLanguageTag("en-GB");
-        String header = StudyLanguageResolutionFilter.createContentLanguageHeaderFromLocale(locale);
-        Assert.assertEquals("en", locale.getLanguage());
-        Assert.assertEquals("GB", locale.getCountry());
-        Assert.assertEquals("en-GB", header);
-    }
-
     private void enableLanguageSupportForStudy(Handle handle, String studyGuid, String isoLanguageCode) {
         handle.attach(StudyDao.class).addSupportedLanguage(studyGuid, isoLanguageCode);
     }
