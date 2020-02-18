@@ -5,12 +5,14 @@ import java.time.ZoneId;
 import java.util.TimeZone;
 
 import com.typesafe.config.Config;
+import org.broadinstitute.ddp.client.DsmClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
-import org.broadinstitute.ddp.util.DsmDrugLoader;
+import org.broadinstitute.ddp.housekeeping.schedule.Keys;
+import org.broadinstitute.ddp.model.dsm.DrugStore;
+import org.broadinstitute.ddp.util.ConfigManager;
 import org.quartz.CronScheduleBuilder;
 import org.quartz.Job;
 import org.quartz.JobBuilder;
-import org.quartz.JobDataMap;
 import org.quartz.JobDetail;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
@@ -24,15 +26,10 @@ import org.slf4j.LoggerFactory;
 
 public class DsmDrugLoaderJob implements Job {
 
-    public static final String NAME = "drug";
-    public static final String GROUP = "loader";
-    private static final String TRIGGER_GROUP = "dsm";
-    private static final String TRIGGER_NAME = "drug-loader";
-
     private static final Logger LOG = LoggerFactory.getLogger(DsmDrugLoaderJob.class);
 
     public static JobKey getKey() {
-        return JobKey.jobKey(NAME, GROUP);
+        return Keys.Loader.DrugJob;
     }
 
     public static void register(Scheduler scheduler, Config cfg) throws SchedulerException {
@@ -42,21 +39,16 @@ public class DsmDrugLoaderJob implements Job {
             return;
         }
 
-        JobDataMap dataMap = new JobDataMap();
-        dataMap.put(ConfigFile.DSM_JWT_SECRET, cfg.getString(ConfigFile.DSM_JWT_SECRET));
-        dataMap.put(ConfigFile.DSM_BASE_URL, cfg.getString(ConfigFile.DSM_BASE_URL));
-
         JobDetail drugLoaderJob = JobBuilder.newJob(DsmDrugLoaderJob.class)
                 .withIdentity(getKey())
-                .usingJobData(dataMap)
                 .requestRecovery(false)
                 .storeDurably(true)
                 .build();
         scheduler.addJob(drugLoaderJob, true);
-        LOG.info("Added drug loader job '{}' to scheduler", getKey());
+        LOG.info("Added job '{}' to scheduler", getKey());
 
         Trigger trigger = TriggerBuilder.newTrigger()
-                .withIdentity(TRIGGER_NAME, TRIGGER_GROUP)
+                .withIdentity(Keys.Loader.DrugTrigger)
                 .forJob(getKey())
                 .withSchedule(CronScheduleBuilder
                         .cronSchedule(schedule)
@@ -65,22 +57,28 @@ public class DsmDrugLoaderJob implements Job {
                 .startNow()
                 .build();
         scheduler.scheduleJob(trigger);
-        LOG.info("Added trigger '{}' for drug loader job '{}' with schedule '{}'", trigger.getKey(), getKey(), schedule);
+        LOG.info("Added trigger '{}' for job '{}' with schedule '{}'", trigger.getKey(), getKey(), schedule);
     }
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
         try {
-            JobDataMap dataMap = context.getMergedJobDataMap();
-            LOG.info("Running DsmDrugDataLoader job '{}'", getKey());
+            LOG.info("Running job '{}'", getKey());
             long start = Instant.now().toEpochMilli();
-            DsmDrugLoader drugLoader = new DsmDrugLoader();
-            drugLoader.fetchAndLoadDrugs(dataMap.getString(ConfigFile.DSM_BASE_URL),
-                    dataMap.getString(ConfigFile.DSM_JWT_SECRET));
+
+            var dsm = new DsmClient(ConfigManager.getInstance().getConfig());
+            var result = dsm.listDrugs();
+            if (result.getStatusCode() == 200) {
+                DrugStore.getInstance().populateDrugList(result.getBody());
+            } else {
+                LOG.error("Could not fetch DSM drug list, got response status code {}",
+                        result.getStatusCode(), result.getThrown());
+            }
+
             long elapsed = Instant.now().toEpochMilli() - start;
-            LOG.info("Dsm Drug Loader job '{}' completed in {}ms", getKey(), elapsed);
+            LOG.info("Completed job '{}' in {}ms", getKey(), elapsed);
         } catch (Exception e) {
-            LOG.error("Error while executing DsmDrugLoader job '{}'", getKey(), e);
+            LOG.error("Error while executing job '{}'", getKey(), e);
             throw new JobExecutionException(e, false);
         }
     }

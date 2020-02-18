@@ -38,4 +38,11 @@ public class Keys {
         public static final TriggerKey DbBackupTrigger = TriggerKey.triggerKey("db-backup", "gcp-operations");
         public static final TriggerKey BackupCheckTrigger = TriggerKey.triggerKey("backup-check", "gcp-operations");
     }
+
+    public static class Loader {
+        public static final JobKey CancerJob = JobKey.jobKey("cancer", "loader");
+        public static final JobKey DrugJob = JobKey.jobKey("drug", "loader");
+        public static final TriggerKey CancerTrigger = TriggerKey.triggerKey("cancer-loader", "dsm");
+        public static final TriggerKey DrugTrigger = TriggerKey.triggerKey("drug-loader", "dsm");
+    }
 }
