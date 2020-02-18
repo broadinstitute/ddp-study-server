@@ -75,7 +75,7 @@ public class StudyLanguageResolutionFilter implements Filter {
                                 handle, preferredLocale
                         );
                         request.attribute(USER_LANGUAGE, preferredLanguage);
-                        LOG.info("Added the preferred user language {} to the attribute store", preferredLanguage.getIsoCode());
+                        LOG.info("Added the preferred user language '{}' to the attribute store", preferredLanguage.getIsoCode());
                     }
             );
         } catch (Exception e) {
