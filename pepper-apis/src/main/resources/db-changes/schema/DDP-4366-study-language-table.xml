@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="sretsia" id="20200502-create-study-language-table">
+        <createTable tableName="study_language">
+            <column name="study_language_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="sl_pk"/>
+            </column>
+            <column name="umbrella_study_id" type="bigint">
+                <constraints nullable="false" foreignKeyName="sl_study_id_us_study_id_fk" references="umbrella_study(umbrella_study_id)"/>
+            </column>
+            <column name="language_code_id" type="bigint">
+                <constraints nullable="false" foreignKeyName="sl_lang_code_id_lc_lang_code_id_fk" references="language_code(language_code_id)"/>
+            </column>
+        </createTable>
+        <addUniqueConstraint tableName="study_language" columnNames="umbrella_study_id, language_code_id" constraintName="sl_uk"/>
+    </changeSet>
+</databaseChangeLog>
