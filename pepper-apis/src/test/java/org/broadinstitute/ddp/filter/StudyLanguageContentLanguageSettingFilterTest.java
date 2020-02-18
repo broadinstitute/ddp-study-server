@@ -5,6 +5,7 @@ import java.util.Locale;
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
 
+import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
@@ -56,7 +57,7 @@ public class StudyLanguageContentLanguageSettingFilterTest extends IntegrationTe
     // Verifies that the route in the study context has a valid "Content-Language" header
     // This effectively means that both StudyLanguageContentLanguageSettingFilter and
     // StudyLanguageResolutionFilter worked as expected
-    public void test_whenLanguageAwareRouteIsCalled_andResponseStatusIs200_thenResponseContainsContentValidLanguageHeader() {
+    public void test_whenLanguageAwareRouteIsCalled_andResponseStatusIs200_thenResponseContainsValidContentLanguageHeader() {
         Response resp = RestAssured.given().auth().oauth2(testData.getTestingUser().getToken())
                 .pathParam("instanceGuid", instanceDto.getGuid())
                 .when().get(url);
@@ -65,4 +66,16 @@ public class StudyLanguageContentLanguageSettingFilterTest extends IntegrationTe
         Assert.assertNotNull(header);
         Assert.assertEquals("en", header);
     }
+
+    @Test
+    public void test_whenNonLanguageAwareRouteIsCalled_andResponseStatusIs200_thenResponseContainsNoContentLanguageHeader() {
+        String url = RouteTestUtil.getTestingBaseUrl() + RouteConstants.API.HEALTH_CHECK;
+        String password = RouteTestUtil.getConfig().getString(ConfigFile.HEALTHCHECK_PASSWORD);
+        Response resp = RestAssured.given().header("Host", password)
+                .when().get(url);
+        resp.then().assertThat().statusCode(200);
+        String header = resp.getHeader("Content-Language");
+        Assert.assertNull(header);
+    }
+
 }
