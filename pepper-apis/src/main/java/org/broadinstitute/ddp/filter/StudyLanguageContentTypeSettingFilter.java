@@ -62,6 +62,6 @@ public class StudyLanguageContentTypeSettingFilter implements Filter {
      * Given a Locale, produces a String that is later used in the Content-Language header (e.g. "en-US")
      */
     static String createHeaderFromLocale(Locale locale) {
-        return String.format("%s-%s", locale.getLanguage(), locale.getCountry());
+        return locale.toLanguageTag();
     }
 }
