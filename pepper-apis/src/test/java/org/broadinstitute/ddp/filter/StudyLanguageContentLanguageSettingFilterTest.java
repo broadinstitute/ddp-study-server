@@ -17,7 +17,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class StudyLanguageContentTypeSettingFilterTest extends IntegrationTestSuite.TestCase {
+public class StudyLanguageContentLanguageSettingFilterTest extends IntegrationTestSuite.TestCase {
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static String url;
     private static ActivityInstanceDto instanceDto;
@@ -46,7 +46,7 @@ public class StudyLanguageContentTypeSettingFilterTest extends IntegrationTestSu
     @Test
     public void test_whenCreateHeaderFromLocaleIsCalled_thenItReturnsCorrectHeader() {
         Locale locale = Locale.forLanguageTag("en-GB");
-        String header = StudyLanguageContentTypeSettingFilter.createHeaderFromLocale(locale);
+        String header = StudyLanguageContentLanguageSettingFilter.createHeaderFromLocale(locale);
         Assert.assertEquals("en", locale.getLanguage());
         Assert.assertEquals("GB", locale.getCountry());
         Assert.assertEquals("en-GB", header);
@@ -54,7 +54,7 @@ public class StudyLanguageContentTypeSettingFilterTest extends IntegrationTestSu
 
     @Test
     // Verifies that the route in the study context has a valid "Content-Language" header
-    // This effectively means that both StudyLanguageContentTypeSettingFilter and
+    // This effectively means that both StudyLanguageContentLanguageSettingFilter and
     // StudyLanguageResolutionFilter worked as expected
     public void test_whenLanguageAwareRouteIsCalled_andResponseStatusIs200_thenResponseContainsContentValidLanguageHeader() {
         Response resp = RestAssured.given().auth().oauth2(testData.getTestingUser().getToken())

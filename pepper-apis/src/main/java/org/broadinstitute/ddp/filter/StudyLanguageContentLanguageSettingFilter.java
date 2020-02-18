@@ -21,10 +21,10 @@ import spark.Response;
  * "/user/*studies/*" and thus the language resolution filter is invoked for it
  * earlier in the chain.
  */
-public class StudyLanguageContentTypeSettingFilter implements Filter {
+public class StudyLanguageContentLanguageSettingFilter implements Filter {
 
     public static final String USER_LANGUAGE = "USER_LANGUAGE";
-    private static final Logger LOG = LoggerFactory.getLogger(StudyLanguageContentTypeSettingFilter.class);
+    private static final Logger LOG = LoggerFactory.getLogger(StudyLanguageContentLanguageSettingFilter.class);
 
     @Override
     public void handle(Request request, Response response) {

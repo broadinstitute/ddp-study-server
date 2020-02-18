@@ -46,7 +46,7 @@ import org.broadinstitute.ddp.filter.ExcludePathFilterWrapper;
 import org.broadinstitute.ddp.filter.HttpHeaderMDCFilter;
 import org.broadinstitute.ddp.filter.MDCAttributeRemovalFilter;
 import org.broadinstitute.ddp.filter.MDCLogBreadCrumbFilter;
-import org.broadinstitute.ddp.filter.StudyLanguageContentTypeSettingFilter;
+import org.broadinstitute.ddp.filter.StudyLanguageContentLanguageSettingFilter;
 import org.broadinstitute.ddp.filter.StudyLanguageResolutionFilter;
 import org.broadinstitute.ddp.filter.TokenConverterFilter;
 import org.broadinstitute.ddp.filter.UserAuthCheckFilter;
@@ -279,9 +279,9 @@ public class DataDonationPlatform {
 
         // These filters work in a tandem:
         // - StudyLanguageResolutionFilter figures out and sets the user language in the attribute store
-        // - StudyLanguageContentTypeSettingFilter sets the "Content-Language" header later on
+        // - StudyLanguageContentLanguageSettingFilter sets the "Content-Language" header later on
         before(API.BASE + "/user/*/studies/*", new StudyLanguageResolutionFilter());
-        after(API.BASE + "/user/*/studies/*", new StudyLanguageContentTypeSettingFilter());
+        after(API.BASE + "/user/*/studies/*", new StudyLanguageContentLanguageSettingFilter());
 
         enableCORS("*", String.join(",", CORS_HTTP_METHODS), String.join(",", CORS_HTTP_HEADERS));
         setupCatchAllErrorHandling();
