@@ -34,6 +34,7 @@ import org.broadinstitute.ddp.db.dto.Auth0TenantDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.filter.DsmAuthFilterTest;
+import org.broadinstitute.ddp.filter.StudyLanguageContentTypeSettingFilterTest;
 import org.broadinstitute.ddp.filter.UserAuthCheckFilterTest;
 import org.broadinstitute.ddp.security.AesUtil;
 import org.broadinstitute.ddp.security.EncryptionKey;
@@ -116,7 +117,8 @@ import org.slf4j.LoggerFactory;
         UpdateUserPasswordRouteTest.class,
         UpdateUserEmailRouteTest.class,
         GetStudiesRouteTest.class,
-        VerifyInvitationRouteTest.class
+        VerifyInvitationRouteTest.class,
+        StudyLanguageContentTypeSettingFilterTest.class
 })
 public class IntegrationTestSuite {
 
