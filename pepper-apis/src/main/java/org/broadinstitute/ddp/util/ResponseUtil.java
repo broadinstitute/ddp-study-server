@@ -22,7 +22,7 @@ public class ResponseUtil {
      */
     public static void halt422ErrorResponse(Response res, String errorCode) {
         String errorJson = new Gson().toJson(new Error(errorCode));
-        res.raw().setContentType(ContentType.APPLICATION_JSON.getMimeType());
+        res.type(ContentType.APPLICATION_JSON.getMimeType());
         halt(GENERIC_INPUT_ERROR, errorJson);
 
     }
@@ -32,12 +32,12 @@ public class ResponseUtil {
      */
     public static void halt400ErrorResponse(Response res, String errorCode) {
         String errorJson = new Gson().toJson(new Error(errorCode));
-        res.raw().setContentType(ContentType.APPLICATION_JSON.getMimeType());
+        res.type(ContentType.APPLICATION_JSON.getMimeType());
         halt(HttpStatus.SC_BAD_REQUEST, errorJson);
     }
 
     /**
-     * Helper to halt the request handler and set an error response. Callers should correspondingly throw when invoking this.
+     * Helper to halt the request handler and set an error response. Callers should rethrow as appropriate.
      *
      * @param res    the response
      * @param status the http status code to set
@@ -45,7 +45,20 @@ public class ResponseUtil {
      * @throws HaltException unconditionally thrown to halt handler
      */
     public static HaltException haltError(Response res, int status, Object error) {
-        res.raw().setContentType(ContentType.APPLICATION_JSON.getMimeType());
+        res.type(ContentType.APPLICATION_JSON.getMimeType());
+        throw halt(status, transformer.render(error));
+    }
+
+    /**
+     * Helper to halt the request handler and set an error response. Callers should rethrow as appropriate. This assumes
+     * the response content type is set to json, since that's the default. Callers can set the content on the response
+     * object to be explicit.
+     *
+     * @param status the http status code to set
+     * @param error  the response to return as the body
+     * @throws HaltException unconditionally thrown to halt handler
+     */
+    public static HaltException haltError(int status, Object error) {
         throw halt(status, transformer.render(error));
     }
 }

@@ -1,7 +1,6 @@
 package org.broadinstitute.ddp.util;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -29,12 +28,9 @@ import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTCreator;
 import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.interfaces.DecodedJWT;
-
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
-
 import com.typesafe.config.Config;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ResponseHandler;
@@ -50,9 +46,7 @@ import org.broadinstitute.ddp.db.dto.EnrollmentStatusDto;
 import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.json.auth0.Auth0CallResponse;
 import org.broadinstitute.ddp.security.JWTConverter;
-
 import org.jdbi.v3.core.Handle;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -564,14 +558,19 @@ public class Auth0Util {
         mgmtAPI.connections().deleteUser(connectionId, email).execute();
     }
 
-
-    // Generates a short-lived JWT token used primarily for fetching DSM data
-    public static String generateShortLivedJwtToken(String secret, String issuer) throws UnsupportedEncodingException {
+    /**
+     * Generate a JWT token with a short expiration time. Useful for creating auth tokens required by DSM.
+     *
+     * @param algorithm the algorithm to sign the token with
+     * @param issuer    the token issuer
+     * @return token string
+     * @throws com.auth0.jwt.exceptions.JWTCreationException if failed to create token
+     */
+    public static String generateShortLivedJwtToken(Algorithm algorithm, String issuer) {
         long expiresAt = Instant.now().plus(1, ChronoUnit.MINUTES).toEpochMilli();
         JWTCreator.Builder builder = JWT.create();
         builder.withIssuer(issuer);
         builder.withExpiresAt(new Date(expiresAt));
-        Algorithm algorithm = Algorithm.HMAC256(secret);
         return builder.sign(algorithm);
     }
 
