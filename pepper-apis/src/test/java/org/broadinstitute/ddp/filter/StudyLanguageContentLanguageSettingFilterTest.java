@@ -68,6 +68,17 @@ public class StudyLanguageContentLanguageSettingFilterTest extends IntegrationTe
     }
 
     @Test
+    public void test_whenLanguageAwareRouteIsCalled_andResponseStatusIsNot200_thenResponseContainsNoContentLanguageHeader() {
+        String badToken = "a" + testData.getTestingUser().getToken();
+        Response resp = RestAssured.given().auth().oauth2(badToken)
+                .pathParam("instanceGuid", instanceDto.getGuid())
+                .when().get(url);
+        resp.then().assertThat().statusCode(401);
+        String header = resp.getHeader("Content-Language");
+        Assert.assertNull(header);
+    }
+
+    @Test
     public void test_whenNonLanguageAwareRouteIsCalled_andResponseStatusIs200_thenResponseContainsNoContentLanguageHeader() {
         String url = RouteTestUtil.getTestingBaseUrl() + RouteConstants.API.HEALTH_CHECK;
         String password = RouteTestUtil.getConfig().getString(ConfigFile.HEALTHCHECK_PASSWORD);
