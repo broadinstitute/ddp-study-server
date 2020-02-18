@@ -6,8 +6,7 @@
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.1.xsd">
 
     <changeSet id="txnwrappertest" author="andrew">
-
-        <createTable tableName="test">
+        <createTable tableName="txnwrapper_test">
             <column name="test_id" type="bigint" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false" />
             </column>
@@ -16,7 +15,7 @@
             </column>
         </createTable>
 
-        <insert tableName="test">
+        <insert tableName="txnwrapper_test">
             <column name="test_name">testing</column>
         </insert>
     </changeSet>
