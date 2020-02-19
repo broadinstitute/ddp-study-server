@@ -9,15 +9,19 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
+
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.json.activity.ActivityInstanceSummary;
 import org.broadinstitute.ddp.security.DDPAuth;
 import org.broadinstitute.ddp.util.RouteUtil;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import spark.Request;
 import spark.Response;
 import spark.Route;
@@ -50,8 +54,9 @@ public class UserActivityInstanceListRoute implements Route {
         DDPAuth ddpAuth = RouteUtil.getDDPAuth(request);
         return TransactionWrapper.withTxn(
                 handle -> {
+                    LanguageDto preferredUserLanguage = RouteUtil.getUserLanguage(request);
                     List<ActivityInstanceSummary> summaries = activityInstanceDao.listActivityInstancesForUser(
-                            handle, userGuid, studyGuid, ddpAuth.getPreferredLanguage()
+                            handle, userGuid, studyGuid, preferredUserLanguage.getIsoCode()
                     );
                     performActivityInstanceNumbering(summaries);
                     return filterActivityInstancesFromDisplay(summaries);

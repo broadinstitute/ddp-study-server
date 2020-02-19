@@ -133,9 +133,9 @@ public class I18nUtil {
         if (null != preferredLocale) {
             LanguageRange preferred = new LanguageRange(preferredLocale.toLanguageTag(), LanguageRange.MAX_WEIGHT);
 
-            // This is the locale the user has specifically chosen, so insert it
-            // at the top of the list so it's the first MAX_WEIGHT option.
-            priorityList.add(0, preferred);
+            // This is the locale the user has specifically chosen, insert it
+            // at the bottom of the list so it has the lowest priority
+            priorityList.add(preferred);
         }
 
         LanguageRange fallback = new LanguageRange(fallbackLocale.toLanguageTag(), LanguageRange.MIN_WEIGHT);

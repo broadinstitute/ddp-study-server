@@ -18,17 +18,17 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
+
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
-import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiCompositeQuestion;
-import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
 import org.broadinstitute.ddp.db.dao.JdbiNumericQuestion;
 import org.broadinstitute.ddp.db.dao.JdbiQuestion;
 import org.broadinstitute.ddp.db.dao.QuestionDao;
@@ -36,6 +36,7 @@ import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.AnswerDto;
 import org.broadinstitute.ddp.db.dto.CompositeQuestionDto;
+import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.db.dto.NumericQuestionDto;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.exception.DDPException;
@@ -82,9 +83,12 @@ import org.broadinstitute.ddp.util.JsonValidationError;
 import org.broadinstitute.ddp.util.MiscUtil;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
+
 import org.jdbi.v3.core.Handle;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import spark.Request;
 import spark.Response;
 import spark.Route;
@@ -158,10 +162,9 @@ public class PatchFormAnswersRoute implements Route {
             var jdbiQuestion = handle.attach(JdbiQuestion.class);
             var answerDao = handle.attach(AnswerDao.class);
 
-            String isoLanguageCode = ddpAuth.getPreferredLanguage() != null
-                    ? ddpAuth.getPreferredLanguage() : I18nContentRenderer.DEFAULT_LANGUAGE_CODE;
-            JdbiLanguageCode jdbiLanguageCode = handle.attach(JdbiLanguageCode.class);
-            Long languageCodeId = jdbiLanguageCode.getLanguageCodeId(isoLanguageCode);
+            LanguageDto preferredUserLanguage = RouteUtil.getUserLanguage(request);
+            String isoLanguageCode = preferredUserLanguage.getIsoCode();
+            Long languageCodeId = preferredUserLanguage.getId();
 
             try {
                 Map<String, List<Rule>> failedRulesByQuestion = new HashMap<>();
