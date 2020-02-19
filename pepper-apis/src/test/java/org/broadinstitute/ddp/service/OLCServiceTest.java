@@ -152,37 +152,37 @@ public class OLCServiceTest extends TxnAwareBaseTest {
         double epsilon = 0;
 
         // longitude tests
-        assertEquals(OLCPrecision.LEAST.getBlockSizeInDegrees(),
-                new OpenLocationCode(OLCService.convertPlusCodeToPrecision(PLUSCODE_FULL, OLCPrecision.LEAST)).decode().getLongitudeWidth(),
+        assertEquals(OLCPrecision.LEAST.getBlockSizeInDegrees(), new OpenLocationCode(
+                OLCService.convertPlusCodeToPrecision(PLUSCODE_FULL, OLCPrecision.LEAST)).decode().getLongitudeWidth(),
                 epsilon);
-        assertEquals(OLCPrecision.LESS.getBlockSizeInDegrees(),
-                new OpenLocationCode(OLCService.convertPlusCodeToPrecision(PLUSCODE_FULL, OLCPrecision.LESS)).decode().getLongitudeWidth(),
+        assertEquals(OLCPrecision.LESS.getBlockSizeInDegrees(), new OpenLocationCode(
+                OLCService.convertPlusCodeToPrecision(PLUSCODE_FULL, OLCPrecision.LESS)).decode().getLongitudeWidth(),
                 epsilon);
-        assertEquals(OLCPrecision.MEDIUM.getBlockSizeInDegrees(),
-                new OpenLocationCode(OLCService.convertPlusCodeToPrecision(PLUSCODE_FULL, OLCPrecision.MEDIUM)).decode().getLongitudeWidth(),
+        assertEquals(OLCPrecision.MEDIUM.getBlockSizeInDegrees(), new OpenLocationCode(
+                OLCService.convertPlusCodeToPrecision(PLUSCODE_FULL, OLCPrecision.MEDIUM)).decode().getLongitudeWidth(),
                 epsilon);
-        assertEquals(OLCPrecision.MORE.getBlockSizeInDegrees(),
-                new OpenLocationCode(OLCService.convertPlusCodeToPrecision(PLUSCODE_FULL, OLCPrecision.MORE)).decode().getLongitudeWidth(),
+        assertEquals(OLCPrecision.MORE.getBlockSizeInDegrees(), new OpenLocationCode(
+                OLCService.convertPlusCodeToPrecision(PLUSCODE_FULL, OLCPrecision.MORE)).decode().getLongitudeWidth(),
                 epsilon);
-        assertEquals(OLCPrecision.MOST.getBlockSizeInDegrees(),
-                new OpenLocationCode(OLCService.convertPlusCodeToPrecision(PLUSCODE_FULL, OLCPrecision.MOST)).decode().getLongitudeWidth(),
+        assertEquals(OLCPrecision.MOST.getBlockSizeInDegrees(), new OpenLocationCode(
+                OLCService.convertPlusCodeToPrecision(PLUSCODE_FULL, OLCPrecision.MOST)).decode().getLongitudeWidth(),
                 epsilon);
 
         // latitude tests
-        assertEquals(OLCPrecision.LEAST.getBlockSizeInDegrees(),
-                new OpenLocationCode(OLCService.convertPlusCodeToPrecision(PLUSCODE_FULL, OLCPrecision.LEAST)).decode().getLatitudeHeight(),
+        assertEquals(OLCPrecision.LEAST.getBlockSizeInDegrees(), new OpenLocationCode(
+                OLCService.convertPlusCodeToPrecision(PLUSCODE_FULL, OLCPrecision.LEAST)).decode().getLatitudeHeight(),
                 epsilon);
-        assertEquals(OLCPrecision.LESS.getBlockSizeInDegrees(),
-                new OpenLocationCode(OLCService.convertPlusCodeToPrecision(PLUSCODE_FULL, OLCPrecision.LESS)).decode().getLatitudeHeight(),
+        assertEquals(OLCPrecision.LESS.getBlockSizeInDegrees(), new OpenLocationCode(
+                OLCService.convertPlusCodeToPrecision(PLUSCODE_FULL, OLCPrecision.LESS)).decode().getLatitudeHeight(),
                 epsilon);
-        assertEquals(OLCPrecision.MEDIUM.getBlockSizeInDegrees(),
-                new OpenLocationCode(OLCService.convertPlusCodeToPrecision(PLUSCODE_FULL, OLCPrecision.MEDIUM)).decode().getLatitudeHeight(),
+        assertEquals(OLCPrecision.MEDIUM.getBlockSizeInDegrees(), new OpenLocationCode(
+                OLCService.convertPlusCodeToPrecision(PLUSCODE_FULL, OLCPrecision.MEDIUM)).decode().getLatitudeHeight(),
                 epsilon);
-        assertEquals(OLCPrecision.MORE.getBlockSizeInDegrees(),
-                new OpenLocationCode(OLCService.convertPlusCodeToPrecision(PLUSCODE_FULL, OLCPrecision.MORE)).decode().getLatitudeHeight(),
+        assertEquals(OLCPrecision.MORE.getBlockSizeInDegrees(), new OpenLocationCode(
+                OLCService.convertPlusCodeToPrecision(PLUSCODE_FULL, OLCPrecision.MORE)).decode().getLatitudeHeight(),
                 epsilon);
-        assertEquals(OLCPrecision.MOST.getBlockSizeInDegrees(),
-                new OpenLocationCode(OLCService.convertPlusCodeToPrecision(PLUSCODE_FULL, OLCPrecision.MOST)).decode().getLatitudeHeight(),
+        assertEquals(OLCPrecision.MOST.getBlockSizeInDegrees(), new OpenLocationCode(
+                OLCService.convertPlusCodeToPrecision(PLUSCODE_FULL, OLCPrecision.MOST)).decode().getLatitudeHeight(),
                 epsilon);
     }
 

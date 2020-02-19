@@ -22,7 +22,6 @@ import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.model.address.OLCPrecision;
 import org.broadinstitute.ddp.model.study.StudyParticipantsInfo;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
-import org.broadinstitute.ddp.service.AddressService;
 import org.broadinstitute.ddp.service.OLCService;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.junit.After;
