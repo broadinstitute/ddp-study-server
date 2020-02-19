@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.client;
 
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * A general container for wrapping a response from an API call.
@@ -31,6 +32,13 @@ public class ApiResult<B, E> {
     // Convenience helper to create unsuccessful result.
     public static <B, E> ApiResult<B, E> err(int statusCode, E error) {
         return new ApiResult<>(statusCode, null, error);
+    }
+
+    // Convenience helper to create result with a thrown exception.
+    public static <B, E> ApiResult<B, E> thrown(Exception thrown) {
+        var res = new ApiResult<B, E>(500, null, null);
+        res.thrown = thrown;
+        return res;
     }
 
     public ApiResult(int statusCode, B body, E error) {
@@ -88,6 +96,20 @@ public class ApiResult<B, E> {
     public ApiResult<B, E> runIfThrown(Consumer<Exception> callback) {
         if (thrown != null) {
             callback.accept(thrown);
+        }
+        return this;
+    }
+
+    /**
+     * Propagate the exception if this result has an exception attached.
+     *
+     * @param callback takes the attached exception and supplies an exception to throw
+     * @return this result, for chaining if not thrown
+     * @throws X the exception to rethrow
+     */
+    public <X extends Throwable> ApiResult<B, E> rethrowIfThrown(Function<Exception, X> callback) throws X {
+        if (thrown != null) {
+            throw callback.apply(thrown);
         }
         return this;
     }

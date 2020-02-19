@@ -25,10 +25,10 @@ import com.google.pubsub.v1.ProjectSubscriptionName;
 import com.google.pubsub.v1.ProjectTopicName;
 import com.google.pubsub.v1.PubsubMessage;
 import com.google.pubsub.v1.Subscription;
-import com.sendgrid.SendGrid;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.client.SendGridClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
@@ -526,7 +526,7 @@ public class Housekeeping {
                                                         + " is not in the pepper database");
                                             }
 
-                                            new EmailNotificationHandler(new SendGrid(notificationMessage.getApiKey()),
+                                            new EmailNotificationHandler(new SendGridClient(notificationMessage.getApiKey()),
                                                     pdfService, pdfBucketService, pdfGenerationService)
                                                     .handleMessage(notificationMessage);
 
