@@ -71,8 +71,6 @@ public class DsmCancerLoaderJob implements Job {
             var result = dsm.listCancers();
             if (result.getStatusCode() == 200) {
                 CancerStore.getInstance().populate(result.getBody());
-            } else if (result.hasThrown()) {
-                LOG.error("Failed to fetch DSM cancers", result.getThrown());
             } else {
                 LOG.error("Could not fetch DSM cancer list, got response status code {}",
                         result.getStatusCode(), result.getThrown());

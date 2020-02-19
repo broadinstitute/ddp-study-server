@@ -116,7 +116,7 @@ public class DsmClient {
                 return ApiResult.err(statusCode, null);
             }
         } catch (JWTCreationException | IOException | InterruptedException | JsonSyntaxException e) {
-            return ApiResult.<List<String>, Void>err(500, null).attachThrown(e);
+            return ApiResult.thrown(e);
         }
     }
 
@@ -143,7 +143,7 @@ public class DsmClient {
                 return ApiResult.err(statusCode, null);
             }
         } catch (JWTCreationException | IOException | InterruptedException | JsonSyntaxException e) {
-            return ApiResult.<List<String>, Void>err(500, null).attachThrown(e);
+            return ApiResult.thrown(e);
         }
     }
 
@@ -176,7 +176,7 @@ public class DsmClient {
                 return ApiResult.err(statusCode, null);
             }
         } catch (JWTCreationException | IOException | InterruptedException | JsonSyntaxException e) {
-            return ApiResult.<ParticipantStatus, Void>err(500, null).attachThrown(e);
+            return ApiResult.thrown(e);
         }
     }
 }
