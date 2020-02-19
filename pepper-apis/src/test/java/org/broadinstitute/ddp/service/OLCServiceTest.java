@@ -1,156 +1,249 @@
 package org.broadinstitute.ddp.service;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
-import java.util.HashSet;
+import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
-import com.auth0.exception.Auth0Exception;
+import com.google.maps.errors.InvalidRequestException;
+import com.google.maps.model.GeocodingResult;
+import com.google.maps.model.Geometry;
+import com.google.maps.model.LatLng;
+import com.google.maps.model.PlusCode;
+import com.google.openlocationcode.OpenLocationCode;
 import org.broadinstitute.ddp.TxnAwareBaseTest;
-import org.broadinstitute.ddp.constants.ConfigFile;
-import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.client.ApiResult;
+import org.broadinstitute.ddp.client.GoogleMapsClient;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
+import org.broadinstitute.ddp.db.dto.StudyDto;
+import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.address.MailAddress;
 import org.broadinstitute.ddp.model.address.OLCPrecision;
-import org.broadinstitute.ddp.model.study.ParticipantInfo;
-import org.broadinstitute.ddp.model.study.StudyParticipantsInfo;
-import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
-import org.broadinstitute.ddp.util.TestDataSetupUtil;
-import org.junit.After;
-import org.junit.BeforeClass;
+import org.jdbi.v3.core.Handle;
+import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.ExpectedException;
+import org.testcontainers.shaded.org.apache.commons.lang.StringUtils;
 
 public class OLCServiceTest extends TxnAwareBaseTest {
-    private static TestDataSetupUtil.GeneratedTestData data;
 
-    private static AddressService addressService;
+    private static final String ADDRESS = "415 Main St, Cambridge, MA 02142, USA";
+    private static final String PLUSCODE_FULL = "87JC9W76+5G";
+    private static final String PLUSCODE_MORE = "87JC9W76+";
+    private static final String PLUSCODE_MED = "87JC9W00+";
+    private static final String PLUSCODE_LESS = "87JC0000+";
+    private static final String PLUSCODE_LEAST = "87000000+";
+    private static final double LAT = 42.362937;
+    private static final double LNG = -71.088687;
 
-    private Set<String> mailAddressesToDelete = new HashSet<>();
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
 
-    @BeforeClass
-    public static void setupTestData() {
-        TransactionWrapper.useTxn(handle -> {
-            data = TestDataSetupUtil.generateBasicUserTestData(handle);
-        });
-        addressService = new AddressService(cfg.getString(ConfigFile.EASY_POST_API_KEY), cfg.getString(ConfigFile.GEOCODING_API_KEY));
-    }
+    private Handle mockHandle;
+    private JdbiUmbrellaStudy mockJdbiStudy;
+    private JdbiUserStudyEnrollment mockEnrollment;
+    private GoogleMapsClient mockMaps;
+    private OLCService service;
 
-    @After
-    public void breakdown() {
-        TransactionWrapper.useTxn(handle -> mailAddressesToDelete.forEach(guid -> assertTrue(addressService.deleteAddress(handle, guid))));
-    }
+    @Before
+    public void init() {
+        mockHandle = mock(Handle.class);
+        mockJdbiStudy = mock(JdbiUmbrellaStudy.class);
+        mockEnrollment = mock(JdbiUserStudyEnrollment.class);
+        when(mockHandle.attach(JdbiUmbrellaStudy.class)).thenReturn(mockJdbiStudy);
+        when(mockHandle.attach(JdbiUserStudyEnrollment.class)).thenReturn(mockEnrollment);
 
-    @Test
-    public void testHappyPath() throws Auth0Exception {
-        MailAddress address;
-
-        OLCPrecision studyPrecision = data.getTestingStudy().getOlcPrecision();
-        TransactionWrapper.useTxn(handle -> mailAddressesToDelete.add(TestDataSetupUtil.createTestingMailAddress(handle, data).getGuid()));
-        String secondUserGuid = TransactionWrapper.withTxn(TransactionWrapper.DB.APIS, handle ->
-                TestDataSetupUtil.generateTestUser(handle, data.getStudyGuid()).getUserGuid());
-        MailAddress secondTestAddress = new MailAddress();
-        secondTestAddress.setName("Abraham Lincoln");
-        secondTestAddress.setStreet1("86 Brattle Street");
-        secondTestAddress.setCity("Cambridge");
-        secondTestAddress.setState("MA");
-        secondTestAddress.setZip("02138");
-        secondTestAddress.setCountry("US");
-        secondTestAddress.setDefault(true);
-
-        address = addressService.addAddress(secondTestAddress, secondUserGuid, secondUserGuid);
-        mailAddressesToDelete.add(address.getGuid());
-        String firstOLC = address.getPlusCode();
-        firstOLC = OLCService.convertPlusCodeToPrecision(firstOLC, studyPrecision);
-
-        String thirdUserGuid = TransactionWrapper.withTxn(TransactionWrapper.DB.APIS, handle ->
-                TestDataSetupUtil.generateTestUser(handle, data.getStudyGuid()).getUserGuid());
-        MailAddress thirdTestAddress = new MailAddress();
-        thirdTestAddress.setName("Bob Lincoln");
-        thirdTestAddress.setStreet1("1600 Amphitheatre Parkway");
-        thirdTestAddress.setCity("Mountain View");
-        thirdTestAddress.setState("CA");
-        thirdTestAddress.setZip("94043");
-        thirdTestAddress.setCountry("US");
-        thirdTestAddress.setDefault(true);
-
-        address = addressService.addAddress(thirdTestAddress, thirdUserGuid, thirdUserGuid);
-        mailAddressesToDelete.add(address.getGuid());
-        String secondOLC = address.getPlusCode();
-        secondOLC = OLCService.convertPlusCodeToPrecision(secondOLC, studyPrecision);
-
-
-        StudyParticipantsInfo participants = TransactionWrapper.withTxn(handle -> {
-            JdbiUserStudyEnrollment jdbiUserStudyEnrollment = handle.attach(JdbiUserStudyEnrollment.class);
-            jdbiUserStudyEnrollment
-                    .changeUserStudyEnrollmentStatus(data.getUserGuid(), data.getStudyGuid(), EnrollmentStatusType.ENROLLED);
-            jdbiUserStudyEnrollment
-                    .changeUserStudyEnrollmentStatus(secondUserGuid, data.getStudyGuid(), EnrollmentStatusType.ENROLLED);
-            jdbiUserStudyEnrollment
-                    .changeUserStudyEnrollmentStatus(thirdUserGuid, data.getStudyGuid(), EnrollmentStatusType.ENROLLED);
-
-            return OLCService.getAllOLCsForEnrolledParticipantsInStudy(handle, data.getStudyGuid());
-        });
-
-        assertEquals(3, participants.getParticipantInfoList().size());
-
-        List<ParticipantInfo> enrolledParticipantInfoList = participants.getParticipantInfoList();
-        assertEquals(firstOLC, enrolledParticipantInfoList.get(0).getLocation());
-        assertEquals(firstOLC, enrolledParticipantInfoList.get(1).getLocation());
-        assertEquals(secondOLC, enrolledParticipantInfoList.get(2).getLocation());
+        mockMaps = mock(GoogleMapsClient.class);
+        service = new OLCService(mockMaps);
     }
 
     @Test
-    public void testReturnsNullWhenNoLocationSharingAllowed() {
-        try {
-            TransactionWrapper.useTxn(handle -> {
-                int rowsUpdated = handle.attach(JdbiUmbrellaStudy.class).updateShareLocationForStudy(false, data.getStudyGuid());
-                assertEquals(1, rowsUpdated);
+    public void testGetAllOLCsForEnrolledParticipantsInStudy() {
+        var enabledStudy = new StudyDto(1L, "study", "name", "irb", "url", 1L, 1L,
+                OLCPrecision.MEDIUM, true, "email", true);
 
-                StudyParticipantsInfo participants =
-                        OLCService.getAllOLCsForEnrolledParticipantsInStudy(handle, data.getStudyGuid());
-                assertNull(participants);
-            });
-        } finally {
-            int rowsUpdated = TransactionWrapper.withTxn(handle -> handle.attach(JdbiUmbrellaStudy.class)
-                    .updateShareLocationForStudy(true, data.getStudyGuid()));
-            assertEquals(1, rowsUpdated);
-        }
+        when(mockJdbiStudy.findByStudyGuid(any())).thenReturn(enabledStudy);
+        when(mockEnrollment.findAllOLCsForEnrolledParticipantsInStudy(any())).thenReturn(List.of(PLUSCODE_FULL));
+
+        var actual = OLCService.getAllOLCsForEnrolledParticipantsInStudy(mockHandle, "study");
+        assertNotNull(actual);
+        assertNotNull(actual.getParticipantInfoList());
+        assertEquals(1, actual.getParticipantInfoList().size());
+        assertEquals(PLUSCODE_MED, actual.getParticipantInfoList().get(0).getLocation());
     }
 
     @Test
-    public void testReturnsEmptyListWhenNoParticipantsHaveDefaultAddresses() {
-        TransactionWrapper.useTxn(handle -> {
-            mailAddressesToDelete.add(TestDataSetupUtil.createTestingMailAddress(handle, data).getGuid());
-            data.getMailAddress().setDefault(false);
-        });
-        addressService.updateAddress(data.getMailAddress().getGuid(), data.getMailAddress(), data.getUserGuid(), data.getUserGuid());
+    public void testGetAllOLCsForEnrolledParticipantsInStudy_noParticipantsWithDefaultAddress() {
+        var enabledStudy = new StudyDto(1L, "study", "name", "irb", "url", 1L, 1L,
+                OLCPrecision.MEDIUM, true, "email", true);
 
-        StudyParticipantsInfo participants =
-                TransactionWrapper.withTxn(handle -> OLCService.getAllOLCsForEnrolledParticipantsInStudy(handle, data.getStudyGuid()));
+        when(mockJdbiStudy.findByStudyGuid(any())).thenReturn(enabledStudy);
+        when(mockEnrollment.findAllOLCsForEnrolledParticipantsInStudy(any())).thenReturn(Collections.emptyList());
 
-        assertTrue(participants.getParticipantInfoList().isEmpty());
+        var actual = OLCService.getAllOLCsForEnrolledParticipantsInStudy(mockHandle, "study");
+        assertTrue(actual.getParticipantInfoList().isEmpty());
     }
 
     @Test
-    public void testReturnsNullWhenNotOLCPrecisionSetForStudy() {
-        try {
-            TransactionWrapper.useTxn(handle -> {
-                int rowsUpdated = handle.attach(JdbiUmbrellaStudy.class).updateOlcPrecisionForStudy(null, data.getStudyGuid());
-                assertEquals(1, rowsUpdated);
+    public void testGetAllOLCsForEnrolledParticipantsInStudy_publicDataSharingDisabled() {
+        var disabledStudy = new StudyDto(1L, "study", "name", "irb", "url", 1L, 1L,
+                OLCPrecision.MEDIUM, false, "email", true);
 
-                StudyParticipantsInfo participants =
-                        OLCService.getAllOLCsForEnrolledParticipantsInStudy(handle, data.getStudyGuid());
-                assertNull(participants);
-            });
-        } finally {
-            int rowsUpdated = TransactionWrapper.withTxn(handle -> handle.attach(JdbiUmbrellaStudy.class)
-                    .updateOlcPrecisionForStudy(OLCPrecision.MEDIUM, data.getStudyGuid()));
-            assertEquals(1, rowsUpdated);
-        }
+        when(mockJdbiStudy.findByStudyGuid(any())).thenReturn(disabledStudy);
 
+        var actual = OLCService.getAllOLCsForEnrolledParticipantsInStudy(mockHandle, "study");
+        assertNull(actual);
+    }
+
+    @Test
+    public void testGetAllOLCsForEnrolledParticipantsInStudy_noOlcPrecisionSet() {
+        var noPrecisionStudy = new StudyDto(1L, "study", "name", "irb", "url", 1L, 1L, null, false, "email", true);
+
+        when(mockJdbiStudy.findByStudyGuid(any())).thenReturn(noPrecisionStudy);
+
+        var actual = OLCService.getAllOLCsForEnrolledParticipantsInStudy(mockHandle, "study");
+        assertNull(actual);
+    }
+
+    @Test
+    public void testConvertPlusCodeToPrecision() {
+        assertEquals("", OLCService.convertPlusCodeToPrecision("", OLCPrecision.MOST));
+        assertEquals(PLUSCODE_FULL, OLCService.convertPlusCodeToPrecision(PLUSCODE_FULL, OLCPrecision.MOST));
+        assertEquals(PLUSCODE_MORE, OLCService.convertPlusCodeToPrecision(PLUSCODE_FULL, OLCPrecision.MORE));
+        assertEquals(PLUSCODE_MED, OLCService.convertPlusCodeToPrecision(PLUSCODE_FULL, OLCPrecision.MEDIUM));
+        assertEquals(PLUSCODE_LESS, OLCService.convertPlusCodeToPrecision(PLUSCODE_FULL, OLCPrecision.LESS));
+        assertEquals(PLUSCODE_LEAST, OLCService.convertPlusCodeToPrecision(PLUSCODE_FULL, OLCPrecision.LEAST));
+    }
+
+    @Test
+    public void testConvertPlusCodeToPrecision_invalidCode() {
+        thrown.expect(DDPException.class);
+        thrown.expectMessage(containsString("is not valid"));
+        OLCService.convertPlusCodeToPrecision("abc11+xyz22", OLCPrecision.LEAST);
+    }
+
+    @Test
+    public void testConvertPlusCodeToPrecision_cannotConvertToMostPreciseWhenShortened() {
+        thrown.expect(DDPException.class);
+        thrown.expectMessage(containsString("is not precise enough"));
+        OLCService.convertPlusCodeToPrecision(PLUSCODE_LESS, OLCPrecision.MEDIUM);
+    }
+
+    @Test
+    public void testConvertPlusCodeToPrecision_nonStandardLength() {
+        String shortenedPluscode = StringUtils.substring(PLUSCODE_FULL, 0, 5);
+        thrown.expect(DDPException.class);
+        thrown.expectMessage(shortenedPluscode + " is not valid");
+        OLCService.convertPlusCodeToPrecision(shortenedPluscode, OLCPrecision.MEDIUM);
+    }
+
+    @Test
+    public void testConvertPlusCodeToPrecision_blockSize() {
+        double epsilon = 0;
+
+        // longitude tests
+        assertEquals(OLCPrecision.LEAST.getBlockSizeInDegrees(),
+                new OpenLocationCode(OLCService.convertPlusCodeToPrecision(PLUSCODE_FULL, OLCPrecision.LEAST)).decode().getLongitudeWidth(),
+                epsilon);
+        assertEquals(OLCPrecision.LESS.getBlockSizeInDegrees(),
+                new OpenLocationCode(OLCService.convertPlusCodeToPrecision(PLUSCODE_FULL, OLCPrecision.LESS)).decode().getLongitudeWidth(),
+                epsilon);
+        assertEquals(OLCPrecision.MEDIUM.getBlockSizeInDegrees(),
+                new OpenLocationCode(OLCService.convertPlusCodeToPrecision(PLUSCODE_FULL, OLCPrecision.MEDIUM)).decode().getLongitudeWidth(),
+                epsilon);
+        assertEquals(OLCPrecision.MORE.getBlockSizeInDegrees(),
+                new OpenLocationCode(OLCService.convertPlusCodeToPrecision(PLUSCODE_FULL, OLCPrecision.MORE)).decode().getLongitudeWidth(),
+                epsilon);
+        assertEquals(OLCPrecision.MOST.getBlockSizeInDegrees(),
+                new OpenLocationCode(OLCService.convertPlusCodeToPrecision(PLUSCODE_FULL, OLCPrecision.MOST)).decode().getLongitudeWidth(),
+                epsilon);
+
+        // latitude tests
+        assertEquals(OLCPrecision.LEAST.getBlockSizeInDegrees(),
+                new OpenLocationCode(OLCService.convertPlusCodeToPrecision(PLUSCODE_FULL, OLCPrecision.LEAST)).decode().getLatitudeHeight(),
+                epsilon);
+        assertEquals(OLCPrecision.LESS.getBlockSizeInDegrees(),
+                new OpenLocationCode(OLCService.convertPlusCodeToPrecision(PLUSCODE_FULL, OLCPrecision.LESS)).decode().getLatitudeHeight(),
+                epsilon);
+        assertEquals(OLCPrecision.MEDIUM.getBlockSizeInDegrees(),
+                new OpenLocationCode(OLCService.convertPlusCodeToPrecision(PLUSCODE_FULL, OLCPrecision.MEDIUM)).decode().getLatitudeHeight(),
+                epsilon);
+        assertEquals(OLCPrecision.MORE.getBlockSizeInDegrees(),
+                new OpenLocationCode(OLCService.convertPlusCodeToPrecision(PLUSCODE_FULL, OLCPrecision.MORE)).decode().getLatitudeHeight(),
+                epsilon);
+        assertEquals(OLCPrecision.MOST.getBlockSizeInDegrees(),
+                new OpenLocationCode(OLCService.convertPlusCodeToPrecision(PLUSCODE_FULL, OLCPrecision.MOST)).decode().getLatitudeHeight(),
+                epsilon);
+    }
+
+    @Test
+    public void testCalculatePlusCodeWithPrecision() {
+        var res1 = new GeocodingResult();
+        res1.plusCode = new PlusCode();
+        res1.plusCode.globalCode = PLUSCODE_FULL;
+        when(mockMaps.lookupGeocode(any())).thenReturn(ApiResult.ok(200, new GeocodingResult[] {res1}));
+        assertEquals(PLUSCODE_MED, service.calculatePlusCodeWithPrecision(ADDRESS, OLCPrecision.MEDIUM));
+    }
+
+    @Test
+    public void testCalculatePlusCodeWithPrecision_fromLatLongLocation() {
+        var res1 = new GeocodingResult();
+        res1.geometry = new Geometry();
+        res1.geometry.location = new LatLng(LAT, LNG);
+        when(mockMaps.lookupGeocode(any())).thenReturn(ApiResult.ok(200, new GeocodingResult[] {res1}));
+        assertEquals(PLUSCODE_MED, service.calculatePlusCodeWithPrecision(ADDRESS, OLCPrecision.MEDIUM));
+    }
+
+    @Test
+    public void testCalculatePlusCodeWithPrecision_moreThanOneResult() {
+        var res1 = new GeocodingResult();
+        res1.plusCode = new PlusCode();
+        res1.plusCode.globalCode = PLUSCODE_FULL;
+        var res2 = new GeocodingResult();
+        res2.plusCode = new PlusCode();
+        res2.plusCode.globalCode = PLUSCODE_MORE;
+
+        when(mockMaps.lookupGeocode(any())).thenReturn(
+                ApiResult.ok(200, new GeocodingResult[] {res1, res2}));
+
+        assertNull(service.calculatePlusCodeWithPrecision(ADDRESS, OLCPrecision.MEDIUM));
+    }
+
+    @Test
+    public void testCalculatePlusCodeWithPrecision_error() {
+        when(mockMaps.lookupGeocode(any())).thenReturn(
+                ApiResult.err(400, new InvalidRequestException("from test")));
+        assertNull(service.calculatePlusCodeWithPrecision(ADDRESS, OLCPrecision.MEDIUM));
+    }
+
+    @Test
+    public void testCalculatePlusCodeWithPrecision_exception() {
+        when(mockMaps.lookupGeocode(any())).thenReturn(
+                ApiResult.thrown(new IOException("from test")));
+        assertNull(service.calculatePlusCodeWithPrecision(ADDRESS, OLCPrecision.MEDIUM));
+    }
+
+    @Test
+    public void testCalculateFullPlusCode() {
+        var res1 = new GeocodingResult();
+        res1.plusCode = new PlusCode();
+        res1.plusCode.globalCode = PLUSCODE_FULL;
+        when(mockMaps.lookupGeocode(any())).thenReturn(ApiResult.ok(200, new GeocodingResult[] {res1}));
+
+        var address = new MailAddress(
+                "name", "415 Main St", null, "Cambridge", "MA", "US", "02142",
+                null, null, null, null, false);
+
+        assertEquals(PLUSCODE_FULL, service.calculateFullPlusCode(address));
     }
 }
