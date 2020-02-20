@@ -278,6 +278,8 @@ public class DataDonationPlatform {
         // - StudyLanguageContentLanguageSettingFilter sets the "Content-Language" header later on
         before(API.BASE + "/user/*/studies/*", new StudyLanguageResolutionFilter());
         after(API.BASE + "/user/*/studies/*", new StudyLanguageContentLanguageSettingFilter());
+        before(API.BASE + "/studies/*", new StudyLanguageResolutionFilter());
+        after(API.BASE + "/studies/*", new StudyLanguageContentLanguageSettingFilter());
 
         enableCORS("*", String.join(",", CORS_HTTP_METHODS), String.join(",", CORS_HTTP_HEADERS));
         setupCatchAllErrorHandling();
