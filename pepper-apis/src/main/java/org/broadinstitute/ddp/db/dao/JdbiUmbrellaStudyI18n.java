@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.db.dao;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Optional;
 
 import org.broadinstitute.ddp.constants.SqlConstants;
 import org.broadinstitute.ddp.db.dto.StudyI18nDto;
@@ -22,6 +23,17 @@ public interface JdbiUmbrellaStudyI18n extends SqlObject {
                 + "AND i18n.language_code_id = lang.language_code_id")
     @RegisterRowMapper(UmbrellaStudyI18nDtoMapper.class)
     List<StudyI18nDto> findTranslationsByStudyId(@Bind("id") long id);
+
+    @SqlQuery("SELECT lc.iso_language_code, i18n.name, i18n.summary "
+            + "FROM i18n_umbrella_study AS i18n JOIN language_code AS lc "
+            + " ON i18n.language_code_id = lc.language_code_id"
+            + " WHERE i18n.umbrella_study_id = :id AND lc.language_code_id = :langCodeId"
+    )
+    @RegisterRowMapper(UmbrellaStudyI18nDtoMapper.class)
+    Optional<StudyI18nDto> findTranslationByStudyIdAndLanguageCodeId(
+            @Bind("id") long id,
+            @Bind("langCodeId") long languageCodeId
+    );
 
     @SqlUpdate("insert into i18n_umbrella_study "
             + "(umbrella_study_id,language_code_id,name,summary) values "
