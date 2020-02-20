@@ -44,6 +44,9 @@ public interface JdbiUmbrellaStudyI18n extends SqlObject {
                 @Bind("name") String name,
                 @Bind("summary") String summary);
 
+    @SqlUpdate("DELETE FROM i18n_umbrella_study WHERE id = :id")
+    int deleteById(@Bind("id") long id);
+
     class UmbrellaStudyI18nDtoMapper implements RowMapper<StudyI18nDto> {
         @Override
         public StudyI18nDto map(ResultSet rs, StatementContext ctx) throws SQLException {
