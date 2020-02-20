@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.studybuilder;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import com.typesafe.config.Config;
@@ -20,6 +21,7 @@ import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.KitConfigurationDao;
 import org.broadinstitute.ddp.db.dao.KitTypeDao;
 import org.broadinstitute.ddp.db.dao.QueuedEventDao;
+import org.broadinstitute.ddp.db.dao.StudyDao;
 import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
 import org.broadinstitute.ddp.db.dto.Auth0TenantDto;
 import org.broadinstitute.ddp.db.dto.ClientDto;
@@ -84,6 +86,7 @@ public class StudyBuilder {
 
         insertStudyGovernance(handle, studyDto);
         insertStudyDetails(handle, studyDto.getId());
+        insertStudySupportedLanguages(handle, studyDto.getId());
         insertSendgrid(handle, studyDto.getId());
         insertKits(handle, studyDto.getId());
 
@@ -374,6 +377,20 @@ public class StudyBuilder {
             LOG.info("Created study details with id={}, language={}, name={}, summary={}",
                     detailId, lang, name, StringUtils.abbreviate(summary, 50));
         }
+    }
+
+    private void insertStudySupportedLanguages(Handle handle, long studyId) {
+        String studyGuid = handle.attach(JdbiUmbrellaStudy.class).findById(studyId).getGuid();
+        cfg.getStringList("studySupportedLanguages").forEach(
+                isoCode -> {
+                    Long langCodeId = handle.attach(JdbiLanguageCode.class).getLanguageCodeId(isoCode);
+                    Optional.ofNullable(langCodeId).orElseThrow(
+                            () -> new DDPException("Could not find language using code: " + langCodeId)
+                    );
+                    handle.attach(StudyDao.class).addSupportedLanguage(studyGuid, isoCode);
+                    LOG.info("Added a supported language '{}' to the study {}", isoCode, studyGuid);
+                }
+        );
     }
 
     private void insertSendgrid(Handle handle, long studyId) {
