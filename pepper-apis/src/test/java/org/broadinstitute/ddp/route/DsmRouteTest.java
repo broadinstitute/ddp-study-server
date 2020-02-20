@@ -23,6 +23,7 @@ import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ClientDao;
 import org.broadinstitute.ddp.db.dao.JdbiAuth0Tenant;
 import org.broadinstitute.ddp.security.JWTConverter;
+import org.broadinstitute.ddp.security.StudyClientConfiguration;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.broadinstitute.ddp.util.TestDataSetupUtil.GeneratedTestData;
 import org.jdbi.v3.core.Handle;
@@ -48,6 +49,10 @@ public class DsmRouteTest extends IntegrationTestSuite.TestCase {
     protected static String studyGuid;
     protected static String dsmClientAccessToken;
 
+    // If DSM client already exists in database, then re-use it.
+    // Otherwise, insert it and clean it up afterwards.
+    private static boolean insertedDsmClient = false;
+
     @BeforeClass
     public static void userSetup() {
         TransactionWrapper.useTxn(handle -> {
@@ -72,7 +77,9 @@ public class DsmRouteTest extends IntegrationTestSuite.TestCase {
     @AfterClass
     public static void userCleanup() {
         TransactionWrapper.useTxn(handle -> {
-            deleteTestDSMAuthClientInDatabase(handle);
+            if (insertedDsmClient) {
+                deleteTestDSMAuthClientInDatabase(handle);
+            }
         });
     }
 
@@ -87,13 +94,18 @@ public class DsmRouteTest extends IntegrationTestSuite.TestCase {
 
         String auth0Domain = auth0Config.getString(ConfigFile.DOMAIN);
         long auth0TenantId = handle.attach(JdbiAuth0Tenant.class).findByDomain(auth0Domain).getId();
+        String auth0ClientId = auth0Config.getString(ConfigFile.AUTH0_DSM_CLIENT_ID);
 
-        clientDao.registerClient(TEST_DSM_CLIENT_NAME,
-                auth0Config.getString(ConfigFile.AUTH0_DSM_CLIENT_ID),
-                auth0Config.getString(ConfigFile.AUTH0_DSM_CLIENT_SECRET),
-                new ArrayList<>(),
-                auth0Config.getString(ConfigFile.ENCRYPTION_SECRET),
-                auth0TenantId);
+        StudyClientConfiguration clientConfig = clientDao.getConfiguration(auth0ClientId, auth0Domain);
+        if (clientConfig == null) {
+            clientDao.registerClient(TEST_DSM_CLIENT_NAME,
+                    auth0ClientId,
+                    auth0Config.getString(ConfigFile.AUTH0_DSM_CLIENT_SECRET),
+                    new ArrayList<>(),
+                    auth0Config.getString(ConfigFile.ENCRYPTION_SECRET),
+                    auth0TenantId);
+            insertedDsmClient = true;
+        }
     }
 
     /**

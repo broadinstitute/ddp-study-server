@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.route;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.List;
 import java.util.Optional;
 import javax.servlet.http.HttpServletResponse;
 
@@ -15,6 +16,7 @@ import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dao.PdfDao;
+import org.broadinstitute.ddp.db.dto.EnrollmentStatusDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.exception.DDPException;
@@ -83,7 +85,7 @@ public class GetPdfRoute implements Route {
             }
             PdfConfigInfo configInfo = pdfConfigInfo.get();
 
-            haltIfUserNotEnrolled(handle, userDto, studyDto, response);
+            haltIfUserNotEverEnrolled(handle, userDto, studyDto, response);
 
             try {
                 PdfVersion pdfVersion = pdfService.findConfigVersionForUser(
@@ -132,24 +134,28 @@ public class GetPdfRoute implements Route {
     }
 
     /**
-     * Ensures the user is enrolled (not registered or exited), or halts the execution of the route.
+     * Ensures the user is enrolled (not registered or exited) either currently or previously, or halts the execution of the route.
      *
      * @param handle   the database handle
      * @param userDto  the user
      * @param studyDto the study
      * @param response the route response
      */
-    private void haltIfUserNotEnrolled(Handle handle, UserDto userDto, StudyDto studyDto, Response response) {
-        EnrollmentStatusType enrollmentStatusType = handle.attach(JdbiUserStudyEnrollment.class)
-                .getEnrollmentStatusByUserAndStudyIds(userDto.getUserId(), studyDto.getId())
-                .orElseThrow(() -> {
-                    String msg = "Could not find enrollment status for user with GUID " + userDto.getUserGuid();
-                    ApiError err = new ApiError(ErrorCodes.USER_NOT_FOUND, msg);
-                    LOG.error(err.getMessage());
-                    return ResponseUtil.haltError(response, HttpStatus.SC_INTERNAL_SERVER_ERROR, err);
-                });
+    private void haltIfUserNotEverEnrolled(Handle handle, UserDto userDto, StudyDto studyDto, Response response) {
+        List<EnrollmentStatusDto> statuses = handle.attach(JdbiUserStudyEnrollment.class)
+                .getAllEnrollmentStatusesByUserAndStudyIdsSortedDesc(userDto.getUserId(), studyDto.getId());
+        if (statuses.isEmpty()) {
+            String msg = "Could not find enrollment status for user with GUID " + userDto.getUserGuid();
+            ApiError err = new ApiError(ErrorCodes.USER_NOT_FOUND, msg);
+            LOG.error(err.getMessage());
+            throw ResponseUtil.haltError(response, HttpStatus.SC_INTERNAL_SERVER_ERROR, err);
+        }
 
-        if (enrollmentStatusType != EnrollmentStatusType.ENROLLED) {
+        EnrollmentStatusType currentStatus = statuses.get(0).getEnrollmentStatus();
+        boolean hasEnrolledBefore = statuses.stream()
+                .anyMatch(status -> status.getEnrollmentStatus() == EnrollmentStatusType.ENROLLED);
+
+        if (currentStatus.isExited() || !hasEnrolledBefore) {
             String msg = "User " + userDto.getUserGuid() + " was not enrolled in study " + studyDto.getGuid();
             ApiError err = new ApiError(ErrorCodes.UNSATISFIED_PRECONDITION, msg);
             LOG.error(err.getMessage());
