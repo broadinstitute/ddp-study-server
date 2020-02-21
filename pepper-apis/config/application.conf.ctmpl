@@ -49,7 +49,6 @@
         "drugLoader": "{{$conf.Data.schedules.drugLoader}}",
         "cancerLoader": "{{$conf.Data.schedules.cancerLoader}}",
         "studyExport": "{{$conf.Data.schedules.studyExport}}",
-        "elasticsearchExport": "{{$conf.Data.schedules.elasticsearchExport}}",
         "tempUserCleanup": "{{$conf.Data.schedules.tempUserCleanup}}"
     },
     "sendgrid": {
