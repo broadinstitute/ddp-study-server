@@ -2,9 +2,9 @@
   "User": {
     "DatStatParticipantData": {
       "PORTAL_USER_ID": "5ed1b69ad1e6ae0edf7c3913",
-      "datstat_firstname": "Maybe full name?",
-      "datstat_lastname": "Maybe full name?",
-      "datstat_email": "we must have this somewhere..."
+      "datstat_firstname": "PossiblyEmptyUntilImport",
+      "datstat_lastname": "PossiblyEmptyUntilImport",
+      "datstat_email": "emailStoredIn@auth0.come"
     },
     "DatStatSurveyData": {
       "Consent": {
