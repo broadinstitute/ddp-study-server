@@ -168,8 +168,13 @@ public class StudyDataLoader {
             firstName = getStringValueFromElement(thisEl, "firstname");
             lastName = getStringValueFromElement(thisEl, "lastname");
             email = getStringValueFromElement(thisEl, "email");
-            dao.insertByStudyGuidIfNotStoredAlready(firstName, lastName, email,
-                    studyCode, null, dateCreatedMillis);
+            if (StringUtils.isBlank(firstName)) {
+                firstName = " ";
+            }
+            if (StringUtils.isBlank(lastName)) {
+                lastName = " ";
+            }
+            dao.insertByStudyGuidIfNotStoredAlready(firstName, lastName, email, studyCode, null, dateCreatedMillis);
         }
     }
 
@@ -745,7 +750,7 @@ public class StudyDataLoader {
         String emailAddress = data.getAsJsonObject().get("datstat_email").getAsString();
 
         // Create a user for the given domain
-        String randomPass = generateRandomPassword();
+        String randomPass = "Welcome1"; //generateRandomPassword();
         User newAuth0User = auth0Util.createAuth0User(emailAddress, randomPass, mgmtToken);
 
         String auth0UserId = newAuth0User.getId();
