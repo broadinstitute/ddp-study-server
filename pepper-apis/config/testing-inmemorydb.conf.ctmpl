@@ -100,7 +100,6 @@
         "drugLoader": "0 0 8,20 ? * * *",
         "cancerLoader": "0 0 8,20 ? * * *",
         "studyExport": "0 0 9 ? * * *",
-        "elasticsearchExport": "0 0 3 ? * * *",
         "tempUserCleanup": "0 30 5 ? * * *"
     },
     "housekeepingMaxConnections": 50,
