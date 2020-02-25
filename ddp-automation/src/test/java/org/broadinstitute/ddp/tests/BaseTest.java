@@ -70,9 +70,17 @@ public abstract class BaseTest {
 
     public static final String DO_BROWSERSTACK = "org.datadonationplatform.doBrowserStack";
 
+    public static final String USE_SAFARI = "org.datadonationplatform.useSafari";
+
     public static final String FIRST_NAME_DESCRIPTION = "first name";
 
     public static final String LAST_NAME_DESCRIPTION = "last name";
+
+    private static boolean useSafari = true;
+
+    private static final String ANGIO_WEBSITE_TEMPLATE = "ascproject";
+
+    private static final String BRAIN_WEBSITE_TEMPLATE = "braincancerproject";
 
     private WebDriver driver;
 
@@ -211,11 +219,32 @@ public abstract class BaseTest {
     public void tearDown() throws Exception {
         if (isBrowserStack) {
             if (driver != null) {
-                driver.quit();
+                this.driver.quit();
+                logger.info("Driver is null after driver.quit(): {}", driver == null);
             }
         }
         if (Boolean.getBoolean(TERMINATE_ALL_BROWSERS)) {
             killAllRunWebBrowsers();
+        }
+    }
+
+    public static boolean currentPageIsAngioWebsite() {
+        return getDriver().getCurrentUrl().contains(ANGIO_WEBSITE_TEMPLATE);
+    }
+
+    public static boolean currentPageIsBrainWebsite() {
+        return getDriver().getCurrentUrl().contains(BRAIN_WEBSITE_TEMPLATE);
+    }
+
+    public static void waitSomeSeconds(int amountOfSecondsToWait) {
+        int seconds = amountOfSecondsToWait * 1000;
+
+        try {
+            logger.info("Waiting for {} seconds...", amountOfSecondsToWait);
+            Thread.sleep(seconds);
+
+        } catch (InterruptedException error) {
+            logger.info("Interrupted Exception error has occurred");
         }
     }
 

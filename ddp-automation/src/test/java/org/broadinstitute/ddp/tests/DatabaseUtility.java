@@ -1,16 +1,15 @@
 package org.broadinstitute.ddp.tests;
 
 import java.util.List;
+import java.util.Optional;
 
 import com.auth0.jwt.JWT;
 import org.broadinstitute.ddp.constants.Auth0Constants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.db.dao.AnswerSql;
+import org.broadinstitute.ddp.db.dao.JdbiAnswer;
 import org.broadinstitute.ddp.db.dao.JdbiMailingList;
-import org.broadinstitute.ddp.db.dao.JdbiMailingList.MailingListEntryDto;
-import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
-import org.broadinstitute.ddp.pages.angiopages.GatekeeperPage;
+import org.broadinstitute.ddp.pages.GatekeeperPage;
 import org.broadinstitute.ddp.util.JDITestUtils;
 import org.junit.Assert;
 import org.slf4j.Logger;
@@ -20,6 +19,8 @@ public class DatabaseUtility {
     private static final Logger logger = LoggerFactory.getLogger(DatabaseUtility.class);
     private static final int STATUS_FOUND = 1;
     private static final String ANGIO_STUDY_GUID = "ANGIO";
+    private static final String BRAIN_STUDY_GUID = "cmi-brain";
+    private static final String IRB_PASSWORD = "broad_institute";
 
     /**
      * Get the user's guid from the token in localStorage
@@ -68,10 +69,19 @@ public class DatabaseUtility {
         // where is this initialized
         TransactionWrapper.withTxn(handle -> {
             JdbiMailingList mailingListDao = handle.attach(JdbiMailingList.class);
-            int emailStatus = mailingListDao.findUserByEmail(email);
-            //1 == email found in db; 0 == email not found in db
-            List<MailingListEntryDto> mailingList = mailingListDao.getAllUsersFromMailingList();
-            logger.info("Size of mailing list: {}", mailingList.size());
+            Optional<Long> userId = null;
+
+            if (BaseTest.currentPageIsAngioWebsite()) {
+                userId = mailingListDao.findIdByEmailAndStudyGuid(email, ANGIO_STUDY_GUID);
+            } else if (BaseTest.currentPageIsBrainWebsite()) {
+                userId = mailingListDao.findIdByEmailAndStudyGuid(email, BRAIN_STUDY_GUID);
+            }
+
+            if (userId != null && userId.isPresent()) {
+                logger.info("User {} has successfully been added to the mailing list", email);
+            } else {
+                logger.info("User {} was not found in the mailing list", email);
+            }
 
             /*if (emailStatus != STATUS_FOUND) {
                 for (MailingListEntryDto mailingListEntry : mailingList) {
@@ -85,14 +95,16 @@ public class DatabaseUtility {
     }
 
     public static void unlockGatekeeperPage(GatekeeperPage gatekeeperPage) {
-        TransactionWrapper.withTxn(handle -> {
+        /*TransactionWrapper.withTxn(handle -> {
+            //Database connection needs some work - connection related failures concerning TransactionWrapper
             JdbiUmbrellaStudy umbrellaStudyDao = handle.attach(JdbiUmbrellaStudy.class);
             String password = umbrellaStudyDao.getIrbPasswordUsingStudyGuid(ANGIO_STUDY_GUID);
             logger.info("Password: {}", password);
-            gatekeeperPage.setPassword(password);
+            gatekeeperPage.setPassword(IRB_PASSWORD);
             return null;
 
-        });
+        });*/
+        gatekeeperPage.setPassword(IRB_PASSWORD);
     }
 
     private static void listResultSet(List<Long> resultSet) {
@@ -105,8 +117,8 @@ public class DatabaseUtility {
     public static List<Long> getAnswerIds() {
         List<Long> ids = TransactionWrapper.withTxn(handle -> {
             logger.info("Using user id: {}", getUserId());
-            AnswerSql answerSql = handle.attach(AnswerSql.class);
-            return List.copyOf(answerSql.findAllAnswerIdsByOperatorUserId(getUserId()));
+            JdbiAnswer answerDao = handle.attach(JdbiAnswer.class);
+            return answerDao.getAnswerIds(getUserId());
         });
         logger.info("Answer IDs:");
         listResultSet(ids);

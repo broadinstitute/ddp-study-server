@@ -10,15 +10,23 @@
     "socialTestPassword":"{{$testingConf.Data.socialTestPassword}}",
 	{{if eq $environment "dev"}}
         "baseUrl": "https://basil-test.datadonationplatform.org",
-        "angioUrl":"https://pepper-angio-dev.datadonationplatform.org"
+        "angioUrl":"https://dev.ascproject.org",
+        "brainUrl":"https://dev.braincancerproject.org/",
+        "auth0UrlTemplate":"login-dev",
+        "hasGatekeeper":"true"
     {{end}}
     {{if eq $environment "test"}}
         "baseUrl": "https://basil-dev.datadonationplatform.org",
-        "angioUrl":"https://pepper-angio-test.datadonationplatform.org"
+        "angioUrl":"https://pepper-angio-test.datadonationplatform.org",
+        "brainUrl":"https://test.braincancerproject.org/",
+        "auth0UrlTemplate":"login-test",
+        "hasGatekeeper":"true"
     {{end}}
     {{if eq $environment "staging"}}
         "baseUrl": "https://basil-staging.datadonationplatform.org",
-        "angioUrl":"https://pepper-angio-staging.datadonationplatform.org"
+        "angioUrl":"https://pepper-angio-staging.datadonationplatform.org",
+        "auth0UrlTemplate":"login-staging",
+        "hasGatekeeper":"true"
     {{end}}
     "testUser":"{{$testingAuth.testUser}}",
     "testUserPassword":"{{$testingAuth.testUserPassword}}",

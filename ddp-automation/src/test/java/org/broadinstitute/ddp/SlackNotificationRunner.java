@@ -40,10 +40,10 @@ public class SlackNotificationRunner extends Categories {
                 if (POST_SUMMARY_TO_SLACK) {
                     logger.info("Posting summary info to slack");
                     String testSuiteLocation = SlackNotificationRunner.this.getDescription().getDisplayName();
-                    logger.info("Test Suit Location: {}", testSuiteLocation);
+                    //logger.info("Test Suit Location: {}", testSuiteLocation);
                     String[] packages = testSuiteLocation.split(Pattern.quote("."));
                     int amountOfPackages = packages.length - 1;
-                    logger.info("Amount of Packages: {}", amountOfPackages);
+                    //logger.info("Amount of Packages: {}", amountOfPackages);
                     String testSuite = packages[amountOfPackages] + "\n";
                     logger.info("Test Suite: {}", testSuite);
 
