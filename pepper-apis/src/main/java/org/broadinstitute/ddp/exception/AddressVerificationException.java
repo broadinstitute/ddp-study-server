@@ -1,16 +1,15 @@
 package org.broadinstitute.ddp.exception;
 
-import org.broadinstitute.ddp.service.AddressVerificationError;
+import org.broadinstitute.ddp.client.EasyPostVerifyError;
 
 public class AddressVerificationException extends DDPException {
-    AddressVerificationError error;
+    EasyPostVerifyError error;
 
-    public AddressVerificationException(AddressVerificationError error) {
-        super();
+    public AddressVerificationException(EasyPostVerifyError error) {
         this.error = error;
     }
 
-    public AddressVerificationError getError() {
+    public EasyPostVerifyError getError() {
         return error;
     }
 }

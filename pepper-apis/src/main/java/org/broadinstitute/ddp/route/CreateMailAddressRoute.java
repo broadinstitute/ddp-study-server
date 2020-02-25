@@ -34,7 +34,7 @@ public class CreateMailAddressRoute extends ValidatedMailAddressInputRoute {
             LOG.debug("About to save: {}", getGson().toJson(dataObject));
         }
         MailAddress addedAddress = TransactionWrapper.withTxn(handle -> {
-            MailAddress addr = addressService.addAddress(dataObject, participantGuid, operatorGuid);
+            MailAddress addr = addressService.addAddress(handle, dataObject, participantGuid, operatorGuid);
             EventDao eventDao = handle.attach(EventDao.class);
             handle.attach(JdbiUserStudyEnrollment.class)
                     .getAllLatestEnrollmentsForUser(participantGuid).stream()
@@ -54,11 +54,9 @@ public class CreateMailAddressRoute extends ValidatedMailAddressInputRoute {
         return addedAddress;
     }
 
-    protected String buildMailAddressUrl(Request request, String participantGuid, MailAddress addedAddress) {
+    private String buildMailAddressUrl(Request request, String participantGuid, MailAddress addedAddress) {
         return request.scheme() + "://" + request.host()
                     + (RouteConstants.API.ADDRESS.replace(RouteConstants.PathParam.ADDRESS_GUID, addedAddress.getGuid())
                     .replace(RouteConstants.PathParam.USER_GUID, participantGuid));
     }
-
-
 }
