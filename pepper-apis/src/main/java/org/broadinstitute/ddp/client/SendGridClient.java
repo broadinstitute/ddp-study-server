@@ -51,6 +51,8 @@ public class SendGridClient {
     /**
      * Find the currently active version of given template.
      *
+     * <p>See https://sendgrid.com/docs/API_Reference/Web_API_v3/Transactional_Templates/templates.html#-GET
+     *
      * @param templateId the template id
      * @return result with active version id, id can be null if no active ones
      */
@@ -85,6 +87,8 @@ public class SendGridClient {
     /**
      * Send the given mail. Currently no body response is provided, and error response is simply the string
      * representation.
+     *
+     * <p>See https://sendgrid.com/docs/API_Reference/Web_API_v3/Mail/index.html
      *
      * @param mail the mail package
      * @return result

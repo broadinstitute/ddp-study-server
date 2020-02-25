@@ -168,8 +168,13 @@ public class StudyDataLoader {
             firstName = getStringValueFromElement(thisEl, "firstname");
             lastName = getStringValueFromElement(thisEl, "lastname");
             email = getStringValueFromElement(thisEl, "email");
-            dao.insertByStudyGuidIfNotStoredAlready(firstName, lastName, email,
-                    studyCode, null, dateCreatedMillis);
+            if (StringUtils.isBlank(firstName)) {
+                firstName = "";
+            }
+            if (StringUtils.isBlank(lastName)) {
+                lastName = "";
+            }
+            dao.insertByStudyGuidIfNotStoredAlready(firstName, lastName, email, studyCode, null, dateCreatedMillis);
         }
     }
 

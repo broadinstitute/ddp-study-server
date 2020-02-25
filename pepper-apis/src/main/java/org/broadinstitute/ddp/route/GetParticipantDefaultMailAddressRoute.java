@@ -5,6 +5,7 @@ import static org.broadinstitute.ddp.constants.RouteConstants.PathParam.USER_GUI
 import java.util.Optional;
 
 import org.broadinstitute.ddp.constants.ErrorCodes;
+import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.address.MailAddress;
 import org.broadinstitute.ddp.service.AddressService;
@@ -27,9 +28,9 @@ public class GetParticipantDefaultMailAddressRoute implements Route {
     @Override
     public Object handle(Request request, Response response) {
         String participantGuid = request.params(USER_GUID);
-        LOG.info("Retrieving default mail address for participant: {})");
-        Optional<MailAddress> optionalAddress = addressService
-                .findDefaultAddressForParticipant(participantGuid);
+        LOG.info("Retrieving default mail address for participant: {})", participantGuid);
+        Optional<MailAddress> optionalAddress = TransactionWrapper.withTxn(handle -> addressService
+                .findDefaultAddressForParticipant(handle, participantGuid));
         if (optionalAddress.isPresent()) {
             return optionalAddress.get();
         } else {

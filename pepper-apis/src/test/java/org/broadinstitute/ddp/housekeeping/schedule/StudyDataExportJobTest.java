@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.housekeeping.schedule;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.any;
@@ -13,6 +14,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Writer;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.io.IOUtils;
@@ -20,11 +22,11 @@ import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
 
-public class StudyExportToBucketJobTest {
+public class StudyDataExportJobTest {
 
     @Test
-    public void testStreamingOfData() throws IOException {
-        StudyExportToBucketJob job = mock(StudyExportToBucketJob.class);
+    public void testStreamingOfData() {
+        StudyDataExportJob job = mock(StudyDataExportJob.class);
 
         int numberOfChunks = 100;
         int chunkSize = 1023; //yes. 1023
@@ -32,7 +34,7 @@ public class StudyExportToBucketJobTest {
         Arrays.fill(testData, 'x');
         //Simulate running the DataExporter
         //mocking the method that does the writing and the one that does reading. Writing first:
-        when(job.buildExportToCsvRunnable(any(StudyDto.class), isNull(), any(Writer.class))).thenAnswer(
+        when(job.buildExportToCsvRunnable(any(StudyDto.class), isNull(), any(Writer.class), anyList(), anyList())).thenAnswer(
                 (InvocationOnMock invocation) ->
                         (Runnable) () -> {
                             Writer writer = invocation.getArgument(2);
@@ -65,8 +67,8 @@ public class StudyExportToBucketJobTest {
         AtomicBoolean saveToGoogleBucketRanOk = new AtomicBoolean(false);
 
         // We read the data back. Presumably this is what the Google Bucket would be doing
-        when(job.saveToGoogleBucket(any(InputStream.class), anyString(), anyString(), anyString(), anyString(),
-                isNull())).thenAnswer((InvocationOnMock invocation) -> {
+        when(job.saveToGoogleBucket(any(InputStream.class), anyString(), anyString(), any()))
+                .thenAnswer((InvocationOnMock invocation) -> {
                     InputStream stream = invocation.getArgument(0);
                     char[] charsRead = IOUtils.toCharArray(stream, "utf-8");
 
@@ -88,11 +90,10 @@ public class StudyExportToBucketJobTest {
                 "http://blah.boo.com", 2, 1, null, false, null, true);
 
         // run the real thing when we call this
-        when(job.exportStudyToGoogleBucket(testStudyDto, null, "projectId", "bucketName", null)).thenCallRealMethod();
+        when(job.exportStudyToGoogleBucket(testStudyDto, null, null, List.of(), List.of())).thenCallRealMethod();
 
         // run it!
-        job.exportStudyToGoogleBucket(testStudyDto, null, "projectId", "bucketName", null);
+        job.exportStudyToGoogleBucket(testStudyDto, null, null, List.of(), List.of());
         assertTrue(saveToGoogleBucketRanOk.get());
     }
-
 }
