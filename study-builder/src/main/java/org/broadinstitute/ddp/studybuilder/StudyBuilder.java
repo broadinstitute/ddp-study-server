@@ -383,8 +383,10 @@ public class StudyBuilder {
         if (!cfg.hasPath("supportedLanguages")) {
             return;
         }
-        cfg.getStringList("supportedLanguages").forEach(
-                isoCode -> {
+        LOG.info("Processing the 'supportedLanguages' section");
+        cfg.getConfigList("supportedLanguages").forEach(
+                languageCfg -> {
+                    String isoCode = languageCfg.getString("isoLanguageCode");
                     Long langCodeId = handle.attach(JdbiLanguageCode.class).getLanguageCodeId(isoCode);
                     Optional.ofNullable(langCodeId).orElseThrow(
                             () -> new DDPException("Could not find language using code: " + langCodeId)
