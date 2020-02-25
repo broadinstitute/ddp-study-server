@@ -86,7 +86,7 @@ public class StudyBuilder {
 
         insertStudyGovernance(handle, studyDto);
         insertStudyDetails(handle, studyDto.getId());
-        insertStudySupportedLanguages(handle, studyDto.getId());
+        insertStudySupportedLanguages(handle, studyDto);
         insertSendgrid(handle, studyDto.getId());
         insertKits(handle, studyDto.getId());
 
@@ -379,16 +379,18 @@ public class StudyBuilder {
         }
     }
 
-    private void insertStudySupportedLanguages(Handle handle, long studyId) {
-        String studyGuid = handle.attach(JdbiUmbrellaStudy.class).findById(studyId).getGuid();
+    private void insertStudySupportedLanguages(Handle handle, StudyDto studyDto) {
+        if (!cfg.hasPath("studySupportedLanguages")) {
+            return;
+        }
         cfg.getStringList("studySupportedLanguages").forEach(
                 isoCode -> {
                     Long langCodeId = handle.attach(JdbiLanguageCode.class).getLanguageCodeId(isoCode);
                     Optional.ofNullable(langCodeId).orElseThrow(
                             () -> new DDPException("Could not find language using code: " + langCodeId)
                     );
-                    handle.attach(StudyDao.class).addSupportedLanguage(studyGuid, isoCode);
-                    LOG.info("Added a supported language '{}' to the study {}", isoCode, studyGuid);
+                    handle.attach(StudyDao.class).addSupportedLanguage(studyDto.getGuid(), isoCode);
+                    LOG.info("Added a supported language '{}' to the study {}", isoCode, studyDto.getGuid());
                 }
         );
     }
