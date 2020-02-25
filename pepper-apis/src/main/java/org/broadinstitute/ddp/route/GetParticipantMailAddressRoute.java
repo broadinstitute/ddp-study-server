@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.route;
 
 import static org.broadinstitute.ddp.constants.RouteConstants.PathParam.USER_GUID;
 
+import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.service.AddressService;
 import org.broadinstitute.ddp.util.RouteUtil;
 import org.slf4j.Logger;
@@ -24,6 +25,6 @@ public class GetParticipantMailAddressRoute implements Route {
         String participantGuid = request.params(USER_GUID);
         String operatorGuid = RouteUtil.getDDPAuth(request).getOperator();
         LOG.info("Retrieving mail address for participant: {} and operator: {}", participantGuid, operatorGuid);
-        return addressService.findAllAddressesForParticipant(participantGuid);
+        return TransactionWrapper.withTxn(handle -> addressService.findAllAddressesForParticipant(handle, participantGuid));
     }
 }

@@ -18,7 +18,6 @@ public class VerifyMailAddressRoute extends ValidatedJsonInputRoute<MailAddress>
     private static final Gson GSON = new GsonBuilder().serializeNulls().create();
     private AddressService addressService;
 
-
     public VerifyMailAddressRoute(AddressService addressService) {
         this.addressService = addressService;
     }
@@ -32,10 +31,7 @@ public class VerifyMailAddressRoute extends ValidatedJsonInputRoute<MailAddress>
             }
             return addressService.verifyAddress(dataObject);
         } catch (AddressVerificationException e) {
-            ResponseUtil.haltError(response, HttpStatus.SC_UNPROCESSABLE_ENTITY, e.getError());
-            return null;
+            throw ResponseUtil.haltError(response, HttpStatus.SC_UNPROCESSABLE_ENTITY, e.getError());
         }
-
     }
-
 }

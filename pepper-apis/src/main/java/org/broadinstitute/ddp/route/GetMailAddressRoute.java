@@ -5,6 +5,7 @@ import static org.broadinstitute.ddp.constants.RouteConstants.PathParam.ADDRESS_
 import java.util.Optional;
 
 import org.broadinstitute.ddp.constants.ErrorCodes;
+import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.address.MailAddress;
 import org.broadinstitute.ddp.service.AddressService;
@@ -28,7 +29,7 @@ public class GetMailAddressRoute implements Route {
     public Object handle(Request request, Response response) {
         String guid = request.params(ADDRESS_GUID);
         LOG.info("Requesting mail address with GUID: {}", guid);
-        Optional<MailAddress> address = addressService.findAddressByGuid(guid);
+        Optional<MailAddress> address = TransactionWrapper.withTxn(handle -> addressService.findAddressByGuid(handle, guid));
         if (address.isPresent()) {
             return address.get();
         } else {
