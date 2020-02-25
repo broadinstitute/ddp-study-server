@@ -380,10 +380,10 @@ public class StudyBuilder {
     }
 
     private void insertStudySupportedLanguages(Handle handle, StudyDto studyDto) {
-        if (!cfg.hasPath("studySupportedLanguages")) {
+        if (!cfg.hasPath("supportedLanguages")) {
             return;
         }
-        cfg.getStringList("studySupportedLanguages").forEach(
+        cfg.getStringList("supportedLanguages").forEach(
                 isoCode -> {
                     Long langCodeId = handle.attach(JdbiLanguageCode.class).getLanguageCodeId(isoCode);
                     Optional.ofNullable(langCodeId).orElseThrow(
