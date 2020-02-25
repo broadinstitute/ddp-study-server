@@ -169,10 +169,10 @@ public class StudyDataLoader {
             lastName = getStringValueFromElement(thisEl, "lastname");
             email = getStringValueFromElement(thisEl, "email");
             if (StringUtils.isBlank(firstName)) {
-                firstName = " ";
+                firstName = "";
             }
             if (StringUtils.isBlank(lastName)) {
-                lastName = " ";
+                lastName = "";
             }
             dao.insertByStudyGuidIfNotStoredAlready(firstName, lastName, email, studyCode, null, dateCreatedMillis);
         }
