@@ -133,7 +133,7 @@ public interface ActivityInstanceDao extends SqlObject {
         long participantId = getJdbiUser().getUserIdByGuid(participantGuid);
         long instanceId = jdbiInstance.insertLegacyInstance(activityId, participantId, instanceGuid,
                 isReadOnly, createdAtMillis, submissionId, sessionId, legacyVersion);
-        //statusDao.insertStatus(instanceId, initialStatus, createdAtMillis, operatorGuid);
+        statusDao.insertStatus(instanceId, initialStatus, createdAtMillis, operatorGuid);
 
         return jdbiInstance.getByActivityInstanceId(instanceId).orElseThrow(() ->
                 new DaoException("Could not find newly created activity instance with id " + instanceId));
