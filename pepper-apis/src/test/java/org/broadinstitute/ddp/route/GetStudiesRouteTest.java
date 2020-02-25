@@ -12,17 +12,24 @@ import java.util.List;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.typesafe.config.Config;
+
+import io.restassured.RestAssured;
+
 import okhttp3.HttpUrl;
+
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.fluent.Response;
 import org.apache.http.util.EntityUtils;
+
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrella;
+import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudyI18n;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.json.errors.ApiError;
@@ -30,9 +37,13 @@ import org.broadinstitute.ddp.model.address.OLCPrecision;
 import org.broadinstitute.ddp.model.study.EnrollmentStatusCount;
 import org.broadinstitute.ddp.model.study.StudySummary;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
+
+import org.hamcrest.Matchers;
+
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -82,7 +93,29 @@ public class GetStudiesRouteTest extends IntegrationTestSuite.TestCase {
     }
 
     @Test
-    public void testHappyPath() throws IOException {
+    public void test_givenStudyExists_andIsTranslated_whenRouteIsCalled_thenItReturns200_andNameIsTranslated() {
+        long translationId = TransactionWrapper.withTxn(handle -> {
+            long languageCodeId = handle.attach(JdbiLanguageCode.class).getLanguageCodeId("en");
+            return handle.attach(JdbiUmbrellaStudyI18n.class).insert(
+                    testData.getStudyId(),
+                    languageCodeId,
+                    "Test study #1",
+                    null
+            );
+        });
+        try {
+            RestAssured.given().auth().oauth2(token)
+                    .when().get(buildGetStudiesUrl(umbrella))
+                    .then().assertThat().statusCode(200)
+                    .body("[0].name", Matchers.is(Matchers.notNullValue()))
+                    .body("[0].name", Matchers.is("Test study #1"));
+        } finally {
+            TransactionWrapper.useTxn(handle -> handle.attach(JdbiUmbrellaStudyI18n.class).deleteById(translationId));
+        }
+    }
+
+    @Test
+    public void test_givenStudyExists_andIsNotTranslated_whenRouteIsCalled_thenItReturns200_andCorrectSummaries() throws IOException {
         Response res = RouteTestUtil.buildAuthorizedGetRequest(token, buildGetStudiesUrl(umbrella)).execute();
         HttpResponse httpResponse = res.returnResponse();
 

@@ -1,21 +1,25 @@
 package org.broadinstitute.ddp.route;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Locale.LanguageRange;
-import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudyI18n;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
+import org.broadinstitute.ddp.db.dao.StudyDao;
 import org.broadinstitute.ddp.db.dto.EnrollmentStatusDto;
+import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.StudyI18nDto;
 import org.broadinstitute.ddp.json.errors.ApiError;
@@ -68,20 +72,16 @@ public class GetStudiesRoute implements Route {
             List<StudySummary> umbrellaStudies = new ArrayList<>();
             for (StudyDto study : studiesDto) {
                 JdbiUmbrellaStudyI18n translationDao = handle.attach(JdbiUmbrellaStudyI18n.class);
-
-                // Fetch a list of all the available translations for this particular study,
-                //  convert them into a set of Locale objects, and stash them away in a map
-                //  for easy access later.
-                List<StudyI18nDto> translations = translationDao.findTranslationsByStudyId(study.getId());
-                Map<Locale, StudyI18nDto> availableTranslations = new HashMap<Locale, StudyI18nDto>();
-                translations.forEach((translation) -> {
-                    Locale locale = Locale.forLanguageTag(translation.getLanguageCode());
-                    availableTranslations.put(locale, translation);
-                });
-
-                Locale userLocale = I18nUtil.resolvePreferredLanguage(authInfo.getPreferredLocale(), acceptLanguages,
-                        availableTranslations.keySet());
-                StudyI18nDto preferredTranslation = availableTranslations.get(userLocale);
+                Set<LanguageDto> supportedLanguages = handle.attach(StudyDao.class).findSupportedLanguagesByGuid(study.getGuid());
+                Set<Locale> supportedLocales = supportedLanguages.stream()
+                        .map(LanguageDto::toLocale)
+                        .collect(Collectors.toSet());
+                Locale userLocale = I18nUtil.resolvePreferredLanguage(authInfo.getPreferredLocale(), acceptLanguages, supportedLocales);
+                Long langCodeId = handle.attach(JdbiLanguageCode.class).getLanguageCodeId(userLocale.toLanguageTag());
+                Optional<StudyI18nDto> preferredTranslation = translationDao.findTranslationByStudyIdAndLanguageCodeId(
+                        study.getId(),
+                        langCodeId
+                );
 
                 List<EnrollmentStatusDto> enrollments = enrollmentDao.findByStudyGuid(study.getGuid());
                 EnrollmentStatusCount enrollmentStatusCount;
@@ -91,12 +91,7 @@ public class GetStudiesRoute implements Route {
                     enrollmentStatusCount = EnrollmentStatusCount.getEnrollmentStatusCountByEnrollments(enrollments);
                 }
 
-                String studyName;
-                if (null != preferredTranslation) {
-                    studyName = preferredTranslation.getName();
-                } else {
-                    studyName = study.getName();
-                }
+                String studyName = preferredTranslation.map(StudyI18nDto::getName).orElse(study.getName());
 
                 boolean restricted = study.getIrbPassword() != null;
                 StudySummary summary = new StudySummary(
