@@ -212,7 +212,7 @@ public class PatchFormAnswersRoute implements Route {
                                     .findAnswerIdsByInstanceGuidAndQuestionId(instanceGuid, questionDto.getId());
                             if (answerIds.size() > 1) {
                                 String errMsg = String.format(
-                                        "A question %s is expected to have 1 answer but found %d answers instead",
+                                        "Question %s is expected to have 1 answer but found %d answers instead",
                                         questionStableId,
                                         answerIds.size()
                                 );
