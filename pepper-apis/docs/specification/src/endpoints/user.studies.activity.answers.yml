@@ -64,8 +64,6 @@ patch:
       description: missing credentials or temporary user is invalid
     404:
       $ref: '../pepper.yml#/components/responses/ActivityAnswersPatchNotFoundResponse'
-    500:
-      $ref: '../pepper.yml#/components/responses/ErrorResponse'
     422:
       $ref: '../pepper.yml#/components/responses/ActivityAnswersPatchInvalidResponse'
     default:
