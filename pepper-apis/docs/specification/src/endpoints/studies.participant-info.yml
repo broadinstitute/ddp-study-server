@@ -1,0 +1,18 @@
+get:
+  operationId: getStudyParticipantInfo
+  tags:
+    - Studies
+  summary: fetch study participant info
+  description: Returns info for enrolled participants, such as location in the form of plus codes. Results in an error if study is not configured to share data.
+  parameters:
+    - in: path
+      name: study
+      required: true
+      description: the study's guid
+      schema:
+        type: string
+  responses:
+    200:
+      $ref: '../pepper.yml#/components/responses/StudyParticipantsInfoResponse'
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'

@@ -403,6 +403,12 @@ StudyNotFoundErrorResponse:
     application/json:
       schema:
         $ref: '../pepper.yml#/components/schemas/Error.StudyNotFound'
+StudyParticipantsInfoResponse:
+  description: info about participants
+  content:
+    application/json:
+      schema:
+        $ref: '../pepper.yml#/components/schemas/StudyParticipantsInfo'
 StudyPasswordRequirementsResponse:
   description: an object describing constraints on the study password
   content:

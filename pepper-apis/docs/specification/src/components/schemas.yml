@@ -1863,6 +1863,24 @@ ParticipantStatusTrackingInfo.Kit:
       type: string
     shipper:
       type: string
+
+StudyParticipantsInfo:
+  type: object
+  required:
+    - participantInfoList
+  properties:
+    participantInfoList:
+      type: array
+      description: list of participant info objects
+      items:
+        type: object
+        required:
+          - location
+        properties:
+          location:
+            type: string
+            description: location of the participant, in the form a plus code and converted to the precision set by the study
+
 ### StudyPasswordRequirements
 StudyPasswordRequirements:
   type: object
