@@ -14,6 +14,7 @@ import org.broadinstitute.ddp.db.dao.JdbiClientUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
 import org.broadinstitute.ddp.db.dao.JdbiOLCPrecision;
 import org.broadinstitute.ddp.db.dao.JdbiSendgridConfiguration;
+import org.broadinstitute.ddp.db.dao.JdbiStudyPasswordRequirements;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrella;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudyI18n;
@@ -26,6 +27,7 @@ import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
 import org.broadinstitute.ddp.db.dto.Auth0TenantDto;
 import org.broadinstitute.ddp.db.dto.ClientDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
+import org.broadinstitute.ddp.db.dto.StudyPasswordRequirementsDto;
 import org.broadinstitute.ddp.db.dto.UmbrellaDto;
 import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.exception.DDPException;
@@ -201,6 +203,32 @@ public class StudyBuilder {
         }
 
         return dto;
+    }
+
+    public void insertTenantPasswordPolicy(Handle handle, Auth0TenantDto tenantDto) {
+        if (cfg.hasPath("tenant.passwordPolicy")) {
+            JdbiStudyPasswordRequirements jdbiPasswordPolicy = handle.attach(JdbiStudyPasswordRequirements.class);
+            StudyPasswordRequirementsDto policyDto = jdbiPasswordPolicy.getById(tenantDto.getId()).orElse(null);
+            if (policyDto == null) {
+                Config policyCfg = cfg.getConfig("tenant.passwordPolicy");
+                int numInserted = jdbiPasswordPolicy.insert(
+                        tenantDto.getId(),
+                        policyCfg.getInt("minLength"),
+                        policyCfg.getBoolean("requireUppercase"),
+                        policyCfg.getBoolean("requireLowercase"),
+                        policyCfg.getBoolean("requireSpecialChar"),
+                        policyCfg.getBoolean("requireNumber"),
+                        ConfigUtil.getIntIfPresent(policyCfg, "maxConsecutive"));
+                if (numInserted != 1) {
+                    throw new DDPException("Could not insert password policy configuration for tenant " + tenantDto.getDomain());
+                }
+                LOG.info("Inserted password policy configuration for tenant {}", tenantDto.getDomain());
+            } else {
+                LOG.warn("Tenant {} already has password policy configured, no changes made", tenantDto.getDomain());
+            }
+        } else {
+            LOG.info("Tenant {} does not have a password policy configuration defined", tenantDto.getDomain());
+        }
     }
 
     private UmbrellaDto getUmbrellaOrInsert(Handle handle) {

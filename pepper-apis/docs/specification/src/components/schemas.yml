@@ -1872,6 +1872,7 @@ StudyPasswordRequirements:
     - isLowercaseLetterRequired
     - isSpecialCharacterRequired
     - isNumberRequired
+    - maxIdenticalConsecutiveCharacters
   properties:
     minLength:
       type: integer
@@ -1885,8 +1886,8 @@ StudyPasswordRequirements:
       type: boolean
     maxIdenticalConsecutiveCharacters:
       type: integer
-      default: 2
-      minimum: 0
+      nullable: true
+      example: 2
 #####
 #
 # Workflows

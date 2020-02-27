@@ -68,7 +68,7 @@ public class JdbiStudyPasswordRequirementsTest extends TxnAwareBaseTest {
         Assert.assertEquals(reqDto.get().isUppercaseLetterRequired(), TestData.IS_UPPERCASE_LETTER_REQUIRED);
         Assert.assertEquals(reqDto.get().isLowercaseLetterRequired(), TestData.IS_LOWERCASE_LETTER_REQUIRED);
         Assert.assertEquals(reqDto.get().isSpecialCharacterRequired(), TestData.IS_SPECIAL_CHARACTER_REQUIRED);
-        Assert.assertEquals(reqDto.get().getMaxIdenticalConsecutiveCharacters(), TestData.MAX_IDENTICAL_CONSECUTIVE_CHARACTERS);
+        Assert.assertEquals(reqDto.get().getMaxIdenticalConsecutiveCharacters(), (Integer) TestData.MAX_IDENTICAL_CONSECUTIVE_CHARACTERS);
         deletePasswordRequirements();
     }
 

@@ -59,7 +59,7 @@ public class StudyPasswordRequirementsDto {
         return isNumberRequired;
     }
 
-    public int getMaxIdenticalConsecutiveCharacters() {
+    public Integer getMaxIdenticalConsecutiveCharacters() {
         return maxIdenticalConsecutiveCharacters;
     }
 
@@ -73,7 +73,7 @@ public class StudyPasswordRequirementsDto {
                     rs.getBoolean(SqlConstants.StudyPasswordComplexityTable.IS_LOWECASE_LETTER_REQUIRED),
                     rs.getBoolean(SqlConstants.StudyPasswordComplexityTable.IS_SPECIAL_CHARACTER_REQUIRED),
                     rs.getBoolean(SqlConstants.StudyPasswordComplexityTable.IS_NUMBER_REQUIRED),
-                    rs.getInt(SqlConstants.StudyPasswordComplexityTable.MAX_IDENTICAL_CONSEQUTIVE_CHARACTERS)
+                    (Integer) rs.getObject(SqlConstants.StudyPasswordComplexityTable.MAX_IDENTICAL_CONSEQUTIVE_CHARACTERS)
             );
         }
     }

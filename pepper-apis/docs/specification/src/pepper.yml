@@ -1,7 +1,7 @@
 openapi: 3.0.0
 servers: []
 info:
-  description: 'Specification for the Pepper API: `v1-Poblano`'
+  description: Specification for the Pepper API
   version: 1.0.0
   title: Pepper
   contact:
@@ -48,10 +48,10 @@ paths:
     $ref: 'endpoints/private/register.yml'
   /temporary-users:
     $ref: 'endpoints/temporary-users.yml'
-  /studies:
-    $ref: 'endpoints/studies.yml'
   /mailing-list:
     $ref: 'endpoints/join.mailing.list.yml'
+  /studies:
+    $ref: 'endpoints/studies.yml'
   /studies/{study}:
     $ref: 'endpoints/studies.study.yml'
   /studies/{study}/password-requirements:

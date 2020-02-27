@@ -28,7 +28,7 @@ public interface JdbiStudyPasswordRequirements extends SqlObject {
             @Bind("isLowercaseLetterRequired") boolean isLowercaseLetterRequired,
             @Bind("isSpecialCharacterRequired") boolean isSpecialCharacterRequired,
             @Bind("isNumberRequired") boolean isNumberRequired,
-            @Bind("maxIdenticalConsecutiveCharacters") int maxIdenticalConsecutiveCharacters
+            @Bind("maxIdenticalConsecutiveCharacters") Integer maxIdenticalConsecutiveCharacters
     );
 
     @SqlUpdate("delete from study_password_requirements where auth0_tenant_id = :id")
