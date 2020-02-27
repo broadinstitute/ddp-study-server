@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.studybuilder;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -34,6 +35,10 @@ public class StudyBuilderCli {
             + "the preference is as follows from highest to lowest: only-activity, only-workflow, only-events.";
     private static final String OPT_RUN_TASK = "run-task";
     private static final String OPT_PATCH = "patch";
+    private static final String OPT_CREATE_EMAILS = "create-emails";
+    private static final String OPT_UPDATE_EMAILS = "update-emails";
+    private static final String OPT_EMAIL_FILES = "email-files";
+    private static final String OPT_EMAIL_TEMPLATES = "email-templates";
     private static final String DEFAULT_STUDIES_DIR = "studies";
     private static final String DEFAULT_STUDY_CONF_FILENAME = "study.conf";
 
@@ -56,6 +61,11 @@ public class StudyBuilderCli {
         options.addOption(null, "no-events", false, "do not run events setup");
         options.addOption(null, "enable-events", true, "enable or disable all the events for a study, accepts true/false");
         options.addOption(null, "invalidate", false, "invalidates a study by renaming its identifiers and configuration");
+        options.addOption(null, OPT_CREATE_EMAILS, false, "create sendgrid emails for study");
+        options.addOption(null, OPT_UPDATE_EMAILS, false, "update active version of sendgrid emails for study");
+        options.addOption(null, OPT_EMAIL_FILES, true, "comma-separated filepaths,"
+                + " only create emails with configured files ending with these filepaths");
+        options.addOption(null, OPT_EMAIL_TEMPLATES, true, "comma-separated template ids, only update emails with these template ids");
         options.addOption(null, OPT_RUN_TASK, true, "run a custom task");
         options.addOption(null, OPT_PATCH, false, "run patches for a study");
 
@@ -158,6 +168,36 @@ public class StudyBuilderCli {
             return;
         } else if (cmd.hasOption("invalidate")) {
             runInvalidateStudy(cfg, studyCfg, builder, isDryRun);
+            return;
+        } else if (cmd.hasOption(OPT_CREATE_EMAILS)) {
+            if (isDryRun) {
+                throw new DDPException("Creation of sendgrid emails does not support dry-run");
+            }
+            var emailBuilder = new EmailBuilder(cfgPath, studyCfg, varsCfg);
+            if (cmd.hasOption(OPT_EMAIL_FILES)) {
+                String[] filepaths = cmd.getOptionValue(OPT_EMAIL_FILES).split(",");
+                log("executing creation of sendgrid emails with filepaths: " + Arrays.toString(filepaths));
+                emailBuilder.createForFiles(filepaths);
+            } else {
+                log("executing creation of all study sendgrid emails...");
+                emailBuilder.createAll();
+            }
+            log("done");
+            return;
+        } else if (cmd.hasOption(OPT_UPDATE_EMAILS)) {
+            if (isDryRun) {
+                throw new DDPException("Update of sendgrid emails does not support dry-run");
+            }
+            var emailBuilder = new EmailBuilder(cfgPath, studyCfg, varsCfg);
+            if (cmd.hasOption(OPT_EMAIL_TEMPLATES)) {
+                String[] templateIds = cmd.getOptionValue(OPT_EMAIL_TEMPLATES).split(",");
+                log("executing update of sendgrid emails with template ids: " + Arrays.toString(templateIds));
+                emailBuilder.updateForTemplates(templateIds);
+            } else {
+                log("executing update of all study sendgrid emails...");
+                emailBuilder.updateAll();
+            }
+            log("done");
             return;
         }
 
