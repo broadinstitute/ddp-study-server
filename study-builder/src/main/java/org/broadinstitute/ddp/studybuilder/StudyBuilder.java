@@ -211,14 +211,22 @@ public class StudyBuilder {
             StudyPasswordRequirementsDto policyDto = jdbiPasswordPolicy.getById(tenantDto.getId()).orElse(null);
             if (policyDto == null) {
                 Config policyCfg = cfg.getConfig("tenant.passwordPolicy");
+                int minLength = policyCfg.getInt("minLength");
+                if (minLength < 1) {
+                    throw new DDPException("minLength must be 1 or greater");
+                }
+                Integer maxConsecutive = ConfigUtil.getIntIfPresent(policyCfg, "maxConsecutive");
+                if (maxConsecutive != null && maxConsecutive < 0) {
+                    throw new DDPException("maxConsecutive must be positive");
+                }
                 int numInserted = jdbiPasswordPolicy.insert(
                         tenantDto.getId(),
-                        policyCfg.getInt("minLength"),
+                        minLength,
                         policyCfg.getBoolean("requireUppercase"),
                         policyCfg.getBoolean("requireLowercase"),
                         policyCfg.getBoolean("requireSpecialChar"),
                         policyCfg.getBoolean("requireNumber"),
-                        ConfigUtil.getIntIfPresent(policyCfg, "maxConsecutive"));
+                        maxConsecutive);
                 if (numInserted != 1) {
                     throw new DDPException("Could not insert password policy configuration for tenant " + tenantDto.getDomain());
                 }
