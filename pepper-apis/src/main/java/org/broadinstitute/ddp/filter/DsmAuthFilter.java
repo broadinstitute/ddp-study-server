@@ -70,7 +70,7 @@ public class DsmAuthFilter implements Filter {
         try {
             jwt = JWTConverter.verifyDDPToken(tokenValue, this.jwkProvider);
         } catch (TokenExpiredException e) {
-            LOG.warn("Found expired token", e);
+            LOG.error("Found expired token", e);
             return false;
         } catch (Exception e) {
             LOG.error("Could not decode token", e);

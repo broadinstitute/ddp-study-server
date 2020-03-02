@@ -34,7 +34,7 @@ public class TokenConverterFilter implements Filter {
             DDPAuth ddpAuth = jwtConverter.convertJWTFromHeader(request.headers(AUTHORIZATION));
             request.attribute(DDP_TOKEN, ddpAuth);
         } catch (TokenExpiredException e) {
-            LOG.warn("Found expired token for request", e);
+            LOG.error("Found expired token for request", e);
             halt(401);
         } catch (Exception e) {
             LOG.error("Error while converting token " + DDP_TOKEN + " for request", e);
