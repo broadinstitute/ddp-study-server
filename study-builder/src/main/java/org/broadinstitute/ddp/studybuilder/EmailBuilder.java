@@ -6,23 +6,29 @@ import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.typesafe.config.Config;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.apache.velocity.runtime.RuntimeConstants;
 import org.broadinstitute.ddp.client.SendGridClient;
 import org.broadinstitute.ddp.exception.DDPException;
+import org.broadinstitute.ddp.util.ConfigUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class EmailBuilder {
 
     private static final Logger LOG = LoggerFactory.getLogger(EmailBuilder.class);
-    private static final int PROGRESS_STEP_COUNT = 5;
+    private static final Gson prettyGson = new GsonBuilder().setPrettyPrinting().create();
 
     private Path cfgPath;
     private Config studyCfg;
@@ -45,56 +51,46 @@ public class EmailBuilder {
         velocity.init();
     }
 
+    private List<Config> searchForConfigs(Set<String> keys) {
+        Set<String> remaining = new HashSet<>(keys);
+        List<Config> found = studyCfg.getConfigList("sendgridEmails")
+                .stream()
+                .filter(cfg -> remaining.remove(cfg.getString("key")))
+                .collect(Collectors.toList());
+        if (!remaining.isEmpty()) {
+            throw new DDPException("Could not find emails for keys: " + Arrays.toString(remaining.toArray()));
+        }
+        return found;
+    }
+
     public void createAll() {
         createForConfigs(List.copyOf(studyCfg.getConfigList("sendgridEmails")));
     }
 
-    public void createForFiles(String[] filepaths) {
-        List<Config> found = studyCfg.getConfigList("sendgridEmails")
-                .stream()
-                .filter(cfg -> {
-                    String path = cfgPath.getParent().resolve(cfg.getString("filepath")).toString();
-                    for (var filepath : filepaths) {
-                        if (path.endsWith(filepath)) {
-                            return true;
-                        }
-                    }
-                    return false;
-                })
-                .collect(Collectors.toList());
-        if (found.size() != filepaths.length) {
-            throw new DDPException("Could not find emails for all specified filepaths");
-        }
-        createForConfigs(found);
+    public void createForEmailKeys(Set<String> keys) {
+        createForConfigs(searchForConfigs(keys));
     }
 
     private void createForConfigs(List<Config> emailCfgs) {
         List<EmailInfo> emails = new ArrayList<>();
-        for (int i = 0; i < emailCfgs.size(); i++) {
-            Config emailCfg = emailCfgs.get(i);
+        for (var emailCfg : emailCfgs) {
             EmailInfo email = createSendGridEmail(emailCfg);
             if (email != null) {
                 emails.add(email);
-            }
-            if ((i + 1) % PROGRESS_STEP_COUNT == 0) {
-                LOG.info("Processed {}/{} emails", i + 1, emailCfgs.size());
+                LOG.info("Created email {} with templateId={} versionId={}", email.key, email.templateId, email.versionId);
             }
         }
-
         if (!emails.isEmpty()) {
-            String table = emails.stream()
-                    .map(email -> String.format("name=%s templateId=%s versionId=%s",
-                            email.name, email.templateId, email.versionId))
-                    .collect(Collectors.joining("\n"));
-            LOG.info("Created {} email templates:\n{}", emails.size(), table);
+            Map<String, String> mappings = emails.stream().collect(Collectors.toMap(e -> e.key, e -> e.templateId));
+            LOG.info("Created {} email templates:\n{}", emails.size(), prettyGson.toJson(mappings));
         }
     }
 
     private EmailInfo createSendGridEmail(Config emailCfg) {
-        String name = emailCfg.getString("name");
-        String templateId = emailCfg.getString("templateId");
-        if (!templateId.isEmpty()) {
-            LOG.error("Email {} already has template id set to {}, not creating", name, templateId);
+        String key = emailCfg.getString("key");
+        String templateId = ConfigUtil.getStrIfPresent(varsCfg, "emails." + key);
+        if (templateId != null && !templateId.isEmpty()) {
+            LOG.error("Email {} already has template id set to {}, not creating", key, templateId);
             return null;
         }
 
@@ -104,11 +100,12 @@ public class EmailBuilder {
             html = renderHtmlContent(file.getName(), html);
         }
         String subject = emailCfg.getString("subject");
+        String name = emailCfg.getString("name");
 
         var templateResult = sendGrid.createTemplate(name);
-        templateResult.rethrowIfThrown(DDPException::new);
+        templateResult.rethrowIfThrown(e -> new DDPException("Error while creating email " + key, e));
         if (templateResult.hasError()) {
-            LOG.error("Error while creating email with name {}: {}", name, templateResult.getError());
+            LOG.error("Error while creating email {}: {}", key, templateResult.getError());
             return null;
         }
 
@@ -116,85 +113,73 @@ public class EmailBuilder {
         String versionId = null;
 
         var versionResult = sendGrid.createTemplateVersion(templateId, name, subject, html, true);
-        versionResult.rethrowIfThrown(DDPException::new);
+        versionResult.rethrowIfThrown(e -> new DDPException("Error while creating version for email " + key, e));
         if (versionResult.hasError()) {
-            LOG.error("Error while creating version for email with name {}."
-                            + " You might need to manually create the version and run update-emails to load HTML content: {}",
-                    name, versionResult.getError());
+            LOG.error("Error while creating version for email {}. You might need to manually create"
+                            + " the version and run update-emails to load HTML content: {}",
+                    key, versionResult.getError());
         } else {
             versionId = versionResult.getBody().getId();
         }
 
-        return new EmailInfo(name, templateId, versionId);
+        return new EmailInfo(key, templateId, versionId);
     }
 
     public void updateAll() {
         updateForConfigs(List.copyOf(studyCfg.getConfigList("sendgridEmails")));
     }
 
-    public void updateForTemplates(String[] templateIds) {
-        Set<String> ids = Set.of(templateIds);
-        List<Config> found = studyCfg.getConfigList("sendgridEmails")
-                .stream()
-                .filter(cfg -> ids.contains(cfg.getString("templateId")))
-                .collect(Collectors.toList());
-        if (found.size() != templateIds.length) {
-            throw new DDPException("Could not find emails for all specified template ids");
-        }
-        updateForConfigs(found);
+    public void updateForEmailKeys(Set<String> keys) {
+        updateForConfigs(searchForConfigs(keys));
     }
 
     private void updateForConfigs(List<Config> emailCfgs) {
         List<EmailInfo> emails = new ArrayList<>();
-        for (int i = 0; i < emailCfgs.size(); i++) {
-            Config emailCfg = emailCfgs.get(i);
+        for (var emailCfg : emailCfgs) {
             EmailInfo email = updateSendGridEmail(emailCfg);
             if (email != null) {
                 emails.add(email);
-            }
-            if ((i + 1) % PROGRESS_STEP_COUNT == 0) {
-                LOG.info("Processed {}/{} emails", i + 1, emailCfgs.size());
+                LOG.info("Updated email {} with templateId={} versionId={}", email.key, email.templateId, email.versionId);
             }
         }
-
         if (!emails.isEmpty()) {
-            String table = emails.stream()
-                    .map(email -> String.format("name=%s templateId=%s versionId=%s",
-                            email.name, email.templateId, email.versionId))
-                    .collect(Collectors.joining("\n"));
-            LOG.info("Updated active versions of {} email templates:\n{}", emails.size(), table);
+            LOG.info("Updated active versions of {} email templates", emails.size());
         }
     }
 
     private EmailInfo updateSendGridEmail(Config emailCfg) {
+        String key = emailCfg.getString("key");
+        String templateId = ConfigUtil.getStrIfPresent(varsCfg, "emails." + key);
+        if (templateId == null) {
+            throw new DDPException("Could not find email template id for email " + key);
+        }
+
         File file = cfgPath.getParent().resolve(emailCfg.getString("filepath")).toFile();
         String html = readRawHtmlContent(file);
         if (emailCfg.getBoolean("render")) {
             html = renderHtmlContent(file.getName(), html);
         }
         String subject = emailCfg.getString("subject");
-        String name = emailCfg.getString("name");
-        String templateId = emailCfg.getString("templateId");
 
         var versionResult = sendGrid.getTemplateActiveVersionId(templateId);
-        versionResult.rethrowIfThrown(DDPException::new);
+        versionResult.rethrowIfThrown(e -> new DDPException("Error fetching active version for email " + key, e));
         if (versionResult.hasError()) {
-            LOG.error("Could not find active version for email template id {}: {}",
-                    templateId, versionResult.getError());
+            LOG.error("Could not find active version for email {} with template id {}: {}",
+                    key, templateId, versionResult.getError());
             return null;
         }
         String versionId = versionResult.getBody();
 
         // Note: we're not updating version name since we didn't update template name, so we keep them the same.
         var updateResult = sendGrid.updateTemplateVersion(templateId, versionId, null, subject, html);
-        updateResult.rethrowIfThrown(DDPException::new);
+        updateResult.rethrowIfThrown(e -> new DDPException("Error while updating email " + key, e));
         if (updateResult.hasError()) {
-            LOG.error("Error while updating active version {} for email template id {}: {}",
-                    versionId, templateId, versionResult.getError());
+            LOG.error("Error while updating active version {} for email {} with template id {}: {}",
+                    versionId, key, templateId, versionResult.getError());
             return null;
         }
 
-        return new EmailInfo(name, templateId, versionId);
+        return new EmailInfo(key, templateId, versionId);
     }
 
     private String readRawHtmlContent(File file) {
@@ -216,12 +201,12 @@ public class EmailBuilder {
     }
 
     private static class EmailInfo {
-        public String name;
+        public String key;
         public String templateId;
         public String versionId;
 
-        public EmailInfo(String name, String templateId, String versionId) {
-            this.name = name;
+        public EmailInfo(String key, String templateId, String versionId) {
+            this.key = key;
             this.templateId = templateId;
             this.versionId = versionId;
         }
