@@ -847,20 +847,16 @@ Error.ActivityAnswersPatchBadPayload:
             - NO_SUCH_ELEMENT
             - REQUIRED_PARAMETER_MISSING
             - UNEXPECTED_NUMBER_OF_ELEMENTS
-Error.ActivityAnswersPatchExists:
+Error.ActivityAnswersInternalServerError:
   allOf:
     - $ref: '../pepper.yml#/components/schemas/Error'
     - type: object
-      required:
-        - stableId
       properties:
         code:
           type: string
           enum:
-            - ANSWER_EXISTS
-        stableId:
-          type: string
-          description: identifier of question with existing answer
+            # Indicates than the question has multiple answers
+            - UNEXPECTED_NUMBER_OF_ELEMENTS
 Error.ActivityAnswersPatchInvalid:
   allOf:
     - $ref: '../pepper.yml#/components/schemas/Error'
