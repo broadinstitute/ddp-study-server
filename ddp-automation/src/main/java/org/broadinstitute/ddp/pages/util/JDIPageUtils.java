@@ -240,7 +240,14 @@ public class JDIPageUtils {
         } catch (InterruptedException error) {
             error.printStackTrace();
         }
-        button.click();
+
+        //Ensure that button is still displayed after the initial click
+        //if the button is a submit-type then occasionally the first click will
+        //process quickly instead of needing 2 clicks - needed because it's
+        //difficult to do hovring actions on automated tests (where hovering triggers a valdiation check)
+        if (button.isDisplayed()) {
+            button.click();
+        }
     }
 
     /**
@@ -316,6 +323,7 @@ public class JDIPageUtils {
     public static String getWebElementTextWithoutIcon(WebElement element) {
         String textWithIcon = getWebElementText(element);
         String[] textDivided = textWithIcon.split(" ");
+
         //String[0] = icon text e.g. 'person'
         //String[1] = actual username e.g. test@tester.org
         return textDivided[USERNAME];
@@ -831,3 +839,4 @@ public class JDIPageUtils {
     }
 
 }
+
