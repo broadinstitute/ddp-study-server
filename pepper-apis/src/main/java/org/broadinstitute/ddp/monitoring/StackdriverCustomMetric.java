@@ -28,7 +28,7 @@ public enum StackdriverCustomMetric {
             MetricDescriptor.MetricKind.GAUGE,
             MetricDescriptor.ValueType.INT64),
     DATA_EXPORTS("exports",
-            "Number of file exports from housekeeping",
+            "Number of data exports from housekeeping",
             MetricDescriptor.MetricKind.GAUGE,
             MetricDescriptor.ValueType.INT64),
     DB_BACKUP("db_backup",

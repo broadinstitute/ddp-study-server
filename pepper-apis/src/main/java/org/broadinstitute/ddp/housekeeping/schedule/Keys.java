@@ -22,16 +22,11 @@ public class Keys {
         public static final JobKey CheckJob = JobKey.jobKey("check", "db-backups");
     }
 
-    public static class EsExport {
-        public static final String StudyTriggerGroup = "study-export-es";
-        public static final JobKey StudyJob = JobKey.jobKey("study", "es-export");
-        public static final JobKey SyncJob = JobKey.jobKey("sync", "es-export");
-        public static final TriggerKey SyncTrigger = TriggerKey.triggerKey("sync", "es-export");
-    }
-
     public static class Export {
-        public static final String StudyTriggerGroup = "study-export";
-        public static final JobKey StudyJob = JobKey.jobKey("study", "export");
+        public static final JobKey DataExportJob = JobKey.jobKey("data", "export");
+        public static final JobKey SyncJob = JobKey.jobKey("sync", "export");
+        public static final TriggerKey DataExportTrigger = TriggerKey.triggerKey("data", "export");
+        public static final TriggerKey SyncTrigger = TriggerKey.triggerKey("sync", "export");
     }
 
     public static class GcpOps {

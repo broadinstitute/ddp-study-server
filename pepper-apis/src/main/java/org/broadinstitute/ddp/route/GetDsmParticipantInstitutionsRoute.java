@@ -150,7 +150,7 @@ public class GetDsmParticipantInstitutionsRoute implements Route {
                     .getUserProfileByUserId(userId);
 
             List<EnrollmentStatusDto> enrollmentStatusDtos = handle.attach(JdbiUserStudyEnrollment.class)
-                    .getAllEnrollmentStatusesByUserAndStudyIds(userId, studyId);
+                    .getAllEnrollmentStatusesByUserAndStudyIdsSortedDesc(userId, studyId);
             Optional<EnrollmentStatusDto> userExitedBeforeEnrollment = enrollmentStatusDtos.stream()
                     .filter(enrollmentStatusDto ->
                             enrollmentStatusDto.getEnrollmentStatus() == EnrollmentStatusType.EXITED_BEFORE_ENROLLMENT)

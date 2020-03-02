@@ -94,7 +94,7 @@ public class KitConfigurationTest extends TxnAwareBaseTest {
             kitConfiguration = kitConfigurationDao.getKitConfigurationForDto(kitConfigurationDto);
 
             MailAddress mailingAddress = buildTestAddress();
-            mailAddress = addressService.addAddress(mailingAddress, userGuid, userGuid);
+            mailAddress = addressService.addAddress(handle, mailingAddress, userGuid, userGuid);
 
             long activityId = activity.getActivityId();
             activityInstanceGuid = activityInstanceDao.insertInstance(activityId, userGuid, userGuid,
