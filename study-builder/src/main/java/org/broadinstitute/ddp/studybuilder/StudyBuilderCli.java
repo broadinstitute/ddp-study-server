@@ -3,7 +3,6 @@ package org.broadinstitute.ddp.studybuilder;
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.Scanner;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -272,7 +271,7 @@ public class StudyBuilderCli {
                 log("executing creation of all study sendgrid emails...");
                 emailBuilder.createAll();
             } else {
-                log("executing creation of sendgrid emails with keys: " + Arrays.toString(keys.toArray()));
+                log("executing creation of sendgrid emails with keys: " + keys.toString());
                 emailBuilder.createForEmailKeys(keys);
             }
         } else {
@@ -280,7 +279,7 @@ public class StudyBuilderCli {
                 log("executing update of all study sendgrid emails...");
                 emailBuilder.updateAll();
             } else {
-                log("executing update of sendgrid emails with keys: " + Arrays.toString(keys.toArray()));
+                log("executing update of sendgrid emails with keys: " + keys.toString());
                 emailBuilder.updateForEmailKeys(keys);
             }
         }

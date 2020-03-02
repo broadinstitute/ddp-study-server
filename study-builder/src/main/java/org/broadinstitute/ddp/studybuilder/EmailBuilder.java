@@ -6,7 +6,6 @@ import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -58,7 +57,7 @@ public class EmailBuilder {
                 .filter(cfg -> remaining.remove(cfg.getString("key")))
                 .collect(Collectors.toList());
         if (!remaining.isEmpty()) {
-            throw new DDPException("Could not find emails for keys: " + Arrays.toString(remaining.toArray()));
+            throw new DDPException("Could not find emails for keys: " + remaining.toString());
         }
         return found;
     }
