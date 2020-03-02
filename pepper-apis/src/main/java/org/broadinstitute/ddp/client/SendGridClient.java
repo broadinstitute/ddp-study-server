@@ -40,6 +40,15 @@ public class SendGridClient {
     private static final String EDITOR_CODE = "code";
     private static final String EDITOR_DESIGN = "design";
 
+    private static final String KEY_NAME = "name";
+    private static final String KEY_GENERATION = "generation";
+    private static final String KEY_SUBJECT = "subject";
+    private static final String KEY_HTML_CONTENT = "html_content";
+    private static final String KEY_ACTIVE = "active";
+    private static final String KEY_EDITOR = "editor";
+    private static final String KEY_TEMPLATE_ID = "template_id";
+    private static final String KEY_UPDATED_AT = "updated_at";
+
     private final SendGrid sendGrid;
 
     // Convenient helper to create new pdf attachment for a mail.
@@ -66,8 +75,8 @@ public class SendGridClient {
      */
     public ApiResult<Template, String> createTemplate(String name) {
         Map<String, String> payload = new HashMap<>();
-        payload.put("name", name);
-        payload.put("generation", GEN_LEGACY);
+        payload.put(KEY_NAME, name);
+        payload.put(KEY_GENERATION, GEN_LEGACY);
 
         Request request = new Request();
         request.setMethod(Method.POST);
@@ -102,11 +111,11 @@ public class SendGridClient {
     public ApiResult<TemplateVersion, String> createTemplateVersion(
             String templateId, String name, String subject, String html, boolean isActive) {
         Map<String, Object> payload = new HashMap<>();
-        payload.put("name", name);
-        payload.put("subject", subject);
-        payload.put("html_content", html);
-        payload.put("active", isActive ? 1 : 0);
-        payload.put("editor", EDITOR_CODE);
+        payload.put(KEY_NAME, name);
+        payload.put(KEY_SUBJECT, subject);
+        payload.put(KEY_HTML_CONTENT, html);
+        payload.put(KEY_ACTIVE, isActive ? 1 : 0);
+        payload.put(KEY_EDITOR, EDITOR_CODE);
 
         Request request = new Request();
         request.setMethod(Method.POST);
@@ -142,13 +151,13 @@ public class SendGridClient {
             String templateId, String versionId, String name, String subject, String html) {
         Map<String, Object> payload = new HashMap<>();
         if (name != null) {
-            payload.put("name", name);
+            payload.put(KEY_NAME, name);
         }
         if (subject != null) {
-            payload.put("subject", subject);
+            payload.put(KEY_SUBJECT, subject);
         }
         if (html != null) {
-            payload.put("html_content", html);
+            payload.put(KEY_HTML_CONTENT, html);
         }
 
         String path = API_TEMPLATES_VERSIONS.replace(PARAM_TEMPLATE_ID, templateId) + "/" + versionId;
@@ -239,7 +248,7 @@ public class SendGridClient {
         private String id;
         private String name;
         private String generation;   // either `legacy` or `dynamic`
-        @SerializedName("updated_at")
+        @SerializedName(KEY_UPDATED_AT)
         private String updatedAt;
         private List<TemplateVersion> versions;
 
@@ -272,13 +281,13 @@ public class SendGridClient {
 
     public static class TemplateVersion {
         private String id;
-        @SerializedName("template_id")
+        @SerializedName(KEY_TEMPLATE_ID)
         private String templateId;
         private String name;
         private String subject;
-        @SerializedName("html_content")
+        @SerializedName(KEY_HTML_CONTENT)
         private String htmlContent;
-        @SerializedName("updated_at")
+        @SerializedName(KEY_UPDATED_AT)
         private String updatedAt;
         private String editor;   // either `code` or `design`
         private int active;      // 0 if inactive, 1 if active. Only one version can be active at a time.

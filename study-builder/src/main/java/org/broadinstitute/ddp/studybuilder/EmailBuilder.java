@@ -76,13 +76,13 @@ public class EmailBuilder {
             EmailInfo email = createSendGridEmail(emailCfg);
             if (email != null) {
                 emails.add(email);
-                LOG.info("Created email {} with templateId={} versionId={}", email.key, email.templateId, email.versionId);
+                LOG.info("Created email {} with templateId={} versionId={}",
+                        email.getKey(), email.getTemplateId(), email.getVersionId());
             }
         }
-        if (!emails.isEmpty()) {
-            Map<String, String> mappings = emails.stream().collect(Collectors.toMap(e -> e.key, e -> e.templateId));
-            LOG.info("Created {} email templates:\n{}", emails.size(), prettyGson.toJson(mappings));
-        }
+        Map<String, String> mappings = emails.stream()
+                .collect(Collectors.toMap(EmailInfo::getKey, EmailInfo::getTemplateId));
+        LOG.info("Created {} email templates:\n{}", emails.size(), prettyGson.toJson(mappings));
     }
 
     private EmailInfo createSendGridEmail(Config emailCfg) {
@@ -138,12 +138,11 @@ public class EmailBuilder {
             EmailInfo email = updateSendGridEmail(emailCfg);
             if (email != null) {
                 emails.add(email);
-                LOG.info("Updated email {} with templateId={} versionId={}", email.key, email.templateId, email.versionId);
+                LOG.info("Updated email {} with templateId={} versionId={}",
+                        email.getKey(), email.getTemplateId(), email.getVersionId());
             }
         }
-        if (!emails.isEmpty()) {
-            LOG.info("Updated active versions of {} email templates", emails.size());
-        }
+        LOG.info("Updated active versions of {} email templates", emails.size());
     }
 
     private EmailInfo updateSendGridEmail(Config emailCfg) {
@@ -200,14 +199,26 @@ public class EmailBuilder {
     }
 
     private static class EmailInfo {
-        public String key;
-        public String templateId;
-        public String versionId;
+        private String key;
+        private String templateId;
+        private String versionId;
 
         public EmailInfo(String key, String templateId, String versionId) {
             this.key = key;
             this.templateId = templateId;
             this.versionId = versionId;
+        }
+
+        public String getKey() {
+            return key;
+        }
+
+        public String getTemplateId() {
+            return templateId;
+        }
+
+        public String getVersionId() {
+            return versionId;
         }
     }
 }
