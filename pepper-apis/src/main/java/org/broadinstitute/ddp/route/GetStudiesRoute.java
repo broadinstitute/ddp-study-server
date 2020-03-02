@@ -50,7 +50,7 @@ public class GetStudiesRoute implements Route {
         LOG.debug("Received request for summary of studies under {}", umbrellaIdentifier);
 
         List<LanguageRange> acceptLanguages;
-        String acceptLanguageHeader = request.headers(RouteConstants.ACCEPT_LANGUAGE);
+        String acceptLanguageHeader = request.headers(RouteConstants.Header.ACCEPT_LANGUAGE);
         if (StringUtils.isNotEmpty(acceptLanguageHeader)) {
             acceptLanguages = LanguageRange.parse(acceptLanguageHeader);
         } else {

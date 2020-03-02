@@ -47,7 +47,7 @@ public class StudyLanguageContentLanguageSettingFilter implements Filter {
             }
             Locale preferredLocale = Locale.forLanguageTag(preferredLanguage.getIsoCode());
             String contentLanguageHeader = createHeaderFromLocale(preferredLocale);
-            response.header(RouteConstants.CONTENT_LANGUAGE, contentLanguageHeader);
+            response.header(RouteConstants.Header.CONTENT_LANGUAGE, contentLanguageHeader);
         } catch (Exception e) {
             LOG.error("Error while try to set the Content-Language header", e);
         }

@@ -3,16 +3,16 @@ package org.broadinstitute.ddp.constants;
 import static org.broadinstitute.ddp.util.MiscUtil.fmt;
 
 public class RouteConstants {
-    public static final String AUTHORIZATION = "Authorization";
-    public static final String ACCEPT_LANGUAGE = "Accept-Language";
-    public static final String CONTENT_LANGUAGE = "Content-Language";
-    public static final String BEARER = "Bearer ";
 
     public static final class Header {
         /**
          * Value should be one of the variants in {@link org.broadinstitute.ddp.content.ContentStyle}.
          */
         public static final String DDP_CONTENT_STYLE = "ddp-Content-Style";
+        public static final String AUTHORIZATION = "Authorization";
+        public static final String ACCEPT_LANGUAGE = "Accept-Language";
+        public static final String CONTENT_LANGUAGE = "Content-Language";
+        public static final String BEARER = "Bearer ";
     }
 
     public static final class API {
