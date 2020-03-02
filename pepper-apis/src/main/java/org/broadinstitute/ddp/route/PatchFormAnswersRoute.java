@@ -40,6 +40,7 @@ import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.db.dto.NumericQuestionDto;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.exception.DDPException;
+import org.broadinstitute.ddp.exception.MoreThanOneAnswerForQuestionExistsException;
 import org.broadinstitute.ddp.exception.OperationNotAllowedException;
 import org.broadinstitute.ddp.exception.RequiredParameterMissingException;
 import org.broadinstitute.ddp.exception.UnexpectedNumberOfElementsException;
@@ -47,7 +48,6 @@ import org.broadinstitute.ddp.json.AnswerResponse;
 import org.broadinstitute.ddp.json.AnswerSubmission;
 import org.broadinstitute.ddp.json.PatchAnswerPayload;
 import org.broadinstitute.ddp.json.PatchAnswerResponse;
-import org.broadinstitute.ddp.json.errors.AnswerExistsError;
 import org.broadinstitute.ddp.json.errors.AnswerValidationError;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.activity.instance.answer.AgreementAnswer;
@@ -212,9 +212,13 @@ public class PatchFormAnswersRoute implements Route {
                             Set<Long> answerIds = answerDao.getAnswerSql()
                                     .findAnswerIdsByInstanceGuidAndQuestionId(instanceGuid, questionDto.getId());
                             if (answerIds.size() > 1) {
-                                String msg = "Question is already answered. Provide the answer guid to update.";
-                                LOG.info(msg);
-                                throw ResponseUtil.haltError(response, 409, new AnswerExistsError(msg, questionStableId));
+                                String errMsg = String.format(
+                                        "A question can have 1 and only 1 answer but found %d answers instead. "
+                                        + "Answer ids: %s",
+                                        answerIds.size(),
+                                        answerIds.toString()
+                                );
+                                throw new MoreThanOneAnswerForQuestionExistsException(errMsg);
                             } else if (answerIds.size() == 1) {
                                 answerId = answerIds.iterator().next();
                             }
@@ -259,6 +263,9 @@ public class PatchFormAnswersRoute implements Route {
             } catch (RequiredParameterMissingException e) {
                 LOG.warn(e.getMessage());
                 throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.REQUIRED_PARAMETER_MISSING, e.getMessage()));
+            } catch (MoreThanOneAnswerForQuestionExistsException e) {
+                LOG.error(e.getMessage());
+                throw ResponseUtil.haltError(response, 500, new ApiError(ErrorCodes.UNEXPECTED_NUMBER_OF_ELEMENTS, e.getMessage()));
             }
 
             res.setBlockVisibilities(formService.getBlockVisibilities(handle, participantGuid, instanceGuid));
