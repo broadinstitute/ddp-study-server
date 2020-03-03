@@ -856,7 +856,7 @@ Error.ActivityAnswersInternalServerError:
           type: string
           enum:
             # Indicates than the question has multiple answers
-            - UNEXPECTED_NUMBER_OF_ELEMENTS
+            - SERVER_ERROR
 Error.ActivityAnswersPatchInvalid:
   allOf:
     - $ref: '../pepper.yml#/components/schemas/Error'
