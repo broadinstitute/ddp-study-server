@@ -75,9 +75,9 @@ public class JWTConverter {
      */
     public static String extractEncodedJwtFromHeader(String authHeader) {
         if (StringUtils.isNotBlank(authHeader)) {
-            int jwtStartIndex = authHeader.indexOf(RouteConstants.BEARER);
+            int jwtStartIndex = authHeader.indexOf(RouteConstants.Header.BEARER);
             if (jwtStartIndex > -1) {
-                return authHeader.substring(jwtStartIndex + RouteConstants.BEARER.length());
+                return authHeader.substring(jwtStartIndex + RouteConstants.Header.BEARER.length());
             }
         }
         return null;
@@ -145,7 +145,7 @@ public class JWTConverter {
     }
 
     /**
-     * Parses the {@link RouteConstants#AUTHORIZATION authorization} {@link RouteConstants#BEARER bearer}
+     * Parses the {@link RouteConstants.Header#AUTHORIZATION authorization} {@link RouteConstants.Header#BEARER bearer}
      * header, validates the JWT, and converts it into
      * {@link DDPAuth a ddp auth object}.
      */

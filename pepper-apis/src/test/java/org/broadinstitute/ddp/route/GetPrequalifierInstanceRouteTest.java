@@ -66,7 +66,7 @@ public class GetPrequalifierInstanceRouteTest extends IntegrationTestSuite.TestC
     @Test
     public void testGet_fallsBackToEnglish() {
         given().auth().oauth2(token)
-                .header(RouteConstants.ACCEPT_LANGUAGE, "abcxyz")
+                .header(RouteConstants.Header.ACCEPT_LANGUAGE, "abcxyz")
                 .when().get(url).then().assertThat()
                 .statusCode(200).contentType(ContentType.JSON)
                 .body("isoLanguageCode", equalTo("en"));
