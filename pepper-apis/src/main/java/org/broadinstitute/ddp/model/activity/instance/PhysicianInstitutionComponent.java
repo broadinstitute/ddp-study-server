@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.model.activity.instance;
 
+import org.broadinstitute.ddp.db.dto.InstitutionPhysicianComponentDto;
 import org.broadinstitute.ddp.model.activity.types.ComponentType;
 import org.broadinstitute.ddp.model.activity.types.InstitutionType;
 
@@ -20,56 +21,44 @@ public abstract class PhysicianInstitutionComponent extends FormComponent {
 
     // fields are marked transient so that gson does not deserialize them.  instead,
     // they are added to the parameters list, which is serialized.
-    private transient boolean allowMultiple;
+    private transient InstitutionPhysicianComponentDto instDto;
+    private transient boolean shouldHideNumber;
 
-    private transient String addButtonText;
-
+    private transient String buttonText;
     private transient String titleText;
-
     private transient String subtitleText;
 
-    private transient InstitutionType institutionType;
-
-    private transient boolean showFields;
-
-    private transient boolean required;
-
-    protected PhysicianInstitutionComponent(ComponentType physicianOrInstitution,
-                                            boolean allowMultiple,
-                                            String addButtonText,
-                                            String titleText,
-                                            String subtitleText,
-                                            InstitutionType institutionType,
-                                            boolean showFields,
-                                            boolean required,
-                                            boolean hideNumber) {
+    protected PhysicianInstitutionComponent(
+            ComponentType physicianOrInstitution,
+            InstitutionPhysicianComponentDto instDto,
+            boolean shouldHideNumber
+    ) {
         super(physicianOrInstitution);
         if (physicianOrInstitution != ComponentType.PHYSICIAN && physicianOrInstitution != ComponentType.INSTITUTION) {
             throw new IllegalArgumentException("Physician/Institution component must be either " + ComponentType
                     .PHYSICIAN + " or " + ComponentType.INSTITUTION);
         }
-        this.allowMultiple = allowMultiple;
-        this.addButtonText = addButtonText;
-        this.titleText = titleText;
-        this.subtitleText = subtitleText;
-        this.institutionType = institutionType;
-        this.showFields = showFields;
-        this.hideDisplayNumber = hideNumber;
-        this.required = required;
+        this.instDto = instDto;
+        this.hideDisplayNumber = shouldHideNumber;
         initParametersMap();
     }
 
     private final void initParametersMap() {
-        parameters.put(ALLOW_MULTIPLE, allowMultiple);
-        parameters.put(ADD_BUTTON_TEXT, addButtonText);
+        renderLabels();
+        parameters.put(ALLOW_MULTIPLE, instDto.getAllowMultiple());
+        parameters.put(ADD_BUTTON_TEXT, buttonText);
         parameters.put(TITLE_TEXT, titleText);
         parameters.put(SUBTITLE_TEXT, subtitleText);
-        parameters.put(INSTITUTION_TYPE, institutionType.name());
-        parameters.put(SHOW_FIELDS, showFields);
-        parameters.put(REQUIRED, required);
+        parameters.put(INSTITUTION_TYPE, instDto.getInstitutionType().name());
+        parameters.put(SHOW_FIELDS, instDto.showFields());
+        parameters.put(REQUIRED, instDto.isRequired());
+    }
+
+    private final void renderLabels() {
+        //
     }
 
     public InstitutionType getInstitutionType() {
-        return institutionType;
+        return instDto.getInstitutionType();
     }
 }
