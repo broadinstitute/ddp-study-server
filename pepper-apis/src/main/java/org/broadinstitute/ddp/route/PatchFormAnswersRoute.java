@@ -40,7 +40,6 @@ import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.db.dto.NumericQuestionDto;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.exception.DDPException;
-import org.broadinstitute.ddp.exception.MoreThanOneAnswerForQuestionExistsException;
 import org.broadinstitute.ddp.exception.OperationNotAllowedException;
 import org.broadinstitute.ddp.exception.RequiredParameterMissingException;
 import org.broadinstitute.ddp.exception.UnexpectedNumberOfElementsException;
@@ -213,12 +212,11 @@ public class PatchFormAnswersRoute implements Route {
                                     .findAnswerIdsByInstanceGuidAndQuestionId(instanceGuid, questionDto.getId());
                             if (answerIds.size() > 1) {
                                 String errMsg = String.format(
-                                        "A question can have 1 and only 1 answer but found %d answers instead. "
-                                        + "Answer ids: %s",
-                                        answerIds.size(),
-                                        answerIds.toString()
+                                        "A question can have 1 and only 1 answer but found %d answers instead",
+                                        answerIds.size()
                                 );
-                                throw new MoreThanOneAnswerForQuestionExistsException(errMsg);
+                                LOG.error(errMsg);
+                                throw ResponseUtil.haltError(response, 500, new ApiError(ErrorCodes.SERVER_ERROR, errMsg));
                             } else if (answerIds.size() == 1) {
                                 answerId = answerIds.iterator().next();
                             }
@@ -263,9 +261,6 @@ public class PatchFormAnswersRoute implements Route {
             } catch (RequiredParameterMissingException e) {
                 LOG.warn(e.getMessage());
                 throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.REQUIRED_PARAMETER_MISSING, e.getMessage()));
-            } catch (MoreThanOneAnswerForQuestionExistsException e) {
-                LOG.error(e.getMessage());
-                throw ResponseUtil.haltError(response, 500, new ApiError(ErrorCodes.UNEXPECTED_NUMBER_OF_ELEMENTS, e.getMessage()));
             }
 
             res.setBlockVisibilities(formService.getBlockVisibilities(handle, participantGuid, instanceGuid));

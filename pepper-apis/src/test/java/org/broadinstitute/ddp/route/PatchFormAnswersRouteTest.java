@@ -521,7 +521,7 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
 
         String json = EntityUtils.toString(response.getEntity());
         ApiError resp = gson.fromJson(json, ApiError.class);
-        assertEquals(ErrorCodes.UNEXPECTED_NUMBER_OF_ELEMENTS, resp.getCode());
+        assertEquals(ErrorCodes.SERVER_ERROR, resp.getCode());
         assertTrue(Pattern.compile("found 2 answers instead").matcher(resp.getMessage()).find());
     }
 
