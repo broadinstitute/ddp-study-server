@@ -103,7 +103,7 @@ public class DsmClient {
             String auth = RouteUtil.makeAuthBearerHeader(generateToken());
             var request = HttpRequest.newBuilder()
                     .uri(baseUrl.resolve(API_CANCERS))
-                    .header(RouteConstants.AUTHORIZATION, auth)
+                    .header(RouteConstants.Header.AUTHORIZATION, auth)
                     .timeout(Duration.ofSeconds(DEFAULT_TIMEOUT_SECS))
                     .build();
             var response = client.send(request, HttpResponse.BodyHandlers.ofString());
@@ -130,7 +130,7 @@ public class DsmClient {
             String auth = RouteUtil.makeAuthBearerHeader(generateToken());
             var request = HttpRequest.newBuilder()
                     .uri(baseUrl.resolve(API_DRUGS))
-                    .header(RouteConstants.AUTHORIZATION, auth)
+                    .header(RouteConstants.Header.AUTHORIZATION, auth)
                     .timeout(Duration.ofSeconds(DEFAULT_TIMEOUT_SECS))
                     .build();
             var response = client.send(request, HttpResponse.BodyHandlers.ofString());
@@ -164,7 +164,7 @@ public class DsmClient {
             String auth = RouteUtil.makeAuthBearerHeader(token);
             var request = HttpRequest.newBuilder()
                     .uri(baseUrl.resolve(path))
-                    .header(RouteConstants.AUTHORIZATION, auth)
+                    .header(RouteConstants.Header.AUTHORIZATION, auth)
                     .timeout(Duration.ofSeconds(DEFAULT_TIMEOUT_SECS))
                     .build();
             var response = client.send(request, HttpResponse.BodyHandlers.ofString());
