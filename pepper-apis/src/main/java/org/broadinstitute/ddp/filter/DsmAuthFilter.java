@@ -1,6 +1,6 @@
 package org.broadinstitute.ddp.filter;
 
-import static org.broadinstitute.ddp.constants.RouteConstants.AUTHORIZATION;
+import static org.broadinstitute.ddp.constants.RouteConstants.Header.AUTHORIZATION;
 import static spark.Spark.halt;
 
 import java.util.Optional;
