@@ -1,8 +1,9 @@
 package org.broadinstitute.ddp.filter;
 
-import static org.broadinstitute.ddp.constants.RouteConstants.AUTHORIZATION;
+import static org.broadinstitute.ddp.constants.RouteConstants.Header.AUTHORIZATION;
 import static spark.Spark.halt;
 
+import com.auth0.jwt.exceptions.TokenExpiredException;
 import org.broadinstitute.ddp.security.DDPAuth;
 import org.broadinstitute.ddp.security.JWTConverter;
 import org.slf4j.Logger;
@@ -32,6 +33,9 @@ public class TokenConverterFilter implements Filter {
         try {
             DDPAuth ddpAuth = jwtConverter.convertJWTFromHeader(request.headers(AUTHORIZATION));
             request.attribute(DDP_TOKEN, ddpAuth);
+        } catch (TokenExpiredException e) {
+            LOG.error("Found expired token for request", e);
+            halt(401);
         } catch (Exception e) {
             LOG.error("Error while converting token " + DDP_TOKEN + " for request", e);
             halt(401);

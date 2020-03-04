@@ -53,7 +53,7 @@ public class AuthFilterRouteTest extends IntegrationTestSuite.TestCase {
             .replace(RouteConstants.PathParam.STUDY_GUID, TestConstants.TEST_STUDY_GUID);
     public static final String STUDY_ENDPOINT = getStudyEndpoint(TestConstants.TEST_USER_GUID, TestConstants.TEST_STUDY_GUID);
     public static final String STUDY2_ENDPOINT = getStudyEndpoint(TestConstants.TEST_USER_GUID, TestConstants.SECOND_STUDY_GUID);
-    private static final Header GARBAGE_AUTH_HEADER = new BasicHeader(RouteConstants.AUTHORIZATION, "Bearer foo");
+    private static final Header GARBAGE_AUTH_HEADER = new BasicHeader(RouteConstants.Header.AUTHORIZATION, "Bearer foo");
     private static final String EXPIRED_JWT = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6IlF6SkROVVJDTmtVMU5q"
             + "TkVPVEF3TjBReFF6aEZRa1EyTjBRek1VWTRNRUl3TkRGQ01EbENNUSJ9.eyJodHRwczovL2RhdGFkb25hdGlvbnBsYXRmb3J"
             + "tLm9yZy9jaWQiOiJGZ08xR080Wk1US2w0MUdPMTBRSmY2R0dzdjNMR3VSRSIsImh0dHBzOi8vZGF0YWRvbmF0aW9ucGxhdGZ"
@@ -67,7 +67,7 @@ public class AuthFilterRouteTest extends IntegrationTestSuite.TestCase {
             + "bprSmyXvxHRRioMlUUdt-m1vex9TIFIxD8JGmRZnYk9MW5pJMNF4H4vGnbWiO7pdelyBLiiYM5EqSvpS2YkbU8BYjC32K42SM2"
             + "qeenjgm30E9sDT6NS1F9cwMwXFbaxvaK4sNfOWr7FNmAfccE09rJs7xaRzJ9m5pjwHdeS0VbNqHXP2RQyDFOzTbmiZ8sY8cKa"
             + "WwfHuvbQpUAlndx53BWP3bCOinmkygCza6aVtvHuo0ursy5a4UR7e9MzY9KjwDpb62FZ-ojHrDHRjj9N7P13PRjoLA";
-    private static final Header EXPIRED_AUTH_HEADER = new BasicHeader(RouteConstants.AUTHORIZATION,
+    private static final Header EXPIRED_AUTH_HEADER = new BasicHeader(RouteConstants.Header.AUTHORIZATION,
             "Bearer " + EXPIRED_JWT);
     private static TestDataSetupUtil.GeneratedTestData generatedTestDataUser1 = null;
 
