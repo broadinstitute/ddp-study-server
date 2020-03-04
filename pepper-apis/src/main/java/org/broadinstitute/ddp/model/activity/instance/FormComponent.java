@@ -1,7 +1,5 @@
 package org.broadinstitute.ddp.model.activity.instance;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
 import java.util.function.Consumer;
 
 import javax.validation.constraints.NotNull;
@@ -22,12 +20,6 @@ public abstract class FormComponent implements Numberable, Renderable {
     private Integer displayNumber;
 
     protected transient boolean hideDisplayNumber;
-
-    @NotNull
-    @SerializedName("parameters")
-    // derived classes should fill this map explicitly.  this is where the client
-    // gets the list of parameters
-    protected Map<String, Object> parameters = new LinkedHashMap<>();
 
     public FormComponent(ComponentType componentType) {
         this.componentType = componentType;

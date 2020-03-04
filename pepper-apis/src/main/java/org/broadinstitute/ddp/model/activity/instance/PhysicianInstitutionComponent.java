@@ -2,6 +2,9 @@ package org.broadinstitute.ddp.model.activity.instance;
 
 import java.util.Optional;
 import java.util.function.Consumer;
+import javax.validation.constraints.NotNull;
+
+import com.google.gson.annotations.SerializedName;
 
 import org.broadinstitute.ddp.content.ContentStyle;
 import org.broadinstitute.ddp.db.dto.InstitutionPhysicianComponentDto;
@@ -15,21 +18,17 @@ import org.broadinstitute.ddp.model.activity.types.InstitutionType;
  */
 public abstract class PhysicianInstitutionComponent extends FormComponent {
 
-    public static final String ALLOW_MULTIPLE = "allowMultiple";
-    public static final String ADD_BUTTON_TEXT = "addButtonText";
-    public static final String TITLE_TEXT = "titleText";
-    public static final String SUBTITLE_TEXT = "subtitleText";
-    public static final String INSTITUTION_TYPE = "institutionType";
-    public static final String SHOW_FIELDS = "showFieldsInitially";
-    public static final String REQUIRED = "required";
-
     // fields are marked transient so that gson does not deserialize them.  instead,
     // they are added to the parameters list, which is serialized.
     private transient InstitutionPhysicianComponentDto instDto;
-
     private transient String buttonText;
     private transient String titleText;
     private transient String subtitleText;
+
+    @NotNull
+    @SerializedName("parameters")
+    // That's what is actually serialized
+    private SerializedFields serializedFields = new SerializedFields();
 
     protected PhysicianInstitutionComponent(
             ComponentType physicianOrInstitution,
@@ -45,14 +44,14 @@ public abstract class PhysicianInstitutionComponent extends FormComponent {
         this.hideDisplayNumber = shouldHideNumber;
     }
 
-    private final void initParametersMap() {
-        parameters.put(ALLOW_MULTIPLE, instDto.getAllowMultiple());
-        parameters.put(ADD_BUTTON_TEXT, buttonText);
-        parameters.put(TITLE_TEXT, titleText);
-        parameters.put(SUBTITLE_TEXT, subtitleText);
-        parameters.put(INSTITUTION_TYPE, instDto.getInstitutionType().name());
-        parameters.put(SHOW_FIELDS, instDto.showFields());
-        parameters.put(REQUIRED, instDto.isRequired());
+    private final void setSerializedFields() {
+        serializedFields.setAllowMultiple(instDto.getAllowMultiple());
+        serializedFields.setButtonText(buttonText);
+        serializedFields.setTitleText(titleText);
+        serializedFields.setSubtitleText(subtitleText);
+        serializedFields.setInstitutionType(instDto.getInstitutionType().name());
+        serializedFields.setShowFields(instDto.showFields());
+        serializedFields.setIsRequired(instDto.isRequired());
     }
 
     @Override
@@ -70,10 +69,55 @@ public abstract class PhysicianInstitutionComponent extends FormComponent {
         titleText = rendered.get(instDto.getTitleTemplateId());
         subtitleText = rendered.get(instDto.getSubtitleTemplateId());
 
-        initParametersMap();
+        setSerializedFields();
     }
 
     public InstitutionType getInstitutionType() {
         return instDto.getInstitutionType();
+    }
+
+    public static class SerializedFields {
+        @SerializedName("allowMultiple")
+        private boolean allowMultiple;
+        @SerializedName("addButtonText")
+        private String buttonText;
+        @SerializedName("titleText")
+        private String titleText;
+        @SerializedName("subtitleText")
+        private String subtitleText;
+        @SerializedName("institutionType")
+        private String institutionType;
+        @SerializedName("showFieldsInitially")
+        private boolean showFields;
+        @SerializedName("required")
+        private boolean isRequired;
+
+        public void setAllowMultiple(boolean allowMultiple) {
+            this.allowMultiple = allowMultiple;
+        }
+
+        public void setButtonText(String buttonText) {
+            this.buttonText = buttonText;
+        }
+
+        public void setTitleText(String titleText) {
+            this.titleText = titleText;
+        }
+
+        public void setSubtitleText(String subtitleText) {
+            this.subtitleText = subtitleText = subtitleText;
+        }
+
+        public void setInstitutionType(String institutionType) {
+            this.institutionType = institutionType;
+        }
+
+        public void setShowFields(boolean showFields) {
+            this.showFields = showFields;
+        }
+
+        public void setIsRequired(boolean isRequired) {
+            this.isRequired = isRequired;
+        }
     }
 }
