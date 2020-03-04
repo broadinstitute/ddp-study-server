@@ -75,12 +75,6 @@ ActivityAnswersPatchBadPayloadResponse:
     application/json:
       schema:
         $ref: '../pepper.yml#/components/schemas/Error.ActivityAnswersPatchBadPayload'
-ActivityAnswersMoreThanOneAnswerResponse:
-  description: multiple answers exist for the question. Something is very wrong
-  content:
-    application/json:
-      schema:
-        $ref: '../pepper.yml#/components/schemas/Error.ActivityAnswersInternalServerError'
 ActivityAnswersPatchInvalidResponse:
   description: activity instance is read-only or answer submission failed validation
   content:
