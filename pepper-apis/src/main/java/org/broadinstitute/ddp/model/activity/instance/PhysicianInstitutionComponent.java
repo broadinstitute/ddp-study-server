@@ -1,5 +1,9 @@
 package org.broadinstitute.ddp.model.activity.instance;
 
+import java.util.Optional;
+import java.util.function.Consumer;
+
+import org.broadinstitute.ddp.content.ContentStyle;
 import org.broadinstitute.ddp.db.dto.InstitutionPhysicianComponentDto;
 import org.broadinstitute.ddp.model.activity.types.ComponentType;
 import org.broadinstitute.ddp.model.activity.types.InstitutionType;
@@ -40,11 +44,9 @@ public abstract class PhysicianInstitutionComponent extends FormComponent {
         }
         this.instDto = instDto;
         this.hideDisplayNumber = shouldHideNumber;
-        initParametersMap();
     }
 
     private final void initParametersMap() {
-        renderLabels();
         parameters.put(ALLOW_MULTIPLE, instDto.getAllowMultiple());
         parameters.put(ADD_BUTTON_TEXT, buttonText);
         parameters.put(TITLE_TEXT, titleText);
@@ -54,8 +56,22 @@ public abstract class PhysicianInstitutionComponent extends FormComponent {
         parameters.put(REQUIRED, instDto.isRequired());
     }
 
-    private final void renderLabels() {
-        //
+    @Override
+    public void registerTemplateIds(Consumer<Long> registry) {
+        super.registerTemplateIds(registry);
+        Optional.ofNullable(instDto.getButtonTemplateId()).ifPresentOrElse(registry::accept, () -> { });
+        Optional.ofNullable(instDto.getTitleTemplateId()).ifPresentOrElse(registry::accept, () -> { });
+        Optional.ofNullable(instDto.getSubtitleTemplateId()).ifPresentOrElse(registry::accept, () -> { });
+    }
+
+    @Override
+    public void applyRenderedTemplates(Provider<String> rendered, ContentStyle style) {
+        super.applyRenderedTemplates(rendered, style);
+        buttonText = rendered.get(instDto.getButtonTemplateId());
+        titleText = rendered.get(instDto.getTitleTemplateId());
+        subtitleText = rendered.get(instDto.getSubtitleTemplateId());
+
+        initParametersMap();
     }
 
     public InstitutionType getInstitutionType() {
