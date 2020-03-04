@@ -26,7 +26,6 @@ public abstract class PhysicianInstitutionComponent extends FormComponent {
     // fields are marked transient so that gson does not deserialize them.  instead,
     // they are added to the parameters list, which is serialized.
     private transient InstitutionPhysicianComponentDto instDto;
-    private transient boolean shouldHideNumber;
 
     private transient String buttonText;
     private transient String titleText;
