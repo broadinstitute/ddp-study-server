@@ -37,12 +37,12 @@ public class ComponentBlock extends FormBlock implements Numberable  {
 
     @Override
     public void registerTemplateIds(Consumer<Long> registry) {
-        // todo: plug into template rendering
+        formComponent.registerTemplateIds(registry);
     }
 
     @Override
     public void applyRenderedTemplates(Provider<String> rendered, ContentStyle style) {
-        // todo: plug into template rendering
+        formComponent.applyRenderedTemplates(rendered, style);
     }
 
     @Override
