@@ -63,9 +63,9 @@ public abstract class PhysicianInstitutionComponent extends FormComponent {
 
     @Override
     public void applyRenderedTemplates(Provider<String> rendered, ContentStyle style) {
-        buttonText = rendered.get(instDto.getButtonTemplateId());
-        titleText = rendered.get(instDto.getTitleTemplateId());
-        subtitleText = rendered.get(instDto.getSubtitleTemplateId());
+        buttonText = Optional.ofNullable(instDto.getButtonTemplateId()).map(id -> rendered.get(id)).orElse(null);
+        titleText = Optional.ofNullable(instDto.getTitleTemplateId()).map(id -> rendered.get(id)).orElse(null);
+        subtitleText = Optional.ofNullable(instDto.getSubtitleTemplateId()).map(id -> rendered.get(id)).orElse(null);
 
         setSerializedFields();
     }
