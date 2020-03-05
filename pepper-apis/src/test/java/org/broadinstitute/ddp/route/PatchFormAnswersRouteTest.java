@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.route;
 
 import static io.restassured.RestAssured.given;
+
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
@@ -8,6 +9,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.isEmptyOrNullString;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
@@ -25,19 +27,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
+
 import io.restassured.http.ContentType;
 import io.restassured.mapper.ObjectMapperType;
 import io.restassured.response.Response;
+
 import liquibase.util.StringUtils;
+
 import org.apache.http.HttpResponse;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.util.EntityUtils;
+
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.API;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
@@ -61,7 +68,6 @@ import org.broadinstitute.ddp.json.AnswerResponse;
 import org.broadinstitute.ddp.json.AnswerSubmission;
 import org.broadinstitute.ddp.json.PatchAnswerPayload;
 import org.broadinstitute.ddp.json.PatchAnswerResponse;
-import org.broadinstitute.ddp.json.errors.AnswerExistsError;
 import org.broadinstitute.ddp.json.errors.AnswerValidationError;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
@@ -105,8 +111,11 @@ import org.broadinstitute.ddp.model.activity.types.TemplateType;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.broadinstitute.ddp.util.TestUtil;
+
 import org.eclipse.jetty.http.HttpStatus;
+
 import org.jdbi.v3.core.Handle;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -494,7 +503,7 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
     }
 
     @Test
-    public void testPatch_noGuid_multipleExistingAnswer() throws Exception {
+    public void test_givenQuestionHasMultipleAnswers_whenEndpointIsCalled_thenItReturns500() throws Exception {
         TransactionWrapper.useTxn(handle -> {
             Answer answer = new BoolAnswer(null, boolStableId, null, true);
             createAnswerAndDeferCleanup(handle, answer);
@@ -508,12 +517,12 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
 
         Request request = RouteTestUtil.buildAuthorizedPatchRequest(token, url, gson.toJson(data));
         HttpResponse response = request.execute().returnResponse();
-        assertEquals(409, response.getStatusLine().getStatusCode());
+        assertEquals(500, response.getStatusLine().getStatusCode());
 
         String json = EntityUtils.toString(response.getEntity());
-        AnswerExistsError resp = gson.fromJson(json, AnswerExistsError.class);
-        assertEquals(ErrorCodes.ANSWER_EXISTS, resp.getCode());
-        assertEquals(boolStableId, resp.getStableId());
+        ApiError resp = gson.fromJson(json, ApiError.class);
+        assertEquals(ErrorCodes.SERVER_ERROR, resp.getCode());
+        assertTrue(Pattern.compile("found 2 answers instead").matcher(resp.getMessage()).find());
     }
 
     private void assert200AndNoAnswersResponse(String uri, String payload) throws Exception {
