@@ -47,7 +47,6 @@ import org.broadinstitute.ddp.json.AnswerResponse;
 import org.broadinstitute.ddp.json.AnswerSubmission;
 import org.broadinstitute.ddp.json.PatchAnswerPayload;
 import org.broadinstitute.ddp.json.PatchAnswerResponse;
-import org.broadinstitute.ddp.json.errors.AnswerExistsError;
 import org.broadinstitute.ddp.json.errors.AnswerValidationError;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.activity.instance.answer.AgreementAnswer;
@@ -212,9 +211,13 @@ public class PatchFormAnswersRoute implements Route {
                             Set<Long> answerIds = answerDao.getAnswerSql()
                                     .findAnswerIdsByInstanceGuidAndQuestionId(instanceGuid, questionDto.getId());
                             if (answerIds.size() > 1) {
-                                String msg = "Question is already answered. Provide the answer guid to update.";
-                                LOG.info(msg);
-                                throw ResponseUtil.haltError(response, 409, new AnswerExistsError(msg, questionStableId));
+                                String errMsg = String.format(
+                                        "Question %s is expected to have 1 answer but found %d answers instead",
+                                        questionStableId,
+                                        answerIds.size()
+                                );
+                                LOG.error(errMsg);
+                                throw ResponseUtil.haltError(response, 500, new ApiError(ErrorCodes.SERVER_ERROR, errMsg));
                             } else if (answerIds.size() == 1) {
                                 answerId = answerIds.iterator().next();
                             }
