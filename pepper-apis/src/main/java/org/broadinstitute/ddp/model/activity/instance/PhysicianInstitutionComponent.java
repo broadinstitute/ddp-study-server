@@ -56,7 +56,6 @@ public abstract class PhysicianInstitutionComponent extends FormComponent {
 
     @Override
     public void registerTemplateIds(Consumer<Long> registry) {
-        super.registerTemplateIds(registry);
         Optional.ofNullable(instDto.getButtonTemplateId()).ifPresentOrElse(registry::accept, () -> { });
         Optional.ofNullable(instDto.getTitleTemplateId()).ifPresentOrElse(registry::accept, () -> { });
         Optional.ofNullable(instDto.getSubtitleTemplateId()).ifPresentOrElse(registry::accept, () -> { });
@@ -64,7 +63,6 @@ public abstract class PhysicianInstitutionComponent extends FormComponent {
 
     @Override
     public void applyRenderedTemplates(Provider<String> rendered, ContentStyle style) {
-        super.applyRenderedTemplates(rendered, style);
         buttonText = rendered.get(instDto.getButtonTemplateId());
         titleText = rendered.get(instDto.getTitleTemplateId());
         subtitleText = rendered.get(instDto.getSubtitleTemplateId());

@@ -41,12 +41,10 @@ public abstract class FormComponent implements Numberable, Renderable {
     }
 
     @Override
-    public void registerTemplateIds(Consumer<Long> registry) {
-    }
+    public abstract void registerTemplateIds(Consumer<Long> registry);
 
     @Override
-    public void applyRenderedTemplates(Provider<String> rendered, ContentStyle style) {
-    }
+    public abstract void applyRenderedTemplates(Provider<String> rendered, ContentStyle style);
 
     public ComponentType getComponentType() {
         return componentType;
