@@ -8,6 +8,7 @@ import java.util.concurrent.TimeUnit;
 
 import com.auth0.jwk.JwkProvider;
 import com.auth0.jwk.JwkProviderBuilder;
+import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -47,8 +48,6 @@ public class DsmAuthFilter implements Filter {
         if (StringUtils.isNotBlank(authorizationHeaderValue)) {
             if (isAuthorizationHeaderValid(authorizationHeaderValue)) {
                 return;
-            } else {
-                LOG.error("Did not find a valid token in Authorization header: {}", authorizationHeaderValue);
             }
         } else {
             LOG.error("Missing {} header on request with URL: {}", AUTHORIZATION, request.url());
@@ -70,6 +69,9 @@ public class DsmAuthFilter implements Filter {
         DecodedJWT jwt;
         try {
             jwt = JWTConverter.verifyDDPToken(tokenValue, this.jwkProvider);
+        } catch (TokenExpiredException e) {
+            LOG.error("Found expired token", e);
+            return false;
         } catch (Exception e) {
             LOG.error("Could not decode token", e);
             return false;
