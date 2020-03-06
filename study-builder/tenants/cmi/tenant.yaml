@@ -1,0 +1,29 @@
+rules:
+  - name: Register User in Pepper
+    script: ../register-user-in-pepper.js
+    stage: login_success
+    enabled: true
+    order: 1
+
+pages:
+  - name: login
+    html: ./pages/login.html
+    enabled: true
+  - name: password_reset
+    html: ./pages/password_reset.html
+    enabled: true
+
+emailTemplates:
+  - template: reset_email
+    body: ./emails/change_password.html
+    from: Count Me In <info@joincountmein.org>
+    resultUrl: '##SERVER_BASE_URL##/pepper/v1/post-password-reset?clientId={{ application.clientID }}'
+    subject: >-
+      {% if client.client_metadata.study == "ANGIO" %} Angiosarcoma Project
+      {% elsif client.client_metadata.study == "cmi-brain" %} Brain Cancer Project
+      {% elsif client.client_metadata.study == "cmi-mbc" %} Metastatic Breast Cancer Project
+      {% elsif client.client_metadata.study == "CMI-OSTEO" %} Osteosarcoma Project
+      {% endif %} Password Reset
+    urlLifetimeInSeconds: 432000
+    syntax: liquid
+    enabled: true

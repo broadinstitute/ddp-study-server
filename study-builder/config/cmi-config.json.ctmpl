@@ -1,0 +1,40 @@
+{{with $environment := env "ENVIRONMENT"}}
+{{with $version := env "VERSION"}}
+{{with $response := vault (printf "secret/pepper/%s/%s/cmi/conf" $environment $version)}}
+{{with $conf := $response.Data}}
+
+{
+  "AUTH0_DOMAIN": "{{$conf.auth0.domain}}",
+  "AUTH0_CLIENT_ID": "{{$conf.auth0.clientId}}",
+  "AUTH0_CLIENT_SECRET": "{{$conf.auth0.clientSecret}}",
+  "AUTH0_KEYWORD_REPLACE_MAPPINGS": {
+  {{with $resp := vault (printf "secret/pepper/%s/%s/angio/conf" $environment $version)}}
+    "ANGIO_BASE_URL": "{{$resp.Data.baseWebUrl}}",
+  {{end}}
+  {{with $resp := vault (printf "secret/pepper/%s/%s/brain/conf" $environment $version)}}
+    "BRAIN_BASE_URL": "{{$resp.Data.baseWebUrl}}",
+  {{end}}
+  {{with $resp := vault (printf "secret/pepper/%s/%s/mbc/conf" $environment $version)}}
+    "MBC_BASE_URL": "{{$resp.Data.baseWebUrl}}",
+  {{end}}
+  {{with $resp := vault (printf "secret/pepper/%s/%s/osteo/conf" $environment $version)}}
+    "OSTEO_BASE_URL": "{{$resp.Data.baseWebUrl}}",
+  {{end}}
+    "ASSETS_BUCKET_URL": "{{$conf.assetsBucketUrl}}",
+    "LOGIN_DOMAIN": "{{$conf.auth0.loginDomain}}",
+    "SERVER_BASE_URL": "{{$conf.serverBaseUrl}}"
+  },
+  "AUTH0_ALLOW_DELETE": false,
+  "INCLUDED_PROPS": {
+  },
+  "EXCLUDED_PROPS": {
+  },
+  "AUTH0_EXCLUDED_RULES": [],
+  "AUTH0_EXCLUDED_CLIENTS": [],
+  "AUTH0_EXCLUDED_RESOURCE_SERVERS": []
+}
+
+{{end}}
+{{end}}
+{{end}}
+{{end}}
