@@ -163,28 +163,28 @@ public class ActivityBuilder {
     }
 
     private void insertActivityValidations(Handle handle, Config activityCfg, ActivityDef def, long activityRevisionId) {
-        if (!activityCfg.hasPath("validations")) {
-            return;
+        if (activityCfg.hasPath("validations")) {
+            insertValidations(handle, def.getActivityId(), def.getActivityCode(), activityRevisionId,
+                    List.copyOf(activityCfg.getConfigList("validations")));
         }
+    }
+
+    public void insertValidations(Handle handle, long activityId, String activityCode, long revisionId, List<Config> validations) {
         JdbiActivity jdbiActivity = handle.attach(JdbiActivity.class);
-        for (Config validationCfg : activityCfg.getConfigList("validations")) {
+        for (Config validationCfg : validations) {
             Template errorMessageTemplate = gson.fromJson(ConfigUtil.toJson(validationCfg.getConfig("messageTemplate")), Template.class);
             List<JsonValidationError> errors = validator.validateAsJson(errorMessageTemplate);
             if (!errors.isEmpty()) {
                 String errorMessage = GsonPojoValidator.createValidationErrorMessage(errors, ", ");
-                throw new DDPException(
-                        String.format(
-                                "Validation error message template for activity %d has the following validation errors: %s",
-                                def.getActivityId(),
-                                errorMessage
-                        )
-                );
+                throw new DDPException(String.format(
+                        "Validation error message template for activity %d has the following validation errors: %s",
+                        activityId, errorMessage));
             }
 
             String precondition = ConfigUtil.getStrIfPresent(validationCfg, "precondition");
             String expression = validationCfg.getString("expression");
             ActivityValidationDto dto = new ActivityValidationDto(
-                    def.getActivityId(),
+                    activityId,
                     null,
                     precondition,
                     expression,
@@ -192,10 +192,9 @@ public class ActivityBuilder {
             );
             List<String> stableIds = validationCfg.getStringList("stableIds");
             dto.addAffectedFields(stableIds);
-            long studyId = jdbiActivity.getStudyIdByActivityId(def.getActivityId()).get();
-            jdbiActivity.insertValidation(dto, adminUserId, studyId, activityRevisionId);
+            jdbiActivity.insertValidation(dto, adminUserId, studyDto.getId(), revisionId);
             LOG.info("Added activity validations for {}, activityId={}, expression={}, affectedQuestionStableIds={}",
-                    def.getActivityCode(), def.getActivityId(), expression, stableIds);
+                    activityCode, activityId, expression, stableIds);
         }
     }
 
