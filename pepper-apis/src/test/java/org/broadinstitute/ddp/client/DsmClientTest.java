@@ -187,7 +187,7 @@ public class DsmClientTest {
         var actualRequest = captor.getValue();
         assertEquals("GET", actualRequest.method());
         assertEquals(expectedPath, actualRequest.uri().getPath());
-        assertEquals(expectedAuth, actualRequest.headers().firstValue(RouteConstants.AUTHORIZATION).orElse(null));
+        assertEquals(expectedAuth, actualRequest.headers().firstValue(RouteConstants.Header.AUTHORIZATION).orElse(null));
     }
 
     @Test

@@ -4,6 +4,7 @@ import static org.broadinstitute.ddp.constants.RouteConstants.QueryParam.STRICT;
 
 import java.util.List;
 
+import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.model.address.MailAddress;
 import org.broadinstitute.ddp.model.address.MailAddressWithStrictValidationRules;
 import org.broadinstitute.ddp.service.AddressService;
@@ -57,7 +58,8 @@ public abstract class ValidatedMailAddressInputRoute<T extends MailAddress> exte
     protected List<JsonValidationError> validateObject(T mailAddress, Request request) {
         List<JsonValidationError> validationErrors = super.validateObject(mailAddress, request);
         if (validationErrors.isEmpty() && useStrictValidation(request)) {
-            validationErrors.addAll(addressService.validateAddress(mailAddress));
+            validationErrors.addAll(TransactionWrapper.withTxn(handle ->
+                    addressService.validateAddress(handle, mailAddress)));
         }
         return validationErrors;
     }

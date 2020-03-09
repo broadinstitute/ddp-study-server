@@ -46,7 +46,7 @@ public class DataSyncJob implements Job {
     private static final String DATA_EXPORTER = "exporter";
 
     public static JobKey getKey() {
-        return Keys.EsExport.SyncJob;
+        return Keys.Export.SyncJob;
     }
 
     public static void register(Scheduler scheduler, Config cfg) throws SchedulerException {
@@ -70,7 +70,7 @@ public class DataSyncJob implements Job {
 
         int intervalSecs = cfg.getInt(ConfigFile.Elasticsearch.SYNC_INTERVAL_SECS);
         Trigger trigger = TriggerBuilder.newTrigger()
-                .withIdentity(Keys.EsExport.SyncTrigger)
+                .withIdentity(Keys.Export.SyncTrigger)
                 .forJob(getKey())
                 .withSchedule(SimpleScheduleBuilder
                         .repeatSecondlyForever(intervalSecs))
@@ -84,11 +84,11 @@ public class DataSyncJob implements Job {
     @Override
     public void execute(JobExecutionContext ctx) throws JobExecutionException {
         try {
-            boolean esJobCurrentlyRunning = ctx.getScheduler()
+            boolean exportCurrentlyRunning = ctx.getScheduler()
                     .getCurrentlyExecutingJobs().stream()
-                    .anyMatch(jctx -> jctx.getJobDetail().getKey().equals(StudyExportToESJob.getKey()));
-            if (esJobCurrentlyRunning) {
-                LOG.warn("Regular elasticsearch export job currently running, skipping sync job");
+                    .anyMatch(jctx -> jctx.getJobDetail().getKey().equals(StudyDataExportJob.getKey()));
+            if (exportCurrentlyRunning) {
+                LOG.warn("Regular data export job currently running, skipping sync job");
                 return;
             }
 

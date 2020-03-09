@@ -57,8 +57,7 @@ import org.broadinstitute.ddp.housekeeping.schedule.CheckAgeUpJob;
 import org.broadinstitute.ddp.housekeeping.schedule.DataSyncJob;
 import org.broadinstitute.ddp.housekeeping.schedule.DatabaseBackupCheckJob;
 import org.broadinstitute.ddp.housekeeping.schedule.DatabaseBackupJob;
-import org.broadinstitute.ddp.housekeeping.schedule.StudyExportToBucketJob;
-import org.broadinstitute.ddp.housekeeping.schedule.StudyExportToESJob;
+import org.broadinstitute.ddp.housekeeping.schedule.StudyDataExportJob;
 import org.broadinstitute.ddp.housekeeping.schedule.TemporaryUserCleanupJob;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.user.User;
@@ -201,8 +200,7 @@ public class Housekeeping {
                     DatabaseBackupJob::register,
                     DatabaseBackupCheckJob::register,
                     TemporaryUserCleanupJob::register,
-                    StudyExportToESJob::register,
-                    StudyExportToBucketJob::register);
+                    StudyDataExportJob::register);
         } else {
             LOG.info("Housekeeping job scheduler is not set to run");
         }

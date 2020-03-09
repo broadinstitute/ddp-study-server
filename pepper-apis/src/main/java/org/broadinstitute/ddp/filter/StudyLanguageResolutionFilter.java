@@ -49,7 +49,7 @@ public class StudyLanguageResolutionFilter implements Filter {
     @Override
     public void handle(Request request, Response response) {
         try {
-            String acceptLanguageHeader = request.headers(RouteConstants.ACCEPT_LANGUAGE);
+            String acceptLanguageHeader = request.headers(RouteConstants.Header.ACCEPT_LANGUAGE);
             Matcher matcher = Pattern.compile(STUDY_GUID_REGEX).matcher(request.url());
             String studyGuid = matcher.find() ? matcher.group(STUDY_GUID_INDEX) : null;
             // The "supported languages" notion is an attribute of a study, thus is doesn't
@@ -59,7 +59,7 @@ public class StudyLanguageResolutionFilter implements Filter {
                 LOG.warn(
                         "Supported languages can't be detected because the filter is invoked"
                         + " before the route that is outside of the study context. Please"
-                        + " remount the filter under '/user/*/studies/*' instead. Current path = {}",
+                        + " remount the filter under '*/studies/*' instead. Current path = {}",
                         request.url()
                 );
                 return;

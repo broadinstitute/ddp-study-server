@@ -1,6 +1,6 @@
 package org.broadinstitute.ddp.util;
 
-import static org.broadinstitute.ddp.constants.RouteConstants.BEARER;
+import static org.broadinstitute.ddp.constants.RouteConstants.Header.BEARER;
 
 import java.util.Arrays;
 import java.util.List;

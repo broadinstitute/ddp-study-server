@@ -159,6 +159,26 @@ public class GetPdfRouteTest extends DsmRouteTest {
     }
 
     @Test
+    public void test_givenUserEnrolledButNowSuspended_thenReturns200() {
+        TransactionWrapper.useTxn(handle -> {
+            TestDataSetupUtil.setUserEnrollmentStatus(handle, generatedTestData, EnrollmentStatusType.ENROLLED);
+            TestDataSetupUtil.setUserEnrollmentStatus(handle, generatedTestData, EnrollmentStatusType.CONSENT_SUSPENDED);
+        });
+
+        given().auth().oauth2(dsmClientAccessToken)
+                .pathParam("studyGuid", generatedTestData.getStudyGuid())
+                .pathParam("userGuid", generatedTestData.getUserGuid())
+                .pathParam("configName", configurationName)
+                .when().get(url)
+                .then().assertThat()
+                .statusCode(HttpStatus.SC_OK);
+
+        TransactionWrapper.useTxn(handle ->
+                removeEnrollmentForUserAndStudy(handle, generatedTestData.getStudyGuid(), generatedTestData.getUserGuid())
+        );
+    }
+
+    @Test
     public void test_givenUserDoesntExist_whenEndpointIsCalled_thenItReturns404_andBodyConstainsErrorExplanation() {
         given().auth().oauth2(dsmClientAccessToken)
                 .pathParam("studyGuid", generatedTestData.getStudyGuid())

@@ -8,6 +8,7 @@ import com.auth0.jwk.JwkProvider;
 import com.auth0.jwk.JwkProviderBuilder;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.auth0.jwt.interfaces.RSAKeyProvider;
 import org.apache.commons.lang3.StringUtils;
@@ -46,7 +47,8 @@ public class JWTConverter {
      * @param jwt         the token to verify
      * @param jwkProvider the provider of jwk data, typically auth0's jwk endpoint
      * @return a verified, decoded JWT
-     * @throws DDPTokenException if issues with jwt or key provider, i.e. token expired, invalid claims, etc.
+     * @throws DDPTokenException if issues with key provider
+     * @throws com.auth0.jwt.exceptions.JWTVerificationException if issues with jwt, e.g. token expired, invalid claims, etc.
      */
     public static DecodedJWT verifyDDPToken(String jwt, JwkProvider jwkProvider) {
         DecodedJWT validToken;
@@ -60,6 +62,10 @@ public class JWTConverter {
 
         try {
             validToken = JWT.require(Algorithm.RSA256(keyProvider)).acceptLeeway(10).build().verify(jwt);
+        } catch (TokenExpiredException e) {
+            // TokenExpired is one of the benign variants of JWTVerificationException that the `verify()` method throws.
+            LOG.warn("Expired token: {}", jwt);
+            throw e;
         } catch (Exception e) {
             LOG.error("Could not verify token {}", jwt, e);
             throw (e);
@@ -75,9 +81,9 @@ public class JWTConverter {
      */
     public static String extractEncodedJwtFromHeader(String authHeader) {
         if (StringUtils.isNotBlank(authHeader)) {
-            int jwtStartIndex = authHeader.indexOf(RouteConstants.BEARER);
+            int jwtStartIndex = authHeader.indexOf(RouteConstants.Header.BEARER);
             if (jwtStartIndex > -1) {
-                return authHeader.substring(jwtStartIndex + RouteConstants.BEARER.length());
+                return authHeader.substring(jwtStartIndex + RouteConstants.Header.BEARER.length());
             }
         }
         return null;
@@ -130,7 +136,7 @@ public class JWTConverter {
                                 auth0ClientId);
                         String preferredLanguage = getPreferredLanguageCodeForUser(handle, ddpUserGuid);
                         txnDdpAuth = new DDPAuth(auth0ClientId, ddpUserGuid, jwt, userPermissions, preferredLanguage);
-                    } catch (DDPTokenException e) {
+                    } catch (Exception e) {
                         LOG.warn("Could not verify token. User "
                                 + decodedJwt.getClaim(Auth0Constants.DDP_USER_ID_CLAIM).asString()
                                 + " tried to authenticate against client auth0clientId "
@@ -145,7 +151,7 @@ public class JWTConverter {
     }
 
     /**
-     * Parses the {@link RouteConstants#AUTHORIZATION authorization} {@link RouteConstants#BEARER bearer}
+     * Parses the {@link RouteConstants.Header#AUTHORIZATION authorization} {@link RouteConstants.Header#BEARER bearer}
      * header, validates the JWT, and converts it into
      * {@link DDPAuth a ddp auth object}.
      */

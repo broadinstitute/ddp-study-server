@@ -3,16 +3,12 @@ package org.broadinstitute.ddp.service;
 import static com.google.openlocationcode.OpenLocationCode.PADDING_CHARACTER;
 import static java.util.stream.Collectors.toList;
 
-import java.io.IOException;
 import java.util.List;
-import javax.annotation.Nonnull;
 
-import com.google.maps.GeoApiContext;
-import com.google.maps.GeocodingApi;
-import com.google.maps.errors.ApiException;
 import com.google.maps.model.GeocodingResult;
 import com.google.openlocationcode.OpenLocationCode;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.client.GoogleMapsClient;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dto.StudyDto;
@@ -26,21 +22,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class OLCService {
+
+    public static final OLCPrecision DEFAULT_OLC_PRECISION = OLCPrecision.MOST;
+
     private static final Logger LOG = LoggerFactory.getLogger(OLCService.class);
     private static final int PRECISION_DELIMITER = 8;
     private static final int FULL_PLUS_CODE_LENGTH = 11;
-    public static OLCPrecision DEFAULT_OLC_PRECISION = OLCPrecision.MOST;
-    private final String geocodingKey;
 
-    public OLCService(@Nonnull String geocodingKey) {
-        this.geocodingKey = geocodingKey;
-    }
+    private final GoogleMapsClient maps;
 
     /**
-     * For a given pluscode, make it as precise/ generic as specified to hide exact address. This is done by incrementally removing
-     * specific values from end of pluscode and converting into 0's.
-     * For more information see: https://plus.codes/howitworks
-     * also see: https://en.wikipedia.org/wiki/Open_Location_Code#Specification
+     * For a given pluscode, make it as precise/generic as specified to hide exact address. This is done by
+     * incrementally removing specific values from end of pluscode and converting into 0's. For more information see:
+     * https://plus.codes/howitworks, also see: https://en.wikipedia.org/wiki/Open_Location_Code#Specification.
      *
      * @param plusCode  the exact 11 character pluscode
      * @param precision the degree of precision of the pluscode requested
@@ -48,9 +42,7 @@ public class OLCService {
      */
     public static String convertPlusCodeToPrecision(String plusCode, OLCPrecision precision) {
         if (OpenLocationCode.isValidCode(plusCode)) {
-
             if (canConvertOLCToTargetPrecision(plusCode, precision)) {
-
                 String lessPreciseOlc = plusCode.substring(0, precision.getCodeLength())
                         + StringUtils.repeat("0", PRECISION_DELIMITER - precision.getCodeLength());
                 if (!lessPreciseOlc.endsWith("+") && lessPreciseOlc.length() < FULL_PLUS_CODE_LENGTH) {
@@ -58,7 +50,7 @@ public class OLCService {
                 }
                 return lessPreciseOlc;
             } else {
-                throw new DDPException("Plus code " + plusCode + " isn't precise enough to convert"
+                throw new DDPException("Plus code " + plusCode + " is not precise enough to convert"
                         + " to desired precision.");
             }
         } else if (StringUtils.isEmpty(plusCode)) {
@@ -80,7 +72,7 @@ public class OLCService {
         // can convert a MORE precise OLC to anything other than MOST precise
         if (indexOfPaddingChar == -1) {
             return targetPrecision != OLCPrecision.MOST;
-        }  else if (indexOfPaddingChar >= indexOfTargetPaddingChar) {
+        } else if (indexOfPaddingChar >= indexOfTargetPaddingChar) {
             // otherwise, all other precisions have padding so we need to make sure the padding is at
             // least as long as (if not longer than) the target valid char length we want
             return true;
@@ -119,6 +111,14 @@ public class OLCService {
         );
     }
 
+    public OLCService(String geocodingKey) {
+        this(new GoogleMapsClient(geocodingKey));
+    }
+
+    public OLCService(GoogleMapsClient mapsClient) {
+        this.maps = mapsClient;
+    }
+
     /**
      * Make call to Google geocoding API with a written out address, get plus code
      *
@@ -127,17 +127,13 @@ public class OLCService {
      * @return the corresponding plus code at the specified precision
      */
     public String calculatePlusCodeWithPrecision(String fullAddress, OLCPrecision precision) {
-        GeoApiContext context = new GeoApiContext.Builder()
-                .apiKey(geocodingKey)
-                .build();
-
-        GeocodingResult[] results;
-        try {
-            results = GeocodingApi.geocode(context, fullAddress).await();
-        } catch (ApiException | InterruptedException | IOException e) {
-            LOG.warn("location: " + fullAddress + " could not be found on google maps services", e);
+        var res = maps.lookupGeocode(fullAddress);
+        if (res.getStatusCode() != 200) {
+            var e = res.hasThrown() ? res.getThrown() : res.getError();
+            LOG.warn("Location: " + fullAddress + " could not be found on google maps services", e);
             return null;
         }
+        GeocodingResult[] results = res.getBody();
 
         String plusCode;
         if (results.length != 1) {

@@ -343,7 +343,7 @@ public class DsmKitRequestDaoTest extends TxnAwareBaseTest {
         testAddress.setDefault(true);
         AddressService addressService = new AddressService(cfg.getString(ConfigFile.EASY_POST_API_KEY),
                 cfg.getString(ConfigFile.GEOCODING_API_KEY));
-        return addressService.addAddress(testAddress, TEST_USER_GUID, TEST_USER_GUID);
+        return TransactionWrapper.withTxn(handle -> addressService.addAddress(handle, testAddress, TEST_USER_GUID, TEST_USER_GUID));
     }
 
     @After

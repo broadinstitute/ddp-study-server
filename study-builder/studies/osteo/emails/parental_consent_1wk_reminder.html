@@ -2,7 +2,6 @@
 <meta name="format-detection" content="telephone=no,date=no,address=no,email=no,url=no" />
 
 <head>
-  <title>Reminder: Please sign the Osteosarcoma Project Consent form</title>
   <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro&display=swap" rel="stylesheet">
   <style type="text/css">
     .ExternalClass,
@@ -75,7 +74,7 @@
   <tr style="width: 540px;">
     <td align="left" style="margin: 0; padding: 50px 0 0 0; font-family: 'Source Sans Pro', sans-serif;">
       <a href="-ddp.baseWebUrl-" target="_blank" style="cursor: pointer; text-decoration: none;">
-        <img src="https://storage.googleapis.com/cmi-study-dev-assets/osteo/project-logo.png"
+        <img src="https://storage.googleapis.com/${assetsBucketName}/osteo/project-logo.png"
              alt="Osteosarcoma Project logo" style="-ms-interpolation-mode: bicubic; border: 0; outline: none; text-decoration: none;"
              width="230px" height="63px" border="0">
       </a>
@@ -99,11 +98,11 @@
   </tr>
   <tr style="width: 540px;">
     <td style="padding: 20px 0 80px 0;">
-      <p style="font-family: 'Source Sans Pro', sans-serif; text-align: left; font-weight: 400; font-size: 16px; line-height: 24px;">If you have questions at any point and would like to talk to a member of our study staff, please reach out to us at <a href="mailto:info@osproject.org" target="_blank" style="color: #7154ff; text-decoration: none; cursor: pointer;">info@osproject.org</a>
-        or call <a href="tel:651-602-2020" style="color: #7154ff; text-decoration: none; cursor: pointer;">651-602-2020</a>.</p>
+      <p style="font-family: 'Source Sans Pro', sans-serif; text-align: left; font-weight: 400; font-size: 16px; line-height: 24px;">If you have questions at any point and would like to talk to a member of our study staff, please reach out to us at <a href="mailto:${contact.email}" target="_blank" style="color: #7154ff; text-decoration: none; cursor: pointer;">${contact.email}</a>
+        or call <a href="tel:${contact.phone}" style="color: #7154ff; text-decoration: none; cursor: pointer;">${contact.phone}</a>.</p>
       <p style="font-family: 'Source Sans Pro', sans-serif; text-align: left; font-weight: 400; font-size: 16px; line-height: 24px;">Sincerely,</p>
       <p style="font-family: 'Source Sans Pro', sans-serif; text-align: left; font-weight: 400; font-size: 16px; line-height: 24px;">The Osteosarcoma Project Team</p>
-      <p style="font-family: 'Source Sans Pro', sans-serif; text-align: left; font-weight: 400; font-size: 16px; line-height: 24px;">For additional updates, follow us on <a href="https://twitter.com/the_osproject/" target="_blank" style="color: #7154ff; text-decoration: none; cursor: pointer;">Twitter</a>, <a href="https://www.facebook.com/osteosarcomaproject/" target="_blank" style="color: #7154ff; text-decoration: none; cursor: pointer;">Facebook</a> or <a href="https://www.instagram.com/osteosarcomaproject/" target="_blank" style="color: #7154ff; text-decoration: none; cursor: pointer;">Instagram</a>.</p>
+      <p style="font-family: 'Source Sans Pro', sans-serif; text-align: left; font-weight: 400; font-size: 16px; line-height: 24px;">For additional updates, follow us on <a href="${social.twitter}" target="_blank" style="color: #7154ff; text-decoration: none; cursor: pointer;">Twitter</a>, <a href="${social.facebook}" target="_blank" style="color: #7154ff; text-decoration: none; cursor: pointer;">Facebook</a> or <a href="${social.instagram}" target="_blank" style="color: #7154ff; text-decoration: none; cursor: pointer;">Instagram</a>.</p>
     </td>
   </tr>
 </table>
