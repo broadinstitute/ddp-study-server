@@ -27,3 +27,58 @@ emailTemplates:
     urlLifetimeInSeconds: 432000
     syntax: liquid
     enabled: true
+
+# NOTE: client names must match what's in Auth0's dashboard, otherwise deploy
+# will create new clients. Everytime deploy happens, client configurations here
+# will overwrite what's in Auth0. If there are additional urls not in here
+# (e.g. localhost callback urls) then those need to be added back manually
+# afterwards. Other settings not configured here will also need to be
+# configured manually.
+clients:
+  - name: angio-angular-client
+    app_type: spa
+    callbacks:
+      - '##ANGIO_BASE_URL##/login-landing'
+    allowed_logout_urls:
+      - '##ANGIO_BASE_URL##'
+      - '##ANGIO_BASE_URL##/session-expired'
+    web_origins:
+      - '##ANGIO_BASE_URL##'
+    client_metadata:
+      study: ANGIO
+
+  - name: brain-angular-client
+    app_type: spa
+    callbacks:
+      - '##BRAIN_BASE_URL##/login-landing'
+    allowed_logout_urls:
+      - '##BRAIN_BASE_URL##'
+      - '##BRAIN_BASE_URL##/session-expired'
+    web_origins:
+      - '##BRAIN_BASE_URL##'
+    client_metadata:
+      study: cmi-brain
+
+  - name: mbc-angular-client
+    app_type: spa
+    callbacks:
+      - '##MBC_BASE_URL##/login-landing'
+    allowed_logout_urls:
+      - '##MBC_BASE_URL##'
+      - '##MBC_BASE_URL##/session-expired'
+    web_origins:
+      - '##MBC_BASE_URL##'
+    client_metadata:
+      study: cmi-mbc
+
+  - name: osteo-angular-client
+    app_type: spa
+    callbacks:
+      - '##OSTEO_BASE_URL##/login-landing'
+    allowed_logout_urls:
+      - '##OSTEO_BASE_URL##'
+      - '##OSTEO_BASE_URL##/session-expired'
+    web_origins:
+      - '##OSTEO_BASE_URL##'
+    client_metadata:
+      study: CMI-OSTEO
