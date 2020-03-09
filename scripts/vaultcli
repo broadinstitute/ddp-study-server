@@ -1,0 +1,189 @@
+#!/usr/bin/env bash
+
+set -o errexit
+set -o pipefail
+
+NAME=${0##*/}
+
+print_help() {
+  cat << EOM
+$NAME - vault command line
+
+A simple tool for interacting with vault, mainly as a safeguard to make it less
+likely to accidentally overwrite credentials.
+
+USAGE:
+  $NAME <COMMAND> [OPTIONS]...
+
+FLAGS:
+  -h, --help    Prints this help
+
+COMMANDS:
+  read          Reads given vault path in JSON format
+  write         Prompts user with several confirmations before writing to vault
+
+EOM
+}
+
+print_usage() {
+  echo "Usage: $NAME <COMMAND> [OPTIONS]..."
+  echo "Try $NAME [-h, --help] for more info"
+}
+
+print_read_help() {
+  cat << EOM
+USAGE:
+  $NAME read <PATH> [OPTIONS]...
+
+Reads vault credentails in JSON format and prints to standard output.
+
+FLAGS:
+  -h, --help    Print this additional help
+  -o, --output  Save to given output file instead of printing to stdout
+  -r, --raw     Pass output to jq to get a raw value
+
+EOM
+}
+
+print_read_usage() {
+  echo "Usage: $NAME read <PATH> [OPTIONS]..."
+}
+
+print_write_help() {
+  cat << EOM
+USAGE:
+  $NAME write <PATH> <FILE> [OPTIONS]...
+
+Writes given file as data to vault path after passing confirmation.
+
+FLAGS:
+  -h, --help    Print this additional help
+
+EOM
+}
+
+print_write_usage() {
+  echo "Usage: $NAME write <PATH> <FILE> [OPTIONS]..."
+}
+
+cmd_read() {
+  if (( $# < 1 )); then
+    print_read_usage
+    exit 1
+  fi
+  for arg in "$@"; do
+    if [[ "$arg" == '-h' ]] || [[ "$arg" == '--help' ]]; then
+      print_read_help
+      return
+    fi
+  done
+
+  local path="$1"; shift
+  local out_file=""
+  local raw_expr=""
+
+  while [[ -n "$1" ]]; do
+    case "$1" in
+      -o | --output)
+        out_file="$2"; shift
+        if [[ -z "$out_file" ]]; then
+          echo "[err] missing output file argument"
+          exit 1
+        fi
+        ;;
+      -r | --raw)
+        raw_expr="$2"; shift
+        if [[ -z "$raw_expr" ]]; then
+          echo "[err] missing jq expression"
+          exit 1
+        fi
+        ;;
+    esac
+    shift
+  done
+
+  local data=""
+  if [[ -n "$raw_expr" ]]; then
+    data=$(vault read --format=json --field=data "$path" | jq -r "$raw_expr")
+  else
+    data=$(vault read --format=json --field=data "$path")
+  fi
+
+  if [[ -n "$out_file" ]]; then
+    echo "$data" > "$out_file"
+  elif [[ -n "$raw_expr" ]]; then
+    echo "$data"
+  else
+    # If we're not writing to a file or reading a raw value, then pipe to jq for pretty-print.
+    echo "$data" | jq
+  fi
+}
+
+cmd_write() {
+  for arg in "$@"; do
+    if [[ "$arg" == '-h' ]] || [[ "$arg" == '--help' ]]; then
+      print_write_help
+      return
+    fi
+  done
+  if (( $# < 2 )); then
+    print_write_usage
+    exit 1
+  fi
+
+  local path="$1"; shift
+  local data_file="$1"; shift
+
+  echo "Will write to path: $path"
+  echo "Using data file: $data_file"
+  echo ''
+  read -p 'Press Enter to open data file for visual confirmation...' ignored
+  cat "$data_file" | less
+
+  echo ''
+  read -p "Writing to '$path', continue? (y/n): " confirm
+
+  local answer=$(echo "$confirm" | tr '[:upper:]' '[:lower:]')
+  if [[ "$answer" == 'y' ]] || [[ "$answer" == 'yes' ]]; then
+    local timestamp=$(date '+%F')
+    local bkup_file=$(echo "$path" | tr '/' '-')
+    bkup_file="$bkup_file-$timestamp.json"
+
+    vault read --format=json --field=data "$path" > "$bkup_file"
+    echo "Wrote backup file: $bkup_file"
+
+    vault write "$path" "@$data_file"
+  else
+    echo "Not writing."
+  fi
+}
+
+main() {
+  if (( $# < 1 )); then
+    print_usage
+    exit 1
+  fi
+
+  if [[ "$1" == '-h' ]] || [[ "$1" == '--help' ]]; then
+    print_help
+    exit 0
+  fi
+
+  local cmd="$1"; shift
+  case "$cmd" in
+    read)
+      cmd_read "$@"
+      ;;
+    write)
+      cmd_write "$@"
+      ;;
+    *)
+      echo "[err] unrecognized command: $cmd"
+      exit 1
+      ;;
+  esac
+
+  exit 0
+}
+
+main "$@"
