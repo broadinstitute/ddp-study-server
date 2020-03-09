@@ -196,9 +196,10 @@ public interface JdbiUserStudyEnrollment extends SqlObject {
                     + " JOIN umbrella_study us ON us.umbrella_study_id = usen.study_id "
                     + " AND usen.user_id = :userId"
                     + " AND usen.study_id = :studyId"
+                    + " ORDER BY usen.valid_from desc"
     )
     @RegisterConstructorMapper(EnrollmentStatusDto.class)
-    List<EnrollmentStatusDto> getAllEnrollmentStatusesByUserAndStudyIds(
+    List<EnrollmentStatusDto> getAllEnrollmentStatusesByUserAndStudyIdsSortedDesc(
             @Bind("userId") long userId,
             @Bind("studyId") long studyId
     );
@@ -311,13 +312,7 @@ public interface JdbiUserStudyEnrollment extends SqlObject {
     }
 
     default long suspendUserStudyConsent(long userId, long studyId) {
-        //update EnrollmentStatus to EnrollmentStatusType.CONSENT_SUSPENDED
-        //Update All existing activity instances as read-only
-        long id = changeUserStudyEnrollmentStatus(
-                userId, studyId, EnrollmentStatusType.CONSENT_SUSPENDED, null);
-        Set<Long> instanceIds = getActivityInstanceDao().findAllInstanceIdsByUserIdAndStudyId(userId, studyId);
-        getActivityInstanceDao().bulkUpdateReadOnlyByActivityIds(userId, true, instanceIds);
-        return id;
+        return changeUserStudyEnrollmentStatus(userId, studyId, EnrollmentStatusType.CONSENT_SUSPENDED, null);
     }
 
     /**

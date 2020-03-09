@@ -63,7 +63,6 @@ public class ConfigFile {
     public static final String DB_BACKUP_SCHEDULE = "schedules.dbBackup";
     public static final String DB_BACKUP_CHECK_SCHEDULE = "schedules.dbBackupCheck";
     public static final String STUDY_EXPORT_SCHEDULE = "schedules.studyExport";
-    public static final String STUDY_EXPORT_TO_ES_SCHEDULE = "schedules.elasticsearchExport";
     public static final String TEMP_USER_CLEANUP_SCHEDULE = "schedules.tempUserCleanup";
 
     //database instance names
@@ -149,12 +148,8 @@ public class ConfigFile {
 
     public static final String DSM_BASE_URL = "dsmBaseUrl";
     public static final String DSM_JWT_SECRET = "dsmJwtSecret";
+    public static final String DSM_JWT_SIGNER = "dsmJwtSigner";
     public static final String USE_DISPOSABLE_TEST_DB = "useDisposableTestDbs";
-
-    public static final class QuestionQueries {
-        public static final String BOOL_INFO_BY_QUESTION_ID_QUERY = "questions.boolInfoByQuestionIdQuery";
-        public static final String TEXT_INFO_BY_QUESTION_ID_QUERY = "questions.textInfoByQuestionIdQuery";
-    }
 
     public static final class SqlQuery {
         public static final String ACTIVITY_INSTANCE_GUID_AND_PARTICIPANT_ID_BY_STUDY_GUID =
@@ -162,12 +157,6 @@ public class ConfigFile {
         public static final String VALID_STUDY_QUERY = "studyActivity.queryValidStudy";
 
         public static final String FORM_ACTIVITY_BY_GUID = "activities.formActivityByGuidQuery";
-
-        public static final String ANSWERS_FOR_QUESTION = "answers.queryAllByFormGuidAndQuestionStableId";
-        public static final String ANSWER_GUIDS_FOR_QUESTION = "answers.queryGuidsByFormGuidAndQuestionStableId";
-        public static final String BOOL_ANSWER_BY_ID = "answers.queryBoolAnswerById";
-        public static final String TEXT_ANSWER_BY_ID = "answers.queryTextAnswerById";
-        public static final String ANSWER_ID_BY_GUIDS = "answers.queryAnswerIdByGuids";
 
         public static final String VALIDATIONS_FOR_QUESTION = "validations.queryAllByQuestionAndLangId";
 
@@ -178,26 +167,6 @@ public class ConfigFile {
 
         public static final String MAX_INSTANCES_PER_USER = "max_instances_per_user";
         public static final String NUM_INSTANCES_FOR_USER = "num_instances_for_user";
-        public static final String PEX_PRECONDITION = "pex_precondition";
-        public static final String PEX_CANCEL_CONDITION = "pex_cancel_condition";
-
-        public static final String PARTICIPANT_GUID = "participant_guid";
-        public static final String PARTICIPANT_HRUID = "participant_hruid";
-
-        // needed to disambiguate cases where there are multiple different guids in a resulset
-        public static final String STUDY_GUID = "study_guid";
-    }
-
-    public static final class SqlStmt {
-        public static final String CREATE_ANSWER = "answers.createAnswerStmt";
-        public static final String CREATE_BOOL_ANSWER = "answers.createBoolAnswerStmt";
-        public static final String CREATE_TEXT_ANSWER = "answers.createTextAnswerStmt";
-        public static final String UPDATE_ANSWER_BY_ID = "answers.updateAnswerByIdStmt";
-        public static final String UPDATE_BOOL_ANSWER_BY_ID = "answers.updateBoolAnswerByIdStmt";
-        public static final String UPDATE_TEXT_ANSWER_BY_ID = "answers.updateTextAnswerByIdStmt";
-        public static final String DELETE_ANSWER_BY_ID = "answers.deleteAnswerByIdStmt";
-        public static final String DELETE_BOOL_ANSWER_BY_ID = "answers.deleteBoolAnswerByIdStmt";
-        public static final String DELETE_TEXT_ANSWER_BY_ID = "answers.deleteTextAnswerByIdStmt";
     }
 
     /**

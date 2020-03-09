@@ -26,11 +26,11 @@ import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.RouteConstants.API;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.constants.TestConstants;
-import org.broadinstitute.ddp.db.AnswerDao;
 import org.broadinstitute.ddp.db.StudyAdminDao;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
+import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.json.export.ExportStudyPayload;
@@ -45,7 +45,6 @@ import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.DateFieldType;
 import org.broadinstitute.ddp.model.activity.types.DateRenderMode;
-import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.activity.types.TemplateType;
 import org.broadinstitute.ddp.service.FireCloudExportService;
 import org.broadinstitute.ddp.util.TestUtil;
@@ -72,7 +71,6 @@ public class FireCloudRouteTest extends IntegrationTestSuite.TestCase {
 
     private static FireCloudExportService fireCloudExportService;
     private static StudyAdminDao studyAdminDao;
-    private static AnswerDao answerDao;
 
     private static String workspaceNamespace;
     private static String workspaceName;
@@ -101,7 +99,6 @@ public class FireCloudRouteTest extends IntegrationTestSuite.TestCase {
         fireCloudExportService = FireCloudExportService.fromSqlConfig(sqlConfig);
         studyAdminDao = StudyAdminDao.init(sqlConfig,
                 new File(System.getProperty(ConfigFile.FIRECLOUD_KEYS_DIR_ENV_VAR)));
-        answerDao = AnswerDao.fromSqlConfig(sqlConfig);
 
         includeOnlyAfter = new Date(0);
 
@@ -205,8 +202,9 @@ public class FireCloudRouteTest extends IntegrationTestSuite.TestCase {
         String umbrellaStudyGuid = TestConstants.TEST_STUDY_GUID;
 
         DateAnswer dateAnswer = new DateAnswer(37L, dateStableId, null, 1995, 3, 15);
-        String guid = TransactionWrapper.withTxn(handle ->
-                answerDao.createAnswer(handle, dateAnswer, TestConstants.TEST_USER_GUID, instanceGuid));
+        long answerId = TransactionWrapper.withTxn(handle -> handle.attach(AnswerDao.class)
+                .createAnswer(TestConstants.TEST_USER_GUID, instanceGuid, dateAnswer)
+                .getAnswerId());
 
         ExportStudyPayload payload = new ExportStudyPayload(workspaceNamespace, workspaceName, includeOnlyAfter);
         String payloadJson = gson.toJson(payload);
@@ -234,9 +232,7 @@ public class FireCloudRouteTest extends IntegrationTestSuite.TestCase {
             });
             assertTrue(success);
         }
-        TransactionWrapper.useTxn((Handle handle) -> {
-            Long id = answerDao.getAnswerIdByGuids(handle, instanceGuid, guid);
-            answerDao.deleteAnswerByIdAndType(handle, id, QuestionType.DATE);
-        });
+
+        TransactionWrapper.useTxn(handle -> handle.attach(AnswerDao.class).deleteAnswer(answerId));
     }
 }

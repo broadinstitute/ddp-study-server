@@ -48,7 +48,8 @@ public class GetPrequalifierInstanceRouteTest extends IntegrationTestSuite.TestC
     private static void setupPrequalActivityAndInstance(Handle handle) {
         String code = "PREQUAL_ROUTE_ACT" + Instant.now().toEpochMilli();
         FormActivityDef prequal = FormActivityDef.formBuilder(FormType.PREQUALIFIER, code, "v1", testData.getStudyGuid())
-                .addName(new Translation("en", "activity " + code))
+                .addName(new Translation("en", "activity name"))
+                .addTitle(new Translation("en", "activity " + code))
                 .addSubtitle(new Translation("en", "subtitle " + code))
                 .build();
         handle.attach(ActivityDao.class).insertActivity(prequal, RevisionMetadata.now(testData.getUserId(), "add " + code));
@@ -65,7 +66,7 @@ public class GetPrequalifierInstanceRouteTest extends IntegrationTestSuite.TestC
     @Test
     public void testGet_fallsBackToEnglish() {
         given().auth().oauth2(token)
-                .header(RouteConstants.ACCEPT_LANGUAGE, "abcxyz")
+                .header(RouteConstants.Header.ACCEPT_LANGUAGE, "abcxyz")
                 .when().get(url).then().assertThat()
                 .statusCode(200).contentType(ContentType.JSON)
                 .body("isoLanguageCode", equalTo("en"));

@@ -4,9 +4,18 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
+import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
+import org.broadinstitute.ddp.db.dao.JdbiActivity;
+import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
+import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.WorkflowDao;
+import org.broadinstitute.ddp.db.dto.ActivityDto;
+import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.json.workflow.WorkflowResponse;
+import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
+import org.broadinstitute.ddp.model.event.ActivityInstanceStatusChangeSignal;
+import org.broadinstitute.ddp.model.event.EventSignal;
 import org.broadinstitute.ddp.model.workflow.ActivityState;
 import org.broadinstitute.ddp.model.workflow.NextStateCandidate;
 import org.broadinstitute.ddp.model.workflow.StateType;
@@ -28,7 +37,13 @@ public class WorkflowService {
         this.interpreter = interpreter;
     }
 
-    public Optional<WorkflowState> suggestNextState(Handle handle, String userGuid, String studyGuid, WorkflowState fromState) {
+    public Optional<WorkflowState> suggestNextState(
+            Handle handle,
+            String operatorGuid,
+            String userGuid,
+            String studyGuid,
+            WorkflowState fromState
+    ) {
         long studyId = handle.attach(JdbiUmbrellaStudy.class)
                 .getIdByGuid(studyGuid)
                 .orElseThrow(() -> new NoSuchElementException("Cannot find study " + studyGuid));
@@ -59,7 +74,12 @@ public class WorkflowService {
             }
         }
 
-        return Optional.ofNullable(next);
+        Optional<WorkflowState> nextState = Optional.ofNullable(next);
+        nextState.ifPresent(nextWfState -> {
+            createActivityInstanceIfMissing(handle, fromState, nextWfState, operatorGuid, userGuid, studyId);
+        });
+
+        return nextState;
     }
 
     public WorkflowResponse buildStateResponse(Handle handle, String userGuid, WorkflowState state) {
@@ -74,5 +94,71 @@ public class WorkflowService {
             }
         }
         return WorkflowResponse.unknown();
+    }
+
+    private void createActivityInstanceIfMissing(
+            Handle handle,
+            WorkflowState fromState,
+            WorkflowState nextState,
+            String operatorGuid,
+            String userGuid,
+            long studyId
+    ) {
+        if (nextState.getType() != StateType.ACTIVITY) {
+            return;
+        }
+        ActivityState activityState = (ActivityState) nextState;
+        ActivityDto activityDto = handle.attach(JdbiActivity.class).queryActivityById(activityState.getActivityId());
+        if (activityDto.getMaxInstancesPerUser() != null && activityDto.getMaxInstancesPerUser() == 0) {
+            return;
+        }
+        String instanceGuid = handle.attach(JdbiActivityInstance.class)
+                .findLatestInstanceGuidByUserGuidAndActivityId(userGuid, activityState.getActivityId())
+                .orElse(null);
+        boolean activityInstanceIsMissing = instanceGuid == null;
+        if (activityInstanceIsMissing) {
+            ActivityInstanceDto instanceDto = handle.attach(ActivityInstanceDao.class)
+                    .insertInstance(activityState.getActivityId(), operatorGuid, userGuid, InstanceStatusType.CREATED, false);
+            LOG.info("Created activity instance with guid '{}' for user guid '{}' using operator guid '{}' and activity id {}",
+                    instanceDto.getGuid(), userGuid, operatorGuid, activityState.getActivityId());
+            processActionsForActivityCreationSignal(
+                    handle,
+                    operatorGuid,
+                    instanceDto.getParticipantId(),
+                    userGuid,
+                    instanceDto.getId(),
+                    activityState.getActivityId(),
+                    studyId
+            );
+            LOG.info(
+                    "Processed actions for the activity instance {} of activity {} triggered by the creation signal",
+                    instanceDto.getGuid(),
+                    activityState.getActivityId()
+            );
+        } else {
+            LOG.info("User guid '{}' already has activity instance with guid '{}', nothing to create", userGuid, instanceGuid);
+        }
+    }
+
+    private void processActionsForActivityCreationSignal(
+            Handle handle,
+            String operatorGuid,
+            long participantId,
+            String participantGuid,
+            long instanceId,
+            long activityId,
+            long studyId
+    ) {
+        long operatorId = handle.attach(JdbiUser.class).getUserIdByGuid(operatorGuid);
+        EventSignal activityCreationSignal = new ActivityInstanceStatusChangeSignal(
+                operatorId,
+                participantId,
+                participantGuid,
+                instanceId,
+                activityId,
+                studyId,
+                InstanceStatusType.CREATED
+        );
+        EventService.getInstance().processSynchronousActionsForEventSignal(handle, activityCreationSignal);
     }
 }

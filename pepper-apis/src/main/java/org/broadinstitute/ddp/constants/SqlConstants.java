@@ -74,8 +74,8 @@ public class SqlConstants {
         public static final String INSTANTIATE_UPON_REGISTRATION = "instantiate_upon_registration";
         public static final String MAX_INSTANCES_PER_USER = "max_instances_per_user";
         public static final String NAME_TRANS = "activity_name_trans";
+        public static final String TITLE_TRANS = "activity_title_trans";
         public static final String SUBTITLE_TRANS = "activity_subtitle_trans";
-        public static final String DASHBOARD_NAME_TRANS = "activity_dashboard_name_trans";
         public static final String DESCRIPTION_TRANS = "activity_description_trans";
         public static final String SUMMARY_TRANS = "activity_summary_trans";
         public static final String EDIT_TIMEOUT_SEC = "edit_timeout_sec";
@@ -96,7 +96,7 @@ public class SqlConstants {
     public static final class ActivityInstanceTable {
         public static final String TABLE_NAME = "activity_instance";
         public static final String GUID = "activity_instance_guid";
-        public static final String NAME = "activity_name";
+        public static final String TITLE = "activity_title";
         public static final String SUBTITLE = "activity_subtitle";
         public static final String TYPE_NAME = "activity_type_name";
         public static final String STATUS_TYPE_NAME = "activity_instance_status_type_name";
@@ -193,64 +193,8 @@ public class SqlConstants {
         public static final String HIDE_QUESTION_NUMBER = "hide_number";
     }
 
-    public static final class QuestionStableCodeTable {
-        public static final String ID = "question_stable_code_id";
-        public static final String STABLE_ID = "stable_id";
-    }
-
     public static final class QuestionTypeTable {
         public static final String CODE = "question_type_code";
-    }
-
-    public static final class BooleanQuestionTable {
-        public static final String QUESTION_ID = "question_id";
-        public static final String TRUE_TEMPLATE_ID = "true_template_id";
-        public static final String FALSE_TEMPLATE_ID = "false_template_id";
-    }
-
-    public static final class PicklistOptionTable {
-        public static final String ID = "picklist_option_id";
-        public static final String STABLE_ID = "picklist_option_stable_id";
-        public static final String OPTION_LABEL_TEMPLATE_ID = "option_label_template_id";
-        public static final String DETAIL_LABEL_TEMPLATE_ID = "detail_label_template_id";
-        public static final String ALLOW_DETAILS = "allow_details";
-        public static final String IS_EXCLUSIVE = "is_exclusive";
-        public static final String DISPLAY_ORDER = "display_order";
-        public static final String REVISION_ID = "revision_id";
-    }
-
-    public static final class PicklistOptionAnswerTable {
-        public static final String DETAIL_TEXT = "detail_text";
-    }
-
-    public static final class PicklistSelectModeTable {
-        public static final String CODE = "picklist_select_mode_code";
-    }
-
-    public static final class PicklistRenderModeTable {
-        public static final String CODE = "picklist_render_mode_code";
-    }
-
-    public static final class PicklistQuestionTable {
-        public static final String QUESTION_ID = "question_id";
-        public static final String PICKLIST_LABEL_TEMPLATE_ID = "picklist_label_template_id";
-    }
-
-    public static final class TextQuestionTable {
-        public static final String INPUT_TYPE = "input_type";
-        public static final String SUGGESTION_TYPE_CODE = "suggestion_type_code";
-        public static final String PLACEHOLDER_TEMPLATE_ID = "placeholder_template_id";
-    }
-
-    public static final class AgreementQuestionTable {
-        public static final String QUESTION_ID = "question_id";
-    }
-
-    public static final class AnswerTable {
-        public static final String TABLE_NAME = "answer";
-        public static final String ID = "answer_id";
-        public static final String GUID = "answer_guid";
-        public static final String ANSWER = "answer";
     }
 
     public static final class ValidationTable {
@@ -349,14 +293,6 @@ public class SqlConstants {
         public static final String TEXT = "expression_text";
     }
 
-    public static final class DateQuestionTable {
-        public static final String DISPLAY_CALENDAR = "display_calendar";
-    }
-
-    public static final class DateRenderModeTable {
-        public static final String CODE = "date_render_mode_code";
-    }
-
     public static final class DateQuestionMonthPicklistTable {
         public static final String USE_MONTH_NAMES = "use_month_names";
     }
@@ -383,43 +319,7 @@ public class SqlConstants {
     }
 
     public static final class EventConfigurationTable {
-
         public static final String ID = "event_configuration_id";
-        public static final String MAX_OCCURRENCES_PER_USER = "max_occurrences_per_user";
-        public static final String POST_DELAY_SECONDS = "post_delay_seconds";
-        public static final String DISPATCH_TO_HOUSEKEEPING = "dispatch_to_housekeeping";
-        public static final String PRECONDITION_EXPRESSION = "precondition_expression";
-        public static final String ACTIVITY_TO_CREATE = "activity_id_to_create";
-    }
-
-    public static final class QueuedEventTable {
-        public static final String ID = "queued_event_id";
-        public static final String OPERATOR_USER_ID = "operator_user_id";
-    }
-
-    public static final class EventActionTypeTable {
-        public static final String TYPE = "event_action_type_code";
-    }
-
-    public static final class MessageDestinationTable {
-
-        public static final String PUBSUB_TOPIC = "gcp_topic";
-    }
-
-    public static final class NotificationServiceTable {
-        public static final String SERVICE_CODE = "service_code";
-    }
-
-    public static final class NotificationTypeTable {
-        public static final String NOTIFICATION_TYPE_CODE = "notification_type_code";
-    }
-
-    public static final class NotificationTemplateTable {
-        public static final String TEMPLATE_KEY = "template_key";
-    }
-
-    public static final class EventTriggerTypeTable {
-        public static final String TYPE_CODE = "event_trigger_type_code";
     }
 
     public static final class MedicalProviderTable {

@@ -4,6 +4,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Scanner;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
@@ -34,6 +35,9 @@ public class StudyBuilderCli {
             + "the preference is as follows from highest to lowest: only-activity, only-workflow, only-events.";
     private static final String OPT_RUN_TASK = "run-task";
     private static final String OPT_PATCH = "patch";
+    private static final String OPT_CREATE_EMAILS = "create-emails";
+    private static final String OPT_UPDATE_EMAILS = "update-emails";
+    private static final String OPT_EMAIL_KEYS = "email-keys";
     private static final String DEFAULT_STUDIES_DIR = "studies";
     private static final String DEFAULT_STUDY_CONF_FILENAME = "study.conf";
 
@@ -46,6 +50,7 @@ public class StudyBuilderCli {
         Options options = new Options();
         options.addOption("h", "help", false, "print this help message");
         options.addOption(null, "vars", true, "study variables file");
+        options.addOption(null, "substitutions", true, "study-wide substitutions file");
         options.addOption(null, "dry-run", false, "run study setup or custom task without saving");
         options.addOption(null, "only-activity", true, "only run activity setup for given activity code");
         options.addOption(null, "only-workflow", false, "only run workflow setup");
@@ -55,6 +60,9 @@ public class StudyBuilderCli {
         options.addOption(null, "no-events", false, "do not run events setup");
         options.addOption(null, "enable-events", true, "enable or disable all the events for a study, accepts true/false");
         options.addOption(null, "invalidate", false, "invalidates a study by renaming its identifiers and configuration");
+        options.addOption(null, OPT_CREATE_EMAILS, false, "create sendgrid emails for study");
+        options.addOption(null, OPT_UPDATE_EMAILS, false, "update active version of sendgrid emails for study");
+        options.addOption(null, OPT_EMAIL_KEYS, true, "comma-separated email keys, only create/update emails with these keys");
         options.addOption(null, OPT_RUN_TASK, true, "run a custom task");
         options.addOption(null, OPT_PATCH, false, "run patches for a study");
 
@@ -86,6 +94,16 @@ public class StudyBuilderCli {
             log("using study variables file: %s", varsFile);
         }
 
+        Config subsCfg = ConfigFactory.empty();
+        if (cmd.hasOption("substitutions")) {
+            String subsFile = cmd.getOptionValue("substitutions");
+            subsCfg = ConfigFactory.parseFile(new File(subsFile));
+            log("using substitutions file: %s", subsFile);
+        }
+
+        // Merge the configs. Substitutions have higher priority, and we fallback to vars, i.e. substitutions override keys in vars.
+        varsCfg = subsCfg.withFallback(varsCfg);
+
         Path cfgPath = resolvePathToStudyConfigFile(positional[0]);
         if (cfgPath == null) {
             log("could not resolve study config filepath using argument: " + positional[0]);
@@ -95,7 +113,7 @@ public class StudyBuilderCli {
         Config studyCfg = ConfigFactory.parseFile(cfgPath.toFile());
         log("using study configuration file: %s", cfgPath);
 
-        log("resolving study configuration using vars...");
+        log("resolving study configuration...");
         studyCfg = studyCfg.resolveWith(varsCfg);
 
         boolean isDryRun = cmd.hasOption("dry-run");
@@ -147,6 +165,12 @@ public class StudyBuilderCli {
             return;
         } else if (cmd.hasOption("invalidate")) {
             runInvalidateStudy(cfg, studyCfg, builder, isDryRun);
+            return;
+        } else if (cmd.hasOption(OPT_CREATE_EMAILS) || cmd.hasOption(OPT_UPDATE_EMAILS)) {
+            if (isDryRun) {
+                throw new DDPException("Create/update of sendgrid emails does not support dry-run");
+            }
+            runEmails(cmd, cfgPath, studyCfg, varsCfg);
             return;
         }
 
@@ -232,6 +256,34 @@ public class StudyBuilderCli {
 
         System.out.println();
         execute(builder::runInvalidate, isDryRun);
+        log("done");
+    }
+
+    private void runEmails(CommandLine cmd, Path cfgPath, Config studyCfg, Config varsCfg) {
+        var emailBuilder = new EmailBuilder(cfgPath, studyCfg, varsCfg);
+        Set<String> keys = null;
+        if (cmd.hasOption(OPT_EMAIL_KEYS)) {
+            keys = Set.of(cmd.getOptionValue(OPT_EMAIL_KEYS).split(","));
+        }
+
+        if (cmd.hasOption(OPT_CREATE_EMAILS)) {
+            if (keys == null) {
+                log("executing creation of all study sendgrid emails...");
+                emailBuilder.createAll();
+            } else {
+                log("executing creation of sendgrid emails with keys: " + keys.toString());
+                emailBuilder.createForEmailKeys(keys);
+            }
+        } else {
+            if (keys == null) {
+                log("executing update of all study sendgrid emails...");
+                emailBuilder.updateAll();
+            } else {
+                log("executing update of sendgrid emails with keys: " + keys.toString());
+                emailBuilder.updateForEmailKeys(keys);
+            }
+        }
+
         log("done");
     }
 }

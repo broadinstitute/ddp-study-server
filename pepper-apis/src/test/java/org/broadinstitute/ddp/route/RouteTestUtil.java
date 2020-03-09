@@ -138,12 +138,12 @@ public class RouteTestUtil {
 
     public static Header buildTestUserAuthHeader() throws Auth0Exception {
         String token = loginStaticTestUserForToken();
-        return new BasicHeader(RouteConstants.AUTHORIZATION, RouteUtil.makeAuthBearerHeader(token));
+        return new BasicHeader(RouteConstants.Header.AUTHORIZATION, RouteUtil.makeAuthBearerHeader(token));
     }
 
     public static Header buildTestAdminAuthHeader() throws Auth0Exception {
         String token = loginStaticAdminUserForToken();
-        return new BasicHeader(RouteConstants.AUTHORIZATION, RouteUtil.makeAuthBearerHeader(token));
+        return new BasicHeader(RouteConstants.Header.AUTHORIZATION, RouteUtil.makeAuthBearerHeader(token));
     }
 
     public static Request buildAuthorizedGetRequest(String token, String url) {

@@ -2,20 +2,20 @@ package org.broadinstitute.ddp.db.dao;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
-import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
-import org.broadinstitute.ddp.db.dto.AgreementAnswerDto;
 import org.broadinstitute.ddp.db.dto.AnswerDto;
 import org.broadinstitute.ddp.db.dto.CompositeAnswerSummaryDto;
-import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.model.activity.instance.answer.AgreementAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.AnswerRow;
@@ -23,6 +23,7 @@ import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
+import org.broadinstitute.ddp.model.activity.instance.answer.NumericAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.NumericIntegerAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
@@ -33,11 +34,8 @@ import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
 import org.jdbi.v3.core.result.RowView;
 import org.jdbi.v3.sqlobject.CreateSqlObject;
 import org.jdbi.v3.sqlobject.SqlObject;
-import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
-import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
-import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 import org.jdbi.v3.sqlobject.statement.UseRowReducer;
 import org.jdbi.v3.stringtemplate4.UseStringTemplateSqlLocator;
 import org.slf4j.Logger;
@@ -50,211 +48,37 @@ public interface AnswerDao extends SqlObject {
     String GUID_COLUMN = "answer_guid";
 
     @CreateSqlObject
-    JdbiPicklistOptionAnswer getJdbiPicklistOptionAnswer();
-
-    @CreateSqlObject
-    JdbiBooleanAnswer getJdbiBooleanAnswer();
-
-    @CreateSqlObject
     PicklistAnswerDao getPicklistAnswerDao();
-
-    @CreateSqlObject
-    JdbiTextAnswer getJdbiTextAnswer();
-
-    @CreateSqlObject
-    JdbiDateAnswer getJdbiDateAnswer();
-
-    @CreateSqlObject
-    JdbiNumericAnswer getJdbiNumericAnswer();
-
-    @CreateSqlObject
-    JdbiAgreementAnswer getJdbiAgreementAnswer();
 
     @CreateSqlObject
     JdbiCompositeAnswer getJdbiCompositeAnswer();
 
     @CreateSqlObject
-    JdbiAnswer getJdbiAnswer();
-
-    @CreateSqlObject
     AnswerSql getAnswerSql();
 
-    @SqlQuery(" select da.year, da.month, da.day "
-            + " from activity_instance as ai "
-            + " join answer as a on ai.activity_instance_id = a.activity_instance_id "
-            + " join date_answer as da on a.answer_id = da.answer_id "
-            + " join user as u on ai.participant_id = u.user_id "
-            + " join question as q on a.question_id = q.question_id "
-            + " join question_stable_code as qsc on qsc.question_stable_code_id = q.question_stable_code_id "
-            + " join umbrella_study as us on qsc.umbrella_study_id = us.umbrella_study_id "
-            + " join revision as rev on rev.revision_id = q.revision_id "
-            + " where u.user_id = :userId "
-            + " and rev.start_date <= ai.created_at "
-            + " and (rev.end_date is null or ai.created_at < rev.end_date) "
-            + " and qsc.stable_id = :questionStableId "
-            + " and us.umbrella_study_id = :studyId "
-            + " order by ai.created_at desc limit 1")
-    @RegisterConstructorMapper(DateValue.class)
-    Optional<DateValue> findLatestDateAnswerByQuestionStableIdAndUserId(@Bind("questionStableId") String questionStableId,
-                                                                        @Bind("userId") long userId,
-                                                                        @Bind("studyId") long studyId);
+    //
+    // inserts
+    //
 
-    @SqlQuery("select qt.question_type_code"
-            + "  from answer as a"
-            + "  join question as q on a.question_id = q.question_id"
-            + "  join question_type as qt on qt.question_type_id = q.question_type_id"
-            + " where a.answer_id = :answerId"
-    )
-    QuestionType findQuestionTypeByAnswerId(@Bind("answerId") long answerId);
-
-    /**
-     * Deletes all answers for the given question in the given activity instance.
-     *
-     * @return
-     */
-    default int deleteAllAnswersForQuestion(ActivityInstanceDto activityInstanceDto, QuestionDto questionDto) {
-        // first delete subclass tables
-
-        boolean unsupportedType = false;
-        switch (questionDto.getType()) {
-            case PICKLIST:
-                JdbiPicklistOptionAnswer picklistOptionAnswer = getJdbiPicklistOptionAnswer();
-                long optionRowsDeleted = picklistOptionAnswer.deleteAllForQuestion(
-                        activityInstanceDto.getId(), questionDto.getId());
-                LOG.info("Deleted {} answer option rows for question {}", optionRowsDeleted, questionDto.getStableId());
-                break;
-            case BOOLEAN:
-                JdbiBooleanAnswer booleanAnswer = getJdbiBooleanAnswer();
-                int numRowsDeleted = booleanAnswer.deleteAllAnswerAnswersForQuestion(
-                        activityInstanceDto.getId(), questionDto.getId());
-                LOG.info("Deleted {} {} rows for question {}",
-                        numRowsDeleted, questionDto.getType(), questionDto.getStableId());
-                break;
-            default:
-                unsupportedType = true;
-
-        }
-        if (unsupportedType) {
-            throw new DaoException("Delete for " + questionDto.getType() + " has not been implemented yet. "
-                    + "How about you write it?");
-        }
-        // now delete parent rows
-        int numAnswerRowsDeleted = getJdbiAnswer().deleteAllAnswersForQuestion(
-                activityInstanceDto.getId(), questionDto.getId());
-        LOG.info("Deleted {} answer rows for {}", numAnswerRowsDeleted, questionDto.getStableId());
-        return numAnswerRowsDeleted;
-    }
-
-    @UseStringTemplateSqlLocator
-    @SqlQuery("queryAnswerIdByQuestionStableIdAndLatestInstance")
-    Optional<Long> findAnswerIdByQuestionStableIdAndLatestInstance(
-            @Bind("userId") long userId,
-            @Bind("studyId") long studyId,
-            @Bind("stableId") String questionStableId);
-
-    @UseStringTemplateSqlLocator
-    @SqlQuery("queryAnswerIdByQuestionStableIdAndInstanceId")
-    Optional<Long> findAnswerIdByQuestionStableIdAndInstanceId(
-            @Bind("userId") long userId,
-            @Bind("instanceId") long instanceId,
-            @Bind("stableId") String questionStableId);
-
-    default Optional<Answer> findAnswerForQuestionAndLatestInstance(long userId, long studyId, String questionStableId) {
-        return findAnswerIdByQuestionStableIdAndLatestInstance(userId, studyId, questionStableId).map(this::getAnswerById);
-    }
-
-    default Optional<Answer> findAnswerForQuestionAndInstance(long userId, long instanceId, String questionStableId) {
-        return findAnswerIdByQuestionStableIdAndInstanceId(userId, instanceId, questionStableId).map(this::getAnswerById);
-    }
-
-    /**
-     * Get answer by id. Automatically looks up type.
-     *
-     * @param answerId the answer id
-     * @return single answer
-     */
-    default Answer getAnswerById(long answerId) {
-        QuestionType type = findQuestionTypeByAnswerId(answerId);
-        return getAnswerByIdAndType(answerId, type);
-    }
-
-    /**
-     * Get answer by id.
-     *
-     * @param answerId     the answer id
-     * @param questionType the question type the answer is responding to
-     * @return single answer
-     */
-    default Answer getAnswerByIdAndType(long answerId, QuestionType questionType) {
-        switch (questionType) {
-            case BOOLEAN:
-                return getJdbiBooleanAnswer().findByAnswerId(answerId);
-            case PICKLIST:
-                return getPicklistAnswerDao()
-                        .findByAnswerId(answerId)
-                        .orElseThrow(() -> new DaoException("Could not find picklist answer with id " + answerId));
-            case TEXT:
-                return getJdbiTextAnswer().findByAnswerId(answerId);
-            case DATE:
-                return getJdbiDateAnswer().getById(answerId).orElseThrow(
-                        () -> new DaoException("Could not find date answer with id " + answerId));
-            case NUMERIC:
-                return getJdbiNumericAnswer().findById(answerId).orElseThrow(
-                        () -> new DaoException("Could not find numeric answer with id " + answerId));
-            case AGREEMENT:
-                AgreementAnswerDto dto = getJdbiAgreementAnswer().findDtoById(answerId).orElseThrow(
-                        () -> new DaoException("Could not find agreement answer with id " + answerId));
-                return new AgreementAnswer(answerId, dto.getQuestionStableId(), dto.getAnswerGuid(), dto.getAnswer());
-            case COMPOSITE:
-                Optional<CompositeAnswerSummaryDto> optionalAnswerSummary =
-                        getJdbiCompositeAnswer().findCompositeAnswerSummary(answerId);
-                if (optionalAnswerSummary.isPresent()) {
-                    CompositeAnswerSummaryDto summaryObj = optionalAnswerSummary.get();
-                    CompositeAnswer answer = new CompositeAnswer(summaryObj.getId(), summaryObj.getQuestionStableId(),
-                            summaryObj.getGuid());
-                    summaryObj.getChildAnswers().forEach((List<AnswerDto> rowChildDtos) -> {
-                        List<Answer> rowOfAnswers = rowChildDtos.stream()
-                                .map(childAnswerDto ->
-                                        //updated query gives us the question information if row exists but answer does not
-                                        //check for null then
-                                        childAnswerDto.getId() == null ? null : getAnswerById(childAnswerDto.getId()))
-                                .collect(Collectors.toList());
-                        answer.addRowOfChildAnswers(rowOfAnswers);
-                    });
-                    return answer;
-                } else {
-                    throw new DaoException("Unable to find CompositeAnswer with id" + answerId);
-                }
-            default:
-                throw new DaoException("Unhandled question type " + questionType);
-        }
-    }
-
-    @UseStringTemplateSqlLocator
-    @SqlUpdate("deleteAllAnswerValuesByActivityInstanceIds")
-    int _deleteAllAnswerValuesByInstanceIds(@BindList(value = "instanceIds", onEmpty = BindList.EmptyHandling.NULL) Set<Long> instanceIds);
-
-    @SqlUpdate("delete from answer where activity_instance_id in (<instanceIds>)")
-    int _deleteAllAnswersByInstanceIds(@BindList(value = "instanceIds", onEmpty = BindList.EmptyHandling.NULL) Set<Long> instanceIds);
-
-    default int deleteAllByInstanceIds(Set<Long> instanceIds) {
-        _deleteAllAnswerValuesByInstanceIds(instanceIds);
-        return _deleteAllAnswersByInstanceIds(instanceIds);
-    }
-
-
-    default Answer createAnswer(long operatorId, long instanceId, long questionId, Answer answer) {
-        String guid = DBUtils.uniqueStandardGuid(getHandle(), TABLE_NAME, GUID_COLUMN);
-        long now = Instant.now().toEpochMilli();
-        long id = getAnswerSql().insertAnswer(guid, operatorId, instanceId, questionId, now, now);
-        createAnswerValue(operatorId, instanceId, id, answer);
-        return findAnswerById(id).orElseThrow(() -> new DaoException("Could not find answer with id " + id));
+    // Convenience method for creating answers using guids. Prefer the other method that takes ids.
+    default Answer createAnswer(String operatorGuid, String instanceGuid, Answer answer) {
+        long operatorId = getHandle().attach(JdbiUser.class).getUserIdByGuid(operatorGuid);
+        long instanceId = getHandle().attach(JdbiActivityInstance.class).getActivityInstanceId(instanceGuid);
+        return createAnswer(operatorId, instanceId, answer);
     }
 
     default Answer createAnswer(long operatorId, long instanceId, Answer answer) {
         String guid = DBUtils.uniqueStandardGuid(getHandle(), TABLE_NAME, GUID_COLUMN);
         long now = Instant.now().toEpochMilli();
         long id = getAnswerSql().insertAnswerByQuestionStableId(guid, operatorId, instanceId, answer.getQuestionStableId(), now, now);
+        createAnswerValue(operatorId, instanceId, id, answer);
+        return findAnswerById(id).orElseThrow(() -> new DaoException("Could not find answer with id " + id));
+    }
+
+    default Answer createAnswer(long operatorId, long instanceId, long questionId, Answer answer) {
+        String guid = DBUtils.uniqueStandardGuid(getHandle(), TABLE_NAME, GUID_COLUMN);
+        long now = Instant.now().toEpochMilli();
+        long id = getAnswerSql().insertAnswer(guid, operatorId, instanceId, questionId, now, now);
         createAnswerValue(operatorId, instanceId, id, answer);
         return findAnswerById(id).orElseThrow(() -> new DaoException("Could not find answer with id " + id));
     }
@@ -274,7 +98,11 @@ public interface AnswerDao extends SqlObject {
             DateValue value = ((DateAnswer) answer).getValue();
             DBUtils.checkInsert(1, answerSql.insertDateValue(answerId, value));
         } else if (type == QuestionType.NUMERIC) {
-            Long value = ((NumericIntegerAnswer) answer).getValue();
+            NumericAnswer ans = (NumericAnswer) answer;
+            if (ans.getNumericType() != NumericType.INTEGER) {
+                throw new DaoException("Unhandled numeric type: " + ans.getNumericType());
+            }
+            Long value = ((NumericIntegerAnswer) ans).getValue();
             DBUtils.checkInsert(1, answerSql.insertNumericIntValue(answerId, value));
         } else if (type == QuestionType.PICKLIST) {
             createAnswerPicklistValue(instanceId, answerId, (PicklistAnswer) answer);
@@ -300,22 +128,189 @@ public interface AnswerDao extends SqlObject {
         getPicklistAnswerDao().assignOptionsToAnswerId(answerId, answer.getValue(), instanceGuid);
     }
 
+    //
+    // updates
+    //
+
+    default Answer updateAnswer(long operatorId, long answerId, Answer newAnswer) {
+        long now = Instant.now().toEpochMilli();
+        DBUtils.checkUpdate(1, getAnswerSql().updateAnswerById(answerId, operatorId, now));
+        updateAnswerValue(operatorId, answerId, newAnswer);
+        return findAnswerById(answerId).orElseThrow(() -> new DaoException("Could not find answer with id " + answerId));
+    }
+
+    private void updateAnswerValue(long operatorId, long answerId, Answer newAnswer) {
+        var answerSql = getAnswerSql();
+        var type = newAnswer.getQuestionType();
+        if (type == QuestionType.AGREEMENT) {
+            boolean value = ((AgreementAnswer) newAnswer).getValue();
+            DBUtils.checkInsert(1, answerSql.updateAgreementValueById(answerId, value));
+        } else if (type == QuestionType.BOOLEAN) {
+            boolean value = ((BoolAnswer) newAnswer).getValue();
+            DBUtils.checkInsert(1, answerSql.updateBoolValueById(answerId, value));
+        } else if (type == QuestionType.COMPOSITE) {
+            updateAnswerCompositeValue(operatorId, answerId, (CompositeAnswer) newAnswer);
+        } else if (type == QuestionType.DATE) {
+            DateValue value = ((DateAnswer) newAnswer).getValue();
+            DBUtils.checkInsert(1, answerSql.updateDateValueById(answerId, value));
+        } else if (type == QuestionType.NUMERIC) {
+            NumericAnswer ans = (NumericAnswer) newAnswer;
+            if (ans.getNumericType() != NumericType.INTEGER) {
+                throw new DaoException("Unhandled numeric type: " + ans.getNumericType());
+            }
+            Long value = ((NumericIntegerAnswer) ans).getValue();
+            DBUtils.checkInsert(1, answerSql.updateNumericIntValueById(answerId, value));
+        } else if (type == QuestionType.PICKLIST) {
+            updateAnswerPicklistValue(answerId, (PicklistAnswer) newAnswer);
+        } else if (type == QuestionType.TEXT) {
+            String value = ((TextAnswer) newAnswer).getValue();
+            DBUtils.checkInsert(1, answerSql.updateTextValueById(answerId, value));
+        } else {
+            throw new DaoException("Unhandled answer type " + type);
+        }
+    }
+
+    private void updateAnswerCompositeValue(long operatorId, long answerId, CompositeAnswer newAnswer) {
+        var jdbiCompositeAnswer = getJdbiCompositeAnswer();
+        CompositeAnswerSummaryDto oldAnswerDto = jdbiCompositeAnswer.findCompositeAnswerSummary(answerId)
+                .orElseThrow(() -> new DaoException("Could not find composite answer with id " + answerId));
+
+        List<List<AnswerDto>> oldChildRows = oldAnswerDto.getChildAnswers();
+        List<AnswerRow> newChildRows = newAnswer.getValue();
+        List<List<Long>> newChildIdRows = new ArrayList<>();
+        Set<Long> allNewChildIds = new HashSet<>();
+
+        // Line up the rows
+        while (oldChildRows.size() < newChildRows.size()) {
+            oldChildRows.add(new ArrayList<>());
+        }
+
+        // Update existing child answers if row index and question stable id matches, otherwise create new child answer
+        for (int rowIdx = 0; rowIdx < newChildRows.size(); rowIdx++) {
+            AnswerRow newRow = newChildRows.get(rowIdx);
+            List<AnswerDto> oldRow = oldChildRows.get(rowIdx);
+
+            List<Long> newChildIds = newRow.getValues().stream().map(newChild -> {
+                if (newChild == null) {
+                    return null;
+                }
+                Long matchingOldChildId = oldRow.stream()
+                        .filter(oldChild -> oldChild != null && oldChild.getQuestionStableId().equals(newChild.getQuestionStableId()))
+                        .findFirst()
+                        .map(AnswerDto::getId)
+                        .orElse(null);
+                if (matchingOldChildId != null) {
+                    updateAnswer(operatorId, matchingOldChildId, newChild);
+                    return matchingOldChildId;
+                } else {
+                    return createAnswer(operatorId, oldAnswerDto.getActivityInstanceId(), newChild).getAnswerId();
+                }
+            }).collect(Collectors.toList());
+
+            newChildIdRows.add(newChildIds);
+            allNewChildIds.addAll(newChildIds);
+        }
+
+        // Remove old child answers that are no longer referenced
+        jdbiCompositeAnswer.deleteChildAnswerItems(answerId);
+        oldChildRows.stream()
+                .flatMap(Collection::stream)
+                .filter(child -> child != null && child.getId() != null && !allNewChildIds.contains(child.getId()))
+                .forEach(orphaned -> deleteAnswer(orphaned.getId()));
+
+        // Recreate child answer references
+        jdbiCompositeAnswer.insertChildAnswerItems(answerId, newChildIdRows);
+    }
+
+    private void updateAnswerPicklistValue(long answerId, PicklistAnswer newAnswer) {
+        var answerSql = getAnswerSql();
+        var picklistAnswerDao = getPicklistAnswerDao();
+        String instanceGuid = answerSql.findInstanceGuidByAnswerId(answerId)
+                .orElseThrow(() -> new DaoException("Could not find activity instance guid for answer id " + answerId));
+        answerSql.deletePicklistSelectedByAnswerId(answerId);
+        picklistAnswerDao.assignOptionsToAnswerId(answerId, newAnswer.getValue(), instanceGuid);
+    }
+
+    //
+    // deletes
+    //
+
+    default void deleteAnswer(long answerId) {
+        deleteAnswers(Set.of(answerId));
+    }
+
+    default void deleteAnswers(Set<Long> answerIds) {
+        var answerSql = getAnswerSql();
+        var jdbiCompositeAnswer = getJdbiCompositeAnswer();
+
+        Set<Long> childAnswerIds = new HashSet<>();
+        Map<Long, QuestionType> typesByAnswerId = answerSql.findQuestionTypesByAnswerIds(answerIds);
+
+        for (var answerId : answerIds) {
+            QuestionType type = typesByAnswerId.get(answerId);
+            if (type == null) {
+                throw new DaoException("Could not find question type for answer with id " + answerId);
+            }
+            if (type == QuestionType.COMPOSITE) {
+                CompositeAnswerSummaryDto parentDto = jdbiCompositeAnswer.findCompositeAnswerSummary(answerId)
+                        .orElseThrow(() -> new DaoException("Could not find parent composite answer with id " + answerId));
+                parentDto.getChildAnswers().stream()
+                        .flatMap(Collection::stream)
+                        .filter(child -> child != null && child.getId() != null)
+                        .forEach(child -> childAnswerIds.add(child.getId()));
+            }
+        }
+
+        // Delete parent answers first so it de-references the child answers
+        DBUtils.checkDelete(answerIds.size(), answerSql.bulkDeleteAnswersById(answerIds));
+
+        // Assuming child answers are not composites, otherwise can recursively delete
+        DBUtils.checkDelete(childAnswerIds.size(), answerSql.bulkDeleteAnswersById(childAnswerIds));
+    }
+
+    default void deleteAllByInstanceIds(Set<Long> instanceIds) {
+        deleteAnswers(getAnswerSql().findAllAnswerIdsByInstanceIds(instanceIds));
+    }
+
+    //
+    // queries
+    //
+
     @UseStringTemplateSqlLocator
-    @SqlQuery("queryAnswerById")
+    @SqlQuery("findAnswerById")
     @UseRowReducer(AnswerWithValueReducer.class)
     Optional<Answer> findAnswerById(@Bind("id") long answerId);
 
     @UseStringTemplateSqlLocator
-    @SqlQuery("queryAnswerByGuid")
+    @SqlQuery("findAnswerByGuid")
     @UseRowReducer(AnswerWithValueReducer.class)
     Optional<Answer> findAnswerByGuid(@Bind("guid") String answerGuid);
 
     @UseStringTemplateSqlLocator
-    @SqlQuery("queryAnswerByInstanceIdAndQuestionStableId")
+    @SqlQuery("findAnswerByInstanceIdAndQuestionStableId")
     @UseRowReducer(AnswerWithValueReducer.class)
     Optional<Answer> findAnswerByInstanceIdAndQuestionStableId(
             @Bind("instanceId") long instanceId,
             @Bind("questionStableId") String questionStableId);
+
+    @UseStringTemplateSqlLocator
+    @SqlQuery("findAnswerByInstanceGuidAndQuestionStableId")
+    @UseRowReducer(AnswerWithValueReducer.class)
+    Optional<Answer> findAnswerByInstanceGuidAndQuestionStableId(
+            @Bind("instanceGuid") String instanceGuid,
+            @Bind("questionStableId") String questionStableId);
+
+    @UseStringTemplateSqlLocator
+    @SqlQuery("findAnswerByLatestInstanceAndQuestionStableId")
+    @UseRowReducer(AnswerWithValueReducer.class)
+    Optional<Answer> findAnswerByLatestInstanceAndQuestionStableId(
+            @Bind("userId") long userId,
+            @Bind("studyId") long studyId,
+            @Bind("questionStableId") String questionStableId);
+
+    //
+    // reducers
+    //
 
     class AnswerWithValueReducer implements LinkedHashMapRowReducer<Long, Answer> {
         private Map<Long, Answer> childAnswers = new HashMap<>();
@@ -323,6 +318,16 @@ public interface AnswerDao extends SqlObject {
         @Override
         public void accumulate(Map<Long, Answer> container, RowView view) {
             reduce(container, view);
+        }
+
+        @Override
+        public Stream<Answer> stream(Map<Long, Answer> container) {
+            if (!childAnswers.isEmpty()) {
+                // There are child answers that has not been consumed by a parent answer,
+                // very likely we're querying for the child answers themselves so return them.
+                container.putAll(childAnswers);
+            }
+            return container.values().stream();
         }
 
         /**
@@ -382,6 +387,7 @@ public interface AnswerDao extends SqlObject {
                         ans.setUnwrapOnExport(view.getColumn("ca_unwrap_on_export", Boolean.class));
                         return ans;
                     });
+
                     Long childAnswerId = view.getColumn("ca_child_answer_id", Long.class);
                     if (childAnswerId != null) {
                         Answer childAnswer = childAnswers.get(childAnswerId);
@@ -389,6 +395,7 @@ public interface AnswerDao extends SqlObject {
                             throw new DaoException(String.format(
                                     "Could not find child answer with id=%d for composite answer %d", childAnswerId, answerId));
                         }
+
                         int childRow = view.getColumn("ca_child_row", Integer.class); // zero-indexed row number
                         int childCol = view.getColumn("ca_child_col", Integer.class); // zero-indexed column number
                         List<AnswerRow> rows = ((CompositeAnswer) answer).getValue();
@@ -400,6 +407,9 @@ public interface AnswerDao extends SqlObject {
                             row.add(null);
                         }
                         row.set(childCol, childAnswer);
+
+                        // Pull child answer out of map, indicating we have consumed it
+                        childAnswers.remove(childAnswerId);
                     }
                     break;
                 default:

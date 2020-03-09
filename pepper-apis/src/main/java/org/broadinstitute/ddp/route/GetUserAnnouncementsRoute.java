@@ -6,23 +6,27 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.http.HttpStatus;
+
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.content.ContentStyle;
 import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.UserAnnouncementDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
+import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.model.user.UserAnnouncement;
+import org.broadinstitute.ddp.security.DDPAuth;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import spark.Request;
 import spark.Response;
 import spark.Route;
@@ -41,14 +45,17 @@ public class GetUserAnnouncementsRoute implements Route {
     public List<UserAnnouncement> handle(Request request, Response response) {
         String studyGuid = request.params(PathParam.STUDY_GUID);
         String userGuid = request.params(PathParam.USER_GUID);
+        DDPAuth ddpAuth = RouteUtil.getDDPAuth(request);
 
         LOG.info("Attempting to retrieve announcements for user {} and study {}", userGuid, studyGuid);
 
-        String langCode = RouteUtil.getDDPAuth(request).getPreferredLanguage();
         ContentStyle style = RouteUtil.parseContentStyleHeaderOrHalt(request, response, ContentStyle.STANDARD);
-        LOG.info("Using ddp content style {} and language code {} to render announcement messages", style, langCode);
 
         return TransactionWrapper.withTxn(handle -> {
+            LanguageDto preferredUserLanguage = RouteUtil.getUserLanguage(request);
+            String langCode = preferredUserLanguage.getIsoCode();
+
+            LOG.info("Using ddp content style {} and language code {} to render announcement messages", style, langCode);
             StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
             if (studyDto == null) {
                 ApiError err = new ApiError(ErrorCodes.STUDY_NOT_FOUND, "Could not find study with guid " + studyGuid);
@@ -73,7 +80,7 @@ public class GetUserAnnouncementsRoute implements Route {
 
             if (!announcements.isEmpty()) {
                 try {
-                    long langCodeId = handle.attach(JdbiLanguageCode.class).getLanguageCodeId(langCode);
+                    long langCodeId = preferredUserLanguage.getId();
                     renderer.bulkRenderAndApply(handle, announcements, style, langCodeId);
                 } catch (NoSuchElementException e) {
                     ApiError err = new ApiError(ErrorCodes.SERVER_ERROR, String.format(

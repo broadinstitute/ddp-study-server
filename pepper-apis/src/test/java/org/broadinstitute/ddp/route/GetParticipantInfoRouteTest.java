@@ -16,12 +16,12 @@ import org.apache.http.client.fluent.Request;
 import org.apache.http.util.EntityUtils;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.db.dao.JdbiMailAddress;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.model.address.OLCPrecision;
 import org.broadinstitute.ddp.model.study.StudyParticipantsInfo;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
-import org.broadinstitute.ddp.service.AddressService;
 import org.broadinstitute.ddp.service.OLCService;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.junit.After;
@@ -48,7 +48,8 @@ public class GetParticipantInfoRouteTest extends IntegrationTestSuite.TestCase {
 
     @After
     public void breakdown() {
-        TransactionWrapper.useTxn(handle -> mailAddressesToDelete.forEach(guid -> assertTrue(AddressService.deleteAddress(handle, guid))));
+        TransactionWrapper.useTxn(handle -> mailAddressesToDelete.forEach(guid ->
+                assertTrue(handle.attach(JdbiMailAddress.class).deleteAddressByGuid(guid))));
     }
 
     private StudyParticipantsInfo getEnrolledParticipantInfo(int expectedHttpStatus) throws IOException {

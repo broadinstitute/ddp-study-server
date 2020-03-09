@@ -19,14 +19,15 @@ public class ActivityInstance {
     @SerializedName("activityCode")
     private String activityCode;
 
-    @SerializedName("name")
-    private String name;
-
     @SerializedName("status")
     private String status;
 
     @SerializedName("readonly")
     private boolean readonly;
+
+    // todo: rename to `title` at api-level
+    @SerializedName("name")
+    private String title;
 
     @SerializedName("subtitle")
     private String subtitle;
@@ -40,7 +41,7 @@ public class ActivityInstance {
     private transient Long firstCompletedAt;
 
     public ActivityInstance(
-            long instanceId, long activityId, ActivityType activityType, String guid, String name, String subtitle,
+            long instanceId, long activityId, ActivityType activityType, String guid, String title, String subtitle,
             String status, boolean readonly, String activityCode, long createdAtMillis, Long firstCompletedAt,
             boolean isFollowup
     ) {
@@ -48,7 +49,7 @@ public class ActivityInstance {
         this.activityId = activityId;
         this.activityType = MiscUtil.checkNonNull(activityType, "activityType");
         this.guid = guid;
-        this.name = name;
+        this.title = title;
         this.subtitle = subtitle;
         this.status = status;
         this.readonly = readonly;
@@ -64,10 +65,6 @@ public class ActivityInstance {
 
     public String getGuid() {
         return guid;
-    }
-
-    public String getName() {
-        return name;
     }
 
     public String getStatus() {
@@ -92,6 +89,10 @@ public class ActivityInstance {
 
     public String getActivityCode() {
         return activityCode;
+    }
+
+    public String getTitle() {
+        return title;
     }
 
     public String getSubtitle() {

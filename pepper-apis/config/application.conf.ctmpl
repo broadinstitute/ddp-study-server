@@ -50,7 +50,6 @@
         "drugLoader": "{{$conf.Data.schedules.drugLoader}}",
         "cancerLoader": "{{$conf.Data.schedules.cancerLoader}}",
         "studyExport": "{{$conf.Data.schedules.studyExport}}",
-        "elasticsearchExport": "{{$conf.Data.schedules.elasticsearchExport}}",
         "tempUserCleanup": "{{$conf.Data.schedules.tempUserCleanup}}"
     },
     "sendgrid": {
@@ -58,7 +57,18 @@
         "fromEmail": "{{$conf.Data.sendgrid.fromEmail}}"
     },
     "sendgridToken": "{{$conf.Data.sendgridToken}}",
-    "sendMetrics": true,
+    {{if eq $environment "dev"}}
+            "sendMetrics": false,
+    {{end}}
+    {{if eq $environment "test"}}
+        "sendMetrics": false,
+    {{end}}
+    {{if eq $environment "staging"}}
+        "sendMetrics": false,
+    {{end}}
+    {{if eq $environment "prod"}}
+        "sendMetrics": true,
+    {{end}}
     "googleGeocodingApiKey": "{{$conf.Data.geocodingKey}}",
     "elasticsearch": {
         # Whether to enable data sync to ES
@@ -72,10 +82,11 @@
 {{end}}{{end}}
     "elasticsearchUsername": "pepper_backend",
     "elasticsearchBatchSize": 100,
-    "dsmJwtSecret": "{{$dsm_conf.Data.portal.jwtDdpSecret}}",
     "dbDsmInstance": "{{$conf.Data.dbDsmInstance}}",
     "dbApiInstance": "{{$conf.Data.dbApiInstance}}",
     "dbHousekeepingInstance": "{{$conf.Data.dbHousekeepingInstance}}",
+    "dsmJwtSecret": "{{$dsm_conf.Data.portal.jwtDdpSecret}}",
+    "dsmJwtSigner": "org.broadinstitute.kdux",
     {{if eq $environment "dev"}}
         "baseTestUrl": "https://pepper-dev.datadonationplatform.org",
         "baseWebDriverUrl": "https://basil-dev.datadonationplatform.org",

@@ -364,25 +364,32 @@ public class TransactionWrapper {
     }
 
 
-    /*
-    public static PoolingDataSource<PoolableConnection> createDataSource(int maxConnections, String dbUrl) {
-        org.apache.commons.dbcp2.ConnectionFactory connectionFactory = new DriverManagerConnectionFactory(dbUrl, null);
-        PoolableConnectionFactory poolableConnectionFactory = new PoolableConnectionFactory(connectionFactory, null);
-        poolableConnectionFactory.setDefaultAutoCommit(true); // will be managed by jdbi
-        GenericObjectPoolConfig poolConfig = new GenericObjectPoolConfig();
-        poolConfig.setMaxTotal(maxConnections);
-        poolConfig.setTestOnBorrow(false);
-        poolConfig.setBlockWhenExhausted(false);
-        poolConfig.setTestWhileIdle(true);
-        poolConfig.setMinIdle(5);
-        poolConfig.setMinEvictableIdleTimeMillis(TimeUnit.MINUTES.toMillis(5));
-        poolConfig.setTimeBetweenEvictionRunsMillis(TimeUnit.HOURS.toMillis(1));
-        poolableConnectionFactory.setValidationQueryTimeout(1);
-        poolableConnectionFactory.setMaxConnLifetimeMillis(TimeUnit.HOURS.toMillis(3));
-        ObjectPool<PoolableConnection> connectionPool = new GenericObjectPool<>(poolableConnectionFactory, poolConfig);
-        poolableConnectionFactory.setPool(connectionPool);
-        return new PoolingDataSource<>(connectionPool);
+    /**
+     * Use the given handle within a savepoint. This manages creating/releasing/rolling back the savepoint. The callback will be given the
+     * same handle passed in after a savepoint has been started, so the argument can be ignored if desired.
+     *
+     * @param name     the name for the savepoint
+     * @param handle   the database handle
+     * @param callback accepts the handle with a savepoint started
+     * @param <X>      type of exception thrown by callback
+     * @throws X exception thrown by callback and rethrown after cleaning up savepoint
+     */
+    public static <X extends Exception> void useSavepoint(String name, Handle handle, HandleConsumer<X> callback) throws X {
+        try {
+            handle.savepoint(name);
+            callback.useHandle(handle);
+            handle.release(name);
+        } catch (Exception original) {
+            try {
+                handle.rollbackToSavepoint(name);
+            } catch (Exception e) {
+                LOG.error("Error rolling back savepoint {}", name, e);
+            }
+            throw original;
+        }
     }
+
+
     */
 
 

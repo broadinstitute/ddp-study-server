@@ -18,8 +18,9 @@ import org.broadinstitute.ddp.db.dao.InvitationFactory;
 import org.broadinstitute.ddp.db.dao.JdbiEventConfiguration;
 import org.broadinstitute.ddp.db.dto.EventConfigurationDto;
 import org.broadinstitute.ddp.db.dto.InvitationDto;
-import org.broadinstitute.ddp.db.dto.NotificationDetailsDto;
 import org.broadinstitute.ddp.db.dto.NotificationTemplateSubstitutionDto;
+import org.broadinstitute.ddp.db.dto.QueuedEventDto;
+import org.broadinstitute.ddp.db.dto.QueuedNotificationDto;
 import org.broadinstitute.ddp.db.dto.SendgridEmailEventActionDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
@@ -74,9 +75,9 @@ public class NotificationEventActionTest extends TxnAwareBaseTest {
             var action = new NotificationEventAction(new EventConfiguration(dto), dto);
             long queuedEventId = action.run(handle, signal);
 
-            NotificationDetailsDto details = fetchQueuedEventDetails(handle, queuedEventId);
-            assertEquals(NotificationType.INVITATION_EMAIL, details.getNotificationType());
-            assertEquals(invitationDto.getContactEmail(), details.getToEmailAddress());
+            QueuedNotificationDto eventDto = fetchQueuedEvent(handle, queuedEventId);
+            assertEquals(NotificationType.INVITATION_EMAIL, eventDto.getNotificationType());
+            assertEquals(invitationDto.getContactEmail(), eventDto.getToEmail());
 
             handle.rollback();
         });
@@ -96,10 +97,10 @@ public class NotificationEventActionTest extends TxnAwareBaseTest {
             var action = new NotificationEventAction(new EventConfiguration(dto), dto);
             long queuedEventId = action.run(handle, signal);
 
-            NotificationDetailsDto details = fetchQueuedEventDetails(handle, queuedEventId);
-            assertEquals(NotificationType.INVITATION_EMAIL, details.getNotificationType());
+            QueuedNotificationDto eventDto = fetchQueuedEvent(handle, queuedEventId);
+            assertEquals(NotificationType.INVITATION_EMAIL, eventDto.getNotificationType());
 
-            NotificationTemplateSubstitutionDto substitutionDto = details.getTemplateSubstitutions()
+            NotificationTemplateSubstitutionDto substitutionDto = eventDto.getTemplateSubstitutions()
                     .stream()
                     .filter(sub -> sub.getVariableName().equals(NotificationTemplateVariables.DDP_INVITATION_ID))
                     .findFirst()
@@ -132,9 +133,9 @@ public class NotificationEventActionTest extends TxnAwareBaseTest {
             var action = new NotificationEventAction(new EventConfiguration(dto), dto);
             long queuedEventId = action.run(handle, signal);
 
-            NotificationDetailsDto details = fetchQueuedEventDetails(handle, queuedEventId);
-            assertEquals(NotificationType.INVITATION_EMAIL, details.getNotificationType());
-            assertEquals(invitation3.getContactEmail(), details.getToEmailAddress());
+            QueuedNotificationDto eventDto = fetchQueuedEvent(handle, queuedEventId);
+            assertEquals(NotificationType.INVITATION_EMAIL, eventDto.getNotificationType());
+            assertEquals(invitation3.getContactEmail(), eventDto.getToEmail());
 
             handle.rollback();
         });
@@ -156,11 +157,11 @@ public class NotificationEventActionTest extends TxnAwareBaseTest {
             var action = new NotificationEventAction(new EventConfiguration(dto), dto);
             long queuedEventId = action.run(handle, signal);
 
-            NotificationDetailsDto details = fetchQueuedEventDetails(handle, queuedEventId);
-            assertEquals(NotificationType.INVITATION_EMAIL, details.getNotificationType());
-            assertEquals(invitation1.getContactEmail(), details.getToEmailAddress());
+            QueuedNotificationDto eventDto = fetchQueuedEvent(handle, queuedEventId);
+            assertEquals(NotificationType.INVITATION_EMAIL, eventDto.getNotificationType());
+            assertEquals(invitation1.getContactEmail(), eventDto.getToEmail());
 
-            NotificationTemplateSubstitutionDto substitutionDto = details.getTemplateSubstitutions()
+            NotificationTemplateSubstitutionDto substitutionDto = eventDto.getTemplateSubstitutions()
                     .stream()
                     .filter(sub -> sub.getVariableName().equals(NotificationTemplateVariables.DDP_INVITATION_ID))
                     .findFirst()
@@ -191,11 +192,11 @@ public class NotificationEventActionTest extends TxnAwareBaseTest {
                 Instant.now().toEpochMilli(), null, 0, null, null, true, 1);
     }
 
-    private NotificationDetailsDto fetchQueuedEventDetails(Handle handle, long queuedEventId) {
-        EventDao eventDao = handle.attach(EventDao.class);
-        NotificationDetailsDto dto = eventDao.getNotificationDetailsDtoForQueuedEvent(queuedEventId, testData.getUserGuid());
-        assertNotNull("notification details for queued event with id " + queuedEventId + " should exists", dto);
-        dto.setTemplateSubstitutions(eventDao.getTemplateSubstitutionsForQueuedNotification(queuedEventId));
-        return dto;
+    private QueuedNotificationDto fetchQueuedEvent(Handle handle, long queuedEventId) {
+        QueuedEventDto queuedEventDto = handle.attach(EventDao.class)
+                .findQueuedEventById(queuedEventId)
+                .orElse(null);
+        assertNotNull("queued event with id " + queuedEventId + " should exists", queuedEventDto);
+        return (QueuedNotificationDto) queuedEventDto;
     }
 }

@@ -1,13 +1,5 @@
 package org.broadinstitute.ddp.util;
 
-import static org.broadinstitute.ddp.constants.AngioPdfConstants.ConsentFields.DATE_OF_BIRTH;
-import static org.broadinstitute.ddp.constants.AngioPdfConstants.ConsentFields.DRAW_BLOOD_NO;
-import static org.broadinstitute.ddp.constants.AngioPdfConstants.ConsentFields.DRAW_BLOOD_YES;
-import static org.broadinstitute.ddp.constants.AngioPdfConstants.ConsentFields.FULL_NAME;
-import static org.broadinstitute.ddp.constants.AngioPdfConstants.ConsentFields.TISSUE_SAMPLE_NO;
-import static org.broadinstitute.ddp.constants.AngioPdfConstants.ConsentFields.TISSUE_SAMPLE_YES;
-import static org.broadinstitute.ddp.constants.AngioPdfConstants.ConsentFields.TODAY_DATE;
-import static org.broadinstitute.ddp.constants.AngioPdfConstants.PdfFileLocations.CONSENT_PDF_LOCATION;
 import static org.broadinstitute.ddp.constants.ConfigFile.Auth0Testing.AUTH0_MGMT_API_CLIENT_ID;
 import static org.broadinstitute.ddp.constants.ConfigFile.Auth0Testing.AUTH0_MGMT_API_CLIENT_SECRET;
 import static org.broadinstitute.ddp.constants.ConfigFile.Auth0Testing.AUTH0_TEST_EMAIL;
@@ -20,7 +12,6 @@ import static org.broadinstitute.ddp.constants.TestConstants.getTestStudyBloodPe
 import static org.broadinstitute.ddp.constants.TestConstants.getTestStudyTissuePexEXPR;
 import static org.broadinstitute.ddp.model.activity.types.InstanceStatusType.CREATED;
 import static org.broadinstitute.ddp.model.activity.types.TextInputType.TEXT;
-import static org.broadinstitute.ddp.script.angio.AngioStudyCreationScript.generateQuestionPrompt;
 import static org.broadinstitute.ddp.util.GuidUtils.UPPER_ALPHA_NUMERIC;
 import static org.broadinstitute.ddp.util.TestUtil.wrapQuestions;
 import static org.junit.Assert.assertEquals;
@@ -51,7 +42,6 @@ import org.apache.commons.io.IOUtils;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.SqlConstants;
 import org.broadinstitute.ddp.constants.TestConstants;
-import org.broadinstitute.ddp.db.AnswerDao;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.StudyActivityMappingDao;
@@ -60,6 +50,7 @@ import org.broadinstitute.ddp.db.UserDao;
 import org.broadinstitute.ddp.db.UserDaoFactory;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
+import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.ClientDao;
 import org.broadinstitute.ddp.db.dao.EventActionDao;
 import org.broadinstitute.ddp.db.dao.FormActivityDao;
@@ -104,6 +95,7 @@ import org.broadinstitute.ddp.model.activity.definition.question.BoolQuestionDef
 import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
+import org.broadinstitute.ddp.model.activity.definition.template.TemplateVariable;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
@@ -159,7 +151,18 @@ public class TestDataSetupUtil {
     private static final String testUserGuid = auth0Config.getString(AUTH0_TEST_USER_GUID);
     private static final String password = auth0Config.getString(AUTH0_TEST_PASSWORD);
     private static final List<GeneratedTestData> testDataToDelete = new ArrayList<>();
+    private static final String CONSENT_PDF_LOCATION = "src/test/resources/ConsentForm.pdf";
     private static UserDao userDao = UserDaoFactory.createFromSqlConfig(sqlConfig);
+
+    public static final class ConsentFields {
+        public static final String DRAW_BLOOD_YES = "drawBlood_YES";
+        public static final String DRAW_BLOOD_NO = "drawBlood_NO";
+        public static final String TISSUE_SAMPLE_YES = "tissueSample_YES";
+        public static final String TISSUE_SAMPLE_NO = "tissueSample_NO";
+        public static final String FULL_NAME = "fullName";
+        public static final String DATE_OF_BIRTH = "dateOfBirth";
+        public static final String TODAY_DATE = "date";
+    }
 
     public static void main(String[] args) throws Exception {
         Logger root = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
@@ -814,28 +817,23 @@ public class TestDataSetupUtil {
             assert (hasGivenInformedConsent);
         }
 
-        Config sqlConfig = ConfigFactory.parseResources(ConfigFile.SQL_CONF);
-        AnswerDao answerDao = AnswerDao.fromSqlConfig(sqlConfig);
-        if (hasGivenInformedConsent) {
-            // Now define your answers
-            ActivityInstanceDto instance = handle.attach(ActivityInstanceDao.class).insertInstance(generatedTestData.getConsentActivityId(),
-                    generatedTestData.getUserGuid());
-            generatedTestData.setConsentActivityInstanceGuid(instance.getGuid());
+        ActivityInstanceDto instance = handle.attach(ActivityInstanceDao.class).insertInstance(generatedTestData.getConsentActivityId(),
+                generatedTestData.getUserGuid());
+        generatedTestData.setConsentActivityInstanceGuid(instance.getGuid());
 
+        AnswerDao answerDao = handle.attach(AnswerDao.class);
+        if (hasGivenInformedConsent) {
             Answer informedConsentAnswer = new TextAnswer(null, generatedTestData.getSignatureQuestionStableId(), null,
                     generatedTestData.getProfile().getFirstName() + " " + generatedTestData.getProfile().getLastName());
-            answerDao.createAnswer(handle,
-                    informedConsentAnswer, generatedTestData.getUserGuid(), generatedTestData.getConsentActivityInstanceGuid());
+            answerDao.createAnswer(generatedTestData.getUserId(), instance.getId(), informedConsentAnswer);
 
             Answer bloodAnswer = new BoolAnswer(null, generatedTestData.getBloodQuestionStableId(), null,
                     hasConsentedToBlood);
-            answerDao.createAnswer(handle, bloodAnswer, generatedTestData.getUserGuid(),
-                    generatedTestData.getConsentActivityInstanceGuid());
+            answerDao.createAnswer(generatedTestData.getUserId(), instance.getId(), bloodAnswer);
 
             Answer tissueAnswer = new BoolAnswer(null, generatedTestData.getTissueQuestionStableId(),
                     null, hasConsentedToTissue);
-            answerDao.createAnswer(handle, tissueAnswer, generatedTestData.getUserGuid(),
-                    generatedTestData.getConsentActivityInstanceGuid());
+            answerDao.createAnswer(generatedTestData.getUserId(), instance.getId(), tissueAnswer);
 
             FormActivityStatusUtil.updateFormActivityStatus(handle, InstanceStatusType.COMPLETE,
                     generatedTestData.getConsentActivityInstanceGuid(), generatedTestData.getUserGuid());
@@ -843,8 +841,7 @@ public class TestDataSetupUtil {
 
         Answer birthDateAnswer = new DateAnswer(null, generatedTestData.getDateOfBirthStableId(), null,
                 birthYear, birthMonth, birthDay);
-        answerDao.createAnswer(handle, birthDateAnswer, generatedTestData.getUserGuid(),
-                generatedTestData.getConsentActivityInstanceGuid());
+        answerDao.createAnswer(generatedTestData.getUserId(), instance.getId(), birthDateAnswer);
     }
 
     public static void answerAboutYou(Handle handle,
@@ -854,10 +851,6 @@ public class TestDataSetupUtil {
             throw new Exception("You need to define an aboutYou activity in the generatedTestData");
         }
 
-        Config sqlConfig = ConfigFactory.parseResources(ConfigFile.SQL_CONF);
-        AnswerDao answerDao = AnswerDao.fromSqlConfig(sqlConfig);
-
-        // Now define your answers
         ActivityInstanceDto instance = handle.attach(ActivityInstanceDao.class).insertInstance(generatedTestData.getAboutYouActivityId(),
                 generatedTestData.getUserGuid());
         generatedTestData.setAboutYouActivityInstanceGuid(instance.getGuid());
@@ -865,8 +858,7 @@ public class TestDataSetupUtil {
         DateAnswer dateOfDiagnosisAnswer = new DateAnswer(null, generatedTestData.getDateOfDiagnosisStableId(),
                 null, DateValue.fromMillisSinceEpoch(diagnosisMillisSinceEpoch));
 
-        answerDao.createAnswer(handle,
-                dateOfDiagnosisAnswer, generatedTestData.getUserGuid(), generatedTestData.getAboutYouActivityInstanceGuid());
+        handle.attach(AnswerDao.class).createAnswer(generatedTestData.getUserId(), instance.getId(), dateOfDiagnosisAnswer);
 
         FormActivityStatusUtil.updateFormActivityStatus(handle, InstanceStatusType.COMPLETE,
                 generatedTestData.getAboutYouActivityInstanceGuid(), generatedTestData.getUserGuid());
@@ -932,9 +924,11 @@ public class TestDataSetupUtil {
                 textTmpl("Yes"),
                 textTmpl("No")).build();
 
+        String var = "prompt_" + generatedTestData.getDateOfBirthStableId();
+        Template prompt = Template.html("$" + var + "");
+        prompt.addVariable(TemplateVariable.single(var, "en", "Date of birth"));
         DateQuestionDef birthDateQuestion = DateQuestionDef
-                .builder(DateRenderMode.TEXT, generatedTestData.getDateOfBirthStableId(),
-                        generateQuestionPrompt(generatedTestData.getDateOfBirthStableId(), "Date of birth"))
+                .builder(DateRenderMode.TEXT, generatedTestData.getDateOfBirthStableId(), prompt)
                 .setDisplayCalendar(false)
                 .addFields(DateFieldType.MONTH, DateFieldType.DAY, DateFieldType.YEAR)
                 .setHideNumber(true)
@@ -1006,13 +1000,13 @@ public class TestDataSetupUtil {
         long revId = handle.attach(JdbiRevision.class).insertStart(Instant.now().toEpochMilli(), userId,
                 "Made angio test consent pdf");
 
-        List<String> fieldValues = Arrays.asList(DRAW_BLOOD_YES,
-                DRAW_BLOOD_NO,
-                TISSUE_SAMPLE_YES,
-                TISSUE_SAMPLE_NO,
-                FULL_NAME,
-                DATE_OF_BIRTH,
-                TODAY_DATE);
+        List<String> fieldValues = Arrays.asList(ConsentFields.DRAW_BLOOD_YES,
+                ConsentFields.DRAW_BLOOD_NO,
+                ConsentFields.TISSUE_SAMPLE_YES,
+                ConsentFields.TISSUE_SAMPLE_NO,
+                ConsentFields.FULL_NAME,
+                ConsentFields.DATE_OF_BIRTH,
+                ConsentFields.TODAY_DATE);
 
         long consentActivityId = generatedTestData.getConsentActivityId();
 
@@ -1189,6 +1183,11 @@ public class TestDataSetupUtil {
                         .getUserStudyEnrollmentId());
             }
         }
+    }
+
+    public static void deleteStudyEnrollmentStatuses(Handle handle, GeneratedTestData testData) {
+        handle.attach(JdbiUserStudyEnrollment.class)
+                .deleteByUserGuidStudyGuid(testData.getUserGuid(), testData.getStudyGuid());
     }
 
     public static class GeneratedTestData {

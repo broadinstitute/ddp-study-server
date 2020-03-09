@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <!-- This file is used for testing in LiquibaseUtilTest. -->
+
+    <changeSet author="yufeng" id="liquibase-rollback-fail-insert">
+        <insert tableName="liquibase_test_table">
+            <column name="name">another</column>
+        </insert>
+        <comment>No auto-rollback and no manual rollback specified.</comment>
+    </changeSet>
+
+    <changeSet author="yufeng" id="liquibase-rollback-fail-faulty-sql">
+        <insert tableName="liquibase_non_existing_table">
+            <column name="name">blah</column>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,11 +1,14 @@
 package org.broadinstitute.ddp.pex;
 
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.Optional;
 
-import org.broadinstitute.ddp.db.dao.JdbiDateAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
+import org.jdbi.v3.core.mapper.RowMapper;
+import org.jdbi.v3.core.statement.StatementContext;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
@@ -69,7 +72,7 @@ interface PexDao extends SqlObject {
 
     @UseStringTemplateSqlLocator
     @SqlQuery("queryLatestDateAnswerByUserGuidActivityCodeAndQuestionStableId")
-    @RegisterRowMapper(JdbiDateAnswer.ZeroedDateValueMapper.class)
+    @RegisterRowMapper(ZeroedDateValueMapper.class)
     DateValue findLatestDateAnswer(@Bind("userGuid") String userGuid,
                                    @Bind("activityCode") String activityCode,
                                    @Bind("stableId") String stableId,
@@ -77,7 +80,7 @@ interface PexDao extends SqlObject {
 
     @UseStringTemplateSqlLocator
     @SqlQuery("queryDateAnswerByStableIdAndActivityInstance")
-    @RegisterRowMapper(JdbiDateAnswer.ZeroedDateValueMapper.class)
+    @RegisterRowMapper(ZeroedDateValueMapper.class)
     DateValue findSpecificDateAnswer(@Bind("activityInstanceGuid") String activityInstanceGuid,
                                      @Bind("stableId") String stableId);
 
@@ -92,4 +95,14 @@ interface PexDao extends SqlObject {
     @SqlQuery("queryNumericIntegerAnswerByStableIdAndActivityInstance")
     Long findSpecificNumericIntegerAnswer(@Bind("activityInstanceGuid") String activityInstanceGuid,
                                           @Bind("stableId") String stableId);
+
+    class ZeroedDateValueMapper implements RowMapper<DateValue> {
+        @Override
+        public DateValue map(ResultSet rs, StatementContext ctx) throws SQLException {
+            return new DateValue(
+                    Optional.ofNullable((Integer) rs.getObject("year")).orElse(0),
+                    Optional.ofNullable((Integer) rs.getObject("month")).orElse(0),
+                    Optional.ofNullable((Integer) rs.getObject("day")).orElse(0));
+        }
+    }
 }

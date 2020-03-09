@@ -11,19 +11,18 @@ public class SummaryTranslation extends Translation {
 
     @NotNull
     @SerializedName("statusCode")
-    private InstanceStatusType statusCode;
+    private InstanceStatusType statusType;
 
     public SummaryTranslation(
             String languageCode,
             String text,
-            InstanceStatusType statusCode
+            InstanceStatusType statusType
     ) {
         super(languageCode, text);
-        this.statusCode = MiscUtil.checkNonNull(statusCode, "statusCode");
+        this.statusType = MiscUtil.checkNonNull(statusType, "statusType");
     }
 
-    public InstanceStatusType getStatusCode() {
-        return statusCode;
+    public InstanceStatusType getStatusType() {
+        return statusType;
     }
-
 }

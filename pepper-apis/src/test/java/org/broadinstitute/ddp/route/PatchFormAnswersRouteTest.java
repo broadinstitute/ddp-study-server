@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.route;
 
 import static io.restassured.RestAssured.given;
+
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
@@ -8,6 +9,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.isEmptyOrNullString;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
@@ -25,38 +27,40 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
+
 import io.restassured.http.ContentType;
 import io.restassured.mapper.ObjectMapperType;
 import io.restassured.response.Response;
+
 import liquibase.util.StringUtils;
+
 import org.apache.http.HttpResponse;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.util.EntityUtils;
+
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.API;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
-import org.broadinstitute.ddp.db.AnswerDao;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceStatusDao;
+import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstanceStatusType;
-import org.broadinstitute.ddp.db.dao.JdbiBooleanAnswer;
-import org.broadinstitute.ddp.db.dao.JdbiDateAnswer;
 import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
-import org.broadinstitute.ddp.db.dao.JdbiNumericAnswer;
 import org.broadinstitute.ddp.db.dao.JdbiQuestion;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
-import org.broadinstitute.ddp.db.dao.PicklistAnswerDao;
 import org.broadinstitute.ddp.db.dao.QuestionDao;
+import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceStatusDto;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
@@ -64,7 +68,6 @@ import org.broadinstitute.ddp.json.AnswerResponse;
 import org.broadinstitute.ddp.json.AnswerSubmission;
 import org.broadinstitute.ddp.json.PatchAnswerPayload;
 import org.broadinstitute.ddp.json.PatchAnswerResponse;
-import org.broadinstitute.ddp.json.errors.AnswerExistsError;
 import org.broadinstitute.ddp.json.errors.AnswerValidationError;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
@@ -108,8 +111,11 @@ import org.broadinstitute.ddp.model.activity.types.TemplateType;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.broadinstitute.ddp.util.TestUtil;
+
 import org.eclipse.jetty.http.HttpStatus;
+
 import org.jdbi.v3.core.Handle;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -118,7 +124,6 @@ import org.junit.Test;
 public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
 
     private static Gson gson;
-    private static AnswerDao answerDao;
 
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static String userGuid;
@@ -128,6 +133,7 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
 
     private static FormActivityDef activity;
     private static ActivityVersionDto activityVersionDto;
+    private static ActivityInstanceDto instanceDto;
     private static String instanceGuid;
     private static String boolStableId;
     private static String textStableId;
@@ -159,7 +165,6 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
     @BeforeClass
     public static void setup() {
         gson = new Gson();
-        answerDao = AnswerDao.fromSqlConfig(RouteTestUtil.getSqlConfig());
 
         TransactionWrapper.useTxn(handle -> {
             testData = TestDataSetupUtil.generateBasicUserTestData(handle);
@@ -330,9 +335,9 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
     @Before
     public void refresh() {
         TransactionWrapper.useTxn(handle -> {
-            instanceGuid = handle.attach(ActivityInstanceDao.class)
-                    .insertInstance(activity.getActivityId(), userGuid)
-                    .getGuid();
+            instanceDto = handle.attach(ActivityInstanceDao.class)
+                    .insertInstance(activity.getActivityId(), userGuid);
+            instanceGuid = instanceDto.getGuid();
             url = urlTemplate.replace("{instanceGuid}", instanceGuid);
         });
     }
@@ -340,10 +345,11 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
     @After
     public void cleanup() {
         TransactionWrapper.useTxn(handle -> {
+            var answerDao = handle.attach(AnswerDao.class);
             for (QuestionType type : QuestionType.values()) {
                 for (String answerGuid : answerGuidsToDelete.get(type)) {
-                    long id = answerDao.getAnswerIdByGuids(handle, instanceGuid, answerGuid);
-                    answerDao.deleteAnswerByIdAndType(handle, id, type);
+                    long id = answerDao.getAnswerSql().findDtoByGuid(answerGuid).get().getId();
+                    answerDao.deleteAnswer(id);
                 }
                 answerGuidsToDelete.get(type).clear();
             }
@@ -352,17 +358,15 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
     }
 
     private boolean getBoolAnswerValue(String guid) {
-        return TransactionWrapper.withTxn(handle -> {
-            Optional<Boolean> res = handle.attach(JdbiBooleanAnswer.class).findValueByGuid(guid);
-            assertTrue(res.isPresent());
-            return res.get();
-        });
+        return TransactionWrapper.withTxn(handle ->
+                ((BoolAnswer) handle.attach(AnswerDao.class).findAnswerByGuid(guid).get()).getValue());
     }
 
     private String createAnswerAndDeferCleanup(Handle handle, Answer answer) {
-        String guid = answerDao.createAnswer(handle, answer, userGuid, instanceGuid);
+        String guid = handle.attach(AnswerDao.class)
+                .createAnswer(testData.getUserId(), instanceDto.getId(), answer)
+                .getAnswerGuid();
         assertNotNull(guid);
-        assertNotNull(answer.getAnswerId());
         answerGuidsToDelete.get(answer.getQuestionType()).add(guid);
         return guid;
     }
@@ -499,7 +503,7 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
     }
 
     @Test
-    public void testPatch_noGuid_multipleExistingAnswer() throws Exception {
+    public void test_givenQuestionHasMultipleAnswers_whenEndpointIsCalled_thenItReturns500() throws Exception {
         TransactionWrapper.useTxn(handle -> {
             Answer answer = new BoolAnswer(null, boolStableId, null, true);
             createAnswerAndDeferCleanup(handle, answer);
@@ -513,12 +517,12 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
 
         Request request = RouteTestUtil.buildAuthorizedPatchRequest(token, url, gson.toJson(data));
         HttpResponse response = request.execute().returnResponse();
-        assertEquals(409, response.getStatusLine().getStatusCode());
+        assertEquals(500, response.getStatusLine().getStatusCode());
 
         String json = EntityUtils.toString(response.getEntity());
-        AnswerExistsError resp = gson.fromJson(json, AnswerExistsError.class);
-        assertEquals(ErrorCodes.ANSWER_EXISTS, resp.getCode());
-        assertEquals(boolStableId, resp.getStableId());
+        ApiError resp = gson.fromJson(json, ApiError.class);
+        assertEquals(ErrorCodes.SERVER_ERROR, resp.getCode());
+        assertTrue(Pattern.compile("found 2 answers instead").matcher(resp.getMessage()).find());
     }
 
     private void assert200AndNoAnswersResponse(String uri, String payload) throws Exception {
@@ -569,12 +573,10 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
         assertNotNull(firstAnswer.getQuestionStableId());
 
         TransactionWrapper.useTxn(handle -> {
-            List<Answer> savedCompositeAnswers = answerDao.getAnswersForQuestion(handle, instanceGuid, firstAnswer
-                    .getQuestionStableId(), handle.attach(JdbiLanguageCode.class).getLanguageCodeId("en"));
-            assertNotNull(savedCompositeAnswers);
-            assertEquals(1, savedCompositeAnswers.size());
-            assertTrue(savedCompositeAnswers.get(0) instanceof CompositeAnswer);
-            CompositeAnswer compositeAnswer = (CompositeAnswer) savedCompositeAnswers.get(0);
+            Optional<Answer> savedCompositeAnswer = handle.attach(AnswerDao.class)
+                    .findAnswerByInstanceGuidAndQuestionStableId(instanceGuid, firstAnswer.getQuestionStableId());
+            assertTrue(savedCompositeAnswer.isPresent());
+            CompositeAnswer compositeAnswer = (CompositeAnswer) savedCompositeAnswer.get();
             List<AnswerRow> childAnswers = compositeAnswer.getValue();
             assertEquals(compListOfAnswers.size(), childAnswers.size());
             for (AnswerRow rowOfAnswers : childAnswers) {
@@ -739,8 +741,6 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
             AnswerRow secondRow = childAnswers.get(1);
             assertEquals(QuestionType.TEXT, secondRow.getValues().get(0).getQuestionType());
             assertEquals(secondRowStringValue, secondRow.getValues().get(0).getValue());
-            assertNull(secondRow.getValues().get(1));
-
         });
     }
 
@@ -911,10 +911,8 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
                 .and().extract().path("answers[0].answerGuid");
 
         answerGuidsToDelete.get(QuestionType.PICKLIST).add(guid);
-        PicklistAnswer answer = TransactionWrapper.withTxn(handle -> {
-            long id = answerDao.getAnswerIdByGuids(handle, instanceGuid, guid);
-            return handle.attach(PicklistAnswerDao.class).findByAnswerId(id).get();
-        });
+        PicklistAnswer answer = (PicklistAnswer) TransactionWrapper.withTxn(handle ->
+                handle.attach(AnswerDao.class).findAnswerByGuid(guid).get());
 
         assertNotNull(answer);
         assertEquals(guid, answer.getAnswerGuid());
@@ -941,10 +939,8 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
                 .body("answers[0].stableId", equalTo(plistSingleSelectSid))
                 .body("answers[0].answerGuid", equalTo(answerGuid));
 
-        PicklistAnswer answer = TransactionWrapper.withTxn(handle -> {
-            long id = answerDao.getAnswerIdByGuids(handle, instanceGuid, answerGuid);
-            return handle.attach(PicklistAnswerDao.class).findByAnswerId(id).get();
-        });
+        PicklistAnswer answer = (PicklistAnswer) TransactionWrapper.withTxn(handle ->
+                handle.attach(AnswerDao.class).findAnswerByGuid(answerGuid).get());
 
         assertNotNull(answer);
         assertEquals(1, answer.getValue().size());
@@ -966,10 +962,8 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
                 .and().extract().path("answers[0].answerGuid");
 
         answerGuidsToDelete.get(QuestionType.PICKLIST).add(guid);
-        PicklistAnswer answer = TransactionWrapper.withTxn(handle -> {
-            long id = answerDao.getAnswerIdByGuids(handle, instanceGuid, guid);
-            return handle.attach(PicklistAnswerDao.class).findByAnswerId(id).get();
-        });
+        PicklistAnswer answer = (PicklistAnswer) TransactionWrapper.withTxn(handle ->
+                handle.attach(AnswerDao.class).findAnswerByGuid(guid).get());
 
         assertNotNull(answer);
         assertEquals(1, answer.getValue().size());
@@ -992,8 +986,8 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
 
     @Test
     public void testPatch_picklistAnswer_optionDetails_overLengthLimit() {
-        String details = StringUtils.repeat("0123456789", 25) + "123456";
-        assertEquals(256, details.length());
+        String details = StringUtils.repeat("0123456789", 50) + "123456";
+        assertEquals(506, details.length());
 
         PatchAnswerPayload payload = createPicklistPayload(plistSingleSelectSid, null,
                 new SelectedPicklistOption(plistSingle_option2_sid, details));
@@ -1002,7 +996,7 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
                 .then().assertThat()
                 .statusCode(400).contentType(ContentType.JSON)
                 .body("code", equalTo(ErrorCodes.BAD_PAYLOAD))
-                .body("message", containsString("length must be between 0 and 255"));
+                .body("message", containsString("length must be between 0 and 500"));
     }
 
     @Test
@@ -1033,10 +1027,8 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
                 .and().extract().path("answers[0].answerGuid");
 
         answerGuidsToDelete.get(QuestionType.PICKLIST).add(guid);
-        PicklistAnswer answer = TransactionWrapper.withTxn(handle -> {
-            long id = answerDao.getAnswerIdByGuids(handle, instanceGuid, guid);
-            return handle.attach(PicklistAnswerDao.class).findByAnswerId(id).get();
-        });
+        PicklistAnswer answer = (PicklistAnswer) TransactionWrapper.withTxn(handle ->
+                handle.attach(AnswerDao.class).findAnswerByGuid(guid).get());
 
         assertNotNull(answer);
         assertEquals(2, answer.getValue().size());
@@ -1055,10 +1047,8 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
                 .and().extract().path("answers[0].answerGuid");
 
         answerGuidsToDelete.get(QuestionType.PICKLIST).add(guid);
-        PicklistAnswer answer = TransactionWrapper.withTxn(handle -> {
-            long id = answerDao.getAnswerIdByGuids(handle, instanceGuid, guid);
-            return handle.attach(PicklistAnswerDao.class).findByAnswerId(id).get();
-        });
+        PicklistAnswer answer = (PicklistAnswer) TransactionWrapper.withTxn(handle ->
+                handle.attach(AnswerDao.class).findAnswerByGuid(guid).get());
 
         assertNotNull(answer);
         assertEquals(0, answer.getValue().size());
@@ -1090,10 +1080,8 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
                 .and().extract().path("answers[0].answerGuid");
 
         answerGuidsToDelete.get(QuestionType.PICKLIST).add(guid);
-        PicklistAnswer answer = TransactionWrapper.withTxn(handle -> {
-            long id = answerDao.getAnswerIdByGuids(handle, instanceGuid, guid);
-            return handle.attach(PicklistAnswerDao.class).findByAnswerId(id).get();
-        });
+        PicklistAnswer answer = (PicklistAnswer) TransactionWrapper.withTxn(handle ->
+                handle.attach(AnswerDao.class).findAnswerByGuid(guid).get());
 
         assertNotNull(answer);
         assertEquals(1, answer.getValue().size());
@@ -1181,10 +1169,8 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
                 .and().extract().path("answers[0].answerGuid");
 
         answerGuidsToDelete.get(QuestionType.DATE).add(guid);
-        DateAnswer answer = TransactionWrapper.withTxn(handle -> {
-            long id = answerDao.getAnswerIdByGuids(handle, instanceGuid, guid);
-            return handle.attach(JdbiDateAnswer.class).getById(id).get();
-        });
+        DateAnswer answer = (DateAnswer) TransactionWrapper.withTxn(handle ->
+                handle.attach(AnswerDao.class).findAnswerByGuid(guid).get());
 
         assertNotNull(answer);
         assertEquals(guid, answer.getAnswerGuid());
@@ -1270,10 +1256,8 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
                 .and().extract().path("answers[0].answerGuid");
 
         answerGuidsToDelete.get(QuestionType.DATE).add(guid);
-        DateAnswer answer = TransactionWrapper.withTxn(handle -> {
-            long id = answerDao.getAnswerIdByGuids(handle, instanceGuid, guid);
-            return handle.attach(JdbiDateAnswer.class).getById(id).get();
-        });
+        DateAnswer answer = (DateAnswer) TransactionWrapper.withTxn(handle ->
+                handle.attach(AnswerDao.class).findAnswerByGuid(guid).get());
 
         assertNotNull(answer);
         assertEquals(guid, answer.getAnswerGuid());
@@ -1305,10 +1289,8 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
                 .and().extract().path("answers[0].answerGuid");
 
         assertEquals(guid, nextGuid);
-        DateAnswer answer = TransactionWrapper.withTxn(handle -> {
-            long id = answerDao.getAnswerIdByGuids(handle, instanceGuid, guid);
-            return handle.attach(JdbiDateAnswer.class).getById(id).get();
-        });
+        DateAnswer answer = (DateAnswer) TransactionWrapper.withTxn(handle ->
+                handle.attach(AnswerDao.class).findAnswerByGuid(guid).get());
 
         assertNotNull(answer);
         assertEquals(updated, answer.getValue());
@@ -1355,10 +1337,8 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
                 .and().extract().path("answers[0].answerGuid");
 
         answerGuidsToDelete.get(QuestionType.DATE).add(guid);
-        DateAnswer answer = TransactionWrapper.withTxn(handle -> {
-            long id = answerDao.getAnswerIdByGuids(handle, instanceGuid, guid);
-            return handle.attach(JdbiDateAnswer.class).getById(id).get();
-        });
+        DateAnswer answer = (DateAnswer) TransactionWrapper.withTxn(handle ->
+                handle.attach(AnswerDao.class).findAnswerByGuid(guid).get());
 
         assertNotNull(answer);
         assertEquals(guid, answer.getAnswerGuid());
@@ -1381,10 +1361,8 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
                 .and().extract().path("answers[0].answerGuid");
 
         answerGuidsToDelete.get(QuestionType.DATE).add(guid);
-        DateAnswer answer = TransactionWrapper.withTxn(handle -> {
-            long id = answerDao.getAnswerIdByGuids(handle, instanceGuid, guid);
-            return handle.attach(JdbiDateAnswer.class).getById(id).get();
-        });
+        DateAnswer answer = (DateAnswer) TransactionWrapper.withTxn(handle ->
+                handle.attach(AnswerDao.class).findAnswerByGuid(guid).get());
 
         assertNotNull(answer);
         assertEquals(guid, answer.getAnswerGuid());
@@ -1439,10 +1417,8 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
                 .and().extract().path("answers[0].answerGuid");
 
         answerGuidsToDelete.get(QuestionType.NUMERIC).add(guid);
-        NumericAnswer answer = TransactionWrapper.withTxn(handle -> {
-            long id = answerDao.getAnswerIdByGuids(handle, instanceGuid, guid);
-            return handle.attach(JdbiNumericAnswer.class).findById(id).get();
-        });
+        NumericAnswer answer = (NumericAnswer) TransactionWrapper.withTxn(handle ->
+                handle.attach(AnswerDao.class).findAnswerByGuid(guid).get());
 
         assertNotNull(answer);
         assertEquals(guid, answer.getAnswerGuid());
@@ -1473,10 +1449,8 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
                 .and().extract().path("answers[0].answerGuid");
 
         assertEquals(guid, nextGuid);
-        NumericAnswer answer = TransactionWrapper.withTxn(handle -> {
-            long id = answerDao.getAnswerIdByGuids(handle, instanceGuid, guid);
-            return handle.attach(JdbiNumericAnswer.class).findById(id).get();
-        });
+        NumericAnswer answer = (NumericAnswer) TransactionWrapper.withTxn(handle ->
+                handle.attach(AnswerDao.class).findAnswerByGuid(guid).get());
 
         assertNotNull(answer);
         assertEquals(75L, answer.getValue());
@@ -1497,10 +1471,8 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
                 .and().extract().path("answers[0].answerGuid");
 
         answerGuidsToDelete.get(QuestionType.NUMERIC).add(guid);
-        NumericAnswer answer = TransactionWrapper.withTxn(handle -> {
-            long id = answerDao.getAnswerIdByGuids(handle, instanceGuid, guid);
-            return handle.attach(JdbiNumericAnswer.class).findById(id).get();
-        });
+        NumericAnswer answer = (NumericAnswer) TransactionWrapper.withTxn(handle ->
+                handle.attach(AnswerDao.class).findAnswerByGuid(guid).get());
 
         assertNotNull(answer);
         assertEquals(guid, answer.getAnswerGuid());

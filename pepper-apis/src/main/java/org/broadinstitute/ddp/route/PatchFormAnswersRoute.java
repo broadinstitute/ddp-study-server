@@ -18,22 +18,25 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
+
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
-import org.broadinstitute.ddp.content.I18nContentRenderer;
-import org.broadinstitute.ddp.db.AnswerDao;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiCompositeQuestion;
-import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
 import org.broadinstitute.ddp.db.dao.JdbiNumericQuestion;
 import org.broadinstitute.ddp.db.dao.JdbiQuestion;
 import org.broadinstitute.ddp.db.dao.QuestionDao;
+import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
+import org.broadinstitute.ddp.db.dto.AnswerDto;
 import org.broadinstitute.ddp.db.dto.CompositeQuestionDto;
+import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.db.dto.NumericQuestionDto;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.exception.DDPException;
@@ -44,7 +47,6 @@ import org.broadinstitute.ddp.json.AnswerResponse;
 import org.broadinstitute.ddp.json.AnswerSubmission;
 import org.broadinstitute.ddp.json.PatchAnswerPayload;
 import org.broadinstitute.ddp.json.PatchAnswerResponse;
-import org.broadinstitute.ddp.json.errors.AnswerExistsError;
 import org.broadinstitute.ddp.json.errors.AnswerValidationError;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.activity.instance.answer.AgreementAnswer;
@@ -68,6 +70,7 @@ import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.activity.types.NumericType;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
+import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.security.DDPAuth;
 import org.broadinstitute.ddp.service.ActivityValidationService;
@@ -79,9 +82,12 @@ import org.broadinstitute.ddp.util.JsonValidationError;
 import org.broadinstitute.ddp.util.MiscUtil;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
+
 import org.jdbi.v3.core.Handle;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import spark.Request;
 import spark.Response;
 import spark.Route;
@@ -94,20 +100,17 @@ public class PatchFormAnswersRoute implements Route {
     private GsonPojoValidator checker;
     private FormActivityService formService;
     private ActivityValidationService actValidationService;
-    private AnswerDao answerDao;
     private PexInterpreter interpreter;
 
     public PatchFormAnswersRoute(
             FormActivityService formService,
             ActivityValidationService actValidationService,
-            AnswerDao answerDao,
             PexInterpreter interpreter
     ) {
         this.gson = new Gson();
         this.checker = new GsonPojoValidator();
         this.formService = formService;
         this.actValidationService = actValidationService;
-        this.answerDao = answerDao;
         this.interpreter = interpreter;
     }
 
@@ -132,6 +135,9 @@ public class PatchFormAnswersRoute implements Route {
                 throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.INVALID_REQUEST, msg));
             }
 
+            User operatorUser = handle.attach(UserDao.class).findUserByGuid(operatorGuid)
+                    .orElseThrow(() -> new DDPException("Could not find operator with guid " + operatorGuid));
+
             PatchAnswerPayload payload = parseBodyPayload(request);
             if (payload == null) {
                 String msg = "Unable to process request body";
@@ -152,12 +158,12 @@ public class PatchFormAnswersRoute implements Route {
                 throw ResponseUtil.haltError(response, 422, new ApiError(ErrorCodes.ACTIVITY_INSTANCE_IS_READONLY, msg));
             }
 
-            JdbiQuestion jdbiQuestion = handle.attach(JdbiQuestion.class);
+            var jdbiQuestion = handle.attach(JdbiQuestion.class);
+            var answerDao = handle.attach(AnswerDao.class);
 
-            String isoLanguageCode = ddpAuth.getPreferredLanguage() != null
-                    ? ddpAuth.getPreferredLanguage() : I18nContentRenderer.DEFAULT_LANGUAGE_CODE;
-            JdbiLanguageCode jdbiLanguageCode = handle.attach(JdbiLanguageCode.class);
-            Long languageCodeId = jdbiLanguageCode.getLanguageCodeId(isoLanguageCode);
+            LanguageDto preferredUserLanguage = RouteUtil.getUserLanguage(request);
+            String isoLanguageCode = preferredUserLanguage.getIsoCode();
+            Long languageCodeId = preferredUserLanguage.getId();
 
             try {
                 Map<String, List<Rule>> failedRulesByQuestion = new HashMap<>();
@@ -199,39 +205,44 @@ public class PatchFormAnswersRoute implements Route {
                         }
                         failedRules.addAll(failures);
                     } else {
-                        // todo: proper usage of flag when requirements are better understood
-                        boolean forceAdd = false;
-
                         // Attempt to figure out the answer to update if one exists.
-                        if (answer.getAnswerGuid() == null && !forceAdd) {
-                            List<String> answerGuids =
-                                    answerDao.getAnswerGuidsForQuestion(handle, instanceGuid, questionStableId);
-                            if (answerGuids.size() > 1) {
-                                String msg = "Question is already answered. Provide the answer guid to update.";
-                                LOG.info(msg);
-                                throw ResponseUtil.haltError(response, 409, new AnswerExistsError(msg, questionStableId));
-                            } else if (answerGuids.size() == 1) {
-                                answer.setAnswerGuid(answerGuids.get(0));
-                            } else {
-                                // No answers exist. Fall through to create a new answer.
-                            }
-                        }
-
+                        Long answerId = null;
                         if (answer.getAnswerGuid() == null) {
-                            String guid = answerDao.createAnswer(handle, answer, operatorGuid, instanceGuid);
-                            answer.setAnswerGuid(guid);
-                            LOG.info("Created answer with guid {} for question stable id {}", guid, questionStableId);
+                            Set<Long> answerIds = answerDao.getAnswerSql()
+                                    .findAnswerIdsByInstanceGuidAndQuestionId(instanceGuid, questionDto.getId());
+                            if (answerIds.size() > 1) {
+                                String errMsg = String.format(
+                                        "Question %s is expected to have 1 answer but found %d answers instead",
+                                        questionStableId,
+                                        answerIds.size()
+                                );
+                                LOG.error(errMsg);
+                                throw ResponseUtil.haltError(response, 500, new ApiError(ErrorCodes.SERVER_ERROR, errMsg));
+                            } else if (answerIds.size() == 1) {
+                                answerId = answerIds.iterator().next();
+                            }
                         } else {
-                            Long answerId = answerDao.getAnswerIdByGuids(handle, instanceGuid, answer.getAnswerGuid());
-                            if (answerId == null) {
+                            AnswerDto answerDto = answerDao.getAnswerSql().findDtoByGuid(answer.getAnswerGuid()).orElse(null);
+                            if (answerDto == null || answerDto.getActivityInstanceId() != instanceDto.getId()) {
+                                // Halt if provided answer guid is not found or it doesn't belong to instance
                                 String msg = "Answer with guid " + answer.getAnswerGuid() + " is not found";
                                 throw ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.ANSWER_NOT_FOUND, msg));
+                            } else {
+                                answerId = answerDto.getId();
                             }
-                            answerDao.updateAnswerById(handle, instanceGuid, answerId, answer, operatorGuid);
-                            LOG.info("Updated answer with guid {} for question stable id {}",
-                                    answer.getAnswerGuid(), questionStableId);
                         }
-                        res.addAnswer(new AnswerResponse(questionStableId, answer.getAnswerGuid()));
+
+                        String answerGuid;
+                        if (answerId == null) {
+                            // Did not provide answer guid and no answer exist yet so create one
+                            answerGuid = answerDao.createAnswer(operatorUser.getId(), instanceDto.getId(), answer).getAnswerGuid();
+                            LOG.info("Created answer with guid {} for question stable id {}", answerGuid, questionStableId);
+                        } else {
+                            answerGuid = answerDao.updateAnswer(operatorUser.getId(), answerId, answer).getAnswerGuid();
+                            LOG.info("Updated answer with guid {} for question stable id {}", answerGuid, questionStableId);
+                        }
+
+                        res.addAnswer(new AnswerResponse(questionStableId, answerGuid));
                     }
                 }
                 if (!failedRulesByQuestion.isEmpty()) {

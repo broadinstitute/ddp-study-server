@@ -1,6 +1,6 @@
 package org.broadinstitute.ddp.util;
 
-import static org.broadinstitute.ddp.constants.RouteConstants.BEARER;
+import static org.broadinstitute.ddp.constants.RouteConstants.Header.BEARER;
 
 import java.util.Arrays;
 import java.util.List;
@@ -14,14 +14,19 @@ import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
+import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
+import org.broadinstitute.ddp.filter.StudyLanguageResolutionFilter;
 import org.broadinstitute.ddp.filter.TokenConverterFilter;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.security.DDPAuth;
+
 import org.jdbi.v3.core.Handle;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import spark.Request;
 import spark.Response;
 import spark.utils.SparkUtils;
@@ -44,6 +49,10 @@ public class RouteUtil {
             ddpAuth = new DDPAuth();
         }
         return ddpAuth;
+    }
+
+    public static LanguageDto getUserLanguage(Request req) {
+        return req.attribute(StudyLanguageResolutionFilter.USER_LANGUAGE);
     }
 
     public static String makeAuthBearerHeader(String headerValue) {

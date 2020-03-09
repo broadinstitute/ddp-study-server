@@ -5,11 +5,10 @@ import java.util.stream.Collectors;
 
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
-import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.db.FormInstanceDao;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
-import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
+import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.json.PutAnswersResponse;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.json.workflow.WorkflowResponse;
@@ -25,8 +24,10 @@ import org.broadinstitute.ddp.service.WorkflowService;
 import org.broadinstitute.ddp.util.FormActivityStatusUtil;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import spark.Request;
 import spark.Response;
 import spark.Route;
@@ -67,11 +68,9 @@ public class PutFormAnswersRoute implements Route {
                 handle -> {
                     RouteUtil.findAccessibleInstanceOrHalt(response, handle, userGuid, studyGuid, instanceGuid);
 
-                    String isoLangCode = ddpAuth.getPreferredLanguage();
-                    if (isoLangCode == null) {
-                        isoLangCode = I18nContentRenderer.DEFAULT_LANGUAGE_CODE;
-                    }
-                    long langCodeId = handle.attach(JdbiLanguageCode.class).getLanguageCodeId(isoLangCode);
+                    LanguageDto preferredUserLanguage = RouteUtil.getUserLanguage(request);
+                    String isoLangCode = preferredUserLanguage.getIsoCode();
+                    long langCodeId = preferredUserLanguage.getId();
 
                     FormInstance form = formInstanceDao.getBaseFormByGuid(handle, instanceGuid, isoLangCode);
                     if (form == null) {
@@ -113,7 +112,7 @@ public class PutFormAnswersRoute implements Route {
 
                     WorkflowState fromState = new ActivityState(form.getActivityId());
                     WorkflowResponse workflowResp = workflowService
-                            .suggestNextState(handle, userGuid, studyGuid, fromState)
+                            .suggestNextState(handle, operatorGuid, userGuid, studyGuid, fromState)
                             .map(nextState -> {
                                 LOG.info("Suggesting user {} to next state {}", userGuid, nextState);
                                 return workflowService.buildStateResponse(handle, userGuid, nextState);

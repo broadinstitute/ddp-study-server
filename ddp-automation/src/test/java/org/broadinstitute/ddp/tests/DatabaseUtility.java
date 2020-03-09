@@ -5,7 +5,7 @@ import java.util.List;
 import com.auth0.jwt.JWT;
 import org.broadinstitute.ddp.constants.Auth0Constants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.db.dao.JdbiAnswer;
+import org.broadinstitute.ddp.db.dao.AnswerSql;
 import org.broadinstitute.ddp.db.dao.JdbiMailingList;
 import org.broadinstitute.ddp.db.dao.JdbiMailingList.MailingListEntryDto;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
@@ -105,8 +105,8 @@ public class DatabaseUtility {
     public static List<Long> getAnswerIds() {
         List<Long> ids = TransactionWrapper.withTxn(handle -> {
             logger.info("Using user id: {}", getUserId());
-            JdbiAnswer answerDao = handle.attach(JdbiAnswer.class);
-            return answerDao.getAnswerIds(getUserId());
+            AnswerSql answerSql = handle.attach(AnswerSql.class);
+            return List.copyOf(answerSql.findAllAnswerIdsByOperatorUserId(getUserId()));
         });
         logger.info("Answer IDs:");
         listResultSet(ids);

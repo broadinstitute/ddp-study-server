@@ -6,7 +6,6 @@ import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.nullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.fail;
@@ -25,13 +24,12 @@ import io.restassured.http.ContentType;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.API;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
-import org.broadinstitute.ddp.db.AnswerDao;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
+import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiExpression;
-import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
 import org.broadinstitute.ddp.db.dao.JdbiRevision;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.JdbiWorkflowTransition;
@@ -75,7 +73,6 @@ import org.junit.Test;
 public class PutFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
 
     private static ActivityVersionDto activityVersionDto;
-    private static AnswerDao answerDao;
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static Auth0Util.TestingUser user;
     private static FormActivityDef form;
@@ -93,7 +90,6 @@ public class PutFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
 
     @BeforeClass
     public static void setup() {
-        answerDao = AnswerDao.fromSqlConfig(RouteTestUtil.getSqlConfig());
         TransactionWrapper.useTxn(handle -> {
             testData = TestDataSetupUtil.generateBasicUserTestData(handle);
             user = testData.getTestingUser();
@@ -348,10 +344,11 @@ public class PutFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
             instanceDtoRef.set(insertNewInstanceAndDeferCleanup(handle, form.getActivityId()));
             String stableId = ((QuestionBlockDef) form.getSections().get(0).getBlocks().get(0)).getQuestion().getStableId();
             // answer should violate LengthRuleDef rule with min length of 2
-            TextAnswer ans = new TextAnswer(null, stableId, null, "x");
-            String guid = answerDao.createAnswer(handle, ans, user.getUserGuid(), instanceDtoRef.get().getGuid());
-            assertNotNull(guid);
+            Answer ans = handle.attach(AnswerDao.class)
+                    .createAnswer(user.getUserId(), instanceDtoRef.get().getId(),
+                            new TextAnswer(null, stableId, null, "x"));
             assertNotNull(ans.getAnswerId());
+            assertNotNull(ans.getAnswerGuid());
             return ans.getAnswerId();
         });
 
@@ -361,9 +358,7 @@ public class PutFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
                 .statusCode(422).contentType(ContentType.JSON)
                 .body("code", equalTo(ErrorCodes.QUESTION_REQUIREMENTS_NOT_MET));
 
-        TransactionWrapper.useTxn(handle -> {
-            answerDao.deleteAnswerByIdAndType(handle, ansId, QuestionType.TEXT);
-        });
+        TransactionWrapper.useTxn(handle -> handle.attach(AnswerDao.class).deleteAnswer(ansId));
     }
 
     @Test
@@ -384,10 +379,10 @@ public class PutFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
 
         long ansId = TransactionWrapper.withTxn(handle -> {
             String stableId = ((QuestionBlockDef) conditionalBlock.getNested().get(0)).getQuestion().getStableId();
-            BoolAnswer ans = new BoolAnswer(null, stableId, null, true);
-            String guid = answerDao.createAnswer(handle, ans, user.getUserGuid(), instanceDto.getGuid());
-            assertNotNull(guid);
+            Answer ans = handle.attach(AnswerDao.class)
+                    .createAnswer(user.getUserId(), instanceDto.getId(), new BoolAnswer(null, stableId, null, true));
             assertNotNull(ans.getAnswerId());
+            assertNotNull(ans.getAnswerGuid());
             return ans.getAnswerId();
         });
 
@@ -399,11 +394,7 @@ public class PutFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
         TransactionWrapper.useTxn(handle -> {
             long exprId = conditionalBlock.getNested().get(0).getShownExprId();
             assertEquals(1, handle.attach(JdbiExpression.class).updateById(exprId, "false"));
-            answerDao.deleteAnswerByIdAndType(handle, ansId, QuestionType.BOOLEAN);
-
-            List<Answer> allCurAnswers = answerDao.getAnswersForQuestion(handle, instanceDto.getGuid(),
-                    ((QuestionBlockDef) conditionalBlock.getNested().get(0)).getQuestion().getStableId(),
-                    handle.attach(JdbiLanguageCode.class).getLanguageCodeId("en"));
+            handle.attach(AnswerDao.class).deleteAnswer(ansId);
         });
     }
 
@@ -460,7 +451,7 @@ public class PutFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
     }
 
     @Test
-    public void testWorkflowResponse_activityStateSuggestion_providesActivityCode() {
+    public void testWorkflowResponse_activityStateSuggestion_providesActivityCodeAndInstanceGuid() {
         FormActivityDef expectedActivity = TransactionWrapper.withTxn(handle -> {
             FormActivityDef another = insertNewActivity(handle);
             ActivityState currentState = new ActivityState(form.getActivityId());
@@ -481,7 +472,7 @@ public class PutFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
                 .body("workflow", is(notNullValue()))
                 .body("workflow.next", equalTo(StateType.ACTIVITY.name()))
                 .body("workflow.activityCode", equalTo(expectedActivityCode))
-                .body("workflow.instanceGuid", is(nullValue()));
+                .body("workflow.instanceGuid", is(notNullValue()));
     }
 
     @Test
@@ -533,10 +524,9 @@ public class PutFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
 
             }).collect(toList());
             parentCompAnswer.addRowOfChildAnswers(childAnswers);
-            String guid = answerDao.createAnswer(handle, parentCompAnswer, user.getUserGuid(), newInstanceDto.getGuid());
+            long id = handle.attach(AnswerDao.class).createAnswer(user.getUserId(), newInstanceDto.getId(), parentCompAnswer).getAnswerId();
 
-            testCleanupTasks.add((cleanupHandle) -> answerDao.deleteAnswerByIdAndType(cleanupHandle, parentCompAnswer.getAnswerId(),
-                    QuestionType.COMPOSITE));
+            testCleanupTasks.add(cleanupHandle -> cleanupHandle.attach(AnswerDao.class).deleteAnswer(id));
             return newInstanceDto;
         });
 
@@ -569,10 +559,9 @@ public class PutFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
 
             }).collect(toList());
             parentCompAnswer.addRowOfChildAnswers(childAnswers);
-            String guid = answerDao.createAnswer(handle, parentCompAnswer, user.getUserGuid(), newInstanceDto.getGuid());
+            long id = handle.attach(AnswerDao.class).createAnswer(user.getUserId(), newInstanceDto.getId(), parentCompAnswer).getAnswerId();
 
-            testCleanupTasks.add((cleanupHandle) -> answerDao.deleteAnswerByIdAndType(cleanupHandle, parentCompAnswer.getAnswerId(),
-                    QuestionType.COMPOSITE));
+            testCleanupTasks.add(cleanupHandle -> cleanupHandle.attach(AnswerDao.class).deleteAnswer(id));
             return newInstanceDto;
         });
 
@@ -602,9 +591,8 @@ public class PutFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
             QuestionDef firstQuestionDef = questionDef.getChildren().get(0);
             TextAnswer firstAnswer = new TextAnswer(null, firstQuestionDef.getStableId(), null, "Hello");
             parentCompAnswer.addRowOfChildAnswers(firstAnswer);
-            String guid = answerDao.createAnswer(handle, parentCompAnswer, user.getUserGuid(), newInstanceDto.getGuid());
-            testCleanupTasks.add((cleanupHandle) -> answerDao.deleteAnswerByIdAndType(cleanupHandle, parentCompAnswer.getAnswerId(),
-                    QuestionType.COMPOSITE));
+            long id = handle.attach(AnswerDao.class).createAnswer(user.getUserId(), newInstanceDto.getId(), parentCompAnswer).getAnswerId();
+            testCleanupTasks.add(cleanupHandle -> cleanupHandle.attach(AnswerDao.class).deleteAnswer(id));
             return newInstanceDto;
         });
 

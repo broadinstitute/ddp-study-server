@@ -11,10 +11,10 @@ import java.util.List;
 import java.util.Set;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
-import org.broadinstitute.ddp.db.AnswerDao;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
+import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.EventActionDao;
 import org.broadinstitute.ddp.db.dao.EventTriggerDao;
 import org.broadinstitute.ddp.db.dao.InvitationDao;
@@ -84,7 +84,7 @@ public class CreateInvitationEventActionTest extends TxnAwareBaseTest {
             ActivityInstanceDto instance = handle.attach(ActivityInstanceDao.class)
                     .insertInstance(activity.getActivityId(), testData.getUserGuid());
             var ans = new TextAnswer(null, CONTACT_EMAIL_SID, null, "not-email");
-            AnswerDao.fromSqlConfig(sqlConfig).createAnswer(handle, ans, testData.getUserGuid(), instance.getGuid());
+            handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), instance.getId(), ans);
 
             var signal = new EventSignal(testData.getUserId(), testData.getUserId(), testData.getUserGuid(),
                     testData.getStudyId(), EventTriggerType.REACHED_AOM_PREP);
@@ -101,16 +101,16 @@ public class CreateInvitationEventActionTest extends TxnAwareBaseTest {
             var invitationDao = handle.attach(InvitationDao.class);
             assertTrue(invitationDao.findInvitations(testData.getStudyId(), testData.getUserId()).isEmpty());
 
-            AnswerDao answerDao = AnswerDao.fromSqlConfig(sqlConfig);
+            AnswerDao answerDao = handle.attach(AnswerDao.class);
             ActivityInstanceDao instanceDao = handle.attach(ActivityInstanceDao.class);
 
             FormActivityDef activity = newContactEmailActivity(handle);
             var instance1 = instanceDao.insertInstance(activity.getActivityId(), testData.getUserGuid());
             var ans1 = new TextAnswer(null, CONTACT_EMAIL_SID, null, "not-email");
-            answerDao.createAnswer(handle, ans1, testData.getUserGuid(), instance1.getGuid());
+            answerDao.createAnswer(testData.getUserId(), instance1.getId(), ans1);
             var instance2 = instanceDao.insertInstance(activity.getActivityId(), testData.getUserGuid());
             var ans2 = new TextAnswer(null, CONTACT_EMAIL_SID, null, "test-invitations@datadonationplatform.org");
-            answerDao.createAnswer(handle, ans2, testData.getUserGuid(), instance2.getGuid());
+            answerDao.createAnswer(testData.getUserId(), instance2.getId(), ans2);
 
             var signal = new EventSignal(testData.getUserId(), testData.getUserId(), testData.getUserGuid(),
                     testData.getStudyId(), EventTriggerType.REACHED_AOM_PREP);
@@ -131,16 +131,16 @@ public class CreateInvitationEventActionTest extends TxnAwareBaseTest {
             var invitationDao = handle.attach(InvitationDao.class);
             assertTrue(invitationDao.findInvitations(testData.getStudyId(), testData.getUserId()).isEmpty());
 
-            AnswerDao answerDao = AnswerDao.fromSqlConfig(sqlConfig);
+            AnswerDao answerDao = handle.attach(AnswerDao.class);
             ActivityInstanceDao instanceDao = handle.attach(ActivityInstanceDao.class);
 
             FormActivityDef activity = newContactEmailActivity(handle);
             var instance1 = instanceDao.insertInstance(activity.getActivityId(), testData.getUserGuid());
             var ans1 = new TextAnswer(null, CONTACT_EMAIL_SID, null, "test-invitations@datadonationplatform.org");
-            answerDao.createAnswer(handle, ans1, testData.getUserGuid(), instance1.getGuid());
+            answerDao.createAnswer(testData.getUserId(), instance1.getId(), ans1);
             var instance2 = instanceDao.insertInstance(activity.getActivityId(), testData.getUserGuid());
             var ans2 = new TextAnswer(null, CONTACT_EMAIL_SID, null, "not-email");
-            answerDao.createAnswer(handle, ans2, testData.getUserGuid(), instance2.getGuid());
+            answerDao.createAnswer(testData.getUserId(), instance2.getId(), ans2);
 
             var signal = new ActivityInstanceStatusChangeSignal(testData.getUserId(), testData.getUserId(), testData.getUserGuid(),
                     instance1.getId(), instance1.getActivityId(), testData.getStudyId(), InstanceStatusType.COMPLETE);
@@ -162,13 +162,10 @@ public class CreateInvitationEventActionTest extends TxnAwareBaseTest {
                     InvitationType.AGE_UP, testData.getStudyId(), testData.getUserId(), "t1@datadonationplatform.org")
                     .getInvitationGuid();
 
-            AnswerDao answerDao = AnswerDao.fromSqlConfig(sqlConfig);
-            ActivityInstanceDao instanceDao = handle.attach(ActivityInstanceDao.class);
-
             FormActivityDef activity = newContactEmailActivity(handle);
-            var instance1 = instanceDao.insertInstance(activity.getActivityId(), testData.getUserGuid());
+            var instance1 = handle.attach(ActivityInstanceDao.class).insertInstance(activity.getActivityId(), testData.getUserGuid());
             var ans1 = new TextAnswer(null, CONTACT_EMAIL_SID, null, "test-invitations@datadonationplatform.org");
-            answerDao.createAnswer(handle, ans1, testData.getUserGuid(), instance1.getGuid());
+            handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), instance1.getId(), ans1);
 
             var signal = new EventSignal(testData.getUserId(), testData.getUserId(), testData.getUserGuid(),
                     testData.getStudyId(), EventTriggerType.REACHED_AOM_PREP);
@@ -185,13 +182,10 @@ public class CreateInvitationEventActionTest extends TxnAwareBaseTest {
     @Test
     public void test_triggersDownstreamEvents() {
         TransactionWrapper.useTxn(handle -> {
-            AnswerDao answerDao = AnswerDao.fromSqlConfig(sqlConfig);
-            ActivityInstanceDao instanceDao = handle.attach(ActivityInstanceDao.class);
-
             FormActivityDef activity = newContactEmailActivity(handle);
-            var instance1 = instanceDao.insertInstance(activity.getActivityId(), testData.getUserGuid());
+            var instance1 = handle.attach(ActivityInstanceDao.class).insertInstance(activity.getActivityId(), testData.getUserGuid());
             var ans1 = new TextAnswer(null, CONTACT_EMAIL_SID, null, "test-invitations@datadonationplatform.org");
-            answerDao.createAnswer(handle, ans1, testData.getUserGuid(), instance1.getGuid());
+            handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), instance1.getId(), ans1);
 
             // setup downstream event
             long triggerId = handle.attach(EventTriggerDao.class).insertStaticTrigger(EventTriggerType.INVITATION_CREATED);

@@ -6,14 +6,14 @@
 
     <!-- This file is used for testing in LiquibaseUtilTest. -->
 
-    <changeSet author="yufeng" id="add-table-successful">
-        <createTable tableName="test_table">
+    <changeSet author="yufeng" id="liquibase-add-table">
+        <createTable tableName="liquibase_test_table">
             <column name="name" type="varchar(50)"/>
         </createTable>
     </changeSet>
 
-    <changeSet author="yufeng" id="insert-data-successful">
-        <insert tableName="test_table">
+    <changeSet author="yufeng" id="liquibase-success-insert">
+        <insert tableName="liquibase_test_table">
             <column name="name">liquibase</column>
         </insert>
     </changeSet>

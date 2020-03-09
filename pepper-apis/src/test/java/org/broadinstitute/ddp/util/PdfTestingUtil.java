@@ -33,20 +33,16 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.apache.commons.io.IOUtils;
 import org.broadinstitute.ddp.constants.ConfigFile;
-import org.broadinstitute.ddp.db.AnswerDao;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
-import org.broadinstitute.ddp.db.dao.JdbiAnswer;
-import org.broadinstitute.ddp.db.dao.JdbiBooleanAnswer;
-import org.broadinstitute.ddp.db.dao.JdbiDateAnswer;
+import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.JdbiEventConfiguration;
 import org.broadinstitute.ddp.db.dao.JdbiMailAddress;
 import org.broadinstitute.ddp.db.dao.JdbiMedicalProvider;
 import org.broadinstitute.ddp.db.dao.JdbiProfile;
 import org.broadinstitute.ddp.db.dao.JdbiRevision;
 import org.broadinstitute.ddp.db.dao.JdbiStudyPdfMapping;
-import org.broadinstitute.ddp.db.dao.JdbiTextAnswer;
 import org.broadinstitute.ddp.db.dao.JdbiUserNotificationPdf;
 import org.broadinstitute.ddp.db.dao.PdfDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
@@ -67,7 +63,8 @@ import org.broadinstitute.ddp.model.activity.definition.validation.DateFieldRequ
 import org.broadinstitute.ddp.model.activity.definition.validation.LengthRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.RequiredRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.RuleDef;
-import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
+import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
@@ -96,8 +93,6 @@ import org.broadinstitute.ddp.model.pdf.PdfVersion;
 import org.broadinstitute.ddp.model.pdf.PhysicianInstitutionTemplate;
 import org.broadinstitute.ddp.model.pdf.ProfileSubstitution;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
-import org.broadinstitute.ddp.route.RouteTestUtil;
-import org.broadinstitute.ddp.script.InsertInstitutionAndMedicalProviderSampleDataScript;
 import org.broadinstitute.ddp.service.PdfGenerationService;
 import org.jdbi.v3.core.Handle;
 
@@ -114,16 +109,16 @@ public final class PdfTestingUtil {
     public static final String MAILING_ADDRESS_PHONE_FIELD_VALUE = "phone";
     public static final String MAILING_ADDRESS_ZIP_FIELD_VALUE = "zip";
     public static final String MAILING_ADDRESS_COUNTRY_FIELD_VALUE = "country";
-    public static final String MAILING_ADDRESS_FILE_PATH = "src/main/resources/ReleaseForm_firstPage.pdf";
+    public static final String MAILING_ADDRESS_FILE_PATH = "src/test/resources/ReleaseForm_firstPage.pdf";
     public static final String TEXT_ANSWER = "blue";
     public static final DateValue TESTING_DATE = new DateValue(2018, 10, 3);
     public static final String ANOTHER_DATE = "anotherDate";
+    public static final DateValue TEST_DATE_VALUE = new DateValue(1978, 5, 16);
     // Dummy placeholders for physician/institution fields (aka field labels embedded in the actual pdf)
     protected static final String NAME_FIELD_NAME = "dummyName";
     protected static final String INSTITUTION_FIELD_NAME = "dummyInstitutionName";
     protected static final String CITY_FIELD_NAME = "dummyCity";
     protected static final String STATE_FIELD_NAME = "dummyState";
-    public static final DateValue TEST_DATE_VALUE = new DateValue(1978, 5, 16);
     protected static final String CHECKBOX1 = "checkbox1";
     protected static final String CHECKBOX2 = "checkbox2";
     protected static final String CHECKBOX3 = "checkbox3";
@@ -133,9 +128,6 @@ public final class PdfTestingUtil {
     private static final Config sqlConfig = ConfigFactory.parseResources(ConfigFile.SQL_CONF);
     // mapping between institution type and key/value pdfField/value
     private static final String tempDir = System.getProperty("java.io.tmpdir");
-
-    private PdfTestingUtil() {
-    }
 
     /**
      * Helper to print the field names within a pdf file to stdout.
@@ -185,9 +177,9 @@ public final class PdfTestingUtil {
 
             ActivityInstanceDto instanceDto = handle.attach(ActivityInstanceDao.class)
                     .insertInstance(activity.getActivityId(), userGuid);
-            Answer answer = new TextAnswer(null, questionSid, null, answerText);
-            AnswerDao.fromSqlConfig(RouteTestUtil.getSqlConfig())
-                    .createAnswer(handle, answer, userGuid, instanceDto.getGuid());
+
+            handle.attach(AnswerDao.class).createAnswer(userId, instanceDto.getId(),
+                    new TextAnswer(null, questionSid, null, answerText));
 
             PdfConfigInfo info = new PdfConfigInfo(studyId, configurationName, pdfFilename, UUID.randomUUID().toString());
             PdfVersion version = new PdfVersion("v1", activityVersion.getRevId());
@@ -334,14 +326,10 @@ public final class PdfTestingUtil {
                 pdfInfo.getMedicalProviderRowsToDelete().add(generatedGuid);
 
                 // put the vars we're using into the map to assert against them during subclass tests
-                String institutionName = InsertInstitutionAndMedicalProviderSampleDataScript.TestMedicalProviderData
-                        .INSTITUTION_NAME + nameIndex;
+                String institutionName = TestMedicalProviderData.INSTITUTION_NAME + nameIndex;
                 String physicianName = NON_ASCII_NAME + nameIndex;
-                String city = InsertInstitutionAndMedicalProviderSampleDataScript.TestMedicalProviderData.INSTITUTION_CITY
-                        + nameIndex;
-                String state = InsertInstitutionAndMedicalProviderSampleDataScript.TestMedicalProviderData.INSTITUTION_STATE
-                        + nameIndex;
-
+                String city = TestMedicalProviderData.INSTITUTION_CITY + nameIndex;
+                String state = TestMedicalProviderData.INSTITUTION_STATE + nameIndex;
 
                 Map<String, String> expectedPdfSubstitutions = new HashMap<>();
 
@@ -376,11 +364,10 @@ public final class PdfTestingUtil {
             //adding extra physician row to make sure can reuse single input stream to render the templates for multiple dtos
             fieldPostFix = "_1";
             Map<String, String> physicianValues = pdfInfo.getExpectedValuesByInstitutionType().get(InstitutionType.PHYSICIAN);
-            String institutionName = InsertInstitutionAndMedicalProviderSampleDataScript.TestMedicalProviderData
-                    .INSTITUTION_NAME;
+            String institutionName = TestMedicalProviderData.INSTITUTION_NAME;
             String physicianName = "Doctor Nick";
-            String city = InsertInstitutionAndMedicalProviderSampleDataScript.TestMedicalProviderData.INSTITUTION_CITY;
-            String state = InsertInstitutionAndMedicalProviderSampleDataScript.TestMedicalProviderData.INSTITUTION_STATE;
+            String city = TestMedicalProviderData.INSTITUTION_CITY;
+            String state = TestMedicalProviderData.INSTITUTION_STATE;
             physicianValues.put(NAME_FIELD_NAME + fieldPostFix, physicianName);
             physicianValues.put(INSTITUTION_FIELD_NAME + fieldPostFix, institutionName);
             physicianValues.put(CITY_FIELD_NAME + fieldPostFix, city);
@@ -604,19 +591,15 @@ public final class PdfTestingUtil {
         int dateQuestionCounter = -1;
 
         List<PdfSubstitution> newSubstitutions = new ArrayList<>();
-        JdbiAnswer jdbiAnswer = handle.attach(JdbiAnswer.class);
-        JdbiBooleanAnswer jdbiBooleanAnswer = handle.attach(JdbiBooleanAnswer.class);
-        JdbiTextAnswer jdbiTextAnswer = handle.attach(JdbiTextAnswer.class);
-        JdbiDateAnswer jdbDateAnswer = handle.attach(JdbiDateAnswer.class);
+        var answerDao = handle.attach(AnswerDao.class);
         for (QuestionDef question : questions) {
             counter++;
-            long answerId = jdbiAnswer.insertBaseAnswer(question.getQuestionId(), pdfInfo.getData().getUserGuid(),
-                    pdfInfo.getTestActivityInstanceId());
             pdfInfo.getExpectedCustomValues().put(fieldNames.get(counter), expectedValues.get(counter));
             switch (question.getQuestionType()) {
                 case BOOLEAN:
                     booleanQuestionCounter++;
-                    jdbiBooleanAnswer.insert(answerId, booleanAnswerValues.get(booleanQuestionCounter));
+                    answerDao.createAnswer(pdfInfo.getData().getUserId(), pdfInfo.getTestActivityInstanceId(),
+                            new BoolAnswer(null, question.getStableId(), null, booleanAnswerValues.get(booleanQuestionCounter)));
                     newSubstitutions.add(new BooleanAnswerSubstitution(
                             fieldNames.get(counter),
                             pdfInfo.getTestActivityId(),
@@ -625,13 +608,15 @@ public final class PdfTestingUtil {
                     break;
                 case TEXT:
                     textQuestionCounter++;
-                    jdbiTextAnswer.insert(answerId, textAnswerValues.get(textQuestionCounter));
+                    answerDao.createAnswer(pdfInfo.getData().getUserId(), pdfInfo.getTestActivityInstanceId(),
+                            new TextAnswer(null, question.getStableId(), null, textAnswerValues.get(textQuestionCounter)));
                     newSubstitutions.add(new AnswerSubstitution(fieldNames.get(counter),
                             pdfInfo.getTestActivityId(), question.getQuestionType(), question.getStableId()));
                     break;
                 case DATE:
                     dateQuestionCounter++;
-                    jdbDateAnswer.insertAnswer(answerId, dateAnswerValues.get(dateQuestionCounter));
+                    answerDao.createAnswer(pdfInfo.getData().getUserId(), pdfInfo.getTestActivityInstanceId(),
+                            new DateAnswer(null, question.getStableId(), null, dateAnswerValues.get(dateQuestionCounter)));
                     newSubstitutions.add(new AnswerSubstitution(fieldNames.get(counter),
                             pdfInfo.getTestActivityId(), question.getQuestionType(), question.getStableId()));
                     break;
@@ -679,6 +664,18 @@ public final class PdfTestingUtil {
 
             handle.attach(PdfDao.class).deleteAllConfigVersions(pdfInfo.getConfigurationId());
         });
+    }
+
+    private PdfTestingUtil() {
+    }
+
+    public static final class TestMedicalProviderData {
+        public static final String GUID = "BBAB095933";
+        public static final InstitutionType INSTITUTION_TYPE = InstitutionType.INSTITUTION;
+        public static final String INSTITUTION_NAME = "Princeton-Plainsboro Teaching Hospital";
+        public static final String PHYSICIAN_NAME = "House MD";
+        public static final String INSTITUTION_CITY = "West Windsor Township";
+        public static final String INSTITUTION_STATE = "New Jersey";
     }
 
     public static class PdfDbInfo {

@@ -39,10 +39,9 @@ import org.broadinstitute.ddp.content.ContentStyle;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
+import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
-import org.broadinstitute.ddp.db.dao.JdbiAnswer;
 import org.broadinstitute.ddp.db.dao.JdbiQuestion;
-import org.broadinstitute.ddp.db.dao.JdbiTextAnswer;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
@@ -67,6 +66,7 @@ import org.broadinstitute.ddp.model.activity.definition.validation.DateRangeRule
 import org.broadinstitute.ddp.model.activity.definition.validation.LengthRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.RequiredRuleDef;
 import org.broadinstitute.ddp.model.activity.instance.ActivityInstance;
+import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
@@ -214,8 +214,8 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
         activityId = activity.getActivityId();
         instanceDto = handle.attach(ActivityInstanceDao.class).insertInstance(activity.getActivityId(), userGuid);
 
-        long answerId = handle.attach(JdbiAnswer.class).insertBaseAnswer(txt1.getQuestionId(), userGuid, instanceDto.getId());
-        handle.attach(JdbiTextAnswer.class).insert(answerId, "valid answer");
+        handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), instanceDto.getId(),
+                new TextAnswer(null, txt1.getStableId(), null, "valid answer"));
         answeredQuestionDto = handle.attach(JdbiQuestion.class).getQuestionDtoById(txt1.getQuestionId()).get();
     }
 
@@ -230,8 +230,7 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
     @AfterClass
     public static void cleanup() {
         TransactionWrapper.useTxn(handle -> {
-            handle.attach(JdbiAnswer.class).deleteAllAnswersForQuestion(instanceDto, answeredQuestionDto);
-            handle.attach(ActivityInstanceDao.class).deleteByInstanceGuid(instanceDto.getGuid());
+            handle.attach(ActivityInstanceDao.class).deleteAllByIds(Set.of(instanceDto.getId()));
         });
     }
 

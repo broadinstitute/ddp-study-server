@@ -35,11 +35,11 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.constants.ConfigFile;
-import org.broadinstitute.ddp.db.AnswerDao;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceStatusDao;
+import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
@@ -68,8 +68,6 @@ public class DataLoaderMain {
     private static final String DEFAULT_MIGRATION_REPORT_PATH = "/tmp/migration_reports";
     private static final String DATSTAT_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss'Z'";
     private static final String USAGE = "DataLoaderMain [-h, --help] [OPTIONS]";
-    private static Config sqlConfig = ConfigFactory.parseResources(ConfigFile.SQL_CONF);
-    private static AnswerDao answerDao = AnswerDao.fromSqlConfig(sqlConfig);
     private static List<String> altPidUserList;
     private Gson gson = new GsonBuilder().setPrettyPrinting().create();
     private List<AngioMigrationRun> migrationRunReport;
@@ -355,6 +353,8 @@ public class DataLoaderMain {
                             hasFollowup = true;
                         }
                     }
+
+                    var answerDao = handle.attach(AnswerDao.class);
 
                     if (hasAboutYou) {
                         String aboutYouInstanceGuid = dataLoader.createActivityInstance(participantData, userGuid, studyId,

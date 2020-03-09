@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp;
 
 import static com.google.common.net.HttpHeaders.X_FORWARDED_FOR;
+import static spark.Spark.after;
 import static spark.Spark.afterAfter;
 import static spark.Spark.awaitInitialization;
 import static spark.Spark.before;
@@ -13,8 +14,6 @@ import static spark.Spark.stop;
 import static spark.Spark.threadPool;
 
 import java.io.File;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -24,12 +23,12 @@ import java.util.Map;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.apache.http.entity.ContentType;
+import org.broadinstitute.ddp.client.DsmClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.API;
 import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.db.ActivityInstanceDao;
-import org.broadinstitute.ddp.db.AnswerDao;
 import org.broadinstitute.ddp.db.CancerStore;
 import org.broadinstitute.ddp.db.ConsentElectionDao;
 import org.broadinstitute.ddp.db.DBUtils;
@@ -46,6 +45,8 @@ import org.broadinstitute.ddp.filter.ExcludePathFilterWrapper;
 import org.broadinstitute.ddp.filter.HttpHeaderMDCFilter;
 import org.broadinstitute.ddp.filter.MDCAttributeRemovalFilter;
 import org.broadinstitute.ddp.filter.MDCLogBreadCrumbFilter;
+import org.broadinstitute.ddp.filter.StudyLanguageContentLanguageSettingFilter;
+import org.broadinstitute.ddp.filter.StudyLanguageResolutionFilter;
 import org.broadinstitute.ddp.filter.TokenConverterFilter;
 import org.broadinstitute.ddp.filter.UserAuthCheckFilter;
 import org.broadinstitute.ddp.json.errors.ApiError;
@@ -135,8 +136,6 @@ import org.broadinstitute.ddp.service.ActivityValidationService;
 import org.broadinstitute.ddp.service.AddressService;
 import org.broadinstitute.ddp.service.CancerService;
 import org.broadinstitute.ddp.service.ConsentService;
-import org.broadinstitute.ddp.service.DsmCancerListService;
-import org.broadinstitute.ddp.service.DsmParticipantStatusService;
 import org.broadinstitute.ddp.service.FireCloudExportService;
 import org.broadinstitute.ddp.service.FormActivityService;
 import org.broadinstitute.ddp.service.MedicalRecordService;
@@ -146,7 +145,6 @@ import org.broadinstitute.ddp.service.PdfService;
 import org.broadinstitute.ddp.service.WorkflowService;
 import org.broadinstitute.ddp.transformers.SimpleJsonTransformer;
 import org.broadinstitute.ddp.util.ConfigManager;
-import org.broadinstitute.ddp.util.DsmDrugLoader;
 import org.broadinstitute.ddp.util.LiquibaseUtil;
 import org.broadinstitute.ddp.util.LogbackConfigurationPrinter;
 import org.broadinstitute.ddp.util.RouteUtil;
@@ -258,7 +256,6 @@ public class DataDonationPlatform {
 
         UserDao userDao = UserDaoFactory.createFromSqlConfig(sqlConfig);
 
-        final AnswerDao answerDao = AnswerDao.fromSqlConfig(sqlConfig);
         SectionBlockDao sectionBlockDao = new SectionBlockDao(new I18nContentRenderer());
 
         FormInstanceDao formInstanceDao = FormInstanceDao.fromDaoAndConfig(sectionBlockDao, sqlConfig);
@@ -282,6 +279,14 @@ public class DataDonationPlatform {
                 MDC.put(MDC_STUDY, RouteUtil.parseStudyGuid(request.pathInfo()));
             }
         });
+
+        // These filters work in a tandem:
+        // - StudyLanguageResolutionFilter figures out and sets the user language in the attribute store
+        // - StudyLanguageContentLanguageSettingFilter sets the "Content-Language" header later on
+        before(API.BASE + "/user/*/studies/*", new StudyLanguageResolutionFilter());
+        after(API.BASE + "/user/*/studies/*", new StudyLanguageContentLanguageSettingFilter());
+        before(API.BASE + "/studies/*", new StudyLanguageResolutionFilter());
+        after(API.BASE + "/studies/*", new StudyLanguageContentLanguageSettingFilter());
 
         enableCORS("*", String.join(",", CORS_HTTP_METHODS), String.join(",", CORS_HTTP_HEADERS));
         setupCatchAllErrorHandling();
@@ -381,7 +386,7 @@ public class DataDonationPlatform {
         // User activity answers routes
         FormActivityService formService = new FormActivityService(interpreter);
         patch(API.USER_ACTIVITY_ANSWERS,
-                new PatchFormAnswersRoute(formService, activityValidationService, answerDao, interpreter),
+                new PatchFormAnswersRoute(formService, activityValidationService, interpreter),
                 responseSerializer);
         put(
                 API.USER_ACTIVITY_ANSWERS,
@@ -446,14 +451,7 @@ public class DataDonationPlatform {
         get(API.CANCER_SUGGESTION, new GetCancerSuggestionsRoute(CancerStore.getInstance()), responseSerializer);
 
         // Routes calling DSM
-        URL dsmBaseUrl = null;
-        try {
-            dsmBaseUrl = new URL(cfg.getString(ConfigFile.DSM_BASE_URL));
-        } catch (MalformedURLException e) {
-            throw new RuntimeException("Invalid DSM URL {}.  DSM-related routes will fail.", e);
-        }
-        DsmParticipantStatusService dsmParticipantStatusService = new DsmParticipantStatusService(dsmBaseUrl);
-        get(API.PARTICIPANT_STATUS, new GetDsmParticipantStatusRoute(dsmParticipantStatusService), responseSerializer);
+        get(API.PARTICIPANT_STATUS, new GetDsmParticipantStatusRoute(new DsmClient(cfg)), responseSerializer);
         get(API.STUDY_PASSWORD_REQUIREMENTS, new GetStudyPasswordRequirementsRoute(), responseSerializer);
 
         patch(
@@ -470,15 +468,29 @@ public class DataDonationPlatform {
         post(API.VERIFY_INVITATION, new VerifyInvitationRoute(), responseSerializer);
 
         Runnable runnable = () -> {
-            //load drug list
-            DsmDrugLoader drugLoader = new DsmDrugLoader();
-            drugLoader.fetchAndLoadDrugs(cfg.getString(ConfigFile.DSM_BASE_URL), cfg.getString(ConfigFile.DSM_JWT_SECRET));
+            var dsm = new DsmClient(cfg);
 
-            //load cancer list
-            DsmCancerListService service = new DsmCancerListService(cfg.getString(ConfigFile.DSM_BASE_URL));
-            List<String> cancerNames = service.fetchCancerList(cfg.getString(ConfigFile.DSM_JWT_SECRET));
-            CancerStore.getInstance().populate(cancerNames);
-            LOG.info("Loaded {} cancers into pepper.", cancerNames == null ? 0 : cancerNames.size());
+            // initialize drug list
+            var result = dsm.listDrugs();
+            if (result.getStatusCode() == 200) {
+                List<String> drugNames = result.getBody();
+                DrugStore.getInstance().populateDrugList(drugNames);
+                LOG.info("Loaded {} drugs into pepper", drugNames == null ? 0 : drugNames.size());
+            } else {
+                LOG.error("Could not initialize DSM drug list, got response status code {}",
+                        result.getStatusCode(), result.getThrown());
+            }
+
+            // initialize cancer list
+            result = dsm.listCancers();
+            if (result.getStatusCode() == 200) {
+                List<String> cancerNames = result.getBody();
+                CancerStore.getInstance().populate(cancerNames);
+                LOG.info("Loaded {} cancers into pepper", cancerNames == null ? 0 : cancerNames.size());
+            } else {
+                LOG.error("Could not initialize DSM cancer list, got response status code {}",
+                        result.getStatusCode(), result.getThrown());
+            }
         };
 
         boolean runScheduler = cfg.getBoolean(ConfigFile.RUN_SCHEDULER);

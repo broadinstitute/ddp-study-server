@@ -1,20 +1,19 @@
 package org.broadinstitute.ddp.db;
 
-import static org.broadinstitute.ddp.util.MySqlTestContainerUtil.MYSQL_VERSION;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import com.typesafe.config.Config;
 import org.broadinstitute.ddp.exception.DDPException;
+import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.ddp.util.LiquibaseUtil;
 import org.broadinstitute.ddp.util.MySqlTestContainerUtil;
 import org.junit.After;
@@ -26,16 +25,13 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.testcontainers.containers.MySQLContainer;
 
 public class TransactionWrapperTest {
 
-    private static final String TEST_QUERY = "select test_name from test";
-
     private static final Logger LOG = LoggerFactory.getLogger(TransactionWrapperTest.class);
-
-    // since we are just testing the transaction wrapper, we want a separate db, not the usual pepper db
-    private static MySQLContainer dbContainer = new MySQLContainer(MYSQL_VERSION);
+    private static final String CHANGESET_FILE = "src/test/resources/db-testscripts/txnwrappertest.xml";
+    private static final String TEST_QUERY = "select test_name from txnwrapper_test";
+    private static final String CHANGELOG_TABLE = "DATABASECHANGELOG";
 
     private static String testDbUrl;
 
@@ -44,30 +40,31 @@ public class TransactionWrapperTest {
 
     @BeforeClass
     public static void setUp() throws SQLException {
-        dbContainer.start();
-        try {
-            TimeUnit.MILLISECONDS.sleep(2000);
-        } catch (InterruptedException e) {
-            LOG.info("Wait interrupted", e);
-        }
-        testDbUrl = MySqlTestContainerUtil.getFullJdbcTestUrl(dbContainer);
-        LiquibaseUtil.runChangeLog(new com.mysql.cj.jdbc.Driver(), testDbUrl, "src/test/resources/db-testscripts/txnwrappertest.xml");
+        // We're using existing pepper db to test transactions. We can have better isolation by spinning up a new db,
+        // but it's a bit too costly in terms of test speed.
+        MySqlTestContainerUtil.initializeTestDbs();
+        Config cfg = ConfigManager.getInstance().getConfig();
+        testDbUrl = cfg.getString(TransactionWrapper.DB.APIS.getDbUrlConfigKey());
+        LiquibaseUtil.runChangeLog(new com.mysql.jdbc.Driver(), testDbUrl, CHANGESET_FILE);
         TransactionWrapper.reset();
     }
 
     @AfterClass
     public static void tearDown() {
-        dbContainer.stop();
-        try {
-            TimeUnit.MILLISECONDS.sleep(2000);
-        } catch (InterruptedException e) {
-            LOG.info("Wait interrupted", e);
-        }
+        // Since we're using the usual pepper db, let's clean up any mess we left.
+        TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, 1, testDbUrl));
+        TransactionWrapper.useTxn(handle -> {
+            handle.execute("drop table if exists txnwrapper_test");
+            handle.createUpdate("delete from <table> where ID = :id")
+                    .define("table", CHANGELOG_TABLE)
+                    .bind("id", "txnwrappertest")
+                    .execute();
+        });
     }
 
     @Before
     public void initPool() {
-        TransactionWrapper.init("UTC", new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, 1, testDbUrl));
+        TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, 1, testDbUrl));
     }
 
     @After
@@ -75,45 +72,33 @@ public class TransactionWrapperTest {
         TransactionWrapper.reset();
     }
 
-
-
     @Test
     public void testPoolExhaustionBehavior() {
         int maxPoolSize = 1;
         synchronized (TransactionWrapper.class) {
             TransactionWrapper.reset();
-            TransactionWrapper.init("UTC", new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS,
-                    maxPoolSize, testDbUrl));
+            TransactionWrapper.init(new TransactionWrapper.DbConfiguration(
+                    TransactionWrapper.DB.APIS, maxPoolSize, testDbUrl));
             final AtomicBoolean gotPoolExhaustedError = new AtomicBoolean(false);
 
-            TransactionWrapper.useTxn((handle) -> {
+            TransactionWrapper.useTxn(handle -> {
                 try {
-                    ResultSet rs = queryTestData(handle.getConnection());
-                    int numRows = 0;
-                    while (rs.next()) {
-                        numRows++;
-                    }
-                    assertEquals(1, numRows);
-                    try {
-                        TransactionWrapper.withTxn((handle2) -> {
-                            return null;
-                        });
-                    } catch (Exception e) {
-                        gotPoolExhaustedError.set(e.getCause().getMessage().toLowerCase().contains("pool"));
-                    }
-                } catch (SQLException e) {
-                    LOG.error("Trouble making first connection", e);
-                    fail("Trouble making first connection");
+                    assertEquals(1, handle.select(TEST_QUERY).mapTo(String.class).list().size());
+                } catch (Exception e) {
+                    LOG.error("Trouble using first connection", e);
+                    fail("Trouble using first connection");
+                }
+
+                try {
+                    TransactionWrapper.useTxn(handle2 -> fail("Got a second connection"));
+                } catch (Exception e) {
+                    gotPoolExhaustedError.set(e.getCause().getMessage().toLowerCase().contains("pool"));
                 }
             });
 
             assertTrue("Two connections were created, but the pool should have failed because the max size is "
                     + maxPoolSize, gotPoolExhaustedError.get());
         }
-    }
-
-    private ResultSet queryTestData(Connection conn) throws SQLException {
-        return conn.prepareStatement(TEST_QUERY).executeQuery();
     }
 
     @Test
@@ -140,7 +125,7 @@ public class TransactionWrapperTest {
 
     @Test
     public void testUseTransaction() {
-        TransactionWrapper.withTxn(handle -> {
+        TransactionWrapper.useTxn(handle -> {
             String name;
             try {
                 try (PreparedStatement stmt = handle.getConnection().prepareStatement(TEST_QUERY)) {
@@ -152,7 +137,6 @@ public class TransactionWrapperTest {
                 throw new RuntimeException("Error running " + TEST_QUERY, e);
             }
             assertEquals("testing", name);
-            return null;
         });
     }
 
@@ -189,7 +173,7 @@ public class TransactionWrapperTest {
     @Test
     public void testJdbi_withTxn_updatesSameTransaction() {
         TransactionWrapper.withTxn(handle -> {
-            int res = handle.execute("insert into test (test_name) values (?)", "jdbi");
+            int res = handle.execute("insert into txnwrapper_test (test_name) values (?)", "jdbi");
             assertEquals(1, res);
 
             List<String> names = handle.select(TEST_QUERY).mapTo(String.class).list();
@@ -198,7 +182,7 @@ public class TransactionWrapperTest {
             assertTrue(names.contains("testing"));
             assertTrue(names.contains("jdbi"));
 
-            res = handle.execute("delete from test where test_name = ?", "jdbi");
+            res = handle.execute("delete from txnwrapper_test where test_name = ?", "jdbi");
             assertEquals(1, res);
 
             return null;
@@ -208,7 +192,7 @@ public class TransactionWrapperTest {
     @Test
     public void testJdbi_withTxn_updatesAcrossTransactions() {
         TransactionWrapper.withTxn(handle -> {
-            int res = handle.execute("insert into test (test_name) values (?)", "jdbi");
+            int res = handle.execute("insert into txnwrapper_test (test_name) values (?)", "jdbi");
             assertEquals(1, res);
             return null;
         });
@@ -220,7 +204,7 @@ public class TransactionWrapperTest {
             assertTrue(names.contains("testing"));
             assertTrue(names.contains("jdbi"));
 
-            int res = handle.execute("delete from test where test_name = ?", "jdbi");
+            int res = handle.execute("delete from txnwrapper_test where test_name = ?", "jdbi");
             assertEquals(1, res);
 
             return null;
@@ -231,7 +215,7 @@ public class TransactionWrapperTest {
     public void testJdbi_withTxn_rollback() {
         try {
             TransactionWrapper.withTxn(handle -> {
-                int res = handle.execute("insert into test (test_name) values (?)", "jdbi");
+                int res = handle.execute("insert into txnwrapper_test (test_name) values (?)", "jdbi");
                 assertEquals(1, res);
 
                 List<String> names = handle.select(TEST_QUERY).mapTo(String.class).list();
@@ -255,7 +239,7 @@ public class TransactionWrapperTest {
     @Test
     public void testJdbi_withTxn_multipleConnections() {
         TransactionWrapper.reset();
-        TransactionWrapper.init("UTC", new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, 2, testDbUrl));
+        TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, 2, testDbUrl));
         boolean res = TransactionWrapper.withTxn(handle -> {
             String name = handle.select(TEST_QUERY).mapTo(String.class).findOnly();
             String name2 = TransactionWrapper.withTxn(
@@ -269,7 +253,7 @@ public class TransactionWrapperTest {
     @Test
     public void testJdbi_withTxn_outOfConnections() {
         TransactionWrapper.reset();
-        TransactionWrapper.init("UTC", new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, 1, testDbUrl));
+        TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, 1, testDbUrl));
         try {
             TransactionWrapper.withTxn(handle -> {
                 handle.select(TEST_QUERY).mapTo(String.class).findOnly();
@@ -280,8 +264,7 @@ public class TransactionWrapperTest {
                 return null;
             });
         } catch (DDPException e) {
-            assertTrue("Got " + e.getCause().getMessage() + " instead of expected regex", e.getCause().getMessage()
-                    .matches(".*Connection is not available.*"));
+            assertTrue(e.getCause().getMessage().matches(".*Pool exhausted"));
         }
     }
 
@@ -307,7 +290,7 @@ public class TransactionWrapperTest {
     @Test
     public void testJdbi_useTxn_updatesSameTransaction() {
         TransactionWrapper.useTxn(handle -> {
-            int res = handle.execute("insert into test (test_name) values (?)", "jdbi");
+            int res = handle.execute("insert into txnwrapper_test (test_name) values (?)", "jdbi");
             assertEquals(1, res);
 
             List<String> names = handle.select(TEST_QUERY).mapTo(String.class).list();
@@ -316,7 +299,7 @@ public class TransactionWrapperTest {
             assertTrue(names.contains("testing"));
             assertTrue(names.contains("jdbi"));
 
-            res = handle.execute("delete from test where test_name = ?", "jdbi");
+            res = handle.execute("delete from txnwrapper_test where test_name = ?", "jdbi");
             assertEquals(1, res);
         });
     }
@@ -324,7 +307,7 @@ public class TransactionWrapperTest {
     @Test
     public void testJdbi_useTxn_updatesAcrossTransactions() {
         TransactionWrapper.useTxn(handle -> {
-            int res = handle.execute("insert into test (test_name) values (?)", "jdbi");
+            int res = handle.execute("insert into txnwrapper_test (test_name) values (?)", "jdbi");
             assertEquals(1, res);
         });
 
@@ -335,7 +318,7 @@ public class TransactionWrapperTest {
             assertTrue(names.contains("testing"));
             assertTrue(names.contains("jdbi"));
 
-            int res = handle.execute("delete from test where test_name = ?", "jdbi");
+            int res = handle.execute("delete from txnwrapper_test where test_name = ?", "jdbi");
             assertEquals(1, res);
         });
     }
@@ -344,7 +327,7 @@ public class TransactionWrapperTest {
     public void testJdbi_useTxn_rollback() {
         try {
             TransactionWrapper.useTxn(handle -> {
-                int res = handle.execute("insert into test (test_name) values (?)", "jdbi");
+                int res = handle.execute("insert into txnwrapper_test (test_name) values (?)", "jdbi");
                 assertEquals(1, res);
 
                 List<String> names = handle.select(TEST_QUERY).mapTo(String.class).list();
@@ -367,7 +350,7 @@ public class TransactionWrapperTest {
     @Test
     public void testJdbi_useTxn_multipleConnections() {
         TransactionWrapper.reset();
-        TransactionWrapper.init("UTC", new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, 2, testDbUrl));
+        TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, 2, testDbUrl));
         TransactionWrapper.useTxn(handle -> {
             String name = handle.select(TEST_QUERY).mapTo(String.class).findOnly();
             TransactionWrapper.useTxn(h -> {
@@ -381,7 +364,7 @@ public class TransactionWrapperTest {
     @Test
     public void testJdbi_useTxn_outOfConnections() {
         TransactionWrapper.reset();
-        TransactionWrapper.init("UTC", new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, 1, testDbUrl));
+        TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, 1, testDbUrl));
         try {
             TransactionWrapper.useTxn(handle -> {
                 handle.select(TEST_QUERY).mapTo(String.class).findOnly();
@@ -390,7 +373,7 @@ public class TransactionWrapperTest {
                 });
             });
         } catch (DDPException e) {
-            assertTrue(e.getCause().getMessage().matches(".*Connection is not available.*"));
+            assertTrue(e.getCause().getMessage().matches(".*Pool exhausted"));
         }
     }
 }

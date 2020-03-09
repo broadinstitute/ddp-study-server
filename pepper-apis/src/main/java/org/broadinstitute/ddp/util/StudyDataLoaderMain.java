@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 import com.google.auth.oauth2.GoogleCredentials;
@@ -42,15 +43,17 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.constants.ConfigFile;
-import org.broadinstitute.ddp.db.AnswerDao;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceStatusDao;
+import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
+import org.broadinstitute.ddp.db.dao.JdbiClient;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
+import org.broadinstitute.ddp.db.dto.ClientDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.model.address.MailAddress;
@@ -63,11 +66,9 @@ import org.slf4j.LoggerFactory;
 public class StudyDataLoaderMain {
 
     private static final Logger LOG = LoggerFactory.getLogger(StudyDataLoaderMain.class);
-    private static final String DATA_GC_ID = "broad-ddp-angio";
+    private static final String DATA_GC_ID = "broad-ddp-mbc";
     private static final String DEFAULT_MIGRATION_REPORT_PATH = "/tmp/migration_reports";
     private static final String USAGE = "StudyDataLoaderMain [-h, --help] [OPTIONS] study-guid";
-    private static Config sqlConfig = ConfigFactory.parseResources(ConfigFile.SQL_CONF);
-    private static AnswerDao answerDao = AnswerDao.fromSqlConfig(sqlConfig);
     private static List<String> altPidUserList;
     private List<StudyMigrationRun> migrationRunReport;
     private String reportFileName;
@@ -77,6 +78,7 @@ public class StudyDataLoaderMain {
     private String preProcessFileName = null;
     private String serviceAccountFile = null;
     private String googleBucketName = null;
+    private String auth0ClientName = null;
 
     public static void main(String[] args) throws Exception {
         initDbConnection();
@@ -92,6 +94,7 @@ public class StudyDataLoaderMain {
         options.addOption("m", false, "Also load mailing address");
         options.addOption("o", true, "Output/Report csv file");
         options.addOption("u", true, "Users to migrate (comma separated list of altpids)");
+        options.addOption("c", true, "Auth0 client name");
         options.addOption("dryrun", false, "Test Run");
         options.addOption("prodrun", false, "Production Run");
         options.addOption("e", true, "Dry run test email");
@@ -115,6 +118,7 @@ public class StudyDataLoaderMain {
          "u" : Provide list of users (comma separated list of altpids") that need to be loaded/migrated
          "dryrun" : Autogenerate email ids for each participant/user during migration. Uses email set by option "e"
          sample email: foo29+1547662520564@broadinstitute.org
+         "c" : auth0 client name
 
          "prodrun: : Use emailIds in the source data import files, no autogeneration of email ids.
          "e" : Specify email template for dryrun email generation
@@ -191,6 +195,15 @@ public class StudyDataLoaderMain {
 
         if (cmd.hasOption("o")) {
             dataLoaderMain.reportFileName = cmd.getOptionValue('o');
+        }
+
+        if (cmd.hasOption("c")) {
+            dataLoaderMain.auth0ClientName = cmd.getOptionValue("c");
+            if (StringUtils.isBlank(dataLoaderMain.auth0ClientName)) {
+                throw new Exception("Invalid auth0 client name");
+            }
+        } else {
+            throw new Exception("Please pass valid auth0 client name using option 'c' ");
         }
 
         dataLoaderMain.isDeleteAuth0Email = cmd.hasOption("de");
@@ -297,6 +310,7 @@ public class StudyDataLoaderMain {
         JsonElement aboutyouSurveyData = surveyData.getAsJsonObject().get("aboutyousurvey");
         JsonElement consentSurveyData = surveyData.getAsJsonObject().get("consentsurvey");
         JsonElement bdconsentSurveyData = surveyData.getAsJsonObject().get("bdconsentsurvey");
+        JsonElement combinedConsentSurveyData = surveyData.getAsJsonObject().get("combinedconsentsurvey");
         JsonElement followupSurveyData = surveyData.getAsJsonObject().get("followupsurvey");
 
         surveyDataMap.put("datstatparticipantdata", datstatParticipantData);
@@ -305,6 +319,7 @@ public class StudyDataLoaderMain {
         surveyDataMap.put("aboutyousurvey", aboutyouSurveyData);
         surveyDataMap.put("consentsurvey", consentSurveyData);
         surveyDataMap.put("bdconsentsurvey", bdconsentSurveyData);
+        surveyDataMap.put("combinedconsentsurvey", combinedConsentSurveyData);
         surveyDataMap.put("followupsurvey", followupSurveyData);
         return surveyDataMap;
     }
@@ -551,17 +566,26 @@ public class StudyDataLoaderMain {
                         }
                     }
                     StudyDto studyDto = jdbiUmbrellaStudy.findByStudyGuid(studyGuid);
+                    Optional<ClientDto> clientDtoOpt = handle.attach(JdbiClient.class).findByClientName(auth0ClientName);
+                    if (clientDtoOpt.isEmpty()) {
+                        throw new Exception("No client found for client name: " + auth0ClientName);
+                    }
+                    ClientDto clientDto = clientDtoOpt.get();
+
                     long studyId = studyDto.getId();
                     userGuid = dataLoader.loadParticipantData(handle, datstatParticipantData, datstatParticipantMappingData,
-                            phoneNumber, studyDto, address, olcService, addressService);
+                            phoneNumber, studyDto, clientDto, address, olcService, addressService);
                     UserDto userDto = jdbiUser.findByUserGuid(userGuid);
 
                     hasAboutYou = (sourceData.get("aboutyousurvey") != null && !sourceData.get("aboutyousurvey").isJsonNull());
                     hasTissueConsent = (sourceData.get("consentsurvey") != null && !sourceData.get("consentsurvey").isJsonNull());
                     hasBloodConsent = (sourceData.get("bdconsentsurvey") != null && !sourceData.get("bdconsentsurvey").isJsonNull());
+                    hasConsent = (sourceData.get("combinedconsentsurvey") != null && !sourceData.get("combinedconsentsurvey").isJsonNull());
                     hasRelease = (sourceData.get("releasesurvey") != null && !sourceData.get("releasesurvey").isJsonNull());
                     hasBloodRelease = (sourceData.get("bdreleasesurvey") != null && !sourceData.get("bdreleasesurvey").isJsonNull());
                     hasFollowup = (sourceData.get("followupsurvey") != null && !sourceData.get("followupsurvey").isJsonNull());
+
+                    var answerDao = handle.attach(AnswerDao.class);
 
                     if (hasAboutYou) {
                         String activityCode = mappingData.get("aboutyousurvey").getAsJsonObject().get("activity_code").getAsString();
@@ -577,20 +601,23 @@ public class StudyDataLoaderMain {
                                 answerDao);
                     }
 
-                    /*if (hasConsent) {
-                        String activityCode = mappingData.get("consentsurvey").getAsJsonObject().get("activity_code").getAsString();
-                        SActivityInstanceDto instanceDto = dataLoader.createActivityInstance(surveyDataMap.get("consentsurvey"),
+                    if (hasConsent) {
+                        //For MBC just create activity
+                        //String activityCode = mappingData.get("consentsurvey").getAsJsonObject().get("activity_code").getAsString();
+                        String activityCode = "CONSENT";
+
+                        ActivityInstanceDto instanceDto = dataLoader.createActivityInstance(sourceData.get("combinedconsentsurvey"),
                                 userGuid, studyId,
                                 activityCode, createdAt,
-                                //CONSENT_ACTIVITY_CODE, createdAt,
                                 jdbiActivity,
                                 activityInstanceDao,
                                 activityInstanceStatusDao);
-                        dataLoader.loadConsentSurveyData(handle, surveyDataMap.get("consentsurvey"),
-                                mappingDataMap.get("consentsurvey"),
+
+                        /*dataLoader.loadConsentSurveyData(handle, sourceData.get("combinedconsentsurvey"),
+                                mappingData.get("consentsurvey"),
                                 studyDto, userDto, instanceDto,
-                                answerDao);
-                    }*/
+                                answerDao);*/
+                    }
 
                     if (hasTissueConsent) {
                         String activityCode = mappingData.get("tissueconsentsurvey").getAsJsonObject().get("activity_code").getAsString();

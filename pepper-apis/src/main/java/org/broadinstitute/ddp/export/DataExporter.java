@@ -33,12 +33,12 @@ import com.typesafe.config.Config;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.ddp.constants.ConfigFile;
+import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dao.FormActivityDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
-import org.broadinstitute.ddp.db.dao.JdbiStudyActivityNameTranslation;
 import org.broadinstitute.ddp.db.dao.ParticipantDao;
 import org.broadinstitute.ddp.db.dao.PdfDao;
 import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
@@ -78,6 +78,7 @@ import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
 import org.broadinstitute.ddp.model.activity.definition.GroupBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.PhysicianInstitutionComponentDef;
 import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
+import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
@@ -256,7 +257,9 @@ public class DataExporter {
                     .forEach((auth0UserId, email) -> participants.get(usersMissingEmails.get(auth0UserId)).getUser().setEmail(email));
         }
 
-        return new ArrayList<>(participants.values());
+        ArrayList<Participant> dataset = new ArrayList<>(participants.values());
+        LOG.info("[export] extracted {} participants for study {}", dataset.size(), studyDto.getGuid());
+        return dataset;
     }
 
     /**
@@ -273,26 +276,23 @@ public class DataExporter {
             Set<String> participantGuids,
             boolean exportStructuredDocument
     ) {
+        List<ActivityExtract> activityExtracts = extractActivities(handle, studyDto);
         List<Participant> participants = extractParticipantDataSetByGuids(handle, studyDto, participantGuids);
-        LOG.info("[export] extracted {} participants for study {}", participants.size(), studyDto.getGuid());
-        exportToElasticsearch(handle, studyDto, participants, exportStructuredDocument);
+        exportToElasticsearch(handle, studyDto, activityExtracts, participants, exportStructuredDocument);
     }
 
     public void exportParticipantsToElasticsearchByIds(Handle handle, StudyDto studyDto, Set<Long> participantIds,
                                                        boolean exportStructuredDocument) {
-        List<Participant> participants = extractParticipantDataSetByIds(handle, studyDto, participantIds);
-        LOG.info("[export] extracted {} participants for study {}", participants.size(), studyDto.getGuid());
-        exportToElasticsearch(handle, studyDto, participants, exportStructuredDocument);
-    }
-
-    public void exportParticipantsToElasticsearch(Handle handle, StudyDto studyDto, boolean exportStructuredDocument) {
-        exportParticipantsToElasticsearchByGuids(handle, studyDto, null, exportStructuredDocument);
-    }
-
-    private void exportToElasticsearch(Handle handle, StudyDto studyDto, List<Participant> participants, boolean exportStructuredDocument) {
-        int maxExtractSize = cfg.getInt(ConfigFile.ELASTICSEARCH_EXPORT_BATCH_SIZE);
-
         List<ActivityExtract> activityExtracts = extractActivities(handle, studyDto);
+        List<Participant> participants = extractParticipantDataSetByIds(handle, studyDto, participantIds);
+        exportToElasticsearch(handle, studyDto, activityExtracts, participants, exportStructuredDocument);
+    }
+
+    public void exportToElasticsearch(Handle handle, StudyDto studyDto,
+                                       List<ActivityExtract> activities,
+                                       List<Participant> participants,
+                                       boolean exportStructuredDocument) {
+        int maxExtractSize = cfg.getInt(ConfigFile.ELASTICSEARCH_EXPORT_BATCH_SIZE);
 
         if (!exportStructuredDocument) {
             OLCPrecision precision = studyDto.getOlcPrecision() == null ? OLCService.DEFAULT_OLC_PRECISION : studyDto.getOlcPrecision();
@@ -317,7 +317,7 @@ public class DataExporter {
 
                     convertInfoToJSONAndExportToES(
                             handle,
-                            activityExtracts,
+                            activities,
                             batch,
                             studyDto,
                             exportStructuredDocument
@@ -344,10 +344,12 @@ public class DataExporter {
         Map<String, Object> allActivityDefs = new HashMap<>();
         //Object is List<Map<String, Object>>
 
-        JdbiStudyActivityNameTranslation dao = handle.attach(JdbiStudyActivityNameTranslation.class);
-        String activityName;
         for (ActivityExtract activity : activityExtracts) {
-            activityName = dao.getActivityNameByStudyAndActivityCode(studyDto.getGuid(), activity.getDefinition().getActivityCode(), "en");
+            String activityName = activity.getDefinition().getTranslatedNames().stream()
+                    .filter(name -> name.getLanguageCode().equals(I18nContentRenderer.DEFAULT_LANGUAGE_CODE))
+                    .map(Translation::getText)
+                    .findFirst()
+                    .orElse("");
             ActivityResponseCollector formatter = new ActivityResponseCollector(activity.getDefinition());
             Map<String, Object> activityDefinitions = new HashMap<>();
             activityDefinitions.put("studyGuid", studyDto.getGuid());
@@ -692,7 +694,7 @@ public class DataExporter {
             List<ActivityResponse> instances = extract.getResponses(activity.getTag());
             if (!instances.isEmpty()) {
                 if (instances.size() > 1) {
-                    LOG.error("[export] participant {} has {} instances of activity {} {}, will only export the latest one",
+                    LOG.warn("[export] participant {} has {} instances of activity {} {}, will only export the latest one",
                             extract.getUser().getGuid(), instances.size(),
                             activity.getDefinition().getActivityCode(), activity.getDefinition().getVersionTag());
                 }
@@ -1008,8 +1010,6 @@ public class DataExporter {
      */
     public int exportDataSetAsCsv(StudyDto studyDto, List<ActivityExtract> activities, List<Participant> participants,
                                   Writer output) throws IOException {
-        LOG.info("[export] extracted {} participants for study {}", participants.size(), studyDto.getGuid());
-
         ParticipantMetadataFormatter participantMetaFmt = new ParticipantMetadataFormatter();
         ActivityMetadataCollector activityMetadataCollector = new ActivityMetadataCollector();
 
@@ -1027,7 +1027,7 @@ public class DataExporter {
         }
 
         CSVWriter writer = new CSVWriter(output);
-        writer.writeNext(headers.toArray(new String[]{}), false);
+        writer.writeNext(headers.toArray(new String[] {}), false);
 
         int total = participants.size();
         int numWritten = 0;
@@ -1045,7 +1045,7 @@ public class DataExporter {
                         row.addAll(formatter.emptyRow());
                     } else {
                         if (instances.size() > 1) {
-                            LOG.error("[export] participant {} has {} instances of activity {} {}, will only export the latest one",
+                            LOG.warn("[export] participant {} has {} instances of activity {} {}, will only export the latest one",
                                     pt.getUser().getGuid(), instances.size(),
                                     activity.getDefinition().getActivityCode(), activity.getDefinition().getVersionTag());
                         }
@@ -1064,7 +1064,7 @@ public class DataExporter {
                 continue;
             }
 
-            writer.writeNext(row.toArray(new String[]{}), false);
+            writer.writeNext(row.toArray(new String[] {}), false);
             numWritten += 1;
 
             LOG.info("[export] ({}/{}) participant {} for study {}:"
