@@ -1,14 +1,16 @@
 package org.broadinstitute.ddp.model.activity.instance;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.function.Consumer;
 
 import javax.validation.constraints.NotNull;
 
 import com.google.gson.annotations.SerializedName;
+
+import org.broadinstitute.ddp.content.ContentStyle;
+import org.broadinstitute.ddp.content.Renderable;
 import org.broadinstitute.ddp.model.activity.types.ComponentType;
 
-public abstract class FormComponent implements Numberable {
+public abstract class FormComponent implements Numberable, Renderable {
 
     @NotNull
     @SerializedName("componentType")
@@ -18,12 +20,6 @@ public abstract class FormComponent implements Numberable {
     private Integer displayNumber;
 
     protected transient boolean hideDisplayNumber;
-
-    @NotNull
-    @SerializedName("parameters")
-    // derived classes should fill this map explicitly.  this is where the client
-    // gets the list of parameters
-    protected Map<String, Object> parameters = new LinkedHashMap<>();
 
     public FormComponent(ComponentType componentType) {
         this.componentType = componentType;
@@ -43,6 +39,12 @@ public abstract class FormComponent implements Numberable {
     public boolean shouldHideNumber() {
         return hideDisplayNumber;
     }
+
+    @Override
+    public abstract void registerTemplateIds(Consumer<Long> registry);
+
+    @Override
+    public abstract void applyRenderedTemplates(Provider<String> rendered, ContentStyle style);
 
     public ComponentType getComponentType() {
         return componentType;

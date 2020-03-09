@@ -56,40 +56,10 @@ public interface ComponentDao extends SqlObject {
         boolean isPhysician = componentDto.getComponentType() == ComponentType.PHYSICIAN;
         if (isInstitution || isPhysician) {
             InstitutionPhysicianComponentDto institutionDto = getJdbiInstitutionPhysicianComponent().findById(componentId);
-
-            String buttonText = null;
-            if (institutionDto.getButtonTemplateId() != null) {
-                buttonText = i18nRenderer.renderContent(getHandle(), institutionDto.getButtonTemplateId(), languageCodeId);
-            }
-            String titleText = null;
-            if (institutionDto.getTitleTemplateId() != null) {
-                titleText = i18nRenderer.renderContent(getHandle(), institutionDto.getTitleTemplateId(),
-                        languageCodeId);
-            }
-            String subtitleText = null;
-            if (institutionDto.getSubtitleTemplateId() != null) {
-                subtitleText = i18nRenderer.renderContent(getHandle(), institutionDto.getSubtitleTemplateId(),
-                        languageCodeId);
-            }
-
             if (isInstitution) {
-                formComponent = new InstitutionComponent(institutionDto.getAllowMultiple(),
-                        buttonText,
-                        titleText,
-                        subtitleText,
-                        institutionDto.getInstitutionType(),
-                        institutionDto.showFields(),
-                        institutionDto.isRequired(),
-                        componentDto.shouldHideNumber());
+                formComponent = new InstitutionComponent(institutionDto, componentDto.shouldHideNumber());
             } else if (isPhysician) {
-                formComponent = new PhysicianComponent(institutionDto.getAllowMultiple(),
-                        buttonText,
-                        titleText,
-                        subtitleText,
-                        institutionDto.getInstitutionType(),
-                        institutionDto.showFields(),
-                        institutionDto.isRequired(),
-                        componentDto.shouldHideNumber());
+                formComponent = new PhysicianComponent(institutionDto, componentDto.shouldHideNumber());
             } else {
                 throw new DaoException("Unknown component type " + componentDto.getComponentType());
             }

@@ -35,8 +35,8 @@ patch:
     `answerGuid` will be treated as an update and the referenced answer will
     be updated accordingly. If `answerGuid` is missing, the server attempts to
     find and update an existing answer only if the question has a single
-    answer. Otherwise, it responses with `409 Conflict`. The response body
-    will contain more details about what failed.
+    answer. Otherwise, it responses with `500 Internal Server Error`. The
+    response body will contain more details about what failed.
 
     **Answer Validations**
 
@@ -64,8 +64,6 @@ patch:
       description: missing credentials or temporary user is invalid
     404:
       $ref: '../pepper.yml#/components/responses/ActivityAnswersPatchNotFoundResponse'
-    409:
-      $ref: '../pepper.yml#/components/responses/ActivityAnswersPatchExistsResponse'
     422:
       $ref: '../pepper.yml#/components/responses/ActivityAnswersPatchInvalidResponse'
     default:
