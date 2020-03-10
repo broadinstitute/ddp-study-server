@@ -30,20 +30,22 @@ emailTemplates:
 
 # NOTE: client names must match what's in Auth0's dashboard, otherwise deploy
 # will create new clients. Everytime deploy happens, client configurations here
-# will overwrite what's in Auth0. If there are additional urls not in here
-# (e.g. localhost callback urls) then those need to be added back manually
-# afterwards. Other settings not configured here will also need to be
-# configured manually.
+# will overwrite what's in Auth0. If there are additional urls not in here then
+# those need to be added back manually. Other settings not configured here will
+# also need to be configured manually.
 clients:
   - name: angio-angular-client
     app_type: spa
     callbacks:
       - '##ANGIO_BASE_URL##/login-landing'
+      ##LOCALHOST_CALLBACKS##
     allowed_logout_urls:
       - '##ANGIO_BASE_URL##'
       - '##ANGIO_BASE_URL##/session-expired'
+      ##LOCALHOST_LOGOUTS##
     web_origins:
       - '##ANGIO_BASE_URL##'
+      ##LOCALHOST_ORIGINS##
     client_metadata:
       study: ANGIO
 
@@ -51,11 +53,14 @@ clients:
     app_type: spa
     callbacks:
       - '##BRAIN_BASE_URL##/login-landing'
+      ##LOCALHOST_CALLBACKS##
     allowed_logout_urls:
       - '##BRAIN_BASE_URL##'
       - '##BRAIN_BASE_URL##/session-expired'
+      ##LOCALHOST_LOGOUTS##
     web_origins:
       - '##BRAIN_BASE_URL##'
+      ##LOCALHOST_ORIGINS##
     client_metadata:
       study: cmi-brain
 
@@ -63,11 +68,14 @@ clients:
     app_type: spa
     callbacks:
       - '##MBC_BASE_URL##/login-landing'
+      ##LOCALHOST_CALLBACKS##
     allowed_logout_urls:
       - '##MBC_BASE_URL##'
       - '##MBC_BASE_URL##/session-expired'
+      ##LOCALHOST_LOGOUTS##
     web_origins:
       - '##MBC_BASE_URL##'
+      ##LOCALHOST_ORIGINS##
     client_metadata:
       study: cmi-mbc
 
@@ -75,10 +83,13 @@ clients:
     app_type: spa
     callbacks:
       - '##OSTEO_BASE_URL##/login-landing'
+      ##LOCALHOST_CALLBACKS##
     allowed_logout_urls:
       - '##OSTEO_BASE_URL##'
       - '##OSTEO_BASE_URL##/session-expired'
+      ##LOCALHOST_LOGOUTS##
     web_origins:
       - '##OSTEO_BASE_URL##'
+      ##LOCALHOST_ORIGINS##
     client_metadata:
       study: CMI-OSTEO

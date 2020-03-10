@@ -8,6 +8,17 @@
   "AUTH0_CLIENT_ID": "{{$conf.auth0.clientId}}",
   "AUTH0_CLIENT_SECRET": "{{$conf.auth0.clientSecret}}",
   "AUTH0_KEYWORD_REPLACE_MAPPINGS": {
+  {{if eq $environment "dev"}}
+    {{/* These end up being a line item in a yaml file, so the hyphen in front is needed. */}}
+    "LOCALHOST_CALLBACKS": "- http://localhost:4200/login-landing",
+    "LOCALHOST_LOGOUTS": "- http://localhost:4200, http://localhost:4200/session-expired",
+    "LOCALHOST_ORIGINS": "- http://localhost:4200",
+  {{else}}
+    {{/* Need to set these as blank, otherwise they won't get substituted and auth0 deploy will complain. */}}
+    "LOCALHOST_CALLBACKS": "",
+    "LOCALHOST_LOGOUTS": "",
+    "LOCALHOST_ORIGINS": "",
+  {{end}}
   {{with $resp := vault (printf "secret/pepper/%s/%s/angio/conf" $environment $version)}}
     "ANGIO_BASE_URL": "{{$resp.Data.baseWebUrl}}",
   {{end}}
