@@ -54,7 +54,10 @@ print_write_help() {
 USAGE:
   $NAME write <PATH> <FILE> [OPTIONS]...
 
-Writes given file as data to vault path after passing confirmation.
+Writes given file as data to vault path after passing confirmation. One
+confirmation step is opening the given data file in the 'less' pager so user
+can visually verify the data to be written. Before writing, a backup of
+existing data in vault will be written to a file in the current directory.
 
 FLAGS:
   -h, --help    Print this additional help
@@ -136,14 +139,19 @@ cmd_write() {
 
   echo "Will write to path: $path"
   echo "Using data file: $data_file"
+
   echo ''
-  read -p 'Press Enter to open data file for visual confirmation...' ignored
-  cat "$data_file" | less
+  read -p 'Open data file for visual confirmation? (y/n): ' confirm
+  local answer=$(echo "$confirm" | tr '[:upper:]' '[:lower:]')
+  if [[ "$answer" == 'y' ]] || [[ "$answer" == 'yes' ]]; then
+    echo 'Opening with the `less` pager tool. Use `q` when done or `h` for help.'
+    read -p 'Press Enter to open... ' pressed
+    cat "$data_file" | less
+  fi
 
   echo ''
   read -p "Writing to '$path', continue? (y/n): " confirm
-
-  local answer=$(echo "$confirm" | tr '[:upper:]' '[:lower:]')
+  answer=$(echo "$confirm" | tr '[:upper:]' '[:lower:]')
   if [[ "$answer" == 'y' ]] || [[ "$answer" == 'yes' ]]; then
     local timestamp=$(date '+%F')
     local bkup_file=$(echo "$path" | tr '/' '-')
