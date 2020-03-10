@@ -1,0 +1,20 @@
+FROM maven:3.6.0-jdk-11
+
+RUN true \
+  && apt-get update \
+  && apt-get install -y curl \
+  && apt-get install -y nano
+
+RUN mkdir /app
+WORKDIR /app
+RUN ["echo","Installing gcloud tools..."]
+RUN curl -o gcloud.tar.gz https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-197.0.0-linux-x86_64.tar.gz
+RUN gunzip gcloud.tar.gz
+RUN tar -xvf gcloud.tar
+ENV PATH="/app/google-cloud-sdk/bin:${PATH}"
+RUN gcloud components install beta --quiet
+RUN gcloud components install pubsub-emulator --quiet
+RUN gcloud components update --quiet
+ENV PUBSUB_EMULATOR_HOST "localhost:8442"
+
+CMD "/bin/bash"
