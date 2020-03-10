@@ -5,6 +5,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -45,7 +46,7 @@ public class TransactionWrapperTest {
         MySqlTestContainerUtil.initializeTestDbs();
         Config cfg = ConfigManager.getInstance().getConfig();
         testDbUrl = cfg.getString(TransactionWrapper.DB.APIS.getDbUrlConfigKey());
-        LiquibaseUtil.runChangeLog(new com.mysql.jdbc.Driver(), testDbUrl, CHANGESET_FILE);
+        LiquibaseUtil.runChangeLog(testDbUrl, CHANGESET_FILE);
         TransactionWrapper.reset();
     }
 
@@ -77,28 +78,38 @@ public class TransactionWrapperTest {
         int maxPoolSize = 1;
         synchronized (TransactionWrapper.class) {
             TransactionWrapper.reset();
-            TransactionWrapper.init(new TransactionWrapper.DbConfiguration(
-                    TransactionWrapper.DB.APIS, maxPoolSize, testDbUrl));
+            TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS,
+                    maxPoolSize, testDbUrl));
             final AtomicBoolean gotPoolExhaustedError = new AtomicBoolean(false);
 
-            TransactionWrapper.useTxn(handle -> {
+            TransactionWrapper.useTxn((handle) -> {
                 try {
-                    assertEquals(1, handle.select(TEST_QUERY).mapTo(String.class).list().size());
-                } catch (Exception e) {
-                    LOG.error("Trouble using first connection", e);
-                    fail("Trouble using first connection");
-                }
-
-                try {
-                    TransactionWrapper.useTxn(handle2 -> fail("Got a second connection"));
-                } catch (Exception e) {
-                    gotPoolExhaustedError.set(e.getCause().getMessage().toLowerCase().contains("pool"));
+                    ResultSet rs = queryTestData(handle.getConnection());
+                    int numRows = 0;
+                    while (rs.next()) {
+                        numRows++;
+                    }
+                    assertEquals(1, numRows);
+                    try {
+                        TransactionWrapper.useTxn((handle2) -> {
+                            LOG.info("Got connection when we shouldn't have");
+                        });
+                    } catch (Exception e) {
+                        gotPoolExhaustedError.set(e.getMessage().toLowerCase().contains("pool"));
+                    }
+                } catch (SQLException e) {
+                    LOG.error("Trouble making first connection", e);
+                    fail("Trouble making first connection");
                 }
             });
 
             assertTrue("Two connections were created, but the pool should have failed because the max size is "
                     + maxPoolSize, gotPoolExhaustedError.get());
         }
+    }
+
+    private ResultSet queryTestData(Connection conn) throws SQLException {
+        return conn.prepareStatement(TEST_QUERY).executeQuery();
     }
 
     @Test
