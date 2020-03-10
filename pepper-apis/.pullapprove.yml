@@ -1,7 +1,7 @@
 version: 2
 
 groups:
-  production-deployment:
+  test-deployment:
     required: 2
     users:
       - zyme
@@ -9,7 +9,7 @@ groups:
 
     conditions:
       branches:
-        production
+        test
     notifications:
       - when: pull_request.opened
         comment: |
