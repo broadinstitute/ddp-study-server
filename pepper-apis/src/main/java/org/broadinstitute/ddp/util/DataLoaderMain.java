@@ -196,7 +196,6 @@ public class DataLoaderMain {
         LiquibaseUtil.runLiquibase(dbUrl, TransactionWrapper.DB.APIS);
 
         int maxConnections = cfg.getInt(ConfigFile.NUM_POOLED_CONNECTIONS);
-
         TransactionWrapper.reset();
         TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, maxConnections,
                 dbUrl));

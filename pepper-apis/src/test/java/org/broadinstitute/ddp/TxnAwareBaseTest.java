@@ -26,7 +26,6 @@ public abstract class TxnAwareBaseTest extends ConfigAwareBaseTest {
 
         int maxConnections = cfg.getInt(ConfigFile.NUM_POOLED_CONNECTIONS);
         String dbUrl = cfg.getString(TransactionWrapper.DB.APIS.getDbUrlConfigKey());
-
         LOG.info("Initializing db pool for " + dbUrl);
         TransactionWrapper.reset();
         TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, maxConnections,
