@@ -231,7 +231,6 @@ public class AesUtil {
     private static void initializeDb(Config cfg) {
         int maxConnections = cfg.getInt(ConfigFile.NUM_POOLED_CONNECTIONS);
         String dbUrl = cfg.getString(ConfigFile.DB_URL);
-        String defaultTimeZoneName = cfg.getString(ConfigFile.DEFAULT_TIMEZONE);
         TransactionWrapper.init(
                 new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, maxConnections, dbUrl));
     }

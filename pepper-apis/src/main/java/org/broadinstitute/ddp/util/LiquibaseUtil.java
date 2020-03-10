@@ -160,7 +160,6 @@ public class LiquibaseUtil implements  AutoCloseable {
         boolean resetDb = false;
 
         String pepperApisDbUrl = cfg.getString(DB.APIS.getDbUrlConfigKey());
-        String defaultTimeZoneName = cfg.getString(ConfigFile.DEFAULT_TIMEZONE);
 
         if (!TransactionWrapper.isInitialized()) {
             TransactionWrapper.init(new TransactionWrapper.DbConfiguration(DB.APIS, 1, pepperApisDbUrl));

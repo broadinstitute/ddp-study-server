@@ -282,7 +282,6 @@ public class StudyDataLoaderMain {
         String dbUrl = cfg.getString(ConfigFile.DB_URL);
         LOG.info("Initializing db pool for " + dbUrl);
         int maxConnections = cfg.getInt(ConfigFile.NUM_POOLED_CONNECTIONS);
-        String defaultTimeZoneName = cfg.getString(ConfigFile.DEFAULT_TIMEZONE);
         TransactionWrapper.reset();
         TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, maxConnections,
                 dbUrl));

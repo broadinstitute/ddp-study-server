@@ -63,8 +63,6 @@ public abstract class HousekeepingTest extends ConfigAwareBaseTest {
         String housekeepingDbUrl = cfg.getString(TransactionWrapper.DB.HOUSEKEEPING.getDbUrlConfigKey());
         int maxHousekeepingConnections = cfg.getInt(TransactionWrapper.DB.HOUSEKEEPING.getDbPoolSizeConfigKey());
 
-        String defaultTimeZoneName = cfg.getString(ConfigFile.DEFAULT_TIMEZONE);
-
         LiquibaseUtil.runLiquibase(pepperDbUrl, TransactionWrapper.DB.APIS);
         LiquibaseUtil.runLiquibase(housekeepingDbUrl, TransactionWrapper.DB.HOUSEKEEPING);
 
