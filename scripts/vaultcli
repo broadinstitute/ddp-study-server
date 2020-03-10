@@ -61,6 +61,7 @@ existing data in vault will be written to a file in the current directory.
 
 FLAGS:
   -h, --help    Print this additional help
+      --value   Write whole contents of data file into the 'value' key
 
 EOM
 }
@@ -81,7 +82,7 @@ cmd_read() {
     fi
   done
 
-  local path="$1"; shift
+  local positionals=()
   local out_file=""
   local raw_expr=""
 
@@ -101,9 +102,18 @@ cmd_read() {
           exit 1
         fi
         ;;
+      *)
+        positionals+=("$1");
+        ;;
     esac
     shift
   done
+
+  if (( ${#positionals[@]} < 1 )); then
+    echo "[err] missing PATH argument"
+    exit 1
+  fi
+  local path="${positionals[0]}"
 
   local data=""
   if [[ -n "$raw_expr" ]]; then
@@ -134,15 +144,40 @@ cmd_write() {
     exit 1
   fi
 
-  local path="$1"; shift
-  local data_file="$1"; shift
+  local positionals=()
+  local is_value=false
 
-  echo "Will write to path: $path"
-  echo "Using data file: $data_file"
+  while [[ -n "$1" ]]; do
+    case "$1" in
+      --value)
+        is_value=true;
+        ;;
+      *)
+        positionals+=("$1");
+        ;;
+    esac
+    shift
+  done
+
+  if (( ${#positionals[@]} < 2 )); then
+    echo "[err] missing PATH and/or FILE arguments"
+    exit 1
+  fi
+  local path="${positionals[0]}"
+  local data_file="${positionals[1]}"
+
+  if $is_value; then
+    echo "Will write to 'value' under path: $path"
+    echo "Using value data file: $data_file"
+  else
+    echo "Will write to path: $path"
+    echo "Using data file: $data_file"
+  fi
 
   echo ''
   read -p 'Open data file for visual confirmation? (y/n): ' confirm
   local answer=$(echo "$confirm" | tr '[:upper:]' '[:lower:]')
+
   if [[ "$answer" == 'y' ]] || [[ "$answer" == 'yes' ]]; then
     echo 'Opening with the `less` pager tool. Use `q` when done or `h` for help.'
     read -p 'Press Enter to open... ' pressed
@@ -152,15 +187,23 @@ cmd_write() {
   echo ''
   read -p "Writing to '$path', continue? (y/n): " confirm
   answer=$(echo "$confirm" | tr '[:upper:]' '[:lower:]')
+
   if [[ "$answer" == 'y' ]] || [[ "$answer" == 'yes' ]]; then
     local timestamp=$(date '+%F')
-    local bkup_file=$(echo "$path" | tr '/' '-')
-    bkup_file="$bkup_file-$timestamp.json"
+    local bkup_file=$(echo "$path" | tr '/' '_')
+    bkup_file="${timestamp}_${bkup_file}"
 
-    vault read --format=json --field=data "$path" > "$bkup_file"
-    echo "Wrote backup file: $bkup_file"
-
-    vault write "$path" "@$data_file"
+    local bkup_data=$(vault read --format=json --field=data "$path")
+    if $is_value; then
+      echo "$bkup_data" | jq -r '.value' > "$bkup_file"
+      echo "Wrote value backup file: $bkup_file"
+      vault write "$path" "value=@$data_file"
+    else
+      bkup_file="$bkup_file.json"
+      echo "$bkup_data" > "$bkup_file"
+      echo "Wrote backup file: $bkup_file"
+      vault write "$path" "@$data_file"
+    fi
   else
     echo "Not writing."
   fi
