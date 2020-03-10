@@ -1,0 +1,20 @@
+version: 2
+
+groups:
+  production-deployment:
+    required: 2
+    users:
+      - zyme
+      - yufengwng
+
+    conditions:
+      branches:
+        production
+    notifications:
+      - when: pull_request.opened
+        comment: |
+          Hey @{{ author }}, looks like we're doing a deploy to @{{base}}.  Cool!
+          The reviewers will let you know when it's approved.
+      - when: pullapprove.approved
+        comment: |
+          Thanks @{{ author }}, your @{{base}} deployment has been approved.  Please follow the merge instructions.
