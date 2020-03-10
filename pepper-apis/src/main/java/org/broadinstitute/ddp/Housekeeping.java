@@ -179,7 +179,7 @@ public class Housekeeping {
 
         if (!TransactionWrapper.isInitialized()) {
             String defaultTimeZoneName = cfg.getString(ConfigFile.DEFAULT_TIMEZONE);
-            TransactionWrapper.init(defaultTimeZoneName, new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.HOUSEKEEPING,
+            TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.HOUSEKEEPING,
                             maxConnections, housekeepingDbUrl),
                     new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS,
                             maxConnections, apisDbUrl));

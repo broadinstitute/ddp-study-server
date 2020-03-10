@@ -101,7 +101,7 @@ public class RouteTestUtil {
             String defaultTimeZoneName = cfg.getString(ConfigFile.DEFAULT_TIMEZONE);
             LOG.info("Initializing db pool for {}", dbUrl);
             TransactionWrapper.reset();
-            TransactionWrapper.init(defaultTimeZoneName, new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, DB_MAX_CONN,
+            TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, DB_MAX_CONN,
                     dbUrl));
         }
     }

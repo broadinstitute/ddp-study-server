@@ -73,7 +73,7 @@ public class UserAdminCLI {
 
         String defaultTimeZoneName = cfg.getString(ConfigFile.DEFAULT_TIMEZONE);
 
-        TransactionWrapper.init(defaultTimeZoneName,
+        TransactionWrapper.init(
                 new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, 1, dbUrl));
         try {
             TransactionWrapper.useTxn(handle -> {

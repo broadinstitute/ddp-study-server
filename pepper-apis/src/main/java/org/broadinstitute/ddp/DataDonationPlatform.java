@@ -242,7 +242,7 @@ public class DataDonationPlatform {
         String dbUrl = cfg.getString(ConfigFile.DB_URL);
         LOG.info("Using db {}", dbUrl);
 
-        TransactionWrapper.init(cfg.getString(ConfigFile.DEFAULT_TIMEZONE),
+        TransactionWrapper.init(
                 new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, maxConnections, dbUrl));
 
         threadPool(-1, -1, requestThreadTimeout);

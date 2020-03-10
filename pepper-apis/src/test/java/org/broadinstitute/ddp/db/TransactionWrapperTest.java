@@ -264,7 +264,7 @@ public class TransactionWrapperTest {
                 return null;
             });
         } catch (DDPException e) {
-            assertTrue(e.getCause().getMessage().matches(".*Pool exhausted"));
+            assertTrue(e.getCause().getMessage().matches(".*Connection is not available.*"));
         }
     }
 
@@ -373,7 +373,7 @@ public class TransactionWrapperTest {
                 });
             });
         } catch (DDPException e) {
-            assertTrue(e.getCause().getMessage().matches(".*Pool exhausted"));
+            assertTrue(e.getCause().getMessage().matches(".*Connection is not available.*"));
         }
     }
 }

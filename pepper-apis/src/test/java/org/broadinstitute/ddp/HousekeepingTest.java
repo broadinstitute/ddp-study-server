@@ -69,7 +69,7 @@ public abstract class HousekeepingTest extends ConfigAwareBaseTest {
         LiquibaseUtil.runLiquibase(housekeepingDbUrl, TransactionWrapper.DB.HOUSEKEEPING);
 
         TransactionWrapper.reset();
-        TransactionWrapper.init(defaultTimeZoneName, new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS,
+        TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS,
                         maxPepperConnections, pepperDbUrl),
                 new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.HOUSEKEEPING,
                         maxHousekeepingConnections, housekeepingDbUrl));

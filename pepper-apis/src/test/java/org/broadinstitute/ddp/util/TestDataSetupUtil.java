@@ -317,7 +317,7 @@ public class TestDataSetupUtil {
         String dbUrl = cfg.getString(ConfigFile.DB_URL);
         String defaultTimeZoneName = cfg.getString(ConfigFile.DEFAULT_TIMEZONE);
 
-        TransactionWrapper.init(defaultTimeZoneName,
+        TransactionWrapper.init(
                 new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, maxConnections, dbUrl));
     }
 

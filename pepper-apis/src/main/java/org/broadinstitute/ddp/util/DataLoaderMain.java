@@ -198,7 +198,7 @@ public class DataLoaderMain {
         int maxConnections = cfg.getInt(ConfigFile.NUM_POOLED_CONNECTIONS);
         String defaultTimeZoneName = cfg.getString(ConfigFile.DEFAULT_TIMEZONE);
         TransactionWrapper.reset();
-        TransactionWrapper.init(defaultTimeZoneName, new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, maxConnections,
+        TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, maxConnections,
                 dbUrl));
 
         DBUtils.loadDaoSqlCommands(sqlConfig);

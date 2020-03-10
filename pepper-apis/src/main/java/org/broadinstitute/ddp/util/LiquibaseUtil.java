@@ -161,7 +161,7 @@ public class LiquibaseUtil {
         String defaultTimeZoneName = cfg.getString(ConfigFile.DEFAULT_TIMEZONE);
 
         if (!TransactionWrapper.isInitialized()) {
-            TransactionWrapper.init(defaultTimeZoneName, new TransactionWrapper.DbConfiguration(DB.APIS, 1, pepperApisDbUrl));
+            TransactionWrapper.init(new TransactionWrapper.DbConfiguration(DB.APIS, 1, pepperApisDbUrl));
             resetDb = true;
         }
         // insert legacy auth0 tenant data

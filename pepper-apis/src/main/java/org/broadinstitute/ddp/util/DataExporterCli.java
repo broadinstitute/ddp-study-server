@@ -140,7 +140,7 @@ public class DataExporterCli {
         int maxConnections = cfg.getInt(ConfigFile.NUM_POOLED_CONNECTIONS);
         TransactionWrapper.reset();
         String defaultTimeZoneName = cfg.getString(ConfigFile.DEFAULT_TIMEZONE);
-        TransactionWrapper.init(defaultTimeZoneName, new TransactionWrapper
+        TransactionWrapper.init(new TransactionWrapper
                 .DbConfiguration(TransactionWrapper.DB.APIS, maxConnections, dbUrl));
 
         DBUtils.loadDaoSqlCommands(sqlConfig);

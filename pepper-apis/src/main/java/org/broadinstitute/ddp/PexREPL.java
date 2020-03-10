@@ -31,7 +31,7 @@ public class PexREPL {
         String dbUrl = cfg.getString(ConfigFile.DB_URL);
         int maxConn = cfg.getInt(ConfigFile.NUM_POOLED_CONNECTIONS);
         String defaultTimeZoneName = cfg.getString(ConfigFile.DEFAULT_TIMEZONE);
-        TransactionWrapper.init(defaultTimeZoneName, new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, maxConn, dbUrl));
+        TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, maxConn, dbUrl));
 
         interp = new TreeWalkInterpreter();
         userCtx = Optional.empty();

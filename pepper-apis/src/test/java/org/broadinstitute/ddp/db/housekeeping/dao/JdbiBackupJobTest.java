@@ -90,7 +90,7 @@ public class JdbiBackupJobTest extends TxnAwareBaseTest {
         String defaultTimeZoneName = cfg.getString(ConfigFile.DEFAULT_TIMEZONE);
         LiquibaseUtil.runLiquibase(dbUrl, TransactionWrapper.DB.HOUSEKEEPING);
 
-        TransactionWrapper.init(defaultTimeZoneName,
+        TransactionWrapper.init(
                 new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.HOUSEKEEPING, maxConnections, dbUrl));
     }
 
