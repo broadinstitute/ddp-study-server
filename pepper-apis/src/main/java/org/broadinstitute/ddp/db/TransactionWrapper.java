@@ -29,6 +29,14 @@ import org.slf4j.LoggerFactory;
  * are re-thrown after making an attempt to rollback the transaction.
  */
 public class TransactionWrapper {
+    // We are setting the VMs default timezone expectation that it will be same on server
+    // or at least specified in DB connection URL
+    // if timezones don't match, times and dates might be miscalculated/improperly converted by JDBC connector
+    // https://bugs.mysql.com/bug.php?id=91112
+    // Note 03/10/2020: Release of fixed Java connector is imminent and this might no longer be necessary
+    static {
+        TimeZone.setDefault(TimeZone.getTimeZone(ConfigManager.getInstance().getConfig().getString(ConfigFile.DEFAULT_TIMEZONE)));
+    }
 
     private static final Logger LOG = LoggerFactory.getLogger(TransactionWrapper.class);
 
@@ -75,7 +83,7 @@ public class TransactionWrapper {
             dbConfigs.add(new DbConfiguration(conn.getKey(), maxConnections, dbUrl));
         }
         reset();
-        init(TimeZone.getDefault().getID(), dbConfigs.toArray(new DbConfiguration[0]));
+        init(dbConfigs.toArray(new DbConfiguration[0]));
     }
 
 
@@ -153,7 +161,7 @@ public class TransactionWrapper {
         }
     }
 
-    public static synchronized void init(String defaultTimeZoneName, DbConfiguration...dbConfigs) {
+    public static synchronized void init(DbConfiguration... dbConfigs) {
         for (DbConfiguration dbConfig : dbConfigs) {
             if (gTxnWrapper.containsKey(dbConfig.getDb())) {
                 TransactionWrapper transactionWrapper = gTxnWrapper.get(dbConfig.getDb());
@@ -175,12 +183,12 @@ public class TransactionWrapper {
         // or at least specified in DB connection URL
         // if timezones don't match, times and dates might be miscalculated/improperly converted by JDBC connector
         // https://bugs.mysql.com/bug.php?id=91112
-        LOG.info("Setting default time zone to: {}", defaultTimeZoneName);
-        TimeZone defaultTimeZone = TimeZone.getTimeZone(defaultTimeZoneName);
-        if (defaultTimeZone == null) {
-            throw new RuntimeException(String.format("Could not find a Time zone with name: %s", defaultTimeZoneName));
-        }
-        TimeZone.setDefault(defaultTimeZone);
+        // LOG.info("Setting default time zone to: {}", defaultTimeZoneName);
+        //        TimeZone defaultTimeZone = TimeZone.getTimeZone(defaultTimeZoneName);
+        //        if (defaultTimeZone == null) {
+        //            throw new RuntimeException(String.format("Could not find a Time zone with name: %s", defaultTimeZoneName));
+        //        }
+        //        TimeZone.setDefault(defaultTimeZone);
 
         isInitialized = true;
     }
@@ -230,7 +238,7 @@ public class TransactionWrapper {
             String dbUrl = cfg.getString(db.getDbUrlConfigKey());
             dbConfigs.add(new DbConfiguration(db, cfg.getInt(db.getDbPoolSizeConfigKey()), dbUrl));
         }
-        init(TimeZone.getDefault().getID(), dbConfigs.toArray(new DbConfiguration[0]));
+        init(dbConfigs.toArray(new DbConfiguration[0]));
     }
 
     /**
@@ -388,11 +396,5 @@ public class TransactionWrapper {
             throw original;
         }
     }
-
-
-    */
-
-
-
 }
 
