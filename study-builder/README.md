@@ -111,7 +111,7 @@ the config file for the CLI tool and deploy, like so:
 
 ```
 $ ./render.sh v1 <env> tenant
-$ a0deploy deploy -c output_config/cmi-config.json -i tenants/cmi/tenant.yaml
+$ a0deploy deploy -c output-config/cmi-config.json -i tenants/cmi/tenant.yaml
 ```
 
 The deploy will only update what is specified in the `tenant.yaml` file. If a
