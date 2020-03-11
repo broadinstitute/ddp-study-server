@@ -57,6 +57,7 @@ import org.broadinstitute.ddp.db.dao.JdbiUserStudyLegacyData;
 import org.broadinstitute.ddp.db.dao.KitTypeDao;
 import org.broadinstitute.ddp.db.dao.MedicalProviderDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
+import org.broadinstitute.ddp.db.dto.ClientDto;
 import org.broadinstitute.ddp.db.dto.MedicalProviderDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.UserDto;
@@ -112,6 +113,7 @@ public class StudyDataLoaderTest {
     private AuthAPI mockAuthAPI;
     private Auth0MgmtTokenHelper mockAuth0MgmtTokenHelper;
     private User mockAuth0User;
+    private ClientDto mockClientDto;
     private static String sourceData;
     private static Map<String, JsonElement> sourceDataMap;
     private static Map<String, JsonElement> mappingData;
@@ -146,6 +148,7 @@ public class StudyDataLoaderTest {
         mockAuth0Util = mock(Auth0Util.class);
         mockAuth0MgmtTokenHelper = mock(Auth0MgmtTokenHelper.class);
         mockAuth0User = mock(User.class);
+        mockClientDto = mock(ClientDto.class);
         initMockStudyDataLoader();
 
         ActivityInstanceDto mockInstanceDto = mock(ActivityInstanceDto.class);
@@ -216,8 +219,6 @@ public class StudyDataLoaderTest {
 
         mockDataLoader.auth0Util = mockAuth0Util;
         mockDataLoader.auth0Domain = pretendDomain;
-        mockDataLoader.pepperClientId = pretendPepperClientId;
-        mockDataLoader.auth0ClientId = pretendAuth0ClientId;
         mockDataLoader.mgmtToken = pretendMgmtToken;
     }
 
@@ -666,12 +667,17 @@ public class StudyDataLoaderTest {
 
         when(mockAuthRequest.setRealm(anyString())).thenReturn(mockAuthRequest);
 
+        when(mockClientDto.getId()).thenReturn(pretendPepperClientId);
+        when(mockClientDto.getAuth0ClientId()).thenReturn(pretendAuth0ClientId);
+
+
         when(mockDataLoader.createLegacyPepperUser(
                 any(JdbiUser.class),
                 any(JdbiClient.class),
                 any(JsonElement.class),
                 anyString(),
-                anyString()
+                anyString(),
+                any(ClientDto.class)
         )).thenCallRealMethod();
 
         mockDataLoader.createLegacyPepperUser(
@@ -679,7 +685,8 @@ public class StudyDataLoaderTest {
                 mockJdbiClient,
                 participantData,
                 pretendUserGuid,
-                pretendUserHruid
+                pretendUserHruid,
+                mockClientDto
         );
 
         ArgumentCaptor<String> creationEmail = ArgumentCaptor.forClass(String.class);

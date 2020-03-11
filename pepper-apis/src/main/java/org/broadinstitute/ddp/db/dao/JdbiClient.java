@@ -90,6 +90,11 @@ public interface JdbiClient extends SqlObject {
     @RegisterConstructorMapper(ClientDto.class)
     Optional<ClientDto> findByAuth0ClientId(@Bind("auth0ClientId") String auth0ClientId);
 
+    @SqlQuery("SELECT client_id,client_name,auth0_client_id,auth0_signing_secret,web_password_redirect_url,is_revoked,auth0_tenant_id"
+            + "  FROM client WHERE client_name= :clientName")
+    @RegisterConstructorMapper(ClientDto.class)
+    Optional<ClientDto> findByClientName(@Bind("clientName") String clientName);
+
     @SqlUpdate("UPDATE client SET web_password_redirect_url = :url WHERE auth0_client_id = :auth0ClientId")
     int updateWebPasswordRedirectUrlByAuth0ClientId(
             @Bind("url") String url,
