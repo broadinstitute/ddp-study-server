@@ -51,11 +51,11 @@ public class ActivityInstanceUtil {
             long createdAtMillis,
             String statusTypeCode,
             boolean isActivityWriteOnce,
-            boolean isActivityInstanceReadonly
+            Boolean isActivityInstanceReadonly
     ) {
         // is_readonly flag in the activity instance overrides everything
-        if (isActivityInstanceReadonly) {
-            return true;
+        if (isActivityInstanceReadonly != null) {
+            return isActivityInstanceReadonly;
         }
         return computeReadonly(isActivityWriteOnce, editTimeoutSec, InstanceStatusType.valueOf(statusTypeCode), createdAtMillis);
     }
