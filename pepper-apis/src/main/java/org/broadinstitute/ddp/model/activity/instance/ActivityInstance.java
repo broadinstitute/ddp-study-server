@@ -23,7 +23,7 @@ public class ActivityInstance {
     private String status;
 
     @SerializedName("readonly")
-    private boolean readonly;
+    private Boolean readonly;
 
     // todo: rename to `title` at api-level
     @SerializedName("name")
@@ -42,7 +42,7 @@ public class ActivityInstance {
 
     public ActivityInstance(
             long instanceId, long activityId, ActivityType activityType, String guid, String title, String subtitle,
-            String status, boolean readonly, String activityCode, long createdAtMillis, Long firstCompletedAt,
+            String status, Boolean readonly, String activityCode, long createdAtMillis, Long firstCompletedAt,
             boolean isFollowup
     ) {
         this.instanceId = instanceId;
@@ -71,7 +71,7 @@ public class ActivityInstance {
         return status;
     }
 
-    public boolean isReadonly() {
+    public Boolean isReadonly() {
         return readonly;
     }
 
