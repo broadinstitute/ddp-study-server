@@ -13,7 +13,7 @@ public class ActivityInstanceDto {
     private long activityId;
     private long participantId;
     private long createdAtMillis;
-    private boolean isReadonly;
+    private Boolean isReadonly;
     private boolean isHidden;
     private InstanceStatusType statusType;
     private ActivityType activityType;
@@ -33,7 +33,7 @@ public class ActivityInstanceDto {
             @ColumnName("created_at") long createdAtMillis,
             @ColumnName("first_completed_at") Long firstCompletedAt,
             @ColumnName("is_readonly") boolean isReadonly,
-            @ColumnName("is_hidden") boolean isHidden,
+            @ColumnName("is_hidden") Boolean isHidden,
             @ColumnName("activity_instance_status_type") InstanceStatusType statusType,
             @ColumnName("activity_type") ActivityType activityType,
             @ColumnName("ondemand_trigger_id") Long onDemandTriggerId,
@@ -82,7 +82,7 @@ public class ActivityInstanceDto {
         return firstCompletedAt;
     }
 
-    public boolean isReadonly() {
+    public Boolean isReadonly() {
         return isReadonly;
     }
 
