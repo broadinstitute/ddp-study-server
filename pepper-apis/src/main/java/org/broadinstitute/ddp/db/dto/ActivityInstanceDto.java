@@ -32,7 +32,7 @@ public class ActivityInstanceDto {
             @ColumnName("participant_id") long participantId,
             @ColumnName("created_at") long createdAtMillis,
             @ColumnName("first_completed_at") Long firstCompletedAt,
-            @ColumnName("is_readonly") boolean isReadonly,
+            @ColumnName("is_readonly") Boolean isReadonly,
             @ColumnName("is_hidden") Boolean isHidden,
             @ColumnName("activity_instance_status_type") InstanceStatusType statusType,
             @ColumnName("activity_type") ActivityType activityType,
