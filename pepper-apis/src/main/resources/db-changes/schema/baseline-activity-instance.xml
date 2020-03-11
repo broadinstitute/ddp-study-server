@@ -18,9 +18,7 @@
             <column name="participant_id" type="bigint">
                 <constraints nullable="false" references="user(user_id)" foreignKeyName="activity_instance_participant_user_fk"/>
             </column>
-            <column name="is_readonly" type="boolean">
-                <constraints nullable="false"/>
-            </column>
+            <column name="is_readonly" type="boolean"/>
             <column name="created_at" type="bigint">
                 <constraints nullable="false"/>
             </column>
