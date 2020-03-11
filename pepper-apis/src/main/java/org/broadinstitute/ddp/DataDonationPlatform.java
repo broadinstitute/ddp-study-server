@@ -101,7 +101,7 @@ import org.broadinstitute.ddp.route.GetPrequalifierInstanceRoute;
 import org.broadinstitute.ddp.route.GetProfileRoute;
 import org.broadinstitute.ddp.route.GetStudiesRoute;
 import org.broadinstitute.ddp.route.GetStudyDetailRoute;
-import org.broadinstitute.ddp.route.GetStudyPasswordRequirementsRoute;
+import org.broadinstitute.ddp.route.GetStudyPasswordPolicyRoute;
 import org.broadinstitute.ddp.route.GetTempMailingAddressRoute;
 import org.broadinstitute.ddp.route.GetUserAnnouncementsRoute;
 import org.broadinstitute.ddp.route.GetWorkflowRoute;
@@ -445,7 +445,7 @@ public class DataDonationPlatform {
 
         // Routes calling DSM
         get(API.PARTICIPANT_STATUS, new GetDsmParticipantStatusRoute(new DsmClient(cfg)), responseSerializer);
-        get(API.STUDY_PASSWORD_REQUIREMENTS, new GetStudyPasswordRequirementsRoute(), responseSerializer);
+        get(API.STUDY_PASSWORD_POLICY, new GetStudyPasswordPolicyRoute(), responseSerializer);
 
         patch(
                 API.UPDATE_USER_PASSWORD,
