@@ -476,7 +476,7 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
     }
 
     @Test
-    public void test_whenEditTimeoutExpires_thenInstanceBecomesReadonly() throws InterruptedException {
+    public void test_givenReadonlyFlagIsNotSet_whenEditTimeoutExpires_thenInstanceBecomesReadonly() throws InterruptedException {
         Response resp = testFor200AndExtractResponse();
         resp.then().assertThat().body("readonly", equalTo(false));
 
