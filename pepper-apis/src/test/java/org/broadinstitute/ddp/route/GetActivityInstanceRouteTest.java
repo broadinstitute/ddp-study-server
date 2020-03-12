@@ -488,11 +488,8 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
                 1L, activity.getActivityCode(), optStudyId.get())
         );
 
-        int numRecords = TransactionWrapper.withTxn(
+        TransactionWrapper.useTxn(
                 handle -> handle.attach(JdbiActivityInstance.class).updateIsReadonlyByGuid(null, instanceDto.getGuid())
-        );
-        Optional<ActivityInstanceDto> dto = TransactionWrapper.withTxn(
-                handle -> handle.attach(JdbiActivityInstance.class).getByActivityInstanceGuid(instanceDto.getGuid())
         );
 
         TimeUnit.SECONDS.sleep(1L);
