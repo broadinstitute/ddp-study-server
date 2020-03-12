@@ -642,6 +642,40 @@ public class StudyDataLoader {
                 studyDto, userDto, instanceDto, answerDao);
     }
 
+    public void loadPrionConsentSurveyData(Handle handle,
+                                      JsonElement surveyData,
+                                      JsonElement mappingData,
+                                      StudyDto studyDto,
+                                      UserDto userDto,
+                                      ActivityInstanceDto instanceDto,
+                                      AnswerDao answerDao) throws Exception {
+        LOG.info("Populating Prion Consent Survey...");
+        if (surveyData == null || surveyData.isJsonNull()) {
+            LOG.warn("NO Prion Consent Survey !");
+            return;
+        }
+
+        processSurveyData(handle, "ConsentSurvey", surveyData, mappingData,
+                studyDto, userDto, instanceDto, answerDao);
+    }
+
+    public void loadMedicalSurveyData(Handle handle,
+                                           JsonElement surveyData,
+                                           JsonElement mappingData,
+                                           StudyDto studyDto,
+                                           UserDto userDto,
+                                           ActivityInstanceDto instanceDto,
+                                           AnswerDao answerDao) throws Exception {
+        LOG.info("Populating Medical Survey...");
+        if (surveyData == null || surveyData.isJsonNull()) {
+            LOG.warn("NO Medical Survey !");
+            return;
+        }
+
+        processSurveyData(handle, "MedicalSurvey", surveyData, mappingData,
+                studyDto, userDto, instanceDto, answerDao);
+    }
+
     public void loadTissueConsentSurveyData(Handle handle,
                                             JsonElement surveyData,
                                             JsonElement mappingData,
@@ -849,8 +883,16 @@ public class StudyDataLoader {
         long createdAtMillis = createdAtDate.toInstant(ZoneOffset.UTC).toEpochMilli();
         long updatedAtMillis = lastModifiedDate.toInstant(ZoneOffset.UTC).toEpochMilli();
 
-        String shortId = data.getAsJsonObject().get("ddp_participant_shortid").getAsString();
         String altpid = data.getAsJsonObject().get("datstat_altpid").getAsString();
+        JsonElement shortIdElem = data.getAsJsonObject().get("ddp_participant_shortid");
+        String shortId;
+        if (shortIdElem == null || shortIdElem.isJsonNull()) {
+            //If no short ID, just use first 6 characters of the altpid
+            shortId = altpid.substring(0, 6);
+        } else {
+            shortId = data.getAsJsonObject().get("ddp_participant_shortid").getAsString();
+        }
+
         long userId = userDao.insertMigrationUser(auth0UserId, userGuid, clientDto.getId(), userHruid,
                 altpid, shortId, createdAtMillis, updatedAtMillis);
         UserDto newUser = new UserDto(userId, auth0UserId, userGuid, userHruid, altpid,
