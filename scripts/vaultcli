@@ -166,6 +166,11 @@ cmd_write() {
   local path="${positionals[0]}"
   local data_file="${positionals[1]}"
 
+  if [[ ! -f "$data_file" ]]; then
+    echo "[err] data file '$data_file' does not exist"
+    exit 1
+  fi
+
   if $is_value; then
     echo "Will write to 'value' under path: $path"
     echo "Using value data file: $data_file"
@@ -185,7 +190,7 @@ cmd_write() {
   fi
 
   echo ''
-  read -p "Writing to '$path', continue? (y/n): " confirm
+  read -p "Submit write to '$path'? (y/n): " confirm
   answer=$(echo "$confirm" | tr '[:upper:]' '[:lower:]')
 
   if [[ "$answer" == 'y' ]] || [[ "$answer" == 'yes' ]]; then
