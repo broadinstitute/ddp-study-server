@@ -13,8 +13,6 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -44,7 +42,6 @@ import com.itextpdf.layout.element.Paragraph;
 import com.itextpdf.layout.property.TextAlignment;
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.db.dao.JdbiMedicalProvider;
 import org.broadinstitute.ddp.db.dto.MedicalProviderDto;
 import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
 import org.broadinstitute.ddp.model.activity.types.InstitutionType;
@@ -55,9 +52,9 @@ import org.broadinstitute.ddp.model.pdf.PhysicianInstitutionTemplate;
 import org.broadinstitute.ddp.model.pdf.ProfileSubstitution;
 import org.broadinstitute.ddp.model.study.Participant;
 import org.broadinstitute.ddp.util.PdfTestingUtil;
-import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,16 +63,17 @@ public class PdfGenerationServiceTest extends TxnAwareBaseTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(PdfGenerationServiceTest.class);
 
-    private PdfTestingUtil.PdfInfo pdfInfo;
+    private static PdfTestingUtil.PdfInfo pdfInfo;
+
     private PdfGenerationService pdfGenerationService = new PdfGenerationService();
 
-    @Before
-    public void setup() throws Exception {
+    @BeforeClass
+    public static void setup() throws Exception {
         pdfInfo = PdfTestingUtil.makePhysicianInstitutionPdf();
     }
 
-    @After
-    public void cleanup() {
+    @AfterClass
+    public static void cleanup() {
         PdfTestingUtil.removeConfigurationData(pdfInfo);
     }
 
@@ -118,36 +116,10 @@ public class PdfGenerationServiceTest extends TxnAwareBaseTest {
 
         assertFieldsCorrectlyWrittenToPdf(new PdfDocument(new PdfReader(new ByteArrayInputStream(physicianPdf))),
                 pdfInfo.getExpectedValuesByInstitutionType().get(InstitutionType.PHYSICIAN));
-
-
-        createDebugFileWithFlattenedFields(physicianPdf);
-        createDebugFileWithFlattenedFields(institutionPdf);
-        createDebugFileWithFlattenedFields(biopsyPdf);
     }
 
     /**
-     * Flattens the fields for the given pdf bytes and writes it out to a temporary file.  This is helpful
-     * for manual inspection of PDFs.
-     */
-    private void createDebugFileWithFlattenedFields(byte[] pdfBytes) throws IOException {
-        PdfDocument flattenedDoc = null;
-        File flattenedFile = null;
-        try {
-            flattenedFile = File.createTempFile("pdftest", ".pdf");
-            PdfWriter tempWriter = new PdfWriter(new FileOutputStream(flattenedFile));
-            flattenedDoc = new PdfDocument(new PdfReader(new ByteArrayInputStream(pdfBytes)), tempWriter);
-
-            PdfAcroForm form = PdfAcroForm.getAcroForm(flattenedDoc, false);
-            form.flattenFields();
-        } finally {
-            flattenedDoc.close();
-            LOG.info("Flattened file {}", flattenedFile.getAbsolutePath());
-        }
-    }
-
-    /**
-     * Runs through the map of field/value pairs and asserts that
-     * they are all present in the given pdf
+     * Runs through the map of field/value pairs and asserts that they are all present in the given pdf
      *
      * @param renderedPdf                the pdf that contains the substitutions
      * @param expectedFieldSubstitutions mapping of pdf field name and string value
@@ -175,8 +147,7 @@ public class PdfGenerationServiceTest extends TxnAwareBaseTest {
     }
 
     /**
-     * Runs through the list of values and asserts that
-     * they are all present in the given pdf
+     * Runs through the list of values and asserts that they are all present in the given pdf
      *
      * @param renderedPdf                the pdf that contains the substitutions
      * @param expectedFieldSubstitutions list of the expected value of the field
@@ -246,7 +217,6 @@ public class PdfGenerationServiceTest extends TxnAwareBaseTest {
                 participant,
                 instances,
                 new ArrayList<>()));
-        createDebugFileWithFlattenedFields(outputDoc);
         assertFieldsCorrectlyWrittenToPdf(new PdfDocument(new PdfReader(new ByteArrayInputStream(outputDoc))),
                 pdfInfo.getExpectedCustomValues());
     }
@@ -262,7 +232,6 @@ public class PdfGenerationServiceTest extends TxnAwareBaseTest {
                 new ArrayList<>(), pdfInfo.getPdfConfiguration().getStudyGuid(), handle
         ));
 
-        createDebugFileWithFlattenedFields(outputDoc);
         assertFieldsCorrectlyWrittenToPdf(new PdfDocument(new PdfReader(new ByteArrayInputStream(outputDoc))),
                 pdfInfo.getExpectedMailingAddressValues());
     }
@@ -302,8 +271,6 @@ public class PdfGenerationServiceTest extends TxnAwareBaseTest {
 
         assertFieldsCorrectlyWrittenToPdf(new PdfDocument(new PdfReader(new ByteArrayInputStream(outputDoc))),
                 fieldsToVerify, PdfTemplateType.CUSTOM);
-
-        createDebugFileWithFlattenedFields(outputDoc);
     }
 
     @Test
@@ -323,42 +290,54 @@ public class PdfGenerationServiceTest extends TxnAwareBaseTest {
 
     @Test
     public void testGenerateMailingAddressFailsWithMissingFields() throws IOException {
+        String originalName = pdfInfo.getMailingAddressTemplate().getLastNamePlaceholder();
+
         String fieldName = "name";
         pdfInfo.getMailingAddressTemplate().setLastNamePlaceholder(fieldName);
 
-        Participant participant = TransactionWrapper.withTxn(handle -> pdfGenerationService.loadParticipantData(
-                handle, pdfInfo.getPdfConfiguration(), pdfInfo.getData().getUserGuid()));
+        try {
+            Participant participant = TransactionWrapper.withTxn(handle -> pdfGenerationService.loadParticipantData(
+                    handle, pdfInfo.getPdfConfiguration(), pdfInfo.getData().getUserGuid()));
 
-        List<String> errors = new ArrayList<>();
-        TransactionWrapper.useTxn(handle -> {
-            pdfGenerationService.generateMailingAddressPdf(
-                    pdfInfo.getMailingAddressTemplate(),
-                    participant.getUser(),
-                    errors, pdfInfo.getPdfConfiguration().getStudyGuid(), handle
-            );
-            assertEquals(1, errors.size());
-            assertEquals(errors.get(0), "Could not find PDFFormField field with name: " + fieldName);
-        });
+            List<String> errors = new ArrayList<>();
+            TransactionWrapper.useTxn(handle -> {
+                pdfGenerationService.generateMailingAddressPdf(
+                        pdfInfo.getMailingAddressTemplate(),
+                        participant.getUser(),
+                        errors, pdfInfo.getPdfConfiguration().getStudyGuid(), handle
+                );
+                assertEquals(1, errors.size());
+                assertEquals(errors.get(0), "Could not find PDFFormField field with name: " + fieldName);
+            });
+        } finally {
+            pdfInfo.getMailingAddressTemplate().setLastNamePlaceholder(originalName);
+        }
     }
 
     @Test
     public void testGenerateMailingAddressFailsWithMissingProxyField() throws IOException {
+        String originalName = pdfInfo.getMailingAddressTemplate().getProxyLastNamePlaceholder();
+
         String fieldName = "proxyLastName";
         pdfInfo.getMailingAddressTemplate().setProxyLastNamePlaceholder(fieldName);
 
-        Participant participant = TransactionWrapper.withTxn(handle -> pdfGenerationService.loadParticipantData(
-                handle, pdfInfo.getPdfConfiguration(), pdfInfo.getData().getUserGuid()));
+        try {
+            Participant participant = TransactionWrapper.withTxn(handle -> pdfGenerationService.loadParticipantData(
+                    handle, pdfInfo.getPdfConfiguration(), pdfInfo.getData().getUserGuid()));
 
-        List<String> errors = new ArrayList<>();
-        TransactionWrapper.useTxn(handle -> {
-            pdfGenerationService.generateMailingAddressPdf(
-                    pdfInfo.getMailingAddressTemplate(),
-                    participant.getUser(),
-                    errors, pdfInfo.getPdfConfiguration().getStudyGuid(), handle
-            );
-            assertEquals(1, errors.size());
-            assertEquals(errors.get(0), "Could not find PDFFormField field with name: " + fieldName);
-        });
+            List<String> errors = new ArrayList<>();
+            TransactionWrapper.useTxn(handle -> {
+                pdfGenerationService.generateMailingAddressPdf(
+                        pdfInfo.getMailingAddressTemplate(),
+                        participant.getUser(),
+                        errors, pdfInfo.getPdfConfiguration().getStudyGuid(), handle
+                );
+                assertEquals(1, errors.size());
+                assertEquals(errors.get(0), "Could not find PDFFormField field with name: " + fieldName);
+            });
+        } finally {
+            pdfInfo.getMailingAddressTemplate().setProxyLastNamePlaceholder(originalName);
+        }
     }
 
     @Test
@@ -409,128 +388,163 @@ public class PdfGenerationServiceTest extends TxnAwareBaseTest {
 
     @Test
     public void testConvertSubstitutionToPdfFailsWhenMissingFields_ActivityDate() throws IOException {
+        var originalSubs = List.copyOf(pdfInfo.getCustomTemplate().getSubstitutions());
+
         int fakePdfOrderIndex = 0;
         List<String> errors = new ArrayList<>();
         pdfInfo.getCustomTemplate().getSubstitutions()
                 .add(new ActivityDateSubstitution("fake", pdfInfo.getTestActivityId()));
 
-        Participant participant = TransactionWrapper.withTxn(handle -> pdfGenerationService.loadParticipantData(
-                handle, pdfInfo.getPdfConfiguration(), pdfInfo.getData().getUserGuid()));
-        Map<Long, ActivityResponse> instances = TransactionWrapper.withTxn(handle -> pdfGenerationService.loadActivityInstanceData(
-                handle, pdfInfo.getPdfConfiguration(), participant));
+        try {
+            Participant participant = TransactionWrapper.withTxn(handle -> pdfGenerationService.loadParticipantData(
+                    handle, pdfInfo.getPdfConfiguration(), pdfInfo.getData().getUserGuid()));
+            Map<Long, ActivityResponse> instances = TransactionWrapper.withTxn(handle -> pdfGenerationService.loadActivityInstanceData(
+                    handle, pdfInfo.getPdfConfiguration(), participant));
 
-        TransactionWrapper.useTxn(handle -> {
-            pdfGenerationService.generateCustomPdf(
-                    pdfInfo.getCustomTemplate(),
-                    fakePdfOrderIndex,
-                    pdfInfo.getPdfConfiguration().getConfigName(),
-                    participant,
-                    instances,
-                    errors);
-            assertTrue(errors.contains("Could not find field with name: fake in body of PDF template"));
-        });
+            TransactionWrapper.useTxn(handle -> {
+                pdfGenerationService.generateCustomPdf(
+                        pdfInfo.getCustomTemplate(),
+                        fakePdfOrderIndex,
+                        pdfInfo.getPdfConfiguration().getConfigName(),
+                        participant,
+                        instances,
+                        errors);
+                assertTrue(errors.contains("Could not find field with name: fake in body of PDF template"));
+            });
+        } finally {
+            pdfInfo.getCustomTemplate().getSubstitutions().clear();
+            pdfInfo.getCustomTemplate().getSubstitutions().addAll(originalSubs);
+        }
     }
 
     @Test
     public void testConvertSubstitutionToPdfFailsWhenMissingActivity_ActivityDate() throws IOException {
+        var originalSubs = List.copyOf(pdfInfo.getCustomTemplate().getSubstitutions());
+
         int fakePdfOrderIndex = 0;
         List<String> errors = new ArrayList<>();
         pdfInfo.getCustomTemplate().getSubstitutions()
                 .add(new ActivityDateSubstitution(PdfTestingUtil.ANOTHER_DATE, 123456));
 
-        Participant participant = TransactionWrapper.withTxn(handle -> pdfGenerationService.loadParticipantData(
-                handle, pdfInfo.getPdfConfiguration(), pdfInfo.getData().getUserGuid()));
-        Map<Long, ActivityResponse> instances = TransactionWrapper.withTxn(handle -> pdfGenerationService.loadActivityInstanceData(
-                handle, pdfInfo.getPdfConfiguration(), participant));
+        try {
+            Participant participant = TransactionWrapper.withTxn(handle -> pdfGenerationService.loadParticipantData(
+                    handle, pdfInfo.getPdfConfiguration(), pdfInfo.getData().getUserGuid()));
+            Map<Long, ActivityResponse> instances = TransactionWrapper.withTxn(handle -> pdfGenerationService.loadActivityInstanceData(
+                    handle, pdfInfo.getPdfConfiguration(), participant));
 
-        TransactionWrapper.useTxn(handle -> {
-            pdfGenerationService.generateCustomPdf(
-                    pdfInfo.getCustomTemplate(),
-                    fakePdfOrderIndex,
-                    pdfInfo.getPdfConfiguration().getConfigName(),
-                    participant,
-                    instances,
-                    errors);
-            assertEquals(1, errors.size());
-            assertTrue(errors.get(0).contains("Did not find activity instance"));
-            assertTrue(errors.get(0).contains("user guid " + pdfInfo.getData().getUserGuid()));
-            assertTrue(errors.get(0).contains("activity id 123456"));
-            assertTrue(errors.get(0).contains("PDF ACTIVITY_DATE substitutions"));
-        });
+            TransactionWrapper.useTxn(handle -> {
+                pdfGenerationService.generateCustomPdf(
+                        pdfInfo.getCustomTemplate(),
+                        fakePdfOrderIndex,
+                        pdfInfo.getPdfConfiguration().getConfigName(),
+                        participant,
+                        instances,
+                        errors);
+                assertEquals(1, errors.size());
+                assertTrue(errors.get(0).contains("Did not find activity instance"));
+                assertTrue(errors.get(0).contains("user guid " + pdfInfo.getData().getUserGuid()));
+                assertTrue(errors.get(0).contains("activity id 123456"));
+                assertTrue(errors.get(0).contains("PDF ACTIVITY_DATE substitutions"));
+            });
+        } finally {
+            pdfInfo.getCustomTemplate().getSubstitutions().clear();
+            pdfInfo.getCustomTemplate().getSubstitutions().addAll(originalSubs);
+        }
     }
 
     @Test
     public void testConvertSubstitutionToPdfFailsWhenUnsupportedProfileField_Profile() throws IOException {
+        var originalSubs = List.copyOf(pdfInfo.getCustomTemplate().getSubstitutions());
+
         int fakePdfOrderIndex = 0;
         List<String> errors = new ArrayList<>();
         pdfInfo.getCustomTemplate().getSubstitutions()
                 .add(new ProfileSubstitution("fake", "unsupported"));
 
-        Participant participant = TransactionWrapper.withTxn(handle -> pdfGenerationService.loadParticipantData(
-                handle, pdfInfo.getPdfConfiguration(), pdfInfo.getData().getUserGuid()));
-        Map<Long, ActivityResponse> instances = TransactionWrapper.withTxn(handle -> pdfGenerationService.loadActivityInstanceData(
-                handle, pdfInfo.getPdfConfiguration(), participant));
+        try {
+            Participant participant = TransactionWrapper.withTxn(handle -> pdfGenerationService.loadParticipantData(
+                    handle, pdfInfo.getPdfConfiguration(), pdfInfo.getData().getUserGuid()));
+            Map<Long, ActivityResponse> instances = TransactionWrapper.withTxn(handle -> pdfGenerationService.loadActivityInstanceData(
+                    handle, pdfInfo.getPdfConfiguration(), participant));
 
-        TransactionWrapper.useTxn(handle -> {
-            pdfGenerationService.generateCustomPdf(
-                    pdfInfo.getCustomTemplate(),
-                    fakePdfOrderIndex,
-                    pdfInfo.getPdfConfiguration().getConfigName(),
-                    participant,
-                    instances,
-                    errors);
-            assertTrue(errors.contains("Unsupported pdf substitution profile field name 'unsupported'"));
-        });
+            TransactionWrapper.useTxn(handle -> {
+                pdfGenerationService.generateCustomPdf(
+                        pdfInfo.getCustomTemplate(),
+                        fakePdfOrderIndex,
+                        pdfInfo.getPdfConfiguration().getConfigName(),
+                        participant,
+                        instances,
+                        errors);
+                assertTrue(errors.contains("Unsupported pdf substitution profile field name 'unsupported'"));
+            });
+        } finally {
+            pdfInfo.getCustomTemplate().getSubstitutions().clear();
+            pdfInfo.getCustomTemplate().getSubstitutions().addAll(originalSubs);
+        }
     }
 
     @Test
     public void testConvertSubstitutionToPdfFailsWhenMissingFields_Profile() throws IOException {
+        var originalSubs = List.copyOf(pdfInfo.getCustomTemplate().getSubstitutions());
+
         int fakePdfOrderIndex = 0;
         List<String> errors = new ArrayList<>();
         pdfInfo.getCustomTemplate().getSubstitutions()
                 .add(new ProfileSubstitution("fake", "first_name"));
 
-        Participant participant = TransactionWrapper.withTxn(handle -> pdfGenerationService.loadParticipantData(
-                handle, pdfInfo.getPdfConfiguration(), pdfInfo.getData().getUserGuid()));
-        Map<Long, ActivityResponse> instances = TransactionWrapper.withTxn(handle -> pdfGenerationService.loadActivityInstanceData(
-                handle, pdfInfo.getPdfConfiguration(), participant));
+        try {
+            Participant participant = TransactionWrapper.withTxn(handle -> pdfGenerationService.loadParticipantData(
+                    handle, pdfInfo.getPdfConfiguration(), pdfInfo.getData().getUserGuid()));
+            Map<Long, ActivityResponse> instances = TransactionWrapper.withTxn(handle -> pdfGenerationService.loadActivityInstanceData(
+                    handle, pdfInfo.getPdfConfiguration(), participant));
 
-        TransactionWrapper.useTxn(handle -> {
-            pdfGenerationService.generateCustomPdf(
-                    pdfInfo.getCustomTemplate(),
-                    fakePdfOrderIndex,
-                    pdfInfo.getPdfConfiguration().getConfigName(),
-                    participant,
-                    instances,
-                    errors);
-            assertTrue(errors.contains("template " + fakePdfOrderIndex + " for configuration "
-                    + pdfInfo.getPdfConfiguration().getConfigName()
-                    + " is missing necessary field: fake"));
-        });
+            TransactionWrapper.useTxn(handle -> {
+                pdfGenerationService.generateCustomPdf(
+                        pdfInfo.getCustomTemplate(),
+                        fakePdfOrderIndex,
+                        pdfInfo.getPdfConfiguration().getConfigName(),
+                        participant,
+                        instances,
+                        errors);
+                assertTrue(errors.contains("template " + fakePdfOrderIndex + " for configuration "
+                        + pdfInfo.getPdfConfiguration().getConfigName()
+                        + " is missing necessary field: fake"));
+            });
+        } finally {
+            pdfInfo.getCustomTemplate().getSubstitutions().clear();
+            pdfInfo.getCustomTemplate().getSubstitutions().addAll(originalSubs);
+        }
     }
 
     @Test
     public void testConvertSubstitutionToPdfFailsWhenMissingFields_Answer() throws IOException {
+        var originalSubs = List.copyOf(pdfInfo.getCustomTemplate().getSubstitutions());
+
         int fakePdfOrderIndex = 0;
         List<String> errors = new ArrayList<>();
         pdfInfo.getCustomTemplate().getSubstitutions().add(new AnswerSubstitution(
                 "fake", pdfInfo.getTestActivityId(), pdfInfo.getQuestionDef().getQuestionType(), pdfInfo.getQuestionDef().getStableId()));
 
-        Participant participant = TransactionWrapper.withTxn(handle -> pdfGenerationService.loadParticipantData(
-                handle, pdfInfo.getPdfConfiguration(), pdfInfo.getData().getUserGuid()));
-        Map<Long, ActivityResponse> instances = TransactionWrapper.withTxn(handle -> pdfGenerationService.loadActivityInstanceData(
-                handle, pdfInfo.getPdfConfiguration(), participant));
+        try {
+            Participant participant = TransactionWrapper.withTxn(handle -> pdfGenerationService.loadParticipantData(
+                    handle, pdfInfo.getPdfConfiguration(), pdfInfo.getData().getUserGuid()));
+            Map<Long, ActivityResponse> instances = TransactionWrapper.withTxn(handle -> pdfGenerationService.loadActivityInstanceData(
+                    handle, pdfInfo.getPdfConfiguration(), participant));
 
-        TransactionWrapper.useTxn(handle -> {
-            pdfGenerationService.generateCustomPdf(
-                    pdfInfo.getCustomTemplate(),
-                    fakePdfOrderIndex,
-                    pdfInfo.getPdfConfiguration().getConfigName(),
-                    participant,
-                    instances,
-                    errors);
-            assertTrue(errors.contains("Could not find PDFFormField field with name: fake"));
-        });
+            TransactionWrapper.useTxn(handle -> {
+                pdfGenerationService.generateCustomPdf(
+                        pdfInfo.getCustomTemplate(),
+                        fakePdfOrderIndex,
+                        pdfInfo.getPdfConfiguration().getConfigName(),
+                        participant,
+                        instances,
+                        errors);
+                assertTrue(errors.contains("Could not find PDFFormField field with name: fake"));
+            });
+        } finally {
+            pdfInfo.getCustomTemplate().getSubstitutions().clear();
+            pdfInfo.getCustomTemplate().getSubstitutions().addAll(originalSubs);
+        }
     }
 
     @Test
@@ -623,10 +637,9 @@ public class PdfGenerationServiceTest extends TxnAwareBaseTest {
 
     @Test
     public void testPhysicianInstitutionPdf_missingPhysicians_returnsNoPages() throws IOException {
-        clearGeneratedMedicalProviders();
-
         Participant participant = TransactionWrapper.withTxn(handle -> pdfGenerationService.loadParticipantData(
                 handle, pdfInfo.getPdfConfiguration(), pdfInfo.getData().getUserGuid()));
+        participant.getProviders().clear();
 
         String studyGuid = pdfInfo.getData().getStudyGuid();
         PhysicianInstitutionTemplate tmpl = pdfInfo.getPhysicianTemplate();
@@ -640,10 +653,9 @@ public class PdfGenerationServiceTest extends TxnAwareBaseTest {
 
     @Test
     public void testPhysicianInstitutionPdf_missingBiopsy_returnsBlankPage() throws IOException {
-        clearGeneratedMedicalProviders();
-
         Participant participant = TransactionWrapper.withTxn(handle -> pdfGenerationService.loadParticipantData(
                 handle, pdfInfo.getPdfConfiguration(), pdfInfo.getData().getUserGuid()));
+        participant.getProviders().clear();
 
         String studyGuid = pdfInfo.getData().getStudyGuid();
         PhysicianInstitutionTemplate tmpl = pdfInfo.getBiopsyTemplate();
@@ -677,10 +689,9 @@ public class PdfGenerationServiceTest extends TxnAwareBaseTest {
 
     @Test
     public void testPhysicianInstitutionPdf_missingInstitutions_returnsNoPages() throws IOException {
-        clearGeneratedMedicalProviders();
-
         Participant participant = TransactionWrapper.withTxn(handle -> pdfGenerationService.loadParticipantData(
                 handle, pdfInfo.getPdfConfiguration(), pdfInfo.getData().getUserGuid()));
+        participant.getProviders().clear();
 
         String studyGuid = pdfInfo.getData().getStudyGuid();
         PhysicianInstitutionTemplate tmpl = pdfInfo.getInstitutionTemplate();
@@ -694,29 +705,23 @@ public class PdfGenerationServiceTest extends TxnAwareBaseTest {
 
     @Test
     public void testPhysicianInstitutionPdf_partialMedicalProvider_filledIn() throws IOException {
-        clearGeneratedMedicalProviders();
-        TransactionWrapper.useTxn(handle -> {
-            String guid = UUID.randomUUID().toString();
-            handle.attach(JdbiMedicalProvider.class).insert(new MedicalProviderDto(
-                    null,
-                    guid,
-                    pdfInfo.getData().getUserId(),
-                    pdfInfo.getData().getStudyId(),
-                    InstitutionType.PHYSICIAN,
-                    "institute A",
-                    "physician A",
-                    null, // missing city
-                    null, // missing state
-                    null,
-                    null,
-                    null,
-                    null
-            ));
-            pdfInfo.getMedicalProviderRowsToDelete().add(guid);
-        });
-
         Participant participant = TransactionWrapper.withTxn(handle -> pdfGenerationService.loadParticipantData(
                 handle, pdfInfo.getPdfConfiguration(), pdfInfo.getData().getUserGuid()));
+        participant.getProviders().clear();
+        participant.addProvider(new MedicalProviderDto(
+                1L,
+                UUID.randomUUID().toString(),
+                pdfInfo.getData().getUserId(),
+                pdfInfo.getData().getStudyId(),
+                InstitutionType.PHYSICIAN,
+                "institute A",
+                "physician A",
+                null, // missing city
+                null, // missing state
+                null,
+                null,
+                null,
+                null));
 
         String studyGuid = pdfInfo.getData().getStudyGuid();
         PhysicianInstitutionTemplate tmpl = pdfInfo.getPhysicianTemplate();
@@ -737,15 +742,5 @@ public class PdfGenerationServiceTest extends TxnAwareBaseTest {
         assertEquals("institute A", form.getField(tmpl.getInstitutionNamePlaceholder() + "_0").getValueAsString());
         assertTrue("city should be empty", form.getField(tmpl.getCityPlaceholder() + "_0").getValueAsString().isEmpty());
         assertTrue("state should be empty", form.getField(tmpl.getStatePlaceholder() + "_0").getValueAsString().isEmpty());
-    }
-
-    private void clearGeneratedMedicalProviders() {
-        TransactionWrapper.useTxn(handle -> {
-            JdbiMedicalProvider jdbiProvider = handle.attach(JdbiMedicalProvider.class);
-            for (String providerGuid : pdfInfo.getMedicalProviderRowsToDelete()) {
-                assertEquals(1, jdbiProvider.deleteByGuid(providerGuid));
-            }
-            pdfInfo.getMedicalProviderRowsToDelete().clear();
-        });
     }
 }
