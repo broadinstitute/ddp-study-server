@@ -16,11 +16,11 @@ USAGE:
   $NAME <COMMAND> [OPTIONS]...
 
 FLAGS:
-  -h, --help    Prints this help
+  -h, --help    Print this help
 
 COMMANDS:
-  read          Reads given vault path in JSON format
-  write         Prompts user with several confirmations before writing to vault
+  read          Read given vault path in JSON format
+  write         Prompt user with several confirmations before writing to vault
 
 EOM
 }
@@ -75,19 +75,17 @@ cmd_read() {
     print_read_usage
     exit 1
   fi
-  for arg in "$@"; do
-    if [[ "$arg" == '-h' ]] || [[ "$arg" == '--help' ]]; then
-      print_read_help
-      return
-    fi
-  done
 
+  local asked_for_help=false
   local positionals=()
   local out_file=""
   local raw_expr=""
 
   while [[ -n "$1" ]]; do
     case "$1" in
+      -h | --help)
+        asked_for_help=true
+        ;;
       -o | --output)
         out_file="$2"; shift
         if [[ -z "$out_file" ]]; then
@@ -109,17 +107,20 @@ cmd_read() {
     shift
   done
 
+  if $asked_for_help; then
+    print_read_help
+    return
+  fi
+
   if (( ${#positionals[@]} < 1 )); then
     echo "[err] missing PATH argument"
     exit 1
   fi
   local path="${positionals[0]}"
 
-  local data=""
+  local data=$(vault read --format=json --field=data "$path")
   if [[ -n "$raw_expr" ]]; then
-    data=$(vault read --format=json --field=data "$path" | jq -r "$raw_expr")
-  else
-    data=$(vault read --format=json --field=data "$path")
+    data=$(echo "$data" | jq -r "$raw_expr")
   fi
 
   if [[ -n "$out_file" ]]; then
@@ -133,22 +134,20 @@ cmd_read() {
 }
 
 cmd_write() {
-  for arg in "$@"; do
-    if [[ "$arg" == '-h' ]] || [[ "$arg" == '--help' ]]; then
-      print_write_help
-      return
-    fi
-  done
-  if (( $# < 2 )); then
+  if (( $# < 1 )); then
     print_write_usage
     exit 1
   fi
 
+  local asked_for_help=false
   local positionals=()
   local is_value=false
 
   while [[ -n "$1" ]]; do
     case "$1" in
+      -h | --help)
+        asked_for_help=true
+        ;;
       --value)
         is_value=true;
         ;;
@@ -158,6 +157,11 @@ cmd_write() {
     esac
     shift
   done
+
+  if $asked_for_help; then
+    print_write_help
+    return
+  fi
 
   if (( ${#positionals[@]} < 2 )); then
     echo "[err] missing PATH and/or FILE arguments"
