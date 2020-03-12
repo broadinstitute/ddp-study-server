@@ -347,6 +347,8 @@ public class StudyDataLoaderMain {
         JsonElement combinedConsentSurveyData = surveyData.getAsJsonObject().get("combinedconsentsurvey");
         JsonElement followupSurveyData = surveyData.getAsJsonObject().get("followupsurvey");
         JsonElement followupConsentSurveyData = surveyData.getAsJsonObject().get("followupconsentsurvey");
+        JsonElement prionConsentSurveyData = surveyData.getAsJsonObject().get("ConsentSurvey");
+        JsonElement medicalSurveyData = surveyData.getAsJsonObject().get("MedicalSurvey");
 
         surveyDataMap.put("datstatparticipantdata", datstatParticipantData);
         surveyDataMap.put("releasesurvey", releaseSurveyData);
@@ -357,6 +359,8 @@ public class StudyDataLoaderMain {
         surveyDataMap.put("combinedconsentsurvey", combinedConsentSurveyData);
         surveyDataMap.put("followupsurvey", followupSurveyData);
         surveyDataMap.put("followupconsentsurvey", followupConsentSurveyData);
+        surveyDataMap.put("ConsentSurvey", prionConsentSurveyData);
+        surveyDataMap.put("MedicalSurvey", medicalSurveyData);
         return surveyDataMap;
     }
 
@@ -605,6 +609,8 @@ public class StudyDataLoaderMain {
             Boolean hasFollowupConsents = false;
             Boolean isSuccess = false;
             Boolean previousRun = false;
+            Boolean hasPrionConsent = false;
+            Boolean hasMedical = false;
             StudyMigrationRun migrationRun;
 
             boolean auth0Collision = false;
@@ -653,6 +659,8 @@ public class StudyDataLoaderMain {
                     hasFollowup = (sourceData.get("followupsurvey") != null && !sourceData.get("followupsurvey").isJsonNull());
                     hasFollowupConsents = (sourceData.get("followupconsentsurvey") != null
                             && sourceData.get("followupconsentsurvey").getAsJsonArray().size() > 0);
+                    hasPrionConsent = (sourceData.get("ConsentSurvey") != null && !sourceData.get("ConsentSurvey").isJsonNull());
+                    hasMedical = (sourceData.get("MedicalSurvey") != null && !sourceData.get("MedicalSurvey").isJsonNull());
 
                     var answerDao = handle.attach(AnswerDao.class);
 
@@ -678,6 +686,34 @@ public class StudyDataLoaderMain {
                                 mappingData.get("aboutyousurvey"),
                                 studyDto, userDto, instanceDto,
                                 answerDao);
+                    }
+
+                    if (hasPrionConsent) {
+                        String activityCode = mappingData.get("ConsentSurvey").getAsJsonObject().get("activity_code").getAsString();
+                        ActivityInstanceDto instanceDto = dataLoader.createActivityInstance(sourceData.get(
+                                "ConsentSurvey"),
+                                userGuid, studyId,
+                                activityCode, createdAt,
+                                jdbiActivity,
+                                activityInstanceDao,
+                                activityInstanceStatusDao);
+                        dataLoader.loadPrionConsentSurveyData(handle, sourceData.get("ConsentSurvey"),
+                                mappingData.get("ConsentSurvey"),
+                                studyDto, userDto, instanceDto, answerDao);
+                    }
+
+                    if (hasMedical) {
+                        String activityCode = mappingData.get("MedicalSurvey").getAsJsonObject().get("activity_code").getAsString();
+                        ActivityInstanceDto instanceDto = dataLoader.createActivityInstance(sourceData.get(
+                                "MedicalSurvey"),
+                                userGuid, studyId,
+                                activityCode, createdAt,
+                                jdbiActivity,
+                                activityInstanceDao,
+                                activityInstanceStatusDao);
+                        dataLoader.loadMedicalSurveyData(handle, sourceData.get("MedicalSurvey"),
+                                mappingData.get("MedicalSurvey"),
+                                studyDto, userDto, instanceDto, answerDao);
                     }
 
                     if (hasConsent) {
