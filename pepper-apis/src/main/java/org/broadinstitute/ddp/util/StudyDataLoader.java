@@ -19,7 +19,6 @@ import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -59,12 +58,12 @@ import org.broadinstitute.ddp.db.dao.JdbiUserStudyLegacyData;
 import org.broadinstitute.ddp.db.dao.KitTypeDao;
 import org.broadinstitute.ddp.db.dao.MedicalProviderDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
+import org.broadinstitute.ddp.db.dto.ClientDto;
 import org.broadinstitute.ddp.db.dto.MedicalProviderDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.db.dto.UserProfileDto;
 import org.broadinstitute.ddp.exception.AddressVerificationException;
-import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.instance.answer.AgreementAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
@@ -105,15 +104,12 @@ public class StudyDataLoader {
     Map<Integer, Boolean> booleanValueLookup;
     Auth0Util auth0Util;
     String auth0Domain;
-    String auth0ClientId;
     String mgmtToken;
-    Long pepperClientId;
 
     public StudyDataLoader(Config cfg) {
 
         Config auth0Config = cfg.getConfig(ConfigFile.AUTH0);
         auth0Domain = auth0Config.getString(ConfigFile.DOMAIN);
-        auth0ClientId = auth0Config.getString(ConfigFile.BACKEND_AUTH0_TEST_CLIENT_ID);
 
         auth0Util = new Auth0Util(auth0Domain);
         Auth0MgmtTokenHelper tokenHelper = new Auth0MgmtTokenHelper(auth0Config.getString("managementApiClientId"),
@@ -185,7 +181,7 @@ public class StudyDataLoader {
     }
 
     public String loadParticipantData(Handle handle, JsonElement datstatData, JsonElement mappingData, String phoneNumber,
-                                      StudyDto studyDto, MailAddress address, OLCService olcService,
+                                      StudyDto studyDto, ClientDto clientDto, MailAddress address, OLCService olcService,
                                       AddressService addressService) throws Exception {
 
         //load data
@@ -206,7 +202,7 @@ public class StudyDataLoader {
         JdbiUser userDao = handle.attach(JdbiUser.class);
         JdbiClient clientDao = handle.attach(JdbiClient.class);
 
-        UserDto pepperUser = createLegacyPepperUser(userDao, clientDao, datstatData, userGuid, userHruid);
+        UserDto pepperUser = createLegacyPepperUser(userDao, clientDao, datstatData, userGuid, userHruid, clientDto);
 
         JdbiProfile jdbiProfile = handle.attach(JdbiProfile.class);
         JdbiLanguageCode jdbiLanguageCode = handle.attach(JdbiLanguageCode.class);
@@ -745,7 +741,7 @@ public class StudyDataLoader {
     }
 
     public UserDto createLegacyPepperUser(JdbiUser userDao, JdbiClient clientDao,
-                                          JsonElement data, String userGuid, String userHruid) throws Exception {
+                                          JsonElement data, String userGuid, String userHruid, ClientDto clientDto) throws Exception {
 
         String emailAddress = data.getAsJsonObject().get("datstat_email").getAsString();
 
@@ -754,14 +750,6 @@ public class StudyDataLoader {
         User newAuth0User = auth0Util.createAuth0User(emailAddress, randomPass, mgmtToken);
 
         String auth0UserId = newAuth0User.getId();
-
-        if (pepperClientId == null) {
-            Optional<Long> pepperClientIdEl = clientDao.getClientIdByAuth0ClientAndDomain(auth0ClientId, auth0Domain);
-            if (!pepperClientIdEl.isPresent()) {
-                throw new DDPException("No client found for " + auth0ClientId);
-            }
-            pepperClientId = pepperClientIdEl.get();
-        }
 
         String userCreatedAt = getStringValueFromElement(data, "ddp_created");
         LocalDateTime createdAtDate = LocalDateTime.parse(userCreatedAt, DateTimeFormatter.ofPattern(DATSTAT_DATE_FORMAT));
@@ -777,11 +765,11 @@ public class StudyDataLoader {
 
         String shortId = data.getAsJsonObject().get("ddp_participant_shortid").getAsString();
         String altpid = data.getAsJsonObject().get("datstat_altpid").getAsString();
-        long userId = userDao.insertMigrationUser(auth0UserId, userGuid, pepperClientId, userHruid,
+        long userId = userDao.insertMigrationUser(auth0UserId, userGuid, clientDto.getId(), userHruid,
                 altpid, shortId, createdAtMillis, updatedAtMillis);
         UserDto newUser = new UserDto(userId, auth0UserId, userGuid, userHruid, altpid,
                 shortId, createdAtMillis, updatedAtMillis);
-        auth0Util.setDDPUserGuidForAuth0User(newUser.getUserGuid(), auth0UserId, auth0ClientId, mgmtToken);
+        auth0Util.setDDPUserGuidForAuth0User(newUser.getUserGuid(), auth0UserId, clientDto.getAuth0ClientId(), mgmtToken);
 
         LOG.info("User created: Auth0UserId = " + auth0UserId + ", GUID = " + userGuid + ", HRUID = " + userHruid + ", ALTPID = "
                 + altpid);
