@@ -1,0 +1,106 @@
+version: 2.1
+references:
+  maven_cache_key: &maven_cache_key
+                   maven-deps-repo
+exit
+
+executors:
+  maven-executor:
+    docker: # todo: create new image endpoint, add this in admin tab for faster starts
+      - image: broadinstitute/study-server-build:back-end-2020-03-11A
+    working_directory: ~/repo/pepper-apis
+
+commands:
+  render-configs:
+    - run:
+        name: <<parameters.study_key>> determine deployment environment
+        command: |
+          case "<< pipeline.git.branch >>" in
+          develop)
+            DEPLOY_ENV=dev
+          ;;
+            study-server-to-appengine)
+            DEPLOY_ENV=dev
+          ;;
+          test)
+            DEPLOY_ENV=test
+            NG_BUILD_OPTS=--prod --aot
+          ;;
+          staging)
+            DEPLOY_ENV=staging
+            NG_BUILD_OPTS=--prod --aot
+          ;;
+          staging)
+            DEPLOY_ENV=prod
+            NG_BUILD_OPTS=--prod --aot
+          ;;
+          *)
+            echo "Cannot map << pipeline.git.branch >> to a deployment environment"
+            exit 17
+          ;;
+          esac
+          echo "Setting deployment ENVIRONMENT to $DEPLOY_ENV"
+          echo "export ENVIRONMENT=$DEPLOY_ENV" >> $BASH_ENV
+          source $BASH_ENV
+    - run:
+        name: show environment variables
+        command: env
+    - run:
+        name: api-build.sh
+        command: ./api-build.sh v1 $ENVIRONMENT . --config
+        environment:
+          USE_DOCKER: false
+
+
+  install-maven-dependencies:
+    description: "Install maven dependencies"
+    steps:
+      - checkout:
+          path: ~/repo
+      - run:
+          name: Show pipeline vars
+          command: |
+            echo "pipeline.id << pipeline.id >>"
+            echo "pipeline.number	 << pipeline.number	 >>"
+            echo "pipeline.project.git_url << pipeline.project.git_url >>"
+            echo "pipeline.project.type << pipeline.project.type >>"
+            echo "pipeline.git.tag << pipeline.git.tag >>"
+            echo "pipeline.git.branch << pipeline.git.branch >>"
+            echo "pipeline.git.revision << pipeline.git.revision >>"
+            echo "pipeline.git.base_revision << pipeline.git.base_revision >>"
+      - restore_cache:
+          key: *maven_cache_key
+      - run:
+          name: Run maven
+          command: |
+#            mvn --batch-mode --fail-never -file smoketest-pom.xml install package test
+#            mvn --batch-mode --fail-never -file housekeeping.xml install package test
+            mvn --batch-mode --fail-never -X -file pom.xml package /
+                     -Ditext.license=output-build-config/itextkey.xml /
+                     -Dddp.firecloudKeysDir=output-build-config/fc_keys /
+                     -Dconfig.file=output-build-config/testing-inmemorydb.conf /
+                     -Dtest=ActivityInstanceDaoTest
+          # working_directory: ~/repo/pepper-apis
+      - save_cache:
+          key: *maven_cache_key
+          paths:
+            - ~/.m2
+      - store_test_results: # uploads the test metadata from the `target/surefire-reports` directory so that it can show up in the CircleCI dashboard.
+          # Upload test results for display in Test Summary: https://circleci.com/docs/2.0/collect-test-data/
+          path: target/surefire-reports
+
+jobs:
+  maven-install:
+    executor:
+      name: maven-executor
+    steps:
+      - install-maven-dependencies
+
+workflows:
+  version: 2
+  build-deploy:
+    jobs:
+      - maven-install:
+          filters:
+            branches:
+              only: study-server-to-appengine
