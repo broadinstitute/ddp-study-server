@@ -5,8 +5,8 @@ references:
 
 executors:
   maven-executor:
-    docker: # todo: create new image endpoint, add this in admin tab for faster starts
-      - image: broadinstitute/study-server-build:back-end-2020-03-11A
+    machine:
+      image: ubuntu-1604:201903-01 
     working_directory: ~/repo/pepper-apis
 
 commands:
