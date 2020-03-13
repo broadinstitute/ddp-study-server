@@ -1,5 +1,7 @@
 package org.broadinstitute.ddp.model.activity.instance;
 
+import java.util.Optional;
+
 import org.broadinstitute.ddp.db.dto.ActivityInstanceStatusDto;
 import org.broadinstitute.ddp.model.activity.definition.ActivityDef;
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
@@ -62,8 +64,8 @@ public abstract class ActivityResponse {
         return participantId;
     }
 
-    public Boolean isReadonly() {
-        return isReadonly;
+    public boolean isReadonly() {
+        return Optional.ofNullable(isReadonly).orElse(false);
     }
 
     public long getCreatedAt() {

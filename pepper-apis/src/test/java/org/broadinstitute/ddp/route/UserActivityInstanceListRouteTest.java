@@ -159,7 +159,7 @@ public class UserActivityInstanceListRouteTest extends IntegrationTestSuite.Test
             }
         }
 
-        if (userActivity.isReadonly() != null && userActivity.isReadonly()) {
+        if (userActivity.isReadonly()) {
             hasReadonlyActivities = true;
         }
 

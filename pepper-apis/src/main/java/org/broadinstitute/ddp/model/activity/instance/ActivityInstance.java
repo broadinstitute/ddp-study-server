@@ -1,5 +1,7 @@
 package org.broadinstitute.ddp.model.activity.instance;
 
+import java.util.Optional;
+
 import javax.validation.constraints.NotNull;
 
 import com.google.gson.annotations.SerializedName;
@@ -71,8 +73,8 @@ public class ActivityInstance {
         return status;
     }
 
-    public Boolean isReadonly() {
-        return readonly;
+    public boolean isReadonly() {
+        return Optional.ofNullable(readonly).orElse(false);
     }
 
     public void makeReadonly() {
