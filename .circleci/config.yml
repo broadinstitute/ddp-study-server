@@ -74,6 +74,7 @@ commands:
             echo "pipeline.git.branch << pipeline.git.branch >>"
             echo "pipeline.git.revision << pipeline.git.revision >>"
             echo "pipeline.git.base_revision << pipeline.git.base_revision >>"
+      - render-configs      
       - run:
       # Our primary container isn't MYSQL so run a sleep command until it's ready.
           name: Waiting for MySQL to be ready
