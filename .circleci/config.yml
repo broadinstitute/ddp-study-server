@@ -96,14 +96,14 @@ commands:
       - run:
           name: Show all the config files
           command: |
-            more output-build-config/testing-circleci.conf
+            more output-config/testing-circleci.conf
       - run:
           name: Run maven
           command: |
             mvn --batch-mode --fail-never -file pom.xml package \
-                     -Ditext.license=output-build-config/itextkey.xml \
-                     -Dddp.firecloudKeysDir=output-build-config/fc_keys \
-                     -Dconfig.file=output-build-config/testing-circleci.conf \
+                     -Ditext.license=output-config/itextkey.xml \
+                     -Dddp.firecloudKeysDir=output-config/fc_keys \
+                     -Dconfig.file=output-config/testing-circleci.conf \
                      -Dtest=ActivityInstanceDaoTest
           #            mvn --batch-mode --fail-never -file smoketest-pom.xml install package test
 #            mvn --batch-mode --fail-never -file housekeeping.xml install package test           
