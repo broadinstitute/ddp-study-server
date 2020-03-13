@@ -5,8 +5,14 @@ references:
 
 executors:
   maven-executor:
-    machine:
-      image: ubuntu-1604:201903-01 
+    docker: # todo: create new image endpoint, add this in admin tab for faster starts
+      - image: broadinstitute/study-server-build:back-end-2020-03-11A
+      - image: circleci/mysql:5.7-ram
+        environment:
+          MYSQL_ROOT_PASSWORD: rootpw
+          MYSQL_DATABASE: test_db
+          MYSQL_USER: user
+          MYSQL_PASSWORD: passw0rd
     working_directory: ~/repo/pepper-apis
 
 commands:
@@ -69,19 +75,30 @@ commands:
             echo "pipeline.git.revision << pipeline.git.revision >>"
             echo "pipeline.git.base_revision << pipeline.git.base_revision >>"
       - run:
-          name: Install java 11
+      # Our primary container isn't MYSQL so run a sleep command until it's ready.
+          name: Waiting for MySQL to be ready
           command: |
-            sudo apt-get update
-            sudo apt-get install openjdk-11-jre openjdk-11-jdk
-      # - restore_cache:
-      #     key: *maven_cache_key
+            for i in `seq 1 10`;
+            do
+              nc -z 127.0.0.1 3306 && echo Success && exit 0
+              echo -n .
+              sleep 1
+            done
+            echo Failed waiting for MySQL && exit 1
+      - restore_cache:
+          key: *maven_cache_key
+      - run:
+          name: Setup test databases
+          command: |
+            mysql -h 127.0.0.1 -u user -ppassw0rd test_db --execute="CREATE DATABASE studyservicedb CHARACTER SET utf8 COLLATE utf8_general_ci"
+            mysql -h 127.0.0.1 -u user -ppassw0rd test_db --execute="CREATE DATABASE housekeepingdb CHARACTER SET utf8 COLLATE utf8_general_ci"
       - run:
           name: Run maven
           command: |
             mvn --batch-mode --fail-never -X -file pom.xml package \
                      -Ditext.license=output-build-config/itextkey.xml \
                      -Dddp.firecloudKeysDir=output-build-config/fc_keys \
-                     -Dconfig.file=output-build-config/testing-inmemorydb.conf \
+                     -Dconfig.file=output-build-config/testing-circleci.conf \
                      -Dtest=ActivityInstanceDaoTest
           #            mvn --batch-mode --fail-never -file smoketest-pom.xml install package test
 #            mvn --batch-mode --fail-never -file housekeeping.xml install package test           
