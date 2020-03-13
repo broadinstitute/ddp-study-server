@@ -2,7 +2,6 @@ version: 2.1
 references:
   maven_cache_key: &maven_cache_key
                    maven-deps-repo
-exit
 
 executors:
   maven-executor:
@@ -12,44 +11,45 @@ executors:
 
 commands:
   render-configs:
-    - run:
-        name: <<parameters.study_key>> determine deployment environment
-        command: |
-          case "<< pipeline.git.branch >>" in
-          develop)
-            DEPLOY_ENV=dev
-          ;;
-            study-server-to-appengine)
-            DEPLOY_ENV=dev
-          ;;
-          test)
-            DEPLOY_ENV=test
-            NG_BUILD_OPTS=--prod --aot
-          ;;
-          staging)
-            DEPLOY_ENV=staging
-            NG_BUILD_OPTS=--prod --aot
-          ;;
-          staging)
-            DEPLOY_ENV=prod
-            NG_BUILD_OPTS=--prod --aot
-          ;;
-          *)
-            echo "Cannot map << pipeline.git.branch >> to a deployment environment"
-            exit 17
-          ;;
-          esac
-          echo "Setting deployment ENVIRONMENT to $DEPLOY_ENV"
-          echo "export ENVIRONMENT=$DEPLOY_ENV" >> $BASH_ENV
-          source $BASH_ENV
-    - run:
-        name: show environment variables
-        command: env
-    - run:
-        name: api-build.sh
-        command: ./api-build.sh v1 $ENVIRONMENT . --config
-        environment:
-          USE_DOCKER: false
+    steps:
+      - run:
+          name: <<parameters.study_key>> determine deployment environment
+          command: |
+            case "<< pipeline.git.branch >>" in
+            develop)
+              DEPLOY_ENV=dev
+            ;;
+              study-server-to-appengine)
+              DEPLOY_ENV=dev
+            ;;
+            test)
+              DEPLOY_ENV=test
+              NG_BUILD_OPTS=--prod --aot
+            ;;
+            staging)
+              DEPLOY_ENV=staging
+              NG_BUILD_OPTS=--prod --aot
+            ;;
+            staging)
+              DEPLOY_ENV=prod
+              NG_BUILD_OPTS=--prod --aot
+            ;;
+            *)
+              echo "Cannot map << pipeline.git.branch >> to a deployment environment"
+              exit 17
+            ;;
+            esac
+            echo "Setting deployment ENVIRONMENT to $DEPLOY_ENV"
+            echo "export ENVIRONMENT=$DEPLOY_ENV" >> $BASH_ENV
+            source $BASH_ENV
+      - run:
+          name: show environment variables
+          command: env
+      - run:
+          name: api-build.sh
+          command: ./api-build.sh v1 $ENVIRONMENT . --config
+          environment:
+            USE_DOCKER: false
 
 
   install-maven-dependencies:
@@ -73,13 +73,13 @@ commands:
       - run:
           name: Run maven
           command: |
-#            mvn --batch-mode --fail-never -file smoketest-pom.xml install package test
-#            mvn --batch-mode --fail-never -file housekeeping.xml install package test
             mvn --batch-mode --fail-never -X -file pom.xml package /
                      -Ditext.license=output-build-config/itextkey.xml /
                      -Dddp.firecloudKeysDir=output-build-config/fc_keys /
                      -Dconfig.file=output-build-config/testing-inmemorydb.conf /
                      -Dtest=ActivityInstanceDaoTest
+          #            mvn --batch-mode --fail-never -file smoketest-pom.xml install package test
+#            mvn --batch-mode --fail-never -file housekeeping.xml install package test           
           # working_directory: ~/repo/pepper-apis
       - save_cache:
           key: *maven_cache_key
