@@ -11,8 +11,8 @@
 {
     # If set to true, tests will use MySQL from Docker container and dbUrl and housekeepingDbUrl will be ignored
     "useDisposableTestDbs": false,
-    "dbUrl": "jdbc:mysql://localhost:3306/studyservicedb?user=root&characterEncoding=UTF-8&useLegacyDatetimeCode=false&serverTimezone=UTC&useSSL=false&sessionVariables=innodb_strict_mode=on,tx_isolation='READ-COMMITTED',sql_mode='TRADITIONAL'",
-    "housekeepingDbUrl": "jdbc:mysql://localhost:3306/housekeepingdb?user=root&characterEncoding=UTF-8&useLegacyDatetimeCode=false&serverTimezone=UTC&useSSL=false&sessionVariables=innodb_strict_mode=on,tx_isolation='READ-COMMITTED',sql_mode='TRADITIONAL'",
+    "dbUrl": "jdbc:mysql://localhost:3306/studyservicedb?user=root&password=rootpw&characterEncoding=UTF-8&useLegacyDatetimeCode=false&serverTimezone=UTC&useSSL=false&sessionVariables=innodb_strict_mode=on,tx_isolation='READ-COMMITTED',sql_mode='TRADITIONAL'",
+    "housekeepingDbUrl": "jdbc:mysql://localhost:3306/housekeepingdb?user=root&password=rootpw&characterEncoding=UTF-8&useLegacyDatetimeCode=false&serverTimezone=UTC&useSSL=false&sessionVariables=innodb_strict_mode=on,tx_isolation='READ-COMMITTED',sql_mode='TRADITIONAL'",
     "maxConnections": 50,
     "defaultTimezone": "{{$testingConf.Data.defaultTimezone}}",
     "port": 5555,
