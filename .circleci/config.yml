@@ -19,7 +19,7 @@ commands:
   render-configs:
     steps:
       - run:
-          name: <<parameters.study_key>> determine deployment environment
+          name: Determine deployment environment for branch << pipeline.git.branch >>
           command: |
             case "<< pipeline.git.branch >>" in
             develop)
