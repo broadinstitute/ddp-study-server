@@ -27,6 +27,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.annotations.SerializedName;
 import com.typesafe.config.Config;
+import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.constants.Auth0Constants;
 import org.broadinstitute.ddp.constants.TestConstants;
 import org.broadinstitute.ddp.db.DBUtils;
@@ -55,9 +56,9 @@ public class TestingUserUtil {
                                                                   String auth0Secret,
                                                                   String studyGuid) throws Auth0Exception {
 
-        Auth0MgmtTokenHelper tokenHelper = Auth0Util.getManagementTokenHelperForStudy(handle, studyGuid);
-        Auth0Util auth0Util = new Auth0Util(tokenHelper.getDomain());
-        String mgmtToken = tokenHelper.getManagementApiToken();
+        var mgmtClient = Auth0Util.getManagementClientForStudy(handle, studyGuid);
+        Auth0Util auth0Util = new Auth0Util(mgmtClient.getDomain());
+        String mgmtToken = mgmtClient.getToken();
         final Auth0Util.TestingUser testUser = auth0Util.createTestingUser(mgmtToken);
         String auth0UserId = testUser.getAuth0Id();
 
@@ -105,8 +106,8 @@ public class TestingUserUtil {
             String mgmtApiClientId,
             String mgmApiClientSecret) throws Auth0Exception {
         Auth0Util auth0Util = new Auth0Util(auth0Domain);
-        Auth0MgmtTokenHelper tokenHelper = new Auth0MgmtTokenHelper(mgmtApiClientId, mgmApiClientSecret, auth0Domain);
-        String mgmtToken = tokenHelper.getManagementApiToken();
+        var mgmtClient = new Auth0ManagementClient(auth0Domain, mgmtApiClientId, mgmApiClientSecret);
+        String mgmtToken = mgmtClient.getToken();
         auth0Util.deleteAuth0User(auth0UserId, mgmtToken);
     }
 
@@ -146,20 +147,20 @@ public class TestingUserUtil {
                                                                  String studyGuid)
             throws Auth0Exception {
 
-        Auth0MgmtTokenHelper mgmtTokenHelper = Auth0Util.getManagementTokenHelperForStudy(handle, studyGuid);
-        CachedUser cachedUser = tryCachedUser(userGUID, auth0ClientId, mgmtTokenHelper.getDomain());
+        var mgmtClient = Auth0Util.getManagementClientForStudy(handle, studyGuid);
+        CachedUser cachedUser = tryCachedUser(userGUID, auth0ClientId, mgmtClient.getDomain());
         if (cachedUser != null) {
             LOG.info("Using cached test user");
             return cachedUser.asTestingUser();
         }
 
-        Auth0Util auth0Util = new Auth0Util(mgmtTokenHelper.getDomain());
-        String mgmtToken = mgmtTokenHelper.getManagementApiToken();
+        Auth0Util auth0Util = new Auth0Util(mgmtClient.getDomain());
+        String mgmtToken = mgmtClient.getToken();
 
         UserDto user = handle.attach(JdbiUser.class).findByUserGuid(userGUID);
         User testUser = auth0Util.getAuth0User(user.getAuth0UserId(), mgmtToken);
 
-        AuthAPI auth = new AuthAPI(mgmtTokenHelper.getDomain(), auth0ClientId, auth0Secret);
+        AuthAPI auth = new AuthAPI(mgmtClient.getDomain(), auth0ClientId, auth0Secret);
         AuthRequest authRequest = auth.login(username, password).setRealm(auth0ClientName);
         TokenHolder tokenHolder = authRequest.execute();
 

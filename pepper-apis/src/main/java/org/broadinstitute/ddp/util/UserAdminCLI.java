@@ -75,16 +75,16 @@ public class UserAdminCLI {
                 new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, 1, dbUrl));
         try {
             TransactionWrapper.useTxn(handle -> {
-                Auth0MgmtTokenHelper mgmtTokenHelper = Auth0Util.getManagementTokenHelperForStudy(handle, studyGuid);
+                var mgmtClient = Auth0Util.getManagementClientForStudy(handle, studyGuid);
 
                 ClientDto clientDto = handle.attach(JdbiClient.class).findByAuth0ClientId(auth0ClientId).get();
 
-                Auth0Util auth0Util = new Auth0Util(mgmtTokenHelper.getDomain());
-                String mgmtToken = mgmtTokenHelper.getManagementApiToken();
+                Auth0Util auth0Util = new Auth0Util(mgmtClient.getDomain());
+                String mgmtToken = mgmtClient.getToken();
 
                 JdbiUser jdbiUser = handle.attach(JdbiUser.class);
 
-                AuthAPI auth = new AuthAPI(mgmtTokenHelper.getDomain(), auth0ClientId, clientDto.getAuth0DecryptedSecret(encryptionSecret));
+                AuthAPI auth = new AuthAPI(mgmtClient.getDomain(), auth0ClientId, clientDto.getAuth0DecryptedSecret(encryptionSecret));
 
                 List<User> auth0Users = auth0Util.getAuth0UsersByEmail(userEmail, mgmtToken);
                 String hruid;
