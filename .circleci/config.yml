@@ -68,8 +68,12 @@ commands:
             echo "pipeline.git.branch << pipeline.git.branch >>"
             echo "pipeline.git.revision << pipeline.git.revision >>"
             echo "pipeline.git.base_revision << pipeline.git.base_revision >>"
-      # - restore_cache:
-      #     key: *maven_cache_key
+      - run:
+          name: Install java 11
+          command: |
+            sudo apt-get install openjdk-11-jre openjdk-11-jdk
+      - restore_cache:
+          key: *maven_cache_key
       - run:
           name: Run maven
           command: |
