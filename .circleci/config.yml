@@ -73,10 +73,10 @@ commands:
       - run:
           name: Run maven
           command: |
-            mvn --batch-mode --fail-never -X -file pom.xml package /
-                     -Ditext.license=output-build-config/itextkey.xml /
-                     -Dddp.firecloudKeysDir=output-build-config/fc_keys /
-                     -Dconfig.file=output-build-config/testing-inmemorydb.conf /
+            mvn --batch-mode --fail-never -X -file pom.xml package \
+                     -Ditext.license=output-build-config/itextkey.xml \
+                     -Dddp.firecloudKeysDir=output-build-config/fc_keys \
+                     -Dconfig.file=output-build-config/testing-inmemorydb.conf \
                      -Dtest=ActivityInstanceDaoTest
           #            mvn --batch-mode --fail-never -file smoketest-pom.xml install package test
 #            mvn --batch-mode --fail-never -file housekeeping.xml install package test           
