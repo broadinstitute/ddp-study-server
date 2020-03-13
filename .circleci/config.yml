@@ -90,8 +90,8 @@ commands:
       - run:
           name: Setup test databases
           command: |
-            mysql -h 127.0.0.1 -u root -p rootpw test_db --execute="CREATE DATABASE studyservicedb CHARACTER SET utf8 COLLATE utf8_general_ci"
-            mysql -h 127.0.0.1 -u root -p rootpw test_db --execute="CREATE DATABASE housekeepingdb CHARACTER SET utf8 COLLATE utf8_general_ci"
+            mysql -h 127.0.0.1 -u root --password=rootpw test_db --execute="CREATE DATABASE studyservicedb CHARACTER SET utf8 COLLATE utf8_general_ci"
+            mysql -h 127.0.0.1 -u root --password=rootpw test_db --execute="CREATE DATABASE housekeepingdb CHARACTER SET utf8 COLLATE utf8_general_ci"
       - run:
           name: Run maven
           command: |
