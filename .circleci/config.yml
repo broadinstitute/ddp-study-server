@@ -68,8 +68,8 @@ commands:
             echo "pipeline.git.branch << pipeline.git.branch >>"
             echo "pipeline.git.revision << pipeline.git.revision >>"
             echo "pipeline.git.base_revision << pipeline.git.base_revision >>"
-      - restore_cache:
-          key: *maven_cache_key
+      # - restore_cache:
+      #     key: *maven_cache_key
       - run:
           name: Run maven
           command: |
