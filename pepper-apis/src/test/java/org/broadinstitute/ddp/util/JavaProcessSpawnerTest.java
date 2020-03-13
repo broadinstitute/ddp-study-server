@@ -3,11 +3,13 @@ package org.broadinstitute.ddp.util;
 import java.util.concurrent.Future;
 
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.zeroturnaround.exec.ProcessResult;
 
+@Ignore
 public class JavaProcessSpawnerTest {
 
     public static final String TEST_OUTPUT = "Blah!";
