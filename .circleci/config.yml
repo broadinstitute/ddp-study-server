@@ -100,7 +100,7 @@ commands:
                      -Ditext.license=output-config/itextkey.xml \
                      -Dddp.firecloudKeysDir=output-config/fc_keys \
                      -Dconfig.file=output-config/testing-circleci.conf \
-                     install
+                     test -Dtest=GetWorkflowRouteTest
           #            mvn --batch-mode --fail-never -file smoketest-pom.xml install package test
 #            mvn --batch-mode --fail-never -file housekeeping.xml install package test           
           # working_directory: ~/repo/pepper-apis
