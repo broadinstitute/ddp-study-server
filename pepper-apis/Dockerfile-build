@@ -1,9 +1,19 @@
+# To make our config generation "compatible" with official dsdetoolbox, extract what is needed from it (this is not the base image)
+FROM broadinstitute/dsde-toolbox:latest AS dsdetoolbox
+
 FROM maven:3.6.0-jdk-11
 
-RUN true \
-  && apt-get update \
-  && apt-get install -y curl \
-  && apt-get install -y nano
+# Copying necessary artifacts to enable configure.rb that lives in our own repo.
+COPY --from=dsdetoolbox /usr/local/bin/consul-template /usr/local/bin/consul-template
+COPY --from=dsdetoolbox /etc/consul-template/config/config.json /etc/consul-template/config/config.json
+COPY --from=dsdetoolbox /usr/local/bin/vault /usr/local/bin/vault
+ENV VAULT_ADDR https://clotho.broadinstitute.org:8200
+
+#RUN true \
+#  && apt-get update \
+#  && apt-get install -y curl \
+#  && apt-get install -y nano
+
 
 RUN mkdir /app
 WORKDIR /app
@@ -15,6 +25,13 @@ ENV PATH="/app/google-cloud-sdk/bin:${PATH}"
 RUN gcloud components install beta --quiet
 RUN gcloud components install pubsub-emulator --quiet
 RUN gcloud components update --quiet
+
+
+RUN apt-get update && apt-get install -y \
+    ruby \
+    jq \
+   && rm -rf /var/lib/apt/lists/*
+
 ENV PUBSUB_EMULATOR_HOST "localhost:8442"
 
 CMD "/bin/bash"
