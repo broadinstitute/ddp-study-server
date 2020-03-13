@@ -36,7 +36,7 @@ public class ActivityInstanceDto {
             @ColumnName("created_at") long createdAtMillis,
             @ColumnName("first_completed_at") Long firstCompletedAt,
             @ColumnName("is_readonly") Boolean isReadonly,
-            @ColumnName("is_hidden") Boolean isHidden,
+            @ColumnName("is_hidden") boolean isHidden,
             @ColumnName("activity_instance_status_type") InstanceStatusType statusType,
             @ColumnName("activity_type") ActivityType activityType,
             @ColumnName("ondemand_trigger_id") Long onDemandTriggerId,
