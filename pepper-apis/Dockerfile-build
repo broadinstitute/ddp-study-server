@@ -30,6 +30,7 @@ RUN gcloud components update --quiet
 RUN apt-get update && apt-get install -y \
     ruby \
     jq \
+    default-mysql-client \
    && rm -rf /var/lib/apt/lists/*
 
 ENV PUBSUB_EMULATOR_HOST "localhost:8442"
