@@ -1,5 +1,7 @@
 package org.broadinstitute.ddp.db.dto;
 
+import java.util.Optional;
+
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 
@@ -83,7 +85,11 @@ public class ActivityInstanceDto {
         return firstCompletedAt;
     }
 
-    public Boolean isReadonly() {
+    public boolean isReadonly() {
+        return Optional.ofNullable(isReadonly).orElse(false);
+    }
+
+    public Boolean getReadonly() {
         return isReadonly;
     }
 

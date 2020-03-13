@@ -160,6 +160,10 @@ public class ActivityInstanceSummary implements TranslatedSummary {
         return Optional.ofNullable(readonly).orElse(false);
     }
 
+    public Boolean getReadonly() {
+        return readonly;
+    }
+
     @Override
     public String getIsoLanguageCode() {
         return isoLanguageCode;

@@ -68,6 +68,10 @@ public abstract class ActivityResponse {
         return Optional.ofNullable(isReadonly).orElse(false);
     }
 
+    public Boolean getReadonly() {
+        return isReadonly;
+    }
+
     public long getCreatedAt() {
         return createdAt;
     }

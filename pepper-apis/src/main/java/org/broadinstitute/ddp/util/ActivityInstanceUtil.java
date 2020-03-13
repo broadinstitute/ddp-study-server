@@ -23,7 +23,7 @@ public class ActivityInstanceUtil {
         ActivityInstanceDto activityInstanceDto = jdbiActivityInstance.getByActivityInstanceGuid(activityInstanceGuid)
                 .orElseThrow(IllegalArgumentException::new);
         // is_readonly flag in the activity instance overrides everything
-        Boolean isReadonly = activityInstanceDto.isReadonly();
+        Boolean isReadonly = activityInstanceDto.getReadonly();
         if (isReadonly != null) {
             return isReadonly;
         }

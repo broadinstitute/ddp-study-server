@@ -77,6 +77,10 @@ public class ActivityInstance {
         return Optional.ofNullable(readonly).orElse(false);
     }
 
+    public Boolean getReadonly() {
+        return readonly;
+    }
+
     public void makeReadonly() {
         this.readonly = true;
     }
