@@ -1,4 +1,4 @@
-version: 2
+version: 3
 
 notifications:
   - when: pull_request.opened
@@ -13,10 +13,11 @@ notifications:
 
 groups:
   test-deployment:
-    required: 2
-    users:
-      - zyme
-      - yufengwng
-
     conditions:
     - "base.ref == 'test'"
+    reviews:
+      required: 1
+    reviewers:
+      users:
+      - zyme
+      - yufengwng
