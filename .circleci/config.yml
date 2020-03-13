@@ -13,7 +13,7 @@ executors:
           MYSQL_DATABASE: test_db
           MYSQL_USER: user
           MYSQL_PASSWORD: passw0rd
-    resource_class: large
+    resource_class: medium+
     working_directory: ~/repo/pepper-apis
 
 commands:
