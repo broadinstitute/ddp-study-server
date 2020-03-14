@@ -1,12 +1,11 @@
 version: 3
 
-# random comment  
 extends: https://api.github.com/repos/example/pullapprove-config/contents/.pullapprove.yml
 
 notifications:
   - when: pull_request.opened
     comment: |
-      Hey @{{ author }}, looks like we're doing a deploy to @{{base}}.  Cool!
+      Hey @{{ author }}, it looks like we're doing a deploy to @{{base}}.  Cool!
       The reviewers will let you know when it's approved.
   - when: pullapprove.approved	 
     comment: |
