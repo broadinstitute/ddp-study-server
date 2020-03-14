@@ -5,7 +5,7 @@ extends: https://api.github.com/repos/example/pullapprove-config/contents/.pulla
 notifications:
   - when: pull_request.opened
     comment: "Hey @{{ author }}, looks like we're doing a deploy to @{{base}}.  Cool!  The reviewers will let you know when it's approved."
-  - when: pullapprove.approved	 
+  - when: pullapprove.approved
     comment: "Thanks @{{ author }}, your @{{base}} deployment has been approved.  Please follow the merge instructions."
 
 groups:
