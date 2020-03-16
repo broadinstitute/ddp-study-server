@@ -1,0 +1,27 @@
+
+{{with $environment := env "ENVIRONMENT"}}
+{{with $version := env "VERSION"}}
+{{with $conf := vault (printf "secret/pepper/%s/%s/conf" $environment $version)}}
+{{with $tcell := index $conf.Data "tcell"}}
+
+{
+  "version": 1,
+  "applications": [
+    {
+      "app_id": "{{$tcell.app_id}}",
+      "api_key": "{{$tcell.api_key}}",
+      "tcell_api_url": "https://us.agent.tcell.insight.rapid7.com/api/v1",
+      "tcell_input_url": "https://us.input.tcell.insight.rapid7.com/api/v1",
+      "js_agent_api_base_url": "https://us.agent.tcell.insight.rapid7.com/api/v1",
+      "logging_options":{
+	"enabled":true,
+	"level":"INFO"
+       }
+    }
+  ]
+}
+
+{{end}}
+{{end}}
+{{end}}
+{{end}}
