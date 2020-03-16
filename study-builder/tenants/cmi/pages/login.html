@@ -81,27 +81,26 @@
 
     var registerUrl = '';
     if (study_guid.toLowerCase() === 'angio') {
-        // arz fixme to read from client var
-        registerUrl = 'https://dev.ascproject.org/count-me-in';
-        headerLogo = 'https://storage.googleapis.com/cmi-study-dev-assets/angio/angiosarcoma-project-isotype.png';
+        registerUrl = '##ANGIO_BASE_URL##/count-me-in';
+        headerLogo = '##ASSETS_BUCKET_URL##/angio/angiosarcoma-project-isotype.png';
         headerText = 'Angiosarcoma Project';
         studyColor = '#ED933A';
         studyHelpEmail = 'info@ascproject.org';
     } else if (study_guid === 'cmi-brain') {
-        registerUrl = 'https://dev.braincancerproject.org/count-me-in';
+        registerUrl = '##BRAIN_BASE_URL##/count-me-in';
         headerText = 'Brain Cancer Project';
-        headerLogo = 'https://storage.googleapis.com/cmi-study-dev-assets/brain/brain-stripe.png';
+        headerLogo = '##ASSETS_BUCKET_URL##/brain/brain-stripe.png';
         studyColor = 'rgb(24, 130, 194)';
     } else if (study_guid === 'cmi-mbc') {
-        registerUrl = 'https://dev.mbcproject.org/count-me-in';
+        registerUrl = '##MBC_BASE_URL##/count-me-in';
         headerText = '';
-        headerLogo = 'https://storage.googleapis.com/cmi-study-dev-assets/mbc/project-logo.png';
+        headerLogo = '##ASSETS_BUCKET_URL##/mbc/project-logo.png';
         studyColor = '#2bb673';
     } else if (study_guid.toLowerCase() === 'cmi-osteo') {
-        registerUrl = 'https://dev.osproject.org/count-me-in';
+        registerUrl = '##OSTEO_BASE_URL##/count-me-in';
         studyColor = '#7154FF';
         headerText = '';
-        headerLogo = 'https://storage.googleapis.com/cmi-study-dev-assets/osteo/project-logo.png';
+        headerLogo = '##ASSETS_BUCKET_URL##/osteo/project-logo.png';
         if (mode === 'signup') {
             title = 'Create your account';
         }
@@ -152,8 +151,7 @@
         configurationBaseUrl: config.clientConfigurationBaseUrl,
         overrides: {
             __tenant: config.auth0Tenant,
-            __token_issuer: 'login-dev.joincountmein.org'}
-
+            __token_issuer: '##LOGIN_DOMAIN##'}
         // uncomment if you want small buttons for social providers
         // socialButtonStyle: 'small'
     };
