@@ -52,7 +52,7 @@ else
     MANIFEST=manifest.rb
 fi
 
-# configure outside the kdux host, with retries in case vault times out
+# Configure outside the kdux host, with retries in case vault times out
 for i in {1..3}; do
   ruby pepper-apis/configure.rb -y && break || sleep 3
 done
