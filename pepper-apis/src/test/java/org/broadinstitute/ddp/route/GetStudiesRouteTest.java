@@ -89,7 +89,7 @@ public class GetStudiesRouteTest extends IntegrationTestSuite.TestCase {
 
     private String buildGetStudiesUrl(String umbrellaGuid) {
         String url = RouteTestUtil.getTestingBaseUrl() + RouteConstants.API.STUDY_ALL;
-        return HttpUrl.parse(url).newBuilder().addQueryParameter(RouteConstants.QueryParam.UMBRELLA, umbrellaGuid).build().toString();
+        return HttpUrl.parse(url).newBuilder().addQueryParameter(RouteConstants.QueryParam.UMBRELLA_GUID, umbrellaGuid).build().toString();
     }
 
     @Test

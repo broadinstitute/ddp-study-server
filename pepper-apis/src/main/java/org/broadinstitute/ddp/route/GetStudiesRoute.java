@@ -40,14 +40,14 @@ public class GetStudiesRoute implements Route {
 
     @Override
     public Object handle(Request request, Response response) throws Exception {
-        final String umbrellaIdentifier = request.queryParams(RouteConstants.QueryParam.UMBRELLA);
+        String umbrellaGuid = request.queryParams(RouteConstants.QueryParam.UMBRELLA_GUID);
 
-        if (StringUtils.isBlank(umbrellaIdentifier)) {
+        if (StringUtils.isBlank(umbrellaGuid)) {
             ApiError error = new ApiError(ErrorCodes.REQUIRED_PARAMETER_MISSING, "Missing umbrella parameter");
             ResponseUtil.haltError(response, HttpStatus.SC_BAD_REQUEST, error);
         }
 
-        LOG.debug("Received request for summary of studies under {}", umbrellaIdentifier);
+        LOG.debug("Received request for summary of studies under {}", umbrellaGuid);
 
         List<LanguageRange> acceptLanguages;
         String acceptLanguageHeader = request.headers(RouteConstants.Header.ACCEPT_LANGUAGE);
@@ -63,7 +63,7 @@ public class GetStudiesRoute implements Route {
             JdbiUmbrellaStudy studyDao = handle.attach(JdbiUmbrellaStudy.class);
             JdbiUserStudyEnrollment enrollmentDao = handle.attach(JdbiUserStudyEnrollment.class);
 
-            List<StudyDto> studiesDto = studyDao.findByUmbrella(umbrellaIdentifier);
+            List<StudyDto> studiesDto = studyDao.findByUmbrellaGuid(umbrellaGuid);
             if (studiesDto.isEmpty()) {
                 ApiError error = new ApiError(ErrorCodes.NOT_FOUND, "No studies for umbrella");
                 ResponseUtil.haltError(response, HttpStatus.SC_NOT_FOUND, error);

@@ -174,6 +174,7 @@ public class RouteConstants {
         public static final String EMAIL  = "email";
         public static final String SUCCESS  = "success";
         public static final String UMBRELLA = "umbrella";
+        public static final String UMBRELLA_GUID = "umbrellaGuid";
         public static final String TYPEAHEAD_QUERY = "q";
         public static final String TYPEAHEAD_QUERY_LIMIT = "limit";
         public static final String ERROR_CODE = "errorCode";
