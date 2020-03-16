@@ -12,13 +12,13 @@ public class PasswordPolicy {
     public static final int MAX_PASSWORD_LENGTH = 128;
 
     private transient PolicyType type;
-    @SerializedName("minLength")
+    @SerializedName("minimumLength")
     private int minLength;
-    @SerializedName("minCharClasses")
+    @SerializedName("minimumCharacterClasses")
     private int minCharClasses;
-    @SerializedName("charClasses")
+    @SerializedName("characterClasses")
     private Set<CharClass> charClasses;
-    @SerializedName("maxRepeatedChars")
+    @SerializedName("maximumRepeatedCharacters")
     private Integer maxRepeatedChars;
 
     public static PasswordPolicy fromType(PolicyType type, Integer minLength) {
@@ -39,27 +39,27 @@ public class PasswordPolicy {
     }
 
     public static PasswordPolicy none(Integer minLength) {
-        minLength = (minLength == null ? PolicyType.NONE.getDefaultMinPasswordLength() : minLength);
+        minLength = (minLength != null ? minLength : PolicyType.NONE.getDefaultMinPasswordLength());
         return new PasswordPolicy(PolicyType.NONE, minLength, 0, CharClasses.empty(), null);
     }
 
     public static PasswordPolicy low(Integer minLength) {
-        minLength = (minLength == null ? PolicyType.LOW.getDefaultMinPasswordLength() : minLength);
+        minLength = (minLength != null ? minLength : PolicyType.LOW.getDefaultMinPasswordLength());
         return new PasswordPolicy(PolicyType.LOW, minLength, 0, CharClasses.empty(), null);
     }
 
     public static PasswordPolicy fair(Integer minLength) {
-        minLength = (minLength == null ? PolicyType.FAIR.getDefaultMinPasswordLength() : minLength);
+        minLength = (minLength != null ? minLength : PolicyType.FAIR.getDefaultMinPasswordLength());
         return new PasswordPolicy(PolicyType.FAIR, minLength, DEFAULT_MIN_CHAR_CLASSES, CharClasses.alphanumeric(), null);
     }
 
     public static PasswordPolicy good(Integer minLength) {
-        minLength = (minLength == null ? PolicyType.GOOD.getDefaultMinPasswordLength() : minLength);
+        minLength = (minLength != null ? minLength : PolicyType.GOOD.getDefaultMinPasswordLength());
         return new PasswordPolicy(PolicyType.GOOD, minLength, DEFAULT_MIN_CHAR_CLASSES, CharClasses.all(), null);
     }
 
     public static PasswordPolicy excellent(Integer minLength) {
-        minLength = (minLength == null ? PolicyType.EXCELLENT.getDefaultMinPasswordLength() : minLength);
+        minLength = (minLength != null ? minLength : PolicyType.EXCELLENT.getDefaultMinPasswordLength());
         return new PasswordPolicy(PolicyType.EXCELLENT, minLength, DEFAULT_MIN_CHAR_CLASSES, CharClasses.all(), DEFAULT_MAX_REPEATED_CHARS);
     }
 

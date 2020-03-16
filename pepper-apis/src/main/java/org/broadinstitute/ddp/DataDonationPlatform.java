@@ -297,9 +297,10 @@ public class DataDonationPlatform {
         post(API.REGISTRATION, new UserRegistrationRoute(interpreter), responseSerializer);
         post(API.TEMP_USERS, new CreateTemporaryUserRoute(userDao), responseSerializer);
 
-        // List available studies & get detailed information on a particular study
+        // Study related routes
         get(API.STUDY_ALL, new GetStudiesRoute(), responseSerializer);
         get(API.STUDY_DETAIL, new GetStudyDetailRoute(), responseSerializer);
+        get(API.STUDY_PASSWORD_POLICY, new GetStudyPasswordPolicyRoute(), responseSerializer);
 
         get(API.ADDRESS_COUNTRIES, new GetCountryAddressInfoSummariesRoute(), responseSerializer);
         get(API.ADDRESS_COUNTRY_DETAILS, new GetCountryAddressInfoRoute(), responseSerializer);
@@ -445,7 +446,6 @@ public class DataDonationPlatform {
 
         // Routes calling DSM
         get(API.PARTICIPANT_STATUS, new GetDsmParticipantStatusRoute(new DsmClient(cfg)), responseSerializer);
-        get(API.STUDY_PASSWORD_POLICY, new GetStudyPasswordPolicyRoute(), responseSerializer);
 
         patch(
                 API.UPDATE_USER_PASSWORD,

@@ -1872,23 +1872,23 @@ ParticipantStatusTrackingInfo.Kit:
 StudyPasswordPolicy:
   type: object
   required:
-    - minLength
-    - minCharClasses
-    - charClasses
-    - allowRepeatedChars
+    - minimumLength
+    - minimumCharacterClasses
+    - characterClasses
+    - maximumRepeatedCharacters
   properties:
-    minLength:
+    minimumLength:
       type: integer
       minimum: 1
       maximum: 128
       example: 8
-      description: minimum number of characters in password
-    minCharClasses:
+      description: Minimum number of characters in password
+    minimumCharacterClasses:
       type: integer
       minimum: 0
       example: 3
-      description: must have a character from at least this number of character classes
-    charClasses:
+      description: Must have a character from at least this number of character classes
+    characterClasses:
       type: array
       items:
         type: string
@@ -1899,12 +1899,12 @@ StudyPasswordPolicy:
           - SPECIAL
       minItems: 0
       example: [UPPER, LOWER, NUMBER]
-      description: set of character classes to look for in password
-    maxRepeatedChars:
+      description: Set of character classes to look for in password
+    maximumRepeatedCharacters:
       type: integer
       nullable: true
       example: 2
-      description: if non-null, no more than the specified number of identical characters are allowed consecutively. This value is inclusive (e.g. if the value is 2 `aa` is allowed, while `aaa` is not allowed).
+      description: If non-null, no more than the specified number of identical characters are allowed consecutively. This value is inclusive (e.g. if the value is 2, then `aa` is allowed while `aaa` is not allowed).
 
 #####
 #
