@@ -141,8 +141,8 @@ jobs:
     executor:
       name: maven-executor
     steps:
-      - install-maven-dependencies
       - install-tcell
+      - install-maven-dependencies
 
 workflows:
   version: 2
