@@ -22,16 +22,15 @@ commands:
       - run:
           name: Download tcell files from bucket
           command: |          
-            TAR_FILE_URL_PATTERN="gs://${BUILDS_BUCKET}/tcell-1.8.3.tar.gz"
-            TAR_FILE_URL=`gsutil ls $TAR_FILE_URL_PATTERN  | sort -r | head -1`
+            TAR_FILE_URL=`gsutil ls $TCELL_PATH  | sort -r | head -1`
 
             if [ -z $TAR_FILE_URL ]
             then
-              echo "Could not find tcell archive ${TAR_FILE_URL_PATTERN}"
+              echo "Could not find tcell archive ${TCELL_PATH}"
               exit 1
             fi
             TAR_FILE_PATH="/tmp/$(basename -- $TAR_FILE_URL)"
-            gsutil cp  $TAR_FILE_URL $TAR_FILE_PATH
+            gsutil -u broad-ddp-prod cp  $TAR_FILE_URL $TAR_FILE_PATH
             cd ~/repo/ddp-workspace
             TCELL_DIR="tcell"
             mkdir -p $TCELL_DIR && tar -xvf $TAR_FILE_PATH
@@ -71,6 +70,7 @@ commands:
             esac
             echo "Setting deployment ENVIRONMENT to $DEPLOY_ENV"
             echo "export ENVIRONMENT=$DEPLOY_ENV" >> $BASH_ENV
+	    echo 'export TCELL_PATH=ddp-tcell/tcell-1.8.3.tar.gz' >> $BASH_ENV
             source $BASH_ENV
       - run:
           name: show environment variables
