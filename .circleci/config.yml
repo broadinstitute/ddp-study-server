@@ -152,5 +152,5 @@ workflows:
           filters:
             branches:
               only:
-	        - study-server-to-appengine
-		- tcell-instrumentation
+                - study-server-to-appengine
+                - tcell-instrumentation
