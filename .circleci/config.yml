@@ -21,7 +21,7 @@ commands:
     steps:
       - run:
           name: Download tcell files from bucket
-	  command: |          
+          command: |          
             TAR_FILE_URL_PATTERN="gs://${BUILDS_BUCKET}/tcell-1.8.3.tar.gz"
             TAR_FILE_URL=`gsutil ls $TAR_FILE_URL_PATTERN  | sort -r | head -1`
 
