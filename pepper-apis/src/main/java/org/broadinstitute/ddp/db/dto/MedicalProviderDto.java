@@ -62,14 +62,21 @@ public class MedicalProviderDto {
             InstitutionType institutionType,
             PostPatchMedicalProviderRequestPayload requestPayload
     ) {
-        this.userMedicalProviderGuid = userMedicalProviderGuid;
-        this.userId = userId;
-        this.umbrellaStudyId = umbrellaStudyId;
-        this.institutionType = institutionType;
-        this.institutionName = requestPayload.getInstitutionName();
-        this.physicianName = requestPayload.getPhysicianName();
-        this.city = requestPayload.getCity();
-        this.state = requestPayload.getState();
+        this(
+                null,
+                userMedicalProviderGuid,
+                userId,
+                umbrellaStudyId,
+                institutionType,
+                requestPayload.getInstitutionName(),
+                requestPayload.getPhysicianName(),
+                requestPayload.getCity(),
+                requestPayload.getState(),
+                null,
+                null,
+                null,
+                null
+        );
     }
 
     public static MedicalProviderDto createUnspecifiedMedicalProvider(
