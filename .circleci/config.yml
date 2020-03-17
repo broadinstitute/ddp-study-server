@@ -17,6 +17,26 @@ executors:
     working_directory: ~/repo/pepper-apis
 
 commands:
+  install-tcell:
+    steps:
+      - run:
+          name: Download tcell files from bucket
+	  command: ||          
+            TAR_FILE_URL_PATTERN="gs://${BUILDS_BUCKET}/tcell-1.8.3.tar.gz"
+            TAR_FILE_URL=`gsutil ls $TAR_FILE_URL_PATTERN  | sort -r | head -1`
+
+            if [ -z $TAR_FILE_URL ]
+            then
+              echo "Could not find tcell archive ${TAR_FILE_URL_PATTERN}"
+              exit 1
+            fi
+            TAR_FILE_PATH="/tmp/$(basename -- $TAR_FILE_URL)"
+            gsutil cp  $TAR_FILE_URL $TAR_FILE_PATH
+            cd ~/repo/ddp-workspace
+	    TCELL_DIR="tcell"
+            mkdir -p $TCELL_DIR && tar -xvf $TAR_FILE_PATH
+            echo "Contents of extracted archive at $TCELL_DIR"
+            ls -l $TCELL_DIR
   render-configs:
     steps:
       - run:
@@ -27,6 +47,9 @@ commands:
               DEPLOY_ENV=dev
             ;;
               study-server-to-appengine)
+              DEPLOY_ENV=dev
+            ;;
+	      tcell-instrumentation)
               DEPLOY_ENV=dev
             ;;
             test)
@@ -119,6 +142,7 @@ jobs:
       name: maven-executor
     steps:
       - install-maven-dependencies
+      - install-tcell
 
 workflows:
   version: 2
@@ -127,4 +151,6 @@ workflows:
       - maven-install:
           filters:
             branches:
-              only: study-server-to-appengine
+              only:
+	        - study-server-to-appengine
+		- tcell-instrumentation
