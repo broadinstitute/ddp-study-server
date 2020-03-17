@@ -40,7 +40,7 @@ public class GetStudiesRoute implements Route {
 
     @Override
     public Object handle(Request request, Response response) throws Exception {
-        String umbrellaGuid = request.queryParams(RouteConstants.QueryParam.UMBRELLA_GUID);
+        String umbrellaGuid = request.queryParams(RouteConstants.QueryParam.UMBRELLA);
 
         if (StringUtils.isBlank(umbrellaGuid)) {
             ApiError error = new ApiError(ErrorCodes.REQUIRED_PARAMETER_MISSING, "Missing umbrella parameter");
