@@ -23,8 +23,9 @@ public class ActivityInstanceUtil {
         ActivityInstanceDto activityInstanceDto = jdbiActivityInstance.getByActivityInstanceGuid(activityInstanceGuid)
                 .orElseThrow(IllegalArgumentException::new);
         // is_readonly flag in the activity instance overrides everything
-        if (activityInstanceDto.isReadonly()) {
-            return true;
+        Boolean isReadonly = activityInstanceDto.getReadonly();
+        if (isReadonly != null) {
+            return isReadonly;
         }
         long studyActivityId = activityInstanceDto.getActivityId();
 
@@ -50,11 +51,11 @@ public class ActivityInstanceUtil {
             long createdAtMillis,
             String statusTypeCode,
             boolean isActivityWriteOnce,
-            boolean isActivityInstanceReadonly
+            Boolean isActivityInstanceReadonly
     ) {
         // is_readonly flag in the activity instance overrides everything
-        if (isActivityInstanceReadonly) {
-            return true;
+        if (isActivityInstanceReadonly != null) {
+            return isActivityInstanceReadonly;
         }
         return computeReadonly(isActivityWriteOnce, editTimeoutSec, InstanceStatusType.valueOf(statusTypeCode), createdAtMillis);
     }

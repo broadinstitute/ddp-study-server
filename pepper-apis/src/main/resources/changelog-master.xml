@@ -192,4 +192,5 @@
     <include file="db-changes/schema/DDP-4094-add-required-to-institution-physician-component.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-4378-normalize-activity-name.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-4366-study-language-table.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-4070-drop-not-null-constraint-for-is-readonly-column.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
