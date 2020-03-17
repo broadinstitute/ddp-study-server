@@ -49,7 +49,7 @@ commands:
               study-server-to-appengine)
               DEPLOY_ENV=dev
             ;;
-	      tcell-instrumentation)
+              tcell-instrumentation)
               DEPLOY_ENV=dev
             ;;
             test)
