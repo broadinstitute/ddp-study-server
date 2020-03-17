@@ -77,8 +77,8 @@ public class PostMedicalProviderRoute implements Route {
                             newMedicalProviderData
                     );
 
-                    int numCreated = insertMedicalProvider(handle, newMedicalProviderDto);
-                    boolean creationSucceeded = numCreated == 1;
+                    int numProvidersCreated = insertMedicalProvider(handle, newMedicalProviderDto);
+                    boolean creationSucceeded = numProvidersCreated == 1;
                     if (creationSucceeded) {
                         logMedicalProviderCreationSuccess(participantGuid, medicalProviderGuid, studyGuid);
                         queueDataForExport(handle, userDto.getUserId(), umbrellaStudyId);
