@@ -70,7 +70,7 @@ commands:
             esac
             echo "Setting deployment ENVIRONMENT to $DEPLOY_ENV"
             echo "export ENVIRONMENT=$DEPLOY_ENV" >> $BASH_ENV
-	    echo 'export TCELL_PATH=ddp-tcell/tcell-1.8.3.tar.gz' >> $BASH_ENV
+            echo 'export TCELL_PATH=ddp-tcell/tcell-1.8.3.tar.gz' >> $BASH_ENV
             source $BASH_ENV
       - run:
           name: show environment variables
