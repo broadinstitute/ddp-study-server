@@ -33,7 +33,7 @@ commands:
             TAR_FILE_PATH="/tmp/$(basename -- $TAR_FILE_URL)"
             gsutil cp  $TAR_FILE_URL $TAR_FILE_PATH
             cd ~/repo/ddp-workspace
-	    TCELL_DIR="tcell"
+            TCELL_DIR="tcell"
             mkdir -p $TCELL_DIR && tar -xvf $TAR_FILE_PATH
             echo "Contents of extracted archive at $TCELL_DIR"
             ls -l $TCELL_DIR
