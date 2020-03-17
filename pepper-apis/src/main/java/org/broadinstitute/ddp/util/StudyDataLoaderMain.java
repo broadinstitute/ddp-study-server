@@ -848,6 +848,9 @@ public class StudyDataLoaderMain {
 
             if (previousRun) {
                 migrationRun = new StudyMigrationRun(altpid, userGuid, previousRun, emailAddress);
+            } else if ("PRION".equals(studyGuid)) {
+                migrationRun = new StudyMigrationRun(altpid, userGuid, hasPrionConsent, hasMedical, isSuccess,
+                        previousRun, emailAddress, auth0Collision);
             } else {
                 migrationRun = new StudyMigrationRun(altpid, userGuid, hasAboutYou, hasConsent, hasBloodConsent, hasTissueConsent,
                         hasRelease, hasBloodRelease, false, hasFollowup, isSuccess, previousRun, emailAddress, auth0Collision);
@@ -951,36 +954,59 @@ public class StudyDataLoaderMain {
         } else {
             writer = Files.newBufferedWriter(Paths.get(".", reportFileName));
         }
-        CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT
-                .withNullString("")
-                .withHeader("AltPid", "Pepper User GUID", "Has About You", "Has Consent", "Has Blood Consent", "Has Tissue Consent",
+        CSVPrinter csvPrinter;
+        if (migrationRunReport != null && migrationRunReport.get(0) != null) {
+            if (migrationRunReport.get(0).getIsPrion()) {
+                csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT
+                    .withNullString("")
+                    .withHeader("AltPid", "Pepper User GUID", "Has Prion Consent", "Has Medical",
+                        "Email", "Previous Run", "Success/Failure", "Auth0 Collision"));
+            } else {
+                csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT
+                    .withNullString("")
+                    .withHeader("AltPid", "Pepper User GUID", "Has About You", "Has Consent", "Has Blood Consent", "Has Tissue Consent",
                         "Has Release", "Has Blood Release",
                         "Has Followup", "Email", "Previous Run", "Success/Failure", "Auth0 Collision"));
+            }
 
-        for (StudyMigrationRun run : migrationRunReport) {
-            addRunValues(run, csvPrinter);
+            for (StudyMigrationRun run : migrationRunReport) {
+                addRunValues(run, csvPrinter, run.getIsPrion());
+            }
+            csvPrinter.close();
         }
-        csvPrinter.close();
 
         LOG.info("Generated migration run report file: {} ", reportFileName);
     }
 
-    private void addRunValues(StudyMigrationRun run, CSVPrinter printer) throws IOException {
-        printer.printRecord(
-                run.getAltPid(),
-                run.getPepperUserGuid(),
-                run.getHasAboutYou(),
-                run.getHasConsent(),
-                run.getHasBloodConsent(),
-                run.getHasTissueConsent(),
-                run.getHasRelease(),
-                run.getHasBloodRelease(),
-                run.getHasFollowup(),
-                run.getEmailAddress(),
-                run.getPreviousRun(),
-                run.getSuccess(),
-                run.getAuth0Collision()
-        );
+    private void addRunValues(StudyMigrationRun run, CSVPrinter printer, boolean isPrion) throws IOException {
+        if (isPrion) {
+            printer.printRecord(
+                    run.getAltPid(),
+                    run.getPepperUserGuid(),
+                    run.getHasPrionConsent(),
+                    run.getHasMedical(),
+                    run.getEmailAddress(),
+                    run.getPreviousRun(),
+                    run.getSuccess(),
+                    run.getAuth0Collision()
+            );
+        } else {
+            printer.printRecord(
+                    run.getAltPid(),
+                    run.getPepperUserGuid(),
+                    run.getHasAboutYou(),
+                    run.getHasConsent(),
+                    run.getHasBloodConsent(),
+                    run.getHasTissueConsent(),
+                    run.getHasRelease(),
+                    run.getHasBloodRelease(),
+                    run.getHasFollowup(),
+                    run.getEmailAddress(),
+                    run.getPreviousRun(),
+                    run.getSuccess(),
+                    run.getAuth0Collision()
+            );
+        }
     }
 
     private class PreProcessedData {
