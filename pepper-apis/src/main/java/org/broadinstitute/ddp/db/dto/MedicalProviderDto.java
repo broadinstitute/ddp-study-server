@@ -1,8 +1,12 @@
 package org.broadinstitute.ddp.db.dto;
 
 import org.apache.commons.lang3.StringUtils;
+
+import org.broadinstitute.ddp.json.medicalprovider.PostPatchMedicalProviderRequestPayload;
 import org.broadinstitute.ddp.model.activity.types.InstitutionType;
+
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
+import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
 public class MedicalProviderDto {
 
@@ -20,6 +24,7 @@ public class MedicalProviderDto {
     private String legacyGuid;
     private String street;
 
+    @JdbiConstructor
     public MedicalProviderDto(
             Long userMedicalProviderId,
             String userMedicalProviderGuid,
@@ -48,6 +53,33 @@ public class MedicalProviderDto {
         this.phone = phone;
         this.legacyGuid = legacyGuid;
         this.street = street;
+    }
+
+    private MedicalProviderDto(
+            String userMedicalProviderGuid,
+            long userId,
+            long umbrellaStudyId,
+            InstitutionType institutionType,
+            PostPatchMedicalProviderRequestPayload requestPayload
+    ) {
+        this.userMedicalProviderGuid = userMedicalProviderGuid;
+        this.userId = userId;
+        this.umbrellaStudyId = umbrellaStudyId;
+        this.institutionType = institutionType;
+        this.institutionName = requestPayload.getInstitutionName();
+        this.physicianName = requestPayload.getPhysicianName();
+        this.city = requestPayload.getCity();
+        this.state = requestPayload.getState();
+    }
+
+    public static MedicalProviderDto createUnspecifiedMedicalProvider(
+            String medicalProviderGuid,
+            long userId,
+            long umbrellaStudyId,
+            InstitutionType institutionTypeCode,
+            PostPatchMedicalProviderRequestPayload requestPayload
+    ) {
+        return new MedicalProviderDto(medicalProviderGuid, userId, umbrellaStudyId, institutionTypeCode, requestPayload);
     }
 
     public boolean isBlank() {
