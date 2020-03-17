@@ -25,6 +25,7 @@ query
   | 'user' '.' study '.' form '.' question '.' questionPredicate                         # QuestionQuery
   | 'user' '.' study '.' form '.' question '.' 'answers' '.' predicate                   # DefaultLatestAnswerQuery
   | 'user' '.' study '.' form '.' instance '.' question '.' 'answers' '.' predicate      # AnswerQuery
+  | 'user' '.' 'profile' '.' profileDataQuery   # ProfileQuery
   ;
 
 study : 'studies' '[' STR ']' ;
@@ -58,6 +59,11 @@ predicate
   | 'hasDate' '(' ')'                       # HasDatePredicate
   | 'ageAtLeast' '(' INT ',' TIMEUNIT ')'   # AgeAtLeastPredicate
   | 'value' '(' ')' # ValueQuery    // Not exactly a predicate but putting this here eases implementation and backwards-compatibility.
+  ;
+
+// Queries to pull out various pieces of profile data
+profileDataQuery
+  : 'birthDate' '(' ')'   # ProfileBirthDateQuery
   ;
 
 

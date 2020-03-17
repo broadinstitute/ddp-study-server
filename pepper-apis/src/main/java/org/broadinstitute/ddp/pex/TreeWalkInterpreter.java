@@ -490,6 +490,28 @@ public class TreeWalkInterpreter implements PexInterpreter {
         }
     }
 
+    private Object evalProfileQuery(InterpreterContext ictx, PexParser.ProfileQueryContext ctx) {
+        UserProfileDto profileDto = ictx.getHandle()
+                .attach(JdbiProfile.class)
+                .getUserProfileByUserGuid(ictx.getUserGuid());
+        if (profileDto == null) {
+            throw new PexFetchException("Could not find profile for user " + ictx.getUserGuid());
+        }
+
+        PexParser.ProfileDataQueryContext queryCtx = ctx.profileDataQuery();
+        if (queryCtx instanceof PexParser.ProfileBirthDateQueryContext) {
+            LocalDate birthDate = profileDto.getBirthDate();
+            if (birthDate == null) {
+                String msg = String.format("User %s does not have birth date in profile", ictx.getUserGuid());
+                throw new PexFetchException(msg);
+            } else {
+                return birthDate;
+            }
+        } else {
+            throw new PexUnsupportedException("Unhandled profile data query: " + queryCtx.getText());
+        }
+    }
+
     /**
      * A parse tree visitor that returns PEX values, which are just Java objects.
      *
@@ -583,6 +605,11 @@ public class TreeWalkInterpreter implements PexInterpreter {
         @Override
         public Object visitDefaultLatestAnswerQuery(PexParser.DefaultLatestAnswerQueryContext ctx) {
             return interpreter.evalDefaultLatestAnswerQuery(ictx, ctx);
+        }
+
+        @Override
+        public Object visitProfileQuery(PexParser.ProfileQueryContext ctx) {
+            return interpreter.evalProfileQuery(ictx, ctx);
         }
     }
 }
