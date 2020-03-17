@@ -12,10 +12,13 @@ public class StudyMigrationRun {
     private Boolean hasBloodRelease;
     private Boolean hasLovedOne;
     private Boolean hasFollowup;
+    private Boolean hasPrionConsent;
+    private Boolean hasMedical;
     private Boolean isSuccess;
     private Boolean previousRun;
     private String emailAddress;
     private Boolean auth0Collision;
+    private Boolean isPrion;
 
     public StudyMigrationRun(String altPid, String pepperUserGuid, Boolean previousRun, String emailAddress) {
         this.altPid = altPid;
@@ -43,12 +46,38 @@ public class StudyMigrationRun {
         this.auth0Collision = auth0Collision;
     }
 
+    public StudyMigrationRun(String altPid, String pepperUserGuid, Boolean hasPrionConsent, Boolean hasMedical,
+                             Boolean isSuccess, Boolean previousRun,
+                             String emailAddress, Boolean auth0Collision) {
+        this.altPid = altPid;
+        this.pepperUserGuid = pepperUserGuid;
+        this.hasPrionConsent = hasPrionConsent;
+        this.hasMedical = hasMedical;
+        this.isSuccess = isSuccess;
+        this.previousRun = previousRun;
+        this.emailAddress = emailAddress;
+        this.auth0Collision = auth0Collision;
+        this.isPrion = true;
+    }
+
     public String getAltPid() {
         return altPid;
     }
 
     public String getPepperUserGuid() {
         return pepperUserGuid;
+    }
+
+    public Boolean getIsPrion() {
+        return isPrion;
+    }
+
+    public Boolean getHasPrionConsent() {
+        return hasPrionConsent;
+    }
+
+    public Boolean getHasMedical() {
+        return hasMedical;
     }
 
     public Boolean getHasAboutYou() {
