@@ -154,7 +154,6 @@ public class StudyDataLoaderTest {
         ActivityInstanceDto mockInstanceDto = mock(ActivityInstanceDto.class);
 
         when(mockDataLoader.answerTextQuestion(
-                any(Handle.class),
                 anyString(),
                 eq(pretendInstanceGuid),
                 eq(pretendUserGuid),
@@ -162,7 +161,6 @@ public class StudyDataLoaderTest {
                 any(AnswerDao.class))).thenReturn(null);
 
         when(mockDataLoader.answerDateQuestion(
-                any(Handle.class),
                 anyString(),
                 eq(pretendInstanceGuid),
                 eq(pretendUserGuid),
@@ -170,7 +168,6 @@ public class StudyDataLoaderTest {
                 any(AnswerDao.class))).thenReturn(null);
 
         when(mockDataLoader.answerPickListQuestion(
-                any(Handle.class),
                 anyString(),
                 eq(pretendInstanceGuid),
                 eq(pretendUserGuid),
@@ -414,7 +411,6 @@ public class StudyDataLoaderTest {
         ArgumentCaptor<String> pickListQPepperStableId = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<List<SelectedPicklistOption>> pickListQAnswerValue = ArgumentCaptor.forClass(List.class);
         verify(mockDataLoader, times(9)).answerPickListQuestion(
-                any(Handle.class),
                 pickListQPepperStableId.capture(),
                 anyString(),
                 anyString(),
@@ -424,7 +420,6 @@ public class StudyDataLoaderTest {
         ArgumentCaptor<String> dateQPepperStableId = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<DateValue> dateQAnswerValue = ArgumentCaptor.forClass(DateValue.class);
         verify(mockDataLoader, times(4)).answerDateQuestion(
-                any(Handle.class),
                 dateQPepperStableId.capture(),
                 anyString(),
                 anyString(),
@@ -434,7 +429,6 @@ public class StudyDataLoaderTest {
         ArgumentCaptor<String> textQPepperStableId = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<String> textQAnswerValue = ArgumentCaptor.forClass(String.class);
         verify(mockDataLoader, times(6)).answerTextQuestion(
-                any(Handle.class),
                 textQPepperStableId.capture(),
                 anyString(),
                 anyString(),
@@ -761,7 +755,6 @@ public class StudyDataLoaderTest {
         ArgumentCaptor<String> pickListQPepperStableId = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<List<SelectedPicklistOption>> pickListQAnswerValue = ArgumentCaptor.forClass(List.class);
         verify(mockDataLoader, times(11)).answerPickListQuestion(
-                any(Handle.class),
                 pickListQPepperStableId.capture(),
                 anyString(),
                 anyString(),
@@ -771,7 +764,6 @@ public class StudyDataLoaderTest {
         ArgumentCaptor<String> dateQPepperStableId = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<DateValue> dateQAnswerValue = ArgumentCaptor.forClass(DateValue.class);
         verify(mockDataLoader, times(3)).answerDateQuestion(
-                any(Handle.class),
                 dateQPepperStableId.capture(),
                 anyString(),
                 anyString(),
@@ -781,7 +773,6 @@ public class StudyDataLoaderTest {
         ArgumentCaptor<String> textQPepperStableId = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<String> textQAnswerValue = ArgumentCaptor.forClass(String.class);
         verify(mockDataLoader, times(2)).answerTextQuestion(
-                any(Handle.class),
                 textQPepperStableId.capture(),
                 anyString(),
                 anyString(),
@@ -791,7 +782,6 @@ public class StudyDataLoaderTest {
         ArgumentCaptor<String> boolQPepperStableId = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<Boolean> boolQAnswerValue = ArgumentCaptor.forClass(Boolean.class);
         verify(mockDataLoader, times(0)).answerBooleanQuestion(
-                any(Handle.class),
                 boolQPepperStableId.capture(),
                 anyString(),
                 anyString(),
@@ -888,7 +878,6 @@ public class StudyDataLoaderTest {
         ArgumentCaptor<String> dateValueStableId = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<DateValue> dateValueAnswerValue = ArgumentCaptor.forClass(DateValue.class);
         verify(mockDataLoader, times(1)).answerDateQuestion(
-                any(Handle.class),
                 dateValueStableId.capture(),
                 anyString(),
                 anyString(),
@@ -898,7 +887,6 @@ public class StudyDataLoaderTest {
         ArgumentCaptor<String> textQPepperStableId = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<String> textQAnswerValue = ArgumentCaptor.forClass(String.class);
         verify(mockDataLoader, times(1)).answerTextQuestion(
-                any(Handle.class),
                 textQPepperStableId.capture(),
                 anyString(),
                 anyString(),
@@ -952,7 +940,6 @@ public class StudyDataLoaderTest {
         ArgumentCaptor<String> dateValueStableId = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<DateValue> dateValueAnswerValue = ArgumentCaptor.forClass(DateValue.class);
         verify(mockDataLoader, times(2)).answerDateQuestion(
-                any(Handle.class),
                 dateValueStableId.capture(),
                 anyString(),
                 anyString(),
@@ -962,7 +949,6 @@ public class StudyDataLoaderTest {
         ArgumentCaptor<String> textQPepperStableId = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<String> textQAnswerValue = ArgumentCaptor.forClass(String.class);
         verify(mockDataLoader, times(3)).answerTextQuestion(
-                any(Handle.class),
                 textQPepperStableId.capture(),
                 anyString(),
                 anyString(),
