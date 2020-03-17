@@ -297,7 +297,7 @@ public class ActivityInstanceDao {
 
                     Long editTimeoutSec = (Long) rs.getObject(SqlConstants.StudyActivityTable.EDIT_TIMEOUT_SEC);
                     long createdAtMillis = rs.getLong(SqlConstants.ActivityInstanceTable.CREATED_AT);
-                    boolean isActivityInstanceReadonly = rs.getBoolean(SqlConstants.ActivityInstanceTable.IS_READONLY);
+                    Boolean isActivityInstanceReadonly = (Boolean)rs.getObject(SqlConstants.ActivityInstanceTable.IS_READONLY);
                     String languageCode = rs.getString(SqlConstants.LanguageCodeTable.CODE);
                     String activityTypeName = rs.getString(SqlConstants.ActivityInstanceTable.TYPE_NAME);
 
