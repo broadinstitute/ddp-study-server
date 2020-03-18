@@ -8,7 +8,7 @@ get:
     - in: query
       name: umbrella
       required: true
-      description: the identifier of the umbrella to return a list of studies for
+      description: the GUID of the umbrella to return a list of studies for
       schema:
         type: string
   responses:
