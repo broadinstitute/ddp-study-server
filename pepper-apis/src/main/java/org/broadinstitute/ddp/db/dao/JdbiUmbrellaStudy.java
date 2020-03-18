@@ -52,9 +52,9 @@ public interface JdbiUmbrellaStudy extends SqlObject {
             + " from umbrella_study as us"
             + " join umbrella as u on us.umbrella_id = u.umbrella_id"
             + " left join olc_precision op on op.olc_precision_id = us.olc_precision_id"
-            + " where u.umbrella_name = :umbrella")
+            + " where u.umbrella_guid = :umbrellaGuid")
     @RegisterConstructorMapper(StudyDto.class)
-    List<StudyDto> findByUmbrella(@Bind("umbrella") String umbrella);
+    List<StudyDto> findByUmbrellaGuid(@Bind("umbrellaGuid") String umbrellaGuid);
 
     @SqlQuery("select us.umbrella_study_id, us.umbrella_id, us.study_name, us.guid, us.irb_password, us.web_base_url, us.auth0_tenant_id,"
             + " op.olc_precision_code, us.share_participant_location, us.study_email, us.enable_data_export"
