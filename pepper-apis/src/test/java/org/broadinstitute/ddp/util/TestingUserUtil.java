@@ -148,16 +148,19 @@ public class TestingUserUtil {
             throws Auth0Exception {
 
         var mgmtClient = Auth0Util.getManagementClientForStudy(handle, studyGuid);
+        UserDto user = handle.attach(JdbiUser.class).findByUserGuid(userGUID);
         CachedUser cachedUser = tryCachedUser(userGUID, auth0ClientId, mgmtClient.getDomain());
         if (cachedUser != null) {
-            LOG.info("Using cached test user");
-            return cachedUser.asTestingUser();
+            if (cachedUser.getId() == user.getUserId()) {
+                LOG.info("Using cached test user");
+                return cachedUser.asTestingUser();
+            } else {
+                LOG.warn("Cached test user id doesn't match what's in database, not using");
+            }
         }
 
         Auth0Util auth0Util = new Auth0Util(mgmtClient.getDomain());
         String mgmtToken = mgmtClient.getToken();
-
-        UserDto user = handle.attach(JdbiUser.class).findByUserGuid(userGUID);
         User testUser = auth0Util.getAuth0User(user.getAuth0UserId(), mgmtToken);
 
         AuthAPI auth = new AuthAPI(mgmtClient.getDomain(), auth0ClientId, auth0Secret);

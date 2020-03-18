@@ -88,6 +88,11 @@ public interface UserDao extends SqlObject {
     Optional<User> findUserByGuid(@Bind("guid") String userGuid);
 
     @UseStringTemplateSqlLocator
+    @SqlQuery("queryUserByHruid")
+    @RegisterConstructorMapper(User.class)
+    Optional<User> findUserByHruid(@Bind("hruid") String userHruid);
+
+    @UseStringTemplateSqlLocator
     @SqlQuery("queryUserByAuth0UserId")
     @RegisterConstructorMapper(User.class)
     Optional<User> findUserByAuth0UserId(@Bind("auth0UserId") String auth0UserId, @Bind("auth0TenantId") long auth0TenantId);

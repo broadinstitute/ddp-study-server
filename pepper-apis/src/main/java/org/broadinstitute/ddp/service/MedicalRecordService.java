@@ -9,15 +9,15 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.AnswerSql;
-import org.broadinstitute.ddp.db.dao.JdbiActivityMapping;
 import org.broadinstitute.ddp.json.consent.ConsentSummary;
 import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
 import org.broadinstitute.ddp.model.activity.instance.ConsentElection;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
-import org.broadinstitute.ddp.model.activity.types.ActivityMappingType;
-import org.broadinstitute.ddp.model.dsm.StudyActivityMapping;
+import org.broadinstitute.ddp.model.study.ActivityMapping;
+import org.broadinstitute.ddp.model.study.ActivityMappingType;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,9 +47,9 @@ public class MedicalRecordService {
     public Optional<DateValue> getDateOfDiagnosis(Handle handle, long participantUserId, long studyId) {
         var answerSql = handle.attach(AnswerSql.class);
 
-        Map<Long, StudyActivityMapping> mappings = handle.attach(JdbiActivityMapping.class)
-                .getActivityMappingForStudyAndActivityType(studyId, ActivityMappingType.DATE_OF_DIAGNOSIS)
-                .collect(Collectors.toMap(StudyActivityMapping::getStudyActivityId, Function.identity()));
+        Map<Long, ActivityMapping> mappings = handle.attach(ActivityDao.class)
+                .findActivityMappings(studyId, ActivityMappingType.DATE_OF_DIAGNOSIS)
+                .collect(Collectors.toMap(ActivityMapping::getActivityId, Function.identity()));
 
         return handle.attach(ActivityInstanceDao.class)
                 .findBaseResponsesByStudyAndUserIds(studyId, Set.of(participantUserId), true, mappings.keySet())
@@ -74,9 +74,9 @@ public class MedicalRecordService {
     public Optional<DateValue> getDateOfBirth(Handle handle, long participantUserId, long studyId) {
         var answerSql = handle.attach(AnswerSql.class);
 
-        Map<Long, StudyActivityMapping> mappings = handle.attach(JdbiActivityMapping.class)
-                .getActivityMappingForStudyAndActivityType(studyId, ActivityMappingType.DATE_OF_BIRTH)
-                .collect(Collectors.toMap(StudyActivityMapping::getStudyActivityId, Function.identity()));
+        Map<Long, ActivityMapping> mappings = handle.attach(ActivityDao.class)
+                .findActivityMappings(studyId, ActivityMappingType.DATE_OF_BIRTH)
+                .collect(Collectors.toMap(ActivityMapping::getActivityId, Function.identity()));
 
         return handle.attach(ActivityInstanceDao.class)
                 .findBaseResponsesByStudyAndUserIds(studyId, Set.of(participantUserId), true, mappings.keySet())
@@ -102,13 +102,13 @@ public class MedicalRecordService {
      */
     public ParticipantConsents fetchBloodAndTissueConsents(Handle handle, long participantUserId, String participantGuid,
                                                            long studyId, String studyGuid) {
-        JdbiActivityMapping jdbiActivityMapping = handle.attach(JdbiActivityMapping.class);
-        Map<Long, StudyActivityMapping> bloodMappings = jdbiActivityMapping
-                .getActivityMappingForStudyAndActivityType(studyId, ActivityMappingType.BLOOD)
-                .collect(Collectors.toMap(StudyActivityMapping::getStudyActivityId, Function.identity()));
-        Map<Long, StudyActivityMapping> tissueMappings = jdbiActivityMapping
-                .getActivityMappingForStudyAndActivityType(studyId, ActivityMappingType.TISSUE)
-                .collect(Collectors.toMap(StudyActivityMapping::getStudyActivityId, Function.identity()));
+        var activityDao = handle.attach(ActivityDao.class);
+        Map<Long, ActivityMapping> bloodMappings = activityDao
+                .findActivityMappings(studyId, ActivityMappingType.BLOOD)
+                .collect(Collectors.toMap(ActivityMapping::getActivityId, Function.identity()));
+        Map<Long, ActivityMapping> tissueMappings = activityDao
+                .findActivityMappings(studyId, ActivityMappingType.TISSUE)
+                .collect(Collectors.toMap(ActivityMapping::getActivityId, Function.identity()));
 
         Set<Long> activityIds = new HashSet<>();
         activityIds.addAll(bloodMappings.keySet());
@@ -129,7 +129,7 @@ public class MedicalRecordService {
     }
 
     private boolean determineElectionStatus(Handle handle, String participantGuid, String studyGuid, ActivityMappingType mappingType,
-                                            Map<Long, StudyActivityMapping> mappings, List<ActivityResponse> instances) {
+                                            Map<Long, ActivityMapping> mappings, List<ActivityResponse> instances) {
         ActivityResponse instance = instances.stream()
                 .filter(inst -> mappings.containsKey(inst.getActivityId()))
                 .findFirst()
