@@ -54,8 +54,8 @@ paths:
     $ref: 'endpoints/join.mailing.list.yml'
   /studies/{study}:
     $ref: 'endpoints/studies.study.yml'
-  /studies/{study}/password-requirements:
-    $ref: 'endpoints/studies.password-requirements.yml'
+  /studies/{study}/password-policy:
+    $ref: 'endpoints/studies.password-policy.yml'
   /studies/{study}/suggestions/drugs:
     $ref: 'endpoints/studies.suggestions.drugs.yml'
   /studies/{study}/suggestions/cancers:

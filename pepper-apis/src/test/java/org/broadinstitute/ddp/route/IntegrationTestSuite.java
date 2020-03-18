@@ -113,7 +113,7 @@ import org.slf4j.LoggerFactory;
         GetDsmDrugSuggestionsRouteTest.class,
         GetParticipantInfoRouteTest.class,
         ListCancersRouteTest.class,
-        GetStudyPasswordRequirementsRouteTest.class,
+        GetStudyPasswordPolicyRouteTest.class,
         UpdateUserPasswordRouteTest.class,
         UpdateUserEmailRouteTest.class,
         GetStudiesRouteTest.class,

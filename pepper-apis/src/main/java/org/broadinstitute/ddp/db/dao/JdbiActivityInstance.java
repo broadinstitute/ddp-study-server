@@ -95,7 +95,7 @@ public interface JdbiActivityInstance extends SqlObject {
 
     @SqlUpdate("update activity_instance set is_readonly = :isReadonly where activity_instance_guid "
             + "= :activityInstanceGuid")
-    int updateIsReadonlyByGuid(boolean isReadonly, String activityInstanceGuid);
+    int updateIsReadonlyByGuid(Boolean isReadonly, String activityInstanceGuid);
 
     @SqlUpdate("update activity_instance set first_completed_at = :timestamp"
             + " where activity_instance_id = :id and first_completed_at is null")
