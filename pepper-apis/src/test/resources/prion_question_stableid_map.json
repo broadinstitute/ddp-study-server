@@ -39,6 +39,7 @@
             "name": "independently_consent",
             "stable_id": "prion_consent_s6_consent_type",
             "type": "Picklist",
+            "source_type": "integer",
             "options": [
               {
                 "name": "prion_consent_s6_INDEPENDENT_YES",
@@ -98,15 +99,13 @@
           {
             "name": "participant_birth_year",
             "stable_id": "prion_medical_birth_year",
-            "type": "Date",
-            "source_type": "string",
-            "format": "yyyy"
+            "type": "string"
           },
           {
             "name": "participant_gender",
             "stable_id": "prion_medical_gender",
             "type": "Picklist",
-            "source_type": "string",
+            "source_type": "integer",
             "options": [
               {
                 "name": "FEMALE",
@@ -140,32 +139,45 @@
           {
             "name": "participant_address_country",
             "stable_id": "prion_medical_country",
-            "type": "Picklist"
+            "type": "Picklist",
+            "source_type": "string",
+            "options": null
           },
           {
             "name": "current_status",
             "stable_id": "prion_medical_disease_status",
             "type": "Picklist",
-            "source_type": "int",
+            "source_type": "integer",
             "options": [
               {
-                "name": "SYMPTOMATIC",
-                "type": "integer"
+                "type": "integer",
+                "stable_id": "SYMPTOMATIC"
               },
               {
-                "name": "AT_RISK",
-                "type": "integer"
+                "type": "integer",
+                "stable_id": "AT_RISK"
               },
               {
-                "name": "CONTROL",
-                "type": "integer"
+                "type": "integer",
+                "stable_id": "CONTROL"
               }
             ]
           },
           {
             "name": "doctor_diagnosed",
             "stable_id": "prion_medical_doctor_diagnosed",
-            "type": "Picklist"
+            "type": "Picklist",
+            "source_type": "integer",
+            "options": [
+              {
+                "type": "integer",
+                "stable_id": "DIAGNOSED_NO"
+              },
+              {
+                "type": "integer",
+                "stable_id": "DIAGNOSED_YES"
+              }
+            ]
           },
           {
             "name": "control",
@@ -213,7 +225,9 @@
           {
             "name": "diagnosis_location_country",
             "stable_id": "prion_medical_diagnosis_location_country",
-            "type": "Picklist"
+            "type": "Picklist",
+            "source_type": "string",
+            "options": null
           },
           {
             "name": "diagnosis_date",
@@ -223,17 +237,70 @@
           {
             "name": "diagnosis_date_estimated",
             "stable_id": "prion_medical_diagnosis_date_estimated",
-            "type": "Picklist"
+            "type": "Picklist",
+            "source_type": "integer",
+            "options": [
+              {
+                "type": "integer",
+                "stable_id": "estimated_yes"
+              }
+            ]
           },
           {
             "name": "prion_subtype",
             "stable_id": "prion_medical_subtype",
-            "type": "Picklist"
+            "type": "Picklist",
+            "source_type": "integer",
+            "options": [
+              {
+                "type": "integer",
+                "stable_id": "CJD"
+              },
+              {
+                "type": "integer",
+                "stable_id": "FFI"
+              },
+              {
+                "type": "integer",
+                "stable_id": "GSS"
+              },
+              {
+                "type": "integer",
+                "stable_id": "VPSPr"
+              },
+              {
+                "type": "integer",
+                "stable_id": "PSA"
+              },
+              {
+                "type": "integer",
+                "stable_id": "KURU"
+              },
+              {
+                "type": "integer",
+                "stable_id": "vCJD"
+              },
+              {
+                "type": "integer",
+                "stable_id": "sFI"
+              }
+            ]
           },
           {
             "name": "participant_belief",
             "stable_id": "prion_medical_participant_belief",
-            "type": "Picklist"
+            "type": "Picklist",
+            "source_type": "integer",
+            "options": [
+              {
+                "type": "integer",
+                "stable_id": "NO"
+              },
+              {
+                "type": "integer",
+                "stable_id": "YES"
+              }
+            ]
           },
           {
             "name": "earliest_symptom",
@@ -243,12 +310,30 @@
           {
             "name": "earliest_symptom_estimated",
             "stable_id": "prion_medical_earliest_symptom_est",
-            "type": "Picklist"
+            "type": "Picklist",
+            "source_type": "integer",
+            "options": [
+              {
+                "type": "integer",
+                "stable_id": "ESTIMATED_DATE"
+              }
+            ]
           },
           {
             "name": "family_history",
             "stable_id": "prion_medical_family_history",
-            "type": "Picklist"
+            "type": "Picklist",
+            "source_type": "integer",
+            "options": [
+              {
+                "type": "integer",
+                "stable_id": "NO"
+              },
+              {
+                "type": "integer",
+                "stable_id": "YES"
+              }
+            ]
           },
           {
             "name": "genetic_testing",
