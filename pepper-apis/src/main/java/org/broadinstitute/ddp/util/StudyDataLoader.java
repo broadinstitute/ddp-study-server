@@ -387,12 +387,10 @@ public class StudyDataLoader {
             instanceCurrentStatus = getActivityInstanceStatus(submissionStatus, ddpCreatedAt, ddpLastUpdatedAt, ddpCompletedAt);
         }
 
-        // Read only is always false for things that aren't consent- we rely on the user being terminated to show read only activities
-        boolean isReadonly = false;
-        if ((activityCode == "CONSENT" || activityCode == "TISSUECONSENT" || activityCode == "BLOODCONSENT")
-                && instanceCurrentStatus == InstanceStatusType.COMPLETE) {
-            isReadonly = true;
-        }
+        // Read only is always undefined for things that aren't consent- we rely on the user being terminated to show read only activities
+        boolean itIsCompletedConsent = (activityCode == "CONSENT" || activityCode == "TISSUECONSENT" || activityCode == "BLOODCONSENT")
+                && instanceCurrentStatus == InstanceStatusType.COMPLETE;
+        Boolean isReadonly = itIsCompletedConsent ? true : null;
         ActivityInstanceDto dto = activityInstanceDao
                 .insertInstance(studyActivityId, participantGuid, participantGuid, InstanceStatusType.CREATED,
                         isReadonly,

@@ -64,7 +64,7 @@ public class ActivityInstanceCreationEventAction extends EventAction {
                 studyActivityId,
                 signal.getParticipantId(),
                 activityInstanceGuid,
-                false,
+                null,
                 Instant.now().toEpochMilli(),
                 null
         );
