@@ -31,6 +31,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.typesafe.config.Config;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -1302,7 +1303,7 @@ public class StudyDataLoader {
 
         sourceDataSurveyQs.get(surveyName).add(questionName);
 
-        //check if source data doesnot have options. try for a match
+        //check if source data does not have options. try for a match
         if (sourceDataElement != null && !sourceDataElement.getAsJsonObject().get(questionName).isJsonNull()) {
             value = sourceDataElement.getAsJsonObject().get(questionName);
         }
@@ -1314,15 +1315,17 @@ public class StudyDataLoader {
         //ex:- "American Indian or Native American, Japanese, Other, something else not on the list"
         //"something else not on the list" is other text / other details.
         //parse by `,` and check each value ..
-        String[] optValues = value.getAsString().split(",");
-        List<String> optValuesList = new ArrayList<>();
-        optValuesList.addAll(Arrays.asList(optValues));
+        String valueString = value.getAsString();
+        String[] optValues = valueString.split(",");
+        List<String> optValuesList = new ArrayList<>(Arrays.asList(optValues));
         optValuesList.replaceAll(String::trim);
 
         List<String> pepperPLOptions = new ArrayList<>();
         JsonArray options = mapElement.getAsJsonObject().getAsJsonArray("options");
+        JsonObject sourceDataObject = sourceDataElement.getAsJsonObject();
         for (JsonElement option : options) {
-            JsonElement optionNameEl = option.getAsJsonObject().get("name");
+            JsonObject optionObject = option.getAsJsonObject();
+            JsonElement optionNameEl = optionObject.get("name");
             String optionName = optionNameEl.getAsString();
             if (altNames.get(optionName) != null) {
                 optionName = altNames.get(optionName);
@@ -1331,20 +1334,24 @@ public class StudyDataLoader {
             }
             pepperPLOptions.add(optionName.toUpperCase());
             final String optName = optionName;
-            if (optionName.equalsIgnoreCase(value.getAsString())
+            if (optionName.equalsIgnoreCase(valueString)
                     || optValuesList.stream().anyMatch(x -> x.equalsIgnoreCase(optName))) {
-
-                if (!optionName.equalsIgnoreCase("Other")) {
-                    selectedPicklistOptions.add(new SelectedPicklistOption(optionNameEl.getAsString().toUpperCase()));
-                } else {
-                    //currently only RACE has Other however Gen2 MBC has other details without user selecting "Other"
-                    //hence MBC Other is taken care below as special case..
-                    //after MBC below code should help
-                    //just select everything after Other (substr)
+              //If detail text was exported as a separate key/value pair, make sure it gets passed through
+              JsonElement detailNameElement = optionObject.get("details_name");
+              if (!detailNameElement.isJsonNull() && !sourceDataObject.get(detailNameElement.getAsString()).isJsonNull()) {
+                String detailValue = sourceDataObject.get(detailNameElement.getAsString()).getAsString();
+                selectedPicklistOptions.add(new SelectedPicklistOption(optionName.toUpperCase(), detailValue));
+              } else if (!optionName.equalsIgnoreCase("Other")) {
+                selectedPicklistOptions.add(new SelectedPicklistOption(optionNameEl.getAsString().toUpperCase()));
+              } else {
+                //currently only RACE has Other however Gen2 MBC has other details without user selecting "Other"
+                //hence MBC Other is taken care below as special case..
+                //after MBC below code should help
+                //just select everything after Other (substr)
                     /*String sourceValue = value.getAsString();
                     String detailText = sourceValue.substring(sourceValue.lastIndexOf("Other") + 6);
                     selectedPicklistOptions.add(new SelectedPicklistOption(optionNameEl.getAsString().toUpperCase(), detailText));*/
-                }
+              }
             }
         }
 
