@@ -48,7 +48,7 @@ public interface ActivityInstanceDao extends SqlObject {
      */
     default ActivityInstanceDto insertInstance(long activityId, String userGuid) {
         long millis = Instant.now().toEpochMilli();
-        return insertInstance(activityId, userGuid, userGuid, InstanceStatusType.CREATED, false, millis);
+        return insertInstance(activityId, userGuid, userGuid, InstanceStatusType.CREATED, null, millis);
     }
 
     /**
