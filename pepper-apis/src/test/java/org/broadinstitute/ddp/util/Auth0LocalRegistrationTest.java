@@ -9,9 +9,9 @@ import java.util.Map;
 import com.auth0.client.mgmt.ManagementAPI;
 import com.auth0.json.mgmt.users.User;
 import com.typesafe.config.Config;
-
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.TxnAwareBaseTest;
+import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.junit.After;
@@ -45,9 +45,8 @@ public class Auth0LocalRegistrationTest extends TxnAwareBaseTest {
         String auth0MgmtClientId = auth0Config.getString(AUTH0_MGMT_API_CLIENT_ID);
         auth0Domain = auth0Config.getString(ConfigFile.DOMAIN);
 
-        Auth0MgmtTokenHelper auth0MgmtTokenHelper =
-                new Auth0MgmtTokenHelper(auth0MgmtClientId, auth0MgmtSecret, auth0Domain);
-        mgmtApiToken = auth0MgmtTokenHelper.getManagementApiToken();
+        var mgmtClient = new Auth0ManagementClient(auth0Domain, auth0MgmtClientId, auth0MgmtSecret);
+        mgmtApiToken = mgmtClient.getToken();
         auth0Mgmt = new ManagementAPI(auth0Domain, mgmtApiToken);
     }
 
