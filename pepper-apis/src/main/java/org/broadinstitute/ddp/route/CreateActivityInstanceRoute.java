@@ -67,7 +67,7 @@ public class CreateActivityInstanceRoute extends ValidatedJsonInputRoute<Activit
             Long studyActivityId = handle.attach(JdbiActivity.class).findIdByStudyIdAndCode(studyId, activityCode).get();
             // todo: remove package qualifier when things are properly migrated
             String instanceGuid = handle.attach(org.broadinstitute.ddp.db.dao.ActivityInstanceDao.class)
-                    .insertInstance(studyActivityId, operatorGuid, participantGuid, InstanceStatusType.CREATED, false)
+                    .insertInstance(studyActivityId, operatorGuid, participantGuid, InstanceStatusType.CREATED, null)
                     .getGuid();
             handle.attach(DataExportDao.class).queueDataSync(participantGuid, studyGuid);
             LOG.info("Created activity instance {} for activity {} and user {}",

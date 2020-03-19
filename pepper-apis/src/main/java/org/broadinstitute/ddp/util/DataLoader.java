@@ -323,7 +323,7 @@ public class DataLoader {
                     getActivityInstanceStatus(submissionStatus, ddpCreatedAt, statusLastUpdatedAt, ddpCompletedAt);
 
             // Read only is always false for things that aren't consent- we rely on the user being terminated to show read only activities
-            boolean isReadonly = false;
+            Boolean isReadonly = null;
             if (gen2Survey instanceof ConsentSurvey && instanceCurrentStatus == InstanceStatusType.COMPLETE) {
                 isReadonly = true;
             }
