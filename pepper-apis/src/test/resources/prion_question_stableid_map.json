@@ -485,23 +485,33 @@
               }
             ]
           },
-          {
-            "name": "prion_mutation",
-            "stable_id": "prion_medical_known_mutation",
-            "type": "Picklist"
-          },
-          {
-            "name": "other_mutation",
-            "stable_id": "prion_medical_specific_mutation",
-            "type": "string"
-          },
+
           {
             "name": "medical_procedure_risk",
             "stable_id": "prion_medical_procedure",
             "type": "Picklist",
+            "source_type": "integer",
             "options": [
               {
-                "name": "medical_procedure_specify"
+                "type": "integer",
+                "stable_id": "MEDICAL_PROCEDURE_TRANSFUSION"
+              },
+              {
+                "type": "integer",
+                "stable_id": "MEDICAL_PROCEDURE_INSTRUMENTS"
+              },
+              {
+                "type": "integer",
+                "stable_id": "MEDICAL_PROCEDURE_TRANSPLANT"
+              },
+              {
+                "type": "integer",
+                "stable_id": "MEDICAL_PROCEDURE_HGH"
+              },
+              {
+                "type": "integer",
+                "stable_id": "MEDICAL_PROCEDURE_OTHER",
+                "details_name": "medical_procedure_specify"
               }
             ]
           },
@@ -511,38 +521,44 @@
             "type": "Picklist",
             "options:": [
               {
-                "name": "therapeutic"
+                "name": "therapeutic",
+                "type": "integer"
               },
               {
-                "name": "clinical"
+                "name": "clinical",
+                "type": "integer"
               },
               {
-                "name": "survey"
+                "name": "survey",
+                "type": "integer"
               },
               {
-                "name": "tissue"
+                "name": "tissue",
+                "type": "integer"
               }
             ]
           },
           {
             "name": "previous_research",
-            "stable_id": "previous_research",
+            "stable_id": "prion_medical_previous_research",
             "type": "Picklist",
             "options": [
               {
-                "name": "ucsf"
+                "name": "ucsf",
+                "type": "integer"
               },
               {
-                "name": "cwru"
+                "name": "cwru",
+                "type": "integer"
               },
               {
-                "name": "mrc"
+                "name": "mrc",
+                "type": "integer"
               },
               {
-                "name": "other"
-              },
-              {
-                "name": "previous_research_specify"
+                "name": "other",
+                "type": "integer",
+                "details_name": "previous_research_specify"
               }
             ]
           },
@@ -553,8 +569,19 @@
           },
           {
             "name": "know_which_mutation",
-            "stable_id": "prion_known_mutation",
-            "type": "Picklist"
+            "stable_id": "prion_medical_known_mutation",
+            "type": "Picklist",
+            "source_type": "integer",
+            "options": [
+              {
+                "type": "integer",
+                "stable_id": "KNOWN_MUTATION_NO"
+              },
+              {
+                "type": "integer",
+                "stable_id": "KNOWN_MUTATION_YES"
+              }
+            ]
           },
           {
             "name": "specific_mutation",
@@ -566,7 +593,7 @@
           "portal_user_id", "datstat.submissionid", "datstat.sessionid", "datstat.submissionstatus",
           "codon_129_residue_same_gene", "codon_129_residue_other_gene", "testing_location_hospital",
           "testing_location_city", "testing_location_state", "testing_location_zip", "testing_location_country",
-          "codon_genotype"
+          "codon_genotype", "prion_mutation", "other_mutation"
         ]
       }
     ],
