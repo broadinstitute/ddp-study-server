@@ -104,6 +104,7 @@ public class StudyDataLoader {
     Map<Integer, String> yesNoDkLookup;
     Map<Integer, Boolean> booleanValueLookup;
     Auth0ManagementClient mgmtClient;
+    private Map<String, List<String>> datStatEnumLookup;
     Auth0Util auth0Util;
     String auth0Domain;
     String mgmtToken;
@@ -161,6 +162,9 @@ public class StudyDataLoader {
         altNames.put("FIRMAGON", "degareliz");
         altNames.put("OTHER_YES", "other_therapy");
         altNames.put("CLINICAL_TRIAL", "exp_clinical_trial");
+
+        datStatEnumLookup = new HashMap<>();
+        //TODO: populate datStatEnumLookup
     }
 
     void loadMailingListData(Handle handle, JsonElement data, String studyCode) {
@@ -1281,7 +1285,9 @@ public class StudyDataLoader {
             return selectedPicklistOptions;
         }
 
-        if (yesNoDkLookup.get(value.getAsInt()) != null) {
+        if (datStatEnumLookup.get(questionName) != null && datStatEnumLookup.get(questionName).get(value.getAsInt()) != null) {
+            selectedPicklistOptions.add(new SelectedPicklistOption(datStatEnumLookup.get(questionName).get(value.getAsInt())));
+        } else if (yesNoDkLookup.get(value.getAsInt()) != null) {
             selectedPicklistOptions.add(new SelectedPicklistOption(yesNoDkLookup.get(value.getAsInt())));
         }
         return selectedPicklistOptions;
