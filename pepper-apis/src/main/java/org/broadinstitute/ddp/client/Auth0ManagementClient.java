@@ -97,24 +97,28 @@ public class Auth0ManagementClient {
      * @return token
      */
     public String getToken() {
-        return getValidToken();
-    }
-
-    private synchronized String getValidToken() {
         if (shouldRequestToken()) {
-            LOG.info("Getting new auth0 management token");
-            var result = getAccessTokenByClientCreds();
-            result.rethrowIfThrown(e -> new DDPException("Error generating management API token", e));
-            if (result.hasError()) {
-                String msg = String.format(
-                        "Attempt to get management token failed with status: %d body: %s",
-                        result.getStatusCode(), result.getError());
-                throw new DDPException(msg);
-            }
-            TOKEN_CACHE.put(tokenLookupKey, result.getBody());
-            LOG.info("Got and cached new auth0 management token");
+            generateNewToken();
         }
         return TOKEN_CACHE.get(tokenLookupKey).getToken();
+    }
+
+    private synchronized void generateNewToken() {
+        // Upon entrance, do another check in case it has already been generated.
+        if (!shouldRequestToken()) {
+            return;
+        }
+        LOG.info("Getting new auth0 management token");
+        var result = getAccessTokenByClientCreds();
+        result.rethrowIfThrown(e -> new DDPException("Error generating management API token", e));
+        if (result.hasError()) {
+            String msg = String.format(
+                    "Attempt to get management token failed with status: %d body: %s",
+                    result.getStatusCode(), result.getError());
+            throw new DDPException(msg);
+        }
+        TOKEN_CACHE.put(tokenLookupKey, result.getBody());
+        LOG.info("Got and cached new auth0 management token");
     }
 
     private boolean shouldRequestToken() {
