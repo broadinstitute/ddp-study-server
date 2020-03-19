@@ -57,7 +57,7 @@ public interface JdbiActivityInstance extends SqlObject {
     long insert(@Bind("activityId") long activityId,
                 @Bind("participantId") long participantId,
                 @Bind("guid") String instanceGuid,
-                @Bind("isReadOnly") boolean isReadOnly,
+                @Bind("isReadOnly") Boolean isReadOnly,
                 @Bind("createdAt") long createdAtMillis,
                 @Bind("triggerId") Long onDemandTriggerId);
 
