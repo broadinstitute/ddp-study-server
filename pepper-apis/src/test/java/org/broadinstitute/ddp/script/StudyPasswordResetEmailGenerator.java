@@ -12,6 +12,7 @@ import com.auth0.exception.Auth0Exception;
 import com.auth0.json.mgmt.users.User;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.utils.URIBuilder;
+import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.JdbiAuth0Tenant;
@@ -25,7 +26,6 @@ import org.broadinstitute.ddp.db.dto.SendgridConfigurationDto;
 import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.db.dto.UserProfileDto;
 import org.broadinstitute.ddp.exception.DDPException;
-import org.broadinstitute.ddp.util.Auth0MgmtTokenHelper;
 import org.broadinstitute.ddp.util.Auth0Util;
 import org.broadinstitute.ddp.util.DdpParticipantSendGridEmailPersonalization;
 import org.broadinstitute.ddp.util.SendGridMailUtil;
@@ -42,13 +42,13 @@ public class StudyPasswordResetEmailGenerator {
     public List<ProfileWithEmail> getProfileWithEmailForEmailAddresses(Handle handle,
                                                                        List<String> recipientEmailAddresses,
                                                                        String auth0Domain,
-                                                                       Auth0MgmtTokenHelper mgmtTokenHelper) throws Auth0Exception {
+                                                                       Auth0ManagementClient mgmtClient) throws Auth0Exception {
         List<ProfileWithEmail> recipientProfiles = new ArrayList<>();
         Auth0Util auth0Util = buildAuth0Util(auth0Domain);
         for (String emailAddress : recipientEmailAddresses) {
             List<User> auth0Users = auth0Util.getAuth0UsersByEmail(
                     emailAddress,
-                    mgmtTokenHelper.getManagementApiToken());
+                    mgmtClient.getToken());
             if (auth0Users.size() != 1) {
                 Assert.fail(auth0Users.size() + " users for " + emailAddress);
             } else {

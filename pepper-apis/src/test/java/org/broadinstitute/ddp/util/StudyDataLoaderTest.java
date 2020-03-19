@@ -37,6 +37,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.typesafe.config.Config;
+import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceStatusDao;
@@ -111,7 +112,7 @@ public class StudyDataLoaderTest {
     private Auth0Util mockAuth0Util;
     private AuthRequest mockAuthRequest;
     private AuthAPI mockAuthAPI;
-    private Auth0MgmtTokenHelper mockAuth0MgmtTokenHelper;
+    private Auth0ManagementClient mockMgmtClient;
     private User mockAuth0User;
     private ClientDto mockClientDto;
     private static String sourceData;
@@ -146,7 +147,7 @@ public class StudyDataLoaderTest {
         mockAuthAPI = mock(AuthAPI.class);
         mockAuthRequest = mock(AuthRequest.class);
         mockAuth0Util = mock(Auth0Util.class);
-        mockAuth0MgmtTokenHelper = mock(Auth0MgmtTokenHelper.class);
+        mockMgmtClient = mock(Auth0ManagementClient.class);
         mockAuth0User = mock(User.class);
         mockClientDto = mock(ClientDto.class);
         initMockStudyDataLoader();
@@ -649,7 +650,7 @@ public class StudyDataLoaderTest {
     public void testCreateLegacyPepperUser() throws Exception {
         JsonElement participantData = sourceDataMap.get("datstatparticipantdata");
 
-        when(mockAuth0MgmtTokenHelper.getManagementApiToken()).thenReturn(pretendMgmtToken);
+        when(mockMgmtClient.getToken()).thenReturn(pretendMgmtToken);
 
         when(mockAuth0Util.createAuth0User(anyString(), anyString(), anyString())).thenReturn(mockAuth0User);
 

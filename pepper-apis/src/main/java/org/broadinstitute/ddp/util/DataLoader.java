@@ -32,6 +32,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.typesafe.config.Config;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.SqlConstants.MedicalProviderTable;
 import org.broadinstitute.ddp.db.DBUtils;
@@ -1232,9 +1233,10 @@ public class DataLoader {
         LOG.info("Getting StudyClient Config for auth0clientId = " + auth0ClientId + " and domain = " + auth0Domain);
 
         Auth0Util auth0Util = new Auth0Util(auth0Domain);
-        Auth0MgmtTokenHelper tokenHelper = new Auth0MgmtTokenHelper(auth0TenantDto.getManagementClientId(),
-                auth0TenantDto.getManagementClientSecret(),
-                auth0Domain);
+        var mgmtClient = new Auth0ManagementClient(
+                auth0Domain,
+                auth0TenantDto.getManagementClientId(),
+                auth0TenantDto.getManagementClientSecret());
 
         JdbiUser userDao = handle.attach(JdbiUser.class);
         JdbiClient clientDao = handle.attach(JdbiClient.class);
@@ -1248,7 +1250,7 @@ public class DataLoader {
                 userDao,
                 clientDao,
                 auth0Util,
-                tokenHelper,
+                mgmtClient,
                 datstatParticipantData,
                 userGuid,
                 userHruid);
@@ -1264,14 +1266,14 @@ public class DataLoader {
                                           JdbiUser userDao,
                                           JdbiClient clientDao,
                                           Auth0Util auth0Util,
-                                          Auth0MgmtTokenHelper tokenHelper,
+                                          Auth0ManagementClient mgmtClient,
                                           DatstatParticipantData data,
                                           String newUserGuid,
                                           String newUserHruid) throws Exception {
         String emailAddress = data.getDatstatEmail();
 
         // Create a user for the given domain
-        String mgmtToken = tokenHelper.getManagementApiToken();
+        String mgmtToken = mgmtClient.getToken();
         User newAuth0User = null;
         List<User> users = auth0Util.getAuth0UsersByEmail(emailAddress, mgmtToken, Auth0Util.USERNAME_PASSWORD_AUTH0_CONN_NAME);
 

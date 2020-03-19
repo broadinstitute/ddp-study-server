@@ -33,6 +33,7 @@ import com.google.gson.JsonElement;
 import com.typesafe.config.Config;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.SqlConstants.MedicalProviderTable;
 import org.broadinstitute.ddp.db.DBUtils;
@@ -112,10 +113,11 @@ public class StudyDataLoader {
         auth0Domain = auth0Config.getString(ConfigFile.DOMAIN);
 
         auth0Util = new Auth0Util(auth0Domain);
-        Auth0MgmtTokenHelper tokenHelper = new Auth0MgmtTokenHelper(auth0Config.getString("managementApiClientId"),
-                auth0Config.getString("managementApiSecret"),
-                auth0Domain);
-        mgmtToken = tokenHelper.getManagementApiToken();
+        var mgmtClient = new Auth0ManagementClient(
+                auth0Domain,
+                auth0Config.getString("managementApiClientId"),
+                auth0Config.getString("managementApiSecret"));
+        mgmtToken = mgmtClient.getToken();
 
         sourceDataSurveyQs = new HashMap<>();
 
