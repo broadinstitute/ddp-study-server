@@ -485,7 +485,6 @@
               }
             ]
           },
-
           {
             "name": "medical_procedure_risk",
             "stable_id": "prion_medical_procedure",

@@ -164,8 +164,101 @@ public class StudyDataLoader {
         altNames.put("OTHER_YES", "other_therapy");
         altNames.put("CLINICAL_TRIAL", "exp_clinical_trial");
 
+        altNames.put("drugstart_year", "drugstartyear");
+        altNames.put("drugstart_month", "drugstartmonth");
+        altNames.put("drugend_year", "drugendyear");
+        altNames.put("drugend_month", "drugendmonth");
+
         datStatEnumLookup = new HashMap<>();
-        //TODO: populate datStatEnumLookup
+        //Participant gender
+        List<String> optionList = new ArrayList<>(4);
+        optionList.add(0, null);
+        optionList.add(1, "FEMALE");
+        optionList.add(2, "MALE");
+        optionList.add(3, "PREFER_NOT");
+        datStatEnumLookup.put("participant_gender", optionList);
+
+        //Current status
+        optionList = new ArrayList<>(4);
+        optionList.add(0, null);
+        optionList.add(1, "SYMPTOMATIC");
+        optionList.add(2, "AT_RISK");
+        optionList.add(3, "CONTROL");
+        datStatEnumLookup.put("current_status", optionList);
+
+        //Prion subtype
+        optionList = new ArrayList<>(9);
+        optionList.add(0, null);
+        optionList.add(1, "CJD");
+        optionList.add(2, "FFI");
+        optionList.add(3, "GSS");
+        optionList.add(4, "VPSPr");
+        optionList.add(5, "PSA");
+        optionList.add(6, "KURU");
+        optionList.add(7, "vCJD");
+        optionList.add(8, "sFI");
+        datStatEnumLookup.put("prion_subtype", optionList);
+
+        //Genetic testing
+        optionList = new ArrayList<>(4);
+        optionList.add(0, null);
+        optionList.add(1, "WAITING");
+        optionList.add(2, "KNOWN");
+        optionList.add(3, "NO");
+        datStatEnumLookup.put("genetic_testing", optionList);
+
+        //Move ability
+        optionList = new ArrayList<>(4);
+        optionList.add(0, null);
+        optionList.add(1, "ASSIST");
+        optionList.add(2, "IND");
+        optionList.add(3, "BED");
+        datStatEnumLookup.put("move_ability", optionList);
+
+        //Cognitive ability
+        optionList = new ArrayList<>(4);
+        optionList.add(0, null);
+        optionList.add(1, "IMP");
+        optionList.add(2, "NORM");
+        optionList.add(3, "SEV");
+        datStatEnumLookup.put("cognitive_ability", optionList);
+
+        //Eat ability
+        optionList = new ArrayList<>(4);
+        optionList.add(0, null);
+        optionList.add(1, "ASSIST");
+        optionList.add(2, "NORM");
+        optionList.add(3, "TUBE");
+        datStatEnumLookup.put("eat_ability", optionList);
+
+        //Travel ability
+        optionList = new ArrayList<>(4);
+        optionList.add(0, null);
+        optionList.add(1, "ASSIST");
+        optionList.add(2, "YES");
+        optionList.add(3, "NO");
+        datStatEnumLookup.put("travel_ability", optionList);
+
+        //participant disease risk
+        optionList = new ArrayList<>(7);
+        optionList.add(0, null);
+        optionList.add(1, "SUSPECTED_EXPOSED");
+        optionList.add(2, "MEDICAL_INFORMED");
+        optionList.add(3, "RELATIVE_UNTESTED");
+        optionList.add(4, "RELATIVE_TESTED");
+        optionList.add(5, "PARTICIPANT_TESTED");
+        optionList.add(6, "OTHER");
+        datStatEnumLookup.put("participant_disease_risk", optionList);
+
+        //medical procedure risk
+        optionList = new ArrayList<>(6);
+        optionList.add(0, null);
+        optionList.add(1, "MEDICAL_PROCEDURE_TRANSFUSION");
+        optionList.add(2, "MEDICAL_PROCEDURE_INSTRUMENTS");
+        optionList.add(3, "MEDICAL_PROCEDURE_TRANSPLANT");
+        optionList.add(4, "MEDICAL_PROCEDURE_HGH");
+        optionList.add(5, "MEDICAL_PROCEDURE_OTHER");
+        datStatEnumLookup.put("medical_procedure_risk", optionList);
     }
 
     void loadMailingListData(Handle handle, JsonElement data, String studyCode) {
