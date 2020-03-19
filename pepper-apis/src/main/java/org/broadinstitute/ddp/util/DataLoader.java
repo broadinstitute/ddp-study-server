@@ -322,12 +322,12 @@ public class DataLoader {
             InstanceStatusType instanceCurrentStatus =
                     getActivityInstanceStatus(submissionStatus, ddpCreatedAt, statusLastUpdatedAt, ddpCompletedAt);
 
-            // Read only is always false for things that aren't consent- we rely on the user being terminated to show read only activities
+            // Read only is always undefined for things that aren't consent- we rely on the user being terminated to show read only activities
             Boolean isReadonly = null;
             if (gen2Survey instanceof ConsentSurvey && instanceCurrentStatus == InstanceStatusType.COMPLETE) {
                 isReadonly = true;
             }
-            // Read only is always false- we rely on the user being terminated to show read only activities
+            // Read only is always undefined - we rely on the user being terminated to show read only activities
             String instanceGuid = activityInstanceDao
                     .insertInstance(studyActivityId, participantGuid, participantGuid, InstanceStatusType.CREATED,
                             isReadonly, ddpCreatedAt,
