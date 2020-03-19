@@ -123,7 +123,7 @@ public class SendGridClientTest {
 
         Request actualRequest = captor.getValue();
         assertEquals(Method.POST, actualRequest.getMethod());
-        assertEquals(SendGridClient.API_MAIL_SEND, actualRequest.getEndpoint());
+        assertEquals(SendGridClient.PATH_MAIL_SEND, actualRequest.getEndpoint());
 
         String payload = actualRequest.getBody();
         assertTrue(payload.contains("from@ddp.org"));

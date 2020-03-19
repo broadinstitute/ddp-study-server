@@ -11,7 +11,6 @@ public class SqlConstants {
     public static final String CLIENT_GUID = "guid";
     public static final String CLIENT_ID = "client_id";
     // todo arz change column name to client_guid and participant_guid so we don't run into ambiguous column name issues
-    public static final String PARTICIPANT_GUID = "guid";
     public static final String STUDY_GUID = "guid";
     // User activities' columns
     public static final String STUDY_ACTIVITY_ID = "study_activity_id";

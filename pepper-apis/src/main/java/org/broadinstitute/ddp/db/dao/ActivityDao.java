@@ -1,7 +1,9 @@
 package org.broadinstitute.ddp.db.dao;
 
 import java.util.NoSuchElementException;
+import java.util.stream.Stream;
 
+import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
@@ -10,8 +12,13 @@ import org.broadinstitute.ddp.model.activity.definition.ConsentActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
+import org.broadinstitute.ddp.model.study.ActivityMapping;
+import org.broadinstitute.ddp.model.study.ActivityMappingType;
 import org.jdbi.v3.sqlobject.CreateSqlObject;
 import org.jdbi.v3.sqlobject.SqlObject;
+import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
+import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,6 +40,9 @@ public interface ActivityDao extends SqlObject {
 
     @CreateSqlObject
     ConsentActivityDao getConsentActivityDao();
+
+    @CreateSqlObject
+    ActivitySql getActivitySql();
 
 
     /**
@@ -66,8 +76,8 @@ public interface ActivityDao extends SqlObject {
     }
 
     /**
-     * Create new version for given activity by terminating currently active version tag. A new revision will be
-     * created for the new version tag using the given metadata.
+     * Create new version for given activity by terminating currently active version tag. A new revision will be created
+     * for the new version tag using the given metadata.
      *
      * @param activityId the associated activity
      * @param versionTag the new version tag
@@ -108,4 +118,31 @@ public interface ActivityDao extends SqlObject {
         }
         throw new DaoException("Unhandled activity type " + type);
     }
+
+    //
+    // Activity Mappings
+    //
+
+    default void insertActivityMapping(ActivityMapping mapping) {
+        insertActivityMapping(
+                mapping.getStudyGuid(),
+                mapping.getType(),
+                mapping.getActivityId(),
+                mapping.getSubActivityStableId());
+    }
+
+    default void insertActivityMapping(String studyGuid, ActivityMappingType type, long activityId, String subStableId) {
+        DBUtils.checkInsert(1, getActivitySql().insertActivityMapping(studyGuid, type, activityId, subStableId));
+    }
+
+    @SqlQuery("select study.guid as study_guid,"
+            + "       mtype.activity_mapping_code as activity_mapping_type,"
+            + "       mapping.study_activity_id as activity_id,"
+            + "       mapping.sub_activity_stable_id"
+            + "  from study_activity_mapping as mapping"
+            + "  join umbrella_study as study on mapping.umbrella_study_id = study.umbrella_study_id"
+            + "  join activity_mapping_type as mtype on mapping.activity_mapping_type_id = mtype.activity_mapping_type_id"
+            + " where study.umbrella_study_id = :studyId and mtype.activity_mapping_code = :type")
+    @RegisterConstructorMapper(ActivityMapping.class)
+    Stream<ActivityMapping> findActivityMappings(@Bind("studyId") long studyId, @Bind("type") ActivityMappingType type);
 }

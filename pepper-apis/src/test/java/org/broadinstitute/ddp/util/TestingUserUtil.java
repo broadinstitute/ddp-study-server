@@ -21,6 +21,7 @@ import com.auth0.client.auth.AuthAPI;
 import com.auth0.exception.Auth0Exception;
 import com.auth0.json.auth.TokenHolder;
 import com.auth0.json.mgmt.users.User;
+import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.auth0.net.AuthRequest;
 import com.google.gson.Gson;
@@ -148,16 +149,19 @@ public class TestingUserUtil {
             throws Auth0Exception {
 
         var mgmtClient = Auth0Util.getManagementClientForStudy(handle, studyGuid);
+        UserDto user = handle.attach(JdbiUser.class).findByUserGuid(userGUID);
         CachedUser cachedUser = tryCachedUser(userGUID, auth0ClientId, mgmtClient.getDomain());
         if (cachedUser != null) {
-            LOG.info("Using cached test user");
-            return cachedUser.asTestingUser();
+            if (cachedUser.getId() == user.getUserId()) {
+                LOG.info("Using cached test user");
+                return cachedUser.asTestingUser();
+            } else {
+                LOG.warn("Cached test user id doesn't match what's in database, not using");
+            }
         }
 
         Auth0Util auth0Util = new Auth0Util(mgmtClient.getDomain());
         String mgmtToken = mgmtClient.getToken();
-
-        UserDto user = handle.attach(JdbiUser.class).findByUserGuid(userGUID);
         User testUser = auth0Util.getAuth0User(user.getAuth0UserId(), mgmtToken);
 
         AuthAPI auth = new AuthAPI(mgmtClient.getDomain(), auth0ClientId, auth0Secret);
@@ -177,9 +181,18 @@ public class TestingUserUtil {
             return null;
         }
 
-        DecodedJWT jwt = JWTConverter.verifyDDPToken(user.getToken(), JWTConverter.defaultProvider(auth0Domain));
-        if (jwt == null) {
-            LOG.warn("Unable to verify or decode jwt token for cached test user");
+        DecodedJWT jwt;
+        try {
+            jwt = JWTConverter.verifyDDPToken(user.getToken(), JWTConverter.defaultProvider(auth0Domain));
+            if (jwt == null) {
+                LOG.warn("Unable to verify or decode jwt token for cached test user");
+                return null;
+            }
+        } catch (TokenExpiredException e) {
+            LOG.warn("Cached test user token expired, not using", e);
+            return null;
+        } catch (Exception e) {
+            LOG.warn("Error while verifying jwt token for cached test user, not using", e);
             return null;
         }
 
@@ -190,7 +203,8 @@ public class TestingUserUtil {
             return null;
         }
 
-        Instant shortenedExpire = jwt.getExpiresAt().toInstant().minus(5, ChronoUnit.MINUTES);
+        // A minute here should be sufficient since there's also a bit of leeway allowed.
+        Instant shortenedExpire = jwt.getExpiresAt().toInstant().minus(1, ChronoUnit.MINUTES);
         Instant now = Instant.now();
         if (now.equals(shortenedExpire) || now.isAfter(shortenedExpire)) {
             LOG.info("Cached test user's jwt token has or is about to expire");
