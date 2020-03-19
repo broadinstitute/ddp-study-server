@@ -338,43 +338,150 @@
           {
             "name": "genetic_testing",
             "stable_id": "prion_medical_genetic_testing",
-            "type": "Picklist"
+            "type": "Picklist",
+            "source_type": "integer",
+            "options": [
+              {
+                "type": "integer",
+                "stable_id": "WAITING"
+              },
+              {
+                "type": "integer",
+                "stable_id": "KNOWN"
+              },
+              {
+                "type": "integer",
+                "stable_id": "NO"
+              }
+            ]
           },
           {
             "name": "mutation_identified",
             "stable_id": "prion_medical_mutation_identified",
-            "type": "Picklist"
+            "type": "Picklist",
+            "source_type": "integer",
+            "options": [
+              {
+                "type": "integer",
+                "stable_id": "NO"
+              },
+              {
+                "type": "integer",
+                "stable_id": "YES"
+              }
+            ]
           },
           {
             "name": "move_ability",
             "stable_id": "prion_medical_move_ability",
-            "type": "Picklist"
+            "type": "Picklist",
+            "source_type": "integer",
+            "options": [
+              {
+                "type": "integer",
+                "stable_id": "ASSIST"
+              },
+              {
+                "type": "integer",
+                "stable_id": "IND"
+              },
+              {
+                "type": "integer",
+                "stable_id": "BED"
+              }
+            ]
           },
           {
             "name": "cognitive_ability",
             "stable_id": "prion_medical_cognitive_ability",
-            "type": "Picklist"
+            "type": "Picklist",
+            "source_type": "integer",
+            "options": [
+              {
+                "type": "integer",
+                "stable_id": "IMP"
+              },
+              {
+                "type": "integer",
+                "stable_id": "NORM"
+              },
+              {
+                "type": "integer",
+                "stable_id": "SEV"
+              }
+            ]
           },
           {
             "name": "eat_ability",
             "stable_id": "prion_medical_eat_ability",
-            "type": "Picklist"
+            "type": "Picklist",
+            "source_type": "integer",
+            "options": [
+              {
+                "type": "integer",
+                "stable_id": "ASSIST"
+              },
+              {
+                "type": "integer",
+                "stable_id": "NORM"
+              },
+              {
+                "type": "integer",
+                "stable_id": "TUBE"
+              }
+            ]
           },
           {
             "name": "travel_ability",
             "stable_id": "prion_medical_travel_ability",
-            "type": "Picklist"
+            "type": "Picklist",
+            "source_type": "integer",
+            "options": [
+              {
+                "type": "integer",
+                "stable_id": "ASSIST"
+              },
+              {
+                "type": "integer",
+                "stable_id": "YES"
+              },
+              {
+                "type": "integer",
+                "stable_id": "NO"
+              }
+            ]
           },
           {
             "name": "participant_disease_risk",
             "stable_id": "prion_medical_disease_risk",
             "type": "Picklist",
+            "source_type": "integer",
             "options": [
               {
-                "name": "how_exposed"
+                "type": "integer",
+                "stable_id": "SUSPECTED_EXPOSED",
+                "details_name": "how_exposed"
               },
               {
-                "name": "how_at_risk"
+                "type": "integer",
+                "stable_id": "MEDICAL_INFORMED"
+              },
+              {
+                "type": "integer",
+                "stable_id": "RELATIVE_UNTESTED"
+              },
+              {
+                "type": "integer",
+                "stable_id": "RELATIVE_TESTED"
+              },
+              {
+                "type": "integer",
+                "stable_id": "PARTICIPANT_TESTED"
+              },
+              {
+                "type": "integer",
+                "stable_id": "OTHER",
+                "details_name": "how_at_risk"
               }
             ]
           },
