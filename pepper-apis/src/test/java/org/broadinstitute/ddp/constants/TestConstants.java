@@ -1,7 +1,7 @@
 package org.broadinstitute.ddp.constants;
 
-import org.broadinstitute.ddp.json.Profile;
 import org.broadinstitute.ddp.model.activity.types.InstitutionType;
+import org.broadinstitute.ddp.model.user.UserProfile;
 
 public class TestConstants {
 
@@ -34,7 +34,7 @@ public class TestConstants {
     public static final int TEST_USER_PROFILE_BIRTH_DAY = 9;
     public static final int TEST_USER_PROFILE_BIRTH_MONTH = 12;
     public static final int TEST_USER_PROFILE_BIRTH_YEAR = 1906;
-    public static final Profile.Sex TEST_USER_PROFILE_SEX = Profile.Sex.FEMALE;
+    public static final UserProfile.SexType TEST_USER_PROFILE_SEX = UserProfile.SexType.FEMALE;
     public static final String TEST_USER_PROFILE_PREFERRED_LANGUAGE = "en";
     public static final String TEST_USER_MAIL_ADDRESS_STREET_NAME = "86 Brattle Street";
     public static final String TEST_USER_MAIL_ADDRESS_STREET_APT = "Apt 42";

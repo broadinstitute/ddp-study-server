@@ -23,8 +23,8 @@ import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
-import org.broadinstitute.ddp.db.dao.JdbiProfile;
 import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
+import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.model.activity.definition.ConditionalBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
@@ -984,7 +984,7 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
     @Test
     public void test_givenParticipantReachedAgeOfMajority_whenHasAgedUpIsEvaluated_thenItReturnsTrue() {
         TransactionWrapper.useTxn(handle -> {
-            handle.attach(JdbiProfile.class).upsertBirthDate(
+            handle.attach(UserProfileDao.class).getUserProfileSql().upsertBirthDate(
                     testData.getTestingUser().getUserId(), LocalDate.now().minusYears(20)
             );
             GovernancePolicy policy = new GovernancePolicy(testData.getStudyId(), new Expression("true"));
@@ -1002,7 +1002,7 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
     @Test
     public void test_givenParticipantDidntReachAgeOfMajority_whenHasAgedUpIsEvaluated_thenItReturnsFalse() {
         TransactionWrapper.useTxn(handle -> {
-            handle.attach(JdbiProfile.class).upsertBirthDate(
+            handle.attach(UserProfileDao.class).getUserProfileSql().upsertBirthDate(
                     testData.getTestingUser().getUserId(), LocalDate.now().minusYears(12)
             );
             GovernancePolicy policy = new GovernancePolicy(testData.getStudyId(), new Expression("true"));
@@ -1137,7 +1137,7 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
     @Test
     public void testEval_profileQuery_noProfile() {
         TransactionWrapper.useTxn(handle -> {
-            handle.attach(JdbiProfile.class).deleteByUserId(testData.getUserId());
+            handle.attach(UserProfileDao.class).getUserProfileSql().deleteByUserId(testData.getUserId());
 
             try {
                 assertTrue(run(handle, "user.profile.birthDate()"));
@@ -1153,8 +1153,8 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
     @Test
     public void testEval_profileQuery_birthDate() {
         TransactionWrapper.useTxn(handle -> {
-            var jdbiProfile = handle.attach(JdbiProfile.class);
-            assertTrue(jdbiProfile.upsertBirthDate(testData.getUserId(), LocalDate.of(2002, 3, 14)));
+            var profileDao = handle.attach(UserProfileDao.class);
+            assertTrue(profileDao.getUserProfileSql().upsertBirthDate(testData.getUserId(), LocalDate.of(2002, 3, 14)));
 
             var answer = new DateAnswer(null, dateStableId, null, 2002, 3, 14);
             handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), firstInstance.getId(), answer);
@@ -1170,8 +1170,8 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
     @Test
     public void testEval_profileQuery_birthDate_none() {
         TransactionWrapper.useTxn(handle -> {
-            var jdbiProfile = handle.attach(JdbiProfile.class);
-            assertTrue(jdbiProfile.upsertBirthDate(testData.getUserId(), null));
+            var profileDao = handle.attach(UserProfileDao.class);
+            assertTrue(profileDao.getUserProfileSql().upsertBirthDate(testData.getUserId(), null));
 
             try {
                 assertTrue(run(handle, "user.profile.birthDate()"));

@@ -8,11 +8,11 @@ import java.util.stream.Stream;
 
 import org.broadinstitute.ddp.db.dto.EnrollmentStatusDto;
 import org.broadinstitute.ddp.db.dto.MedicalProviderDto;
-import org.broadinstitute.ddp.db.dto.UserProfileDto;
 import org.broadinstitute.ddp.model.address.MailAddress;
 import org.broadinstitute.ddp.model.study.Participant;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.model.user.User;
+import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.service.DsmAddressValidationStatus;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
 import org.jdbi.v3.core.result.RowView;
@@ -89,7 +89,7 @@ public interface ParticipantDao extends SqlObject {
     @UseStringTemplateSqlLocator
     @SqlQuery("bulkQueryLatestEnrollmentsWithUserDataAndOrderedProvidersByStudyId")
     @RegisterConstructorMapper(value = User.class, prefix = "u")
-    @RegisterConstructorMapper(value = UserProfileDto.class, prefix = "p")
+    @RegisterConstructorMapper(value = UserProfile.class, prefix = "p")
     @RegisterConstructorMapper(value = MailAddress.class, prefix = "a")
     @RegisterConstructorMapper(value = MedicalProviderDto.class, prefix = "m")
     @RegisterColumnMapper(DsmAddressValidationStatus.ByOrdinalColumnMapper.class)
@@ -104,7 +104,7 @@ public interface ParticipantDao extends SqlObject {
     @UseStringTemplateSqlLocator
     @SqlQuery("bulkQueryLatestEnrollmentsWithUserProfileByStudyId")
     @RegisterConstructorMapper(value = User.class, prefix = "u")
-    @RegisterConstructorMapper(value = UserProfileDto.class, prefix = "p")
+    @RegisterConstructorMapper(value = UserProfile.class, prefix = "p")
     @UseRowReducer(ParticipantsWithUserProfileReducer.class)
     Stream<Participant> _findParticipantsWithUserProfile(
             @Bind("studyId") long studyId,
@@ -130,7 +130,7 @@ public interface ParticipantDao extends SqlObject {
                         null);
                 User user = row.getRow(User.class);
                 if (row.getColumn("p_user_id", Long.class) != null) {
-                    user.setProfile(row.getRow(UserProfileDto.class));
+                    user.setProfile(row.getRow(UserProfile.class));
                 }
                 if (row.getColumn("a_id", Long.class) != null) {
                     user.setAddress(row.getRow(MailAddress.class));
@@ -161,7 +161,7 @@ public interface ParticipantDao extends SqlObject {
                         null);
                 User user = row.getRow(User.class);
                 if (row.getColumn("p_user_id", Long.class) != null) {
-                    user.setProfile(row.getRow(UserProfileDto.class));
+                    user.setProfile(row.getRow(UserProfile.class));
                 }
                 return new Participant(status, user);
             });

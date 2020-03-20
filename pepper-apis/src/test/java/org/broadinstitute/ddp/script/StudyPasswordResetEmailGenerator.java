@@ -16,16 +16,16 @@ import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.JdbiAuth0Tenant;
-import org.broadinstitute.ddp.db.dao.JdbiProfile;
 import org.broadinstitute.ddp.db.dao.JdbiSendgridConfiguration;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
+import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.Auth0TenantDto;
 import org.broadinstitute.ddp.db.dto.EnrollmentStatusDto;
 import org.broadinstitute.ddp.db.dto.SendgridConfigurationDto;
 import org.broadinstitute.ddp.db.dto.UserDto;
-import org.broadinstitute.ddp.db.dto.UserProfileDto;
 import org.broadinstitute.ddp.exception.DDPException;
+import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.util.Auth0Util;
 import org.broadinstitute.ddp.util.DdpParticipantSendGridEmailPersonalization;
 import org.broadinstitute.ddp.util.SendGridMailUtil;
@@ -55,7 +55,7 @@ public class StudyPasswordResetEmailGenerator {
                 User auth0User = auth0Users.iterator().next();
                 Auth0TenantDto auth0TenantDto = handle.attach(JdbiAuth0Tenant.class).findByDomain(auth0Domain);
                 UserDto userDto = handle.attach(JdbiUser.class).findByAuth0UserId(auth0User.getId(), auth0TenantDto.getId());
-                UserProfileDto userProfile = handle.attach(JdbiProfile.class).getUserProfileByUserGuid(userDto.getUserGuid());
+                UserProfile userProfile = handle.attach(UserProfileDao.class).findProfileByUserGuid(userDto.getUserGuid()).orElse(null);
 
                 if (userProfile == null) {
                     throw new DaoException("Could not find profile for " + emailAddress);
@@ -95,7 +95,7 @@ public class StudyPasswordResetEmailGenerator {
             String sendGridApiKey = getSendgridApiKey(studyGuid, handle);
 
             for (ProfileWithEmail profileWithEmail : addresseeProfiles) {
-                UserProfileDto profile = profileWithEmail.getProfile();
+                UserProfile profile = profileWithEmail.getProfile();
                 String userEmail = profileWithEmail.getEmailAddress();
                 if (userEmail == null) {
                     LOG.error("Could not look up email address for user with id: " + profile.getUserId());
@@ -185,12 +185,12 @@ public class StudyPasswordResetEmailGenerator {
                                                                                               Handle handle) {
         List<EnrollmentStatusDto> allStudyEnrollments = handle.attach(JdbiUserStudyEnrollment.class).findByStudyGuid(studyGuid);
 
-        final JdbiProfile profileDao = handle.attach(JdbiProfile.class);
+        final UserProfileDao profileDao = handle.attach(UserProfileDao.class);
         final JdbiUser userDao = handle.attach(JdbiUser.class);
         return allStudyEnrollments.stream()
                 .filter(each -> !each.getEnrollmentStatus().isExited() && each.getEnrollmentStatus().shouldReceiveCommunications())
                 .map(userEnrollment -> {
-                    UserProfileDto profile = profileDao.getUserProfileByUserId(userEnrollment.getUserId());
+                    UserProfile profile = profileDao.findProfileByUserId(userEnrollment.getUserId()).orElse(null);
                     UserDto userDto = userDao.findByUserId(userEnrollment.getUserId());
                     String userEmail = userDto != null ? getUserEmail(userDto.getAuth0UserId(), auth0Util, auth0MgmtToken) : null;
                     return new ProfileWithEmail(profile, userEmail);

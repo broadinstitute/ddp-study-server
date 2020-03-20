@@ -20,7 +20,7 @@ import java.util.Set;
 
 import com.auth0.exception.Auth0Exception;
 import org.broadinstitute.ddp.TxnAwareBaseTest;
-import org.broadinstitute.ddp.db.dto.UserProfileDto;
+import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.util.Auth0Util;
 import org.jdbi.v3.core.Handle;
 import org.junit.Ignore;
@@ -34,13 +34,14 @@ public class StudyPasswordResetEmailGeneratorTest extends TxnAwareBaseTest {
     public void testSendingEmails() throws Auth0Exception {
         StudyPasswordResetEmailGenerator generator;
         generator = mock(StudyPasswordResetEmailGenerator.class);
+        var male = UserProfile.SexType.MALE;
         //This is the one that we expect will get an email
-        UserProfileDto profileDto1 = new UserProfileDto(1L, "Hulk", "Hogan", "MALE", LocalDate.of(1953, 8, 11), 1L, "en", false);
+        UserProfile profile1 = new UserProfile(1L, "Hulk", "Hogan", male, LocalDate.of(1953, 8, 11), 1L, "en", false, null);
 
         //This one should be filtered out. says do not contact
-        UserProfileDto profileDto2 = new UserProfileDto(1L, "Jerome", "Salinger", "MALE", LocalDate.of(1919, 1, 1), 1L, "en", true);
-        ProfileWithEmail profileWithEmail1 = new ProfileWithEmail(profileDto1, "hulk.hogan@hulkomania.org");
-        ProfileWithEmail profileWithEmail2 = new ProfileWithEmail(profileDto2, "jd@nyc.gov");
+        UserProfile profile2 = new UserProfile(1L, "Jerome", "Salinger", male, LocalDate.of(1919, 1, 1), 1L, "en", true, null);
+        ProfileWithEmail profileWithEmail1 = new ProfileWithEmail(profile1, "hulk.hogan@hulkomania.org");
+        ProfileWithEmail profileWithEmail2 = new ProfileWithEmail(profile2, "jd@nyc.gov");
 
 
         when(generator.findUserProfilesForParticipantsNotExitedThatCanBeContacted(anyString(), any(Auth0Util.class), anyString(),
@@ -78,7 +79,7 @@ public class StudyPasswordResetEmailGeneratorTest extends TxnAwareBaseTest {
         ArgumentMatcher<Map<String, String>> substitutionsMapper = (valueMap) -> {
             // should include our link with the study guid
             return valueMap.get(DDP_LINK).equals(resetLink + "&study=" + studyGuid)
-                    && valueMap.get(DDP_PARTICIPANT_FIRST_NAME).equals(profileDto1.getFirstName());
+                    && valueMap.get(DDP_PARTICIPANT_FIRST_NAME).equals(profile1.getFirstName());
         };
         verify(generator, times(1)).sendEmailMessage(eq(fromName), eq(fromEmailAddress), eq(emailSubject),
                 eq(sendgridTemplateId), eq(sendGridApiKey), eq("Hulk Hogan"), eq(profileWithEmail1.getEmailAddress()),

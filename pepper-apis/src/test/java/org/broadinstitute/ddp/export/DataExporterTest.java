@@ -41,7 +41,6 @@ import org.broadinstitute.ddp.db.dto.ActivityInstanceStatusDto;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.EnrollmentStatusDto;
 import org.broadinstitute.ddp.db.dto.MedicalProviderDto;
-import org.broadinstitute.ddp.db.dto.UserProfileDto;
 import org.broadinstitute.ddp.export.collectors.ActivityResponseCollector;
 import org.broadinstitute.ddp.model.activity.definition.ActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
@@ -82,6 +81,7 @@ import org.broadinstitute.ddp.model.governance.GovernancePolicy;
 import org.broadinstitute.ddp.model.study.Participant;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.model.user.User;
+import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.service.DsmAddressValidationStatus;
 import org.broadinstitute.ddp.service.MedicalRecordService;
@@ -649,7 +649,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
             User user = new User(1L, TEST_USER_GUID, "blah-hruid", "blah-legacy-altpid", "blah-shortid",
                     false, 1L, 1L, "auth", timestamp, timestamp, null);
             user.setEmail("test@datadonationplatform.org");
-            user.setProfile(new UserProfileDto(1L, "first-foo", "last-bar", null, null, 1L, "en", true));
+            user.setProfile(new UserProfile(1L, "first-foo", "last-bar", null, null, 1L, "en", true, null));
             if (!emptyAddress) {
                 MailAddress address = new MailAddress("foo bar", "85 Main St", "Apt 2", "Boston", "MA", "US", "02115", "6171112233", null,
                         "", DsmAddressValidationStatus.DSM_INVALID_ADDRESS_STATUS, true);

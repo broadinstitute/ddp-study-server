@@ -16,9 +16,9 @@ import org.broadinstitute.ddp.constants.RouteConstants.API;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.UserDaoFactory;
-import org.broadinstitute.ddp.db.dao.JdbiProfile;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.UserDao;
+import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.route.IntegrationTestSuite;
 import org.broadinstitute.ddp.route.RouteTestUtil;
@@ -52,8 +52,8 @@ public class UserAuthCheckFilterTest extends IntegrationTestSuite.TestCase {
     public void testAuthUser_canAccessBothAuthAndWhitelistRoutes() {
         String profileUrl = makeUrl(API.USER_PROFILE
                 .replace(PathParam.USER_GUID, testData.getUserGuid()));
-        String previousName = TransactionWrapper.withTxn(handle -> handle.attach(JdbiProfile.class)
-                .getUserProfileByUserId(testData.getUserId()).getFirstName());
+        String previousName = TransactionWrapper.withTxn(handle -> handle.attach(UserProfileDao.class)
+                .findProfileByUserId(testData.getUserId()).get().getFirstName());
 
         try {
             String newName = "foo" + Instant.now().toEpochMilli();
@@ -72,8 +72,8 @@ public class UserAuthCheckFilterTest extends IntegrationTestSuite.TestCase {
                     .statusCode(200).contentType(ContentType.JSON)
                     .body("firstName", equalTo(newName));
         } finally {
-            TransactionWrapper.useTxn(handle -> assertEquals(1, handle.attach(JdbiProfile.class)
-                    .updateFirstName(previousName, testData.getUserId())));
+            TransactionWrapper.useTxn(handle -> assertEquals(1, handle.attach(UserProfileDao.class)
+                    .getUserProfileSql().updateFirstName(testData.getUserId(), previousName)));
         }
     }
 

@@ -13,7 +13,6 @@ import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.UserDaoFactory;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.UserDto;
-import org.broadinstitute.ddp.db.dto.UserProfileDto;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
 import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
@@ -23,6 +22,7 @@ import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
+import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.jdbi.v3.core.Handle;
 import org.junit.BeforeClass;
@@ -100,9 +100,10 @@ public class UserDaoTest extends TxnAwareBaseTest {
     private void populateData(Handle handle, UserDto tempUser) {
         long langId = handle.attach(JdbiLanguageCode.class).getLanguageCodeId("en");
 
-        assertEquals(1, handle.attach(JdbiProfile.class)
-                .insert(new UserProfileDto(
-                        tempUser.getUserId(), "first", "last", null, null, langId, "en", false)));
+        handle.attach(UserProfileDao.class).createProfile(
+                new UserProfile.Builder(tempUser.getUserId())
+                        .setFirstName("first").setLastName("last").setPreferredLangId(langId).setDoNotContact(false)
+                        .build());
 
         ActivityInstanceDto instance = handle.attach(ActivityInstanceDao.class)
                 .insertInstance(form.getActivityId(), tempUser.getUserGuid());
@@ -112,8 +113,8 @@ public class UserDaoTest extends TxnAwareBaseTest {
     }
 
     private void ensureDataExists(Handle handle, UserDto userDto) {
-        assertNotNull(handle.attach(JdbiProfile.class)
-                .getUserProfileByUserId(userDto.getUserId()));
+        assertTrue(handle.attach(UserProfileDao.class)
+                .findProfileByUserId(userDto.getUserId()).isPresent());
 
         List<ActivityInstanceDto> instances = handle.attach(JdbiActivityInstance.class)
                 .findAllByUserIdAndStudyId(userDto.getUserId(), testData.getStudyId());

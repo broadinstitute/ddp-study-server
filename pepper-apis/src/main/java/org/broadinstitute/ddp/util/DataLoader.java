@@ -36,7 +36,6 @@ import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.SqlConstants.MedicalProviderTable;
 import org.broadinstitute.ddp.db.DBUtils;
-import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceStatusDao;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
@@ -51,17 +50,16 @@ import org.broadinstitute.ddp.db.dao.JdbiCountrySubnationalDivision;
 import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
 import org.broadinstitute.ddp.db.dao.JdbiMailAddress;
 import org.broadinstitute.ddp.db.dao.JdbiMailingList;
-import org.broadinstitute.ddp.db.dao.JdbiProfile;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.JdbiUserLegacyInfo;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dao.KitTypeDao;
 import org.broadinstitute.ddp.db.dao.MedicalProviderDao;
+import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.Auth0TenantDto;
 import org.broadinstitute.ddp.db.dto.MedicalProviderDto;
 import org.broadinstitute.ddp.db.dto.UserDto;
-import org.broadinstitute.ddp.db.dto.UserProfileDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.instance.answer.AgreementAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
@@ -90,6 +88,7 @@ import org.broadinstitute.ddp.model.migration.Physician;
 import org.broadinstitute.ddp.model.migration.ReleaseSurvey;
 import org.broadinstitute.ddp.model.migration.SurveyAddress;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
+import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.security.StudyClientConfiguration;
 import org.broadinstitute.ddp.service.DsmAddressValidationStatus;
 import org.broadinstitute.ddp.service.OLCService;
@@ -168,9 +167,9 @@ public class DataLoader {
         UserDto pepperUser = createUserForLegacyParticipant(handle, cfg, data);
         userGuid = pepperUser.getUserGuid();
 
-        JdbiProfile jdbiProfile = handle.attach(JdbiProfile.class);
         JdbiLanguageCode jdbiLanguageCode = handle.attach(JdbiLanguageCode.class);
-        addUserProfile(pepperUser, data, jdbiLanguageCode, jdbiProfile);
+        UserProfileDao profileDao = handle.attach(UserProfileDao.class);
+        addUserProfile(pepperUser, data, jdbiLanguageCode, profileDao);
 
         JdbiMailAddress jdbiMailAddress = handle.attach(JdbiMailAddress.class);
         MailAddress address = addUserAddress(handle, pepperUser,
@@ -1325,26 +1324,23 @@ public class DataLoader {
         return stringBuilder.toString();
     }
 
-    UserProfileDto addUserProfile(UserDto user,
-                                  DatstatParticipantData data,
-                                  JdbiLanguageCode jdbiLanguageCode,
-                                  JdbiProfile jdbiProfile) throws Exception {
+    UserProfile addUserProfile(UserDto user,
+                               DatstatParticipantData data,
+                               JdbiLanguageCode jdbiLanguageCode,
+                               UserProfileDao profileDao) throws Exception {
 
         Boolean isDoNotContact = getBooleanValue(data.getDdpDoNotContact());
         Long languageCodeId = jdbiLanguageCode.getLanguageCodeId(DEFAULT_PREFERRED_LANGUAGE_CODE);
 
-        UserProfileDto userProfileDto = new UserProfileDto(user.getUserId(), data.getDatstatFirstname(), data.getDatstatLastname(),
-                null, null, languageCodeId,
-                DEFAULT_PREFERRED_LANGUAGE_CODE, isDoNotContact);
+        UserProfile profile = new UserProfile.Builder(user.getUserId())
+                .setFirstName(StringUtils.trim(data.getDatstatFirstname()))
+                .setLastName(StringUtils.trim(data.getDatstatLastname()))
+                .setPreferredLangId(languageCodeId)
+                .setDoNotContact(isDoNotContact)
+                .build();
+        profileDao.createProfile(profile);
 
-        int numRowsInserted = jdbiProfile.insert(userProfileDto);
-
-        if (numRowsInserted != 1) {
-            LOG.info("Failed to save profile information.  " + numRowsInserted + " rows were updated");
-            throw new DaoException("Failed to save profile information.  " + numRowsInserted + " rows were updated");
-        }
-
-        return userProfileDto;
+        return profile;
     }
 
     MailAddress addUserAddress(Handle handle, UserDto user,
