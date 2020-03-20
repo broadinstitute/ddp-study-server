@@ -88,7 +88,7 @@ public class DsmTriggerOnDemandActivityRoute extends ValidatedJsonInputRoute<Tri
 
             ActivityInstanceDto instanceDto = handle.attach(ActivityInstanceDao.class)
                     .insertInstance(activityDto.getActivityId(), participantGuid, participantGuid,
-                            InstanceStatusType.CREATED, false, Instant.now().toEpochMilli(), payload.getTriggerId());
+                            InstanceStatusType.CREATED, null, Instant.now().toEpochMilli(), payload.getTriggerId());
 
             if (instanceDto == null || StringUtils.isBlank(instanceDto.getGuid())) {
                 ApiError err = new ApiError(ErrorCodes.SERVER_ERROR, String.format(

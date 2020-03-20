@@ -940,6 +940,15 @@ Error.BadPayload:
           type: string
           enum:
             - BAD_PAYLOAD
+Error.NotFound:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Error'
+    - type: object
+      properties:
+        code:
+          type: string
+          enum:
+            - NOT_FOUND
 Error.RegisterNotFound:
   allOf:
     - $ref: '../pepper.yml#/components/schemas/Error'
@@ -1859,30 +1868,44 @@ ParticipantStatusTrackingInfo.Kit:
       type: string
     shipper:
       type: string
-### StudyPasswordRequirements
-StudyPasswordRequirements:
+
+StudyPasswordPolicy:
   type: object
   required:
-    - minLength
-    - isUppercaseLetterRequired
-    - isLowercaseLetterRequired
-    - isSpecialCharacterRequired
-    - isNumberRequired
+    - minimumLength
+    - minimumCharacterClasses
+    - characterClasses
+    - maximumRepeatedCharacters
   properties:
-    minLength:
+    minimumLength:
       type: integer
-    isUppercaseLetterRequired:
-      type: boolean
-    isLowercaseLetterRequired:
-      type: boolean
-    isSpecialCharacterRequired:
-      type: boolean
-    isNumberRequired:
-      type: boolean
-    maxIdenticalConsecutiveCharacters:
+      minimum: 1
+      maximum: 128
+      example: 8
+      description: Minimum number of characters in password
+    minimumCharacterClasses:
       type: integer
-      default: 2
       minimum: 0
+      example: 3
+      description: Must have a character from at least this number of character classes
+    characterClasses:
+      type: array
+      items:
+        type: string
+        enum:
+          - UPPER
+          - LOWER
+          - NUMBER
+          - SPECIAL
+      minItems: 0
+      example: [UPPER, LOWER, NUMBER]
+      description: Set of character classes to look for in password
+    maximumRepeatedCharacters:
+      type: integer
+      nullable: true
+      example: 2
+      description: If non-null, no more than the specified number of identical characters are allowed consecutively. This value is inclusive (e.g. if the value is 2, then `aa` is allowed while `aaa` is not allowed).
+
 #####
 #
 # Workflows

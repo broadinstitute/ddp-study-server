@@ -40,7 +40,6 @@ import org.broadinstitute.ddp.housekeeping.message.PdfGenerationMessage;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.event.NotificationType;
 import org.broadinstitute.ddp.model.governance.Governance;
-import org.broadinstitute.ddp.util.Auth0MgmtTokenHelper;
 import org.broadinstitute.ddp.util.Auth0Util;
 import org.broadinstitute.ddp.util.GsonUtil;
 import org.jdbi.v3.core.Handle;
@@ -131,10 +130,8 @@ public class PubSubMessageBuilder {
 
                     User auth0User = null;
                     try {
-                        Auth0MgmtTokenHelper auth0MgmtTokenHelper = Auth0Util.getManagementTokenHelperForStudy(
-                                apisHandle, pendingEvent.getStudyGuid());
-                        auth0User = new Auth0Util(auth0MgmtTokenHelper.getDomain()).getAuth0User(
-                                auth0UserId, auth0MgmtTokenHelper.getManagementApiToken());
+                        var mgmtClient = Auth0Util.getManagementClientForStudy(apisHandle, pendingEvent.getStudyGuid());
+                        auth0User = new Auth0Util(mgmtClient.getDomain()).getAuth0User(auth0UserId, mgmtClient.getToken());
                     } catch (Auth0Exception e) {
                         throw new MessageBuilderException("Could not get auth0 user " + auth0UserId, e);
                     }

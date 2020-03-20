@@ -49,6 +49,7 @@ import com.auth0.net.AuthRequest;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.typesafe.config.Config;
+import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceStatusDao;
@@ -123,7 +124,7 @@ public class DataLoaderTest {
     private Auth0Util mockAuth0Util;
     private AuthRequest mockAuthRequest;
     private AuthAPI mockAuthAPI;
-    private Auth0MgmtTokenHelper mockAuth0MgmtTokenHelper;
+    private Auth0ManagementClient mockMgmtClient;
     private User mockAuth0User;
 
     @BeforeClass
@@ -141,7 +142,7 @@ public class DataLoaderTest {
         mockAuthAPI = mock(AuthAPI.class);
         mockAuthRequest = mock(AuthRequest.class);
         mockAuth0Util = mock(Auth0Util.class);
-        mockAuth0MgmtTokenHelper = mock(Auth0MgmtTokenHelper.class);
+        mockMgmtClient = mock(Auth0ManagementClient.class);
         mockAuth0User = mock(User.class);
 
         when(mockDataLoader.answerTextQuestion(
@@ -702,7 +703,7 @@ public class DataLoaderTest {
         DatstatParticipantData participantData = gson.fromJson(new FileReader(file), ParticipantData.class)
                 .getParticipantUser().getDatstatparticipantdata();
 
-        when(mockAuth0MgmtTokenHelper.getManagementApiToken()).thenReturn(pretendMgmtToken);
+        when(mockMgmtClient.getToken()).thenReturn(pretendMgmtToken);
 
         when(mockAuth0Util.createAuth0User(anyString(), anyString(), anyString())).thenReturn(mockAuth0User);
 
@@ -720,7 +721,7 @@ public class DataLoaderTest {
                 any(JdbiUser.class),
                 any(JdbiClient.class),
                 any(Auth0Util.class),
-                any(Auth0MgmtTokenHelper.class),
+                any(Auth0ManagementClient.class),
                 any(DatstatParticipantData.class),
                 anyString(),
                 anyString()
@@ -732,7 +733,7 @@ public class DataLoaderTest {
                 mockJdbiUser,
                 mockJdbiClient,
                 mockAuth0Util,
-                mockAuth0MgmtTokenHelper,
+                mockMgmtClient,
                 participantData,
                 pretendUserGuid,
                 pretendUserHruid

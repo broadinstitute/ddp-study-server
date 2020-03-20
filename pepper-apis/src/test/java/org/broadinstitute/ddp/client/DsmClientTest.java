@@ -70,7 +70,7 @@ public class DsmClientTest {
 
         var actualRequest = captor.getValue();
         assertEquals("GET", actualRequest.method());
-        assertEquals(DsmClient.API_CANCERS, actualRequest.uri().getPath());
+        assertEquals(DsmClient.PATH_CANCERS, actualRequest.uri().getPath());
     }
 
     @Test
@@ -119,7 +119,7 @@ public class DsmClientTest {
 
         var actualRequest = captor.getValue();
         assertEquals("GET", actualRequest.method());
-        assertEquals(DsmClient.API_DRUGS, actualRequest.uri().getPath());
+        assertEquals(DsmClient.PATH_DRUGS, actualRequest.uri().getPath());
     }
 
     @Test
@@ -176,7 +176,7 @@ public class DsmClientTest {
         assertEquals(sampleStatus.getTissueReceivedEpochTimeSec(), actual.getTissueReceivedEpochTimeSec());
         assertEquals(sampleStatus.getTissueSentEpochTimeSec(), actual.getTissueSentEpochTimeSec());
 
-        String expectedPath = DsmClient.API_PARTICIPANT_STATUS
+        String expectedPath = DsmClient.PATH_PARTICIPANT_STATUS
                 .replace(RouteConstants.PathParam.STUDY_GUID, "abc")
                 .replace(RouteConstants.PathParam.USER_GUID, "xyz");
         var expectedAuth = RouteUtil.makeAuthBearerHeader("token");

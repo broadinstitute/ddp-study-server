@@ -21,7 +21,6 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.constants.SqlConstants;
-import org.broadinstitute.ddp.constants.SqlConstants.UserGovernanceTable;
 import org.broadinstitute.ddp.db.dao.JdbiClientUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
 import org.broadinstitute.ddp.db.dao.JdbiProfile;
@@ -29,8 +28,6 @@ import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.db.dto.UserProfileDto;
-import org.broadinstitute.ddp.exception.UserExistsException;
-import org.broadinstitute.ddp.json.GovernedParticipant;
 import org.broadinstitute.ddp.json.Profile;
 import org.broadinstitute.ddp.json.User;
 import org.broadinstitute.ddp.model.governance.Governance;
@@ -54,20 +51,10 @@ public class UserDao {
     public static final long EXPIRATION_DURATION_MILLIS = TimeUnit.HOURS.toMillis(24);
 
     private final String insertUserStmt;
-    private final String checkUserGuidQuery;
-    private final String updateUserFirstAndLastName;
-    private final String insertGovernedUserStmt;
     private final String hasAdminAccessQuery;
-    private final String userExistsQuery;
-    private final String userGuidForAuth0IdQuery;
     private final String profileExistsQuery;
     private final String getUserIdFromGuid;
-    private final String getUserIdFromHruid;
-    private final String getGuidFromUserId;
-    private final String userExistsGuidQuery;
-    private final String governanceAliasExistsQuery;
     private final String userClientRevocationQuery;
-    private final String getAllGovParticipantsQuery;
     private final String patchGenderStmt;
     private final String patchPreferredLanguageStmt;
 
@@ -75,61 +62,21 @@ public class UserDao {
      * Set up needed sql queries.
      */
     public UserDao(String insertUserStmt,
-                   String updateUserFirstAndLastName,
-                   String checkUserGuidQuery,
-                   String insertGovernedUserStmt,
                    String hasAdminAccessQuery,
-                   String userExistsQuery,
-                   String userGuidForAuth0IdQuery,
                    String profileExistsQuery,
                    String getUserIdFromGuid,
-                   String getUserIdFromHruid,
-                   String getGuidFromUserId,
-                   String userExistsGuidQuery,
-                   String governanceAliasExistsQuery,
                    String userClientRevocationQuery,
-                   String getAllGovParticipantsQuery,
                    String patchGenderStmt,
                    String patchPreferredLanguageStmt
     ) {
         this.insertUserStmt = insertUserStmt;
-        this.updateUserFirstAndLastName = updateUserFirstAndLastName;
-        this.checkUserGuidQuery = checkUserGuidQuery;
-        this.insertGovernedUserStmt = insertGovernedUserStmt;
         this.hasAdminAccessQuery = hasAdminAccessQuery;
-        this.userExistsQuery = userExistsQuery;
-        this.userGuidForAuth0IdQuery = userGuidForAuth0IdQuery;
         this.profileExistsQuery = profileExistsQuery;
         this.getUserIdFromGuid = getUserIdFromGuid;
-        this.getUserIdFromHruid = getUserIdFromHruid;
-        this.getGuidFromUserId = getGuidFromUserId;
-        this.userExistsGuidQuery = userExistsGuidQuery;
-        this.governanceAliasExistsQuery = governanceAliasExistsQuery;
         this.userClientRevocationQuery = userClientRevocationQuery;
-        this.getAllGovParticipantsQuery = getAllGovParticipantsQuery;
         this.patchGenderStmt = patchGenderStmt;
         this.patchPreferredLanguageStmt = patchPreferredLanguageStmt;
     }
-
-    /**
-     * Returns true if the user with the given auth0 user id exists.
-     */
-    private boolean doesUserExistByAuth0Id(Handle handle, String auth0Domain, String auth0UserId) {
-        boolean userExists;
-        try {
-            try (PreparedStatement stmt = handle.getConnection().prepareStatement(userExistsQuery)) {
-                stmt.setString(1, auth0UserId);
-                stmt.setString(2, auth0Domain);
-                try (ResultSet rs = stmt.executeQuery()) {
-                    userExists = rs.next();
-                }
-            }
-        } catch (SQLException e) {
-            throw new DaoException("Could not determine whether existing user " + auth0UserId + " exists", e);
-        }
-        return userExists;
-    }
-
 
     /**
      * Returns the user_id from user table based on guid.
@@ -154,57 +101,6 @@ public class UserDao {
             throw new DaoException("Could not find user id by guid " + guid, e);
         }
         return userId;
-    }
-
-    /**
-     * Returns the user_id from user table based on hruid.
-     *
-     * @param handle JDBI handle
-     * @param hruid   the user hruid
-     * @return the user ID for a the user specified by the given hruid
-     */
-    public Long getUserIdByHruid(Handle handle, String hruid) throws SQLException {
-        Long userId = null;
-        try (PreparedStatement stmt = handle.getConnection().prepareStatement(getUserIdFromHruid)) {
-            stmt.setString(1, hruid);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    userId = rs.getLong(1);
-                }
-                if (rs.next()) {
-                    throw new DaoException("Multiple entries for user with hruid " + hruid);
-                }
-            }
-        }
-        return userId;
-    }
-
-    /**
-     * Returns the user guid from the user table based on user id.
-     *
-     * @param handle JDBI handle
-     * @param userId the user id
-     * @return the guid for the user specified by the given ID
-     */
-    public String getUserGuidForUserId(Handle handle, Long userId) {
-        String userGuid = null;
-
-        try (PreparedStatement stmt = handle.getConnection().prepareStatement(getGuidFromUserId)) {
-            stmt.setLong(1, userId);
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                userGuid = rs.getString(SqlConstants.PARTICIPANT_GUID);
-                if (rs.next()) {
-                    throw new DaoException("too many users for given id " + userId);
-                }
-            } else {
-                throw new DaoException("No corresponding guid for userId " + userId);
-            }
-        } catch (SQLException e) {
-            throw new DaoException("Cannot find guid for corresponding userId: " + userId, e);
-        }
-
-        return userGuid;
     }
 
     /**
@@ -447,68 +343,6 @@ public class UserDao {
     }
 
     /**
-     * Determines if given alias can be used to label a governed participant of governing user.
-     */
-    public boolean isGovernanceAliasUnique(Handle handle, String governingUserGuid, String alias) {
-        boolean aliasExists = false;
-        try {
-            try (PreparedStatement stmt = handle.getConnection().prepareStatement(governanceAliasExistsQuery)) {
-                stmt.setString(1, governingUserGuid);
-                stmt.setString(2, alias);
-                try (ResultSet rs = stmt.executeQuery()) {
-                    aliasExists = rs.next();
-                }
-            }
-        } catch (SQLException e) {
-            throw new DaoException("Could not determine uniqueness of alias for user " + governingUserGuid, e);
-        }
-        return !aliasExists;
-    }
-
-    /**
-     * Creates a new participant and adds the participant to the governing user's list of governed participants.
-     *
-     * @param handle            JDBI handle
-     * @param clientGuid        the client guid
-     * @param governingUserGuid the governing operator's guid
-     * @param alias             the nickname for this governance relationship
-     * @return the new participant user
-     */
-    public User createGovernedParticipant(Handle handle, String clientGuid, String governingUserGuid, String alias) {
-        User newParticipant = null;
-
-        try {
-            newParticipant = insertNewUser(handle, clientGuid, null);
-        } catch (SQLException e) {
-            throw new DaoException("Could not create new governed participant for operator " + governingUserGuid, e);
-        }
-
-        try {
-            try (PreparedStatement stmt = handle.getConnection().prepareStatement(insertGovernedUserStmt)) {
-                stmt.setString(1, governingUserGuid);
-                stmt.setString(2, newParticipant.getDdpUserId());
-                stmt.setString(3, alias);
-                stmt.setBoolean(4, true);
-                int numRowsInserted = stmt.executeUpdate();
-
-                if (numRowsInserted != 1) {
-                    getSecureLog().error("Could not add governed participant with alias '{}' because {} rows "
-                            + "were inserted", alias, numRowsInserted);
-                    LOG.error("Failed to add governed participant");
-                } else {
-                    getSecureLog().info("Added governed participant {} with alias '{}'",
-                            newParticipant.getDdpUserId(), alias);
-                    LOG.info("Added governed participant {}", newParticipant.getDdpUserId());
-                }
-            }
-        } catch (SQLException e) {
-            throw new DaoException("Could not add governed participant for operator " + governingUserGuid, e);
-        }
-
-        return newParticipant;
-    }
-
-    /**
      * Create a new temporary user.
      *
      * @param handle        the database handle
@@ -522,10 +356,6 @@ public class UserDao {
         } catch (SQLException e) {
             throw new DaoException(String.format("Could not create temporary user with auth0ClientId '%s'", auth0ClientId));
         }
-    }
-
-    private User insertNewUser(Handle handle, String auth0ClientId, String auth0UserId) throws SQLException {
-        return insertNewUser(handle, auth0ClientId, auth0UserId, false);
     }
 
     private User insertNewUser(Handle handle, String auth0ClientId, String auth0UserId, boolean isTemporary) throws SQLException {
@@ -557,75 +387,6 @@ public class UserDao {
         // todo arz invent a two-tier exception that will write sensitive data to one log and public data to another log
 
         return new User(userGuid);
-    }
-
-    /**
-     * Updates or inserts first and last name into user_profile.
-     * @param handle the jdbi handle
-     * @param userGuid userGuid
-     * @param firstName user first name
-     * @param lastName user last name
-     * @throws SQLException if error executing
-     */
-    public void upsertUserName(Handle handle, String userGuid, String firstName, String lastName) throws SQLException {
-        try (PreparedStatement updateStmt = handle.getConnection().prepareStatement(updateUserFirstAndLastName)) {
-            updateStmt.setString(1, firstName);
-            updateStmt.setString(2, lastName);
-            updateStmt.setString(3, userGuid);
-            int returnValue = updateStmt.executeUpdate();
-            LOG.info("Database returned: {} while upserting first name and last name into user_profile", returnValue);
-        }
-    }
-
-    /**
-     * Register user by client ID and user ID.
-     *
-     * @param handle        the JDBC connection
-     * @param auth0Domain the auth0 domain
-     * @param auth0ClientId auth0 client ID
-     * @param auth0UserId   auth 0 user ID
-     * @return new user object
-     */
-    public User registerUser(Handle handle, String auth0Domain, String auth0ClientId, String auth0UserId) throws
-            UserExistsException {
-        if (doesUserExistByAuth0Id(handle, auth0Domain, auth0UserId)) {
-            throw new UserExistsException(auth0UserId);
-        } else {
-            User user = null;
-            try {
-                user = insertNewUser(handle, auth0ClientId, auth0UserId);
-            } catch (SQLException e) {
-                throw new DaoException("Could not create user " + auth0UserId + " using client " + auth0ClientId, e);
-            }
-            getSecureLog().info("Created ddp user {} for {}", user.getDdpUserId(), auth0UserId);
-            return user;
-        }
-    }
-
-    /**
-     * Get an operator's list of governed participants.
-     *
-     * @param handle       JDBI handle
-     * @param operatorGuid the governing operator's guid
-     * @return list of governed participants and their aliases
-     */
-    public List<GovernedParticipant> getAllGovernedParticipantsByOperatorGuid(Handle handle, String operatorGuid) {
-        List<GovernedParticipant> participants = new ArrayList<>();
-        try {
-            try (PreparedStatement stmt = handle.getConnection().prepareStatement(getAllGovParticipantsQuery)) {
-                stmt.setString(1, operatorGuid);
-                try (ResultSet rs = stmt.executeQuery()) {
-                    while (rs.next()) {
-                        String guid = rs.getString(SqlConstants.DDP_USER_GUID);
-                        String alias = rs.getString(UserGovernanceTable.ALIAS);
-                        participants.add(new GovernedParticipant(guid, alias));
-                    }
-                }
-            }
-        } catch (SQLException e) {
-            throw new DaoException("Could not find governed participants for " + operatorGuid, e);
-        }
-        return participants;
     }
 
     /**
@@ -668,29 +429,6 @@ public class UserDao {
 
         return new UserPermissions(operatorGuid, clientStatus.isAccountLocked(), clientStatus.isRevoked(),
                 clientStudyGuids, participants.values(), adminStudyGuids);
-    }
-
-    /**
-     * Returns the internal ddp user guid for the given auth0 user id.
-     */
-    public String queryDdpUserGuidFromAuth0Id(Handle handle, String auth0Domain, String auth0UserId) throws
-            SQLException {
-        String ddpUserId;
-        try (PreparedStatement stmt = handle.getConnection().prepareStatement(userGuidForAuth0IdQuery)) {
-            stmt.setString(1, auth0UserId);
-            stmt.setString(2, auth0Domain);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (!rs.next()) {
-                    throw new DaoException("Could not find auth0 user id " + auth0UserId);
-                } else {
-                    ddpUserId = rs.getString(SqlConstants.DDP_USER_GUID);
-                    if (rs.next()) {
-                        throw new DaoException("Too many rows returned for " + auth0UserId);
-                    }
-                }
-            }
-        }
-        return ddpUserId;
     }
 
     private static class ClientStatus {

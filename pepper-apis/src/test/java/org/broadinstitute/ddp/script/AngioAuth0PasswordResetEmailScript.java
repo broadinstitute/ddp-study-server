@@ -8,10 +8,10 @@ import java.util.Set;
 
 import com.auth0.exception.Auth0Exception;
 import org.broadinstitute.ddp.TxnAwareBaseTest;
+import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.exception.DDPException;
-import org.broadinstitute.ddp.util.Auth0MgmtTokenHelper;
 import org.broadinstitute.ddp.util.Auth0Util;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -32,14 +32,12 @@ public class AngioAuth0PasswordResetEmailScript extends TxnAwareBaseTest {
     private static final String BASE_WEBPAGE_URL = "https://pepper-angio.datadonationplatform.org/password-reset-done";
     private Set<String> userEmailBlackList;
 
-    private String auth0Token;
-    private Auth0MgmtTokenHelper auth0MgmtTokenHelper;
+    private Auth0ManagementClient mgmtClient;
 
     @Before
     public void setup() {
         TransactionWrapper.useTxn(handle -> {
-            auth0MgmtTokenHelper = Auth0Util.getManagementTokenHelperForStudy(handle, STUDY_GUID);
-            auth0Token = auth0MgmtTokenHelper.getManagementApiToken();
+            mgmtClient = Auth0Util.getManagementClientForStudy(handle, STUDY_GUID);
         });
         initializeEmailBlackList();
 
@@ -63,7 +61,7 @@ public class AngioAuth0PasswordResetEmailScript extends TxnAwareBaseTest {
             recipientProfiles = TransactionWrapper.withTxn(handle -> {
                 String auth0Domain = cfg.getConfig(ConfigFile.AUTH0).getString(ConfigFile.DOMAIN);
                 return emailGenerator.getProfileWithEmailForEmailAddresses(handle, recipients,
-                        auth0Domain, auth0MgmtTokenHelper);
+                        auth0Domain, mgmtClient);
             });
         } catch (Auth0Exception e) {
             LOG.error("Error sending email", e);
@@ -71,7 +69,7 @@ public class AngioAuth0PasswordResetEmailScript extends TxnAwareBaseTest {
 
         try {
             emailGenerator.sendPasswordResetEmails(STUDY_GUID, recipientProfiles, FROM_NAME, FROM_EMAIL, MESSAGE_SUBJECT, BASE_WEBPAGE_URL,
-                    SENDGRID_TEMPLATE_ID, auth0MgmtTokenHelper.getDomain(), auth0Token);
+                    SENDGRID_TEMPLATE_ID, mgmtClient.getDomain(), mgmtClient.getToken());
         } catch (DDPException e) {
             LOG.error("Exception executing AngioAuth0PasswordResetEmailScript", e);
         }
@@ -82,7 +80,7 @@ public class AngioAuth0PasswordResetEmailScript extends TxnAwareBaseTest {
         StudyPasswordResetEmailGenerator emailGenerator = new StudyPasswordResetEmailGenerator();
         try {
             emailGenerator.sendPasswordResetEmails(STUDY_GUID, userEmailBlackList, FROM_NAME, FROM_EMAIL, MESSAGE_SUBJECT, BASE_WEBPAGE_URL,
-                    SENDGRID_TEMPLATE_ID, auth0MgmtTokenHelper.getDomain(), auth0Token);
+                    SENDGRID_TEMPLATE_ID, mgmtClient.getDomain(), mgmtClient.getToken());
         } catch (DDPException e) {
             LOG.error("Exception executing AngioAuth0PasswordResetEmailScript", e);
         }

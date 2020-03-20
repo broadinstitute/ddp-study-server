@@ -1,7 +1,10 @@
 package org.broadinstitute.ddp.db.dto;
 
+import java.util.Optional;
+
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
+
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
@@ -13,7 +16,7 @@ public class ActivityInstanceDto {
     private long activityId;
     private long participantId;
     private long createdAtMillis;
-    private boolean isReadonly;
+    private Boolean isReadonly;
     private boolean isHidden;
     private InstanceStatusType statusType;
     private ActivityType activityType;
@@ -32,7 +35,7 @@ public class ActivityInstanceDto {
             @ColumnName("participant_id") long participantId,
             @ColumnName("created_at") long createdAtMillis,
             @ColumnName("first_completed_at") Long firstCompletedAt,
-            @ColumnName("is_readonly") boolean isReadonly,
+            @ColumnName("is_readonly") Boolean isReadonly,
             @ColumnName("is_hidden") boolean isHidden,
             @ColumnName("activity_instance_status_type") InstanceStatusType statusType,
             @ColumnName("activity_type") ActivityType activityType,
@@ -83,6 +86,10 @@ public class ActivityInstanceDto {
     }
 
     public boolean isReadonly() {
+        return Optional.ofNullable(isReadonly).orElse(false);
+    }
+
+    public Boolean getReadonly() {
         return isReadonly;
     }
 

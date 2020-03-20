@@ -22,6 +22,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.opencsv.CSVWriter;
 import com.typesafe.config.Config;
+import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceStatusDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
@@ -48,7 +49,6 @@ import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
-import org.broadinstitute.ddp.util.Auth0MgmtTokenHelper;
 import org.broadinstitute.ddp.util.Auth0Util;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
@@ -671,11 +671,11 @@ public class AngioConsentVersion2 implements CustomTask {
     }
 
     private String getAuth0MgmtToken() {
-        return new Auth0MgmtTokenHelper(
+        return new Auth0ManagementClient(
+                cfg.getString("tenant.domain"),
                 cfg.getString("tenant.mgmtClientId"),
-                cfg.getString("tenant.mgmtSecret"),
-                cfg.getString("tenant.domain")
-        ).getManagementApiToken();
+                cfg.getString("tenant.mgmtSecret")
+        ).getToken();
     }
 
     private void saveToFile(String filename, String[] headers, List<String[]> rows) {
