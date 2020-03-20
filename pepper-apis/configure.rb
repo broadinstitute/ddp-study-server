@@ -6,6 +6,8 @@ $dsde_toolbox_image_name = "broadinstitute/dsde-toolbox:latest"
 # instead of using Docker image built in scripts
 $use_docker = ENV.fetch("USE_DOCKER", "true") == "true"
 
+$gae = ENV.fetch("GAE", "false")
+
 $version = ENV.fetch("VERSION") { |_|
   puts "VERSION not set"
   exit 1
@@ -183,6 +185,7 @@ def render_from_path(path, output_file_name = nil)
     vault_cmd = [
              "docker", "run", "--rm", "-w", "/w", "-v", "#{Dir.pwd}:/w",
                   "-e", "VAULT_TOKEN=#{$vault_token}", "-e", "ENVIRONMENT=#{$env}", "-e", "VERSION=#{$version}",
+                  "-e", "GAE=#{$gae}",
                   "-e", "BUILD_CONTAINERS=#{$build_containers_flag}",
                   "-e", "DOCS_PROXIED_HOST=#{$docsProxiedHost}",
                   "-e", "NGINX_PROXIED_HOST=#{$nginxProxiedHost}",
