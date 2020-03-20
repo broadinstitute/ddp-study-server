@@ -176,17 +176,6 @@ public class TransactionWrapper {
             }
             gTxnWrapper.put(dbConfig.getDb(), new TransactionWrapper(dbConfig.getMaxConnections(), dbConfig.getDbUrl(), dbConfig.getDb()));
         }
-        // We are setting the VMs default timezone expectation that it will be same on server
-        // or at least specified in DB connection URL
-        // if timezones don't match, times and dates might be miscalculated/improperly converted by JDBC connector
-        // https://bugs.mysql.com/bug.php?id=91112
-        // LOG.info("Setting default time zone to: {}", defaultTimeZoneName);
-        //        TimeZone defaultTimeZone = TimeZone.getTimeZone(defaultTimeZoneName);
-        //        if (defaultTimeZone == null) {
-        //            throw new RuntimeException(String.format("Could not find a Time zone with name: %s", defaultTimeZoneName));
-        //        }
-        //        TimeZone.setDefault(defaultTimeZone);
-
         isInitialized = true;
     }
 
