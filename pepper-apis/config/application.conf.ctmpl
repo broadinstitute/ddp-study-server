@@ -10,7 +10,7 @@
 {{with $testingAuth := index $testingConf.Data "auth0"}}
 {{with $slack := index $conf.Data "slack"}}
 {{with $elasticsearchConf := vault (printf "secret/pepper/%s/%s/elasticsearch" $environment $version)}}
-
+{
     {{if eq $gae "true"}}
         "dbUrl": "{{$conf.Data.gaeDbUrl}}",
         "housekeepingDbUrl": "{{$conf.Data.gaeHousekeepingDbUrl}}",
