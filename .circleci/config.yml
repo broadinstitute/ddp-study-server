@@ -25,6 +25,7 @@ commands:
           command: |
             echo "export VAULT_TOKEN=`vault write -field=token auth/approle/login role_id=$VAULT_ROLE_ID secret_id=$VAULT_ROLE_SECRET_ID`" >> $BASH_ENV
             echo "export SHORT_GIT_SHA=`echo '<< pipeline.git.revision >>' | cut -c 1-7`" >> $BASH_ENV
+            echo 'export BUILDS_BUCKET=ddp-build-artifacts' >> $BASH_ENV
             source $BASH_ENV
 
   set-deployment-env:
@@ -128,6 +129,19 @@ commands:
           # Upload test results for display in Test Summary: https://circleci.com/docs/2.0/collect-test-data/
           path: target/surefire-reports
 
+  store-jar:
+    steps:
+      - run:
+          name: Store build jar
+          command: |
+            set -u
+            readvault.sh secret/pepper/prod/v1/conf .data.gcp.serviceKey | gcloud auth activate-service-account --key-file=-
+            DATE=`date +%F`
+            JAR_BASE_NAME=DataDonationPlatform
+            JAR_FILE_NAME="${JAR_BASE_NAME}_${DATE}_${SHORT_GIT_SHA}.jar"
+            LOCAL_JAR_FILE_PATH="./target/${JAR_BASE_NAME}.jar"
+            gsutil cp  ${LOCAL_JAR_FILE_PATH} "gs://${BUILDS_BUCKET}/ddp-study-server-pepper-apis/${JAR_FILE_NAME}"                         
+
   deploy-jar:
     steps:
       - set-deployment-env
@@ -156,6 +170,13 @@ jobs:
     steps:
       - build-jar
 
+  build-and-store-jar-job:
+    executor:
+      name: maven-executor
+    steps:
+      - build-jar
+      - store-jar   
+
   build-and-deploy-job:
     executor:
       name: maven-executor
@@ -167,7 +188,7 @@ workflows:
   version: 2
   build-deploy:
     jobs:
-      - build-and-deploy-job:
+      - build-and-store-jar-job:
           filters:
             branches:
               only: study-server-to-appengine
