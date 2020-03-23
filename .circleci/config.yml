@@ -24,9 +24,11 @@ commands:
           name: Set environment to be used by build
           command: |
             echo "export VAULT_TOKEN=`vault write -field=token auth/approle/login role_id=$VAULT_ROLE_ID secret_id=$VAULT_ROLE_SECRET_ID`" >> $BASH_ENV
+            echo "export SHORT_GIT_SHA=`echo '<< pipeline.git.revision >>' | cut -c 1-7`" >> $BASH_ENV
             source $BASH_ENV
 
-  render-configs:
+  set-deployment-env:
+    description: "Determine the deploy target and set the ENVIRONMENT var"
     steps:
       - run:
           name: Determine deployment environment for branch << pipeline.git.branch >>
@@ -40,15 +42,12 @@ commands:
             ;;
             test)
               DEPLOY_ENV=test
-              NG_BUILD_OPTS=--prod --aot
             ;;
             staging)
               DEPLOY_ENV=staging
-              NG_BUILD_OPTS=--prod --aot
             ;;
             staging)
               DEPLOY_ENV=prod
-              NG_BUILD_OPTS=--prod --aot
             ;;
             *)
               echo "Cannot map << pipeline.git.branch >> to a deployment environment"
@@ -57,21 +56,25 @@ commands:
             esac
             echo "Setting deployment ENVIRONMENT to $DEPLOY_ENV"
             echo "export ENVIRONMENT=$DEPLOY_ENV" >> $BASH_ENV
-            source $BASH_ENV
+            source $BASH_ENV          
+
+  render-configs:
+    description: render config files
+    steps:
       - run:
           name: show environment variables
           command: env
       - run:
           name: api-build.sh
-          command: ./api-build.sh v1 $ENVIRONMENT . --gae-config
+          command: ./api-build.sh v1 ${ENVIRONMENT:-dev} . --gae-config
           environment:
             USE_DOCKER: false
 
 
-  install-maven-dependencies:
+  build-jar:
     description: "Install maven dependencies"
     steps:
-      - checkout:
+      - checkout: 
           path: ~/repo
       - run:
           name: Show pipeline vars
@@ -85,7 +88,8 @@ commands:
             echo "pipeline.git.revision << pipeline.git.revision >>"
             echo "pipeline.git.base_revision << pipeline.git.base_revision >>"
       - setup-shared-env
-      - render-configs      
+      # For now we are going to hard-code "dev" when we generate config for jar builds
+      - render-configs  
       - run:
           name: Waiting for MySQL to be ready
           command: |
@@ -124,18 +128,45 @@ commands:
           # Upload test results for display in Test Summary: https://circleci.com/docs/2.0/collect-test-data/
           path: target/surefire-reports
 
+  deploy-jar:
+    steps:
+      - set-deployment-env
+      - render-configs
+      - run:
+          name: Gather deployment assets
+          command: |
+            mkdir deployment_assets
+            cd deployment_assets
+            cp ../target/DataDonationPlatform.jar .
+            cp ../src/app.yaml .
+            cp ../output-config/application.conf .
+            cp -r ../output-config/fc_keys .
+      - run:
+          name: Deploy to GAE
+          command: |
+            set -u
+            gcloud app deploy --version="${SHORT_GIT_SHA}" --stop-previous-version --project "broad-ddp-${ENVIRONMENT}" app.yaml
+
+
 jobs:
-  maven-install:
+  build-jar-job:
     executor:
       name: maven-executor
     steps:
-      - install-maven-dependencies
+      - build-jar
+
+  build-and-deploy-job:
+    executor:
+      name: maven-executor
+    steps:
+      - build-jar
+      - deploy-jar      
 
 workflows:
   version: 2
   build-deploy:
     jobs:
-      - maven-install:
+      - build-jar-job:
           filters:
             branches:
               only: study-server-to-appengine
