@@ -34,6 +34,7 @@ public class PostPasswordResetRoute implements Route {
     @Override
     public Object handle(Request request, Response response) throws Exception {
         String auth0ClientId = request.queryParams(QueryParam.AUTH0_CLIENT_ID);
+        String auth0Domain = request.queryParams(QueryParam.AUTH0_DOMAIN);
         String email = request.queryParams(QueryParam.EMAIL);
         String auth0Success = request.queryParams(QueryParam.SUCCESS);
 
@@ -43,7 +44,7 @@ public class PostPasswordResetRoute implements Route {
             ResponseUtil.haltError(response, HttpStatus.SC_BAD_REQUEST, new ApiError(ErrorCodes.REQUIRED_PARAMETER_MISSING, errMsg));
         }
 
-        HttpUrl clientPwdResetUrl = getWebClientPasswordResetRedirectUrl(auth0ClientId, response);
+        HttpUrl clientPwdResetUrl = getWebClientPasswordResetRedirectUrl(auth0ClientId, auth0Domain, response);
 
         HttpUrl.Builder urlBuilder = clientPwdResetUrl.newBuilder();
         urlBuilder.addQueryParameter(QueryParam.EMAIL, email);
@@ -62,11 +63,11 @@ public class PostPasswordResetRoute implements Route {
         return "";
     }
 
-    private HttpUrl getWebClientPasswordResetRedirectUrl(String auth0ClientId, Response response) {
+    private HttpUrl getWebClientPasswordResetRedirectUrl(String auth0ClientId, String auth0Domain, Response response) {
         return TransactionWrapper.withTxn(
                 handle -> {
                     JdbiClient jdbiClient = handle.attach(JdbiClient.class);
-                    Optional<ClientDto> clientDto = jdbiClient.findByAuth0ClientId(auth0ClientId);
+                    Optional<ClientDto> clientDto = jdbiClient.getClientByAuth0ClientAndDomain(auth0ClientId, auth0Domain);
                     if (!clientDto.isPresent()) {
                         String errMsg = "Client with Auth0 client id " + auth0ClientId + " does not exist";
                         LOG.warn(errMsg);

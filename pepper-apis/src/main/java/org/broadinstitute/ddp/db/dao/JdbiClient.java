@@ -58,6 +58,21 @@ public interface JdbiClient extends SqlObject {
                                                      @Bind("auth0Domain") String auth0Domain);
 
     @SqlQuery("SELECT "
+            + "     c.client_id, c.client_name, c.auth0_client_id, c.auth0_signing_secret, "
+            + "     c.web_password_redirect_url, c.is_revoked, c.auth0_tenant_id"
+            + "FROM "
+            + "     client c, auth0_tenant t "
+            + "WHERE "
+            + "     c.auth0_client_id = :auth0ClientId and c.auth0_tenant_id = t.auth0_tenant_id"
+            + "     AND t.auth0_domain = :auth0Domain"
+    )
+    @RegisterConstructorMapper(ClientDto.class)
+    Optional<ClientDto> getClientByAuth0ClientAndDomain(
+            @Bind("auth0ClientId") String auth0ClientId,
+            @Bind("auth0Domain") String auth0Domain
+    );
+
+    @SqlQuery("SELECT "
             + "     c.is_revoked "
             + "FROM "
             + "     client c, auth0_tenant t "
@@ -92,14 +107,12 @@ public interface JdbiClient extends SqlObject {
     );
 
     @SqlQuery("SELECT client_id,client_name,auth0_client_id,auth0_signing_secret,web_password_redirect_url,is_revoked,auth0_tenant_id"
-            + "  FROM client WHERE auth0_client_id = :auth0ClientId")
+            + "  FROM client WHERE auth0_client_id = :auth0ClientId AND auth0_tenant_id = :auth0TenantId")
     @RegisterConstructorMapper(ClientDto.class)
-    Optional<ClientDto> findByAuth0ClientId(@Bind("auth0ClientId") String auth0ClientId);
-
-    @SqlQuery("SELECT client_id,client_name,auth0_client_id,auth0_signing_secret,web_password_redirect_url,is_revoked,auth0_tenant_id"
-            + "  FROM client WHERE client_name= :clientName")
-    @RegisterConstructorMapper(ClientDto.class)
-    Optional<ClientDto> findByClientName(@Bind("clientName") String clientName);
+    Optional<ClientDto> findByAuth0ClientIdAndAuth0TenantId(
+            @Bind("auth0ClientId") String auth0ClientId,
+            @Bind("auth0TenantId") long auth0TenantId
+    );
 
     @SqlUpdate("UPDATE client SET web_password_redirect_url = :url WHERE auth0_client_id = :auth0ClientId")
     int updateWebPasswordRedirectUrlByAuth0ClientId(

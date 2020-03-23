@@ -171,6 +171,7 @@ public class RouteConstants {
         public static final String INSTANCE_GUID = "instanceGuid";
         public static final String IRB_PASSWORD = "irbPassword";
         public static final String AUTH0_CLIENT_ID  = "clientId";
+        public static final String AUTH0_DOMAIN  = "domain";
         public static final String EMAIL  = "email";
         public static final String SUCCESS  = "success";
         public static final String UMBRELLA = "umbrella";

@@ -36,11 +36,13 @@ public class CreateTemporaryUserRoute extends ValidatedJsonInputRoute<CreateTemp
     @Override
     public Object handle(Request request, Response response, CreateTemporaryUserPayload payload) {
         String auth0ClientId = payload.getAuth0ClientId();
+        String auth0Domain = payload.getAuth0Domain();
 
         LOG.info("Request to create new temporary user from ipAddress '{}' and auth0ClientId '{}'", request.ip(), auth0ClientId);
 
         CreateTemporaryUserResponse result = TransactionWrapper.withTxn(handle -> {
-            ClientDto clientDto = handle.attach(JdbiClient.class).findByAuth0ClientId(auth0ClientId).orElse(null);
+            ClientDto clientDto = handle.attach(JdbiClient.class)
+                    .getClientByAuth0ClientAndDomain(auth0ClientId, auth0Domain).orElse(null);
             if (clientDto == null || clientDto.isRevoked()) {
                 String msg = String.format("Client '%s' is invalid or inactive", auth0ClientId);
                 LOG.warn(msg);

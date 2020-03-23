@@ -15,6 +15,7 @@ import java.util.Set;
 import com.google.gson.Gson;
 import io.restassured.http.ContentType;
 import io.restassured.mapper.ObjectMapperType;
+import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -55,7 +56,10 @@ public class CreateTemporaryUserRouteTest extends IntegrationTestSuite.TestCase 
     public void test_createsUser_withExpectedExpirationDuration() {
         long now = Instant.now().toEpochMilli();
 
-        CreateTemporaryUserPayload payload = new CreateTemporaryUserPayload(testData.getTestingClient().getAuth0ClientId());
+        CreateTemporaryUserPayload payload = new CreateTemporaryUserPayload(
+                testData.getTestingClient().getAuth0ClientId(),
+                ConfigFile.Auth0Testing.AUTH0_DOMAIN2
+        );
         String body = given().body(payload, ObjectMapperType.GSON)
                 .when().post(url)
                 .then().assertThat()
@@ -79,7 +83,10 @@ public class CreateTemporaryUserRouteTest extends IntegrationTestSuite.TestCase 
 
     @Test
     public void test_differentUsersEachTime() {
-        CreateTemporaryUserPayload payload = new CreateTemporaryUserPayload(testData.getTestingClient().getAuth0ClientId());
+        CreateTemporaryUserPayload payload = new CreateTemporaryUserPayload(
+                testData.getTestingClient().getAuth0ClientId(),
+                ConfigFile.Auth0Testing.AUTH0_DOMAIN2
+        );
 
         String guid1 = given().body(payload, ObjectMapperType.GSON)
                 .when().post(url)
@@ -102,7 +109,7 @@ public class CreateTemporaryUserRouteTest extends IntegrationTestSuite.TestCase 
 
     @Test
     public void test_missingAuth0ClientId_returns400() {
-        CreateTemporaryUserPayload payload = new CreateTemporaryUserPayload("");
+        CreateTemporaryUserPayload payload = new CreateTemporaryUserPayload("", "");
         given().body(payload, ObjectMapperType.GSON)
                 .when().post(url)
                 .then().assertThat()
@@ -112,7 +119,7 @@ public class CreateTemporaryUserRouteTest extends IntegrationTestSuite.TestCase 
 
     @Test
     public void test_invalidAuth0ClientId_returns400() {
-        CreateTemporaryUserPayload payload = new CreateTemporaryUserPayload("abc123");
+        CreateTemporaryUserPayload payload = new CreateTemporaryUserPayload("abc123", "auth0domain");
         given().body(payload, ObjectMapperType.GSON)
                 .when().post(url)
                 .then().assertThat()
