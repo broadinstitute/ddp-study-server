@@ -48,6 +48,8 @@ public class DsmRouteTest extends IntegrationTestSuite.TestCase {
     protected static String userGuid;
     protected static String studyGuid;
     protected static String dsmClientAccessToken;
+    protected static String auth0ClientId;
+    protected static long auth0TenantId;
 
     // If DSM client already exists in database, then re-use it.
     // Otherwise, insert it and clean it up afterwards.
@@ -93,8 +95,8 @@ public class DsmRouteTest extends IntegrationTestSuite.TestCase {
         Config auth0Config = RouteTestUtil.getConfig().getConfig(ConfigFile.AUTH0);
 
         String auth0Domain = auth0Config.getString(ConfigFile.DOMAIN);
-        long auth0TenantId = handle.attach(JdbiAuth0Tenant.class).findByDomain(auth0Domain).getId();
-        String auth0ClientId = auth0Config.getString(ConfigFile.AUTH0_DSM_CLIENT_ID);
+        auth0TenantId = handle.attach(JdbiAuth0Tenant.class).findByDomain(auth0Domain).getId();
+        auth0ClientId = auth0Config.getString(ConfigFile.AUTH0_DSM_CLIENT_ID);
 
         StudyClientConfiguration clientConfig = clientDao.getConfiguration(auth0ClientId, auth0Domain);
         if (clientConfig == null) {
@@ -115,7 +117,7 @@ public class DsmRouteTest extends IntegrationTestSuite.TestCase {
      */
     private static void deleteTestDSMAuthClientInDatabase(Handle handle) {
         ClientDao clientDao = handle.attach(ClientDao.class);
-        clientDao.deleteClientByName(TEST_DSM_CLIENT_NAME);
+        clientDao.deleteClientByAuth0ClientIdAndAuth0TenantId(auth0ClientId, auth0TenantId);
     }
 
     /**

@@ -83,15 +83,15 @@ public interface ClientDao extends SqlObject {
      * @param clientName to delete
      * @return number of rows deleted. This should really be 1
      */
-    default int deleteClientByName(String clientName) {
+    default int deleteClientByAuth0ClientIdAndAuth0TenantId(String auth0ClientId, long auth0TenantId) {
         // First remove all client__umbrella_study entries for this client Id
-        Long clientId = getClientDao().getClientIdByName(clientName).orElse(null);
+        Long clientId = getClientDao().getClientIdByAuth0ClientIdAndAuth0TenantId(auth0ClientId, auth0TenantId).orElse(null);
         if (clientId != null) {
             getClientUmbrellaStudyDao().deleteByInternalClientId(clientId);
         }
 
         // now remove the client itself
-        return getClientDao().deleteClientByName(clientName);
+        return getClientDao().deleteClientByAuth0ClientIdAndAuth0TenantId(auth0ClientId, auth0TenantId);
     }
 
 

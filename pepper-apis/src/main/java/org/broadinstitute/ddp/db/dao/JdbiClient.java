@@ -72,18 +72,24 @@ public interface JdbiClient extends SqlObject {
     @SqlUpdate("DELETE FROM "
             + "     client "
             + "WHERE "
-            + "     client.client_name = :clientName"
+            + "     auth0_client_id = :auth0ClientId AND auth0_tenant_id = :auth0TenantId"
     )
-    int deleteClientByName(@Bind("clientName") String clientName);
+    int deleteClientByAuth0ClientIdAndAuth0TenantId(
+            @Bind("auth0ClientId") String auth0ClientId,
+            @Bind("auth0TenantId") long auth0TenantId
+    );
 
     @SqlQuery("SELECT "
             + "     client_id "
             + "FROM "
             + "     client "
             + "WHERE "
-            + "     client.client_name = :clientName"
+            + "     auth0_client_id = :auth0ClientId AND auth0_tenant_id = :auth0TenantId"
     )
-    Optional<Long> getClientIdByName(@Bind("clientName") String clientName);
+    Optional<Long> getClientIdByAuth0ClientIdAndAuth0TenantId(
+            @Bind("auth0ClientId") String auth0ClientId,
+            @Bind("auth0TenantId") long auth0TenantId
+    );
 
     @SqlQuery("SELECT client_id,client_name,auth0_client_id,auth0_signing_secret,web_password_redirect_url,is_revoked,auth0_tenant_id"
             + "  FROM client WHERE auth0_client_id = :auth0ClientId")
