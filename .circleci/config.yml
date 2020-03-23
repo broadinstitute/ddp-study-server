@@ -145,6 +145,7 @@ commands:
           name: Deploy to GAE
           command: |
             set -u
+            vault read secret/pepper/${ENVIRONMENT}/v1/conf | jq -r .data.gcp.serviceKey | gcloud auth activate-service-account --key-file=-
             gcloud app deploy --version="${SHORT_GIT_SHA}" --stop-previous-version --project "broad-ddp-${ENVIRONMENT}" app.yaml
 
 
