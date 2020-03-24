@@ -1,4 +1,4 @@
-service: pepper-housekeeping
+service: housekeeping
 runtime: java11
 instance_class: B4_1G
 # look at tuning for spawning new VMs under load (10 connections -> new instance)
