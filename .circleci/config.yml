@@ -201,7 +201,7 @@ commands:
             mkdir deployment_assets
             cd deployment_assets
             cp ../target/<<parameters.jar_base_name>>.jar .
-            cp ../src/appengine/app.yaml .
+            cp ../src/appengine/<<parameters.jar_base_name>>.yaml .
             cp ../output-config/application.conf .
             cp -r ../output-config/fc_keys .
       - run:
