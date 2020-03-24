@@ -34,11 +34,11 @@ import org.slf4j.LoggerFactory;
  */
 public class DsmClient {
 
-    public static final String API_CANCERS = "/app/cancers";
-    public static final String API_DRUGS = "/app/drugs";
-    public static final String API_PARTICIPANT_STATUS = String.format(
+    public static final String PATH_CANCERS = "/app/cancers";
+    public static final String PATH_DRUGS = "/app/drugs";
+    public static final String PATH_PARTICIPANT_STATUS = String.format(
             "/info/participantstatus/%s/%s", PathParam.STUDY_GUID, PathParam.USER_GUID);
-    public static final int DEFAULT_TIMEOUT_SECS = 30;
+    public static final int DEFAULT_TIMEOUT_SECS = 10;
 
     private static final Logger LOG = LoggerFactory.getLogger(DsmClient.class);
     private static final Gson gson = new Gson();
@@ -102,8 +102,8 @@ public class DsmClient {
         try {
             String auth = RouteUtil.makeAuthBearerHeader(generateToken());
             var request = HttpRequest.newBuilder()
-                    .uri(baseUrl.resolve(API_CANCERS))
-                    .header(RouteConstants.AUTHORIZATION, auth)
+                    .uri(baseUrl.resolve(PATH_CANCERS))
+                    .header(RouteConstants.Header.AUTHORIZATION, auth)
                     .timeout(Duration.ofSeconds(DEFAULT_TIMEOUT_SECS))
                     .build();
             var response = client.send(request, HttpResponse.BodyHandlers.ofString());
@@ -129,8 +129,8 @@ public class DsmClient {
         try {
             String auth = RouteUtil.makeAuthBearerHeader(generateToken());
             var request = HttpRequest.newBuilder()
-                    .uri(baseUrl.resolve(API_DRUGS))
-                    .header(RouteConstants.AUTHORIZATION, auth)
+                    .uri(baseUrl.resolve(PATH_DRUGS))
+                    .header(RouteConstants.Header.AUTHORIZATION, auth)
                     .timeout(Duration.ofSeconds(DEFAULT_TIMEOUT_SECS))
                     .build();
             var response = client.send(request, HttpResponse.BodyHandlers.ofString());
@@ -157,14 +157,14 @@ public class DsmClient {
      * @return result with status info
      */
     public ApiResult<ParticipantStatus, Void> getParticipantStatus(String studyGuid, String userGuid, String token) {
-        String path = API_PARTICIPANT_STATUS
+        String path = PATH_PARTICIPANT_STATUS
                 .replace(PathParam.STUDY_GUID, studyGuid)
                 .replace(PathParam.USER_GUID, userGuid);
         try {
             String auth = RouteUtil.makeAuthBearerHeader(token);
             var request = HttpRequest.newBuilder()
                     .uri(baseUrl.resolve(path))
-                    .header(RouteConstants.AUTHORIZATION, auth)
+                    .header(RouteConstants.Header.AUTHORIZATION, auth)
                     .timeout(Duration.ofSeconds(DEFAULT_TIMEOUT_SECS))
                     .build();
             var response = client.send(request, HttpResponse.BodyHandlers.ofString());

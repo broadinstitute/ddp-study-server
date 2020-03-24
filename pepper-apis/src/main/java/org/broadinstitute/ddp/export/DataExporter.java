@@ -111,7 +111,6 @@ import org.broadinstitute.ddp.service.ConsentService;
 import org.broadinstitute.ddp.service.MedicalRecordService;
 import org.broadinstitute.ddp.service.OLCService;
 import org.broadinstitute.ddp.service.PdfService;
-import org.broadinstitute.ddp.util.Auth0MgmtTokenHelper;
 import org.broadinstitute.ddp.util.Auth0Util;
 import org.broadinstitute.ddp.util.ElasticsearchServiceUtil;
 import org.elasticsearch.action.bulk.BulkRequest;
@@ -157,9 +156,9 @@ public class DataExporter {
     }
 
     public static Map<String, String> fetchAndCacheAuth0Emails(Handle handle, String studyGuid, Set<String> auth0UserIds) {
-        Auth0MgmtTokenHelper tokenHelper = Auth0Util.getManagementTokenHelperForStudy(handle, studyGuid);
-        Map<String, String> emailResults = new Auth0Util(tokenHelper.getDomain())
-                .getUserPassConnEmailsByAuth0UserIds(auth0UserIds, tokenHelper.getManagementApiToken());
+        var mgmtClient = Auth0Util.getManagementClientForStudy(handle, studyGuid);
+        Map<String, String> emailResults = new Auth0Util(mgmtClient.getDomain())
+                .getUserPassConnEmailsByAuth0UserIds(auth0UserIds, mgmtClient.getToken());
         emailResults.forEach((auth0UserId, email) -> emailStore.put(auth0UserId, email));
         return emailResults;
     }

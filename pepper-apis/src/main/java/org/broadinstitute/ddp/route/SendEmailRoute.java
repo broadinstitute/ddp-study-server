@@ -28,7 +28,6 @@ import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.workflow.StaticState;
 import org.broadinstitute.ddp.model.workflow.WorkflowState;
 import org.broadinstitute.ddp.service.WorkflowService;
-import org.broadinstitute.ddp.util.Auth0MgmtTokenHelper;
 import org.broadinstitute.ddp.util.Auth0Util;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
 import org.slf4j.Logger;
@@ -55,12 +54,12 @@ public class SendEmailRoute extends ValidatedJsonInputRoute<SendEmailPayload> {
         TransactionWrapper.useTxn(handle -> {
             LOG.info("Handling email resend for {} in study {}", email, studyGuid);
             StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
-            Auth0MgmtTokenHelper auth0MgmtTokenHelper = Auth0Util.getManagementTokenHelperForStudy(handle, studyGuid);
+            var mgmtClient = Auth0Util.getManagementClientForStudy(handle, studyGuid);
             List<User> auth0Users;
 
-            Auth0Util auth0Util = new Auth0Util(auth0MgmtTokenHelper.getDomain());
+            Auth0Util auth0Util = new Auth0Util(mgmtClient.getDomain());
             try {
-                auth0Users = auth0Util.getAuth0UsersByEmail(email, auth0MgmtTokenHelper.getManagementApiToken());
+                auth0Users = auth0Util.getAuth0UsersByEmail(email, mgmtClient.getToken());
             } catch (Auth0Exception e) {
                 throw new DDPException("Error while looking up auth0 user " + email, e);
             }

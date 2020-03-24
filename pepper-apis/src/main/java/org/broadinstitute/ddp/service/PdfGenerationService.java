@@ -67,7 +67,6 @@ import org.broadinstitute.ddp.model.pdf.SubstitutionType;
 import org.broadinstitute.ddp.model.study.Participant;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.transformers.DateTimeFormatUtils;
-import org.broadinstitute.ddp.util.Auth0MgmtTokenHelper;
 import org.broadinstitute.ddp.util.Auth0Util;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
@@ -226,10 +225,10 @@ public class PdfGenerationService {
         }
 
         if (hasEmailSource) {
-            Auth0MgmtTokenHelper tokenHelper = Auth0Util.getManagementTokenHelperForStudy(handle, config.getStudyGuid());
+            var mgmtClient = Auth0Util.getManagementClientForStudy(handle, config.getStudyGuid());
             String auth0UserId = participant.getUser().getAuth0UserId();
-            Map<String, String> emailResults = new Auth0Util(tokenHelper.getDomain())
-                    .getUserPassConnEmailsByAuth0UserIds(Sets.newHashSet(auth0UserId), tokenHelper.getManagementApiToken());
+            Map<String, String> emailResults = new Auth0Util(mgmtClient.getDomain())
+                    .getUserPassConnEmailsByAuth0UserIds(Sets.newHashSet(auth0UserId), mgmtClient.getToken());
             participant.getUser().setEmail(emailResults.get(auth0UserId));
         }
 

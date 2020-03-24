@@ -75,12 +75,6 @@ ActivityAnswersPatchBadPayloadResponse:
     application/json:
       schema:
         $ref: '../pepper.yml#/components/schemas/Error.ActivityAnswersPatchBadPayload'
-ActivityAnswersPatchExistsResponse:
-  description: answer already exists for question, `answerGuid` should be specified
-  content:
-    application/json:
-      schema:
-        $ref: '../pepper.yml#/components/schemas/Error.ActivityAnswersPatchExists'
 ActivityAnswersPatchInvalidResponse:
   description: activity instance is read-only or answer submission failed validation
   content:
@@ -403,12 +397,6 @@ StudyNotFoundErrorResponse:
     application/json:
       schema:
         $ref: '../pepper.yml#/components/schemas/Error.StudyNotFound'
-StudyPasswordRequirementsResponse:
-  description: an object describing constraints on the study password
-  content:
-    application/json:
-      schema:
-        $ref: '../pepper.yml#/components/schemas/StudyPasswordRequirements'
 UpdateUserLoginDataMalformedEmailOrEmailAlreadyExistsInAuth0ErrorResponse:
   description: email is malformed or already exists in Auth0
   content:

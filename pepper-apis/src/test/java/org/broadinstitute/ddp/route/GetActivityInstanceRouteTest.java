@@ -41,6 +41,7 @@ import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
+import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiQuestion;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
@@ -475,7 +476,7 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
     }
 
     @Test
-    public void testGet_readonlyIsSetCorrectly() throws InterruptedException {
+    public void test_givenReadonlyFlagIsNotSet_whenEditTimeoutExpires_thenInstanceBecomesReadonly() throws InterruptedException {
         Response resp = testFor200AndExtractResponse();
         resp.then().assertThat().body("readonly", equalTo(false));
 
@@ -485,6 +486,10 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
 
         TransactionWrapper.withTxn(handle -> handle.attach(JdbiActivity.class).updateEditTimeoutSecByCode(
                 1L, activity.getActivityCode(), optStudyId.get())
+        );
+
+        TransactionWrapper.useTxn(
+                handle -> handle.attach(JdbiActivityInstance.class).updateIsReadonlyByGuid(null, instanceDto.getGuid())
         );
 
         TimeUnit.SECONDS.sleep(1L);

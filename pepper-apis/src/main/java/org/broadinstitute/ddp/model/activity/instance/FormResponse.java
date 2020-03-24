@@ -28,7 +28,7 @@ public final class FormResponse extends ActivityResponse {
     public FormResponse(@ColumnName("instance_id") long id,
                         @ColumnName("instance_guid") String guid,
                         @ColumnName("participant_id") long participantId,
-                        @ColumnName("is_readonly") boolean isReadonly,
+                        @ColumnName("is_readonly") Boolean isReadonly,
                         @ColumnName("created_at") long createdAt,
                         @ColumnName("first_completed_at") Long firstCompletedAt,
                         @ColumnName("activity_id") long activityId,

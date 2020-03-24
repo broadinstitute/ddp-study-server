@@ -26,6 +26,11 @@ queryUserByGuid() ::= <<
 where u.guid = :guid
 >>
 
+queryUserByHruid() ::= <<
+<select_user()>
+where u.hruid = :hruid
+>>
+
 queryUserByAuth0UserId() ::= <<
 <select_user()>
 where u.auth0_user_id = :auth0UserId
