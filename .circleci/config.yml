@@ -260,7 +260,7 @@ workflows:
   version: 2
   build-deploy:
     jobs:
-      - build-and-store-jar-job:
+      - deploy-jar-job:
           filters:
             branches:
-              only: deploy-jar-job
+              only: study-server-to-appengine
