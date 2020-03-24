@@ -59,6 +59,9 @@ commands:
             test)
               DEPLOY_ENV=test
             ;;
+            test_deleteme1) #todo remove when done
+              DEPLOY_ENV=test
+            ;;
             staging)
               DEPLOY_ENV=staging
             ;;
@@ -308,3 +311,4 @@ workflows:
                 - test
                 - staging
                 - production
+                - test_deleteme1
