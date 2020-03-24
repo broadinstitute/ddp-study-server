@@ -160,7 +160,7 @@ commands:
             gsutil cp  ${LOCAL_JAR_FILE_PATH} "gs://${BUILDS_BUCKET}/ddp-study-server-pepper-apis/${JAR_FILE_NAME}"
   
   retrieve-jar:
-    description: Get jar from bucket
+    description: Get <<parameters.jar_base_name>> jar from bucket
     parameters:
       jar_base_name:
         type: string
@@ -207,11 +207,32 @@ commands:
             cp ../output-config/application.conf .
             cp -r ../output-config/fc_keys .
       - run:
-          name: Deploy to GAE
+          name: Deploy <<parameters.jar_base_name>> to GAE
           command: |
             set -u
             vault read -format=json secret/pepper/${ENVIRONMENT}/v1/conf  | jq -r .data.gcp.serviceKey | gcloud auth activate-service-account --key-file=-
             gcloud app deploy --version="${SHORT_GIT_SHA}" --stop-previous-version --project "broad-ddp-${ENVIRONMENT}" $DEPLOY_DIR/<<parameters.jar_base_name>>.yaml
+  
+  update-deployment-sheet:
+    parameters:
+      jar_base_name:
+        type: string
+    steps:
+      - run:
+          name: Update deployments sheet
+          command: |
+            set -u
+            TZ=America/New_York
+            DATE=`TZ=$TZ date +%F`
+            TIME=`TZ=$TZ date +%T`
+            COMPONENT='<<parameters.jar_base_name>> server'
+            BRANCH=<< pipeline.git.branch >>
+            # Picking up any tags attached to the current commit
+            TAG=`git tag --points-at HEAD | xargs`
+            # Extract email from current commit
+            AUTHOR=`git show -s --format='%ae' HEAD`
+            readvault.sh secret/pepper/${ENVIRONMENT}/v1/conf .data.gcp.serviceKey | \
+            sheetappend $RELEASE_SHEET_ID $DATE $TIME "$COMPONENT" $ENVIRONMENT $BRANCH "$TAG" $SHORT_GIT_SHA "$AUTHOR" $CIRCLE_BUILD_NUM "$CIRCLE_BUILD_URL"
 
 
 jobs:
@@ -260,9 +281,31 @@ jobs:
 
 workflows:
   version: 2
-  build-deploy:
+
+  build-and-deploy:
+    jobs:
+      - build-and-deploy-job:
+          filters:
+            branches:
+              only:
+                - develop
+                - study-server-to-appengine
+
+  build-and-store:
+    jobs:
+      - build-and-store-jar-job:
+          filters:
+            branches:
+              only:
+                - /^rc.*/
+                - /^hotfix.*/
+
+  deploy-all-apps-workflow:
     jobs:
       - deploy-jar-job:
           filters:
             branches:
-              only: study-server-to-appengine
+              only:
+                - test
+                - staging
+                - production
