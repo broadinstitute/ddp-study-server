@@ -149,7 +149,9 @@ public class PostPasswordResetRouteTest extends IntegrationTestSuite.TestCase {
 
     @Test
     public void test_WhenRouteIsCalledWithRevokedClient_ItRespondsWithUnprocessableEntity() {
-        TransactionWrapper.useTxn(handle -> handle.attach(JdbiClient.class).updateIsRevokedByAuth0ClientId(true, auth0ClientId));
+        TransactionWrapper.useTxn(
+                handle -> handle.attach(JdbiClient.class).updateIsRevokedByAuth0ClientIdAndAuth0Domain(true, auth0ClientId, auth0Domain)
+        );
         Map<String, String> queryParams = new HashMap<>();
         queryParams.put(QueryParam.AUTH0_CLIENT_ID, auth0ClientId);
         queryParams.put(QueryParam.AUTH0_DOMAIN, auth0Domain);
@@ -158,7 +160,9 @@ public class PostPasswordResetRouteTest extends IntegrationTestSuite.TestCase {
         HttpUrl fullUrl = buildEncodedUrl(url, queryParams);
         given().when().get(fullUrl.toString()).then().assertThat()
                 .statusCode(HttpStatus.SC_UNPROCESSABLE_ENTITY);
-        TransactionWrapper.useTxn(handle -> handle.attach(JdbiClient.class).updateIsRevokedByAuth0ClientId(false, auth0ClientId));
+        TransactionWrapper.useTxn(
+                handle -> handle.attach(JdbiClient.class).updateIsRevokedByAuth0ClientIdAndAuth0Domain(false, auth0ClientId, auth0Domain)
+        );
     }
 
     @Test

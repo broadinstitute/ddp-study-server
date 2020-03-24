@@ -119,9 +119,13 @@ public interface JdbiClient extends SqlObject {
             @Bind("auth0ClientId") String auth0ClientId
     );
 
-    @SqlUpdate("UPDATE client SET is_revoked = :isRevoked WHERE auth0_client_id = :auth0ClientId")
-    int updateIsRevokedByAuth0ClientId(
+    @SqlUpdate(
+            "UPDATE client SET is_revoked = :isRevoked WHERE auth0_client_id = :auth0ClientId "
+            + "AND EXISTS (SELECT 1 FROM auth0_tenant WHERE auth0_domain = :auth0Domain)"
+    )
+    int updateIsRevokedByAuth0ClientIdAndAuth0Domain(
             @Bind("isRevoked") boolean isRevoked,
-            @Bind("auth0ClientId") String auth0ClientId
+            @Bind("auth0ClientId") String auth0ClientId,
+            @Bind("auth0Domain") String auth0Domain
     );
 }
