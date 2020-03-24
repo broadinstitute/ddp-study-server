@@ -208,7 +208,7 @@ jobs:
       name: maven-executor
     steps:
       - setup-shared-env
-      - extract-jar
+      - retrieve-jar
       - deploy-jar
 
   build-and-deploy-job:
