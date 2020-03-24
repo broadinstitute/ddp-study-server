@@ -166,9 +166,10 @@ commands:
                 echo "Could not find archive using pattern ${JAR_FILE_URL_PATTERN}"
                 exit 1
             fi
-            JAR_FILE_PATH="../target/${JAR_BASE_NAME}.jar"
+            JAR_FILE_PATH="target/${JAR_BASE_NAME}.jar"
             mkdir -p $(dirname $JAR_FILE_PATH)
             gsutil cp  $JAR_FILE_URL $JAR_FILE_PATH
+            echo ""
 
 
   deploy-jar:
