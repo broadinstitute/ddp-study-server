@@ -38,8 +38,8 @@ public class PostPasswordResetRoute implements Route {
         String email = request.queryParams(QueryParam.EMAIL);
         String auth0Success = request.queryParams(QueryParam.SUCCESS);
 
-        if (StringUtils.isBlank(auth0ClientId) || StringUtils.isBlank(email)) {
-            String errMsg = "auth0ClientId and email query string parameters are mandatory";
+        if (StringUtils.isBlank(auth0ClientId) || StringUtils.isBlank(auth0Domain) || StringUtils.isBlank(email)) {
+            String errMsg = "auth0ClientId, auth0Domain and email query string parameters are mandatory";
             LOG.warn(errMsg);
             ResponseUtil.haltError(response, HttpStatus.SC_BAD_REQUEST, new ApiError(ErrorCodes.REQUIRED_PARAMETER_MISSING, errMsg));
         }
