@@ -28,7 +28,8 @@
 			  <configuration>
 				<archive>
 				  <manifest>
-					<addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                      <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+                      <mainClass>org.broadinstitute.ddp.DataDonationPlatform</mainClass>
 				  </manifest>
 				</archive>
 			  </configuration>
