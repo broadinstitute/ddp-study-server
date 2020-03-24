@@ -148,7 +148,7 @@ commands:
         type: string
     steps:
       - run:
-          name: Store build jar
+          name: Store jar <<parameters.jar_base_name>>
           command: |
             set -u
             vault read -format=json  secret/pepper/prod/v1/conf | jq -r .data.gcp.serviceKey | gcloud auth activate-service-account --key-file=-
@@ -159,16 +159,20 @@ commands:
             gsutil cp  ${LOCAL_JAR_FILE_PATH} "gs://${BUILDS_BUCKET}/ddp-study-server-pepper-apis/${JAR_FILE_NAME}"
   
   retrieve-jar:
+    description: Get jar from bucket
+    parameters:
+      jar_base_name:
+        type: string
     steps:
       - run:
-          name: Retrieve jar from bucket
+          name: Retrieve <<parameters.jar_base_name>> jar from bucket
           command: |
             set -u
             set +e
             # @TODO remove when done
-            SHORT_GIT_SHA=aed6df4
+            SHORT_GIT_SHA=c7328b4
             vault read -format=json  secret/pepper/prod/v1/conf | jq -r .data.gcp.serviceKey | gcloud auth activate-service-account --key-file=-
-            JAR_BASE_NAME=DataDonationPlatform
+            JAR_BASE_NAME=<<parameters.jar_base_name>>
             JAR_FILE_URL_PATTERN="gs://${BUILDS_BUCKET}/ddp-study-server-pepper-apis/${JAR_BASE_NAME}_*_${SHORT_GIT_SHA}.jar"
             echo "Checking for ${JAR_FILE_URL_PATTERN}"
             # For some reason following line generating exit code 1 every time in CircleCI. Use set +e so script can continue
@@ -205,7 +209,7 @@ commands:
           command: |
             set -u
             vault read -format=json secret/pepper/${ENVIRONMENT}/v1/conf  | jq -r .data.gcp.serviceKey | gcloud auth activate-service-account --key-file=-
-            gcloud app deploy --version="${SHORT_GIT_SHA}" --stop-previous-version --project "broad-ddp-${ENVIRONMENT}" deployment_assets/app.yaml
+            gcloud app deploy --version="${SHORT_GIT_SHA}" --stop-previous-version --project "broad-ddp-${ENVIRONMENT}" deployment_assets/<<parameters.jar_base_name>>.yaml
 
 
 jobs:
@@ -232,8 +236,14 @@ jobs:
       name: deploy-executor
     steps:
       - common-setup
-      - retrieve-jar
-      - deploy-jar
+      - retrieve-jar:
+          jar_base_name: DataDonationPlatform
+      - deploy-jar:
+          jar_base_name: DataDonationPlatform
+      - retrieve-jar:
+          jar_base_name: Housekeeping
+      - deploy-jar:
+          jar_base_name: Housekeeping    
 
   build-and-deploy-job:
     executor:
@@ -241,7 +251,10 @@ jobs:
     steps:
       - common-setup
       - build-jars
-      - deploy-jar      
+      - deploy-jar:
+          jar_base_name: DataDonationPlatform
+      - deploy-jar:
+          jar_base_name: Housekeeping    
 
 workflows:
   version: 2
@@ -250,4 +263,4 @@ workflows:
       - build-and-store-jar-job:
           filters:
             branches:
-              only: study-server-to-appengine
+              only: deploy-jar-job
