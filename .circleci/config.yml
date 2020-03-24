@@ -2,11 +2,13 @@ version: 2.1
 references:
   maven_cache_key: &maven_cache_key
                    maven-deps-repo
+  ci_support_image: &ci_support_image
+                       broadinstitute/study-server-build:back-end-2020-03-11A              
 
 executors:
-  maven-executor:
+  build-executor:
     docker: # todo: create new image endpoint, add this in admin tab for faster starts
-      - image: broadinstitute/study-server-build:back-end-2020-03-11A
+      - image: *ci_support_image
       - image: circleci/mysql:5.7-ram
         environment: &DB_VARS
           MYSQL_ROOT_PASSWORD: rootpw
@@ -15,6 +17,11 @@ executors:
           MYSQL_PASSWORD: passw0rd
     resource_class: medium+
     working_directory: ~/repo/pepper-apis
+
+  deploy-executor:
+    docker: # todo: create new image endpoint, add this in admin tab for faster starts
+    - image: *ci_support_image
+    working_directory: ~/repo/pepper-apis  
 
 commands:
   setup-shared-env:
@@ -79,7 +86,7 @@ commands:
             USE_DOCKER: false
 
 
-  build-jar:
+  build-jars:
     description: "Install maven dependencies"
     steps:
       - run:
@@ -122,6 +129,7 @@ commands:
                      -Dddp.firecloudKeysDir=output-config/fc_keys \
                      -Dconfig.file=output-config/testing-circleci.conf \
                      install
+            mvn package -f housekeeping-pom.xml -Dmaven.test.skip -Dcheckstyle.skip         
           #            mvn --batch-mode --fail-never -file smoketest-pom.xml install package test
 #            mvn --batch-mode --fail-never -file housekeeping.xml install package test           
           # working_directory: ~/repo/pepper-apis
@@ -134,6 +142,10 @@ commands:
           path: target/surefire-reports
 
   store-jar:
+    description: Store jar in bucket
+    parameters:
+      jar_base_name:
+        type: string
     steps:
       - run:
           name: Store build jar
@@ -141,7 +153,7 @@ commands:
             set -u
             vault read -format=json  secret/pepper/prod/v1/conf | jq -r .data.gcp.serviceKey | gcloud auth activate-service-account --key-file=-
             DATE=`date +%F`
-            JAR_BASE_NAME=DataDonationPlatform
+            JAR_BASE_NAME=<<parameters.jar_base_name>>
             JAR_FILE_NAME="${JAR_BASE_NAME}_${DATE}_${SHORT_GIT_SHA}.jar"
             LOCAL_JAR_FILE_PATH="./target/${JAR_BASE_NAME}.jar"
             gsutil cp  ${LOCAL_JAR_FILE_PATH} "gs://${BUILDS_BUCKET}/ddp-study-server-pepper-apis/${JAR_FILE_NAME}"
@@ -173,6 +185,9 @@ commands:
 
 
   deploy-jar:
+    parameters:
+      jar_base_name:
+        type: string
     steps:
       - set-deployment-env
       - render-configs
@@ -181,7 +196,7 @@ commands:
           command: |
             mkdir deployment_assets
             cd deployment_assets
-            cp ../target/DataDonationPlatform.jar .
+            cp ../target/<<parameters.jar_base_name>>.jar .
             cp ../src/appengine/app.yaml .
             cp ../output-config/application.conf .
             cp -r ../output-config/fc_keys .
@@ -194,24 +209,27 @@ commands:
 
 
 jobs:
-  build-jar-job:
+  build-jars-job:
     executor:
-      name: maven-executor
+      name: build-executor
     steps:
       - common-setup
-      - build-jar
+      - build-jars
 
   build-and-store-jar-job:
     executor:
-      name: maven-executor
+      name: build-executor
     steps:
       - common-setup
-      - build-jar
-      - store-jar   
+      - build-jars
+      - store-jar:
+          jar_base_name: DataDonationPlatform
+      - store-jar:
+          jar_base_name: Housekeeping
 
   deploy-jar-job:
     executor:
-      name: maven-executor
+      name: deploy-executor
     steps:
       - common-setup
       - retrieve-jar
@@ -219,17 +237,17 @@ jobs:
 
   build-and-deploy-job:
     executor:
-      name: maven-executor
+      name: build-executor
     steps:
       - common-setup
-      - build-jar
+      - build-jars
       - deploy-jar      
 
 workflows:
   version: 2
   build-deploy:
     jobs:
-      - deploy-jar-job:
+      - build-and-store-jar-job:
           filters:
             branches:
               only: study-server-to-appengine
