@@ -33,11 +33,18 @@ public class GetStudyPasswordPolicyRoute implements Route {
     public PasswordPolicy handle(Request request, Response response) {
         String studyGuid = request.params(RouteConstants.PathParam.STUDY_GUID);
         String clientId = request.queryParams(RouteConstants.QueryParam.AUTH0_CLIENT_ID);
+        String domain = request.queryParams(RouteConstants.QueryParam.AUTH0_DOMAIN);
 
-        LOG.info("Attempting to lookup password policy for study {} and client id {}", studyGuid, clientId);
+        LOG.info("Attempting to lookup password policy for study {}, client id {} and domain {}", studyGuid, clientId, domain);
         if (clientId == null || clientId.isBlank()) {
             LOG.warn("Client id is missing or blank");
             String msg = "Query parameter 'clientId' is required";
+            throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.BAD_PAYLOAD, msg));
+        }
+
+        if (domain == null || domain.isBlank()) {
+            LOG.warn("domain is missing or blank");
+            String msg = "Query parameter 'domain' is required";
             throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.BAD_PAYLOAD, msg));
         }
 
@@ -50,7 +57,7 @@ public class GetStudyPasswordPolicyRoute implements Route {
             }
 
             List<String> permittedStudies = handle.attach(JdbiClientUmbrellaStudy.class)
-                    .findPermittedStudyGuidsByAuth0ClientId(clientId);
+                    .findPermittedStudyGuidsByAuth0ClientIdAndAuth0Domain(clientId, domain);
             if (!permittedStudies.contains(studyGuid)) {
                 LOG.warn("Either client does not exist or client does not have access to study " + studyGuid);
                 String msg = "Could not find client with id " + clientId;

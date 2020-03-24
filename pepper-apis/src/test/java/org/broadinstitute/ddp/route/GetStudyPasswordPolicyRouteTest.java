@@ -28,12 +28,14 @@ import com.auth0.json.mgmt.Connection;
 import io.restassured.http.ContentType;
 import org.broadinstitute.ddp.client.ApiResult;
 import org.broadinstitute.ddp.client.Auth0ManagementClient;
+import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.model.study.PasswordPolicy;
 import org.broadinstitute.ddp.model.study.PasswordPolicy.PolicyType;
+import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -44,6 +46,7 @@ public class GetStudyPasswordPolicyRouteTest extends IntegrationTestSuite.TestCa
 
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static String auth0ClientId;
+    private static String auth0Domain;
     private static String url;
 
     private Auth0ManagementClient mockMgmt;
@@ -53,6 +56,7 @@ public class GetStudyPasswordPolicyRouteTest extends IntegrationTestSuite.TestCa
     public static void setup() {
         testData = TransactionWrapper.withTxn(TestDataSetupUtil::generateBasicUserTestData);
         auth0ClientId = testData.getTestingClient().getAuth0ClientId();
+        auth0Domain = ConfigManager.getInstance().getConfig().getConfig(ConfigFile.AUTH0).getString(ConfigFile.DOMAIN);
         url = RouteTestUtil.getTestingBaseUrl() + RouteConstants.API.STUDY_PASSWORD_POLICY
                 .replace(RouteConstants.PathParam.STUDY_GUID, "{study}");
     }
@@ -67,6 +71,7 @@ public class GetStudyPasswordPolicyRouteTest extends IntegrationTestSuite.TestCa
     @Test
     public void testHandle_noClientIdQueryParam() {
         given().pathParam("study", testData.getStudyGuid())
+                .queryParam(RouteConstants.QueryParam.AUTH0_DOMAIN, auth0Domain)
                 .when().get(url)
                 .then().assertThat()
                 .statusCode(400).contentType(ContentType.JSON)
@@ -75,9 +80,21 @@ public class GetStudyPasswordPolicyRouteTest extends IntegrationTestSuite.TestCa
     }
 
     @Test
+    public void testHandle_noDomainQueryParam() {
+        given().pathParam("study", testData.getStudyGuid())
+                .queryParam(RouteConstants.QueryParam.AUTH0_CLIENT_ID, "foobar")
+                .when().get(url)
+                .then().assertThat()
+                .statusCode(400).contentType(ContentType.JSON)
+                .body("code", equalTo(ErrorCodes.BAD_PAYLOAD))
+                .body("message", containsString(RouteConstants.QueryParam.AUTH0_DOMAIN));
+    }
+
+    @Test
     public void testHandle_invalidStudy() {
         given().pathParam("study", "foobar")
                 .queryParam(RouteConstants.QueryParam.AUTH0_CLIENT_ID, auth0ClientId)
+                .queryParam(RouteConstants.QueryParam.AUTH0_DOMAIN, auth0Domain)
                 .when().get(url)
                 .then().assertThat()
                 .statusCode(404).contentType(ContentType.JSON)
@@ -89,6 +106,7 @@ public class GetStudyPasswordPolicyRouteTest extends IntegrationTestSuite.TestCa
     public void testHandle_invalidClient() {
         given().pathParam("study", testData.getStudyGuid())
                 .queryParam(RouteConstants.QueryParam.AUTH0_CLIENT_ID, "foobar")
+                .queryParam(RouteConstants.QueryParam.AUTH0_DOMAIN, auth0Domain)
                 .when().get(url)
                 .then().assertThat()
                 .statusCode(404).contentType(ContentType.JSON)
@@ -102,6 +120,7 @@ public class GetStudyPasswordPolicyRouteTest extends IntegrationTestSuite.TestCa
                 TestDataSetupUtil.generateTestStudy(handle, RouteTestUtil.getConfig()));
         given().pathParam("study", anotherStudy.getGuid())
                 .queryParam(RouteConstants.QueryParam.AUTH0_CLIENT_ID, auth0ClientId)
+                .queryParam(RouteConstants.QueryParam.AUTH0_DOMAIN, auth0Domain)
                 .when().get(url)
                 .then().assertThat()
                 .statusCode(404).contentType(ContentType.JSON)

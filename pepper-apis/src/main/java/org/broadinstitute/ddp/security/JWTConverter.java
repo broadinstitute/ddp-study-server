@@ -131,9 +131,12 @@ public class JWTConverter {
                     try {
                         DecodedJWT validToken = verifyDDPToken(jwt, jwkProvider);
                         String ddpUserGuid = validToken.getClaim(Auth0Constants.DDP_USER_ID_CLAIM).asString();
-                        UserPermissions userPermissions = userDao.queryUserPermissionsByOperatorGuidAndClientId(handle,
+                        UserPermissions userPermissions = userDao.queryUserPermissionsByOperatorGuidClientIdAndAuth0Domain(
+                                handle,
                                 ddpUserGuid,
-                                auth0ClientId);
+                                auth0ClientId,
+                                auth0Domain
+                        );
                         String preferredLanguage = getPreferredLanguageCodeForUser(handle, ddpUserGuid);
                         txnDdpAuth = new DDPAuth(auth0ClientId, ddpUserGuid, jwt, userPermissions, preferredLanguage);
                     } catch (Exception e) {
