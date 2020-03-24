@@ -14,6 +14,3 @@ network:
 # get size from env var, try this without mx, ms
 entrypoint: java -Dddp.firecloudKeysDir=fc_keys -Dconfig.file=application.conf -jar DataDonationPlatform.jar
 
-skip_files:
-  - src/main/resources/org/.*
-  - src/main/resources/*.pdf
