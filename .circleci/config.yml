@@ -171,7 +171,6 @@ commands:
             set -u
             set +e
             # @TODO remove when done
-            SHORT_GIT_SHA=c7328b4
             vault read -format=json  secret/pepper/prod/v1/conf | jq -r .data.gcp.serviceKey | gcloud auth activate-service-account --key-file=-
             JAR_BASE_NAME=<<parameters.jar_base_name>>
             JAR_FILE_URL_PATTERN="gs://${BUILDS_BUCKET}/ddp-study-server-pepper-apis/${JAR_BASE_NAME}_*_${SHORT_GIT_SHA}.jar"
