@@ -33,6 +33,7 @@ commands:
             echo "export VAULT_TOKEN=`vault write -field=token auth/approle/login role_id=$VAULT_ROLE_ID secret_id=$VAULT_ROLE_SECRET_ID`" >> $BASH_ENV
             echo "export SHORT_GIT_SHA=`echo '<< pipeline.git.revision >>' | cut -c 1-7`" >> $BASH_ENV
             echo 'export BUILDS_BUCKET=ddp-build-artifacts' >> $BASH_ENV
+            echo 'export DEPLOY_DIR=deployment_assets' >> $BASH_ENV
             source $BASH_ENV
 
   common-setup:
@@ -198,8 +199,9 @@ commands:
       - run:
           name: Gather deployment assets
           command: |
-            mkdir deployment_assets
-            cd deployment_assets
+            rm -rf $DEPLOY_DIR
+            mkdir -p $DEPLOY_DIR
+            cd $DEPLOY_DIR
             cp ../target/<<parameters.jar_base_name>>.jar .
             cp ../src/appengine/<<parameters.jar_base_name>>.yaml .
             cp ../output-config/application.conf .
@@ -209,7 +211,7 @@ commands:
           command: |
             set -u
             vault read -format=json secret/pepper/${ENVIRONMENT}/v1/conf  | jq -r .data.gcp.serviceKey | gcloud auth activate-service-account --key-file=-
-            gcloud app deploy --version="${SHORT_GIT_SHA}" --stop-previous-version --project "broad-ddp-${ENVIRONMENT}" deployment_assets/<<parameters.jar_base_name>>.yaml
+            gcloud app deploy --version="${SHORT_GIT_SHA}" --stop-previous-version --project "broad-ddp-${ENVIRONMENT}" $DEPLOY_DIR/<<parameters.jar_base_name>>.yaml
 
 
 jobs:
