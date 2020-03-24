@@ -59,12 +59,11 @@ public interface JdbiClient extends SqlObject {
 
     @SqlQuery("SELECT "
             + "     c.client_id, c.client_name, c.auth0_client_id, c.auth0_signing_secret, "
-            + "     c.web_password_redirect_url, c.is_revoked, c.auth0_tenant_id"
+            + "     c.web_password_redirect_url, c.is_revoked, c.auth0_tenant_id "
             + "FROM "
             + "     client c, auth0_tenant t "
             + "WHERE "
-            + "     c.auth0_client_id = :auth0ClientId and c.auth0_tenant_id = t.auth0_tenant_id"
-            + "     AND t.auth0_domain = :auth0Domain"
+            + "     c.auth0_client_id = :auth0ClientId AND t.auth0_domain = :auth0Domain"
     )
     @RegisterConstructorMapper(ClientDto.class)
     Optional<ClientDto> getClientByAuth0ClientAndDomain(
