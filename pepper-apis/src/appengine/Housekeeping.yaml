@@ -1,4 +1,4 @@
-service: zim-pepper-backend
+service: housekeeping
 runtime: java11
 instance_class: B4_1G
 # look at tuning for spawning new VMs under load (10 connections -> new instance)
@@ -12,5 +12,5 @@ network:
   instance_tag: study-server # necessary for firewall rules so that DSM will accept https requests from pepper
 
 # get size from env var, try this without mx, ms
-entrypoint: java -Dddp.firecloudKeysDir=fc_keys -Dconfig.file=application.conf -jar DataDonationPlatform.jar
+entrypoint: java -Dddp.firecloudKeysDir=fc_keys -Dconfig.file=application.conf -jar Housekeeping.jar
 
