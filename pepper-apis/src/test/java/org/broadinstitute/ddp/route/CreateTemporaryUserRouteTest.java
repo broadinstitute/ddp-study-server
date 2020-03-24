@@ -24,6 +24,7 @@ import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.json.CreateTemporaryUserPayload;
 import org.broadinstitute.ddp.json.CreateTemporaryUserResponse;
+import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -35,6 +36,7 @@ public class CreateTemporaryUserRouteTest extends IntegrationTestSuite.TestCase 
     private static Set<String> usersToDelete;
     private static Gson gson;
     private static String url;
+    private static String auth0Domain;
 
     @BeforeClass
     public static void setup() {
@@ -42,6 +44,7 @@ public class CreateTemporaryUserRouteTest extends IntegrationTestSuite.TestCase 
         url = RouteTestUtil.getTestingBaseUrl() + RouteConstants.API.TEMP_USERS;
         usersToDelete = new HashSet<>();
         gson = new Gson();
+        auth0Domain = ConfigManager.getInstance().getConfig().getConfig(ConfigFile.AUTH0).getString(ConfigFile.DOMAIN);
     }
 
     @AfterClass
@@ -58,7 +61,7 @@ public class CreateTemporaryUserRouteTest extends IntegrationTestSuite.TestCase 
 
         CreateTemporaryUserPayload payload = new CreateTemporaryUserPayload(
                 testData.getTestingClient().getAuth0ClientId(),
-                ConfigFile.Auth0Testing.AUTH0_DOMAIN2
+                auth0Domain
         );
         String body = given().body(payload, ObjectMapperType.GSON)
                 .when().post(url)
@@ -85,7 +88,7 @@ public class CreateTemporaryUserRouteTest extends IntegrationTestSuite.TestCase 
     public void test_differentUsersEachTime() {
         CreateTemporaryUserPayload payload = new CreateTemporaryUserPayload(
                 testData.getTestingClient().getAuth0ClientId(),
-                ConfigFile.Auth0Testing.AUTH0_DOMAIN2
+                auth0Domain
         );
 
         String guid1 = given().body(payload, ObjectMapperType.GSON)
