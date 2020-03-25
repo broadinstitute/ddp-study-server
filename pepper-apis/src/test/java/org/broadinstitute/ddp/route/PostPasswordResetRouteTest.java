@@ -43,7 +43,8 @@ public class PostPasswordResetRouteTest extends IntegrationTestSuite.TestCase {
                 handle -> {
                     GeneratedTestData testData = TestDataSetupUtil.generateBasicUserTestData(handle);
                     auth0ClientId = testData.getTestingClient().getAuth0ClientId();
-                    handle.attach(JdbiClient.class).updateWebPasswordRedirectUrlByAuth0ClientId(testRedirectUrl, auth0ClientId);
+                    handle.attach(JdbiClient.class)
+                            .updateWebPasswordRedirectUrlByAuth0ClientIdAndAuth0Domain(testRedirectUrl, auth0ClientId, auth0Domain);
                     token = testData.getTestingUser().getToken();
                     auth0Domain = ConfigManager.getInstance().getConfig().getConfig(ConfigFile.AUTH0).getString(ConfigFile.DOMAIN);
                 }
@@ -80,7 +81,8 @@ public class PostPasswordResetRouteTest extends IntegrationTestSuite.TestCase {
     @Test
     public void test_WhenClientDoesNotHaveRedirectUrl_RouteRespondsWithUnprocessableEntity() {
         TransactionWrapper.useTxn(
-                handle -> handle.attach(JdbiClient.class).updateWebPasswordRedirectUrlByAuth0ClientId(null, auth0ClientId)
+                handle -> handle.attach(JdbiClient.class)
+                        .updateWebPasswordRedirectUrlByAuth0ClientIdAndAuth0Domain(null, auth0ClientId, auth0Domain)
         );
         Map<String, String> queryParams = new HashMap<>();
         queryParams.put(QueryParam.AUTH0_CLIENT_ID, auth0ClientId);
@@ -92,7 +94,7 @@ public class PostPasswordResetRouteTest extends IntegrationTestSuite.TestCase {
                 .statusCode(HttpStatus.SC_UNPROCESSABLE_ENTITY);
         TransactionWrapper.useTxn(
                 handle -> handle.attach(JdbiClient.class)
-                        .updateWebPasswordRedirectUrlByAuth0ClientId(testRedirectUrl, auth0ClientId)
+                        .updateWebPasswordRedirectUrlByAuth0ClientIdAndAuth0Domain(testRedirectUrl, auth0ClientId, auth0Domain)
         );
     }
 
@@ -168,8 +170,8 @@ public class PostPasswordResetRouteTest extends IntegrationTestSuite.TestCase {
     @Test
     public void test_WhenRedirectUrlIsMalformed_RouteRespondsWithInternalServerError() {
         TransactionWrapper.useTxn(
-                handle -> handle.attach(JdbiClient.class).updateWebPasswordRedirectUrlByAuth0ClientId(
-                        "malformedUrl", auth0ClientId
+                handle -> handle.attach(JdbiClient.class).updateWebPasswordRedirectUrlByAuth0ClientIdAndAuth0Domain(
+                        "malformedUrl", auth0ClientId, auth0Domain
                 )
         );
         Map<String, String> queryParams = new HashMap<>();
@@ -181,8 +183,8 @@ public class PostPasswordResetRouteTest extends IntegrationTestSuite.TestCase {
         given().when().get(fullUrl.toString()).then().assertThat()
                 .statusCode(HttpStatus.SC_INTERNAL_SERVER_ERROR);
         TransactionWrapper.useTxn(
-                handle -> handle.attach(JdbiClient.class).updateWebPasswordRedirectUrlByAuth0ClientId(
-                        testRedirectUrl, auth0ClientId
+                handle -> handle.attach(JdbiClient.class).updateWebPasswordRedirectUrlByAuth0ClientIdAndAuth0Domain(
+                        testRedirectUrl, auth0ClientId, auth0Domain
                 )
         );
     }

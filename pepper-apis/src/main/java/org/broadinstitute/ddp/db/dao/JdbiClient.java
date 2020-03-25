@@ -113,10 +113,14 @@ public interface JdbiClient extends SqlObject {
             @Bind("auth0TenantId") long auth0TenantId
     );
 
-    @SqlUpdate("UPDATE client SET web_password_redirect_url = :url WHERE auth0_client_id = :auth0ClientId")
-    int updateWebPasswordRedirectUrlByAuth0ClientId(
+    @SqlUpdate(
+            "UPDATE client SET web_password_redirect_url = :url WHERE auth0_client_id = :auth0ClientId "
+            + "AND EXISTS (SELECT 1 FROM auth0_tenant WHERE auth0_domain = :auth0Domain)"
+    )
+    int updateWebPasswordRedirectUrlByAuth0ClientIdAndAuth0Domain(
             @Bind("url") String url,
-            @Bind("auth0ClientId") String auth0ClientId
+            @Bind("auth0ClientId") String auth0ClientId,
+            @Bind("auth0Domain") String auth0Domain
     );
 
     @SqlUpdate(
