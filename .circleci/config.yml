@@ -227,19 +227,20 @@ commands:
           command: |
             set -u
             set -x
-            TZ=America/New_York
-            DATE=`TZ=$TZ date +%F`
-            TIME=`TZ=$TZ date +%T`
-            COMPONENT='<<parameters.jar_base_name>> server'
-            BRANCH=<< pipeline.git.branch >>
-            # Picking up any tags attached to the current commit
-            TAG=`git tag --points-at HEAD | xargs`
+            # TZ=America/New_York
+            # DATE=`TZ=$TZ date +%F`
+            # TIME=`TZ=$TZ date +%T`
+            # COMPONENT='<<parameters.jar_base_name>> server'
+            # BRANCH=<< pipeline.git.branch >>
+            # # Picking up any tags attached to the current commit
+            # TAG=`git tag --points-at HEAD | xargs`
             # List of other branches that have same commit
+            ./scripts/ci/otherbranchessamecommit.sh
             OTHER_BRANCHES=`./scripts/ci/otherbranchessamecommit.sh | xargs`
             # Extract email from current commit
-            AUTHOR=`git show -s --format='%ae' HEAD`
-            vault read -format=json secret/pepper/${ENVIRONMENT}/v1/conf  | jq -r .data.gcp.serviceKey | \
-            sheetappend $RELEASE_SHEET_ID $DATE $TIME "$COMPONENT" $ENVIRONMENT $BRANCH "$TAG" $SHORT_GIT_SHA "$AUTHOR" $CIRCLE_BUILD_NUM "$CIRCLE_BUILD_URL" "$OTHER_BRANCHES"
+            # AUTHOR=`git show -s --format='%ae' HEAD`
+            # vault read -format=json secret/pepper/${ENVIRONMENT}/v1/conf  | jq -r .data.gcp.serviceKey | \
+            # sheetappend $RELEASE_SHEET_ID $DATE $TIME "$COMPONENT" $ENVIRONMENT $BRANCH "$TAG" $SHORT_GIT_SHA "$AUTHOR" $CIRCLE_BUILD_NUM "$CIRCLE_BUILD_URL" "$OTHER_BRANCHES"
 
 
 jobs:
