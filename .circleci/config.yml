@@ -226,6 +226,7 @@ commands:
           name: Update deployments sheet
           command: |
             set -u
+            set -x
             TZ=America/New_York
             DATE=`TZ=$TZ date +%F`
             TIME=`TZ=$TZ date +%T`
