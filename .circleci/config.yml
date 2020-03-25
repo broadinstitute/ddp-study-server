@@ -197,26 +197,26 @@ commands:
         type: string
     steps:
       - set-deployment-env
-      # - render-configs
-      # - run:
-      #     name: Gather deployment assets
-      #     command: |
-      #       rm -rf $DEPLOY_DIR
-      #       mkdir -p $DEPLOY_DIR
-      #       cd $DEPLOY_DIR
-      #       cp ../target/<<parameters.jar_base_name>>.jar .
-      #       cp ../src/appengine/<<parameters.jar_base_name>>.yaml .
-      #       cp ../output-config/application.conf .
-      #       cp -r ../output-config/fc_keys .
-      # - run:
-      #     name: Deploy <<parameters.jar_base_name>> to GAE
-      #     command: |
-      #       set -u
-      #       vault read -format=json secret/pepper/${ENVIRONMENT}/v1/conf  | jq -r .data.gcp.serviceKey | gcloud auth activate-service-account --key-file=-
-      #       gcloud app deploy --version="${SHORT_GIT_SHA}" --stop-previous-version --project "broad-ddp-${ENVIRONMENT}" $DEPLOY_DIR/<<parameters.jar_base_name>>.yaml
+      - render-configs
+      - run:
+          name: Gather deployment assets
+          command: |
+            rm -rf $DEPLOY_DIR
+            mkdir -p $DEPLOY_DIR
+            cd $DEPLOY_DIR
+            cp ../target/<<parameters.jar_base_name>>.jar .
+            cp ../src/appengine/<<parameters.jar_base_name>>.yaml .
+            cp ../output-config/application.conf .
+            cp -r ../output-config/fc_keys .
+      - run:
+          name: Deploy <<parameters.jar_base_name>> to GAE
+          command: |
+            set -u
+            vault read -format=json secret/pepper/${ENVIRONMENT}/v1/conf  | jq -r .data.gcp.serviceKey | gcloud auth activate-service-account --key-file=-
+            gcloud app deploy --version="${SHORT_GIT_SHA}" --stop-previous-version --project "broad-ddp-${ENVIRONMENT}" $DEPLOY_DIR/<<parameters.jar_base_name>>.yaml
       - update-deployment-sheet:
-          jar_base_name: <<parameters.jar_base_name>>          
-  
+          jar_base_name: <<parameters.jar_base_name>>
+
   update-deployment-sheet:
     parameters:
       jar_base_name:
@@ -226,21 +226,19 @@ commands:
           name: Update deployments sheet
           command: |
             set -u
-            set -x
-            # TZ=America/New_York
-            # DATE=`TZ=$TZ date +%F`
-            # TIME=`TZ=$TZ date +%T`
-            # COMPONENT='<<parameters.jar_base_name>> server'
-            # BRANCH=<< pipeline.git.branch >>
-            # # Picking up any tags attached to the current commit
-            # TAG=`git tag --points-at HEAD | xargs`
+            TZ=America/New_York
+            DATE=`TZ=$TZ date +%F`
+            TIME=`TZ=$TZ date +%T`
+            COMPONENT='<<parameters.jar_base_name>> server'
+            BRANCH=<< pipeline.git.branch >>
+            # Picking up any tags attached to the current commit
+            TAG=`git tag --points-at HEAD | xargs`
             # List of other branches that have same commit
-            ./scripts/ci/otherbranchessamecommit.sh
-            OTHER_BRANCHES=`./scripts/ci/otherbranchessamecommit.sh | xargs`
+            OTHER_BRANCHES=$(./scripts/ci/otherbranchessamecommit.sh | xargs)
             # Extract email from current commit
-            # AUTHOR=`git show -s --format='%ae' HEAD`
-            # vault read -format=json secret/pepper/${ENVIRONMENT}/v1/conf  | jq -r .data.gcp.serviceKey | \
-            # sheetappend $RELEASE_SHEET_ID $DATE $TIME "$COMPONENT" $ENVIRONMENT $BRANCH "$TAG" $SHORT_GIT_SHA "$AUTHOR" $CIRCLE_BUILD_NUM "$CIRCLE_BUILD_URL" "$OTHER_BRANCHES"
+            AUTHOR=`git show -s --format='%ae' HEAD`
+            vault read -format=json secret/pepper/${ENVIRONMENT}/v1/conf  | jq -r .data.gcp.serviceKey | \
+            sheetappend $RELEASE_SHEET_ID $DATE $TIME "$COMPONENT" $ENVIRONMENT $BRANCH "$TAG" $SHORT_GIT_SHA "$AUTHOR" $CIRCLE_BUILD_NUM "$CIRCLE_BUILD_URL" "$OTHER_BRANCHES"
 
 
 jobs:
@@ -267,12 +265,12 @@ jobs:
       name: deploy-executor
     steps:
       - common-setup
-      # - retrieve-jar:
-      #     jar_base_name: DataDonationPlatform
-      # - deploy-jar:
-      #     jar_base_name: DataDonationPlatform
-      # - retrieve-jar:
-      #     jar_base_name: Housekeeping
+      - retrieve-jar:
+          jar_base_name: DataDonationPlatform
+      - deploy-jar:
+          jar_base_name: DataDonationPlatform
+      - retrieve-jar:
+          jar_base_name: Housekeeping
       - deploy-jar:
           jar_base_name: Housekeeping    
 
