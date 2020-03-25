@@ -196,7 +196,7 @@ commands:
       jar_base_name:
         type: string
     steps:
-      # - set-deployment-env
+      - set-deployment-env
       # - render-configs
       # - run:
       #     name: Gather deployment assets
