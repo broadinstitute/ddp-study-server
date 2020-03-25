@@ -235,8 +235,8 @@ commands:
             # Picking up any tags attached to the current commit
             TAG=`git tag --points-at HEAD | xargs`
             # List of other branches that have same commit
-            OTHER_BRANCHES=$(./scripts/ci/otherbranchessamecommit.sh | xargs)
-            echo "OTHER_BRANCHES=$OTHER_BRANCHES"
+            # OTHER_BRANCHES=$(./scripts/ci/otherbranchessamecommit.sh | xargs)
+            # echo "OTHER_BRANCHES=$OTHER_BRANCHES"
             # Extract email from current commit
             AUTHOR=`git show -s --format='%ae' HEAD`
             vault read -format=json secret/pepper/${ENVIRONMENT}/v1/conf  | jq -r .data.gcp.serviceKey | \
