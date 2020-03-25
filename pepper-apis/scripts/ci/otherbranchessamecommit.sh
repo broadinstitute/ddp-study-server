@@ -8,11 +8,11 @@ grep $CURRENT_COMMIT |  #find current commit sha
 grep -Eo "$REMOTE_BRANCH_PREFIX.*" |  #keep only remote branches
 cut -c "$((${#REMOTE_BRANCH_PREFIX} + 1))-" | #remove prefixes
 grep -Ev "^${CURRENT_BRANCH}"  #exclude the current working branch
-
+EXIT_CODE=$?
 # turns out grep if no matching lines found returns exit code 1. We don't want that for our script!
-if [ $? == 1 ] || [ $? == 0 ]
+if [ $EXIT_CODE == 1 ] || [ $EXIT_CODE == 0 ]
 then
   exit 0
 else
-  exit $?
+  exit $EXIT_CODE
 fi
