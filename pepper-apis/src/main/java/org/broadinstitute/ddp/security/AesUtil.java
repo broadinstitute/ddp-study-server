@@ -32,6 +32,17 @@ public class AesUtil {
     private static final String ENCRYPTION_TYPE = "AES";
     private static final int IV_SIZE = 16;
     private static final int KEY_SIZE = 16;
+    private static final String SELECT_CLIENT_TENANT_AND_SIGNING_SECRET_QUERY =
+            "    SELECT "
+            + "      CONCAT(auth0_tenant_id, '-', auth0_client_id) AS auth0_client_id_tenant_id,"
+            + "      auth0_signing_secret"
+            + "  FROM"
+            + "      client";
+    private static final String UPDATE_SIGNING_SECRET_QUERY =
+            "  UPDATE client "
+            + "SET auth0_signing_secret = :auth0_signing_secret "
+            + "WHERE auth0_client_id = :auth0_client_id "
+            + "AND auth0_tenant_id = :auth0_tenant_id";
     private Logger logger = LoggerFactory.getLogger(AesUtil.class);
 
 
@@ -160,23 +171,34 @@ public class AesUtil {
                 return;
             }
             TransactionWrapper.withTxn(handle -> {
-                List<Map<String, Object>> clientList = handle.createQuery(
-                        "select auth0_client_id, auth0_signing_secret from client").mapToMap().list();
+                List<Map<String, Object>> clientList = handle.createQuery(SELECT_CLIENT_TENANT_AND_SIGNING_SECRET_QUERY)
+                        .mapToMap()
+                        .list();
                 for (Map<String, Object> client : clientList) {
                     String auth0Secret = (String) client.get("auth0_signing_secret");
-                    String auth0ClientId = (String) client.get("auth0_client_id");
-                    System.out.println("auth0clientId = " + auth0ClientId);
+                    String auth0ClientIdTenantIdStr = (String) client.get("auth0_client_id_tenant_id");
+                    ClientIdTenantId clientIdTenantId = new ClientIdTenantId(auth0ClientIdTenantIdStr);
+
+                    System.out.println("auth0ClientId = " + clientIdTenantId.getAuth0ClientId());
+                    System.out.println("auth0TenantId = " + clientIdTenantId.getAuth0TenantId());
                     if (auth0Secret.length() == 64) {
-                        System.out.println("Found unencrypted auth0 secret for client " + auth0ClientId);
+                        System.out.println(
+                                String.format(
+                                        "Found unencrypted auth0 secret for client %s and tenant %d",
+                                        clientIdTenantId.getAuth0ClientId(),
+                                        clientIdTenantId.getAuth0TenantId()
+                                )
+                        );
                         auth0Secret = AesUtil.encrypt(auth0Secret, encryptionSecret);
-                        int numRows = handle.createUpdate("UPDATE client "
-                                + "SET auth0_signing_secret = :auth0_signing_secret "
-                                + "WHERE auth0_client_id = :auth0_client_id")
+                        int numRows = handle.createUpdate(UPDATE_SIGNING_SECRET_QUERY)
                                 .bind("auth0_signing_secret", auth0Secret)
-                                .bind("auth0_client_id", auth0ClientId)
+                                .bind("auth0_client_id", clientIdTenantId.getAuth0ClientId())
+                                .bind("auth0_tenant_id", clientIdTenantId.getAuth0TenantId())
                                 .execute();
                         if (numRows != 1) {
-                            throw new RuntimeException("We expected to only update one row for client_id" + auth0ClientId);
+                            throw new RuntimeException(
+                                    "We expected to only update one row for client_id" + clientIdTenantId.getAuth0ClientId()
+                            );
                         }
                     }
                 }
@@ -194,12 +216,14 @@ public class AesUtil {
                 return;
             }
             TransactionWrapper.withTxn(handle -> {
-                List<Map<String, Object>> clientList = handle.createQuery(
-                        "select auth0_client_id, auth0_signing_secret from client").mapToMap().list();
+                List<Map<String, Object>> clientList = handle.createQuery(SELECT_CLIENT_TENANT_AND_SIGNING_SECRET_QUERY)
+                        .mapToMap()
+                        .list();
                 for (Map<String, Object> client : clientList) {
                     String auth0Secret = (String) client.get("auth0_signing_secret");
-                    String auth0ClientId = (String) client.get("auth0_client_id");
-                    System.out.println("auth0clientId = " + auth0ClientId);
+                    String auth0ClientIdTenantIdStr = (String) client.get("auth0_client_id_tenant_id");
+                    ClientIdTenantId clientIdTenantId = new ClientIdTenantId(auth0ClientIdTenantIdStr);
+
                     boolean couldNotDecrypt = false;
                     String decryptedSecret = null;
                     try {
@@ -209,14 +233,15 @@ public class AesUtil {
                     }
                     if (!couldNotDecrypt) {
                         String encryptedSecret = AesUtil.encrypt(decryptedSecret, encryptionSecret);
-                        int numRows = handle.createUpdate("UPDATE client "
-                                + "SET auth0_signing_secret = :auth0_signing_secret "
-                                + "WHERE auth0_client_id = :auth0_client_id")
+                        int numRows = handle.createUpdate(UPDATE_SIGNING_SECRET_QUERY)
                                 .bind("auth0_signing_secret", encryptedSecret)
-                                .bind("auth0_client_id", auth0ClientId)
+                                .bind("auth0_client_id", clientIdTenantId.getAuth0ClientId())
+                                .bind("auth0_tenant_id", clientIdTenantId.getAuth0TenantId())
                                 .execute();
                         if (numRows > 1) {
-                            throw new RuntimeException("We expected to only update one row for client_id" + auth0ClientId);
+                            throw new RuntimeException(
+                                    "We expected to only update one row for client_id" + clientIdTenantId.getAuth0ClientId()
+                            );
                         }
                     }
                 }
@@ -234,5 +259,26 @@ public class AesUtil {
 
         TransactionWrapper.init(
                 new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, maxConnections, dbUrl));
+    }
+
+    private static class ClientIdTenantId {
+        private String auth0ClientId;
+        private long auth0TenantId;
+
+        public ClientIdTenantId(String auth0ClientIdTenantIdStr) {
+            int clientIdIndex = 0;
+            int tenantIdIndex = 1;
+            String[] parts = auth0ClientIdTenantIdStr.split("-");
+            this.auth0ClientId = parts[clientIdIndex];
+            this.auth0TenantId = Long.valueOf(parts[tenantIdIndex]);
+        }
+
+        public String getAuth0ClientId() {
+            return auth0ClientId;
+        }
+
+        public long getAuth0TenantId() {
+            return auth0TenantId;
+        }
     }
 }
