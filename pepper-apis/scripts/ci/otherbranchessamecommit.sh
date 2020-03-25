@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -x
 #List other branches that refer to current commit
 CURRENT_BRANCH=$(git branch --contains HEAD | grep -E '^\*' | grep -Eo '\b\w.*' )
 CURRENT_COMMIT=$(git log -1 --format=%H)
