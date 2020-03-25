@@ -266,12 +266,12 @@ jobs:
       name: deploy-executor
     steps:
       - common-setup
-      - retrieve-jar:
-          jar_base_name: DataDonationPlatform
-      - deploy-jar:
-          jar_base_name: DataDonationPlatform
-      - retrieve-jar:
-          jar_base_name: Housekeeping
+      # - retrieve-jar:
+      #     jar_base_name: DataDonationPlatform
+      # - deploy-jar:
+      #     jar_base_name: DataDonationPlatform
+      # - retrieve-jar:
+      #     jar_base_name: Housekeeping
       - deploy-jar:
           jar_base_name: Housekeeping    
 
