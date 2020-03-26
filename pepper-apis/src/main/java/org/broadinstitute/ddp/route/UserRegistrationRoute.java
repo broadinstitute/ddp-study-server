@@ -10,6 +10,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import com.auth0.exception.Auth0Exception;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
+import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -48,7 +49,6 @@ import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.pex.TreeWalkInterpreter;
 import org.broadinstitute.ddp.security.StudyClientConfiguration;
 import org.broadinstitute.ddp.service.EventService;
-import org.broadinstitute.ddp.util.Auth0MgmtTokenHelper;
 import org.broadinstitute.ddp.util.Auth0Util;
 import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.ddp.util.ResponseUtil;
@@ -97,7 +97,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
         final PexInterpreter pexInterpreter = new TreeWalkInterpreter();
         AtomicReference<String> ddpUserGuid = new AtomicReference<>();
 
-        LOG.info("Attempting registration with client {},  study {} and invitation {}", auth0ClientId, studyGuid, invitationGuid);
+        LOG.info("Attempting registration with client {}, study {} and invitation {}", auth0ClientId, studyGuid, invitationGuid);
 
         return TransactionWrapper.withTxn(handle -> {
             auth0UserId.set(payload.getAuth0UserId());
@@ -121,7 +121,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
             }
 
             Auth0Util auth0Util = new Auth0Util(auth0Domain);
-            Auth0MgmtTokenHelper mgmtTokenHelper = Auth0Util.getManagementTokenHelperForDomain(handle, auth0Domain);
+            var mgmtClient = Auth0Util.getManagementClientForDomain(handle, auth0Domain);
 
             String auth0ClientSecret = clientConfig.getAuth0SigningSecret();
             Auth0Util.RefreshTokenResponse auth0RefreshResponse = null;
@@ -208,16 +208,16 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                 queueUserRegisteredEvents(handle, study, operatorUser, studyUser);
                 handle.attach(DataExportDao.class).queueDataSync(studyUser.getId());
 
-                unregisterEmailFromStudyMailingList(handle, study, operatorUser, auth0Util, mgmtTokenHelper);
+                unregisterEmailFromStudyMailingList(handle, study, operatorUser, auth0Util, mgmtClient);
 
                 ddpUserGuid.set(operatorUser.getGuid());
             } else {
                 LOG.info("Attempting to register existing user {} with client {} and study {}", auth0UserId, auth0ClientId, studyGuid);
-                ddpUserGuid.set(handleExistingUser(response, payload, handle, study, operatorUser, auth0Util, mgmtTokenHelper));
+                ddpUserGuid.set(handleExistingUser(response, payload, handle, study, operatorUser, auth0Util, mgmtClient));
             }
 
             if (doLocalRegistration) {
-                return saveDDPGuidInAuth0Metadata(mgmtTokenHelper, ddpUserGuid.get(), auth0UserId.get(),
+                return saveDDPGuidInAuth0Metadata(mgmtClient, ddpUserGuid.get(), auth0UserId.get(),
                         auth0ClientId, auth0ClientSecret, auth0RefreshResponse.getRefreshToken());
             } else {
                 return new UserRegistrationResponse(ddpUserGuid.get());
@@ -246,7 +246,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
     }
 
     private String handleExistingUser(Response response, UserRegistrationPayload payload, Handle handle, StudyDto study, User user,
-                                      Auth0Util auth0Util, Auth0MgmtTokenHelper mgmtTokenHelper) {
+                                      Auth0Util auth0Util, Auth0ManagementClient mgmtClient) {
         String tempUserGuid = payload.getTempUserGuid();
         if (tempUserGuid != null) {
             String msg = String.format("Using existing user to upgrade temporary user with guid '%s' is not supported", tempUserGuid);
@@ -274,7 +274,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                 registerUserWithStudy(handle, study, user);
                 queueUserRegisteredEvents(handle, study, user, user);
                 handle.attach(DataExportDao.class).queueDataSync(user.getId());
-                unregisterEmailFromStudyMailingList(handle, study, user, auth0Util, mgmtTokenHelper);
+                unregisterEmailFromStudyMailingList(handle, study, user, auth0Util, mgmtClient);
                 return user.getGuid();
             }
         } else {
@@ -356,10 +356,10 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
     }
 
     private void unregisterEmailFromStudyMailingList(Handle handle, StudyDto study, User user,
-                                                     Auth0Util auth0Util, Auth0MgmtTokenHelper mgmtTokenHelper) {
+                                                     Auth0Util auth0Util, Auth0ManagementClient mgmtClient) {
         String userEmail = null;
         try {
-            userEmail = auth0Util.getAuth0User(user.getAuth0UserId(), mgmtTokenHelper.getManagementApiToken()).getEmail();
+            userEmail = auth0Util.getAuth0User(user.getAuth0UserId(), mgmtClient.getToken()).getEmail();
         } catch (Auth0Exception e) {
             LOG.error("Auth0 request to retrieve auth0 user {} failed", user.getAuth0UserId(), e);
         }
@@ -381,7 +381,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
      * user ids for the same auth0 user id.  Returns the object
      * that should be sent to the client.
      */
-    private LocalRegistrationResponse saveDDPGuidInAuth0Metadata(Auth0MgmtTokenHelper mgmtTokenHelper, String ddpUserGuid,
+    private LocalRegistrationResponse saveDDPGuidInAuth0Metadata(Auth0ManagementClient mgmtClient, String ddpUserGuid,
                                                                  String auth0UserId, String auth0ClientId,
                                                                  String auth0ClientSecret, String refreshToken) {
         // set the ddp user guid in the user's app metadata, keyed by client id so that
@@ -389,10 +389,10 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
         LOG.info("Setting auth0 user's metadata so that auth0 user {} has ddp user guid {} for client {}",
                 auth0UserId, ddpUserGuid, auth0ClientId);
 
-        Auth0Util auth0Util = new Auth0Util(mgmtTokenHelper.getDomain());
+        Auth0Util auth0Util = new Auth0Util(mgmtClient.getDomain());
 
         auth0Util.setDDPUserGuidForAuth0User(ddpUserGuid, auth0UserId, auth0ClientId,
-                                             mgmtTokenHelper.getManagementApiToken());
+                                             mgmtClient.getToken());
 
         return new LocalRegistrationResponse(auth0Util.refreshToken(auth0ClientId, auth0ClientSecret, refreshToken));
     }

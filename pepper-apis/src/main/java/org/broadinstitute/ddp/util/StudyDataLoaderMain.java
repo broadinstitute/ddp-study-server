@@ -586,6 +586,15 @@ public class StudyDataLoaderMain {
 
                     var answerDao = handle.attach(AnswerDao.class);
 
+                    //create prequal
+                    dataLoader.createPrequal(handle,
+                            userGuid, studyId,
+                            createdAt,
+                            jdbiActivity,
+                            activityInstanceDao,
+                            activityInstanceStatusDao,
+                            answerDao);
+
                     if (hasAboutYou) {
                         String activityCode = mappingData.get("aboutyousurvey").getAsJsonObject().get("activity_code").getAsString();
                         ActivityInstanceDto instanceDto = dataLoader.createActivityInstance(sourceData.get("aboutyousurvey"),

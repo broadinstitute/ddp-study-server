@@ -11,7 +11,6 @@ public class SqlConstants {
     public static final String CLIENT_GUID = "guid";
     public static final String CLIENT_ID = "client_id";
     // todo arz change column name to client_guid and participant_guid so we don't run into ambiguous column name issues
-    public static final String PARTICIPANT_GUID = "guid";
     public static final String STUDY_GUID = "guid";
     // User activities' columns
     public static final String STUDY_ACTIVITY_ID = "study_activity_id";
@@ -396,15 +395,5 @@ public class SqlConstants {
         public static final String FROM_NAME = "from_name";
         public static final String FROM_EMAIL = "from_email";
         public static final String DEFAULT_SALUTATION = "default_salutation";
-    }
-
-    public static class StudyPasswordComplexityTable {
-        public static final String ID = "auth0_tenant_id";
-        public static final String MIN_LENGTH = "min_length";
-        public static final String IS_UPPERCASE_LETTER_REQUIRED = "is_uppercase_letter_required";
-        public static final String IS_LOWECASE_LETTER_REQUIRED = "is_lowercase_letter_required";
-        public static final String IS_SPECIAL_CHARACTER_REQUIRED = "is_special_character_required";
-        public static final String IS_NUMBER_REQUIRED = "is_number_required";
-        public static final String MAX_IDENTICAL_CONSEQUTIVE_CHARACTERS = "max_identical_consecutive_characters";
     }
 }
