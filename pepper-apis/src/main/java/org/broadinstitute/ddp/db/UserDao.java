@@ -392,7 +392,7 @@ public class UserDao {
     /**
      * Returns user permissions for the given operator user guid.
      */
-    public UserPermissions queryUserPermissionsByOperatorGuidClientIdAndAuth0Domain(
+    public UserPermissions queryUserPermissions(
             Handle handle,
             String operatorGuid,
             String auth0ClientId,
