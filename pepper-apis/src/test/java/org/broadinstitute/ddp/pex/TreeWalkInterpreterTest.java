@@ -1134,6 +1134,56 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
         run(expr);
     }
 
+    @Test
+    public void testEval_profileQuery_noProfile() {
+        TransactionWrapper.useTxn(handle -> {
+            handle.attach(JdbiProfile.class).deleteByUserId(testData.getUserId());
+
+            try {
+                assertTrue(run(handle, "user.profile.birthDate()"));
+                fail("expected exception not thrown");
+            } catch (PexFetchException e) {
+                assertTrue(e.getMessage().contains("Could not find profile"));
+            }
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testEval_profileQuery_birthDate() {
+        TransactionWrapper.useTxn(handle -> {
+            var jdbiProfile = handle.attach(JdbiProfile.class);
+            assertTrue(jdbiProfile.upsertBirthDate(testData.getUserId(), LocalDate.of(2002, 3, 14)));
+
+            var answer = new DateAnswer(null, dateStableId, null, 2002, 3, 14);
+            handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), firstInstance.getId(), answer);
+
+            String expr = String.format("user.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"]"
+                            + ".answers.value() == user.profile.birthDate()",
+                    studyGuid, activityCode, dateStableId);
+            assertTrue(run(handle, expr));
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testEval_profileQuery_birthDate_none() {
+        TransactionWrapper.useTxn(handle -> {
+            var jdbiProfile = handle.attach(JdbiProfile.class);
+            assertTrue(jdbiProfile.upsertBirthDate(testData.getUserId(), null));
+
+            try {
+                assertTrue(run(handle, "user.profile.birthDate()"));
+                fail("expected exception not thrown");
+            } catch (PexFetchException e) {
+                assertTrue(e.getMessage().contains("does not have birth date"));
+            }
+
+            handle.rollback();
+        });
+    }
+
     private boolean run(String expr) {
         return TransactionWrapper.withTxn(handle -> new TreeWalkInterpreter().eval(expr, handle, userGuid, firstInstance.getGuid()));
     }
