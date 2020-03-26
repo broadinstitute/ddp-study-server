@@ -228,6 +228,7 @@ commands:
             mkdir -p $DEPLOY_DIR
             cd $DEPLOY_DIR
             cp -r ../$TCELL_DIR .
+            cp ../output-config/tcell_agent.config $TCELL_DIR
             cp ../target/<<parameters.jar_base_name>>.jar .
             cp ../src/appengine/<<parameters.jar_base_name>>.yaml .
             cp ../output-config/application.conf .
