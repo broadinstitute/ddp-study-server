@@ -24,16 +24,13 @@ public interface ClientDao extends SqlObject {
     /**
      * Saves a new client and gives it access to the given list of studies
      *
-     * @param clientName         the name of the client.  Could be anything, but let's
-     *                           keep it consistent with the auth0 client name
      * @param auth0ClientId      auth0's internal client id
      * @param auth0ClientSecret  auth0's secret for the client
      * @param studyGuidsToAccess list of guids that the client should
      *                           have access to
      * @return client.client_id
      */
-    default long registerClient(String clientName,
-                                String auth0ClientId,
+    default long registerClient(String auth0ClientId,
                                 String auth0ClientSecret,
                                 Collection<String> studyGuidsToAccess,
                                 String encryptionKey,
@@ -41,13 +38,16 @@ public interface ClientDao extends SqlObject {
 
         String encryptedClientSecret = AesUtil.encrypt(auth0ClientSecret, encryptionKey);
 
-        long clientId = getClientDao().insertClient(clientName, auth0ClientId, encryptedClientSecret, auth0TenantId,
+        long clientId = getClientDao().insertClient(auth0ClientId, encryptedClientSecret, auth0TenantId,
                                                     null);
-        LOG.info("Inserted client {} for {}", clientId, clientName);
+        LOG.info("Inserted client {} for {}", clientId);
 
         for (String studyGuid : studyGuidsToAccess) {
             long aclId = getClientUmbrellaStudyDao().insert(clientId, getUmbrellaStudyDao().findByStudyGuid(studyGuid).getId());
-            LOG.info("Inserted client__umbrella_study id {} for client {} and study {}", aclId, clientName, studyGuid);
+            LOG.info(
+                    "Inserted client__umbrella_study id {} for client {}, tenant {} and study {}",
+                    aclId, auth0ClientId, auth0TenantId, studyGuid
+            );
         }
         return clientId;
     }
@@ -80,7 +80,6 @@ public interface ClientDao extends SqlObject {
 
     /**
      * Passthrough to JdbiClient that deletes a client
-     * @param clientName to delete
      * @return number of rows deleted. This should really be 1
      */
     default int deleteClientByAuth0ClientIdAndAuth0TenantId(String auth0ClientId, long auth0TenantId) {

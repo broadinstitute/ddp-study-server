@@ -100,8 +100,7 @@ public class DsmRouteTest extends IntegrationTestSuite.TestCase {
 
         StudyClientConfiguration clientConfig = clientDao.getConfiguration(auth0ClientId, auth0Domain);
         if (clientConfig == null) {
-            clientDao.registerClient(TEST_DSM_CLIENT_NAME,
-                    auth0ClientId,
+            clientDao.registerClient(auth0ClientId,
                     auth0Config.getString(ConfigFile.AUTH0_DSM_CLIENT_SECRET),
                     new ArrayList<>(),
                     auth0Config.getString(ConfigFile.ENCRYPTION_SECRET),

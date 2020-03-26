@@ -21,12 +21,13 @@ public class DsmAuthFilterTest extends DsmRouteTest {
 
     private DsmAuthFilter filter;
     private String dsmClientId;
+    private String auth0Domain;
 
     @Before
     public void setup() {
         Config auth0Config = RouteTestUtil.getConfig().getConfig(ConfigFile.AUTH0);
         dsmClientId = auth0Config.getString(ConfigFile.AUTH0_DSM_CLIENT_ID);
-        String auth0Domain = auth0Config.getString(ConfigFile.DOMAIN);
+        auth0Domain = auth0Config.getString(ConfigFile.DOMAIN);
 
         filter = new DsmAuthFilter(dsmClientId, auth0Domain);
     }
@@ -56,13 +57,17 @@ public class DsmAuthFilterTest extends DsmRouteTest {
 
     @Test
     public void testValidTokenWithInvalidClient() {
+        String updateIsRevokedQueryTemplate = "UPDATE client SET is_revoked = %d WHERE auth0_client_id = %s "
+                + " AND EXISTS (SELECT 1 FROM auth0_tenant where auth0_domain = %s)";
         TransactionWrapper.withTxn(handle -> {
-            handle.createUpdate("UPDATE client SET is_revoked = 1 where client_name = \'" + TEST_DSM_CLIENT_NAME + "\'").execute();
+            String query = String.format(updateIsRevokedQueryTemplate, 1, dsmClientId, auth0Domain);
+            handle.createUpdate(query).execute();
             return null;
         });
         boolean result = filter.isTokenValueValid(dsmClientAccessToken);
         TransactionWrapper.withTxn(handle -> {
-            handle.createUpdate("UPDATE client SET is_revoked = 0 where client_name = \'" + TEST_DSM_CLIENT_NAME + "\'").execute();
+            String query = String.format(updateIsRevokedQueryTemplate, 0, dsmClientId, auth0Domain);
+            handle.createUpdate(query).execute();
             return null;
         });
         assertFalse(result);

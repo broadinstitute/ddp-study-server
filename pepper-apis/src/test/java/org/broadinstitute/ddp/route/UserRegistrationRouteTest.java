@@ -142,13 +142,11 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
             Long clientId1 = clientDao.registerClient(
                     GuidUtils.randomStringFromDictionary(UPPER_ALPHA_NUMERIC, 20),
                     GuidUtils.randomStringFromDictionary(UPPER_ALPHA_NUMERIC, 20),
-                    GuidUtils.randomStringFromDictionary(UPPER_ALPHA_NUMERIC, 20),
                     Collections.singletonList(study1.getGuid()),
                     GuidUtils.randomStringFromDictionary(UPPER_ALPHA_NUMERIC, 20),
                     study1.getAuth0TenantId());
 
             Long clientId2 = clientDao.registerClient(
-                    GuidUtils.randomStringFromDictionary(UPPER_ALPHA_NUMERIC, 20),
                     GuidUtils.randomStringFromDictionary(UPPER_ALPHA_NUMERIC, 20),
                     GuidUtils.randomStringFromDictionary(UPPER_ALPHA_NUMERIC, 20),
                     Collections.singletonList(study1.getGuid()),

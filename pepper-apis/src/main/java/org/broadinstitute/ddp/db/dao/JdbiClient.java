@@ -14,16 +14,14 @@ import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 public interface JdbiClient extends SqlObject {
     /**
      * It is expected that the auth0Secret here is encrypted. Don't call this directly, but rather call ClientDao
-     * @param clientName clientName to save
      * @param auth0ClientId client id
      * @param auth0TenantId the id of the tenant
      */
-    @SqlUpdate("insert into client(client_name,is_revoked,auth0_signing_secret,"
+    @SqlUpdate("insert into client(is_revoked,auth0_signing_secret,"
             + "auth0_client_id,auth0_tenant_id,web_password_redirect_url)"
-            + " values(:clientName,false,:auth0Secret,:auth0ClientId,:auth0TenantId,:redirectUrl)")
+            + " values(false,:auth0Secret,:auth0ClientId,:auth0TenantId,:redirectUrl)")
     @GetGeneratedKeys
-    long insertClient(@Bind("clientName")String clientName,
-                      @Bind("auth0ClientId") String auth0ClientId,
+    long insertClient(@Bind("auth0ClientId") String auth0ClientId,
                       @Bind("auth0Secret") String auth0Secret,
                       @Bind("auth0TenantId") long auth0TenantId,
                       @Bind("redirectUrl") String redirectUrl);
@@ -58,7 +56,7 @@ public interface JdbiClient extends SqlObject {
                                                      @Bind("auth0Domain") String auth0Domain);
 
     @SqlQuery("SELECT "
-            + "     c.client_id, c.client_name, c.auth0_client_id, c.auth0_signing_secret, "
+            + "     c.client_id, c.auth0_client_id, c.auth0_signing_secret, "
             + "     c.web_password_redirect_url, c.is_revoked, c.auth0_tenant_id "
             + "FROM "
             + "     client c, auth0_tenant t "
@@ -105,7 +103,7 @@ public interface JdbiClient extends SqlObject {
             @Bind("auth0TenantId") long auth0TenantId
     );
 
-    @SqlQuery("SELECT client_id,client_name,auth0_client_id,auth0_signing_secret,web_password_redirect_url,is_revoked,auth0_tenant_id"
+    @SqlQuery("SELECT client_id,auth0_client_id,auth0_signing_secret,web_password_redirect_url,is_revoked,auth0_tenant_id"
             + "  FROM client WHERE auth0_client_id = :auth0ClientId AND auth0_tenant_id = :auth0TenantId")
     @RegisterConstructorMapper(ClientDto.class)
     Optional<ClientDto> findByAuth0ClientIdAndAuth0TenantId(
