@@ -42,4 +42,9 @@ RUN apt-get update && apt-get install -y \
 
 ENV PUBSUB_EMULATOR_HOST "localhost:8442"
 
+# keep track of git hash
+ARG GIT_SHA
+RUN echo $GIT_SHA > /git_sha.txt
+
+
 CMD "/bin/bash"
