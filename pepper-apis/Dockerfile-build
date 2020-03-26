@@ -25,10 +25,13 @@ RUN gcloud components update --quiet
 RUN curl -sL https://deb.nodesource.com/setup_10.x | bash -
 RUN apt-get install -y nodejs
 
-WORKDIR /tmp
+WORKDIR /opt
 #extracting sheetappend from ddp-angular repo. At some point we can get this from an npm repo
-RUN svn export https://github.com/broadinstitute/ddp-angular/trunk/build-utils/sheetappend
-RUN npm install -g sheetappend
+RUN svn export https://github.com/broadinstitute/ddp-angular/trunk/build-utils
+RUN npm install -g build-utils/sheetappend
+RUN curl -o build-utils/reportdeploy.sh curl -o reportdeploy.sh https://raw.githubusercontent.com/broadinstitute/ddp-angular/circle-ci-updates-1/build-utils/reportdeploy.sh
+RUN chmod 555 build-utils/reportdeploy.sh
+
 
 RUN apt-get update && apt-get install -y \
     ruby \
