@@ -159,7 +159,7 @@ public class UserActivityInstanceListRouteTest extends IntegrationTestSuite.Test
             }
         }
 
-        if (userActivity.isReadonly() != null && userActivity.isReadonly()) {
+        if (userActivity.isReadonly()) {
             hasReadonlyActivities = true;
         }
 
@@ -192,6 +192,8 @@ public class UserActivityInstanceListRouteTest extends IntegrationTestSuite.Test
         String firstActivityCode = firstActivityInstanceSummary.getActivityCode();
         String firstActivityInstanceGuid = firstActivityInstanceSummary.getActivityInstanceGuid();
 
+        TransactionWrapper.withTxn(handle -> handle.attach(JdbiActivityInstance.class)
+                .updateIsReadonlyByGuid(null, firstActivityInstanceGuid));
         TransactionWrapper.withTxn(handle -> handle.attach(JdbiActivity.class)
                 .updateEditTimeoutSecByCode(1L, firstActivityCode, testData.getStudyId()));
         TimeUnit.SECONDS.sleep(1L);

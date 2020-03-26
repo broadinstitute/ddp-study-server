@@ -118,7 +118,7 @@ public class WorkflowService {
         boolean activityInstanceIsMissing = instanceGuid == null;
         if (activityInstanceIsMissing) {
             ActivityInstanceDto instanceDto = handle.attach(ActivityInstanceDao.class)
-                    .insertInstance(activityState.getActivityId(), operatorGuid, userGuid, InstanceStatusType.CREATED, false);
+                    .insertInstance(activityState.getActivityId(), operatorGuid, userGuid, InstanceStatusType.CREATED, null);
             LOG.info("Created activity instance with guid '{}' for user guid '{}' using operator guid '{}' and activity id {}",
                     instanceDto.getGuid(), userGuid, operatorGuid, activityState.getActivityId());
             processActionsForActivityCreationSignal(

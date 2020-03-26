@@ -2,13 +2,15 @@ version: 2.1
 references:
   maven_cache_key: &maven_cache_key
                    maven-deps-repo
+  ci_support_image: &ci_support_image
+                       broadinstitute/study-server-build:back-end-2020-03-11A
 
 executors:
-  maven-executor:
+  build-executor:
     docker: # todo: create new image endpoint, add this in admin tab for faster starts
-      - image: broadinstitute/study-server-build:back-end-2020-03-11A
+      - image: *ci_support_image
       - image: circleci/mysql:5.7-ram
-        environment:
+        environment: &DB_VARS
           MYSQL_ROOT_PASSWORD: rootpw
           MYSQL_DATABASE: test_db
           MYSQL_USER: user
@@ -16,12 +18,17 @@ executors:
     resource_class: medium+
     working_directory: ~/repo/pepper-apis
 
+  deploy-executor:
+    docker: # todo: create new image endpoint, add this in admin tab for faster starts
+    - image: *ci_support_image
+    working_directory: ~/repo/pepper-apis
+
 commands:
   install-tcell:
     steps:
       - run:
           name: Download tcell files from bucket
-          command: |          
+          command: |
             TAR_FILE_URL=`gsutil ls $TCELL_PATH  | sort -r | head -1`
 
             if [ -z $TAR_FILE_URL ]
@@ -36,7 +43,28 @@ commands:
             mkdir -p $TCELL_DIR && tar -xvf $TAR_FILE_PATH
             echo "Contents of extracted archive at $TCELL_DIR"
             ls -l $TCELL_DIR
-  render-configs:
+  setup-shared-env:
+    description: "Setup shared ENV vars used by multiple scripts"
+    steps:
+      - run:
+          name: Set environment to be used by build
+          command: |
+            echo "export VAULT_TOKEN=`vault write -field=token auth/approle/login role_id=$VAULT_ROLE_ID secret_id=$VAULT_ROLE_SECRET_ID`" >> $BASH_ENV
+            echo "export SHORT_GIT_SHA=`echo '<< pipeline.git.revision >>' | cut -c 1-7`" >> $BASH_ENV
+            echo 'export BUILDS_BUCKET=ddp-build-artifacts' >> $BASH_ENV
+            echo 'export DEPLOY_DIR=deployment_assets' >> $BASH_ENV
+            source $BASH_ENV
+
+  common-setup:
+    description: "Common setup for all jobs"
+    steps:
+      - checkout:
+          path: ~/repo
+      - setup-shared-env
+      - install-tcell
+
+  set-deployment-env:
+    description: "Determine the deploy target and set the ENVIRONMENT var"
     steps:
       - run:
           name: Determine deployment environment for branch << pipeline.git.branch >>
@@ -53,15 +81,15 @@ commands:
             ;;
             test)
               DEPLOY_ENV=test
-              NG_BUILD_OPTS=--prod --aot
+            ;;
+            test_deleteme1) #todo remove when done
+              DEPLOY_ENV=test
             ;;
             staging)
               DEPLOY_ENV=staging
-              NG_BUILD_OPTS=--prod --aot
             ;;
             staging)
               DEPLOY_ENV=prod
-              NG_BUILD_OPTS=--prod --aot
             ;;
             *)
               echo "Cannot map << pipeline.git.branch >> to a deployment environment"
@@ -72,21 +100,23 @@ commands:
             echo "export ENVIRONMENT=$DEPLOY_ENV" >> $BASH_ENV
             echo 'export TCELL_PATH=ddp-tcell/tcell-1.8.3.tar.gz' >> $BASH_ENV
             source $BASH_ENV
+
+  render-configs:
+    description: render config files
+    steps:
       - run:
           name: show environment variables
           command: env
       - run:
           name: api-build.sh
-          command: ./api-build.sh v1 $ENVIRONMENT . --config
+          command: ./api-build.sh v1 ${ENVIRONMENT:-dev} . --gae-config
           environment:
             USE_DOCKER: false
 
 
-  install-maven-dependencies:
+  build-jars:
     description: "Install maven dependencies"
     steps:
-      - checkout:
-          path: ~/repo
       - run:
           name: Show pipeline vars
           command: |
@@ -98,9 +128,9 @@ commands:
             echo "pipeline.git.branch << pipeline.git.branch >>"
             echo "pipeline.git.revision << pipeline.git.revision >>"
             echo "pipeline.git.base_revision << pipeline.git.base_revision >>"
-      - render-configs      
+      # For now we are going to hard-code "dev" when we generate config for jar builds
+      - render-configs
       - run:
-      # Our primary container isn't MYSQL so run a sleep command until it's ready.
           name: Waiting for MySQL to be ready
           command: |
             for i in `seq 1 10`;
@@ -115,16 +145,19 @@ commands:
       - run:
           name: Setup test databases
           command: |
-            mysql -h 127.0.0.1 -u root --password=rootpw test_db --execute="CREATE DATABASE studyservicedb CHARACTER SET utf8 COLLATE utf8_general_ci"
-            mysql -h 127.0.0.1 -u root --password=rootpw test_db --execute="CREATE DATABASE housekeepingdb CHARACTER SET utf8 COLLATE utf8_general_ci"
+            mysql -h 127.0.0.1 -u root --password=$MYSQL_ROOT_PASSWORD test_db --execute="CREATE DATABASE studyservicedb CHARACTER SET utf8 COLLATE utf8_general_ci"
+            mysql -h 127.0.0.1 -u root --password=$MYSQL_ROOT_PASSWORD test_db --execute="CREATE DATABASE housekeepingdb CHARACTER SET utf8 COLLATE utf8_general_ci"
+          environment: *DB_VARS
       - run:
           name: Run maven
           command: |
-            mvn --batch-mode --fail-never -file pom.xml package \
+            # @todo remove test
+            mvn --batch-mode -Dtest=ProfileRouteTest -file pom.xml package \
                      -Ditext.license=output-config/itextkey.xml \
                      -Dddp.firecloudKeysDir=output-config/fc_keys \
                      -Dconfig.file=output-config/testing-circleci.conf \
                      install
+            mvn package -f housekeeping-pom.xml -Dmaven.test.skip -Dcheckstyle.skip
           #            mvn --batch-mode --fail-never -file smoketest-pom.xml install package test
 #            mvn --batch-mode --fail-never -file housekeeping.xml install package test           
           # working_directory: ~/repo/pepper-apis
@@ -136,21 +169,175 @@ commands:
           # Upload test results for display in Test Summary: https://circleci.com/docs/2.0/collect-test-data/
           path: target/surefire-reports
 
-jobs:
-  maven-install:
-    executor:
-      name: maven-executor
+  store-jar:
+    description: Store jar in bucket
+    parameters:
+      jar_base_name:
+        type: string
     steps:
-      - install-tcell
-      - install-maven-dependencies
+      - run:
+          name: Store jar <<parameters.jar_base_name>>
+          command: |
+            set -u
+            vault read -format=json  secret/pepper/prod/v1/conf | jq -r .data.gcp.serviceKey | gcloud auth activate-service-account --key-file=-
+            DATE=`date +%F`
+            JAR_BASE_NAME=<<parameters.jar_base_name>>
+            JAR_FILE_NAME="${JAR_BASE_NAME}_${DATE}_${SHORT_GIT_SHA}.jar"
+            LOCAL_JAR_FILE_PATH="./target/${JAR_BASE_NAME}.jar"
+            gsutil cp  ${LOCAL_JAR_FILE_PATH} "gs://${BUILDS_BUCKET}/ddp-study-server-pepper-apis/${JAR_FILE_NAME}"
+
+  retrieve-jar:
+    description: Get <<parameters.jar_base_name>> jar from bucket
+    parameters:
+      jar_base_name:
+        type: string
+    steps:
+      - run:
+          name: Retrieve <<parameters.jar_base_name>> jar from bucket
+          command: |
+            set -u
+            set +e
+            # @TODO remove when done
+            vault read -format=json  secret/pepper/prod/v1/conf | jq -r .data.gcp.serviceKey | gcloud auth activate-service-account --key-file=-
+            JAR_BASE_NAME=<<parameters.jar_base_name>>
+            JAR_FILE_URL_PATTERN="gs://${BUILDS_BUCKET}/ddp-study-server-pepper-apis/${JAR_BASE_NAME}_*_${SHORT_GIT_SHA}.jar"
+            echo "Checking for ${JAR_FILE_URL_PATTERN}"
+            # For some reason following line generating exit code 1 every time in CircleCI. Use set +e so script can continue
+            JAR_FILE_URL=`gsutil ls $JAR_FILE_URL_PATTERN  | sort -r | head -1`
+            if [ -z $JAR_FILE_URL ]
+              then
+                echo "Could not find archive using pattern ${JAR_FILE_URL_PATTERN}"
+                exit 1
+            fi
+            JAR_FILE_PATH="target/${JAR_BASE_NAME}.jar"
+            mkdir -p $(dirname $JAR_FILE_PATH)
+            gsutil cp  $JAR_FILE_URL $JAR_FILE_PATH
+            echo ""
+
+
+  deploy-jar:
+    parameters:
+      jar_base_name:
+        type: string
+    steps:
+      - set-deployment-env
+      - render-configs
+      - run:
+          name: Gather deployment assets
+          command: |
+            rm -rf $DEPLOY_DIR
+            mkdir -p $DEPLOY_DIR
+            cd $DEPLOY_DIR
+            cp ../target/<<parameters.jar_base_name>>.jar .
+            cp ../src/appengine/<<parameters.jar_base_name>>.yaml .
+            cp ../output-config/application.conf .
+            cp -r ../output-config/fc_keys .
+      - run:
+          name: Deploy <<parameters.jar_base_name>> to GAE
+          command: |
+            set -u
+            vault read -format=json secret/pepper/${ENVIRONMENT}/v1/conf  | jq -r .data.gcp.serviceKey | gcloud auth activate-service-account --key-file=-
+            gcloud app deploy --version="${SHORT_GIT_SHA}" --stop-previous-version --project "broad-ddp-${ENVIRONMENT}" $DEPLOY_DIR/<<parameters.jar_base_name>>.yaml
+      - update-deployment-sheet:
+          jar_base_name: <<parameters.jar_base_name>>
+
+  update-deployment-sheet:
+    parameters:
+      jar_base_name:
+        type: string
+    steps:
+      - run:
+          name: Update deployments sheet
+          command: |
+            set -u
+            TZ=America/New_York
+            DATE=`TZ=$TZ date +%F`
+            TIME=`TZ=$TZ date +%T`
+            COMPONENT='<<parameters.jar_base_name>> server'
+            BRANCH=<< pipeline.git.branch >>
+            # Picking up any tags attached to the current commit
+            TAG=`git tag --points-at HEAD | xargs`
+            # List of other branches that have same commit
+            OTHER_BRANCHES=$(./scripts/ci/otherbranchessamecommit.sh | xargs)
+            # Extract email from current commit
+            AUTHOR=`git show -s --format='%ae' HEAD`
+            vault read -format=json secret/pepper/${ENVIRONMENT}/v1/conf  | jq -r .data.gcp.serviceKey | \
+            sheetappend $RELEASE_SHEET_ID $DATE $TIME "$COMPONENT" $ENVIRONMENT $BRANCH "$TAG" $SHORT_GIT_SHA "$AUTHOR" $CIRCLE_BUILD_NUM "$CIRCLE_BUILD_URL" "$OTHER_BRANCHES"
+
+
+jobs:
+  build-jars-job:
+    executor:
+      name: build-executor
+    steps:
+      - common-setup
+      - build-jars
+
+  build-and-store-jar-job:
+    executor:
+      name: build-executor
+    steps:
+      - common-setup
+      - build-jars
+      - store-jar:
+          jar_base_name: DataDonationPlatform
+      - store-jar:
+          jar_base_name: Housekeeping
+
+  deploy-jar-job:
+    executor:
+      name: deploy-executor
+    steps:
+      - common-setup
+      - retrieve-jar:
+          jar_base_name: DataDonationPlatform
+      - deploy-jar:
+          jar_base_name: DataDonationPlatform
+      - retrieve-jar:
+          jar_base_name: Housekeeping
+      - deploy-jar:
+          jar_base_name: Housekeeping
+
+  build-and-deploy-job:
+    executor:
+      name: build-executor
+    steps:
+      - common-setup
+      - build-jars
+      - deploy-jar:
+          jar_base_name: DataDonationPlatform
+      - deploy-jar:
+          jar_base_name: Housekeeping
 
 workflows:
   version: 2
-  build-deploy:
+
+  build-and-deploy:
     jobs:
-      - maven-install:
+      - build-and-deploy-job:
           filters:
             branches:
               only:
+                - develop
                 - study-server-to-appengine
+
+  build-and-store:
+    jobs:
+      - build-and-store-jar-job:
+          filters:
+            branches:
+              only:
+                - /^rc.*/
+                - /^hotfix.*/
+
+  deploy-all-apps-workflow:
+    jobs:
+      - deploy-jar-job:
+          filters:
+            branches:
+              only:
+                - test
+                - staging
+                - production
+                - test_deleteme1
                 - tcell-instrumentation

@@ -44,7 +44,6 @@ import org.broadinstitute.ddp.constants.SqlConstants;
 import org.broadinstitute.ddp.constants.TestConstants;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
-import org.broadinstitute.ddp.db.StudyActivityMappingDao;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.UserDao;
 import org.broadinstitute.ddp.db.UserDaoFactory;
@@ -102,7 +101,6 @@ import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
-import org.broadinstitute.ddp.model.activity.types.ActivityMappingType;
 import org.broadinstitute.ddp.model.activity.types.DateFieldType;
 import org.broadinstitute.ddp.model.activity.types.DateRenderMode;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
@@ -114,7 +112,6 @@ import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.activity.types.TemplateType;
 import org.broadinstitute.ddp.model.address.MailAddress;
 import org.broadinstitute.ddp.model.address.OLCPrecision;
-import org.broadinstitute.ddp.model.dsm.StudyActivityMapping;
 import org.broadinstitute.ddp.model.pdf.ActivityDateSubstitution;
 import org.broadinstitute.ddp.model.pdf.AnswerSubstitution;
 import org.broadinstitute.ddp.model.pdf.BooleanAnswerSubstitution;
@@ -123,6 +120,8 @@ import org.broadinstitute.ddp.model.pdf.PdfActivityDataSource;
 import org.broadinstitute.ddp.model.pdf.PdfConfigInfo;
 import org.broadinstitute.ddp.model.pdf.PdfConfiguration;
 import org.broadinstitute.ddp.model.pdf.PdfVersion;
+import org.broadinstitute.ddp.model.study.ActivityMapping;
+import org.broadinstitute.ddp.model.study.ActivityMappingType;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.security.AesUtil;
 import org.broadinstitute.ddp.security.EncryptionKey;
@@ -137,12 +136,10 @@ import org.slf4j.LoggerFactory;
  */
 public class TestDataSetupUtil {
 
-    public static final String TEMP_DISABLE_CLIENT_STUDY_TENANT_CONSTRAINTS =
-            "src/test/resources/db-testscripts/disable-tenant-constraints.xml";
+    public static final String TEMP_DISABLE_CLIENT_STUDY_TENANT_CONSTRAINTS = "db-testscripts/disable-tenant-constraints.xml";
     public static final String MIGRATE_LEGACY_STUDY_CLIENT_TENANT_AND_ENABLE_CONSTRAINTS =
-            "src/test/resources/db-testscripts/backfill-test-tenants-and-re-enable-tenant-constrains.xml";
-    public static final String BASELINE_SEED_TEST_DATA =
-            "src/test/resources/db-testscripts/baseline-seed-test-data.xml";
+            "db-testscripts/backfill-test-tenants-and-re-enable-tenant-constrains.xml";
+    public static final String BASELINE_SEED_TEST_DATA = "db-testscripts/baseline-seed-test-data.xml";
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(TestDataSetupUtil.class);
     private static final Config cfg = ConfigManager.getInstance().getConfig();
     private static final Config auth0Config = cfg.getConfig(ConfigFile.AUTH0);
@@ -153,16 +150,6 @@ public class TestDataSetupUtil {
     private static final List<GeneratedTestData> testDataToDelete = new ArrayList<>();
     private static final String CONSENT_PDF_LOCATION = "src/test/resources/ConsentForm.pdf";
     private static UserDao userDao = UserDaoFactory.createFromSqlConfig(sqlConfig);
-
-    public static final class ConsentFields {
-        public static final String DRAW_BLOOD_YES = "drawBlood_YES";
-        public static final String DRAW_BLOOD_NO = "drawBlood_NO";
-        public static final String TISSUE_SAMPLE_YES = "tissueSample_YES";
-        public static final String TISSUE_SAMPLE_NO = "tissueSample_NO";
-        public static final String FULL_NAME = "fullName";
-        public static final String DATE_OF_BIRTH = "dateOfBirth";
-        public static final String TODAY_DATE = "date";
-    }
 
     public static void main(String[] args) throws Exception {
         Logger root = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
@@ -896,11 +883,10 @@ public class TestDataSetupUtil {
         generatedTestData.setAboutYouActivityId(activityVersionDto.getActivityId());
 
         // Create consent mappings for this study
-        StudyActivityMappingDao.insertStudyActivityMapping(handle, new StudyActivityMapping(generatedTestData.getStudyGuid(),
+        activityDao.insertActivityMapping(new ActivityMapping(generatedTestData.getStudyGuid(),
                 ActivityMappingType.DATE_OF_DIAGNOSIS,
                 activityVersionDto.getActivityId(),
                 generatedTestData.getDateOfDiagnosisStableId()));
-
     }
 
     public static void addTestConsent(Handle handle, GeneratedTestData generatedTestData) {
@@ -968,22 +954,22 @@ public class TestDataSetupUtil {
         generatedTestData.setConsentVersionId(activityVersionDto.getId());
 
         // Create consent mappings for this study
-        StudyActivityMappingDao.insertStudyActivityMapping(handle, new StudyActivityMapping(generatedTestData.getStudyGuid(),
+        activityDao.insertActivityMapping(new ActivityMapping(generatedTestData.getStudyGuid(),
                 ActivityMappingType.BLOOD,
                 activityVersionDto.getActivityId(),
                 generatedTestData.getBloodQuestionStableId()));
 
-        StudyActivityMappingDao.insertStudyActivityMapping(handle, new StudyActivityMapping(generatedTestData.getStudyGuid(),
+        activityDao.insertActivityMapping(new ActivityMapping(generatedTestData.getStudyGuid(),
                 ActivityMappingType.TISSUE,
                 activityVersionDto.getActivityId(),
                 generatedTestData.getTissueQuestionStableId()));
 
-        StudyActivityMappingDao.insertStudyActivityMapping(handle, new StudyActivityMapping(generatedTestData.getStudyGuid(),
+        activityDao.insertActivityMapping(new ActivityMapping(generatedTestData.getStudyGuid(),
                 ActivityMappingType.MEDICAL_RELEASE,
                 activityVersionDto.getActivityId(),
                 null));
 
-        StudyActivityMappingDao.insertStudyActivityMapping(handle, new StudyActivityMapping(generatedTestData.getStudyGuid(),
+        activityDao.insertActivityMapping(new ActivityMapping(generatedTestData.getStudyGuid(),
                 ActivityMappingType.DATE_OF_BIRTH,
                 activityVersionDto.getActivityId(),
                 generatedTestData.getDateOfBirthStableId()));
@@ -1080,7 +1066,7 @@ public class TestDataSetupUtil {
                         wantsAltPid ? TestConstants.TEST_INSTITUTION_LEGACY_GUID : null,
                         random ? "Street" + GuidUtils.randomStringFromDictionary(UPPER_ALPHA_NUMERIC, 10) :
                                 TestConstants.TEST_INSTITUTION_STREET
-                        ));
+                ));
         return handle.attach(JdbiMedicalProvider.class).insert(generatedTestData.getMedicalProvider());
     }
 
@@ -1137,8 +1123,7 @@ public class TestDataSetupUtil {
     }
 
     /**
-     * Creates a new empty form activity for testing.  Activity does not
-     * have any questions.
+     * Creates a new empty form activity for testing.  Activity does not have any questions.
      */
     public static FormActivityDef createBlankActivity(Handle handle, String activityCode, String userGuid, String
             studyGuid) {
@@ -1187,6 +1172,16 @@ public class TestDataSetupUtil {
     public static void deleteStudyEnrollmentStatuses(Handle handle, GeneratedTestData testData) {
         handle.attach(JdbiUserStudyEnrollment.class)
                 .deleteByUserGuidStudyGuid(testData.getUserGuid(), testData.getStudyGuid());
+    }
+
+    public static final class ConsentFields {
+        public static final String DRAW_BLOOD_YES = "drawBlood_YES";
+        public static final String DRAW_BLOOD_NO = "drawBlood_NO";
+        public static final String TISSUE_SAMPLE_YES = "tissueSample_YES";
+        public static final String TISSUE_SAMPLE_NO = "tissueSample_NO";
+        public static final String FULL_NAME = "fullName";
+        public static final String DATE_OF_BIRTH = "dateOfBirth";
+        public static final String TODAY_DATE = "date";
     }
 
     public static class GeneratedTestData {

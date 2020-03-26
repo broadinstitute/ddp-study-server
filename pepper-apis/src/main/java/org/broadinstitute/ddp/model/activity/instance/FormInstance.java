@@ -76,7 +76,7 @@ public final class FormInstance extends ActivityInstance {
             String title,
             String subtitle,
             String status,
-            boolean readonly,
+            Boolean readonly,
             ListStyleHint listStyleHint,
             Long readonlyHintTemplateId,
             Long introductionSectionId,

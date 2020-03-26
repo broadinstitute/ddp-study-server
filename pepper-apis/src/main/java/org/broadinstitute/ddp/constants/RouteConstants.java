@@ -144,7 +144,7 @@ public class RouteConstants {
                 STUDY_DETAIL + "/suggestions/cancers"
         );
 
-        public static final String STUDY_PASSWORD_REQUIREMENTS = STUDY_DETAIL + "/password-requirements";
+        public static final String STUDY_PASSWORD_POLICY = STUDY_DETAIL + "/password-policy";
         public static final String UPDATE_USER_PASSWORD = USER_SPECIFIC + "/password";
         public static final String UPDATE_USER_EMAIL = USER_SPECIFIC + "/email";
     }

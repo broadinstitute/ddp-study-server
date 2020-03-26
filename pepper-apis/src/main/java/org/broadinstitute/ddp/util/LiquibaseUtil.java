@@ -16,7 +16,7 @@ import liquibase.exception.LiquibaseException;
 import liquibase.exception.MigrationFailedException;
 import liquibase.exception.RollbackFailedException;
 import liquibase.lockservice.DatabaseChangeLogLock;
-import liquibase.resource.FileSystemResourceAccessor;
+import liquibase.resource.ClassLoaderResourceAccessor;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -32,13 +32,13 @@ import org.slf4j.LoggerFactory;
 
 public class LiquibaseUtil implements  AutoCloseable {
 
-    public static final String PEPPER_APIS_GLOBAL_MIGRATIONS = "src/main/resources/changelog-master.xml";
+    public static final String PEPPER_APIS_GLOBAL_MIGRATIONS = "changelog-master.xml";
 
-    public static final String HOUSEKEEPING_GLOBAL_MIGRATIONS = "src/main/resources/housekeeping-changelog-master.xml";
+    public static final String HOUSEKEEPING_GLOBAL_MIGRATIONS = "housekeeping-changelog-master.xml";
 
     private static final Logger LOG = LoggerFactory.getLogger(LiquibaseUtil.class);
 
-    public static final String AUTH0_TENANT_MIGRATION = "src/main/resources/db-changes/tenant-migration.xml";
+    public static final String AUTH0_TENANT_MIGRATION = "db-changes/tenant-migration.xml";
 
     private HikariDataSource dataSource;
 
@@ -117,7 +117,7 @@ public class LiquibaseUtil implements  AutoCloseable {
         Liquibase liquibase = null;
         String tag = null;
         try {
-            liquibase = new Liquibase(changelogFile, new FileSystemResourceAccessor(), new JdbcConnection(dataSource.getConnection()));
+            liquibase = new Liquibase(changelogFile, new ClassLoaderResourceAccessor(), new JdbcConnection(dataSource.getConnection()));
             logLocks(liquibase.listLocks());
 
             tag = generateDatabaseTag();

@@ -1,5 +1,7 @@
 package org.broadinstitute.ddp.json.activity;
 
+import java.util.Optional;
+
 import com.google.gson.annotations.SerializedName;
 import org.apache.commons.lang3.StringUtils;
 
@@ -154,7 +156,11 @@ public class ActivityInstanceSummary implements TranslatedSummary {
         return iconBase64;
     }
 
-    public Boolean isReadonly() {
+    public boolean isReadonly() {
+        return Optional.ofNullable(readonly).orElse(false);
+    }
+
+    public Boolean getReadonly() {
         return readonly;
     }
 

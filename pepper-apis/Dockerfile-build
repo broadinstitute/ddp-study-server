@@ -9,11 +9,6 @@ COPY --from=dsdetoolbox /etc/consul-template/config/config.json /etc/consul-temp
 COPY --from=dsdetoolbox /usr/local/bin/vault /usr/local/bin/vault
 ENV VAULT_ADDR https://clotho.broadinstitute.org:8200
 
-#RUN true \
-#  && apt-get update \
-#  && apt-get install -y curl \
-#  && apt-get install -y nano
-
 
 RUN mkdir /app
 WORKDIR /app
@@ -26,6 +21,14 @@ RUN gcloud components install beta --quiet
 RUN gcloud components install pubsub-emulator --quiet
 RUN gcloud components update --quiet
 
+#install sheetappend utility. First install node
+RUN curl -sL https://deb.nodesource.com/setup_10.x | bash -
+RUN apt-get install -y nodejs
+
+WORKDIR /tmp
+#extracting sheetappend from ddp-angular repo. At some point we can get this from an npm repo
+RUN svn export https://github.com/broadinstitute/ddp-angular/trunk/build-utils/sheetappend
+RUN npm install -g sheetappend
 
 RUN apt-get update && apt-get install -y \
     ruby \

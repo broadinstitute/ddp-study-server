@@ -1,11 +1,9 @@
-package org.broadinstitute.ddp.model.activity.types;
+package org.broadinstitute.ddp.model.study;
 
 /**
- * DSM-specific terms for mapping concepts that endure
- * across studies for CMI.
+ * Mapping types to indicate an activity has a certain attribute of interest to the platform.
  */
 public enum ActivityMappingType {
-
     /**
      * Whether or not the user has agreed to donate blood
      */

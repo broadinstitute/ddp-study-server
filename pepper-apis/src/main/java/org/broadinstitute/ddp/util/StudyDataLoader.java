@@ -33,6 +33,7 @@ import com.google.gson.JsonElement;
 import com.typesafe.config.Config;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.SqlConstants.MedicalProviderTable;
 import org.broadinstitute.ddp.db.DBUtils;
@@ -112,10 +113,11 @@ public class StudyDataLoader {
         auth0Domain = auth0Config.getString(ConfigFile.DOMAIN);
 
         auth0Util = new Auth0Util(auth0Domain);
-        Auth0MgmtTokenHelper tokenHelper = new Auth0MgmtTokenHelper(auth0Config.getString("managementApiClientId"),
-                auth0Config.getString("managementApiSecret"),
-                auth0Domain);
-        mgmtToken = tokenHelper.getManagementApiToken();
+        var mgmtClient = new Auth0ManagementClient(
+                auth0Domain,
+                auth0Config.getString("managementApiClientId"),
+                auth0Config.getString("managementApiSecret"));
+        mgmtToken = mgmtClient.getToken();
 
         sourceDataSurveyQs = new HashMap<>();
 
@@ -257,6 +259,47 @@ public class StudyDataLoader {
         return pepperUser.getUserGuid();
     }
 
+    public ActivityInstanceDto createPrequal(Handle handle, String participantGuid, long studyId, String ddpCreated,
+                                             JdbiActivity jdbiActivity,
+                                             ActivityInstanceDao activityInstanceDao,
+                                             ActivityInstanceStatusDao activityInstanceStatusDao,
+                                             AnswerDao answerDao) throws Exception {
+
+        Long studyActivityId = jdbiActivity.findIdByStudyIdAndCode(studyId, "PREQUAL").get();
+        Instant instant;
+        try {
+            instant = Instant.parse(ddpCreated);
+        } catch (DateTimeParseException e) {
+            throw new Exception("Could not parse required createdAt value for prequal, value is " + ddpCreated);
+        }
+        long ddpCreatedAt = instant.toEpochMilli();
+        ActivityInstanceDto dto = activityInstanceDao
+                .insertInstance(studyActivityId, participantGuid, participantGuid, InstanceStatusType.CREATED,
+                        true,
+                        ddpCreatedAt,
+                        null, null, null);
+
+        //populate PREQUAL answers
+        JdbiProfile jdbiProfile = handle.attach(JdbiProfile.class);
+        UserProfileDto profileDto = jdbiProfile.getUserProfileByUserGuid(participantGuid);
+        answerTextQuestion("PREQUAL_FIRST_NAME", participantGuid, dto.getGuid(),
+                profileDto.getFirstName(), answerDao);
+
+        answerTextQuestion("PREQUAL_LAST_NAME", participantGuid, dto.getGuid(),
+                profileDto.getLastName(), answerDao);
+
+        List<SelectedPicklistOption> options = new ArrayList<SelectedPicklistOption>();
+        options.add(new SelectedPicklistOption("DIAGNOSED"));
+        answerPickListQuestion("PREQUAL_SELF_DESCRIBE", participantGuid, dto.getGuid(),
+                options, answerDao);
+
+        //add 30seconds to created_date and populate complete status
+        activityInstanceStatusDao
+                .insertStatus(dto.getId(), InstanceStatusType.COMPLETE, ddpCreatedAt + 30000, participantGuid);
+
+        return dto;
+    }
+
 
     public ActivityInstanceDto createActivityInstance(JsonElement surveyData, String participantGuid,
                                                       long studyId, String activityCode, String createdAt,
@@ -344,12 +387,10 @@ public class StudyDataLoader {
             instanceCurrentStatus = getActivityInstanceStatus(submissionStatus, ddpCreatedAt, ddpLastUpdatedAt, ddpCompletedAt);
         }
 
-        // Read only is always false for things that aren't consent- we rely on the user being terminated to show read only activities
-        boolean isReadonly = false;
-        if ((activityCode == "CONSENT" || activityCode == "TISSUECONSENT" || activityCode == "BLOODCONSENT")
-                && instanceCurrentStatus == InstanceStatusType.COMPLETE) {
-            isReadonly = true;
-        }
+        // Read only is always undefined for things that aren't consent- we rely on the user being terminated to show read only activities
+        boolean itIsCompletedConsent = (activityCode == "CONSENT" || activityCode == "TISSUECONSENT" || activityCode == "BLOODCONSENT")
+                && instanceCurrentStatus == InstanceStatusType.COMPLETE;
+        Boolean isReadonly = itIsCompletedConsent ? true : null;
         ActivityInstanceDto dto = activityInstanceDao
                 .insertInstance(studyActivityId, participantGuid, participantGuid, InstanceStatusType.CREATED,
                         isReadonly,
@@ -486,7 +527,7 @@ public class StudyDataLoader {
         //handle agreement
         String surveyStatus = surveyData.getAsJsonObject().get("survey_status").getAsString();
         if (surveyStatus.equalsIgnoreCase("COMPLETE")) {
-            answerAgreementQuestion(handle, "TISSUERELEASE_AGREEMENT", userDto.getUserGuid(),
+            answerAgreementQuestion("TISSUERELEASE_AGREEMENT", userDto.getUserGuid(),
                     instanceDto.getGuid(), Boolean.TRUE, answerDao);
         }
 
@@ -520,7 +561,7 @@ public class StudyDataLoader {
         //handle agreement
         String surveyStatus = surveyData.getAsJsonObject().get("survey_status").getAsString();
         if (surveyStatus.equalsIgnoreCase("COMPLETE")) {
-            answerAgreementQuestion(handle, "BLOODRELEASE_AGREEMENT", userDto.getUserGuid(),
+            answerAgreementQuestion("BLOODRELEASE_AGREEMENT", userDto.getUserGuid(),
                     instanceDto.getGuid(), Boolean.TRUE, answerDao);
         }
 
@@ -631,11 +672,11 @@ public class StudyDataLoader {
                         .collect(Collectors.joining(", "));
 
         if (StringUtils.isNotBlank(bdConsentAddress)) {
-            answerTextQuestion(handle, "BLOODCONSENT_ADDRESS", userDto.getUserGuid(), instanceDto.getGuid(),
+            answerTextQuestion("BLOODCONSENT_ADDRESS", userDto.getUserGuid(), instanceDto.getGuid(),
                     bdConsentAddress, answerDao);
         }
         if (StringUtils.isNotBlank(phoneNumber)) {
-            answerTextQuestion(handle, "BLOODCONSENT_PHONE", userDto.getUserGuid(), instanceDto.getGuid(),
+            answerTextQuestion("BLOODCONSENT_PHONE", userDto.getUserGuid(), instanceDto.getGuid(),
                     phoneNumber, answerDao);
         }
         //addLegacySurveyAddress(handle, studyDto, userDto, instanceDto, surveyData, "bloodconsent");
@@ -664,7 +705,7 @@ public class StudyDataLoader {
                 dsmTriggerId == null ? DSM_DEFAULT_ON_DEMAND_TRIGGER_ID : dsmTriggerId.intValue());
     }
 
-    public String answerDateQuestion(Handle handle, String pepperQuestionStableId, String participantGuid, String instanceGuid,
+    public String answerDateQuestion(String pepperQuestionStableId, String participantGuid, String instanceGuid,
                                      DateValue value, AnswerDao answerDao) {
 
         Answer answer = new DateAnswer(null, pepperQuestionStableId, null, null, null, null);
@@ -677,8 +718,7 @@ public class StudyDataLoader {
         return answerDao.createAnswer(participantGuid, instanceGuid, answer).getAnswerGuid();
     }
 
-    public String answerTextQuestion(Handle handle,
-                                     String pepperQuestionStableId,
+    public String answerTextQuestion(String pepperQuestionStableId,
                                      String participantGuid,
                                      String instanceGuid,
                                      String value, AnswerDao answerDao) {
@@ -690,8 +730,7 @@ public class StudyDataLoader {
         return guid;
     }
 
-    public String answerBooleanQuestion(Handle handle,
-                                        String pepperQuestionStableId,
+    public String answerBooleanQuestion(String pepperQuestionStableId,
                                         String participantGuid,
                                         String instanceGuid,
                                         Boolean value, AnswerDao answerDao) throws Exception {
@@ -702,8 +741,7 @@ public class StudyDataLoader {
         return null;
     }
 
-    public String answerAgreementQuestion(Handle handle,
-                                          String pepperQuestionStableId,
+    public String answerAgreementQuestion(String pepperQuestionStableId,
                                           String participantGuid,
                                           String instanceGuid,
                                           Boolean value, AnswerDao answerDao) throws Exception {
@@ -714,7 +752,7 @@ public class StudyDataLoader {
         return null;
     }
 
-    public String answerPickListQuestion(Handle handle, String questionStableId, String participantGuid, String instanceGuid,
+    public String answerPickListQuestion(String questionStableId, String participantGuid, String instanceGuid,
                                          List<SelectedPicklistOption> selectedPicklistOptions, AnswerDao answerDao) {
         Answer answer = new PicklistAnswer(null, questionStableId, null, selectedPicklistOptions);
         return answerDao.createAnswer(participantGuid, instanceGuid, answer).getAnswerGuid();
@@ -1013,25 +1051,25 @@ public class StudyDataLoader {
             //check type and act accordingly
             switch (questionType) {
                 case "Date":
-                    processDateQuestion(handle, thisMap, sourceData, surveyName, participantGuid, instanceGuid, answerDao);
+                    processDateQuestion(thisMap, sourceData, surveyName, participantGuid, instanceGuid, answerDao);
                     break;
                 case "string":
-                    processTextQuestion(handle, thisMap, sourceData, surveyName, participantGuid, instanceGuid, answerDao);
+                    processTextQuestion(thisMap, sourceData, surveyName, participantGuid, instanceGuid, answerDao);
                     break;
                 case "Picklist":
-                    processPicklistQuestion(handle, thisMap, sourceData, surveyName, participantGuid, instanceGuid, answerDao);
+                    processPicklistQuestion(thisMap, sourceData, surveyName, participantGuid, instanceGuid, answerDao);
                     break;
                 //case "YesNoDkPicklist":
                 //    processYesNoDkPicklistQuestion(handle, thisMap, sourceData, surveyName, participantGuid, instanceGuid, answerDao);
                 //    break; //todo
                 case "Boolean":
-                    processBooleanQuestion(handle, thisMap, sourceData, surveyName, participantGuid, instanceGuid, answerDao);
+                    processBooleanQuestion(thisMap, sourceData, surveyName, participantGuid, instanceGuid, answerDao);
                     break;
                 case "BooleanSpecialPL":
                     processBooleanSpecialPLQuestion(handle, thisMap, sourceData, surveyName, participantGuid, instanceGuid, answerDao);
                     break;
                 case "Agreement":
-                    processAgreementQuestion(handle, thisMap, sourceData, surveyName, participantGuid, instanceGuid, answerDao);
+                    processAgreementQuestion(thisMap, sourceData, surveyName, participantGuid, instanceGuid, answerDao);
                     break;
                 case "Composite":
                     processCompositeQuestion(handle, thisMap, sourceData, surveyName,
@@ -1077,7 +1115,7 @@ public class StudyDataLoader {
         }
     }
 
-    private String processPicklistQuestion(Handle handle, JsonElement mapElement, JsonElement sourceDataElement, String surveyName,
+    private String processPicklistQuestion(JsonElement mapElement, JsonElement sourceDataElement, String surveyName,
                                            String participantGuid, String instanceGuid, AnswerDao answerDao) {
 
         String answerGuid = null;
@@ -1111,7 +1149,7 @@ public class StudyDataLoader {
             selectedPicklistOptions = getSelectedPicklistOptions(mapElement, sourceDataElement, questionName, surveyName);
         }
         if (CollectionUtils.isNotEmpty(selectedPicklistOptions)) {
-            answerGuid = answerPickListQuestion(handle, stableId, participantGuid, instanceGuid, selectedPicklistOptions, answerDao);
+            answerGuid = answerPickListQuestion(stableId, participantGuid, instanceGuid, selectedPicklistOptions, answerDao);
         }
         return answerGuid;
 
@@ -1232,7 +1270,7 @@ public class StudyDataLoader {
         return selectedPicklistOptions;
     }
 
-    private String processDateQuestion(Handle handle, JsonElement mapElement, JsonElement sourceDataElement, String surveyName,
+    private String processDateQuestion(JsonElement mapElement, JsonElement sourceDataElement, String surveyName,
                                        String participantGuid, String instanceGuid, AnswerDao answerDao) throws Exception {
 
         String answerGuid = null;
@@ -1254,11 +1292,11 @@ public class StudyDataLoader {
                     String valueStr = valueEl.getAsString();
                     int valueInt = Integer.parseInt(valueStr);
                     DateValue dateValue = new DateValue(valueInt, null, null);
-                    answerGuid = answerDateQuestion(handle, stableId, participantGuid, instanceGuid, dateValue, answerDao);
+                    answerGuid = answerDateQuestion(stableId, participantGuid, instanceGuid, dateValue, answerDao);
                 } else {
                     String dateFormat = mapElement.getAsJsonObject().get("format").getAsString();
                     DateValue dateValue = parseDate(valueEl.getAsString(), dateFormat);
-                    answerGuid = answerDateQuestion(handle, stableId, participantGuid, instanceGuid, dateValue, answerDao);
+                    answerGuid = answerDateQuestion(stableId, participantGuid, instanceGuid, dateValue, answerDao);
                 }
             }
         } else {
@@ -1292,12 +1330,12 @@ public class StudyDataLoader {
                 day = dayEl.getAsInt();
             }
             DateValue dateValue = new DateValue(year, month, day);
-            answerGuid = answerDateQuestion(handle, stableId, participantGuid, instanceGuid, dateValue, answerDao);
+            answerGuid = answerDateQuestion(stableId, participantGuid, instanceGuid, dateValue, answerDao);
         }
         return answerGuid;
     }
 
-    private String processTextQuestion(Handle handle, JsonElement mapElement, JsonElement sourceDataElement, String surveyName,
+    private String processTextQuestion(JsonElement mapElement, JsonElement sourceDataElement, String surveyName,
                                        String participantGuid, String instanceGuid, AnswerDao answerDao) throws Exception {
 
         String answerGuid = null;
@@ -1312,14 +1350,14 @@ public class StudyDataLoader {
         }
 
         if (valueEl != null && !valueEl.isJsonNull()) {
-            answerGuid = answerTextQuestion(handle, stableId, participantGuid, instanceGuid, valueEl.getAsString(), answerDao);
+            answerGuid = answerTextQuestion(stableId, participantGuid, instanceGuid, valueEl.getAsString(), answerDao);
         }
         sourceDataSurveyQs.get(surveyName).add(questionName);
         return answerGuid;
     }
 
 
-    private String processAgreementQuestion(Handle handle, JsonElement mapElement, JsonElement sourceDataElement, String surveyName,
+    private String processAgreementQuestion(JsonElement mapElement, JsonElement sourceDataElement, String surveyName,
                                             String participantGuid, String instanceGuid, AnswerDao answerDao) throws Exception {
 
         String answerGuid;
@@ -1338,7 +1376,7 @@ public class StudyDataLoader {
         }
         sourceDataSurveyQs.get(surveyName).add(questionName);
 
-        answerGuid = answerAgreementQuestion(handle, stableId, participantGuid, instanceGuid, valueEl.getAsBoolean(), answerDao);
+        answerGuid = answerAgreementQuestion(stableId, participantGuid, instanceGuid, valueEl.getAsBoolean(), answerDao);
         return answerGuid;
     }
 
@@ -1366,27 +1404,27 @@ public class StudyDataLoader {
                 String nestedQuestionType = getStringValueFromElement(childEl, "type");
                 switch (nestedQuestionType) {
                     case "Date":
-                        childGuid = processDateQuestion(handle, childEl, sourceDataElement, surveyName, participantGuid,
+                        childGuid = processDateQuestion(childEl, sourceDataElement, surveyName, participantGuid,
                                 instanceGuid, answerDao);
                         nestedQAGuids.add(childGuid);
                         break;
                     case "string":
-                        childGuid = processTextQuestion(handle, childEl, sourceDataElement, surveyName,
+                        childGuid = processTextQuestion(childEl, sourceDataElement, surveyName,
                                 participantGuid, instanceGuid, answerDao);
                         nestedQAGuids.add(childGuid);
                         break;
                     case "Picklist":
-                        childGuid = processPicklistQuestion(handle, childEl, sourceDataElement, surveyName,
+                        childGuid = processPicklistQuestion(childEl, sourceDataElement, surveyName,
                                 participantGuid, instanceGuid, answerDao);
                         nestedQAGuids.add(childGuid);
                         break;
                     case "Boolean":
-                        childGuid = processBooleanQuestion(handle, childEl, sourceDataElement, surveyName,
+                        childGuid = processBooleanQuestion(childEl, sourceDataElement, surveyName,
                                 participantGuid, instanceGuid, answerDao);
                         nestedQAGuids.add(childGuid);
                         break;
                     case "Agreement":
-                        childGuid = processAgreementQuestion(handle, childEl, sourceDataElement, surveyName,
+                        childGuid = processAgreementQuestion(childEl, sourceDataElement, surveyName,
                                 participantGuid, instanceGuid, answerDao);
                         nestedQAGuids.add(childGuid);
                         break;
@@ -1400,7 +1438,7 @@ public class StudyDataLoader {
                             if (isClinicalTrial) {
                                 List<SelectedPicklistOption> selectedPicklistOptions = new ArrayList<>();
                                 selectedPicklistOptions.add(new SelectedPicklistOption("IS_CLINICAL_TRIAL"));
-                                childGuid = answerPickListQuestion(handle, childStableId, participantGuid,
+                                childGuid = answerPickListQuestion(childStableId, participantGuid,
                                         instanceGuid, selectedPicklistOptions, answerDao);
                                 nestedQAGuids.add(childGuid);
                             }
@@ -1452,31 +1490,31 @@ public class StudyDataLoader {
 
                         switch (nestedQuestionType) {
                             case "Date":
-                                childGuid = processDateQuestion(handle, childEl, thisDataEl, surveyName, participantGuid,
+                                childGuid = processDateQuestion(childEl, thisDataEl, surveyName, participantGuid,
                                         instanceGuid, answerDao);
                                 nestedQAGuids.add(childGuid);
                                 nestedAnsOrders.add(compositeAnswerOrder);
                                 break;
                             case "string":
-                                childGuid = processTextQuestion(handle, childEl, thisDataEl, surveyName,
+                                childGuid = processTextQuestion(childEl, thisDataEl, surveyName,
                                         participantGuid, instanceGuid, answerDao);
                                 nestedQAGuids.add(childGuid);
                                 nestedAnsOrders.add(compositeAnswerOrder);
                                 break;
                             case "Picklist":
-                                childGuid = processPicklistQuestion(handle, childEl, thisDataEl, surveyName,
+                                childGuid = processPicklistQuestion(childEl, thisDataEl, surveyName,
                                         participantGuid, instanceGuid, answerDao);
                                 nestedQAGuids.add(childGuid);
                                 nestedAnsOrders.add(compositeAnswerOrder);
                                 break;
                             case "Boolean":
-                                childGuid = processBooleanQuestion(handle, childEl, thisDataEl, surveyName,
+                                childGuid = processBooleanQuestion(childEl, thisDataEl, surveyName,
                                         participantGuid, instanceGuid, answerDao);
                                 nestedQAGuids.add(childGuid);
                                 nestedAnsOrders.add(compositeAnswerOrder);
                                 break;
                             case "Agreement":
-                                childGuid = processAgreementQuestion(handle, childEl, thisDataEl, surveyName,
+                                childGuid = processAgreementQuestion(childEl, thisDataEl, surveyName,
                                         participantGuid, instanceGuid, answerDao);
                                 nestedQAGuids.add(childGuid);
                                 nestedAnsOrders.add(compositeAnswerOrder);
@@ -1488,7 +1526,7 @@ public class StudyDataLoader {
                                 if (isClinicalTrial) {
                                     List<SelectedPicklistOption> selectedPicklistOptions = new ArrayList<>();
                                     selectedPicklistOptions.add(new SelectedPicklistOption("IS_CLINICAL_TRIAL"));
-                                    childGuid = answerPickListQuestion(handle, childStableId, participantGuid,
+                                    childGuid = answerPickListQuestion(childStableId, participantGuid,
                                             instanceGuid, selectedPicklistOptions, answerDao);
                                     nestedQAGuids.add(childGuid);
                                     nestedAnsOrders.add(compositeAnswerOrder);
@@ -1541,11 +1579,11 @@ public class StudyDataLoader {
         }
 
         //answerGuid = answerBooleanQuestion(handle, stableId, participantGuid, instanceGuid, value, answerDao);
-        answerGuid = answerPickListQuestion(handle, stableId, participantGuid, instanceGuid, selectedOptions, answerDao);
+        answerGuid = answerPickListQuestion(stableId, participantGuid, instanceGuid, selectedOptions, answerDao);
         return answerGuid;
     }
 
-    private String processBooleanQuestion(Handle handle, JsonElement mapElement, JsonElement sourceDataElement, String surveyName,
+    private String processBooleanQuestion(JsonElement mapElement, JsonElement sourceDataElement, String surveyName,
                                           String participantGuid, String instanceGuid, AnswerDao answerDao) throws Exception {
 
         String answerGuid = null;
@@ -1579,7 +1617,7 @@ public class StudyDataLoader {
             LOG.error("NO source type for Boolean Q: {} ", stableId);
         }
 
-        answerGuid = answerBooleanQuestion(handle, stableId, participantGuid, instanceGuid, value, answerDao);
+        answerGuid = answerBooleanQuestion(stableId, participantGuid, instanceGuid, value, answerDao);
         return answerGuid;
     }
 

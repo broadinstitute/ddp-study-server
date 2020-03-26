@@ -7,23 +7,22 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import java.sql.SQLException;
 import java.util.NoSuchElementException;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.constants.SqlConstants.ActivityInstanceTable;
+import org.broadinstitute.ddp.db.dao.UserDao;
+import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.util.GuidUtils;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class DBUtilsTest extends TxnAwareBaseTest {
 
-    private static UserDao userDao;
     private static ActivityInstanceDao activityInstanceDao;
 
     @BeforeClass
     public static void setup() {
-        userDao = UserDaoFactory.createFromSqlConfig(sqlConfig);
         activityInstanceDao = new ActivityInstanceDao(null);
     }
 
@@ -43,14 +42,14 @@ public class DBUtilsTest extends TxnAwareBaseTest {
     }
 
     @Test
-    public void testUniqueUserGuid() throws SQLException {
+    public void testUniqueUserGuid() {
         TransactionWrapper.withTxn(handle -> {
             String guid = DBUtils.uniqueUserGuid(handle);
 
             assertNotNull(guid);
             assertEquals(GuidUtils.USER_GUID_LENGTH, guid.length());
 
-            Long id = userDao.getUserIdByGuid(handle, guid);
+            Long id = handle.attach(UserDao.class).findUserByGuid(guid).map(User::getId).orElse(null);
             assertNull(id);
 
             return null;
@@ -58,14 +57,14 @@ public class DBUtilsTest extends TxnAwareBaseTest {
     }
 
     @Test
-    public void testUniqueUserHruid() throws SQLException {
+    public void testUniqueUserHruid() {
         TransactionWrapper.useTxn(handle -> {
             String hruid = DBUtils.uniqueUserHruid(handle);
 
             assertNotNull(hruid);
             assertEquals(GuidUtils.HRUID_PREFIX.length() + GuidUtils.USER_HRUID_RANDOM_PART_LENGTH, hruid.length());
 
-            Long id = userDao.getUserIdByHruid(handle, hruid);
+            Long id = handle.attach(UserDao.class).findUserByHruid(hruid).map(User::getId).orElse(null);
             assertNull(id);
         });
     }

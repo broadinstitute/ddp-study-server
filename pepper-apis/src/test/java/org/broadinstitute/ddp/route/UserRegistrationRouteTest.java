@@ -80,7 +80,6 @@ import org.broadinstitute.ddp.model.invitation.InvitationType;
 import org.broadinstitute.ddp.model.pex.Expression;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.model.user.User;
-import org.broadinstitute.ddp.util.Auth0MgmtTokenHelper;
 import org.broadinstitute.ddp.util.Auth0Util;
 import org.broadinstitute.ddp.util.GuidUtils;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
@@ -214,14 +213,14 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
             handle.attach(UserGovernanceDao.class).deleteAllGovernancesForProxy(existingUserId);
         });
 
-        Auth0MgmtTokenHelper helper = TransactionWrapper.withTxn(handle ->
-                Auth0Util.getManagementTokenHelperForDomain(handle, auth0Domain));
+        var mgmtClient = TransactionWrapper.withTxn(handle ->
+                Auth0Util.getManagementClientForDomain(handle, auth0Domain));
         Auth0Util auth0Util = new Auth0Util(auth0Domain);
 
         for (String auth0UserId : auth0UserIdsToDelete) {
             RouteTestUtil.deleteUserByAuth0UserId(auth0UserId, auth0Domain);
             try {
-                auth0Util.deleteAuth0User(auth0UserId, helper.getManagementApiToken());
+                auth0Util.deleteAuth0User(auth0UserId, mgmtClient.getToken());
             } catch (Auth0Exception e) {
                 throw new RuntimeException(e);
             }
@@ -405,8 +404,8 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
         String testAuth0UserId = TransactionWrapper.withTxn(handle -> {
             // Have to create a completely new user that only exists in Auth0, so that email-lookup-by-user will not
             // fail and we can test that user/profile is created post-registration.
-            Auth0MgmtTokenHelper helper = Auth0Util.getManagementTokenHelperForDomain(handle, auth0Domain);
-            return new Auth0Util(auth0Domain).createTestingUser(helper.getManagementApiToken()).getAuth0Id();
+            var mgmtClient = Auth0Util.getManagementClientForDomain(handle, auth0Domain);
+            return new Auth0Util(auth0Domain).createTestingUser(mgmtClient.getToken()).getAuth0Id();
         });
         auth0UserIdsToDelete.add(testAuth0UserId);
 

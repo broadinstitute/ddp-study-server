@@ -75,26 +75,15 @@ public class ConfigFile {
     public static final String CLIENT_ID_BY_AUTH0_CLIENT_ID_QUERY = "clientIdByAuth0ClientIdQuery";
     public static final String CLIENT_UPSERT_STATEMENT = "upsertClientStatement";
     public static final String CLIENT_DELETE_BY_NAME = "deleteClientByName";
-    public static final String CHECK_USER_GUID_QUERY = "checkUserGuidQuery";
     public static final String INSERT_USER_STMT = "insertUser";
-    public static final String UPSERT_USER_PROFILE_FIRST_AND_LAST_NAME = "upsertFirstAndLastName";
-    public static final String INSERT_GOVERNED_PARTICIPANT = "insertGovernedUserStmt";
     public static final String STUDIES_FOR_CLIENT_QUERY = "studiesForClientQuery";
     public static final String QUERY_GOVERNED_PARTICIPANTS_BY_OPERATOR = "governedParticipantsForOperatorQuery";
-    public static final String USER_EXISTS_QUERY = "userExistsQuery";
     public static final String PROFILE_EXISTS_QUERY = "profileExistsQuery";
     public static final String GET_USER_ID_FROM_GUID = "getUserIdFromGuidQuery";
-    public static final String GET_USER_ID_FROM_HRUID = "getUserIdFromHruidQuery";
-    public static final String USER_EXISTS_GUID = "userExistsGuidQuery";
-    public static final String GOVERNANCE_ALIAS_EXISTS_QUERY = "governanceAliasExistsQuery";
-    public static final String GET_ALL_GOV_PARTS_QUERY = "governedParticipantsForOperatorQuery";
     public static final String PATCH_SEX_STMT = "patchSexStmt";
     public static final String PATCH_PREFERRED_LANGUAGE_STMT = "patchPreferredLanguageStmt";
-    public static final String USER_GUID_FOR_AUTH0ID_QUERY = "userGuidForAuth0IdQuery";
     public static final String HEALTHCHECK_PASSWORD = "healthcheckPassword";
     public static final String USER_CLIENT_REVOCATION_QUERY = "userClientRevocationQuery";
-    public static final String GET_TEMPLATE_VARIABLES_WITH_TRANSLATIONS_QUERY =
-            "templateVariablesWithTranslationsQuery";
 
     // milliseconds after which spark will terminate a request thread if it hasn't completed
     public static final String THREAD_TIMEOUT = "threadTimeout";
@@ -157,13 +146,6 @@ public class ConfigFile {
         public static final String VALID_STUDY_QUERY = "studyActivity.queryValidStudy";
 
         public static final String FORM_ACTIVITY_BY_GUID = "activities.formActivityByGuidQuery";
-
-        public static final String VALIDATIONS_FOR_QUESTION = "validations.queryAllByQuestionAndLangId";
-
-        public static final String USER_GUID_BY_ID = "getUserGuidFromUserIdQuery";
-        public static final String MIN_AND_MAX_LENGTH_VALIDATION = "validations.minAndMaxLengthValidationQuery";
-        public static final String REGEX_PATTERN_VALIDATION = "validations.regexPatternValidationQuery";
-        public static final String NUM_OPTIONS_SELECTED_VALIDATION = "validations.numOptionsSelectedValidationQuery";
 
         public static final String MAX_INSTANCES_PER_USER = "max_instances_per_user";
         public static final String NUM_INSTANCES_FOR_USER = "num_instances_for_user";
