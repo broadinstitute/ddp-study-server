@@ -40,7 +40,7 @@ commands:
             TAR_FILE_PATH="/tmp/$(basename -- $TAR_FILE_URL)"
             gsutil cp  $TAR_FILE_URL $TAR_FILE_PATH
             cd ~/repo/pepper-apis
-            tar -xvf --warning=no-unknown-keyword --no-same-owner $TAR_FILE_PATH
+            tar --no-same-owner -xvf $TAR_FILE_PATH
   setup-shared-env:
     description: "Setup shared ENV vars used by multiple scripts"
     steps:
