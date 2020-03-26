@@ -62,7 +62,6 @@ commands:
       - checkout:
           path: ~/repo
       - setup-shared-env
-      - install-tcell
 
   set-deployment-env:
     description: "Determine the deploy target and set the ENVIRONMENT var"
@@ -223,6 +222,7 @@ commands:
     steps:
       - set-deployment-env
       - render-configs
+      - install-tcell
       - run:
           name: Gather deployment assets
           command: |
