@@ -57,8 +57,8 @@ public class DsmAuthFilterTest extends DsmRouteTest {
 
     @Test
     public void testValidTokenWithInvalidClient() {
-        String updateIsRevokedQueryTemplate = "UPDATE client SET is_revoked = %d WHERE auth0_client_id = %s "
-                + " AND EXISTS (SELECT 1 FROM auth0_tenant where auth0_domain = %s)";
+        String updateIsRevokedQueryTemplate = "UPDATE client SET is_revoked = %d WHERE auth0_client_id = '%s' "
+                + " AND EXISTS (SELECT 1 FROM auth0_tenant where auth0_domain = '%s')";
         TransactionWrapper.withTxn(handle -> {
             String query = String.format(updateIsRevokedQueryTemplate, 1, dsmClientId, auth0Domain);
             handle.createUpdate(query).execute();
