@@ -38,10 +38,10 @@ commands:
             fi
             TAR_FILE_PATH="/tmp/$(basename -- $TAR_FILE_URL)"
             gsutil -u broad-ddp-prod cp  $TAR_FILE_URL $TAR_FILE_PATH
-            cd ~/repo/ddp-workspace
+            cd ~/repo/pepper-apis
             TCELL_DIR="tcell"
             mkdir -p $TCELL_DIR && tar -xvf $TAR_FILE_PATH
-            echo "Contents of extracted archive at $TCELL_DIR"
+            echo "Tcell extracted archive is at $TCELL_DIR"
             ls -l $TCELL_DIR
   setup-shared-env:
     description: "Setup shared ENV vars used by multiple scripts"
@@ -53,6 +53,7 @@ commands:
             echo "export SHORT_GIT_SHA=`echo '<< pipeline.git.revision >>' | cut -c 1-7`" >> $BASH_ENV
             echo 'export BUILDS_BUCKET=ddp-build-artifacts' >> $BASH_ENV
             echo 'export DEPLOY_DIR=deployment_assets' >> $BASH_ENV
+            echo 'export TCELL_DIR=tcell' >> $BASH_ENV
             source $BASH_ENV
 
   common-setup:
@@ -228,6 +229,7 @@ commands:
             rm -rf $DEPLOY_DIR
             mkdir -p $DEPLOY_DIR
             cd $DEPLOY_DIR
+            cp -r ../$TCELL_DIR .
             cp ../target/<<parameters.jar_base_name>>.jar .
             cp ../src/appengine/<<parameters.jar_base_name>>.yaml .
             cp ../output-config/application.conf .
