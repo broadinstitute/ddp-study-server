@@ -343,4 +343,3 @@ workflows:
                 - staging
                 - production
                 - test_deleteme1
-                - tcell-instrumentation
