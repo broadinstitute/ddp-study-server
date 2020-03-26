@@ -37,7 +37,7 @@ commands:
               exit 1
             fi
             TAR_FILE_PATH="/tmp/$(basename -- $TAR_FILE_URL)"
-            gsutil -u broad-ddp-prod cp  $TAR_FILE_URL $TAR_FILE_PATH
+            gsutil cp  $TAR_FILE_URL $TAR_FILE_PATH
             cd ~/repo/pepper-apis
             TCELL_DIR="tcell"
             mkdir -p $TCELL_DIR && tar -xvf $TAR_FILE_PATH
@@ -99,7 +99,7 @@ commands:
             esac
             echo "Setting deployment ENVIRONMENT to $DEPLOY_ENV"
             echo "export ENVIRONMENT=$DEPLOY_ENV" >> $BASH_ENV
-            echo 'export TCELL_PATH=ddp-tcell/tcell-1.8.3.tar.gz' >> $BASH_ENV
+            echo 'export TCELL_PATH=gs://ddp-tcell/tcell-1.8.3.tar.gz' >> $BASH_ENV
             source $BASH_ENV
 
   render-configs:
