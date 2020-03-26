@@ -322,6 +322,7 @@ workflows:
               only:
                 - develop
                 - study-server-to-appengine
+                - tcell-instrumentation
 
   build-and-store:
     jobs:
