@@ -40,10 +40,7 @@ commands:
             TAR_FILE_PATH="/tmp/$(basename -- $TAR_FILE_URL)"
             gsutil cp  $TAR_FILE_URL $TAR_FILE_PATH
             cd ~/repo/pepper-apis
-            TCELL_DIR="tcell"
-            mkdir -p $TCELL_DIR && tar -xvf $TAR_FILE_PATH
-            echo "Tcell extracted archive is at $TCELL_DIR"
-            ls -l $TCELL_DIR
+            tar -xvf --warning=no-unknown-keyword --no-same-owner $TAR_FILE_PATH
   setup-shared-env:
     description: "Setup shared ENV vars used by multiple scripts"
     steps:
