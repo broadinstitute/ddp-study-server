@@ -228,7 +228,7 @@ commands:
             set -u
             set +x
             vault read -format=json secret/pepper/${ENVIRONMENT}/v1/conf  | jq -r .data.gcp.serviceKey | \
-            /opt/build-utils/reportdeploy.sh "$RELEASE_SHEET_ID" "$COMPONENT" "$ENVIRONMENT" "$CIRCLE_BUILD_NUM" "$CIRCLE_BUILD_URL"
+            /opt/build-utils/reportdeploy.sh "$RELEASE_SHEET_ID" '<<parameters.jar_base_name>> server' "$ENVIRONMENT" "$CIRCLE_BUILD_NUM" "$CIRCLE_BUILD_URL"
 
 jobs:
   build-jars-job:
