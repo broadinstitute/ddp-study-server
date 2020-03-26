@@ -34,22 +34,17 @@ import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.governance.GovernancePolicy;
 import org.broadinstitute.ddp.pex.lang.PexBaseVisitor;
 import org.broadinstitute.ddp.pex.lang.PexParser;
-import org.broadinstitute.ddp.pex.lang.PexParser.AndExprContext;
+import org.broadinstitute.ddp.pex.lang.PexParser.AgeAtLeastPredicateContext;
 import org.broadinstitute.ddp.pex.lang.PexParser.AnswerQueryContext;
-import org.broadinstitute.ddp.pex.lang.PexParser.BoolLiteralExprContext;
 import org.broadinstitute.ddp.pex.lang.PexParser.DefaultLatestAnswerQueryContext;
 import org.broadinstitute.ddp.pex.lang.PexParser.FormPredicateContext;
 import org.broadinstitute.ddp.pex.lang.PexParser.FormQueryContext;
-import org.broadinstitute.ddp.pex.lang.PexParser.GroupExprContext;
 import org.broadinstitute.ddp.pex.lang.PexParser.HasAnyOptionPredicateContext;
 import org.broadinstitute.ddp.pex.lang.PexParser.HasDatePredicateContext;
 import org.broadinstitute.ddp.pex.lang.PexParser.HasFalsePredicateContext;
-import org.broadinstitute.ddp.pex.lang.PexParser.HasInstancePredicateContext;
 import org.broadinstitute.ddp.pex.lang.PexParser.HasOptionPredicateContext;
-import org.broadinstitute.ddp.pex.lang.PexParser.HasTextPredicateContext;
 import org.broadinstitute.ddp.pex.lang.PexParser.HasTruePredicateContext;
 import org.broadinstitute.ddp.pex.lang.PexParser.IsStatusPredicateContext;
-import org.broadinstitute.ddp.pex.lang.PexParser.OrExprContext;
 import org.broadinstitute.ddp.pex.lang.PexParser.PredicateContext;
 import org.broadinstitute.ddp.pex.lang.PexParser.QuestionPredicateContext;
 import org.broadinstitute.ddp.pex.lang.PexParser.QuestionQueryContext;
@@ -67,6 +62,16 @@ import org.slf4j.LoggerFactory;
  *
  * <p>This uses our own visitor instead of the tree walker from ANTLR so we can
  * implement optimizations like short-circuiting binary operators.
+ *
+ * <p>Correspondence between PEX values and Java objects is simply:
+ * <ul>
+ *     <li>bool -> Boolean</li>
+ *     <li>int -> Long</li>
+ *     <li>str -> String</li>
+ *     <li>date -> LocalDate</li>
+ * </ul>
+ *
+ * <p>Note that support for dates is very minimal. Only full dates with year-month-day is supported.
  */
 public class TreeWalkInterpreter implements PexInterpreter {
 
@@ -90,30 +95,25 @@ public class TreeWalkInterpreter implements PexInterpreter {
         }
 
         InterpreterContext ictx = new InterpreterContext(handle, userGuid, activityInstanceGuid);
-        BooleanVisitor visitor = new BooleanVisitor(this, ictx);
-        return visitor.visit(tree);
+        PexValueVisitor visitor = new PexValueVisitor(this, ictx);
+
+        Object result = visitor.visit(tree);
+        if (!(result instanceof Boolean)) {
+            String typeName = result.getClass().getSimpleName();
+            throw new PexRuntimeException("Final result of expression needs to be a bool value but got runtime type " + typeName);
+        }
+
+        return (boolean) result;
     }
 
     /**
-     * Extract the string value represented in a node by removing the beginning and ending double-quotes.
-     * Does not support backslash-escaping, or any kind of string escaping.
+     * Extract the boolean value represented in a node by parsing a bool.
      *
      * @param node the parse tree terminal node
-     * @return string value
+     * @return boolean value
      */
-    private String extractString(TerminalNode node) {
-        String raw = node.getText();
-        return raw.substring(1, raw.length() - 1);
-    }
-
-    /**
-     * Extract the numeric value represented in a node by parsing an int.
-     *
-     * @param node the parse tree terminal node
-     * @return int value
-     */
-    private int extractInt(TerminalNode node) {
-        return Integer.parseInt(node.getText());
+    private boolean extractBool(TerminalNode node) {
+        return Boolean.parseBoolean(node.getText());
     }
 
     /**
@@ -127,6 +127,18 @@ public class TreeWalkInterpreter implements PexInterpreter {
     }
 
     /**
+     * Extract the string value represented in a node by removing the beginning and ending double-quotes. Does not
+     * support backslash-escaping, or any kind of string escaping.
+     *
+     * @param node the parse tree terminal node
+     * @return string value
+     */
+    private String extractString(TerminalNode node) {
+        String raw = node.getText();
+        return raw.substring(1, raw.length() - 1);
+    }
+
+    /**
      * Extract the comparison operator represented by the given node.
      *
      * @param node the parse tree terminal node
@@ -134,81 +146,37 @@ public class TreeWalkInterpreter implements PexInterpreter {
      */
     private CompareOperator extractCompareOperator(TerminalNode node) {
         switch (node.getText()) {
-            case "<": return CompareOperator.LESS;
-            case "<=": return CompareOperator.LESS_EQ;
-            case ">": return CompareOperator.GREATER;
-            case ">=": return CompareOperator.GREATER_EQ;
-            case "==": return CompareOperator.EQ;
-            case "!=": return CompareOperator.NOT_EQ;
+            case "<":
+                return CompareOperator.LESS;
+            case "<=":
+                return CompareOperator.LESS_EQ;
+            case ">":
+                return CompareOperator.GREATER;
+            case ">=":
+                return CompareOperator.GREATER_EQ;
+            case "==":
+                return CompareOperator.EQ;
+            case "!=":
+                return CompareOperator.NOT_EQ;
             default:
                 throw new PexException("Unknown compare operator: " + node.getText());
         }
     }
 
-    private boolean evalDefaultLatestAnswerQuery(InterpreterContext ictx, DefaultLatestAnswerQueryContext ctx) {
-        String studyGuid = extractString(ctx.study().STR());
-        String activityCode = extractString(ctx.form().STR());
-        String stableId = extractString(ctx.question().STR());
-        long studyId = ictx.getHandle().attach(JdbiUmbrellaStudy.class)
-                .getIdByGuid(studyGuid)
-                .orElseThrow(() -> {
-                    String msg = String.format("Study guid '%s' does not refer to a valid study", studyGuid);
-                    return new PexFetchException(new NoSuchElementException(msg));
-                });
-
-        QuestionType questionType = fetcher.findQuestionType(ictx, studyGuid, activityCode, stableId).orElseThrow(() -> {
-            String msg = String.format(
-                    "Cannot find question %s in form %s for user %s and study %s",
-                    stableId, activityCode, ictx.getUserGuid(), studyGuid);
-            return new PexFetchException(new NoSuchElementException(msg));
-        });
-
-        switch (questionType) {
-            case BOOLEAN:
-                return applyBoolAnswerSetPredicate(ictx, ctx, activityCode, stableId, studyId);
-            case TEXT:
-                return applyTextAnswerSetPredicate(ictx, ctx, activityCode, stableId, studyId);
-            case PICKLIST:
-                return applyPicklistAnswerSetPredicate(ictx, ctx, activityCode, stableId, studyId);
-            case DATE:
-                return applyDateAnswerSetPredicate(ictx, ctx, activityCode, stableId, studyId);
-            case NUMERIC:
-                return applyNumericAnswerSetPredicate(ictx, ctx, activityCode, stableId, studyId);
+    /**
+     * Extract the unary operator represented by the given node.
+     *
+     * @param node the parse tree terminal node
+     * @return unary operator type
+     */
+    private UnaryOperator extractUnaryOperator(TerminalNode node) {
+        switch (node.getText()) {
+            case "!":
+                return UnaryOperator.NOT;
+            case "-":
+                return UnaryOperator.NEG;
             default:
-                throw new PexUnsupportedException("Question " + stableId + " with type "
-                        + questionType + " is currently not supported");
-        }
-    }
-
-    private boolean evalFormQuery(InterpreterContext ictx, FormQueryContext ctx) {
-        String umbrellaStudyGuid = extractString(ctx.study().STR());
-        String studyActivityCode = extractString(ctx.form().STR());
-        return applyFormPredicate(ictx, ctx.formPredicate(), umbrellaStudyGuid, studyActivityCode);
-    }
-
-    private boolean applyFormPredicate(InterpreterContext ictx, FormPredicateContext predCtx, String studyGuid, String activityCode) {
-        if (predCtx instanceof IsStatusPredicateContext) {
-            List<InstanceStatusType> expectedStatuses = ((IsStatusPredicateContext) predCtx).STR().stream()
-                    .map(node -> {
-                        String str = extractString(node).toUpperCase();
-                        try {
-                            return InstanceStatusType.valueOf(str);
-                        } catch (Exception e) {
-                            throw new PexUnsupportedException("Invalid status used for status predicate: " + str, e);
-                        }
-                    })
-                    .collect(Collectors.toList());
-            return fetcher.findLatestActivityInstanceStatus(ictx, studyGuid, activityCode)
-                    .map(latestStatus -> expectedStatuses.contains(latestStatus))
-                    .orElseThrow(() -> {
-                        String msg = String.format("No activity instance of form %s found for user %s and study %s",
-                                activityCode, ictx.getUserGuid(), studyGuid);
-                        return new PexFetchException(new NoSuchElementException(msg));
-                    });
-        } else if (predCtx instanceof HasInstancePredicateContext) {
-            return fetcher.findLatestActivityInstanceStatus(ictx, studyGuid, activityCode).isPresent();
-        } else {
-            throw new PexUnsupportedException("Unsupported form predicate: " + predCtx.getText());
+                throw new PexException("Unknown unary operator: " + node.getText());
         }
     }
 
@@ -237,6 +205,38 @@ public class TreeWalkInterpreter implements PexInterpreter {
             return policy.hasReachedAgeOfMajority(ictx.getHandle(), new TreeWalkInterpreter(), userGuid, profileDto.getBirthDate());
         } else {
             throw new PexUnsupportedException("Unsupported study predicate: " + predCtx.getText());
+        }
+    }
+
+    private boolean evalFormQuery(InterpreterContext ictx, FormQueryContext ctx) {
+        String umbrellaStudyGuid = extractString(ctx.study().STR());
+        String studyActivityCode = extractString(ctx.form().STR());
+        return applyFormPredicate(ictx, ctx.formPredicate(), umbrellaStudyGuid, studyActivityCode);
+    }
+
+    private boolean applyFormPredicate(InterpreterContext ictx, FormPredicateContext predCtx, String studyGuid, String activityCode) {
+        if (predCtx instanceof IsStatusPredicateContext) {
+            List<InstanceStatusType> expectedStatuses = ((IsStatusPredicateContext) predCtx).STR().stream()
+                    .map(node -> {
+                        String str = extractString(node).toUpperCase();
+                        try {
+                            return InstanceStatusType.valueOf(str);
+                        } catch (Exception e) {
+                            throw new PexUnsupportedException("Invalid status used for status predicate: " + str, e);
+                        }
+                    })
+                    .collect(Collectors.toList());
+            return fetcher.findLatestActivityInstanceStatus(ictx, studyGuid, activityCode)
+                    .map(latestStatus -> expectedStatuses.contains(latestStatus))
+                    .orElseThrow(() -> {
+                        String msg = String.format("No activity instance of form %s found for user %s and study %s",
+                                activityCode, ictx.getUserGuid(), studyGuid);
+                        return new PexFetchException(new NoSuchElementException(msg));
+                    });
+        } else if (predCtx instanceof PexParser.HasInstancePredicateContext) {
+            return fetcher.findLatestActivityInstanceStatus(ictx, studyGuid, activityCode).isPresent();
+        } else {
+            throw new PexUnsupportedException("Unsupported form predicate: " + predCtx.getText());
         }
     }
 
@@ -284,115 +284,23 @@ public class TreeWalkInterpreter implements PexInterpreter {
         }
     }
 
-    /**
-     * Returns true if the given date is at least minimumAge old.
-     * @param dateValue the date to check
-     * @param timeUnit the time unit
-     * @param minimumAge minimum age, inclusive
-     * @return true if dateValue is present and is at least minimumAge.  False otherwise,
-     *              including if dateValue is empty
-     */
-    private boolean isOldEnough(Optional<DateValue> dateValue, ChronoUnit timeUnit, int minimumAge) {
-        boolean isOldEnough = false;
-        if (dateValue.isPresent()) {
-            long age = dateValue.get().between(timeUnit, LocalDate.now());  // Instant is zoneless; use LocalDate.
-            isOldEnough = age >= minimumAge;
-        }
-        return isOldEnough;
+    private Object evalDefaultLatestAnswerQuery(InterpreterContext ictx, DefaultLatestAnswerQueryContext ctx) {
+        String studyGuid = extractString(ctx.study().STR());
+        String activityCode = extractString(ctx.form().STR());
+        String stableId = extractString(ctx.question().STR());
+        return applyAnswerPredicate(ictx, studyGuid, activityCode, stableId, LATEST, ctx.predicate());
     }
 
-    private boolean applyDateAnswerSetPredicate(InterpreterContext ictx, DefaultLatestAnswerQueryContext ctx,
-                                                String activityCode, String stableId, long studyId) {
-        PredicateContext setPredCtx = ctx.predicate();
-        if (setPredCtx instanceof HasDatePredicateContext) {
-            return fetcher.findLatestDateAnswer(ictx, activityCode, stableId, studyId).isPresent();
-        } else if (setPredCtx instanceof PexParser.AgeAtLeastPredicateContext) {
-            int minimumAge = extractInt(((PexParser.AgeAtLeastPredicateContext) setPredCtx).INT());
-
-            ChronoUnit timeUnit = ChronoUnit.valueOf(((PexParser.AgeAtLeastPredicateContext) setPredCtx).TIMEUNIT().getText());
-
-            Optional<DateValue> dateValue;
-            dateValue = fetcher.findLatestDateAnswer(ictx, activityCode, stableId, studyId);
-
-            return isOldEnough(dateValue, timeUnit, minimumAge);
-
-        } else {
-            throw new PexUnsupportedException("Invalid predicate used on date answer set query: " + setPredCtx.getText());
-        }
-    }
-
-    private boolean applyBoolAnswerSetPredicate(InterpreterContext ictx, DefaultLatestAnswerQueryContext ctx,
-                                                String activityCode, String stableId, long studyId) {
-        PredicateContext setPredCtx = ctx.predicate();
-        if (setPredCtx instanceof HasTruePredicateContext) {
-            return matchBoolAnswer(ictx, activityCode, null, stableId, true, studyId);
-        } else if (setPredCtx instanceof HasFalsePredicateContext) {
-            return matchBoolAnswer(ictx, activityCode, null, stableId, false, studyId);
-        } else {
-            throw new PexUnsupportedException("Invalid predicate used on boolean answer set query: " + setPredCtx.getText());
-        }
-    }
-
-    private boolean applyTextAnswerSetPredicate(InterpreterContext ictx, DefaultLatestAnswerQueryContext ctx,
-                                                String activityCode, String stableId, long studyId) {
-        PredicateContext setPredCtx = ctx.predicate();
-        if (setPredCtx instanceof HasTextPredicateContext) {
-            return !StringUtils.isBlank(fetcher.findLatestTextAnswer(ictx, activityCode, stableId, studyId));
-        } else {
-            throw new PexUnsupportedException("Invalid predicate used on text answer set query: " + setPredCtx.getText());
-        }
-    }
-
-    private boolean applyPicklistAnswerSetPredicate(InterpreterContext ictx, DefaultLatestAnswerQueryContext ctx,
-                                                    String activityCode, String stableId, long studyId) {
-        PredicateContext setPredCtx = ctx.predicate();
-        if (setPredCtx instanceof HasOptionPredicateContext) {
-            String optionStableId = extractString(((HasOptionPredicateContext) setPredCtx).STR());
-            List<String> result = fetcher.findLatestPicklistAnswer(ictx, activityCode, stableId, studyId);
-            if (result == null) {
-                return false;
-            } else {
-                return result.contains(optionStableId);
-            }
-        } else if (setPredCtx instanceof HasAnyOptionPredicateContext) {
-            List<String> optionStableIds = ((HasAnyOptionPredicateContext) setPredCtx).STR()
-                    .stream()
-                    .map(this::extractString)
-                    .collect(Collectors.toList());
-            List<String> result = fetcher.findLatestPicklistAnswer(ictx, activityCode, stableId, studyId);
-            if (result == null) {
-                return false;
-            } else {
-                return result.stream().anyMatch(optionStableIds::contains);
-            }
-        } else {
-            throw new PexUnsupportedException("Invalid predicate used on picklist answer set query: " + setPredCtx.getText());
-        }
-    }
-
-    private boolean applyNumericAnswerSetPredicate(InterpreterContext ictx, DefaultLatestAnswerQueryContext ctx,
-                                                   String activityCode, String stableId, long studyId) {
-        PredicateContext setPredCtx = ctx.predicate();
-        if (setPredCtx instanceof PexParser.NumComparePredicateContext) {
-            PexParser.NumComparePredicateContext numCmpPred = (PexParser.NumComparePredicateContext) setPredCtx;
-            CompareOperator op = extractCompareOperator(numCmpPred.COMPARE_OPERATOR());
-            long target = extractLong(numCmpPred.INT());
-            Long value = fetcher.findLatestNumericIntegerAnswer(ictx, activityCode, stableId, studyId);
-            if (value == null) {
-                return false;
-            } else {
-                return op.compare(value, target);
-            }
-        } else {
-            throw new PexUnsupportedException("Invalid predicate used on numeric answer set query: " + setPredCtx.getText());
-        }
-    }
-
-    private boolean evalAnswerQuery(InterpreterContext ictx, AnswerQueryContext ctx) {
+    private Object evalAnswerQuery(InterpreterContext ictx, AnswerQueryContext ctx) {
         String studyGuid = extractString(ctx.study().STR());
         String activityCode = extractString(ctx.form().STR());
         String type = ctx.instance().INSTANCE_TYPE().getText();
         String stableId = extractString(ctx.question().STR());
+        return applyAnswerPredicate(ictx, studyGuid, activityCode, stableId, type, ctx.predicate());
+    }
+
+    private Object applyAnswerPredicate(InterpreterContext ictx, String studyGuid, String activityCode, String stableId,
+                                        String instanceType, PredicateContext predicateCtx) {
         long studyId = ictx.getHandle().attach(JdbiUmbrellaStudy.class)
                 .getIdByGuid(studyGuid)
                 .orElseThrow(() -> {
@@ -407,185 +315,274 @@ public class TreeWalkInterpreter implements PexInterpreter {
             return new PexFetchException(new NoSuchElementException(msg));
         });
 
-        String activityInstanceGuid = (type.equals(LATEST)) ? null : ictx.getActivityInstanceGuid();
+        String instanceGuid = instanceType.equals(LATEST) ? null : ictx.getActivityInstanceGuid();
 
         switch (questionType) {
             case BOOLEAN:
-                return applyBoolAnswerPredicate(ictx, ctx, activityCode, activityInstanceGuid, stableId, studyId);
+                return applyBoolAnswerPredicate(ictx, predicateCtx, studyId, activityCode, instanceGuid, stableId);
             case TEXT:
-                return applyTextAnswerPredicate(ictx, ctx, activityCode, activityInstanceGuid, stableId, studyId);
+                return applyTextAnswerPredicate(ictx, predicateCtx, studyId, activityCode, instanceGuid, stableId);
             case PICKLIST:
-                return applyPicklistAnswerPredicate(ictx, ctx, activityCode, activityInstanceGuid, stableId, studyId);
+                return applyPicklistAnswerPredicate(ictx, predicateCtx, studyId, activityCode, instanceGuid, stableId);
             case DATE:
-                return applyDateAnswerPredicate(ictx, ctx, activityCode, activityInstanceGuid, stableId, studyId);
+                return applyDateAnswerPredicate(ictx, predicateCtx, studyId, activityCode, instanceGuid, stableId);
+            case NUMERIC:
+                return applyNumericAnswerPredicate(ictx, predicateCtx, studyId, activityCode, instanceGuid, stableId);
             default:
                 throw new PexUnsupportedException("Question " + stableId + " with type "
                         + questionType + " is currently not supported");
         }
     }
 
-    private boolean matchBoolAnswer(InterpreterContext ictx, String activityCode,
-                                    String activityInstanceGuid, String stableId,
-                                    boolean expected, long studyId) {
-        Boolean result;
-        if (StringUtils.isBlank(activityInstanceGuid)) {
-            result = fetcher.findLatestBoolAnswer(ictx, activityCode, stableId, studyId);
-        } else {
-            result = fetcher.findSpecificBoolAnswer(ictx, activityCode, activityInstanceGuid, stableId);
-        }
-        if (result == null) {
-            return false;
-        } else {
-            return result == expected;
-        }
-    }
-
-    private boolean applyBoolAnswerPredicate(InterpreterContext ictx, AnswerQueryContext ctx,
-                                             String activityCode, String activityInstanceGuid,
-                                             String stableId, long studyId) {
-        PredicateContext predCtx = ctx.predicate();
-        if (!(predCtx instanceof HasFalsePredicateContext) && !(predCtx instanceof HasTruePredicateContext)) {
-            throw new PexUnsupportedException("Invalid predicate used on boolean answer query: " + predCtx.getText());
-        }
-        boolean expectedValue = predCtx instanceof HasTruePredicateContext;
-        return matchBoolAnswer(ictx, activityCode, activityInstanceGuid, stableId, expectedValue, studyId);
-    }
-
-    private boolean applyTextAnswerPredicate(InterpreterContext ictx, AnswerQueryContext ctx,
-                                             String activityCode, String activityInstanceGuid,
-                                             String stableId, long studyId) {
-        PredicateContext predCtx = ctx.predicate();
-        if (predCtx instanceof HasTextPredicateContext) {
-            if (activityInstanceGuid == null) {
-                return !StringUtils.isBlank(fetcher.findLatestTextAnswer(ictx, activityCode, stableId, studyId));
-            } else {
-                return !StringUtils.isBlank(fetcher.findSpecificTextAnswer(ictx, activityCode, activityInstanceGuid, stableId));
-            }
-        } else {
-            throw new PexUnsupportedException("Invalid predicate used on text answer query: " + predCtx.getText());
-        }
-    }
-
-    private boolean applyDateAnswerPredicate(InterpreterContext ictx, AnswerQueryContext ctx,
-                                             String activityCode, String activityInstanceGuid,
-                                             String stableId, long studyId) {
-        PredicateContext predCtx = ctx.predicate();
-        if (predCtx instanceof HasDatePredicateContext) {
-            if (activityInstanceGuid == null) {
-                return fetcher.findLatestDateAnswer(ictx, activityCode, stableId, studyId).isPresent();
-            } else {
-                return fetcher.findSpecificDateAnswer(ictx, activityCode, activityInstanceGuid, stableId).isPresent();
-            }
-        } else if (predCtx instanceof PexParser.AgeAtLeastPredicateContext) {
-            int minimumAge = extractInt(((PexParser.AgeAtLeastPredicateContext) predCtx).INT());
-
-            ChronoUnit timeUnit = ChronoUnit.valueOf(((PexParser.AgeAtLeastPredicateContext) predCtx).TIMEUNIT().getText());
-
-            Optional<DateValue> dateValue;
-            if (activityInstanceGuid == null) {
-                dateValue = fetcher.findLatestDateAnswer(ictx, activityCode, stableId, studyId);
-            } else {
-                dateValue = fetcher.findSpecificDateAnswer(ictx, activityCode, activityInstanceGuid, stableId);
-            }
-
-            return isOldEnough(dateValue, timeUnit, minimumAge);
-
-        } else {
-            throw new PexUnsupportedException("Invalid predicate used on date answer query: " + predCtx.getText());
-        }
-    }
-
-    private boolean applyPicklistAnswerPredicate(InterpreterContext ictx, AnswerQueryContext ctx,
-                                                 String activityCode, String activityInstanceGuid,
-                                                 String stableId, long studyId) {
-        PredicateContext setPredCtx = ctx.predicate();
-        if (setPredCtx instanceof HasOptionPredicateContext) {
-            String optionStableId = extractString(((HasOptionPredicateContext) setPredCtx).STR());
-            List<String> result;
-            if (activityInstanceGuid == null) {
-                result = fetcher.findLatestPicklistAnswer(ictx, activityCode, stableId, studyId);
-            } else {
-                result = fetcher.findSpecificPicklistAnswer(ictx, activityCode, activityInstanceGuid, stableId);
-            }
-
-            if (result == null) {
+    private Object applyBoolAnswerPredicate(InterpreterContext ictx, PredicateContext predicateCtx,
+                                            long studyId, String activityCode, String instanceGuid, String stableId) {
+        if (predicateCtx instanceof HasTruePredicateContext || predicateCtx instanceof HasFalsePredicateContext) {
+            boolean expected = (predicateCtx instanceof HasTruePredicateContext);
+            Boolean value = StringUtils.isBlank(instanceGuid)
+                    ? fetcher.findLatestBoolAnswer(ictx, activityCode, stableId, studyId)
+                    : fetcher.findSpecificBoolAnswer(ictx, activityCode, instanceGuid, stableId);
+            if (value == null) {
                 return false;
             } else {
-                return result.contains(optionStableId);
+                return value == expected;
             }
-
+        } else if (predicateCtx instanceof PexParser.ValueQueryContext) {
+            Boolean value = StringUtils.isBlank(instanceGuid)
+                    ? fetcher.findLatestBoolAnswer(ictx, activityCode, stableId, studyId)
+                    : fetcher.findSpecificBoolAnswer(ictx, activityCode, instanceGuid, stableId);
+            if (value == null) {
+                String msg = String.format("User %s does not have boolean answer for question %s", ictx.getUserGuid(), stableId);
+                throw new PexFetchException(msg);
+            } else {
+                return value;
+            }
         } else {
-            throw new PexUnsupportedException("Invalid predicate used on picklist answer set query: " + setPredCtx.getText());
+            throw new PexUnsupportedException("Invalid predicate used on boolean answer query: " + predicateCtx.getText());
         }
     }
 
     /**
-     * A parse tree visitor that returns boolean values.
+     * Returns true if the given date is at least minimumAge old.
      *
-     * <p>This focuses on how to visit the tree nodes, and relies on the tree walk interpreter for
-     * actual evaluation of nodes.
+     * @param dateValue  the date to check
+     * @param timeUnit   the time unit
+     * @param minimumAge minimum age, inclusive
+     * @return true if dateValue is present and is at least minimumAge. False otherwise, including if dateValue is empty
      */
-    private class BooleanVisitor extends PexBaseVisitor<Boolean> {
+    private boolean isOldEnough(Optional<DateValue> dateValue, ChronoUnit timeUnit, long minimumAge) {
+        boolean isOldEnough = false;
+        if (dateValue.isPresent()) {
+            long age = dateValue.get().between(timeUnit, LocalDate.now());  // Instant is zoneless; use LocalDate.
+            isOldEnough = age >= minimumAge;
+        }
+        return isOldEnough;
+    }
+
+    private Object applyDateAnswerPredicate(InterpreterContext ictx, PredicateContext predicateCtx,
+                                            long studyId, String activityCode, String instanceGuid, String stableId) {
+        if (predicateCtx instanceof HasDatePredicateContext) {
+            Optional<DateValue> dateValue = StringUtils.isBlank(instanceGuid)
+                    ? fetcher.findLatestDateAnswer(ictx, activityCode, stableId, studyId)
+                    : fetcher.findSpecificDateAnswer(ictx, activityCode, instanceGuid, stableId);
+            return dateValue.isPresent();
+        } else if (predicateCtx instanceof AgeAtLeastPredicateContext) {
+            AgeAtLeastPredicateContext predCtx = (AgeAtLeastPredicateContext) predicateCtx;
+            long minimumAge = extractLong(predCtx.INT());
+            ChronoUnit timeUnit = ChronoUnit.valueOf(predCtx.TIMEUNIT().getText());
+
+            Optional<DateValue> dateValue = StringUtils.isBlank(instanceGuid)
+                    ? fetcher.findLatestDateAnswer(ictx, activityCode, stableId, studyId)
+                    : fetcher.findSpecificDateAnswer(ictx, activityCode, instanceGuid, stableId);
+
+            return isOldEnough(dateValue, timeUnit, minimumAge);
+        } else if (predicateCtx instanceof PexParser.ValueQueryContext) {
+            Optional<DateValue> dateValue = StringUtils.isBlank(instanceGuid)
+                    ? fetcher.findLatestDateAnswer(ictx, activityCode, stableId, studyId)
+                    : fetcher.findSpecificDateAnswer(ictx, activityCode, instanceGuid, stableId);
+
+            if (dateValue.isEmpty()) {
+                String msg = String.format("User %s does not have date answer for question %s", ictx.getUserGuid(), stableId);
+                throw new PexFetchException(msg);
+            }
+
+            LocalDate value = dateValue.flatMap(DateValue::asLocalDate).orElse(null);
+            if (value == null) {
+                String msg = String.format(
+                        "Could not convert date answer to date value for user %s and question %s",
+                        ictx.getUserGuid(), stableId);
+                throw new PexRuntimeException(msg);
+            }
+
+            return value;
+        } else {
+            throw new PexUnsupportedException("Invalid predicate used on date answer query: " + predicateCtx.getText());
+        }
+    }
+
+    private Object applyTextAnswerPredicate(InterpreterContext ictx, PredicateContext predicateCtx,
+                                            long studyId, String activityCode, String instanceGuid, String stableId) {
+        if (predicateCtx instanceof PexParser.HasTextPredicateContext) {
+            String value = StringUtils.isBlank(instanceGuid)
+                    ? fetcher.findLatestTextAnswer(ictx, activityCode, stableId, studyId)
+                    : fetcher.findSpecificTextAnswer(ictx, activityCode, instanceGuid, stableId);
+            return StringUtils.isNotBlank(value);
+        } else if (predicateCtx instanceof PexParser.ValueQueryContext) {
+            String value = StringUtils.isBlank(instanceGuid)
+                    ? fetcher.findLatestTextAnswer(ictx, activityCode, stableId, studyId)
+                    : fetcher.findSpecificTextAnswer(ictx, activityCode, instanceGuid, stableId);
+            if (value == null) {
+                String msg = String.format("User %s does not have text answer for question %s", ictx.getUserGuid(), stableId);
+                throw new PexFetchException(msg);
+            } else {
+                return value;
+            }
+        } else {
+            throw new PexUnsupportedException("Invalid predicate used on text answer query: " + predicateCtx.getText());
+        }
+    }
+
+    private Object applyPicklistAnswerPredicate(InterpreterContext ictx, PredicateContext predicateCtx,
+                                                long studyId, String activityCode, String instanceGuid, String stableId) {
+        if (predicateCtx instanceof HasOptionPredicateContext) {
+            String optionStableId = extractString(((HasOptionPredicateContext) predicateCtx).STR());
+            List<String> value = StringUtils.isBlank(instanceGuid)
+                    ? fetcher.findLatestPicklistAnswer(ictx, activityCode, stableId, studyId)
+                    : fetcher.findSpecificPicklistAnswer(ictx, activityCode, instanceGuid, stableId);
+            if (value == null) {
+                return false;
+            } else {
+                return value.contains(optionStableId);
+            }
+        } else if (predicateCtx instanceof HasAnyOptionPredicateContext) {
+            List<String> optionStableIds = ((HasAnyOptionPredicateContext) predicateCtx).STR()
+                    .stream()
+                    .map(this::extractString)
+                    .collect(Collectors.toList());
+            List<String> value = StringUtils.isBlank(instanceGuid)
+                    ? fetcher.findLatestPicklistAnswer(ictx, activityCode, stableId, studyId)
+                    : fetcher.findSpecificPicklistAnswer(ictx, activityCode, instanceGuid, stableId);
+            if (value == null) {
+                return false;
+            } else {
+                return value.stream().anyMatch(optionStableIds::contains);
+            }
+        } else if (predicateCtx instanceof PexParser.ValueQueryContext) {
+            throw new PexUnsupportedException("Getting picklist answer value is currently not supported");
+        } else {
+            throw new PexUnsupportedException("Invalid predicate used on picklist answer set query: " + predicateCtx.getText());
+        }
+    }
+
+    private Object applyNumericAnswerPredicate(InterpreterContext ictx, PredicateContext predicateCtx,
+                                               long studyId, String activityCode, String instanceGuid, String stableId) {
+        if (predicateCtx instanceof PexParser.ValueQueryContext) {
+            Long value = StringUtils.isBlank(instanceGuid)
+                    ? fetcher.findLatestNumericIntegerAnswer(ictx, activityCode, stableId, studyId)
+                    : fetcher.findSpecificNumericIntegerAnswer(ictx, activityCode, instanceGuid, stableId);
+            if (value == null) {
+                String msg = String.format("User %s does not have numeric answer for question %s", ictx.getUserGuid(), stableId);
+                throw new PexFetchException(msg);
+            } else {
+                return value;
+            }
+        } else {
+            throw new PexUnsupportedException("Invalid predicate used on numeric answer set query: " + predicateCtx.getText());
+        }
+    }
+
+    /**
+     * A parse tree visitor that returns PEX values, which are just Java objects.
+     *
+     * <p>This mainly focuses on how to visit the tree nodes and handling some operators, but relies on the tree walk
+     * interpreter for actual evaluation of most nodes.
+     */
+    class PexValueVisitor extends PexBaseVisitor<Object> {
 
         private TreeWalkInterpreter interpreter;
         private InterpreterContext ictx;
 
-        BooleanVisitor(TreeWalkInterpreter interpreter, InterpreterContext ictx) {
+        PexValueVisitor(TreeWalkInterpreter interpreter, InterpreterContext ictx) {
             this.interpreter = interpreter;
             this.ictx = ictx;
         }
 
         @Override
-        public Boolean visitNotExpr(PexParser.NotExprContext ctx) {
-            return !ctx.expr().accept(this);
+        public Object visitBoolLiteralExpr(PexParser.BoolLiteralExprContext ctx) {
+            return extractBool(ctx.BOOL());
         }
 
         @Override
-        public Boolean visitAndExpr(AndExprContext ctx) {
-            // Let Java handle short circuiting
-            return ctx.expr(0).accept(this) && ctx.expr(1).accept(this);
+        public Object visitIntLiteralExpr(PexParser.IntLiteralExprContext ctx) {
+            return extractLong(ctx.INT());
         }
 
         @Override
-        public Boolean visitOrExpr(OrExprContext ctx) {
-            // Let Java handle short circuiting
-            return ctx.expr(0).accept(this) || ctx.expr(1).accept(this);
+        public Object visitStrLiteralExpr(PexParser.StrLiteralExprContext ctx) {
+            return extractString(ctx.STR());
         }
 
         @Override
-        public Boolean visitGroupExpr(GroupExprContext ctx) {
+        public Object visitUnaryExpr(PexParser.UnaryExprContext ctx) {
+            UnaryOperator op = extractUnaryOperator(ctx.UNARY_OPERATOR());
+            Object value = ctx.expr().accept(this);
+            return op.apply(value);
+        }
+
+        @Override
+        public Object visitCompareExpr(PexParser.CompareExprContext ctx) {
+            CompareOperator op = extractCompareOperator(ctx.RELATION_OPERATOR());
+            Object lhs = ctx.expr(0).accept(this);
+            Object rhs = ctx.expr(1).accept(this);
+            return op.apply(lhs, rhs);
+        }
+
+        @Override
+        public Object visitEqualityExpr(PexParser.EqualityExprContext ctx) {
+            CompareOperator op = extractCompareOperator(ctx.EQUALITY_OPERATOR());
+            Object lhs = ctx.expr(0).accept(this);
+            Object rhs = ctx.expr(1).accept(this);
+            return op.apply(lhs, rhs);
+        }
+
+        @Override
+        public Object visitAndExpr(PexParser.AndExprContext ctx) {
+            return LogicalOperator.AND.apply(this, ctx.expr(0), ctx.expr(1));
+        }
+
+        @Override
+        public Object visitOrExpr(PexParser.OrExprContext ctx) {
+            return LogicalOperator.OR.apply(this, ctx.expr(0), ctx.expr(1));
+        }
+
+        @Override
+        public Object visitGroupExpr(PexParser.GroupExprContext ctx) {
             // Only evaluate the enclosed expression and not the terminal nodes
             return ctx.expr().accept(this);
         }
 
         @Override
-        public Boolean visitBoolLiteralExpr(BoolLiteralExprContext ctx) {
-            return Boolean.valueOf(ctx.BOOL().getText());
-        }
-
-        @Override
-        public Boolean visitDefaultLatestAnswerQuery(DefaultLatestAnswerQueryContext ctx) {
-            return interpreter.evalDefaultLatestAnswerQuery(ictx, ctx);
-        }
-
-        @Override
-        public Boolean visitAnswerQuery(AnswerQueryContext ctx) {
-            return interpreter.evalAnswerQuery(ictx, ctx);
-        }
-
-        @Override
-        public Boolean visitFormQuery(FormQueryContext ctx) {
-            return interpreter.evalFormQuery(ictx, ctx);
-        }
-
-        @Override
-        public Boolean visitStudyQuery(StudyQueryContext ctx) {
+        public Object visitStudyQuery(PexParser.StudyQueryContext ctx) {
             return interpreter.evalStudyQuery(ictx, ctx);
         }
 
         @Override
-        public Boolean visitQuestionQuery(PexParser.QuestionQueryContext ctx) {
+        public Object visitFormQuery(PexParser.FormQueryContext ctx) {
+            return interpreter.evalFormQuery(ictx, ctx);
+        }
+
+        @Override
+        public Object visitQuestionQuery(PexParser.QuestionQueryContext ctx) {
             return interpreter.evalQuestionQuery(ictx, ctx);
+        }
+
+        @Override
+        public Object visitAnswerQuery(PexParser.AnswerQueryContext ctx) {
+            return interpreter.evalAnswerQuery(ictx, ctx);
+        }
+
+        @Override
+        public Object visitDefaultLatestAnswerQuery(PexParser.DefaultLatestAnswerQueryContext ctx) {
+            return interpreter.evalDefaultLatestAnswerQuery(ictx, ctx);
         }
     }
 }
