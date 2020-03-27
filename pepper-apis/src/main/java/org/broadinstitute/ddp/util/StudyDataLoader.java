@@ -906,12 +906,12 @@ public class StudyDataLoader {
         }
 
         String ddpCreated = getStringValueFromElement(data, "ddp_created");
-        long ddpCreatedAt = Instant.now().toEpochMilli();
+        long ddpCreatedAt = Instant.now().getEpochSecond();
         //use DDP_CREATED time for MailAddress creation time.
         if (ddpCreated != null) {
             Instant instant = Instant.parse(ddpCreated);
             if (instant != null) {
-                ddpCreatedAt = instant.toEpochMilli();
+                ddpCreatedAt = instant.getEpochSecond();
             }
         }
 
