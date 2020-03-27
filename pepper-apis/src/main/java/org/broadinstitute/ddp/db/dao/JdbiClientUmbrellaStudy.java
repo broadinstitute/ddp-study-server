@@ -25,6 +25,16 @@ public interface JdbiClientUmbrellaStudy extends SqlObject {
             @Bind("auth0Domain") String auth0Domain
     );
 
+    @SqlQuery("select us.guid from client__umbrella_study as cus "
+            + "join client as c on c.client_id = cus.client_id "
+            + "join umbrella_study as us on us.umbrella_study_id = cus.umbrella_study_id "
+            + "where c.auth0_client_id = :auth0ClientId and c.auth0_tenant_id = :auth0TenantId "
+            + "and not c.is_revoked")
+    List<String> findPermittedStudyGuidsByAuth0ClientIdAndAuth0TenantId(
+            @Bind("auth0ClientId") String auth0ClientId,
+            @Bind("auth0TenantId") long auth0TenantId
+    );
+
     /**
      * This is delete function works off client tables client_id NOT auth0ClientId
      * @return number of rows deleted, which could be more than one
