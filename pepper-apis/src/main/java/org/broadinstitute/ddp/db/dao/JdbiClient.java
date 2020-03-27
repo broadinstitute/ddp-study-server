@@ -115,8 +115,9 @@ public interface JdbiClient extends SqlObject {
     );
 
     @SqlUpdate(
-            "UPDATE client SET web_password_redirect_url = :url WHERE auth0_client_id = :auth0ClientId "
-            + "AND EXISTS (SELECT 1 FROM auth0_tenant WHERE auth0_domain = :auth0Domain)"
+            "UPDATE client c JOIN auth0_tenant t ON c.auth0_tenant_id = t.auth0_tenant_id "
+            + " SET c.web_password_redirect_url = :url WHERE c.auth0_client_id = :auth0ClientId "
+            + "AND t.auth0_domain = :auth0Domain"
     )
     int updateWebPasswordRedirectUrlByAuth0ClientIdAndAuth0Domain(
             @Bind("url") String url,
@@ -125,8 +126,9 @@ public interface JdbiClient extends SqlObject {
     );
 
     @SqlUpdate(
-            "UPDATE client SET is_revoked = :isRevoked WHERE auth0_client_id = :auth0ClientId "
-            + "AND EXISTS (SELECT 1 FROM auth0_tenant WHERE auth0_domain = :auth0Domain)"
+            "UPDATE client c JOIN auth0_tenant t ON c.auth0_tenant_id = t.auth0_tenant_id "
+            + " SET c.is_revoked = :isRevoked WHERE c.auth0_client_id = :auth0ClientId "
+            + "AND t.auth0_domain = :auth0Domain"
     )
     int updateIsRevokedByAuth0ClientIdAndAuth0Domain(
             @Bind("isRevoked") boolean isRevoked,
