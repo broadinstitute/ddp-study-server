@@ -40,7 +40,7 @@ public interface ClientDao extends SqlObject {
 
         long clientId = getClientDao().insertClient(auth0ClientId, encryptedClientSecret, auth0TenantId,
                                                     null);
-        LOG.info("Inserted client {} for {}", clientId);
+        LOG.info("Inserted client {}", clientId);
 
         for (String studyGuid : studyGuidsToAccess) {
             long aclId = getClientUmbrellaStudyDao().insert(clientId, getUmbrellaStudyDao().findByStudyGuid(studyGuid).getId());
