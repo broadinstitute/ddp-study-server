@@ -86,7 +86,7 @@ public interface JdbiClient extends SqlObject {
             + "WHERE "
             + "     auth0_client_id = :auth0ClientId AND auth0_tenant_id = :auth0TenantId"
     )
-    int deleteClientByAuth0ClientIdAndAuth0TenantId(
+    int deleteByAuth0ClientIdAndAuth0TenantId(
             @Bind("auth0ClientId") String auth0ClientId,
             @Bind("auth0TenantId") long auth0TenantId
     );

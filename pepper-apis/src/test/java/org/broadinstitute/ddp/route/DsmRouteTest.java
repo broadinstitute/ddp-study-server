@@ -116,7 +116,7 @@ public class DsmRouteTest extends IntegrationTestSuite.TestCase {
      */
     private static void deleteTestDSMAuthClientInDatabase(Handle handle) {
         ClientDao clientDao = handle.attach(ClientDao.class);
-        clientDao.deleteClientByAuth0ClientIdAndAuth0TenantId(auth0ClientId, auth0TenantId);
+        clientDao.deleteByAuth0ClientIdAndAuth0TenantId(auth0ClientId, auth0TenantId);
     }
 
     /**
