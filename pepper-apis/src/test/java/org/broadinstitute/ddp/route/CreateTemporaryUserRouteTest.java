@@ -24,7 +24,6 @@ import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.json.CreateTemporaryUserPayload;
 import org.broadinstitute.ddp.json.CreateTemporaryUserResponse;
-import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -44,7 +43,7 @@ public class CreateTemporaryUserRouteTest extends IntegrationTestSuite.TestCase 
         url = RouteTestUtil.getTestingBaseUrl() + RouteConstants.API.TEMP_USERS;
         usersToDelete = new HashSet<>();
         gson = new Gson();
-        auth0Domain = ConfigManager.getInstance().getConfig().getConfig(ConfigFile.AUTH0).getString(ConfigFile.DOMAIN);
+        auth0Domain = RouteTestUtil.getConfig().getConfig(ConfigFile.AUTH0).getString(ConfigFile.DOMAIN);
     }
 
     @AfterClass

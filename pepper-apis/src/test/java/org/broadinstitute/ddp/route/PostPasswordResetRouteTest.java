@@ -17,7 +17,6 @@ import org.broadinstitute.ddp.constants.RouteConstants.API;
 import org.broadinstitute.ddp.constants.RouteConstants.QueryParam;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.JdbiClient;
-import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.broadinstitute.ddp.util.TestDataSetupUtil.GeneratedTestData;
 import org.broadinstitute.ddp.util.TestUtil;
@@ -46,7 +45,7 @@ public class PostPasswordResetRouteTest extends IntegrationTestSuite.TestCase {
                     handle.attach(JdbiClient.class)
                             .updateWebPasswordRedirectUrlByAuth0ClientIdAndAuth0Domain(testRedirectUrl, auth0ClientId, auth0Domain);
                     token = testData.getTestingUser().getToken();
-                    auth0Domain = ConfigManager.getInstance().getConfig().getConfig(ConfigFile.AUTH0).getString(ConfigFile.DOMAIN);
+                    auth0Domain = RouteTestUtil.getConfig().getConfig(ConfigFile.AUTH0).getString(ConfigFile.DOMAIN);
                 }
         );
         url = RouteTestUtil.getTestingBaseUrl() + API.POST_PASSWORD_RESET;

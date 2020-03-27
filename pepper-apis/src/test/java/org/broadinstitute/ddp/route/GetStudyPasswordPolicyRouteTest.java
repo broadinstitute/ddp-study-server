@@ -35,7 +35,6 @@ import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.model.study.PasswordPolicy;
 import org.broadinstitute.ddp.model.study.PasswordPolicy.PolicyType;
-import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -56,7 +55,7 @@ public class GetStudyPasswordPolicyRouteTest extends IntegrationTestSuite.TestCa
     public static void setup() {
         testData = TransactionWrapper.withTxn(TestDataSetupUtil::generateBasicUserTestData);
         auth0ClientId = testData.getTestingClient().getAuth0ClientId();
-        auth0Domain = ConfigManager.getInstance().getConfig().getConfig(ConfigFile.AUTH0).getString(ConfigFile.DOMAIN);
+        auth0Domain = RouteTestUtil.getConfig().getConfig(ConfigFile.AUTH0).getString(ConfigFile.DOMAIN);
         url = RouteTestUtil.getTestingBaseUrl() + RouteConstants.API.STUDY_PASSWORD_POLICY
                 .replace(RouteConstants.PathParam.STUDY_GUID, "{study}");
     }
