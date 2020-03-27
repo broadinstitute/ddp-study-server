@@ -82,15 +82,15 @@ public interface ClientDao extends SqlObject {
      * Passthrough to JdbiClient that deletes a client
      * @return number of rows deleted. This should really be 1
      */
-    default int deleteClientByAuth0ClientIdAndAuth0TenantId(String auth0ClientId, long auth0TenantId) {
-        // First remove all client__umbrella_study entries for this client Id
+    default int deleteByAuth0ClientIdAndAuth0TenantId(String auth0ClientId, long auth0TenantId) {
         Long clientId = getClientDao().getClientIdByAuth0ClientIdAndAuth0TenantId(auth0ClientId, auth0TenantId).orElse(null);
-        if (clientId != null) {
-            getClientUmbrellaStudyDao().deleteByInternalClientId(clientId);
+        if (clientId == null) {
+            return 0;
         }
-
+        // First remove all client__umbrella_study entries for this client Id
+        getClientUmbrellaStudyDao().deleteByInternalClientId(clientId);
         // now remove the client itself
-        return getClientDao().deleteClientByAuth0ClientIdAndAuth0TenantId(auth0ClientId, auth0TenantId);
+        return getClientDao().deleteByClientId(clientId);
     }
 
 

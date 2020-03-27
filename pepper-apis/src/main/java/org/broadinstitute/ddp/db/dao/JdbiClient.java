@@ -91,6 +91,9 @@ public interface JdbiClient extends SqlObject {
             @Bind("auth0TenantId") long auth0TenantId
     );
 
+    @SqlUpdate("DELETE FROM client WHERE client_id = :id")
+    int deleteByClientId(@Bind("id") long id);
+
     @SqlQuery("SELECT "
             + "     client_id "
             + "FROM "
