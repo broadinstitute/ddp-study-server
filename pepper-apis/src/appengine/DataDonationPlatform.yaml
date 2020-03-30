@@ -1,9 +1,7 @@
 service: pepper-backend
 runtime: java11
-instance_class: F4_1G
-# look at tuning for spawning new VMs under load (10 connections -> new instance)
+instance_class: F2
 
-# set 2 min instances
 # @todo back to 2 when dev completed
 automatic_scaling:
   max_instances: 4 #up to 2147483647
@@ -14,10 +12,10 @@ automatic_scaling:
   target_throughput_utilization: 0.8 #default is 0.6 . Also metric to launch more instances
   max_concurrent_requests: 10 #default is 10 . Max is 80. GCP recommends 10 max value.
   max_pending_latency: 60ms #Default is 30ms. Max time a request is allowed to wait in queue.
-  min_pending_latency: 60ms #Default is 30ms. Theshold used to scale down
+  min_pending_latency: 60ms #Default is 30ms. Threshold used to scale down
 network:
   instance_tag: study-server # necessary for firewall rules so that DSM will accept https requests from pepper
 
 # get size from env var, try this without mx, ms
-entrypoint: java -Dddp.firecloudKeysDir=fc_keys -Dconfig.file=application.conf -jar -Xmx1680000k -Xms1680000k DataDonationPlatform.jar
+entrypoint: java -Dddp.firecloudKeysDir=fc_keys -Dconfig.file=application.conf -jar -Xmx410m -Xmx410m DataDonationPlatform.jar
 
