@@ -10,7 +10,6 @@ public class CreateTemporaryUserPayload {
     @SerializedName("auth0ClientId")
     private String auth0ClientId;
 
-    @NotBlank
     @SerializedName("auth0Domain")
     private String auth0Domain;
 
