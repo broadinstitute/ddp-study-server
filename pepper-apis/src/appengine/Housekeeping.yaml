@@ -1,10 +1,8 @@
 service: housekeeping
 runtime: java11
-instance_class: F4_1G
+instance_class: F2
 # look at tuning for spawning new VMs under load (10 connections -> new instance)
 
-# set 2 min instances
-# @todo back to 2 when dev completed
 #F type instances need to run with automatic scaling
 automatic_scaling:
   max_instances: 1 #up to 2147483647
@@ -22,5 +20,5 @@ network:
 inbound_services:
   - warmup
 # get size from env var, try this without mx, ms
-entrypoint: java -Dddp.firecloudKeysDir=fc_keys -Dconfig.file=application.conf -jar -Xmx1680000k -Xms1680000k Housekeeping.jar
+entrypoint: java -Dddp.firecloudKeysDir=fc_keys -Dconfig.file=application.conf -jar -Xmx410m -Xmx410m Housekeeping.jar
 
