@@ -12,6 +12,7 @@ import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.JdbiAuth0Tenant;
+import org.broadinstitute.ddp.db.dao.JdbiClient;
 import org.broadinstitute.ddp.db.dao.JdbiClientUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dto.Auth0TenantDto;
@@ -42,13 +43,24 @@ public class GetStudyPasswordPolicyRoute implements Route {
             throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.BAD_PAYLOAD, msg));
         }
 
-        if (domain == null || domain.isBlank()) {
-            LOG.warn("domain is missing or blank");
-            String msg = "Query parameter 'domain' is required";
-            throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.BAD_PAYLOAD, msg));
-        }
-
         PasswordPolicy policy = TransactionWrapper.withTxn(handle -> {
+            if (domain == null || domain.isBlank()) {
+                // Left for backward compatibility. It's expected that for some time
+                // there will be no clashes between clients with the same Auth0 client id
+                // When they start to occur, change the check accordingly
+                LOG.info("Domain query parameter is missing, checking if the auth0 client id '{}' is unique", clientId);
+                int numClients = handle.attach(JdbiClient.class).countClientsWithSameAuth0ClientId(clientId);
+                if (numClients > 1) {
+                    String msg = "Auth0 client id '{}' is not unique, please provide a domain value for disambiguation";
+                    LOG.warn(msg);
+                    throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.BAD_PAYLOAD, msg));
+                } else if (numClients == 0) {
+                    String msg = "Auth0 client id '{}' does not exist";
+                    LOG.warn(msg);
+                    throw ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.NOT_FOUND, msg));
+                }
+                LOG.info("All fine, client id '{}' is unique, nothing to worry about", clientId);
+            }
             StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
             if (studyDto == null) {
                 String msg = "Could not find study with guid " + studyGuid;

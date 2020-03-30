@@ -135,4 +135,9 @@ public interface JdbiClient extends SqlObject {
             @Bind("auth0ClientId") String auth0ClientId,
             @Bind("auth0Domain") String auth0Domain
     );
+
+    @SqlQuery(
+            "SELECT COUNT(*) FROM client WHERE auth0_client_id = :auth0ClientId"
+    )
+    int countClientsWithSameAuth0ClientId(@Bind("auth0ClientId") String auth0ClientId);
 }
