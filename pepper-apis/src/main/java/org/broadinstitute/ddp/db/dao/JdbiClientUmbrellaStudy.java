@@ -26,6 +26,18 @@ public interface JdbiClientUmbrellaStudy extends SqlObject {
             @Bind("auth0Domain") String auth0Domain
     );
 
+    // Left for backward compatibility
+    @SqlQuery("select us.guid from client__umbrella_study as cus "
+            + "join client as c on c.client_id = cus.client_id "
+            + "join umbrella_study as us on us.umbrella_study_id = cus.umbrella_study_id "
+            + "join auth0_tenant t on t.auth0_tenant_id = us.auth0_tenant_id "
+            + "where c.auth0_tenant_id = t.auth0_tenant_id "
+            + "and c.auth0_client_id = :auth0ClientId"
+            + "and not c.is_revoked")
+    List<String> findPermittedStudyGuidsByAuth0ClientId(
+            @Bind("auth0ClientId") String auth0ClientId
+    );
+
     @SqlQuery("select us.guid from client__umbrella_study as cus "
             + "join client as c on c.client_id = cus.client_id "
             + "join umbrella_study as us on us.umbrella_study_id = cus.umbrella_study_id "

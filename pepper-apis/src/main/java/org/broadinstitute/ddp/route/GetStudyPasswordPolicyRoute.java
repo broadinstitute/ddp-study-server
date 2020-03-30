@@ -44,7 +44,19 @@ public class GetStudyPasswordPolicyRoute implements Route {
         }
 
         PasswordPolicy policy = TransactionWrapper.withTxn(handle -> {
-            if (domain == null || domain.isBlank()) {
+            StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
+            if (studyDto == null) {
+                String msg = "Could not find study with guid " + studyGuid;
+                LOG.warn(msg);
+                throw ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.NOT_FOUND, msg));
+            }
+
+            List<String> permittedStudies = null;
+            boolean isDomainSpecified = domain != null && !domain.isBlank();
+            if (isDomainSpecified) {
+                permittedStudies = handle.attach(JdbiClientUmbrellaStudy.class)
+                        .findPermittedStudyGuidsByAuth0ClientIdAndAuth0Domain(clientId, domain);
+            } else {
                 // Left for backward compatibility. It's expected that for some time
                 // there will be no clashes between clients with the same Auth0 client id
                 // When they start to occur, change the check accordingly
@@ -58,19 +70,14 @@ public class GetStudyPasswordPolicyRoute implements Route {
                     String msg = "Auth0 client id '{}' does not exist";
                     LOG.warn(msg);
                     throw ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.NOT_FOUND, msg));
-                } else {
+                } else if (numClients == 1) {
                     LOG.info("All fine, client id '{}' is unique, nothing to worry about", clientId);
+                    // Fetch permitted studies using a unique auth0 client id
+                    permittedStudies = handle.attach(JdbiClientUmbrellaStudy.class)
+                            .findPermittedStudyGuidsByAuth0ClientId(clientId);
                 }
             }
-            StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
-            if (studyDto == null) {
-                String msg = "Could not find study with guid " + studyGuid;
-                LOG.warn(msg);
-                throw ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.NOT_FOUND, msg));
-            }
 
-            List<String> permittedStudies = handle.attach(JdbiClientUmbrellaStudy.class)
-                    .findPermittedStudyGuidsByAuth0ClientIdAndAuth0Domain(clientId, domain);
             if (!permittedStudies.contains(studyGuid)) {
                 LOG.warn("Either client does not exist or client does not have access to study " + studyGuid);
                 String msg = "Could not find client with id " + clientId;
