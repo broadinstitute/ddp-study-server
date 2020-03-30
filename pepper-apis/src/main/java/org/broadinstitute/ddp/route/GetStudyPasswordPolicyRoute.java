@@ -58,8 +58,9 @@ public class GetStudyPasswordPolicyRoute implements Route {
                     String msg = "Auth0 client id '{}' does not exist";
                     LOG.warn(msg);
                     throw ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.NOT_FOUND, msg));
+                } else {
+                    LOG.info("All fine, client id '{}' is unique, nothing to worry about", clientId);
                 }
-                LOG.info("All fine, client id '{}' is unique, nothing to worry about", clientId);
             }
             StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
             if (studyDto == null) {
