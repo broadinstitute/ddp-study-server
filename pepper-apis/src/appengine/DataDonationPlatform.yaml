@@ -16,6 +16,10 @@ automatic_scaling:
 network:
   instance_tag: study-server # necessary for firewall rules so that DSM will accept https requests from pepper
 
-# get size from env var, try this without mx, ms
-entrypoint: java -Dddp.firecloudKeysDir=fc_keys -Dconfig.file=application.conf -jar -Xmx410m -Xmx410m DataDonationPlatform.jar
+entrypoint: java -Xmx410m -Xmx410m -jar DataDonationPlatform.jar
+
+# GAE does not like the "=" character in entrypoint and does not support "." in environment variables
+env_variables:
+  config_file: application.conf
+  ddp_firecloudKeysDir: fc_keys
 

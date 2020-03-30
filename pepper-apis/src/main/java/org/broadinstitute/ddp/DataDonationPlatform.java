@@ -215,7 +215,11 @@ public class DataDonationPlatform {
         boolean doLiquibase = cfg.getBoolean(ConfigFile.DO_LIQUIBASE);
         int maxConnections = cfg.getInt(ConfigFile.NUM_POOLED_CONNECTIONS);
 
-        String firecloudKeysLocation = System.getProperty(ConfigFile.FIRECLOUD_KEYS_DIR_ENV_VAR);
+        // For benefit of GAE. Does not like command line options with "=" characters and env variables with "."
+        String firecloudKeysLocation = System.getenv(ConfigFile.FIRECLOUD_KEYS_DIR_ENV_VAR.replace('.', '_'));
+        if (firecloudKeysLocation == null) {
+            firecloudKeysLocation = System.getProperty(ConfigFile.FIRECLOUD_KEYS_DIR_ENV_VAR);
+        }
         if (firecloudKeysLocation == null) {
             LOG.error("System property {} was not set. Exiting program", ConfigFile.FIRECLOUD_KEYS_DIR_ENV_VAR);
             System.exit(-1);
