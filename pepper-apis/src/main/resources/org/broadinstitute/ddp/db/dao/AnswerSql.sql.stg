@@ -8,9 +8,7 @@ values (:guid, :operatorId, :instanceId, :createdAt, :updatedAt,
           join revision as rev on q.revision_id = rev.revision_id
           join activity_instance as ai on q.study_activity_id = ai.study_activity_id
          where qsc.stable_id = :questionStableId
-           and ai.activity_instance_id = :instanceId
-           and rev.start_date \<= ai.created_at
-           and (rev.end_date is null or ai.created_at \< rev.end_date)))
+           and ai.activity_instance_id = :instanceId))
 >>
 
 all_answer_dtos_select() ::= <<
