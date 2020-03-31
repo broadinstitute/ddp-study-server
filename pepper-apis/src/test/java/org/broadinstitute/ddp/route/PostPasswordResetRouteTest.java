@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.route;
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -16,12 +17,18 @@ import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.API;
 import org.broadinstitute.ddp.constants.RouteConstants.QueryParam;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.db.dao.ClientDao;
+import org.broadinstitute.ddp.db.dao.JdbiAuth0Tenant;
 import org.broadinstitute.ddp.db.dao.JdbiClient;
+import org.broadinstitute.ddp.db.dto.Auth0TenantDto;
+import org.broadinstitute.ddp.security.AesUtil;
+import org.broadinstitute.ddp.security.EncryptionKey;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.broadinstitute.ddp.util.TestDataSetupUtil.GeneratedTestData;
 import org.broadinstitute.ddp.util.TestUtil;
 
 import org.hamcrest.Matchers;
+
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -133,6 +140,65 @@ public class PostPasswordResetRouteTest extends IntegrationTestSuite.TestCase {
                 .when().get(fullUrl.toString()).then().assertThat()
                 .statusCode(HttpStatus.SC_MOVED_TEMPORARILY)
                 .header(HttpHeaders.LOCATION, equalTo(testRedirectUrlWithEmail));
+    }
+
+    @Test
+    public void test_WhenRouteIsCalledWithEmptyAuth0Domain_andClientIdIsNotUnique_ItRespondsWithBadRequest() {
+        String auth0Domain1 = "http://gkjdfkldshgf5434lsh.com";
+        String auth0Domain2 = "http://mbhndyfjklvfm5553.com";
+        String duplicatedAuth0ClientId = "hsdyeshrasflaelas";
+        try {
+            TransactionWrapper.useTxn(
+                    handle -> {
+                        Auth0TenantDto auth0Tenant1 = handle.attach(JdbiAuth0Tenant.class).insertIfNotExists(
+                                auth0Domain1,
+                                "mbvjgofhjjdsld",
+                                AesUtil.encrypt("kb#jfOF@$#Jglh854jfc", EncryptionKey.getEncryptionKey())
+                        );
+
+                        Auth0TenantDto auth0Tenant2 = handle.attach(JdbiAuth0Tenant.class).insertIfNotExists(
+                                auth0Domain2,
+                                "nfofjfldjfglgh",
+                                AesUtil.encrypt("hgudighndfjgbiud!!#hf", EncryptionKey.getEncryptionKey())
+                        );
+
+                        handle.attach(ClientDao.class).registerClient(
+                                duplicatedAuth0ClientId,
+                                "Hdlf(f9**8rtlJ",
+                                new ArrayList<>(),
+                                "84578lkf^gjHDU$",
+                                auth0Tenant1.getId()
+                        );
+
+                        handle.attach(ClientDao.class).registerClient(
+                                duplicatedAuth0ClientId,
+                                "Mfjhf^#495J",
+                                new ArrayList<>(),
+                                "Mfg.fgjg($2312(^",
+                                auth0Tenant2.getId()
+                        );
+                    }
+            );
+            Map<String, String> queryParams = new HashMap<>();
+            queryParams.put(QueryParam.AUTH0_CLIENT_ID, duplicatedAuth0ClientId);
+            queryParams.put(QueryParam.AUTH0_DOMAIN, "");
+            queryParams.put(QueryParam.EMAIL, testEmail);
+            queryParams.put(QueryParam.SUCCESS, "true");
+            HttpUrl fullUrl = buildEncodedUrl(url, queryParams);
+            given().when().get(fullUrl.toString()).then().assertThat()
+                    .statusCode(HttpStatus.SC_BAD_REQUEST);
+        } finally {
+            TransactionWrapper.useTxn(
+                    handle -> {
+                        handle.createUpdate(
+                                "delete from client where auth0_client_id = :duplicatedAuth0ClientId"
+                        ).bind("duplicatedAuth0ClientId", duplicatedAuth0ClientId).execute();
+                        handle.createUpdate(
+                                "delete from auth0_tenant where auth0_domain = :auth0Domain1 or auth0_domain = :auth0Domain2"
+                        ).bind("auth0Domain1", auth0Domain1).bind("auth0Domain2", auth0Domain2).execute();
+                    }
+            );
+        }
     }
 
     @Test
