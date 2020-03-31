@@ -122,15 +122,17 @@ public class PostPasswordResetRouteTest extends IntegrationTestSuite.TestCase {
     }
 
     @Test
-    public void test_WhenRouteIsCalledWithEmptyAuth0Domain_ItRespondsWithBadRequest() {
+    public void test_WhenRouteIsCalledWithEmptyAuth0Domain_andClientIdIsUnique_ItRespondsWithHttpRedirect() {
         Map<String, String> queryParams = new HashMap<>();
         queryParams.put(QueryParam.AUTH0_CLIENT_ID, auth0ClientId);
         queryParams.put(QueryParam.AUTH0_DOMAIN, "");
         queryParams.put(QueryParam.EMAIL, testEmail);
         queryParams.put(QueryParam.SUCCESS, "true");
         HttpUrl fullUrl = buildEncodedUrl(url, queryParams);
-        given().when().get(fullUrl.toString()).then().assertThat()
-                .statusCode(HttpStatus.SC_BAD_REQUEST);
+        given(TestUtil.RestAssured.nonFollowingRequestSpec())
+                .when().get(fullUrl.toString()).then().assertThat()
+                .statusCode(HttpStatus.SC_MOVED_TEMPORARILY)
+                .header(HttpHeaders.LOCATION, equalTo(testRedirectUrlWithEmail));
     }
 
     @Test

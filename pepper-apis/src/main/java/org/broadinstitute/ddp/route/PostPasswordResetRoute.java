@@ -38,13 +38,33 @@ public class PostPasswordResetRoute implements Route {
         String email = request.queryParams(QueryParam.EMAIL);
         String auth0Success = request.queryParams(QueryParam.SUCCESS);
 
-        if (StringUtils.isBlank(auth0ClientId) || StringUtils.isBlank(auth0Domain) || StringUtils.isBlank(email)) {
-            String errMsg = "auth0ClientId, auth0Domain and email query string parameters are mandatory";
+        if (StringUtils.isBlank(auth0ClientId) || StringUtils.isBlank(email)) {
+            String errMsg = "auth0ClientId and email query string parameters are mandatory";
             LOG.warn(errMsg);
             ResponseUtil.haltError(response, HttpStatus.SC_BAD_REQUEST, new ApiError(ErrorCodes.REQUIRED_PARAMETER_MISSING, errMsg));
         }
 
-        HttpUrl clientPwdResetUrl = getWebClientPasswordResetRedirectUrl(auth0ClientId, auth0Domain, response);
+        HttpUrl clientPwdResetUrl = null;
+        boolean isDomainSpecified = auth0Domain != null && !auth0Domain.isBlank();
+        if (isDomainSpecified) {
+            clientPwdResetUrl = getWebClientPasswordResetRedirectUrl(auth0ClientId, auth0Domain, response);
+        } else {
+            // Left for backward compatibility. It's expected that for some time
+            // there will be no clashes between clients with the same Auth0 client id
+            // When they start to occur, change the check accordingly
+            LOG.info("Domain query parameter is missing, checking if the auth0 client id '{}' is unique", auth0ClientId);
+            int numClients = TransactionWrapper.withTxn(
+                    handle -> handle.attach(JdbiClient.class).countClientsWithSameAuth0ClientId(auth0ClientId)
+            );
+            if (numClients > 1) {
+                String msg = "Auth0 client id '{}' is not unique, please provide a auth0Domain value for disambiguation";
+                LOG.warn(msg);
+                throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.BAD_PAYLOAD, msg));
+            } else if (numClients == 1) {
+                LOG.info("All fine, client id '{}' is unique, nothing to worry about", auth0ClientId);
+                clientPwdResetUrl = getWebClientPasswordResetRedirectUrl(auth0ClientId, null, response);
+            }
+        }
 
         HttpUrl.Builder urlBuilder = clientPwdResetUrl.newBuilder();
         urlBuilder.addQueryParameter(QueryParam.EMAIL, email);
@@ -66,8 +86,13 @@ public class PostPasswordResetRoute implements Route {
     private HttpUrl getWebClientPasswordResetRedirectUrl(String auth0ClientId, String auth0Domain, Response response) {
         return TransactionWrapper.withTxn(
                 handle -> {
+                    Optional<ClientDto> clientDto = null;
                     JdbiClient jdbiClient = handle.attach(JdbiClient.class);
-                    Optional<ClientDto> clientDto = jdbiClient.getClientByAuth0ClientAndDomain(auth0ClientId, auth0Domain);
+                    if (auth0Domain != null) {
+                        clientDto = jdbiClient.getClientByAuth0ClientAndDomain(auth0ClientId, auth0Domain);
+                    } else {
+                        clientDto = Optional.ofNullable(jdbiClient.findClientsByAuth0Client(auth0ClientId).get(0));
+                    }
                     if (!clientDto.isPresent()) {
                         String errMsg = "Client with Auth0 client id " + auth0ClientId + " does not exist";
                         LOG.warn(errMsg);
