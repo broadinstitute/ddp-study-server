@@ -1334,6 +1334,7 @@ public class StudyDataLoader {
         String sourceType = getStringValueFromElement(mapElement, "source_type");
         //handle options
         String stableId = getStringValueFromElement(mapElement, "stable_id");
+        LOG.info("Processing picklist question " + questionName + " with stable id " + stableId);
 
         List<SelectedPicklistOption> selectedPicklistOptions = new ArrayList<>();
         if (mapElement.getAsJsonObject().get("options") == null || mapElement.getAsJsonObject().get("options").isJsonNull()) {
@@ -1526,11 +1527,9 @@ public class StudyDataLoader {
         String answerGuid = null;
         JsonElement valueEl;
         String questionName = mapElement.getAsJsonObject().get("name").getAsString();
-        String stableId = null;
-        JsonElement stableIdElement = mapElement.getAsJsonObject().get("stable_id");
-        if (!stableIdElement.isJsonNull()) {
-            stableId = stableIdElement.getAsString();
-        }
+        String stableId = getStringValueFromElement(mapElement, "stable_id");
+        LOG.info("Processing date question: " + questionName + " with stable_id " + stableId);
+
         //check if question has subelements, nullable
         if (mapElement.getAsJsonObject().get("subelements") == null) {
             valueEl = sourceDataElement.getAsJsonObject().get(questionName);
@@ -1593,11 +1592,8 @@ public class StudyDataLoader {
         String questionName = mapElement.getAsJsonObject().get("name").getAsString();
 
         valueEl = sourceDataElement.getAsJsonObject().get(questionName);
-        String stableId = null;
-        JsonElement stableIdElement = mapElement.getAsJsonObject().get("stable_id");
-        if (!stableIdElement.isJsonNull()) {
-            stableId = stableIdElement.getAsString();
-        }
+        String stableId = getStringValueFromElement(mapElement, "stable_id");
+        LOG.info("Processing text question " + questionName + " with stable id " + stableId);
 
         if (valueEl != null && !valueEl.isJsonNull()) {
             answerGuid = answerTextQuestion(stableId, participantGuid, instanceGuid, valueEl.getAsString(), answerDao);
@@ -1611,16 +1607,14 @@ public class StudyDataLoader {
                                             String participantGuid, String instanceGuid, AnswerDao answerDao) throws Exception {
 
         String answerGuid;
-        String stableId = null;
         String questionName = mapElement.getAsJsonObject().get("name").getAsString();
         JsonElement valueEl = sourceDataElement.getAsJsonObject().get(questionName);
         if (valueEl == null || valueEl.isJsonNull()) {
             return null;
         }
-        JsonElement stableIdElement = mapElement.getAsJsonObject().get("stable_id");
-        if (!stableIdElement.isJsonNull()) {
-            stableId = stableIdElement.getAsString();
-        }
+        String stableId = getStringValueFromElement(mapElement, "stable_id");
+        LOG.info("Processing agreement question " + questionName + " with stable id " + stableId);
+
         if (stableId == null) {
             return null;
         }
@@ -1644,11 +1638,8 @@ public class StudyDataLoader {
         String questionName = mapElement.getAsJsonObject().get("name").getAsString();
         sourceDataSurveyQs.get(surveyName).add(questionName);
         //handle composite options (nested answers)
-        String stableId = null;
-        JsonElement stableIdElement = mapElement.getAsJsonObject().get("stable_id");
-        if (!stableIdElement.isJsonNull()) {
-            stableId = stableIdElement.getAsString();
-        }
+        String stableId = getStringValueFromElement(mapElement, "stable_id");
+        LOG.info("Processing composite question " + questionName + " with stable_id " + stableId);
         //handle children/nestedQA
         JsonArray children = mapElement.getAsJsonObject().getAsJsonArray("children");
         List<String> nestedQAGuids = new ArrayList<>();
@@ -1719,11 +1710,8 @@ public class StudyDataLoader {
         String answerGuid = null;
         String questionName = mapElement.getAsJsonObject().get("name").getAsString();
         sourceDataSurveyQs.get(surveyName).add(questionName);
-        String stableId = null;
-        JsonElement stableIdElement = mapElement.getAsJsonObject().get("stable_id");
-        if (!stableIdElement.isJsonNull()) {
-            stableId = stableIdElement.getAsString();
-        }
+        String stableId = getStringValueFromElement(mapElement, "stable_id");
+        LOG.info("Processing med list composite question " + questionName + " with stable id " + stableId);
 
         //source data has array of composite data
         JsonElement dataArrayEl = sourceDataElement.getAsJsonObject().get(questionName);
@@ -1801,15 +1789,10 @@ public class StudyDataLoader {
         //reason: boolean question does not support rendering as a checkbox
         //ex: "current_medication_names.dk": 0 ; "previous_medication_names.dk": 0,
         String answerGuid = null;
-        String stableId = null;
-        JsonElement stableIdElement = mapElement.getAsJsonObject().get("stable_id");
-        if (!stableIdElement.isJsonNull()) {
-            stableId = stableIdElement.getAsString();
-        }
-        if (stableId == null) {
-            return null;
-        }
+        String stableId = getStringValueFromElement(mapElement, "stable_id");
         String questionName = mapElement.getAsJsonObject().get("name").getAsString();
+        LOG.info("Processing boolean special picklist question " + questionName + " with stable id " + stableId);
+
         JsonElement valueEl = sourceDataElement.getAsJsonObject().get(questionName);
         if (valueEl == null || valueEl.isJsonNull()) {
             return null;
@@ -1830,15 +1813,10 @@ public class StudyDataLoader {
                                           String participantGuid, String instanceGuid, AnswerDao answerDao) throws Exception {
 
         String answerGuid = null;
-        String stableId = null;
-        JsonElement stableIdElement = mapElement.getAsJsonObject().get("stable_id");
-        if (!stableIdElement.isJsonNull()) {
-            stableId = stableIdElement.getAsString();
-        }
-        if (stableId == null) {
-            return null;
-        }
+        String stableId = getStringValueFromElement(mapElement, "stable_id");
         String questionName = getStringValueFromElement(mapElement, "name");
+        LOG.info("Processing boolean question " + questionName + " with stable id " + stableId);
+
         JsonElement valueEl = sourceDataElement.getAsJsonObject().get(questionName);
         if (valueEl == null || valueEl.isJsonNull()) {
             return null;
