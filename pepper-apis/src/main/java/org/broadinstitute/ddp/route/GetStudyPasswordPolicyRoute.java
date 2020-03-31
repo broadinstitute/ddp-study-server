@@ -6,13 +6,14 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.auth0.json.mgmt.Connection;
+
 import org.apache.http.entity.ContentType;
+
 import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.JdbiAuth0Tenant;
-import org.broadinstitute.ddp.db.dao.JdbiClient;
 import org.broadinstitute.ddp.db.dao.JdbiClientUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dto.Auth0TenantDto;
@@ -20,8 +21,10 @@ import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.study.PasswordPolicy;
 import org.broadinstitute.ddp.util.ResponseUtil;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import spark.Request;
 import spark.Response;
 import spark.Route;
@@ -34,9 +37,8 @@ public class GetStudyPasswordPolicyRoute implements Route {
     public PasswordPolicy handle(Request request, Response response) {
         String studyGuid = request.params(RouteConstants.PathParam.STUDY_GUID);
         String clientId = request.queryParams(RouteConstants.QueryParam.AUTH0_CLIENT_ID);
-        String domain = request.queryParams(RouteConstants.QueryParam.AUTH0_DOMAIN);
 
-        LOG.info("Attempting to lookup password policy for study {}, client id {} and domain {}", studyGuid, clientId, domain);
+        LOG.info("Attempting to lookup password policy for study {} and client id {}", studyGuid, clientId);
         if (clientId == null || clientId.isBlank()) {
             LOG.warn("Client id is missing or blank");
             String msg = "Query parameter 'clientId' is required";
@@ -51,35 +53,8 @@ public class GetStudyPasswordPolicyRoute implements Route {
                 throw ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.NOT_FOUND, msg));
             }
 
-            List<String> permittedStudies = null;
-            boolean isDomainSpecified = domain != null && !domain.isBlank();
-            if (isDomainSpecified) {
-                permittedStudies = handle.attach(JdbiClientUmbrellaStudy.class)
-                        .findPermittedStudyGuidsByAuth0ClientIdAndAuth0Domain(clientId, domain);
-            } else {
-                // Left for backward compatibility. It's expected that for some time
-                // there will be no clashes between clients with the same Auth0 client id
-                // When they start to occur, change the check accordingly
-                LOG.info("Domain query parameter is missing, checking if the auth0 client id '{}' is unique", clientId);
-                int numClients = handle.attach(JdbiClient.class).countClientsWithSameAuth0ClientId(clientId);
-                if (numClients > 1) {
-                    String msg = String.format(
-                            "Auth0 client id '%s' is not unique, please provide a domain value for disambiguation",
-                            clientId
-                    );
-                    LOG.warn(msg);
-                    throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.BAD_PAYLOAD, msg));
-                } else if (numClients == 0) {
-                    String msg = String.format("Auth0 client id '%s' does not exist", clientId);
-                    LOG.warn(msg);
-                    throw ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.NOT_FOUND, msg));
-                } else if (numClients == 1) {
-                    LOG.info("All fine, client id '{}' is unique, nothing to worry about", clientId);
-                    // Fetch permitted studies using a unique auth0 client id
-                    permittedStudies = handle.attach(JdbiClientUmbrellaStudy.class)
-                            .findPermittedStudyGuidsByAuth0ClientId(clientId);
-                }
-            }
+            List<String> permittedStudies = handle.attach(JdbiClientUmbrellaStudy.class)
+                    .findPermittedStudyGuidsByAuth0ClientIdAndAuth0TenantId(clientId, studyDto.getAuth0TenantId());
 
             if (!permittedStudies.contains(studyGuid)) {
                 LOG.warn("Either client does not exist or client does not have access to study " + studyGuid);
