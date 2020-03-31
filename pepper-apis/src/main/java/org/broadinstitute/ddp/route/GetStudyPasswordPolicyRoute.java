@@ -63,11 +63,14 @@ public class GetStudyPasswordPolicyRoute implements Route {
                 LOG.info("Domain query parameter is missing, checking if the auth0 client id '{}' is unique", clientId);
                 int numClients = handle.attach(JdbiClient.class).countClientsWithSameAuth0ClientId(clientId);
                 if (numClients > 1) {
-                    String msg = "Auth0 client id '{}' is not unique, please provide a domain value for disambiguation";
+                    String msg = String.format(
+                            "Auth0 client id '%s' is not unique, please provide a domain value for disambiguation",
+                            clientId
+                    );
                     LOG.warn(msg);
                     throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.BAD_PAYLOAD, msg));
                 } else if (numClients == 0) {
-                    String msg = "Auth0 client id '{}' does not exist";
+                    String msg = String.format("Auth0 client id '%s' does not exist", clientId);
                     LOG.warn(msg);
                     throw ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.NOT_FOUND, msg));
                 } else if (numClients == 1) {

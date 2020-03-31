@@ -60,7 +60,9 @@ public class CreateTemporaryUserRoute extends ValidatedJsonInputRoute<CreateTemp
                 LOG.info("Domain query parameter is missing, checking if the auth0 client id '{}' is unique", auth0ClientId);
                 int numClients = handle.attach(JdbiClient.class).countClientsWithSameAuth0ClientId(auth0ClientId);
                 if (numClients > 1) {
-                    String msg = "Auth0 client id '{}' is not unique, please provide a auth0Domain value for disambiguation";
+                    String msg = String.format(
+                            "Auth0 client id '%s' is not unique, please provide a auth0Domain value for disambiguation", auth0ClientId
+                    );
                     LOG.warn(msg);
                     throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.BAD_PAYLOAD, msg));
                 } else if (numClients == 1) {
