@@ -1,5 +1,7 @@
 package org.broadinstitute.ddp.route;
 
+import java.util.List;
+
 import org.apache.http.HttpStatus;
 
 import org.broadinstitute.ddp.constants.ErrorCodes;
@@ -56,16 +58,16 @@ public class CreateTemporaryUserRoute extends ValidatedJsonInputRoute<CreateTemp
                 // there will be no clashes between clients with the same Auth0 client id
                 // When they start to occur, change the check accordingly
                 LOG.info("Domain query parameter is missing, checking if the auth0 client id '{}' is unique", auth0ClientId);
-                int numClients = handle.attach(JdbiClient.class).countClientsWithSameAuth0ClientId(auth0ClientId);
-                if (numClients > 1) {
+                List<ClientDto> clientDtos = handle.attach(JdbiClient.class).getClientsByAuth0ClientId(auth0ClientId);
+                if (clientDtos.size() > 1) {
                     String msg = String.format(
                             "Auth0 client id '%s' is not unique, please provide a auth0Domain value for disambiguation", auth0ClientId
                     );
                     LOG.warn(msg);
                     throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.BAD_PAYLOAD, msg));
-                } else if (numClients == 1) {
+                } else if (clientDtos.size() == 1) {
                     LOG.info("All fine, client id '{}' is unique, nothing to worry about", auth0ClientId);
-                    clientDto = handle.attach(JdbiClient.class).getClientByAuth0ClientId(auth0ClientId).orElse(null);
+                    clientDto = clientDtos.get(0);
                 }
             }
 
