@@ -194,5 +194,6 @@
     <include file="db-changes/schema/DDP-4366-study-language-table.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-4070-drop-not-null-constraint-for-is-readonly-column.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-4502-remove-study-password-requirements.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-4511-change-false-values-to-null-for-is-readonly.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-4134-change-unique-keys-in-client-table.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

@@ -27,8 +27,7 @@ public class ActivityInstance {
     @SerializedName("readonly")
     private Boolean readonly;
 
-    // todo: rename to `title` at api-level
-    @SerializedName("name")
+    @SerializedName("title")
     private String title;
 
     @SerializedName("subtitle")

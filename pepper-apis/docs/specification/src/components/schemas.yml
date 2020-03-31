@@ -10,7 +10,6 @@ ActivityInstanceStatusType:
     - COMPLETE
     - CREATED
     - IN_PROGRESS
-    - TERMINATED
 FormType:
   title: FormType
   type: string
@@ -114,25 +113,49 @@ Activity:
   required:
     - activityType
     - formType
+    - activityCode
     - guid
+    - title
+    - subtitle
     - readonly
     - status
     - listStyleHint
     - sections
     - lastUpdatedText
     - lastUpdated
+    - isFollowup
   properties:
     activityType:
       $ref: '../pepper.yml#/components/schemas/ActivityType'
     formType:
       $ref: '../pepper.yml#/components/schemas/FormType'
+    activityCode:
+      type: string
+      description: unique identifier of the activity
     guid:
       type: string
-      description: the unique identifier for this instance of an activity
+      description: unique identifier for this instance of the activity
     status:
       type: string
+    title:
+      type: string
+      description: title of the activity to be displayed
+    subtitle:
+      type: string
+      nullable: true
+      description: |
+        A string to display to the user as a subtitle for the activity. If the
+        `ddp-Content-Style` header is set to `BASIC`, this field will contain
+        unstructured text.
     readonly:
       type: boolean
+    readonlyHint:
+      type: string
+      nullable: true
+      description: |
+        A string to display when an activity is in a read-only state (the
+        `readonly` flag is `true`). If the `ddp-Content-Style` header is set to
+        `BASIC`, this field will contain unstructured text.
     listStyleHint:
       $ref: '../pepper.yml#/components/schemas/ListStyle'
     introduction:
@@ -143,20 +166,6 @@ Activity:
         $ref: '../pepper.yml#/components/schemas/Section'
     closing:
       $ref: '../pepper.yml#/components/schemas/Section'
-    subtitle:
-      type: string
-      nullable: true
-      description: |
-        A string to display to the user as a subtitle for the activity. If the
-        `ddp-Content-Style` header is set to `BASIC`, this field will contain
-        unstructured text.
-    readonlyHint:
-      type: string
-      nullable: true
-      description: |
-        A string to display when an activity is in a read-only state (the
-        `readonly` flag is `true`). If the `ddp-Content-Style` header is set to
-        `BASIC`, this field will contain unstructured text.
     lastUpdatedText:
       type: string
       nullable: true
@@ -169,18 +178,21 @@ Activity:
       format: date-time
       nullable: true
       description: The date time the activity definition (NOT the instance) was last updated
+    isFollowup:
+      type: boolean
+      description: whether this activity is considered a "follow-up"
 Activity.Summary:
   type: object
   title: Activity Summary
   required:
     - activityCode
-    - activityDashboardName
-    - activityDescription
-    - activityName
-    - activitySubtitle
-    - activitySubtype
-    - activitySummary
     - activityType
+    - activitySubtype
+    - activityName
+    - activityTitle
+    - activitySubtitle
+    - activityDescription
+    - activitySummary
     - instanceGuid
     - statusCode
     - readonly
@@ -192,22 +204,27 @@ Activity.Summary:
       description: the source activity for this instance
       example: ABCDEFGH12
       type: string
-    activityDashboardName:
-      type: string
-    activityDescription:
-      type: string
-    activityName:
-      description: name of the activity
-      example: Medical Release Form
-      type: string
-    activitySubtitle:
-      type: string
-    activitySubtype:
-      $ref: "../pepper.yml#/components/schemas/FormType"
-    activitySummary:
-      type: string
     activityType:
       $ref: "../pepper.yml#/components/schemas/ActivityType"
+    activitySubtype:
+      $ref: "../pepper.yml#/components/schemas/FormType"
+    activityName:
+      type: string
+      description: name of the activity
+      example: Medical Survey
+    activityTitle:
+      type: string
+      description: title of the activity, should be used when viewing/editing activity instance
+      example: Please tell us about your disease
+    activitySubtitle:
+      type: string
+      nullable: true
+    activityDescription:
+      type: string
+      nullable: true
+    activitySummary:
+      type: string
+      nullable: true
     createdAt:
       type: integer
       description: The creation timestamp of the activity instance, in milliseconds since `1970-01-01T00:00:00Z` (UNIX time)
@@ -1032,7 +1049,7 @@ PrequalifierModel:
   type: object
   required:
     - guid
-    - name
+    - title
     - status
     - typeName
     - isoLanguageCode
@@ -1040,7 +1057,7 @@ PrequalifierModel:
     guid:
       type: string
       example: 6B03213FD0
-    name:
+    title:
       type: string
       example: Join the Basil Research Study
     status:

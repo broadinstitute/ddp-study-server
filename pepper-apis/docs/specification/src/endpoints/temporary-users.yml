@@ -9,5 +9,8 @@ post:
   responses:
     201:
       $ref: '../pepper.yml#/components/responses/CreateTempUserResponse'
+    400:
+      description: domain is missing in payload and client id in payload is not unique
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'
     default:
       $ref: '../pepper.yml#/components/responses/ErrorResponse'
