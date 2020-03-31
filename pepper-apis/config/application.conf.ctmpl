@@ -81,9 +81,7 @@
 {{end}}{{end}}
     "elasticsearchUsername": "pepper_backend",
     "elasticsearchBatchSize": 100,
-    "dbDsmInstance": "{{$conf.Data.dbDsmInstance}}",
-    "dbApiInstance": "{{$conf.Data.dbApiInstance}}",
-    "dbHousekeepingInstance": "{{$conf.Data.dbHousekeepingInstance}}",
+    "dbInstanceId": "{{$conf.Data.dbInstanceId}}",
     "dsmJwtSecret": "{{$dsm_conf.Data.portal.jwtDdpSecret}}",
     "dsmJwtSigner": "org.broadinstitute.kdux",
     {{if eq $environment "dev"}}

@@ -18,9 +18,7 @@
     "dsmBaseUrl": "http://localhost:9555",
     "dsmJwtSecret": "Dsm test secret!",
     "dsmJwtSigner": "org.broadinstitute.kdux",
-    "dbApiInstance": "pepper-dev",
-    "dbDsmInstance": "dev-dsm",
-    "dbHousekeepingInstance": "housekeeping-dev1",
+    "dbInstanceId": "ddp-dev",
     "auth0": {
         "domain": "{{$auth0.domain}}",
         "domain2": "{{$auth0.domain2}}",
