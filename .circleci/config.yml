@@ -128,7 +128,7 @@ commands:
           name: Run maven
           command: |
             # @todo remove test
-            mvn --batch-mode -Dtest=ProfileRouteTest -file pom.xml package \
+            mvn --batch-mode -file pom.xml package \
                      -Ditext.license=output-config/itextkey.xml \
                      -Dddp.firecloudKeysDir=output-config/fc_keys \
                      -Dconfig.file=output-config/testing-circleci.conf \
