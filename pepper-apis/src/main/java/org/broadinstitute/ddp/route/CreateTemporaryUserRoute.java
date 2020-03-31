@@ -1,7 +1,5 @@
 package org.broadinstitute.ddp.route;
 
-import java.util.List;
-
 import org.apache.http.HttpStatus;
 
 import org.broadinstitute.ddp.constants.ErrorCodes;
@@ -67,8 +65,7 @@ public class CreateTemporaryUserRoute extends ValidatedJsonInputRoute<CreateTemp
                     throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.BAD_PAYLOAD, msg));
                 } else if (numClients == 1) {
                     LOG.info("All fine, client id '{}' is unique, nothing to worry about", auth0ClientId);
-                    List<ClientDto> clientDtos = handle.attach(JdbiClient.class).findClientsByAuth0Client(auth0ClientId);
-                    clientDto = clientDtos.get(0);
+                    clientDto = handle.attach(JdbiClient.class).getClientByAuth0ClientId(auth0ClientId).orElse(null);
                 }
             }
 

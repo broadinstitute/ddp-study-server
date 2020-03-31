@@ -1,6 +1,5 @@
 package org.broadinstitute.ddp.db.dao;
 
-import java.util.List;
 import java.util.Optional;
 
 import org.broadinstitute.ddp.db.dto.ClientDto;
@@ -80,7 +79,7 @@ public interface JdbiClient extends SqlObject {
             + "     auth0_client_id = :auth0ClientId"
     )
     @RegisterConstructorMapper(ClientDto.class)
-    List<ClientDto> findClientsByAuth0Client(
+    Optional<ClientDto> getClientByAuth0ClientId(
             @Bind("auth0ClientId") String auth0ClientId
     );
 
