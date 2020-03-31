@@ -30,7 +30,7 @@ import org.slf4j.LoggerFactory;
 public class TransactionWrapperTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(TransactionWrapperTest.class);
-    private static final String CHANGESET_FILE = "src/test/resources/db-testscripts/txnwrappertest.xml";
+    private static final String CHANGESET_FILE = "db-testscripts/txnwrappertest.xml";
     private static final String TEST_QUERY = "select test_name from txnwrapper_test";
     private static final String CHANGELOG_TABLE = "DATABASECHANGELOG";
 
