@@ -63,7 +63,7 @@ public class CreateTemporaryUserRoute extends ValidatedJsonInputRoute<CreateTemp
                     String msg = String.format(
                             "Auth0 client id '%s' is not unique, please provide a auth0Domain value for disambiguation", auth0ClientId
                     );
-                    LOG.warn(msg);
+                    LOG.error(msg);
                     throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.BAD_PAYLOAD, msg));
                 } else if (clientDtos.size() == 1) {
                     LOG.info("All fine, client id '{}' is unique, nothing to worry about", auth0ClientId);

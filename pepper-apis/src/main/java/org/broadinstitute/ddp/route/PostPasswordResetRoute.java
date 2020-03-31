@@ -58,7 +58,7 @@ public class PostPasswordResetRoute implements Route {
             );
             if (numClients > 1) {
                 String msg = "Auth0 client id '{}' is not unique, please provide a auth0Domain value for disambiguation";
-                LOG.warn(msg);
+                LOG.error(msg);
                 throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.BAD_PAYLOAD, msg));
             } else if (numClients == 1) {
                 LOG.info("All fine, client id '{}' is unique, nothing to worry about", auth0ClientId);
