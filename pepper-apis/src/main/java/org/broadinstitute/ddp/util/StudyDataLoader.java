@@ -170,8 +170,15 @@ public class StudyDataLoader {
         altNames.put("drugend_month", "drugendmonth");
 
         datStatEnumLookup = new HashMap<>();
+
+        //Independently consent
+        List<String> optionList = new ArrayList<>(2);
+        optionList.add(0, "prion_consent_s6_INDEPENDENT_NO");
+        optionList.add(1, "prion_consent_s6_INDEPENDENT_YES");
+        datStatEnumLookup.put("independently_consent", optionList);
+
         //Participant gender
-        List<String> optionList = new ArrayList<>(4);
+        optionList = new ArrayList<>(4);
         optionList.add(0, null);
         optionList.add(1, "FEMALE");
         optionList.add(2, "MALE");
