@@ -185,7 +185,7 @@
             "type": "Picklist",
             "options": [
               {
-                "name": "effected",
+                "name": "affected",
                 "type": "integer"
               },
               {
