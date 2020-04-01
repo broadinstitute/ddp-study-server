@@ -8,10 +8,9 @@ import java.time.LocalDate;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.db.dao.JdbiProfile;
 import org.broadinstitute.ddp.db.dao.JdbiQuestion;
+import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
-import org.broadinstitute.ddp.db.dto.UserProfileDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
@@ -22,6 +21,7 @@ import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
 import org.broadinstitute.ddp.model.copy.CopyLocationType;
+import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.broadinstitute.ddp.util.TestFormActivity;
 import org.junit.BeforeClass;
@@ -44,18 +44,18 @@ public class AnswerToProfileCopierTest extends TxnAwareBaseTest {
     @Test
     public void testCopy_noSourceAnswer() {
         TransactionWrapper.useTxn(handle -> {
-            String expected = handle.attach(JdbiProfile.class)
-                    .getUserProfileByUserId(testData.getUserId())
-                    .getFirstName();
+            String expected = handle.attach(UserProfileDao.class)
+                    .findProfileByUserId(testData.getUserId())
+                    .get().getFirstName();
 
             var instance = new FormResponse(1L, "a", testData.getUserId(), false, 1L, 1L, 1L, "b", "c", null);
             var question = new QuestionDto(QuestionType.TEXT, 1L, "q", 1L, 1L, 1L, 1L, false, false, false, 1L, 1L, 1L);
             new AnswerToProfileCopier(handle, testData.getUserId())
                     .copy(instance, question, CopyLocationType.PARTICIPANT_PROFILE_FIRST_NAME);
 
-            String actual = handle.attach(JdbiProfile.class)
-                    .getUserProfileByUserId(testData.getUserId())
-                    .getFirstName();
+            String actual = handle.attach(UserProfileDao.class)
+                    .findProfileByUserId(testData.getUserId())
+                    .get().getFirstName();
             assertEquals(expected, actual);
 
             handle.rollback();
@@ -75,8 +75,8 @@ public class AnswerToProfileCopierTest extends TxnAwareBaseTest {
             copier.copy(instance, q1, CopyLocationType.OPERATOR_PROFILE_FIRST_NAME);
             copier.copy(instance, q2, CopyLocationType.OPERATOR_PROFILE_LAST_NAME);
 
-            UserProfileDto profile = handle.attach(JdbiProfile.class)
-                    .getUserProfileByUserId(testData.getUserId());
+            UserProfile profile = handle.attach(UserProfileDao.class)
+                    .findProfileByUserId(testData.getUserId()).get();
             assertEquals("op-first", profile.getFirstName());
             assertEquals("op-last", profile.getLastName());
 
@@ -97,8 +97,8 @@ public class AnswerToProfileCopierTest extends TxnAwareBaseTest {
             copier.copy(instance, q1, CopyLocationType.PARTICIPANT_PROFILE_FIRST_NAME);
             copier.copy(instance, q2, CopyLocationType.PARTICIPANT_PROFILE_LAST_NAME);
 
-            UserProfileDto profile = handle.attach(JdbiProfile.class)
-                    .getUserProfileByUserId(testData.getUserId());
+            UserProfile profile = handle.attach(UserProfileDao.class)
+                    .findProfileByUserId(testData.getUserId()).get();
             assertEquals("ptp-first", profile.getFirstName());
             assertEquals("ptp-last", profile.getLastName());
 
@@ -116,8 +116,8 @@ public class AnswerToProfileCopierTest extends TxnAwareBaseTest {
             var q1 = new QuestionDto(QuestionType.DATE, 1L, "q1", 1L, 1L, 1L, 1L, false, false, false, 1L, 1L, 1L);
             copier.copy(instance, q1, CopyLocationType.PARTICIPANT_PROFILE_BIRTH_DATE);
 
-            UserProfileDto profile = handle.attach(JdbiProfile.class)
-                    .getUserProfileByUserId(testData.getUserId());
+            UserProfile profile = handle.attach(UserProfileDao.class)
+                    .findProfileByUserId(testData.getUserId()).get();
             assertEquals(LocalDate.of(1987, 3, 14), profile.getBirthDate());
 
             handle.rollback();
@@ -175,8 +175,8 @@ public class AnswerToProfileCopierTest extends TxnAwareBaseTest {
             copier.copy(instance, cq, CopyLocationType.PARTICIPANT_PROFILE_FIRST_NAME);
             copier.copy(instance, cq2, CopyLocationType.PARTICIPANT_PROFILE_FIRST_NAME);
 
-            UserProfileDto profile = handle.attach(JdbiProfile.class)
-                    .getUserProfileByUserId(testData.getUserId());
+            UserProfile profile = handle.attach(UserProfileDao.class)
+                    .findProfileByUserId(testData.getUserId()).get();
             assertEquals("child-text", profile.getFirstName());
 
             handle.rollback();
@@ -186,9 +186,9 @@ public class AnswerToProfileCopierTest extends TxnAwareBaseTest {
     @Test
     public void testCopy_fromCompositeChild_noChildAnswers() {
         TransactionWrapper.useTxn(handle -> {
-            String expected = handle.attach(JdbiProfile.class)
-                    .getUserProfileByUserId(testData.getUserId())
-                    .getFirstName();
+            String expected = handle.attach(UserProfileDao.class)
+                    .findProfileByUserId(testData.getUserId())
+                    .get().getFirstName();
 
             TextQuestionDef child = TextQuestionDef.builder(TextInputType.TEXT, "c1", Template.text("")).build();
             TestFormActivity.builder()
@@ -201,9 +201,9 @@ public class AnswerToProfileCopierTest extends TxnAwareBaseTest {
             var copier = new AnswerToProfileCopier(handle, testData.getUserId());
             copier.copy(instance, cq, CopyLocationType.PARTICIPANT_PROFILE_FIRST_NAME);
 
-            String actual = handle.attach(JdbiProfile.class)
-                    .getUserProfileByUserId(testData.getUserId())
-                    .getFirstName();
+            String actual = handle.attach(UserProfileDao.class)
+                    .findProfileByUserId(testData.getUserId())
+                    .get().getFirstName();
             assertEquals(expected, actual);
 
             handle.rollback();

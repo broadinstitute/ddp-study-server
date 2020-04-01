@@ -20,11 +20,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
-import org.broadinstitute.ddp.db.dao.JdbiProfile;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
+import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
-import org.broadinstitute.ddp.db.dto.UserProfileDto;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
@@ -32,6 +31,7 @@ import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.governance.GovernancePolicy;
+import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.pex.lang.PexBaseVisitor;
 import org.broadinstitute.ddp.pex.lang.PexParser;
 import org.broadinstitute.ddp.pex.lang.PexParser.AgeAtLeastPredicateContext;
@@ -195,14 +195,14 @@ public class TreeWalkInterpreter implements PexInterpreter {
             }
 
             String userGuid = ictx.getUserGuid();
-            UserProfileDto profileDto = ictx.getHandle().attach(JdbiProfile.class).getUserProfileByUserGuid(userGuid);
-            if (profileDto == null || profileDto.getBirthDate() == null) {
+            UserProfile profile = ictx.getHandle().attach(UserProfileDao.class).findProfileByUserGuid(userGuid).orElse(null);
+            if (profile == null || profile.getBirthDate() == null) {
                 LOG.warn("User {} in study {} does not have profile or birth date to evaluate age-up policy, defaulting to false",
                         userGuid, studyGuid);
                 return false;
             }
 
-            return policy.hasReachedAgeOfMajority(ictx.getHandle(), new TreeWalkInterpreter(), userGuid, profileDto.getBirthDate());
+            return policy.hasReachedAgeOfMajority(ictx.getHandle(), new TreeWalkInterpreter(), userGuid, profile.getBirthDate());
         } else {
             throw new PexUnsupportedException("Unsupported study predicate: " + predCtx.getText());
         }
@@ -491,16 +491,17 @@ public class TreeWalkInterpreter implements PexInterpreter {
     }
 
     private Object evalProfileQuery(InterpreterContext ictx, PexParser.ProfileQueryContext ctx) {
-        UserProfileDto profileDto = ictx.getHandle()
-                .attach(JdbiProfile.class)
-                .getUserProfileByUserGuid(ictx.getUserGuid());
-        if (profileDto == null) {
+        UserProfile profile = ictx.getHandle()
+                .attach(UserProfileDao.class)
+                .findProfileByUserGuid(ictx.getUserGuid())
+                .orElse(null);
+        if (profile == null) {
             throw new PexFetchException("Could not find profile for user " + ictx.getUserGuid());
         }
 
         PexParser.ProfileDataQueryContext queryCtx = ctx.profileDataQuery();
         if (queryCtx instanceof PexParser.ProfileBirthDateQueryContext) {
-            LocalDate birthDate = profileDto.getBirthDate();
+            LocalDate birthDate = profile.getBirthDate();
             if (birthDate == null) {
                 String msg = String.format("User %s does not have birth date in profile", ictx.getUserGuid());
                 throw new PexFetchException(msg);

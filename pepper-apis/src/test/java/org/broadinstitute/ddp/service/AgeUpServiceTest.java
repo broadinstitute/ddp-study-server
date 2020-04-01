@@ -24,14 +24,13 @@ import org.broadinstitute.ddp.db.dao.EventTriggerDao;
 import org.broadinstitute.ddp.db.dao.InvitationFactory;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiEventConfiguration;
-import org.broadinstitute.ddp.db.dao.JdbiProfile;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
+import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.QueuedEventDto;
 import org.broadinstitute.ddp.db.dto.SendgridEmailEventActionDto;
-import org.broadinstitute.ddp.db.dto.UserProfileDto;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
@@ -43,6 +42,7 @@ import org.broadinstitute.ddp.model.invitation.InvitationType;
 import org.broadinstitute.ddp.model.pex.Expression;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.model.user.User;
+import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.pex.TreeWalkInterpreter;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
@@ -237,7 +237,7 @@ public class AgeUpServiceTest extends TxnAwareBaseTest {
     private User createAgeUpTestCandidate(Handle handle, EnrollmentStatusType status, LocalDate birthDate) {
         User user = handle.attach(UserDao.class).createUser(testData.getClientId(), null);
         handle.attach(JdbiUserStudyEnrollment.class).changeUserStudyEnrollmentStatus(user.getGuid(), testData.getStudyGuid(), status);
-        handle.attach(JdbiProfile.class).insert(new UserProfileDto(user.getId(), null, null, null, birthDate, null, null, null));
+        handle.attach(UserProfileDao.class).createProfile(new UserProfile.Builder(user.getId()).setBirthDate(birthDate).build());
         handle.attach(StudyGovernanceDao.class).addAgeUpCandidate(testData.getStudyId(), user.getId());
         return user;
     }

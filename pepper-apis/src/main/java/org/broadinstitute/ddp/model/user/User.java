@@ -3,13 +3,13 @@ package org.broadinstitute.ddp.model.user;
 import java.time.Instant;
 
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.ddp.db.dto.UserProfileDto;
 import org.broadinstitute.ddp.model.address.MailAddress;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
 /**
- * Representation of a user in the system, with associations to it's profile and address which are considered system-wide resources.
+ * Representation of a user in the system, with associations to it's profile and address which are considered
+ * system-wide resources.
  */
 public class User {
 
@@ -30,8 +30,7 @@ public class User {
     // so fill this manually when necessary.
     private String email;
 
-    // todo: better models for profile and address
-    private UserProfileDto profile;
+    private UserProfile profile;
     private MailAddress address;
 
     @JdbiConstructor
@@ -121,11 +120,11 @@ public class User {
         this.email = email;
     }
 
-    public UserProfileDto getProfile() {
+    public UserProfile getProfile() {
         return profile;
     }
 
-    public void setProfile(UserProfileDto profile) {
+    public void setProfile(UserProfile profile) {
         this.profile = profile;
     }
 
