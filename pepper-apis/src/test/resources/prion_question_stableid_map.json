@@ -133,7 +133,7 @@
           },
           {
             "name": "participant_address_zip",
-            "stable_id": "prion_medical_zip",
+            "stable_id": "prion_medical_postal",
             "type": "string"
           },
           {
