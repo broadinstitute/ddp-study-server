@@ -276,6 +276,12 @@ public class StudyDataLoader {
         optionList.add(4, "MEDICAL_PROCEDURE_HGH");
         optionList.add(5, "MEDICAL_PROCEDURE_OTHER");
         datStatEnumLookup.put("medical_procedure_risk", optionList);
+
+        //know_which_mutation
+        optionList = new ArrayList<>(2);
+        optionList.add(0, "KNOWN_MUTATION_NO");
+        optionList.add(1, "KNOWN_MUTATION_YES");
+        datStatEnumLookup.put("know_which_mutation", optionList);
     }
 
     void loadMailingListData(Handle handle, JsonElement data, String studyCode) {
