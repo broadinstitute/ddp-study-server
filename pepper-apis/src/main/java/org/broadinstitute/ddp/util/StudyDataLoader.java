@@ -138,6 +138,7 @@ public class StudyDataLoader {
         dkAltNames = new HashMap<>();
         dkAltNames.put("dk", "Don't know");
 
+        // altNames maps from the name in the mapping to the name in the export file
         altNames = new HashMap<>();
         altNames.put("SOUTH_EAST_ASIAN", "southeast_asian_indian");
         altNames.put("BLACK", "black_african_american");
@@ -169,6 +170,9 @@ public class StudyDataLoader {
         altNames.put("drugend_year", "drugendyear");
         altNames.put("drugend_month", "drugendmonth");
 
+        altNames.put("affected", "effected");
+
+        //index is value in export file and element is stable id
         datStatEnumLookup = new HashMap<>();
 
         //Independently consent
@@ -192,6 +196,12 @@ public class StudyDataLoader {
         optionList.add(2, "AT_RISK");
         optionList.add(3, "CONTROL");
         datStatEnumLookup.put("current_status", optionList);
+
+        //Doctor diagnosed
+        optionList = new ArrayList<>(2);
+        optionList.add(0, "DIAGNOSED_NO");
+        optionList.add(1, "DIAGNOSED_YES");
+        datStatEnumLookup.put("doctor_diagnosed", optionList);
 
         //Prion subtype
         optionList = new ArrayList<>(9);
