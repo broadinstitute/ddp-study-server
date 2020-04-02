@@ -234,7 +234,7 @@ commands:
 
             echo "The versions to delete ${VERSIONS_TO_DELETE}"
             for CURRENT_VERSION in $VERSIONS_TO_DELETE; do
-              gcloud app versions delete --service "$SERVICE" "$CURRENT_VERSION" --project "broad-ddp-${ENVIRONMENT}"
+              gcloud app versions delete --quiet --service "$SERVICE" "$CURRENT_VERSION" --project "broad-ddp-${ENVIRONMENT}"
             done;
 
   update-deployment-sheet:
