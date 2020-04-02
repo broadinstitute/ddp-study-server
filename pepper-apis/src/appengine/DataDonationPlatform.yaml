@@ -1,6 +1,6 @@
 service: pepper-backend
 runtime: java11
-instance_class: F2
+instance_class: F4
 
 # @todo back to 2 when dev completed
 automatic_scaling:
@@ -16,7 +16,7 @@ automatic_scaling:
 network:
   instance_tag: study-server # necessary for firewall rules so that DSM will accept https requests from pepper
 
-entrypoint: java -Xmx410m -Xmx410m -jar DataDonationPlatform.jar
+entrypoint: java -Xmx820m -Xmx820m -jar DataDonationPlatform.jar
 
 # GAE does not like the "=" character in entrypoint and does not support "." in environment variables
 env_variables:
