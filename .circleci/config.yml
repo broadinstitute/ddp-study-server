@@ -226,6 +226,7 @@ commands:
             SERVICE=$(grep -Eo "^service:\s*.*" "${CONFIG_FILE}" | awk '{print $2}')
             echo "The service name is *${SERVICE}*"
 
+            vault read -format=json secret/pepper/${ENVIRONMENT}/v1/conf  | jq -r .data.gcp.serviceKey | gcloud auth activate-service-account --key-file=-
             # find what other versions are currently running
             # skip first line, exclude our version, print 2nd column
             AWK_COMMMAND="NR > 1 && !/${SHORT_GIT_SHA}/ {print \$2}"
