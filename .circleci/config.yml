@@ -230,7 +230,7 @@ commands:
             # find what other versions are currently running
             # skip first line, exclude our version, print 2nd column
             AWK_COMMMAND="NR > 1 && !/${SHORT_GIT_SHA}/ {print \$2}"
-            VERSIONS_TO_DELETE=$(gcloud app versions list --service pepper-backend | awk "${AWK_COMMMAND}")
+            VERSIONS_TO_DELETE=$(gcloud app versions list --service pepper-backend --project "broad-ddp-${ENVIRONMENT} | awk "${AWK_COMMMAND}")
 
             echo "The versions to delete ${VERSIONS_TO_DELETE}"
             for CURRENT_VERSION in $VERSIONS_TO_DELETE; do
