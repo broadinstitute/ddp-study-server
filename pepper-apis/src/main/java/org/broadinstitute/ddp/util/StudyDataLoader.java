@@ -570,6 +570,8 @@ public class StudyDataLoader {
         //MBC might have dup physicians because physician list comes in both release and bdrelease surveys
         processPhysicianList(handle, surveyData, userDto, studyDto,
                 "physician_list", InstitutionType.PHYSICIAN, "bdreleasesurvey", instanceDto);
+
+        updateUserStudyEnrollment(handle, surveyData, userDto.getUserGuid(), studyDto.getGuid());
     }
 
 
