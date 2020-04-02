@@ -16,6 +16,7 @@
     </changeSet>
 
     <changeSet author="yufeng" id="baseline-umbrella-study-table">
+        <validCheckSum>8:3a40af1a21b979493c2fdee8b40f6c9a</validCheckSum>
         <createTable tableName="umbrella_study">
             <column name="umbrella_study_id" type="bigint" autoIncrement="true" startWith="1">
                 <constraints primaryKey="true" primaryKeyName="umbrella_study_pk"/>
@@ -23,7 +24,7 @@
             <column name="umbrella_id" type="bigint">
                 <constraints nullable="false" references="umbrella(umbrella_id)" foreignKeyName="umbrella_study_umbrella_fk"/>
             </column>
-            <column name="study_name" type="varchar(1000)">
+            <column name="study_name" type="varchar(200)">
                 <constraints nullable="false" unique="true" uniqueConstraintName="umbrella_study_name_uk"/>
             </column>
             <column name="guid" type="varchar(10)">
