@@ -1,12 +1,12 @@
 package org.broadinstitute.ddp.script;
 
-import org.broadinstitute.ddp.db.dto.UserProfileDto;
+import org.broadinstitute.ddp.model.user.UserProfile;
 
 public class ProfileWithEmail {
-    private UserProfileDto profile;
+    private UserProfile profile;
     private String emailAddress;
 
-    ProfileWithEmail(UserProfileDto profile, String emailAddress) {
+    ProfileWithEmail(UserProfile profile, String emailAddress) {
         this.profile = profile;
         this.emailAddress = emailAddress;
     }
@@ -15,7 +15,7 @@ public class ProfileWithEmail {
         return profile.getFirstName() + " " + profile.getLastName();
     }
 
-    public UserProfileDto getProfile() {
+    public UserProfile getProfile() {
         return profile;
     }
 

@@ -329,9 +329,9 @@ public class DataDonationPlatform {
         get(API.USER_STUDY_PARTICIPANTS, new GetGovernedStudyParticipantsRoute(), responseSerializer);
 
         // User profile routes
-        get(API.USER_PROFILE, new GetProfileRoute(userDao), responseSerializer);
-        post(API.USER_PROFILE, new AddProfileRoute(userDao), responseSerializer);
-        patch(API.USER_PROFILE, new PatchProfileRoute(userDao), responseSerializer);
+        get(API.USER_PROFILE, new GetProfileRoute(), responseSerializer);
+        post(API.USER_PROFILE, new AddProfileRoute(), responseSerializer);
+        patch(API.USER_PROFILE, new PatchProfileRoute(), responseSerializer);
 
         // User mailing address routes
         AddressService addressService = new AddressService(cfg.getString(ConfigFile.EASY_POST_API_KEY),
