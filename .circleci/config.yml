@@ -127,12 +127,12 @@ commands:
       - run:
           name: Run maven
           command: |
-            # @todo remove test
+            # @todo remove skipTest
             mvn --batch-mode -file pom.xml package \
                      -Ditext.license=output-config/itextkey.xml \
                      -Dddp.firecloudKeysDir=output-config/fc_keys \
                      -Dconfig.file=output-config/testing-circleci.conf \
-                     install
+                     install -Dmaven.test.skip
             mvn package -f housekeeping-pom.xml -Dmaven.test.skip -Dcheckstyle.skip         
           #            mvn --batch-mode --fail-never -file smoketest-pom.xml install package test
 #            mvn --batch-mode --fail-never -file housekeeping.xml install package test           
