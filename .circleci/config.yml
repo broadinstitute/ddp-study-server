@@ -247,7 +247,7 @@ commands:
           command: |
             set -u
             set +x
-            ../scripts/vaultcli read secret/pepper/${ENVIRONMENT}/v1/conf --raw .gcp.serviceKey | \
+            vault read -format=json secret/pepper/${ENVIRONMENT}/v1/conf  | jq -r .data.gcp.serviceKey |
             /opt/build-utils/reportdeploy.sh "$RELEASE_SHEET_ID" '<<parameters.jar_base_name>> server' "$ENVIRONMENT" "$CIRCLE_BUILD_NUM" "$CIRCLE_BUILD_URL"
 
   auth-gcp-service-account:
