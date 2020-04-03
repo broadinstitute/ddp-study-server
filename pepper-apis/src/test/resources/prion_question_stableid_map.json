@@ -27,7 +27,8 @@
           {
             "name": "age_majority",
             "stable_id": "prion_consent_s6_age",
-            "type": "Agreement"
+            "type": "Agreement",
+            "source_type": "integer"
           },
           {
             "name": "follow_up",
