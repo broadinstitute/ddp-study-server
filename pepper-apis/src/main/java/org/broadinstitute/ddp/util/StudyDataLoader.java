@@ -700,6 +700,12 @@ public class StudyDataLoader {
             return;
         }
 
+        String status = getStringValueFromElement(surveyData, "survey_status");
+        if (status.equalsIgnoreCase("CREATED")) {
+            LOG.warn("Created followup survey instance but no data ");
+            return;
+        }
+
         processSurveyData(handle, "followupsurvey", surveyData, mappingData,
                 studyDto, userDto, instanceDto, answerDao);
 
