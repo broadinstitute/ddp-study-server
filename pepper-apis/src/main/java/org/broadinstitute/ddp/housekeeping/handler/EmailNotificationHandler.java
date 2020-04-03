@@ -15,7 +15,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import com.sendgrid.Attachments;
 import com.sendgrid.Email;
@@ -25,11 +24,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.client.SendGridClient;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.EventDao;
-import org.broadinstitute.ddp.db.dao.JdbiProfile;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
+import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.NotificationTemplateSubstitutionDto;
-import org.broadinstitute.ddp.db.dto.UserProfileDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.housekeeping.message.HousekeepingMessageHandler;
 import org.broadinstitute.ddp.housekeeping.message.NotificationMessage;
@@ -37,6 +35,7 @@ import org.broadinstitute.ddp.model.event.NotificationType;
 import org.broadinstitute.ddp.model.event.PdfAttachment;
 import org.broadinstitute.ddp.model.pdf.PdfConfiguration;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
+import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.monitoring.PointsReducerFactory;
 import org.broadinstitute.ddp.monitoring.StackdriverCustomMetric;
 import org.broadinstitute.ddp.monitoring.StackdriverMetricsTracker;
@@ -169,9 +168,9 @@ public class EmailNotificationHandler implements HousekeepingMessageHandler<Noti
             return true;
         }
 
-        UserProfileDto profile = apisHandle.attach(JdbiProfile.class).getUserProfileByUserGuid(participantGuid);
-        boolean doNotContact = Optional.ofNullable(profile)
-                .map(UserProfileDto::getDoNotContact)
+        boolean doNotContact = apisHandle.attach(UserProfileDao.class)
+                .findProfileByUserGuid(participantGuid)
+                .map(UserProfile::getDoNotContact)
                 .orElse(false);
         if (doNotContact) {
             LOG.info("The participant {} elected not to receive notifications, so nothing will be sent", participantGuid);

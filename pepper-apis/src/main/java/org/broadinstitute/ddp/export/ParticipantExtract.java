@@ -9,10 +9,10 @@ import org.broadinstitute.ddp.db.dto.ActivityInstanceStatusDto;
 import org.broadinstitute.ddp.db.dto.EnrollmentStatusDto;
 import org.broadinstitute.ddp.db.dto.MedicalProviderDto;
 import org.broadinstitute.ddp.db.dto.UserDto;
-import org.broadinstitute.ddp.db.dto.UserProfileDto;
 import org.broadinstitute.ddp.model.activity.instance.ActivityInstance;
 import org.broadinstitute.ddp.model.address.MailAddress;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
+import org.broadinstitute.ddp.model.user.UserProfile;
 
 /**
  * A data extract that encapsulates all the data for a participant that is relevant to a study.
@@ -21,25 +21,25 @@ public class ParticipantExtract {
 
     private EnrollmentStatusDto statusDto;
     private UserDto userDto;
-    private UserProfileDto profileDto;
+    private UserProfile profile;
     private String userEmail;
     private MailAddress address;
     private List<MedicalProviderDto> providers;
     private List<ActivityInstance> instances;
     private Map<String, List<ActivityInstanceStatusDto>> instanceStatuses;
 
-    public ParticipantExtract(EnrollmentStatusDto statusDto, UserDto userDto, UserProfileDto profileDto, MailAddress address) {
-        this(statusDto, userDto, null, profileDto, address, new ArrayList<>(), new ArrayList<>(), new HashMap<>());
+    public ParticipantExtract(EnrollmentStatusDto statusDto, UserDto userDto, UserProfile profile, MailAddress address) {
+        this(statusDto, userDto, null, profile, address, new ArrayList<>(), new ArrayList<>(), new HashMap<>());
     }
 
-    public ParticipantExtract(EnrollmentStatusDto statusDto, UserDto userDto, String userEmail, UserProfileDto profileDto,
+    public ParticipantExtract(EnrollmentStatusDto statusDto, UserDto userDto, String userEmail, UserProfile profile,
                               MailAddress address, List<MedicalProviderDto> providers,
                               List<ActivityInstance> instances,
                               Map<String, List<ActivityInstanceStatusDto>> instanceStatuses) {
         this.statusDto = statusDto;
         this.userDto = userDto;
         this.userEmail = userEmail;
-        this.profileDto = profileDto;
+        this.profile = profile;
         this.address = address;
         this.providers = providers;
         this.instances = instances;
@@ -74,8 +74,8 @@ public class ParticipantExtract {
         this.userEmail = userEmail;
     }
 
-    public UserProfileDto getProfileDto() {
-        return profileDto;
+    public UserProfile getProfile() {
+        return profile;
     }
 
     public MailAddress getAddress() {
@@ -95,7 +95,7 @@ public class ParticipantExtract {
     }
 
     public boolean hasProfile() {
-        return profileDto != null;
+        return profile != null;
     }
 
     public boolean hasAddress() {

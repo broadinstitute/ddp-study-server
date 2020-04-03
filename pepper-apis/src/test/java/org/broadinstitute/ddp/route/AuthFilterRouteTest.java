@@ -29,8 +29,8 @@ import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.constants.TestConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.db.dao.JdbiProfile;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
+import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.json.Profile;
 import org.broadinstitute.ddp.json.export.ExportStudyPayload;
 import org.broadinstitute.ddp.util.ConfigManager;
@@ -165,7 +165,7 @@ public class AuthFilterRouteTest extends IntegrationTestSuite.TestCase {
     public void clearProfile() {
         TransactionWrapper.useTxn(handle -> {
             long userId = handle.attach(JdbiUser.class).getUserIdByGuid(TestConstants.TEST_USER_GUID);
-            handle.attach(JdbiProfile.class).deleteByUserId(userId);
+            handle.attach(UserProfileDao.class).getUserProfileSql().deleteByUserId(userId);
 
         });
     }

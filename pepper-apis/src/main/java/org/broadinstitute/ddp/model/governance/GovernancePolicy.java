@@ -7,10 +7,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import org.broadinstitute.ddp.db.dao.JdbiProfile;
-import org.broadinstitute.ddp.db.dto.UserProfileDto;
+import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.pex.Expression;
+import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.mapper.Nested;
@@ -95,10 +95,10 @@ public class GovernancePolicy {
     }
 
     public boolean hasReachedAgeOfMajority(Handle handle, PexInterpreter interpreter, String userGuid) {
-        UserProfileDto profileDto = handle.attach(JdbiProfile.class).getUserProfileByUserGuid(userGuid);
-        if (profileDto == null || profileDto.getBirthDate() == null) {
+        UserProfile profile = handle.attach(UserProfileDao.class).findProfileByUserGuid(userGuid).orElse(null);
+        if (profile == null || profile.getBirthDate() == null) {
             throw new DDPException("User with guid " + userGuid + " does not have profile or birth date");
         }
-        return hasReachedAgeOfMajority(handle, interpreter, userGuid, profileDto.getBirthDate());
+        return hasReachedAgeOfMajority(handle, interpreter, userGuid, profile.getBirthDate());
     }
 }

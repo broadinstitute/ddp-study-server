@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import com.auth0.client.auth.AuthAPI;
 import com.auth0.exception.Auth0Exception;
 import com.auth0.json.auth.TokenHolder;
+import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.auth0.net.AuthRequest;
 import com.google.gson.Gson;
@@ -161,9 +162,18 @@ public class DsmRouteTest extends IntegrationTestSuite.TestCase {
             return null;
         }
 
-        DecodedJWT jwt = JWTConverter.verifyDDPToken(creds.getToken(), JWTConverter.defaultProvider(auth0Domain));
-        if (jwt == null) {
-            LOG.warn("Unable to verify or decode jwt token for cached dsm credentials");
+        DecodedJWT jwt;
+        try {
+            jwt = JWTConverter.verifyDDPToken(creds.getToken(), JWTConverter.defaultProvider(auth0Domain));
+            if (jwt == null) {
+                LOG.warn("Unable to verify or decode jwt token for cached dsm credentials");
+                return null;
+            }
+        } catch (TokenExpiredException e) {
+            LOG.warn("Cached dsm token expired, not using", e);
+            return null;
+        } catch (Exception e) {
+            LOG.warn("Error while verifying cached dsm jwt token, not using", e);
             return null;
         }
 
@@ -172,7 +182,7 @@ public class DsmRouteTest extends IntegrationTestSuite.TestCase {
             return null;
         }
 
-        Instant shortenedExpire = jwt.getExpiresAt().toInstant().minus(5, ChronoUnit.MINUTES);
+        Instant shortenedExpire = jwt.getExpiresAt().toInstant().minus(1, ChronoUnit.MINUTES);
         Instant now = Instant.now();
         if (now.equals(shortenedExpire) || now.isAfter(shortenedExpire)) {
             LOG.info("Cached dsm credentials's jwt token has or is about to expire");

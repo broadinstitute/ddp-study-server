@@ -1,0 +1,22 @@
+group UserProfileDao;
+
+select_profile() ::= <<
+select p.user_id,
+       p.first_name,
+       p.last_name,
+       p.sex,
+       p.birth_date,
+       p.do_not_contact,
+       p.is_deceased,
+       p.preferred_language_id,
+       (select iso_language_code from language_code where language_code_id = p.preferred_language_id) as iso_language_code
+  from user_profile as p
+>>
+
+findProfileByUserId() ::= <<
+<select_profile()> where p.user_id = :userId
+>>
+
+findProfileByUserGuid() ::= <<
+<select_profile()> where p.user_id = (select user_id from user where guid = :userGuid)
+>>

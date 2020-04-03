@@ -22,17 +22,16 @@ import org.broadinstitute.ddp.db.dao.InvitationDao;
 import org.broadinstitute.ddp.db.dao.JdbiCountry;
 import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
 import org.broadinstitute.ddp.db.dao.JdbiMailingList;
-import org.broadinstitute.ddp.db.dao.JdbiProfile;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dao.QueuedEventDao;
 import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
+import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.EventConfigurationDto;
 import org.broadinstitute.ddp.db.dto.InvitationDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
-import org.broadinstitute.ddp.db.dto.UserProfileDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.json.LocalRegistrationResponse;
 import org.broadinstitute.ddp.json.UserRegistrationPayload;
@@ -45,6 +44,7 @@ import org.broadinstitute.ddp.model.governance.Governance;
 import org.broadinstitute.ddp.model.governance.GovernancePolicy;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.model.user.User;
+import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.pex.TreeWalkInterpreter;
 import org.broadinstitute.ddp.security.StudyClientConfiguration;
@@ -436,19 +436,15 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
             languageId = handle.attach(JdbiLanguageCode.class).getLanguageCodeId(EN_LANGUAGE_CODE);
         }
 
-        JdbiProfile jdbiProfile = handle.attach(JdbiProfile.class);
-        UserProfileDto profile = jdbiProfile.getUserProfileByUserId(user.getId());
+        var profileDao = handle.attach(UserProfileDao.class);
+        UserProfile profile = profileDao.findProfileByUserId(user.getId()).orElse(null);
 
         if (profile == null) {
-            profile = UserProfileDto.withOnlyPreferredLang(user.getId(), languageId);
-            int numInserted = jdbiProfile.insert(profile);
-            if (numInserted != 1) {
-                throw new DDPException(String.format(
-                        "Could not initialize user profile for user with guid '%s'",
-                        user.getGuid()));
-            }
-        } else if (profile.getPreferredLanguageId() == null) {
-            int numUpdated = jdbiProfile.updatePreferredLangId(user.getId(), languageId);
+            profile = new UserProfile.Builder(user.getId()).setPreferredLangId(languageId).build();
+            profileDao.createProfile(profile);
+            LOG.info("Initialized user profile for user with guid {}", user.getGuid());
+        } else if (profile.getPreferredLangId() == null) {
+            int numUpdated = profileDao.getUserProfileSql().updatePreferredLangId(user.getId(), languageId);
             if (numUpdated != 1) {
                 throw new DDPException(String.format(
                         "Could not update preferred language for user with guid '%s'",

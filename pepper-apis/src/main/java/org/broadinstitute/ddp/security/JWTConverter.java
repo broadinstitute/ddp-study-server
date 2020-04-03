@@ -17,10 +17,10 @@ import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.UserDao;
 import org.broadinstitute.ddp.db.dao.ClientDao;
-import org.broadinstitute.ddp.db.dao.JdbiProfile;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
-import org.broadinstitute.ddp.db.dto.UserProfileDto;
+import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.exception.DDPTokenException;
+import org.broadinstitute.ddp.model.user.UserProfile;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -92,11 +92,11 @@ public class JWTConverter {
     private String getPreferredLanguageCodeForUser(Handle handle, String userGuid) {
         JdbiUser userDao = handle.attach(JdbiUser.class);
         Long userId = userDao.getUserIdByGuid(userGuid);
-        JdbiProfile userProfileDao = handle.attach(JdbiProfile.class);
-        UserProfileDto userProfileDto = userProfileDao.getUserProfileByUserId(userId);
+        var profileDao = handle.attach(UserProfileDao.class);
+        UserProfile userProfile = profileDao.findProfileByUserId(userId).orElse(null);
         String preferredIsoLanguageCode;
-        if (userProfileDto != null && userProfileDto.getPreferredLanguageCode() != null) {
-            preferredIsoLanguageCode = userProfileDto.getPreferredLanguageCode();
+        if (userProfile != null && userProfile.getPreferredLangCode() != null) {
+            preferredIsoLanguageCode = userProfile.getPreferredLangCode();
             LOG.info("The preferred language code for the user with GUID {} is '{}'",
                     userGuid, preferredIsoLanguageCode);
         } else {
