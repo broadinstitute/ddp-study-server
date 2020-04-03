@@ -150,11 +150,12 @@ commands:
       jar_base_name:
         type: string
     steps:
+      - auth-gcp-service-account:
+          env: prod
       - run:
           name: Store jar <<parameters.jar_base_name>>
           command: |
             set -u
-            vault read -format=json  secret/pepper/prod/v1/conf | jq -r .data.gcp.serviceKey | gcloud auth activate-service-account --key-file=-
             DATE=`date +%F`
             JAR_BASE_NAME=<<parameters.jar_base_name>>
             JAR_FILE_NAME="${JAR_BASE_NAME}_${DATE}_${SHORT_GIT_SHA}.jar"
@@ -167,13 +168,13 @@ commands:
       jar_base_name:
         type: string
     steps:
+      - auth-gcp-service-account:
+          env: prod
       - run:
           name: Retrieve <<parameters.jar_base_name>> jar from bucket
           command: |
             set -u
             set +e
-            # @TODO remove when done
-            vault read -format=json  secret/pepper/prod/v1/conf | jq -r .data.gcp.serviceKey | gcloud auth activate-service-account --key-file=-
             JAR_BASE_NAME=<<parameters.jar_base_name>>
             JAR_FILE_URL_PATTERN="gs://${BUILDS_BUCKET}/ddp-study-server-pepper-apis/${JAR_BASE_NAME}_*_${SHORT_GIT_SHA}.jar"
             echo "Checking for ${JAR_FILE_URL_PATTERN}"
@@ -207,11 +208,11 @@ commands:
             cp ../src/appengine/<<parameters.jar_base_name>>.yaml .
             cp ../output-config/application.conf .
             cp -r ../output-config/fc_keys .
+      - auth-gcp-service-account
       - run:
           name: Deploy <<parameters.jar_base_name>> to GAE
           command: |
             set -u
-            vault read -format=json secret/pepper/${ENVIRONMENT}/v1/conf  | jq -r .data.gcp.serviceKey | gcloud auth activate-service-account --key-file=-
             gcloud app deploy --version="${SHORT_GIT_SHA}" --stop-previous-version --project "broad-ddp-${ENVIRONMENT}" $DEPLOY_DIR/<<parameters.jar_base_name>>.yaml
       - update-deployment-sheet:
           jar_base_name: <<parameters.jar_base_name>>
@@ -225,7 +226,6 @@ commands:
             SERVICE=$(grep -Eo -m1 "^service:\s*.*" "${CONFIG_FILE}" | awk '{print $2}')
             echo "The service name is *${SERVICE}*"
 
-            vault read -format=json secret/pepper/${ENVIRONMENT}/v1/conf  | jq -r .data.gcp.serviceKey | gcloud auth activate-service-account --key-file=-
             # find what other versions are currently running
             # skip first line, exclude our version, print 2nd column
             AWK_COMMMAND="NR > 1 && !/${SHORT_GIT_SHA}/ {print \$2}"
@@ -246,9 +246,25 @@ commands:
           command: |
             set -u
             set +x
-            vault read -format=json secret/pepper/${ENVIRONMENT}/v1/conf  | jq -r .data.gcp.serviceKey | \
+            ../scripts/vaultcli read secret/pepper/${ENVIRONMENT}/v1/conf --raw .gcp.serviceKey | \
             /opt/build-utils/reportdeploy.sh "$RELEASE_SHEET_ID" '<<parameters.jar_base_name>> server' "$ENVIRONMENT" "$CIRCLE_BUILD_NUM" "$CIRCLE_BUILD_URL"
 
+  auth-gcp-service-account:
+    parameters:
+      env:
+        type: string
+        default: ''
+    steps:
+      - run:
+          name: Call authenticate with GCP with in deployment environment
+          command: |
+            PARAM_ENV='<< parameters.env >>'
+            TARGET_ENV="${PARAM_ENV:-${ENVIRONMENT}}"
+            if [[ -z $TARGET_ENV ]]; then
+              echo "Target environment was not set"
+              exit 1
+            fi
+            ../scripts/vaultcli read secret/pepper/${TARGET_ENV}/v1/conf --raw .gcp.serviceKey | gcloud auth activate-service-account --key-file=-
 jobs:
   build-jars-job:
     executor:
