@@ -122,7 +122,7 @@ public class NotificationEventActionTest extends TxnAwareBaseTest {
                     testData.getStudyId(), testData.getUserId(), "test222@datadonationplatform.org");
             try {
                 Thread.sleep(2);
-            }catch(InterruptedException e) {
+            } catch (InterruptedException e) {
                 fail("Got interrupted while sleeping");
             }
             InvitationDto invitation3 = invitationFactory.createInvitation(InvitationType.AGE_UP,
