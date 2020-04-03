@@ -267,7 +267,9 @@ commands:
               echo "Target vault env: $TARGET_ENV"
               echo "From $PWD"
             fi
-            ../scripts/vaultcli read secret/pepper/${TARGET_ENV}/v1/conf --raw .gcp.serviceKey | gcloud auth activate-service-account --key-file=-
+            vault read --format=json secret/pepper/${TARGET_ENV}/v1/conf |
+              jq -r .data.gcp.serviceKey |
+              gcloud auth activate-service-account --key-file=-
 jobs:
   build-jars-job:
     executor:
@@ -306,8 +308,6 @@ jobs:
       name: build-executor
     steps:
       - common-setup
-      - set-deployment-env
-      - auth-gcp-service-account
       - build-jars
       - deploy-jar:
           jar_base_name: DataDonationPlatform
