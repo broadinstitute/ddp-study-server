@@ -306,6 +306,7 @@ jobs:
       name: build-executor
     steps:
       - common-setup
+      - set-deployment-env
       - auth-gcp-service-account
       - build-jars
       - deploy-jar:
