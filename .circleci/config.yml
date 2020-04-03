@@ -263,6 +263,9 @@ commands:
             if [[ -z $TARGET_ENV ]]; then
               echo "Target environment was not set"
               exit 1
+            else
+              echo "Target vault env: $TARGET_ENV"
+              echo "From $PWD"
             fi
             ../scripts/vaultcli read secret/pepper/${TARGET_ENV}/v1/conf --raw .gcp.serviceKey | gcloud auth activate-service-account --key-file=-
 jobs:
@@ -303,6 +306,7 @@ jobs:
       name: build-executor
     steps:
       - common-setup
+      - auth-gcp-service-account
       - build-jars
       - deploy-jar:
           jar_base_name: DataDonationPlatform
