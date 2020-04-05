@@ -570,6 +570,8 @@ public class StudyDataLoader {
         //MBC might have dup physicians because physician list comes in both release and bdrelease surveys
         processPhysicianList(handle, surveyData, userDto, studyDto,
                 "physician_list", InstitutionType.PHYSICIAN, "bdreleasesurvey", instanceDto);
+
+        updateUserStudyEnrollment(handle, surveyData, userDto.getUserGuid(), studyDto.getGuid());
     }
 
 
@@ -695,6 +697,12 @@ public class StudyDataLoader {
         LOG.info("Populating Followup Survey...");
         if (surveyData == null || surveyData.isJsonNull()) {
             LOG.warn("NO Followup Survey !");
+            return;
+        }
+
+        String status = getStringValueFromElement(surveyData, "survey_status");
+        if (status.equalsIgnoreCase("CREATED")) {
+            LOG.warn("Created followup survey instance but no data ");
             return;
         }
 
