@@ -7,7 +7,6 @@ import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 public class ClientDto {
 
     private long id;
-    private String name;
     private String auth0ClientId;
     private String auth0EncryptedSecret;
     private String webPasswordRedirectUrl;
@@ -16,14 +15,12 @@ public class ClientDto {
 
     @JdbiConstructor
     public ClientDto(@ColumnName("client_id") long id,
-                     @ColumnName("client_name") String name,
                      @ColumnName("auth0_client_id") String auth0ClientId,
                      @ColumnName("auth0_signing_secret") String auth0EncryptedSecret,
                      @ColumnName("web_password_redirect_url") String webPasswordRedirectUrl,
                      @ColumnName("is_revoked") boolean isRevoked,
                      @ColumnName("auth0_tenant_id") long auth0TenantId) {
         this.id = id;
-        this.name = name;
         this.auth0ClientId = auth0ClientId;
         this.auth0EncryptedSecret = auth0EncryptedSecret;
         this.webPasswordRedirectUrl = webPasswordRedirectUrl;
@@ -33,10 +30,6 @@ public class ClientDto {
 
     public long getId() {
         return id;
-    }
-
-    public String getName() {
-        return name;
     }
 
     public String getAuth0ClientId() {

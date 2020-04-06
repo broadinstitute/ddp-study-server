@@ -373,7 +373,6 @@ public class TestDataSetupUtil {
                     mgmtClientId,
                     encryptedSecret);
             clientId = clientDao.registerClient(
-                    auth0clientName,
                     auth0clientId,
                     auth0Secret,
                     Collections.singletonList(study.getGuid()),

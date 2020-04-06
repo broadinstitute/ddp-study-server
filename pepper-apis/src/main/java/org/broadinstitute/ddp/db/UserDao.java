@@ -106,8 +106,12 @@ public class UserDao {
     /**
      * Returns user permissions for the given operator user guid.
      */
-    public UserPermissions queryUserPermissionsByOperatorGuidAndClientId(Handle handle, String operatorGuid,
-                                                                         String auth0ClientId) {
+    public UserPermissions queryUserPermissions(
+            Handle handle,
+            String operatorGuid,
+            String auth0ClientId,
+            String auth0Domain
+    ) {
         ClientStatus clientStatus = handle.select(userClientRevocationQuery, operatorGuid, auth0ClientId)
                 .map(new UserClientStatusMapper())
                 .findFirst()
@@ -116,7 +120,10 @@ public class UserDao {
                             operatorGuid, auth0ClientId);
                     return new DaoException(msg);
                 });
-        List<String> clientStudyGuids = handle.attach(JdbiClientUmbrellaStudy.class).findPermittedStudyGuidsByAuth0ClientId(auth0ClientId);
+        List<String> clientStudyGuids = handle.attach(JdbiClientUmbrellaStudy.class).findPermittedStudyGuidsByAuth0ClientIdAndAuth0Domain(
+                auth0ClientId,
+                auth0Domain
+        );
 
         Map<String, ParticipantAccess> participants = new HashMap<>();
         List<Governance> governances = handle.attach(UserGovernanceDao.class)
