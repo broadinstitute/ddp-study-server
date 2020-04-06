@@ -301,7 +301,7 @@ public class DataDonationPlatform {
                 new TokenConverterFilter(new JWTConverter(userDao)));
         beforeWithExclusion(API.BASE + "/*", new String[] {API.DSM_BASE + "/*", API.CHECK_IRB_PASSWORD}, new AddDDPAuthLoggingFilter());
         // Internal routes
-        get(API.HEALTH_CHECK, new HealthCheckRoute(healthcheckPassword), responseSerializer);
+        get(API.HEALTH_CHECK, new HealthCheckRoute(), responseSerializer);
         get(API.DEPLOYED_VERSION, new GetDeployedAppVersionRoute(), responseSerializer);
         get(API.INTERNAL_ERROR, new ErrorRoute(), responseSerializer);
 

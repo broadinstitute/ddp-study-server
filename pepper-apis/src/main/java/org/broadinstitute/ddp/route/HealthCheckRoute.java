@@ -30,21 +30,10 @@ public class HealthCheckRoute implements Route {
     private static final String HC_QUERY = "SELECT 1 FROM umbrella";
     private static final Integer QUERY_TIMEOUT = 20;
     private static final String CUSTOM_PASSWORD_HEADER = "Host";
-    private final String password;
     private static final long MIN_TIME_BETWEEN_DB_QUERIES = 2 * 1000L;
     private static AtomicLong lastRealHealthCheckTime = new AtomicLong(System.currentTimeMillis());
     private static final Object healthCheckMonitor = new Object();
     private static final AtomicBoolean isAThreadQueryingTheDatabase = new AtomicBoolean(false);
-
-    /**
-     * Instantiates HealthCheckRoute.
-     */
-    public HealthCheckRoute(String password) {
-        if (password == null) {
-            throw new IllegalArgumentException("password must be non-null");
-        }
-        this.password = password;
-    }
 
     /**
      * Checks the database health by attempting to execute a trivial query.
@@ -67,11 +56,6 @@ public class HealthCheckRoute implements Route {
 
     @Override
     public HealthCheckResponse handle(Request request, Response response) throws Exception {
-        String password = request.headers(CUSTOM_PASSWORD_HEADER);
-        if (!this.password.equals(password)) {
-            LOG.warn("Healthcheck route denied with {} header password {}", CUSTOM_PASSWORD_HEADER, password);
-            halt(401);
-        }
 
         // don't query the db on each healthcheck because google's redundant healthchecks tend to hammer us
         // all at once and we don't want this to exhaust our connection pool

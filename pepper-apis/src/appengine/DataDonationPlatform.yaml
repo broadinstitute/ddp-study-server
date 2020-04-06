@@ -10,6 +10,13 @@ resources:
 manual_scaling:
   instances: 1
 
+readiness_check:
+  path: "/v1/healthcheck"
+  check_interval_sec: 30
+  timeout_sec: 4
+  failure_threshold: 2
+  success_threshold: 2
+
 network:
   instance_tag: study-server # necessary for firewall rules so that DSM will accept https requests from pepper
 

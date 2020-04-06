@@ -21,18 +21,8 @@ public class HealthCheckRouteTest extends IntegrationTestSuite.TestCase {
 
     @Test
     public void testGoodPassword() {
-        given().header("Host", password)
-                .when().get(url).then().assertThat()
+        given().when().get(url).then().assertThat()
                 .statusCode(200);
     }
 
-    @Test
-    public void testBadPassword() {
-        given().header(new Header("Host", null))
-                .when().get(url).then().assertThat()
-                .statusCode(401);
-        given().header("Host", "bad password")
-                .when().get(url).then().assertThat()
-                .statusCode(401);
-    }
 }
