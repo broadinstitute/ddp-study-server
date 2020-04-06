@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp;
 
 import static com.google.common.net.HttpHeaders.X_FORWARDED_FOR;
+import static org.broadinstitute.ddp.util.FilterUtil.whitelist;
 import static spark.Spark.after;
 import static spark.Spark.afterAfter;
 import static spark.Spark.awaitInitialization;
@@ -17,6 +18,7 @@ import java.io.File;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -147,6 +149,7 @@ import org.broadinstitute.ddp.transformers.SimpleJsonTransformer;
 import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.ddp.util.LiquibaseUtil;
 import org.broadinstitute.ddp.util.LogbackConfigurationPrinter;
+import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
 import org.quartz.Scheduler;
 import org.slf4j.Logger;
@@ -294,7 +297,11 @@ public class DataDonationPlatform {
         get(API.DEPLOYED_VERSION, new GetDeployedAppVersionRoute(), responseSerializer);
         get(API.INTERNAL_ERROR, new ErrorRoute(), responseSerializer);
 
+        if (cfg.getBoolean(ConfigFile.RESTRICT_REGISTER_ROUTE)) {
+            whitelist(API.REGISTRATION, cfg.getStringList(ConfigFile.AUTH0_IP_WHITE_LIST));
+        }
         post(API.REGISTRATION, new UserRegistrationRoute(interpreter), responseSerializer);
+
         post(API.TEMP_USERS, new CreateTemporaryUserRoute(userDao), responseSerializer);
 
         // Study related routes
@@ -574,10 +581,7 @@ public class DataDonationPlatform {
         //JSON for Not Found (code 404) handling
         notFound((request, response) -> {
             LOG.info("[404] Current status: {}", response.status());
-            ApiError apiError = new ApiError(ErrorCodes.NOT_FOUND, "This page was not found.");
-            response.type(ContentType.APPLICATION_JSON.getMimeType());
-            SimpleJsonTransformer jsonTransformer = new SimpleJsonTransformer();
-            return jsonTransformer.render(apiError);
+            return ResponseUtil.halt404PageNotFound(response);
         });
 
         internalServerError((request, response) -> {
