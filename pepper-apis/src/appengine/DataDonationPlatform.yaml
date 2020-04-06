@@ -6,9 +6,6 @@ resources:
   cpu: 4
   memory_gb: 15
   disk_size_gb: 5
-  volumes:
-    - name: tcell
-      volume_type: tmpfs
 
 manual_scaling:
   instances: 1
