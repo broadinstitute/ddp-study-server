@@ -1,8 +1,6 @@
 service: pepper-backend
 runtime: java
 env: flex
-runtime_config:
-  jdk: openjdk11
 
 resources:
   cpu: 4
