@@ -1,5 +1,5 @@
 service: pepper-backend
-runtime: java11
+runtime: java
 env: flex
 
 resources:
