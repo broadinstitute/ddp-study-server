@@ -16,9 +16,7 @@ import static spark.Spark.threadPool;
 
 import java.io.File;
 import java.time.Instant;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -43,7 +41,6 @@ import org.broadinstitute.ddp.db.UserDao;
 import org.broadinstitute.ddp.db.UserDaoFactory;
 import org.broadinstitute.ddp.filter.AddDDPAuthLoggingFilter;
 import org.broadinstitute.ddp.filter.DsmAuthFilter;
-import org.broadinstitute.ddp.filter.ExcludePathFilterWrapper;
 import org.broadinstitute.ddp.filter.HttpHeaderMDCFilter;
 import org.broadinstitute.ddp.filter.MDCAttributeRemovalFilter;
 import org.broadinstitute.ddp.filter.MDCLogBreadCrumbFilter;
@@ -147,6 +144,7 @@ import org.broadinstitute.ddp.service.PdfService;
 import org.broadinstitute.ddp.service.WorkflowService;
 import org.broadinstitute.ddp.transformers.SimpleJsonTransformer;
 import org.broadinstitute.ddp.util.ConfigManager;
+import org.broadinstitute.ddp.util.FilterUtil;
 import org.broadinstitute.ddp.util.LiquibaseUtil;
 import org.broadinstitute.ddp.util.LogbackConfigurationPrinter;
 import org.broadinstitute.ddp.util.ResponseUtil;
@@ -289,9 +287,9 @@ public class DataDonationPlatform {
 
         // before filter converts jwt into DDP_AUTH request attribute
         // we exclude the DSM paths. DSM paths have own separate authentication
-        beforeWithExclusion(API.BASE + "/*", new String[] {API.DSM_BASE + "/*", API.CHECK_IRB_PASSWORD},
+        FilterUtil.beforeWithExclusion(API.BASE + "/*", new String[] {API.DSM_BASE + "/*", API.CHECK_IRB_PASSWORD},
                 new TokenConverterFilter(new JWTConverter(userDao)));
-        beforeWithExclusion(API.BASE + "/*", new String[] {API.DSM_BASE + "/*", API.CHECK_IRB_PASSWORD}, new AddDDPAuthLoggingFilter());
+        FilterUtil.beforeWithExclusion(API.BASE + "/*", new String[] {API.DSM_BASE + "/*", API.CHECK_IRB_PASSWORD}, new AddDDPAuthLoggingFilter());
         // Internal routes
         get(API.HEALTH_CHECK, new HealthCheckRoute(healthcheckPassword), responseSerializer);
         get(API.DEPLOYED_VERSION, new GetDeployedAppVersionRoute(), responseSerializer);
@@ -621,14 +619,4 @@ public class DataDonationPlatform {
         DBUtils.loadDaoSqlCommands(sqlConfig);
     }
 
-    /**
-     * Allow to specify the exclusion of a path from the execution of a filter
-     *
-     * @param filterPath     the path for which the filter is applicable
-     * @param pathsToExclude the paths to exclude the execution of the filter
-     * @param filter         the filter
-     */
-    public static void beforeWithExclusion(String filterPath, String[] pathsToExclude, Filter filter) {
-        before(filterPath, new ExcludePathFilterWrapper(filter, Arrays.asList(pathsToExclude)));
-    }
 }
