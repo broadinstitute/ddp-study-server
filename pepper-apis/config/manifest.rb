@@ -13,6 +13,7 @@ render "application.conf.ctmpl"
 render "testing-circleci.conf.ctmpl"
 copy_file "post_deploy_smoketest.sh"
 copy_file "waf.conf"
+render "tcell_agent.config.ctmpl"
 fc_keys = './fc_keys'
 Dir.mkdir(fc_keys)
 # at some point managing fc keys this way will become a headache...
