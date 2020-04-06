@@ -532,7 +532,7 @@ public class StudyDataLoader {
         // Read only is always false for things that aren't consent- we rely on the user being terminated to show read
         // only activities
         boolean itIsCompletedConsent = (activityCode == "CONSENT" || activityCode == "TISSUECONSENT" || activityCode == "BLOODCONSENT"
-                || activityCode == "FOLLOWUPCONSENT")
+                || activityCode == "FOLLOWUPCONSENT" || activityCode.equals("PRIONCONSENT"))
                 && instanceCurrentStatus == InstanceStatusType.COMPLETE;
         Boolean isReadonly = itIsCompletedConsent;
         ActivityInstanceDto dto = activityInstanceDao
@@ -553,9 +553,12 @@ public class StudyDataLoader {
             dto = jdbiActivityInstance.getByActivityInstanceId(dto.getId()).get();
         } else if (InstanceStatusType.COMPLETE == instanceCurrentStatus) {
             if (ddpCompletedAt == null) {
-                //ddpCompletedAt = ddpLastUpdatedAt;
-                throw new Exception("No completed/submitted date value passed for " + activityCode
+                if ("PRIONCONSENT".equals(activityCode)) {
+                    ddpCompletedAt = ddpLastUpdatedAt;
+                } else {
+                    throw new Exception("No completed/submitted date value passed for " + activityCode
                         + " survey with status COMPLETE. user guid: " + participantGuid);
+                }
             }
             activityInstanceStatusDao.insertStatus(activityInstanceId, InstanceStatusType.COMPLETE, ddpCompletedAt, participantGuid);
             if (ddpLastUpdatedAt > ddpCompletedAt) {
@@ -1163,6 +1166,14 @@ public class StudyDataLoader {
         String surveyVersion = getStringValueFromElement(surveyData, "surveyversion");
         String activityVersion = getStringValueFromElement(surveyData, "consent_version");
         String surveyStatus = getStringValueFromElement(surveyData, "survey_status");
+        String completeStatus = getStringValueFromElement(surveyData, "complete_status");
+        if (completeStatus != null && !completeStatus.isEmpty()) {
+            if (Integer.valueOf(completeStatus) == 1) {
+                surveyStatus = "COMPLETE";
+            } else {
+                surveyStatus = "IN_PROGRESS";
+            }
+        }
         Integer datstatSubmissionStatus = getIntegerValueFromElement(surveyData, "datstat.submissionstatus");
 
         if (ddpFirstCompleted == null) {
