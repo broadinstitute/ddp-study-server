@@ -149,7 +149,7 @@ commands:
       - run:
           name: Run maven
           command: |
-            mvn --batch-mode -file pom.xml package \
+            mvn -DskipTests=true --batch-mode -file pom.xml package \
                      -Ditext.license=output-config/itextkey.xml \
                      -Dddp.firecloudKeysDir=output-config/fc_keys \
                      -Dconfig.file=output-config/testing-circleci.conf \
