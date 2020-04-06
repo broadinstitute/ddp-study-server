@@ -10,6 +10,10 @@ post:
     201:
       $ref: '../pepper.yml#/components/responses/CreateTempUserResponse'
     400:
-      $ref: '../pepper.yml#/components/responses/ErrorResponse'
+      description: if domain is not provided and client id is not unique
+      content:
+        application/json:
+          schema:
+            $ref: '../pepper.yml#/components/schemas/Error.BadPayload'
     default:
       $ref: '../pepper.yml#/components/responses/ErrorResponse'
