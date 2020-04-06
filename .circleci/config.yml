@@ -24,6 +24,23 @@ executors:
     working_directory: ~/repo/pepper-apis  
 
 commands:
+  install-tcell:
+    steps:
+      - run:
+          name: Download tcell files from bucket
+          command: |
+            vault read -format=json  secret/pepper/prod/v1/conf | jq -r .data.gcp.serviceKey | gcloud auth activate-service-account --key-file=-
+            TAR_FILE_URL=`gsutil ls $TCELL_PATH  | sort -r | head -1`
+
+            if [ -z $TAR_FILE_URL ]
+            then
+              echo "Could not find tcell archive ${TCELL_PATH}"
+              exit 1
+            fi
+            TAR_FILE_PATH="/tmp/$(basename -- $TAR_FILE_URL)"
+            gsutil cp  $TAR_FILE_URL $TAR_FILE_PATH
+            cd ~/repo/pepper-apis
+            tar --no-same-owner -xvf $TAR_FILE_PATH
   setup-shared-env:
     description: "Setup shared ENV vars used by multiple scripts"
     steps:
@@ -34,6 +51,7 @@ commands:
             echo "export SHORT_GIT_SHA=`echo '<< pipeline.git.revision >>' | cut -c 1-7`" >> $BASH_ENV
             echo 'export BUILDS_BUCKET=ddp-build-artifacts' >> $BASH_ENV
             echo 'export DEPLOY_DIR=deployment_assets' >> $BASH_ENV
+            echo 'export TCELL_DIR=tcell' >> $BASH_ENV
             source $BASH_ENV
 
   common-setup:
@@ -56,6 +74,10 @@ commands:
               study-server-to-appengine)
               DEPLOY_ENV=dev
             ;;
+            ;;
+              app-engine-flexible)
+              DEPLOY_ENV=dev
+            ;;
             test)
               DEPLOY_ENV=test
             ;;
@@ -75,7 +97,8 @@ commands:
             esac
             echo "Setting deployment ENVIRONMENT to $DEPLOY_ENV"
             echo "export ENVIRONMENT=$DEPLOY_ENV" >> $BASH_ENV
-            source $BASH_ENV          
+            echo 'export TCELL_PATH=gs://ddp-tcell/tcell-1.8.3.tar.gz' >> $BASH_ENV
+            source $BASH_ENV
 
   render-configs:
     description: render config files
@@ -198,12 +221,15 @@ commands:
     steps:
       - set-deployment-env
       - render-configs
+      - install-tcell
       - run:
           name: Gather deployment assets
           command: |
             rm -rf $DEPLOY_DIR
             mkdir -p $DEPLOY_DIR
             cd $DEPLOY_DIR
+            cp -r ../$TCELL_DIR .
+            cp ../output-config/tcell_agent.config $TCELL_DIR
             cp ../target/<<parameters.jar_base_name>>.jar .
             cp ../src/appengine/<<parameters.jar_base_name>>.yaml .
             cp ../output-config/application.conf .
@@ -325,6 +351,7 @@ workflows:
               only:
                 - develop
                 - study-server-to-appengine
+                - app-engine-flexible
 
   build-and-store:
     jobs:
