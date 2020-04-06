@@ -118,6 +118,9 @@ public class ConfigFile {
     public static final String DOMAIN = "domain";
     public static final String SEND_METRICS = "sendMetrics";
 
+    public static final String RESTRICT_REGISTER_ROUTE = "restrictRegisterRoute";
+
+    public static final String AUTH0_IP_WHITE_LIST = "ipWhiteList";
     /**
      * Google API key for geocoding
      */
@@ -145,7 +148,7 @@ public class ConfigFile {
     }
 
     /**
-     * For production code, all auth0 settings go into the database.  For
+     * For production code, most auth0 settings go into the database.  For
      * testing, we can keep things in the config file to keep life simpler and
      * migrate into the db at a later time.
      */
