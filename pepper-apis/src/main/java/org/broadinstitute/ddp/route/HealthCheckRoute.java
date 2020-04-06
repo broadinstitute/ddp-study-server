@@ -1,7 +1,5 @@
 package org.broadinstitute.ddp.route;
 
-import static spark.Spark.halt;
-
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;

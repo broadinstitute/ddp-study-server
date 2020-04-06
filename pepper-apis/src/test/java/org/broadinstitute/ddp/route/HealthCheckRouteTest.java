@@ -2,7 +2,6 @@ package org.broadinstitute.ddp.route;
 
 import static io.restassured.RestAssured.given;
 
-import io.restassured.http.Header;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.RouteConstants.API;
 import org.junit.BeforeClass;
