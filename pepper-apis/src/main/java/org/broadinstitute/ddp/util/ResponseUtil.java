@@ -29,9 +29,9 @@ public class ResponseUtil {
 
     }
 
-    public static void halt404PageNotFound(Response response) {
+    public static HaltException halt404PageNotFound(Response response) {
         ApiError apiError = new ApiError(ErrorCodes.NOT_FOUND, "This page was not found.");
-        haltError(response, HttpStatus.SC_BAD_REQUEST, apiError);
+        return haltError(response, HttpStatus.SC_BAD_REQUEST, apiError);
     }
 
     /**
