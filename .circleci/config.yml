@@ -74,7 +74,6 @@ commands:
               study-server-to-appengine)
               DEPLOY_ENV=dev
             ;;
-            ;;
               app-engine-flexible)
               DEPLOY_ENV=dev
             ;;
