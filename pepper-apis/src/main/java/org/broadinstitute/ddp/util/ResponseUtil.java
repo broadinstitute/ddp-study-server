@@ -5,7 +5,9 @@ import static spark.Spark.halt;
 import com.google.gson.Gson;
 import org.apache.http.HttpStatus;
 import org.apache.http.entity.ContentType;
+import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.json.Error;
+import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.transformers.SimpleJsonTransformer;
 import spark.HaltException;
 import spark.Response;
@@ -25,6 +27,11 @@ public class ResponseUtil {
         res.type(ContentType.APPLICATION_JSON.getMimeType());
         halt(GENERIC_INPUT_ERROR, errorJson);
 
+    }
+
+    public static void halt404PageNotFound(Response response) {
+        ApiError apiError = new ApiError(ErrorCodes.NOT_FOUND, "This page was not found.");
+        haltError(response, HttpStatus.SC_BAD_REQUEST, apiError);
     }
 
     /**
