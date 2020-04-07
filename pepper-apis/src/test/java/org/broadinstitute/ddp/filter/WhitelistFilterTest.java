@@ -61,7 +61,6 @@ public class WhitelistFilterTest {
 
     @AfterClass
     public static void stopTestServer() {
-        System.out.println("Stopping server");
         TestServer.stopServer();
     }
 
