@@ -29,9 +29,14 @@ public class ResponseUtil {
 
     }
 
-    public static HaltException halt404PageNotFound(Response response) {
+    public static String renderPageNotFound(Response response) {
+        response.type(ContentType.APPLICATION_JSON.getMimeType());
         ApiError apiError = new ApiError(ErrorCodes.NOT_FOUND, "This page was not found.");
-        return haltError(response, HttpStatus.SC_BAD_REQUEST, apiError);
+        return transformer.render(apiError);
+    }
+
+    public static HaltException halt404PageNotFound(Response response) {
+        return halt(HttpStatus.SC_NOT_FOUND, renderPageNotFound(response));
     }
 
     /**
