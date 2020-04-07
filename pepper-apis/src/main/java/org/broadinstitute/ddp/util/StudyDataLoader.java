@@ -466,7 +466,7 @@ public class StudyDataLoader {
         Long ddpCompletedAt = null;
 
         //If the survey is completed but no completion date was set, use last updated.
-        if (submissionStatus.equals(1) && (ddpCompleted == null || ddpCompleted.isEmpty())) {
+        if (submissionStatus != null && submissionStatus.equals(1) && (ddpCompleted == null || ddpCompleted.isEmpty())) {
             ddpCompleted = ddpLastUpdated;
         }
 
