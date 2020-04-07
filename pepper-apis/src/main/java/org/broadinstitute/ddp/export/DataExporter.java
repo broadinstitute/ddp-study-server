@@ -334,7 +334,7 @@ public class DataExporter {
         }
     }
 
-    public void exportActivityDefinitionsToElasticsearch(
+    public List<ActivityExtract> exportActivityDefinitionsToElasticsearch(
             Handle handle, StudyDto studyDto, Config cfg) {
 
         //get study activities
@@ -371,6 +371,8 @@ public class DataExporter {
         } catch (IOException e) {
             LOG.error("[activitydefinition export] failed during export ", e);
         }
+
+        return activityExtracts;
     }
 
     private void exportDataToElasticSearch(String index, Map<String, Object> data, Config cfg) throws IOException {
