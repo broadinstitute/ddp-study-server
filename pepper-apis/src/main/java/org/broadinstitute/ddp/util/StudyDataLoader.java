@@ -546,6 +546,10 @@ public class StudyDataLoader {
 
         long activityInstanceId = dto.getId();
 
+        if (ddpLastUpdatedAt.equals(ddpCreatedAt)) {
+            ddpLastUpdatedAt++;
+        }
+
         if (InstanceStatusType.IN_PROGRESS == instanceCurrentStatus) {
             activityInstanceStatusDao
                     .insertStatus(activityInstanceId, InstanceStatusType.IN_PROGRESS, ddpLastUpdatedAt, participantGuid);
@@ -1173,6 +1177,12 @@ public class StudyDataLoader {
             } else {
                 surveyStatus = "IN_PROGRESS";
             }
+        } else if ("0".equals(surveyStatus) || surveyStatus == null) {
+            surveyStatus = "CREATED";
+        } else if ("1".equals(surveyStatus)) {
+            surveyStatus = "IN_PROGRESS";
+        } else if ("2".equals(surveyStatus)) {
+            surveyStatus = "COMPLETED";
         }
         Integer datstatSubmissionStatus = getIntegerValueFromElement(surveyData, "datstat.submissionstatus");
 
