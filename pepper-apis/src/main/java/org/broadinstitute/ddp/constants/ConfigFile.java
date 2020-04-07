@@ -120,7 +120,6 @@ public class ConfigFile {
 
     public static final String RESTRICT_REGISTER_ROUTE = "restrictRegisterRoute";
 
-    public static final String AUTH0_IP_WHITE_LIST = "ipWhiteList";
     /**
      * Google API key for geocoding
      */
@@ -136,6 +135,8 @@ public class ConfigFile {
     public static final String DSM_JWT_SIGNER = "dsmJwtSigner";
     public static final String USE_DISPOSABLE_TEST_DB = "useDisposableTestDbs";
 
+    public static final String AUTH0_IP_WHITE_LIST = "auth0IpWhiteList";
+
     public static final class SqlQuery {
         public static final String ACTIVITY_INSTANCE_GUID_AND_PARTICIPANT_ID_BY_STUDY_GUID =
                 "studyActivity.queryActivityInstanceGuidAndParticipantId";
@@ -148,7 +149,7 @@ public class ConfigFile {
     }
 
     /**
-     * For production code, most auth0 settings go into the database.  For
+     * For production code, all auth0 settings go into the database.  For
      * testing, we can keep things in the config file to keep life simpler and
      * migrate into the db at a later time.
      */
