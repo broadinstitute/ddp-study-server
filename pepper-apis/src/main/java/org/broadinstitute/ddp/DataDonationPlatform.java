@@ -289,7 +289,8 @@ public class DataDonationPlatform {
         // we exclude the DSM paths. DSM paths have own separate authentication
         FilterUtil.beforeWithExclusion(API.BASE + "/*", new String[] {API.DSM_BASE + "/*", API.CHECK_IRB_PASSWORD},
                 new TokenConverterFilter(new JWTConverter(userDao)));
-        FilterUtil.beforeWithExclusion(API.BASE + "/*", new String[] {API.DSM_BASE + "/*", API.CHECK_IRB_PASSWORD}, new AddDDPAuthLoggingFilter());
+        FilterUtil.beforeWithExclusion(API.BASE + "/*", new String[] {API.DSM_BASE + "/*", API.CHECK_IRB_PASSWORD},
+                new AddDDPAuthLoggingFilter());
         // Internal routes
         get(API.HEALTH_CHECK, new HealthCheckRoute(healthcheckPassword), responseSerializer);
         get(API.DEPLOYED_VERSION, new GetDeployedAppVersionRoute(), responseSerializer);
