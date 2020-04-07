@@ -21,6 +21,7 @@
     "dbApiInstance": "pepper-dev",
     "dbDsmInstance": "dev-dsm",
     "dbHousekeepingInstance": "housekeeping-dev1",
+    "restrictRegisterRoute": false,
     "auth0": {
         "domain": "{{$auth0.domain}}",
         "domain2": "{{$auth0.domain2}}",
