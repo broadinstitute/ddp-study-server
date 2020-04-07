@@ -18,6 +18,11 @@
     "port": {{$conf.Data.port}},
     "doLiquibase": {{$conf.Data.doLiquibase}},
     "threadTimeout": {{$conf.Data.threadTimeout}},
+    "auth0IpWhiteList": [
+    {{range $i, $ip := $conf.Data.auth0.ipWhiteList}}
+        {{if $i}},{{end}}"{{ $ip }}"
+    {{end}}
+    ],
     "auth0": {
         "domain": "{{$auth0.domain}}",
         "managementApiSecret": "{{$auth0.managementApiSecret}}",
@@ -37,6 +42,7 @@
     "usePubSubEmulator": false,
     "pubSubProject": "{{$conf.Data.pubSubProject}}",
     "runScheduler": {{$conf.Data.runScheduler}},
+    "restrictRegisterRoute": {{$conf.Data.restrictRegisterRoute}},
     "requireDefaultGcpCredentials": {{$conf.Data.requireDefaultGcpCredentials}},
     "googleProjectId": "{{$conf.Data.googleProjectId}}",
     "pdfArchiveBucket": "{{$conf.Data.pdfArchiveBucket}}",
