@@ -579,7 +579,7 @@ public class DataDonationPlatform {
         //JSON for Not Found (code 404) handling
         notFound((request, response) -> {
             LOG.info("[404] Current status: {}", response.status());
-            return ResponseUtil.halt404PageNotFound(response);
+            return ResponseUtil.renderPageNotFound(response);
         });
 
         internalServerError((request, response) -> {
