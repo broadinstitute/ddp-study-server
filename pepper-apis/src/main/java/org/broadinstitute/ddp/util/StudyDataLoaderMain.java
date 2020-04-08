@@ -648,6 +648,7 @@ public class StudyDataLoaderMain {
                     userGuid = dataLoader.loadParticipantData(handle, datstatParticipantData, datstatParticipantMappingData,
                             phoneNumber, studyDto, clientDto, address, olcService, addressService);
                     UserDto userDto = jdbiUser.findByUserGuid(userGuid);
+                    JsonElement completeStatusElement;
 
                     hasAboutYou = (sourceData.get("aboutyousurvey") != null && !sourceData.get("aboutyousurvey").isJsonNull());
                     hasConsent = (sourceData.get("consentsurvey") != null && !sourceData.get("consentsurvey").isJsonNull());
@@ -660,7 +661,16 @@ public class StudyDataLoaderMain {
                     hasFollowupConsents = (sourceData.get("followupconsentsurvey") != null
                             && sourceData.get("followupconsentsurvey").getAsJsonArray().size() > 0);
                     hasPrionConsent = (sourceData.get("ConsentSurvey") != null && !sourceData.get("ConsentSurvey").isJsonNull());
-                    hasMedical = (sourceData.get("MedicalSurvey") != null && !sourceData.get("MedicalSurvey").isJsonNull());
+                    boolean hasSomeMedical = sourceData.get("MedicalSurvey") != null && !sourceData.get(
+                            "MedicalSurvey").isJsonNull();
+                    hasMedical = (hasSomeMedical && hasPrionConsent && (completeStatusElement =
+                            sourceData.get("ConsentSurvey").getAsJsonObject().get("complete_status")) != null
+                            && !completeStatusElement.isJsonNull() && "1".equals(completeStatusElement.getAsString()));
+
+                    if (hasSomeMedical && !hasMedical) {
+                        LOG.warn("Not loading medical questionnaire for participant (altpid " + altpid + ", email "
+                                + emailAddress + ") because consent survey has not been completed.");
+                    }
 
                     var answerDao = handle.attach(AnswerDao.class);
 
@@ -690,21 +700,8 @@ public class StudyDataLoaderMain {
                                 answerDao);
                     }
 
-                    if (hasPrionConsent) {
-                        String activityCode = mappingData.get("ConsentSurvey").getAsJsonObject().get("activity_code").getAsString();
-                        ActivityInstanceDto instanceDto = dataLoader.createActivityInstance(sourceData.get(
-                                "ConsentSurvey"),
-                                userGuid, studyId,
-                                activityCode, createdAt,
-                                jdbiActivity,
-                                activityInstanceDao,
-                                activityInstanceStatusDao);
-                        dataLoader.loadPrionConsentSurveyData(handle, sourceData.get("ConsentSurvey"),
-                                mappingData.get("ConsentSurvey"),
-                                studyDto, userDto, instanceDto, answerDao);
-                    }
-
                     if (hasMedical) {
+                        LOG.info("Loading Prion medical survey");
                         String activityCode = mappingData.get("MedicalSurvey").getAsJsonObject().get("activity_code").getAsString();
                         ActivityInstanceDto instanceDto = dataLoader.createActivityInstance(sourceData.get(
                                 "MedicalSurvey"),
@@ -715,6 +712,21 @@ public class StudyDataLoaderMain {
                                 activityInstanceStatusDao);
                         dataLoader.loadMedicalSurveyData(handle, sourceData.get("MedicalSurvey"),
                                 mappingData.get("MedicalSurvey"),
+                                studyDto, userDto, instanceDto, answerDao);
+                    }
+
+                    if (hasPrionConsent) {
+                        LOG.info("Loading Prion consent survey");
+                        String activityCode = mappingData.get("ConsentSurvey").getAsJsonObject().get("activity_code").getAsString();
+                        ActivityInstanceDto instanceDto = dataLoader.createActivityInstance(sourceData.get(
+                                "ConsentSurvey"),
+                                userGuid, studyId,
+                                activityCode, createdAt,
+                                jdbiActivity,
+                                activityInstanceDao,
+                                activityInstanceStatusDao);
+                        dataLoader.loadPrionConsentSurveyData(handle, sourceData.get("ConsentSurvey"),
+                                mappingData.get("ConsentSurvey"),
                                 studyDto, userDto, instanceDto, answerDao);
                     }
 

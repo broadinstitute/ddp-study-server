@@ -444,7 +444,7 @@ public class StudyDataLoader {
                                                       ActivityInstanceStatusDao activityInstanceStatusDao,
                                                       JdbiActivityInstance jdbiActivityInstance) throws Exception {
 
-        BaseSurvey baseSurvey = getBaseSurvey(surveyData);
+        BaseSurvey baseSurvey = getBaseSurveyForActivity(surveyData, activityCode);
         if (baseSurvey.getDdpCreated() == null) {
             LOG.warn("No createdAt for survey: {} participant guid: {} . using participant data created_at ",
                     activityCode, participantGuid);
@@ -726,7 +726,7 @@ public class StudyDataLoader {
 
 
     private void updateUserStudyEnrollment(Handle handle, JsonElement surveyData, String userGuid, String studyGuid) throws Exception {
-        BaseSurvey baseSurvey = getBaseSurvey(surveyData);
+        BaseSurvey baseSurvey = getBaseSurvey(surveyData, getStringValueFromElement(surveyData, "survey_status"));
         if (InstanceStatusType.COMPLETE.name().equalsIgnoreCase(baseSurvey.getSurveyStatus())) {
             long updatedAt;
             if (baseSurvey.getDdpFirstCompleted() != null) {
@@ -1154,8 +1154,31 @@ public class StudyDataLoader {
         return stateCode;
     }
 
+    private BaseSurvey getBaseSurveyForActivity(JsonElement surveyData, String activityCode) {
+        String status;
+        if ("PRIONCONSENT".equals(activityCode)) {
+            // Status field is complete_status.  Blank and 0 are in progress and 1 is complete
+            String completeStatus = getStringValueFromElement(surveyData, "complete_status");
 
-    private BaseSurvey getBaseSurvey(JsonElement surveyData) {
+            status = (completeStatus != null && !completeStatus.isEmpty() && "1".equals(completeStatus))
+                ? "COMPLETED" : "IN_PROGRESS";
+        } else if ("PRIONMEDICAL".equals(activityCode)) {
+            //Status field is survey_status.  0 and blank are not started, 1 is in progress, and 2 is complete
+            String surveyStatus = getStringValueFromElement(surveyData, "survey_status");
+            if (surveyStatus != null && !surveyStatus.isEmpty() && "1".equals(surveyStatus)) {
+                status = "IN_PROGRESS";
+            } else if (surveyStatus != null && !surveyStatus.isEmpty() && "2".equals(surveyStatus)) {
+                status = "COMPLETED";
+            } else {
+                status = "CREATED";
+            }
+        } else {
+            status = getStringValueFromElement(surveyData, "survey_status");
+        }
+        return getBaseSurvey(surveyData, status);
+    }
+
+    private BaseSurvey getBaseSurvey(JsonElement surveyData, String surveyStatus) {
 
         Integer datstatSubmissionIdNum = getIntegerValueFromElement(surveyData, "datstat.submissionid");
         Long datstatSubmissionId = null;
@@ -1169,30 +1192,14 @@ public class StudyDataLoader {
         String ddpLastUpdated = getStringValueFromElement(surveyData, "ddp_lastupdated");
         String surveyVersion = getStringValueFromElement(surveyData, "surveyversion");
         String activityVersion = getStringValueFromElement(surveyData, "consent_version");
-        String surveyStatus = getStringValueFromElement(surveyData, "survey_status");
-        String completeStatus = getStringValueFromElement(surveyData, "complete_status");
-        if (completeStatus != null && !completeStatus.isEmpty()) {
-            if (Integer.valueOf(completeStatus) == 1) {
-                surveyStatus = "COMPLETE";
-            } else {
-                surveyStatus = "IN_PROGRESS";
-            }
-        } else if ("0".equals(surveyStatus) || surveyStatus == null) {
-            surveyStatus = "CREATED";
-        } else if ("1".equals(surveyStatus)) {
-            surveyStatus = "IN_PROGRESS";
-        } else if ("2".equals(surveyStatus)) {
-            surveyStatus = "COMPLETED";
-        }
         Integer datstatSubmissionStatus = getIntegerValueFromElement(surveyData, "datstat.submissionstatus");
 
         if (ddpFirstCompleted == null) {
             ddpFirstCompleted = ddpLastSubmitted;
         }
 
-        BaseSurvey baseSurvey = new BaseSurvey(datstatSubmissionId, datstatSessionId, ddpCreated, ddpFirstCompleted,
+        return new BaseSurvey(datstatSubmissionId, datstatSessionId, ddpCreated, ddpFirstCompleted,
                 ddpLastUpdated, surveyVersion, activityVersion, surveyStatus, datstatSubmissionStatus);
-        return baseSurvey;
     }
 
     private String getStringValueFromElement(JsonElement element, String key) {
