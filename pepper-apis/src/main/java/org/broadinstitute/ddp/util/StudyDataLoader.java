@@ -529,12 +529,10 @@ public class StudyDataLoader {
             instanceCurrentStatus = getActivityInstanceStatus(submissionStatus, ddpCreatedAt, ddpLastUpdatedAt, ddpCompletedAt);
         }
 
-        // Read only is always false for things that aren't consent- we rely on the user being terminated to show read
-        // only activities
+        // Read only is always undefined for things that aren't consent- we rely on the user being terminated to show read only activities
         boolean itIsCompletedConsent = (activityCode == "CONSENT" || activityCode == "TISSUECONSENT" || activityCode == "BLOODCONSENT"
-                || activityCode == "FOLLOWUPCONSENT" || activityCode.equals("PRIONCONSENT"))
-                && instanceCurrentStatus == InstanceStatusType.COMPLETE;
-        Boolean isReadonly = itIsCompletedConsent;
+                || activityCode == "FOLLOWUPCONSENT" || activityCode.equals("PRIONCONSENT")) && instanceCurrentStatus == InstanceStatusType.COMPLETE;
+        Boolean isReadonly = itIsCompletedConsent ? true : null;
         ActivityInstanceDto dto = activityInstanceDao
                 .insertInstance(studyActivityId, participantGuid, participantGuid, InstanceStatusType.CREATED,
                         isReadonly,
@@ -1161,14 +1159,14 @@ public class StudyDataLoader {
             String completeStatus = getStringValueFromElement(surveyData, "complete_status");
 
             status = (completeStatus != null && !completeStatus.isEmpty() && "1".equals(completeStatus))
-                ? "COMPLETED" : "IN_PROGRESS";
+                ? "COMPLETE" : "IN_PROGRESS";
         } else if ("PRIONMEDICAL".equals(activityCode)) {
             //Status field is survey_status.  0 and blank are not started, 1 is in progress, and 2 is complete
             String surveyStatus = getStringValueFromElement(surveyData, "survey_status");
             if (surveyStatus != null && !surveyStatus.isEmpty() && "1".equals(surveyStatus)) {
                 status = "IN_PROGRESS";
             } else if (surveyStatus != null && !surveyStatus.isEmpty() && "2".equals(surveyStatus)) {
-                status = "COMPLETED";
+                status = "COMPLETE";
             } else {
                 status = "CREATED";
             }
