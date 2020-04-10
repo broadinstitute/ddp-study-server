@@ -211,42 +211,62 @@
             ]
           },
           {
-            "name": "diagnosis_location_hospital",
-            "stable_id": "prion_medical_diagnosis_location_hospital",
-            "type": "string"
+            "name": "diagnosis_location",
+            "stable_id": "prion_medical_diagnosis_location",
+            "type": "Composite",
+            "children": [
+              {
+                "name": "diagnosis_location_hospital",
+                "stable_id": "prion_medical_diagnosis_location_hospital",
+                "type": "string"
+              },
+              {
+                "name": "diagnosis_location_city",
+                "stable_id": "prion_medical_diagnosis_location_city",
+                "type": "string"
+              },
+              {
+                "name": "diagnosis_location_state",
+                "stable_id": "prion_medical_diagnosis_location_state",
+                "type": "string"
+              },
+              {
+                "name": "diagnosis_location_zip",
+                "stable_id": "prion_medical_diagnosis_location_zip",
+                "type": "string"
+              },
+              {
+                "name": "diagnosis_location_country",
+                "stable_id": "prion_medical_diagnosis_location_country",
+                "type": "Picklist",
+                "source_type": "string",
+                "options": null
+              }
+            ]
           },
           {
-            "name": "diagnosis_location_city",
-            "stable_id": "prion_medical_diagnosis_location_city",
-            "type": "string"
-          },
-          {
-            "name": "diagnosis_location_state",
-            "stable_id": "prion_medical_diagnosis_location_state",
-            "type": "string"
-          },
-          {
-            "name": "diagnosis_location_zip",
-            "stable_id": "prion_medical_diagnosis_location_zip",
-            "type": "string"
-          },
-          {
-            "name": "diagnosis_location_country",
-            "stable_id": "prion_medical_diagnosis_location_country",
-            "type": "Picklist",
-            "source_type": "string",
-            "options": null
-          },
-          {
-            "name": "diagnosis_date",
-            "stable_id": "prion_medical_diagnosis_date_date",
-            "type": "string"
-          },
-          {
-            "name": "diagnosis_date_estimated",
-            "type": "BooleanSpecialPL",
-            "source_type": "integer",
-            "stable_id": "prion_medical_diagnosis_date_estimated"
+            "name": "diagnosis",
+            "stable_id": "prion_medical_diagnosis_date",
+            "type": "Composite",
+            "children": [
+              {
+                "name": "diagnosis_date",
+                "stable_id": "prion_medical_diagnosis_date_date",
+                "type": "string"
+              },
+              {
+                "name": "diagnosis_date_estimated",
+                "type": "Picklist",
+                "source_type": "integer",
+                "stable_id": "prion_medical_diagnosis_date_estimated",
+                "options": [
+                  {
+                    "type": "integer",
+                    "stable_id": "YES"
+                  }
+                ]
+              }
+            ]
           },
           {
             "name": "prion_subtype",
@@ -305,15 +325,28 @@
             ]
           },
           {
-            "name": "earliest_symptom",
-            "stable_id": "prion_medical_earliest_symptom",
-            "type": "string"
-          },
-          {
-            "name": "earliest_symptom_estimated",
-            "type": "BooleanSpecialPL",
-            "source_type": "integer",
-            "stable_id": "prion_medical_earliest_symptom_est"
+            "name": "earliest",
+            "stable_id": "prion_medical_earliest_symptoms",
+            "type": "Composite",
+            "children": [
+              {
+                "name": "earliest_symptom",
+                "stable_id": "prion_medical_earliest_symptom",
+                "type": "string"
+              },
+              {
+                "name": "earliest_symptom_estimated",
+                "type": "Picklist",
+                "source_type": "integer",
+                "stable_id": "prion_medical_earliest_symptom_est",
+                "options": [
+                  {
+                    "type": "integer",
+                    "stable_id": "ESTIMATED_DATE"
+                  }
+                ]
+              }
+            ]
           },
           {
             "name": "family_history",
