@@ -567,6 +567,7 @@
                     </dependency>
                 </dependencies>
                 <configuration>
+                    <forkCount>3</forkCount>
                     <systemPropertyVariables>
                         <testFailureIgnore>true</testFailureIgnore>
                         <!-- set these variables as -D vars in mvn commandline. -->
