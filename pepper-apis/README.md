@@ -69,7 +69,7 @@ Additionally, if you're at the Broad:
 * Set the `VAULT_ADDR` environment variable
     * E.g. `echo 'export VAULT_ADDR=https://clotho.broadinstitute.org:8200' >> ~/.bashrc`
 * Authenticate with vault
-    * `vault auth -method=github token=$(cat ~/.github-token)`
+    * `vault login -method=github token=$(cat ~/.github-token)`
 
 [vault-dl]: https://www.vaultproject.io/downloads.html
 [gh-vault]: https://broadinstitute.atlassian.net/wiki/spaces/DO/pages/113874856/Vault
