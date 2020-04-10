@@ -1,8 +1,8 @@
 openapi: 3.0.0
 servers: []
 info:
-  description: 'Specification for the Pepper API: `v1-Poblano`'
-  version: 1.0.0
+  description: 'Pepper API specification'
+  version: 1.8.0
   title: Pepper
   contact:
     email: info@datadonationplatform.org
