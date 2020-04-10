@@ -6,7 +6,7 @@ FROM maven:3.6.3-jdk-11 AS maven
 
 FROM docker:17.12.0-ce as static-docker-source
 
-FROM openjdk:13-alpine
+FROM azul/zulu-openjdk-alpine:11
 
 COPY --from=maven /usr/share/maven /usr/share/maven
 RUN ln -s /usr/share/maven/bin/mvn /usr/bin/mvn
