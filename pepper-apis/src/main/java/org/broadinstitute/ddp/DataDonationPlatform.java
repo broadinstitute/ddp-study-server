@@ -1,7 +1,8 @@
 package org.broadinstitute.ddp;
 
 import static com.google.common.net.HttpHeaders.X_FORWARDED_FOR;
-import static org.broadinstitute.ddp.util.FilterUtil.whitelist;
+import static org.broadinstitute.ddp.filter.BeforeWithExclusionFilter.beforeWithExclusion;
+import static org.broadinstitute.ddp.filter.WhiteListFilter.whitelist;
 import static spark.Spark.after;
 import static spark.Spark.afterAfter;
 import static spark.Spark.awaitInitialization;
@@ -144,7 +145,6 @@ import org.broadinstitute.ddp.service.PdfService;
 import org.broadinstitute.ddp.service.WorkflowService;
 import org.broadinstitute.ddp.transformers.SimpleJsonTransformer;
 import org.broadinstitute.ddp.util.ConfigManager;
-import org.broadinstitute.ddp.util.FilterUtil;
 import org.broadinstitute.ddp.util.LiquibaseUtil;
 import org.broadinstitute.ddp.util.LogbackConfigurationPrinter;
 import org.broadinstitute.ddp.util.ResponseUtil;
@@ -153,7 +153,6 @@ import org.quartz.Scheduler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
-import spark.Filter;
 import spark.Request;
 import spark.Response;
 import spark.ResponseTransformer;
@@ -267,11 +266,8 @@ public class DataDonationPlatform {
         before("*", new HttpHeaderMDCFilter(X_FORWARDED_FOR));
         before("*", new MDCLogBreadCrumbFilter());
 
-        before("*", new Filter() {
-            @Override
-            public void handle(Request request, Response response) throws Exception {
-                MDC.put(MDC_STUDY, RouteUtil.parseStudyGuid(request.pathInfo()));
-            }
+        before("*", (Request request, Response response) -> {
+            MDC.put(MDC_STUDY, RouteUtil.parseStudyGuid(request.pathInfo()));
         });
 
         // These filters work in a tandem:
@@ -287,10 +283,9 @@ public class DataDonationPlatform {
 
         // before filter converts jwt into DDP_AUTH request attribute
         // we exclude the DSM paths. DSM paths have own separate authentication
-        FilterUtil.beforeWithExclusion(API.BASE + "/*", new String[] {API.DSM_BASE + "/*", API.CHECK_IRB_PASSWORD},
+        beforeWithExclusion(API.BASE + "/*", List.of(API.DSM_BASE + "/*", API.CHECK_IRB_PASSWORD),
                 new TokenConverterFilter(new JWTConverter(userDao)));
-        FilterUtil.beforeWithExclusion(API.BASE + "/*", new String[] {API.DSM_BASE + "/*", API.CHECK_IRB_PASSWORD},
-                new AddDDPAuthLoggingFilter());
+        beforeWithExclusion(API.BASE + "/*", List.of(API.DSM_BASE + "/*", API.CHECK_IRB_PASSWORD), new AddDDPAuthLoggingFilter());
         // Internal routes
         get(API.HEALTH_CHECK, new HealthCheckRoute(healthcheckPassword), responseSerializer);
         get(API.DEPLOYED_VERSION, new GetDeployedAppVersionRoute(), responseSerializer);
@@ -299,6 +294,7 @@ public class DataDonationPlatform {
         if (cfg.getBoolean(ConfigFile.RESTRICT_REGISTER_ROUTE)) {
             whitelist(API.REGISTRATION, cfg.getStringList(ConfigFile.AUTH0_IP_WHITE_LIST));
         }
+
         post(API.REGISTRATION, new UserRegistrationRoute(interpreter), responseSerializer);
 
         post(API.TEMP_USERS, new CreateTemporaryUserRoute(userDao), responseSerializer);

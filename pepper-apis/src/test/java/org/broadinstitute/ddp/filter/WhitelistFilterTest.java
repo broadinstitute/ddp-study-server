@@ -1,6 +1,6 @@
 package org.broadinstitute.ddp.filter;
 
-import static org.broadinstitute.ddp.util.FilterUtil.whitelist;
+import static org.broadinstitute.ddp.filter.WhiteListFilter.whitelist;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static spark.Spark.awaitInitialization;
