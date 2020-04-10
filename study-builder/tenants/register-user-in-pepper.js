@@ -11,7 +11,7 @@ function (user, context, callback) {
     user.app_metadata = user.app_metadata || {};
     user.app_metadata.pepper_user_guids = user.app_metadata.pepper_user_guids || {};
 
-    var m2mClients = ['dsm', 'Salt CMS'];
+    var m2mClients = ['dsm', 'Count Me In (Salt CMS)'];
     if (m2mClients.includes(context.clientName)) {
         return callback(null, user, context);
     }
