@@ -123,26 +123,33 @@
             ]
           },
           {
-            "name": "participant_address_city",
-            "stable_id": "prion_medical_city",
-            "type": "string"
-          },
-          {
-            "name": "participant_address_state",
-            "stable_id": "prion_medical_state",
-            "type": "string"
-          },
-          {
-            "name": "participant_address_zip",
-            "stable_id": "prion_medical_postal",
-            "type": "string"
-          },
-          {
-            "name": "participant_address_country",
-            "stable_id": "prion_medical_country",
-            "type": "Picklist",
-            "source_type": "string",
-            "options": null
+            "name": "participant_address",
+            "type": "Composite",
+            "children": [
+              {
+                "name": "participant_address_city",
+                "type": "string",
+                "stable_id": "prion_medical_city"
+              },
+              {
+                "name": "participant_address_state",
+                "type": "string",
+                "stable_id": "prion_medical_state"
+              },
+              {
+                "name": "participant_address_zip",
+                "type": "string",
+                "stable_id": "prion_medical_postal"
+              },
+              {
+                "name": "participant_address_country",
+                "stable_id": "prion_medical_country",
+                "type": "Picklist",
+                "source_type": "string",
+                "options": null
+              }
+            ],
+            "stable_id": "prion_medical_address"
           },
           {
             "name": "current_status",
