@@ -282,6 +282,18 @@ public class StudyDataLoader {
         optionList.add(0, "KNOWN_MUTATION_NO");
         optionList.add(1, "KNOWN_MUTATION_YES");
         datStatEnumLookup.put("know_which_mutation", optionList);
+
+        //earliest_symptom_estimated
+        optionList = new ArrayList<>(2);
+        optionList.add(0, null);
+        optionList.add(1, "ESTIMATED_DATE");
+        datStatEnumLookup.put("earliest_symptom_estimated", optionList);
+
+        //diagnosis_date_estimated
+        optionList = new ArrayList<>(2);
+        optionList.add(0, null);
+        optionList.add(1, "YES");
+        datStatEnumLookup.put("diagnosis_date_estimated", optionList);
     }
 
     void loadMailingListData(Handle handle, JsonElement data, String studyCode) {
