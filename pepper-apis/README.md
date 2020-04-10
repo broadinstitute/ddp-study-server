@@ -64,7 +64,7 @@ your PATH:
 
 Additionally, if you're at the Broad:
 
-* Go to Gitub and create a personal access token (see the instructions [here][gh-vault])
+* Go to GitHub and create a personal access token (see the instructions [here][gh-vault])
 * Store your token somewhere safe and accessible locally (e.g. `~/.github-token`)
 * Set the `VAULT_ADDR` environment variable
     * E.g. `echo 'export VAULT_ADDR=https://clotho.broadinstitute.org:8200' >> ~/.bashrc`
