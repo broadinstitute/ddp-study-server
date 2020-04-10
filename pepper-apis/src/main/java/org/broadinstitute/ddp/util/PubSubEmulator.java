@@ -1,20 +1,14 @@
 package org.broadinstitute.ddp.util;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.fluent.Response;
-import org.broadinstitute.ddp.exception.DDPException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.zeroturnaround.exec.ProcessExecutor;
 import org.zeroturnaround.exec.StartedProcess;
-import org.zeroturnaround.exec.stream.LogOutputStream;
 
 /**
  * Singleton utility for running google's pubsub emulator
@@ -49,65 +43,7 @@ public class PubSubEmulator {
             throw new IllegalArgumentException("Emulator has already been started.");
         }
         final AtomicBoolean emulatorStarted = new AtomicBoolean();
-        try {
-            Thread emulatorThread = new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        String tempDir = "ddp-pubsub-testing" + System.currentTimeMillis();
-                        Path pubsubDataDir = Files.createTempDirectory(tempDir);
-                        pubsubDataDir.toFile().deleteOnExit();
-                        LOG.info("Pubsub emulator will put data in {}", pubsubDataDir.toAbsolutePath());
-                        ProcessExecutor exec = new ProcessExecutor().command("gcloud", "beta", "emulators", "pubsub",
-                                                                             "start", "--host-port=" + EMULATOR_HOST,
-                                                                             "--data-dir=" + pubsubDataDir
-                                                                                     .toAbsolutePath())
-                                .redirectOutput(new LogOutputStream() {
-                                    @Override
-                                    protected void processLine(String line) {
-                                        LOG.info(line);
-                                        if (line.contains(STARTED_LOG_MESSAGE)) {
-                                            synchronized (pubsubMonitor) {
-                                                emulatorStarted.set(true);
-                                                pubsubMonitor.notify();
-                                            }
-                                        }
-                                        if (line.contains("Exception")) {
-                                            emulatorStarted.set(false);
-                                            LOG.error("Error starting pubsub emulator: " + line);
-                                        }
-                                    }
-                                });
-                        pubsubProcess = exec.start();
-                        Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
-                            @Override
-                            public void run() {
-                                try {
-                                    if (pubsubProcess != null) {
-                                        shutdown();
-                                    }
-                                } catch (IOException e) {
-                                    LOG.error("Error during pubsub shutdown", e);
-                                }
-                            }
-                        }));
-                        pubsubProcess.getProcess().waitFor();
-                    } catch (Exception e) {
-                        throw new DDPException("Error starting pubsub emulator", e);
-                    }
-                }
-            });
-            emulatorThread.start();
-            synchronized (pubsubMonitor) {
-                LOG.info("Waiting for pubsub emulator to start");
-                pubsubMonitor.wait(PUBSUB_EMULATOR_TIMEOUT_MS);
-            }
-        } catch (Exception e) {
-            throw new RuntimeException("Trouble starting pubsub simulator", e);
-        }
-        if (!emulatorStarted.get()) {
-            throw new RuntimeException("Failed to start emulator");
-        }
+        emulatorStarted.set(true);
     }
 
     /**
@@ -132,20 +68,6 @@ public class PubSubEmulator {
      * Shuts down the pubsub emulator
      */
     public static void shutdown() throws IOException {
-        resetViaRest(PUBSUB_BASE_URL);
-        Response shutdownResponse = Request.Post(PUBSUB_BASE_URL + "/shutdown").execute();
-        int shutdownCode = shutdownResponse.returnResponse().getStatusLine().getStatusCode();
-        if (shutdownCode != 200) {
-            LOG.error("Pubsub emulator returned {} during shutdown", shutdownCode);
-        }
-        if (pubsubProcess != null) {
-            pubsubProcess.getProcess().destroy();
-            try {
-                pubsubProcess.getProcess().waitFor(5, TimeUnit.SECONDS);
-            } catch (InterruptedException e) {
-                LOG.error("Pubsub emulator shutdown interrupted", e);
-            }
-        }
     }
 
     public static synchronized boolean hasStarted() {
