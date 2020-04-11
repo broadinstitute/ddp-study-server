@@ -1,6 +1,6 @@
 version: 2.1
 orbs:
-  maven: circleci/maven@x.y
+  maven: circleci/maven@1.0.0
 references:
   ci_support_image: &ci_support_image
                        broadinstitute/study-server-build:2020-04-10G
