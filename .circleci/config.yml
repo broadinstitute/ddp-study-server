@@ -346,6 +346,7 @@ jobs:
   parallel_test-job:
     executor:
       name: build-executor
+    working_directory: ~/repo/pepper-apis
     parameters:
       app_src_directory:
         default: ''
@@ -395,7 +396,8 @@ jobs:
         description: The path to the test results.
         type: string
     steps:
-      - checkout
+      - checkout:
+          path: ~/repo
       - run:
           command: >
             echo -e "\033[31m\033[4mOrb Notes on Test Splitting\033[0m
@@ -480,7 +482,7 @@ workflows:
 
   figure-out-tests:
     jobs:
-      - maven/parallel_test:
+      - parallel_test-job:
           executor:
             name: build-executor
           # test_directory: pepper-apis/src/test/java
