@@ -3,7 +3,7 @@ references:
   maven_cache_key: &maven_cache_key
                    maven-deps-repo
   ci_support_image: &ci_support_image
-                       broadinstitute/study-server-build:2020-04-10E
+                       broadinstitute/study-server-build:2020-04-10F
 
 executors:
   build-executor:
