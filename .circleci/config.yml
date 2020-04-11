@@ -1,7 +1,5 @@
 version: 2.1
 references:
-  maven_cache_key: &maven_cache_key
-                   pom.xml-{{ checksum "pom.xml" }}
   ci_support_image: &ci_support_image
                        broadinstitute/study-server-build:2020-04-10G
 
@@ -123,7 +121,8 @@ commands:
             done
             echo Failed waiting for MySQL && exit 1
       - restore_cache:
-          key: *maven_cache_key
+          key: pom.xml-{{ checksum "pom.xml" }}
+                   pom.xml-
       - run:
           name: Setup test databases
           command: |
@@ -143,7 +142,7 @@ commands:
 #            mvn --batch-mode --fail-never -file housekeeping.xml install package test           
           # working_directory: ~/repo/pepper-apis
       - save_cache:
-          key: *maven_cache_key
+          key: pom.xml-{{ checksum "pom.xml" }}
           paths:
             - ~/.m2
       - store_test_results: # uploads the test metadata from the `target/surefire-reports` directory so that it can show up in the CircleCI dashboard.
