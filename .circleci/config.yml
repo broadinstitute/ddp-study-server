@@ -402,6 +402,7 @@ jobs:
       - run:
           command: |
             set +x
+            set +e
             CIRCLE_CI_DIR='../.circleci'
             echo "Doing 0!"  
             mkdir -p "$CIRCLE_CI_DIR/tests/"
