@@ -428,23 +428,28 @@ jobs:
             mkdir -p .circleci/tests/
 
             # generate excluded surefire tests using provided pattern
-
+            echo "Doing 1!"  
             circleci tests glob
             <<parameters.test_directory>>/<<parameters.parallel_test_pattern>> | \
               sed -e 's#^<<parameters.test_directory>>/\(.*\)\.java#\1#' | \
               tr "/" "." > .circleci/tests/surefire_classnames
+            echo "Doing 2!"  
             cat .circleci/tests/surefire_classnames | \
               circleci tests split --split-by=timings --timings-type=classname > /tmp/this_node_tests
+            echo "Doing 3!"    
             cat .circleci/tests/surefire_classnames | \
               grep -xvf /tmp/this_node_tests > .circleci/tests/surefire_classnames_ignore_list
             # generate excluded failsafe tests using provided pattern
 
+            echo "Doing 4!"   
             circleci tests glob
             <<parameters.test_directory>>/<<parameters.parallel_it_pattern>> | \
               sed -e 's#^<<parameters.test_directory>>/\(.*\)\.java#\1#' | \
               tr "/" "." > .circleci/tests/failsafe_classnames
+            echo "Doing 5!"   
             cat .circleci/tests/failsafe_classnames | \
               circleci tests split --split-by=timings --timings-type=classname > /tmp/this_node_it_tests
+            echo "Doing 6!"   
             cat .circleci/tests/failsafe_classnames |  \
               grep -xvf /tmp/this_node_it_tests > .circleci/tests/failsafe_classnames_ignore_list
           name: Enable Test Splitting
