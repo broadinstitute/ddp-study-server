@@ -466,7 +466,8 @@ workflows:
           executor:
             name: build-executor
           # test_directory: pepper-apis/src/test/java
-          parallel_test_pattern: '**/*Test.java'  
+          parallel_test_pattern: '**/*Test.java'
+          parallelism: 3  
           command: --batch-mode -Ditext.license=output-config/itextkey.xml -Dddp.firecloudKeysDir=output-config/fc_keys -Dconfig.file=output-config/testing-circleci.conf verify -f pom.xml
           filters:
             branches:
