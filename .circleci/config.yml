@@ -1,3 +1,5 @@
+orbs:
+  maven: circleci/maven@x.y
 version: 2.1
 references:
   ci_support_image: &ci_support_image
@@ -342,12 +344,16 @@ jobs:
     steps:
       - list-tests
 
+
 workflows:
   version: 2
 
   figure-out-tests:
     jobs:
-      - run-tests-job:
+      - maven/parallel_test:
+          executor:
+            name: build-executor
+          command: --batch-mode package -Ditext.license=output-config/itextkey.xml -Dddp.firecloudKeysDir=output-config/fc_keys -Dconfig.file=output-config/testing-circleci.conf verify
           filters:
             branches:
               only:
