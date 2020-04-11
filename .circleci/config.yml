@@ -424,7 +424,7 @@ jobs:
             inspection/debugging.
 
             "
-
+            echo "Doing 0!"  
             mkdir -p .circleci/tests/
 
             # generate excluded surefire tests using provided pattern
