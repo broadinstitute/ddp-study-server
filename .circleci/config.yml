@@ -3,19 +3,21 @@ references:
   maven_cache_key: &maven_cache_key
                    maven-deps-repo
   ci_support_image: &ci_support_image
-                       broadinstitute/study-server-build:2020-04-10F
+                       broadinstitute/study-server-build:2020-04-10G
 
 executors:
   build-executor:
     docker: # todo: create new image endpoint, add this in admin tab for faster starts
       - image: *ci_support_image
+      # start pubsub emulator
+      - image: broadinstitute/study-server-build:pubsub-1
       - image: circleci/mysql:5.7-ram
         environment: &DB_VARS
           MYSQL_ROOT_PASSWORD: rootpw
           MYSQL_DATABASE: test_db
           MYSQL_USER: user
           MYSQL_PASSWORD: passw0rd
-      - image: messagebird/gcloud-pubsub-emulator:latest
+
               
     resource_class: medium+
     working_directory: ~/repo/pepper-apis
