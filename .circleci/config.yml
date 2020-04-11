@@ -439,24 +439,12 @@ jobs:
           app_src_directory: << parameters.app_src_directory >>
           settings_file: << parameters.settings_file >>
           steps:
-            - when:
-                condition: << parameters.settings_file >>
-                steps:
-                  - run:
-                      command: >-
-                        << parameters.maven_command >> << parameters.command >>
-                        -Dsurefire.excludesFile=~/repo/.circleci/tests/surefire_classnames_ignore_list
-                        --settings '<< parameters.settings_file >>'
-                      name: Run Tests
-            - unless:
-                condition: << parameters.settings_file >>
-                steps:
-                  - run:
-                      app_src_directory: << parameters.app_src_directory >>
-                      command: >-
-                        << parameters.maven_command >> << parameters.command >>
-                        -Dsurefire.excludesFile=~/repo/.circleci/tests/surefire_classnames_ignore_list
-                      name: Run Tests
+            - run:
+                app_src_directory: << parameters.app_src_directory >>
+                command: >-
+                  << parameters.maven_command >> << parameters.command >>
+                  -Dsurefire.excludesFile=../.circleci/.circleci/tests/surefire_classnames_ignore_list
+                name: Run Tests
       - maven/process_test_results:
           test_results_path: << parameters.test_results_path >>    
 
@@ -471,7 +459,7 @@ workflows:
             name: build-executor
           # test_directory: pepper-apis/src/test/java
           parallel_test_pattern: '**/*Test.java'  
-          command: --batch-mode package -Ditext.license=output-config/itextkey.xml -Dddp.firecloudKeysDir=output-config/fc_keys -Dconfig.file=output-config/testing-circleci.conf verify
+          command: --batch-mode -Ditext.license=output-config/itextkey.xml -Dddp.firecloudKeysDir=output-config/fc_keys -Dconfig.file=output-config/testing-circleci.conf verify -f pom.xml
           filters:
             branches:
               only:
