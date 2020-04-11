@@ -331,7 +331,7 @@ jobs:
 
   run-tests-job:
     executor:
-    name: build-executor
+      name: build-executor
     steps:
       - list-tests
 
@@ -354,7 +354,7 @@ workflows:
               only:
                 - develop
                 # @todo remove when done
-                - study-server-to-appengine
+                # - study-server-to-appengine
 
   build-and-store:
     jobs:
