@@ -1,7 +1,7 @@
 version: 2.1
 references:
   ci_support_image: &ci_support_image
-                       broadinstitute/study-server-build:2020-04-10H
+                       broadinstitute/study-server-build:2020-04-10G
 
 executors:
   build-executor:
