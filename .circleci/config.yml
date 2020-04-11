@@ -400,10 +400,11 @@ jobs:
           path: ~/repo
       - list-tests    
       - run:
-          command: >
+          command: |
+            set +x
             CIRCLE_CI_DIR='../.circleci'
             echo "Doing 0!"  
-            mkdir -p $CIRCLE_CI_DIR/tests/
+            mkdir -p "$CIRCLE_CI_DIR/tests/"
 
             # generate excluded surefire tests using provided pattern
             echo "Doing 1!"  
@@ -411,10 +412,10 @@ jobs:
               sed -e 's#^<<parameters.test_directory>>/\(.*\)\.java#\1#' | \
               tr "/" "." > "${CIRCLE_CI_DIR}/tests/surefire_classnames"
             echo "Doing 2!"  
-            cat ${CIRCLE_CI_DIR}/tests/surefire_classnames | \
+            cat "${CIRCLE_CI_DIR}/tests/surefire_classnames" | \
               circleci tests split --split-by=timings --timings-type=classname > /tmp/this_node_tests
             echo "Doing 3!"    
-            cat ${CIRCLE_CI_DIR}/tests/surefire_classnames | \
+            cat "${CIRCLE_CI_DIR}/tests/surefire_classnames" | \
               grep -xvf /tmp/this_node_tests > "${CIRCLE_CI_DIR}/tests/surefire_classnames_ignore_list"
             # generate excluded failsafe tests using provided pattern
 
@@ -424,7 +425,7 @@ jobs:
               sed -e 's#^<<parameters.test_directory>>/\(.*\)\.java#\1#' | \
               tr "/" "." > "${CIRCLE_CI_DIR}/tests/failsafe_classnames"
             echo "Doing 5!"   
-            cat $CIRCLE_CI_DIR/tests/failsafe_classnames | \
+            cat "$CIRCLE_CI_DIR/tests/failsafe_classnames" | \
               circleci tests split --split-by=timings --timings-type=classname > /tmp/this_node_it_tests
             echo "Doing 6!"   
             cat "${CIRCLE_CI_DIR}/tests/failsafe_classnames" |  \
