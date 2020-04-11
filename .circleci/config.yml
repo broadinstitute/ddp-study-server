@@ -247,7 +247,6 @@ commands:
       jar_base_name:
         type: string
     steps:
-      - checkout
       - run:
           name: Update deployments sheet
           command: |
@@ -280,6 +279,7 @@ commands:
 
   list-tests:
     steps:
+      - checkout
       - run:
           name: List all the tests we have
           command: |
