@@ -429,8 +429,7 @@ jobs:
 
             # generate excluded surefire tests using provided pattern
             echo "Doing 1!"  
-            circleci tests glob
-            <<parameters.test_directory>>/<<parameters.parallel_test_pattern>> | \
+            circleci tests glob <<parameters.test_directory>>/<<parameters.parallel_test_pattern>> | \
               sed -e 's#^<<parameters.test_directory>>/\(.*\)\.java#\1#' | \
               tr "/" "." > .circleci/tests/surefire_classnames
             echo "Doing 2!"  
