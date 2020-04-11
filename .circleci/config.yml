@@ -281,8 +281,7 @@ commands:
 
   list-tests:
     steps:
-      - checkout:
-          path: ~/repo
+      - checkout
       - run:
           name: List all the tests we have
           command: |
@@ -350,14 +349,20 @@ workflows:
 
   figure-out-tests:
     jobs:
-      - maven/parallel_test:
-          executor:
-            name: build-executor
-          command: --batch-mode package -Ditext.license=output-config/itextkey.xml -Dddp.firecloudKeysDir=output-config/fc_keys -Dconfig.file=output-config/testing-circleci.conf verify
+      # - maven/parallel_test:
+      #     executor:
+      #       name: build-executor
+      #     command: --batch-mode package -Ditext.license=output-config/itextkey.xml -Dddp.firecloudKeysDir=output-config/fc_keys -Dconfig.file=output-config/testing-circleci.conf verify
+      #     filters:
+      #       branches:
+      #         only:
+      #           - study-server-to-appengine
+
+      - run-tests-job:
           filters:
             branches:
               only:
-                - study-server-to-appengine
+                - study-server-to-appengine    
 
   build-and-deploy:
     jobs:
