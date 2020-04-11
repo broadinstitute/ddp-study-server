@@ -420,18 +420,18 @@ jobs:
               grep -xvf /tmp/this_node_tests > "${CIRCLE_CI_DIR}/tests/surefire_classnames_ignore_list"
             # generate excluded failsafe tests using provided pattern
 
-            echo "Doing 4!"   
-            circleci tests glob
-            <<parameters.test_directory>>/<<parameters.parallel_it_pattern>> | \
-              sed -e 's#^<<parameters.test_directory>>/\(.*\)\.java#\1#' | \
-              tr "/" "." > "${CIRCLE_CI_DIR}/tests/failsafe_classnames"
-            echo "Doing 5!"   
-            cat "$CIRCLE_CI_DIR/tests/failsafe_classnames" | \
-              circleci tests split --split-by=timings --timings-type=classname > /tmp/this_node_it_tests
-            echo "Doing 6!"   
-            cat "${CIRCLE_CI_DIR}/tests/failsafe_classnames" |  \
-              grep -xvf /tmp/this_node_it_tests > "${CIRCLE_CI_DIR}/tests/failsafe_classnames_ignore_list"
-          name: Enable Test Splitting
+            # echo "Doing 4!"   
+            # circleci tests glob
+            # <<parameters.test_directory>>/<<parameters.parallel_it_pattern>> | \
+            #   sed -e 's#^<<parameters.test_directory>>/\(.*\)\.java#\1#' | \
+            #   tr "/" "." > "${CIRCLE_CI_DIR}/tests/failsafe_classnames"
+            # echo "Doing 5!"   
+            # cat "$CIRCLE_CI_DIR/tests/failsafe_classnames" | \
+            #   circleci tests split --split-by=timings --timings-type=classname > /tmp/this_node_it_tests
+          #   echo "Doing 6!"   
+          #   cat "${CIRCLE_CI_DIR}/tests/failsafe_classnames" |  \
+          #     grep -xvf /tmp/this_node_it_tests > "${CIRCLE_CI_DIR}/tests/failsafe_classnames_ignore_list"
+          # name: Enable Test Splitting
       - store_artifacts:
           path: ~/repo/.circleci/tests/
       - maven/with_cache:
@@ -445,7 +445,6 @@ jobs:
                       command: >-
                         << parameters.maven_command >> << parameters.command >>
                         -Dsurefire.excludesFile=~/repo/.circleci/tests/surefire_classnames_ignore_list
-                        -Dfailsafe.excludesFile=~/repo/.circleci/tests/failsafe_classnames_ignore_list
                         --settings '<< parameters.settings_file >>'
                       name: Run Tests
             - unless:
@@ -456,7 +455,6 @@ jobs:
                       command: >-
                         << parameters.maven_command >> << parameters.command >>
                         -Dsurefire.excludesFile=~/repo/.circleci/tests/surefire_classnames_ignore_list
-                        -Dfailsafe.excludesFile=~/repo/.circleci/tests/failsafe_classnames_ignore_list
                       name: Run Tests
       - maven/process_test_results:
           test_results_path: << parameters.test_results_path >>    
