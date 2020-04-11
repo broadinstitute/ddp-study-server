@@ -435,16 +435,24 @@ jobs:
           # name: Enable Test Splitting
       - store_artifacts:
           path: ~/repo/.circleci/tests/
-      - maven/with_cache:
-          app_src_directory: << parameters.app_src_directory >>
-          settings_file: << parameters.settings_file >>
-          steps:
-            - run:
-                app_src_directory: << parameters.app_src_directory >>
-                command: >-
-                  << parameters.maven_command >> << parameters.command >>
-                  -Dsurefire.excludesFile=../.circleci/.circleci/tests/surefire_classnames_ignore_list
-                name: Run Tests
+      - restore_cache:
+          keys:
+            - pom.xml-{{ checksum "pom.xml" }}
+            - pom.xml-    
+      - run:
+          command: | 
+            << parameters.maven_command >> << parameters.command >> \
+                    -Dsurefire.excludesFile=../.circleci/.circleci/tests/surefire_classnames_ignore_list     
+      # - maven/with_cache:
+      #     app_src_directory: << parameters.app_src_directory >>
+      #     settings_file: << parameters.settings_file >>
+      #     steps:
+      #       - run:
+      #           app_src_directory: << parameters.app_src_directory >>
+      #           command: >-
+      #             << parameters.maven_command >> << parameters.command >>
+      #             -Dsurefire.excludesFile=../.circleci/.circleci/tests/surefire_classnames_ignore_list
+      #           name: Run Tests
       - maven/process_test_results:
           test_results_path: << parameters.test_results_path >>    
 
