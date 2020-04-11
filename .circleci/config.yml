@@ -418,6 +418,7 @@ jobs:
             echo "Doing 3!"    
             cat "${CIRCLE_CI_DIR}/tests/surefire_classnames" | \
               grep -xvf /tmp/this_node_tests > "${CIRCLE_CI_DIR}/tests/surefire_classnames_ignore_list"
+            echo "All done!"  
             # generate excluded failsafe tests using provided pattern
 
             # echo "Doing 4!"   
