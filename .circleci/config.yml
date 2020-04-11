@@ -283,7 +283,7 @@ commands:
           name: List all the tests we have
           command: |
             set +x
-            circleci tests glob "src/tests/**/*.java"
+            echo $(circleci tests glob "src/tests/**/*.java")
 
 jobs:
   build-jars-job:
