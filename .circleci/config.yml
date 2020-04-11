@@ -449,7 +449,7 @@ jobs:
           name: Enable Test Splitting
       - store_artifacts:
           path: .circleci/tests/
-      - with_cache:
+      - maven/with_cache:
           app_src_directory: << parameters.app_src_directory >>
           settings_file: << parameters.settings_file >>
           steps:
