@@ -281,7 +281,7 @@ commands:
 
   list-tests:
     steps:
-      - checkout
+#      - checkout
       - run:
           name: List all the tests we have
           command: |
@@ -398,6 +398,7 @@ jobs:
     steps:
       - checkout:
           path: ~/repo
+      - list-tests    
       - run:
           command: >
             echo -e "\033[31m\033[4mOrb Notes on Test Splitting\033[0m
