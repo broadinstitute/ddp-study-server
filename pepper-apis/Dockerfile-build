@@ -1,21 +1,18 @@
 # To make our config generation "compatible" with official dsdetoolbox, extract what is needed from it (this is not the base image)
 FROM broadinstitute/dsde-toolbox:latest AS dsdetoolbox
 
-
 FROM maven:3.6.3-jdk-11 AS maven
 
-FROM docker:17.12.0-ce as static-docker-source
+FROM google/cloud-sdk:alpine
 
-FROM azul/zulu-openjdk-alpine:11
-
+#Essentials for Maven
 COPY --from=maven /usr/share/maven /usr/share/maven
 RUN ln -s /usr/share/maven/bin/mvn /usr/bin/mvn
 COPY --from=maven /usr/local/bin/mvn-entrypoint.sh /usr/local/bin/mvn-entrypoint.sh
-# COPY --from=maven settings-docker.xml /usr/share/maven/ref/
+COPY --from=maven /usr/share/maven/ref/settings-docker.xml /usr/share/maven/ref/settings-docker.xml
 
 ENV MAVEN_HOME /usr/share/maven
 ENV MAVEN_CONFIG "$USER_HOME_DIR/.m2"
-ENTRYPOINT ["/usr/local/bin/mvn-entrypoint.sh"]
 
 # Copying necessary artifacts to enable configure.rb that lives in our own repo.
 COPY --from=dsdetoolbox /usr/local/bin/consul-template /usr/local/bin/consul-template
@@ -27,53 +24,29 @@ RUN apk  --no-cache add \
     curl \
     bash \
     jq \
-    ruby \
-    ruby-bundler \
-    ruby-json  \
-    python3 \
-    py3-crcmod \
-    libc6-compat \
-    openssh-client \
-    gnupg \
-    nodejs \
-    npm \
-    subversion \
     mysql-client \
     netcat-openbsd \
     git \
+    openjdk11 \
+    # to support configure.rb
+    ruby \
+    ruby-json  \
+    # to support sheetappend script
+    nodejs \
     && rm -rf /var/cache/apk/*
-#Adapted from https://github.com/GoogleCloudPlatform/cloud-sdk-docker/blob/master/alpine/Dockerfile
-ARG CLOUD_SDK_VERSION=288.0.0
-ENV CLOUD_SDK_VERSION=$CLOUD_SDK_VERSION
-ENV CLOUDSDK_PYTHON=python3
-ENV PATH /google-cloud-sdk/bin:$PATH
-COPY --from=static-docker-source /usr/local/bin/docker /usr/local/bin/docker
-RUN ["echo","Installing gcloud tools..."]
-RUN curl -O https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-${CLOUD_SDK_VERSION}-linux-x86_64.tar.gz && \
-        tar xzf google-cloud-sdk-${CLOUD_SDK_VERSION}-linux-x86_64.tar.gz && \
-        rm google-cloud-sdk-${CLOUD_SDK_VERSION}-linux-x86_64.tar.gz && \
-        gcloud config set core/disable_usage_reporting true && \
-        gcloud config set component_manager/disable_update_check true && \
-        gcloud config set metrics/environment github_docker_image && \
-        gcloud components install beta --quiet && \
-        gcloud components install pubsub-emulator --quiet && \
-        gcloud --version
 
-VOLUME ["/root/.config"]
-
-ENV PUBSUB_EMULATOR_HOST "localhost:8442"
-
-WORKDIR /opt
 #extracting sheetappend from ddp-angular repo. At some point we can get this from an npm repo
-RUN svn export https://github.com/broadinstitute/ddp-angular/trunk/build-utils && \
+WORKDIR /opt
+RUN apk --no-cache add npm subversion && \
+    svn export https://github.com/broadinstitute/ddp-angular/trunk/build-utils && \
         npm install -g build-utils/sheetappend && \
         curl -o build-utils/reportdeploy.sh \
             https://raw.githubusercontent.com/broadinstitute/ddp-angular/circle-ci-updates-1/build-utils/reportdeploy.sh && \
-        chmod 555 build-utils/reportdeploy.sh
+        chmod 555 build-utils/reportdeploy.sh && \
+        apk del npm subversion
 
 # keep track of git hash
 ARG GIT_SHA
 RUN echo $GIT_SHA > /git_sha.txt
-
 
 CMD "/bin/bash"
