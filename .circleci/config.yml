@@ -1,7 +1,7 @@
 version: 2.1
 references:
   ci_support_image: &ci_support_image
-                       broadinstitute/study-server-build:2020-04-10G
+                       broadinstitute/study-server-build:2020-04-10H
 
 executors:
   build-executor:
@@ -276,6 +276,15 @@ commands:
             vault read --format=json secret/pepper/${TARGET_ENV}/v1/conf |
               jq -r .data.gcp.serviceKey |
               gcloud auth activate-service-account --key-file=-
+
+  list-tests:
+    steps:
+      - run:
+          name: List all the tests we have
+          command: |
+            set +x
+            circleci tests glob "src/tests/**/*.java"
+
 jobs:
   build-jars-job:
     executor:
@@ -318,10 +327,24 @@ jobs:
       - deploy-jar:
           jar_base_name: DataDonationPlatform
       - deploy-jar:
-          jar_base_name: Housekeeping    
+          jar_base_name: Housekeeping
+
+  run-tests-job:
+    executor:
+    name: build-executor
+    steps:
+      - list-tests
 
 workflows:
   version: 2
+
+  figure-out-tests:
+    jobs:
+      - run-tests-job:
+          filters:
+            branches:
+              only:
+                - study-server-to-appengine
 
   build-and-deploy:
     jobs:
