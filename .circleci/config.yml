@@ -283,7 +283,10 @@ commands:
           name: List all the tests we have
           command: |
             set +x
+            echo "The pwd is $PWD"
             echo $(circleci tests glob "src/test/**/*.java")
+            echo "using find:"
+            find src/test -name "*.java" 
 
 jobs:
   build-jars-job:
