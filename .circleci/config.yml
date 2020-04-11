@@ -473,7 +473,7 @@ jobs:
                         -Dsurefire.excludesFile=.circleci/tests/surefire_classnames_ignore_list
                         -Dfailsafe.excludesFile=.circleci/tests/failsafe_classnames_ignore_list
                       name: Run Tests
-      - process_test_results:
+      - maven/process_test_results:
           test_results_path: << parameters.test_results_path >>    
 
 
