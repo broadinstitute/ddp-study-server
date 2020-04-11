@@ -488,7 +488,6 @@ workflows:
           # test_directory: pepper-apis/src/test/java
           parallel_test_pattern: '**/*Test.java'  
           command: --batch-mode package -Ditext.license=output-config/itextkey.xml -Dddp.firecloudKeysDir=output-config/fc_keys -Dconfig.file=output-config/testing-circleci.conf verify
-          working_directory: pepper-apis
           filters:
             branches:
               only:
