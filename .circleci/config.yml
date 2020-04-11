@@ -247,6 +247,7 @@ commands:
       jar_base_name:
         type: string
     steps:
+      - checkout
       - run:
           name: Update deployments sheet
           command: |
