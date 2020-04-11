@@ -279,7 +279,7 @@ commands:
 
   list-tests:
     steps:
-      - checkout
+      - checkout:
           path: ~/repo
       - run:
           name: List all the tests we have
