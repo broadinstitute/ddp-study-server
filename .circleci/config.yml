@@ -285,6 +285,8 @@ commands:
           command: |
             set +x
             echo "The pwd is $PWD"
+            echo "doing ls -l"
+            ls -l
             echo $(circleci tests glob "src/test/**/*.java")
             echo "using find:"
             find src/test -name "*.java" 
