@@ -1,7 +1,7 @@
 version: 2.1
 references:
   maven_cache_key: &maven_cache_key
-                   maven-deps-repo
+                   pom.xml-{{ checksum "pom.xml" }}
   ci_support_image: &ci_support_image
                        broadinstitute/study-server-build:2020-04-10G
 
@@ -57,13 +57,15 @@ commands:
             develop)
               DEPLOY_ENV=dev
             ;;
+            # @todo remove when done
               study-server-to-appengine)
               DEPLOY_ENV=dev
             ;;
             test)
               DEPLOY_ENV=test
             ;;
-            test_deleteme1) #todo remove when done
+            # @todo remove when done
+            test_deleteme1)
               DEPLOY_ENV=test
             ;;
             staging)
@@ -328,6 +330,7 @@ workflows:
             branches:
               only:
                 - develop
+                # @todo remove when done
                 - study-server-to-appengine
 
   build-and-store:
@@ -348,4 +351,5 @@ workflows:
                 - test
                 - staging
                 - production
+                # @todo remove when done
                 - test_deleteme1
