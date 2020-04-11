@@ -401,7 +401,7 @@ jobs:
       - list-tests    
       - run:
           command: >
-            CIRCLE_CI_DIR=~/repo/.circleci
+            CIRCLE_CI_DIR='../.circleci'
             echo "Doing 0!"  
             mkdir -p $CIRCLE_CI_DIR/tests/
 
