@@ -121,8 +121,9 @@ commands:
             done
             echo Failed waiting for MySQL && exit 1
       - restore_cache:
-          key: pom.xml-{{ checksum "pom.xml" }}
-                   pom.xml-
+          keys:
+            - pom.xml-{{ checksum "pom.xml" }}
+            - pom.xml-
       - run:
           name: Setup test databases
           command: |
