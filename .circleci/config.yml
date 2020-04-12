@@ -356,23 +356,9 @@ jobs:
           of your git repo. Supply the name of the directory or relative path of the
           directory containing your source code.
         type: string
-      command:
-        default: verify
-        description: The maven command to run.
-        type: string
-      executor:
-        default: default
-        description: The name of custom executor to use
-        type: executor
       maven_command:
         default: mvn
         description: Specify a custom path for invoking maven
-        type: string
-      parallel_it_pattern:
-        default: '**/*IT*.java'
-        description: |
-          This is the standard Failsafe pattern, but you can override
-          if you use alternate <includes> patterns in your pom.xml.
         type: string
       parallel_test_pattern:
         default: '**/*Test*.java'
@@ -396,6 +382,9 @@ jobs:
         default: target/surefire-reports
         description: The path to the test results.
         type: string
+      circleci_path:
+        type: string
+        default: ../.circleci  
     steps:
       - common-setup
       - list-tests
@@ -420,41 +409,33 @@ jobs:
             mysql -h 127.0.0.1 -u root --password=rootpw test_db --execute="CREATE DATABASE studyservicedb CHARACTER SET utf8 COLLATE utf8_general_ci"
             mysql -h 127.0.0.1 -u root --password=rootpw test_db --execute="CREATE DATABASE housekeepingdb CHARACTER SET utf8 COLLATE utf8_general_ci"    
       - run:
+          name: Split tests
           command: |
             set +x
             set +e
-            CIRCLE_CI_DIR='../.circleci'
-            echo "Doing 0!"  
+            CIRCLE_CI_DIR='<< parameters.circleci_path >>'
             mkdir -p "$CIRCLE_CI_DIR/tests/"
 
-            # generate excluded surefire tests using provided pattern
-            echo "Doing 1!"  
-            circleci tests glob <<parameters.test_directory>>/<<parameters.parallel_test_pattern>> | \
-              sed -e 's#^<<parameters.test_directory>>/\(.*\)\.java#\1#' | \
-              tr "/" "." |
-              grep -v '.*RouteTest' > "${CIRCLE_CI_DIR}/tests/surefire_classnames"
+            TEST_SRC_DIRECTORY='src/test/java'  
+            TEST_SEARCH_PATTERN='**/*Test*.java'
+
+            # generate list of tests to be processed
+            circleci tests glob "${TEST_SRC_DIRECTORY}/${TEST_SEARCH_PATTERN}" | # fancy circleci find command
+              sed -e 's#^<<parameters.test_directory>>/\(.*\)\.java#\1#' | # Strip .java and parent directory path
+              tr "/" "." |  #Convert to a class name of form org.package.ClassName
+              grep -v '.*RouteTest' > "${CIRCLE_CI_DIR}/tests/surefire_classnames" #Exclude RouteTest. These done from suite
+              
+            # Pattern does not pick this one up. Add explicitly
             echo 'org.broadinstitute.ddp.route.IntegrationTestSuite'  >> "${CIRCLE_CI_DIR}/tests/surefire_classnames"
-            echo "Doing 2!"  
+            
+            # tests split will figure out which tests to run in this node  
             cat "${CIRCLE_CI_DIR}/tests/surefire_classnames" | \
               circleci tests split --split-by=timings --timings-type=classname > /tmp/this_node_tests
-            echo "Doing 3!"    
+            
+            # the ones that don't run in this node
             cat "${CIRCLE_CI_DIR}/tests/surefire_classnames" | \
               grep -xvf /tmp/this_node_tests > "${CIRCLE_CI_DIR}/tests/surefire_classnames_ignore_list"
-            echo "All done!"  
-            # generate excluded failsafe tests using provided pattern
-
-            # echo "Doing 4!"   
-            # circleci tests glob
-            # <<parameters.test_directory>>/<<parameters.parallel_it_pattern>> | \
-            #   sed -e 's#^<<parameters.test_directory>>/\(.*\)\.java#\1#' | \
-            #   tr "/" "." > "${CIRCLE_CI_DIR}/tests/failsafe_classnames"
-            # echo "Doing 5!"   
-            # cat "$CIRCLE_CI_DIR/tests/failsafe_classnames" | \
-            #   circleci tests split --split-by=timings --timings-type=classname > /tmp/this_node_it_tests
-          #   echo "Doing 6!"   
-          #   cat "${CIRCLE_CI_DIR}/tests/failsafe_classnames" |  \
-          #     grep -xvf /tmp/this_node_it_tests > "${CIRCLE_CI_DIR}/tests/failsafe_classnames_ignore_list"
-          # name: Enable Test Splitting
+            
       - store_artifacts:
           path: ~/repo/.circleci/tests/
       - restore_cache:
@@ -462,19 +443,10 @@ jobs:
             - pom.xml-{{ checksum "pom.xml" }}
             - pom.xml-    
       - run:
+          name: Run tests
           command: | 
             << parameters.maven_command >> << parameters.command >> \
-                    -Dsurefire.excludesFile=../.circleci/tests/surefire_classnames_ignore_list     
-      # - maven/with_cache:
-      #     app_src_directory: << parameters.app_src_directory >>
-      #     settings_file: << parameters.settings_file >>
-      #     steps:
-      #       - run:
-      #           app_src_directory: << parameters.app_src_directory >>
-      #           command: >-
-      #             << parameters.maven_command >> << parameters.command >>
-      #             -Dsurefire.excludesFile=../.circleci/.circleci/tests/surefire_classnames_ignore_list
-      #           name: Run Tests
+                    -Dsurefire.excludesFile=<< parameters.circleci_path >>/tests/surefire_classnames_ignore_list     
       - maven/process_test_results:
           test_results_path: << parameters.test_results_path >>    
 
