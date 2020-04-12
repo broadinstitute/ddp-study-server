@@ -433,7 +433,7 @@ jobs:
               sed -e 's#^<<parameters.test_directory>>/\(.*\)\.java#\1#' | \
               tr "/" "." |
               grep -v '.*RouteTest.java' > "${CIRCLE_CI_DIR}/tests/surefire_classnames"
-            cat 'org.broadinstitute.ddp.route.IntegrationTestSuite'  >> "${CIRCLE_CI_DIR}/tests/surefire_classnames"
+            echo 'org.broadinstitute.ddp.route.IntegrationTestSuite'  >> "${CIRCLE_CI_DIR}/tests/surefire_classnames"
             echo "Doing 2!"  
             cat "${CIRCLE_CI_DIR}/tests/surefire_classnames" | \
               circleci tests split --split-by=timings --timings-type=classname > /tmp/this_node_tests
