@@ -133,8 +133,6 @@ commands:
   compile:
     description: Run maven compile
     steps:
-      - setup-test-dbs
-      - render-configs
       - restore_cache:
           keys:
             - pom.xml-{{ checksum "pom.xml" }}
@@ -155,6 +153,8 @@ commands:
   run-tests:
     description: Run tests
     steps:
+    - setup-test-dbs
+    - render-configs      
     - restore_cache:
         keys:
           - pom.xml-{{ checksum "pom.xml" }}
@@ -162,8 +162,10 @@ commands:
     - run:
         name: Run maven
         command: |
-          mvn test -file pom.xml -Dmaven.test.skip=true -Dmaven.test.skip=true
-          mvn test -f housekeeping-pom.xml -Dcheckstyle.skip         
+          mvn test -file pom.xml -Dcheckstyle.skip -Dtest=HousekeepingSendgridEmailNotificationTest \
+                     -Ditext.license=output-config/itextkey.xml \
+                     -Dddp.firecloudKeysDir=output-config/fc_keys \
+                     -Dconfig.file=output-config/testing-circleci.conf
         #            mvn --batch-mode --fail-never -file smoketest-pom.xml install package test
     #            mvn --batch-mode --fail-never -file housekeeping.xml install package test           
         # working_directory: ~/repo/pepper-apis
