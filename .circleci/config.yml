@@ -346,6 +346,7 @@ jobs:
   parallel_test-job:
     executor:
       name: build-executor
+    parallelism: 2  
     working_directory: ~/repo/pepper-apis
     parameters:
       app_src_directory:
