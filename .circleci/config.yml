@@ -101,7 +101,7 @@ commands:
           name: Show pipeline vars
           command: |
             echo "pipeline.id << pipeline.id >>"
-            echo "pipeline.number	 << pipeline.number	 >>"
+            echo "pipeline.number  << pipeline.number  >>"
             echo "pipeline.project.git_url << pipeline.project.git_url >>"
             echo "pipeline.project.type << pipeline.project.type >>"
             echo "pipeline.git.tag << pipeline.git.tag >>"
