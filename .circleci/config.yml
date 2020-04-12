@@ -443,7 +443,7 @@ jobs:
       - run:
           command: | 
             << parameters.maven_command >> << parameters.command >> \
-                    -Dsurefire.excludesFile=../.circleci/.circleci/tests/surefire_classnames_ignore_list     
+                    -Dsurefire.excludesFile=../.circleci/tests/surefire_classnames_ignore_list     
       # - maven/with_cache:
       #     app_src_directory: << parameters.app_src_directory >>
       #     settings_file: << parameters.settings_file >>
