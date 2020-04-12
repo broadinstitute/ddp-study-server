@@ -160,7 +160,9 @@ commands:
           - pom.xml-{{ checksum "pom.xml" }}
           - pom.xml-
     - run:
-        name: Run ma
+        name: Run maven
+        command: |
+          ls -l
           ls -l ./target
           mvn test -file pom.xml -Dcheckstyle.skip -Dtest=HousekeepingSendgridEmailNotificationTest \
                      -Ditext.license=output-config/itextkey.xml \
