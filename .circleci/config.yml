@@ -346,7 +346,7 @@ jobs:
   parallel_test-job:
     executor:
       name: build-executor
-    parallelism: 2  
+    parallelism: 3  
     working_directory: ~/repo/pepper-apis
     parameters:
       app_src_directory:
@@ -490,7 +490,7 @@ workflows:
           # test_directory: pepper-apis/src/test/java
           parallel_test_pattern: '**/*Test.java'
           parallelism: 3  
-          command: --batch-mode -Ditext.license=output-config/itextkey.xml -Dddp.firecloudKeysDir=output-config/fc_keys -Dconfig.file=output-config/testing-circleci.conf test -f pom.xml
+          command: --batch-mode -Ditext.license=output-config/itextkey.xml -Dddp.firecloudKeysDir=output-config/fc_keys -Dconfig.file=output-config/testing-circleci.conf -Dcheckstyle.skip test -f pom.xml
           filters:
             branches:
               only:
