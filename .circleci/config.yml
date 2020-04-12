@@ -535,17 +535,17 @@ workflows:
               only:
                 - xxxstudy-server-parallel-tests
 
-      - build-test-workflow:
-          jobs:
-            - compile-only-job: &parallel_filters
-                filters: 
-                  branches:
-                    only:
-                      - study-server-parallel-tests
-            - test-only-job:
-                <<: *parallel_filters
-                requires:
-                  - compile-only-job
+  build-test-workflow:
+    jobs:
+      - compile-only-job: &parallel_filters
+          filters: 
+            branches:
+              only:
+                - study-server-parallel-tests
+      - test-only-job:
+          <<: *parallel_filters
+          requires:
+            - compile-only-job
 
       # - run-tests-job:
       #     filters:
