@@ -169,6 +169,7 @@ public class DataDonationPlatform {
     private static final String[] CORS_HTTP_HEADERS = new String[] {"Content-Type", "Authorization", "X-Requested-With",
             "Content-Length", "Accept", "Origin", ""};
     private static final Map<String, String> pathToClass = new HashMap<>();
+    public static final String APP_ENGINE_PORT = "PORT";
     private static Scheduler scheduler = null;
 
     /**
@@ -214,7 +215,11 @@ public class DataDonationPlatform {
         boolean doLiquibase = cfg.getBoolean(ConfigFile.DO_LIQUIBASE);
         int maxConnections = cfg.getInt(ConfigFile.NUM_POOLED_CONNECTIONS);
 
-        String firecloudKeysLocation = System.getProperty(ConfigFile.FIRECLOUD_KEYS_DIR_ENV_VAR);
+        // For benefit of GAE. Does not like command line options with "=" characters and env variables with "."
+        String firecloudKeysLocation = System.getenv(ConfigFile.FIRECLOUD_KEYS_DIR_ENV_VAR.replace('.', '_'));
+        if (firecloudKeysLocation == null) {
+            firecloudKeysLocation = System.getProperty(ConfigFile.FIRECLOUD_KEYS_DIR_ENV_VAR);
+        }
         if (firecloudKeysLocation == null) {
             LOG.error("System property {} was not set. Exiting program", ConfigFile.FIRECLOUD_KEYS_DIR_ENV_VAR);
             System.exit(-1);
@@ -229,8 +234,14 @@ public class DataDonationPlatform {
         int requestThreadTimeout = cfg.getInt(ConfigFile.THREAD_TIMEOUT);
         String healthcheckPassword = cfg.getString(ConfigFile.HEALTHCHECK_PASSWORD);
 
-        int port = cfg.getInt(ConfigFile.PORT);
-        port(port);
+        // app engine's port env var wins
+        int configFilePort = cfg.getInt(ConfigFile.PORT);
+        String appEnginePort = System.getenv(APP_ENGINE_PORT);
+        if (appEnginePort != null) {
+            port(Integer.parseInt(appEnginePort));
+        } else {
+            port(configFilePort);
+        }
 
         String dbUrl = cfg.getString(ConfigFile.DB_URL);
         LOG.info("Using db {}", dbUrl);

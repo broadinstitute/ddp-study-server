@@ -136,12 +136,10 @@ import org.slf4j.LoggerFactory;
  */
 public class TestDataSetupUtil {
 
-    public static final String TEMP_DISABLE_CLIENT_STUDY_TENANT_CONSTRAINTS =
-            "src/test/resources/db-testscripts/disable-tenant-constraints.xml";
+    public static final String TEMP_DISABLE_CLIENT_STUDY_TENANT_CONSTRAINTS = "db-testscripts/disable-tenant-constraints.xml";
     public static final String MIGRATE_LEGACY_STUDY_CLIENT_TENANT_AND_ENABLE_CONSTRAINTS =
-            "src/test/resources/db-testscripts/backfill-test-tenants-and-re-enable-tenant-constrains.xml";
-    public static final String BASELINE_SEED_TEST_DATA =
-            "src/test/resources/db-testscripts/baseline-seed-test-data.xml";
+            "db-testscripts/backfill-test-tenants-and-re-enable-tenant-constrains.xml";
+    public static final String BASELINE_SEED_TEST_DATA = "db-testscripts/baseline-seed-test-data.xml";
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(TestDataSetupUtil.class);
     private static final Config cfg = ConfigManager.getInstance().getConfig();
     private static final Config auth0Config = cfg.getConfig(ConfigFile.AUTH0);
@@ -503,12 +501,12 @@ public class TestDataSetupUtil {
         scripts.add(BASELINE_SEED_TEST_DATA);
         scripts.add(MIGRATE_LEGACY_STUDY_CLIENT_TENANT_AND_ENABLE_CONSTRAINTS);
         try {
-            Driver driver = new com.mysql.jdbc.Driver();
+            Driver driver = new com.mysql.cj.jdbc.Driver();
 
             for (String script : scripts) {
                 LOG.info("Running legacy test setup script {}", script);
                 String dbUrl = cfg.getString(TransactionWrapper.DB.APIS.getDbUrlConfigKey());
-                LiquibaseUtil.runChangeLog(driver, dbUrl, script);
+                LiquibaseUtil.runChangeLog(dbUrl, script);
             }
         } catch (Exception e) {
             LOG.error("Failed to insert static test account data", e);

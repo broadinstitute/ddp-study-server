@@ -1,0 +1,532 @@
+version: 2.1
+orbs:
+  maven: circleci/maven@1.0.0
+references:
+  ci_support_image: &ci_support_image
+                       broadinstitute/study-server-build:2020-04-10G
+
+executors:
+  build-executor:
+    docker: # todo: create new image endpoint, add this in admin tab for faster starts
+      - image: *ci_support_image
+      # start pubsub emulator
+      - image: broadinstitute/study-server-build:pubsub-1
+      - image: circleci/mysql:5.7-ram
+        environment: &DB_VARS
+          MYSQL_ROOT_PASSWORD: rootpw
+          MYSQL_DATABASE: test_db
+          MYSQL_USER: user
+          MYSQL_PASSWORD: passw0rd
+
+              
+    resource_class: medium+
+    working_directory: ~/repo/pepper-apis
+
+  deploy-executor:
+    docker: # todo: create new image endpoint, add this in admin tab for faster starts
+    - image: *ci_support_image
+    working_directory: ~/repo/pepper-apis  
+
+commands:
+  setup-shared-env:
+    description: "Setup shared ENV vars used by multiple scripts"
+    steps:
+      - run:
+          name: Set environment to be used by build
+          command: |
+            echo "export VAULT_TOKEN=`vault write -field=token auth/approle/login role_id=$VAULT_ROLE_ID secret_id=$VAULT_ROLE_SECRET_ID`" >> $BASH_ENV
+            echo "export SHORT_GIT_SHA=`echo '<< pipeline.git.revision >>' | cut -c 1-7`" >> $BASH_ENV
+            echo 'export BUILDS_BUCKET=ddp-build-artifacts' >> $BASH_ENV
+            echo 'export DEPLOY_DIR=deployment_assets' >> $BASH_ENV
+            source $BASH_ENV
+
+  common-setup:
+    description: "Common setup for all jobs"
+    steps:
+      - checkout: 
+          path: ~/repo
+      - setup-shared-env          
+
+  set-deployment-env:
+    description: "Determine the deploy target and set the ENVIRONMENT var"
+    steps:
+      - run:
+          name: Determine deployment environment for branch << pipeline.git.branch >>
+          command: |
+            case "<< pipeline.git.branch >>" in
+            develop)
+              DEPLOY_ENV=dev
+            ;;
+            # @todo remove when done
+              study-server-to-appengine)
+              DEPLOY_ENV=dev
+            ;;
+            test)
+              DEPLOY_ENV=test
+            ;;
+            # @todo remove when done
+            test_deleteme1)
+              DEPLOY_ENV=test
+            ;;
+            staging)
+              DEPLOY_ENV=staging
+            ;;
+            staging)
+              DEPLOY_ENV=prod
+            ;;
+            *)
+              echo "Cannot map << pipeline.git.branch >> to a deployment environment"
+              exit 17
+            ;;
+            esac
+            echo "Setting deployment ENVIRONMENT to $DEPLOY_ENV"
+            echo "export ENVIRONMENT=$DEPLOY_ENV" >> $BASH_ENV
+            source $BASH_ENV          
+
+  render-configs:
+    description: render config files
+    steps:
+      - run:
+          name: show environment variables
+          command: env
+      - run:
+          name: api-build.sh
+          command: ./api-build.sh v1 ${ENVIRONMENT:-dev} . --gae-config
+          environment:
+            USE_DOCKER: false
+
+
+  build-jars:
+    description: "Install maven dependencies"
+    steps:
+      - run:
+          name: Show pipeline vars
+          command: |
+            echo "pipeline.id << pipeline.id >>"
+            echo "pipeline.number	 << pipeline.number	 >>"
+            echo "pipeline.project.git_url << pipeline.project.git_url >>"
+            echo "pipeline.project.type << pipeline.project.type >>"
+            echo "pipeline.git.tag << pipeline.git.tag >>"
+            echo "pipeline.git.branch << pipeline.git.branch >>"
+            echo "pipeline.git.revision << pipeline.git.revision >>"
+            echo "pipeline.git.base_revision << pipeline.git.base_revision >>"
+      # For now we are going to hard-code "dev" when we generate config for jar builds
+      - render-configs  
+      - run:
+          name: Waiting for MySQL to be ready
+          command: |
+            for i in `seq 1 10`;
+            do
+              nc -z 127.0.0.1 3306 && echo Success && exit 0
+              echo -n .
+              sleep 1
+            done
+            echo Failed waiting for MySQL && exit 1
+      - restore_cache:
+          keys:
+            - pom.xml-{{ checksum "pom.xml" }}
+            - pom.xml-
+      - run:
+          name: Setup test databases
+          command: |
+            mysql -h 127.0.0.1 -u root --password=$MYSQL_ROOT_PASSWORD test_db --execute="CREATE DATABASE studyservicedb CHARACTER SET utf8 COLLATE utf8_general_ci"
+            mysql -h 127.0.0.1 -u root --password=$MYSQL_ROOT_PASSWORD test_db --execute="CREATE DATABASE housekeepingdb CHARACTER SET utf8 COLLATE utf8_general_ci"
+          environment: *DB_VARS
+      - run:
+          name: Run maven
+          command: |
+            mvn --batch-mode -file pom.xml package \
+                     -Ditext.license=output-config/itextkey.xml \
+                     -Dddp.firecloudKeysDir=output-config/fc_keys \
+                     -Dconfig.file=output-config/testing-circleci.conf \
+                     install
+            mvn package -f housekeeping-pom.xml -Dmaven.test.skip -Dcheckstyle.skip         
+          #            mvn --batch-mode --fail-never -file smoketest-pom.xml install package test
+#            mvn --batch-mode --fail-never -file housekeeping.xml install package test           
+          # working_directory: ~/repo/pepper-apis
+      - save_cache:
+          key: pom.xml-{{ checksum "pom.xml" }}
+          paths:
+            - ~/.m2
+      - store_test_results: # uploads the test metadata from the `target/surefire-reports` directory so that it can show up in the CircleCI dashboard.
+          # Upload test results for display in Test Summary: https://circleci.com/docs/2.0/collect-test-data/
+          path: target/surefire-reports
+
+  store-jar:
+    description: Store jar in bucket
+    parameters:
+      jar_base_name:
+        type: string
+    steps:
+      - auth-gcp-service-account:
+          env: prod
+      - run:
+          name: Store jar <<parameters.jar_base_name>>
+          command: |
+            set -u
+            DATE=`date +%F`
+            JAR_BASE_NAME=<<parameters.jar_base_name>>
+            JAR_FILE_NAME="${JAR_BASE_NAME}_${DATE}_${SHORT_GIT_SHA}.jar"
+            LOCAL_JAR_FILE_PATH="./target/${JAR_BASE_NAME}.jar"
+            gsutil cp  ${LOCAL_JAR_FILE_PATH} "gs://${BUILDS_BUCKET}/ddp-study-server-pepper-apis/${JAR_FILE_NAME}"
+  
+  retrieve-jar:
+    description: Get <<parameters.jar_base_name>> jar from bucket
+    parameters:
+      jar_base_name:
+        type: string
+    steps:
+      - auth-gcp-service-account:
+          env: prod
+      - run:
+          name: Retrieve <<parameters.jar_base_name>> jar from bucket
+          command: |
+            set -u
+            set +e
+            JAR_BASE_NAME=<<parameters.jar_base_name>>
+            JAR_FILE_URL_PATTERN="gs://${BUILDS_BUCKET}/ddp-study-server-pepper-apis/${JAR_BASE_NAME}_*_${SHORT_GIT_SHA}.jar"
+            echo "Checking for ${JAR_FILE_URL_PATTERN}"
+            # For some reason following line generating exit code 1 every time in CircleCI. Use set +e so script can continue
+            JAR_FILE_URL=`gsutil ls $JAR_FILE_URL_PATTERN  | sort -r | head -1`
+            if [ -z $JAR_FILE_URL ]
+              then
+                echo "Could not find archive using pattern ${JAR_FILE_URL_PATTERN}"
+                exit 1
+            fi
+            JAR_FILE_PATH="target/${JAR_BASE_NAME}.jar"
+            mkdir -p $(dirname $JAR_FILE_PATH)
+            gsutil cp  $JAR_FILE_URL $JAR_FILE_PATH
+            echo ""
+
+
+  deploy-jar:
+    parameters:
+      jar_base_name:
+        type: string
+    steps:
+      - set-deployment-env
+      - render-configs
+      - run:
+          name: Gather deployment assets
+          command: |
+            rm -rf $DEPLOY_DIR
+            mkdir -p $DEPLOY_DIR
+            cd $DEPLOY_DIR
+            cp ../target/<<parameters.jar_base_name>>.jar .
+            cp ../src/appengine/<<parameters.jar_base_name>>.yaml .
+            cp ../output-config/application.conf .
+            cp -r ../output-config/fc_keys .
+      - auth-gcp-service-account
+      - run:
+          name: Deploy <<parameters.jar_base_name>> to GAE
+          command: |
+            set -u
+            gcloud app deploy --version="${SHORT_GIT_SHA}" --stop-previous-version --project "broad-ddp-${ENVIRONMENT}" $DEPLOY_DIR/<<parameters.jar_base_name>>.yaml
+      - update-deployment-sheet:
+          jar_base_name: <<parameters.jar_base_name>>
+      - run:
+          name: Delete previous versions of service
+          command: |
+            set -u
+            set +x
+            # extract the service name from the GAE yaml file
+            CONFIG_FILE="$DEPLOY_DIR/<<parameters.jar_base_name>>.yaml"
+            SERVICE=$(grep -Eo -m1 "^service:\s*.*" "${CONFIG_FILE}" | awk '{print $2}')
+            echo "The service name is *${SERVICE}*"
+
+            # find what other versions are currently running
+            # skip first line, exclude our version, print 2nd column
+            AWK_COMMMAND="NR > 1 && !/${SHORT_GIT_SHA}/ {print \$2}"
+            VERSIONS_TO_DELETE=$(gcloud app versions list --service "${SERVICE}" --project "broad-ddp-${ENVIRONMENT}" | awk "${AWK_COMMMAND}")
+
+            for CURRENT_VERSION in $VERSIONS_TO_DELETE; do
+              echo "Deleting version $CURRENT_VERSION of service $SERVICE"
+              gcloud app versions delete --quiet --service "$SERVICE" "$CURRENT_VERSION" --project "broad-ddp-${ENVIRONMENT}"
+            done;
+
+  update-deployment-sheet:
+    parameters:
+      jar_base_name:
+        type: string
+    steps:
+      - run:
+          name: Update deployments sheet
+          command: |
+            set -u
+            set +x
+            vault read -format=json secret/pepper/${ENVIRONMENT}/v1/conf  | jq -r .data.gcp.serviceKey |
+            /opt/build-utils/reportdeploy.sh "$RELEASE_SHEET_ID" '<<parameters.jar_base_name>> server' "$ENVIRONMENT" "$CIRCLE_BUILD_NUM" "$CIRCLE_BUILD_URL"
+
+  auth-gcp-service-account:
+    parameters:
+      env:
+        type: string
+        default: ''
+    steps:
+      - run:
+          name: Call authenticate with GCP with in deployment environment
+          command: |
+            PARAM_ENV='<< parameters.env >>'
+            TARGET_ENV="${PARAM_ENV:-${ENVIRONMENT}}"
+            if [[ -z $TARGET_ENV ]]; then
+              echo "Target environment was not set"
+              exit 1
+            else
+              echo "Target vault env: $TARGET_ENV"
+              echo "From $PWD"
+            fi
+            vault read --format=json secret/pepper/${TARGET_ENV}/v1/conf |
+              jq -r .data.gcp.serviceKey |
+              gcloud auth activate-service-account --key-file=-
+
+  list-tests:
+    steps:
+#      - checkout
+      - run:
+          name: List all the tests we have
+          command: |
+            set +x
+            echo "The pwd is $PWD"
+            echo "doing ls -l"
+            ls -l
+            echo $(circleci tests glob "src/test/**/*.java")
+            echo "using find:"
+            find src/test -name "*.java" 
+
+jobs:
+  build-jars-job:
+    executor:
+      name: build-executor
+    steps:
+      - common-setup
+      - build-jars
+
+  build-and-store-jar-job:
+    executor:
+      name: build-executor
+    steps:
+      - common-setup
+      - build-jars
+      - store-jar:
+          jar_base_name: DataDonationPlatform
+      - store-jar:
+          jar_base_name: Housekeeping
+
+  deploy-jar-job:
+    executor:
+      name: deploy-executor
+    steps:
+      - common-setup
+      - retrieve-jar:
+          jar_base_name: DataDonationPlatform
+      - deploy-jar:
+          jar_base_name: DataDonationPlatform
+      - retrieve-jar:
+          jar_base_name: Housekeeping
+      - deploy-jar:
+          jar_base_name: Housekeeping    
+
+  build-and-deploy-job:
+    executor:
+      name: build-executor
+    steps:
+      - common-setup
+      - build-jars
+      - deploy-jar:
+          jar_base_name: DataDonationPlatform
+      - deploy-jar:
+          jar_base_name: Housekeeping
+
+  run-tests-job:
+    executor:
+      name: build-executor
+    steps:
+      - list-tests
+
+  parallel_test-job:
+    executor:
+      name: build-executor
+    parallelism: 2  
+    working_directory: ~/repo/pepper-apis
+    parameters:
+      app_src_directory:
+        default: ''
+        description: >-
+          Useful when the source of your maven project is nott in the root directory
+          of your git repo. Supply the name of the directory or relative path of the
+          directory containing your source code.
+        type: string
+      command:
+        default: verify
+        description: The maven command to run.
+        type: string
+      executor:
+        default: default
+        description: The name of custom executor to use
+        type: executor
+      maven_command:
+        default: mvn
+        description: Specify a custom path for invoking maven
+        type: string
+      parallel_it_pattern:
+        default: '**/*IT*.java'
+        description: |
+          This is the standard Failsafe pattern, but you can override
+          if you use alternate <includes> patterns in your pom.xml.
+        type: string
+      parallel_test_pattern:
+        default: '**/*Test*.java'
+        description: |
+          This is the standard Surefire pattern, but you can override
+          if you use alternate <includes> patterns in your pom.xml
+        type: string
+      parallelism:
+        default: 2
+        description: How many nodes should testing be split across?
+        type: integer
+      settings_file:
+        default: pom.xml
+        description: Specify a custom settings file to use (optional)
+        type: string
+      test_directory:
+        default: src/test/java
+        description: If following standard maven conventions this does not need to be changed.
+        type: string
+      test_results_path:
+        default: target/surefire-reports
+        description: The path to the test results.
+        type: string
+    steps:
+      - common-setup
+      - list-tests
+      - render-configs  
+      - run:
+          name: Waiting for MySQL to be ready
+          command: |
+            for i in `seq 1 10`;
+            do
+              nc -z 127.0.0.1 3306 && echo Success && exit 0
+              echo -n .
+              sleep 1
+            done
+            echo Failed waiting for MySQL && exit 1
+      - restore_cache:
+          keys:
+            - pom.xml-{{ checksum "pom.xml" }}
+            - pom.xml-
+      - run:
+          name: Setup test databases
+          command: |
+            mysql -h 127.0.0.1 -u root --password=rootpw test_db --execute="CREATE DATABASE studyservicedb CHARACTER SET utf8 COLLATE utf8_general_ci"
+            mysql -h 127.0.0.1 -u root --password=rootpw test_db --execute="CREATE DATABASE housekeepingdb CHARACTER SET utf8 COLLATE utf8_general_ci"    
+      - run:
+          command: |
+            set +x
+            set +e
+            CIRCLE_CI_DIR='../.circleci'
+            echo "Doing 0!"  
+            mkdir -p "$CIRCLE_CI_DIR/tests/"
+
+            # generate excluded surefire tests using provided pattern
+            echo "Doing 1!"  
+            circleci tests glob <<parameters.test_directory>>/<<parameters.parallel_test_pattern>> | \
+              sed -e 's#^<<parameters.test_directory>>/\(.*\)\.java#\1#' | \
+              tr "/" "." > "${CIRCLE_CI_DIR}/tests/surefire_classnames"
+            echo "Doing 2!"  
+            cat "${CIRCLE_CI_DIR}/tests/surefire_classnames" | \
+              circleci tests split --split-by=timings --timings-type=classname > /tmp/this_node_tests
+            echo "Doing 3!"    
+            cat "${CIRCLE_CI_DIR}/tests/surefire_classnames" | \
+              grep -xvf /tmp/this_node_tests > "${CIRCLE_CI_DIR}/tests/surefire_classnames_ignore_list"
+            echo "All done!"  
+            # generate excluded failsafe tests using provided pattern
+
+            # echo "Doing 4!"   
+            # circleci tests glob
+            # <<parameters.test_directory>>/<<parameters.parallel_it_pattern>> | \
+            #   sed -e 's#^<<parameters.test_directory>>/\(.*\)\.java#\1#' | \
+            #   tr "/" "." > "${CIRCLE_CI_DIR}/tests/failsafe_classnames"
+            # echo "Doing 5!"   
+            # cat "$CIRCLE_CI_DIR/tests/failsafe_classnames" | \
+            #   circleci tests split --split-by=timings --timings-type=classname > /tmp/this_node_it_tests
+          #   echo "Doing 6!"   
+          #   cat "${CIRCLE_CI_DIR}/tests/failsafe_classnames" |  \
+          #     grep -xvf /tmp/this_node_it_tests > "${CIRCLE_CI_DIR}/tests/failsafe_classnames_ignore_list"
+          # name: Enable Test Splitting
+      - store_artifacts:
+          path: ~/repo/.circleci/tests/
+      - restore_cache:
+          keys:
+            - pom.xml-{{ checksum "pom.xml" }}
+            - pom.xml-    
+      - run:
+          command: | 
+            << parameters.maven_command >> << parameters.command >> \
+                    -Dsurefire.excludesFile=../.circleci/tests/surefire_classnames_ignore_list     
+      # - maven/with_cache:
+      #     app_src_directory: << parameters.app_src_directory >>
+      #     settings_file: << parameters.settings_file >>
+      #     steps:
+      #       - run:
+      #           app_src_directory: << parameters.app_src_directory >>
+      #           command: >-
+      #             << parameters.maven_command >> << parameters.command >>
+      #             -Dsurefire.excludesFile=../.circleci/.circleci/tests/surefire_classnames_ignore_list
+      #           name: Run Tests
+      - maven/process_test_results:
+          test_results_path: << parameters.test_results_path >>    
+
+
+workflows:
+  version: 2
+
+  figure-out-tests:
+    jobs:
+      - parallel_test-job:
+          executor:
+            name: build-executor
+          # test_directory: pepper-apis/src/test/java
+          parallel_test_pattern: '**/*Test.java'
+          parallelism: 3  
+          command: --batch-mode -Ditext.license=output-config/itextkey.xml -Dddp.firecloudKeysDir=output-config/fc_keys -Dconfig.file=output-config/testing-circleci.conf verify -f pom.xml
+          filters:
+            branches:
+              only:
+                - study-server-to-appengine
+
+      # - run-tests-job:
+      #     filters:
+      #       branches:
+      #         only:
+      #           - study-server-to-appengine    
+
+  build-and-deploy:
+    jobs:
+      - build-and-deploy-job:
+          filters:
+            branches:
+              only:
+                - develop
+                # @todo remove when done
+                # - study-server-to-appengine
+
+  build-and-store:
+    jobs:
+      - build-and-store-jar-job:
+          filters:
+            branches:
+              only:
+                - /^rc.*/
+                - /^hotfix.*/
+
+  deploy-all-apps-workflow:
+    jobs:
+      - deploy-jar-job:
+          filters:
+            branches:
+              only:
+                - test
+                - staging
+                - production
+                # @todo remove when done
+                - test_deleteme1

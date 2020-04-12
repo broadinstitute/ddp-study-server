@@ -1,0 +1,25 @@
+service: pepper-backend
+runtime: java11
+instance_class: F4
+
+# @todo back to 2 when dev completed
+automatic_scaling:
+  max_instances: 4 #up to 2147483647
+  min_instances: 0 #0 means first one starts only on first request. Needs additional setup to use
+  max_idle_instances: 1 #default is automatic
+  min_idle_instances: 0 #also needs additional setup
+  target_cpu_utilization: 0.8 #0.6 is the default. Higher might trigger new instances created
+  target_throughput_utilization: 0.8 #default is 0.6 . Also metric to launch more instances
+  max_concurrent_requests: 10 #default is 10 . Max is 80. GCP recommends 10 max value.
+  max_pending_latency: 60ms #Default is 30ms. Max time a request is allowed to wait in queue.
+  min_pending_latency: 60ms #Default is 30ms. Threshold used to scale down
+network:
+  instance_tag: study-server # necessary for firewall rules so that DSM will accept https requests from pepper
+
+entrypoint: java -Xmx820m -Xmx820m -jar DataDonationPlatform.jar
+
+# GAE does not like the "=" character in entrypoint and does not support "." in environment variables
+env_variables:
+  config_file: application.conf
+  ddp_firecloudKeysDir: fc_keys
+
