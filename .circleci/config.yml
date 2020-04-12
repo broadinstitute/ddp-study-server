@@ -431,7 +431,9 @@ jobs:
             echo "Doing 1!"  
             circleci tests glob <<parameters.test_directory>>/<<parameters.parallel_test_pattern>> | \
               sed -e 's#^<<parameters.test_directory>>/\(.*\)\.java#\1#' | \
-              tr "/" "." > "${CIRCLE_CI_DIR}/tests/surefire_classnames"
+              tr "/" "." |
+              grep -v '.*RouteTest.java' > "${CIRCLE_CI_DIR}/tests/surefire_classnames"
+            cat 'org.broadinstitute.ddp.route.IntegrationTestSuite'  >> "${CIRCLE_CI_DIR}/tests/surefire_classnames"
             echo "Doing 2!"  
             cat "${CIRCLE_CI_DIR}/tests/surefire_classnames" | \
               circleci tests split --split-by=timings --timings-type=classname > /tmp/this_node_tests
@@ -488,11 +490,11 @@ workflows:
           # test_directory: pepper-apis/src/test/java
           parallel_test_pattern: '**/*Test.java'
           parallelism: 3  
-          command: --batch-mode -Ditext.license=output-config/itextkey.xml -Dddp.firecloudKeysDir=output-config/fc_keys -Dconfig.file=output-config/testing-circleci.conf verify -f pom.xml
+          command: --batch-mode -Ditext.license=output-config/itextkey.xml -Dddp.firecloudKeysDir=output-config/fc_keys -Dconfig.file=output-config/testing-circleci.conf test -f pom.xml
           filters:
             branches:
               only:
-                - study-server-to-appengine
+                - study-server-parallel-tests
 
       # - run-tests-job:
       #     filters:
