@@ -121,7 +121,7 @@ commands:
             done
             echo Failed waiting for MySQL && exit 1
       - restore_cache:
-          key: 
+          key:
             - pom.xml-{{ checksum "pom.xml" }}
             - pom.xml-
       - run:
@@ -318,7 +318,7 @@ jobs:
       - deploy-jar:
           jar_base_name: DataDonationPlatform
       - deploy-jar:
-          jar_base_name: Housekeeping    
+          jar_base_name: Housekeeping
 
 workflows:
   version: 2
