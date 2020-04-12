@@ -95,23 +95,10 @@ commands:
           environment:
             USE_DOCKER: false
 
-
-  build-jars:
-    description: "Install maven dependencies"
+  setup-test-dbs:
+    description: setup the test databases. Ensure up and running
     steps:
-      - run:
-          name: Show pipeline vars
-          command: |
-            echo "pipeline.id << pipeline.id >>"
-            echo "pipeline.number	 << pipeline.number	 >>"
-            echo "pipeline.project.git_url << pipeline.project.git_url >>"
-            echo "pipeline.project.type << pipeline.project.type >>"
-            echo "pipeline.git.tag << pipeline.git.tag >>"
-            echo "pipeline.git.branch << pipeline.git.branch >>"
-            echo "pipeline.git.revision << pipeline.git.revision >>"
-            echo "pipeline.git.base_revision << pipeline.git.base_revision >>"
-      # For now we are going to hard-code "dev" when we generate config for jar builds
-      - render-configs  
+      - render-configs
       - run:
           name: Waiting for MySQL to be ready
           command: |
@@ -122,24 +109,86 @@ commands:
               sleep 1
             done
             echo Failed waiting for MySQL && exit 1
-      - restore_cache:
-          keys:
-            - pom.xml-{{ checksum "pom.xml" }}
-            - pom.xml-
       - run:
           name: Setup test databases
           command: |
             mysql -h 127.0.0.1 -u root --password=$MYSQL_ROOT_PASSWORD test_db --execute="CREATE DATABASE studyservicedb CHARACTER SET utf8 COLLATE utf8_general_ci"
             mysql -h 127.0.0.1 -u root --password=$MYSQL_ROOT_PASSWORD test_db --execute="CREATE DATABASE housekeepingdb CHARACTER SET utf8 COLLATE utf8_general_ci"
           environment: *DB_VARS
+    
+  show-pipeline-vars:
+    description: "Show pipeline vars"
+    steps:
+      - run:
+          name: Show pipeline vars
+          command: |
+            echo "pipeline.id << pipeline.id >>"
+            echo "pipeline.number  << pipeline.number  >>"
+            echo "pipeline.project.git_url << pipeline.project.git_url >>"
+            echo "pipeline.project.type << pipeline.project.type >>"
+            echo "pipeline.git.tag << pipeline.git.tag >>"
+            echo "pipeline.git.branch << pipeline.git.branch >>"
+            echo "pipeline.git.revision << pipeline.git.revision >>"
+            echo "pipeline.git.base_revision << pipeline.git.base_revision >>"
+  compile:
+    description: Run maven compile
+    steps:
+      - setup-test-dbs
+      - render-configs
+      - restore_cache:
+          keys:
+            - pom.xml-{{ checksum "pom.xml" }}
+            - pom.xml-
       - run:
           name: Run maven
           command: |
-            mvn --batch-mode -file pom.xml package \
+            mvn compile -file pom.xml
+            mvn compile -f housekeeping-pom.xml -Dcheckstyle.skip         
+          #            mvn --batch-mode --fail-never -file smoketest-pom.xml install package test
+  #            mvn --batch-mode --fail-never -file housekeeping.xml install package test           
+          # working_directory: ~/repo/pepper-apis
+      - save_cache:
+          key: pom.xml-{{ checksum "pom.xml" }}
+          paths:
+            - ~/.m2
+
+  run-tests:
+    description: Run tests
+    steps:
+    - restore_cache:
+        keys:
+          - pom.xml-{{ checksum "pom.xml" }}
+          - pom.xml-
+    - run:
+        name: Run maven
+        command: |
+          mvn test -file pom.xml -Dmaven.test.skip=true -Dmaven.test.skip=true
+          mvn test -f housekeeping-pom.xml -Dcheckstyle.skip         
+        #            mvn --batch-mode --fail-never -file smoketest-pom.xml install package test
+    #            mvn --batch-mode --fail-never -file housekeeping.xml install package test           
+        # working_directory: ~/repo/pepper-apis
+    - store_test_results: # uploads the test metadata from the `target/surefire-reports` directory so that it can show up in the CircleCI dashboard.
+        # Upload test results for display in Test Summary: https://circleci.com/docs/2.0/collect-test-data/
+        path: target/surefire-reports    
+
+  build-jars:
+    description: "Build project jars"
+    steps:
+      - show-pipeline-vars
+      - render-configs # For now we are going to hard-code "dev" when we generate config for jar builds
+      - setup-test-dbs
+      - restore_cache:
+          keys:
+            - pom.xml-{{ checksum "pom.xml" }}
+            - pom.xml-
+      - run:
+          name: Run maven
+          command: |
+            mvn --batch-mode -file pom.xml \
                      -Ditext.license=output-config/itextkey.xml \
                      -Dddp.firecloudKeysDir=output-config/fc_keys \
                      -Dconfig.file=output-config/testing-circleci.conf \
-                     install
+                      package 
             mvn package -f housekeeping-pom.xml -Dmaven.test.skip -Dcheckstyle.skip         
           #            mvn --batch-mode --fail-never -file smoketest-pom.xml install package test
 #            mvn --batch-mode --fail-never -file housekeeping.xml install package test           
@@ -337,12 +386,6 @@ jobs:
       - deploy-jar:
           jar_base_name: Housekeeping
 
-  run-tests-job:
-    executor:
-      name: build-executor
-    steps:
-      - list-tests
-
   parallel_test-job:
     executor:
       name: build-executor
@@ -454,6 +497,27 @@ jobs:
           test_results_path: << parameters.test_results_path >>    
 
 
+  compile-only-job:
+    executor:
+      name: build-executor
+    steps:
+      - compile
+      - persist_to_workspace:
+          # Must be an absolute path, or relative path from working_directory. This is a directory on the container which is 
+          # taken to be the root directory of the workspace.
+          root: .
+          # Must be relative path from root
+          paths:
+            - /target
+
+  test-only-job:
+    executor:
+      name: build-executor
+    steps:
+      - attach_workspace:
+          at: ~/repo/pepper-apis
+      - run-tests
+
 workflows:
   version: 2
 
@@ -469,7 +533,19 @@ workflows:
           filters:
             branches:
               only:
-                - study-server-parallel-tests
+                - xxxstudy-server-parallel-tests
+
+      - build-test-workflow:
+          jobs:
+            - compile-only-job: &parallel_filters
+                filters: 
+                  branches:
+                    only:
+                      - study-server-parallel-tests
+            - test-only-job:
+                <<: *parallel_filters
+                requires:
+                  - compile-only-job
 
       # - run-tests-job:
       #     filters:
