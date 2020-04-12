@@ -360,6 +360,9 @@ jobs:
         default: mvn
         description: Specify a custom path for invoking maven
         type: string
+      command:
+        type: string
+        description: What comes after the mvn command  
       parallel_test_pattern:
         default: '**/*Test*.java'
         description: |
@@ -457,8 +460,8 @@ workflows:
   figure-out-tests:
     jobs:
       - parallel_test-job:
-          executor:
-            name: build-executor
+          # executor:
+          #   name: build-executor
           # test_directory: pepper-apis/src/test/java
           parallel_test_pattern: '**/*Test.java'
           parallelism: 3  
