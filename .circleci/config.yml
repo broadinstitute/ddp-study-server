@@ -510,7 +510,7 @@ jobs:
           root: ~/repo/pepper-apis
           # Must be relative path from root
           paths:
-            - /target
+            - target
 
   test-only-job:
     executor:
