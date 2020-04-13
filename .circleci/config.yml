@@ -161,8 +161,8 @@ commands:
     - render-configs      
     - restore_cache:
         keys:
-          - pom.xml-{{ checksum "pom.xml" }}
-          - pom.xml-
+          - pom.xml1-{{ checksum "pom.xml" }}
+          - pom.xml1-
     - run:
         name: Run maven
         command: |
@@ -539,11 +539,14 @@ jobs:
   test-only-job:
     executor:
       name: build-executor
+    working_directory: /home/circleci/repo/pepper-apis
     steps:
-      - checkout:
-          path: ~/repo
+      - run:
+          command: |
+            mkdir /home/circleci
+            mkdir /home/circleci/repo
       - attach_workspace:
-          at: ~/repo/pepper-apis
+          at: /home/circleci/repo
       - run-tests
 
 workflows:
