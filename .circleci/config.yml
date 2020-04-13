@@ -531,10 +531,10 @@ jobs:
       - persist_to_workspace:
           # Must be an absolute path, or relative path from working_directory. This is a directory on the container which is 
           # taken to be the root directory of the workspace.
-          root: ~/repo
+          root: ~
           # Must be relative path from root
           paths:
-            - pepper-apis
+            - repo
 
   test-only-job:
     executor:
@@ -542,7 +542,7 @@ jobs:
     working_directory: /home/circleci/repo/pepper-apis
     steps:
       - attach_workspace:
-          at: /home/circleci/repo
+          at: /home/circleci
       - run-tests
 
 workflows:
