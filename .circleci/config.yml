@@ -511,6 +511,8 @@ jobs:
       name: java-executor
     working_directory: ~/repo/pepper-apis  
     steps:
+      - run:
+          command: chmod -R 777 ~
       - checkout:
           path: ~/repo
       - compile
