@@ -544,7 +544,7 @@ workflows:
               only:
                 - study-server-parallel-tests
       - parallel_test-job:
-          parallelism: 3  
+          parallelism: 4
           command: --batch-mode -Ditext.license=output-config/itextkey.xml -Dddp.firecloudKeysDir=output-config/fc_keys -Dconfig.file=output-config/testing-circleci.conf -Dcheckstyle.skip test -f pom.xml
           <<: *parallel_filters
           requires:
