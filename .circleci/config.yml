@@ -517,8 +517,11 @@ jobs:
           command: |
             echo "HOME: $HOME"
             echo $PWD
-            ls -l    
-      - checkout
+            ls -l
+            cd ..
+            rmdir pepper-apis    
+      - checkout:
+          path: ~/project
       - run:
           command: |
             echo "HOME: $HOME"
