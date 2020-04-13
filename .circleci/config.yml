@@ -399,14 +399,9 @@ jobs:
     executor:
       name: build-executor
     parallelism: 3  
-    working_directory: ~/repo/pepper-apis
+    working_directory: /home/circleci/repo/pepper-apis
     parameters:
       app_src_directory:
-        default: ''
-        description: >-
-          Useful when the source of your maven project is nott in the root directory
-          of your git repo. Supply the name of the directory or relative path of the
-          directory containing your source code.
         type: string
       maven_command:
         default: mvn
@@ -425,44 +420,12 @@ jobs:
         default: 2
         description: How many nodes should testing be split across?
         type: integer
-      settings_file:
-        default: pom.xml
-        description: Specify a custom settings file to use (optional)
-        type: string
-      test_directory:
-        default: src/test/java
-        description: If following standard maven conventions this does not need to be changed.
-        type: string
-      test_results_path:
-        default: target/surefire-reports
-        description: The path to the test results.
-        type: string
       circleci_path:
         type: string
         default: ../.circleci  
     steps:
-      - common-setup
-      - list-tests
-      - render-configs  
-      - run:
-          name: Waiting for MySQL to be ready
-          command: |
-            for i in `seq 1 10`;
-            do
-              nc -z 127.0.0.1 3306 && echo Success && exit 0
-              echo -n .
-              sleep 1
-            done
-            echo Failed waiting for MySQL && exit 1
-      - restore_cache:
-          keys:
-            - pom.xml-{{ checksum "pom.xml" }}
-            - pom.xml-
-      - run:
-          name: Setup test databases
-          command: |
-            mysql -h 127.0.0.1 -u root --password=rootpw test_db --execute="CREATE DATABASE studyservicedb CHARACTER SET utf8 COLLATE utf8_general_ci"
-            mysql -h 127.0.0.1 -u root --password=rootpw test_db --execute="CREATE DATABASE housekeepingdb CHARACTER SET utf8 COLLATE utf8_general_ci"    
+      - attach_workspace:
+          at: /home/circleci       
       - run:
           name: Split tests
           command: |
@@ -490,26 +453,28 @@ jobs:
             # the ones that don't run in this node
             cat "${CIRCLE_CI_DIR}/tests/surefire_classnames" | \
               grep -xvf /tmp/this_node_tests > "${CIRCLE_CI_DIR}/tests/surefire_classnames_ignore_list"
-            
       - store_artifacts:
-          path: ~/repo/.circleci/tests/
+          path: /home/circleci/repo/pepper-apis/.circleci/tests/        
+      - common-setup
+      - render-configs
+      - setup-test-dbs
       - restore_cache:
           keys:
-            - pom.xml-{{ checksum "pom.xml" }}
-            - pom.xml-    
+            - pom.xml1-{{ checksum "pom.xml" }}
+            - pom.xml1-    
       - run:
           name: Run tests
           command: | 
             << parameters.maven_command >> << parameters.command >> \
                     -Dsurefire.excludesFile=<< parameters.circleci_path >>/tests/surefire_classnames_ignore_list     
       - maven/process_test_results:
-          test_results_path: << parameters.test_results_path >>    
+          test_results_path: target/surefire-reports    
 
 
   compile-only-job:
     executor:
       name: java-executor
-    working_directory: ~/repo/pepper-apis  
+    working_directory: /home/circleci/repo/pepper-apis  
     steps:
       - run:
           command: chmod -R 777 ~
@@ -519,6 +484,7 @@ jobs:
             echo $PWD
             ls -l
             cd ..
+            # this really necessary?
             rmdir pepper-apis    
       - checkout:
           path: ~/repo
@@ -569,16 +535,18 @@ workflows:
             branches:
               only:
                 - study-server-parallel-tests
-      - test-only-job:
+      - parallel_test-job:
+          parallelism: 3  
+          command: --batch-mode -Ditext.license=output-config/itextkey.xml -Dddp.firecloudKeysDir=output-config/fc_keys -Dconfig.file=output-config/testing-circleci.conf -Dcheckstyle.skip test -f pom.xml
           <<: *parallel_filters
           requires:
             - compile-only-job
 
-      # - run-tests-job:
-      #     filters:
-      #       branches:
-      #         only:
-      #           - study-server-to-appengine    
+      # - test-only-job:
+      #     <<: *parallel_filters
+      #     requires:
+      #       - compile-only-job
+
 
   build-and-deploy:
     jobs:
