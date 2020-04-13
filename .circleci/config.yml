@@ -143,8 +143,8 @@ commands:
       - run:
           name: Run maven
           command: |
-            mvn compile package -DskipTests -file pom.xml
-            mvn package -DskipTests -f housekeeping-pom.xml -Dcheckstyle.skip         
+            mvn compile package -DskipTests -file pom.xml -Dmaven.repo.local=/home/circleci/.m2/repository
+            mvn package -DskipTests -f housekeeping-pom.xml -Dcheckstyle.skip -Dmaven.repo.local=/home/circleci/.m2/repository
           #            mvn --batch-mode --fail-never -file smoketest-pom.xml install package test
   #            mvn --batch-mode --fail-never -file housekeeping.xml install package test           
           # working_directory: ~/repo/pepper-apis
