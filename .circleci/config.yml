@@ -515,11 +515,13 @@ jobs:
           command: chmod -R 777 ~
       - run:
           command: |
+            echo "HOME: $HOME"
             echo $PWD
             ls -l    
       - checkout
       - run:
           command: |
+            echo "HOME: $HOME"
             echo $PWD
             ls -l    
       - compile
