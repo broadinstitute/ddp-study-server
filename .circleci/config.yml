@@ -397,7 +397,6 @@ jobs:
   parallel_test-job:
     executor:
       name: build-executor
-    parallelism: 3  
     working_directory: /home/circleci/repo/pepper-apis
     parameters:
       maven_command:
