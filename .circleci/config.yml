@@ -509,12 +509,12 @@ jobs:
   compile-only-job:
     executor:
       name: java-executor
-    working_directory: ~/repo/pepper-apis  
+    working_directory: ~/ddp/pepper-apis  
     steps:
       - run:
           command: chmod -R 777 ~
       - checkout:
-          path: ~/repo
+          path: ~/ddp
       - compile
       - persist_to_workspace:
           # Must be an absolute path, or relative path from working_directory. This is a directory on the container which is 
