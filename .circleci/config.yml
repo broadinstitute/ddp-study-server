@@ -137,15 +137,15 @@ commands:
   compile:
     description: Run maven compile
     steps:
-      # - restore_cache:
-      #     keys:
-      #       - pom.xml-{{ checksum "pom.xml" }}
-      #       - pom.xml-
+      - restore_cache:
+          keys:
+            - pom.xml-{{ checksum "pom.xml" }}
+            - pom.xml-
       - run:
           name: Run maven
           command: |
-            mvn compile -file pom.xml
-            mvn compile -f housekeeping-pom.xml -Dcheckstyle.skip         
+            mvn compile package -DskipTests -file pom.xml
+            mvn package -DskipTests -f housekeeping-pom.xml -Dcheckstyle.skip         
           #            mvn --batch-mode --fail-never -file smoketest-pom.xml install package test
   #            mvn --batch-mode --fail-never -file housekeeping.xml install package test           
           # working_directory: ~/repo/pepper-apis
@@ -531,10 +531,10 @@ jobs:
       - persist_to_workspace:
           # Must be an absolute path, or relative path from working_directory. This is a directory on the container which is 
           # taken to be the root directory of the workspace.
-          root: ~/repo/pepper-apis
+          root: ~/project
           # Must be relative path from root
           paths:
-            - target
+            - pepper-apis
 
   test-only-job:
     executor:
