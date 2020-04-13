@@ -467,6 +467,7 @@ jobs:
           name: Run tests
           command: | 
             << parameters.maven_command >> << parameters.command >> \
+                    -Dmaven.repo.local=/home/circleci/.m2/repository
                     -Dsurefire.excludesFile=<< parameters.circleci_path >>/tests/surefire_classnames_ignore_list     
       - maven/process_test_results:
           test_results_path: target/surefire-reports    
