@@ -509,7 +509,7 @@ jobs:
   compile-only-job:
     executor:
       name: java-executor
-    # working_directory: ~/ddp/pepper-apis  
+      working_directory: ~/project/pepper-apis  
     steps:
       - run:
           command: chmod -R 777 ~
