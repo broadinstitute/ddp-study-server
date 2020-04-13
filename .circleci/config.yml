@@ -137,10 +137,10 @@ commands:
   compile:
     description: Run maven compile
     steps:
-      - restore_cache:
-          keys:
-            - pom.xml-{{ checksum "pom.xml" }}
-            - pom.xml-
+      # - restore_cache:
+      #     keys:
+      #       - pom.xml-{{ checksum "pom.xml" }}
+      #       - pom.xml-
       - run:
           name: Run maven
           command: |
