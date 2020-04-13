@@ -9,6 +9,7 @@ executors:
   java-executor:
     docker:
       - image: circleci/openjdk:11.0.6-buster
+    resource_class: medium+
 
   build-executor:
     docker: # todo: create new image endpoint, add this in admin tab for faster starts
@@ -438,24 +439,31 @@ jobs:
             TEST_SRC_DIRECTORY='src/test/java'  
             TEST_SEARCH_PATTERN='**/*Test*.java'
 
+            SUREFIRE_CLASS_NAMES_PATH="${CIRCLE_CI_DIR}/tests/surefire_classnames"
+
             # generate list of tests to be processed
             circleci tests glob "${TEST_SRC_DIRECTORY}/${TEST_SEARCH_PATTERN}" | # fancy circleci find command
               sed -e 's#^<<parameters.test_directory>>/\(.*\)\.java#\1#' | # Strip .java and parent directory path
               tr "/" "." |  #Convert to a class name of form org.package.ClassName
               grep -v '.*RouteTest' > "${CIRCLE_CI_DIR}/tests/surefire_classnames" #Exclude RouteTest. These done from suite
-              
+
             # Pattern does not pick this one up. Add explicitly
-            echo 'org.broadinstitute.ddp.route.IntegrationTestSuite'  >> "${CIRCLE_CI_DIR}/tests/surefire_classnames"
-            
+            echo 'org.broadinstitute.ddp.route.IntegrationTestSuite'  >> $SUREFIRE_CLASS_NAMES_PATH
+
+            echo "Total number of test class names collected: $(wc -l $SUREFIRE_CLASS_NAMES_PATH)"
+
             # tests split will figure out which tests to run in this node  
-            cat "${CIRCLE_CI_DIR}/tests/surefire_classnames" | \
+            cat $SUREFIRE_CLASS_NAMES_PATH | \
               circleci tests split --split-by=timings --timings-type=classname > /tmp/this_node_tests
             
             # the ones that don't run in this node
-            cat "${CIRCLE_CI_DIR}/tests/surefire_classnames" | \
-              grep -xvf /tmp/this_node_tests > "${CIRCLE_CI_DIR}/tests/surefire_classnames_ignore_list"
+            IGNORE_LIST_PATH="${CIRCLE_CI_DIR}/tests/surefire_classnames_ignore_list"
+            cat $SUREFIRE_CLASS_NAMES_PATH | \
+              grep -xvf /tmp/this_node_tests > $IGNORE_LIST_PATH
+
+            echo "Total number of test classes that will be skipped in this node: $(wc -l $IGNORE_LIST_PATH)"
       - store_artifacts:
-          path: /home/circleci/repo/pepper-apis/.circleci/tests/        
+          path: << parameters.circleci_path>>/tests/
       - common-setup
       - render-configs
       - setup-test-dbs
@@ -467,7 +475,7 @@ jobs:
           name: Run tests
           command: | 
             << parameters.maven_command >> << parameters.command >> \
-                    -Dmaven.repo.local=/home/circleci/.m2/repository
+                    -Dmaven.repo.local=/home/circleci/.m2/repository \
                     -Dsurefire.excludesFile=<< parameters.circleci_path >>/tests/surefire_classnames_ignore_list     
       - maven/process_test_results:
           test_results_path: target/surefire-reports    
