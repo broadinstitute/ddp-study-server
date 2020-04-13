@@ -26,9 +26,9 @@ public class SendGridClient {
 
     // Note: API endpoint paths should not have leading slash,
     // and path parameters uses colon syntax like SparkJava.
-    public static final String API_MAIL_SEND = "mail/send";
-    public static final String API_TEMPLATES = "templates";
-    public static final String API_TEMPLATES_VERSIONS = "templates/:templateId/versions";
+    public static final String PATH_MAIL_SEND = "mail/send";
+    public static final String PATH_TEMPLATES = "templates";
+    public static final String PATH_TEMPLATES_VERSIONS = "templates/:templateId/versions";
     public static final String PARAM_TEMPLATE_ID = ":templateId";
 
     private static final Logger LOG = LoggerFactory.getLogger(SendGridClient.class);
@@ -80,7 +80,7 @@ public class SendGridClient {
 
         Request request = new Request();
         request.setMethod(Method.POST);
-        request.setEndpoint(API_TEMPLATES);
+        request.setEndpoint(PATH_TEMPLATES);
         request.setBody(gson.toJson(payload));
 
         try {
@@ -119,7 +119,7 @@ public class SendGridClient {
 
         Request request = new Request();
         request.setMethod(Method.POST);
-        request.setEndpoint(API_TEMPLATES_VERSIONS.replace(PARAM_TEMPLATE_ID, templateId));
+        request.setEndpoint(PATH_TEMPLATES_VERSIONS.replace(PARAM_TEMPLATE_ID, templateId));
         request.setBody(gson.toJson(payload));
 
         try {
@@ -160,7 +160,7 @@ public class SendGridClient {
             payload.put(KEY_HTML_CONTENT, html);
         }
 
-        String path = API_TEMPLATES_VERSIONS.replace(PARAM_TEMPLATE_ID, templateId) + "/" + versionId;
+        String path = PATH_TEMPLATES_VERSIONS.replace(PARAM_TEMPLATE_ID, templateId) + "/" + versionId;
 
         Request request = new Request();
         request.setMethod(Method.PATCH);
@@ -192,7 +192,7 @@ public class SendGridClient {
     public ApiResult<String, Void> getTemplateActiveVersionId(String templateId) {
         Request request = new Request();
         request.setMethod(Method.GET);
-        request.setEndpoint(API_TEMPLATES + "/" + templateId);
+        request.setEndpoint(PATH_TEMPLATES + "/" + templateId);
         try {
             Response response = sendGrid.api(request);
             int statusCode = response.getStatusCode();
@@ -229,7 +229,7 @@ public class SendGridClient {
     public ApiResult<Void, String> sendMail(Mail mail) {
         Request request = new Request();
         request.setMethod(Method.POST);
-        request.setEndpoint(API_MAIL_SEND);
+        request.setEndpoint(PATH_MAIL_SEND);
         try {
             request.setBody(mail.build());
             Response response = sendGrid.api(request);

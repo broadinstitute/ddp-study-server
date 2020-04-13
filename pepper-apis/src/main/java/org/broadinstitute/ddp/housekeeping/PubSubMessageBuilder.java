@@ -25,14 +25,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.NotificationTemplateVariables;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
-import org.broadinstitute.ddp.db.dao.JdbiProfile;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
+import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.NotificationTemplateSubstitutionDto;
 import org.broadinstitute.ddp.db.dto.QueuedEventDto;
 import org.broadinstitute.ddp.db.dto.QueuedNotificationDto;
 import org.broadinstitute.ddp.db.dto.QueuedPdfGenerationDto;
-import org.broadinstitute.ddp.db.dto.UserProfileDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.exception.MessageBuilderException;
 import org.broadinstitute.ddp.housekeeping.message.NotificationMessage;
@@ -40,7 +39,7 @@ import org.broadinstitute.ddp.housekeeping.message.PdfGenerationMessage;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.event.NotificationType;
 import org.broadinstitute.ddp.model.governance.Governance;
-import org.broadinstitute.ddp.util.Auth0MgmtTokenHelper;
+import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.util.Auth0Util;
 import org.broadinstitute.ddp.util.GsonUtil;
 import org.jdbi.v3.core.Handle;
@@ -121,20 +120,19 @@ public class PubSubMessageBuilder {
                         auth0UserId = userDao.findUserById(gov.getProxyUserId()).map(user -> user.getAuth0UserId()).orElse(null);
 
                         // add personalizations for proxy
-                        UserProfileDto profileDto = apisHandle.attach(JdbiProfile.class).getUserProfileByUserId(gov.getProxyUserId());
-                        if (profileDto != null) {
+                        UserProfile profile = apisHandle.attach(UserProfileDao.class)
+                                .findProfileByUserId(gov.getProxyUserId()).orElse(null);
+                        if (profile != null) {
                             queuedNotificationDto.addTemplateSubstitutions(
-                                    new NotificationTemplateSubstitutionDto(DDP_PROXY_FIRST_NAME, profileDto.getFirstName()),
-                                    new NotificationTemplateSubstitutionDto(DDP_PROXY_LAST_NAME, profileDto.getLastName()));
+                                    new NotificationTemplateSubstitutionDto(DDP_PROXY_FIRST_NAME, profile.getFirstName()),
+                                    new NotificationTemplateSubstitutionDto(DDP_PROXY_LAST_NAME, profile.getLastName()));
                         }
                     }
 
                     User auth0User = null;
                     try {
-                        Auth0MgmtTokenHelper auth0MgmtTokenHelper = Auth0Util.getManagementTokenHelperForStudy(
-                                apisHandle, pendingEvent.getStudyGuid());
-                        auth0User = new Auth0Util(auth0MgmtTokenHelper.getDomain()).getAuth0User(
-                                auth0UserId, auth0MgmtTokenHelper.getManagementApiToken());
+                        var mgmtClient = Auth0Util.getManagementClientForStudy(apisHandle, pendingEvent.getStudyGuid());
+                        auth0User = new Auth0Util(mgmtClient.getDomain()).getAuth0User(auth0UserId, mgmtClient.getToken());
                     } catch (Auth0Exception e) {
                         throw new MessageBuilderException("Could not get auth0 user " + auth0UserId, e);
                     }

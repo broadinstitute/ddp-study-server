@@ -44,9 +44,6 @@ public interface TemplateDao extends SqlObject {
     JdbiTemplate getJdbiTemplate();
 
     @CreateSqlObject
-    JdbiTemplateType getJdbiTemplateType();
-
-    @CreateSqlObject
     JdbiTemplateVariable getJdbiTemplateVariable();
 
     @CreateSqlObject

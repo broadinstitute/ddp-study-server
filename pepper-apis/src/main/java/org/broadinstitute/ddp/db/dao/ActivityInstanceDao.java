@@ -48,7 +48,7 @@ public interface ActivityInstanceDao extends SqlObject {
      */
     default ActivityInstanceDto insertInstance(long activityId, String userGuid) {
         long millis = Instant.now().toEpochMilli();
-        return insertInstance(activityId, userGuid, userGuid, InstanceStatusType.CREATED, false, millis);
+        return insertInstance(activityId, userGuid, userGuid, InstanceStatusType.CREATED, null, millis);
     }
 
     /**
@@ -58,7 +58,7 @@ public interface ActivityInstanceDao extends SqlObject {
                                                String operatorGuid,
                                                String participantGuid,
                                                InstanceStatusType initialStatus,
-                                               boolean isReadOnly) {
+                                               Boolean isReadOnly) {
         long millis = Instant.now().toEpochMilli();
         return insertInstance(activityId, operatorGuid, participantGuid, initialStatus, isReadOnly, millis);
     }
@@ -76,7 +76,7 @@ public interface ActivityInstanceDao extends SqlObject {
      * @return newly created activity instance
      */
     default ActivityInstanceDto insertInstance(long activityId, String operatorGuid, String participantGuid,
-                                               InstanceStatusType initialStatus, boolean isReadOnly,
+                                               InstanceStatusType initialStatus, Boolean isReadOnly,
                                                long createdAtMillis) {
         return insertInstance(activityId, operatorGuid, participantGuid, initialStatus, isReadOnly, createdAtMillis, null);
     }
@@ -94,7 +94,7 @@ public interface ActivityInstanceDao extends SqlObject {
      * @return newly created activity instance
      */
     default ActivityInstanceDto insertInstance(long activityId, String operatorGuid, String participantGuid,
-                                               InstanceStatusType initialStatus, boolean isReadOnly,
+                                               InstanceStatusType initialStatus, Boolean isReadOnly,
                                                long createdAtMillis, Long onDemandTriggerId) {
         JdbiActivityInstance jdbiInstance = getJdbiActivityInstance();
         ActivityInstanceStatusDao statusDao = getActivityInstanceStatusDao();
@@ -123,7 +123,7 @@ public interface ActivityInstanceDao extends SqlObject {
      * @return newly created activity instance
      */
     default ActivityInstanceDto insertInstance(long activityId, String operatorGuid, String participantGuid,
-                                               InstanceStatusType initialStatus, boolean isReadOnly,
+                                               InstanceStatusType initialStatus, Boolean isReadOnly,
                                                long createdAtMillis, Long submissionId,
                                                String sessionId, String legacyVersion) {
         JdbiActivityInstance jdbiInstance = getJdbiActivityInstance();

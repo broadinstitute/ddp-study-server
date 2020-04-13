@@ -101,7 +101,7 @@ import org.broadinstitute.ddp.route.GetPrequalifierInstanceRoute;
 import org.broadinstitute.ddp.route.GetProfileRoute;
 import org.broadinstitute.ddp.route.GetStudiesRoute;
 import org.broadinstitute.ddp.route.GetStudyDetailRoute;
-import org.broadinstitute.ddp.route.GetStudyPasswordRequirementsRoute;
+import org.broadinstitute.ddp.route.GetStudyPasswordPolicyRoute;
 import org.broadinstitute.ddp.route.GetTempMailingAddressRoute;
 import org.broadinstitute.ddp.route.GetUserAnnouncementsRoute;
 import org.broadinstitute.ddp.route.GetWorkflowRoute;
@@ -297,9 +297,10 @@ public class DataDonationPlatform {
         post(API.REGISTRATION, new UserRegistrationRoute(interpreter), responseSerializer);
         post(API.TEMP_USERS, new CreateTemporaryUserRoute(userDao), responseSerializer);
 
-        // List available studies & get detailed information on a particular study
+        // Study related routes
         get(API.STUDY_ALL, new GetStudiesRoute(), responseSerializer);
         get(API.STUDY_DETAIL, new GetStudyDetailRoute(), responseSerializer);
+        get(API.STUDY_PASSWORD_POLICY, new GetStudyPasswordPolicyRoute(), responseSerializer);
 
         get(API.ADDRESS_COUNTRIES, new GetCountryAddressInfoSummariesRoute(), responseSerializer);
         get(API.ADDRESS_COUNTRY_DETAILS, new GetCountryAddressInfoRoute(), responseSerializer);
@@ -317,9 +318,9 @@ public class DataDonationPlatform {
         get(API.USER_STUDY_PARTICIPANTS, new GetGovernedStudyParticipantsRoute(), responseSerializer);
 
         // User profile routes
-        get(API.USER_PROFILE, new GetProfileRoute(userDao), responseSerializer);
-        post(API.USER_PROFILE, new AddProfileRoute(userDao), responseSerializer);
-        patch(API.USER_PROFILE, new PatchProfileRoute(userDao), responseSerializer);
+        get(API.USER_PROFILE, new GetProfileRoute(), responseSerializer);
+        post(API.USER_PROFILE, new AddProfileRoute(), responseSerializer);
+        patch(API.USER_PROFILE, new PatchProfileRoute(), responseSerializer);
 
         // User mailing address routes
         AddressService addressService = new AddressService(cfg.getString(ConfigFile.EASY_POST_API_KEY),
@@ -445,7 +446,6 @@ public class DataDonationPlatform {
 
         // Routes calling DSM
         get(API.PARTICIPANT_STATUS, new GetDsmParticipantStatusRoute(new DsmClient(cfg)), responseSerializer);
-        get(API.STUDY_PASSWORD_REQUIREMENTS, new GetStudyPasswordRequirementsRoute(), responseSerializer);
 
         patch(
                 API.UPDATE_USER_PASSWORD,

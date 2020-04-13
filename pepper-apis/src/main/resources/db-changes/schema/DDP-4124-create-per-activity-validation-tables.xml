@@ -5,6 +5,7 @@
                    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
 
     <changeSet author="sretsia" id="20191024-create-activity-validation-table">
+        <validCheckSum>8:efe74766758312dd4fdbde8846be8416</validCheckSum>
         <createTable tableName="activity_validation">
             <column name="activity_validation_id" type="bigint" autoIncrement="true" startWith="1">
                 <constraints primaryKey="true" nullable="false" primaryKeyName="activity_validation_id_pk"/>
@@ -12,10 +13,10 @@
             <column name="study_activity_id" type="bigint">
                 <constraints nullable="false" foreignKeyName="av_activity_id_sa_study_act_id_fk" references="study_activity(study_activity_id)"/>
             </column>
-            <column name="precondition_text" type="varchar(10000)">
+            <column name="precondition_text" type="varchar(5000)">
                 <constraints nullable="true"/>
             </column>
-            <column name="expression_text" type="varchar(10000)">
+            <column name="expression_text" type="varchar(5000)">
                 <constraints nullable="false"/>
             </column>
             <column name="error_message_template_id" type="bigint">

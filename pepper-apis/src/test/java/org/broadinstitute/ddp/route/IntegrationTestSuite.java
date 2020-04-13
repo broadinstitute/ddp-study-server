@@ -113,7 +113,7 @@ import org.slf4j.LoggerFactory;
         GetDsmDrugSuggestionsRouteTest.class,
         GetParticipantInfoRouteTest.class,
         ListCancersRouteTest.class,
-        GetStudyPasswordRequirementsRouteTest.class,
+        GetStudyPasswordPolicyRouteTest.class,
         UpdateUserPasswordRouteTest.class,
         UpdateUserEmailRouteTest.class,
         GetStudiesRouteTest.class,
@@ -207,7 +207,7 @@ public class IntegrationTestSuite {
             if (!clientId.isPresent()) {
                 // add the client and access to the test studies if needed
                 long insertedClientId = handle.attach(ClientDao.class)
-                        .registerClient(testClientName, testClientId, testClientSecret, new ArrayList<>(),
+                        .registerClient(testClientId, testClientSecret, new ArrayList<>(),
                                 encryptionSecret, auth0Tenant.getId());
                 List<String> testStudies = new ArrayList<>();
                 testStudies.add(TestConstants.TEST_STUDY_GUID);

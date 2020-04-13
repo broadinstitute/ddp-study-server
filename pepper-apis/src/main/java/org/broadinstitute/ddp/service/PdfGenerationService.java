@@ -30,12 +30,11 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
-import org.broadinstitute.ddp.db.dao.JdbiProfile;
 import org.broadinstitute.ddp.db.dao.ParticipantDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
+import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.MedicalProviderDto;
-import org.broadinstitute.ddp.db.dto.UserProfileDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.definition.ActivityDef;
 import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
@@ -66,8 +65,8 @@ import org.broadinstitute.ddp.model.pdf.ProfileSubstitution;
 import org.broadinstitute.ddp.model.pdf.SubstitutionType;
 import org.broadinstitute.ddp.model.study.Participant;
 import org.broadinstitute.ddp.model.user.User;
+import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.transformers.DateTimeFormatUtils;
-import org.broadinstitute.ddp.util.Auth0MgmtTokenHelper;
 import org.broadinstitute.ddp.util.Auth0Util;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
@@ -226,10 +225,10 @@ public class PdfGenerationService {
         }
 
         if (hasEmailSource) {
-            Auth0MgmtTokenHelper tokenHelper = Auth0Util.getManagementTokenHelperForStudy(handle, config.getStudyGuid());
+            var mgmtClient = Auth0Util.getManagementClientForStudy(handle, config.getStudyGuid());
             String auth0UserId = participant.getUser().getAuth0UserId();
-            Map<String, String> emailResults = new Auth0Util(tokenHelper.getDomain())
-                    .getUserPassConnEmailsByAuth0UserIds(Sets.newHashSet(auth0UserId), tokenHelper.getManagementApiToken());
+            Map<String, String> emailResults = new Auth0Util(mgmtClient.getDomain())
+                    .getUserPassConnEmailsByAuth0UserIds(Sets.newHashSet(auth0UserId), mgmtClient.getToken());
             participant.getUser().setEmail(emailResults.get(auth0UserId));
         }
 
@@ -764,7 +763,7 @@ public class PdfGenerationService {
                         DsmAddressValidationStatus.DSM_INVALID_ADDRESS_STATUS, false);
             }
 
-            UserProfileDto userProfileDto = user.getProfile();
+            UserProfile userProfile = user.getProfile();
             Map<String, String> placeholderToValue = new HashMap<>();
 
             //check if we need proxy name
@@ -785,21 +784,23 @@ public class PdfGenerationService {
                     }
                     governance = governances.get(0);
                     //get proxy userProfile to substitute first & last names
-                    userProfileDto = handle.attach(JdbiProfile.class).getUserProfileByUserGuid(governance.getProxyUserGuid());
+                    String proxyUserGuid = governance.getProxyUserGuid();
+                    userProfile = handle.attach(UserProfileDao.class).findProfileByUserGuid(proxyUserGuid)
+                            .orElseThrow(() -> new DDPException("Could not find profile for proxy user with guid " + proxyUserGuid));
                     if (StringUtils.isNotBlank(template.getProxyFirstNamePlaceholder())) {
-                        placeholderToValue.put(template.getProxyFirstNamePlaceholder(), userProfileDto.getFirstName());
+                        placeholderToValue.put(template.getProxyFirstNamePlaceholder(), userProfile.getFirstName());
                     }
                     if (StringUtils.isNotBlank(template.getProxyLastNamePlaceholder())) {
-                        placeholderToValue.put(template.getProxyLastNamePlaceholder(), userProfileDto.getLastName());
+                        placeholderToValue.put(template.getProxyLastNamePlaceholder(), userProfile.getLastName());
                     }
                 }
             }
 
             if (template.getFirstNamePlaceholder() != null) {
-                placeholderToValue.put(template.getFirstNamePlaceholder(), userProfileDto.getFirstName());
+                placeholderToValue.put(template.getFirstNamePlaceholder(), userProfile.getFirstName());
             }
             if (template.getLastNamePlaceholder() != null) {
-                placeholderToValue.put(template.getLastNamePlaceholder(), userProfileDto.getLastName());
+                placeholderToValue.put(template.getLastNamePlaceholder(), userProfile.getLastName());
             }
             placeholderToValue.put(template.getStreetPlaceholder(), address.getCombinedStreet());
             placeholderToValue.put(template.getCityPlaceholder(), address.getCity());

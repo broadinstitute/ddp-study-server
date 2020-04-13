@@ -110,7 +110,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
     public static void setup() {
         TransactionWrapper.useTxn(handle -> {
             testData = TestDataSetupUtil.generateBasicUserTestData(handle);
-            langCodeId = handle.attach(JdbiLanguageCode.class).getLanguageCodeId(testData.getProfile().getPreferredLanguage());
+            langCodeId = testData.getProfile().getPreferredLangId();
         });
     }
 

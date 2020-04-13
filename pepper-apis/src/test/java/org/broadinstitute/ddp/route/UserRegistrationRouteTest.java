@@ -49,13 +49,13 @@ import org.broadinstitute.ddp.db.dao.JdbiAuth0Tenant;
 import org.broadinstitute.ddp.db.dao.JdbiEventConfiguration;
 import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
 import org.broadinstitute.ddp.db.dao.JdbiMailingList;
-import org.broadinstitute.ddp.db.dao.JdbiProfile;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dao.QueuedEventDao;
 import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
+import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.Auth0TenantDto;
 import org.broadinstitute.ddp.db.dto.EnrollmentStatusDto;
@@ -63,7 +63,6 @@ import org.broadinstitute.ddp.db.dto.InvitationDto;
 import org.broadinstitute.ddp.db.dto.SendgridEmailEventActionDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.UserDto;
-import org.broadinstitute.ddp.db.dto.UserProfileDto;
 import org.broadinstitute.ddp.json.UserRegistrationPayload;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
@@ -79,7 +78,7 @@ import org.broadinstitute.ddp.model.invitation.InvitationType;
 import org.broadinstitute.ddp.model.pex.Expression;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.model.user.User;
-import org.broadinstitute.ddp.util.Auth0MgmtTokenHelper;
+import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.util.Auth0Util;
 import org.broadinstitute.ddp.util.GuidUtils;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
@@ -143,13 +142,11 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
             Long clientId1 = clientDao.registerClient(
                     GuidUtils.randomStringFromDictionary(UPPER_ALPHA_NUMERIC, 20),
                     GuidUtils.randomStringFromDictionary(UPPER_ALPHA_NUMERIC, 20),
-                    GuidUtils.randomStringFromDictionary(UPPER_ALPHA_NUMERIC, 20),
                     Collections.singletonList(study1.getGuid()),
                     GuidUtils.randomStringFromDictionary(UPPER_ALPHA_NUMERIC, 20),
                     study1.getAuth0TenantId());
 
             Long clientId2 = clientDao.registerClient(
-                    GuidUtils.randomStringFromDictionary(UPPER_ALPHA_NUMERIC, 20),
                     GuidUtils.randomStringFromDictionary(UPPER_ALPHA_NUMERIC, 20),
                     GuidUtils.randomStringFromDictionary(UPPER_ALPHA_NUMERIC, 20),
                     Collections.singletonList(study1.getGuid()),
@@ -213,14 +210,14 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
             handle.attach(UserGovernanceDao.class).deleteAllGovernancesForProxy(existingUserId);
         });
 
-        Auth0MgmtTokenHelper helper = TransactionWrapper.withTxn(handle ->
-                Auth0Util.getManagementTokenHelperForDomain(handle, auth0Domain));
+        var mgmtClient = TransactionWrapper.withTxn(handle ->
+                Auth0Util.getManagementClientForDomain(handle, auth0Domain));
         Auth0Util auth0Util = new Auth0Util(auth0Domain);
 
         for (String auth0UserId : auth0UserIdsToDelete) {
             RouteTestUtil.deleteUserByAuth0UserId(auth0UserId, auth0Domain);
             try {
-                auth0Util.deleteAuth0User(auth0UserId, helper.getManagementApiToken());
+                auth0Util.deleteAuth0User(auth0UserId, mgmtClient.getToken());
             } catch (Auth0Exception e) {
                 throw new RuntimeException(e);
             }
@@ -229,12 +226,12 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
 
         TransactionWrapper.useTxn(handle -> {
             JdbiUser jdbiUser = handle.attach(JdbiUser.class);
-            JdbiProfile jdbiProfile = handle.attach(JdbiProfile.class);
+            var profileDao = handle.attach(UserProfileDao.class);
             DataExportDao dataExportDao = handle.attach(DataExportDao.class);
             for (String userGuid : userGuidsToDelete) {
                 long userId = jdbiUser.getUserIdByGuid(userGuid);
                 dataExportDao.deleteDataSyncRequestsForUser(userId);
-                jdbiProfile.deleteByUserId(userId);
+                profileDao.getUserProfileSql().deleteByUserId(userId);
             }
             int numDeleted = jdbiUser.deleteAllByGuids(userGuidsToDelete);
             assertEquals(userGuidsToDelete.size(), numDeleted);
@@ -404,8 +401,8 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
         String testAuth0UserId = TransactionWrapper.withTxn(handle -> {
             // Have to create a completely new user that only exists in Auth0, so that email-lookup-by-user will not
             // fail and we can test that user/profile is created post-registration.
-            Auth0MgmtTokenHelper helper = Auth0Util.getManagementTokenHelperForDomain(handle, auth0Domain);
-            return new Auth0Util(auth0Domain).createTestingUser(helper.getManagementApiToken()).getAuth0Id();
+            var mgmtClient = Auth0Util.getManagementClientForDomain(handle, auth0Domain);
+            return new Auth0Util(auth0Domain).createTestingUser(mgmtClient.getToken()).getAuth0Id();
         });
         auth0UserIdsToDelete.add(testAuth0UserId);
 
@@ -426,10 +423,10 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
             assertTrue(start.toEpochMilli() <= userDto.getCreatedAtMillis());
             assertEquals(userDto.getCreatedAtMillis(), userDto.getUpdatedAtMillis());
 
-            UserProfileDto userProfileDto = handle.attach(JdbiProfile.class).getUserProfileByUserId(userDto.getUserId());
+            UserProfile profile = handle.attach(UserProfileDao.class).findProfileByUserId(userDto.getUserId()).get();
 
             Long enLanguageCodeId = handle.attach(JdbiLanguageCode.class).getLanguageCodeId(EN_LANG_CODE);
-            assertEquals(userProfileDto.getPreferredLanguageId(), enLanguageCodeId);
+            assertEquals(profile.getPreferredLangId(), enLanguageCodeId);
 
             JdbiUserStudyEnrollment jdbiEnrollment = handle.attach(JdbiUserStudyEnrollment.class);
             Optional<EnrollmentStatusType> enrollment = jdbiEnrollment
@@ -541,7 +538,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
             User governedUser = handle.attach(UserDao.class).findUserById(governances.get(0).getGovernedUserId()).get();
             userGuidsToDelete.add(governedUser.getGuid());
             assertNotNull("Governed user should have profile initialized",
-                    handle.attach(JdbiProfile.class).getUserProfileByUserId(governedUser.getId()));
+                    handle.attach(UserProfileDao.class).findProfileByUserId(governedUser.getId()).get());
             assertTrue("Governed user should be registered in study",
                     jdbiEnrollment.findIdByUserAndStudyGuid(governedUser.getGuid(), testStudy.getGuid()).isPresent());
 
@@ -762,9 +759,9 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
             assertNull(actualUser.getExpiresAtMillis());
             assertEquals(fakeAuth0Id, actualUser.getAuth0UserId());
 
-            UserProfileDto userProfileDto = handle.attach(JdbiProfile.class).getUserProfileByUserId(actualUser.getUserId());
+            UserProfile profile = handle.attach(UserProfileDao.class).findProfileByUserId(actualUser.getUserId()).get();
             Long enLanguageCodeId = handle.attach(JdbiLanguageCode.class).getLanguageCodeId(EN_LANG_CODE);
-            assertEquals(userProfileDto.getPreferredLanguageId(), enLanguageCodeId);
+            assertEquals(profile.getPreferredLangId(), enLanguageCodeId);
 
             JdbiUserStudyEnrollment jdbiEnrollment = handle.attach(JdbiUserStudyEnrollment.class);
             Optional<EnrollmentStatusType> enrollment = jdbiEnrollment
@@ -871,19 +868,15 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
                 handle.attach(InvitationDao.class).clearDates(invitation.get().getInvitationGuid());
                 userDao.updateAuth0UserId(user.get().getGuid(), null);
 
-                JdbiProfile jdbiProfile = handle.attach(JdbiProfile.class);
+                var profileDao = handle.attach(UserProfileDao.class);
 
-                UserProfileDto userProfile = null;
-
-                try {
-                    userProfile = jdbiProfile.getUserProfileByUserId(user.get().getId());
-                } catch (NullPointerException e) {
-                    // old school jdbi way of saying "no row found"
+                UserProfile profile = profileDao.findProfileByUserId(user.get().getId()).orElse(null);
+                if (profile == null) {
                     shouldDeleteProfile.set(true);
                 }
 
-                if (userProfile == null || userProfile.getBirthDate() == null) {
-                    jdbiProfile.upsertBirthDate(user.get().getId(), LocalDate.of(1953, 9, 18));
+                if (profile == null || profile.getBirthDate() == null) {
+                    profileDao.getUserProfileSql().upsertBirthDate(user.get().getId(), LocalDate.of(1953, 9, 18));
                 }
 
                 var studyGovernanceDao = handle.attach(StudyGovernanceDao.class);
@@ -941,7 +934,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
                 }
 
                 if (shouldDeleteProfile.get()) {
-                    handle.attach(JdbiProfile.class).deleteByUserId(user.get().getId());
+                    handle.attach(UserProfileDao.class).getUserProfileSql().deleteByUserId(user.get().getId());
                 }
 
                 if (testStudy.get() != null) {

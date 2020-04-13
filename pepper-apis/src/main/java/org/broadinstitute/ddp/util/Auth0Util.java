@@ -38,6 +38,7 @@ import org.apache.http.client.fluent.Request;
 import org.apache.http.client.fluent.Response;
 import org.apache.http.entity.ContentType;
 import org.apache.http.util.EntityUtils;
+import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.dao.JdbiAuth0Tenant;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
@@ -133,24 +134,25 @@ public class Auth0Util {
 
     /**
      * Queries the study for its management api creds
-     * and returns a new management token helper.
+     * and returns a new management api client.
      */
-    public static Auth0MgmtTokenHelper getManagementTokenHelperForStudy(Handle handle,
-                                                                        String studyGuid) {
+    public static Auth0ManagementClient getManagementClientForStudy(Handle handle, String studyGuid) {
         Auth0TenantDto auth0TenantDto = handle.attach(JdbiAuth0Tenant.class).findByStudyGuid(studyGuid);
-        return new Auth0MgmtTokenHelper(auth0TenantDto.getManagementClientId(),
-                auth0TenantDto.getManagementClientSecret(),
-                auth0TenantDto.getDomain());
+        return new Auth0ManagementClient(
+                auth0TenantDto.getDomain(),
+                auth0TenantDto.getManagementClientId(),
+                auth0TenantDto.getManagementClientSecret());
     }
 
     /**
-     * Get management token helper using credentials for the given domain.
+     * Get management api client using credentials for the given domain.
      */
-    public static Auth0MgmtTokenHelper getManagementTokenHelperForDomain(Handle handle, String auth0Domain) {
+    public static Auth0ManagementClient getManagementClientForDomain(Handle handle, String auth0Domain) {
         Auth0TenantDto auth0TenantDto = handle.attach(JdbiAuth0Tenant.class).findByDomain(auth0Domain);
-        return new Auth0MgmtTokenHelper(auth0TenantDto.getManagementClientId(),
-                auth0TenantDto.getManagementClientSecret(),
-                auth0TenantDto.getDomain());
+        return new Auth0ManagementClient(
+                auth0TenantDto.getDomain(),
+                auth0TenantDto.getManagementClientId(),
+                auth0TenantDto.getManagementClientSecret());
     }
 
     public static boolean isUserCredentialsValid(
@@ -199,11 +201,12 @@ public class Auth0Util {
         return isValid;
     }
 
-    public static Auth0MgmtTokenHelper getManagementTokenHelperForUser(Handle handle, String userGuid) {
+    public static Auth0ManagementClient getManagementClientForUser(Handle handle, String userGuid) {
         Auth0TenantDto auth0TenantDto = handle.attach(JdbiAuth0Tenant.class).findByUserGuid(userGuid);
-        return new Auth0MgmtTokenHelper(auth0TenantDto.getManagementClientId(),
-                auth0TenantDto.getManagementClientSecret(),
-                auth0TenantDto.getDomain());
+        return new Auth0ManagementClient(
+                auth0TenantDto.getDomain(),
+                auth0TenantDto.getManagementClientId(),
+                auth0TenantDto.getManagementClientSecret());
     }
 
     /**
@@ -350,9 +353,9 @@ public class Auth0Util {
      * @return A ManagementAPI instance able to change the user's data in Auth0
      */
     public static ManagementAPI getManagementApiInstanceForUser(String userGuid, Handle handle) {
-        Auth0MgmtTokenHelper tokenHelper = Auth0Util.getManagementTokenHelperForUser(handle, userGuid);
-        String mgmtToken = tokenHelper.getManagementApiToken();
-        String auth0Domain = tokenHelper.getDomain();
+        var mgmtClient = Auth0Util.getManagementClientForUser(handle, userGuid);
+        String mgmtToken = mgmtClient.getToken();
+        String auth0Domain = mgmtClient.getDomain();
         return new ManagementAPI(auth0Domain, mgmtToken);
     }
 
@@ -547,11 +550,12 @@ public class Auth0Util {
         LOG.info("Domain : {} ", auth0Domain);
 
         Auth0TenantDto auth0TenantDto = handle.attach(JdbiAuth0Tenant.class).findByDomain(auth0Domain);
-        Auth0MgmtTokenHelper tokenHelper = new Auth0MgmtTokenHelper(auth0TenantDto.getManagementClientId(),
-                auth0TenantDto.getManagementClientSecret(),
-                auth0Domain);
+        var mgmtClient = new Auth0ManagementClient(
+                auth0Domain,
+                auth0TenantDto.getManagementClientId(),
+                auth0TenantDto.getManagementClientSecret());
 
-        String mgmtToken = tokenHelper.getManagementApiToken();
+        String mgmtToken = mgmtClient.getToken();
         Auth0Util auth0Util = new Auth0Util(auth0Domain);
         String connectionId = auth0Util.getAuth0UserNamePasswordConnectionId(mgmtToken);
         ManagementAPI mgmtAPI = new ManagementAPI(auth0Domain, mgmtToken);

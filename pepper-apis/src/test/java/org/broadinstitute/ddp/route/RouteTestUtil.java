@@ -26,15 +26,16 @@ import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.constants.SqlConstants;
 import org.broadinstitute.ddp.constants.TestConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.db.UserDaoFactory;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
 import org.broadinstitute.ddp.db.dao.JdbiAuth0Tenant;
-import org.broadinstitute.ddp.db.dao.JdbiProfile;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
+import org.broadinstitute.ddp.db.dao.UserDao;
+import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.ActivityValidationDto;
 import org.broadinstitute.ddp.db.dto.Auth0TenantDto;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
+import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.ddp.util.RouteUtil;
 import org.broadinstitute.ddp.util.TestingUserUtil;
@@ -298,8 +299,7 @@ public class RouteTestUtil {
             Auth0TenantDto auth0TenantDto = handle.attach(JdbiAuth0Tenant.class).findByDomain(auth0Domain);
             Long userId = userDao.getUserIdByAuth0UserId(auth0UserId, auth0TenantDto.getId());
             handle.attach(DataExportDao.class).deleteDataSyncRequestsForUser(userId);
-            JdbiProfile userProfileDao = handle.attach(JdbiProfile.class);
-            userProfileDao.deleteByUserId(userId);
+            handle.attach(UserProfileDao.class).getUserProfileSql().deleteByUserId(userId);
             try (PreparedStatement stmt = handle.getConnection().prepareStatement(DELETE_USER_BY_AUTH0USERID_STMT)) {
                 stmt.setString(1, auth0UserId);
                 int deleted = stmt.executeUpdate();
@@ -318,7 +318,7 @@ public class RouteTestUtil {
      */
     public static void deleteProfilesForUserGuid(String userGuid) throws SQLException {
         TransactionWrapper.withTxn(handle -> {
-            Long userId = UserDaoFactory.createFromSqlConfig(sqlConfig).getUserIdByGuid(handle, userGuid);
+            Long userId = handle.attach(UserDao.class).findUserByGuid(userGuid).map(User::getId).orElse(null);
             if (userId != null) {
                 deleteProfileForUserId(handle, userId);
             }

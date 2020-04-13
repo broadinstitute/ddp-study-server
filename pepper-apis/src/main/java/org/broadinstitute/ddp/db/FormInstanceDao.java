@@ -106,7 +106,7 @@ public class FormInstanceDao {
                 String statusTypeCode = rs.getString(ActivityInstanceStatusTypeTable.ACTIVITY_STATUS_TYPE_CODE);
                 Long editTimeoutSec = (Long) rs.getObject(StudyActivityTable.EDIT_TIMEOUT_SEC);
                 boolean isWriteOnce = rs.getBoolean(StudyActivityTable.IS_WRITE_ONCE);
-                boolean isInstanceReadonly = rs.getBoolean(ActivityInstanceTable.IS_READONLY);
+                Boolean isInstanceReadonly = (Boolean)rs.getObject(ActivityInstanceTable.IS_READONLY);
                 long createdAtMillis = rs.getLong(ActivityInstanceTable.CREATED_AT);
                 Long firstCompletedAt = (Long) rs.getObject(ActivityInstanceTable.FIRST_COMPLETED_AT);
                 boolean isReadonly = ActivityInstanceUtil.isReadonly(editTimeoutSec, createdAtMillis, statusTypeCode,

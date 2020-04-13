@@ -100,3 +100,23 @@ pdfs, are also understood to be relative to the `study.conf` file.*
 [go-tmpl]: https://golang.org/pkg/text/template/
 [consul-tmpl]: https://github.com/hashicorp/consul-template
 [tscfg-lib]: https://github.com/lightbend/config
+
+## Syncing Auth0 Tenant Configurations
+
+To make it easier to sync various bits of tenant configuration across
+environments, we can leverage Auth0's [Deploy CLI][cli]. First, you should
+install `auth0-deploy-cli` via npm locally and setup the extension in the
+appropriate tenant environment (see [here][install-docs]). Then, you can render
+the config file for the CLI tool and deploy, like so:
+
+```
+$ ./render.sh v1 <env> tenant
+$ a0deploy deploy -c output-config/cmi-config.json -i tenants/cmi/tenant.yaml
+```
+
+The deploy will only update what is specified in the `tenant.yaml` file. If a
+piece of configuration is not specified there, you will need to manually update
+via Auth0's dashboard.
+
+[cli]: https://auth0.com/docs/extensions/deploy-cli
+[install-docs]: https://auth0.com/docs/extensions/deploy-cli/guides/install-deploy-cli
