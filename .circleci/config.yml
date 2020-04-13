@@ -169,7 +169,7 @@ commands:
           ls -l
           ls -l ./target
           ls -l ./target/classes
-          mvn test -file pom.xml -Dcheckstyle.skip -Dtest=HousekeepingSendgridEmailNotificationTest \
+          mvn test -file pom.xml -Dmaven.repo.local=/home/circleci/.m2/repository -Dcheckstyle.skip -Dtest=HousekeepingSendgridEmailNotificationTest \
                      -Ditext.license=output-config/itextkey.xml \
                      -Dddp.firecloudKeysDir=output-config/fc_keys \
                      -Dconfig.file=output-config/testing-circleci.conf
