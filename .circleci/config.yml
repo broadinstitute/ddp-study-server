@@ -8,7 +8,7 @@ references:
 executors:
   java-executor:
     docker:
-      - image: circleci/openjdk-11
+      - image: circleci/11.0.6-buster
 
   build-executor:
     docker: # todo: create new image endpoint, add this in admin tab for faster starts
