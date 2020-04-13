@@ -509,6 +509,7 @@ jobs:
   compile-only-job:
     executor:
       name: java-executor
+    working_directory: ~/repo/pepper-apis  
     steps:
       - checkout:
           path: ~/repo
