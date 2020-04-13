@@ -495,7 +495,7 @@ jobs:
             # this really necessary?
             rmdir pepper-apis    
       - checkout:
-          path: ~/repo
+          path: /home/circleci/repo
       - run:
           command: |
             echo "HOME: $HOME"
