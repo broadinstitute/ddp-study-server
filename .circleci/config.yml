@@ -401,12 +401,13 @@ jobs:
     parallelism: 3  
     working_directory: /home/circleci/repo/pepper-apis
     parameters:
-      app_src_directory:
-        type: string
       maven_command:
         default: mvn
         description: Specify a custom path for invoking maven
         type: string
+      test_directory:
+        default: src/test/java
+        type: string 
       command:
         type: string
         description: What comes after the mvn command  
