@@ -139,8 +139,8 @@ commands:
     steps:
       - restore_cache:
           keys:
-            - pom.xml-{{ checksum "pom.xml" }}
-            - pom.xml-
+            - pom.xml1-{{ checksum "pom.xml" }}
+            - pom.xml1-
       - run:
           name: Run maven
           command: |
@@ -150,7 +150,7 @@ commands:
   #            mvn --batch-mode --fail-never -file housekeeping.xml install package test           
           # working_directory: ~/repo/pepper-apis
       - save_cache:
-          key: pom.xml-{{ checksum "pom.xml" }}
+          key: pom.xml1-{{ checksum "pom.xml" }}
           paths:
             - ~/.m2
 
@@ -509,7 +509,7 @@ jobs:
   compile-only-job:
     executor:
       name: java-executor
-    working_directory: ~/project/pepper-apis  
+    working_directory: ~/repo/pepper-apis  
     steps:
       - run:
           command: chmod -R 777 ~
@@ -521,7 +521,7 @@ jobs:
             cd ..
             rmdir pepper-apis    
       - checkout:
-          path: ~/project
+          path: ~/repo
       - run:
           command: |
             echo "HOME: $HOME"
@@ -531,7 +531,7 @@ jobs:
       - persist_to_workspace:
           # Must be an absolute path, or relative path from working_directory. This is a directory on the container which is 
           # taken to be the root directory of the workspace.
-          root: ~/project
+          root: ~/repo
           # Must be relative path from root
           paths:
             - pepper-apis
