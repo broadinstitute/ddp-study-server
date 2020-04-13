@@ -398,6 +398,7 @@ jobs:
     executor:
       name: build-executor
     working_directory: /home/circleci/repo/pepper-apis
+    parallelism: <<parameters.parallelism>>
     parameters:
       maven_command:
         default: mvn
