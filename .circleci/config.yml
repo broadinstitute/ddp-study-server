@@ -423,7 +423,7 @@ jobs:
         type: integer
       circleci_path:
         type: string
-        default: ../.circleci  
+        default: /home/circleci/repo/.circleci  
     steps:
       - attach_workspace:
           at: /home/circleci       
