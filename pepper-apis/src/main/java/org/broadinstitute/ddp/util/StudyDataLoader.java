@@ -1465,12 +1465,11 @@ public class StudyDataLoader {
             JsonArray options = mapElement.getAsJsonObject().getAsJsonArray("options");
             for (JsonElement option : options) {
                 JsonObject optionObject = option.getAsJsonObject();
-                JsonElement optionNameEl = optionObject.get("name");
+                JsonElement optionNameEl = optionObject.get("stable_id");
 
                 //Find out if this is the selected option
                 if (optionNameEl != null && optionNameEl.getAsString() != null
-                        && !optionNameEl.getAsString().isEmpty() && value.getAsString() != null
-                        && optionNameEl.getAsString().equalsIgnoreCase(value.getAsString())) {
+                        && !optionNameEl.getAsString().isEmpty() && val.equals(optionNameEl.getAsString())) {
                     JsonElement specifyKeyElement = optionObject.get("text");
 
                     //If we find the specify field, set foundSpecify to true and include the specify value
