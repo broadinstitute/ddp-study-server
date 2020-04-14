@@ -4,6 +4,22 @@ orbs:
 references:
   ci_support_image: &ci_support_image
                        broadinstitute/study-server-build:2020-04-10G
+  root_path: &root_path
+      /home/circleci
+  repo_path: &repo_path
+              /home/circleci/repo
+  m2_cache_key: &m2_cache_key
+                  pom.xml1-{{ checksum "pom.xml" }}
+  m2_cache_restore_key: &m2_cache_keys
+    keys:
+      - *m2_cache_key
+      - pom.xml1-
+  m2_repo_path: &m2_repo_path
+             /home/circleci/.m2/repository
+  pepper_apis-path: &pepper_apis_path
+            /home/circleci/repo/pepper-apis
+
+
 
 executors:
   java-executor:
@@ -135,21 +151,21 @@ commands:
             echo "pipeline.git.base_revision << pipeline.git.base_revision >>"
   compile:
     description: Run maven compile
+    parameters:
+      m2_repo:
+        type: string
     steps:
-      - restore_cache:
-          keys:
-            - pom.xml1-{{ checksum "pom.xml" }}
-            - pom.xml1-
+      - restore_cache: *m2_cache_keys
       - run:
           name: Run maven
           command: |
-            mvn compile package -DskipTests -file pom.xml -Dmaven.repo.local=/home/circleci/.m2/repository
-            mvn package -DskipTests -f housekeeping-pom.xml -Dcheckstyle.skip -Dmaven.repo.local=/home/circleci/.m2/repository
+            mvn compile package -DskipTests -file pom.xml -Dmaven.repo.local=<< parameters.m2_repo >>
+            mvn package -DskipTests -f housekeeping-pom.xml -Dcheckstyle.skip -Dmaven.repo.local=<< parameters.m2_repo >>
           #            mvn --batch-mode --fail-never -file smoketest-pom.xml install package test
   #            mvn --batch-mode --fail-never -file housekeeping.xml install package test           
           # working_directory: ~/repo/pepper-apis
       - save_cache:
-          key: pom.xml1-{{ checksum "pom.xml" }}
+          key: *m2_cache_key
           paths:
             - ~/.m2
 
@@ -157,7 +173,6 @@ commands:
     description: Run tests
     steps:
     - setup-test-dbs
-    - render-configs      
     - restore_cache:
         keys:
           - pom.xml1-{{ checksum "pom.xml" }}
@@ -463,7 +478,6 @@ jobs:
       - store_artifacts:
           path: << parameters.circleci_path>>/tests/
       - common-setup
-      - render-configs
       - setup-test-dbs
       - restore_cache:
           keys:
@@ -482,7 +496,7 @@ jobs:
   compile-only-job:
     executor:
       name: java-executor
-    working_directory: /home/circleci/repo/pepper-apis  
+    working_directory: *pepper_apis_path
     steps:
       - run:
           command: chmod -R 777 ~
@@ -495,17 +509,20 @@ jobs:
             # this really necessary?
             rmdir pepper-apis    
       - checkout:
-          path: /home/circleci/repo
+          path: *repo_path
       - run:
           command: |
             echo "HOME: $HOME"
             echo $PWD
-            ls -l    
-      - compile
+            ls -l
+      - compile:
+          m2_repo: *m2_repo_path
+      # will be needed down the workflow
+      - render-configs
       - persist_to_workspace:
           # Must be an absolute path, or relative path from working_directory. This is a directory on the container which is 
           # taken to be the root directory of the workspace.
-          root: /home/circleci
+          root: *root_path
           # Must be relative path from root
           paths:
             - repo
@@ -513,28 +530,14 @@ jobs:
   test-only-job:
     executor:
       name: build-executor
-    working_directory: /home/circleci/repo/pepper-apis
+    working_directory: *pepper_apis_path
     steps:
       - attach_workspace:
-          at: /home/circleci
+          at: *root_path
       - run-tests
 
 workflows:
   version: 2
-
-  figure-out-tests:
-    jobs:
-      - parallel_test-job:
-          # executor:
-          #   name: build-executor
-          # test_directory: pepper-apis/src/test/java
-          parallel_test_pattern: '**/*Test.java'
-          parallelism: 4
-          command: --batch-mode -Ditext.license=output-config/itextkey.xml -Dddp.firecloudKeysDir=output-config/fc_keys -Dconfig.file=output-config/testing-circleci.conf -Dcheckstyle.skip test -f pom.xml
-          filters:
-            branches:
-              only:
-                - xxxstudy-server-parallel-tests
 
   build-test-workflow:
     jobs:
