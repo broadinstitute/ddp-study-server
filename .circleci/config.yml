@@ -79,7 +79,7 @@ commands:
           name: Set environment to be used by build
           command: |
             echo "export VAULT_TOKEN=$(vault write -field=token auth/approle/login role_id=$VAULT_ROLE_ID secret_id=$VAULT_ROLE_SECRET_ID)" >> $BASH_ENV
-            echo "export SHORT_GIT_SHA=`echo $(<< pipeline.git.revision >>' | cut -c 1-7)" >> $BASH_ENV
+            echo "export SHORT_GIT_SHA=echo $(<< pipeline.git.revision >>' | cut -c 1-7)" >> $BASH_ENV
             source $BASH_ENV
 
   set-deployment-env:
@@ -465,8 +465,8 @@ workflows:
             branches:
               only:
                 - develop
-                - /^rc.*/
-                - /^hotfix.*/
+                - &rc /^rc.*/
+                - &hotfix /^hotfix.*/
                 - study-server-parallel-tests
       - parallel-tests-job:
           parallelism: 4
@@ -484,8 +484,8 @@ workflows:
           filters:
             branches:
               only:
-                - /^rc.*/
-                - /^hotfix.*/
+                - *rc
+                - *hotfix
           requires:
             - compile-only-job
 
