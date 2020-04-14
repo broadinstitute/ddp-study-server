@@ -313,7 +313,7 @@ commands:
           name: Deploy <<parameters.jar_base_name>> to GAE
           command: |
             set -u
-            gcloud app deploy --version="${SHORT_GIT_SHA}" --project "broad-ddp-${ENVIRONMENT}" <<parameters.deploy_dir>>/<<parameters.jar_base_name>>.yaml
+            gcloud app deploy --version="${SHORT_GIT_SHA}" --stop-previous-version --project "broad-ddp-${ENVIRONMENT}" <<parameters.deploy_dir>>/<<parameters.jar_base_name>>.yaml
       - update-deployment-sheet:
           jar_base_name: <<parameters.jar_base_name>>
       - run:
@@ -330,6 +330,12 @@ commands:
             # skip first line, exclude our version, print 2nd column
             AWK_COMMMAND="NR > 1 && !/${SHORT_GIT_SHA}/ {print \$2}"
             VERSIONS_TO_DELETE=$(gcloud app versions list --service "${SERVICE}" --project "broad-ddp-${ENVIRONMENT}" | awk "${AWK_COMMMAND}")
+
+            # Sometime deleting versions fails. If there are less than 3 versions then we are not going to worry about it
+            # and set flag so this job step does not fail when exit error value is generated
+            if [[ "${#VERSIONS_TO_DELETE[@]}" -lt 3 ]]; then
+              set +e
+            fi
 
             for CURRENT_VERSION in $VERSIONS_TO_DELETE; do
               echo "Deleting version $CURRENT_VERSION of service $SERVICE"
@@ -571,17 +577,17 @@ workflows:
                 - /^rc.*/
                 - /^hotfix.*/-
                 - study-server-parallel-tests
-#      - parallel-tests-job:
-#          parallelism: 4
-#          filters:
-#            branches:
-#              only:
-#                - develop
-#                - /^rc.*/
-#                - /^hotfix.*/-
-#                - study-server-parallel-tests
-#          requires:
-#            - compile-only-job
+      - parallel-tests-job:
+          parallelism: 4
+          filters:
+            branches:
+              only:
+                - develop
+                - /^rc.*/
+                - /^hotfix.*/
+                - study-server-parallel-tests
+          requires:
+            - compile-only-job
       - deploy-workspace-jar-job:
           filters:
             branches:
@@ -589,13 +595,13 @@ workflows:
                 - develop
                 - study-server-parallel-tests
           requires:
-            - compile-only-job
+            - parallel-tests-job
       - store-jar-job:
           filters:
             branches:
               only:
                 - /^rc.*/
-                - /^hotfix.*/-
+                - /^hotfix.*/
                 - study-server-parallel-tests
           requires:
             - compile-only-job
