@@ -516,7 +516,8 @@ jobs:
       - restore_cache: *m2_cache_keys
       - run:
           name: Run tests
-          command: | 
+          command: |
+            echo "The value of IGNORE_CLASS_LIST_PATH=${IGNORE_CLASS_LIST_PATH}"
             mvn --batch-mode -Dcheckstyle.skip test -f pom.xml \
                     -Ditext.license=output-config/itextkey.xml \
                     -Dddp.firecloudKeysDir=output-config/fc_keys \
