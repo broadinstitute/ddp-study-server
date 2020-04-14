@@ -489,7 +489,7 @@
               {
                 "type": "integer",
                 "stable_id": "SUSPECTED_EXPOSED",
-                "details_name": "how_exposed"
+                "text": "how_exposed"
               },
               {
                 "type": "integer",
@@ -510,7 +510,7 @@
               {
                 "type": "integer",
                 "stable_id": "OTHER",
-                "details_name": "how_at_risk"
+                "text": "how_at_risk"
               }
             ]
           },
@@ -539,7 +539,7 @@
               {
                 "type": "integer",
                 "stable_id": "MEDICAL_PROCEDURE_OTHER",
-                "details_name": "medical_procedure_specify"
+                "text": "medical_procedure_specify"
               }
             ]
           },
@@ -547,7 +547,7 @@
             "name": "research",
             "stable_id": "prion_medical_research",
             "type": "Picklist",
-            "options:": [
+            "options": [
               {
                 "name": "therapeutic",
                 "type": "integer"
@@ -586,7 +586,7 @@
               {
                 "name": "other",
                 "type": "integer",
-                "details_name": "previous_research_specify"
+                "text": "previous_research_specify"
               }
             ]
           },
