@@ -535,6 +535,7 @@ jobs:
     steps:
       - checkout:
           path: *repo_path
+      - setup-shared-env
       - compile
       # will be needed down the workflow
       - render-configs
