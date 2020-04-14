@@ -478,16 +478,18 @@ workflows:
             branches:
               only:
                 - develop
+                - study-server-parallel-tests
           requires:
-            - compile-only-job
+            - parallel-tests-job
       - store-jar-job:
           filters:
             branches:
               only:
                 - *rc
                 - *hotfix
+                - study-server-parallel-tests
           requires:
-            - compile-only-job
+            - parallel-tests-job
 
   deploy-workflow:
     jobs:
