@@ -63,7 +63,7 @@ commands:
     description: "Common setup for all jobs"
     steps:
       - checkout: 
-          path: ~/repo
+          path: *repo_path
       - setup-shared-env          
 
   set-deployment-env:
@@ -85,7 +85,7 @@ commands:
             ;;
             # @todo remove when done
             test_deleteme1)
-              DEPLOY_ENV=test
+              DEPLOY_ENV=dev
             ;;
             staging)
               DEPLOY_ENV=staging
@@ -384,6 +384,7 @@ jobs:
   deploy-jar-job:
     executor:
       name: deploy-executor
+    working_directory: *pepper_apis_path
     steps:
       - common-setup
       - retrieve-jar:
@@ -478,6 +479,7 @@ jobs:
                     -Dddp.firecloudKeysDir=output-config/fc_keys \
                     -Dconfig.file=output-config/testing-circleci.conf  \
                     -Dmaven.repo.local=<< parameters.m2_repo >> \
+                    # Key line to do tests in parallel
                     -Dsurefire.excludesFile=$IGNORE_CLASS_LIST_PATH     
       - store_test_results:
           path: target/surefire-reports
@@ -494,11 +496,8 @@ jobs:
       # will be needed down the workflow
       - render-configs
       - persist_to_workspace:
-          # Must be an absolute path, or relative path from working_directory. This is a directory on the container which is 
-          # taken to be the root directory of the workspace.
-          root: *root_path
-          # Must be relative path from root
-          paths:
+           root: *root_path
+           paths:
             - repo
 
   test-only-job:
@@ -541,6 +540,18 @@ workflows:
           requires:
             - parallel-tests-job
 
+  deploy-workflow:
+    jobs:
+      - deploy-jar-job:
+          filters:
+            branches:
+              only:
+                - test
+                - staging
+                - production
+                # @todo remove when done
+                - test_deleteme1
+
   build-and-deploy:
     jobs:
       - build-and-deploy-job:
@@ -560,14 +571,4 @@ workflows:
                 - /^rc.*/
                 - /^hotfix.*/
 
-  deploy-all-apps-workflow:
-    jobs:
-      - deploy-jar-job:
-          filters:
-            branches:
-              only:
-                - test
-                - staging
-                - production
-                # @todo remove when done
-                - test_deleteme1
+
