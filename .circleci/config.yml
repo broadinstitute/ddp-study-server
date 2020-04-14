@@ -449,7 +449,7 @@ jobs:
 
             # generate list of tests to be processed
             circleci tests glob "${TEST_SRC_DIRECTORY}/${TEST_SEARCH_PATTERN}" | # fancy circleci find command
-              sed -e 's#^${TEST_SRC_DIRECTORY}/\(.*\)\.java#\1#' | # Strip .java and parent directory path
+              sed -e "s#^${TEST_SRC_DIRECTORY}/\(.*\)\.java#\1#" | # Strip .java and parent directory path
               tr "/" "." |  #Convert to a class name of form org.package.ClassName
               grep -v '.*RouteTest' > "${SUREFIRE_CLASS_NAMES_PATH}" #Exclude RouteTest. These done from suite
 
