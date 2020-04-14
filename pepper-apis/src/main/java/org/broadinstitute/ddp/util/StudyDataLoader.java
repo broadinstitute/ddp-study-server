@@ -1447,15 +1447,61 @@ public class StudyDataLoader {
             return selectedPicklistOptions;
         }
 
-        if (datStatEnumLookup.get(questionName) != null && datStatEnumLookup.get(questionName).get(value.getAsInt()) != null) {
-            selectedPicklistOptions.add(new SelectedPicklistOption(datStatEnumLookup.get(questionName).get(value.getAsInt())));
-        } else if (yesNoDkLookup.get(value.getAsInt()) != null) {
-            selectedPicklistOptions.add(new SelectedPicklistOption(yesNoDkLookup.get(value.getAsInt())));
+        //Get the option value using either datStatEnumLookup or yesNoDkLookup
+        boolean foundValue = false;
+        String val = null;
+        if (datStatEnumLookup.get(questionName) != null && datStatEnumLookup.get(questionName).get(value.getAsInt()) != null){
+            foundValue = true;
+            val = datStatEnumLookup.get(questionName).get(value.getAsInt());
         }
+        else if (yesNoDkLookup.get(value.getAsInt()) != null){
+            foundValue = true;
+            val = yesNoDkLookup.get(value.getAsInt());
+        }
+
+        //If we found the value, add a SelectedPicklistOption with the value to selectedPicklistOptions
+        if (foundValue) {
+            //Check for a specify field associated with the selected option
+            boolean foundSpecify = false;
+            JsonArray options = mapElement.getAsJsonObject().getAsJsonArray("options");
+            for (JsonElement option : options) {
+                JsonObject optionObject = option.getAsJsonObject();
+                JsonElement optionNameEl = optionObject.get("name");
+
+                //Find out if this is the selected option
+                if (optionNameEl != null && optionNameEl.getAsString() != null
+                    && !optionNameEl.getAsString().isEmpty() && value.getAsString() != null
+                    && optionNameEl.getAsString().equalsIgnoreCase(value.getAsString())) {
+                    JsonElement specifyKeyElement = optionObject.get("text");
+
+                    //If we find the specify field, set foundSpecify to true and include the specify value
+                    if (specifyKeyElement != null && !specifyKeyElement.isJsonNull()
+                        && StringUtils.isNotEmpty(specifyKeyElement.getAsString())) {
+                        foundSpecify = true;
+                        String otherTextKey;
+                        if ("MedicalSurvey".equals(surveyName)) {
+                            //For Prion medical survey, text contains the full name of the key, so don't concatenate
+                            otherTextKey = specifyKeyElement.getAsString();
+                        } else {
+                            //Otherwise, the name of the key is [optionName].[valueAssociatedWithTextInMapping]
+                            otherTextKey = questionName + "." + optionNameEl.getAsString() + "." + specifyKeyElement.getAsString();
+                        }
+
+                        selectedPicklistOptions.add(new SelectedPicklistOption(val, getStringValueFromElement(sourceDataElement, otherTextKey)));
+                    }
+
+                    //Now that we've found the selected option and checked for specify, done looking through options
+                    break;
+                }
+            }
+            // If we didn't find a specify field, don't include one
+            if (!foundSpecify) {
+                selectedPicklistOptions.add(new SelectedPicklistOption(val));
+            }
+        }
+
         return selectedPicklistOptions;
-
     }
-
 
     private List<SelectedPicklistOption> getPicklistOptionsForSourceStrs(JsonElement mapElement, JsonElement sourceDataElement,
                                                                          String questionName, String surveyName) {
@@ -1497,22 +1543,31 @@ public class StudyDataLoader {
             final String optName = optionName;
             if (optionName.equalsIgnoreCase(valueString)
                     || optValuesList.stream().anyMatch(x -> x.equalsIgnoreCase(optName))) {
-              //If detail text was exported as a separate key/value pair, make sure it gets passed through
-              JsonElement detailNameElement = optionObject.get("details_name");
-              if (!detailNameElement.isJsonNull() && !sourceDataObject.get(detailNameElement.getAsString()).isJsonNull()) {
-                String detailValue = sourceDataObject.get(detailNameElement.getAsString()).getAsString();
-                selectedPicklistOptions.add(new SelectedPicklistOption(optionName.toUpperCase(), detailValue));
-              } else if (!optionName.equalsIgnoreCase("Other")) {
-                selectedPicklistOptions.add(new SelectedPicklistOption(optionNameEl.getAsString().toUpperCase()));
-              } else {
-                //currently only RACE has Other however Gen2 MBC has other details without user selecting "Other"
-                //hence MBC Other is taken care below as special case..
-                //after MBC below code should help
-                //just select everything after Other (substr)
+                //If specify text was exported as a separate key/value pair, make sure it gets passed through
+                if (optionObject.get("text") != null) {
+                    String otherTextKey;
+                    if ("MedicalSurvey".equals(surveyName)) {
+                        //For Prion medical survey, text contains full name of key, so don't concatenate
+                        otherTextKey = optionObject.get("text").getAsString();
+                    } else {
+                        //Otherwise, the name of the key is [optionName].[valueAssociatedWithTextInMapping]
+                        otherTextKey = questionName.concat(".").concat(optionName).concat(".").concat(
+                            optionObject.get("text").getAsString());
+                    }
+                    JsonElement otherTextEl = sourceDataObject.get(otherTextKey);
+                    String otherText = getStringValueFromElement(sourceDataElement, otherTextKey);
+                    selectedPicklistOptions.add(new SelectedPicklistOption(optionName.toUpperCase(), otherText));
+                } else if (!optionName.equalsIgnoreCase("Other")) {
+                  selectedPicklistOptions.add(new SelectedPicklistOption(optionNameEl.getAsString().toUpperCase()));
+                } else {
+                  //currently only RACE has Other however Gen2 MBC has other details without user selecting "Other"
+                  //hence MBC Other is taken care below as special case..
+                  //after MBC below code should help
+                  //just select everything after Other (substr)
                     /*String sourceValue = value.getAsString();
                     String detailText = sourceValue.substring(sourceValue.lastIndexOf("Other") + 6);
                     selectedPicklistOptions.add(new SelectedPicklistOption(optionNameEl.getAsString().toUpperCase(), detailText));*/
-              }
+                }
             }
         }
 
@@ -1558,9 +1613,19 @@ public class StudyDataLoader {
             }
             if (value != null && value.getAsInt() == 1) { //option checked
                 if (option.getAsJsonObject().get("text") != null) {
-                    //other text details
-                    String otherText = getTextDetails(sourceDataElement, option, key);
-                    selectedPicklistOptions.add(new SelectedPicklistOption(optionName.getAsString().toUpperCase(), otherText));
+                  //other text details
+                  String otherTextKey;
+                  if ("MedicalSurvey".equals(surveyName)) {
+                    //For Prion medical survey, text contains the full name of the key--don't concatenate
+                    otherTextKey = option.getAsJsonObject().get("text").getAsString();
+                  }
+                  else {
+                    //Otherwise, the name of the key is [optionName].[valueAssociatedWithTextInMapping]
+                    otherTextKey = key.concat(".").concat(option.getAsJsonObject().get("text").getAsString());
+                  }
+
+                  String otherText = getStringValueFromElement(sourceDataElement, otherTextKey);
+                  selectedPicklistOptions.add(new SelectedPicklistOption(optionName.getAsString().toUpperCase(), otherText));
                 } else {
                     selectedPicklistOptions.add(new SelectedPicklistOption(optionName.getAsString().toUpperCase()));
                 }
