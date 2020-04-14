@@ -412,18 +412,12 @@ jobs:
       - deploy-jar:
           jar_base_name: Housekeeping
 
-  parallel_test-job:
+  parallel-test-job:
     executor:
       name: build-executor
-    working_directory: /home/circleci/repo/pepper-apis
+    working_directory: *pepper_apis_path
     parallelism: <<parameters.parallelism>>
     parameters:
-      m2_repo:
-        type: string
-        default: *m2_repo_path
-      command:
-        type: string
-        description: What comes after the mvn command
       parallelism:
         default: 2
         description: How many nodes should testing be split across?
@@ -434,6 +428,9 @@ jobs:
       circleci_path:
         type: string
         default: *circleci_path
+      m2_repo:
+        type: string
+        default: *m2_repo_path
     steps:
       - attach_workspace:
           at: *root_path
@@ -442,49 +439,53 @@ jobs:
           command: |
             set +x
             set +e
-            CIRCLE_CI_DIR='<< parameters.repo_path >>/.circleci'
-            mkdir -p "$CIRCLE_CI_DIR/tests/"
+            TEST_DATA_PATH='<< parameters.circleci_path >>/tests'
+            mkdir -p "$TEST_DATA_PATH"
 
             TEST_SRC_DIRECTORY='src/test/java'  
             TEST_SEARCH_PATTERN='**/*Test*.java'
 
-            SUREFIRE_CLASS_NAMES_PATH="${CIRCLE_CI_DIR}/tests/surefire_classnames"
+            SUREFIRE_CLASS_NAMES_PATH="${TEST_DATA_PATH}/surefire_classnames"
 
             # generate list of tests to be processed
             circleci tests glob "${TEST_SRC_DIRECTORY}/${TEST_SEARCH_PATTERN}" | # fancy circleci find command
               sed -e 's#^${TEST_SRC_DIRECTORY}/\(.*\)\.java#\1#' | # Strip .java and parent directory path
               tr "/" "." |  #Convert to a class name of form org.package.ClassName
-              grep -v '.*RouteTest' > "${CIRCLE_CI_DIR}/tests/surefire_classnames" #Exclude RouteTest. These done from suite
+              grep -v '.*RouteTest' > "${SUREFIRE_CLASS_NAMES_PATH}" #Exclude RouteTest. These done from suite
 
-            # Pattern does not pick this one up. Add explicitly
+            # Test file name pattern does not pick this one up. Add explicitly
             echo 'org.broadinstitute.ddp.route.IntegrationTestSuite'  >> $SUREFIRE_CLASS_NAMES_PATH
 
             echo "Total number of test class names collected: $(wc -l $SUREFIRE_CLASS_NAMES_PATH)"
 
-            # tests split will figure out which tests to run in this node  
+            # tests split will figure out which tests to run in this node
+            THIS_NODE_TESTS_PATH=/tmp/this_node_tests
             cat $SUREFIRE_CLASS_NAMES_PATH | \
-              circleci tests split --split-by=timings --timings-type=classname > /tmp/this_node_tests
+              circleci tests split --split-by=timings --timings-type=classname > $THIS_NODE_TESTS_PATH
             
-            # the ones that don't run in this node
-            IGNORE_LIST_PATH="${CIRCLE_CI_DIR}/tests/surefire_classnames_ignore_list"
+            
+            IGNORE_CLASS_LIST_PATH="${TEST_DATA_PATH}/surefire_classnames_ignore_list"
+            
+            # Filter out the ones that don't run in this node
             cat $SUREFIRE_CLASS_NAMES_PATH | \
-              grep -xvf /tmp/this_node_tests > $IGNORE_LIST_PATH
-
-            echo "Total number of test classes that will be skipped in this node: $(wc -l $IGNORE_LIST_PATH)"
+              grep -xvf $THIS_NODE_TESTS_PATH > $IGNORE_CLASS_LIST_PATH
+            
+            // save path for next steps
+            echo "export IGNORE_CLASS_LIST_PATH=${IGNORE_CLASS_LIST_PATH}" >> $BASH_ENV
+            echo "Total number of test classes that will be skipped in this node: $(wc -l IGNORE_CLASS_LIST_PATH)"
       - store_artifacts:
           path: << parameters.circleci_path>>/tests/
-      - common-setup
       - setup-test-dbs
-      - restore_cache:
-          keys:
-            - pom.xml1-{{ checksum "pom.xml" }}
-            - pom.xml1-    
+      - restore_cache: *m2_cache_keys
       - run:
           name: Run tests
           command: | 
-            mvn << parameters.command >> \
+            mvn --batch-mode -Dcheckstyle.skip test -f pom.xml \
+                    -Ditext.license=output-config/itextkey.xml \
+                    -Dddp.firecloudKeysDir=output-config/fc_keys \
+                    -Dconfig.file=output-config/testing-circleci.conf  \
                     -Dmaven.repo.local=<< parameters.m2_repo >> \
-                    -Dsurefire.excludesFile=<< parameters.circleci_path >>/tests/surefire_classnames_ignore_list     
+                    -Dsurefire.excludesFile=$IGNORE_CLASS_LIST_PATH     
       - maven/process_test_results:
           test_results_path: target/surefire-reports    
 
@@ -541,9 +542,8 @@ workflows:
             branches:
               only:
                 - study-server-parallel-tests
-      - parallel_test-job:
+      - parallel-test-job:
           parallelism: 4
-          command: --batch-mode -Ditext.license=output-config/itextkey.xml -Dddp.firecloudKeysDir=output-config/fc_keys -Dconfig.file=output-config/testing-circleci.conf -Dcheckstyle.skip test -f pom.xml
           <<: *parallel_filters
           requires:
             - compile-only-job
