@@ -309,6 +309,46 @@
             ]
           },
           {
+            "name": "prion_subtype",
+            "stable_id": "prion_medical_risk_subtype",
+            "type": "Picklist",
+            "source_type": "integer",
+            "options": [
+              {
+                "type": "integer",
+                "stable_id": "CJD"
+              },
+              {
+                "type": "integer",
+                "stable_id": "FFI"
+              },
+              {
+                "type": "integer",
+                "stable_id": "GSS"
+              },
+              {
+                "type": "integer",
+                "stable_id": "VPSPr"
+              },
+              {
+                "type": "integer",
+                "stable_id": "PSA"
+              },
+              {
+                "type": "integer",
+                "stable_id": "KURU"
+              },
+              {
+                "type": "integer",
+                "stable_id": "vCJD"
+              },
+              {
+                "type": "integer",
+                "stable_id": "sFI"
+              }
+            ]
+          },
+          {
             "name": "participant_belief",
             "stable_id": "prion_medical_participant_belief",
             "type": "Picklist",
