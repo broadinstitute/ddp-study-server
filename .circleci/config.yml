@@ -595,7 +595,8 @@ workflows:
                 - /^rc.*/
                 - /^hotfix.*/-
                 - study-server-parallel-tests
-
+          requires:
+            - compile-only-job
 
   deploy-workflow:
     jobs:
