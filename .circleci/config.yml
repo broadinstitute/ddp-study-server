@@ -495,23 +495,8 @@ jobs:
       name: java-executor
     working_directory: *pepper_apis_path
     steps:
-#      - run:
-#          command: chmod -R 777 ~
-#      - run:
-#          command: |
-#            echo "HOME: $HOME"
-#            echo $PWD
-#            ls -l
-#            cd ..
-#            # this really necessary?
-#            rmdir pepper-apis
       - checkout:
           path: *repo_path
-      - run:
-          command: |
-            echo "HOME: $HOME"
-            echo $PWD
-            ls -l
       - compile
       # will be needed down the workflow
       - render-configs
@@ -532,6 +517,15 @@ jobs:
           at: *root_path
       - run-tests
 
+  store-jar-job:
+    executor:
+      name: build-executor
+    working_directory: *pepper_apis_path
+    steps:
+      - store-jar:
+          jar_base_name: DataDonationPlatform
+      - store-jar:
+          jar_base_name: Housekeeping
 workflows:
   version: 2
 
@@ -547,6 +541,9 @@ workflows:
           <<: *parallel_filters
           requires:
             - compile-only-job
+      - store-jar-job:
+          requires:
+            - parallel-test-job
 
   build-and-deploy:
     jobs:
