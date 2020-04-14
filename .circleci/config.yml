@@ -333,7 +333,7 @@ commands:
 
             # Sometime deleting versions fails. If there are less than 3 versions then we are not going to worry about it
             # and set flag so this job step does not fail when exit error value is generated
-            if [[ "${#VERSIONS_TO_DELETE[@]}" -lt 3 ]]; then
+            if [[ !-z $VERSIONS_TO_DELETE ]] && [[ "${#VERSIONS_TO_DELETE[@]}" -lt 3 ]]; then
               set +e
             fi
 
@@ -523,8 +523,8 @@ jobs:
                     -Dddp.firecloudKeysDir=output-config/fc_keys \
                     -Dconfig.file=output-config/testing-circleci.conf  \
                     -Dmaven.repo.local=<< parameters.m2_repo >> \
-                    # Key line to do tests in parallel
-                    -Dsurefire.excludesFile=$IGNORE_CLASS_LIST_PATH     
+                    -Dsurefire.excludesFile=$IGNORE_CLASS_LIST_PATH   # Key line to do tests in parallel
+
       - store_test_results:
           path: target/surefire-reports
 
