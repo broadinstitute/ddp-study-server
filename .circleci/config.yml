@@ -119,7 +119,6 @@ commands:
   setup-test-dbs:
     description: setup the test databases. Ensure up and running
     steps:
-      - render-configs
       - run:
           name: Waiting for MySQL to be ready
           command: |
@@ -472,7 +471,7 @@ jobs:
             
             // save path for next steps
             echo "export IGNORE_CLASS_LIST_PATH=${IGNORE_CLASS_LIST_PATH}" >> $BASH_ENV
-            echo "Total number of test classes that will be skipped in this node: $(wc -l IGNORE_CLASS_LIST_PATH)"
+            echo "Total number of test classes that will be skipped in this node: $(wc -l $IGNORE_CLASS_LIST_PATH)"
       - store_artifacts:
           path: << parameters.circleci_path>>/tests/
       - setup-test-dbs
@@ -537,14 +536,14 @@ workflows:
             branches:
               only:
                 - study-server-parallel-tests
-      - parallel-test-job:
-          parallelism: 4
-          <<: *parallel_filters
-          requires:
-            - compile-only-job
+#      - parallel-test-job:
+#          parallelism: 4
+#          <<: *parallel_filters
+#          requires:
+#            - compile-only-job
       - store-jar-job:
           requires:
-            - parallel-test-job
+            - compile-only-job
 
   build-and-deploy:
     jobs:
