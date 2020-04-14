@@ -1,6 +1,4 @@
 version: 2.1
-orbs:
-  maven: circleci/maven@1.0.0
 references:
   ci_support_image: &ci_support_image
                        broadinstitute/study-server-build:2020-04-10G
@@ -24,10 +22,10 @@ references:
 
 
 executors:
-  java-executor:
+  build-executor:
     docker:
       - image: *ci_support_image
-  build-executor:
+  test-executor:
     docker: # todo: create new image endpoint, add this in admin tab for faster starts
       - image: *ci_support_image
       # start pubsub emulator
@@ -182,9 +180,6 @@ commands:
     - run:
         name: Run maven
         command: |
-          ls -l
-          ls -l ./target
-          ls -l ./target/classes
           mvn test -file pom.xml -Dmaven.repo.local=/home/circleci/.m2/repository -Dcheckstyle.skip -Dtest=HousekeepingSendgridEmailNotificationTest \
                      -Ditext.license=output-config/itextkey.xml \
                      -Dddp.firecloudKeysDir=output-config/fc_keys \
@@ -411,15 +406,14 @@ jobs:
       - deploy-jar:
           jar_base_name: Housekeeping
 
-  parallel-test-job:
+  parallel-tests-job:
     executor:
-      name: build-executor
+      name: test-executor
     working_directory: *pepper_apis_path
     parallelism: <<parameters.parallelism>>
     parameters:
       parallelism:
         default: 2
-        description: How many nodes should testing be split across?
         type: integer
       repo_path:
         type: string
@@ -485,13 +479,13 @@ jobs:
                     -Dconfig.file=output-config/testing-circleci.conf  \
                     -Dmaven.repo.local=<< parameters.m2_repo >> \
                     -Dsurefire.excludesFile=$IGNORE_CLASS_LIST_PATH     
-      - maven/process_test_results:
-          test_results_path: target/surefire-reports    
+      - store_test_results:
+          path: target/surefire-reports
 
 
   compile-only-job:
     executor:
-      name: java-executor
+      name: build-executor
     working_directory: *pepper_apis_path
     steps:
       - checkout:
@@ -509,7 +503,7 @@ jobs:
 
   test-only-job:
     executor:
-      name: build-executor
+      name: test-executor
     working_directory: *pepper_apis_path
     steps:
       - attach_workspace:
@@ -538,14 +532,14 @@ workflows:
             branches:
               only:
                 - study-server-parallel-tests
-      - parallel-test-job:
+      - parallel-tests-job:
           parallelism: 4
           <<: *parallel_filters
           requires:
             - compile-only-job
       - store-jar-job:
           requires:
-            - compile-only-job
+            - parallel-tests-job
 
   build-and-deploy:
     jobs:
