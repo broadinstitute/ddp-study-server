@@ -1450,11 +1450,10 @@ public class StudyDataLoader {
         //Get the option value using either datStatEnumLookup or yesNoDkLookup
         boolean foundValue = false;
         String val = null;
-        if (datStatEnumLookup.get(questionName) != null && datStatEnumLookup.get(questionName).get(value.getAsInt()) != null){
+        if (datStatEnumLookup.get(questionName) != null && datStatEnumLookup.get(questionName).get(value.getAsInt()) != null) {
             foundValue = true;
             val = datStatEnumLookup.get(questionName).get(value.getAsInt());
-        }
-        else if (yesNoDkLookup.get(value.getAsInt()) != null){
+        } else if (yesNoDkLookup.get(value.getAsInt()) != null) {
             foundValue = true;
             val = yesNoDkLookup.get(value.getAsInt());
         }
@@ -1470,13 +1469,13 @@ public class StudyDataLoader {
 
                 //Find out if this is the selected option
                 if (optionNameEl != null && optionNameEl.getAsString() != null
-                    && !optionNameEl.getAsString().isEmpty() && value.getAsString() != null
-                    && optionNameEl.getAsString().equalsIgnoreCase(value.getAsString())) {
+                        && !optionNameEl.getAsString().isEmpty() && value.getAsString() != null
+                        && optionNameEl.getAsString().equalsIgnoreCase(value.getAsString())) {
                     JsonElement specifyKeyElement = optionObject.get("text");
 
                     //If we find the specify field, set foundSpecify to true and include the specify value
                     if (specifyKeyElement != null && !specifyKeyElement.isJsonNull()
-                        && StringUtils.isNotEmpty(specifyKeyElement.getAsString())) {
+                            && StringUtils.isNotEmpty(specifyKeyElement.getAsString())) {
                         foundSpecify = true;
                         String otherTextKey;
                         if ("MedicalSurvey".equals(surveyName)) {
@@ -1487,7 +1486,8 @@ public class StudyDataLoader {
                             otherTextKey = questionName + "." + optionNameEl.getAsString() + "." + specifyKeyElement.getAsString();
                         }
 
-                        selectedPicklistOptions.add(new SelectedPicklistOption(val, getStringValueFromElement(sourceDataElement, otherTextKey)));
+                        selectedPicklistOptions.add(new SelectedPicklistOption(val,
+                                getStringValueFromElement(sourceDataElement, otherTextKey)));
                     }
 
                     //Now that we've found the selected option and checked for specify, done looking through options
@@ -1596,8 +1596,9 @@ public class StudyDataLoader {
             JsonElement value = null;
             JsonElement optionName = option.getAsJsonObject().get("name");
             String key;
-            String optName = null;
-            if (optionName != null && !optionName.isJsonNull()) {
+          String optName;
+          if (optionName != null && !optionName.isJsonNull()) {
+             optName = null;
                 optName = optionName.getAsString();
                 if (altNames.get(optName) != null) {
                     optName = altNames.get(optName);
@@ -1613,16 +1614,15 @@ public class StudyDataLoader {
             }
             if (value != null && value.getAsInt() == 1) { //option checked
                 if (option.getAsJsonObject().get("text") != null) {
-                  //other text details
-                  String otherTextKey;
-                  if ("MedicalSurvey".equals(surveyName)) {
-                    //For Prion medical survey, text contains the full name of the key--don't concatenate
-                    otherTextKey = option.getAsJsonObject().get("text").getAsString();
-                  }
-                  else {
-                    //Otherwise, the name of the key is [optionName].[valueAssociatedWithTextInMapping]
-                    otherTextKey = key.concat(".").concat(option.getAsJsonObject().get("text").getAsString());
-                  }
+                    //other text details
+                    String otherTextKey;
+                    if ("MedicalSurvey".equals(surveyName)) {
+                        //For Prion medical survey, text contains the full name of the key--don't concatenate
+                        otherTextKey = option.getAsJsonObject().get("text").getAsString();
+                    } else {
+                        //Otherwise, the name of the key is [optionName].[valueAssociatedWithTextInMapping]
+                        otherTextKey = key.concat(".").concat(option.getAsJsonObject().get("text").getAsString());
+                    }
 
                   String otherText = getStringValueFromElement(sourceDataElement, otherTextKey);
                   selectedPicklistOptions.add(new SelectedPicklistOption(optionName.getAsString().toUpperCase(), otherText));
