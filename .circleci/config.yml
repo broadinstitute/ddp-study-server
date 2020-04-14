@@ -23,6 +23,11 @@ references:
             ddp-build-artifacts
   jar_build_bucket_dir: &jar_build_bucket_dir
         /ddp-study-server-pepper-apis
+  housekeeping_test_db: &housekeeping_test_db
+      housekeepingdb
+  studyserver_test_db: &studyserver_test_db
+      studyservicedb
+
 
 executors:
   build-executor:
@@ -39,15 +44,11 @@ executors:
           MYSQL_DATABASE: test_db
           MYSQL_USER: user
           MYSQL_PASSWORD: passw0rd
-
-              
-    resource_class: medium+
-    working_directory: ~/repo/pepper-apis
+    resource_class: medium+ #default medium not big enough for tests
 
   deploy-executor:
     docker: # todo: create new image endpoint, add this in admin tab for faster starts
     - image: *ci_support_image
-    working_directory: ~/repo/pepper-apis  
 
 commands:
   compile:
@@ -131,6 +132,13 @@ commands:
 
   setup-test-dbs:
     description: setup the test databases. Ensure up and running
+    parameters:
+      studyserverdb:
+        type: string
+        default: *studyserver_test_db
+      housekeepingdb:
+        type: string
+        default: *housekeeping_test_db
     steps:
       - run:
           name: Waiting for MySQL to be ready
@@ -145,8 +153,8 @@ commands:
       - run:
           name: Setup test databases
           command: |
-            mysql -h 127.0.0.1 -u root --password=$MYSQL_ROOT_PASSWORD test_db --execute="CREATE DATABASE studyservicedb CHARACTER SET utf8 COLLATE utf8_general_ci"
-            mysql -h 127.0.0.1 -u root --password=$MYSQL_ROOT_PASSWORD test_db --execute="CREATE DATABASE housekeepingdb CHARACTER SET utf8 COLLATE utf8_general_ci"
+            mysql -h 127.0.0.1 -u root --password=$MYSQL_ROOT_PASSWORD test_db --execute="CREATE DATABASE << parameters.studyserverdb >> CHARACTER SET utf8 COLLATE utf8_general_ci"
+            mysql -h 127.0.0.1 -u root --password=$MYSQL_ROOT_PASSWORD test_db --execute="CREATE DATABASE << parameters.housekeepingdb >>b CHARACTER SET utf8 COLLATE utf8_general_ci"
           environment: *DB_VARS
     
   show-pipeline-vars:
