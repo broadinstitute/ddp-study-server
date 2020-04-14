@@ -442,7 +442,7 @@ jobs:
             mkdir -p "$TEST_DATA_PATH"
 
             TEST_SRC_DIRECTORY='src/test/java'  
-            TEST_SEARCH_PATTERN='**/*Test*.java'
+            TEST_SEARCH_PATTERN='**/*Test.java'
 
             SUREFIRE_CLASS_NAMES_PATH="${TEST_DATA_PATH}/surefire_classnames"
 
@@ -521,6 +521,8 @@ jobs:
       name: build-executor
     working_directory: *pepper_apis_path
     steps:
+      - attach_workspace:
+          at: *root_path
       - setup-shared-env
       - store-jar:
           jar_base_name: DataDonationPlatform
@@ -536,11 +538,11 @@ workflows:
             branches:
               only:
                 - study-server-parallel-tests
-#      - parallel-test-job:
-#          parallelism: 4
-#          <<: *parallel_filters
-#          requires:
-#            - compile-only-job
+      - parallel-test-job:
+          parallelism: 4
+          <<: *parallel_filters
+          requires:
+            - compile-only-job
       - store-jar-job:
           requires:
             - compile-only-job
