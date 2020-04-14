@@ -578,8 +578,8 @@ workflows:
 #                - /^rc.*/
 #                - /^hotfix.*/-
 #                - study-server-parallel-tests
-          requires:
-            - compile-only-job
+#          requires:
+#            - compile-only-job
       - deploy-workspace-jar-job:
           filters:
             branches:
