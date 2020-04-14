@@ -495,16 +495,16 @@ jobs:
       name: java-executor
     working_directory: *pepper_apis_path
     steps:
-      - run:
-          command: chmod -R 777 ~
-      - run:
-          command: |
-            echo "HOME: $HOME"
-            echo $PWD
-            ls -l
-            cd ..
-            # this really necessary?
-            rmdir pepper-apis    
+#      - run:
+#          command: chmod -R 777 ~
+#      - run:
+#          command: |
+#            echo "HOME: $HOME"
+#            echo $PWD
+#            ls -l
+#            cd ..
+#            # this really necessary?
+#            rmdir pepper-apis
       - checkout:
           path: *repo_path
       - run:
@@ -547,12 +547,6 @@ workflows:
           <<: *parallel_filters
           requires:
             - compile-only-job
-
-      # - test-only-job:
-      #     <<: *parallel_filters
-      #     requires:
-      #       - compile-only-job
-
 
   build-and-deploy:
     jobs:
