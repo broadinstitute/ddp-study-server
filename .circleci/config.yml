@@ -18,6 +18,10 @@ references:
             /home/circleci/repo/pepper-apis
   circleci_path: &circleci_path
             /home/circleci/repo/.circleci
+  builds_bucket: &builds_bucket
+            ddp-build-artifacts
+  jar_build_bucket_dir: &jar_build_bucket_dir
+        /ddp-study-server-pepper-apis
 
 
 
@@ -55,8 +59,6 @@ commands:
           command: |
             echo "export VAULT_TOKEN=`vault write -field=token auth/approle/login role_id=$VAULT_ROLE_ID secret_id=$VAULT_ROLE_SECRET_ID`" >> $BASH_ENV
             echo "export SHORT_GIT_SHA=`echo '<< pipeline.git.revision >>' | cut -c 1-7`" >> $BASH_ENV
-            echo 'export BUILDS_BUCKET=ddp-build-artifacts' >> $BASH_ENV
-            echo 'export DEPLOY_DIR=deployment_assets' >> $BASH_ENV
             source $BASH_ENV
 
   common-setup:
@@ -83,7 +85,6 @@ commands:
             test)
               DEPLOY_ENV=test
             ;;
-            # @todo remove when done
             test_deleteme1)
               DEPLOY_ENV=dev
             ;;
@@ -226,6 +227,12 @@ commands:
     parameters:
       jar_base_name:
         type: string
+      builds_bucket:
+        type: string
+        default: *builds_bucket
+      jar_build_bucket_dir:
+        type: string
+        default: *jar_build_bucket_dir
     steps:
       - auth-gcp-service-account:
           env: prod
@@ -234,16 +241,24 @@ commands:
           command: |
             set -u
             DATE=`date +%F`
-            JAR_BASE_NAME=<<parameters.jar_base_name>>
+            BUILDS_BUCKET='<<parameters.builds_bucket>>'
+            JAR_BASE_NAME='<<parameters.jar_base_name>>'
+            JAR_BUILD_BUCKET_DIR='<<parameters.jar_build_bucket_dir>>'
             JAR_FILE_NAME="${JAR_BASE_NAME}_${DATE}_${SHORT_GIT_SHA}.jar"
             LOCAL_JAR_FILE_PATH="./target/${JAR_BASE_NAME}.jar"
-            gsutil cp  ${LOCAL_JAR_FILE_PATH} "gs://${BUILDS_BUCKET}/ddp-study-server-pepper-apis/${JAR_FILE_NAME}"
+            gsutil cp  ${LOCAL_JAR_FILE_PATH} "gs://${BUILDS_BUCKET}${JAR_BUILD_BUCKET_DIR}/${JAR_FILE_NAME}"
   
   retrieve-jar:
     description: Get <<parameters.jar_base_name>> jar from bucket
     parameters:
       jar_base_name:
         type: string
+      builds_bucket:
+        type: string
+        default: *builds_bucket
+      jar_build_bucket_dir:
+        type: string
+        default: *jar_build_bucket_dir
     steps:
       - auth-gcp-service-account:
           env: prod
@@ -252,8 +267,10 @@ commands:
           command: |
             set -u
             set +e
-            JAR_BASE_NAME=<<parameters.jar_base_name>>
-            JAR_FILE_URL_PATTERN="gs://${BUILDS_BUCKET}/ddp-study-server-pepper-apis/${JAR_BASE_NAME}_*_${SHORT_GIT_SHA}.jar"
+            BUILDS_BUCKET='<<parameters.builds_bucket>>'
+            JAR_BASE_NAME='<<parameters.jar_base_name>>'
+            JAR_BUILD_BUCKET_DIR='<<parameters.jar_build_bucket_dir>>'
+            JAR_FILE_URL_PATTERN="gs://${BUILDS_BUCKET}${JAR_BUILD_BUCKET_DIR}/${JAR_BASE_NAME}_*_${SHORT_GIT_SHA}.jar"
             echo "Checking for ${JAR_FILE_URL_PATTERN}"
             # For some reason following line generating exit code 1 every time in CircleCI. Use set +e so script can continue
             JAR_FILE_URL=`gsutil ls $JAR_FILE_URL_PATTERN  | sort -r | head -1`
@@ -272,12 +289,16 @@ commands:
     parameters:
       jar_base_name:
         type: string
+      deploy_dir:
+        type: string
+        default: deployment-assets
     steps:
       - set-deployment-env
       - render-configs
       - run:
           name: Gather deployment assets
           command: |
+            DEPLOY_DIR='<<parameters.deploy_dir>>'
             rm -rf $DEPLOY_DIR
             mkdir -p $DEPLOY_DIR
             cd $DEPLOY_DIR
@@ -290,7 +311,7 @@ commands:
           name: Deploy <<parameters.jar_base_name>> to GAE
           command: |
             set -u
-            gcloud app deploy --version="${SHORT_GIT_SHA}" --stop-previous-version --project "broad-ddp-${ENVIRONMENT}" $DEPLOY_DIR/<<parameters.jar_base_name>>.yaml
+            gcloud app deploy --version="${SHORT_GIT_SHA}" --stop-previous-version --project "broad-ddp-${ENVIRONMENT}" <<parameters.deploy_dir>>/<<parameters.jar_base_name>>.yaml
       - update-deployment-sheet:
           jar_base_name: <<parameters.jar_base_name>>
       - run:
@@ -299,7 +320,7 @@ commands:
             set -u
             set +x
             # extract the service name from the GAE yaml file
-            CONFIG_FILE="$DEPLOY_DIR/<<parameters.jar_base_name>>.yaml"
+            CONFIG_FILE="<<parameters.deploy_dir>>/<<parameters.jar_base_name>>.yaml"
             SERVICE=$(grep -Eo -m1 "^service:\s*.*" "${CONFIG_FILE}" | awk '{print $2}')
             echo "The service name is *${SERVICE}*"
 
@@ -381,7 +402,20 @@ jobs:
       - store-jar:
           jar_base_name: Housekeeping
 
-  deploy-jar-job:
+  deploy-workspace-jar-job:
+    executor:
+      name: deploy-executor
+    working_directory: *pepper_apis_path
+    steps:
+      - attach_workspace:
+          at: *root_path
+      - setup-shared-env
+      - deploy-jar:
+          jar_base_name: DataDonationPlatform
+      - deploy-jar:
+          jar_base_name: Housekeeping
+
+  deploy-stored-jar-job:
     executor:
       name: deploy-executor
     working_directory: *pepper_apis_path
@@ -466,6 +500,7 @@ jobs:
             
             // save path for next steps
             echo "export IGNORE_CLASS_LIST_PATH=${IGNORE_CLASS_LIST_PATH}" >> $BASH_ENV
+            source $BASH_ENV
             echo "Total number of test classes that will be skipped in this node: $(wc -l $IGNORE_CLASS_LIST_PATH)"
       - store_artifacts:
           path: << parameters.circleci_path>>/tests/
@@ -530,19 +565,41 @@ workflows:
           filters: 
             branches:
               only:
+                - develop
+                - /^rc.*/
+                - /^hotfix.*/-
                 - study-server-parallel-tests
-      - parallel-tests-job:
-          parallelism: 4
-          <<: *parallel_filters
+#      - parallel-tests-job:
+#          parallelism: 4
+#          filters:
+#            branches:
+#              only:
+#                - develop
+#                - /^rc.*/
+#                - /^hotfix.*/-
+#                - study-server-parallel-tests
+          requires:
+            - compile-only-job
+      - deploy-workspace-jar-job:
+          filters:
+            branches:
+              only:
+                - develop
+                - study-server-parallel-tests
           requires:
             - compile-only-job
       - store-jar-job:
-          requires:
-            - parallel-tests-job
+          filters:
+            branches:
+              only:
+                - /^rc.*/
+                - /^hotfix.*/-
+                - study-server-parallel-tests
+
 
   deploy-workflow:
     jobs:
-      - deploy-jar-job:
+      - deploy-stored-jar-job:
           filters:
             branches:
               only:
