@@ -522,6 +522,7 @@ jobs:
       name: build-executor
     working_directory: *pepper_apis_path
     steps:
+      - setup-shared-env
       - store-jar:
           jar_base_name: DataDonationPlatform
       - store-jar:
