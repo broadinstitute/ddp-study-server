@@ -18,6 +18,8 @@ references:
              /home/circleci/.m2/repository
   pepper_apis-path: &pepper_apis_path
             /home/circleci/repo/pepper-apis
+  circleci_path: &circleci_path
+            /home/circleci/repo/.circleci
 
 
 
@@ -154,6 +156,7 @@ commands:
     parameters:
       m2_repo:
         type: string
+        default: *m2_repo_path
     steps:
       - restore_cache: *m2_cache_keys
       - run:
@@ -415,38 +418,31 @@ jobs:
     working_directory: /home/circleci/repo/pepper-apis
     parallelism: <<parameters.parallelism>>
     parameters:
-      maven_command:
-        default: mvn
-        description: Specify a custom path for invoking maven
+      m2_repo:
         type: string
-      test_directory:
-        default: src/test/java
-        type: string 
+        default: *m2_repo_path
       command:
         type: string
-        description: What comes after the mvn command  
-      parallel_test_pattern:
-        default: '**/*Test*.java'
-        description: |
-          This is the standard Surefire pattern, but you can override
-          if you use alternate <includes> patterns in your pom.xml
-        type: string
+        description: What comes after the mvn command
       parallelism:
         default: 2
         description: How many nodes should testing be split across?
         type: integer
+      repo_path:
+        type: string
+        default: *repo_path
       circleci_path:
         type: string
-        default: /home/circleci/repo/.circleci  
+        default: *circleci_path
     steps:
       - attach_workspace:
-          at: /home/circleci       
+          at: *root_path
       - run:
           name: Split tests
           command: |
             set +x
             set +e
-            CIRCLE_CI_DIR='<< parameters.circleci_path >>'
+            CIRCLE_CI_DIR='<< parameters.repo_path >>/.circleci'
             mkdir -p "$CIRCLE_CI_DIR/tests/"
 
             TEST_SRC_DIRECTORY='src/test/java'  
@@ -456,7 +452,7 @@ jobs:
 
             # generate list of tests to be processed
             circleci tests glob "${TEST_SRC_DIRECTORY}/${TEST_SEARCH_PATTERN}" | # fancy circleci find command
-              sed -e 's#^<<parameters.test_directory>>/\(.*\)\.java#\1#' | # Strip .java and parent directory path
+              sed -e 's#^${TEST_SRC_DIRECTORY}/\(.*\)\.java#\1#' | # Strip .java and parent directory path
               tr "/" "." |  #Convert to a class name of form org.package.ClassName
               grep -v '.*RouteTest' > "${CIRCLE_CI_DIR}/tests/surefire_classnames" #Exclude RouteTest. These done from suite
 
@@ -486,8 +482,8 @@ jobs:
       - run:
           name: Run tests
           command: | 
-            << parameters.maven_command >> << parameters.command >> \
-                    -Dmaven.repo.local=/home/circleci/.m2/repository \
+            mvn << parameters.command >> \
+                    -Dmaven.repo.local=<< parameters.m2_repo >> \
                     -Dsurefire.excludesFile=<< parameters.circleci_path >>/tests/surefire_classnames_ignore_list     
       - maven/process_test_results:
           test_results_path: target/surefire-reports    
@@ -515,8 +511,7 @@ jobs:
             echo "HOME: $HOME"
             echo $PWD
             ls -l
-      - compile:
-          m2_repo: *m2_repo_path
+      - compile
       # will be needed down the workflow
       - render-configs
       - persist_to_workspace:
