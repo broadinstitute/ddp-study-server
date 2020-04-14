@@ -247,7 +247,7 @@ commands:
             JAR_FILE_NAME="${JAR_BASE_NAME}_${DATE}_${SHORT_GIT_SHA}.jar"
             LOCAL_JAR_FILE_PATH="./target/${JAR_BASE_NAME}.jar"
             JAR_BUCKET_URL="gs://${BUILDS_BUCKET}${JAR_BUILD_BUCKET_DIR}/${JAR_FILE_NAME}"
-            gsutil cp  ${LOCAL_JAR_FILE_PATH}
+            gsutil cp  ${JAR_BUCKET_URL}
             echo "${JAR_FILE_NAME} successfully uploaded to ${JAR_BUCKET_URL}"
   
   retrieve-jar:
