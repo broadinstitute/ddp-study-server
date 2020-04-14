@@ -24,8 +24,6 @@ references:
   jar_build_bucket_dir: &jar_build_bucket_dir
         /ddp-study-server-pepper-apis
 
-
-
 executors:
   build-executor:
     docker:
@@ -462,7 +460,7 @@ workflows:
 
   build-test-store-deploy-workflow:
     jobs:
-      - compile-only-job: &parallel_filters
+      - compile-only-job: &compile_and_test_filters
           filters: 
             branches:
               only:
@@ -472,13 +470,7 @@ workflows:
                 - study-server-parallel-tests
       - parallel-tests-job:
           parallelism: 4
-          filters:
-            branches:
-              only:
-                - develop
-                - /^rc.*/
-                - /^hotfix.*/
-                - study-server-parallel-tests
+          <<: *compile_and_test_filters
           requires:
             - compile-only-job
       - deploy-workspace-jar-job:
@@ -486,7 +478,6 @@ workflows:
             branches:
               only:
                 - develop
-                - study-server-parallel-tests
           requires:
             - compile-only-job
       - store-jar-job:
@@ -495,7 +486,6 @@ workflows:
               only:
                 - /^rc.*/
                 - /^hotfix.*/
-                - study-server-parallel-tests
           requires:
             - compile-only-job
 
