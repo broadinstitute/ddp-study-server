@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -21,7 +20,6 @@ import com.google.api.services.sqladmin.model.Operation;
 import com.google.api.services.sqladmin.model.OperationError;
 import com.google.api.services.sqladmin.model.OperationErrors;
 import com.typesafe.config.Config;
-
 import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -56,24 +54,11 @@ public class DatabaseBackup {
         }
     }
 
-
     public List<Operation> createBackups() {
         String gcpProject = cfg.getString(ConfigFile.GOOGLE_PROJECT_ID);
-        String instanceDsm = cfg.getString(ConfigFile.DB_DSM_INSTANCE_ID);
-        String instanceAPI = cfg.getString(ConfigFile.DB_API_INSTANCE_ID);
-        String instanceHousekeeping = cfg.getString(ConfigFile.DB_HOUSEKEEPING_INSTANCE_ID);
-
-        List<Operation> backupRequestResponse = TransactionWrapper.withTxn(TransactionWrapper.DB.HOUSEKEEPING, handle -> {
-            List<Operation> responses = new ArrayList<Operation>();
-            Operation responseDsm = createBackup(handle, gcpProject, instanceDsm);
-            Operation responseApi = createBackup(handle, gcpProject, instanceAPI);
-            Operation responseHousekeeping = createBackup(handle, gcpProject, instanceHousekeeping);
-            responses.add(responseDsm);
-            responses.add(responseApi);
-            responses.add(responseHousekeeping);
-            return responses;
-        });
-        return backupRequestResponse;
+        String instanceId = cfg.getString(ConfigFile.DB_INSTANCE_ID);
+        return TransactionWrapper.withTxn(TransactionWrapper.DB.HOUSEKEEPING,
+                handle -> List.of(createBackup(handle, gcpProject, instanceId)));
     }
 
     public void checkBackupJobs() {
@@ -96,7 +81,7 @@ public class DatabaseBackup {
                     Instant start = Instant.ofEpochMilli(dto.getStartTime());
                     Instant startPlus6Hrs = start.plus(6, ChronoUnit.HOURS);
                     if (Instant.now().isAfter(startPlus6Hrs)) {
-                        LOG.error("Backup job {} failed to complete.");
+                        LOG.error("Backup job for database instance {} failed to complete.", dto.getDatabaseName());
                         updateBackupJobTable(jdbiBackupJob, dto.getRunName(), null, RUN_STATUS_HOPELESS);
                     }
                 }
