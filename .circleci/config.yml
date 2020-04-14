@@ -319,7 +319,6 @@ commands:
       - run:
           name: Delete previous versions of service
           command: |
-            set -u
             set +x
             # extract the service name from the GAE yaml file
             CONFIG_FILE="<<parameters.deploy_dir>>/<<parameters.jar_base_name>>.yaml"
@@ -377,28 +376,7 @@ commands:
               jq -r .data.gcp.serviceKey |
               gcloud auth activate-service-account --key-file=-
 
-  list-tests:
-    steps:
-#      - checkout
-      - run:
-          name: List all the tests we have
-          command: |
-            set +x
-            echo "The pwd is $PWD"
-            echo "doing ls -l"
-            ls -l
-            echo $(circleci tests glob "src/test/**/*.java")
-            echo "using find:"
-            find src/test -name "*.java" 
-
 jobs:
-  build-jars-job:
-    executor:
-      name: build-executor
-    steps:
-      - common-setup
-      - build-jars
-
   build-and-store-jar-job:
     executor:
       name: build-executor
@@ -620,23 +598,5 @@ workflows:
                 # @todo remove when done
                 - test_deleteme1
 
-  build-and-deploy:
-    jobs:
-      - build-and-deploy-job:
-          filters:
-            branches:
-              only:
-                - develop
-                # @todo remove when done
-                # - study-server-to-appengine
-
-  build-and-store:
-    jobs:
-      - build-and-store-jar-job:
-          filters:
-            branches:
-              only:
-                - /^rc.*/
-                - /^hotfix.*/
 
 
