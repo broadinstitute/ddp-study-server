@@ -154,7 +154,7 @@ commands:
           name: Setup test databases
           command: |
             mysql -h 127.0.0.1 -u root --password=$MYSQL_ROOT_PASSWORD test_db --execute="CREATE DATABASE << parameters.studyserverdb >> CHARACTER SET utf8 COLLATE utf8_general_ci"
-            mysql -h 127.0.0.1 -u root --password=$MYSQL_ROOT_PASSWORD test_db --execute="CREATE DATABASE << parameters.housekeepingdb >>b CHARACTER SET utf8 COLLATE utf8_general_ci"
+            mysql -h 127.0.0.1 -u root --password=$MYSQL_ROOT_PASSWORD test_db --execute="CREATE DATABASE << parameters.housekeepingdb >> CHARACTER SET utf8 COLLATE utf8_general_ci"
           environment: *DB_VARS
     
   show-pipeline-vars:
