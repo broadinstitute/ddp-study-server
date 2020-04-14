@@ -333,7 +333,7 @@ commands:
 
             # Sometime deleting versions fails. If there are less than 3 versions then we are not going to worry about it
             # and set flag so this job step does not fail when exit error value is generated
-            if [[ !-z $VERSIONS_TO_DELETE ]] && [[ "${#VERSIONS_TO_DELETE[@]}" -lt 3 ]]; then
+            if [[ ! -z $VERSIONS_TO_DELETE ]] && [[ "${#VERSIONS_TO_DELETE[@]}" -lt 3 ]]; then
               set +e
             fi
 
@@ -579,17 +579,17 @@ workflows:
                 - /^rc.*/
                 - /^hotfix.*/-
                 - study-server-parallel-tests
-      - parallel-tests-job:
-          parallelism: 4
-          filters:
-            branches:
-              only:
-                - develop
-                - /^rc.*/
-                - /^hotfix.*/
-                - study-server-parallel-tests
-          requires:
-            - compile-only-job
+#      - parallel-tests-job:
+#          parallelism: 4
+#          filters:
+#            branches:
+#              only:
+#                - develop
+#                - /^rc.*/
+#                - /^hotfix.*/
+#                - study-server-parallel-tests
+#          requires:
+#            - compile-only-job
       - deploy-workspace-jar-job:
           filters:
             branches:
@@ -597,7 +597,7 @@ workflows:
                 - develop
                 - study-server-parallel-tests
           requires:
-            - parallel-tests-job
+            - compile-only-job
       - store-jar-job:
           filters:
             branches:
