@@ -997,7 +997,9 @@ public class StudyDataLoader {
         var jdbiCompositeAnswer = handle.attach(JdbiCompositeAnswer.class);
         if (CollectionUtils.isNotEmpty(nestedGuids)) {
             for (String childGuid : nestedGuids) {
-                childrenAnswerIds.add(answerDao.getAnswerSql().findDtoByGuid(childGuid).get().getId());
+                if (childGuid != null) {
+                    childrenAnswerIds.add(answerDao.getAnswerSql().findDtoByGuid(childGuid).get().getId());
+                }
             }
             jdbiCompositeAnswer.insertChildAnswerItems(parentAnswer.getAnswerId(), childrenAnswerIds, compositeAnswerOrders);
         }
