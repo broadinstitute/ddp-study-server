@@ -65,10 +65,8 @@ public class ConfigFile {
     public static final String STUDY_EXPORT_SCHEDULE = "schedules.studyExport";
     public static final String TEMP_USER_CLEANUP_SCHEDULE = "schedules.tempUserCleanup";
 
-    //database instance names
-    public static final String DB_DSM_INSTANCE_ID = "dbDsmInstance";
-    public static final String DB_API_INSTANCE_ID = "dbApiInstance";
-    public static final String DB_HOUSEKEEPING_INSTANCE_ID = "dbHousekeepingInstance";
+    // database instance names
+    public static final String DB_INSTANCE_ID = "dbInstanceId";
 
     // SQL queries
     public static final String CLIENT_KEY_CONFIGURATION_QUERY = "clientKeyConfigurationQuery";
