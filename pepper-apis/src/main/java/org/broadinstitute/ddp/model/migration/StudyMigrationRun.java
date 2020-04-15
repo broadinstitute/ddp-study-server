@@ -44,6 +44,7 @@ public class StudyMigrationRun {
         this.previousRun = previousRun;
         this.emailAddress = emailAddress;
         this.auth0Collision = auth0Collision;
+        this.isPrion = false;
     }
 
     public StudyMigrationRun(String altPid, String pepperUserGuid, Boolean hasPrionConsent, Boolean hasMedical,
