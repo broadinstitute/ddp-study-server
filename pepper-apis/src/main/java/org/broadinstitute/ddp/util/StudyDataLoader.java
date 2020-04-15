@@ -567,7 +567,7 @@ public class StudyDataLoader {
             dto = jdbiActivityInstance.getByActivityInstanceId(dto.getId()).get();
         } else if (InstanceStatusType.COMPLETE == instanceCurrentStatus) {
             if (ddpCompletedAt == null) {
-                if ("PRIONCONSENT".equals(activityCode)) {
+                if ("PRIONCONSENT".equals(activityCode) || "PRIONMEDICAL".equals(activityCode)) {
                     ddpCompletedAt = ddpLastUpdatedAt;
                 } else {
                     throw new Exception("No completed/submitted date value passed for " + activityCode
