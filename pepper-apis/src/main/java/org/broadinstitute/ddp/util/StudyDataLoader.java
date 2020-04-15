@@ -351,7 +351,8 @@ public class StudyDataLoader {
         JdbiUser userDao = handle.attach(JdbiUser.class);
         JdbiClient clientDao = handle.attach(JdbiClient.class);
 
-        UserDto pepperUser = createLegacyPepperUser(userDao, clientDao, datstatData, userGuid, userHruid, clientDto);
+        UserDto pepperUser = createLegacyPepperUser(userDao, clientDao, datstatData, userGuid, userHruid, clientDto,
+                studyDto.getGuid());
 
         JdbiLanguageCode jdbiLanguageCode = handle.attach(JdbiLanguageCode.class);
         UserProfileDao profileDao = handle.attach(UserProfileDao.class);
@@ -1007,13 +1008,29 @@ public class StudyDataLoader {
     }
 
     public UserDto createLegacyPepperUser(JdbiUser userDao, JdbiClient clientDao,
-                                          JsonElement data, String userGuid, String userHruid, ClientDto clientDto) throws Exception {
+                                          JsonElement data, String userGuid, String userHruid, ClientDto clientDto,
+                                          String studyGuid) throws Exception {
 
         String emailAddress = data.getAsJsonObject().get("datstat_email").getAsString();
 
-        // Create a user for the given domain
-        String randomPass = generateRandomPassword();
-        User newAuth0User = auth0Util.createAuth0User(emailAddress, randomPass, mgmtToken);
+        //If this is Prion, first check for an existing Auth0 user
+        User newAuth0User = null;
+        if ("PRION".equals(studyGuid)) {
+            List<User> auth0UsersByEmail = auth0Util.getAuth0UsersByEmail(emailAddress, mgmtToken);
+            if (auth0UsersByEmail != null && auth0UsersByEmail.size() > 0) {
+                newAuth0User = auth0UsersByEmail.get(0);
+                LOG.info("Using existing Auth0 user");
+            }
+            else {
+                LOG.info("Prion user with email " + emailAddress + " not found in Auth0");
+            }
+        }
+
+        if (newAuth0User == null) {
+            // Create a user for the given domain
+            String randomPass = generateRandomPassword();
+            newAuth0User = auth0Util.createAuth0User(emailAddress, randomPass, mgmtToken);
+        }
 
         String auth0UserId = newAuth0User.getId();
 
