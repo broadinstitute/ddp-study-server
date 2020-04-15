@@ -66,13 +66,26 @@ commands:
           name: Run maven
           command: |
             # Some images the $HOME directory is not writable. Let's be specific for .m2/repository location
-            mvn compile package -DskipTests -file pom.xml -Dmaven.repo.local=<< parameters.m2_repo >>
-            mvn package -DskipTests -f housekeeping-pom.xml -Dcheckstyle.skip -Dmaven.repo.local=<< parameters.m2_repo >>
+            mvn test-compile package -DskipTests -file pom.xml -Dmaven.repo.local=<< parameters.m2_repo >>
+            # mvn package -DskipTests -f housekeeping-pom.xml -Dcheckstyle.skip -Dmaven.repo.local=<< parameters.m2_repo >>
       - save_cache:
           key: *m2_cache_key
           paths:
             - << parameters.root_path >>/.m2
-
+  build-jar:
+    description: Build jar
+    parameters:
+      pom_file:
+        type: string
+      m2_repo:
+        type: string
+        default: *m2_repo_path
+    steps:
+      - restore_cache: *m2_cache_keys
+      - run:
+          name: Run maven package
+          command: |
+            mvn package -DskipTests -file << parameter.pom_file >> -Dcheckstyle.skip -Dmaven.repo.local=<< parameters.m2_repo >>
   setup-shared-env:
     description: "Setup shared ENV vars used by multiple scripts"
     steps:
@@ -428,8 +441,12 @@ jobs:
       - attach_workspace:
           at: *root_path
       - setup-shared-env
+      - build-jar:
+          pom_file: pom.xml
       - store-jar:
           jar_base_name: DataDonationPlatform
+      - build-jar:
+          pom_file: housekeeping-pom.xml
       - store-jar:
           jar_base_name: Housekeeping
 
@@ -441,8 +458,12 @@ jobs:
       - attach_workspace:
           at: *root_path
       - setup-shared-env
+      - build-jar:
+          pom_file: pom.xml
       - deploy-jar:
           jar_base_name: DataDonationPlatform
+      - build-jar:
+          pom_file: housekeeping-pom.xml
       - deploy-jar:
           jar_base_name: Housekeeping
 
