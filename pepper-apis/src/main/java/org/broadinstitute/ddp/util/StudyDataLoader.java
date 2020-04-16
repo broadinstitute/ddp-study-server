@@ -1020,8 +1020,7 @@ public class StudyDataLoader {
             if (auth0UsersByEmail != null && auth0UsersByEmail.size() > 0) {
                 newAuth0User = auth0UsersByEmail.get(0);
                 LOG.info("Using existing Auth0 user");
-            }
-            else {
+            } else {
                 LOG.info("Prion user with email " + emailAddress + " not found in Auth0");
             }
         }
