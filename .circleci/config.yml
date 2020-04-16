@@ -435,7 +435,7 @@ jobs:
 
   store-jar-job:
     executor:
-      name: build-executor
+      name: deploy-executor
     working_directory: *pepper_apis_path
     steps:
       - attach_workspace:
