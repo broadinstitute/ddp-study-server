@@ -340,7 +340,7 @@ commands:
 jobs:
   compile-only-job:
     executor:
-      name: compile-executor
+      name: build-executor
     working_directory: *pepper_apis_path
     steps:
       - checkout:
