@@ -301,6 +301,7 @@ commands:
               echo "Deleting version $CURRENT_VERSION of service $SERVICE"
               gcloud app versions delete --quiet --service "$SERVICE" "$CURRENT_VERSION" --project "broad-ddp-${ENVIRONMENT}"
             done;
+            :
 
   update-deployment-sheet:
     parameters:
