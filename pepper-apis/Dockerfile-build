@@ -3,7 +3,7 @@ FROM broadinstitute/dsde-toolbox:latest AS dsdetoolbox
 
 FROM maven:3.6.3-jdk-11 AS maven
 
-FROM google/cloud-sdk:alpine
+FROM alpine:3.11.5
 
 #Essentials for Maven
 COPY --from=maven /usr/share/maven /usr/share/maven

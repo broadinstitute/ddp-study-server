@@ -32,10 +32,10 @@ references:
 executors:
   build-executor:
     docker:
-      - image: *ci_support_image
+      - image: broadinstitute/study-server-build:java-2020-04-15A
   test-executor:
     docker:
-      - image: *ci_support_image
+      - image: broadinstitute/study-server-build:java-2020-04-15A
       # start pubsub emulator
       - image: broadinstitute/study-server-build:pubsub-1
       - image: circleci/mysql:5.7-ram
@@ -340,7 +340,7 @@ commands:
 jobs:
   compile-only-job:
     executor:
-      name: build-executor
+      name: compile-executor
     working_directory: *pepper_apis_path
     steps:
       - checkout:
