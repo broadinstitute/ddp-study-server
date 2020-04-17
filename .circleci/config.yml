@@ -112,6 +112,10 @@ commands:
               study-server-parallel-tests)
               DEPLOY_ENV=dev
             ;;
+            # @todo remove when done
+              DDP-4548_OpenAPIToGAE)
+              DEPLOY_ENV=dev
+            ;;
             test)
               DEPLOY_ENV=test
             ;;
