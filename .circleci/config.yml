@@ -286,7 +286,7 @@ commands:
           jar_base_name: <<parameters.jar_base_name>>
       - delete-old-service-versions:
           deploy_dir: <<parameters.deploy_dir>>
-          deploy_config_base_name: <<parameters.jar_base_name>
+          deploy_config_base_name: <<parameters.jar_base_name>>
 
   delete-old-service-versions:
     parameters:
