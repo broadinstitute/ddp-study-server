@@ -355,6 +355,9 @@ commands:
       additional_options:
         type: string
         default: ''
+      m2_repo:
+        type: string
+        default: *m2_repo_path
     steps:
       - run:
           name: Run Integration Test Suite
