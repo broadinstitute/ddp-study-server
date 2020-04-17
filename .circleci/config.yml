@@ -390,6 +390,7 @@ jobs:
   route-tests-job:
     executor:
       name: test-executor
+    working_directory: *pepper_apis_path
     steps:
       - setup-test-workspace
       - run-maven-with-pepper-options:
@@ -416,6 +417,7 @@ jobs:
         default: *m2_repo_path
     steps:
       - setup-test-workspace
+      -
       - run:
           name: Split tests
           command: |
