@@ -362,7 +362,7 @@ commands:
       - run:
           name: Run Integration Test Suite
           command: |
-            mvn <<parameter.phase>> --batch-mode -Dcheckstyle.skip -f <<parameters.pom_file>> \
+            mvn <<parameters.phase>> --batch-mode -Dcheckstyle.skip -f <<parameters.pom_file>> \
                     -Ditext.license=output-config/itextkey.xml \
                     -Dddp.firecloudKeysDir=output-config/fc_keys \
                     -Dconfig.file=output-config/testing-circleci.conf  \
