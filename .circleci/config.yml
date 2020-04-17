@@ -417,7 +417,6 @@ jobs:
         default: *m2_repo_path
     steps:
       - setup-test-workspace
-      -
       - run:
           name: Split tests
           command: |
