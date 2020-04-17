@@ -614,6 +614,7 @@ public class StudyDataLoaderMain {
             StudyMigrationRun migrationRun;
 
             boolean auth0Collision = false;
+            boolean foundInAuth0 = false;
             try {
 
                 //verify if participant is already loaded..
@@ -645,6 +646,7 @@ public class StudyDataLoaderMain {
                     ClientDto clientDto = clientDtoOpt.get();
 
                     long studyId = studyDto.getId();
+                    foundInAuth0 = dataLoader.isExistingAuth0User(datstatParticipantData);
                     userGuid = dataLoader.loadParticipantData(handle, datstatParticipantData, datstatParticipantMappingData,
                             phoneNumber, studyDto, clientDto, address, olcService, addressService);
                     UserDto userDto = jdbiUser.findByUserGuid(userGuid);
@@ -861,13 +863,11 @@ public class StudyDataLoaderMain {
             }
 
             if (previousRun) {
-                migrationRun = new StudyMigrationRun(altpid, userGuid, previousRun, emailAddress);
-            } else if ("PRION".equals(studyGuid)) {
-                migrationRun = new StudyMigrationRun(altpid, userGuid, hasPrionConsent, hasMedical, isSuccess,
-                        previousRun, emailAddress, auth0Collision);
+                migrationRun = new StudyMigrationRun(altpid, userGuid, previousRun, emailAddress, studyGuid);
             } else {
-                migrationRun = new StudyMigrationRun(altpid, userGuid, hasAboutYou, hasConsent, hasBloodConsent, hasTissueConsent,
-                        hasRelease, hasBloodRelease, false, hasFollowup, isSuccess, previousRun, emailAddress, auth0Collision);
+                migrationRun = new StudyMigrationRun(altpid, userGuid, hasAboutYou, hasConsent, hasBloodConsent,
+                    hasTissueConsent, hasRelease, hasBloodRelease, false, hasFollowup, isSuccess, previousRun,
+                    emailAddress, auth0Collision, hasPrionConsent, hasMedical, foundInAuth0, studyGuid);
             }
 
             migrationRunReport.add(migrationRun);
@@ -970,18 +970,12 @@ public class StudyDataLoaderMain {
         }
         CSVPrinter csvPrinter;
         if (migrationRunReport != null && migrationRunReport.get(0) != null) {
-            if ("PRION".equals(studyGuid)) {
-                csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT
-                    .withNullString("")
-                    .withHeader("AltPid", "Pepper User GUID", "Has Prion Consent", "Has Medical",
-                        "Email", "Previous Run", "Success/Failure", "Auth0 Collision"));
-            } else {
-                csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT
-                    .withNullString("")
-                    .withHeader("AltPid", "Pepper User GUID", "Has About You", "Has Consent", "Has Blood Consent", "Has Tissue Consent",
-                        "Has Release", "Has Blood Release",
-                        "Has Followup", "Email", "Previous Run", "Success/Failure", "Auth0 Collision"));
-            }
+            csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT
+                .withNullString("")
+                .withHeader("AltPid", "Pepper User GUID", "Email", "Previous Run", "Success/Failure",
+                    "Auth0 Collision", "Found in Auth0", "Is Prion", "Has Prion Consent", "Has Prion Medical",
+                    "Has About You", "Has Consent", "Has Blood Consent", "Has Tissue Consent", "Has Release",
+                    "Has Blood Release", "Has Followup"));
 
             for (StudyMigrationRun run : migrationRunReport) {
                 addRunValues(run, csvPrinter, studyGuid);
@@ -993,34 +987,25 @@ public class StudyDataLoaderMain {
     }
 
     private void addRunValues(StudyMigrationRun run, CSVPrinter printer, String studyGuid) throws IOException {
-        if ("PRION".equals(studyGuid)) {
-            printer.printRecord(
-                    run.getAltPid(),
-                    run.getPepperUserGuid(),
-                    run.getHasPrionConsent(),
-                    run.getHasMedical(),
-                    run.getEmailAddress(),
-                    run.getPreviousRun(),
-                    run.getSuccess(),
-                    run.getAuth0Collision()
-            );
-        } else {
-            printer.printRecord(
-                    run.getAltPid(),
-                    run.getPepperUserGuid(),
-                    run.getHasAboutYou(),
-                    run.getHasConsent(),
-                    run.getHasBloodConsent(),
-                    run.getHasTissueConsent(),
-                    run.getHasRelease(),
-                    run.getHasBloodRelease(),
-                    run.getHasFollowup(),
-                    run.getEmailAddress(),
-                    run.getPreviousRun(),
-                    run.getSuccess(),
-                    run.getAuth0Collision()
-            );
-        }
+        printer.printRecord(
+                run.getAltPid(),
+                run.getPepperUserGuid(),
+                run.getEmailAddress(),
+                run.getPreviousRun(),
+                run.getSuccess(),
+                run.getAuth0Collision(),
+                run.getFoundInAuth0(),
+                run.getIsPrion(),
+                run.getHasPrionConsent(),
+                run.getHasPrionMedical(),
+                run.getHasAboutYou(),
+                run.getHasConsent(),
+                run.getHasBloodConsent(),
+                run.getHasTissueConsent(),
+                run.getHasRelease(),
+                run.getHasBloodRelease(),
+                run.getHasFollowup()
+        );
     }
 
     private class PreProcessedData {
