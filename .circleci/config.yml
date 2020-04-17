@@ -452,7 +452,7 @@ jobs:
               sed -e "s#^${TEST_SRC_DIRECTORY}/\(.*\)\.java#\1#" | # Strip .java and parent directory path
               tr "/" "." |  # Convert to a class name of form org.package.ClassName
               grep -v 'IntegrationTestSuite' |
-              grep --wvf testsuitechildren.txt > "${SUREFIRE_CLASS_NAMES_PATH}" #Exclude test suite children
+              grep -wvf testsuitechildren.txt > "${SUREFIRE_CLASS_NAMES_PATH}" #Exclude test suite children
 
             # Test file name pattern does not pick this one up. Add explicitly
             # echo 'org.broadinstitute.ddp.route.IntegrationTestSuite'  >> $SUREFIRE_CLASS_NAMES_PATH
@@ -565,7 +565,7 @@ workflows:
           requires:
             - compile-only-job
       - parallel-tests-job:
-          parallelism: 5
+          parallelism: 8
           <<: *compile_and_test_filters
           requires:
             - compile-only-job
