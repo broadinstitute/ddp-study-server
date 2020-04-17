@@ -409,7 +409,7 @@ public class StudyDataLoaderMain {
         processParticipant(studyGuid, surveyDataMap, mappingData, dataLoader, null, addressService, olcService);
 
         try {
-            createReport(migrationRunReport);
+            createReport(migrationRunReport, studyGuid);
         } catch (Exception e) {
             LOG.error("Failed to create migration run report. ", e);
         }
@@ -547,7 +547,7 @@ public class StudyDataLoaderMain {
             String email = datstatData.getAsJsonObject().get("datstat_email").getAsString().toLowerCase();
             setRunEmail(dryRun, datstatData);
 
-            if (!dryRun && preProcessedData.getAuth0ExistingEmails().contains(email)) {
+            if (!dryRun && preProcessedData.getAuth0ExistingEmails().contains(email)  && !"PRION".equals(studyGuid)) {
                 LOG.error("Skipped altpid: {} . Email : {} already exists in Auth0. ", altpid, email);
                 skippedList.add(altpid);
                 continue;
@@ -558,7 +558,7 @@ public class StudyDataLoaderMain {
             }
         }
         try {
-            createReport(migrationRunReport);
+            createReport(migrationRunReport, studyGuid);
         } catch (Exception e) {
             LOG.error("Failed to create migration run report. ", e);
         }
@@ -954,7 +954,7 @@ public class StudyDataLoaderMain {
     }
 
 
-    private void createReport(List<StudyMigrationRun> migrationRunReport) throws Exception {
+    private void createReport(List<StudyMigrationRun> migrationRunReport, String studyGuid) throws Exception {
 
         BufferedWriter writer;
         if (StringUtils.isBlank(reportFileName)) {
@@ -970,7 +970,7 @@ public class StudyDataLoaderMain {
         }
         CSVPrinter csvPrinter;
         if (migrationRunReport != null && migrationRunReport.get(0) != null) {
-            if (migrationRunReport.get(0).getIsPrion()) {
+            if ("PRION".equals(studyGuid)) {
                 csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT
                     .withNullString("")
                     .withHeader("AltPid", "Pepper User GUID", "Has Prion Consent", "Has Medical",
@@ -984,7 +984,7 @@ public class StudyDataLoaderMain {
             }
 
             for (StudyMigrationRun run : migrationRunReport) {
-                addRunValues(run, csvPrinter, run.getIsPrion());
+                addRunValues(run, csvPrinter, studyGuid);
             }
             csvPrinter.close();
         }
@@ -992,8 +992,8 @@ public class StudyDataLoaderMain {
         LOG.info("Generated migration run report file: {} ", reportFileName);
     }
 
-    private void addRunValues(StudyMigrationRun run, CSVPrinter printer, boolean isPrion) throws IOException {
-        if (isPrion) {
+    private void addRunValues(StudyMigrationRun run, CSVPrinter printer, String studyGuid) throws IOException {
+        if ("PRION".equals(studyGuid)) {
             printer.printRecord(
                     run.getAltPid(),
                     run.getPepperUserGuid(),
