@@ -284,31 +284,9 @@ commands:
             gcloud app deploy --version="${SHORT_GIT_SHA}" --stop-previous-version --project "broad-ddp-${ENVIRONMENT}" <<parameters.deploy_dir>>/<<parameters.jar_base_name>>.yaml
       - update-deployment-sheet:
           jar_base_name: <<parameters.jar_base_name>>
-      - run:
-          name: Delete previous versions of service
-          command: |
-            set +x
-            # extract the service name from the GAE yaml file
-            CONFIG_FILE="<<parameters.deploy_dir>>/<<parameters.jar_base_name>>.yaml"
-            SERVICE=$(grep -Eo -m1 "^service:\s*.*" "${CONFIG_FILE}" | awk '{print $2}')
-            echo "The service name is *${SERVICE}*"
-
-            # find what other versions are currently running
-            # skip first line, exclude our version, print 2nd column
-            AWK_COMMMAND="NR > 1 && !/${SHORT_GIT_SHA}/ {print \$2}"
-            VERSIONS_TO_DELETE=$(gcloud app versions list --service "${SERVICE}" --project "broad-ddp-${ENVIRONMENT}" | awk "${AWK_COMMMAND}")
-
-            # Sometime deleting versions fails. If there are less than 3 versions then we are not going to worry about it
-            # and set flag so this job step does not fail when exit error value is generated
-            if [[ ! -z $VERSIONS_TO_DELETE ]] && [[ "${#VERSIONS_TO_DELETE[@]}" -lt 3 ]]; then
-              set +e
-            fi
-
-            for CURRENT_VERSION in $VERSIONS_TO_DELETE; do
-              echo "Deleting version $CURRENT_VERSION of service $SERVICE"
-              gcloud app versions delete --quiet --service "$SERVICE" "$CURRENT_VERSION" --project "broad-ddp-${ENVIRONMENT}"
-            done;
-            :
+      - delete-old-service-versions:
+          deploy_dir: <<parameters.deploy_dir>>
+          deploy_config_base_name: <<parameters.jar_base_name>
 
   delete-old-service-versions:
     parameters:
