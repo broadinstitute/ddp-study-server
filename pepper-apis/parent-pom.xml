@@ -579,7 +579,11 @@
                     </systemPropertyVariables>
                     <includes>
                         <include>**/*Test.java</include>
+                        <include>**/*Suite.java</include>
                     </includes>
+                    <excludes>
+                        <exclude>**/*RouteTest.java</exclude>
+                    </excludes>
                     <environmentVariables>
                         <PUBSUB_EMULATOR_HOST>localhost:8442</PUBSUB_EMULATOR_HOST>
                         <JAVA_HOME>${java.home}</JAVA_HOME>
