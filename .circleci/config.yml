@@ -104,16 +104,17 @@ commands:
       - run:
           name: Determine deployment environment for branch << pipeline.git.branch >>
           command: |
+            echo "Checking which environment deploy branch: << pipeline.git.branch >>"
             case "<< pipeline.git.branch >>" in
             develop)
               DEPLOY_ENV=dev
             ;;
             # @todo remove when done
-              study-server-parallel-tests)
+            study-server-parallel-tests)
               DEPLOY_ENV=dev
             ;;
             # @todo remove when done
-              DDP-4548_OpenAPIToGAE)
+            DDP-4548_OpenAPIToGAE)
               DEPLOY_ENV=dev
             ;;
             test)
