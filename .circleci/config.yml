@@ -18,7 +18,7 @@ references:
   pepper_apis-path: &pepper_apis_path
             /home/circleci/repo/pepper-apis
   api-spec-path: &api-spec-path
-            /home/circleci/repo/pepper-apis/specification
+            /home/circleci/repo/pepper-apis/docs/specification
   circleci_path: &circleci_path
             /home/circleci/repo/.circleci
   builds_bucket: &builds_bucket
