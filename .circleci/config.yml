@@ -392,8 +392,10 @@ jobs:
             # generate list of tests to be processed
             circleci tests glob "${TEST_SRC_DIRECTORY}/${TEST_SEARCH_PATTERN}" | # fancy circleci find command
               sed -e "s#^${TEST_SRC_DIRECTORY}/\(.*\)\.java#\1#" | # Strip .java and parent directory path
-              tr "/" "." |  #Convert to a class name of form org.package.ClassName
-              grep -v '.*RouteTest' > "${SUREFIRE_CLASS_NAMES_PATH}" #Exclude RouteTest. These done from suite
+              tr "/" "." > "${SUREFIRE_CLASS_NAMES_PATH}"  #Convert to a class name of form org.package.ClassName
+            # Removing special handling of Route classes for now
+            #  tr "/" "." |  #Convert to a class name of form org.package.ClassName
+             # grep -v '.*RouteTest' > "${SUREFIRE_CLASS_NAMES_PATH}" #Exclude RouteTest. These done from suite
 
             # Test file name pattern does not pick this one up. Add explicitly
             # echo 'org.broadinstitute.ddp.route.IntegrationTestSuite'  >> $SUREFIRE_CLASS_NAMES_PATH
