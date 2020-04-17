@@ -360,7 +360,7 @@ commands:
         default: *m2_repo_path
     steps:
       - run:
-          name: Run Integration Test Suite
+          name: 'Run maven <<parameters.phase>> with options: <<parameters.additional_options>>'
           command: |
             mvn <<parameters.phase>> --batch-mode -Dcheckstyle.skip -f <<parameters.pom_file>> \
                     -Ditext.license=output-config/itextkey.xml \
@@ -536,7 +536,7 @@ workflows:
     jobs:
       - compile-only-job
       - parallel-tests-job:
-          parallelism: 5
+          parallelism: 8
           requires:
             - compile-only-job
 
