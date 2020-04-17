@@ -1,0 +1,54 @@
+# To make our config generation "compatible" with official dsdetoolbox, extract what is needed from it (this is not the base image)
+FROM broadinstitute/dsde-toolbox:latest AS dsdetoolbox
+
+FROM maven:3.6.3-jdk-11 AS maven
+
+FROM alpine:3.11.5
+
+#Essentials for Maven
+COPY --from=maven /usr/share/maven /usr/share/maven
+RUN ln -s /usr/share/maven/bin/mvn /usr/bin/mvn
+COPY --from=maven /usr/local/bin/mvn-entrypoint.sh /usr/local/bin/mvn-entrypoint.sh
+COPY --from=maven /usr/share/maven/ref/settings-docker.xml /usr/share/maven/ref/settings-docker.xml
+
+ENV MAVEN_HOME /usr/share/maven
+ENV MAVEN_CONFIG "$USER_HOME_DIR/.m2"
+
+# Copying necessary artifacts to enable configure.rb that lives in our own repo.
+COPY --from=dsdetoolbox /usr/local/bin/consul-template /usr/local/bin/consul-template
+COPY --from=dsdetoolbox /etc/consul-template/config/config.json /etc/consul-template/config/config.json
+COPY --from=dsdetoolbox /usr/local/bin/vault /usr/local/bin/vault
+ENV VAULT_ADDR https://clotho.broadinstitute.org:8200
+
+RUN apk  --no-cache add \
+    curl \
+    bash \
+    jq \
+    mysql-client \
+    netcat-openbsd \
+    # base alpine image does not have ssh
+    openssh-client \
+    git \
+    openjdk11 \
+    # to support configure.rb
+    ruby \
+    ruby-json  \
+    # to support sheetappend script
+    nodejs \
+    && rm -rf /var/cache/apk/*
+
+#extracting sheetappend from ddp-angular repo. At some point we can get this from an npm repo
+#WORKDIR /opt
+#RUN apk --no-cache add npm subversion && \
+#    svn export https://github.com/broadinstitute/ddp-angular/trunk/build-utils && \
+#        npm install -g build-utils/sheetappend && \
+#        curl -o build-utils/reportdeploy.sh \
+#            https://raw.githubusercontent.com/broadinstitute/ddp-angular/circle-ci-updates-1/build-utils/reportdeploy.sh && \
+#        chmod 555 build-utils/reportdeploy.sh && \
+#        apk del npm subversion
+
+# keep track of git hash
+ARG GIT_SHA
+RUN echo $GIT_SHA > /git_sha.txt
+
+CMD "/bin/bash"
