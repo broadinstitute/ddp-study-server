@@ -426,6 +426,14 @@ jobs:
       - setup-test-workspace
       - initialize-databases
       - run:
+          name: Generate list of IntegrationTestSuite children
+          command: |
+            SUITE_CLASS=IntegrationTestSuite
+            SUITE_CLASS_PATH=$(find src/test -name ${SUITE_CLASS}.java)
+            sed -En "/@SuiteClasses\(/,/public\s+class\s+${SUITE_CLASS}/p" "$SUITE_CLASS_PATH" | # find everything between two patterns in file
+              grep -Eo "\w+\.class" | # find the matching class pattern
+              sed -E 's/(\w+)\.class/\1/' > testsuitechildren.txt  # drop .class
+      - run:
           name: Split tests
           command: |
             set +x
@@ -443,7 +451,8 @@ jobs:
             circleci tests glob "${TEST_SRC_DIRECTORY}/${TEST_SEARCH_PATTERN}" | # fancy circleci find command
               sed -e "s#^${TEST_SRC_DIRECTORY}/\(.*\)\.java#\1#" | # Strip .java and parent directory path
               tr "/" "." |  # Convert to a class name of form org.package.ClassName
-              grep -v '.*RouteTest' > "${SUREFIRE_CLASS_NAMES_PATH}" #Exclude RouteTest. These done from suite
+              grep -v 'IntegrationTestSuite' |
+              grep --wvf testsuitechildren.txt > "${SUREFIRE_CLASS_NAMES_PATH}" #Exclude test suite children
 
             # Test file name pattern does not pick this one up. Add explicitly
             # echo 'org.broadinstitute.ddp.route.IntegrationTestSuite'  >> $SUREFIRE_CLASS_NAMES_PATH
