@@ -12,53 +12,64 @@ public class StudyMigrationRun {
     private Boolean hasBloodRelease;
     private Boolean hasLovedOne;
     private Boolean hasFollowup;
-    private Boolean hasPrionConsent;
-    private Boolean hasMedical;
     private Boolean isSuccess;
     private Boolean previousRun;
     private String emailAddress;
     private Boolean auth0Collision;
+    private Boolean foundInAuth0;
     private Boolean isPrion;
+    private Boolean hasPrionConsent;
+    private Boolean hasPrionMedical;
 
-    public StudyMigrationRun(String altPid, String pepperUserGuid, Boolean previousRun, String emailAddress) {
+    public StudyMigrationRun(String altPid, String pepperUserGuid, Boolean previousRun, String emailAddress,
+                             String studyGuid) {
         this.altPid = altPid;
         this.pepperUserGuid = pepperUserGuid;
         this.previousRun = previousRun;
         this.emailAddress = emailAddress;
+        isPrion = "PRION".equals(studyGuid);
     }
 
-    public StudyMigrationRun(String altPid, String pepperUserGuid, Boolean hasAboutYou, Boolean hasConsent, Boolean hasBloodConsent,
+    public StudyMigrationRun(String altpid, String pepperUserGuid, Boolean hasAboutYou, Boolean hasConsent, Boolean hasBloodConsent,
                              Boolean hasTissueConsent, Boolean hasRelease, Boolean hasBloodRelease, Boolean hasLovedOne,
-                             Boolean hasFollowup, Boolean isSuccess, Boolean previousRun, String emailAddress, Boolean auth0Collision) {
-        this.altPid = altPid;
+                             Boolean hasFollowup, Boolean isSuccess, Boolean previousRun, String emailAddress,
+                             Boolean auth0Collision, Boolean hasPrionConsent, Boolean hasPrionMedical, Boolean foundInAuth0,
+                             String studyGuid) {
+        this.altPid = altpid;
         this.pepperUserGuid = pepperUserGuid;
-        this.hasAboutYou = hasAboutYou;
-        this.hasConsent = hasConsent;
-        this.hasBloodConsent = hasBloodConsent;
-        this.hasTissueConsent = hasTissueConsent;
-        this.hasRelease = hasRelease;
-        this.hasBloodRelease = hasBloodRelease;
-        this.hasLovedOne = hasLovedOne;
-        this.hasFollowup = hasFollowup;
         this.isSuccess = isSuccess;
         this.previousRun = previousRun;
         this.emailAddress = emailAddress;
-        this.auth0Collision = auth0Collision;
-        this.isPrion = false;
-    }
 
-    public StudyMigrationRun(String altPid, String pepperUserGuid, Boolean hasPrionConsent, Boolean hasMedical,
-                             Boolean isSuccess, Boolean previousRun,
-                             String emailAddress, Boolean auth0Collision) {
-        this.altPid = altPid;
-        this.pepperUserGuid = pepperUserGuid;
-        this.hasPrionConsent = hasPrionConsent;
-        this.hasMedical = hasMedical;
-        this.isSuccess = isSuccess;
-        this.previousRun = previousRun;
-        this.emailAddress = emailAddress;
-        this.auth0Collision = auth0Collision;
-        this.isPrion = true;
+        if ("PRION".equals(studyGuid)) {
+            this.isPrion = true;
+            this.hasAboutYou = false;
+            this.hasConsent = false;
+            this.hasBloodConsent = false;
+            this.hasTissueConsent = false;
+            this.hasRelease = false;
+            this.hasBloodRelease = false;
+            this.hasLovedOne = false;
+            this.hasFollowup = false;
+            this.hasPrionConsent = hasPrionConsent;
+            this.hasPrionMedical = hasPrionMedical;
+            this.auth0Collision = false;
+            this.foundInAuth0 = foundInAuth0;
+        } else {
+            this.isPrion = false;
+            this.hasAboutYou = hasAboutYou;
+            this.hasConsent = hasConsent;
+            this.hasBloodConsent = hasBloodConsent;
+            this.hasTissueConsent = hasTissueConsent;
+            this.hasRelease = hasRelease;
+            this.hasBloodRelease = hasBloodRelease;
+            this.hasLovedOne = hasLovedOne;
+            this.hasFollowup = hasFollowup;
+            this.hasPrionConsent = false;
+            this.hasPrionMedical = false;
+            this.auth0Collision = auth0Collision;
+            this.foundInAuth0 = false;
+        }
     }
 
     public String getAltPid() {
@@ -77,8 +88,8 @@ public class StudyMigrationRun {
         return hasPrionConsent;
     }
 
-    public Boolean getHasMedical() {
-        return hasMedical;
+    public Boolean getHasPrionMedical() {
+        return hasPrionMedical;
     }
 
     public Boolean getHasAboutYou() {
@@ -115,6 +126,10 @@ public class StudyMigrationRun {
 
     public Boolean getAuth0Collision() {
         return auth0Collision;
+    }
+
+    public Boolean getFoundInAuth0() {
+        return foundInAuth0;
     }
 
     public Boolean getHasBloodConsent() {
