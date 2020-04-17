@@ -1007,6 +1007,12 @@ public class StudyDataLoader {
         return parentAnswer.getAnswerGuid();
     }
 
+    public boolean isExistingAuth0User(JsonElement datStatData) throws Exception {
+        String emailAddress = datStatData.getAsJsonObject().get("datstat_email").getAsString();
+        List<User> auth0UsersByEmail = auth0Util.getAuth0UsersByEmail(emailAddress, mgmtToken);
+        return auth0UsersByEmail != null && auth0UsersByEmail.size() > 0;
+    }
+
     public UserDto createLegacyPepperUser(JdbiUser userDao, JdbiClient clientDao,
                                           JsonElement data, String userGuid, String userHruid, ClientDto clientDto,
                                           String studyGuid) throws Exception {
