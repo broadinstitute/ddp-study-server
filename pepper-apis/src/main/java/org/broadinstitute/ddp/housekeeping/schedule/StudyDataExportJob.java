@@ -31,6 +31,7 @@ import org.broadinstitute.ddp.monitoring.PointsReducerFactory;
 import org.broadinstitute.ddp.monitoring.StackdriverCustomMetric;
 import org.broadinstitute.ddp.monitoring.StackdriverMetricsTracker;
 import org.broadinstitute.ddp.util.ConfigManager;
+import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.GoogleCredentialUtil;
 import org.quartz.CronScheduleBuilder;
 import org.quartz.DisallowConcurrentExecution;
@@ -58,12 +59,6 @@ public class StudyDataExportJob implements Job {
     }
 
     public static void register(Scheduler scheduler, Config cfg) throws SchedulerException {
-        String exportSchedule = cfg.getString(ConfigFile.STUDY_EXPORT_SCHEDULE);
-        if (exportSchedule.equalsIgnoreCase("off")) {
-            LOG.warn("Job '{}' is set to be turned off", getKey());
-            return;
-        }
-
         // Test that we can initialize the credentials.
         GoogleCredentialUtil.initCredentials(cfg.getBoolean(ConfigFile.REQUIRE_DEFAULT_GCP_CREDENTIALS));
 
@@ -73,29 +68,35 @@ public class StudyDataExportJob implements Job {
                 .storeDurably(true)
                 .build();
         scheduler.addJob(job, true);
-        LOG.info("Added job '{}' to scheduler", getKey());
+        LOG.info("Added job {} to scheduler", getKey());
+
+        String schedule = ConfigUtil.getStrIfPresent(cfg, ConfigFile.STUDY_EXPORT_SCHEDULE);
+        if (schedule == null || schedule.equalsIgnoreCase("off")) {
+            LOG.warn("Job {} is set to be turned off, no trigger added", getKey());
+            return;
+        }
 
         Trigger trigger = TriggerBuilder.newTrigger()
                 .withIdentity(Keys.Export.DataExportTrigger)
                 .forJob(getKey())
                 .withSchedule(CronScheduleBuilder
-                        .cronSchedule(exportSchedule)
+                        .cronSchedule(schedule)
                         .inTimeZone(TimeZone.getTimeZone(ZoneId.of("UTC")))
                         .withMisfireHandlingInstructionFireAndProceed())    // If missed or late, just fire it.
                 .startNow()
                 .build();
         scheduler.scheduleJob(trigger);
-        LOG.info("Added trigger '{}' for job '{}' with schedule '{}'", trigger.getKey(), getKey(), exportSchedule);
+        LOG.info("Added trigger {} for job {} with schedule '{}'", trigger.getKey(), getKey(), schedule);
     }
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
         try {
-            LOG.info("Running job '{}'", getKey());
+            LOG.info("Running job {}", getKey());
             long elapsed = estimateExecutionTime(this::run);
-            LOG.info("Finished job '{}'. Took {}s", getKey(), elapsed / 1000);
+            LOG.info("Finished job {}. Took {}s", getKey(), elapsed / 1000);
         } catch (Exception e) {
-            LOG.error("Error while executing job '{}'", getKey(), e);
+            LOG.error("Error while executing job {}", getKey(), e);
             throw new JobExecutionException(e, false);
         }
     }
@@ -109,14 +110,14 @@ public class StudyDataExportJob implements Job {
         GoogleCredentials credentials = GoogleCredentialUtil
                 .initCredentials(cfg.getBoolean(ConfigFile.REQUIRE_DEFAULT_GCP_CREDENTIALS));
         if (credentials == null) {
-            LOG.error("No Google credentials are provided, skipping job '{}'", getKey());
+            LOG.error("No Google credentials are provided, skipping job {}", getKey());
             return;
         }
 
         var bucketClient = new GoogleBucketClient(gcpProjectId, credentials);
         Bucket bucket = bucketClient.getBucket(bucketName);
         if (bucket == null) {
-            LOG.error("Could not find google bucket '{}', skipping job '{}'", bucketName, getKey());
+            LOG.error("Could not find google bucket {}, skipping job {}", bucketName, getKey());
             return;
         }
 
@@ -132,7 +133,7 @@ public class StudyDataExportJob implements Job {
         for (var studyDto : studyDtos) {
             String studyGuid = studyDto.getGuid();
             if (!studyDto.isDataExportEnabled()) {
-                LOG.warn("Study '{}' does not have data export enabled, skipping data export", studyGuid);
+                LOG.warn("Study {} does not have data export enabled, skipping data export", studyGuid);
                 continue;
             }
 
@@ -233,7 +234,7 @@ public class StudyDataExportJob implements Job {
 
     boolean saveToGoogleBucket(InputStream csvInputStream, String fileName, String studyGuid, Bucket bucket) {
         Blob blob = bucket.create(fileName, csvInputStream, "text/csv");
-        LOG.info("Uploaded file '{}' to bucket '{}' for study '{}'", blob.getName(), bucket.getName(), studyGuid);
+        LOG.info("Uploaded file {} to bucket {} for study {}", blob.getName(), bucket.getName(), studyGuid);
         return true;
     }
 

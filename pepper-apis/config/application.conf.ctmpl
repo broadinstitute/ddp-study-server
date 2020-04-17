@@ -40,13 +40,16 @@
     "healthcheckPassword": "{{$conf.Data.healthcheckPassword}}",
     "easyPostApiKey": "{{$conf.Data.easyPostApiKey}}",
     "usePubSubEmulator": false,
-    "pubSubProject": "{{$conf.Data.pubSubProject}}",
     "runScheduler": {{$conf.Data.runScheduler}},
     "restrictRegisterRoute": {{$conf.Data.restrictRegisterRoute}},
     "requireDefaultGcpCredentials": {{$conf.Data.requireDefaultGcpCredentials}},
     "googleProjectId": "{{$conf.Data.googleProjectId}}",
     "pdfArchiveBucket": "{{$conf.Data.pdfArchiveBucket}}",
     "pdfArchiveUseFilesystem": false,
+    "pubsub": {
+        "pepperEventsSubscription": "{{$conf.Data.pubsub.pepperEventsSubscription}}",
+        "housekeepingEventsSubscription": "{{$conf.Data.pubsub.housekeepingEventsSubscription",
+    },
     "studyExportBucket": "{{$conf.Data.studyExportBucket}}",
     "schedules": {
         "checkAgeUp": "{{$conf.Data.schedules.checkAgeUp}}",

@@ -17,9 +17,10 @@ import static spark.Spark.threadPool;
 
 import java.time.Instant;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
+import com.google.cloud.pubsub.v1.Subscriber;
+import com.google.pubsub.v1.ProjectSubscriptionName;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.apache.http.entity.ContentType;
@@ -38,6 +39,7 @@ import org.broadinstitute.ddp.db.StudyActivityDao;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.UserDao;
 import org.broadinstitute.ddp.db.UserDaoFactory;
+import org.broadinstitute.ddp.event.EventReceiver;
 import org.broadinstitute.ddp.filter.AddDDPAuthLoggingFilter;
 import org.broadinstitute.ddp.filter.DsmAuthFilter;
 import org.broadinstitute.ddp.filter.HttpHeaderMDCFilter;
@@ -144,6 +146,7 @@ import org.broadinstitute.ddp.util.LogbackConfigurationPrinter;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
 import org.quartz.Scheduler;
+import org.quartz.SchedulerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -165,6 +168,7 @@ public class DataDonationPlatform {
     private static final Map<String, String> pathToClass = new HashMap<>();
     public static final String PORT = "PORT";
     private static Scheduler scheduler = null;
+    private static Subscriber eventSubscriber = null;
 
     /**
      * Stop the server using the default wait time.
@@ -179,6 +183,9 @@ public class DataDonationPlatform {
      * @param millisecs milliseconds to wait for Spark to close
      */
     public static void shutdown(int millisecs) {
+        if (eventSubscriber != null) {
+            eventSubscriber.stopAsync();
+        }
         if (scheduler != null) {
             JobScheduler.shutdownScheduler(scheduler, false);
         }
@@ -444,41 +451,30 @@ public class DataDonationPlatform {
 
         post(API.VERIFY_INVITATION, new VerifyInvitationRoute(), responseSerializer);
 
-        Runnable runnable = () -> {
-            var dsm = new DsmClient(cfg);
-
-            // initialize drug list
-            var result = dsm.listDrugs();
-            if (result.getStatusCode() == 200) {
-                List<String> drugNames = result.getBody();
-                DrugStore.getInstance().populateDrugList(drugNames);
-                LOG.info("Loaded {} drugs into pepper", drugNames == null ? 0 : drugNames.size());
-            } else {
-                LOG.error("Could not initialize DSM drug list, got response status code {}",
-                        result.getStatusCode(), result.getThrown());
-            }
-
-            // initialize cancer list
-            result = dsm.listCancers();
-            if (result.getStatusCode() == 200) {
-                List<String> cancerNames = result.getBody();
-                CancerStore.getInstance().populate(cancerNames);
-                LOG.info("Loaded {} cancers into pepper", cancerNames == null ? 0 : cancerNames.size());
-            } else {
-                LOG.error("Could not initialize DSM cancer list, got response status code {}",
-                        result.getStatusCode(), result.getThrown());
-            }
-        };
-
         boolean runScheduler = cfg.getBoolean(ConfigFile.RUN_SCHEDULER);
         if (runScheduler) {
-            Thread threadDL = new Thread(runnable);
-            threadDL.start();
-
-            //setup DDP JobScheduler on server startup
+            // Setup DDP JobScheduler on server startup
             scheduler = JobScheduler.initializeWith(cfg,
                     DsmDrugLoaderJob::register,
                     DsmCancerLoaderJob::register);
+
+            // Initialize drug/cancer list on startup
+            try {
+                scheduler.triggerJob(DsmDrugLoaderJob.getKey());
+                scheduler.triggerJob(DsmCancerLoaderJob.getKey());
+            } catch (SchedulerException e) {
+                LOG.error("Could not trigger job to initialize drug/cancer lists", e);
+            }
+
+            // Setup event listener
+            if (!cfg.getBoolean(ConfigFile.USE_PUBSUB_EMULATOR)) {
+                var sub = ProjectSubscriptionName.of(
+                        cfg.getString(ConfigFile.GOOGLE_PROJECT_ID),
+                        cfg.getString(ConfigFile.PUBSUB_PEPPER_EVENTS_SUB));
+                eventSubscriber = Subscriber.newBuilder(sub, new EventReceiver(scheduler)).build();
+                eventSubscriber.startAsync();
+                LOG.info("Started pepper events subscriber to subscription {}", sub);
+            }
         } else {
             LOG.info("DDP job scheduler is not set to run");
         }
