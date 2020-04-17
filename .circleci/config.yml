@@ -370,6 +370,12 @@ commands:
       - store_test_results:
           path: target/surefire-reports
 
+  initialize-databases:
+    steps:
+      - run-maven-with-pepper-options:
+          phase: test
+          additional_options: '-Dtest=KitTypeDaoTest#findTestGetAllKitTypes'
+
 jobs:
   compile-only-job:
     executor:
@@ -397,6 +403,7 @@ jobs:
           phase: test
           additional_options: '-Dtest=IntegrationTestSuite'
 
+
   parallel-tests-job:
     executor:
       name: test-executor
@@ -417,6 +424,7 @@ jobs:
         default: *m2_repo_path
     steps:
       - setup-test-workspace
+      - initialize-databases
       - run:
           name: Split tests
           command: |
@@ -560,6 +568,7 @@ workflows:
                 - study-server-parallel-tests
           requires:
             - parallel-tests-job
+            - route-tests-job
       - store-jar-job:
           filters:
             branches:
