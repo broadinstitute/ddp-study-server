@@ -540,7 +540,6 @@ jobs:
             set -u
             gcloud app deploy --version="${SHORT_GIT_SHA}" --stop-previous-version --project "broad-ddp-${ENVIRONMENT}" deploy/app.yaml
       - delete-old-service-versions:
-          parameters:
             deploy_dir: deploy
 
 parameters:
