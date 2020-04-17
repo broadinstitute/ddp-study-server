@@ -538,6 +538,7 @@ jobs:
           name: Build docs
           command: ./build.sh documentation
       - setup-shared-env
+      - set-deployment-env
       - auth-gcp-service-account
       - run:
           name: Deploy docs website
