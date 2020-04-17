@@ -338,6 +338,35 @@ commands:
               jq -r .data.gcp.serviceKey |
               gcloud auth activate-service-account --key-file=-
 
+  setup-test-workspace:
+    steps:
+      - attach_workspace:
+          at: *root_path
+      - setup-test-dbs
+      - restore_cache: *m2_cache_keys
+
+  run-maven-with-pepper-options:
+    parameters:
+      phase:
+        type: string
+      pom_file:
+        type: string
+        default: pom.xml
+      additional_options:
+        type: string
+        default: ''
+    steps:
+      - run:
+          name: Run Integration Test Suite
+          command: |
+            mvn <<parameter.phase>> --batch-mode -Dcheckstyle.skip -f <<parameters.pom_file>> \
+                    -Ditext.license=output-config/itextkey.xml \
+                    -Dddp.firecloudKeysDir=output-config/fc_keys \
+                    -Dconfig.file=output-config/testing-circleci.conf  \
+                    -Dmaven.repo.local=<< parameters.m2_repo >> <<parameters.additional_options>>
+      - store_test_results:
+          path: target/surefire-reports
+
 jobs:
   compile-only-job:
     executor:
@@ -354,6 +383,15 @@ jobs:
           root: *root_path
           paths:
             - repo
+
+  route-tests-job:
+    executor:
+      name: test-executor
+    steps:
+      - setup-test-workspace
+      - run-maven-with-pepper-options:
+          phase: test
+          additional_options: '-Dtest=IntegrationTestSuite'
 
   parallel-tests-job:
     executor:
@@ -374,8 +412,7 @@ jobs:
         type: string
         default: *m2_repo_path
     steps:
-      - attach_workspace:
-          at: *root_path
+      - setup-test-workspace
       - run:
           name: Split tests
           command: |
@@ -393,9 +430,8 @@ jobs:
             # generate list of tests to be processed
             circleci tests glob "${TEST_SRC_DIRECTORY}/${TEST_SEARCH_PATTERN}" | # fancy circleci find command
               sed -e "s#^${TEST_SRC_DIRECTORY}/\(.*\)\.java#\1#" | # Strip .java and parent directory path
-              tr "/" "." > "${SUREFIRE_CLASS_NAMES_PATH}"
-            #              tr "/" "." |  #Convert to a class name of form org.package.ClassName
-            #              grep -v '.*RouteTest' > "${SUREFIRE_CLASS_NAMES_PATH}" #Exclude RouteTest. These done from suite
+              tr "/" "." |  # Convert to a class name of form org.package.ClassName
+              grep -v '.*RouteTest' > "${SUREFIRE_CLASS_NAMES_PATH}" #Exclude RouteTest. These done from suite
 
             # Test file name pattern does not pick this one up. Add explicitly
             # echo 'org.broadinstitute.ddp.route.IntegrationTestSuite'  >> $SUREFIRE_CLASS_NAMES_PATH
@@ -420,21 +456,9 @@ jobs:
             echo "Total number of test classes that will be skipped in this node: $(wc -l $IGNORE_CLASS_LIST_PATH)"
       - store_artifacts:
           path: << parameters.circleci_path>>/tests/
-      - setup-test-dbs
-      - restore_cache: *m2_cache_keys
-      - run:
-          name: Run tests
-          command: |
-            echo "The value of IGNORE_CLASS_LIST_PATH=${IGNORE_CLASS_LIST_PATH}"
-            mvn --batch-mode -Dcheckstyle.skip test -f pom.xml \
-                    -Ditext.license=output-config/itextkey.xml \
-                    -Dddp.firecloudKeysDir=output-config/fc_keys \
-                    -Dconfig.file=output-config/testing-circleci.conf  \
-                    -Dmaven.repo.local=<< parameters.m2_repo >> \
-                    -Dsurefire.excludesFile=$IGNORE_CLASS_LIST_PATH   # Key line to do tests in parallel
-
-      - store_test_results:
-          path: target/surefire-reports
+      - run-maven-with-pepper-options:
+          phase: test
+          additional_options: '-Dsurefire.excludesFile=$IGNORE_CLASS_LIST_PATH'
 
   store-jar-job:
     executor:
@@ -515,6 +539,10 @@ workflows:
                 - &rc /^rc.*/
                 - &hotfix /^hotfix.*/
                 - study-server-parallel-tests
+      - route-tests-job:
+          <<: *compile_and_test_filters
+          requires:
+            - compile-only-job
       - parallel-tests-job:
           parallelism: 5
           <<: *compile_and_test_filters
@@ -537,6 +565,7 @@ workflows:
                 - study-server-parallel-tests
           requires:
             - parallel-tests-job
+            - route-tests-job
 
   deploy-workflow:
     jobs:
