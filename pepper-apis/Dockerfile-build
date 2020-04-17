@@ -31,8 +31,9 @@ RUN apk  --no-cache add \
     # to support configure.rb
     ruby \
     ruby-json  \
-    # to support sheetappend script
+    # to support sheetappend script & OpenAPI build/deploy
     nodejs \
+    npm \
     && rm -rf /var/cache/apk/*
 
 #extracting sheetappend from ddp-angular repo. At some point we can get this from an npm repo
@@ -42,8 +43,7 @@ RUN apk --no-cache add npm subversion && \
         npm install -g build-utils/sheetappend && \
         curl -o build-utils/reportdeploy.sh \
             https://raw.githubusercontent.com/broadinstitute/ddp-angular/circle-ci-updates-1/build-utils/reportdeploy.sh && \
-        chmod 555 build-utils/reportdeploy.sh && \
-        apk del npm subversion
+        chmod 555 build-utils/reportdeploy.sh
 
 # keep track of git hash
 ARG GIT_SHA
