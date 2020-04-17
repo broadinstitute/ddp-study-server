@@ -396,7 +396,7 @@ jobs:
               grep -v '.*RouteTest' > "${SUREFIRE_CLASS_NAMES_PATH}" #Exclude RouteTest. These done from suite
 
             # Test file name pattern does not pick this one up. Add explicitly
-            echo 'org.broadinstitute.ddp.route.IntegrationTestSuite'  >> $SUREFIRE_CLASS_NAMES_PATH
+            # echo 'org.broadinstitute.ddp.route.IntegrationTestSuite'  >> $SUREFIRE_CLASS_NAMES_PATH
 
             echo "Total number of test class names collected: $(wc -l $SUREFIRE_CLASS_NAMES_PATH)"
 
