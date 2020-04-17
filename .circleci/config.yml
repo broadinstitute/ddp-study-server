@@ -319,6 +319,7 @@ commands:
         default: app
     steps:
       - run:
+          name: Delete previous versions of service
           command: |
             set +x
             # extract the service name from the GAE yaml file
