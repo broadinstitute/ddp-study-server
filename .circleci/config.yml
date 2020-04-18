@@ -550,11 +550,11 @@ workflows:
     when: << pipeline.parameters.on_demand >>
     jobs:
       - compile-only-job
-      - &parallel-test parallel-tests-job:
+      - parallel-tests-job:
           parallelism: 10
           requires:
             - compile-only-job
-      - &route-test route-tests-job:
+      - route-tests-job:
           requires:
             - compile-only-job
 
@@ -569,10 +569,15 @@ workflows:
                 - &rc /^rc.*/
                 - &hotfix /^hotfix.*/
                 - study-server-parallel-tests
-      - *route-test:
+      - route-tests-job:
           <<: *compile_and_test_filters
-      - *parallel-test:
+          requires:
+            - compile-only-job
+      - parallel-tests-job:
+          parallelism: 10
           <<: *compile_and_test_filters
+          requires:
+            - compile-only-job
       - deploy-workspace-jar-job:
           filters:
             branches:
