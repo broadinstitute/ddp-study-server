@@ -27,6 +27,7 @@ references:
       housekeepingdb
   studyserver_test_db: &studyserver_test_db
       studyservicedb
+  test_parallellism: &test_parallelism 10
 
 
 executors:
@@ -430,15 +431,16 @@ jobs:
           command: |
             SUITE_CLASS=IntegrationTestSuite
             SUITE_CLASS_PATH=$(find src/test -name ${SUITE_CLASS}.java)
-            sed -En "/@SuiteClasses\(/,/public\s+class\s+${SUITE_CLASS}/p" "$SUITE_CLASS_PATH" | # find everything between two patterns in file
+            START_PATTERN='@SuiteClasses\('
+            END_PATTERN="public\s+class\s+${SUITE_CLASS}"
+            sed -En "/${START_PATTERN}/,/${END_PATTERN}/p" "$SUITE_CLASS_PATH" | # find everything between two patterns in file
               grep -Eo "\w+\.class" | # find the matching class pattern
-              sed -E 's/(\w+)\.class/\1/' > testsuitechildren.txt  # drop .class
+              sed -E 's/(\w+)\.class/\1/' > testsuitechildren.txt  # drop .class. Get names without package info
       - run:
           name: Split tests
           command: |
             set +x
             set +e
-            set -o xtrace
             TEST_DATA_PATH='<< parameters.circleci_path >>/tests'
             mkdir -p "$TEST_DATA_PATH"
 
@@ -449,8 +451,8 @@ jobs:
             SUREFIRE_CLASS_NAMES_PATH="${TEST_DATA_PATH}/surefire_classnames"
 
             # generate list of tests to be processed
-            circleci tests glob "${TEST_SRC_DIRECTORY}/${TEST_SEARCH_PATTERN}" | # fancy circleci find command
-              sed -e "s#^${TEST_SRC_DIRECTORY}/\(.*\)\.java#\1#" | # Strip .java and parent directory path
+            circleci tests glob "${TEST_SRC_DIRECTORY}/${TEST_SEARCH_PATTERN}" | # fancy circleci 'find' command
+              sed -e "s#^${TEST_SRC_DIRECTORY}/\(.*\)\.java#\1#" | # Strip out '.java' and parent directory path
               tr "/" "." >  "$ALL_TEST_CLASS_NAMES_PATH" # Convert to a class name of form org.package.ClassName
 
             cat "$ALL_TEST_CLASS_NAMES_PATH" |
@@ -463,18 +465,18 @@ jobs:
             cat $SUREFIRE_CLASS_NAMES_PATH |
               circleci tests split --split-by=timings --timings-type=classname > $THIS_NODE_TESTS_PATH
 
-
             IGNORE_CLASS_LIST_PATH="${TEST_DATA_PATH}/surefire_classnames_ignore_list"
 
-            # Filter out the ones that don't run in this node
-            cat $SUREFIRE_CLASS_NAMES_PATH | \
+            # Specify the tests to run by substraction: we tell Surefire what NOT to run
+            # Make sure the one CircleCi has calculated are removed from the "ignore" list
+            cat $SUREFIRE_CLASS_NAMES_PATH |
               grep -xvf $THIS_NODE_TESTS_PATH > $IGNORE_CLASS_LIST_PATH
 
-            # Explicitly tell Surefire to exclude our IntegrationTestSuite children
+            # Explicitly tell Surefire to ignore the suite children
             cat "$ALL_TEST_CLASS_NAMES_PATH" |
               grep -f testsuitechildren.txt >> $IGNORE_CLASS_LIST_PATH
 
-            # And the Suite itself
+            # And ignore the Suite itself
             echo 'org.broadinstitute.ddp.route.IntegrationTestSuite'  >> $IGNORE_CLASS_LIST_PATH
 
             # save path for next steps
@@ -551,7 +553,7 @@ workflows:
     jobs:
       - compile-only-job
       - parallel-tests-job:
-          parallelism: 10
+          parallelism: *test_parallelism
           requires:
             - compile-only-job
       - route-tests-job:
@@ -574,7 +576,7 @@ workflows:
           requires:
             - compile-only-job
       - parallel-tests-job:
-          parallelism: 10
+          parallelism: *test_parallelism
           <<: *compile_and_test_filters
           requires:
             - compile-only-job
