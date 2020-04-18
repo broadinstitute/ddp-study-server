@@ -451,7 +451,7 @@ jobs:
             # generate list of tests to be processed
             circleci tests glob "${TEST_SRC_DIRECTORY}/${TEST_SEARCH_PATTERN}" | # fancy circleci find command
               sed -e "s#^${TEST_SRC_DIRECTORY}/\(.*\)\.java#\1#" | # Strip .java and parent directory path
-              tr "/" "." >  "$ALL_TEST_CLASS_NAMES_PATH # Convert to a class name of form org.package.ClassName
+              tr "/" "." >  "$ALL_TEST_CLASS_NAMES_PATH" # Convert to a class name of form org.package.ClassName
 
             cat "$ALL_TEST_CLASS_NAMES_PATH" |
               grep -vf testsuitechildren.txt > "${SUREFIRE_CLASS_NAMES_PATH}" #Exclude test suite children from consideration
@@ -471,13 +471,13 @@ jobs:
               grep -xvf $THIS_NODE_TESTS_PATH > $IGNORE_CLASS_LIST_PATH
 
             # Explicitly tell Surefire to exclude our IntegrationTestSuite children
-            echo "$ALL_TEST_CLASS_NAMES" |
+            cat "$ALL_TEST_CLASS_NAMES_PATH" |
               grep -f testsuitechildren.txt >> $IGNORE_CLASS_LIST_PATH
 
             # And the Suite itself
             echo 'org.broadinstitute.ddp.route.IntegrationTestSuite'  >> $IGNORE_CLASS_LIST_PATH
 
-            // save path for next steps
+            # save path for next steps
             echo "export IGNORE_CLASS_LIST_PATH=${IGNORE_CLASS_LIST_PATH}" >> $BASH_ENV
             source $BASH_ENV
             echo "Total number of test classes that will be skipped in this node: $(wc -l $IGNORE_CLASS_LIST_PATH)"
