@@ -572,17 +572,6 @@ parameters:
 workflows:
   version: 2
 
-  parallel-compile-and-test-workflow:
-    jobs:
-      - parallel-compile-and-test-job:
-          parallelism: *test_parallelism
-          filters:
-            branches:
-              only:
-                - develop
-                - study-server-parallel-tests
-
-
   run-tests-on-demand-workflow:
     when: << pipeline.parameters.on_demand >>
     jobs:
@@ -615,6 +604,35 @@ workflows:
           <<: *compile_and_test_filters
           requires:
             - compile-only-job
+      - deploy-workspace-jar-job:
+          filters:
+            branches:
+              only:
+                - develop
+                - study-server-parallel-testsX
+          requires:
+            - parallel-tests-job
+            - route-tests-job
+      - store-jar-job:
+          filters:
+            branches:
+              only:
+                - *rc
+                - *hotfix
+                - study-server-parallel-tests
+          requires:
+            - parallel-tests-job
+            - route-tests-job
+
+  parallel-compile-and-test-workflow:
+    jobs:
+      - parallel-compile-and-test-job:
+          parallelism: *test_parallelism
+          filters:
+            branches:
+              only:
+                - develop
+                - study-server-parallel-tests
       - deploy-workspace-jar-job:
           filters:
             branches:
