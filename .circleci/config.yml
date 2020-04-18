@@ -64,7 +64,7 @@ commands:
     steps:
       - restore_cache: *m2_cache_keys
       - run:
-          name: Run maven
+          name: Run compile
           command: |
             # Some images the $HOME directory is not writable. Let's be specific for .m2/repository location
             mvn process-test-classes -DskipTests -file pom.xml -Dmaven.repo.local=<< parameters.m2_repo >>
@@ -94,7 +94,7 @@ commands:
           name: Set environment to be used by build
           command: |
             echo "export VAULT_TOKEN=$(vault write -field=token auth/approle/login role_id=$VAULT_ROLE_ID secret_id=$VAULT_ROLE_SECRET_ID)" >> $BASH_ENV
-            echo "export SHORT_GIT_SHA=$(echo '<< pipeline.git.revision >>' | cut -c 1-7)" >> $BASH_ENV
+            echo "export SHORT_GIT_SHA=$(echo $CIRCLE_SHA1 | cut -c 1-7)" >> $BASH_ENV
             source $BASH_ENV
 
   set-deployment-env:
@@ -103,7 +103,7 @@ commands:
       - run:
           name: Determine deployment environment for branch << pipeline.git.branch >>
           command: |
-            case "<< pipeline.git.branch >>" in
+            case "${CIRCLE_BRANCH}" in
             develop)
               DEPLOY_ENV=dev
             ;;
@@ -144,7 +144,7 @@ commands:
           environment:
             USE_DOCKER: false
 
-  setup-test-dbs:
+  create-test-dbs:
     description: setup the test databases. Ensure up and running
     parameters:
       studyserverdb:
@@ -339,7 +339,11 @@ commands:
               jq -r .data.gcp.serviceKey |
               gcloud auth activate-service-account --key-file=-
 
-  compute-test-split:
+  compute-parallel-test-split:
+    description: >
+      Use CircleCi utility to compute tests to be run in a parallel test job.
+      Note that we try to exclude IntegrationTestSuite tests from running in a parallel.
+      In current workflow IntegrationTestSuite runs in its own dedicated job.
     parameters:
       circleci_path:
         type: string
@@ -355,6 +359,7 @@ commands:
             sed -En "/${START_PATTERN}/,/${END_PATTERN}/p" "$SUITE_CLASS_PATH" | # find everything between two patterns in file
               grep -Eo "\w+\.class" | # find the matching class pattern
               sed -E 's/(\w+)\.class/\1/' > testsuitechildren.txt  # drop .class. Get names without package info
+            echo "Number of test suite children: $( wc -l < testsuitechildren.txt )"
       - run:
           name: Split tests
           command: |
@@ -374,8 +379,9 @@ commands:
               sed -e "s#^${TEST_SRC_DIRECTORY}/\(.*\)\.java#\1#" | # Strip out '.java' and parent directory path
               tr "/" "." >  "$ALL_TEST_CLASS_NAMES_PATH" # Convert to a class name of form org.package.ClassName
 
+            # Exclude test suite children from consideration
             cat "$ALL_TEST_CLASS_NAMES_PATH" |
-              grep -vf testsuitechildren.txt > "${SUREFIRE_CLASS_NAMES_PATH}" #Exclude test suite children from consideration
+              grep -vf testsuitechildren.txt > "${SUREFIRE_CLASS_NAMES_PATH}"
 
             echo "Total number of test class names collected: $(wc -l $SUREFIRE_CLASS_NAMES_PATH)"
 
@@ -405,13 +411,6 @@ commands:
       - store_artifacts:
           path: << parameters.circleci_path>>/tests/
 
-  setup-test-workspace:
-    steps:
-      - attach_workspace:
-          at: *root_path
-      - setup-test-dbs
-      - restore_cache: *m2_cache_keys
-
   run-maven-with-pepper-options:
     parameters:
       phase:
@@ -437,7 +436,8 @@ commands:
       - store_test_results:
           path: target/surefire-reports
 
-  initialize-databases:
+  run-liquibase:
+    description: Force calling Liquibase and populating database
     steps:
       - run-maven-with-pepper-options:
           phase: test
@@ -453,7 +453,7 @@ jobs:
           path: *repo_path
       - setup-shared-env
       - render-configs
-      - setup-test-dbs
+      - create-test-dbs
       - restore_cache: *m2_cache_keys
       - run-maven-with-pepper-options:
           phase: test
@@ -472,61 +472,18 @@ jobs:
       - checkout:
           path: *repo_path
       - setup-shared-env
-      - compile #save cache only on one node!
-      - render-configs
-      - setup-test-dbs
-      - initialize-databases
-      - compute-test-split
-      - run-maven-with-pepper-options:
-          phase: test
-          additional_options: '-Dsurefire.excludesFile=$IGNORE_CLASS_LIST_PATH'
-      - persist_to_workspace:
-          root: *root_path
-          paths:
-            - repo
-
-  compile-only-job:
-    executor:
-      name: build-executor
-    working_directory: *pepper_apis_path
-    steps:
-      - checkout:
-          path: *repo_path
-      - setup-shared-env
       - compile
-      # will be needed for tests later on
       - render-configs
+      - create-test-dbs
+      - run-liquibase # Forcing Liquibase to execute ahead of tests so test timings are not eschewed by order
+      - compute-parallel-test-split
+      - run-maven-with-pepper-options:
+          phase: test
+          additional_options: '-Dsurefire.excludesFile=$IGNORE_CLASS_LIST_PATH'
       - persist_to_workspace:
           root: *root_path
           paths:
             - repo
-
-  route-tests-job:
-    executor:
-      name: test-executor
-    working_directory: *pepper_apis_path
-    steps:
-      - setup-test-workspace
-      - run-maven-with-pepper-options:
-          phase: test
-          additional_options: '-Dtest=IntegrationTestSuite'
-
-  parallel-tests-job:
-    executor:
-      name: test-executor
-    working_directory: *pepper_apis_path
-    parallelism: <<parameters.parallelism>>
-    parameters:
-      parallelism:
-        default: 2
-        type: integer
-    steps:
-      - setup-test-workspace
-      - initialize-databases
-      - compute-test-split
-      - run-maven-with-pepper-options:
-          phase: test
-          additional_options: '-Dsurefire.excludesFile=$IGNORE_CLASS_LIST_PATH'
 
   store-jar-job:
     executor:
@@ -545,7 +502,7 @@ jobs:
       - store-jar:
           jar_base_name: Housekeeping
 
-  deploy-workspace-jar-job:
+  deploy-jar-from-workspace-job:
     executor:
       name: deploy-executor
     working_directory: *pepper_apis_path
@@ -587,83 +544,28 @@ parameters:
 workflows:
   version: 2
 
-  run-tests-on-demand-workflow:
-    when: << pipeline.parameters.on_demand >>
-    jobs:
-      - compile-only-job
-      - parallel-tests-job:
-          parallelism: *test_parallelism
-          requires:
-            - compile-only-job
-      - route-tests-job:
-          requires:
-            - compile-only-job
-
-  build-test-store-deploy-workflow:
+  parallel-compile-and-test-workflow:
     unless: << pipeline.parameters.on_demand >>
     jobs:
-      - compile-only-job: &compile_and_test_filters
-          filters: 
+      - parallel-compile-and-test-job: &compile_and_test_filters
+          filters:
             branches:
               only:
                 - develop
                 - &rc /^rc.*/
                 - &hotfix /^hotfix.*/
-                - study-server-parallel-testsX
-      - route-tests-job:
-          <<: *compile_and_test_filters
-          requires:
-            - compile-only-job
-      - parallel-tests-job:
-          parallelism: *test_parallelism
-          <<: *compile_and_test_filters
-          requires:
-            - compile-only-job
-      - deploy-workspace-jar-job:
-          filters:
-            branches:
-              only:
-                - develop
-                - study-server-parallel-testsX
-          requires:
-            - parallel-tests-job
-            - route-tests-job
-      - store-jar-job:
-          filters:
-            branches:
-              only:
-                - *rc
-                - *hotfix
                 - study-server-parallel-tests
-          requires:
-            - parallel-tests-job
-            - route-tests-job
-
-  parallel-compile-and-test-workflow:
-    jobs:
       - compile-and-run-test-suite-job:
-        filters:
-          branches:
-            only:
-              - develop
-              - study-server-parallel-tests
-      - parallel-compile-and-test-job:
-          parallelism: *test_parallelism
-          filters:
-            branches:
-              only:
-                - develop
-                - study-server-parallel-tests
-      - deploy-workspace-jar-job:
+          <<: *compile_and_test_filters
+      - deploy-jar-from-workspace-job:
           filters:
             branches:
               only:
                 - develop
                 - study-server-parallel-tests
           requires:
-            - compile-and-run-test-suite-job
             - parallel-compile-and-test-job
-  #          - route-tests-job
+            - compile-and-run-test-suite-job
       - store-jar-job:
           filters:
             branches:
@@ -674,7 +576,12 @@ workflows:
           requires:
             - compile-and-run-test-suite-job
             - parallel-compile-and-test-job
-  #          - route-tests-job
+
+  run-tests-on-demand-workflow:
+    when: << pipeline.parameters.on_demand >>
+    jobs:
+      - parallel-compile-and-test-job
+      - compile-and-run-test-suite-job
 
   deploy-workflow:
     jobs:
