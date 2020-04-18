@@ -551,7 +551,10 @@ workflows:
     jobs:
       - compile-only-job
       - parallel-tests-job:
-          parallelism: 8
+          parallelism: 10
+          requires:
+            - compile-only-job
+      - route-tests-job:
           requires:
             - compile-only-job
 
@@ -571,7 +574,7 @@ workflows:
           requires:
             - compile-only-job
       - parallel-tests-job:
-          parallelism: 8
+          parallelism: 10
           <<: *compile_and_test_filters
           requires:
             - compile-only-job
