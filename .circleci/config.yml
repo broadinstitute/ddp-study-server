@@ -445,23 +445,22 @@ jobs:
             TEST_SRC_DIRECTORY='src/test/java'
             TEST_SEARCH_PATTERN='**/*Test.java'
 
+            ALL_TEST_CLASS_NAMES_PATH="${TEST_DATA_PATH}/allTestClassNames.txt"
             SUREFIRE_CLASS_NAMES_PATH="${TEST_DATA_PATH}/surefire_classnames"
 
             # generate list of tests to be processed
             circleci tests glob "${TEST_SRC_DIRECTORY}/${TEST_SEARCH_PATTERN}" | # fancy circleci find command
               sed -e "s#^${TEST_SRC_DIRECTORY}/\(.*\)\.java#\1#" | # Strip .java and parent directory path
-              tr "/" "." |  # Convert to a class name of form org.package.ClassName
-              grep -v 'IntegrationTestSuite' |
-              grep -wvf testsuitechildren.txt > "${SUREFIRE_CLASS_NAMES_PATH}" #Exclude test suite children
+              tr "/" "." >  "$ALL_TEST_CLASS_NAMES_PATH # Convert to a class name of form org.package.ClassName
 
-            # Test file name pattern does not pick this one up. Add explicitly
-            # echo 'org.broadinstitute.ddp.route.IntegrationTestSuite'  >> $SUREFIRE_CLASS_NAMES_PATH
+            cat "$ALL_TEST_CLASS_NAMES_PATH" |
+              grep -vf testsuitechildren.txt > "${SUREFIRE_CLASS_NAMES_PATH}" #Exclude test suite children from consideration
 
             echo "Total number of test class names collected: $(wc -l $SUREFIRE_CLASS_NAMES_PATH)"
 
             # tests split will figure out which tests to run in this node
             THIS_NODE_TESTS_PATH=/tmp/this_node_tests
-            cat $SUREFIRE_CLASS_NAMES_PATH | \
+            cat $SUREFIRE_CLASS_NAMES_PATH |
               circleci tests split --split-by=timings --timings-type=classname > $THIS_NODE_TESTS_PATH
 
 
@@ -470,6 +469,13 @@ jobs:
             # Filter out the ones that don't run in this node
             cat $SUREFIRE_CLASS_NAMES_PATH | \
               grep -xvf $THIS_NODE_TESTS_PATH > $IGNORE_CLASS_LIST_PATH
+
+            # Explicitly tell Surefire to exclude our IntegrationTestSuite children
+            echo "$ALL_TEST_CLASS_NAMES" |
+              grep -f testsuitechildren.txt >> $IGNORE_CLASS_LIST_PATH
+
+            # And the Suite itself
+            echo 'org.broadinstitute.ddp.route.IntegrationTestSuite'  >> $IGNORE_CLASS_LIST_PATH
 
             // save path for next steps
             echo "export IGNORE_CLASS_LIST_PATH=${IGNORE_CLASS_LIST_PATH}" >> $BASH_ENV
