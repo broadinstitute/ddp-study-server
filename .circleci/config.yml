@@ -454,6 +454,8 @@ jobs:
         default: 2
         type: integer
     steps:
+      - checkout:
+          path: *repo_path
       - setup-shared-env
       - compile #save cache only on one node!
       - render-configs
