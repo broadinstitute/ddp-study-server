@@ -444,6 +444,20 @@ commands:
           additional_options: '-Dtest=KitTypeDaoTest#findTestGetAllKitTypes'
 
 jobs:
+  compile-and-run-test-suite-job:
+    executor:
+      name: test-executor
+    working_directory: *pepper_apis_path
+    steps:
+      - checkout:
+          path: *repo_path
+      - render-configs
+      - setup-test-dbs
+      - restore_cache: *m2_cache_keys
+      - run-maven-with-pepper-options:
+          phase: test
+          additional_options: '-Dtest=IntegrationTestSuite'
+
   parallel-compile-and-test-job:
     executor:
       name: test-executor
@@ -626,6 +640,12 @@ workflows:
 
   parallel-compile-and-test-workflow:
     jobs:
+      - compile-and-run-test-suite-job:
+        filters:
+          branches:
+            only:
+              - develop
+              - study-server-parallel-tests
       - parallel-compile-and-test-job:
           parallelism: *test_parallelism
           filters:
@@ -640,6 +660,7 @@ workflows:
                 - develop
                 - study-server-parallel-tests
           requires:
+            - compile-and-run-test-suite-job
             - parallel-compile-and-test-job
   #          - route-tests-job
       - store-jar-job:
@@ -650,6 +671,7 @@ workflows:
                 - *hotfix
                 - study-server-parallel-tests
           requires:
+            - compile-and-run-test-suite-job
             - parallel-compile-and-test-job
   #          - route-tests-job
 
