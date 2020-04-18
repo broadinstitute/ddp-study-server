@@ -339,95 +339,14 @@ commands:
               jq -r .data.gcp.serviceKey |
               gcloud auth activate-service-account --key-file=-
 
-  setup-test-workspace:
-    steps:
-      - attach_workspace:
-          at: *root_path
-      - setup-test-dbs
-      - restore_cache: *m2_cache_keys
-
-  run-maven-with-pepper-options:
+  compute-test-split:
     parameters:
-      phase:
-        type: string
-      pom_file:
-        type: string
-        default: pom.xml
-      additional_options:
-        type: string
-        default: ''
-      m2_repo:
-        type: string
-        default: *m2_repo_path
-    steps:
-      - run:
-          name: 'Run maven <<parameters.phase>> with options: <<parameters.additional_options>>'
-          command: |
-            mvn <<parameters.phase>> --batch-mode -Dcheckstyle.skip -f <<parameters.pom_file>> \
-                    -Ditext.license=output-config/itextkey.xml \
-                    -Dddp.firecloudKeysDir=output-config/fc_keys \
-                    -Dconfig.file=output-config/testing-circleci.conf  \
-                    -Dmaven.repo.local=<< parameters.m2_repo >> <<parameters.additional_options>>
-      - store_test_results:
-          path: target/surefire-reports
-
-  initialize-databases:
-    steps:
-      - run-maven-with-pepper-options:
-          phase: test
-          additional_options: '-Dtest=KitTypeDaoTest#findTestGetAllKitTypes'
-
-jobs:
-  compile-only-job:
-    executor:
-      name: build-executor
-    working_directory: *pepper_apis_path
-    steps:
-      - checkout:
-          path: *repo_path
-      - setup-shared-env
-      - compile
-      # will be needed for tests later on
-      - render-configs
-      - persist_to_workspace:
-          root: *root_path
-          paths:
-            - repo
-
-  route-tests-job:
-    executor:
-      name: test-executor
-    working_directory: *pepper_apis_path
-    steps:
-      - setup-test-workspace
-      - run-maven-with-pepper-options:
-          phase: test
-          additional_options: '-Dtest=IntegrationTestSuite'
-
-
-  parallel-tests-job:
-    executor:
-      name: test-executor
-    working_directory: *pepper_apis_path
-    parallelism: <<parameters.parallelism>>
-    parameters:
-      parallelism:
-        default: 2
-        type: integer
-      repo_path:
-        type: string
-        default: *repo_path
       circleci_path:
         type: string
         default: *circleci_path
-      m2_repo:
-        type: string
-        default: *m2_repo_path
     steps:
-      - setup-test-workspace
-      - initialize-databases
       - run:
-          name: Generate list of IntegrationTestSuite children
+          name: Generate list of IntegrationTestSuite childrenparallel_tests_run
           command: |
             SUITE_CLASS=IntegrationTestSuite
             SUITE_CLASS_PATH=$(find src/test -name ${SUITE_CLASS}.java)
@@ -485,6 +404,109 @@ jobs:
             echo "Total number of test classes that will be skipped in this node: $(wc -l $IGNORE_CLASS_LIST_PATH)"
       - store_artifacts:
           path: << parameters.circleci_path>>/tests/
+
+  setup-test-workspace:
+    steps:
+      - attach_workspace:
+          at: *root_path
+      - setup-test-dbs
+      - restore_cache: *m2_cache_keys
+
+  run-maven-with-pepper-options:
+    parameters:
+      phase:
+        type: string
+      pom_file:
+        type: string
+        default: pom.xml
+      additional_options:
+        type: string
+        default: ''
+      m2_repo:
+        type: string
+        default: *m2_repo_path
+    steps:
+      - run:
+          name: 'Run maven <<parameters.phase>> with options: <<parameters.additional_options>>'
+          command: |
+            mvn <<parameters.phase>> --batch-mode -Dcheckstyle.skip -f <<parameters.pom_file>> \
+                    -Ditext.license=output-config/itextkey.xml \
+                    -Dddp.firecloudKeysDir=output-config/fc_keys \
+                    -Dconfig.file=output-config/testing-circleci.conf  \
+                    -Dmaven.repo.local=<< parameters.m2_repo >> <<parameters.additional_options>>
+      - store_test_results:
+          path: target/surefire-reports
+
+  initialize-databases:
+    steps:
+      - run-maven-with-pepper-options:
+          phase: test
+          additional_options: '-Dtest=KitTypeDaoTest#findTestGetAllKitTypes'
+
+jobs:
+  parallel-compile-and-test-job:
+    executor:
+      name: test-executor
+    working_directory: *pepper_apis_path
+    parallelism: <<parameters.parallelism>>
+    parameters:
+      parallelism:
+        default: 2
+        type: integer
+    steps:
+      - setup-shared-env
+      - compile #save cache only on one node!
+      - render-configs
+      - setup-test-dbs
+      - initialize-databases
+      - compute-test-split
+      - run-maven-with-pepper-options:
+          phase: test
+          additional_options: '-Dsurefire.excludesFile=$IGNORE_CLASS_LIST_PATH'
+      - persist_to_workspace:
+          root: *root_path
+          paths:
+            - repo
+
+  compile-only-job:
+    executor:
+      name: build-executor
+    working_directory: *pepper_apis_path
+    steps:
+      - checkout:
+          path: *repo_path
+      - setup-shared-env
+      - compile
+      # will be needed for tests later on
+      - render-configs
+      - persist_to_workspace:
+          root: *root_path
+          paths:
+            - repo
+
+  route-tests-job:
+    executor:
+      name: test-executor
+    working_directory: *pepper_apis_path
+    steps:
+      - setup-test-workspace
+      - run-maven-with-pepper-options:
+          phase: test
+          additional_options: '-Dtest=IntegrationTestSuite'
+
+  parallel-tests-job:
+    executor:
+      name: test-executor
+    working_directory: *pepper_apis_path
+    parallelism: <<parameters.parallelism>>
+    parameters:
+      parallelism:
+        default: 2
+        type: integer
+    steps:
+      - setup-test-workspace
+      - initialize-databases
+      - compute-test-split
       - run-maven-with-pepper-options:
           phase: test
           additional_options: '-Dsurefire.excludesFile=$IGNORE_CLASS_LIST_PATH'
@@ -548,6 +570,17 @@ parameters:
 workflows:
   version: 2
 
+  parallel-compile-and-test-workflow:
+    jobs:
+      - parallel-compile-and-test-job:
+          parallelism: *test_parallelism
+          filters:
+            branches:
+              only:
+                - develop
+                - study-server-parallel-tests
+
+
   run-tests-on-demand-workflow:
     when: << pipeline.parameters.on_demand >>
     jobs:
@@ -570,7 +603,7 @@ workflows:
                 - develop
                 - &rc /^rc.*/
                 - &hotfix /^hotfix.*/
-                - study-server-parallel-tests
+                - study-server-parallel-testsX
       - route-tests-job:
           <<: *compile_and_test_filters
           requires:
@@ -585,7 +618,7 @@ workflows:
             branches:
               only:
                 - develop
-                - study-server-parallel-tests
+                - study-server-parallel-testsX
           requires:
             - parallel-tests-job
             - route-tests-job
