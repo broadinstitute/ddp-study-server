@@ -638,9 +638,9 @@ workflows:
             branches:
               only:
                 - develop
-                - study-server-parallel-testsX
+                - study-server-parallel-tests
           requires:
-            - parallel-tests-job
+            - parallel-compile-and-test-job
             - route-tests-job
       - store-jar-job:
           filters:
@@ -650,7 +650,7 @@ workflows:
                 - *hotfix
                 - study-server-parallel-tests
           requires:
-            - parallel-tests-job
+            - parallel-compile-and-test-job
             - route-tests-job
 
   deploy-workflow:
