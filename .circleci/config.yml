@@ -641,7 +641,7 @@ workflows:
                 - study-server-parallel-tests
           requires:
             - parallel-compile-and-test-job
-            - route-tests-job
+  #          - route-tests-job
       - store-jar-job:
           filters:
             branches:
@@ -651,7 +651,7 @@ workflows:
                 - study-server-parallel-tests
           requires:
             - parallel-compile-and-test-job
-            - route-tests-job
+  #          - route-tests-job
 
   deploy-workflow:
     jobs:
