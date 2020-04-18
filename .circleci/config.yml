@@ -451,6 +451,7 @@ jobs:
     steps:
       - checkout:
           path: *repo_path
+      - setup-shared-env
       - render-configs
       - setup-test-dbs
       - restore_cache: *m2_cache_keys
