@@ -66,7 +66,7 @@ commands:
           name: Run maven
           command: |
             # Some images the $HOME directory is not writable. Let's be specific for .m2/repository location
-            mvn test-compile package -DskipTests -file pom.xml -Dmaven.repo.local=<< parameters.m2_repo >>
+            mvn process-test-classes -DskipTests -file pom.xml -Dmaven.repo.local=<< parameters.m2_repo >>
             # mvn package -DskipTests -f housekeeping-pom.xml -Dcheckstyle.skip -Dmaven.repo.local=<< parameters.m2_repo >>
       - save_cache:
           key: *m2_cache_key
