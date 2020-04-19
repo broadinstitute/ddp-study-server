@@ -436,6 +436,13 @@ commands:
       - store_test_results:
           path: target/surefire-reports
 
+  start-dp-test-server:
+    description: Force calling Liquibase and populating database
+    steps:
+      - run-maven-with-pepper-options:
+          phase: test
+          additional_options: 'exec:java -Dexec.mainClass=org.broadinstitute.ddp.route.IntegrationTestSuite -Dexec.classpathScope=test'
+
   run-liquibase:
     description: Force calling Liquibase and populating database
     steps:
@@ -475,7 +482,7 @@ jobs:
       - compile
       - render-configs
       - create-test-dbs
-      - run-liquibase # Forcing Liquibase to execute ahead of tests so test timings are not eschewed by order
+      - start-dp-test-server # Forcing Liquibase to execute ahead of tests so test timings are not eschewed by order
       - compute-parallel-test-split
       - run-maven-with-pepper-options:
           phase: test
