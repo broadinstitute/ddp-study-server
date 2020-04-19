@@ -21,6 +21,24 @@
         <elasticsearch.version>6.8.2</elasticsearch.version>
     </properties>
 
+    <profiles>
+        <profile>
+            <id>DefaultBuild</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <exclude.test.pattern>**/*RouteTest.java</exclude.test.pattern>
+            </properties>
+        </profile>
+        <profile>
+            <id>CircleciBuild</id>
+            <properties>
+                <exclude.test.pattern>NOTHING</exclude.test.pattern>
+            </properties>
+        </profile>
+    </profiles>
+
     <dependencies>
         <dependency>
             <groupId>com.zaxxer</groupId>
@@ -582,7 +600,7 @@
                         <include>**/*Suite.java</include>
                     </includes>
                     <excludes>
-                        <exclude>**/*RouteTest.java</exclude>
+                        <exclude>${exclude.test.pattern}</exclude>
                     </excludes>
                     <environmentVariables>
                         <PUBSUB_EMULATOR_HOST>localhost:8442</PUBSUB_EMULATOR_HOST>

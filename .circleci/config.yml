@@ -390,6 +390,7 @@ commands:
 
             # tests split will figure out which tests to run in this node
             THIS_NODE_TESTS_PATH=/tmp/this_node_tests
+
             cat $SUREFIRE_CLASS_NAMES_PATH |
               circleci tests split --split-by=timings --timings-type=classname > $THIS_NODE_TESTS_PATH
 
@@ -409,6 +410,8 @@ commands:
 
             # And ignore the Suite itself
             echo 'org.broadinstitute.ddp.route.IntegrationTestSuite'  >> $IGNORE_CLASS_LIST_PATH
+
+            cp $THIS_NODE_TESTS_PATH "${TEST_DATA_PATH}" /this_node_circleci_tests
 
             # save path for next steps
             echo "export IGNORE_CLASS_LIST_PATH=${IGNORE_CLASS_LIST_PATH}" >> $BASH_ENV
@@ -507,7 +510,7 @@ jobs:
       - compute-parallel-test-split
       - run-maven-with-pepper-options:
           phase: test
-          additional_options: '-Dsurefire.excludesFile=$IGNORE_CLASS_LIST_PATH'
+          additional_options: '-PCircleciBuild -Dsurefire.excludesFile=$IGNORE_CLASS_LIST_PATH'
       - persist_to_workspace:
           root: *root_path
           paths:
