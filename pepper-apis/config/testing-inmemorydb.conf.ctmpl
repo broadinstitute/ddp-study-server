@@ -64,7 +64,6 @@
     "baseTestUrl": "http://localhost:5555",
     "socialTestEmail": "{{$testingConf.Data.socialTestEmail}}",
     "socialTestPassword": "{{$testingConf.Data.socialTestPassword}}",
-    "baseTestUrl": "http://localhost:5555",
     "firecloud": {
         {{if eq $environment "dev"}}
             "testWorkspaceNamespace": "pepper-dev2",
