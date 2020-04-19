@@ -170,7 +170,7 @@ public class PubSubEmulator {
             CloseableHttpResponse response =
                     httpClient.execute(new HttpGet("http://" + EMULATOR_HOST));
             return response.getStatusLine().getStatusCode() == 200;
-        } catch(HttpHostConnectException e) {
+        } catch (HttpHostConnectException e) {
             LOG.debug("Could not connect to pubsub server. Must not be running");
             return false;
         } catch (IOException e) {
@@ -178,6 +178,5 @@ public class PubSubEmulator {
             LOG.error(msg, e);
             throw new DDPException(msg, e);
         }
-
     }
 }
