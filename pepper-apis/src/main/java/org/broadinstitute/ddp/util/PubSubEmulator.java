@@ -11,6 +11,7 @@ import org.apache.http.client.fluent.Request;
 import org.apache.http.client.fluent.Response;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.conn.HttpHostConnectException;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.broadinstitute.ddp.exception.DDPException;
@@ -165,10 +166,13 @@ public class PubSubEmulator {
     private static boolean isExternalEmulatorRunning() {
         try (
                 CloseableHttpClient httpClient = HttpClients.createDefault();
-                CloseableHttpResponse response =
-                        httpClient.execute(new HttpGet("http://" + EMULATOR_HOST));
         ) {
+            CloseableHttpResponse response =
+                    httpClient.execute(new HttpGet("http://" + EMULATOR_HOST));
             return response.getStatusLine().getStatusCode() == 200;
+        } catch(HttpHostConnectException e) {
+            LOG.debug("Could not connect to pubsub server. Must not be running");
+            return false;
         } catch (IOException e) {
             String msg = "There was problem initializing CloseableHttpClient";
             LOG.error(msg, e);
