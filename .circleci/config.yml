@@ -380,6 +380,8 @@ commands:
               sed -e "s#^${TEST_SRC_DIRECTORY}/\(.*\)\.java#\1#" | # Strip out '.java' and parent directory path
               tr "/" "." >  "$ALL_TEST_CLASS_NAMES_PATH" # Convert to a class name of form org.package.ClassName
 
+            SUREFIRE_CLASS_NAMES_PATH="$ALL_TEST_CLASS_NAMES_PATH"
+
             # Exclude test suite children from consideration
             #cat "$ALL_TEST_CLASS_NAMES_PATH" |
             #   grep -vf testsuitechildren.txt > "${SUREFIRE_CLASS_NAMES_PATH}"
