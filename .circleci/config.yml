@@ -378,9 +378,9 @@ commands:
             # generate list of tests to be processed
             circleci tests glob "${TEST_SRC_DIRECTORY}/${TEST_SEARCH_PATTERN}" | # fancy circleci 'find' command
               sed -e "s#^${TEST_SRC_DIRECTORY}/\(.*\)\.java#\1#" | # Strip out '.java' and parent directory path
-              tr "/" "." >  "$ALL_TEST_CLASS_NAMES_PATH" # Convert to a class name of form org.package.ClassName
+              tr "/" "." >  "$SUREFIRE_CLASS_NAMES_PATH" # Convert to a class name of form org.package.ClassName
 
-            SUREFIRE_CLASS_NAMES_PATH="$ALL_TEST_CLASS_NAMES_PATH"
+            # SUREFIRE_CLASS_NAMES_PATH="$ALL_TEST_CLASS_NAMES_PATH"
 
             # Exclude test suite children from consideration
             #cat "$ALL_TEST_CLASS_NAMES_PATH" |
@@ -393,7 +393,10 @@ commands:
             cat $SUREFIRE_CLASS_NAMES_PATH |
               circleci tests split --split-by=timings --timings-type=classname > $THIS_NODE_TESTS_PATH
 
+            echo "Number of test classes circleci wants to execute on this node: $(wc -l < $THIS_NODE_TESTS_PATH)"
+
             IGNORE_CLASS_LIST_PATH="${TEST_DATA_PATH}/surefire_classnames_ignore_list"
+
 
             # Specify the tests to run by substraction: we tell Surefire what NOT to run
             # Make sure the one CircleCi has calculated are removed from the "ignore" list
