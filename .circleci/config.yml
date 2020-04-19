@@ -28,6 +28,7 @@ references:
   studyserver_test_db: &studyserver_test_db
       studyservicedb
   test_parallellism: &test_parallelism 10
+  ddp_server_port: &ddp_server_port 5556
 
 
 executors:
@@ -424,6 +425,9 @@ commands:
       m2_repo:
         type: string
         default: *m2_repo_path
+      background:
+        type: boolean
+        default: false
     steps:
       - run:
           name: 'Run maven <<parameters.phase>> with options: <<parameters.additional_options>>'
@@ -433,15 +437,27 @@ commands:
                     -Dddp.firecloudKeysDir=output-config/fc_keys \
                     -Dconfig.file=output-config/testing-circleci.conf  \
                     -Dmaven.repo.local=<< parameters.m2_repo >> <<parameters.additional_options>>
+          background: <<parameters.background>>
       - store_test_results:
           path: target/surefire-reports
 
   start-ddp-test-server:
-    description: Force calling Liquibase and populating database
+    description: Run test server that applies liquibase and load test data
     steps:
       - run-maven-with-pepper-options:
           phase: exec:java
           additional_options: '-Dexec.mainClass=org.broadinstitute.ddp.route.IntegrationTestSuite -Dexec.classpathScope=test'
+          background: true
+      - run:
+          name: Waiting for DDP Study Server to be ready
+          command: |
+            for i in `seq 1 10`;
+            do
+              nc -z 127.0.0.1 5556 && echo Success && exit 0
+              echo -n .
+              sleep 1
+            done
+            echo Failed waiting for MySQL && exit 1
 
   run-liquibase:
     description: Force calling Liquibase and populating database
