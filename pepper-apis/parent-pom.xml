@@ -34,7 +34,7 @@
         <profile>
             <id>CircleciBuild</id>
             <properties>
-                <exclude.test.pattern>NOTHING</exclude.test.pattern>
+                <exclude.test.pattern>*ListCancerListCancersRouteTest, *GetCancerSuggestionsRouteTest, *GetDsmDrugSuggestionsRouteTest</exclude.test.pattern>
             </properties>
         </profile>
     </profiles>
