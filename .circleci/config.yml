@@ -27,7 +27,7 @@ references:
       housekeepingdb
   studyserver_test_db: &studyserver_test_db
       studyservicedb
-  test_parallellism: &test_parallelism 10
+  test_parallellism: &test_parallelism 15
   ddp_server_port: &ddp_server_port 5556
 
 
