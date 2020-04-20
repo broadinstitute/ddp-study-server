@@ -488,7 +488,7 @@ jobs:
       - restore_cache: *m2_cache_keys
       - run-maven-with-pepper-options:
           phase: test
-          additional_options: '-Dtest=IntegrationTestSuite'
+          additional_options: '-Dtest=ServerInSameProcessIntegrationTestSuite'
 
   parallel-compile-and-test-job:
     executor:
