@@ -134,16 +134,9 @@ commands:
         type: string
         default: *housekeeping_test_db
     steps:
-      - run:
-          name: Waiting for MySQL to be ready
-          command: |
-            for i in `seq 1 10`;
-            do
-              nc -z 127.0.0.1 3306 && echo Success && exit 0
-              echo -n .
-              sleep 1
-            done
-            echo Failed waiting for MySQL && exit 1
+      - wait_for_server:
+          port: 3306
+          timeout: 15
       - run:
           name: Setup test databases
           command: |
@@ -462,6 +455,28 @@ commands:
       - store_test_results:
           path: target/surefire-reports
 
+  wait_for_server:
+    description: Wait for a server to respond for specific period of time
+    parameters:
+      server_address:
+        type: string
+        default: '127.0.0.1'
+      port:
+        type: integer
+      timeout:
+        type: integer
+        default: 60
+    steps:
+      - run:
+          name: Waiting for server to start
+          command: |
+            for i in `seq 1 << parameters.timeout >>`;
+            do
+              nc -z << parameters.server_address >> << parameters.port >> && echo Success && exit 0
+              echo -n .
+              sleep 1
+            done
+            echo Failed waiting for << parameters.server_address >> << parameters.port >> to start && exit 1
 
   start-ddp-test-server:
     description: Run test server that applies liquibase and load test data
@@ -470,23 +485,9 @@ commands:
           phase: exec:java
           additional_options: '-Dexec.mainClass=org.broadinstitute.ddp.route.IntegrationTestSuite -Dexec.classpathScope=test'
           background: true
-      - run:
-          name: Waiting for DDP Study Server to be ready
-          command: |
-            for i in `seq 1 60`;
-            do
-              nc -z 127.0.0.1 5556 && echo Success && exit 0
-              echo -n .
-              sleep 1
-            done
-            echo Failed waiting for DDP Study Server to start && exit 1
-
-  run-liquibase:
-    description: Force calling Liquibase and populating database
-    steps:
-      - run-maven-with-pepper-options:
-          phase: test
-          additional_options: '-Dtest=KitTypeDaoTest#findTestGetAllKitTypes'
+      - wait_for_server:
+          port: 5556
+          timeout: 60
 
 jobs:
   compile-and-run-test-suite-job:
