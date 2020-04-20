@@ -510,7 +510,7 @@ jobs:
       - compute-parallel-test-split
       - run-maven-with-pepper-options:
           phase: test
-          additional_options: '-PCircleciBuild -Dsurefire.excludesFile=$IGNORE_CLASS_LIST_PATH'
+          additional_options: '-PCircleciParallelBuild -Dsurefire.excludesFile=$IGNORE_CLASS_LIST_PATH'
       - persist_to_workspace:
           root: *root_path
           paths:

@@ -28,13 +28,15 @@
                 <activeByDefault>true</activeByDefault>
             </activation>
             <properties>
+                <include.test.pattern>**/*Test.java, **/*IntegrationTestSuite.java,</include.test.pattern>
                 <exclude.test.pattern>**/*RouteTest.java</exclude.test.pattern>
             </properties>
         </profile>
         <profile>
-            <id>CircleciBuild</id>
+            <id>CircleciParallelBuild</id>
             <properties>
-                <exclude.test.pattern>*ListCancerListCancersRouteTest, *GetCancerSuggestionsRouteTest, *GetDsmDrugSuggestionsRouteTest</exclude.test.pattern>
+                <include.test.pattern>**/*Test.java</include.test.pattern>
+                <exclude.test.pattern>*ListCancersRouteTest, *GetCancerSuggestionsRouteTest, *GetDsmDrugSuggestionsRouteTest</exclude.test.pattern>
             </properties>
         </profile>
     </profiles>
@@ -596,8 +598,7 @@
                         <runOrder>alphabetical</runOrder>
                     </systemPropertyVariables>
                     <includes>
-                        <include>**/*Test.java</include>
-                        <include>**/*Suite.java</include>
+                        <include>${include.test.pattern}</include>
                     </includes>
                     <excludes>
                         <exclude>${exclude.test.pattern}</exclude>
