@@ -56,24 +56,13 @@ commands:
   compile:
     description: Run maven compile
     parameters:
-      m2_repo:
-        type: string
-        default: *m2_repo_path
-      root_path:
-        type: string
-        default: *root_path
     steps:
-      - restore_cache: *m2_cache_keys
-      - run:
-          name: Run compile
-          command: |
-            # Some images the $HOME directory is not writable. Let's be specific for .m2/repository location
-            mvn process-test-classes -DskipTests -file pom.xml -Dmaven.repo.local=<< parameters.m2_repo >>
-            # mvn package -DskipTests -f housekeeping-pom.xml -Dcheckstyle.skip -Dmaven.repo.local=<< parameters.m2_repo >>
-      - save_cache:
-          key: *m2_cache_key
-          paths:
-            - << parameters.root_path >>/.m2
+      - run-maven-with-pepper-options:
+          phase: process-test-classes
+          additional_options: '-DskipTests'
+          restore_m2_cache: true
+          skip_checkstyle: false
+
   build-jar:
     description: Build jar
     parameters:
@@ -430,24 +419,52 @@ commands:
       additional_options:
         type: string
         default: ''
+      skip_checkstyle:
+        type: boolean
+        default: true
       m2_repo:
         type: string
         default: *m2_repo_path
+      restore_m2_cache:
+        type: boolean
+        default: false
+      save_m2_cache:
+        type: boolean
+        default: false
       background:
         type: boolean
         default: false
+      root_path:
+        type: string
+        default: *root_path
     steps:
+      - when:
+          condition: << parameters.restore_m2_cache >>
+          steps:
+            - restore_cache: *m2_cache_keys
       - run:
           name: 'Run maven <<parameters.phase>> with options: <<parameters.additional_options>>'
           command: |
-            mvn <<parameters.phase>> --batch-mode -Dcheckstyle.skip -f <<parameters.pom_file>> \
+            CHECKSTYLE_OPTION=''
+            if [[ << parameters.skip_checkstyle >> = true ]]; then
+              CHECKSTYLE_OPTION='-Dcheckstyle.skip'
+            fi
+            mvn <<parameters.phase>> --batch-mode $CHECKSTYLE_OPTION -f <<parameters.pom_file>> \
                     -Ditext.license=output-config/itextkey.xml \
                     -Dddp.firecloudKeysDir=output-config/fc_keys \
                     -Dconfig.file=output-config/testing-circleci.conf  \
                     -Dmaven.repo.local=<< parameters.m2_repo >> <<parameters.additional_options>>
           background: <<parameters.background>>
+      - when:
+          condition: << parameters.save_m2_cache >>
+          steps:
+            - save_cache:
+                key: *m2_cache_key
+                paths:
+                  - << parameters.root_path >>/.m2
       - store_test_results:
           path: target/surefire-reports
+
 
   start-ddp-test-server:
     description: Run test server that applies liquibase and load test data
@@ -485,10 +502,10 @@ jobs:
       - setup-shared-env
       - render-configs
       - create-test-dbs
-      - restore_cache: *m2_cache_keys
       - run-maven-with-pepper-options:
           phase: test
           additional_options: '-Dtest=ServerInSameProcessIntegrationTestSuite'
+          restore_m2_cache: true
 
   parallel-compile-and-test-job:
     executor:
@@ -503,7 +520,11 @@ jobs:
       - checkout:
           path: *repo_path
       - setup-shared-env
-      - compile
+      - run-maven-with-pepper-options:
+          phase: process-test-classes
+          additional_options: '-DskipTests'
+          restore_m2_cache: true
+          skip_checkstyle: false
       - render-configs
       - create-test-dbs
       - start-ddp-test-server # Forcing Liquibase to execute ahead of tests so test timings are not eschewed by order
@@ -511,6 +532,7 @@ jobs:
       - run-maven-with-pepper-options:
           phase: test
           additional_options: '-PCircleciParallelBuild -Dsurefire.excludesFile=$IGNORE_CLASS_LIST_PATH'
+          save_m2_cache: true
       - persist_to_workspace:
           root: *root_path
           paths:
