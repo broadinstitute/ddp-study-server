@@ -37,7 +37,7 @@ executors:
       - image: broadinstitute/study-server-build:java-2020-04-15A
   test-executor:
     docker:
-      - image: broadinstitute/study-server-build:java-2020-04-15A
+      - image: broadinstitute/study-server-build:java-2020-04-20A
       # start pubsub emulator
       - image: broadinstitute/study-server-build:pubsub-1
       - image: circleci/mysql:5.7-ram
