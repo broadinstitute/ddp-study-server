@@ -15,7 +15,7 @@ references:
       - pom.xml2-
   m2_repo_path: &m2_repo_path
              /home/circleci/.m2/repository
-  pepper_apis-path: &pepper_apis_path
+  pepper_apis_path: &pepper_apis_path
             /home/circleci/repo/pepper-apis
   circleci_path: &circleci_path
             /home/circleci/repo/.circleci
@@ -100,7 +100,7 @@ commands:
             staging)
               DEPLOY_ENV=staging
             ;;
-            staging)
+            prod)
               DEPLOY_ENV=prod
             ;;
             *)
@@ -323,17 +323,6 @@ commands:
         default: *circleci_path
     steps:
       - run:
-          name: Generate list of IntegrationTestSuite childrenparallel_tests_run
-          command: |
-            SUITE_CLASS=IntegrationTestSuite
-            SUITE_CLASS_PATH=$(find src/test -name ${SUITE_CLASS}.java)
-            START_PATTERN='@SuiteClasses\('
-            END_PATTERN="public\s+class\s+${SUITE_CLASS}"
-            sed -En "/${START_PATTERN}/,/${END_PATTERN}/p" "$SUITE_CLASS_PATH" | # find everything between two patterns in file
-              grep -Eo "\w+\.class" | # find the matching class pattern
-              sed -E 's/(\w+)\.class/\1/' > testsuitechildren.txt  # drop .class. Get names without package info
-            echo "Number of test suite children: $( wc -l < testsuitechildren.txt )"
-      - run:
           name: Split tests
           command: |
             set +x
@@ -352,12 +341,6 @@ commands:
               sed -e "s#^${TEST_SRC_DIRECTORY}/\(.*\)\.java#\1#" | # Strip out '.java' and parent directory path
               tr "/" "." >  "$SUREFIRE_CLASS_NAMES_PATH" # Convert to a class name of form org.package.ClassName
 
-            # SUREFIRE_CLASS_NAMES_PATH="$ALL_TEST_CLASS_NAMES_PATH"
-
-            # Exclude test suite children from consideration
-            #cat "$ALL_TEST_CLASS_NAMES_PATH" |
-            #   grep -vf testsuitechildren.txt > "${SUREFIRE_CLASS_NAMES_PATH}"
-
             echo "Total number of test class names collected: $(wc -l $SUREFIRE_CLASS_NAMES_PATH)"
 
             # tests split will figure out which tests to run in this node
@@ -375,10 +358,6 @@ commands:
             # Make sure the one CircleCi has calculated are removed from the "ignore" list
             cat $SUREFIRE_CLASS_NAMES_PATH |
               grep -xvf $THIS_NODE_TESTS_PATH > $IGNORE_CLASS_LIST_PATH
-
-            # Explicitly tell Surefire to ignore the suite children
-            # cat "$ALL_TEST_CLASS_NAMES_PATH" |
-            #   grep -f testsuitechildren.txt >> $IGNORE_CLASS_LIST_PATH
 
             # And ignore the Suite itself
             echo 'org.broadinstitute.ddp.route.IntegrationTestSuite'  >> $IGNORE_CLASS_LIST_PATH
@@ -525,7 +504,7 @@ jobs:
           skip_checkstyle: false
       - render-configs
       - create-test-dbs
-      - start-ddp-test-server # Forcing Liquibase to execute ahead of tests so test timings are not eschewed by order
+      - start-ddp-test-server # starts DDP server. And execute Liquibase DB population
       - compute-parallel-test-split
       - run-maven-with-pepper-options:
           phase: test

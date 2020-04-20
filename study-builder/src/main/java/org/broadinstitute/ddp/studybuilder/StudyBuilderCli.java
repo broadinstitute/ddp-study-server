@@ -83,7 +83,7 @@ public class StudyBuilderCli {
 
         Config cfg = ConfigFactory.load();
         TransactionWrapper.reset();
-        TransactionWrapper.init("UTC", new TransactionWrapper
+        TransactionWrapper.init(new TransactionWrapper
                 .DbConfiguration(TransactionWrapper.DB.APIS, 1, cfg.getString("dbUrl")));
         log("using db url: %s", cfg.getString("dbUrl"));
 

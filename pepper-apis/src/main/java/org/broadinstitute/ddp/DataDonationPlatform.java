@@ -169,7 +169,7 @@ public class DataDonationPlatform {
     private static final String[] CORS_HTTP_HEADERS = new String[] {"Content-Type", "Authorization", "X-Requested-With",
             "Content-Length", "Accept", "Origin", ""};
     private static final Map<String, String> pathToClass = new HashMap<>();
-    public static final String APP_ENGINE_PORT = "PORT";
+    public static final String PORT = "PORT";
     private static Scheduler scheduler = null;
 
     /**
@@ -236,7 +236,9 @@ public class DataDonationPlatform {
 
         // app engine's port env var wins
         int configFilePort = cfg.getInt(ConfigFile.PORT);
-        String appEnginePort = System.getenv(APP_ENGINE_PORT);
+
+        // GAE specifies port to use via environment variable
+        String appEnginePort = System.getenv(PORT);
         if (appEnginePort != null) {
             port(Integer.parseInt(appEnginePort));
         } else {
