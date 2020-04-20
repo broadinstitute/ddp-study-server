@@ -8,11 +8,11 @@ references:
   repo_path: &repo_path
               /home/circleci/repo
   m2_cache_key: &m2_cache_key
-                  pom.xml1-{{ checksum "pom.xml" }}
+                  pom.xml2-{{ checksum "pom.xml" }}
   m2_cache_restore_key: &m2_cache_keys
     keys:
       - *m2_cache_key
-      - pom.xml1-
+      - pom.xml2-
   m2_repo_path: &m2_repo_path
              /home/circleci/.m2/repository
   pepper_apis-path: &pepper_apis_path
