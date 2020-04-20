@@ -53,16 +53,6 @@ executors:
     - image: *ci_support_image
 
 commands:
-  compile:
-    description: Run maven compile
-    parameters:
-    steps:
-      - run-maven-with-pepper-options:
-          phase: process-test-classes
-          additional_options: '-DskipTests'
-          restore_m2_cache: true
-          skip_checkstyle: false
-
   build-jar:
     description: Build jar
     parameters:
@@ -422,6 +412,9 @@ commands:
       skip_checkstyle:
         type: boolean
         default: true
+      skip_tests:
+        type: boolean
+        default: true
       m2_repo:
         type: string
         default: *m2_repo_path
@@ -449,7 +442,11 @@ commands:
             if [[ << parameters.skip_checkstyle >> = true ]]; then
               CHECKSTYLE_OPTION='-Dcheckstyle.skip'
             fi
-            mvn <<parameters.phase>> --batch-mode $CHECKSTYLE_OPTION -f <<parameters.pom_file>> \
+            SKIPTESTS_OPTION='-DskipTests=<< parameters.skip_tests >>'
+            mvn <<parameters.phase>> --batch-mode \
+                    -f <<parameters.pom_file>> \
+                    $CHECKSTYLE_OPTION \
+                    $SKIPTESTS_OPTION \
                     -Ditext.license=output-config/itextkey.xml \
                     -Dddp.firecloudKeysDir=output-config/fc_keys \
                     -Dconfig.file=output-config/testing-circleci.conf  \
@@ -504,6 +501,7 @@ jobs:
       - create-test-dbs
       - run-maven-with-pepper-options:
           phase: test
+          skip_tests: false
           additional_options: '-Dtest=ServerInSameProcessIntegrationTestSuite'
           restore_m2_cache: true
 
@@ -522,7 +520,6 @@ jobs:
       - setup-shared-env
       - run-maven-with-pepper-options:
           phase: process-test-classes
-          additional_options: '-DskipTests'
           restore_m2_cache: true
           skip_checkstyle: false
       - render-configs
@@ -531,6 +528,7 @@ jobs:
       - compute-parallel-test-split
       - run-maven-with-pepper-options:
           phase: test
+          skip_tests: false
           additional_options: '-PCircleciParallelBuild -Dsurefire.excludesFile=$IGNORE_CLASS_LIST_PATH'
           save_m2_cache: true
       - persist_to_workspace:
