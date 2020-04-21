@@ -2,7 +2,7 @@ version: 2.1
 
 references:
   ci_support_image: &ci_support_image
-                      broadinstitute/study-server-build:2020-04-17A
+                       broadinstitute/study-server-build:2020-04-10G
   root_path: &root_path
       /home/circleci
   repo_path: &repo_path
