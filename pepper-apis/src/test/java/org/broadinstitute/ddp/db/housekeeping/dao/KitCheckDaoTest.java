@@ -49,6 +49,9 @@ public class KitCheckDaoTest extends TxnAwareBaseTest {
             testData = TestDataSetupUtil.generateBasicUserTestData(handle);
             userGuid = testData.getUserGuid();
             studyGuid = testData.getStudyGuid();
+            JdbiMailAddress jdbiAddress = handle.attach(JdbiMailAddress.class);
+            jdbiAddress.findDefaultAddressForParticipant(userGuid)
+                    .ifPresent(address -> jdbiAddress.deleteAddress(address.getId()));
         });
         setupKitConfiguration();
     }
