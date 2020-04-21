@@ -21,6 +21,26 @@
         <elasticsearch.version>6.8.2</elasticsearch.version>
     </properties>
 
+    <profiles>
+        <profile>
+            <id>DefaultBuild</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <include.test.pattern>**/*Test.java, **/*IntegrationTestSuite.java,</include.test.pattern>
+                <exclude.test.pattern>**/*RouteTest.java</exclude.test.pattern>
+            </properties>
+        </profile>
+        <profile>
+            <id>CircleciParallelBuild</id>
+            <properties>
+                <include.test.pattern>**/*Test.java</include.test.pattern>
+                <exclude.test.pattern>*ListCancersRouteTest, *GetCancerSuggestionsRouteTest, *GetDsmDrugSuggestionsRouteTest</exclude.test.pattern>
+            </properties>
+        </profile>
+    </profiles>
+
     <dependencies>
         <dependency>
             <groupId>com.zaxxer</groupId>
@@ -157,11 +177,6 @@
             <groupId>com.google.cloud.sql</groupId>
             <artifactId>mysql-socket-factory-connector-j-8</artifactId>
             <version>1.0.15</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-dbcp2</artifactId>
-            <version>2.1.1</version>
         </dependency>
         <dependency>
             <groupId>org.jdbi</groupId>
@@ -578,11 +593,10 @@
                         <runOrder>alphabetical</runOrder>
                     </systemPropertyVariables>
                     <includes>
-                        <include>**/*Test.java</include>
-                        <include>**/*Suite.java</include>
+                        <include>${include.test.pattern}</include>
                     </includes>
                     <excludes>
-                        <exclude>**/*RouteTest.java</exclude>
+                        <exclude>${exclude.test.pattern}</exclude>
                     </excludes>
                     <environmentVariables>
                         <PUBSUB_EMULATOR_HOST>localhost:8442</PUBSUB_EMULATOR_HOST>

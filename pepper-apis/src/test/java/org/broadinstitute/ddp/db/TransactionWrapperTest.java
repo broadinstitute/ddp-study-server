@@ -92,7 +92,7 @@ public class TransactionWrapperTest {
                     assertEquals(1, numRows);
                     try {
                         TransactionWrapper.useTxn((handle2) -> {
-                            LOG.info("Got connection when we shouldn't have");
+                            fail("Got connection when we shouldn't have");
                         });
                     } catch (Exception e) {
                         gotPoolExhaustedError.set(e.getMessage().toLowerCase().contains("pool"));

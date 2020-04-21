@@ -15,7 +15,7 @@
     "housekeepingDbUrl": "jdbc:mysql://localhost:3306/housekeepingdb?user=root&password=rootpw&characterEncoding=UTF-8&useLegacyDatetimeCode=false&serverTimezone=UTC&useSSL=false&sessionVariables=innodb_strict_mode=on,tx_isolation='READ-COMMITTED',sql_mode='TRADITIONAL'",
     "maxConnections": 50,
     "defaultTimezone": "{{$testingConf.Data.defaultTimezone}}",
-    "port": 5555,
+    "port": 5556,
     "doLiquibase": true,
     "threadTimeout": 30000,
     "dsmBaseUrl": "http://localhost:9555",
@@ -65,10 +65,9 @@
     "easyPostApiKey": "{{$testingConf.Data.easyPostApiKey}}",
     # by default, boot in-processs for testing.  change rendered .conf file manually for local development
     "bootTestAppInSeparateProcess": false,
-    "baseTestUrl": "http://localhost:5555",
+    "baseTestUrl": "http://localhost:5556",
     "socialTestEmail": "{{$testingConf.Data.socialTestEmail}}",
     "socialTestPassword": "{{$testingConf.Data.socialTestPassword}}",
-    "baseTestUrl": "http://localhost:5555",
     "firecloud": {
         {{if eq $environment "dev"}}
             "testWorkspaceNamespace": "pepper-dev2",

@@ -8,14 +8,14 @@ references:
   repo_path: &repo_path
               /home/circleci/repo
   m2_cache_key: &m2_cache_key
-                  pom.xml1-{{ checksum "pom.xml" }}
+                  pom.xml2-{{ checksum "pom.xml" }}
   m2_cache_restore_key: &m2_cache_keys
     keys:
       - *m2_cache_key
-      - pom.xml1-
+      - pom.xml2-
   m2_repo_path: &m2_repo_path
              /home/circleci/.m2/repository
-  pepper_apis-path: &pepper_apis_path
+  pepper_apis_path: &pepper_apis_path
             /home/circleci/repo/pepper-apis
   api-spec-path: &api-spec-path
             /home/circleci/repo/pepper-apis/docs/specification
@@ -29,6 +29,8 @@ references:
       housekeepingdb
   studyserver_test_db: &studyserver_test_db
       studyservicedb
+  test_parallellism: &test_parallelism 15
+  ddp_server_port: &ddp_server_port 5556
 
 
 executors:
@@ -37,7 +39,7 @@ executors:
       - image: broadinstitute/study-server-build:java-2020-04-15A
   test-executor:
     docker:
-      - image: broadinstitute/study-server-build:java-2020-04-15A
+      - image: broadinstitute/study-server-build:java-2020-04-20A
       # start pubsub emulator
       - image: broadinstitute/study-server-build:pubsub-1
       - image: circleci/mysql:5.7-ram
@@ -53,27 +55,6 @@ executors:
     - image: *ci_support_image
 
 commands:
-  compile:
-    description: Run maven compile
-    parameters:
-      m2_repo:
-        type: string
-        default: *m2_repo_path
-      root_path:
-        type: string
-        default: *root_path
-    steps:
-      - restore_cache: *m2_cache_keys
-      - run:
-          name: Run maven
-          command: |
-            # Some images the $HOME directory is not writable. Let's be specific for .m2/repository location
-            mvn test-compile package -DskipTests -file pom.xml -Dmaven.repo.local=<< parameters.m2_repo >>
-            # mvn package -DskipTests -f housekeeping-pom.xml -Dcheckstyle.skip -Dmaven.repo.local=<< parameters.m2_repo >>
-      - save_cache:
-          key: *m2_cache_key
-          paths:
-            - << parameters.root_path >>/.m2
   build-jar:
     description: Build jar
     parameters:
@@ -95,7 +76,7 @@ commands:
           name: Set environment to be used by build
           command: |
             echo "export VAULT_TOKEN=$(vault write -field=token auth/approle/login role_id=$VAULT_ROLE_ID secret_id=$VAULT_ROLE_SECRET_ID)" >> $BASH_ENV
-            echo "export SHORT_GIT_SHA=$(echo '<< pipeline.git.revision >>' | cut -c 1-7)" >> $BASH_ENV
+            echo "export SHORT_GIT_SHA=$(echo $CIRCLE_SHA1 | cut -c 1-7)" >> $BASH_ENV
             source $BASH_ENV
 
   set-deployment-env:
@@ -104,8 +85,7 @@ commands:
       - run:
           name: Determine deployment environment for branch << pipeline.git.branch >>
           command: |
-            echo "Checking which environment deploy branch: << pipeline.git.branch >>"
-            case "<< pipeline.git.branch >>" in
+            case "${CIRCLE_BRANCH}" in
             develop)
               DEPLOY_ENV=dev
             ;;
@@ -126,7 +106,7 @@ commands:
             staging)
               DEPLOY_ENV=staging
             ;;
-            staging)
+            prod)
               DEPLOY_ENV=prod
             ;;
             *)
@@ -150,7 +130,7 @@ commands:
           environment:
             USE_DOCKER: false
 
-  setup-test-dbs:
+  create-test-dbs:
     description: setup the test databases. Ensure up and running
     parameters:
       studyserverdb:
@@ -160,16 +140,9 @@ commands:
         type: string
         default: *housekeeping_test_db
     steps:
-      - run:
-          name: Waiting for MySQL to be ready
-          command: |
-            for i in `seq 1 10`;
-            do
-              nc -z 127.0.0.1 3306 && echo Success && exit 0
-              echo -n .
-              sleep 1
-            done
-            echo Failed waiting for MySQL && exit 1
+      - wait_for_server:
+          port: 3306
+          timeout: 15
       - run:
           name: Setup test databases
           command: |
@@ -320,7 +293,7 @@ commands:
               echo "Deleting version $CURRENT_VERSION of service $SERVICE"
               gcloud app versions delete --quiet --service "$SERVICE" "$CURRENT_VERSION" --project "broad-ddp-${ENVIRONMENT}"
             done;
-            :
+            : # Need to make sure that exit code for step is a 0 even if versions delete failed
 
   update-deployment-sheet:
     parameters:
@@ -357,24 +330,180 @@ commands:
               jq -r .data.gcp.serviceKey |
               gcloud auth activate-service-account --key-file=-
 
+  compute-parallel-test-split:
+    description: >
+      Use CircleCi utility to compute tests to be run in a parallel test job.
+      Note that we try to exclude IntegrationTestSuite tests from running in a parallel.
+      In current workflow IntegrationTestSuite runs in its own dedicated job.
+    parameters:
+      circleci_path:
+        type: string
+        default: *circleci_path
+    steps:
+      - run:
+          name: Split tests
+          command: |
+            set +x
+            set +e
+            TEST_DATA_PATH='<< parameters.circleci_path >>/tests'
+            mkdir -p "$TEST_DATA_PATH"
+
+            TEST_SRC_DIRECTORY='src/test/java'
+            TEST_SEARCH_PATTERN='**/*Test.java'
+
+            ALL_TEST_CLASS_NAMES_PATH="${TEST_DATA_PATH}/allTestClassNames.txt"
+            SUREFIRE_CLASS_NAMES_PATH="${TEST_DATA_PATH}/surefire_classnames"
+
+            # generate list of tests to be processed
+            circleci tests glob "${TEST_SRC_DIRECTORY}/${TEST_SEARCH_PATTERN}" | # fancy circleci 'find' command
+              sed -e "s#^${TEST_SRC_DIRECTORY}/\(.*\)\.java#\1#" | # Strip out '.java' and parent directory path
+              tr "/" "." >  "$SUREFIRE_CLASS_NAMES_PATH" # Convert to a class name of form org.package.ClassName
+
+            echo "Total number of test class names collected: $(wc -l $SUREFIRE_CLASS_NAMES_PATH)"
+
+            # tests split will figure out which tests to run in this node
+            THIS_NODE_TESTS_PATH=/tmp/this_node_tests
+
+            cat $SUREFIRE_CLASS_NAMES_PATH |
+              circleci tests split --split-by=timings --timings-type=classname > $THIS_NODE_TESTS_PATH
+
+            echo "Number of test classes circleci wants to execute on this node: $(wc -l < $THIS_NODE_TESTS_PATH)"
+
+            IGNORE_CLASS_LIST_PATH="${TEST_DATA_PATH}/surefire_classnames_ignore_list"
+
+
+            # Specify the tests to run by substraction: we tell Surefire what NOT to run
+            # Make sure the one CircleCi has calculated are removed from the "ignore" list
+            cat $SUREFIRE_CLASS_NAMES_PATH |
+              grep -xvf $THIS_NODE_TESTS_PATH > $IGNORE_CLASS_LIST_PATH
+
+            # And ignore the Suite itself
+            echo 'org.broadinstitute.ddp.route.IntegrationTestSuite'  >> $IGNORE_CLASS_LIST_PATH
+
+            cp $THIS_NODE_TESTS_PATH "${TEST_DATA_PATH}" /this_node_circleci_tests
+
+            # save path for next steps
+            echo "export IGNORE_CLASS_LIST_PATH=${IGNORE_CLASS_LIST_PATH}" >> $BASH_ENV
+            source $BASH_ENV
+            echo "Total number of test classes that will be skipped in this node: $(wc -l $IGNORE_CLASS_LIST_PATH)"
+      - store_artifacts:
+          path: << parameters.circleci_path>>/tests/
+
+  run-maven-with-pepper-options:
+    parameters:
+      phase:
+        type: string
+      pom_file:
+        type: string
+        default: pom.xml
+      additional_options:
+        type: string
+        default: ''
+      skip_checkstyle:
+        type: boolean
+        default: true
+      skip_tests:
+        type: boolean
+        default: true
+      m2_repo:
+        type: string
+        default: *m2_repo_path
+      restore_m2_cache:
+        type: boolean
+        default: false
+      save_m2_cache:
+        type: boolean
+        default: false
+      background:
+        type: boolean
+        default: false
+      root_path:
+        type: string
+        default: *root_path
+    steps:
+      - when:
+          condition: << parameters.restore_m2_cache >>
+          steps:
+            - restore_cache: *m2_cache_keys
+      - run:
+          name: 'Run maven <<parameters.phase>> with options: <<parameters.additional_options>>'
+          command: |
+            CHECKSTYLE_OPTION=''
+            if [[ << parameters.skip_checkstyle >> = true ]]; then
+              CHECKSTYLE_OPTION='-Dcheckstyle.skip'
+            fi
+            SKIPTESTS_OPTION='-DskipTests=<< parameters.skip_tests >>'
+            mvn <<parameters.phase>> --batch-mode \
+                    -f <<parameters.pom_file>> \
+                    $CHECKSTYLE_OPTION \
+                    $SKIPTESTS_OPTION \
+                    -Ditext.license=output-config/itextkey.xml \
+                    -Dddp.firecloudKeysDir=output-config/fc_keys \
+                    -Dconfig.file=output-config/testing-circleci.conf  \
+                    -Dmaven.repo.local=<< parameters.m2_repo >> <<parameters.additional_options>>
+          background: <<parameters.background>>
+      - when:
+          condition: << parameters.save_m2_cache >>
+          steps:
+            - save_cache:
+                key: *m2_cache_key
+                paths:
+                  - << parameters.root_path >>/.m2
+      - store_test_results:
+          path: target/surefire-reports
+
+  wait_for_server:
+    description: Wait for a server to respond for specific period of time
+    parameters:
+      server_address:
+        type: string
+        default: '127.0.0.1'
+      port:
+        type: integer
+      timeout:
+        type: integer
+        default: 60
+    steps:
+      - run:
+          name: Waiting for server to start
+          command: |
+            for i in `seq 1 << parameters.timeout >>`;
+            do
+              nc -z << parameters.server_address >> << parameters.port >> && echo Success && exit 0
+              echo -n .
+              sleep 1
+            done
+            echo Failed waiting for << parameters.server_address >> << parameters.port >> to start && exit 1
+
+  start-ddp-test-server:
+    description: Run test server that applies liquibase and load test data
+    steps:
+      - run-maven-with-pepper-options:
+          phase: exec:java
+          additional_options: '-Dexec.mainClass=org.broadinstitute.ddp.route.IntegrationTestSuite -Dexec.classpathScope=test'
+          background: true
+      - wait_for_server:
+          port: 5556
+          timeout: 60
+
 jobs:
-  compile-only-job:
+  compile-and-run-test-suite-job:
     executor:
-      name: build-executor
+      name: test-executor
     working_directory: *pepper_apis_path
     steps:
       - checkout:
           path: *repo_path
       - setup-shared-env
-      - compile
-      # will be needed for tests later on
       - render-configs
-      - persist_to_workspace:
-          root: *root_path
-          paths:
-            - repo
+      - create-test-dbs
+      - run-maven-with-pepper-options:
+          phase: test
+          skip_tests: false
+          additional_options: '-Dtest=ServerInSameProcessIntegrationTestSuite'
+          restore_m2_cache: true
 
-  parallel-tests-job:
+  parallel-compile-and-test-job:
     executor:
       name: test-executor
     working_directory: *pepper_apis_path
@@ -383,77 +512,27 @@ jobs:
       parallelism:
         default: 2
         type: integer
-      repo_path:
-        type: string
-        default: *repo_path
-      circleci_path:
-        type: string
-        default: *circleci_path
-      m2_repo:
-        type: string
-        default: *m2_repo_path
     steps:
-      - attach_workspace:
-          at: *root_path
-      - run:
-          name: Split tests
-          command: |
-            set +x
-            set +e
-            set -o xtrace
-            TEST_DATA_PATH='<< parameters.circleci_path >>/tests'
-            mkdir -p "$TEST_DATA_PATH"
-
-            TEST_SRC_DIRECTORY='src/test/java'
-            TEST_SEARCH_PATTERN='**/*Test.java'
-
-            SUREFIRE_CLASS_NAMES_PATH="${TEST_DATA_PATH}/surefire_classnames"
-
-            # generate list of tests to be processed
-            circleci tests glob "${TEST_SRC_DIRECTORY}/${TEST_SEARCH_PATTERN}" | # fancy circleci find command
-              sed -e "s#^${TEST_SRC_DIRECTORY}/\(.*\)\.java#\1#" | # Strip .java and parent directory path
-              tr "/" "." > "${SUREFIRE_CLASS_NAMES_PATH}"
-            #              tr "/" "." |  #Convert to a class name of form org.package.ClassName
-            #              grep -v '.*RouteTest' > "${SUREFIRE_CLASS_NAMES_PATH}" #Exclude RouteTest. These done from suite
-
-            # Test file name pattern does not pick this one up. Add explicitly
-            # echo 'org.broadinstitute.ddp.route.IntegrationTestSuite'  >> $SUREFIRE_CLASS_NAMES_PATH
-
-            echo "Total number of test class names collected: $(wc -l $SUREFIRE_CLASS_NAMES_PATH)"
-
-            # tests split will figure out which tests to run in this node
-            THIS_NODE_TESTS_PATH=/tmp/this_node_tests
-            cat $SUREFIRE_CLASS_NAMES_PATH | \
-              circleci tests split --split-by=timings --timings-type=classname > $THIS_NODE_TESTS_PATH
-
-
-            IGNORE_CLASS_LIST_PATH="${TEST_DATA_PATH}/surefire_classnames_ignore_list"
-
-            # Filter out the ones that don't run in this node
-            cat $SUREFIRE_CLASS_NAMES_PATH | \
-              grep -xvf $THIS_NODE_TESTS_PATH > $IGNORE_CLASS_LIST_PATH
-
-            // save path for next steps
-            echo "export IGNORE_CLASS_LIST_PATH=${IGNORE_CLASS_LIST_PATH}" >> $BASH_ENV
-            source $BASH_ENV
-            echo "Total number of test classes that will be skipped in this node: $(wc -l $IGNORE_CLASS_LIST_PATH)"
-      - store_artifacts:
-          path: << parameters.circleci_path>>/tests/
-      - setup-test-dbs
-      - restore_cache: *m2_cache_keys
-      - run:
-          name: Run tests
-          command: |
-            echo "The value of IGNORE_CLASS_LIST_PATH=${IGNORE_CLASS_LIST_PATH}"
-            mvn --batch-mode -Dcheckstyle.skip test -f pom.xml \
-                    -Ditext.license=output-config/itextkey.xml \
-                    -Dddp.firecloudKeysDir=output-config/fc_keys \
-                    -Dconfig.file=output-config/testing-circleci.conf  \
-                    -Dmaven.repo.local=<< parameters.m2_repo >> \
-                    -Dsurefire.excludesFile=$IGNORE_CLASS_LIST_PATH   # Key line to do tests in parallel
-
-      - store_test_results:
-          path: target/surefire-reports
+      - checkout:
+          path: *repo_path
+      - setup-shared-env
+      - run-maven-with-pepper-options:
+          phase: process-test-classes
+          restore_m2_cache: true
+          skip_checkstyle: false
+      - render-configs
+      - create-test-dbs
+      - start-ddp-test-server # starts DDP server. And execute Liquibase DB population
+      - compute-parallel-test-split
+      - run-maven-with-pepper-options:
+          phase: test
+          skip_tests: false
+          additional_options: '-PCircleciParallelBuild -Dsurefire.excludesFile=$IGNORE_CLASS_LIST_PATH'
+          save_m2_cache: true
+      - persist_to_workspace:
+          root: *root_path
+          paths:
+            - repo
 
   store-jar-job:
     executor:
@@ -472,7 +551,7 @@ jobs:
       - store-jar:
           jar_base_name: Housekeeping
 
-  deploy-workspace-jar-job:
+  deploy-jar-from-workspace-job:
     executor:
       name: deploy-executor
     working_directory: *pepper_apis_path
@@ -535,39 +614,29 @@ parameters:
 workflows:
   version: 2
 
-  run-tests-on-demand-workflow:
-    when: << pipeline.parameters.on_demand >>
-    jobs:
-      - compile-only-job
-      - parallel-tests-job:
-          parallelism: 5
-          requires:
-            - compile-only-job
-
-  build-test-store-deploy-workflow:
+  parallel-compile-and-test-workflow:
     unless: << pipeline.parameters.on_demand >>
     jobs:
-      - compile-only-job: &compile_and_test_filters
-          filters: 
+      - compile-and-run-test-suite-job: &compile_and_test_filters
+          filters:
             branches:
               only:
                 - develop
                 - &rc /^rc.*/
                 - &hotfix /^hotfix.*/
                 - study-server-parallel-tests
-      - parallel-tests-job:
-          parallelism: 5
+      - parallel-compile-and-test-job:
+          parallelism: *test_parallelism
           <<: *compile_and_test_filters
-          requires:
-            - compile-only-job
-      - deploy-workspace-jar-job:
+      - deploy-jar-from-workspace-job:
           filters:
             branches:
               only:
                 - develop
                 - study-server-parallel-tests
           requires:
-            - parallel-tests-job
+            - parallel-compile-and-test-job
+            - compile-and-run-test-suite-job
       - store-jar-job:
           filters:
             branches:
@@ -576,7 +645,15 @@ workflows:
                 - *hotfix
                 - study-server-parallel-tests
           requires:
-            - parallel-tests-job
+            - compile-and-run-test-suite-job
+            - parallel-compile-and-test-job
+
+  run-tests-on-demand-workflow:
+    when: << pipeline.parameters.on_demand >>
+    jobs:
+      - compile-and-run-test-suite-job
+      - parallel-compile-and-test-job:
+          parallelism: *test_parallelism
 
   deploy-workflow:
     jobs:
