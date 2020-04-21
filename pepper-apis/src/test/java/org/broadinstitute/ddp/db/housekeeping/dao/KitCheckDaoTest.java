@@ -115,10 +115,10 @@ public class KitCheckDaoTest extends TxnAwareBaseTest {
     @Test
     public void testCheckForKits_userEnrolled_missingMailAddress() {
         TransactionWrapper.useTxn(handle -> {
-            enrollTestUser(handle);
-
             JdbiMailAddress jdbiAddress = handle.attach(JdbiMailAddress.class);
             assertFalse("should not have address", jdbiAddress.findDefaultAddressForParticipant(userGuid).isPresent());
+
+            enrollTestUser(handle);
 
             int numRecipients = new KitCheckDao().checkForKits(handle).getTotalNumberOfParticipantsQueuedForKit();
             assertEquals("should not have any recipients", 0L, numRecipients);
