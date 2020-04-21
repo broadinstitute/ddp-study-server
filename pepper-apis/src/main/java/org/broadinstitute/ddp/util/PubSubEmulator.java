@@ -168,7 +168,7 @@ public class PubSubEmulator {
                 CloseableHttpClient httpClient = HttpClients.createDefault();
         ) {
             CloseableHttpResponse response =
-                    httpClient.execute(new HttpGet("http://" + EMULATOR_HOST));
+                    httpClient.execute(new HttpGet(PUBSUB_BASE_URL));
             return response.getStatusLine().getStatusCode() == 200;
         } catch (HttpHostConnectException e) {
             LOG.debug("Could not connect to pubsub server. Must not be running");
