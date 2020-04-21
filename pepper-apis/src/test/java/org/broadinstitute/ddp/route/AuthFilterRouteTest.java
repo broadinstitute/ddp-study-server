@@ -9,8 +9,8 @@ import static org.broadinstitute.ddp.constants.ConfigFile.Auth0Testing.AUTH0_MGM
 import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
+import java.util.function.Function;
 
 import com.auth0.exception.Auth0Exception;
 import com.google.gson.Gson;
@@ -32,7 +32,6 @@ import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.json.Profile;
-import org.broadinstitute.ddp.json.export.ExportStudyPayload;
 import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.hamcrest.Matchers;
@@ -75,9 +74,6 @@ public class AuthFilterRouteTest extends IntegrationTestSuite.TestCase {
     private static String testUserToken;
     private static String testAdminToken;
 
-    private static String workspaceNamespace;
-    private static String workspaceName;
-
     private static List<Integer> acceptableStatuses = new ArrayList<>();
     private final boolean isAdmin = true;
 
@@ -95,10 +91,6 @@ public class AuthFilterRouteTest extends IntegrationTestSuite.TestCase {
         testAdminToken = RouteTestUtil.loginStaticAdminUserForToken();
 
         Config cfg = RouteTestUtil.getConfig();
-        Config firecloudConfig = cfg.getConfig(ConfigFile.FIRECLOUD);
-        workspaceNamespace = firecloudConfig.getString(ConfigFile.TEST_FIRECLOUD_WORKSPACE_NAMESPACE);
-        workspaceName = firecloudConfig.getString(ConfigFile.TEST_FIRECLOUD_WORKSPACE_NAME);
-
         acceptableStatuses.add(200);
         acceptableStatuses.add(502);
         setupUsers();
@@ -177,6 +169,24 @@ public class AuthFilterRouteTest extends IntegrationTestSuite.TestCase {
                 Assert.assertEquals(401, httpResponse.getStatusLine().getStatusCode());
                 Assert.assertTrue(StringUtils.isEmpty(EntityUtils.toString(httpResponse.getEntity())));
                 return null;
+            }
+        });
+    }
+
+
+    private void assert404ForStandardVerbs(String endpoint, Header authHeader) throws IOException {
+        List<Function<String, Request>> methods = List.of(Request::Get, Request::Post, Request::Patch, Request::Put);
+        methods.forEach(method -> {
+            try {
+                method.apply(endpoint)
+                        .addHeader(authHeader)
+                        .execute()
+                        .handleResponse(res -> {
+                            Assert.assertEquals(404, res.getStatusLine().getStatusCode());
+                            return null;
+                        });
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
         });
     }
@@ -342,7 +352,7 @@ public class AuthFilterRouteTest extends IntegrationTestSuite.TestCase {
 
     @Test
     public void testAdminStudiesRequestFailsWithNoToken() throws Exception {
-        assert401NoBodyForStandardVerbs(buildAdminStudiesUrl(), null);
+        assert404ForStandardVerbs(buildAdminStudiesUrl(), null);
     }
 
     @Test
@@ -358,26 +368,23 @@ public class AuthFilterRouteTest extends IntegrationTestSuite.TestCase {
     @Test
     public void testAdminStudiesRequestsFailsWithRevokedClient() throws Exception {
         RouteTestUtil.revokeTestClient();
-        assert401NoBodyForStandardVerbs(buildAdminStudiesUrl(), RouteTestUtil.buildTestAdminAuthHeader());
+        assert404ForStandardVerbs(buildAdminStudiesUrl(), RouteTestUtil.buildTestAdminAuthHeader());
     }
 
     @Test
     public void testAdminStudiesRequestFailsWithLockedUserAccount() throws Exception {
         RouteTestUtil.disableTestUserAccount(isAdmin);
-        assert401NoBodyForStandardVerbs(buildAdminStudiesUrl(), RouteTestUtil.buildTestAdminAuthHeader());
+        assert404ForStandardVerbs(buildAdminStudiesUrl(), RouteTestUtil.buildTestAdminAuthHeader());
     }
 
     @Test
     public void testAdminStudiesGetRequestPassesAuthFilterWithGoodToken() throws Exception {
-        Request studiesGetRequest = RouteTestUtil.buildAuthorizedGetRequest(testAdminToken,
-                buildAdminStudiesUrl());
-        int statusCode = studiesGetRequest.execute().returnResponse().getStatusLine().getStatusCode();
-        Assert.assertTrue("status code: " + statusCode, statusCode == 200);
+        assert404ForStandardVerbs(buildAdminStudiesUrl(), new BasicHeader("Authorization", "Bearer " + testAdminToken));
     }
 
     @Test
     public void testAdminWorkspacesRequestFailsWithNoToken() throws Exception {
-        assert401NoBodyForStandardVerbs(buildAdminWorkspacesUrl(), null);
+        assert404ForStandardVerbs(buildAdminWorkspacesUrl(), null);
     }
 
     @Test
@@ -393,26 +400,23 @@ public class AuthFilterRouteTest extends IntegrationTestSuite.TestCase {
     @Test
     public void testAdminWorkspacesRequestsFailsWithRevokedClient() throws Exception {
         RouteTestUtil.revokeTestClient();
-        assert401NoBodyForStandardVerbs(buildAdminWorkspacesUrl(), RouteTestUtil.buildTestAdminAuthHeader());
+        assert404ForStandardVerbs(buildAdminWorkspacesUrl(), RouteTestUtil.buildTestAdminAuthHeader());
     }
 
     @Test
     public void testAdminWorkspacesRequestFailsWithLockedUserAccount() throws Exception {
         RouteTestUtil.disableTestUserAccount(isAdmin);
-        assert401NoBodyForStandardVerbs(buildAdminWorkspacesUrl(), RouteTestUtil.buildTestAdminAuthHeader());
+        assert404ForStandardVerbs(buildAdminWorkspacesUrl(), RouteTestUtil.buildTestAdminAuthHeader());
     }
 
     @Test
     public void testAdminWorkspacesGetRequestPassesAuthFilterWithGoodToken() throws Exception {
-        Request workspacesGetRequest = RouteTestUtil.buildAuthorizedGetRequest(testAdminToken,
-                buildAdminWorkspacesUrl());
-        int statusCode = workspacesGetRequest.execute().returnResponse().getStatusLine().getStatusCode();
-        Assert.assertTrue("status code: " + statusCode, acceptableStatuses.contains(statusCode));
+        assert404ForStandardVerbs(buildAdminWorkspacesUrl(), new BasicHeader("Authorization", "Bearer " + testAdminToken));
     }
 
     @Test
     public void testAdminExportStudiesRequestFailsWithNoToken() throws Exception {
-        assert401NoBodyForStandardVerbs(buildAdminExportStudiesUrl(), null);
+        assert404ForStandardVerbs(buildAdminExportStudiesUrl(), null);
     }
 
     @Test
@@ -428,24 +432,13 @@ public class AuthFilterRouteTest extends IntegrationTestSuite.TestCase {
     @Test
     public void testAdminExportStudiesRequestsFailsWithRevokedClient() throws Exception {
         RouteTestUtil.revokeTestClient();
-        assert401NoBodyForStandardVerbs(buildAdminExportStudiesUrl(), RouteTestUtil.buildTestAdminAuthHeader());
+        assert404ForStandardVerbs(buildAdminExportStudiesUrl(), RouteTestUtil.buildTestAdminAuthHeader());
     }
 
     @Test
     public void testAdminExportStudiesRequestFailsWithLockedUserAccount() throws Exception {
         RouteTestUtil.disableTestUserAccount(isAdmin);
-        assert401NoBodyForStandardVerbs(buildAdminExportStudiesUrl(), RouteTestUtil.buildTestAdminAuthHeader());
-    }
-
-    @Test
-    public void testAdminExportStudiesPostRequestPassesAuthFilterWithGoodToken() throws Exception {
-        Date includeOnlyAfter = new Date(0);
-        ExportStudyPayload payload = new ExportStudyPayload(workspaceNamespace, workspaceName, includeOnlyAfter);
-        String payloadJson = new Gson().toJson(payload);
-        Request studiesGetRequest = RouteTestUtil.buildAuthorizedPostRequest(testAdminToken,
-                buildAdminExportStudiesUrl(), payloadJson);
-        int statusCode = studiesGetRequest.execute().returnResponse().getStatusLine().getStatusCode();
-        Assert.assertTrue("status code: " + statusCode, acceptableStatuses.contains(statusCode));
+        assert404ForStandardVerbs(buildAdminExportStudiesUrl(), RouteTestUtil.buildTestAdminAuthHeader());
     }
 
     @Test

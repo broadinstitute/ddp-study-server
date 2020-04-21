@@ -68,24 +68,6 @@
     "baseTestUrl": "http://localhost:5556",
     "socialTestEmail": "{{$testingConf.Data.socialTestEmail}}",
     "socialTestPassword": "{{$testingConf.Data.socialTestPassword}}",
-    "firecloud": {
-        {{if eq $environment "dev"}}
-            "testWorkspaceNamespace": "pepper-dev2",
-            "testWorkspace": "pepper-dev-playground"
-        {{end}}
-        {{if eq $environment "test"}}
-            "testWorkspaceNamespace": "pepper-dev2",
-            "testWorkspace": "pepper-test"
-        {{end}}
-        {{if eq $environment "staging"}}
-            "testWorkspaceNamespace": "pepper-dev2",
-            "testWorkspace": "pepper-staging"
-        {{end}}
-        {{if eq $environment "prod"}}
-            "testWorkspaceNamespace": "pepper-dev2",
-            "testWorkspace": "pepper-prod-testing"
-        {{end}}
-    },
     "usePubSubEmulator": true,
     "pubSubProject": "testing",
     "runScheduler": false,

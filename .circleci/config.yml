@@ -242,7 +242,6 @@ commands:
             cp ../target/<<parameters.jar_base_name>>.jar .
             cp ../src/appengine/<<parameters.jar_base_name>>.yaml .
             cp ../output-config/application.conf .
-            cp -r ../output-config/fc_keys .
       - auth-gcp-service-account
       - run:
           name: Deploy <<parameters.jar_base_name>> to GAE
@@ -482,6 +481,7 @@ jobs:
       - run-maven-with-pepper-options:
           phase: test
           skip_tests: false
+          skip_checkstyle: false
           additional_options: '-Dtest=ServerInSameProcessIntegrationTestSuite'
           restore_m2_cache: true
 
@@ -501,7 +501,7 @@ jobs:
       - run-maven-with-pepper-options:
           phase: process-test-classes
           restore_m2_cache: true
-          skip_checkstyle: false
+          skip_checkstyle: true
       - render-configs
       - create-test-dbs
       - start-ddp-test-server # starts DDP server. And execute Liquibase DB population

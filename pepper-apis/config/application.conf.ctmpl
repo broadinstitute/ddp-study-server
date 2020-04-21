@@ -93,10 +93,6 @@
     {{if eq $environment "dev"}}
         "baseTestUrl": "https://pepper-dev.datadonationplatform.org",
         "baseWebDriverUrl": "https://basil-dev.datadonationplatform.org",
-        "firecloud": {
-            "testWorkspaceNamespace":"pepper-dev2",
-            "testWorkspace":"pepper-dev-playground"
-        },
         "dsmBaseUrl": "https://dsm-dev.datadonationplatform.org:443"
     {{end}}
     {{if eq $environment "test"}}
