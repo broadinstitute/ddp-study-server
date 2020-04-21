@@ -482,6 +482,7 @@ jobs:
       - run-maven-with-pepper-options:
           phase: test
           skip_tests: false
+          skip_checkstyle: false
           additional_options: '-Dtest=ServerInSameProcessIntegrationTestSuite'
           restore_m2_cache: true
 
@@ -501,7 +502,7 @@ jobs:
       - run-maven-with-pepper-options:
           phase: process-test-classes
           restore_m2_cache: true
-          skip_checkstyle: false
+          skip_checkstyle: true
       - render-configs
       - create-test-dbs
       - start-ddp-test-server # starts DDP server. And execute Liquibase DB population
