@@ -8,7 +8,6 @@ import static org.broadinstitute.ddp.constants.ConfigFile.Auth0Testing.AUTH0_MGM
 
 import java.io.IOException;
 import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
 
@@ -18,11 +17,7 @@ import com.typesafe.config.Config;
 import io.restassured.RestAssured;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.Header;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.fluent.Request;
-import org.apache.http.client.fluent.Response;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
 import org.broadinstitute.ddp.constants.ConfigFile;
@@ -44,14 +39,10 @@ import org.junit.Test;
 
 public class AuthFilterRouteTest extends IntegrationTestSuite.TestCase {
 
-    public static final String BASE_USER_ENDPOINT = getBaseUserEndpoint(TestConstants.TEST_USER_GUID);
-    public static final String PROFILE_ENDPOINT = BASE_USER_ENDPOINT + "/profile";
-    public static final String ADMIN_STUDIES_ENDPOINT = RouteConstants.API.ADMIN_STUDIES;
-    public static final String ADMIN_WORKSPACES_ENDPOINT = RouteConstants.API.ADMIN_WORKSPACES;
-    public static final String ADMIN_EXPORT_STUDIES_ENDPOINT = RouteConstants.API.EXPORT_STUDY
-            .replace(RouteConstants.PathParam.STUDY_GUID, TestConstants.TEST_STUDY_GUID);
-    public static final String STUDY_ENDPOINT = getStudyEndpoint(TestConstants.TEST_USER_GUID, TestConstants.TEST_STUDY_GUID);
-    public static final String STUDY2_ENDPOINT = getStudyEndpoint(TestConstants.TEST_USER_GUID, TestConstants.SECOND_STUDY_GUID);
+    private static final String BASE_USER_ENDPOINT = getBaseUserEndpoint(TestConstants.TEST_USER_GUID);
+    private static final String PROFILE_ENDPOINT = BASE_USER_ENDPOINT + "/profile";
+    private static final String STUDY_ENDPOINT = getStudyEndpoint(TestConstants.TEST_USER_GUID, TestConstants.TEST_STUDY_GUID);
+    private static final String STUDY2_ENDPOINT = getStudyEndpoint(TestConstants.TEST_USER_GUID, TestConstants.SECOND_STUDY_GUID);
     private static final Header GARBAGE_AUTH_HEADER = new BasicHeader(RouteConstants.Header.AUTHORIZATION, "Bearer foo");
     private static final String EXPIRED_JWT = "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiIsImtpZCI6IlF6SkROVVJDTmtVMU5q"
             + "TkVPVEF3TjBReFF6aEZRa1EyTjBRek1VWTRNRUl3TkRGQ01EbENNUSJ9.eyJodHRwczovL2RhdGFkb25hdGlvbnBsYXRmb3J"
@@ -72,27 +63,20 @@ public class AuthFilterRouteTest extends IntegrationTestSuite.TestCase {
 
     private static TestDataSetupUtil.GeneratedTestData generatedTestDataUser2 = null;
     private static String testUserToken;
-    private static String testAdminToken;
 
-    private static List<Integer> acceptableStatuses = new ArrayList<>();
     private final boolean isAdmin = true;
 
-    public static String getBaseUserEndpoint(String user) {
+    private static String getBaseUserEndpoint(String user) {
         return "/pepper/v1/user/" + user;
     }
 
-    public static String getStudyEndpoint(String userGuid, String studyGuid) {
+    private static String getStudyEndpoint(String userGuid, String studyGuid) {
         return getBaseUserEndpoint(userGuid) + "/studies/" + studyGuid + "/activities";
     }
 
     @BeforeClass
     public static void setupAuthToken() throws Auth0Exception {
         testUserToken = RouteTestUtil.loginStaticTestUserForToken();
-        testAdminToken = RouteTestUtil.loginStaticAdminUserForToken();
-
-        Config cfg = RouteTestUtil.getConfig();
-        acceptableStatuses.add(200);
-        acceptableStatuses.add(502);
         setupUsers();
     }
 
@@ -162,19 +146,7 @@ public class AuthFilterRouteTest extends IntegrationTestSuite.TestCase {
         });
     }
 
-    private void assert401NoBody(Response res) throws IOException {
-        res.handleResponse(new ResponseHandler<Object>() {
-            @Override
-            public Object handleResponse(HttpResponse httpResponse) throws ClientProtocolException, IOException {
-                Assert.assertEquals(401, httpResponse.getStatusLine().getStatusCode());
-                Assert.assertTrue(StringUtils.isEmpty(EntityUtils.toString(httpResponse.getEntity())));
-                return null;
-            }
-        });
-    }
-
-
-    private void assert404ForStandardVerbs(String endpoint, Header authHeader) throws IOException {
+    private void assert401NoBodyForStandardVerbs(String endpoint, Header authHeader) {
         List<Function<String, Request>> methods = List.of(Request::Get, Request::Post, Request::Patch, Request::Put);
         methods.forEach(method -> {
             try {
@@ -182,7 +154,8 @@ public class AuthFilterRouteTest extends IntegrationTestSuite.TestCase {
                         .addHeader(authHeader)
                         .execute()
                         .handleResponse(res -> {
-                            Assert.assertEquals(404, res.getStatusLine().getStatusCode());
+                            Assert.assertEquals(401, res.getStatusLine().getStatusCode());
+                            Assert.assertTrue(StringUtils.isEmpty(EntityUtils.toString(res.getEntity())));
                             return null;
                         });
             } catch (IOException e) {
@@ -191,27 +164,8 @@ public class AuthFilterRouteTest extends IntegrationTestSuite.TestCase {
         });
     }
 
-    private void assert401NoBodyForStandardVerbs(String endpoint, Header authHeader) throws IOException {
-        assert401NoBody(Request.Get(endpoint).addHeader(authHeader).execute());
-        assert401NoBody(Request.Post(endpoint).addHeader(authHeader).execute());
-        assert401NoBody(Request.Patch(endpoint).addHeader(authHeader).execute());
-        assert401NoBody(Request.Put(endpoint).addHeader(authHeader).execute());
-    }
-
     private String buildProfileUrl() {
         return RouteTestUtil.getTestingBaseUrl() + PROFILE_ENDPOINT;
-    }
-
-    private String buildAdminStudiesUrl() {
-        return RouteTestUtil.getTestingBaseUrl() + ADMIN_STUDIES_ENDPOINT;
-    }
-
-    private String buildAdminWorkspacesUrl() {
-        return RouteTestUtil.getTestingBaseUrl() + ADMIN_WORKSPACES_ENDPOINT;
-    }
-
-    private String buildAdminExportStudiesUrl() {
-        return RouteTestUtil.getTestingBaseUrl() + ADMIN_EXPORT_STUDIES_ENDPOINT;
     }
 
     private String buildStudyUrl() {
@@ -256,17 +210,17 @@ public class AuthFilterRouteTest extends IntegrationTestSuite.TestCase {
     }
 
     @Test
-    public void testProfileRequestsFailsWithNoToken() throws Exception {
+    public void testProfileRequestsFailsWithNoToken() {
         assert401NoBodyForStandardVerbs(buildProfileUrl(), null);
     }
 
     @Test
-    public void testProfileRequestsFailsWithGarbageToken() throws Exception {
+    public void testProfileRequestsFailsWithGarbageToken() {
         assert401NoBodyForStandardVerbs(buildProfileUrl(), GARBAGE_AUTH_HEADER);
     }
 
     @Test
-    public void testProfileRequestsFailsWithExpiredToken() throws Exception {
+    public void testProfileRequestsFailsWithExpiredToken() {
         assert401NoBodyForStandardVerbs(buildProfileUrl(), EXPIRED_AUTH_HEADER);
     }
 
@@ -306,17 +260,17 @@ public class AuthFilterRouteTest extends IntegrationTestSuite.TestCase {
     // todo arz test that unmapped path errors out
 
     @Test
-    public void testGovernedStudyParticipants_requestFailsWithNoToken() throws Exception {
+    public void testGovernedStudyParticipants_requestFailsWithNoToken() {
         assert401NoBodyForStandardVerbs(buildGovernedStudyParticipantsUrl(), null);
     }
 
     @Test
-    public void testGovernedStudyParticipants_requestFailsWithGarbageToken() throws Exception {
+    public void testGovernedStudyParticipants_requestFailsWithGarbageToken() {
         assert401NoBodyForStandardVerbs(buildGovernedStudyParticipantsUrl(), GARBAGE_AUTH_HEADER);
     }
 
     @Test
-    public void testGovernedStudyParticipants_requestFailsWithExpiredToken() throws Exception {
+    public void testGovernedStudyParticipants_requestFailsWithExpiredToken() {
         assert401NoBodyForStandardVerbs(buildGovernedStudyParticipantsUrl(), EXPIRED_AUTH_HEADER);
     }
 
@@ -333,7 +287,7 @@ public class AuthFilterRouteTest extends IntegrationTestSuite.TestCase {
     }
 
     @Test
-    public void testGovernedStudyParticipants_requestPassesAuthFilterWithGoodToken() throws Exception {
+    public void testGovernedStudyParticipants_requestPassesAuthFilterWithGoodToken() {
         RestAssured.given().auth().oauth2(testUserToken)
                 .when().get(buildGovernedStudyParticipantsUrl())
                 .then().assertThat()
@@ -341,7 +295,7 @@ public class AuthFilterRouteTest extends IntegrationTestSuite.TestCase {
     }
 
     @Test
-    public void testGovernedStudyParticipants_failsWhenRequestedUserIsNotOperatorItself() throws Exception {
+    public void testGovernedStudyParticipants_failsWhenRequestedUserIsNotOperatorItself() {
         String url = buildGovernedStudyParticipantsUrl()
                 .replace(TestConstants.TEST_USER_GUID, "another-user-guid");
         RestAssured.given().auth().oauth2(testUserToken)
@@ -351,108 +305,17 @@ public class AuthFilterRouteTest extends IntegrationTestSuite.TestCase {
     }
 
     @Test
-    public void testAdminStudiesRequestFailsWithNoToken() throws Exception {
-        assert404ForStandardVerbs(buildAdminStudiesUrl(), null);
-    }
-
-    @Test
-    public void testAdminStudiesRequestFailsWithGarbageToken() throws Exception {
-        assert401NoBodyForStandardVerbs(buildAdminStudiesUrl(), GARBAGE_AUTH_HEADER);
-    }
-
-    @Test
-    public void testAdminStudiesRequestFailsWithExpiredToken() throws Exception {
-        assert401NoBodyForStandardVerbs(buildAdminStudiesUrl(), EXPIRED_AUTH_HEADER);
-    }
-
-    @Test
-    public void testAdminStudiesRequestsFailsWithRevokedClient() throws Exception {
-        RouteTestUtil.revokeTestClient();
-        assert404ForStandardVerbs(buildAdminStudiesUrl(), RouteTestUtil.buildTestAdminAuthHeader());
-    }
-
-    @Test
-    public void testAdminStudiesRequestFailsWithLockedUserAccount() throws Exception {
-        RouteTestUtil.disableTestUserAccount(isAdmin);
-        assert404ForStandardVerbs(buildAdminStudiesUrl(), RouteTestUtil.buildTestAdminAuthHeader());
-    }
-
-    @Test
-    public void testAdminStudiesGetRequestPassesAuthFilterWithGoodToken() throws Exception {
-        assert404ForStandardVerbs(buildAdminStudiesUrl(), new BasicHeader("Authorization", "Bearer " + testAdminToken));
-    }
-
-    @Test
-    public void testAdminWorkspacesRequestFailsWithNoToken() throws Exception {
-        assert404ForStandardVerbs(buildAdminWorkspacesUrl(), null);
-    }
-
-    @Test
-    public void testAdminWorkspacesRequestFailsWithGarbageToken() throws Exception {
-        assert401NoBodyForStandardVerbs(buildAdminWorkspacesUrl(), GARBAGE_AUTH_HEADER);
-    }
-
-    @Test
-    public void testAdminWorkspacesRequestFailsWithExpiredToken() throws Exception {
-        assert401NoBodyForStandardVerbs(buildAdminWorkspacesUrl(), EXPIRED_AUTH_HEADER);
-    }
-
-    @Test
-    public void testAdminWorkspacesRequestsFailsWithRevokedClient() throws Exception {
-        RouteTestUtil.revokeTestClient();
-        assert404ForStandardVerbs(buildAdminWorkspacesUrl(), RouteTestUtil.buildTestAdminAuthHeader());
-    }
-
-    @Test
-    public void testAdminWorkspacesRequestFailsWithLockedUserAccount() throws Exception {
-        RouteTestUtil.disableTestUserAccount(isAdmin);
-        assert404ForStandardVerbs(buildAdminWorkspacesUrl(), RouteTestUtil.buildTestAdminAuthHeader());
-    }
-
-    @Test
-    public void testAdminWorkspacesGetRequestPassesAuthFilterWithGoodToken() throws Exception {
-        assert404ForStandardVerbs(buildAdminWorkspacesUrl(), new BasicHeader("Authorization", "Bearer " + testAdminToken));
-    }
-
-    @Test
-    public void testAdminExportStudiesRequestFailsWithNoToken() throws Exception {
-        assert404ForStandardVerbs(buildAdminExportStudiesUrl(), null);
-    }
-
-    @Test
-    public void testAdminExportStudiesRequestFailsWithGarbageToken() throws Exception {
-        assert401NoBodyForStandardVerbs(buildAdminExportStudiesUrl(), GARBAGE_AUTH_HEADER);
-    }
-
-    @Test
-    public void testAdminExportStudiesRequestFailsWithExpiredToken() throws Exception {
-        assert401NoBodyForStandardVerbs(buildAdminExportStudiesUrl(), EXPIRED_AUTH_HEADER);
-    }
-
-    @Test
-    public void testAdminExportStudiesRequestsFailsWithRevokedClient() throws Exception {
-        RouteTestUtil.revokeTestClient();
-        assert404ForStandardVerbs(buildAdminExportStudiesUrl(), RouteTestUtil.buildTestAdminAuthHeader());
-    }
-
-    @Test
-    public void testAdminExportStudiesRequestFailsWithLockedUserAccount() throws Exception {
-        RouteTestUtil.disableTestUserAccount(isAdmin);
-        assert404ForStandardVerbs(buildAdminExportStudiesUrl(), RouteTestUtil.buildTestAdminAuthHeader());
-    }
-
-    @Test
-    public void testStudyRequestsFailsWithNoToken() throws Exception {
+    public void testStudyRequestsFailsWithNoToken() {
         assert401NoBodyForStandardVerbs(buildStudyUrl(), null);
     }
 
     @Test
-    public void testStudyRequestsFailsWithGarbageToken() throws Exception {
+    public void testStudyRequestsFailsWithGarbageToken() {
         assert401NoBodyForStandardVerbs(buildStudyUrl(), GARBAGE_AUTH_HEADER);
     }
 
     @Test
-    public void testStudyRequestsFailsWithExpiredToken() throws Exception {
+    public void testStudyRequestsFailsWithExpiredToken() {
         assert401NoBodyForStandardVerbs(buildStudyUrl(), EXPIRED_AUTH_HEADER);
     }
 
