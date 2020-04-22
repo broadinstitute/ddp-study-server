@@ -242,7 +242,6 @@ commands:
             cp ../target/<<parameters.jar_base_name>>.jar .
             cp ../src/appengine/<<parameters.jar_base_name>>.yaml .
             cp ../output-config/application.conf .
-            cp -r ../output-config/fc_keys .
       - auth-gcp-service-account
       - run:
           name: Deploy <<parameters.jar_base_name>> to GAE

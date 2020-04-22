@@ -73,7 +73,6 @@ import org.slf4j.LoggerFactory;
         DsmTriggerOnDemandActivityRouteTest.class,
         EmbeddedComponentActivityInstanceTest.class,
         ErrorHandlingRouteTest.class,
-        FireCloudRouteTest.class,
         GetActivityInstanceRouteTest.class,
         GetConsentSummariesRouteTest.class,
         GetConsentSummaryRouteTest.class,

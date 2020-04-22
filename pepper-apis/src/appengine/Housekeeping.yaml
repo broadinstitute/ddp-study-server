@@ -10,5 +10,4 @@ entrypoint: java -Xmx820m -Xmx820m -jar Housekeeping.jar
 # GAE does not like the "=" character in entrypoint and does not support "." in environment variables
 env_variables:
   config_file: application.conf
-  ddp_firecloudKeysDir: fc_keys
 
