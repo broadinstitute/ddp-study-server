@@ -5,6 +5,7 @@ echo 'Starting housekeeping...'
 {{with $version := env "VERSION"}}
 {{with $conf := vault (printf "secret/pepper/%s/%s/conf" $environment $version)}}
 
+CORE_COMMAND="-Dconfig.file=config/application.conf -Xms256m -Xmx512m -jar target/Housekeeping.jar"
 DEBUG="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=9876"
 
 # pass in debug flag
