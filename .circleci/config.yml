@@ -101,7 +101,7 @@ commands:
               DEPLOY_ENV=staging
             ;;
             prod)
-              DEPLOY_ENV=prod
+              DEPLOY_ENV=production
             ;;
             *)
               echo "Cannot map << pipeline.git.branch >> to a deployment environment"
