@@ -179,7 +179,6 @@ public class IntegrationTestSuite {
     public static void startupTestServer() {
         bootAppServer();
         waitForServer(1000);
-        insertTestData();
     }
 
     private static void insertTestData() {
