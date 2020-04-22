@@ -421,7 +421,7 @@ commands:
                     $SKIPTESTS_OPTION \
                     -Ditext.license=output-config/itextkey.xml \
                     -Dddp.firecloudKeysDir=output-config/fc_keys \
-                    -Dconfig.file=output-config/testing-circleci.conf  \
+                    -Dconfig.file=output-build-config/testing-inmemorydb.conf  \
                     -Dmaven.repo.local=<< parameters.m2_repo >> <<parameters.additional_options>>
           background: <<parameters.background>>
       - when:
