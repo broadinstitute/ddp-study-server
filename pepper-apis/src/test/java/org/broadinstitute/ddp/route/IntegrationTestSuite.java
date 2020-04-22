@@ -382,8 +382,8 @@ public class IntegrationTestSuite {
 
     public static void main(String[] args) {
         initializeDatabase();
-        insertTestData();
         startupTestServer();
+        insertTestData();
     }
 
 }
