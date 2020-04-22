@@ -14,6 +14,7 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
@@ -101,6 +102,7 @@ public class StudyDataLoader {
 
     Map<String, List<String>> sourceDataSurveyQs;
     Map<String, String> altNames;
+    Map<String, String> dkAltNames;
     Map<Integer, String> yesNoDkLookup;
     Map<Integer, Boolean> booleanValueLookup;
     Auth0Util auth0Util;
@@ -131,8 +133,10 @@ public class StudyDataLoader {
         booleanValueLookup.put(0, false);
         booleanValueLookup.put(1, true);
 
+        dkAltNames = new HashMap<>();
+        dkAltNames.put("dk", "Don't know");
+
         altNames = new HashMap<>();
-        altNames.put("dk", "Don't know");
         altNames.put("AMERICAN_INDIAN", "American Indian or Native American");
         altNames.put("OTHER_EAST_ASIAN", "Other East Asian");
         altNames.put("SOUTH_EAST_ASIAN", "South East Asian or Indian");
@@ -1211,6 +1215,8 @@ public class StudyDataLoader {
             String optionName = optionNameEl.getAsString();
             if (altNames.get(optionName) != null) {
                 optionName = altNames.get(optionName);
+            } else if (dkAltNames.get(optionName) != null) {
+                optionName = dkAltNames.get(optionName);
             }
             final String optName = optionName;
             if (optionName.equalsIgnoreCase(value.getAsString())
@@ -1454,7 +1460,7 @@ public class StudyDataLoader {
                 }
             }
         }
-        nestedQAGuids.remove(null);
+        nestedQAGuids.removeAll(Collections.singleton(null));
         if (CollectionUtils.isNotEmpty(nestedQAGuids)) {
             answerGuid = answerCompositeQuestion(handle, stableId, participantGuid, instanceGuid,
                     nestedQAGuids, nestedAnsOrders, answerDao);
@@ -1544,7 +1550,7 @@ public class StudyDataLoader {
                 }
             }
 
-            nestedQAGuids.remove(null);
+            nestedQAGuids.removeAll(Collections.singleton(null));
             if (CollectionUtils.isNotEmpty(nestedQAGuids)) {
                 answerGuid = answerCompositeQuestion(handle, stableId, participantGuid, instanceGuid, nestedQAGuids,
                         nestedAnsOrders, answerDao);
