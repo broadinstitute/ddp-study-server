@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.util;
 
+import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang.time.DateUtils.MILLIS_PER_SECOND;
 
 import java.text.ParseException;
@@ -1209,10 +1210,12 @@ public class StudyDataLoader {
         optValuesList.addAll(Arrays.asList(optValues));
         optValuesList.replaceAll(String::trim);
 
+        List<String> pepperPLOptions = new ArrayList<>();
         JsonArray options = mapElement.getAsJsonObject().getAsJsonArray("options");
         for (JsonElement option : options) {
             JsonElement optionNameEl = option.getAsJsonObject().get("name");
             String optionName = optionNameEl.getAsString();
+            pepperPLOptions.add(optionName);
             if (altNames.get(optionName) != null) {
                 optionName = altNames.get(optionName);
             } else if (dkAltNames.get(optionName) != null) {
@@ -1222,19 +1225,29 @@ public class StudyDataLoader {
             if (optionName.equalsIgnoreCase(value.getAsString())
                     || optValuesList.stream().anyMatch(x -> x.equalsIgnoreCase(optName))) {
 
-                //todo.. handle other_text in a better way!
-                if (optionName.equalsIgnoreCase("Other")) {
-                    String otherDetails = null;
-                    if (optValuesList.size() > (selectedPicklistOptions.size() + 1)) {
-                        //there is Other text
-                        otherDetails = optValuesList.get(optValuesList.size() - 1);
-                    }
-                    selectedPicklistOptions.add(new SelectedPicklistOption(optionNameEl.getAsString().toUpperCase(), otherDetails));
-                } else {
+                if (!optionName.equalsIgnoreCase("Other")) {
                     selectedPicklistOptions.add(new SelectedPicklistOption(optionNameEl.getAsString().toUpperCase()));
+                } else {
+                    //currently only RACE has Other however Gen2 MBC has other details without user selecting "Other"
+                    //hence MBC Other is taken care below as special case..
+                    //after MBC below code should help
+                    //just select everything after Other (substr)
+                    /*String sourceValue = value.getAsString();
+                    String detailText = sourceValue.substring(sourceValue.lastIndexOf("Other") + 6);
+                    selectedPicklistOptions.add(new SelectedPicklistOption(optionNameEl.getAsString().toUpperCase(), detailText));*/
                 }
             }
         }
+
+        if ("RACE".equalsIgnoreCase(questionName)) {
+            //Gen2 MBC has other details without user selecting "Other"
+            //handle others by adding everything that doesn't match pepper options
+            List<String> otherText = optValuesList.stream().filter(opt -> !pepperPLOptions.contains(opt.toUpperCase())).collect(toList());
+            otherText.remove("Other");
+            String otherDetails = otherText.stream().collect(Collectors.joining(","));
+            selectedPicklistOptions.add(new SelectedPicklistOption("OTHER", otherDetails));
+        }
+
 
         return selectedPicklistOptions;
     }
