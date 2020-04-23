@@ -1215,12 +1215,12 @@ public class StudyDataLoader {
         for (JsonElement option : options) {
             JsonElement optionNameEl = option.getAsJsonObject().get("name");
             String optionName = optionNameEl.getAsString();
-            pepperPLOptions.add(optionName);
             if (altNames.get(optionName) != null) {
                 optionName = altNames.get(optionName);
             } else if (dkAltNames.get(optionName) != null) {
                 optionName = dkAltNames.get(optionName);
             }
+            pepperPLOptions.add(optionName.toUpperCase());
             final String optName = optionName;
             if (optionName.equalsIgnoreCase(value.getAsString())
                     || optValuesList.stream().anyMatch(x -> x.equalsIgnoreCase(optName))) {
@@ -1245,9 +1245,8 @@ public class StudyDataLoader {
             List<String> otherText = optValuesList.stream().filter(opt -> !pepperPLOptions.contains(opt.toUpperCase())).collect(toList());
             otherText.remove("Other");
             String otherDetails = otherText.stream().collect(Collectors.joining(","));
-            selectedPicklistOptions.add(new SelectedPicklistOption("OTHER", otherDetails));
+            selectedPicklistOptions.add(new SelectedPicklistOption(OTHER, otherDetails));
         }
-
 
         return selectedPicklistOptions;
     }
