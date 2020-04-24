@@ -62,6 +62,7 @@ public class MigratedDataReconcileCli {
     Map<String, String> stateCodesMap;
     Map<Integer, String> yesNoDkLookup;
     Map<Integer, Boolean> booleanValueLookup;
+    Set<String> dkSet;
     private String serviceAccountFile = null;
     private String googleBucketName = null;
 
@@ -122,9 +123,12 @@ public class MigratedDataReconcileCli {
         booleanValueLookup.put(0, false);
         booleanValueLookup.put(1, true);
 
-        altNames = new HashMap<>();
-        altNames.put("DK", "Don't know");
+        dkSet = new HashSet<>();
+        dkSet.add("dk");
+        dkSet.add("DK");
+        dkSet.add("Don't know");
 
+        altNames = new HashMap<>();
         altNames.put("AMERICAN_INDIAN", "American Indian or Native American");
         altNames.put("OTHER_EAST_ASIAN", "Other East Asian");
         altNames.put("SOUTH_EAST_ASIAN", "South East Asian or Indian");
@@ -351,6 +355,11 @@ public class MigratedDataReconcileCli {
                     } else if (sourceFieldName.contains("state") && sourceFieldValue.length() > 2) {
                         //state comes in as TN and also Tennessee in some cases
                         targetFieldValue = stateCodesMap.get(targetFieldValue);
+                    } else if (dkSet.contains(sourceFieldValue) && dkSet.contains(targetFieldValue)) {
+                        //dk/DK/Don't know .. consider as match & move on
+                        //LOG.info("source field Name: {} .. target field Name: {} .. source field Value: {} .. target field Value: {}  ",
+                        //        sourceFieldName, targetFieldName, sourceFieldValue, targetFieldValue);
+                        sourceFieldValue = targetFieldValue;
                     }
 
                     //compare values
@@ -773,7 +782,7 @@ public class MigratedDataReconcileCli {
                 } else {
                     value = getStringValueFromElement(thisDataEl, thisElement.getAsString());
                 }
-                values.add(value);
+                values.add(value != null ? value : "");
             }
             medList.add(String.join(";", values));
         }

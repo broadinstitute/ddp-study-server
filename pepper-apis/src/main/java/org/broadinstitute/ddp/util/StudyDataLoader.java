@@ -15,7 +15,6 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Collections;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
@@ -1418,37 +1417,31 @@ public class StudyDataLoader {
         JsonArray children = mapElement.getAsJsonObject().getAsJsonArray("children");
         List<String> nestedQAGuids = new ArrayList<>();
         List<Integer> nestedAnsOrders = new ArrayList<>();
-        String childGuid;
         //todo.. This composite type does not handle array/list of answers. make it handle array for future study proof
         for (JsonElement childEl : children) {
-            nestedAnsOrders.add(0);
+            String childGuid = null;
             if (childEl != null && !childEl.isJsonNull()) {
                 String nestedQuestionType = getStringValueFromElement(childEl, "type");
                 switch (nestedQuestionType) {
                     case "Date":
                         childGuid = processDateQuestion(childEl, sourceDataElement, surveyName, participantGuid,
                                 instanceGuid, answerDao);
-                        nestedQAGuids.add(childGuid);
                         break;
                     case "string":
                         childGuid = processTextQuestion(childEl, sourceDataElement, surveyName,
                                 participantGuid, instanceGuid, answerDao);
-                        nestedQAGuids.add(childGuid);
                         break;
                     case "Picklist":
                         childGuid = processPicklistQuestion(childEl, sourceDataElement, surveyName,
                                 participantGuid, instanceGuid, answerDao);
-                        nestedQAGuids.add(childGuid);
                         break;
                     case "Boolean":
                         childGuid = processBooleanQuestion(childEl, sourceDataElement, surveyName,
                                 participantGuid, instanceGuid, answerDao);
-                        nestedQAGuids.add(childGuid);
                         break;
                     case "Agreement":
                         childGuid = processAgreementQuestion(childEl, sourceDataElement, surveyName,
                                 participantGuid, instanceGuid, answerDao);
-                        nestedQAGuids.add(childGuid);
                         break;
                     case "ClinicalTrialPicklist":
                         //todo .. revisit and make it generic
@@ -1456,13 +1449,11 @@ public class StudyDataLoader {
                         JsonElement thisDataArrayEl = sourceDataElement.getAsJsonObject().get(questionName);
                         if (thisDataArrayEl != null && !thisDataArrayEl.isJsonNull()) {
                             Boolean isClinicalTrial = getBooleanValueFromElement(thisDataArrayEl, "clinicaltrial");
-                            //thisDataArrayEl.getAsJsonObject().get("clinicaltrial").getAsBoolean();
                             if (isClinicalTrial) {
                                 List<SelectedPicklistOption> selectedPicklistOptions = new ArrayList<>();
                                 selectedPicklistOptions.add(new SelectedPicklistOption("IS_CLINICAL_TRIAL"));
                                 childGuid = answerPickListQuestion(childStableId, participantGuid,
                                         instanceGuid, selectedPicklistOptions, answerDao);
-                                nestedQAGuids.add(childGuid);
                             }
                         }
                         break;
@@ -1470,9 +1461,12 @@ public class StudyDataLoader {
                         LOG.warn(" Default ..Composite nested Q name: {} .. type: {} not supported", questionName,
                                 nestedQuestionType);
                 }
+                if (StringUtils.isNotBlank(childGuid)) {
+                    nestedQAGuids.add(childGuid);
+                    nestedAnsOrders.add(0);
+                }
             }
         }
-        nestedQAGuids.removeAll(Collections.singleton(null));
         if (CollectionUtils.isNotEmpty(nestedQAGuids)) {
             answerGuid = answerCompositeQuestion(handle, stableId, participantGuid, instanceGuid,
                     nestedQAGuids, nestedAnsOrders, answerDao);
@@ -1505,8 +1499,8 @@ public class StudyDataLoader {
                 compositeAnswerOrder++;
                 //handle children/nestedQA
                 JsonArray children = mapElement.getAsJsonObject().getAsJsonArray("children");
-                String childGuid;
                 for (JsonElement childEl : children) {
+                    String childGuid = null;
                     if (childEl != null && !childEl.isJsonNull()) {
                         String nestedQuestionType = getStringValueFromElement(childEl, "type");
 
@@ -1514,32 +1508,22 @@ public class StudyDataLoader {
                             case "Date":
                                 childGuid = processDateQuestion(childEl, thisDataEl, surveyName, participantGuid,
                                         instanceGuid, answerDao);
-                                nestedQAGuids.add(childGuid);
-                                nestedAnsOrders.add(compositeAnswerOrder);
                                 break;
                             case "string":
                                 childGuid = processTextQuestion(childEl, thisDataEl, surveyName,
                                         participantGuid, instanceGuid, answerDao);
-                                nestedQAGuids.add(childGuid);
-                                nestedAnsOrders.add(compositeAnswerOrder);
                                 break;
                             case "Picklist":
                                 childGuid = processPicklistQuestion(childEl, thisDataEl, surveyName,
                                         participantGuid, instanceGuid, answerDao);
-                                nestedQAGuids.add(childGuid);
-                                nestedAnsOrders.add(compositeAnswerOrder);
                                 break;
                             case "Boolean":
                                 childGuid = processBooleanQuestion(childEl, thisDataEl, surveyName,
                                         participantGuid, instanceGuid, answerDao);
-                                nestedQAGuids.add(childGuid);
-                                nestedAnsOrders.add(compositeAnswerOrder);
                                 break;
                             case "Agreement":
                                 childGuid = processAgreementQuestion(childEl, thisDataEl, surveyName,
                                         participantGuid, instanceGuid, answerDao);
-                                nestedQAGuids.add(childGuid);
-                                nestedAnsOrders.add(compositeAnswerOrder);
                                 break;
                             case "ClinicalTrialPicklist":
                                 //todo .. revisit and make it generic
@@ -1550,19 +1534,20 @@ public class StudyDataLoader {
                                     selectedPicklistOptions.add(new SelectedPicklistOption("IS_CLINICAL_TRIAL"));
                                     childGuid = answerPickListQuestion(childStableId, participantGuid,
                                             instanceGuid, selectedPicklistOptions, answerDao);
-                                    nestedQAGuids.add(childGuid);
-                                    nestedAnsOrders.add(compositeAnswerOrder);
                                 }
                                 break;
                             default:
                                 LOG.warn(" Default ..Composite nested Q name: {} .. type: {} ", questionName,
                                         nestedQuestionType);
                         }
+                        if (StringUtils.isNotBlank(childGuid)) {
+                            nestedQAGuids.add(childGuid);
+                            nestedAnsOrders.add(compositeAnswerOrder);
+                        }
                     }
                 }
             }
 
-            nestedQAGuids.removeAll(Collections.singleton(null));
             if (CollectionUtils.isNotEmpty(nestedQAGuids)) {
                 answerGuid = answerCompositeQuestion(handle, stableId, participantGuid, instanceGuid, nestedQAGuids,
                         nestedAnsOrders, answerDao);
