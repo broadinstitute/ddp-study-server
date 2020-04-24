@@ -149,8 +149,10 @@ public class MigratedDataReconcileCli {
         skipFields.add("street1"); //During address validation street is changed to ST ; road to RD .. so on
 
         if (hasGoogleBucket) {
-            Map<String, String> altpidBucketMap = getAltpidBucketMap();
-            compareBucketData(csvFileName, altpidBucketMap, outputFileName, mappingFileName);
+            LOG.info("Comparing data export content to google bucket participant files. {}", new Date());
+            Map<String, Map> altpidBucketDataMap = loadBucketData(); // <altpid, SurveyDataMap>>
+            LOG.info("Loaded Bucket data for {} participants. {}", altpidBucketDataMap.size(), new Date());
+            compareBucketData(csvFileName, altpidBucketDataMap, outputFileName, mappingFileName);
         } else if (hasFile) {
             compareLocalFile(csvFileName, cmd.getOptionValue('l'), outputFileName, mappingFileName);
         }
@@ -158,7 +160,7 @@ public class MigratedDataReconcileCli {
         csvPrinter.close();
     }
 
-    public void compareBucketData(String csvFileName, Map<String, String> altpidBucketMap,
+    public void compareBucketData(String csvFileName, Map<String, Map> altpidBucketMap,
                                   String outputFileName, String mappingFileName) throws Exception {
 
         BufferedWriter writer = Files.newBufferedWriter(Paths.get(outputFileName));
@@ -171,21 +173,25 @@ public class MigratedDataReconcileCli {
                         "SOURCE_VALUE", "TARGET_VALUE", "MATCH"));
 
         CSVParser parser = getCSVParser(csvFileName);
-
-        GoogleCredentials credentials = GoogleCredentials.fromStream(
-                new FileInputStream(serviceAccountFile))
-                .createScoped(Lists.newArrayList("https://www.googleapis.com/auth/cloud-platform"));
-        Storage storage = GoogleBucketUtil.getStorage(credentials, DATA_GC_ID);
-        Bucket bucket = storage.get(googleBucketName);
+        int ptpCounter = 0;
+        List<String> missedAltpids = new ArrayList<>();
 
         for (CSVRecord csvRecord : parser) {
             String altpid = csvRecord.get("legacy_altpid");
             if (StringUtils.isEmpty(altpid) || !altpidBucketMap.containsKey(altpid)) {
+                missedAltpids.add(altpid);
                 continue;
             }
             LOG.debug("comparing altpid: {} ... bucket file: {}", altpid, altpidBucketMap.get(altpid));
-            Map<String, JsonElement> userData = getBucketData(altpidBucketMap.get(altpid), bucket);
+            Map<String, JsonElement> userData = altpidBucketMap.get(altpid);
             doCompare(csvRecord, userData, mappingData);
+            ptpCounter++;
+        }
+        LOG.info("Completed comparing {} participant files. {} ", ptpCounter, new Date());
+        if (!missedAltpids.isEmpty()) {
+            LOG.warn("*** Failed to compare {} altpids: {} ", missedAltpids.size(), Arrays.toString(missedAltpids.toArray()));
+        } else {
+            LOG.info("NO missed Altpids...");
         }
     }
 
@@ -567,36 +573,31 @@ public class MigratedDataReconcileCli {
         return surveyDataMap;
     }
 
-    private Map<String, String> getAltpidBucketMap() throws IOException {
-        Map<String, String> altPidBucket = new HashMap<>();
+    private Map<String, Map> loadBucketData() throws IOException {
         GoogleCredentials credentials = GoogleCredentials.fromStream(
                 new FileInputStream(serviceAccountFile))
                 .createScoped(Lists.newArrayList("https://www.googleapis.com/auth/cloud-platform"));
         Storage storage = GoogleBucketUtil.getStorage(credentials, DATA_GC_ID);
         Bucket bucket = storage.get(googleBucketName);
         String participantData;
-        JsonElement data;
+        StudyDataLoaderMain dataLoaderMain = new StudyDataLoaderMain();
 
-        //todo : check if its too much to store all 5000+ ptps data in memory so that I don't need to iterate through buckets again
-        //Map<String, JsonElement> surveyDataMap = null;
+        //load all Bucket data into memory
+        Map<String, Map> altpidBucketDataMap = new HashMap<>();
         for (Blob file : bucket.list().iterateAll()) {
             participantData = new String(file.getContent());
             if (!file.getName().startsWith("Participant_")) {
                 LOG.info("Skipping bucket file: {}", file.getName());
                 continue;
-                //not a participant data .. continue to next file.
+                //not participant data .. continue to next file.
             }
             try {
                 //load source survey data
-                //surveyDataMap = dataLoaderMain.loadSourceDataFile(data);
-                data = new Gson().fromJson(participantData, new TypeToken<JsonObject>() {
-                }.getType());
-                JsonObject dataObj = data.getAsJsonObject();
-                JsonElement user = dataObj.get("user");
-                JsonElement datstatParticipantData = user.getAsJsonObject().get("datstatparticipantdata");
-                String altpid = datstatParticipantData.getAsJsonObject().get("datstat_altpid").getAsString();
+                Map<String, JsonElement> surveyDataMap = dataLoaderMain.loadSourceDataFile(participantData);
+                JsonElement datstatData = surveyDataMap.get("datstatparticipantdata");
+                String altpid = datstatData.getAsJsonObject().get("datstat_altpid").getAsString();
                 if (StringUtils.isNotBlank(altpid)) {
-                    altPidBucket.put(altpid, file.getName());
+                    altpidBucketDataMap.put(altpid, surveyDataMap);
                 }
             } catch (JsonSyntaxException e) {
                 LOG.error("Exception while processing participant file: ", e);
@@ -604,7 +605,7 @@ public class MigratedDataReconcileCli {
             }
         }
 
-        return altPidBucket;
+        return altpidBucketDataMap;
     }
 
     private String getStringValueFromElement(JsonElement element, String key) {
