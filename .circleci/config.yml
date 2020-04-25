@@ -96,7 +96,8 @@ commands:
             esac
             echo "Setting deployment ENVIRONMENT to $DEPLOY_ENV"
             echo "export ENVIRONMENT=$DEPLOY_ENV" >> $BASH_ENV
-            echo 'export TCELL_PATH=gs://ddp-tcell/tcell-1.8.3.tar.gz' >> $BASH_ENV
+	    # to install a new version of tcell, do  "tar -cvfz tcell-x.y.z.tar.gz *" from within the extracted tcell dir
+            echo 'export TCELL_PATH=gs://ddp-tcell/tcell-1.10.0.tar.gz' >> $BASH_ENV
             source $BASH_ENV
 
   render-configs:
