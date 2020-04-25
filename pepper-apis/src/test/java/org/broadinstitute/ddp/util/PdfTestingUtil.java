@@ -40,15 +40,14 @@ import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.JdbiEventConfiguration;
 import org.broadinstitute.ddp.db.dao.JdbiMailAddress;
 import org.broadinstitute.ddp.db.dao.JdbiMedicalProvider;
-import org.broadinstitute.ddp.db.dao.JdbiProfile;
 import org.broadinstitute.ddp.db.dao.JdbiRevision;
 import org.broadinstitute.ddp.db.dao.JdbiStudyPdfMapping;
 import org.broadinstitute.ddp.db.dao.JdbiUserNotificationPdf;
 import org.broadinstitute.ddp.db.dao.PdfDao;
+import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.MedicalProviderDto;
-import org.broadinstitute.ddp.db.dto.UserProfileDto;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
 import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
@@ -93,6 +92,7 @@ import org.broadinstitute.ddp.model.pdf.PdfVersion;
 import org.broadinstitute.ddp.model.pdf.PhysicianInstitutionTemplate;
 import org.broadinstitute.ddp.model.pdf.ProfileSubstitution;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
+import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.service.PdfGenerationService;
 import org.jdbi.v3.core.Handle;
 
@@ -300,9 +300,9 @@ public final class PdfTestingUtil {
                     MAILING_ADDRESS_COUNTRY_FIELD_VALUE,
                     MAILING_ADDRESS_PHONE_FIELD_VALUE);
 
-            UserProfileDto userDto = handle.attach(JdbiProfile.class).getUserProfileByUserId(pdfInfo.getData().getUserId());
-            pdfInfo.getExpectedMailingAddressValues().put(MAILING_ADDRESS_FIRST_NAME_FIELD_VALUE, userDto.getFirstName());
-            pdfInfo.getExpectedMailingAddressValues().put(MAILING_ADDRESS_LAST_NAME_FIELD_VALUE, userDto.getLastName());
+            UserProfile profile = handle.attach(UserProfileDao.class).findProfileByUserId(pdfInfo.getData().getUserId()).get();
+            pdfInfo.getExpectedMailingAddressValues().put(MAILING_ADDRESS_FIRST_NAME_FIELD_VALUE, profile.getFirstName());
+            pdfInfo.getExpectedMailingAddressValues().put(MAILING_ADDRESS_LAST_NAME_FIELD_VALUE, profile.getLastName());
 
             MailAddress address = handle.attach(JdbiMailAddress.class)
                     .findDefaultAddressForParticipant(pdfInfo.getData().getUserGuid())

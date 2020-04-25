@@ -1,14 +1,13 @@
-package org.broadinstitute.ddp.db.dao;
+package org.broadinstitute.ddp.util;
 
 import java.util.concurrent.TimeUnit;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.db.dao.JdbiActivity;
+import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
-import org.broadinstitute.ddp.util.ActivityInstanceUtil;
-import org.broadinstitute.ddp.util.TestDataSetupUtil;
-
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;

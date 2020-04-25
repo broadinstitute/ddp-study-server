@@ -1,16 +1,13 @@
 service: housekeeping
 runtime: java11
-instance_class: B4_1G
-# look at tuning for spawning new VMs under load (10 connections -> new instance)
-
-# set 2 min instances
-# @todo back to 2 when dev completed
+instance_class: B4
+# B2 allows background threads and we can use manual scaling
 manual_scaling:
   instances: 1
 
-network:
-  instance_tag: study-server # necessary for firewall rules so that DSM will accept https requests from pepper
+entrypoint: java -Xmx820m -Xmx820m -jar Housekeeping.jar
 
-# get size from env var, try this without mx, ms
-entrypoint: java -Dddp.firecloudKeysDir=fc_keys -Dconfig.file=application.conf -jar Housekeeping.jar
+# GAE does not like the "=" character in entrypoint and does not support "." in environment variables
+env_variables:
+  config_file: application.conf
 

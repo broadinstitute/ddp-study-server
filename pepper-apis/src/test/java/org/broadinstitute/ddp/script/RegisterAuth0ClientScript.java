@@ -30,11 +30,6 @@ public class RegisterAuth0ClientScript extends TxnAwareBaseTest {
     public static final String AUTH0_CLIENT_SECRET_PARAM = CLIENT_PREFIX + "clientSecret";
 
     /**
-     * Name of the client.  Could be anything you want, but let's just use whatever the auth0 client name is
-     */
-    public static final String CLIENT_NAME_PARAM = CLIENT_PREFIX + "clientName";
-
-    /**
      * Auth0 client id of the client
      */
     public static final String AUTH0_CLIENT_ID_PARAM = CLIENT_PREFIX + "auth0ClientId";
@@ -62,7 +57,6 @@ public class RegisterAuth0ClientScript extends TxnAwareBaseTest {
      */
     @Test
     public void registerClient() {
-        String clientName = System.getProperty(CLIENT_NAME_PARAM);
         String auth0ClientId = System.getProperty(AUTH0_CLIENT_ID_PARAM);
         String auth0ClientSecret = System.getProperty(AUTH0_CLIENT_SECRET_PARAM);
         String rawStudyGuids = System.getProperty(STUDY_GUIDS_PARAM);
@@ -76,12 +70,14 @@ public class RegisterAuth0ClientScript extends TxnAwareBaseTest {
             studyGuids.add(rawStudyGuids);
         }
 
-        LOG.info("Registering client {} with id {}.  Omitting logging of secret.  Will have access to {}", clientName,
-                auth0ClientId, studyGuids);
+        LOG.info(
+                "Registering client {} in domain {}.  Omitting logging of secret.  Will have access to {}",
+                auth0ClientId, auth0domain, studyGuids
+        );
 
         TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, handle -> {
             long auth0TenantId = handle.attach(JdbiAuth0Tenant.class).findByDomain(auth0domain).getId();
-            long clientId = handle.attach(ClientDao.class).registerClient(clientName, auth0ClientId, auth0ClientSecret,
+            long clientId = handle.attach(ClientDao.class).registerClient(auth0ClientId, auth0ClientSecret,
                     studyGuids, encryptionSecret, auth0TenantId);
         });
     }

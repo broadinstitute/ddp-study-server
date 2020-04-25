@@ -16,11 +16,11 @@ public class PexParserTest {
     private static String EXPR_C = "user.studies[\"C1\"].forms[\"C2\"].questions[\"C3\"].answers.hasTrue()";
 
     private static String TREE_A = "(expr (query user . (study studies [ \"A1\" ]) . (form forms [ \"A2\" ]) . "
-            + "(question questions [ \"A3\" ]) . answers . (predicate hasTrue())))";
+            + "(question questions [ \"A3\" ]) . answers . (predicate hasTrue ( ))))";
     private static String TREE_B = "(expr (query user . (study studies [ \"B1\" ]) . (form forms [ \"B2\" ]) . "
-            + "(question questions [ \"B3\" ]) . answers . (predicate hasTrue())))";
+            + "(question questions [ \"B3\" ]) . answers . (predicate hasTrue ( ))))";
     private static String TREE_C = "(expr (query user . (study studies [ \"C1\" ]) . (form forms [ \"C2\" ]) . "
-            + "(question questions [ \"C3\" ]) . answers . (predicate hasTrue())))";
+            + "(question questions [ \"C3\" ]) . answers . (predicate hasTrue ( ))))";
 
     @Test
     public void testParsing_tree() {
@@ -37,23 +37,62 @@ public class PexParserTest {
     }
 
     @Test
-    public void testPrecedence_ANDoverOR() {
+    public void testPrecedence_unaryHigherThanRelation() {
+        String expr = "-1 < -2";
+        String expected = "(pex (expr (expr - (expr 1)) < (expr - (expr 2))))";
+        testParserTreeOutput(expr, expected);
+    }
+
+    @Test
+    public void testPrecedence_relationHigherThanEquality() {
+        String expr = "1 < 2 == 4 >= 3";
+        String expected = "(pex (expr (expr (expr 1) < (expr 2)) == (expr (expr 4) >= (expr 3))))";
+        testParserTreeOutput(expr, expected);
+    }
+
+    @Test
+    public void testPrecedence_equalityHigherThanLogical() {
+        String expr = "1 == 2 || 4 != 3";
+        String expected = "(pex (expr (expr (expr 1) == (expr 2)) || (expr (expr 4) != (expr 3))))";
+        testParserTreeOutput(expr, expected);
+    }
+
+    @Test
+    public void testPrecedence_ANDHigherThanOR() {
         String expr = String.format("%s || %s && %s", EXPR_A, EXPR_B, EXPR_C);
         String expected = String.format("(pex (expr %s || (expr %s && %s)))", TREE_A, TREE_B, TREE_C);
         testParserTreeOutput(expr, expected);
     }
 
     @Test
-    public void testPrecedence_negationBindsTighterThanOtherLogicalOperators() {
+    public void testPrecedence_logicalNotHigherThanOtherLogicalOperators() {
         String expr = "!true && !false || !true";
         String expected = "(pex (expr (expr (expr ! (expr true)) && (expr ! (expr false))) || (expr ! (expr true))))";
         testParserTreeOutput(expr, expected);
     }
 
     @Test
-    public void testAssociativity_negationRightToLeft() {
+    public void testAssociativity_unaryRightToLeft() {
         String expr = "!!!true";
         String expected = "(pex (expr ! (expr ! (expr ! (expr true)))))";
+        testParserTreeOutput(expr, expected);
+
+        expr = "---25";
+        expected = "(pex (expr - (expr - (expr - (expr 25)))))";
+        testParserTreeOutput(expr, expected);
+    }
+
+    @Test
+    public void testAssociativity_relationLeftToRight() {
+        String expr = "1 < 2 < 3";
+        String expected = "(pex (expr (expr (expr 1) < (expr 2)) < (expr 3)))";
+        testParserTreeOutput(expr, expected);
+    }
+
+    @Test
+    public void testAssociativity_equalityLeftToRight() {
+        String expr = "1 == 2 == 3";
+        String expected = "(pex (expr (expr (expr 1) == (expr 2)) == (expr 3)))";
         testParserTreeOutput(expr, expected);
     }
 
@@ -100,16 +139,21 @@ public class PexParserTest {
     }
 
     @Test
-    public void testBoolLiteral_true() {
+    public void testLiteral() {
         String expr = "true";
         String expected = "(pex (expr true))";
         testParserTreeOutput(expr, expected);
-    }
 
-    @Test
-    public void testBoolLiteral_false() {
-        String expr = "false";
-        String expected = "(pex (expr false))";
+        expr = "false";
+        expected = "(pex (expr false))";
+        testParserTreeOutput(expr, expected);
+
+        expr = "125";
+        expected = "(pex (expr 125))";
+        testParserTreeOutput(expr, expected);
+
+        expr = "\"abc\"";
+        expected = "(pex (expr \"abc\"))";
         testParserTreeOutput(expr, expected);
     }
 
@@ -117,7 +161,7 @@ public class PexParserTest {
     public void testQuery_defaultLatestAnswerQuery() {
         String expr = "user.studies[\"A1\"].forms[\"A2\"].questions[\"A3\"].answers.hasFalse()";
         String expected = "(pex (expr (query user . (study studies [ \"A1\" ]) . (form forms [ \"A2\" ]) . "
-                + "(question questions [ \"A3\" ]) . answers . (predicate hasFalse()))))";
+                + "(question questions [ \"A3\" ]) . answers . (predicate hasFalse ( )))))";
         testParserTreeOutput(expr, expected);
     }
 
@@ -133,7 +177,7 @@ public class PexParserTest {
     public void testQuery_answerQuery() {
         String expr = "user.studies[\"A1\"].forms[\"A2\"].instances[latest].questions[\"A3\"].answers.hasFalse()";
         String expected = "(pex (expr (query user . (study studies [ \"A1\" ]) . (form forms [ \"A2\" ]) . "
-                + "(instance instances [ latest ]) . (question questions [ \"A3\" ]) . answers . (predicate hasFalse()))))";
+                + "(instance instances [ latest ]) . (question questions [ \"A3\" ]) . answers . (predicate hasFalse ( )))))";
         testParserTreeOutput(expr, expected);
     }
 

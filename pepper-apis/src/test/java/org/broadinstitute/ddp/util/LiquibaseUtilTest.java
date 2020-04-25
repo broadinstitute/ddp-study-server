@@ -18,7 +18,7 @@ import org.junit.Test;
 
 public class LiquibaseUtilTest extends TxnAwareBaseTest {
 
-    private static final String DB_SCRIPTS_DIR = "src/test/resources/db-testscripts";
+    private static final String DB_SCRIPTS_DIR = "db-testscripts";
     private static final String CHANGELOG_TABLE = "DATABASECHANGELOG";
     private static final String[] TEST_TABLES = new String[] {
             "liquibase_test_table", "liquibase_non_existing_table"
