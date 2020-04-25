@@ -72,10 +72,4 @@ public class ErrorCodes {
     public static final String PASSWORD_TOO_WEAK = "PASSWORD_TOO_WEAK";
     public static final String MALFORMED_EMAIL = "MALFORMED_EMAIL";
     public static final String EMAIL_ALREADY_EXISTS = "EMAIL_ALREADY_EXISTS";
-
-    public static final class FireCloudErrors {
-        public static final String MISSING_WORKSPACE_NAME = "MISSING_WORKSPACE_NAME";
-        public static final String MISSING_WORKSPACE_NAMESPACE = "MISSING_WORKSPACE_NAMESPACE";
-        public static final String INVALID_AFTER_DATE = "INVALID_AFTER_DATE";
-    }
 }

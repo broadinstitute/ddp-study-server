@@ -13,7 +13,6 @@ import static spark.Spark.port;
 import static spark.Spark.stop;
 import static spark.Spark.threadPool;
 
-import java.io.File;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -35,7 +34,6 @@ import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.FormInstanceDao;
 import org.broadinstitute.ddp.db.SectionBlockDao;
 import org.broadinstitute.ddp.db.StudyActivityDao;
-import org.broadinstitute.ddp.db.StudyAdminDao;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.UserDao;
 import org.broadinstitute.ddp.db.UserDaoFactory;
@@ -67,10 +65,8 @@ import org.broadinstitute.ddp.route.DeleteTempMailingAddressRoute;
 import org.broadinstitute.ddp.route.DsmExitUserRoute;
 import org.broadinstitute.ddp.route.DsmTriggerOnDemandActivityRoute;
 import org.broadinstitute.ddp.route.ErrorRoute;
-import org.broadinstitute.ddp.route.ExportStudyRoute;
 import org.broadinstitute.ddp.route.GetActivityInstanceRoute;
 import org.broadinstitute.ddp.route.GetActivityInstanceStatusTypeListRoute;
-import org.broadinstitute.ddp.route.GetAdminStudiesRoute;
 import org.broadinstitute.ddp.route.GetCancerSuggestionsRoute;
 import org.broadinstitute.ddp.route.GetConsentSummariesRoute;
 import org.broadinstitute.ddp.route.GetConsentSummaryRoute;
@@ -105,7 +101,6 @@ import org.broadinstitute.ddp.route.GetStudyPasswordPolicyRoute;
 import org.broadinstitute.ddp.route.GetTempMailingAddressRoute;
 import org.broadinstitute.ddp.route.GetUserAnnouncementsRoute;
 import org.broadinstitute.ddp.route.GetWorkflowRoute;
-import org.broadinstitute.ddp.route.GetWorkspacesRoute;
 import org.broadinstitute.ddp.route.HealthCheckRoute;
 import org.broadinstitute.ddp.route.JoinMailingListRoute;
 import org.broadinstitute.ddp.route.ListCancersRoute;
@@ -136,7 +131,6 @@ import org.broadinstitute.ddp.service.ActivityValidationService;
 import org.broadinstitute.ddp.service.AddressService;
 import org.broadinstitute.ddp.service.CancerService;
 import org.broadinstitute.ddp.service.ConsentService;
-import org.broadinstitute.ddp.service.FireCloudExportService;
 import org.broadinstitute.ddp.service.FormActivityService;
 import org.broadinstitute.ddp.service.MedicalRecordService;
 import org.broadinstitute.ddp.service.PdfBucketService;
@@ -169,6 +163,7 @@ public class DataDonationPlatform {
     private static final String[] CORS_HTTP_HEADERS = new String[] {"Content-Type", "Authorization", "X-Requested-With",
             "Content-Length", "Accept", "Origin", ""};
     private static final Map<String, String> pathToClass = new HashMap<>();
+    public static final String PORT = "PORT";
     private static Scheduler scheduler = null;
 
     /**
@@ -214,23 +209,19 @@ public class DataDonationPlatform {
         boolean doLiquibase = cfg.getBoolean(ConfigFile.DO_LIQUIBASE);
         int maxConnections = cfg.getInt(ConfigFile.NUM_POOLED_CONNECTIONS);
 
-        String firecloudKeysLocation = System.getProperty(ConfigFile.FIRECLOUD_KEYS_DIR_ENV_VAR);
-        if (firecloudKeysLocation == null) {
-            LOG.error("System property {} was not set. Exiting program", ConfigFile.FIRECLOUD_KEYS_DIR_ENV_VAR);
-            System.exit(-1);
-        }
-        File firecloudKeysDir = new File(firecloudKeysLocation);
-        if (!firecloudKeysDir.exists() || !firecloudKeysDir.isDirectory()) {
-            LOG.error("Cannot find directory {} specified in system property {}. Exiting program", firecloudKeysDir,
-                    ConfigFile.FIRECLOUD_KEYS_DIR_ENV_VAR);
-            System.exit(-1);
-        }
-
         int requestThreadTimeout = cfg.getInt(ConfigFile.THREAD_TIMEOUT);
         String healthcheckPassword = cfg.getString(ConfigFile.HEALTHCHECK_PASSWORD);
 
-        int port = cfg.getInt(ConfigFile.PORT);
-        port(port);
+        // app engine's port env var wins
+        int configFilePort = cfg.getInt(ConfigFile.PORT);
+
+        // GAE specifies port to use via environment variable
+        String appEnginePort = System.getenv(PORT);
+        if (appEnginePort != null) {
+            port(Integer.parseInt(appEnginePort));
+        } else {
+            port(configFilePort);
+        }
 
         String dbUrl = cfg.getString(ConfigFile.DB_URL);
         LOG.info("Using db {}", dbUrl);
@@ -257,9 +248,6 @@ public class DataDonationPlatform {
         PexInterpreter interpreter = new TreeWalkInterpreter();
         final ActivityInstanceService actInstService = new ActivityInstanceService(activityInstanceDao, interpreter);
         final ActivityValidationService activityValidationService = new ActivityValidationService();
-
-        final FireCloudExportService fireCloudExportService = FireCloudExportService.fromSqlConfig(sqlConfig);
-        final StudyAdminDao studyAdminDao = StudyAdminDao.init(sqlConfig, firecloudKeysDir);
 
         SimpleJsonTransformer responseSerializer = new SimpleJsonTransformer();
 
@@ -390,12 +378,6 @@ public class DataDonationPlatform {
 
         // Study exit request
         post(API.USER_STUDY_EXIT, new SendExitNotificationRoute());
-
-        // Study admin routes
-        before(API.ADMIN_BASE + "/*", new UserAuthCheckFilter());
-        get(API.ADMIN_STUDIES, new GetAdminStudiesRoute(studyAdminDao), responseSerializer);
-        get(API.ADMIN_WORKSPACES, new GetWorkspacesRoute(fireCloudExportService, studyAdminDao), responseSerializer);
-        post(API.EXPORT_STUDY, new ExportStudyRoute(fireCloudExportService, studyAdminDao), responseSerializer);
 
         Config auth0Config = cfg.getConfig(ConfigFile.AUTH0);
         before(API.DSM_BASE + "/*", new DsmAuthFilter(auth0Config.getString(ConfigFile.AUTH0_DSM_CLIENT_ID),

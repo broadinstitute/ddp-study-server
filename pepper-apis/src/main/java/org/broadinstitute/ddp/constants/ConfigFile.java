@@ -14,6 +14,9 @@ public class ConfigFile {
     // whether or not to run liquibase at app boot
     public static final String DO_LIQUIBASE = "doLiquibase";
 
+    // Name of the default timezone to be used by system. Does not change VM time zone!
+    public static final String DEFAULT_TIMEZONE = "defaultTimezone";
+
     // config file name used for testing the app with a disposable in-memory database
     public static final String IN_MEMORY_DB_TESTING_CONFIG_FILE = "testing-inmemorydb.conf";
 

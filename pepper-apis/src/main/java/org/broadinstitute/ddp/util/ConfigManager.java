@@ -28,7 +28,16 @@ public class ConfigManager {
 
     private static final String TYPESAFE_CONFIG_SYSTEM_VAR = "config.file";
 
-    public static File TYPESAFE_CONFIG_FILE = new File(System.getProperty(TYPESAFE_CONFIG_SYSTEM_VAR));
+    public static final File TYPESAFE_CONFIG_FILE;
+
+    static {
+        // For benefit of GAE. Does not like command line options with "=" characters and env variables with "."
+        String configFileName = System.getenv(TYPESAFE_CONFIG_SYSTEM_VAR.replace('.', '_'));
+        if (configFileName == null) {
+            configFileName = System.getProperty(TYPESAFE_CONFIG_SYSTEM_VAR);
+        }
+        TYPESAFE_CONFIG_FILE = new File(configFileName);
+    }
 
     private final Config cfg;
 
