@@ -7,6 +7,7 @@
   "version": 1,
   "applications": [
     {
+      "host_identifier": "study server backend",
       "app_id": "{{$tcell.app_id}}",
       "api_key": "{{$tcell.ddp_study_server_api_key}}",
       "tcell_api_url": "https://us.agent.tcell.insight.rapid7.com/api/v1",
