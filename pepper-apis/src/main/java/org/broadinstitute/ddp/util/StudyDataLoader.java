@@ -1259,8 +1259,9 @@ public class StudyDataLoader {
             JsonElement value = null;
             JsonElement optionName = option.getAsJsonObject().get("name");
             String key;
+            String optName = null;
             if (optionName != null && !optionName.isJsonNull()) {
-                String optName = optionName.getAsString();
+                optName = optionName.getAsString();
                 if (altNames.get(optName) != null) {
                     optName = altNames.get(optName);
                 }
@@ -1276,19 +1277,32 @@ public class StudyDataLoader {
             if (value != null && value.getAsInt() == 1) { //option checked
                 if (option.getAsJsonObject().get("text") != null) {
                     //other text details
-                    String otherTextKey = key.concat(".").concat(option.getAsJsonObject().get("text").getAsString());
-                    JsonElement otherTextEl = sourceDataElement.getAsJsonObject().get(otherTextKey);
-                    String otherText = null;
-                    if (otherTextEl != null && !otherTextEl.isJsonNull()) {
-                        otherText = otherTextEl.getAsString();
-                    }
+                    String otherText = getTextDetails(sourceDataElement, option, key);
                     selectedPicklistOptions.add(new SelectedPicklistOption(optionName.getAsString().toUpperCase(), otherText));
                 } else {
                     selectedPicklistOptions.add(new SelectedPicklistOption(optionName.getAsString().toUpperCase()));
                 }
+            } else if ("Other".equalsIgnoreCase(optName) && option.getAsJsonObject().get("text") != null) {
+                //additional check to handle scenarios where:
+                //Other is NOT checked but other_text details are entered
+                String otherText = getTextDetails(sourceDataElement, option, key);
+                if (StringUtils.isNotBlank(otherText)) {
+                    //other text details
+                    selectedPicklistOptions.add(new SelectedPicklistOption(optionName.getAsString().toUpperCase(), otherText));
+                }
             }
         }
         return selectedPicklistOptions;
+    }
+
+    private String getTextDetails(JsonElement sourceDataElement, JsonElement option, String key) {
+        String otherTextKey = key.concat(".").concat(option.getAsJsonObject().get("text").getAsString());
+        JsonElement otherTextEl = sourceDataElement.getAsJsonObject().get(otherTextKey);
+        String otherText = null;
+        if (otherTextEl != null && !otherTextEl.isJsonNull()) {
+            otherText = otherTextEl.getAsString();
+        }
+        return otherText;
     }
 
     private String processDateQuestion(JsonElement mapElement, JsonElement sourceDataElement, String surveyName,
