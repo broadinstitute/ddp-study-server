@@ -612,7 +612,7 @@ workflows:
                 - &rc /^rc.*/
                 - &hotfix /^hotfix.*/
                 - study-server-parallel-tests
-                -tcell-instrumentation
+                - tcell-instrumentation
       - parallel-compile-and-test-job:
           parallelism: *test_parallelism
           <<: *compile_and_test_filters
