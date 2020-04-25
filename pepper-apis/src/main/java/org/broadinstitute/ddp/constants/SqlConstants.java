@@ -303,18 +303,8 @@ public class SqlConstants {
         public static final String FIRST_SELECTED_YEAR = "first_selected_year";
     }
 
-    public static final class FirecloudServiceAccountTable {
-        public static final String ACCOUNT_KEY_LOCATION = "account_key_location";
-    }
-
     public static final class FireCloud {
-        public static final String FIRECLOUD_STUDY_QUERY = "firecloud.fireCloudStudyExport";
-        public static final String STUDY_NAMES_FOR_ADMIN_GUID = "firecloud.getStudyNamesForUserAdminGuid";
-        public static final String STUDY_PARTICIPANT_COUNT = "firecloud.getStudyParticipantCount";
         public static final String HAD_ADMIN_ACCESS_QUERY = "firecloud.hasAdminAccessQuery";
-        public static final String SERVICE_ACCOUNT_PATH_WITH_STUDY_QUERY = "firecloud.serviceAccountPathWithStudyQuery";
-        public static final String SERVICE_ACCOUNT_PATH_WITHOUT_STUDY_QUERY
-                = "firecloud.serviceAccountPathWithoutStudyQuery";
     }
 
     public static final class EventConfigurationTable {
