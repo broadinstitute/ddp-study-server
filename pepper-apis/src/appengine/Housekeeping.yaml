@@ -5,7 +5,7 @@ instance_class: B4
 manual_scaling:
   instances: 1
 
-entrypoint: java -Xmx820m -Xmx820m -jar Housekeeping.jar
+entrypoint: java -javaagent:tcell/tcellagent.jar -Xmx820m -Xmx820m -jar Housekeeping.jar
 
 # GAE does not like the "=" character in entrypoint and does not support "." in environment variables
 env_variables:
