@@ -13,8 +13,9 @@
       "tcell_input_url": "https://us.input.tcell.insight.rapid7.com/api/v1",
       "js_agent_api_base_url": "https://us.agent.tcell.insight.rapid7.com/api/v1",
       "logging_options":{
-	"enabled":true,
-	"level":"INFO"
+	      "enabled":true,
+	      "destination":"stdout",
+	      "level":"INFO"
        }
     }
   ]
