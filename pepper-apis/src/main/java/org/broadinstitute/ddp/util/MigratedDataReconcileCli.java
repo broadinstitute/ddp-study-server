@@ -357,8 +357,8 @@ public class MigratedDataReconcileCli {
                         if (stateCodesMap.containsKey(targetFieldValue)) {
                             targetFieldValue = stateCodesMap.get(targetFieldValue);
                         }
-                    } else if (dkSet.contains(sourceFieldValue) && dkSet.contains(targetFieldValue) &&
-                            !sourceFieldName.contains("country")) {
+                    } else if (dkSet.contains(sourceFieldValue) && dkSet.contains(targetFieldValue)
+                            && !sourceFieldName.contains("country")) {
                         //dk/DK/Don't know .. consider as match & move on
                         //LOG.info("source field Name: {} .. target field Name: {} .. source field Value: {} .. target field Value: {}  ",
                         //        sourceFieldName, targetFieldName, sourceFieldValue, targetFieldValue);
