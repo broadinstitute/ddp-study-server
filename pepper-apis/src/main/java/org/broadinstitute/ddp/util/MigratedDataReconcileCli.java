@@ -147,7 +147,7 @@ public class MigratedDataReconcileCli {
         initStateCodes();
 
         //skip reporting some fields to reduce noise !!
-        skipFields.add("datstat_email"); //email is different in test dryruns
+        //skipFields.add("datstat_email"); //email is different in test dryruns
         skipFields.add("ddp_postal_code"); //During address validation zip is corrected / changed
         skipFields.add("postal_code");
         skipFields.add("street1"); //During address validation street is changed to ST ; road to RD .. so on
@@ -357,7 +357,8 @@ public class MigratedDataReconcileCli {
                         if (stateCodesMap.containsKey(targetFieldValue)) {
                             targetFieldValue = stateCodesMap.get(targetFieldValue);
                         }
-                    } else if (dkSet.contains(sourceFieldValue) && dkSet.contains(targetFieldValue)) {
+                    } else if (dkSet.contains(sourceFieldValue) && dkSet.contains(targetFieldValue) &&
+                            !sourceFieldName.contains("country")) {
                         //dk/DK/Don't know .. consider as match & move on
                         //LOG.info("source field Name: {} .. target field Name: {} .. source field Value: {} .. target field Value: {}  ",
                         //        sourceFieldName, targetFieldName, sourceFieldValue, targetFieldValue);
