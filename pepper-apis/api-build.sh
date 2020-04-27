@@ -53,16 +53,17 @@ function push_docs_image {
 
 function render_config() {
   # render build configs
+  GAE=false
+  if [[ "$1" =  "gae" ]]; then
+    GAE=true
+  fi
   echo "rendering buildtime configs"
-  INPUT_DIR=config DOCS_PROXIED_HOST=$DOCS_PROXIED_HOST NGINX_PROXIED_HOST=$NGINX_PROXIED_HOST OUTPUT_DIR=$BUILD_OUTDIR ENVIRONMENT=$ENVIRONMENT VERSION=$VERSION DIR=$DIR MANIFEST=build-manifest.rb ruby configure.rb -y
+  INPUT_DIR=config DOCS_PROXIED_HOST=$DOCS_PROXIED_HOST NGINX_PROXIED_HOST=$NGINX_PROXIED_HOST OUTPUT_DIR=$BUILD_OUTDIR ENVIRONMENT=$ENVIRONMENT VERSION=$VERSION DIR=$DIR GAE=$GAE MANIFEST=build-manifest.rb ruby configure.rb -y
 
-  if [[ "$1" == "local" ]]; then
+  if [[ "$1" == "local" ]] || [[ "$1" == "gae" ]]; then
       echo "rendering runtime configs locally"
-      INPUT_DIR=config NO_SYSLOG=true DOCS_PROXIED_HOST=$DOCS_PROXIED_HOST NGINX_PROXIED_HOST=$NGINX_PROXIED_HOST OUTPUT_DIR=$OUTDIR ENVIRONMENT=$ENVIRONMENT DIR=$DIR/$OUTDIR VERSION=$VERSION ruby configure.rb -y
+      INPUT_DIR=config NO_SYSLOG=true DOCS_PROXIED_HOST=$DOCS_PROXIED_HOST NGINX_PROXIED_HOST=$NGINX_PROXIED_HOST OUTPUT_DIR=$OUTDIR ENVIRONMENT=$ENVIRONMENT DIR=$DIR/$OUTDIR VERSION=$VERSION GAE=$GAE ruby configure.rb -y
       cp $OUTDIR/docker-compose.yaml $DIR
-  elif [[ "$1" == "gae" ]]; then
-      echo "gae configs"
-      INPUT_DIR=config NO_SYSLOG=true DOCS_PROXIED_HOST=$DOCS_PROXIED_HOST NGINX_PROXIED_HOST=$NGINX_PROXIED_HOST OUTPUT_DIR=$OUTDIR ENVIRONMENT=$ENVIRONMENT DIR=$DIR/$OUTDIR VERSION=$VERSION GAE=true ruby configure.rb -y
   fi
 }
 

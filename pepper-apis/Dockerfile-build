@@ -21,8 +21,12 @@ COPY --from=dsdetoolbox /usr/local/bin/vault /usr/local/bin/vault
 ENV VAULT_ADDR https://clotho.broadinstitute.org:8200
 
 RUN apk  --no-cache add \
+    curl \
+    bash \
     jq \
     mysql-client \
+    netcat-openbsd \
+    git \
     openjdk11 \
     # to support configure.rb
     ruby \

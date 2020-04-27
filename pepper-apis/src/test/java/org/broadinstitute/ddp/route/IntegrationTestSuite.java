@@ -73,7 +73,6 @@ import org.slf4j.LoggerFactory;
         DsmTriggerOnDemandActivityRouteTest.class,
         EmbeddedComponentActivityInstanceTest.class,
         ErrorHandlingRouteTest.class,
-        FireCloudRouteTest.class,
         GetActivityInstanceRouteTest.class,
         GetConsentSummariesRouteTest.class,
         GetConsentSummaryRouteTest.class,
@@ -179,7 +178,6 @@ public class IntegrationTestSuite {
     public static void startupTestServer() {
         bootAppServer();
         waitForServer(1000);
-        insertTestData();
     }
 
     private static void insertTestData() {
@@ -385,6 +383,7 @@ public class IntegrationTestSuite {
     public static void main(String[] args) {
         initializeDatabase();
         startupTestServer();
+        insertTestData();
     }
 
 }

@@ -3,6 +3,7 @@
 
 {{with $environment := env "ENVIRONMENT"}}
 {{with $version := env "VERSION"}}
+{{with $gae := env "GAE"}}
 {{with $testingConf := vault (printf "secret/pepper/%s/%s/testing" $environment $version)}}
 {{with $auth0 := index $testingConf.Data "auth0"}}
 {{with $testingAuth := index $testingConf.Data "auth0"}}
@@ -10,10 +11,16 @@
 
 {
     # If set to true, tests will use MySQL from Docker container and dbUrl and housekeepingDbUrl will be ignored
-    "useDisposableTestDbs": true,
+    {{if eq $gae "true"}}
+        "useDisposableTestDbs": false,
+        "dbUrl": "jdbc:mysql://localhost:3306/studyservicedb?user=root&password=rootpw&characterEncoding=UTF-8&useLegacyDatetimeCode=false&serverTimezone=UTC&useSSL=false&sessionVariables=innodb_strict_mode=on,tx_isolation='READ-COMMITTED',sql_mode='TRADITIONAL'",
+        "housekeepingDbUrl": "jdbc:mysql://localhost:3306/housekeepingdb?user=root&password=rootpw&characterEncoding=UTF-8&useLegacyDatetimeCode=false&serverTimezone=UTC&useSSL=false&sessionVariables=innodb_strict_mode=on,tx_isolation='READ-COMMITTED',sql_mode='TRADITIONAL'",
+    {{else}}
+        "useDisposableTestDbs": true,
+    {{end}}
     "maxConnections": 50,
     "defaultTimezone": "{{$testingConf.Data.defaultTimezone}}",
-    "port": 5555,
+    "port": 5556,
     "doLiquibase": true,
     "threadTimeout": 30000,
     "dsmBaseUrl": "http://localhost:9555",
@@ -61,27 +68,9 @@
     "easyPostApiKey": "{{$testingConf.Data.easyPostApiKey}}",
     # by default, boot in-processs for testing.  change rendered .conf file manually for local development
     "bootTestAppInSeparateProcess": false,
-    "baseTestUrl": "http://localhost:5555",
+    "baseTestUrl": "http://localhost:5556",
     "socialTestEmail": "{{$testingConf.Data.socialTestEmail}}",
     "socialTestPassword": "{{$testingConf.Data.socialTestPassword}}",
-    "firecloud": {
-        {{if eq $environment "dev"}}
-            "testWorkspaceNamespace": "pepper-dev2",
-            "testWorkspace": "pepper-dev-playground"
-        {{end}}
-        {{if eq $environment "test"}}
-            "testWorkspaceNamespace": "pepper-dev2",
-            "testWorkspace": "pepper-test"
-        {{end}}
-        {{if eq $environment "staging"}}
-            "testWorkspaceNamespace": "pepper-dev2",
-            "testWorkspace": "pepper-staging"
-        {{end}}
-        {{if eq $environment "prod"}}
-            "testWorkspaceNamespace": "pepper-dev2",
-            "testWorkspace": "pepper-prod-testing"
-        {{end}}
-    },
     "usePubSubEmulator": true,
     "pubSubProject": "testing",
     "runScheduler": false,
@@ -170,6 +159,7 @@
     }
 }
 
+{{end}}
 {{end}}
 {{end}}
 {{end}}

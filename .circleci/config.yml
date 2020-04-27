@@ -17,8 +17,6 @@ references:
              /home/circleci/.m2/repository
   pepper_apis_path: &pepper_apis_path
             /home/circleci/repo/pepper-apis
-  api-spec-path: &api-spec-path
-            /home/circleci/repo/pepper-apis/docs/specification
   circleci_path: &circleci_path
             /home/circleci/repo/.circleci
   builds_bucket: &builds_bucket
@@ -106,7 +104,7 @@ commands:
             staging)
               DEPLOY_ENV=staging
             ;;
-            prod)
+            production)
               DEPLOY_ENV=prod
             ;;
             *)
@@ -248,7 +246,6 @@ commands:
             cp ../target/<<parameters.jar_base_name>>.jar .
             cp ../src/appengine/<<parameters.jar_base_name>>.yaml .
             cp ../output-config/application.conf .
-            cp -r ../output-config/fc_keys .
       - auth-gcp-service-account
       - run:
           name: Deploy <<parameters.jar_base_name>> to GAE
@@ -257,24 +254,12 @@ commands:
             gcloud app deploy --version="${SHORT_GIT_SHA}" --stop-previous-version --project "broad-ddp-${ENVIRONMENT}" <<parameters.deploy_dir>>/<<parameters.jar_base_name>>.yaml
       - update-deployment-sheet:
           jar_base_name: <<parameters.jar_base_name>>
-      - delete-old-service-versions:
-          deploy_dir: <<parameters.deploy_dir>>
-          deploy_config_base_name: <<parameters.jar_base_name>>
-
-  delete-old-service-versions:
-    parameters:
-      deploy_dir:
-        type: string
-      deploy_config_base_name:
-        type: string
-        default: app
-    steps:
       - run:
           name: Delete previous versions of service
           command: |
             set +x
             # extract the service name from the GAE yaml file
-            CONFIG_FILE="<<parameters.deploy_dir>>/<<parameters.deploy_config_base_name>>.yaml"
+            CONFIG_FILE="<<parameters.deploy_dir>>/<<parameters.jar_base_name>>.yaml"
             SERVICE=$(grep -Eo -m1 "^service:\s*.*" "${CONFIG_FILE}" | awk '{print $2}')
             echo "The service name is *${SERVICE}*"
 
@@ -293,7 +278,7 @@ commands:
               echo "Deleting version $CURRENT_VERSION of service $SERVICE"
               gcloud app versions delete --quiet --service "$SERVICE" "$CURRENT_VERSION" --project "broad-ddp-${ENVIRONMENT}"
             done;
-            : # Need to make sure that exit code for step is a 0 even if versions delete failed
+            exit 0
 
   update-deployment-sheet:
     parameters:
@@ -439,7 +424,7 @@ commands:
                     $SKIPTESTS_OPTION \
                     -Ditext.license=output-config/itextkey.xml \
                     -Dddp.firecloudKeysDir=output-config/fc_keys \
-                    -Dconfig.file=output-config/testing-circleci.conf  \
+                    -Dconfig.file=output-build-config/testing-inmemorydb.conf  \
                     -Dmaven.repo.local=<< parameters.m2_repo >> <<parameters.additional_options>>
           background: <<parameters.background>>
       - when:
@@ -500,6 +485,7 @@ jobs:
       - run-maven-with-pepper-options:
           phase: test
           skip_tests: false
+          skip_checkstyle: false
           additional_options: '-Dtest=ServerInSameProcessIntegrationTestSuite'
           restore_m2_cache: true
 
@@ -519,7 +505,7 @@ jobs:
       - run-maven-with-pepper-options:
           phase: process-test-classes
           restore_m2_cache: true
-          skip_checkstyle: false
+          skip_checkstyle: true
       - render-configs
       - create-test-dbs
       - start-ddp-test-server # starts DDP server. And execute Liquibase DB population
