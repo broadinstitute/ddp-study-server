@@ -256,12 +256,24 @@ commands:
             gcloud app deploy --version="${SHORT_GIT_SHA}" --stop-previous-version --project "broad-ddp-${ENVIRONMENT}" <<parameters.deploy_dir>>/<<parameters.jar_base_name>>.yaml
       - update-deployment-sheet:
           jar_base_name: <<parameters.jar_base_name>>
+      - delete-old-service-versions:
+          deploy_dir: <<parameters.deploy_dir>>
+          deploy_config_base_name: <<parameters.jar_base_name>>
+
+  delete-old-service-versions:
+    parameters:
+      deploy_dir:
+        type: string
+      deploy_config_base_name:
+        type: string
+        default: app
+    steps:
       - run:
           name: Delete previous versions of service
           command: |
             set +x
             # extract the service name from the GAE yaml file
-            CONFIG_FILE="<<parameters.deploy_dir>>/<<parameters.jar_base_name>>.yaml"
+            CONFIG_FILE="<<parameters.deploy_dir>>/<<parameters.deploy_config_base_name>>.yaml"
             SERVICE=$(grep -Eo -m1 "^service:\s*.*" "${CONFIG_FILE}" | awk '{print $2}')
             echo "The service name is *${SERVICE}*"
 
@@ -425,7 +437,6 @@ commands:
                     $CHECKSTYLE_OPTION \
                     $SKIPTESTS_OPTION \
                     -Ditext.license=output-config/itextkey.xml \
-                    -Dddp.firecloudKeysDir=output-config/fc_keys \
                     -Dconfig.file=output-build-config/testing-inmemorydb.conf  \
                     -Dmaven.repo.local=<< parameters.m2_repo >> <<parameters.additional_options>>
           background: <<parameters.background>>
