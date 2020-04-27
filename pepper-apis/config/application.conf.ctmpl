@@ -2,6 +2,7 @@
 
 {{with $environment := env "ENVIRONMENT"}}
 {{with $version := env "VERSION"}}
+{{with $gae := env "GAE"}}
 {{with $conf := vault (printf "secret/pepper/%s/%s/conf" $environment $version)}}
 {{with $dsm_conf := vault (printf "secret/pepper/%s/%s/dsm/config" $environment $version)}}
 {{with $auth0 := index $conf.Data "auth0"}}
@@ -9,11 +10,16 @@
 {{with $testingAuth := index $testingConf.Data "auth0"}}
 {{with $slack := index $conf.Data "slack"}}
 {{with $elasticsearchConf := vault (printf "secret/pepper/%s/%s/elasticsearch" $environment $version)}}
-
 {
-    "dbUrl": "{{$conf.Data.dbUrl}}",
+    {{if eq $gae "true"}}
+        "dbUrl": "{{$conf.Data.gaeDbUrl}}",
+        "housekeepingDbUrl": "{{$conf.Data.gaeHousekeepingDbUrl}}",
+    {{else}}
+        "dbUrl": "{{$conf.Data.dbUrl}}",
+        "housekeepingDbUrl": "{{$conf.Data.housekeepingDbUrl}}",
+    {{end}}
+    "defaultTimezone": "{{$conf.Data.defaultTimezone}}",
     "maxConnections": {{$conf.Data.maxConnections}},
-    "housekeepingDbUrl": "{{$conf.Data.housekeepingDbUrl}}",
     "housekeepingMaxConnections": {{$conf.Data.housekeepingMaxConnections}},
     "port": {{$conf.Data.port}},
     "doLiquibase": {{$conf.Data.doLiquibase}},
@@ -81,18 +87,12 @@
 {{end}}{{end}}
     "elasticsearchUsername": "pepper_backend",
     "elasticsearchBatchSize": 100,
-    "dbDsmInstance": "{{$conf.Data.dbDsmInstance}}",
-    "dbApiInstance": "{{$conf.Data.dbApiInstance}}",
-    "dbHousekeepingInstance": "{{$conf.Data.dbHousekeepingInstance}}",
+    "dbInstanceId": "{{$conf.Data.dbInstanceId}}",
     "dsmJwtSecret": "{{$dsm_conf.Data.portal.jwtDdpSecret}}",
     "dsmJwtSigner": "org.broadinstitute.kdux",
     {{if eq $environment "dev"}}
         "baseTestUrl": "https://pepper-dev.datadonationplatform.org",
         "baseWebDriverUrl": "https://basil-dev.datadonationplatform.org",
-        "firecloud": {
-            "testWorkspaceNamespace":"pepper-dev2",
-            "testWorkspace":"pepper-dev-playground"
-        },
         "dsmBaseUrl": "https://dsm-dev.datadonationplatform.org:443"
     {{end}}
     {{if eq $environment "test"}}
@@ -107,6 +107,7 @@
         "dsmBaseUrl": "https://dsm.datadonationplatform.org:443"
     {{end}}
 }
+{{end}}
 {{end}}
 {{end}}
 {{end}}

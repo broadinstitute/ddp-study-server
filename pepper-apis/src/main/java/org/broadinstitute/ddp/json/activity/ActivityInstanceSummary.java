@@ -13,12 +13,10 @@ public class ActivityInstanceSummary implements TranslatedSummary {
     @SerializedName("instanceGuid")
     private String activityInstanceGuid;
 
-    // todo: rename to `activityName`
-    @SerializedName("activityDashboardName")
+    @SerializedName("activityName")
     private String activityName;
 
-    // todo: rename to `activityTitle`
-    @SerializedName("activityName")
+    @SerializedName("activityTitle")
     private String activityTitle;
 
     @SerializedName("activitySubtitle")

@@ -23,6 +23,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doCallRealMethod;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -62,15 +63,14 @@ import org.broadinstitute.ddp.db.dao.JdbiClient;
 import org.broadinstitute.ddp.db.dao.JdbiCountrySubnationalDivision;
 import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
 import org.broadinstitute.ddp.db.dao.JdbiMailAddress;
-import org.broadinstitute.ddp.db.dao.JdbiProfile;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.JdbiUserLegacyInfo;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dao.KitTypeDao;
 import org.broadinstitute.ddp.db.dao.MedicalProviderDao;
+import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.MedicalProviderDto;
 import org.broadinstitute.ddp.db.dto.UserDto;
-import org.broadinstitute.ddp.db.dto.UserProfileDto;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
@@ -83,6 +83,7 @@ import org.broadinstitute.ddp.model.migration.DatstatParticipantData;
 import org.broadinstitute.ddp.model.migration.ParticipantData;
 import org.broadinstitute.ddp.model.migration.ReleaseSurvey;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
+import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.service.DsmAddressValidationStatus;
 import org.broadinstitute.ddp.service.OLCService;
 import org.broadinstitute.ddp.util.gen2.enums.LovedOneRelationTo;
@@ -666,14 +667,14 @@ public class DataLoaderTest {
                 any(UserDto.class),
                 any(DatstatParticipantData.class),
                 any(JdbiLanguageCode.class),
-                any(JdbiProfile.class)
+                any(UserProfileDao.class)
         )).thenCallRealMethod();
 
         JdbiLanguageCode mockJdbiLanguageCode = mock(JdbiLanguageCode.class);
         when(mockJdbiLanguageCode.getLanguageCodeId(anyString())).thenReturn(pretendLanguageCodeId);
 
-        JdbiProfile mockJdbiProfile = mock(JdbiProfile.class);
-        when(mockJdbiProfile.insert(any(UserProfileDto.class))).thenReturn(1);
+        UserProfileDao mockProfileDao = mock(UserProfileDao.class);
+        doNothing().when(mockProfileDao).createProfile(any(UserProfile.class));
 
         long now = Instant.now().toEpochMilli();
         UserDto userDto = new UserDto(pretendUserId, pretendAuth0UserId, pretendUserGuid, pretendUserGuid, null, null, now, now);
@@ -682,19 +683,19 @@ public class DataLoaderTest {
                 userDto,
                 participantData,
                 mockJdbiLanguageCode,
-                mockJdbiProfile);
+                mockProfileDao);
 
         verify(mockJdbiLanguageCode, times(1)).getLanguageCodeId(anyString());
 
-        ArgumentCaptor<UserProfileDto> userProfileDtoCaptor = ArgumentCaptor.forClass(UserProfileDto.class);
-        verify(mockJdbiProfile, times(1)).insert(userProfileDtoCaptor.capture());
+        ArgumentCaptor<UserProfile> userProfileCaptor = ArgumentCaptor.forClass(UserProfile.class);
+        verify(mockProfileDao, times(1)).createProfile(userProfileCaptor.capture());
 
-        assertEquals(pretendUserId, userProfileDtoCaptor.getValue().getUserId());
+        assertEquals(pretendUserId, userProfileCaptor.getValue().getUserId());
 
-        assertEquals("First1539381231204", userProfileDtoCaptor.getValue().getFirstName());
-        assertEquals("Last1539381231204", userProfileDtoCaptor.getValue().getLastName());
-        assertEquals(pretendLanguageCodeId, userProfileDtoCaptor.getValue().getPreferredLanguageId());
-        assertEquals(null, userProfileDtoCaptor.getValue().getDoNotContact());
+        assertEquals("First1539381231204", userProfileCaptor.getValue().getFirstName());
+        assertEquals("Last1539381231204", userProfileCaptor.getValue().getLastName());
+        assertEquals(pretendLanguageCodeId, userProfileCaptor.getValue().getPreferredLangId());
+        assertEquals(null, userProfileCaptor.getValue().getDoNotContact());
     }
 
     @Test

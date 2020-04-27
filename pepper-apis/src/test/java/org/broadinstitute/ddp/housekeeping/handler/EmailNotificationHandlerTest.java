@@ -38,9 +38,9 @@ import org.broadinstitute.ddp.client.ApiResult;
 import org.broadinstitute.ddp.client.SendGridClient;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.EventDao;
-import org.broadinstitute.ddp.db.dao.JdbiProfile;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
+import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.NotificationTemplateSubstitutionDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.housekeeping.message.NotificationMessage;
@@ -130,18 +130,18 @@ public class EmailNotificationHandlerTest extends TxnAwareBaseTest {
         TransactionWrapper.useTxn(handle -> {
             handle.attach(JdbiUserStudyEnrollment.class).changeUserStudyEnrollmentStatus(
                     testData.getUserGuid(), testData.getStudyGuid(), EnrollmentStatusType.ENROLLED);
-            JdbiProfile jdbiProfile = handle.attach(JdbiProfile.class);
+            var profileDao = handle.attach(UserProfileDao.class);
 
             // no preference
-            jdbiProfile.updateDoNotContact(null, testData.getUserId());
+            profileDao.getUserProfileSql().updateDoNotContact(testData.getUserId(), null);
             assertFalse(handler.messageShouldBeIgnored(handle, testData.getStudyGuid(), testData.getUserGuid()));
 
             // opted in
-            jdbiProfile.updateDoNotContact(false, testData.getUserId());
+            profileDao.getUserProfileSql().updateDoNotContact(testData.getUserId(), false);
             assertFalse(handler.messageShouldBeIgnored(handle, testData.getStudyGuid(), testData.getUserGuid()));
 
             // opted out
-            jdbiProfile.updateDoNotContact(true, testData.getUserId());
+            profileDao.getUserProfileSql().updateDoNotContact(testData.getUserId(), true);
             assertTrue(handler.messageShouldBeIgnored(handle, testData.getStudyGuid(), testData.getUserGuid()));
 
             handle.rollback();

@@ -6,7 +6,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.auth0.json.mgmt.Connection;
+
 import org.apache.http.entity.ContentType;
+
 import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
@@ -19,8 +21,10 @@ import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.study.PasswordPolicy;
 import org.broadinstitute.ddp.util.ResponseUtil;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import spark.Request;
 import spark.Response;
 import spark.Route;
@@ -50,7 +54,8 @@ public class GetStudyPasswordPolicyRoute implements Route {
             }
 
             List<String> permittedStudies = handle.attach(JdbiClientUmbrellaStudy.class)
-                    .findPermittedStudyGuidsByAuth0ClientId(clientId);
+                    .findPermittedStudyGuidsByAuth0ClientIdAndAuth0TenantId(clientId, studyDto.getAuth0TenantId());
+
             if (!permittedStudies.contains(studyGuid)) {
                 LOG.warn("Either client does not exist or client does not have access to study " + studyGuid);
                 String msg = "Could not find client with id " + clientId;

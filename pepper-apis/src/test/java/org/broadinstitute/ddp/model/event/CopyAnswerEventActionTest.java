@@ -14,9 +14,8 @@ import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.CopyConfigurationDao;
-import org.broadinstitute.ddp.db.dao.JdbiProfile;
+import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
-import org.broadinstitute.ddp.db.dto.UserProfileDto;
 import org.broadinstitute.ddp.model.activity.definition.question.DateQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
@@ -43,6 +42,7 @@ import org.broadinstitute.ddp.model.copy.CopyConfiguration;
 import org.broadinstitute.ddp.model.copy.CopyConfigurationPair;
 import org.broadinstitute.ddp.model.copy.CopyLocation;
 import org.broadinstitute.ddp.model.copy.CopyLocationType;
+import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.broadinstitute.ddp.util.TestFormActivity;
 import org.junit.BeforeClass;
@@ -86,7 +86,7 @@ public class CopyAnswerEventActionTest extends TxnAwareBaseTest {
             var action = new CopyAnswerEventAction(null, configId);
             action.doAction(null, handle, signal);
 
-            UserProfileDto profile = handle.attach(JdbiProfile.class).getUserProfileByUserId(testData.getUserId());
+            UserProfile profile = handle.attach(UserProfileDao.class).findProfileByUserId(testData.getUserId()).get();
             assertEquals("new-last-name", profile.getLastName());
 
             handle.rollback();
@@ -96,8 +96,8 @@ public class CopyAnswerEventActionTest extends TxnAwareBaseTest {
     @Test
     public void testCopyAnswersFromTriggeredInstance() {
         TransactionWrapper.useTxn(handle -> {
-            JdbiProfile jdbiProfile = handle.attach(JdbiProfile.class);
-            UserProfileDto originalProfile = jdbiProfile.getUserProfileByUserId(testData.getUserId());
+            var profileDao = handle.attach(UserProfileDao.class);
+            UserProfile originalProfile = profileDao.findProfileByUserId(testData.getUserId()).get();
 
             TestFormActivity act = TestFormActivity.builder()
                     .withTextQuestion(true)
@@ -137,7 +137,7 @@ public class CopyAnswerEventActionTest extends TxnAwareBaseTest {
             var action = new CopyAnswerEventAction(null, configId);
             action.doAction(null, handle, signal);
 
-            UserProfileDto profile = jdbiProfile.getUserProfileByUserId(testData.getUserId());
+            UserProfile profile = profileDao.findProfileByUserId(testData.getUserId()).get();
             assertEquals(lastNameFromAnswer, profile.getLastName());
             assertEquals(LocalDate.of(1987, 3, 14), profile.getBirthDate());
 
@@ -257,7 +257,7 @@ public class CopyAnswerEventActionTest extends TxnAwareBaseTest {
             action.doAction(null, handle, signal);
 
             // Check profile
-            UserProfileDto profile = handle.attach(JdbiProfile.class).getUserProfileByUserId(testData.getUserId());
+            UserProfile profile = handle.attach(UserProfileDao.class).findProfileByUserId(testData.getUserId()).get();
             assertEquals("from-source", profile.getLastName());
             assertEquals(LocalDate.of(1987, 3, 14), profile.getBirthDate());
 

@@ -4,7 +4,6 @@ import java.security.MessageDigest;
 import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.List;
-import java.util.Map;
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
@@ -19,6 +18,11 @@ import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.util.ConfigManager;
+
+import org.jdbi.v3.core.mapper.reflect.ColumnName;
+import org.jdbi.v3.core.mapper.reflect.ConstructorMapper;
+import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,6 +36,16 @@ public class AesUtil {
     private static final String ENCRYPTION_TYPE = "AES";
     private static final int IV_SIZE = 16;
     private static final int KEY_SIZE = 16;
+    private static final String SELECT_CLIENT_TENANT_AND_SIGNING_SECRET_QUERY =
+            "    SELECT "
+            + "      auth0_client_id, auth0_tenant_id, auth0_signing_secret"
+            + "  FROM"
+            + "      client";
+    private static final String UPDATE_SIGNING_SECRET_QUERY =
+            "  UPDATE client "
+            + "SET auth0_signing_secret = :auth0_signing_secret "
+            + "WHERE auth0_client_id = :auth0_client_id "
+            + "AND auth0_tenant_id = :auth0_tenant_id";
     private Logger logger = LoggerFactory.getLogger(AesUtil.class);
 
 
@@ -160,23 +174,31 @@ public class AesUtil {
                 return;
             }
             TransactionWrapper.withTxn(handle -> {
-                List<Map<String, Object>> clientList = handle.createQuery(
-                        "select auth0_client_id, auth0_signing_secret from client").mapToMap().list();
-                for (Map<String, Object> client : clientList) {
-                    String auth0Secret = (String) client.get("auth0_signing_secret");
-                    String auth0ClientId = (String) client.get("auth0_client_id");
-                    System.out.println("auth0clientId = " + auth0ClientId);
-                    if (auth0Secret.length() == 64) {
-                        System.out.println("Found unencrypted auth0 secret for client " + auth0ClientId);
-                        auth0Secret = AesUtil.encrypt(auth0Secret, encryptionSecret);
-                        int numRows = handle.createUpdate("UPDATE client "
-                                + "SET auth0_signing_secret = :auth0_signing_secret "
-                                + "WHERE auth0_client_id = :auth0_client_id")
-                                .bind("auth0_signing_secret", auth0Secret)
-                                .bind("auth0_client_id", auth0ClientId)
+                List<ClientInfo> clientList = handle.createQuery(SELECT_CLIENT_TENANT_AND_SIGNING_SECRET_QUERY)
+                        .registerRowMapper(ConstructorMapper.factory(ClientInfo.class))
+                        .mapTo(ClientInfo.class)
+                        .list();
+                for (ClientInfo clientInfo : clientList) {
+                    System.out.println("auth0ClientId = " + clientInfo.getAuth0ClientId());
+                    System.out.println("auth0TenantId = " + clientInfo.getAuth0TenantId());
+                    if (clientInfo.getAuth0SigningSecret().length() == 64) {
+                        System.out.println(
+                                String.format(
+                                        "Found unencrypted auth0 secret for client %s and tenant %d",
+                                        clientInfo.getAuth0ClientId(),
+                                        clientInfo.getAuth0TenantId()
+                                )
+                        );
+                        String auth0EncrypedSigningSecret = AesUtil.encrypt(clientInfo.getAuth0SigningSecret(), encryptionSecret);
+                        int numRows = handle.createUpdate(UPDATE_SIGNING_SECRET_QUERY)
+                                .bind("auth0_signing_secret", auth0EncrypedSigningSecret)
+                                .bind("auth0_client_id", clientInfo.getAuth0ClientId())
+                                .bind("auth0_tenant_id", clientInfo.getAuth0TenantId())
                                 .execute();
                         if (numRows != 1) {
-                            throw new RuntimeException("We expected to only update one row for client_id" + auth0ClientId);
+                            throw new RuntimeException(
+                                    "We expected to only update one row for client_id" + clientInfo.getAuth0ClientId()
+                            );
                         }
                     }
                 }
@@ -194,12 +216,12 @@ public class AesUtil {
                 return;
             }
             TransactionWrapper.withTxn(handle -> {
-                List<Map<String, Object>> clientList = handle.createQuery(
-                        "select auth0_client_id, auth0_signing_secret from client").mapToMap().list();
-                for (Map<String, Object> client : clientList) {
-                    String auth0Secret = (String) client.get("auth0_signing_secret");
-                    String auth0ClientId = (String) client.get("auth0_client_id");
-                    System.out.println("auth0clientId = " + auth0ClientId);
+                List<ClientInfo> clientList = handle.createQuery(SELECT_CLIENT_TENANT_AND_SIGNING_SECRET_QUERY)
+                        .registerRowMapper(ConstructorMapper.factory(ClientInfo.class))
+                        .mapTo(ClientInfo.class)
+                        .list();
+                for (ClientInfo clientInfo : clientList) {
+                    String auth0Secret = clientInfo.getAuth0SigningSecret();
                     boolean couldNotDecrypt = false;
                     String decryptedSecret = null;
                     try {
@@ -209,14 +231,15 @@ public class AesUtil {
                     }
                     if (!couldNotDecrypt) {
                         String encryptedSecret = AesUtil.encrypt(decryptedSecret, encryptionSecret);
-                        int numRows = handle.createUpdate("UPDATE client "
-                                + "SET auth0_signing_secret = :auth0_signing_secret "
-                                + "WHERE auth0_client_id = :auth0_client_id")
+                        int numRows = handle.createUpdate(UPDATE_SIGNING_SECRET_QUERY)
                                 .bind("auth0_signing_secret", encryptedSecret)
-                                .bind("auth0_client_id", auth0ClientId)
+                                .bind("auth0_client_id", clientInfo.getAuth0ClientId())
+                                .bind("auth0_tenant_id", clientInfo.getAuth0TenantId())
                                 .execute();
                         if (numRows > 1) {
-                            throw new RuntimeException("We expected to only update one row for client_id" + auth0ClientId);
+                            throw new RuntimeException(
+                                    "We expected to only update one row for client_id" + clientInfo.getAuth0ClientId()
+                            );
                         }
                     }
                 }
@@ -234,5 +257,34 @@ public class AesUtil {
 
         TransactionWrapper.init(
                 new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, maxConnections, dbUrl));
+    }
+
+    public static class ClientInfo {
+        private String auth0ClientId;
+        private long auth0TenantId;
+        private String auth0SigningSecret;
+
+        @JdbiConstructor
+        public ClientInfo(
+                @ColumnName("auth0_client_id") String auth0ClientId,
+                @ColumnName("auth0_tenant_id") long auth0TenantId,
+                @ColumnName("auth0_signing_secret") String auth0SigningSecret
+        ) {
+            this.auth0ClientId = auth0ClientId;
+            this.auth0TenantId = auth0TenantId;
+            this.auth0SigningSecret = auth0SigningSecret;
+        }
+
+        public String getAuth0ClientId() {
+            return auth0ClientId;
+        }
+
+        public long getAuth0TenantId() {
+            return auth0TenantId;
+        }
+
+        public String getAuth0SigningSecret() {
+            return auth0SigningSecret;
+        }
     }
 }

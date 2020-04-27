@@ -14,6 +14,9 @@ public class ConfigFile {
     // whether or not to run liquibase at app boot
     public static final String DO_LIQUIBASE = "doLiquibase";
 
+    // Name of the default timezone to be used by system. Does not change VM time zone!
+    public static final String DEFAULT_TIMEZONE = "defaultTimezone";
+
     // config file name used for testing the app with a disposable in-memory database
     public static final String IN_MEMORY_DB_TESTING_CONFIG_FILE = "testing-inmemorydb.conf";
 
@@ -62,10 +65,8 @@ public class ConfigFile {
     public static final String STUDY_EXPORT_SCHEDULE = "schedules.studyExport";
     public static final String TEMP_USER_CLEANUP_SCHEDULE = "schedules.tempUserCleanup";
 
-    //database instance names
-    public static final String DB_DSM_INSTANCE_ID = "dbDsmInstance";
-    public static final String DB_API_INSTANCE_ID = "dbApiInstance";
-    public static final String DB_HOUSEKEEPING_INSTANCE_ID = "dbHousekeepingInstance";
+    // database instance names
+    public static final String DB_INSTANCE_ID = "dbInstanceId";
 
     // SQL queries
     public static final String CLIENT_KEY_CONFIGURATION_QUERY = "clientKeyConfigurationQuery";
@@ -75,10 +76,6 @@ public class ConfigFile {
     public static final String INSERT_USER_STMT = "insertUser";
     public static final String STUDIES_FOR_CLIENT_QUERY = "studiesForClientQuery";
     public static final String QUERY_GOVERNED_PARTICIPANTS_BY_OPERATOR = "governedParticipantsForOperatorQuery";
-    public static final String PROFILE_EXISTS_QUERY = "profileExistsQuery";
-    public static final String GET_USER_ID_FROM_GUID = "getUserIdFromGuidQuery";
-    public static final String PATCH_SEX_STMT = "patchSexStmt";
-    public static final String PATCH_PREFERRED_LANGUAGE_STMT = "patchPreferredLanguageStmt";
     public static final String HEALTHCHECK_PASSWORD = "healthcheckPassword";
     public static final String USER_CLIENT_REVOCATION_QUERY = "userClientRevocationQuery";
 

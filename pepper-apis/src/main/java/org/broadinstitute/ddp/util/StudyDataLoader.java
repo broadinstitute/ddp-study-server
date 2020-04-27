@@ -37,7 +37,6 @@ import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.SqlConstants.MedicalProviderTable;
 import org.broadinstitute.ddp.db.DBUtils;
-import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceStatusDao;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
@@ -52,19 +51,19 @@ import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
 import org.broadinstitute.ddp.db.dao.JdbiMailAddress;
 import org.broadinstitute.ddp.db.dao.JdbiMailingList;
 import org.broadinstitute.ddp.db.dao.JdbiMedicalProvider;
-import org.broadinstitute.ddp.db.dao.JdbiProfile;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyLegacyData;
 import org.broadinstitute.ddp.db.dao.KitTypeDao;
 import org.broadinstitute.ddp.db.dao.MedicalProviderDao;
+import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.ClientDto;
 import org.broadinstitute.ddp.db.dto.MedicalProviderDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.UserDto;
-import org.broadinstitute.ddp.db.dto.UserProfileDto;
 import org.broadinstitute.ddp.exception.AddressVerificationException;
+import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.instance.answer.AgreementAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
@@ -80,6 +79,7 @@ import org.broadinstitute.ddp.model.address.MailAddress;
 import org.broadinstitute.ddp.model.migration.BaseSurvey;
 import org.broadinstitute.ddp.model.migration.SurveyAddress;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
+import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.service.AddressService;
 import org.broadinstitute.ddp.service.DsmAddressValidationStatus;
 import org.broadinstitute.ddp.service.OLCService;
@@ -206,9 +206,9 @@ public class StudyDataLoader {
 
         UserDto pepperUser = createLegacyPepperUser(userDao, clientDao, datstatData, userGuid, userHruid, clientDto);
 
-        JdbiProfile jdbiProfile = handle.attach(JdbiProfile.class);
         JdbiLanguageCode jdbiLanguageCode = handle.attach(JdbiLanguageCode.class);
-        addUserProfile(pepperUser, datstatData, jdbiLanguageCode, jdbiProfile);
+        UserProfileDao profileDao = handle.attach(UserProfileDao.class);
+        addUserProfile(pepperUser, datstatData, jdbiLanguageCode, profileDao);
 
         JdbiMailAddress jdbiMailAddress = handle.attach(JdbiMailAddress.class);
         MailAddress createdAddress = addUserAddress(handle, pepperUser,
@@ -280,13 +280,14 @@ public class StudyDataLoader {
                         null, null, null);
 
         //populate PREQUAL answers
-        JdbiProfile jdbiProfile = handle.attach(JdbiProfile.class);
-        UserProfileDto profileDto = jdbiProfile.getUserProfileByUserGuid(participantGuid);
+        UserProfileDao profileDao = handle.attach(UserProfileDao.class);
+        UserProfile profile = profileDao.findProfileByUserGuid(participantGuid)
+                .orElseThrow(() -> new DDPException("Could not find profile for use with guid " + participantGuid));
         answerTextQuestion("PREQUAL_FIRST_NAME", participantGuid, dto.getGuid(),
-                profileDto.getFirstName(), answerDao);
+                profile.getFirstName(), answerDao);
 
         answerTextQuestion("PREQUAL_LAST_NAME", participantGuid, dto.getGuid(),
-                profileDto.getLastName(), answerDao);
+                profile.getLastName(), answerDao);
 
         List<SelectedPicklistOption> options = new ArrayList<SelectedPicklistOption>();
         options.add(new SelectedPicklistOption("DIAGNOSED"));
@@ -569,6 +570,8 @@ public class StudyDataLoader {
         //MBC might have dup physicians because physician list comes in both release and bdrelease surveys
         processPhysicianList(handle, surveyData, userDto, studyDto,
                 "physician_list", InstitutionType.PHYSICIAN, "bdreleasesurvey", instanceDto);
+
+        updateUserStudyEnrollment(handle, surveyData, userDto.getUserGuid(), studyDto.getGuid());
     }
 
 
@@ -694,6 +697,12 @@ public class StudyDataLoader {
         LOG.info("Populating Followup Survey...");
         if (surveyData == null || surveyData.isJsonNull()) {
             LOG.warn("NO Followup Survey !");
+            return;
+        }
+
+        String status = getStringValueFromElement(surveyData, "survey_status");
+        if (status.equalsIgnoreCase("CREATED")) {
+            LOG.warn("Created followup survey instance but no data ");
             return;
         }
 
@@ -826,28 +835,23 @@ public class StudyDataLoader {
         return stringBuilder.toString();
     }
 
-    UserProfileDto addUserProfile(UserDto user,
-                                  JsonElement data,
-                                  JdbiLanguageCode jdbiLanguageCode,
-                                  JdbiProfile jdbiProfile) throws Exception {
+    UserProfile addUserProfile(UserDto user,
+                               JsonElement data,
+                               JdbiLanguageCode jdbiLanguageCode,
+                               UserProfileDao profileDao) {
 
         Boolean isDoNotContact = getBooleanValueFromElement(data, "ddp_do_not_contact");
         Long languageCodeId = jdbiLanguageCode.getLanguageCodeId(DEFAULT_PREFERRED_LANGUAGE_CODE);
 
-        UserProfileDto userProfileDto = new UserProfileDto(user.getUserId(),
-                data.getAsJsonObject().get("datstat_firstname").getAsString(),
-                data.getAsJsonObject().get("datstat_lastname").getAsString(),
-                null, null, languageCodeId,
-                DEFAULT_PREFERRED_LANGUAGE_CODE, isDoNotContact);
+        UserProfile profile = new UserProfile.Builder(user.getUserId())
+                .setFirstName(StringUtils.trim(data.getAsJsonObject().get("datstat_firstname").getAsString()))
+                .setLastName(StringUtils.trim(data.getAsJsonObject().get("datstat_lastname").getAsString()))
+                .setPreferredLangId(languageCodeId)
+                .setDoNotContact(isDoNotContact)
+                .build();
+        profileDao.createProfile(profile);
 
-        int numRowsInserted = jdbiProfile.insert(userProfileDto);
-
-        if (numRowsInserted != 1) {
-            LOG.info("Failed to save profile information.  " + numRowsInserted + " rows were updated");
-            throw new DaoException("Failed to save profile information.  " + numRowsInserted + " rows were updated");
-        }
-
-        return userProfileDto;
+        return profile;
     }
 
     MailAddress getUserAddress(Handle handle, JsonElement data,
