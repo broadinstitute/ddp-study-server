@@ -59,8 +59,10 @@ public class MigratedDataReconcileCli {
     private List<String> skipFields = new ArrayList<>();
     CSVPrinter csvPrinter = null;
     Map<String, String> altNames;
+    Map<String, String> stateCodesMap;
     Map<Integer, String> yesNoDkLookup;
     Map<Integer, Boolean> booleanValueLookup;
+    Set<String> dkSet;
     private String serviceAccountFile = null;
     private String googleBucketName = null;
 
@@ -113,7 +115,7 @@ public class MigratedDataReconcileCli {
         String mappingFileName = cmd.getOptionValue("mappingfile");
 
         yesNoDkLookup = new HashMap<>();
-        yesNoDkLookup.put(0, "");
+        yesNoDkLookup.put(0, ""); //TODO for 0: support NO, null, empty
         yesNoDkLookup.put(1, "YES");
         yesNoDkLookup.put(2, "DK");
 
@@ -121,9 +123,12 @@ public class MigratedDataReconcileCli {
         booleanValueLookup.put(0, false);
         booleanValueLookup.put(1, true);
 
-        altNames = new HashMap<>();
-        altNames.put("DK", "Don't know");
+        dkSet = new HashSet<>();
+        dkSet.add("dk");
+        dkSet.add("DK");
+        dkSet.add("Don't know");
 
+        altNames = new HashMap<>();
         altNames.put("AMERICAN_INDIAN", "American Indian or Native American");
         altNames.put("OTHER_EAST_ASIAN", "Other East Asian");
         altNames.put("SOUTH_EAST_ASIAN", "South East Asian or Indian");
@@ -139,6 +144,8 @@ public class MigratedDataReconcileCli {
         altNames.put("drugend_year", "drugendyear");
         altNames.put("drugend_month", "drugendmonth");
 
+        initStateCodes();
+
         //skip reporting some fields to reduce noise !!
         //skipFields.add("datstat_email"); //email is different in test dryruns
         skipFields.add("ddp_postal_code"); //During address validation zip is corrected / changed
@@ -146,8 +153,10 @@ public class MigratedDataReconcileCli {
         skipFields.add("street1"); //During address validation street is changed to ST ; road to RD .. so on
 
         if (hasGoogleBucket) {
-            Map<String, String> altpidBucketMap = getAltpidBucketMap();
-            compareBucketData(csvFileName, altpidBucketMap, outputFileName, mappingFileName);
+            LOG.info("Comparing data export content to google bucket participant files. {}", new Date());
+            Map<String, Map> altpidBucketDataMap = loadBucketData(); // <altpid, SurveyDataMap>>
+            LOG.info("Loaded Bucket data for {} participants. {}", altpidBucketDataMap.size(), new Date());
+            compareBucketData(csvFileName, altpidBucketDataMap, outputFileName, mappingFileName);
         } else if (hasFile) {
             compareLocalFile(csvFileName, cmd.getOptionValue('l'), outputFileName, mappingFileName);
         }
@@ -155,7 +164,7 @@ public class MigratedDataReconcileCli {
         csvPrinter.close();
     }
 
-    public void compareBucketData(String csvFileName, Map<String, String> altpidBucketMap,
+    public void compareBucketData(String csvFileName, Map<String, Map> altpidBucketMap,
                                   String outputFileName, String mappingFileName) throws Exception {
 
         BufferedWriter writer = Files.newBufferedWriter(Paths.get(outputFileName));
@@ -168,15 +177,25 @@ public class MigratedDataReconcileCli {
                         "SOURCE_VALUE", "TARGET_VALUE", "MATCH"));
 
         CSVParser parser = getCSVParser(csvFileName);
+        int ptpCounter = 0;
+        List<String> missedAltpids = new ArrayList<>();
 
         for (CSVRecord csvRecord : parser) {
             String altpid = csvRecord.get("legacy_altpid");
             if (StringUtils.isEmpty(altpid) || !altpidBucketMap.containsKey(altpid)) {
+                missedAltpids.add(altpid);
                 continue;
             }
-            LOG.info("comparing altpid: {} ... bucket file: {}", altpid, altpidBucketMap.get(altpid));
-            Map<String, JsonElement> userData = getBucketData(altpidBucketMap.get(altpid));
+            LOG.debug("comparing altpid: {} ... bucket file: {}", altpid, altpidBucketMap.get(altpid));
+            Map<String, JsonElement> userData = altpidBucketMap.get(altpid);
             doCompare(csvRecord, userData, mappingData);
+            ptpCounter++;
+        }
+        LOG.info("Completed comparing {} participant files. {} ", ptpCounter, new Date());
+        if (!missedAltpids.isEmpty()) {
+            LOG.warn("*** Failed to compare {} altpids: {} ", missedAltpids.size(), Arrays.toString(missedAltpids.toArray()));
+        } else {
+            LOG.info("NO missed Altpids...");
         }
     }
 
@@ -333,7 +352,19 @@ public class MigratedDataReconcileCli {
 
                     if (altNames.containsKey(targetFieldValue)) {
                         targetFieldValue = altNames.get(targetFieldValue);
+                    } else if (sourceFieldName.contains("state") && sourceFieldValue.length() > 2) {
+                        //state comes in as TN and also Tennessee in some cases
+                        if (stateCodesMap.containsKey(targetFieldValue)) {
+                            targetFieldValue = stateCodesMap.get(targetFieldValue);
+                        }
+                    } else if (dkSet.contains(sourceFieldValue) && dkSet.contains(targetFieldValue)
+                            && !sourceFieldName.contains("country")) {
+                        //dk/DK/Don't know .. consider as match & move on
+                        //LOG.info("source field Name: {} .. target field Name: {} .. source field Value: {} .. target field Value: {}  ",
+                        //        sourceFieldName, targetFieldName, sourceFieldValue, targetFieldValue);
+                        sourceFieldValue = targetFieldValue;
                     }
+
                     //compare values
                     if (sourceFieldValue.equalsIgnoreCase(targetFieldValue)) {
                         //printRecord(csvRecord.get("legacy_altpid"), csvRecord.get("participant_guid"),
@@ -386,8 +417,8 @@ public class MigratedDataReconcileCli {
                         if (yesNoDkLookup.containsKey(yesNoInt)) {
                             altSourceValue = yesNoDkLookup.get(yesNoInt);
                         }
-                        if (sourceFieldName.equalsIgnoreCase("previously_medicated") && yesNoInt == 0) {
-                            //special case!!
+                        if (sourceFieldName.contains("_medicated") && yesNoInt == 0) {
+                            //special cases!!
                             altSourceValue = "NO";
                         }
                         if (altSourceValue.equalsIgnoreCase(targetFieldValue)) {
@@ -538,63 +569,47 @@ public class MigratedDataReconcileCli {
         }
     }
 
-    private Map<String, JsonElement> getBucketData(String bucketFileName) throws IOException {
+    private Map<String, JsonElement> getBucketData(String bucketFileName, Bucket bucket) {
 
         StudyDataLoaderMain dataLoaderMain = new StudyDataLoaderMain();
         //Download files from Google storage
-        //iterate through All buckets
-        GoogleCredentials credentials = GoogleCredentials.fromStream(
-                new FileInputStream(serviceAccountFile))
-                .createScoped(Lists.newArrayList("https://www.googleapis.com/auth/cloud-platform"));
-        Storage storage = GoogleBucketUtil.getStorage(credentials, DATA_GC_ID);
-        Bucket bucket = storage.get(googleBucketName);
-        String data;
         Map<String, JsonElement> surveyDataMap = null;
-        if (bucket.get(bucketFileName).exists()) {
-            data = new String(bucket.get(bucketFileName).getContent());
-            try {
-                //load source survey data
-                surveyDataMap = dataLoaderMain.loadSourceDataFile(data);
+        String data = new String(bucket.get(bucketFileName).getContent());
+        try {
+            //load source survey data
+            surveyDataMap = dataLoaderMain.loadSourceDataFile(data);
 
-            } catch (JsonSyntaxException e) {
-                LOG.error("Exception while processing bucket file : {}", bucketFileName, e);
-            }
+        } catch (JsonSyntaxException e) {
+            LOG.error("Exception while processing bucket file : {}", bucketFileName, e);
         }
-
         return surveyDataMap;
     }
 
-
-    private Map<String, String> getAltpidBucketMap() throws IOException {
-        Map<String, String> altPidBucket = new HashMap<>();
+    private Map<String, Map> loadBucketData() throws IOException {
         GoogleCredentials credentials = GoogleCredentials.fromStream(
                 new FileInputStream(serviceAccountFile))
                 .createScoped(Lists.newArrayList("https://www.googleapis.com/auth/cloud-platform"));
         Storage storage = GoogleBucketUtil.getStorage(credentials, DATA_GC_ID);
         Bucket bucket = storage.get(googleBucketName);
         String participantData;
-        JsonElement data;
+        StudyDataLoaderMain dataLoaderMain = new StudyDataLoaderMain();
 
-        //todo : check if its too much to store all 5000+ ptps data in memory so that I don't need to iterate through buckets again
-        //Map<String, JsonElement> surveyDataMap = null;
+        //load all Bucket data into memory
+        Map<String, Map> altpidBucketDataMap = new HashMap<>();
         for (Blob file : bucket.list().iterateAll()) {
             participantData = new String(file.getContent());
             if (!file.getName().startsWith("Participant_")) {
                 LOG.info("Skipping bucket file: {}", file.getName());
                 continue;
-                //not a participant data .. continue to next file.
+                //not participant data .. continue to next file.
             }
             try {
                 //load source survey data
-                //surveyDataMap = dataLoaderMain.loadSourceDataFile(data);
-                data = new Gson().fromJson(participantData, new TypeToken<JsonObject>() {
-                }.getType());
-                JsonObject dataObj = data.getAsJsonObject();
-                JsonElement user = dataObj.get("user");
-                JsonElement datstatParticipantData = user.getAsJsonObject().get("datstatparticipantdata");
-                String altpid = datstatParticipantData.getAsJsonObject().get("datstat_altpid").getAsString();
+                Map<String, JsonElement> surveyDataMap = dataLoaderMain.loadSourceDataFile(participantData);
+                JsonElement datstatData = surveyDataMap.get("datstatparticipantdata");
+                String altpid = datstatData.getAsJsonObject().get("datstat_altpid").getAsString();
                 if (StringUtils.isNotBlank(altpid)) {
-                    altPidBucket.put(altpid, file.getName());
+                    altpidBucketDataMap.put(altpid, surveyDataMap);
                 }
             } catch (JsonSyntaxException e) {
                 LOG.error("Exception while processing participant file: ", e);
@@ -602,7 +617,7 @@ public class MigratedDataReconcileCli {
             }
         }
 
-        return altPidBucket;
+        return altpidBucketDataMap;
     }
 
     private String getStringValueFromElement(JsonElement element, String key) {
@@ -770,7 +785,7 @@ public class MigratedDataReconcileCli {
                 } else {
                     value = getStringValueFromElement(thisDataEl, thisElement.getAsString());
                 }
-                values.add(value);
+                values.add(value != null ? value : "");
             }
             medList.add(String.join(";", values));
         }
@@ -969,4 +984,73 @@ public class MigratedDataReconcileCli {
         return parser;
     }
 
+    private void initStateCodes() {
+        //Hardcoded here rather than loading from DB to avoid DB dependency
+        stateCodesMap = new HashMap<>();
+
+        stateCodesMap.put("AB", "Alberta");
+        stateCodesMap.put("BC", "British Columbia");
+        stateCodesMap.put("MB", "Manitoba");
+        stateCodesMap.put("NB", "New Brunswick");
+        stateCodesMap.put("NL", "Newfoundland and Labrador");
+        stateCodesMap.put("NT", "Northwest Territories");
+        stateCodesMap.put("NS", "Nova Scotia");
+        stateCodesMap.put("NU", "Nunavut");
+        stateCodesMap.put("ON", "Ontario");
+        stateCodesMap.put("PE", "Prince Edward Island");
+        stateCodesMap.put("QC", "Quebec");
+        stateCodesMap.put("SK", "Saskatchewan");
+        stateCodesMap.put("YT", "Yukon");
+        stateCodesMap.put("AL", "Alabama");
+        stateCodesMap.put("AK", "Alaska");
+        stateCodesMap.put("AZ", "Arizona");
+        stateCodesMap.put("AR", "Arkansas");
+        stateCodesMap.put("CA", "California");
+        stateCodesMap.put("CO", "Colorado");
+        stateCodesMap.put("CT", "Connecticut");
+        stateCodesMap.put("DE", "Delaware");
+        stateCodesMap.put("DC", "District of Columbia");
+        stateCodesMap.put("FL", "Florida");
+        stateCodesMap.put("GA", "Georgia");
+        stateCodesMap.put("HI", "Hawaii");
+        stateCodesMap.put("ID", "Idaho");
+        stateCodesMap.put("IL", "Illinois");
+        stateCodesMap.put("IN", "Indiana");
+        stateCodesMap.put("IA", "Iowa");
+        stateCodesMap.put("KS", "Kansas");
+        stateCodesMap.put("KY", "Kentucky");
+        stateCodesMap.put("LA", "Louisiana");
+        stateCodesMap.put("ME", "Maine");
+        stateCodesMap.put("MD", "Maryland");
+        stateCodesMap.put("MA", "Massachusetts");
+        stateCodesMap.put("MI", "Michigan");
+        stateCodesMap.put("MN", "Minnesota");
+        stateCodesMap.put("MS", "Mississippi");
+        stateCodesMap.put("MO", "Missouri");
+        stateCodesMap.put("MT", "Montana");
+        stateCodesMap.put("NE", "Nebraska");
+        stateCodesMap.put("NV", "Nevada");
+        stateCodesMap.put("NH", "New Hampshire");
+        stateCodesMap.put("NJ", "New Jersey");
+        stateCodesMap.put("NM", "New Mexico");
+        stateCodesMap.put("NY", "New York");
+        stateCodesMap.put("NC", "North Carolina");
+        stateCodesMap.put("ND", "North Dakota");
+        stateCodesMap.put("OH", "Ohio");
+        stateCodesMap.put("OK", "Oklahoma");
+        stateCodesMap.put("OR", "Oregon");
+        stateCodesMap.put("PA", "Pennsylvania");
+        stateCodesMap.put("RI", "Rhode Island");
+        stateCodesMap.put("SC", "South Carolina");
+        stateCodesMap.put("SD", "South Dakota");
+        stateCodesMap.put("TN", "Tennessee");
+        stateCodesMap.put("TX", "Texas");
+        stateCodesMap.put("UT", "Utah");
+        stateCodesMap.put("VT", "Vermont");
+        stateCodesMap.put("VA", "Virginia");
+        stateCodesMap.put("WA", "Washington");
+        stateCodesMap.put("WV", "West Virginia");
+        stateCodesMap.put("WI", "Wisconsin");
+        stateCodesMap.put("WY", "Wyoming");
+    }
 }
