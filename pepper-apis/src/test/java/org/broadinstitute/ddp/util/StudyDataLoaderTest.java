@@ -205,8 +205,10 @@ public class StudyDataLoaderTest {
         mockDataLoader.booleanValueLookup.put(0, false);
         mockDataLoader.booleanValueLookup.put(1, true);
 
+        mockDataLoader.dkAltNames = new HashMap<>();
+        mockDataLoader.dkAltNames.put("dk", "Don't know");
+
         mockDataLoader.altNames = new HashMap<>();
-        mockDataLoader.altNames.put("dk", "Don't know");
         mockDataLoader.altNames.put("AMERICAN_INDIAN", "American Indian or Native American");
         mockDataLoader.altNames.put("AXILLARY_LYMPH_NODES", "aux_lymph_node");
         mockDataLoader.altNames.put("OTHER_LYMPH_NODES", "other_lymph_node");

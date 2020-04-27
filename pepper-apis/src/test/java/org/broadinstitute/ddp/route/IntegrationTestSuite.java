@@ -20,6 +20,10 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.typesafe.config.Config;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.conn.HttpHostConnectException;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.broadinstitute.ddp.DataDonationPlatform;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.TestConstants;
@@ -33,12 +37,14 @@ import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dto.Auth0TenantDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.UserDto;
+import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.filter.DsmAuthFilterTest;
 import org.broadinstitute.ddp.filter.StudyLanguageContentLanguageSettingFilterTest;
 import org.broadinstitute.ddp.filter.UserAuthCheckFilterTest;
 import org.broadinstitute.ddp.security.AesUtil;
 import org.broadinstitute.ddp.security.EncryptionKey;
 import org.broadinstitute.ddp.security.JWTConverterTest;
+import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.ddp.util.JavaProcessSpawner;
 import org.broadinstitute.ddp.util.LogbackConfigurationPrinter;
 import org.broadinstitute.ddp.util.MySqlTestContainerUtil;
@@ -67,7 +73,6 @@ import org.slf4j.LoggerFactory;
         DsmTriggerOnDemandActivityRouteTest.class,
         EmbeddedComponentActivityInstanceTest.class,
         ErrorHandlingRouteTest.class,
-        FireCloudRouteTest.class,
         GetActivityInstanceRouteTest.class,
         GetConsentSummariesRouteTest.class,
         GetConsentSummaryRouteTest.class,
@@ -153,20 +158,34 @@ public class IntegrationTestSuite {
 
         LogbackConfigurationPrinter.printLoggingConfiguration();
 
-        RouteTestUtil.loadConfig();
+        initializeDatabase();
 
+        if (!isTestServerRunning()) {
+            startupTestServer();
+            insertTestData();
+        } else {
+            RouteTestUtil.setupDatabasePool();
+        }
+        callCounter += 1;
+    }
+
+    private static void initializeDatabase() {
+        RouteTestUtil.loadConfig();
         RouteTestUtil.loadSqlConfig();
         MySqlTestContainerUtil.initializeTestDbs();
+    }
 
+    public static void startupTestServer() {
         bootAppServer();
         waitForServer(1000);
+    }
 
+    private static void insertTestData() {
+        LOG.warn("Inserting test data!!!!");
         RouteTestUtil.setupDatabasePool();
-
         TestDataSetupUtil.insertStaticTestData();
         initializeStaticTestUserData();
-
-        callCounter += 1;
+        LOG.warn("Test data has been inserted!!!!");
     }
 
     private static List<Class> ignoredClasses() {
@@ -250,7 +269,11 @@ public class IntegrationTestSuite {
             // There are still tests running, do nothing and exit.
             return;
         }
+        tearDownSuiteServer();
 
+    }
+
+    public static void tearDownSuiteServer() {
         // todo(yufeng) figure out how to shutdown server running in separate process
         DataDonationPlatform.shutdown();
         TransactionWrapper.reset();
@@ -336,4 +359,31 @@ public class IntegrationTestSuite {
             IntegrationTestSuite.tearDown();
         }
     }
+
+    private static boolean isTestServerRunning() {
+        int serverPortNum = ConfigManager.getInstance().getConfig().getInt(ConfigFile.PORT);
+        String serverUrl = "http://localhost:" + serverPortNum;
+        try (
+                CloseableHttpClient httpClient = HttpClients.createDefault();
+
+        ) {
+            httpClient.execute(new HttpGet(serverUrl));
+            return true;
+        } catch (HttpHostConnectException e) {
+            LOG.debug("Could not connect to server url. Must not be running");
+            return false;
+        } catch (IOException e) {
+            String msg = "There was problem initializing CloseableHttpClient";
+            LOG.error(msg, e);
+            throw new DDPException(msg, e);
+        }
+
+    }
+
+    public static void main(String[] args) {
+        initializeDatabase();
+        startupTestServer();
+        insertTestData();
+    }
+
 }

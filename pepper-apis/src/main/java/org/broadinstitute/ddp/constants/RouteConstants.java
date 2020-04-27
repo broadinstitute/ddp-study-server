@@ -88,11 +88,6 @@ public class RouteConstants {
         public static final String USER_STUDY_EXIT = String.format(
                 BASE + "/user/%s/studies/%s/exit", PathParam.USER_GUID, PathParam.STUDY_GUID);
 
-        public static final String ADMIN_BASE = BASE + "/admin";
-        public static final String ADMIN_STUDIES = BASE + "/admin/studies";
-        public static final String ADMIN_WORKSPACES = BASE + "/admin/workspaces";
-        public static final String EXPORT_STUDY = fmt(BASE + "/admin/studies/%s/export", PathParam.STUDY_GUID);
-
         public static final String DSM_BASE = BASE + "/dsm";
         public static final String DSM_STUDY = fmt(DSM_BASE + "/studies/%s/ddp", PathParam.STUDY_GUID);
         public static final String DSM_GET_INSTITUTION_REQUESTS = fmt(DSM_STUDY + "/institutionrequests/%s", PathParam.MAX_ID);
@@ -180,7 +175,4 @@ public class RouteConstants {
         public static final String ERROR_CODE = "errorCode";
     }
 
-    public static final class FireCloud {
-        public static String fireCloudBaseUrl = "https://api.firecloud.org/api/workspaces";
-    }
 }
