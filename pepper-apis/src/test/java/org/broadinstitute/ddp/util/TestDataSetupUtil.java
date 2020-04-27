@@ -18,7 +18,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.FileInputStream;
-import java.sql.Driver;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -43,8 +42,6 @@ import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.SqlConstants;
 import org.broadinstitute.ddp.constants.TestConstants;
 import org.broadinstitute.ddp.db.DBUtils;
-import org.broadinstitute.ddp.db.DaoException;
-import org.broadinstitute.ddp.db.StudyActivityMappingDao;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.UserDao;
 import org.broadinstitute.ddp.db.UserDaoFactory;
@@ -66,9 +63,9 @@ import org.broadinstitute.ddp.db.dao.JdbiEventConfiguration;
 import org.broadinstitute.ddp.db.dao.JdbiEventConfigurationOccurrenceCounter;
 import org.broadinstitute.ddp.db.dao.JdbiEventTrigger;
 import org.broadinstitute.ddp.db.dao.JdbiExpression;
+import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
 import org.broadinstitute.ddp.db.dao.JdbiMailAddress;
 import org.broadinstitute.ddp.db.dao.JdbiMedicalProvider;
-import org.broadinstitute.ddp.db.dao.JdbiProfile;
 import org.broadinstitute.ddp.db.dao.JdbiRevision;
 import org.broadinstitute.ddp.db.dao.JdbiSendgridConfiguration;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrella;
@@ -76,6 +73,7 @@ import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dao.PdfDao;
+import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.Auth0TenantDto;
@@ -85,7 +83,6 @@ import org.broadinstitute.ddp.db.dto.SendgridConfigurationDto;
 import org.broadinstitute.ddp.db.dto.SendgridEmailEventActionDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.UserDto;
-import org.broadinstitute.ddp.json.Profile;
 import org.broadinstitute.ddp.model.activity.definition.ConsentActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.ConsentElectionDef;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
@@ -102,7 +99,6 @@ import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
-import org.broadinstitute.ddp.model.activity.types.ActivityMappingType;
 import org.broadinstitute.ddp.model.activity.types.DateFieldType;
 import org.broadinstitute.ddp.model.activity.types.DateRenderMode;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
@@ -114,7 +110,6 @@ import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.activity.types.TemplateType;
 import org.broadinstitute.ddp.model.address.MailAddress;
 import org.broadinstitute.ddp.model.address.OLCPrecision;
-import org.broadinstitute.ddp.model.dsm.StudyActivityMapping;
 import org.broadinstitute.ddp.model.pdf.ActivityDateSubstitution;
 import org.broadinstitute.ddp.model.pdf.AnswerSubstitution;
 import org.broadinstitute.ddp.model.pdf.BooleanAnswerSubstitution;
@@ -123,7 +118,10 @@ import org.broadinstitute.ddp.model.pdf.PdfActivityDataSource;
 import org.broadinstitute.ddp.model.pdf.PdfConfigInfo;
 import org.broadinstitute.ddp.model.pdf.PdfConfiguration;
 import org.broadinstitute.ddp.model.pdf.PdfVersion;
+import org.broadinstitute.ddp.model.study.ActivityMapping;
+import org.broadinstitute.ddp.model.study.ActivityMappingType;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
+import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.security.AesUtil;
 import org.broadinstitute.ddp.security.EncryptionKey;
 import org.broadinstitute.ddp.security.StudyClientConfiguration;
@@ -137,12 +135,10 @@ import org.slf4j.LoggerFactory;
  */
 public class TestDataSetupUtil {
 
-    public static final String TEMP_DISABLE_CLIENT_STUDY_TENANT_CONSTRAINTS =
-            "src/test/resources/db-testscripts/disable-tenant-constraints.xml";
+    public static final String TEMP_DISABLE_CLIENT_STUDY_TENANT_CONSTRAINTS = "db-testscripts/disable-tenant-constraints.xml";
     public static final String MIGRATE_LEGACY_STUDY_CLIENT_TENANT_AND_ENABLE_CONSTRAINTS =
-            "src/test/resources/db-testscripts/backfill-test-tenants-and-re-enable-tenant-constrains.xml";
-    public static final String BASELINE_SEED_TEST_DATA =
-            "src/test/resources/db-testscripts/baseline-seed-test-data.xml";
+            "db-testscripts/backfill-test-tenants-and-re-enable-tenant-constrains.xml";
+    public static final String BASELINE_SEED_TEST_DATA = "db-testscripts/baseline-seed-test-data.xml";
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(TestDataSetupUtil.class);
     private static final Config cfg = ConfigManager.getInstance().getConfig();
     private static final Config auth0Config = cfg.getConfig(ConfigFile.AUTH0);
@@ -153,16 +149,6 @@ public class TestDataSetupUtil {
     private static final List<GeneratedTestData> testDataToDelete = new ArrayList<>();
     private static final String CONSENT_PDF_LOCATION = "src/test/resources/ConsentForm.pdf";
     private static UserDao userDao = UserDaoFactory.createFromSqlConfig(sqlConfig);
-
-    public static final class ConsentFields {
-        public static final String DRAW_BLOOD_YES = "drawBlood_YES";
-        public static final String DRAW_BLOOD_NO = "drawBlood_NO";
-        public static final String TISSUE_SAMPLE_YES = "tissueSample_YES";
-        public static final String TISSUE_SAMPLE_NO = "tissueSample_NO";
-        public static final String FULL_NAME = "fullName";
-        public static final String DATE_OF_BIRTH = "dateOfBirth";
-        public static final String TODAY_DATE = "date";
-    }
 
     public static void main(String[] args) throws Exception {
         Logger root = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
@@ -257,15 +243,14 @@ public class TestDataSetupUtil {
                                 null);
 
                         System.out.print(String.valueOf(userId) + "\t");
-                        Profile profile = null;
+                        UserProfile profile = null;
                         if (cmd.hasOption('p')) {
-                            profile = createTestingProfile(handle, userGuid, true);
-                            LocalDate localDate = LocalDate.of(profile.getBirthYear(),
-                                    profile.getBirthMonth(), profile.getBirthDayInMonth());
+                            profile = createTestingProfile(handle, userId, true);
+                            LocalDate birthDate = profile.getBirthDate();
                             System.out.print(String.format("%s\t%s\t%s\t%s\t", profile.getFirstName(),
                                     profile.getLastName(),
-                                    profile.getSex().name(),
-                                    DateTimeFormatter.ISO_DATE.format(localDate)));
+                                    profile.getSexType().name(),
+                                    DateTimeFormatter.ISO_DATE.format(birthDate)));
                         }
 
                         GeneratedTestData generatedTestData = new GeneratedTestData(testingUser, profile,
@@ -385,7 +370,6 @@ public class TestDataSetupUtil {
                     mgmtClientId,
                     encryptedSecret);
             clientId = clientDao.registerClient(
-                    auth0clientName,
                     auth0clientId,
                     auth0Secret,
                     Collections.singletonList(study.getGuid()),
@@ -405,7 +389,7 @@ public class TestDataSetupUtil {
 
         GeneratedTestData generatedTestData = null;
         Auth0Util.TestingUser testUserBeingUsed = null;
-        Profile profile = null;
+        UserProfile profile = null;
 
         if (!forceUserCreation) {
             Long userId = null;
@@ -448,14 +432,9 @@ public class TestDataSetupUtil {
                 throw new RuntimeException(e);
             }
 
-            try {
-                profile = userDao.getProfile(handle, testUserGuid);
-            } catch (DaoException e) {
-                profile = null;
-            }
-
+            profile = handle.attach(UserProfileDao.class).findProfileByUserGuid(testUserGuid).orElse(null);
             if (profile == null) {
-                profile = createTestingProfile(handle, testUserBeingUsed.getUserGuid(), false);
+                profile = createTestingProfile(handle, testUserBeingUsed.getUserId(), false);
             }
 
             generatedTestData = new GeneratedTestData(testUserBeingUsed, profile, study, studyClientConfiguration);
@@ -467,7 +446,7 @@ public class TestDataSetupUtil {
                         auth0Secret,
                         study.getGuid());
 
-                profile = createTestingProfile(handle, testUserBeingUsed.getUserGuid(), false);
+                profile = createTestingProfile(handle, testUserBeingUsed.getUserId(), false);
 
             } catch (Auth0Exception e) {
                 throw new RuntimeException("Could not generate testing user", e);
@@ -521,12 +500,10 @@ public class TestDataSetupUtil {
         scripts.add(BASELINE_SEED_TEST_DATA);
         scripts.add(MIGRATE_LEGACY_STUDY_CLIENT_TENANT_AND_ENABLE_CONSTRAINTS);
         try {
-            Driver driver = new com.mysql.jdbc.Driver();
-
             for (String script : scripts) {
                 LOG.info("Running legacy test setup script {}", script);
                 String dbUrl = cfg.getString(TransactionWrapper.DB.APIS.getDbUrlConfigKey());
-                LiquibaseUtil.runChangeLog(driver, dbUrl, script);
+                LiquibaseUtil.runChangeLog(dbUrl, script);
             }
         } catch (Exception e) {
             LOG.error("Failed to insert static test account data", e);
@@ -702,30 +679,29 @@ public class TestDataSetupUtil {
     /**
      * Creates a profile for this user
      */
-    public static Profile createTestingProfile(Handle handle, String userGuid, boolean random) {
+    public static UserProfile createTestingProfile(Handle handle, long userId, boolean random) {
         Random rand = new Random();
-        Profile profile = new Profile(
-                random ? rand.ints(1, 28).findFirst().getAsInt()
-                        : TestConstants.TEST_USER_PROFILE_BIRTH_DAY,
-                random ? rand.ints(1, 12).findFirst().getAsInt()
-                        : TestConstants.TEST_USER_PROFILE_BIRTH_MONTH,
-                random ? rand.ints(1800, 2017).findFirst().getAsInt()
-                        : TestConstants.TEST_USER_PROFILE_BIRTH_YEAR,
-                random ? Profile.Sex.values()[rand.nextInt(Profile.Sex.values().length)]
-                        : TestConstants.TEST_USER_PROFILE_SEX,
-                TestConstants.TEST_USER_PROFILE_PREFERRED_LANGUAGE,
-                random ? "John" + GuidUtils.randomStringFromDictionary(UPPER_ALPHA_NUMERIC, 10)
-                        : TestConstants.TEST_USER_PROFILE_FIRST_NAME,
-                random ? "Doe" + GuidUtils.randomStringFromDictionary(UPPER_ALPHA_NUMERIC, 10)
-                        : TestConstants.TEST_USER_PROFILE_LAST_NAME);
-        try {
-            userDao.addProfile(handle,
-                    profile,
-                    userGuid);
-        } catch (Exception e) {
-            throw new RuntimeException("Couldn't create test profile! WHY????????", e);
-        }
-
+        UserProfile profile = new UserProfile.Builder(userId)
+                .setFirstName(random
+                        ? "John" + GuidUtils.randomStringFromDictionary(UPPER_ALPHA_NUMERIC, 10)
+                        : TestConstants.TEST_USER_PROFILE_FIRST_NAME)
+                .setLastName(random
+                        ? "Doe" + GuidUtils.randomStringFromDictionary(UPPER_ALPHA_NUMERIC, 10)
+                        : TestConstants.TEST_USER_PROFILE_LAST_NAME)
+                .setSexType(random
+                        ? UserProfile.SexType.values()[rand.nextInt(UserProfile.SexType.values().length)]
+                        : TestConstants.TEST_USER_PROFILE_SEX)
+                .setBirthDate(LocalDate.of(
+                        random ? rand.ints(1800, 2017).findFirst().getAsInt()
+                                : TestConstants.TEST_USER_PROFILE_BIRTH_YEAR,
+                        random ? rand.ints(1, 12).findFirst().getAsInt()
+                                : TestConstants.TEST_USER_PROFILE_BIRTH_MONTH,
+                        random ? rand.ints(1, 28).findFirst().getAsInt()
+                                : TestConstants.TEST_USER_PROFILE_BIRTH_DAY))
+                .setPreferredLangId(handle.attach(JdbiLanguageCode.class)
+                        .getLanguageCodeId(TestConstants.TEST_USER_PROFILE_PREFERRED_LANGUAGE))
+                .build();
+        handle.attach(UserProfileDao.class).createProfile(profile);
         return profile;
     }
 
@@ -896,11 +872,10 @@ public class TestDataSetupUtil {
         generatedTestData.setAboutYouActivityId(activityVersionDto.getActivityId());
 
         // Create consent mappings for this study
-        StudyActivityMappingDao.insertStudyActivityMapping(handle, new StudyActivityMapping(generatedTestData.getStudyGuid(),
+        activityDao.insertActivityMapping(new ActivityMapping(generatedTestData.getStudyGuid(),
                 ActivityMappingType.DATE_OF_DIAGNOSIS,
                 activityVersionDto.getActivityId(),
                 generatedTestData.getDateOfDiagnosisStableId()));
-
     }
 
     public static void addTestConsent(Handle handle, GeneratedTestData generatedTestData) {
@@ -968,22 +943,22 @@ public class TestDataSetupUtil {
         generatedTestData.setConsentVersionId(activityVersionDto.getId());
 
         // Create consent mappings for this study
-        StudyActivityMappingDao.insertStudyActivityMapping(handle, new StudyActivityMapping(generatedTestData.getStudyGuid(),
+        activityDao.insertActivityMapping(new ActivityMapping(generatedTestData.getStudyGuid(),
                 ActivityMappingType.BLOOD,
                 activityVersionDto.getActivityId(),
                 generatedTestData.getBloodQuestionStableId()));
 
-        StudyActivityMappingDao.insertStudyActivityMapping(handle, new StudyActivityMapping(generatedTestData.getStudyGuid(),
+        activityDao.insertActivityMapping(new ActivityMapping(generatedTestData.getStudyGuid(),
                 ActivityMappingType.TISSUE,
                 activityVersionDto.getActivityId(),
                 generatedTestData.getTissueQuestionStableId()));
 
-        StudyActivityMappingDao.insertStudyActivityMapping(handle, new StudyActivityMapping(generatedTestData.getStudyGuid(),
+        activityDao.insertActivityMapping(new ActivityMapping(generatedTestData.getStudyGuid(),
                 ActivityMappingType.MEDICAL_RELEASE,
                 activityVersionDto.getActivityId(),
                 null));
 
-        StudyActivityMappingDao.insertStudyActivityMapping(handle, new StudyActivityMapping(generatedTestData.getStudyGuid(),
+        activityDao.insertActivityMapping(new ActivityMapping(generatedTestData.getStudyGuid(),
                 ActivityMappingType.DATE_OF_BIRTH,
                 activityVersionDto.getActivityId(),
                 generatedTestData.getDateOfBirthStableId()));
@@ -1080,7 +1055,7 @@ public class TestDataSetupUtil {
                         wantsAltPid ? TestConstants.TEST_INSTITUTION_LEGACY_GUID : null,
                         random ? "Street" + GuidUtils.randomStringFromDictionary(UPPER_ALPHA_NUMERIC, 10) :
                                 TestConstants.TEST_INSTITUTION_STREET
-                        ));
+                ));
         return handle.attach(JdbiMedicalProvider.class).insert(generatedTestData.getMedicalProvider());
     }
 
@@ -1108,7 +1083,7 @@ public class TestDataSetupUtil {
 
     public static void deleteProfile(Handle handle, GeneratedTestData generatedTestData) {
         if (generatedTestData.getProfile() != null) {
-            handle.attach(JdbiProfile.class).deleteByUserId(generatedTestData.getUserId());
+            handle.attach(UserProfileDao.class).getUserProfileSql().deleteByUserId(generatedTestData.getUserId());
         }
     }
 
@@ -1137,8 +1112,7 @@ public class TestDataSetupUtil {
     }
 
     /**
-     * Creates a new empty form activity for testing.  Activity does not
-     * have any questions.
+     * Creates a new empty form activity for testing.  Activity does not have any questions.
      */
     public static FormActivityDef createBlankActivity(Handle handle, String activityCode, String userGuid, String
             studyGuid) {
@@ -1189,11 +1163,21 @@ public class TestDataSetupUtil {
                 .deleteByUserGuidStudyGuid(testData.getUserGuid(), testData.getStudyGuid());
     }
 
+    public static final class ConsentFields {
+        public static final String DRAW_BLOOD_YES = "drawBlood_YES";
+        public static final String DRAW_BLOOD_NO = "drawBlood_NO";
+        public static final String TISSUE_SAMPLE_YES = "tissueSample_YES";
+        public static final String TISSUE_SAMPLE_NO = "tissueSample_NO";
+        public static final String FULL_NAME = "fullName";
+        public static final String DATE_OF_BIRTH = "dateOfBirth";
+        public static final String TODAY_DATE = "date";
+    }
+
     public static class GeneratedTestData {
         private Auth0Util.TestingUser testingUser;
         private StudyDto study;
         private StudyClientConfiguration client;
-        private Profile testUserProfile;
+        private UserProfile testUserProfile;
         private PdfConfigInfo pdfConfigInfo;
         private MailAddress mailAddress;
         private MedicalProviderDto medicalProvider;
@@ -1214,7 +1198,7 @@ public class TestDataSetupUtil {
         private long enrollmentConfigurationId;
 
         public GeneratedTestData(Auth0Util.TestingUser testingUser,
-                                 Profile testUserProfile,
+                                 UserProfile testUserProfile,
                                  StudyDto study,
                                  StudyClientConfiguration client) {
             this.testUserProfile = testUserProfile;
@@ -1270,11 +1254,11 @@ public class TestDataSetupUtil {
             return study.getId();
         }
 
-        public Profile getProfile() {
+        public UserProfile getProfile() {
             return testUserProfile;
         }
 
-        public void setTestUserProfile(Profile testUserProfile) {
+        public void setTestUserProfile(UserProfile testUserProfile) {
             this.testUserProfile = testUserProfile;
         }
 

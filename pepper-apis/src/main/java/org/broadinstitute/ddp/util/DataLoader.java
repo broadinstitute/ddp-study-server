@@ -32,10 +32,10 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.typesafe.config.Config;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.SqlConstants.MedicalProviderTable;
 import org.broadinstitute.ddp.db.DBUtils;
-import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceStatusDao;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
@@ -50,17 +50,16 @@ import org.broadinstitute.ddp.db.dao.JdbiCountrySubnationalDivision;
 import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
 import org.broadinstitute.ddp.db.dao.JdbiMailAddress;
 import org.broadinstitute.ddp.db.dao.JdbiMailingList;
-import org.broadinstitute.ddp.db.dao.JdbiProfile;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.JdbiUserLegacyInfo;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dao.KitTypeDao;
 import org.broadinstitute.ddp.db.dao.MedicalProviderDao;
+import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.Auth0TenantDto;
 import org.broadinstitute.ddp.db.dto.MedicalProviderDto;
 import org.broadinstitute.ddp.db.dto.UserDto;
-import org.broadinstitute.ddp.db.dto.UserProfileDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.instance.answer.AgreementAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
@@ -89,6 +88,7 @@ import org.broadinstitute.ddp.model.migration.Physician;
 import org.broadinstitute.ddp.model.migration.ReleaseSurvey;
 import org.broadinstitute.ddp.model.migration.SurveyAddress;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
+import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.security.StudyClientConfiguration;
 import org.broadinstitute.ddp.service.DsmAddressValidationStatus;
 import org.broadinstitute.ddp.service.OLCService;
@@ -167,9 +167,9 @@ public class DataLoader {
         UserDto pepperUser = createUserForLegacyParticipant(handle, cfg, data);
         userGuid = pepperUser.getUserGuid();
 
-        JdbiProfile jdbiProfile = handle.attach(JdbiProfile.class);
         JdbiLanguageCode jdbiLanguageCode = handle.attach(JdbiLanguageCode.class);
-        addUserProfile(pepperUser, data, jdbiLanguageCode, jdbiProfile);
+        UserProfileDao profileDao = handle.attach(UserProfileDao.class);
+        addUserProfile(pepperUser, data, jdbiLanguageCode, profileDao);
 
         JdbiMailAddress jdbiMailAddress = handle.attach(JdbiMailAddress.class);
         MailAddress address = addUserAddress(handle, pepperUser,
@@ -322,12 +322,12 @@ public class DataLoader {
             InstanceStatusType instanceCurrentStatus =
                     getActivityInstanceStatus(submissionStatus, ddpCreatedAt, statusLastUpdatedAt, ddpCompletedAt);
 
-            // Read only is always false for things that aren't consent- we rely on the user being terminated to show read only activities
-            boolean isReadonly = false;
+            // Read only is always undefined for things that aren't consent- we rely on the user being terminated to show r/o activities
+            Boolean isReadonly = null;
             if (gen2Survey instanceof ConsentSurvey && instanceCurrentStatus == InstanceStatusType.COMPLETE) {
                 isReadonly = true;
             }
-            // Read only is always false- we rely on the user being terminated to show read only activities
+            // Read only is always undefined - we rely on the user being terminated to show read only activities
             String instanceGuid = activityInstanceDao
                     .insertInstance(studyActivityId, participantGuid, participantGuid, InstanceStatusType.CREATED,
                             isReadonly, ddpCreatedAt,
@@ -1232,9 +1232,10 @@ public class DataLoader {
         LOG.info("Getting StudyClient Config for auth0clientId = " + auth0ClientId + " and domain = " + auth0Domain);
 
         Auth0Util auth0Util = new Auth0Util(auth0Domain);
-        Auth0MgmtTokenHelper tokenHelper = new Auth0MgmtTokenHelper(auth0TenantDto.getManagementClientId(),
-                auth0TenantDto.getManagementClientSecret(),
-                auth0Domain);
+        var mgmtClient = new Auth0ManagementClient(
+                auth0Domain,
+                auth0TenantDto.getManagementClientId(),
+                auth0TenantDto.getManagementClientSecret());
 
         JdbiUser userDao = handle.attach(JdbiUser.class);
         JdbiClient clientDao = handle.attach(JdbiClient.class);
@@ -1248,7 +1249,7 @@ public class DataLoader {
                 userDao,
                 clientDao,
                 auth0Util,
-                tokenHelper,
+                mgmtClient,
                 datstatParticipantData,
                 userGuid,
                 userHruid);
@@ -1264,14 +1265,14 @@ public class DataLoader {
                                           JdbiUser userDao,
                                           JdbiClient clientDao,
                                           Auth0Util auth0Util,
-                                          Auth0MgmtTokenHelper tokenHelper,
+                                          Auth0ManagementClient mgmtClient,
                                           DatstatParticipantData data,
                                           String newUserGuid,
                                           String newUserHruid) throws Exception {
         String emailAddress = data.getDatstatEmail();
 
         // Create a user for the given domain
-        String mgmtToken = tokenHelper.getManagementApiToken();
+        String mgmtToken = mgmtClient.getToken();
         User newAuth0User = null;
         List<User> users = auth0Util.getAuth0UsersByEmail(emailAddress, mgmtToken, Auth0Util.USERNAME_PASSWORD_AUTH0_CONN_NAME);
 
@@ -1323,26 +1324,23 @@ public class DataLoader {
         return stringBuilder.toString();
     }
 
-    UserProfileDto addUserProfile(UserDto user,
-                                  DatstatParticipantData data,
-                                  JdbiLanguageCode jdbiLanguageCode,
-                                  JdbiProfile jdbiProfile) throws Exception {
+    UserProfile addUserProfile(UserDto user,
+                               DatstatParticipantData data,
+                               JdbiLanguageCode jdbiLanguageCode,
+                               UserProfileDao profileDao) throws Exception {
 
         Boolean isDoNotContact = getBooleanValue(data.getDdpDoNotContact());
         Long languageCodeId = jdbiLanguageCode.getLanguageCodeId(DEFAULT_PREFERRED_LANGUAGE_CODE);
 
-        UserProfileDto userProfileDto = new UserProfileDto(user.getUserId(), data.getDatstatFirstname(), data.getDatstatLastname(),
-                null, null, languageCodeId,
-                DEFAULT_PREFERRED_LANGUAGE_CODE, isDoNotContact);
+        UserProfile profile = new UserProfile.Builder(user.getUserId())
+                .setFirstName(StringUtils.trim(data.getDatstatFirstname()))
+                .setLastName(StringUtils.trim(data.getDatstatLastname()))
+                .setPreferredLangId(languageCodeId)
+                .setDoNotContact(isDoNotContact)
+                .build();
+        profileDao.createProfile(profile);
 
-        int numRowsInserted = jdbiProfile.insert(userProfileDto);
-
-        if (numRowsInserted != 1) {
-            LOG.info("Failed to save profile information.  " + numRowsInserted + " rows were updated");
-            throw new DaoException("Failed to save profile information.  " + numRowsInserted + " rows were updated");
-        }
-
-        return userProfileDto;
+        return profile;
     }
 
     MailAddress addUserAddress(Handle handle, UserDto user,

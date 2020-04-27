@@ -278,33 +278,38 @@ public class StudyBuilder {
     private ClientDto getClientOrInsert(Handle handle, long tenantId) {
         Config clientCfg = cfg.getConfig("client");
         String clientId = clientCfg.getString("id");
-        String clientName = clientCfg.getString("name");
         String clientSecret = clientCfg.getString("secret");
         String passwordRedirectUrl = clientCfg.getString("passwordRedirectUrl");
 
         JdbiClient jdbiClient = handle.attach(JdbiClient.class);
-        ClientDto dto = jdbiClient.findByAuth0ClientId(clientId).orElse(null);
+        Optional<ClientDto> clientDto = jdbiClient.findByAuth0ClientIdAndAuth0TenantId(clientId, tenantId);
 
-        if (dto == null) {
-            String encryptedSecret = AesUtil.encrypt(clientSecret, EncryptionKey.getEncryptionKey());
-            long id = jdbiClient.insertClient(clientName, clientId, encryptedSecret, tenantId, passwordRedirectUrl);
-            dto = new ClientDto(id, clientName, clientId, encryptedSecret, passwordRedirectUrl, false, tenantId);
-            LOG.info("Created client with id={}, name={}, clientId={}", id, clientName, clientId);
-        } else {
-            LOG.warn("Client already exists with id={}, name={}, clientId={}", dto.getId(), dto.getName(), dto.getAuth0ClientId());
-        }
-
-        return dto;
+        return clientDto.map(
+            dto -> {
+                LOG.warn("Client already exists with id={}, auth0ClientId={}", dto.getId(), dto.getAuth0ClientId());
+                return dto;
+            }
+        ).orElseGet(
+            () -> {
+                String encryptedSecret = AesUtil.encrypt(clientSecret, EncryptionKey.getEncryptionKey());
+                long id = jdbiClient.insertClient(clientId, encryptedSecret, tenantId, passwordRedirectUrl);
+                LOG.info("Created client with id={}, auth0ClientId={}", id, clientId);
+                return new ClientDto(id, clientId, encryptedSecret, passwordRedirectUrl, false, tenantId);
+            }
+        );
     }
 
     private void grantClientAccessToStudy(Handle handle, ClientDto clientDto, StudyDto studyDto) {
         JdbiClientUmbrellaStudy jdbiACL = handle.attach(JdbiClientUmbrellaStudy.class);
-        List<String> studyGuids = jdbiACL.findPermittedStudyGuidsByAuth0ClientId(clientDto.getAuth0ClientId());
+        List<String> studyGuids = jdbiACL.findPermittedStudyGuidsByAuth0ClientIdAndAuth0TenantId(
+                clientDto.getAuth0ClientId(),
+                clientDto.getAuth0TenantId()
+        );
         if (!studyGuids.contains(studyDto.getGuid())) {
             jdbiACL.insert(clientDto.getId(), studyDto.getId());
-            LOG.info("Granted client {} access to study {}", clientDto.getName(), studyDto.getGuid());
+            LOG.info("Granted client {} access to study {}", clientDto.getAuth0ClientId(), studyDto.getGuid());
         } else {
-            LOG.warn("Client {} already has access to study {}", clientDto.getName(), studyDto.getGuid());
+            LOG.warn("Client {} already has access to study {}", clientDto.getAuth0ClientId(), studyDto.getGuid());
         }
     }
 

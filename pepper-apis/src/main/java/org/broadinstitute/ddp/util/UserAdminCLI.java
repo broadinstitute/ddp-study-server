@@ -42,6 +42,7 @@ public class UserAdminCLI {
     public static final String EMAIL_OPTION = "e";
     public static final String PASSWORD_OPTION = "p";
     public static final String CLIENT_OPTION = "c";
+    public static final String TENANT_OPTION = "t";
 
     public static void main(String[] args) {
         Options options = new Options();
@@ -49,7 +50,8 @@ public class UserAdminCLI {
         options.addRequiredOption(STUDY_OPTION, "study", true, "study guid (note caps sensitivity");
         options.addRequiredOption(EMAIL_OPTION, "email", true, "email for the account");
         options.addRequiredOption(PASSWORD_OPTION, "password", true, "password for the account");
-        options.addRequiredOption(CLIENT_OPTION, "client", true, "auth client id");
+        options.addRequiredOption(CLIENT_OPTION, "client", true, "auth0 client id");
+        options.addRequiredOption(TENANT_OPTION, "tenant", true, "auth0 tenant id");
 
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = null;
@@ -66,6 +68,7 @@ public class UserAdminCLI {
         String userEmail = cmd.getOptionValue(EMAIL_OPTION);
         String password = cmd.getOptionValue(PASSWORD_OPTION);
         String auth0ClientId = cmd.getOptionValue(CLIENT_OPTION);
+        Long auth0TenantId = Long.valueOf(cmd.getOptionValue(TENANT_OPTION));
 
         Config cfg = ConfigFactory.load();
         String encryptionSecret = cfg.getConfig(ConfigFile.AUTH0).getString(ConfigFile.ENCRYPTION_SECRET);
@@ -75,16 +78,17 @@ public class UserAdminCLI {
                 new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, 1, dbUrl));
         try {
             TransactionWrapper.useTxn(handle -> {
-                Auth0MgmtTokenHelper mgmtTokenHelper = Auth0Util.getManagementTokenHelperForStudy(handle, studyGuid);
+                var mgmtClient = Auth0Util.getManagementClientForStudy(handle, studyGuid);
 
-                ClientDto clientDto = handle.attach(JdbiClient.class).findByAuth0ClientId(auth0ClientId).get();
+                ClientDto clientDto = handle.attach(JdbiClient.class)
+                        .findByAuth0ClientIdAndAuth0TenantId(auth0ClientId, auth0TenantId).get();
 
-                Auth0Util auth0Util = new Auth0Util(mgmtTokenHelper.getDomain());
-                String mgmtToken = mgmtTokenHelper.getManagementApiToken();
+                Auth0Util auth0Util = new Auth0Util(mgmtClient.getDomain());
+                String mgmtToken = mgmtClient.getToken();
 
                 JdbiUser jdbiUser = handle.attach(JdbiUser.class);
 
-                AuthAPI auth = new AuthAPI(mgmtTokenHelper.getDomain(), auth0ClientId, clientDto.getAuth0DecryptedSecret(encryptionSecret));
+                AuthAPI auth = new AuthAPI(mgmtClient.getDomain(), auth0ClientId, clientDto.getAuth0DecryptedSecret(encryptionSecret));
 
                 List<User> auth0Users = auth0Util.getAuth0UsersByEmail(userEmail, mgmtToken);
                 String hruid;

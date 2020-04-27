@@ -51,18 +51,17 @@
             </sqlCheck>
         </preConditions>
         <insert tableName="client">
-            <column name="client_name" value="demo-web-client"/>
             <column name="is_revoked" valueBoolean="false"/>
             <column name="auth0_domain" value="https://ddp-dev.auth0.com/"/>
             <column name="auth0_client_id" value="5ps6MnYXmzpuo4OePvfcW0Dfv6cMPNIC"/>
             <column name="auth0_signing_secret" value="20JhCH3DTn905Vm90Rcy/DGNqQw9EJ/XOGvPG8yyQV7+kkL4riGVGKEuTzZ6xKOQMFL9wKA8ZBC8h1WqKI4xeh9dX0BqBfRrAuubSyHPrOP2qUX4DcO4SqXqyO5CEnr4"/>
         </insert>
         <insert tableName="client__umbrella_study">
-            <column name="client_id" valueComputed="(select client_id from client where client_name = 'demo-web-client')"/>
+            <column name="client_id" valueComputed="(select client_id from client where auth0_client_id = '5ps6MnYXmzpuo4OePvfcW0Dfv6cMPNIC' and auth0_domain = 'https://ddp-dev.auth0.com/')"/>
             <column name="umbrella_study_id" valueComputed="(select umbrella_study_id from umbrella_study where guid = 'TESTSTUDY1')"/>
         </insert>
         <insert tableName="client__umbrella_study">
-            <column name="client_id" valueComputed="(select client_id from client where client_name = 'demo-web-client')"/>
+            <column name="client_id" valueComputed="(select client_id from client where auth0_client_id = '5ps6MnYXmzpuo4OePvfcW0Dfv6cMPNIC' and auth0_domain = 'https://ddp-dev.auth0.com/')"/>
             <column name="umbrella_study_id" valueComputed="(select umbrella_study_id from umbrella_study where guid = 'TESTSTUDY2')"/>
         </insert>
     </changeSet>
@@ -79,7 +78,7 @@
             <column name="hruid" value="ABCDE"/>
             <column name="auth0_user_id" value="auth0|5bc73d85c07a357ae7ec4f71"/>
             <column name="is_locked" valueBoolean="false"/>
-            <column name="created_by_client_id" valueComputed="(select client_id from client where client_name = 'demo-web-client')"/>
+            <column name="created_by_client_id" valueComputed="(select client_id from client where auth0_client_id = '5ps6MnYXmzpuo4OePvfcW0Dfv6cMPNIC' and auth0_domain = 'https://ddp-dev.auth0.com/')"/>
             <column name="created_at" valueComputed="unix_timestamp() * 1000"/>
             <column name="updated_at" valueComputed="unix_timestamp() * 1000"/>
         </insert>
@@ -96,7 +95,7 @@
             <column name="guid" value="CA390377Y7D18X4CB2SS"/>
             <column name="auth0_user_id" value="auth0|5bc73da07574ac516351a1f3"/>
             <column name="is_locked" valueBoolean="false"/>
-            <column name="created_by_client_id" valueComputed="(select client_id from client where client_name = 'demo-web-client')"/>
+            <column name="created_by_client_id" valueComputed="(select client_id from client where auth0_client_id = '5ps6MnYXmzpuo4OePvfcW0Dfv6cMPNIC' and auth0_domain = 'https://ddp-dev.auth0.com/')"/>
             <column name="created_at" valueComputed="unix_timestamp() * 1000"/>
             <column name="updated_at" valueComputed="unix_timestamp() * 1000"/>
         </insert>

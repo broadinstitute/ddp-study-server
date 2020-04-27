@@ -11,6 +11,8 @@ public class ActivityInstanceRecord {
     private String activityCode;
     @SerializedName("activityVersion")
     private String versionTag;
+    @SerializedName("guid")
+    private String activityInstanceGuid;
     @SerializedName("status")
     private InstanceStatusType status;
     @SerializedName("createdAt")
@@ -25,6 +27,7 @@ public class ActivityInstanceRecord {
     public ActivityInstanceRecord(
             String versionTag,
             String activityCode,
+            String activityInstanceGuid,
             InstanceStatusType status,
             long createdAtMillis,
             Long completedAtMillis,
@@ -33,6 +36,7 @@ public class ActivityInstanceRecord {
     ) {
         this.versionTag = versionTag;
         this.activityCode = activityCode;
+        this.activityInstanceGuid = activityInstanceGuid;
         this.status = status;
         this.createdAtMillis = createdAtMillis;
         this.completedAtMillis = completedAtMillis;

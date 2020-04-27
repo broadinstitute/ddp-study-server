@@ -9,8 +9,8 @@ import java.util.stream.Stream;
 
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
-import org.broadinstitute.ddp.db.dto.UserProfileDto;
 import org.broadinstitute.ddp.model.user.User;
+import org.broadinstitute.ddp.model.user.UserProfile;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
 import org.jdbi.v3.core.result.RowView;
@@ -88,6 +88,11 @@ public interface UserDao extends SqlObject {
     Optional<User> findUserByGuid(@Bind("guid") String userGuid);
 
     @UseStringTemplateSqlLocator
+    @SqlQuery("queryUserByHruid")
+    @RegisterConstructorMapper(User.class)
+    Optional<User> findUserByHruid(@Bind("hruid") String userHruid);
+
+    @UseStringTemplateSqlLocator
     @SqlQuery("queryUserByAuth0UserId")
     @RegisterConstructorMapper(User.class)
     Optional<User> findUserByAuth0UserId(@Bind("auth0UserId") String auth0UserId, @Bind("auth0TenantId") long auth0TenantId);
@@ -102,7 +107,7 @@ public interface UserDao extends SqlObject {
     @UseStringTemplateSqlLocator
     @SqlQuery("queryUsersAndProfilesByGuids")
     @RegisterConstructorMapper(value = User.class, prefix = "u")
-    @RegisterConstructorMapper(value = UserProfileDto.class, prefix = "p")
+    @RegisterConstructorMapper(value = UserProfile.class, prefix = "p")
     @UseRowReducer(UserWithProfileReducer.class)
     Stream<User> findUsersAndProfilesByGuids(
             @BindList(value = "userGuids", onEmpty = BindList.EmptyHandling.NULL) Set<String> userGuids);
@@ -161,7 +166,7 @@ public interface UserDao extends SqlObject {
             if (!container.containsKey(userId)) {
                 User user = row.getRow(User.class);
                 if (row.getColumn("p_user_id", Long.class) != null) {
-                    user.setProfile(row.getRow(UserProfileDto.class));
+                    user.setProfile(row.getRow(UserProfile.class));
                 }
                 container.put(userId, user);
             }

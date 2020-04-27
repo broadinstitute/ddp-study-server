@@ -76,9 +76,6 @@ public interface ValidationDao extends SqlObject {
     TemplateDao getTemplateDao();
 
     @CreateSqlObject
-    JdbiTemplate getJdbiTemplate();
-
-    @CreateSqlObject
     JdbiI18nValidationMsgTrans getJdbiI18nValidationMsgTrans();
 
 
@@ -144,6 +141,16 @@ public interface ValidationDao extends SqlObject {
                     message,
                     correctionHint));
         }
+
+        rules.sort((lhs, rhs) -> {
+            if (lhs.getRuleType() == RuleType.REQUIRED) {
+                return -1;
+            } else if (rhs.getRuleType() == RuleType.REQUIRED) {
+                return 1;
+            } else {
+                return 0;  // Don't change existing order of other rules.
+            }
+        });
 
         LOG.info("Found {} validations for question id {} using language code id {}",
                 rules.size(), questionId, langCodeId);

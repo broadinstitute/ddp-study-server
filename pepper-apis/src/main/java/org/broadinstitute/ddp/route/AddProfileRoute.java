@@ -1,71 +1,85 @@
 package org.broadinstitute.ddp.route;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.db.UserDao;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
+import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
+import org.broadinstitute.ddp.db.dao.UserDao;
+import org.broadinstitute.ddp.db.dao.UserProfileDao;
+import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.json.Profile;
+import org.broadinstitute.ddp.model.user.User;
+import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.util.ResponseUtil;
+import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
-import spark.Route;
 
-public class AddProfileRoute implements Route {
+public class AddProfileRoute extends ValidatedJsonInputRoute<Profile> {
 
     private static final Logger LOG = LoggerFactory.getLogger(AddProfileRoute.class);
-    private final UserDao userDao;
-
-    public AddProfileRoute(UserDao userDao) {
-        this.userDao = userDao;
-    }
 
     @Override
-    public Object handle(Request request, Response response) throws Exception {
-        String guid = request.params(RouteConstants.PathParam.USER_GUID);
-        LOG.info("Creating profile for {}", guid);
+    public Object handle(Request request, Response response, Profile profile) throws Exception {
+        String userGuid = request.params(RouteConstants.PathParam.USER_GUID);
+        LOG.info("Creating profile for user with guid {}", userGuid);
 
-        JsonElement data = new JsonParser().parse(request.body());
-        if (!data.isJsonObject() || data.getAsJsonObject().entrySet().size() == 0) {
+        if (profile == null) {
             ResponseUtil.halt400ErrorResponse(response, ErrorCodes.MISSING_BODY);
-        }
-        JsonObject payload = data.getAsJsonObject();
-
-        String sexStr = null;
-        if (payload.has(Profile.SEX) && !payload.get(Profile.SEX).isJsonNull()) {
-            sexStr = payload.get(Profile.SEX).getAsString();
-        }
-        boolean isValidSex = userDao.isValidSex(sexStr);
-        if (!isValidSex) {
-            ResponseUtil.halt400ErrorResponse(response, ErrorCodes.INVALID_SEX);
+            return null;
         }
 
-        Profile profile = new Gson().fromJson(payload, Profile.class);
-        TransactionWrapper.withTxn((Handle handle) -> {
-            boolean isValidLanguage = userDao.isValidLanguage(profile.getPreferredLanguage(), handle);
-            if (!isValidLanguage) {
-                ResponseUtil.halt400ErrorResponse(response, ErrorCodes.INVALID_LANGUAGE_PREFERENCE);
+        UserProfile.SexType sex = null;
+        if (profile.getSex() != null) {
+            try {
+                sex = UserProfile.SexType.valueOf(profile.getSex());
+            } catch (IllegalArgumentException e) {
+                LOG.warn("Provided invalid profile sex type: {}", profile.getSex(), e);
+                ResponseUtil.halt400ErrorResponse(response, ErrorCodes.INVALID_SEX);
+                return null;
             }
-            boolean exists = userDao.doesProfileExist(handle, guid);
+        }
+        UserProfile.SexType sexType = sex;
+
+        TransactionWrapper.useTxn((Handle handle) -> {
+            String langCode = profile.getPreferredLanguage();
+            Long langId = handle.attach(JdbiLanguageCode.class).getLanguageCodeId(langCode);
+            if (StringUtils.isNotBlank(langCode) && langId == null) {
+                ResponseUtil.halt400ErrorResponse(response, ErrorCodes.INVALID_LANGUAGE_PREFERENCE);
+                return;
+            }
+
+            UserProfileDao profileDao = handle.attach(UserProfileDao.class);
+            boolean exists = profileDao.findProfileByUserGuid(userGuid).isPresent();
             if (!exists) {
+                long userId = handle.attach(UserDao.class)
+                        .findUserByGuid(userGuid)
+                        .map(User::getId)
+                        .orElseThrow(() -> new DDPException("Could not find user with guid " + userGuid));
                 try {
-                    userDao.addProfile(handle, profile, guid);
-                } catch (RuntimeException e) {
-                    throw new RuntimeException("error adding profile to the dao of user: " + guid, e);
+                    profileDao.createProfile(new UserProfile.Builder(userId)
+                            .setFirstName(profile.getFirstName())
+                            .setLastName(profile.getLastName())
+                            .setSexType(sexType)
+                            .setBirthDate(profile.getBirthDate())
+                            .setPreferredLangId(langId)
+                            .build());
+                } catch (Exception e) {
+                    throw new DDPException("Error adding profile for user with guid " + userGuid, e);
                 }
             } else {
                 ResponseUtil.halt400ErrorResponse(response, ErrorCodes.DUPLICATE_PROFILE);
+                return;
             }
-            handle.attach(DataExportDao.class).queueDataSync(guid);
-            return null;
+
+            handle.attach(DataExportDao.class).queueDataSync(userGuid);
         });
+
         response.status(201);
         return profile;
     }

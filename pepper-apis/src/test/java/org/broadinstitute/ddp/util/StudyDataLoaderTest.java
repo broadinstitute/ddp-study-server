@@ -11,6 +11,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doCallRealMethod;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -37,6 +38,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.typesafe.config.Config;
+import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceStatusDao;
@@ -50,24 +52,24 @@ import org.broadinstitute.ddp.db.dao.JdbiInstitutionType;
 import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
 import org.broadinstitute.ddp.db.dao.JdbiMailAddress;
 import org.broadinstitute.ddp.db.dao.JdbiMedicalProvider;
-import org.broadinstitute.ddp.db.dao.JdbiProfile;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyLegacyData;
 import org.broadinstitute.ddp.db.dao.KitTypeDao;
 import org.broadinstitute.ddp.db.dao.MedicalProviderDao;
+import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.ClientDto;
 import org.broadinstitute.ddp.db.dto.MedicalProviderDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.UserDto;
-import org.broadinstitute.ddp.db.dto.UserProfileDto;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
 import org.broadinstitute.ddp.model.activity.types.InstitutionType;
 import org.broadinstitute.ddp.model.address.MailAddress;
 import org.broadinstitute.ddp.model.dsm.KitType;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
+import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.service.AddressService;
 import org.broadinstitute.ddp.service.OLCService;
 import org.jdbi.v3.core.Handle;
@@ -111,7 +113,7 @@ public class StudyDataLoaderTest {
     private Auth0Util mockAuth0Util;
     private AuthRequest mockAuthRequest;
     private AuthAPI mockAuthAPI;
-    private Auth0MgmtTokenHelper mockAuth0MgmtTokenHelper;
+    private Auth0ManagementClient mockMgmtClient;
     private User mockAuth0User;
     private ClientDto mockClientDto;
     private static String sourceData;
@@ -146,7 +148,7 @@ public class StudyDataLoaderTest {
         mockAuthAPI = mock(AuthAPI.class);
         mockAuthRequest = mock(AuthRequest.class);
         mockAuth0Util = mock(Auth0Util.class);
-        mockAuth0MgmtTokenHelper = mock(Auth0MgmtTokenHelper.class);
+        mockMgmtClient = mock(Auth0ManagementClient.class);
         mockAuth0User = mock(User.class);
         mockClientDto = mock(ClientDto.class);
         initMockStudyDataLoader();
@@ -154,7 +156,6 @@ public class StudyDataLoaderTest {
         ActivityInstanceDto mockInstanceDto = mock(ActivityInstanceDto.class);
 
         when(mockDataLoader.answerTextQuestion(
-                any(Handle.class),
                 anyString(),
                 eq(pretendInstanceGuid),
                 eq(pretendUserGuid),
@@ -162,7 +163,6 @@ public class StudyDataLoaderTest {
                 any(AnswerDao.class))).thenReturn(null);
 
         when(mockDataLoader.answerDateQuestion(
-                any(Handle.class),
                 anyString(),
                 eq(pretendInstanceGuid),
                 eq(pretendUserGuid),
@@ -170,7 +170,6 @@ public class StudyDataLoaderTest {
                 any(AnswerDao.class))).thenReturn(null);
 
         when(mockDataLoader.answerPickListQuestion(
-                any(Handle.class),
                 anyString(),
                 eq(pretendInstanceGuid),
                 eq(pretendUserGuid),
@@ -206,8 +205,10 @@ public class StudyDataLoaderTest {
         mockDataLoader.booleanValueLookup.put(0, false);
         mockDataLoader.booleanValueLookup.put(1, true);
 
+        mockDataLoader.dkAltNames = new HashMap<>();
+        mockDataLoader.dkAltNames.put("dk", "Don't know");
+
         mockDataLoader.altNames = new HashMap<>();
-        mockDataLoader.altNames.put("dk", "Don't know");
         mockDataLoader.altNames.put("AMERICAN_INDIAN", "American Indian or Native American");
         mockDataLoader.altNames.put("AXILLARY_LYMPH_NODES", "aux_lymph_node");
         mockDataLoader.altNames.put("OTHER_LYMPH_NODES", "other_lymph_node");
@@ -414,7 +415,6 @@ public class StudyDataLoaderTest {
         ArgumentCaptor<String> pickListQPepperStableId = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<List<SelectedPicklistOption>> pickListQAnswerValue = ArgumentCaptor.forClass(List.class);
         verify(mockDataLoader, times(9)).answerPickListQuestion(
-                any(Handle.class),
                 pickListQPepperStableId.capture(),
                 anyString(),
                 anyString(),
@@ -424,7 +424,6 @@ public class StudyDataLoaderTest {
         ArgumentCaptor<String> dateQPepperStableId = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<DateValue> dateQAnswerValue = ArgumentCaptor.forClass(DateValue.class);
         verify(mockDataLoader, times(4)).answerDateQuestion(
-                any(Handle.class),
                 dateQPepperStableId.capture(),
                 anyString(),
                 anyString(),
@@ -434,7 +433,6 @@ public class StudyDataLoaderTest {
         ArgumentCaptor<String> textQPepperStableId = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<String> textQAnswerValue = ArgumentCaptor.forClass(String.class);
         verify(mockDataLoader, times(6)).answerTextQuestion(
-                any(Handle.class),
                 textQPepperStableId.capture(),
                 anyString(),
                 anyString(),
@@ -614,21 +612,21 @@ public class StudyDataLoaderTest {
     }
 
     @Test
-    public void testAddUserProfile() throws Exception {
+    public void testAddUserProfile() {
 
         JsonElement participantData = sourceDataMap.get("datstatparticipantdata");
         when(mockDataLoader.addUserProfile(
                 any(UserDto.class),
                 any(JsonElement.class),
                 any(JdbiLanguageCode.class),
-                any(JdbiProfile.class)
+                any(UserProfileDao.class)
         )).thenCallRealMethod();
 
         JdbiLanguageCode mockJdbiLanguageCode = mock(JdbiLanguageCode.class);
         when(mockJdbiLanguageCode.getLanguageCodeId(anyString())).thenReturn(pretendLanguageCodeId);
 
-        JdbiProfile mockJdbiProfile = mock(JdbiProfile.class);
-        when(mockJdbiProfile.insert(any(UserProfileDto.class))).thenReturn(1);
+        UserProfileDao mockProfileDao = mock(UserProfileDao.class);
+        doNothing().when(mockProfileDao).createProfile(any(UserProfile.class));
 
         long now = Instant.now().toEpochMilli();
         UserDto userDto = new UserDto(pretendUserId, pretendAuth0UserId, pretendUserGuid, pretendUserGuid, null, null, now, now);
@@ -637,25 +635,25 @@ public class StudyDataLoaderTest {
                 userDto,
                 participantData,
                 mockJdbiLanguageCode,
-                mockJdbiProfile);
+                mockProfileDao);
 
         verify(mockJdbiLanguageCode, times(1)).getLanguageCodeId(anyString());
 
-        ArgumentCaptor<UserProfileDto> userProfileDtoCaptor = ArgumentCaptor.forClass(UserProfileDto.class);
-        verify(mockJdbiProfile, times(1)).insert(userProfileDtoCaptor.capture());
+        ArgumentCaptor<UserProfile> userProfileCaptor = ArgumentCaptor.forClass(UserProfile.class);
+        verify(mockProfileDao, times(1)).createProfile(userProfileCaptor.capture());
 
-        assertEquals(pretendUserId, userProfileDtoCaptor.getValue().getUserId());
+        assertEquals(pretendUserId, userProfileCaptor.getValue().getUserId());
 
-        assertEquals("First1539381231204", userProfileDtoCaptor.getValue().getFirstName());
-        assertEquals("Last1539381231204", userProfileDtoCaptor.getValue().getLastName());
-        assertEquals(pretendLanguageCodeId, userProfileDtoCaptor.getValue().getPreferredLanguageId());
+        assertEquals("First1539381231204", userProfileCaptor.getValue().getFirstName());
+        assertEquals("Last1539381231204", userProfileCaptor.getValue().getLastName());
+        assertEquals(pretendLanguageCodeId, userProfileCaptor.getValue().getPreferredLangId());
     }
 
     @Test
     public void testCreateLegacyPepperUser() throws Exception {
         JsonElement participantData = sourceDataMap.get("datstatparticipantdata");
 
-        when(mockAuth0MgmtTokenHelper.getManagementApiToken()).thenReturn(pretendMgmtToken);
+        when(mockMgmtClient.getToken()).thenReturn(pretendMgmtToken);
 
         when(mockAuth0Util.createAuth0User(anyString(), anyString(), anyString())).thenReturn(mockAuth0User);
 
@@ -761,7 +759,6 @@ public class StudyDataLoaderTest {
         ArgumentCaptor<String> pickListQPepperStableId = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<List<SelectedPicklistOption>> pickListQAnswerValue = ArgumentCaptor.forClass(List.class);
         verify(mockDataLoader, times(11)).answerPickListQuestion(
-                any(Handle.class),
                 pickListQPepperStableId.capture(),
                 anyString(),
                 anyString(),
@@ -771,7 +768,6 @@ public class StudyDataLoaderTest {
         ArgumentCaptor<String> dateQPepperStableId = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<DateValue> dateQAnswerValue = ArgumentCaptor.forClass(DateValue.class);
         verify(mockDataLoader, times(3)).answerDateQuestion(
-                any(Handle.class),
                 dateQPepperStableId.capture(),
                 anyString(),
                 anyString(),
@@ -781,7 +777,6 @@ public class StudyDataLoaderTest {
         ArgumentCaptor<String> textQPepperStableId = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<String> textQAnswerValue = ArgumentCaptor.forClass(String.class);
         verify(mockDataLoader, times(2)).answerTextQuestion(
-                any(Handle.class),
                 textQPepperStableId.capture(),
                 anyString(),
                 anyString(),
@@ -791,7 +786,6 @@ public class StudyDataLoaderTest {
         ArgumentCaptor<String> boolQPepperStableId = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<Boolean> boolQAnswerValue = ArgumentCaptor.forClass(Boolean.class);
         verify(mockDataLoader, times(0)).answerBooleanQuestion(
-                any(Handle.class),
                 boolQPepperStableId.capture(),
                 anyString(),
                 anyString(),
@@ -888,7 +882,6 @@ public class StudyDataLoaderTest {
         ArgumentCaptor<String> dateValueStableId = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<DateValue> dateValueAnswerValue = ArgumentCaptor.forClass(DateValue.class);
         verify(mockDataLoader, times(1)).answerDateQuestion(
-                any(Handle.class),
                 dateValueStableId.capture(),
                 anyString(),
                 anyString(),
@@ -898,7 +891,6 @@ public class StudyDataLoaderTest {
         ArgumentCaptor<String> textQPepperStableId = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<String> textQAnswerValue = ArgumentCaptor.forClass(String.class);
         verify(mockDataLoader, times(1)).answerTextQuestion(
-                any(Handle.class),
                 textQPepperStableId.capture(),
                 anyString(),
                 anyString(),
@@ -952,7 +944,6 @@ public class StudyDataLoaderTest {
         ArgumentCaptor<String> dateValueStableId = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<DateValue> dateValueAnswerValue = ArgumentCaptor.forClass(DateValue.class);
         verify(mockDataLoader, times(2)).answerDateQuestion(
-                any(Handle.class),
                 dateValueStableId.capture(),
                 anyString(),
                 anyString(),
@@ -962,7 +953,6 @@ public class StudyDataLoaderTest {
         ArgumentCaptor<String> textQPepperStableId = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<String> textQAnswerValue = ArgumentCaptor.forClass(String.class);
         verify(mockDataLoader, times(3)).answerTextQuestion(
-                any(Handle.class),
                 textQPepperStableId.capture(),
                 anyString(),
                 anyString(),

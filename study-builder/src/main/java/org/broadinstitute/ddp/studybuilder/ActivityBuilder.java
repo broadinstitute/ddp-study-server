@@ -14,7 +14,6 @@ import com.typesafe.config.ConfigFactory;
 import org.apache.commons.io.IOUtils;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
-import org.broadinstitute.ddp.db.dao.JdbiActivityMapping;
 import org.broadinstitute.ddp.db.dao.JdbiFormTypeActivityInstanceStatusType;
 import org.broadinstitute.ddp.db.dao.JdbiRevision;
 import org.broadinstitute.ddp.db.dto.ActivityValidationDto;
@@ -29,6 +28,7 @@ import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
 import org.broadinstitute.ddp.model.activity.types.FormType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
+import org.broadinstitute.ddp.model.study.ActivityMappingType;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.GsonPojoValidator;
 import org.broadinstitute.ddp.util.GsonUtil;
@@ -152,11 +152,11 @@ public class ActivityBuilder {
     }
 
     private void insertActivityMappings(Handle handle, Config activityCfg, ActivityDef def) {
-        JdbiActivityMapping jdbiActivityMapping = handle.attach(JdbiActivityMapping.class);
+        var activityDao = handle.attach(ActivityDao.class);
         for (Config mappingCfg : activityCfg.getConfigList("mappings")) {
-            String type = mappingCfg.getString("type");
+            var type = ActivityMappingType.valueOf(mappingCfg.getString("type"));
             String stableId = ConfigUtil.getStrIfPresent(mappingCfg, "stableId");
-            jdbiActivityMapping.insertMapping(studyDto.getGuid(), type, def.getActivityId(), stableId);
+            activityDao.insertActivityMapping(studyDto.getGuid(), type, def.getActivityId(), stableId);
             LOG.info("Added activity mapping for {} with type={}, activityId={}, subStableId={}",
                     def.getActivityCode(), type, def.getActivityId(), stableId);
         }

@@ -78,7 +78,8 @@ public class StudyDataLoaderMain {
     private String preProcessFileName = null;
     private String serviceAccountFile = null;
     private String googleBucketName = null;
-    private String auth0ClientName = null;
+    private String auth0ClientId = null;
+    private Long auth0TenantId = null;
 
     public static void main(String[] args) throws Exception {
         initDbConnection();
@@ -94,7 +95,7 @@ public class StudyDataLoaderMain {
         options.addOption("m", false, "Also load mailing address");
         options.addOption("o", true, "Output/Report csv file");
         options.addOption("u", true, "Users to migrate (comma separated list of altpids)");
-        options.addOption("c", true, "Auth0 client name");
+        options.addOption("c", true, "Auth0 client id");
         options.addOption("dryrun", false, "Test Run");
         options.addOption("prodrun", false, "Production Run");
         options.addOption("e", true, "Dry run test email");
@@ -104,6 +105,7 @@ public class StudyDataLoaderMain {
         options.addOption("gb", true, "google bucket file");
         options.addOption("p", false, "preprocess");
         options.addOption("pf", true, "preprocess file name");
+        options.addOption("t", true, "Auth0 tenant id");
 
         /**
          Command line options
@@ -198,12 +200,21 @@ public class StudyDataLoaderMain {
         }
 
         if (cmd.hasOption("c")) {
-            dataLoaderMain.auth0ClientName = cmd.getOptionValue("c");
-            if (StringUtils.isBlank(dataLoaderMain.auth0ClientName)) {
-                throw new Exception("Invalid auth0 client name");
+            dataLoaderMain.auth0ClientId = cmd.getOptionValue("c");
+            if (StringUtils.isBlank(dataLoaderMain.auth0ClientId)) {
+                throw new Exception("Invalid auth0 client id");
             }
         } else {
-            throw new Exception("Please pass valid auth0 client name using option 'c' ");
+            throw new Exception("Please pass valid auth0 client id using option 'c' ");
+        }
+
+        if (cmd.hasOption("t")) {
+            if (StringUtils.isBlank(cmd.getOptionValue("t"))) {
+                throw new Exception("Invalid auth0 tenant id");
+            }
+            dataLoaderMain.auth0TenantId = Long.valueOf(cmd.getOptionValue("t"));
+        } else {
+            throw new Exception("Please pass valid auth0 tenant id using option 't' ");
         }
 
         dataLoaderMain.isDeleteAuth0Email = cmd.hasOption("de");
@@ -565,9 +576,12 @@ public class StudyDataLoaderMain {
                         }
                     }
                     StudyDto studyDto = jdbiUmbrellaStudy.findByStudyGuid(studyGuid);
-                    Optional<ClientDto> clientDtoOpt = handle.attach(JdbiClient.class).findByClientName(auth0ClientName);
+                    Optional<ClientDto> clientDtoOpt = handle.attach(JdbiClient.class)
+                            .findByAuth0ClientIdAndAuth0TenantId(auth0ClientId, auth0TenantId);
                     if (clientDtoOpt.isEmpty()) {
-                        throw new Exception("No client found for client name: " + auth0ClientName);
+                        throw new Exception(
+                                String.format("No client found for auth0 client %s, auth0 tenant %d", auth0ClientId, auth0TenantId)
+                        );
                     }
                     ClientDto clientDto = clientDtoOpt.get();
 
@@ -585,6 +599,15 @@ public class StudyDataLoaderMain {
                     hasFollowup = (sourceData.get("followupsurvey") != null && !sourceData.get("followupsurvey").isJsonNull());
 
                     var answerDao = handle.attach(AnswerDao.class);
+
+                    //create prequal
+                    dataLoader.createPrequal(handle,
+                            userGuid, studyId,
+                            createdAt,
+                            jdbiActivity,
+                            activityInstanceDao,
+                            activityInstanceStatusDao,
+                            answerDao);
 
                     if (hasAboutYou) {
                         String activityCode = mappingData.get("aboutyousurvey").getAsJsonObject().get("activity_code").getAsString();

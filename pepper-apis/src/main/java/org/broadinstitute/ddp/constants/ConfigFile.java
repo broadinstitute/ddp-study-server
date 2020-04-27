@@ -14,6 +14,9 @@ public class ConfigFile {
     // whether or not to run liquibase at app boot
     public static final String DO_LIQUIBASE = "doLiquibase";
 
+    // Name of the default timezone to be used by system. Does not change VM time zone!
+    public static final String DEFAULT_TIMEZONE = "defaultTimezone";
+
     // config file name used for testing the app with a disposable in-memory database
     public static final String IN_MEMORY_DB_TESTING_CONFIG_FILE = "testing-inmemorydb.conf";
 
@@ -62,36 +65,19 @@ public class ConfigFile {
     public static final String STUDY_EXPORT_SCHEDULE = "schedules.studyExport";
     public static final String TEMP_USER_CLEANUP_SCHEDULE = "schedules.tempUserCleanup";
 
-    //database instance names
-    public static final String DB_DSM_INSTANCE_ID = "dbDsmInstance";
-    public static final String DB_API_INSTANCE_ID = "dbApiInstance";
-    public static final String DB_HOUSEKEEPING_INSTANCE_ID = "dbHousekeepingInstance";
+    // database instance names
+    public static final String DB_INSTANCE_ID = "dbInstanceId";
 
     // SQL queries
     public static final String CLIENT_KEY_CONFIGURATION_QUERY = "clientKeyConfigurationQuery";
     public static final String CLIENT_ID_BY_AUTH0_CLIENT_ID_QUERY = "clientIdByAuth0ClientIdQuery";
     public static final String CLIENT_UPSERT_STATEMENT = "upsertClientStatement";
     public static final String CLIENT_DELETE_BY_NAME = "deleteClientByName";
-    public static final String CHECK_USER_GUID_QUERY = "checkUserGuidQuery";
     public static final String INSERT_USER_STMT = "insertUser";
-    public static final String UPSERT_USER_PROFILE_FIRST_AND_LAST_NAME = "upsertFirstAndLastName";
-    public static final String INSERT_GOVERNED_PARTICIPANT = "insertGovernedUserStmt";
     public static final String STUDIES_FOR_CLIENT_QUERY = "studiesForClientQuery";
     public static final String QUERY_GOVERNED_PARTICIPANTS_BY_OPERATOR = "governedParticipantsForOperatorQuery";
-    public static final String USER_EXISTS_QUERY = "userExistsQuery";
-    public static final String PROFILE_EXISTS_QUERY = "profileExistsQuery";
-    public static final String GET_USER_ID_FROM_GUID = "getUserIdFromGuidQuery";
-    public static final String GET_USER_ID_FROM_HRUID = "getUserIdFromHruidQuery";
-    public static final String USER_EXISTS_GUID = "userExistsGuidQuery";
-    public static final String GOVERNANCE_ALIAS_EXISTS_QUERY = "governanceAliasExistsQuery";
-    public static final String GET_ALL_GOV_PARTS_QUERY = "governedParticipantsForOperatorQuery";
-    public static final String PATCH_SEX_STMT = "patchSexStmt";
-    public static final String PATCH_PREFERRED_LANGUAGE_STMT = "patchPreferredLanguageStmt";
-    public static final String USER_GUID_FOR_AUTH0ID_QUERY = "userGuidForAuth0IdQuery";
     public static final String HEALTHCHECK_PASSWORD = "healthcheckPassword";
     public static final String USER_CLIENT_REVOCATION_QUERY = "userClientRevocationQuery";
-    public static final String GET_TEMPLATE_VARIABLES_WITH_TRANSLATIONS_QUERY =
-            "templateVariablesWithTranslationsQuery";
 
     // milliseconds after which spark will terminate a request thread if it hasn't completed
     public static final String THREAD_TIMEOUT = "threadTimeout";
@@ -133,6 +119,8 @@ public class ConfigFile {
     public static final String DOMAIN = "domain";
     public static final String SEND_METRICS = "sendMetrics";
 
+    public static final String RESTRICT_REGISTER_ROUTE = "restrictRegisterRoute";
+
     /**
      * Google API key for geocoding
      */
@@ -148,19 +136,14 @@ public class ConfigFile {
     public static final String DSM_JWT_SIGNER = "dsmJwtSigner";
     public static final String USE_DISPOSABLE_TEST_DB = "useDisposableTestDbs";
 
+    public static final String AUTH0_IP_WHITE_LIST = "auth0IpWhiteList";
+
     public static final class SqlQuery {
         public static final String ACTIVITY_INSTANCE_GUID_AND_PARTICIPANT_ID_BY_STUDY_GUID =
                 "studyActivity.queryActivityInstanceGuidAndParticipantId";
         public static final String VALID_STUDY_QUERY = "studyActivity.queryValidStudy";
 
         public static final String FORM_ACTIVITY_BY_GUID = "activities.formActivityByGuidQuery";
-
-        public static final String VALIDATIONS_FOR_QUESTION = "validations.queryAllByQuestionAndLangId";
-
-        public static final String USER_GUID_BY_ID = "getUserGuidFromUserIdQuery";
-        public static final String MIN_AND_MAX_LENGTH_VALIDATION = "validations.minAndMaxLengthValidationQuery";
-        public static final String REGEX_PATTERN_VALIDATION = "validations.regexPatternValidationQuery";
-        public static final String NUM_OPTIONS_SELECTED_VALIDATION = "validations.numOptionsSelectedValidationQuery";
 
         public static final String MAX_INSTANCES_PER_USER = "max_instances_per_user";
         public static final String NUM_INSTANCES_FOR_USER = "num_instances_for_user";

@@ -1,0 +1,13 @@
+service: housekeeping
+runtime: java11
+instance_class: B4
+# B2 allows background threads and we can use manual scaling
+manual_scaling:
+  instances: 1
+
+entrypoint: java -Xmx820m -Xmx820m -jar Housekeeping.jar
+
+# GAE does not like the "=" character in entrypoint and does not support "." in environment variables
+env_variables:
+  config_file: application.conf
+

@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import com.auth0.client.auth.AuthAPI;
 import com.auth0.exception.Auth0Exception;
 import com.auth0.json.auth.TokenHolder;
+import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.auth0.net.AuthRequest;
 import com.google.gson.Gson;
@@ -48,6 +49,8 @@ public class DsmRouteTest extends IntegrationTestSuite.TestCase {
     protected static String userGuid;
     protected static String studyGuid;
     protected static String dsmClientAccessToken;
+    protected static String auth0ClientId;
+    protected static long auth0TenantId;
 
     // If DSM client already exists in database, then re-use it.
     // Otherwise, insert it and clean it up afterwards.
@@ -93,13 +96,12 @@ public class DsmRouteTest extends IntegrationTestSuite.TestCase {
         Config auth0Config = RouteTestUtil.getConfig().getConfig(ConfigFile.AUTH0);
 
         String auth0Domain = auth0Config.getString(ConfigFile.DOMAIN);
-        long auth0TenantId = handle.attach(JdbiAuth0Tenant.class).findByDomain(auth0Domain).getId();
-        String auth0ClientId = auth0Config.getString(ConfigFile.AUTH0_DSM_CLIENT_ID);
+        auth0TenantId = handle.attach(JdbiAuth0Tenant.class).findByDomain(auth0Domain).getId();
+        auth0ClientId = auth0Config.getString(ConfigFile.AUTH0_DSM_CLIENT_ID);
 
         StudyClientConfiguration clientConfig = clientDao.getConfiguration(auth0ClientId, auth0Domain);
         if (clientConfig == null) {
-            clientDao.registerClient(TEST_DSM_CLIENT_NAME,
-                    auth0ClientId,
+            clientDao.registerClient(auth0ClientId,
                     auth0Config.getString(ConfigFile.AUTH0_DSM_CLIENT_SECRET),
                     new ArrayList<>(),
                     auth0Config.getString(ConfigFile.ENCRYPTION_SECRET),
@@ -115,7 +117,7 @@ public class DsmRouteTest extends IntegrationTestSuite.TestCase {
      */
     private static void deleteTestDSMAuthClientInDatabase(Handle handle) {
         ClientDao clientDao = handle.attach(ClientDao.class);
-        clientDao.deleteClientByName(TEST_DSM_CLIENT_NAME);
+        clientDao.deleteByAuth0ClientIdAndAuth0TenantId(auth0ClientId, auth0TenantId);
     }
 
     /**
@@ -160,9 +162,18 @@ public class DsmRouteTest extends IntegrationTestSuite.TestCase {
             return null;
         }
 
-        DecodedJWT jwt = JWTConverter.verifyDDPToken(creds.getToken(), JWTConverter.defaultProvider(auth0Domain));
-        if (jwt == null) {
-            LOG.warn("Unable to verify or decode jwt token for cached dsm credentials");
+        DecodedJWT jwt;
+        try {
+            jwt = JWTConverter.verifyDDPToken(creds.getToken(), JWTConverter.defaultProvider(auth0Domain));
+            if (jwt == null) {
+                LOG.warn("Unable to verify or decode jwt token for cached dsm credentials");
+                return null;
+            }
+        } catch (TokenExpiredException e) {
+            LOG.warn("Cached dsm token expired, not using", e);
+            return null;
+        } catch (Exception e) {
+            LOG.warn("Error while verifying cached dsm jwt token, not using", e);
             return null;
         }
 
@@ -171,7 +182,7 @@ public class DsmRouteTest extends IntegrationTestSuite.TestCase {
             return null;
         }
 
-        Instant shortenedExpire = jwt.getExpiresAt().toInstant().minus(5, ChronoUnit.MINUTES);
+        Instant shortenedExpire = jwt.getExpiresAt().toInstant().minus(1, ChronoUnit.MINUTES);
         Instant now = Instant.now();
         if (now.equals(shortenedExpire) || now.isAfter(shortenedExpire)) {
             LOG.info("Cached dsm credentials's jwt token has or is about to expire");

@@ -49,7 +49,6 @@ import org.broadinstitute.ddp.db.dto.ActivityInstanceStatusDto;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.EnrollmentStatusDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
-import org.broadinstitute.ddp.db.dto.UserProfileDto;
 import org.broadinstitute.ddp.elastic.ElasticSearchIndexType;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.export.collectors.ActivityMetadataCollector;
@@ -105,13 +104,13 @@ import org.broadinstitute.ddp.model.pdf.PdfConfigInfo;
 import org.broadinstitute.ddp.model.pdf.PdfVersion;
 import org.broadinstitute.ddp.model.study.Participant;
 import org.broadinstitute.ddp.model.user.User;
+import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.pex.TreeWalkInterpreter;
 import org.broadinstitute.ddp.service.ConsentService;
 import org.broadinstitute.ddp.service.MedicalRecordService;
 import org.broadinstitute.ddp.service.OLCService;
 import org.broadinstitute.ddp.service.PdfService;
-import org.broadinstitute.ddp.util.Auth0MgmtTokenHelper;
 import org.broadinstitute.ddp.util.Auth0Util;
 import org.broadinstitute.ddp.util.ElasticsearchServiceUtil;
 import org.elasticsearch.action.bulk.BulkRequest;
@@ -157,9 +156,9 @@ public class DataExporter {
     }
 
     public static Map<String, String> fetchAndCacheAuth0Emails(Handle handle, String studyGuid, Set<String> auth0UserIds) {
-        Auth0MgmtTokenHelper tokenHelper = Auth0Util.getManagementTokenHelperForStudy(handle, studyGuid);
-        Map<String, String> emailResults = new Auth0Util(tokenHelper.getDomain())
-                .getUserPassConnEmailsByAuth0UserIds(auth0UserIds, tokenHelper.getManagementApiToken());
+        var mgmtClient = Auth0Util.getManagementClientForStudy(handle, studyGuid);
+        Map<String, String> emailResults = new Auth0Util(mgmtClient.getDomain())
+                .getUserPassConnEmailsByAuth0UserIds(auth0UserIds, mgmtClient.getToken());
         emailResults.forEach((auth0UserId, email) -> emailStore.put(auth0UserId, email));
         return emailResults;
     }
@@ -335,7 +334,7 @@ public class DataExporter {
         }
     }
 
-    public void exportActivityDefinitionsToElasticsearch(
+    public List<ActivityExtract> exportActivityDefinitionsToElasticsearch(
             Handle handle, StudyDto studyDto, Config cfg) {
 
         //get study activities
@@ -372,6 +371,8 @@ public class DataExporter {
         } catch (IOException e) {
             LOG.error("[activitydefinition export] failed during export ", e);
         }
+
+        return activityExtracts;
     }
 
     private void exportDataToElasticSearch(String index, Map<String, Object> data, Config cfg) throws IOException {
@@ -467,10 +468,10 @@ public class DataExporter {
     private UserRecord createUserRecord(User user,
                                         Map<String, Set<String>> proxiesMap,
                                         Map<String, Set<String>> governedUsersMap) {
-        UserProfileDto profileDto = user.getProfile();
-        ParticipantProfile profile = new ParticipantProfile(profileDto.getFirstName(), profileDto.getLastName(),
+        UserProfile userProfile = user.getProfile();
+        ParticipantProfile profile = new ParticipantProfile(userProfile.getFirstName(), userProfile.getLastName(),
                 user.getGuid(), user.getHruid(), user.getLegacyAltPid(), user.getLegacyShortId(), user.getEmail(),
-                profileDto.getDoNotContact(), user.getCreatedAt());
+                userProfile.getDoNotContact(), user.getCreatedAt());
 
         Set<String> proxies = new HashSet<>();
         Set<String> governedUsers = new HashSet<>();
@@ -481,9 +482,7 @@ public class DataExporter {
             governedUsers = proxiesMap.get(user.getGuid());
         }
 
-        UserRecord userRecord = new UserRecord(profile, proxies, governedUsers);
-
-        return userRecord;
+        return new UserRecord(profile, proxies, governedUsers);
     }
 
     private List<User> extractUsersFromResultSet(Handle handle, StudyDto studyDto, Stream<User> resultset) {
@@ -607,7 +606,7 @@ public class DataExporter {
 
             // First grab from the profile, if it's not there then look in activity data using medical-record service
             LocalDate birthDate = Optional.ofNullable(participant.getUser().getProfile())
-                    .map(UserProfileDto::getBirthDate)
+                    .map(UserProfile::getBirthDate)
                     .or(() -> medicalRecordService
                             .getDateOfBirth(handle, participant.getUser().getId(), studyId)
                             .flatMap(DateValue::asLocalDate))
@@ -726,11 +725,11 @@ public class DataExporter {
 
         // Profile
         ParticipantProfile.Builder builder = ParticipantProfile.builder();
-        UserProfileDto profileDto = user.getProfile();
-        if (profileDto != null) {
-            builder.setFirstName(profileDto.getFirstName());
-            builder.setLastName(profileDto.getLastName());
-            builder.setDoNotContact(profileDto.getDoNotContact());
+        UserProfile userProfile = user.getProfile();
+        if (userProfile != null) {
+            builder.setFirstName(userProfile.getFirstName());
+            builder.setLastName(userProfile.getLastName());
+            builder.setDoNotContact(userProfile.getDoNotContact());
         }
         builder.setGuid(user.getGuid())
                 .setHruid(user.getHruid())
@@ -752,6 +751,7 @@ public class DataExporter {
                 ActivityInstanceRecord activityInstanceRecord = new ActivityInstanceRecord(
                         instance.getActivityVersionTag(),
                         instance.getActivityCode(),
+                        instance.getGuid(),
                         lastStatus.getType(),
                         instance.getCreatedAt(),
                         instance.getFirstCompletedAt(),

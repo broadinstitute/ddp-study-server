@@ -15,27 +15,27 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
-import org.broadinstitute.ddp.db.dao.JdbiActivityMapping;
 import org.broadinstitute.ddp.db.dao.JdbiMailAddress;
 import org.broadinstitute.ddp.db.dao.JdbiMedicalProvider;
-import org.broadinstitute.ddp.db.dao.JdbiProfile;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
+import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.EnrollmentStatusDto;
 import org.broadinstitute.ddp.db.dto.MedicalProviderDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.UserDto;
-import org.broadinstitute.ddp.db.dto.UserProfileDto;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
-import org.broadinstitute.ddp.model.activity.types.ActivityMappingType;
 import org.broadinstitute.ddp.model.address.MailAddress;
 import org.broadinstitute.ddp.model.dsm.Institution;
 import org.broadinstitute.ddp.model.dsm.ParticipantInstitution;
-import org.broadinstitute.ddp.model.dsm.StudyActivityMapping;
+import org.broadinstitute.ddp.model.study.ActivityMapping;
+import org.broadinstitute.ddp.model.study.ActivityMappingType;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
+import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.service.DsmAddressValidationStatus;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.jdbi.v3.core.Handle;
@@ -107,18 +107,18 @@ public class GetDsmParticipantInstitutionsRoute implements Route {
                 .filter(dto -> !dto.isBlank())
                 .collect(Collectors.groupingBy(MedicalProviderDto::getUserId));
 
-        List<StudyActivityMapping> studyActivityMappings = handle.attach(JdbiActivityMapping.class)
-                .getActivityMappingForStudyAndActivityType(studyId, ActivityMappingType.MEDICAL_RELEASE)
+        List<ActivityMapping> activityMappings = handle.attach(ActivityDao.class)
+                .findActivityMappings(studyId, ActivityMappingType.MEDICAL_RELEASE)
                 .collect(Collectors.toList());
-        if (studyActivityMappings.isEmpty()) {
+        if (activityMappings.isEmpty()) {
             String errorMessage = "Activity mapping: " + ActivityMappingType.MEDICAL_RELEASE + " not found for: " + studyGuid;
             logger.error(errorMessage);
             throw ResponseUtil.haltError(response, HttpStatus.SC_NOT_FOUND,
                     new ApiError(ErrorCodes.STUDY_NOT_FOUND, errorMessage));
         }
 
-        Set<Long> releaseActivityIds = studyActivityMappings.stream()
-                .map(StudyActivityMapping::getStudyActivityId)
+        Set<Long> releaseActivityIds = activityMappings.stream()
+                .map(ActivityMapping::getActivityId)
                 .collect(Collectors.toSet());
         Map<Long, List<ActivityResponse>> userIdToReleaseInstances = handle.attach(ActivityInstanceDao.class)
                 .findBaseResponsesByStudyAndUserIds(studyId, Set.copyOf(userIds), true, releaseActivityIds)
@@ -146,8 +146,8 @@ public class GetDsmParticipantInstitutionsRoute implements Route {
 
             ParticipantInstitution.Address address = new ParticipantInstitution.Address(mailAddressResult.orElse(null));
 
-            UserProfileDto userProfileDto = handle.attach(JdbiProfile.class)
-                    .getUserProfileByUserId(userId);
+            UserProfile userProfile = handle.attach(UserProfileDao.class)
+                    .findProfileByUserId(userId).orElse(null);
 
             List<EnrollmentStatusDto> enrollmentStatusDtos = handle.attach(JdbiUserStudyEnrollment.class)
                     .getAllEnrollmentStatusesByUserAndStudyIdsSortedDesc(userId, studyId);
@@ -175,8 +175,8 @@ public class GetDsmParticipantInstitutionsRoute implements Route {
             }
 
             ParticipantInstitution participantInstitution = new ParticipantInstitution(
-                    userProfileDto.getFirstName(),
-                    userProfileDto.getLastName(),
+                    userProfile.getFirstName(),
+                    userProfile.getLastName(),
                     userDto.getUserHruid(),
                     userDto.getLegacyShortId(),
                     mailAddressResult.map(MailAddress::getCountry).orElse(null),

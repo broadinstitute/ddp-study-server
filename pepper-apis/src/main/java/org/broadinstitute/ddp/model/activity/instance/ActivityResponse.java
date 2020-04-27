@@ -1,5 +1,7 @@
 package org.broadinstitute.ddp.model.activity.instance;
 
+import java.util.Optional;
+
 import org.broadinstitute.ddp.db.dto.ActivityInstanceStatusDto;
 import org.broadinstitute.ddp.model.activity.definition.ActivityDef;
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
@@ -13,7 +15,7 @@ public abstract class ActivityResponse {
     protected long id;
     protected String guid;
     protected long participantId;
-    protected boolean isReadonly;
+    protected Boolean isReadonly;
     protected long createdAt;
     protected Long firstCompletedAt;
 
@@ -25,7 +27,7 @@ public abstract class ActivityResponse {
     protected ActivityInstanceStatusDto latestStatus;
 
     ActivityResponse(ActivityType type,
-                     long id, String guid, long participantId, boolean isReadonly, long createdAt, Long firstCompletedAt,
+                     long id, String guid, long participantId, Boolean isReadonly, long createdAt, Long firstCompletedAt,
                      long activityId, String activityCode, String activityVersionTag,
                      ActivityInstanceStatusDto latestStatus) {
         this.type = type;
@@ -63,6 +65,10 @@ public abstract class ActivityResponse {
     }
 
     public boolean isReadonly() {
+        return Optional.ofNullable(isReadonly).orElse(false);
+    }
+
+    public Boolean getReadonly() {
         return isReadonly;
     }
 

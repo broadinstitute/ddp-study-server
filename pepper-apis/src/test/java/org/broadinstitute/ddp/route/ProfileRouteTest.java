@@ -2,7 +2,6 @@ package org.broadinstitute.ddp.route;
 
 import java.io.IOException;
 import java.sql.Connection;
-import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
@@ -11,8 +10,6 @@ import java.util.Locale;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import com.typesafe.config.Config;
-import com.typesafe.config.ConfigFactory;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.fluent.Response;
@@ -21,26 +18,20 @@ import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.API;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.db.UserDao;
-import org.broadinstitute.ddp.db.UserDaoFactory;
+import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.json.Error;
 import org.broadinstitute.ddp.json.Profile;
+import org.broadinstitute.ddp.model.user.UserProfile;
 import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
 
-
-    public static final String PEPPER_V1 = "/pepper/v1/";
-    private static final Logger LOG = LoggerFactory.getLogger(ProfileRouteTest.class);
-    //profile testing constants
-    private static final Profile.Sex sex = Profile.Sex.FEMALE;
+    private static final String sex = UserProfile.SexType.FEMALE.name();
     private static final Integer birthMonth = 3;
     private static final Integer birthDayInMonth = 15;
     private static final Integer birthYear = 1995;
@@ -48,62 +39,34 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
     private static final String lastName = "McFakerton";
     private static final String preferredLanguage = Locale.ENGLISH.getLanguage();
     private static final Collection<String> profileUserIdsToDelete = new HashSet<>();
-    static Config sqlConfig;
-    static UserDao userDao;
+    private static final Gson gson = new Gson();
     private static String token;
     private static String guid;
     private static String url;
-    private final Gson gson = new Gson();
 
     @BeforeClass
     public static void beforeClass() throws Exception {
-        sqlConfig = ConfigFactory.parseResources("sql.conf");
-
         token = RouteTestUtil.loginStaticTestUserForToken();
         guid = RouteTestUtil.getUnverifiedUserGuidFromToken(token);
-
         url = RouteTestUtil.getTestingBaseUrl() + API.USER_PROFILE.replace(PathParam.USER_GUID, guid);
     }
 
     @Before
     public void setupData() {
-        userDao = UserDaoFactory.createFromSqlConfig(sqlConfig);
         TransactionWrapper.useTxn(handle -> {
             if (guid != null) {
-                try {
-                    deleteProfile(handle.getConnection(), guid);
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
+                handle.attach(UserProfileDao.class).getUserProfileSql().deleteByUserGuid(guid);
             }
         });
     }
 
-    /**
-     * Beginning of functions used in Profile functions.
-     */
     @After
-    public void deleteTestingProfiles() throws SQLException {
-        for (String guid : profileUserIdsToDelete) {
-            TransactionWrapper.withTxn(handle -> {
-                if (guid != null) {
-                    deleteProfile(handle.getConnection(), guid);
-                }
-                return null;
-            });
-        }
-    }
-
-    private void deleteProfile(Connection conn, String guid) throws SQLException {
-        LOG.info("Deleting test user {} ", guid);
-        try (PreparedStatement stmt = conn.prepareStatement(
-                "delete from user_profile where user_id = (select user_id from user where guid = ?)")) {
-            stmt.setString(1, guid);
-            int numRowsDeleted = stmt.executeUpdate();
-            if (numRowsDeleted != 1) {
-                LOG.error("Removed {} user_profile rows for user_id {}", numRowsDeleted, guid);
+    public void deleteTestingProfiles() {
+        TransactionWrapper.useTxn(handle -> {
+            for (String guid : profileUserIdsToDelete) {
+                handle.attach(UserProfileDao.class).getUserProfileSql().deleteByUserGuid(guid);
             }
-        }
+        });
     }
 
     private Profile successfulAddPostCheck(Profile payload) throws IOException {
@@ -302,8 +265,8 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
     }
 
     /**
-     * tests that if there is an existing user with a profile not in database, there is a 422 error message
-     * for a missing profile.
+     * tests that if there is an existing user with a profile not in database, there is a 422 error message for a
+     * missing profile.
      */
     @Test
     public void testGetProfileNotInDatabase() throws Exception {
@@ -324,7 +287,7 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
         Integer dummyBirthMonth = 2;
         Integer dummyBirthDayInMonth = 16;
         Integer dummyBirthYear = 2004;
-        JsonObject updatedProfile = createProfileJsonObject(Profile.Sex.MALE.name(),
+        JsonObject updatedProfile = createProfileJsonObject(UserProfile.SexType.MALE.name(),
                 dummyBirthDayInMonth, dummyBirthMonth, dummyBirthYear, "ru", "foo", "bar");
 
         Response response = RouteTestUtil.buildAuthorizedPatchRequest(token, url, updatedProfile.toString()).execute();
@@ -333,7 +296,7 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
 
         String bodyToString = EntityUtils.toString(res.getEntity());
         Profile queriedProfile = gson.fromJson(bodyToString, Profile.class);
-        Assert.assertEquals(Profile.Sex.MALE, queriedProfile.getSex());
+        Assert.assertEquals(UserProfile.SexType.MALE.name(), queriedProfile.getSex());
         Assert.assertEquals(dummyBirthDayInMonth, queriedProfile.getBirthDayInMonth());
         Assert.assertEquals(dummyBirthMonth, queriedProfile.getBirthMonth());
         Assert.assertEquals(dummyBirthYear, queriedProfile.getBirthYear());
@@ -370,7 +333,7 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
     @Test
     public void testNoPatchProfile() throws Exception {
         postDummyProfile();
-        JsonObject updatedProfile = createProfileJsonObject(sex.name(),
+        JsonObject updatedProfile = createProfileJsonObject(sex,
                 birthDayInMonth, birthMonth, birthYear, preferredLanguage, firstName, lastName);
 
         Response response = RouteTestUtil.buildAuthorizedPatchRequest(token, url, updatedProfile.toString()).execute();
@@ -392,7 +355,7 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
     @Test
     public void testPatchProfileDoesntExist() throws Exception {
         profileUserIdsToDelete.add(guid);
-        JsonObject updatedProfile = createProfileJsonObject(sex.name(),
+        JsonObject updatedProfile = createProfileJsonObject(sex,
                 birthDayInMonth, birthMonth, birthYear, preferredLanguage, firstName, lastName);
 
         Response response = RouteTestUtil.buildAuthorizedPatchRequest(token, url, updatedProfile.toString()).execute();
@@ -425,7 +388,7 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
     @Test
     public void testPatchBadLanguage() throws Exception {
         postDummyProfile();
-        JsonObject updatedProfile = createProfileJsonObject(Profile.Sex.MALE.name(),
+        JsonObject updatedProfile = createProfileJsonObject(UserProfile.SexType.MALE.name(),
                 birthDayInMonth, birthMonth, birthYear, "not-a-language", firstName, lastName);
 
         Response response = RouteTestUtil.buildAuthorizedPatchRequest(token, url, updatedProfile.toString()).execute();
