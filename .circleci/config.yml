@@ -91,7 +91,7 @@ commands:
               DEPLOY_ENV=dev
             ;;
             # @todo remove when done
-            DDP-4548_OpenAPIToGAE)
+            DDP-4548_OpenAPIToGAE_2)
               DEPLOY_ENV=dev
             ;;
             test)
@@ -670,7 +670,7 @@ workflows:
             branches:
               only:
                 - develop
-                - DDP-4548_OpenAPIToGAE
+                - DDP-4548_OpenAPIToGAE_2
 
 
 
