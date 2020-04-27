@@ -1244,7 +1244,9 @@ public class StudyDataLoader {
             List<String> otherText = optValuesList.stream().filter(opt -> !pepperPLOptions.contains(opt.toUpperCase())).collect(toList());
             otherText.remove("Other");
             String otherDetails = otherText.stream().collect(Collectors.joining(","));
-            selectedPicklistOptions.add(new SelectedPicklistOption(OTHER, otherDetails));
+            if (StringUtils.isNotBlank(otherDetails)) {
+                selectedPicklistOptions.add(new SelectedPicklistOption(OTHER, otherDetails));
+            }
         }
 
         return selectedPicklistOptions;
