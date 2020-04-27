@@ -1581,7 +1581,7 @@ public class StudyDataLoader {
                     String otherText = getStringValueFromElement(sourceDataElement, otherTextKey);
                     selectedPicklistOptions.add(new SelectedPicklistOption(optionName.toUpperCase(), otherText));
                 } else if (!optionName.equalsIgnoreCase("Other")) {
-                  selectedPicklistOptions.add(new SelectedPicklistOption(optionNameEl.getAsString().toUpperCase()));
+                    selectedPicklistOptions.add(new SelectedPicklistOption(optionNameEl.getAsString().toUpperCase()));
                 } else {
                   //currently only RACE has Other however Gen2 MBC has other details without user selecting "Other"
                   //hence MBC Other is taken care below as special case..
@@ -1619,9 +1619,8 @@ public class StudyDataLoader {
             JsonElement value = null;
             JsonElement optionName = option.getAsJsonObject().get("name");
             String key;
-          String optName;
-          if (optionName != null && !optionName.isJsonNull()) {
-             optName = null;
+            String optName = null;
+            if (optionName != null && !optionName.isJsonNull()) {
                 optName = optionName.getAsString();
                 if (altNames.get(optName) != null) {
                     optName = altNames.get(optName);
@@ -1647,8 +1646,9 @@ public class StudyDataLoader {
                         otherTextKey = key.concat(".").concat(option.getAsJsonObject().get("text").getAsString());
                     }
 
-                  String otherText = getStringValueFromElement(sourceDataElement, otherTextKey);
-                  selectedPicklistOptions.add(new SelectedPicklistOption(optionName.getAsString().toUpperCase(), otherText));
+                    String otherText = getStringValueFromElement(sourceDataElement, otherTextKey);
+                    selectedPicklistOptions.add(new SelectedPicklistOption(optionName.getAsString().toUpperCase(),
+                            otherText));
                 } else {
                     selectedPicklistOptions.add(new SelectedPicklistOption(optionName.getAsString().toUpperCase()));
                 }
