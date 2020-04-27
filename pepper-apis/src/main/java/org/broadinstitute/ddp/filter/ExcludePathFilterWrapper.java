@@ -14,7 +14,7 @@ import spark.utils.SparkUtils;
 /**
  * Try to fill in what appears to be gap in Spark: ability to exclude execution of a filter
  * for a given pattern. This deals with the situation where you want to apply the filter to
- * a path such as /* <b>EXCETPT </b> /dir1/myExcludedStuff/*
+ * a path such as /* <b>EXCEPT </b> /dir1/myExcludedStuff/*
  */
 public class ExcludePathFilterWrapper implements Filter {
     private Set<String> pathsToExclude = new HashSet<>();
