@@ -34,9 +34,6 @@ references:
 
 
 executors:
-  build-executor:
-    docker:
-      - image: broadinstitute/study-server-build:java-2020-04-15A
   test-executor:
     docker:
       - image: broadinstitute/study-server-build:java-2020-04-20A
@@ -50,7 +47,7 @@ executors:
           MYSQL_PASSWORD: passw0rd
     resource_class: medium+ #default medium not big enough for tests
 
-  deploy-executor:
+  build-deploy-executor:
     docker: # todo: create new image endpoint, add this in admin tab for faster starts
     - image: *ci_support_image
 
@@ -535,7 +532,7 @@ jobs:
 
   store-jar-job:
     executor:
-      name: deploy-executor
+      name: build-deploy-executor
     working_directory: *pepper_apis_path
     steps:
       - attach_workspace:
@@ -552,7 +549,7 @@ jobs:
 
   deploy-jar-from-workspace-job:
     executor:
-      name: deploy-executor
+      name: build-deploy-executor
     working_directory: *pepper_apis_path
     steps:
       - attach_workspace:
@@ -569,7 +566,7 @@ jobs:
 
   deploy-stored-jar-job:
     executor:
-      name: deploy-executor
+      name: build-deploy-executor
     working_directory: *pepper_apis_path
     steps:
       - checkout:
@@ -586,7 +583,7 @@ jobs:
 
   deploy-docs-job:
     executor:
-      name: deploy-executor
+      name: build-deploy-executor
     working_directory: *api-spec-path
     steps:
       - checkout:
