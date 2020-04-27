@@ -197,5 +197,5 @@
     <include file="db-changes/schema/DDP-4511-change-false-values-to-null-for-is-readonly.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-4134-change-unique-keys-in-client-table.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-4458-truncate-varchar-for-utf8mb4.xml" relativeToChangelogFile="true"/>
-    <include file="db-changes/schema/DDP-4475-add-isdefault-to-studylanguage.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-4552-modify-medicalprovider-street.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
