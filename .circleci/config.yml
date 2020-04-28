@@ -64,9 +64,9 @@ commands:
       - run:
           name: Download tcell files from bucket
           command: |
-            TCELL_GCP_PATH=<<parameters.tcell_gcp_path>>
+            TCELL_GCP_PATH='<<parameters.tcell_gcp_path>>'
             vault read -format=json  secret/pepper/prod/v1/conf | jq -r .data.gcp.serviceKey | gcloud auth activate-service-account --key-file=-
-            TAR_FILE_URL=`gsutil ls ${TCELL_GCP_PATH} | sort -r | head -1`
+            TAR_FILE_URL=`gsutil ls $TCELL_GCP_PATH | sort -r | head -1`
 
             if [ -z $TAR_FILE_URL ]
             then
