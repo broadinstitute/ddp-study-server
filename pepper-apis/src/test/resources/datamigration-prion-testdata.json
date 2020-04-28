@@ -67,7 +67,7 @@
         "previous_research.mrc": 0,
         "previous_research.other": 0,
         "previous_research_specify": "some2here",
-        "survey_status": null,
+        "survey_status": 1,
         "know_which_mutation": 1,
         "specific_mutation": "invis2ble",
         "datstat.submissionid": 419,
