@@ -1820,6 +1820,10 @@ public class StudyDataLoader {
                         childGuid = processBooleanQuestion(childEl, sourceDataElement, surveyName,
                                 participantGuid, instanceGuid, answerDao);
                         break;
+                    case "BooleanSpecialPL":
+                        childGuid = processBooleanSpecialPLQuestion(handle, childEl, sourceDataElement, surveyName,
+                                participantGuid, instanceGuid, answerDao);
+                        break;
                     case "Agreement":
                         childGuid = processAgreementQuestion(childEl, sourceDataElement, surveyName,
                                 participantGuid, instanceGuid, answerDao);
