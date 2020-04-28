@@ -1,6 +1,8 @@
 version: 2.1
 
 references:
+  tcell_dir: &tcell_dir tcell
+  tcell_gcp_path: &tcell_gcp_path gs://ddp-tcell/tcell-1.10.0.tar.gz
   ci_support_image: &ci_support_image
                        broadinstitute/study-server-build:2020-04-10G
   root_path: &root_path
@@ -54,21 +56,26 @@ executors:
 
 commands:
   install-tcell:
+  parameters:
+    tcell_gcp_path:
+      type: string
+      default: *tcell_gcp_path
     steps:
       - run:
           name: Download tcell files from bucket
           command: |
             vault read -format=json  secret/pepper/prod/v1/conf | jq -r .data.gcp.serviceKey | gcloud auth activate-service-account --key-file=-
-            TAR_FILE_URL=`gsutil ls $TCELL_PATH  | sort -r | head -1`
+            TAR_FILE_URL=`gsutil ls <<parameters.tcell_gcp_path>>  | sort -r | head -1`
 
             if [ -z $TAR_FILE_URL ]
             then
-              echo "Could not find tcell archive ${TCELL_PATH}"
+              echo "Could not find tcell archive <<parameters.tcell_gcp_path>>"
               exit 1
             fi
             TAR_FILE_PATH="/tmp/$(basename -- $TAR_FILE_URL)"
             gsutil cp  $TAR_FILE_URL $TAR_FILE_PATH
 
+            # untarring will create a "tcell" dir
             tar --no-same-owner -xvf $TAR_FILE_PATH
   build-jar:
     description: Build jar
@@ -92,7 +99,6 @@ commands:
           command: |
             echo "export VAULT_TOKEN=$(vault write -field=token auth/approle/login role_id=$VAULT_ROLE_ID secret_id=$VAULT_ROLE_SECRET_ID)" >> $BASH_ENV
             echo "export SHORT_GIT_SHA=$(echo $CIRCLE_SHA1 | cut -c 1-7)" >> $BASH_ENV
-            echo 'export TCELL_DIR=tcell' >> $BASH_ENV
             source $BASH_ENV
 
   set-deployment-env:
@@ -252,6 +258,9 @@ commands:
       deploy_dir:
         type: string
         default: deployment-assets
+      tcell_dir:
+        type: string
+        default: *tcell_dir
     steps:
       - set-deployment-env
       - render-configs
@@ -260,6 +269,7 @@ commands:
           name: Gather deployment assets
           command: |
             DEPLOY_DIR='<<parameters.deploy_dir>>'
+            TCELL_DIR='<<parameters.tcell_dir>>'
             rm -rf $DEPLOY_DIR
             mkdir -p $DEPLOY_DIR
             cd $DEPLOY_DIR
