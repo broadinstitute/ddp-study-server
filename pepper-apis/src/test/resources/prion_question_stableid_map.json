@@ -256,15 +256,9 @@
               },
               {
                 "name": "diagnosis_date_estimated",
-                "type": "Picklist",
+                "type": "BooleanSpecialPL",
                 "source_type": "integer",
-                "stable_id": "prion_medical_diagnosis_date_estimated",
-                "options": [
-                  {
-                    "type": "integer",
-                    "stable_id": "YES"
-                  }
-                ]
+                "stable_id": "prion_medical_diagnosis_date_estimated"
               }
             ]
           },
@@ -376,15 +370,9 @@
               },
               {
                 "name": "earliest_symptom_estimated",
-                "type": "Picklist",
+                "type": "BooleanSpecialPL",
                 "source_type": "integer",
-                "stable_id": "prion_medical_earliest_symptom_est",
-                "options": [
-                  {
-                    "type": "integer",
-                    "stable_id": "ESTIMATED_DATE"
-                  }
-                ]
+                "stable_id": "prion_medical_earliest_symptom_est"
               }
             ]
           },
