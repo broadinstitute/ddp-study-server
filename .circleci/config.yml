@@ -3,6 +3,7 @@ version: 2.1
 references:
   tcell_dir: &tcell_dir
              tcell
+  # to install a new version of tcell, do  "tar -cvfz tcell-x.y.z.tar.gz tcell" after expanding tcell's zip
   tcell_gcp_path: &tcell_gcp_path
                   gs://ddp-tcell/tcell-1.10.0.tar.gz
   ci_support_image: &ci_support_image
@@ -140,8 +141,6 @@ commands:
             esac
             echo "Setting deployment ENVIRONMENT to $DEPLOY_ENV"
             echo "export ENVIRONMENT=$DEPLOY_ENV" >> $BASH_ENV
-            # to install a new version of tcell, do  "tar -cvfz tcell-x.y.z.tar.gz tcell" after expanding tcell's zip
-            echo 'export TCELL_PATH=gs://ddp-tcell/tcell-1.10.0.tar.gz' >> $BASH_ENV
             source $BASH_ENV
 
   render-configs:
