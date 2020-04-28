@@ -21,4 +21,5 @@ entrypoint: java -javaagent:tcell/tcellagent.jar -Xmx820m -Xmx820m -jar DataDona
 # GAE does not like the "=" character in entrypoint and does not support "." in environment variables
 env_variables:
   config_file: application.conf
+  TCELL_AGENT_HOST_IDENTIFIER: study-server
 
