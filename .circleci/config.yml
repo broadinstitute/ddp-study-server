@@ -519,13 +519,12 @@ commands:
           condition: << parameters.restore_m2_cache >>
           steps:
             - restore_cache: *m2_cache_keys
-      - run:
-          name: Compiling and installing pepper-apis to m2 repository
-          command: mvn install --batch-mode -DskipTests -Dmaven.repo.local=<< parameters.m2_repo >>
-      - run: cd << parameters.repo_path >>/study-builder
-      - run:
-          name: Compiling study-builder
-          command: mvn package --batch-mode -DskipTests -Dmaven.repo.local=<< parameters.m2_repo >>
+      - run: |
+          pwd
+          mvn install --batch-mode -DskipTests -Dmaven.repo.local=<< parameters.m2_repo >>
+          cd << parameters.repo_path >>/study-builder
+          ls -l
+          mvn package --batch-mode -DskipTests -Dmaven.repo.local=<< parameters.m2_repo >>
 
 jobs:
   compile-and-run-test-suite-job:
