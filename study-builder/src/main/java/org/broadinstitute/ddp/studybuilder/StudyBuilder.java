@@ -71,7 +71,6 @@ public class StudyBuilder {
 
     public StudyBuilder doEvents(boolean doEvents) {
         this.doEvents = doEvents;
-        foo = "a line";
         return this;
     }
 

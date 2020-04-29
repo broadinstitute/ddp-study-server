@@ -502,8 +502,8 @@ commands:
           port: 5556
           timeout: 60
 
-  compile-pepper-and-study-builder:
-    description: Compile and run checkstyle on study-builder
+  compile-all-jars:
+    description: Compile and run checkstyle on pepper, housekeeping, and study-builder
     parameters:
       m2_repo:
         type: string
@@ -520,10 +520,11 @@ commands:
           steps:
             - restore_cache: *m2_cache_keys
       - run:
-          name: Compiling pepper-apis then study-builder
+          name: Compiling pepper-apis, housekeeping, and study-builder
           command: |
-            mvn install -f parent-pom.xml --batch-mode -DskipTests -Dmaven.repo.local=<< parameters.m2_repo >>
             mvn install --batch-mode -DskipTests -Dmaven.repo.local=<< parameters.m2_repo >>
+            mvn install -f parent-pom.xml --batch-mode -DskipTests -Dmaven.repo.local=<< parameters.m2_repo >>
+            mvn package -f housekeeping-pom.xml --batch-mode -DskipTests -Dmaven.repo.local=<< parameters.m2_repo >>
             cd << parameters.repo_path >>/study-builder
             mvn package --batch-mode -DskipTests -Dmaven.repo.local=<< parameters.m2_repo >>
 
@@ -536,7 +537,7 @@ jobs:
       - checkout:
           path: *repo_path
       - setup-shared-env
-      - compile-pepper-and-study-builder:
+      - compile-all-jars:
           restore_m2_cache: true
       - render-configs
       - create-test-dbs
@@ -560,7 +561,7 @@ jobs:
       - checkout:
           path: *repo_path
       - setup-shared-env
-      - compile-pepper-and-study-builder:
+      - compile-all-jars:
           restore_m2_cache: true
       - run-maven-with-pepper-options:
           phase: process-test-classes
