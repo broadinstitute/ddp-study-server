@@ -37,9 +37,6 @@ references:
 
 
 executors:
-  build-executor:
-    docker:
-      - image: broadinstitute/study-server-build:java-2020-04-15A
   test-executor:
     docker:
       - image: broadinstitute/study-server-build:java-2020-04-20A
