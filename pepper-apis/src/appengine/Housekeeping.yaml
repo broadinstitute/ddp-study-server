@@ -11,5 +11,4 @@ entrypoint: java -javaagent:tcell/tcellagent.jar -Xmx820m -Xmx820m -jar Housekee
 env_variables:
   config_file: application.conf
   TCELL_AGENT_HOST_IDENTIFIER: housekeeping
-  TCELL_AGENT_CACHE_DIR: /tmp
 
