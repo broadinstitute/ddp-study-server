@@ -71,7 +71,7 @@ public class StudyBuilder {
 
     public StudyBuilder doEvents(boolean doEvents) {
         this.doEvents = doEvents;
-        var foo = "very long linelinelinelinelinelinelinelinelinelinelinelinelinelinelinelinelinelinelinelinelinelinelinelinelinelinelinelinelinelinelinelineline";
+        foo = "a line";
         return this;
     }
 

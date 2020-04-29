@@ -502,7 +502,7 @@ commands:
           port: 5556
           timeout: 60
 
-  compile-study-builder:
+  compile-pepper-and-study-builder:
     description: Compile and run checkstyle on study-builder
     parameters:
       m2_repo:
@@ -536,14 +536,14 @@ jobs:
       - checkout:
           path: *repo_path
       - setup-shared-env
-      - compile-study-builder:
+      - compile-pepper-and-study-builder:
           restore_m2_cache: true
       - render-configs
       - create-test-dbs
       - run-maven-with-pepper-options:
           phase: test
           skip_tests: false
-          skip_checkstyle: false
+          skip_checkstyle: true
           additional_options: '-Dtest=ServerInSameProcessIntegrationTestSuite'
           restore_m2_cache: true
 
@@ -560,6 +560,8 @@ jobs:
       - checkout:
           path: *repo_path
       - setup-shared-env
+      - compile-pepper-and-study-builder:
+          restore_m2_cache: true
       - run-maven-with-pepper-options:
           phase: process-test-classes
           restore_m2_cache: true
@@ -571,6 +573,7 @@ jobs:
       - run-maven-with-pepper-options:
           phase: test
           skip_tests: false
+          skip_checkstyle: true
           additional_options: '-PCircleciParallelBuild -Dsurefire.excludesFile=$IGNORE_CLASS_LIST_PATH'
           save_m2_cache: true
       - persist_to_workspace:
