@@ -520,7 +520,7 @@ commands:
           steps:
             - restore_cache: *m2_cache_keys
       - run:
-          name: Compiling and installing Pepper to m2 repository
+          name: Compiling and installing pepper-apis to m2 repository
           command: mvn install --batch-mode -DskipTests -Dmaven.repo.local=<< parameters.m2_repo >>
       - run: cd << parameters.repo_path >>/study-builder
       - run:
