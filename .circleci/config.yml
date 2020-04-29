@@ -502,6 +502,24 @@ commands:
           port: 5556
           timeout: 60
 
+  compile-study-builder:
+    description: Compile and run checkstyle on study-builder
+    parameters:
+      m2_repo:
+        type: string
+        default: *m2_repo_path
+      restore_m2_cache:
+        type: boolean
+        default: false
+    steps:
+      - when:
+          condition: << parameters.restore_m2_cache >>
+          steps:
+            - restore_cache: *m2_cache_keys
+      - run: mvn install --batch-mode -DskipTests -Dmaven.repo.local=<< parameters.m2_repo >>
+      - run: cd ./study-builder
+      - run: mvn package --batch-mode -DskipTests -Dmaven.repo.local=<< parameters.m2_repo >>
+
 jobs:
   compile-and-run-test-suite-job:
     executor:
@@ -511,6 +529,8 @@ jobs:
       - checkout:
           path: *repo_path
       - setup-shared-env
+      - compile-study-builder:
+          restore_m2_cache: true
       - render-configs
       - create-test-dbs
       - run-maven-with-pepper-options:
