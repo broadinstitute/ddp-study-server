@@ -508,6 +508,9 @@ commands:
       m2_repo:
         type: string
         default: *m2_repo_path
+      repo_path:
+        type: string
+        default: *repo_path
       restore_m2_cache:
         type: boolean
         default: false
@@ -516,9 +519,13 @@ commands:
           condition: << parameters.restore_m2_cache >>
           steps:
             - restore_cache: *m2_cache_keys
-      - run: mvn install --batch-mode -DskipTests -Dmaven.repo.local=<< parameters.m2_repo >>
-      - run: cd ./study-builder
-      - run: mvn package --batch-mode -DskipTests -Dmaven.repo.local=<< parameters.m2_repo >>
+      - run:
+          name: Compiling and installing Pepper to m2 repository
+          command: mvn install --batch-mode -DskipTests -Dmaven.repo.local=<< parameters.m2_repo >>
+      - run: cd << parameters.repo_path >>/study-builder
+      - run:
+          name: Compiling study-builder
+          command: mvn package --batch-mode -DskipTests -Dmaven.repo.local=<< parameters.m2_repo >>
 
 jobs:
   compile-and-run-test-suite-job:
