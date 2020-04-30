@@ -568,8 +568,10 @@ jobs:
       - checkout:
           path: *repo_path
       - setup-shared-env
-      - compile-all-jars:
+      - run-maven-with-pepper-options:
+          phase: process-test-classes
           restore_m2_cache: true
+          skip_checkstyle: true
       - render-configs
       - create-test-dbs
       - start-ddp-test-server # starts DDP server. And execute Liquibase DB population
@@ -577,7 +579,6 @@ jobs:
       - run-maven-with-pepper-options:
           phase: test
           skip_tests: false
-          skip_checkstyle: true
           additional_options: '-PCircleciParallelBuild -Dsurefire.excludesFile=$IGNORE_CLASS_LIST_PATH'
           save_m2_cache: true
       - persist_to_workspace:
