@@ -22,4 +22,5 @@ entrypoint: java -javaagent:tcell/tcellagent.jar -Xmx820m -Xmx820m -jar DataDona
 env_variables:
   config_file: application.conf
   TCELL_AGENT_HOST_IDENTIFIER: study-server
+  TCELL_AGENT_CACHE_DIR: /tmp
 
