@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -252,7 +253,7 @@ public class StudyDataLoaderMain {
 
         if (isPreProcess) {
             LOG.info("Preprocessing Auth0 Email and Address verification");
-            LocalDateTime now = LocalDateTime.now();
+            Instant now = Instant.now();
             dataLoaderMain.serviceAccountFile = cmd.getOptionValue("gsa");
             dataLoaderMain.googleBucketName = cmd.getOptionValue("gb");
             PreProcessedData userPreProcessedDto = dataLoaderMain.preProcessAddressAndEmailVerification(cfg, null);
@@ -271,7 +272,7 @@ public class StudyDataLoaderMain {
                 Files.write(Paths.get(".", dataLoaderMain.preProcessFileName), preProcessedData.getBytes());
             }
             LOG.info("Created pre-processed data file: {} ", dataLoaderMain.preProcessFileName);
-            LocalDateTime now2 = LocalDateTime.now();
+            Instant now2 = Instant.now();
             Duration duration = Duration.between(now, now2);
             long secs = duration.getSeconds();
             long mins = duration.toMinutes();
@@ -501,7 +502,7 @@ public class StudyDataLoaderMain {
     public void processGoogleBucketParticipantFiles(Config cfg, String studyGuid, boolean dryRun) throws Exception {
 
         LOG.info("Processing google bucket files. {} ", new Date());
-        LocalDateTime now = LocalDateTime.now();
+        Instant now = Instant.now();
         //Download files from Google storage
         //iterate through All buckets
         StudyDataLoader dataLoader = new StudyDataLoader(cfg);
@@ -519,7 +520,7 @@ public class StudyDataLoaderMain {
             preProcessedData = preProcessAddressAndEmailVerification(cfg, dataLoader);
             LOG.info("loaded pre-processed data. {} ", new Date());
         }
-        LocalDateTime nowPreprocessDone = LocalDateTime.now();
+        Instant nowPreprocessDone = Instant.now();
         Duration duration = Duration.between(now, nowPreprocessDone);
         long secs = duration.getSeconds();
         long mins = duration.toMinutes();
@@ -567,7 +568,7 @@ public class StudyDataLoaderMain {
             deleteAuth0Emails(cfg, migrationRunReport);
         }
         LOG.info("completed processing google bucket files");
-        LocalDateTime nowDone = LocalDateTime.now();
+        Instant nowDone = Instant.now();
         duration = Duration.between(now, nowDone);
         secs = duration.getSeconds();
         mins = duration.toMinutes();
