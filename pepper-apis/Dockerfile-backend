@@ -29,16 +29,10 @@ RUN gcloud components install pubsub-emulator --quiet
 RUN gcloud components update --quiet
 ENV PUBSUB_EMULATOR_HOST "localhost:8442"
 
-RUN ["echo","Frontloading maven dependencies..."]
-# This command forces maven to download everything (deps and all plugins) and take advantage of
-# caching.  dependency:go-offline does not do a good enough job capturing the full dependencies,
-# nor does dependency-resolve and dependency:resolve-plugins.  So we just run a quick test to get
-# maven to download everything
-RUN mvn $SET_LOCAL_M2_REPO --batch-mode clean install package test  surefire-report:report-only sonar:sonar --fail-never || echo "warning: failed to build pepper-apis"
 COPY src/ /app/src
-RUN mvn $SET_LOCAL_M2_REPO -o --batch-mode -DskipTests=true clean install package || echo "warning: failed to build pepper-apis"
-RUN mvn $SET_LOCAL_M2_REPO -o --batch-mode -DskipTests=true --file smoketest-pom.xml package || echo "warning: failed to build pepper-apis/smoketest"
-RUN mvn $SET_LOCAL_M2_REPO -o --batch-mode -DskipTests=true --file housekeeping-pom.xml package || echo "warning: failed to build pepper-apis/housekeeping"
+RUN mvn $SET_LOCAL_M2_REPO --batch-mode -DskipTests=true clean install package || echo "warning: failed to build pepper-apis"
+RUN mvn $SET_LOCAL_M2_REPO --batch-mode -DskipTests=true --file smoketest-pom.xml package || echo "warning: failed to build pepper-apis/smoketest"
+RUN mvn $SET_LOCAL_M2_REPO --batch-mode -DskipTests=true --file housekeeping-pom.xml package || echo "warning: failed to build pepper-apis/housekeeping"
 
 # keep track of git hash
 ARG GIT_SHA

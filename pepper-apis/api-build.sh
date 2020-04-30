@@ -171,7 +171,6 @@ function run_tests() {
                 -Dddp.firecloudKeysDir=fc_keys \
                 -Dmaven.repo.local=/app/repo \
                 -Dconfig.file=config/testing-inmemorydb.conf \
-                -o \
                 --batch-mode \
                 checkstyle:checkstyle test surefire-report:report-only
 
@@ -292,7 +291,7 @@ VERSION=$1
 ENVIRONMENT=$2
 DIR=$3
 VAULT_TOKEN=$VAULT_TOKEN
-tag=${VERSION}_${ENV}
+tag=${VERSION}_${ENVIRONMENT}
 
 GIT_SHA="${GIT_SHA:-$(git rev-parse --verify HEAD)}"
 GIT_SHA_SHORT=${GIT_SHA:0:12}
