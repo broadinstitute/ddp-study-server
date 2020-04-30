@@ -22,7 +22,7 @@ function build_docs_image {
             --user $(id -u ${USER}):$(id -g ${USER}) \
             --volume "${PWD}/${docs_path}":"/build" \
             --workdir "/build" \
-            node:8-slim \
+            node:10-slim \
             ./build.sh documentation
     else
         (
