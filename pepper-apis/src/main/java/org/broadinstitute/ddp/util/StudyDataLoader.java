@@ -1246,6 +1246,8 @@ public class StudyDataLoader {
             String otherDetails = otherText.stream().collect(Collectors.joining(","));
             if (StringUtils.isNotBlank(otherDetails)) {
                 selectedPicklistOptions.add(new SelectedPicklistOption(OTHER, otherDetails));
+            } else if (optValuesList.contains("Other")) {
+                selectedPicklistOptions.add(new SelectedPicklistOption(OTHER));
             }
         }
 
