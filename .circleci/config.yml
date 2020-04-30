@@ -2,32 +2,32 @@ version: 2.1
 
 references:
   tcell_dir: &tcell_dir
-             tcell
+      tcell
   # to install a new version of tcell, do  "tar -cvfz tcell-x.y.z.tar.gz tcell" after expanding tcell's zip
   tcell_gcp_path: &tcell_gcp_path
-                  gs://ddp-tcell/tcell-1.10.0.tar.gz
+      gs://ddp-tcell/tcell-1.10.0.tar.gz
   ci_support_image: &ci_support_image
-                       broadinstitute/study-server-build:2020-04-10G
+      broadinstitute/study-server-build:2020-04-10G
   root_path: &root_path
       /home/circleci
   repo_path: &repo_path
-              /home/circleci/repo
+      /home/circleci/repo
   m2_cache_key: &m2_cache_key
-                  pom.xml2-{{ checksum "pom.xml" }}
+      pom.xml2-{{ checksum "pom.xml" }}-{{ checksum "parent-pom.xml" }}
   m2_cache_restore_key: &m2_cache_keys
     keys:
       - *m2_cache_key
       - pom.xml2-
   m2_repo_path: &m2_repo_path
-             /home/circleci/.m2/repository
+      /home/circleci/.m2/repository
   pepper_apis_path: &pepper_apis_path
-            /home/circleci/repo/pepper-apis
+      /home/circleci/repo/pepper-apis
   circleci_path: &circleci_path
-            /home/circleci/repo/.circleci
+      /home/circleci/repo/.circleci
   builds_bucket: &builds_bucket
-            ddp-build-artifacts
+      ddp-build-artifacts
   jar_build_bucket_dir: &jar_build_bucket_dir
-        /ddp-study-server-pepper-apis
+      /ddp-study-server-pepper-apis
   housekeeping_test_db: &housekeeping_test_db
       housekeepingdb
   studyserver_test_db: &studyserver_test_db
@@ -502,6 +502,39 @@ commands:
           port: 5556
           timeout: 60
 
+  compile-all-jars:
+    description: Compile and run checkstyle on all jars
+    parameters:
+      m2_repo:
+        type: string
+        default: *m2_repo_path
+      repo_path:
+        type: string
+        default: *repo_path
+      restore_m2_cache:
+        type: boolean
+        default: false
+    steps:
+      - when:
+          condition: << parameters.restore_m2_cache >>
+          steps:
+            - restore_cache: *m2_cache_keys
+      - run:
+          name: Compile and run checkstyle on all jars
+          command: |
+            # Install pepper-apis to .m2 so we can compile study-builder
+            mvn install --batch-mode -DskipTests -Dmaven.repo.local=<< parameters.m2_repo >>
+
+            # Just need to get parent-pom into .m2 so don't need to run checkstyle.
+            mvn install -f parent-pom.xml --batch-mode -DskipTests -Dcheckstyle.skip -Dmaven.repo.local=<< parameters.m2_repo >>
+
+            # Compile housekeeping
+            mvn test-compile -f housekeeping-pom.xml --batch-mode -DskipTests -Dmaven.repo.local=<< parameters.m2_repo >>
+
+            # Compile study-builder
+            cd << parameters.repo_path >>/study-builder
+            mvn test-compile --batch-mode -DskipTests -Dmaven.repo.local=<< parameters.m2_repo >>
+
 jobs:
   compile-and-run-test-suite-job:
     executor:
@@ -511,14 +544,16 @@ jobs:
       - checkout:
           path: *repo_path
       - setup-shared-env
+      - compile-all-jars:
+          restore_m2_cache: true
       - render-configs
       - create-test-dbs
       - run-maven-with-pepper-options:
           phase: test
           skip_tests: false
-          skip_checkstyle: false
+          skip_checkstyle: true
           additional_options: '-Dtest=ServerInSameProcessIntegrationTestSuite'
-          restore_m2_cache: true
+          restore_m2_cache: false
 
   parallel-compile-and-test-job:
     executor:
