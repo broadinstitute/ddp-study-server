@@ -5,7 +5,7 @@ references:
       tcell
   # to install a new version of tcell, do  "tar -cvfz tcell-x.y.z.tar.gz tcell" after expanding tcell's zip
   tcell_gcp_path: &tcell_gcp_path
-      gs://ddp-tcell/tcell-1.10.0.tar.gz
+      gs://ddp-tcell/tcell-1.11.0.tar.gz
   ci_support_image: &ci_support_image
       broadinstitute/study-server-build:2020-04-10G
   root_path: &root_path
@@ -114,9 +114,6 @@ commands:
             ;;
             # @todo remove when done
               study-server-parallel-tests)
-              DEPLOY_ENV=dev
-            ;;
-              tcell-instrumentation)
               DEPLOY_ENV=dev
             ;;
             test)
