@@ -13,6 +13,7 @@
     "start": "\"$(npm bin)/redoc-cli\" serve --watch src/pepper.yml",
     "lint": "npm run generate-bundle && \"$(npm bin)/speccy\" lint --rules=\"rules.yml\" build/pepper.yml",
     "generate-bundle": "\"$(npm bin)/swagger-cli\" bundle --outfile build/pepper.yml --type yaml src/pepper.yml",
+    "generate-json-bundle": "\"$(npm bin)/swagger-cli\" bundle --outfile build/pepper.json src/pepper.yml",
     "generate-docs": "\"$(npm bin)/redoc-cli\" bundle --output build/pepper.html src/pepper.yml",
     "generate-openapi-angular-client": "openapi-generator generate  -i  build/pepper.yml -g typescript-angular -o generated-sources/openapi --additional-properties=\"ngVersion=8.0.0\""
   },

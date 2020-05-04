@@ -7,7 +7,7 @@ references:
   tcell_gcp_path: &tcell_gcp_path
       gs://ddp-tcell/tcell-1.11.0.tar.gz
   ci_support_image: &ci_support_image
-      broadinstitute/study-server-build:2020-04-10G
+      broadinstitute/study-server-build:2020-04-30A
   root_path: &root_path
       /home/circleci
   repo_path: &repo_path
@@ -21,7 +21,9 @@ references:
   m2_repo_path: &m2_repo_path
       /home/circleci/.m2/repository
   pepper_apis_path: &pepper_apis_path
-      /home/circleci/repo/pepper-apis
+            /home/circleci/repo/pepper-apis
+  api-spec-path: &api-spec-path
+            /home/circleci/repo/pepper-apis/docs/specification
   circleci_path: &circleci_path
       /home/circleci/repo/.circleci
   builds_bucket: &builds_bucket
@@ -50,7 +52,7 @@ executors:
           MYSQL_PASSWORD: passw0rd
     resource_class: medium+ #default medium not big enough for tests
 
-  deploy-executor:
+  build-deploy-executor:
     docker: # todo: create new image endpoint, add this in admin tab for faster starts
     - image: *ci_support_image
 
@@ -113,7 +115,7 @@ commands:
               DEPLOY_ENV=dev
             ;;
             # @todo remove when done
-              study-server-parallel-tests)
+            DDP-4548_OpenAPIToGAE_2)
               DEPLOY_ENV=dev
             ;;
             test)
@@ -282,12 +284,24 @@ commands:
             gcloud app deploy --version="${SHORT_GIT_SHA}" --stop-previous-version --project "broad-ddp-${ENVIRONMENT}" <<parameters.deploy_dir>>/<<parameters.jar_base_name>>.yaml
       - update-deployment-sheet:
           jar_base_name: <<parameters.jar_base_name>>
+      - delete-old-service-versions:
+          deploy_dir: <<parameters.deploy_dir>>
+          deploy_config_base_name: <<parameters.jar_base_name>>
+
+  delete-old-service-versions:
+    parameters:
+      deploy_dir:
+        type: string
+      deploy_config_base_name:
+        type: string
+        default: app
+    steps:
       - run:
           name: Delete previous versions of service
           command: |
             set +x
             # extract the service name from the GAE yaml file
-            CONFIG_FILE="<<parameters.deploy_dir>>/<<parameters.jar_base_name>>.yaml"
+            CONFIG_FILE="<<parameters.deploy_dir>>/<<parameters.deploy_config_base_name>>.yaml"
             SERVICE=$(grep -Eo -m1 "^service:\s*.*" "${CONFIG_FILE}" | awk '{print $2}')
             echo "The service name is *${SERVICE}*"
 
@@ -451,7 +465,6 @@ commands:
                     $CHECKSTYLE_OPTION \
                     $SKIPTESTS_OPTION \
                     -Ditext.license=output-config/itextkey.xml \
-                    -Dddp.firecloudKeysDir=output-config/fc_keys \
                     -Dconfig.file=output-build-config/testing-inmemorydb.conf  \
                     -Dmaven.repo.local=<< parameters.m2_repo >> <<parameters.additional_options>>
           background: <<parameters.background>>
@@ -585,7 +598,7 @@ jobs:
 
   store-jar-job:
     executor:
-      name: deploy-executor
+      name: build-deploy-executor
     working_directory: *pepper_apis_path
     steps:
       - attach_workspace:
@@ -602,7 +615,7 @@ jobs:
 
   deploy-jar-from-workspace-job:
     executor:
-      name: deploy-executor
+      name: build-deploy-executor
     working_directory: *pepper_apis_path
     steps:
       - attach_workspace:
@@ -619,7 +632,7 @@ jobs:
 
   deploy-stored-jar-job:
     executor:
-      name: deploy-executor
+      name: build-deploy-executor
     working_directory: *pepper_apis_path
     steps:
       - checkout:
@@ -633,6 +646,27 @@ jobs:
           jar_base_name: Housekeeping
       - deploy-jar:
           jar_base_name: Housekeeping
+
+  deploy-docs-job:
+    executor:
+      name: build-deploy-executor
+    working_directory: *api-spec-path
+    steps:
+      - checkout:
+          path: *repo_path
+      - run:
+          name: Build docs
+          command: ./build.sh documentation
+      - setup-shared-env
+      - set-deployment-env
+      - auth-gcp-service-account
+      - run:
+          name: Deploy docs website
+          command: |
+            set -u
+            gcloud app deploy --version="${SHORT_GIT_SHA}" --stop-previous-version --project "broad-ddp-${ENVIRONMENT}" deploy/app.yaml
+      - delete-old-service-versions:
+            deploy_dir: deploy
 
 parameters:
   on_demand:
@@ -698,4 +732,12 @@ workflows:
                 # @todo remove when done
                 - test_deleteme1
 
+  deploy-api-docs-workflow:
+    jobs:
+      - deploy-docs-job:
+          filters:
+            branches:
+              only:
+                - develop
+                - DDP-4548_OpenAPIToGAE_2
 
