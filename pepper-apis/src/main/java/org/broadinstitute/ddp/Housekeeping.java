@@ -12,7 +12,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
@@ -22,6 +21,8 @@ import com.google.cloud.pubsub.v1.MessageReceiver;
 import com.google.cloud.pubsub.v1.Publisher;
 import com.google.cloud.pubsub.v1.Subscriber;
 import com.google.gson.Gson;
+import com.google.protobuf.Duration;
+import com.google.pubsub.v1.ExpirationPolicy;
 import com.google.pubsub.v1.ProjectSubscriptionName;
 import com.google.pubsub.v1.ProjectTopicName;
 import com.google.pubsub.v1.PubsubMessage;
@@ -43,9 +44,9 @@ import org.broadinstitute.ddp.db.dto.QueuedEventDto;
 import org.broadinstitute.ddp.db.housekeeping.dao.JdbiEvent;
 import org.broadinstitute.ddp.db.housekeeping.dao.JdbiMessage;
 import org.broadinstitute.ddp.db.housekeeping.dao.KitCheckDao;
+import org.broadinstitute.ddp.event.HousekeepingEventReceiver;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.exception.MessageBuilderException;
-import org.broadinstitute.ddp.event.HousekeepingEventReceiver;
 import org.broadinstitute.ddp.housekeeping.PubSubConnectionManager;
 import org.broadinstitute.ddp.housekeeping.PubSubMessageBuilder;
 import org.broadinstitute.ddp.housekeeping.handler.EmailNotificationHandler;
@@ -213,7 +214,14 @@ public class Housekeeping {
             var topicName = ProjectTopicName.of(pubSubProject, cfg.getString(ConfigFile.PUBSUB_HKEEP_EVENTS_TOPIC));
             var subName = ProjectSubscriptionName.of(pubSubProject,
                     String.format("%s-%s", topicName.getTopic(), GuidUtils.randomNanoId()));
-            pubsubConnectionManager.createSubscriptionIfNotExists(subName, topicName);
+            pubsubConnectionManager.createSubscriptionIfNotExists(Subscription.newBuilder()
+                    .setName(subName.toString())
+                    .setTopic(topicName.toString())
+                    .setAckDeadlineSeconds(PubSubConnectionManager.ACK_DEADLINE_SECONDS)
+                    .setExpirationPolicy(ExpirationPolicy.newBuilder().setTtl(Duration.newBuilder()
+                            .setSeconds(PubSubConnectionManager.SUB_EXPIRATION_DAYS * 24 * 60 * 60)
+                            .build()).build())
+                    .build());
             LOG.info("Created housekeeping events subscription {}", subName);
 
             HousekeepingEventReceiver receiver = new HousekeepingEventReceiver(subName.getSubscription(), scheduler);

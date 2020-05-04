@@ -21,12 +21,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
 import com.google.cloud.pubsub.v1.Subscriber;
 import com.google.cloud.pubsub.v1.SubscriptionAdminClient;
+import com.google.protobuf.Duration;
+import com.google.pubsub.v1.ExpirationPolicy;
 import com.google.pubsub.v1.ProjectSubscriptionName;
 import com.google.pubsub.v1.ProjectTopicName;
-import com.google.pubsub.v1.PushConfig;
+import com.google.pubsub.v1.Subscription;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.apache.http.entity.ContentType;
@@ -482,10 +483,14 @@ public class DataDonationPlatform {
                 var subName = ProjectSubscriptionName.of(gcpProjectId,
                         String.format("%s-%s", topicName.getTopic(), GuidUtils.randomNanoId()));
                 try (var client = SubscriptionAdminClient.create()) {
-                    client.createSubscription(
-                            subName, topicName,
-                            PushConfig.getDefaultInstance(),
-                            PubSubConnectionManager.ACK_DEADLINE_SECONDS);
+                    client.createSubscription(Subscription.newBuilder()
+                            .setName(subName.toString())
+                            .setTopic(topicName.toString())
+                            .setAckDeadlineSeconds(PubSubConnectionManager.ACK_DEADLINE_SECONDS)
+                            .setExpirationPolicy(ExpirationPolicy.newBuilder().setTtl(Duration.newBuilder()
+                                    .setSeconds(PubSubConnectionManager.SUB_EXPIRATION_DAYS * 24 * 60 * 60)
+                                    .build()).build())
+                            .build());
                     LOG.info("Created pepper events subscription {}", subName);
                 } catch (IOException e) {
                     throw new DDPException("Failed to create subscription to topic " + topicName);
