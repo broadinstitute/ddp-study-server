@@ -485,7 +485,7 @@ public class StudyDataLoaderMain {
         } else {
             LOG.info("NO existing emails found.");
         }
-        LOG.info("Apltpid Map size: {} first: {} ", altpidBucketDataMap.size(), altpidBucketDataMap.keySet().iterator().next());
+        LOG.info("Apltpid Map size: {} ", altpidBucketDataMap.size());
 
         return new PreProcessedData(userEmailMap, userAddressMap, existingAuth0Emails, altpidBucketDataMap);
     }
@@ -534,15 +534,8 @@ public class StudyDataLoaderMain {
                 cfg.getString(ConfigFile.GEOCODING_API_KEY));
 
         Map<String, Map> altpidBucketDataMap = preProcessedData.getAltpidBucketDataMap();
-        TreeMap<Long, Map> sortedMap = new TreeMap<>();
-        for (String key : altpidBucketDataMap.keySet()) {
-            //WATCHOUT: Any non-numeric altpids will fail
-            sortedMap.put(Long.valueOf(key), altpidBucketDataMap.get(key));
-        }
-        altpidBucketDataMap.clear();
-        for (Long key : sortedMap.keySet()) {
-            String altpid = String.valueOf(key);
-            Map<String, JsonElement> surveyDataMap = sortedMap.get(key);
+        for (String altpid : altpidBucketDataMap.keySet()) {
+            Map<String, JsonElement> surveyDataMap = altpidBucketDataMap.get(altpid);
 
             JsonElement datstatData = surveyDataMap.get("datstatparticipantdata");
             String email = datstatData.getAsJsonObject().get("datstat_email").getAsString();
