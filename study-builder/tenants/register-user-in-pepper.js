@@ -103,6 +103,12 @@ function (user, context, callback) {
 
         console.log(context);
 
+        // This is the token renewal case. Let's avoid going through pepper registration
+        if (context.request.query.renew_token_only) {
+            context.idToken[pepperUserGuidClaim] = user.app_metadata.user_guid;
+            return callback(null, user, context);
+        }
+
         // In order to get a refresh token, the client must go through one of the other methods
         // to get an id/access token first (oauth2-password, oidc-implicit-profile, etc).
         // This allows us to assume that, if they have a refresh token, they must have gone through the
