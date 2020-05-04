@@ -31,7 +31,7 @@ references:
   gitub_dispatch_config_path: &github_dispatch_config_path
     /config/deployment
   github_dispatch_config_branch: &github_dispatch_config_branch
-    shared_gae_dispatch_config
+    develop
   jar_build_bucket_dir: &jar_build_bucket_dir
       /ddp-study-server-pepper-apis
   housekeeping_test_db: &housekeeping_test_db
