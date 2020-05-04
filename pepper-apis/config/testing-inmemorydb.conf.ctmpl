@@ -27,6 +27,7 @@
     "dsmJwtSecret": "Dsm test secret!",
     "dsmJwtSigner": "org.broadinstitute.kdux",
     "dbInstanceId": "ddp-dev",
+    "restrictRegisterRoute": false,
     "auth0": {
         "domain": "{{$auth0.domain}}",
         "domain2": "{{$auth0.domain2}}",

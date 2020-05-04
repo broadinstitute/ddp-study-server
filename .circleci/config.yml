@@ -1,30 +1,33 @@
 version: 2.1
 
 references:
+  tcell_dir: &tcell_dir
+      tcell
+  # to install a new version of tcell, do  "tar -cvfz tcell-x.y.z.tar.gz tcell" after expanding tcell's zip
+  tcell_gcp_path: &tcell_gcp_path
+      gs://ddp-tcell/tcell-1.11.0.tar.gz
   ci_support_image: &ci_support_image
-                      broadinstitute/study-server-build:2020-04-30A
+      broadinstitute/study-server-build:2020-04-30A
   root_path: &root_path
       /home/circleci
   repo_path: &repo_path
-              /home/circleci/repo
+      /home/circleci/repo
   m2_cache_key: &m2_cache_key
-                  pom.xml2-{{ checksum "pom.xml" }}
+      pom.xml2-{{ checksum "pom.xml" }}-{{ checksum "parent-pom.xml" }}
   m2_cache_restore_key: &m2_cache_keys
     keys:
       - *m2_cache_key
       - pom.xml2-
   m2_repo_path: &m2_repo_path
-             /home/circleci/.m2/repository
+      /home/circleci/.m2/repository
   pepper_apis_path: &pepper_apis_path
-            /home/circleci/repo/pepper-apis
-  api-spec-path: &api-spec-path
-            /home/circleci/repo/pepper-apis/docs/specification
+      /home/circleci/repo/pepper-apis
   circleci_path: &circleci_path
-            /home/circleci/repo/.circleci
+      /home/circleci/repo/.circleci
   builds_bucket: &builds_bucket
-            ddp-build-artifacts
+      ddp-build-artifacts
   jar_build_bucket_dir: &jar_build_bucket_dir
-        /ddp-study-server-pepper-apis
+      /ddp-study-server-pepper-apis
   housekeeping_test_db: &housekeeping_test_db
       housekeepingdb
   studyserver_test_db: &studyserver_test_db
@@ -52,6 +55,29 @@ executors:
     - image: *ci_support_image
 
 commands:
+  install-tcell:
+    parameters:
+      tcell_gcp_path:
+        type: string
+        default: *tcell_gcp_path
+    steps:
+      - run:
+          name: Download tcell files from bucket
+          command: |
+            TCELL_GCP_PATH='<<parameters.tcell_gcp_path>>'
+            vault read -format=json  secret/pepper/prod/v1/conf | jq -r .data.gcp.serviceKey | gcloud auth activate-service-account --key-file=-
+            TAR_FILE_URL=`gsutil ls $TCELL_GCP_PATH | sort -r | head -1`
+
+            if [ -z $TAR_FILE_URL ]
+            then
+              echo "Could not find tcell archive ${TCELL_GCP_PATH}"
+              exit 1
+            fi
+            TAR_FILE_PATH="/tmp/$(basename -- $TAR_FILE_URL)"
+            gsutil cp  $TAR_FILE_URL $TAR_FILE_PATH
+
+            # untarring will create a "tcell" dir
+            tar --no-same-owner -xvf $TAR_FILE_PATH
   build-jar:
     description: Build jar
     parameters:
@@ -87,10 +113,6 @@ commands:
               DEPLOY_ENV=dev
             ;;
             # @todo remove when done
-            study-server-parallel-tests)
-              DEPLOY_ENV=dev
-            ;;
-            # @todo remove when done
             DDP-4548_OpenAPIToGAE_2)
               DEPLOY_ENV=dev
             ;;
@@ -113,7 +135,7 @@ commands:
             esac
             echo "Setting deployment ENVIRONMENT to $DEPLOY_ENV"
             echo "export ENVIRONMENT=$DEPLOY_ENV" >> $BASH_ENV
-            source $BASH_ENV          
+            source $BASH_ENV
 
   render-configs:
     description: render config files
@@ -146,7 +168,7 @@ commands:
             mysql -h 127.0.0.1 -u root --password=$MYSQL_ROOT_PASSWORD test_db --execute="CREATE DATABASE << parameters.studyserverdb >> CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
             mysql -h 127.0.0.1 -u root --password=$MYSQL_ROOT_PASSWORD test_db --execute="CREATE DATABASE << parameters.housekeepingdb >> CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
           environment: *DB_VARS
-    
+
   show-pipeline-vars:
     description: "Show pipeline vars"
     steps:
@@ -189,7 +211,7 @@ commands:
             JAR_BUCKET_URL="gs://${BUILDS_BUCKET}${JAR_BUILD_BUCKET_DIR}/${JAR_FILE_NAME}"
             gsutil cp "${LOCAL_JAR_FILE_PATH}" "${JAR_BUCKET_URL}"
             echo "${JAR_FILE_NAME} successfully uploaded to ${JAR_BUCKET_URL}"
-  
+
   retrieve-jar:
     description: Get <<parameters.jar_base_name>> jar from bucket
     parameters:
@@ -232,16 +254,23 @@ commands:
       deploy_dir:
         type: string
         default: deployment-assets
+      tcell_dir:
+        type: string
+        default: *tcell_dir
     steps:
       - set-deployment-env
       - render-configs
+      - install-tcell
       - run:
           name: Gather deployment assets
           command: |
             DEPLOY_DIR='<<parameters.deploy_dir>>'
+            TCELL_DIR='<<parameters.tcell_dir>>'
             rm -rf $DEPLOY_DIR
             mkdir -p $DEPLOY_DIR
             cd $DEPLOY_DIR
+            cp -r ../$TCELL_DIR .
+            cp ../output-config/tcell_agent.config $TCELL_DIR
             cp ../target/<<parameters.jar_base_name>>.jar .
             cp ../src/appengine/<<parameters.jar_base_name>>.yaml .
             cp ../output-config/application.conf .
@@ -481,6 +510,39 @@ commands:
           port: 5556
           timeout: 60
 
+  compile-all-jars:
+    description: Compile and run checkstyle on all jars
+    parameters:
+      m2_repo:
+        type: string
+        default: *m2_repo_path
+      repo_path:
+        type: string
+        default: *repo_path
+      restore_m2_cache:
+        type: boolean
+        default: false
+    steps:
+      - when:
+          condition: << parameters.restore_m2_cache >>
+          steps:
+            - restore_cache: *m2_cache_keys
+      - run:
+          name: Compile and run checkstyle on all jars
+          command: |
+            # Install pepper-apis to .m2 so we can compile study-builder
+            mvn install --batch-mode -DskipTests -Dmaven.repo.local=<< parameters.m2_repo >>
+
+            # Just need to get parent-pom into .m2 so don't need to run checkstyle.
+            mvn install -f parent-pom.xml --batch-mode -DskipTests -Dcheckstyle.skip -Dmaven.repo.local=<< parameters.m2_repo >>
+
+            # Compile housekeeping
+            mvn test-compile -f housekeeping-pom.xml --batch-mode -DskipTests -Dmaven.repo.local=<< parameters.m2_repo >>
+
+            # Compile study-builder
+            cd << parameters.repo_path >>/study-builder
+            mvn test-compile --batch-mode -DskipTests -Dmaven.repo.local=<< parameters.m2_repo >>
+
 jobs:
   compile-and-run-test-suite-job:
     executor:
@@ -490,14 +552,16 @@ jobs:
       - checkout:
           path: *repo_path
       - setup-shared-env
+      - compile-all-jars:
+          restore_m2_cache: true
       - render-configs
       - create-test-dbs
       - run-maven-with-pepper-options:
           phase: test
           skip_tests: false
-          skip_checkstyle: false
+          skip_checkstyle: true
           additional_options: '-Dtest=ServerInSameProcessIntegrationTestSuite'
-          restore_m2_cache: true
+          restore_m2_cache: false
 
   parallel-compile-and-test-job:
     executor:
@@ -579,7 +643,7 @@ jobs:
       - retrieve-jar:
           jar_base_name: Housekeeping
       - deploy-jar:
-          jar_base_name: Housekeeping    
+          jar_base_name: Housekeeping
 
   deploy-docs-job:
     executor:
@@ -621,6 +685,7 @@ workflows:
                 - &rc /^rc.*/
                 - &hotfix /^hotfix.*/
                 - study-server-parallel-tests
+                - tcell-instrumentation
       - parallel-compile-and-test-job:
           parallelism: *test_parallelism
           <<: *compile_and_test_filters
@@ -630,6 +695,7 @@ workflows:
               only:
                 - develop
                 - study-server-parallel-tests
+                - tcell-instrumentation
           requires:
             - parallel-compile-and-test-job
             - compile-and-run-test-suite-job
@@ -640,6 +706,7 @@ workflows:
                 - *rc
                 - *hotfix
                 - study-server-parallel-tests
+                - tcell-instrumentation
           requires:
             - compile-and-run-test-suite-job
             - parallel-compile-and-test-job
@@ -671,6 +738,4 @@ workflows:
               only:
                 - develop
                 - DDP-4548_OpenAPIToGAE_2
-
-
 
