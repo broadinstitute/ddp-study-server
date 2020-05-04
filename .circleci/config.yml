@@ -21,9 +21,9 @@ references:
   m2_repo_path: &m2_repo_path
       /home/circleci/.m2/repository
   pepper_apis_path: &pepper_apis_path
-      /home/circleci/repo/pepper-apis
+            /home/circleci/repo/pepper-apis
   api-spec-path: &api-spec-path
-                   /home/circleci/repo/pepper-apis/docs/specification
+            /home/circleci/repo/pepper-apis/docs/specification
   circleci_path: &circleci_path
       /home/circleci/repo/.circleci
   builds_bucket: &builds_bucket
