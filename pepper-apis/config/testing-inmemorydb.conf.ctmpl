@@ -80,8 +80,8 @@
     "pdfArchiveBucket": "pepper-pdf-dev",
     "pdfArchiveUseFilesystem": true,
     "pubsub": {
-        "pepperEventsSubscription": "pepper-events",
-        "housekeepingEventsSubscription": "housekeeping-events",
+        "pepperEventsTopic": "local-pepper-events",
+        "housekeepingEventsTopic": "local-housekeeping-events",
     },
     "studyExportBucket": "ddp-dev-study-exports-testing",
     "schedules": {

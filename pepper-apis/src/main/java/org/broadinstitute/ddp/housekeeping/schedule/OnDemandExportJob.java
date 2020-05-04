@@ -26,9 +26,8 @@ import org.slf4j.LoggerFactory;
 
 public class OnDemandExportJob implements Job {
 
-    public static final String DATA_INDEX = "index";
     public static final String DATA_STUDY = "study";
-    public static final String INDEX_ALL = "all";
+    public static final String DATA_INDEX = "index";
 
     private static final Logger LOG = LoggerFactory.getLogger(OnDemandExportJob.class);
 
@@ -52,24 +51,25 @@ public class OnDemandExportJob implements Job {
     public void execute(JobExecutionContext ctx) throws JobExecutionException {
         try {
             JobDataMap data = ctx.getMergedJobDataMap();
-            String index = data.getString(DATA_INDEX);
             String study = data.getString(DATA_STUDY);
-            LOG.info("Triggered on-demand export job for index={} and study={}", index, study);
+            String index = data.getOrDefault(DATA_INDEX, null) != null
+                    ? data.getString(DATA_INDEX) : null;
+            LOG.info("Triggered on-demand export job for study={} and index={}", study, index == null ? "<null>" : index);
 
             boolean exportCurrentlyRunning = ctx.getScheduler()
                     .getCurrentlyExecutingJobs().stream()
                     .anyMatch(jctx -> {
                         JobKey key = jctx.getJobDetail().getKey();
-                        return key.equals(StudyDataExportJob.getKey()) || key.equals(DataSyncJob.getKey());
+                        return key.equals(StudyDataExportJob.getKey());
                     });
             if (exportCurrentlyRunning) {
-                LOG.warn("Regular data export or sync job currently running, skipping on-demand export job");
+                LOG.warn("Regular data export job currently running, skipping on-demand export job");
                 return;
             }
 
             LOG.info("Running job {}", getKey());
             long start = Instant.now().toEpochMilli();
-            run(index, study);
+            run(study, index);
             long elapsed = Instant.now().toEpochMilli() - start;
             LOG.info("Finished job {}. Took {}s", getKey(), elapsed / 1000);
         } catch (Exception e) {
@@ -78,7 +78,7 @@ public class OnDemandExportJob implements Job {
         }
     }
 
-    private void run(String index, String studyGuid) {
+    private void run(String studyGuid, String index) {
         Config cfg = ConfigManager.getInstance().getConfig();
         var exporter = new DataExporter(cfg);
 
@@ -90,7 +90,7 @@ public class OnDemandExportJob implements Job {
             }
 
             try {
-                if (index.equals(INDEX_ALL)) {
+                if (index == null) {
                     LOG.info("Running {} elasticsearch export for study {}",
                             ElasticSearchIndexType.ACTIVITY_DEFINITION, studyGuid);
                     long start = Instant.now().toEpochMilli();

@@ -111,8 +111,8 @@ public class ConfigFile {
     public static final String BACKEND_AUTH0_TEST_CLIENT_ID2 = "backendTestClientId2";
     public static final String BACKEND_AUTH0_TEST_SECRET2 = "backendTestSecret2";
     public static final String BACKEND_AUTH0_TEST_CLIENT_NAME2 = "backendTestClientName2";
-    public static final String PUBSUB_PEPPER_EVENTS_SUB = "pubsub.pepperEventsSubscription";
-    public static final String PUBSUB_HKEEP_EVENTS_SUB = "pubsub.housekeepingEventsSubscription";
+    public static final String PUBSUB_PEPPER_EVENTS_TOPIC = "pubsub.pepperEventsTopic";
+    public static final String PUBSUB_HKEEP_EVENTS_TOPIC = "pubsub.housekeepingEventsTopic";
     public static final String SLACK_HOOK = "slack.hook";
     public static final String SLACK_CHANNEL = "slack.channel";
     public static final String TEST_USER_AUTH0_ID = "testUserAuth0Id";

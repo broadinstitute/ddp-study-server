@@ -47,8 +47,8 @@
     "pdfArchiveBucket": "{{$conf.Data.pdfArchiveBucket}}",
     "pdfArchiveUseFilesystem": false,
     "pubsub": {
-        "pepperEventsSubscription": "{{$conf.Data.pubsub.pepperEventsSubscription}}",
-        "housekeepingEventsSubscription": "{{$conf.Data.pubsub.housekeepingEventsSubscription",
+        "pepperEventsTopic": "{{$conf.Data.pubsub.pepperEventsTopic}}",
+        "housekeepingEventsTopic": "{{$conf.Data.pubsub.housekeepingEventsTopic}}",
     },
     "studyExportBucket": "{{$conf.Data.studyExportBucket}}",
     "schedules": {

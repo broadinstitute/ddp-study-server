@@ -3,6 +3,8 @@ package org.broadinstitute.ddp.util;
 import java.util.Random;
 import java.util.UUID;
 
+import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
+
 public final class GuidUtils {
 
     public static final int USER_HRUID_RANDOM_PART_LENGTH = 5;
@@ -10,6 +12,7 @@ public final class GuidUtils {
     public static final int STANDARD_GUID_LENGTH = 10;
     public static final char[] UPPER_ALPHA_NUMERIC = "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890".toCharArray();
     public static final char[] UPPER_ALPHA_NUMERIC_EXCLUDING_CONFUSING_CHAR = "ABCDEFGHJKLMNPQRTUVWXYZ2346789".toCharArray();
+    public static final char[] ALPHA_NUMERIC = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ".toCharArray();
     public static final String HRUID_PREFIX = "P";
 
     /**
@@ -67,5 +70,9 @@ public final class GuidUtils {
      */
     public static String randomUUID() {
         return UUID.randomUUID().toString();
+    }
+
+    public static String randomNanoId() {
+        return NanoIdUtils.randomNanoId(NanoIdUtils.DEFAULT_NUMBER_GENERATOR, ALPHA_NUMERIC, NanoIdUtils.DEFAULT_SIZE);
     }
 }

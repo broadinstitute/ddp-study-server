@@ -12,6 +12,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.aventrix.jnanoid.jnanoid.NanoIdUtils;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
@@ -74,6 +75,7 @@ import org.broadinstitute.ddp.service.PdfBucketService;
 import org.broadinstitute.ddp.service.PdfGenerationService;
 import org.broadinstitute.ddp.service.PdfService;
 import org.broadinstitute.ddp.util.ConfigManager;
+import org.broadinstitute.ddp.util.GuidUtils;
 import org.broadinstitute.ddp.util.LiquibaseUtil;
 import org.broadinstitute.ddp.util.LogbackConfigurationPrinter;
 import org.quartz.Scheduler;
@@ -173,7 +175,6 @@ public class Housekeeping {
         boolean doLiquibase = cfg.getBoolean(ConfigFile.DO_LIQUIBASE);
         int maxConnections = cfg.getInt(ConfigFile.HOUSEKEEPING_NUM_POOLED_CONNECTIONS);
         String pubSubProject = cfg.getString(ConfigFile.GOOGLE_PROJECT_ID);
-        String eventsSubName = cfg.getString(ConfigFile.PUBSUB_HKEEP_EVENTS_SUB);
 
         boolean usePubSubEmulator = cfg.getBoolean(ConfigFile.USE_PUBSUB_EMULATOR);
         String housekeepingDbUrl = cfg.getString(TransactionWrapper.DB.HOUSEKEEPING.getDbUrlConfigKey());
@@ -209,11 +210,16 @@ public class Housekeeping {
                     TemporaryUserCleanupJob::register,
                     StudyDataExportJob::register);
 
-            ProjectSubscriptionName sub = ProjectSubscriptionName.of(pubSubProject, eventsSubName);
-            HousekeepingEventReceiver receiver = new HousekeepingEventReceiver(scheduler);
-            eventSubscriber = pubsubConnectionManager.subscribe(sub, receiver);
+            var topicName = ProjectTopicName.of(pubSubProject, cfg.getString(ConfigFile.PUBSUB_HKEEP_EVENTS_TOPIC));
+            var subName = ProjectSubscriptionName.of(pubSubProject,
+                    String.format("%s-%s", topicName.getTopic(), GuidUtils.randomNanoId()));
+            pubsubConnectionManager.createSubscriptionIfNotExists(subName, topicName);
+            LOG.info("Created housekeeping events subscription {}", subName);
+
+            HousekeepingEventReceiver receiver = new HousekeepingEventReceiver(subName.getSubscription(), scheduler);
+            eventSubscriber = pubsubConnectionManager.subscribe(subName, receiver);
             eventSubscriber.startAsync();
-            LOG.info("Started housekeeping events subscriber to subscription {}", sub);
+            LOG.info("Started housekeeping events subscriber to subscription {}", subName);
         } else {
             LOG.info("Housekeeping job scheduler is not set to run");
         }

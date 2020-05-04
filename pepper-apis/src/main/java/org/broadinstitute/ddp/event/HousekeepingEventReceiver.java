@@ -21,11 +21,14 @@ public class HousekeepingEventReceiver implements MessageReceiver {
 
     private static final Logger LOG = LoggerFactory.getLogger(HousekeepingEventReceiver.class);
     private static final Gson gson = GsonUtil.standardGson();
-    private static final String TYPE_ATTR = "type";
+    private static final String ATTR_TYPE = "type";
+    private static final String ATTR_SUB = "sub";
 
+    private final String subscriptionName;
     private final Scheduler scheduler;
 
-    public HousekeepingEventReceiver(Scheduler scheduler) {
+    public HousekeepingEventReceiver(String subscriptionName, Scheduler scheduler) {
+        this.subscriptionName = subscriptionName;
         this.scheduler = scheduler;
     }
 
@@ -33,17 +36,28 @@ public class HousekeepingEventReceiver implements MessageReceiver {
     public void receiveMessage(PubsubMessage message, AckReplyConsumer reply) {
         LOG.info("Received pubsub event message {}", message.getMessageId());
 
+        String targetSubName = message.getAttributesOrDefault(ATTR_SUB, null);
+        if (targetSubName != null && !subscriptionName.equals(targetSubName)) {
+            LOG.info("Received event message for target subscription {} and not our current subscription {}, ack-ing",
+                    targetSubName, subscriptionName);
+            reply.ack();
+            return;
+        }
+
         EventType type;
         try {
-            type = EventType.valueOf(message.getAttributesOrDefault(TYPE_ATTR, null));
+            type = EventType.valueOf(message.getAttributesOrDefault(ATTR_TYPE, null));
             LOG.info("Type of event message is: {}", type);
         } catch (Exception e) {
-            LOG.error("Could not determine event type for message {}, nack-ing", message.getMessageId());
-            reply.nack();
+            LOG.error("Could not determine event type for message {}, ack-ing", message.getMessageId());
+            reply.ack();
             return;
         }
 
         switch (type) {
+            case PING:
+                LOG.info("Received PING event message on subscription {}", subscriptionName);
+                break;
             case CLEAR_CACHE:
                 handleClearCache(message, reply);
                 break;
@@ -67,6 +81,12 @@ public class HousekeepingEventReceiver implements MessageReceiver {
     }
 
     private void handleCleanupTempUsers(PubsubMessage message, AckReplyConsumer reply) {
+        if (message.getAttributesOrDefault(ATTR_SUB, null) == null) {
+            LOG.error("Target subscription name is required for ELASTIC_EXPORT event message, ack-ing");
+            reply.ack();
+            return;
+        }
+
         JobKey key = TemporaryUserCleanupJob.getKey();
         try {
             scheduler.triggerJob(key);
@@ -79,11 +99,24 @@ public class HousekeepingEventReceiver implements MessageReceiver {
     }
 
     private void handleElasticExport(PubsubMessage message, AckReplyConsumer reply) {
+        if (message.getAttributesOrDefault(ATTR_SUB, null) == null) {
+            LOG.error("Target subscription name is required for CLEANUP_TEMP_USERS event message, ack-ing");
+            reply.ack();
+            return;
+        }
+
         String data = message.getData().toStringUtf8();
         var payload = gson.fromJson(data, ElasticExportPayload.class);
+        if (payload.getStudy() == null) {
+            LOG.error("Study needs to be provided for ELASTIC_EXPORT event message, ack-ing");
+            reply.ack();
+            return;
+        }
+
         JobDataMap map = new JobDataMap();
-        map.put(OnDemandExportJob.DATA_INDEX, payload.getIndex());
         map.put(OnDemandExportJob.DATA_STUDY, payload.getStudy());
+        map.put(OnDemandExportJob.DATA_INDEX, payload.getIndex());
+
         JobKey key = OnDemandExportJob.getKey();
         try {
             scheduler.triggerJob(key, map);
@@ -99,6 +132,7 @@ public class HousekeepingEventReceiver implements MessageReceiver {
         CLEAR_CACHE,
         CLEANUP_TEMP_USERS,
         ELASTIC_EXPORT,
+        PING,
     }
 
     public static class ElasticExportPayload {

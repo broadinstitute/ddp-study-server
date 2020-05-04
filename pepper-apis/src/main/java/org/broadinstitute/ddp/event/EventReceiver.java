@@ -17,11 +17,14 @@ import org.slf4j.LoggerFactory;
 public class EventReceiver implements MessageReceiver {
 
     private static final Logger LOG = LoggerFactory.getLogger(EventReceiver.class);
-    private static final String TYPE_ATTR = "type";
+    private static final String ATTR_TYPE = "type";
+    private static final String ATTR_SUB = "sub";
 
+    private final String subscriptionName;
     private final Scheduler scheduler;
 
-    public EventReceiver(Scheduler scheduler) {
+    public EventReceiver(String subscriptionName, Scheduler scheduler) {
+        this.subscriptionName = subscriptionName;
         this.scheduler = scheduler;
     }
 
@@ -29,17 +32,28 @@ public class EventReceiver implements MessageReceiver {
     public void receiveMessage(PubsubMessage message, AckReplyConsumer reply) {
         LOG.info("Received pubsub event message {}", message.getMessageId());
 
+        String targetSubName = message.getAttributesOrDefault(ATTR_SUB, null);
+        if (targetSubName != null && !subscriptionName.equals(targetSubName)) {
+            LOG.info("Received event message for target subscription {} and not our current subscription {}, ack-ing",
+                    targetSubName, subscriptionName);
+            reply.ack();
+            return;
+        }
+
         EventType type;
         try {
-            type = EventType.valueOf(message.getAttributesOrDefault(TYPE_ATTR, null));
+            type = EventType.valueOf(message.getAttributesOrDefault(ATTR_TYPE, null));
             LOG.info("Type of event message is: {}", type);
         } catch (Exception e) {
-            LOG.error("Could not determine event type for message {}, nack-ing", message.getMessageId());
-            reply.nack();
+            LOG.error("Could not determine event type for message {}, ack-ing", message.getMessageId());
+            reply.ack();
             return;
         }
 
         switch (type) {
+            case PING:
+                LOG.info("Received PING event message on subscription {}", subscriptionName);
+                break;
             case CLEAR_CACHE:
                 handleClearCache(message, reply);
                 break;
@@ -80,5 +94,6 @@ public class EventReceiver implements MessageReceiver {
         CLEAR_CACHE,
         LOAD_DRUG_LIST,
         LOAD_CANCER_LIST,
+        PING,
     }
 }
