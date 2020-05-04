@@ -26,6 +26,12 @@ references:
       /home/circleci/repo/.circleci
   builds_bucket: &builds_bucket
       ddp-build-artifacts
+  github_dispatch_repo_path: &github_dispatch_repo_path
+      /broadinstitute/ddp-angular
+  gitub_dispatch_config_path: &github_dispatch_config_path
+    /config/deployment
+  github_dispatch_config_branch: &github_dispatch_config_branch
+    shared_gae_dispatch_config
   jar_build_bucket_dir: &jar_build_bucket_dir
       /ddp-study-server-pepper-apis
   housekeeping_test_db: &housekeeping_test_db
@@ -307,6 +313,40 @@ commands:
               gcloud app versions delete --quiet --service "$SERVICE" "$CURRENT_VERSION" --project "broad-ddp-${ENVIRONMENT}"
             done;
             exit 0
+
+  update-dispatch-rules:
+    parameters:
+      config_repo_path:
+        type: string
+        default: *github_dispatch_repo_path
+      config_file_path:
+        type: string
+        default: *github_dispatch_config_path
+      config_branch:
+        type: string
+        default: *github_dispatch_config_branch
+    steps:
+      - run:
+          name: Get dispatch.yaml file
+          command: |
+            # We are going to copy the dispatch file from the other repo
+            set -u
+            API_BASE_URL='https://api.github.com/repos'
+            API_BASE_PATH="<< parameters.config_repo_path >>/contents"
+            FILE_PATH="<< parameters.config_file_path >>/${ENVIRONMENT}/dispatch.yaml"
+            FILE_URL="${API_BASE_URL}${API_BASE_PATH}${FILE_PATH}"
+            BRANCH="<< parameters.config_branch >>"
+            FULL_URL="${FILE_URL}?ref=${BRANCH}"
+            curl /
+              -H 'Accept:application/vnd.github.v3.raw' /
+              "$FULL_URL" /
+              -o dispatch.yaml
+            cat dispatch.yaml
+      - run:
+          name: Update GAE dispatch config
+          command: |
+            set -u
+            gcloud app deploy --quiet --project "broad-ddp-${ENVIRONMENT}" dispatch.yaml
 
   update-deployment-sheet:
     parameters:
@@ -616,6 +656,7 @@ jobs:
           pom_file: housekeeping-pom.xml
       - deploy-jar:
           jar_base_name: Housekeeping
+      - update-dispatch-rules
 
   deploy-stored-jar-job:
     executor:
@@ -633,6 +674,7 @@ jobs:
           jar_base_name: Housekeeping
       - deploy-jar:
           jar_base_name: Housekeeping
+      - update-dispatch-rules
 
 parameters:
   on_demand:
