@@ -28,6 +28,12 @@ references:
       /home/circleci/repo/.circleci
   builds_bucket: &builds_bucket
       ddp-build-artifacts
+  github_dispatch_repo_path: &github_dispatch_repo_path
+      /broadinstitute/ddp-angular
+  gitub_dispatch_config_path: &github_dispatch_config_path
+    /config/deployment
+  github_dispatch_config_branch: &github_dispatch_config_branch
+    develop
   jar_build_bucket_dir: &jar_build_bucket_dir
       /ddp-study-server-pepper-apis
   housekeeping_test_db: &housekeeping_test_db
@@ -115,14 +121,11 @@ commands:
               DEPLOY_ENV=dev
             ;;
             # @todo remove when done
-            DDP-4548_OpenAPIToGAE_2)
+            GAE_Migration1)
               DEPLOY_ENV=dev
             ;;
             test)
               DEPLOY_ENV=test
-            ;;
-            test_deleteme1)
-              DEPLOY_ENV=dev
             ;;
             staging)
               DEPLOY_ENV=staging
@@ -321,6 +324,40 @@ commands:
               gcloud app versions delete --quiet --service "$SERVICE" "$CURRENT_VERSION" --project "broad-ddp-${ENVIRONMENT}"
             done;
             exit 0
+
+  update-dispatch-rules:
+    parameters:
+      config_repo_path:
+        type: string
+        default: *github_dispatch_repo_path
+      config_file_path:
+        type: string
+        default: *github_dispatch_config_path
+      config_branch:
+        type: string
+        default: *github_dispatch_config_branch
+    steps:
+      - run:
+          name: Get dispatch.yaml file
+          command: |
+            # We are going to copy the dispatch file from the other repo
+            set -u
+            API_BASE_URL='https://api.github.com/repos'
+            API_BASE_PATH="<< parameters.config_repo_path >>/contents"
+            FILE_PATH="<< parameters.config_file_path >>/${ENVIRONMENT}/dispatch.yaml"
+            FILE_URL="${API_BASE_URL}${API_BASE_PATH}${FILE_PATH}"
+            BRANCH="<< parameters.config_branch >>"
+            FULL_URL="${FILE_URL}?ref=${BRANCH}"
+            curl \
+              -H 'Accept:application/vnd.github.v3.raw' \
+              "$FULL_URL" \
+              -o dispatch.yaml
+            cat dispatch.yaml
+      - run:
+          name: Update GAE dispatch config
+          command: |
+            set -u
+            gcloud app deploy --quiet --project "broad-ddp-${ENVIRONMENT}" dispatch.yaml
 
   update-deployment-sheet:
     parameters:
@@ -629,6 +666,7 @@ jobs:
           pom_file: housekeeping-pom.xml
       - deploy-jar:
           jar_base_name: Housekeeping
+      - update-dispatch-rules
 
   deploy-stored-jar-job:
     executor:
@@ -646,6 +684,7 @@ jobs:
           jar_base_name: Housekeeping
       - deploy-jar:
           jar_base_name: Housekeeping
+      - update-dispatch-rules
 
   deploy-docs-job:
     executor:
@@ -686,8 +725,7 @@ workflows:
                 - develop
                 - &rc /^rc.*/
                 - &hotfix /^hotfix.*/
-                - study-server-parallel-tests
-                - tcell-instrumentation
+                - GAE_Migration1
       - parallel-compile-and-test-job:
           parallelism: *test_parallelism
           <<: *compile_and_test_filters
@@ -696,8 +734,7 @@ workflows:
             branches:
               only:
                 - develop
-                - study-server-parallel-tests
-                - tcell-instrumentation
+                - GAE_Migration1
           requires:
             - parallel-compile-and-test-job
             - compile-and-run-test-suite-job
@@ -707,8 +744,6 @@ workflows:
               only:
                 - *rc
                 - *hotfix
-                - study-server-parallel-tests
-                - tcell-instrumentation
           requires:
             - compile-and-run-test-suite-job
             - parallel-compile-and-test-job
@@ -729,8 +764,6 @@ workflows:
                 - test
                 - staging
                 - production
-                # @todo remove when done
-                - test_deleteme1
 
   deploy-api-docs-workflow:
     jobs:
@@ -739,5 +772,4 @@ workflows:
             branches:
               only:
                 - develop
-                - DDP-4548_OpenAPIToGAE_2
 
