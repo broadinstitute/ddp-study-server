@@ -348,9 +348,9 @@ commands:
             FILE_URL="${API_BASE_URL}${API_BASE_PATH}${FILE_PATH}"
             BRANCH="<< parameters.config_branch >>"
             FULL_URL="${FILE_URL}?ref=${BRANCH}"
-            curl /
-              -H 'Accept:application/vnd.github.v3.raw' /
-              "$FULL_URL" /
+            curl \
+              -H 'Accept:application/vnd.github.v3.raw' \
+              "$FULL_URL" \
               -o dispatch.yaml
             cat dispatch.yaml
       - run:
