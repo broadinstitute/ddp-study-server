@@ -121,14 +121,11 @@ commands:
               DEPLOY_ENV=dev
             ;;
             # @todo remove when done
-            DDP-4548_OpenAPIToGAE_2)
+            GAE_Migration1)
               DEPLOY_ENV=dev
             ;;
             test)
               DEPLOY_ENV=test
-            ;;
-            test_deleteme1)
-              DEPLOY_ENV=dev
             ;;
             staging)
               DEPLOY_ENV=staging
