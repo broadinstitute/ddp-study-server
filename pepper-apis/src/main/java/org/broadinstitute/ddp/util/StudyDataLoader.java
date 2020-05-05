@@ -1959,7 +1959,11 @@ public class StudyDataLoader {
         int valueInt = valueEl.getAsInt();
         List<SelectedPicklistOption> selectedOptions = new ArrayList<>();
         if (valueInt == 1) {
-            selectedOptions.add(new SelectedPicklistOption("YES"));
+            if (datStatEnumLookup.containsKey(questionName)) {
+                selectedOptions.add(new SelectedPicklistOption(datStatEnumLookup.get(questionName).get(1)));
+            } else {
+                selectedOptions.add(new SelectedPicklistOption("YES"));
+            }
         }
 
         //answerGuid = answerBooleanQuestion(handle, stableId, participantGuid, instanceGuid, value, answerDao);
