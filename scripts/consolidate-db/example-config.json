@@ -1,0 +1,26 @@
+{
+  "gcp_project": "",
+  "instance_id": "",
+  "root_password": "",
+  "instance_create_flags": [
+  ],
+  "bucket": "",
+  "pepper": {
+    "schema": "",
+    "username": "",
+    "password": "",
+    "old_instance_id": ""
+  },
+  "housekeeping": {
+    "schema": "",
+    "username": "",
+    "password": "",
+    "old_instance_id": ""
+  },
+  "dsm": {
+    "schema": "",
+    "username": "",
+    "password": "",
+    "old_instance_id": ""
+  }
+}

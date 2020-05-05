@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.pex;
 
 import static org.broadinstitute.ddp.pex.RetrievedActivityInstanceType.LATEST;
 import static org.broadinstitute.ddp.pex.RetrievedActivityInstanceType.SPECIFIC;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -22,8 +23,8 @@ import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
-import org.broadinstitute.ddp.db.dao.JdbiProfile;
 import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
+import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.model.activity.definition.ConditionalBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
@@ -40,7 +41,6 @@ import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
-import org.broadinstitute.ddp.model.activity.instance.answer.NumericAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.NumericIntegerAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
@@ -183,6 +183,14 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
     }
 
     @Test
+    public void testEval_finalResultNonBool() {
+        thrown.expect(PexRuntimeException.class);
+        thrown.expectMessage(containsString("result of expression needs to be a bool value"));
+        String expr = "-125";
+        run(expr);
+    }
+
+    @Test
     public void testEval_boolLiteralExpr() {
         assertTrue(run("true"));
         assertFalse(run("false"));
@@ -191,6 +199,21 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
         assertTrue(run("true && true"));
         assertTrue(run("true || false"));
         assertTrue(run("false || (true && (false || true))"));
+    }
+
+    @Test
+    public void testEval_relationExpr() {
+        assertTrue(run("1 < 2"));
+        assertTrue(run("1 <= 2"));
+        assertTrue(run("3 > 2"));
+        assertTrue(run("3 >= 2"));
+    }
+
+    @Test
+    public void testEval_equalityExpr() {
+        assertTrue(run("true == true"));
+        assertTrue(run("1 != \"a\""));
+        assertTrue(run("5 < 0 == false"));
     }
 
     @Test
@@ -230,7 +253,7 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
     }
 
     @Test
-    public void testEval_notExpr_negates() {
+    public void testEval_notExpr_complements() {
         assertTrue(run("!false"));
     }
 
@@ -489,29 +512,6 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
         TransactionWrapper.useTxn(handle -> {
             SelectedPicklistOption option = new SelectedPicklistOption("OPTION_NA");
             PicklistAnswer answer = new PicklistAnswer(null, picklistStableId, null, Collections.singletonList(option));
-            handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), firstInstance.getId(), answer);
-
-            assertFalse(run(handle, expr));
-
-            handle.rollback();
-        });
-    }
-
-    @Test
-    public void testEval_numeric_defaultLatestAnswer_compare_noAnswer() {
-        String expr = String.format(
-                "user.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"].answers.value() < 18",
-                studyGuid, activityCode, numericStableId);
-        assertFalse(run(expr));
-    }
-
-    @Test
-    public void testEval_numeric_defaultLatestAnswer_compare_nullAnswer() {
-        String expr = String.format(
-                "user.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"].answers.value() < 18",
-                studyGuid, activityCode, numericStableId);
-        TransactionWrapper.useTxn(handle -> {
-            NumericAnswer answer = new NumericIntegerAnswer(null, numericStableId, null, null);
             handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), firstInstance.getId(), answer);
 
             assertFalse(run(handle, expr));
@@ -984,7 +984,7 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
     @Test
     public void test_givenParticipantReachedAgeOfMajority_whenHasAgedUpIsEvaluated_thenItReturnsTrue() {
         TransactionWrapper.useTxn(handle -> {
-            handle.attach(JdbiProfile.class).upsertBirthDate(
+            handle.attach(UserProfileDao.class).getUserProfileSql().upsertBirthDate(
                     testData.getTestingUser().getUserId(), LocalDate.now().minusYears(20)
             );
             GovernancePolicy policy = new GovernancePolicy(testData.getStudyId(), new Expression("true"));
@@ -1002,7 +1002,7 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
     @Test
     public void test_givenParticipantDidntReachAgeOfMajority_whenHasAgedUpIsEvaluated_thenItReturnsFalse() {
         TransactionWrapper.useTxn(handle -> {
-            handle.attach(JdbiProfile.class).upsertBirthDate(
+            handle.attach(UserProfileDao.class).getUserProfileSql().upsertBirthDate(
                     testData.getTestingUser().getUserId(), LocalDate.now().minusYears(12)
             );
             GovernancePolicy policy = new GovernancePolicy(testData.getStudyId(), new Expression("true"));
@@ -1013,6 +1013,173 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
             studyGovernanceDao.createPolicy(policy);
             String expr = String.format("user.studies[\"%s\"].hasAgedUp()", studyGuid);
             assertFalse(run(handle, expr));
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testEval_valueQuery_bool() {
+        String expr = String.format(
+                "false == user.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"].answers.value()",
+                studyGuid, activityCode, boolStableId);
+        TransactionWrapper.useTxn(handle -> {
+            var answer = new BoolAnswer(null, boolStableId, null, false);
+            handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), firstInstance.getId(), answer);
+            assertTrue(run(handle, expr));
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testEval_valueQuery_bool_noAnswer() {
+        thrown.expect(PexFetchException.class);
+        thrown.expectMessage(containsString("does not have boolean answer"));
+        String expr = String.format(
+                "false == user.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"].answers.value()",
+                studyGuid, activityCode, boolStableId);
+        run(expr);
+    }
+
+    @Test
+    public void testEval_valueQuery_text() {
+        String expr = String.format(
+                "\"foo\" == user.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"].answers.value()",
+                studyGuid, activityCode, textStableId);
+        TransactionWrapper.useTxn(handle -> {
+            var answer = new TextAnswer(null, textStableId, null, "foo");
+            handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), firstInstance.getId(), answer);
+            assertTrue(run(handle, expr));
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testEval_valueQuery_text_noAnswer() {
+        thrown.expect(PexFetchException.class);
+        thrown.expectMessage(containsString("does not have text answer"));
+        String expr = String.format(
+                "false == user.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"].answers.value()",
+                studyGuid, activityCode, textStableId);
+        run(expr);
+    }
+
+    @Test
+    public void testEval_valueQuery_date() {
+        String expr = String.format(
+                "1 != user.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"].answers.value()",
+                studyGuid, activityCode, dateStableId);
+        TransactionWrapper.useTxn(handle -> {
+            var answer = new DateAnswer(null, dateStableId, null, 2012, 3, 14);
+            handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), firstInstance.getId(), answer);
+            assertTrue(run(handle, expr));
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testEval_valueQuery_date_notFullDate() {
+        thrown.expect(PexRuntimeException.class);
+        thrown.expectMessage(containsString("Could not convert date answer"));
+        String expr = String.format(
+                "1 != user.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"].answers.value()",
+                studyGuid, activityCode, dateStableId);
+        TransactionWrapper.useTxn(handle -> {
+            var answer = new DateAnswer(null, dateStableId, null, 2012, null, 14);
+            handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), firstInstance.getId(), answer);
+            run(handle, expr);
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testEval_valueQuery_date_noAnswer() {
+        thrown.expect(PexFetchException.class);
+        thrown.expectMessage(containsString("does not have date answer"));
+        String expr = String.format(
+                "1 != user.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"].answers.value()",
+                studyGuid, activityCode, dateStableId);
+        run(expr);
+    }
+
+    @Test
+    public void testEval_valueQuery_numeric() {
+        String expr = String.format(
+                "18 <= user.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"].answers.value()",
+                studyGuid, activityCode, numericStableId);
+        TransactionWrapper.useTxn(handle -> {
+            var answer = new NumericIntegerAnswer(null, numericStableId, null, 21L);
+            handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), firstInstance.getId(), answer);
+            assertTrue(run(handle, expr));
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testEval_valueQuery_numeric_noAnswer() {
+        thrown.expect(PexFetchException.class);
+        thrown.expectMessage(containsString("does not have numeric answer"));
+        String expr = String.format(
+                "18 <= user.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"].answers.value()",
+                studyGuid, activityCode, numericStableId);
+        run(expr);
+    }
+
+    @Test
+    public void testEval_valueQuery_picklist_notSupported() {
+        thrown.expect(PexUnsupportedException.class);
+        thrown.expectMessage(containsString("picklist answer value"));
+        String expr = String.format(
+                "18 != user.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"].answers.value()",
+                studyGuid, activityCode, picklistStableId);
+        run(expr);
+    }
+
+    @Test
+    public void testEval_profileQuery_noProfile() {
+        TransactionWrapper.useTxn(handle -> {
+            handle.attach(UserProfileDao.class).getUserProfileSql().deleteByUserId(testData.getUserId());
+
+            try {
+                assertTrue(run(handle, "user.profile.birthDate()"));
+                fail("expected exception not thrown");
+            } catch (PexFetchException e) {
+                assertTrue(e.getMessage().contains("Could not find profile"));
+            }
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testEval_profileQuery_birthDate() {
+        TransactionWrapper.useTxn(handle -> {
+            var profileDao = handle.attach(UserProfileDao.class);
+            assertTrue(profileDao.getUserProfileSql().upsertBirthDate(testData.getUserId(), LocalDate.of(2002, 3, 14)));
+
+            var answer = new DateAnswer(null, dateStableId, null, 2002, 3, 14);
+            handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), firstInstance.getId(), answer);
+
+            String expr = String.format("user.studies[\"%s\"].forms[\"%s\"].questions[\"%s\"]"
+                            + ".answers.value() == user.profile.birthDate()",
+                    studyGuid, activityCode, dateStableId);
+            assertTrue(run(handle, expr));
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testEval_profileQuery_birthDate_none() {
+        TransactionWrapper.useTxn(handle -> {
+            var profileDao = handle.attach(UserProfileDao.class);
+            assertTrue(profileDao.getUserProfileSql().upsertBirthDate(testData.getUserId(), null));
+
+            try {
+                assertTrue(run(handle, "user.profile.birthDate()"));
+                fail("expected exception not thrown");
+            } catch (PexFetchException e) {
+                assertTrue(e.getMessage().contains("does not have birth date"));
+            }
+
             handle.rollback();
         });
     }

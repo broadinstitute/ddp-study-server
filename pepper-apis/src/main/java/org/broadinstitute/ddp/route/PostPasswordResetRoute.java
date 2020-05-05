@@ -34,6 +34,7 @@ public class PostPasswordResetRoute implements Route {
     @Override
     public Object handle(Request request, Response response) throws Exception {
         String auth0ClientId = request.queryParams(QueryParam.AUTH0_CLIENT_ID);
+        String auth0Domain = request.queryParams(QueryParam.AUTH0_DOMAIN);
         String email = request.queryParams(QueryParam.EMAIL);
         String auth0Success = request.queryParams(QueryParam.SUCCESS);
 
@@ -43,7 +44,27 @@ public class PostPasswordResetRoute implements Route {
             ResponseUtil.haltError(response, HttpStatus.SC_BAD_REQUEST, new ApiError(ErrorCodes.REQUIRED_PARAMETER_MISSING, errMsg));
         }
 
-        HttpUrl clientPwdResetUrl = getWebClientPasswordResetRedirectUrl(auth0ClientId, response);
+        HttpUrl clientPwdResetUrl = null;
+        boolean isDomainSpecified = auth0Domain != null && !auth0Domain.isBlank();
+        if (isDomainSpecified) {
+            clientPwdResetUrl = getWebClientPasswordResetRedirectUrl(auth0ClientId, auth0Domain, response);
+        } else {
+            // Left for backward compatibility. It's expected that for some time
+            // there will be no clashes between clients with the same Auth0 client id
+            // When they start to occur, change the check accordingly
+            LOG.info("Domain query parameter is missing, checking if the auth0 client id '{}' is unique", auth0ClientId);
+            int numClients = TransactionWrapper.withTxn(
+                    handle -> handle.attach(JdbiClient.class).countClientsWithSameAuth0ClientId(auth0ClientId)
+            );
+            if (numClients > 1) {
+                String msg = String.format("Auth0 client id %s is not unique, please also provide domain query parameter", auth0ClientId);
+                LOG.error(msg);
+                throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.BAD_PAYLOAD, msg));
+            } else if (numClients == 1) {
+                LOG.info("All fine, client id '{}' is unique, nothing to worry about", auth0ClientId);
+                clientPwdResetUrl = getWebClientPasswordResetRedirectUrl(auth0ClientId, null, response);
+            }
+        }
 
         HttpUrl.Builder urlBuilder = clientPwdResetUrl.newBuilder();
         urlBuilder.addQueryParameter(QueryParam.EMAIL, email);
@@ -62,17 +83,24 @@ public class PostPasswordResetRoute implements Route {
         return "";
     }
 
-    private HttpUrl getWebClientPasswordResetRedirectUrl(String auth0ClientId, Response response) {
+    private HttpUrl getWebClientPasswordResetRedirectUrl(String auth0ClientId, String auth0Domain, Response response) {
         return TransactionWrapper.withTxn(
                 handle -> {
+                    Optional<ClientDto> clientDtoOpt = null;
                     JdbiClient jdbiClient = handle.attach(JdbiClient.class);
-                    Optional<ClientDto> clientDto = jdbiClient.findByAuth0ClientId(auth0ClientId);
-                    if (!clientDto.isPresent()) {
-                        String errMsg = "Client with Auth0 client id " + auth0ClientId + " does not exist";
-                        LOG.warn(errMsg);
-                        throw ResponseUtil.haltError(response, HttpStatus.SC_NOT_FOUND, new ApiError(ErrorCodes.NOT_FOUND, errMsg));
+                    if (auth0Domain != null) {
+                        clientDtoOpt = jdbiClient.getClientByAuth0ClientAndDomain(auth0ClientId, auth0Domain);
+                    } else {
+                        clientDtoOpt = jdbiClient.getClientByAuth0ClientId(auth0ClientId);
                     }
-                    boolean isRevoked = clientDto.get().isRevoked();
+                    ClientDto clientDto = clientDtoOpt.orElseGet(
+                            () -> {
+                                String errMsg = "Client with Auth0 client id " + auth0ClientId + " does not exist";
+                                LOG.warn(errMsg);
+                                throw ResponseUtil.haltError(response, HttpStatus.SC_NOT_FOUND, new ApiError(ErrorCodes.NOT_FOUND, errMsg));
+                            }
+                    );
+                    boolean isRevoked = clientDto.isRevoked();
                     if (isRevoked) {
                         String errMsg = "The client is revoked";
                         LOG.warn(errMsg);
@@ -82,7 +110,7 @@ public class PostPasswordResetRoute implements Route {
                                 new ApiError(ErrorCodes.OPERATION_NOT_ALLOWED, errMsg)
                         );
                     }
-                    String redirUrl = clientDto.get().getWebPasswordRedirectUrl();
+                    String redirUrl = clientDto.getWebPasswordRedirectUrl();
                     if (redirUrl == null) {
                         String errMsg = "Post-password redirect URL for the auth0 client with id " + auth0ClientId + " is not defined";
                         LOG.warn(errMsg);

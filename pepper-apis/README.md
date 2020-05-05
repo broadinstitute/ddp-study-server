@@ -158,24 +158,31 @@ In order to send a request to the service, you must obtain an `idToken` first
 
 
 ## Databases
-We track schema changes via liquibase, use hsqldb for local in-memory databases,
-and google cloudsql/mysql for our CI dev/test/staging/prod environments. For connecting
-to hsqldb locally, see [docs/hsqldb-on-cli.md](docs/hsqldb-on-cli.md).
+We track schema changes via liquibase, use mysql for local database, and google
+cloudsql/mysql for our CI dev/test/staging/prod environments. We used to use
+hsql for local in-memory database. If you're using that and want to connect to
+hsqldb locally, see [docs/hsqldb-on-cli.md](docs/hsqldb-on-cli.md).
 
 ### Setting up a local mysql database
 Local mysql databases have some advantages over hsqldb:
 
 1. They more closely resemble what you'll find in dev/test/staging/prod
-2. You can connect to them with sql clients, which you can't do with our default disposable hsqldb
+2. You can connect to them with sql clients, which you can't do easily with disposable hsqldb
 
 Beware that our cloudSQL databases require SSL, and if you don't enable SSL on your local mysql instance, you may
 end up with surprises during CI builds. If you still want to disable SSL locally, append the following parameter to the
 JDBC connection string (see the details on how to set it below):
 
-`useSSL=false`
+```
+useSSL=false
+```
 
-You'll need to download mysql for your local machine, make note of the generated password during installation,
-create a separate schema in your database, and create a new user for the database.
+You'll need to download mysql for your local machine, make note of the
+generated password during installation, create a separate schema in your
+database, and create a new user for the database. (If you're on macOS, try
+installing `mysql@5.7` using Homebrew.)
+
+Note that we use `utf8mb4` and NOT `utf8`.
 
 1. [Download mysql](https://dev.mysql.com/downloads/mysql/) and note one-time share of root password
 
@@ -184,40 +191,40 @@ create a separate schema in your database, and create a new user for the databas
 3. Download a decent sql client, such as [mysql workbench](https://www.mysql.com/products/workbench)
 
 4. Create a new local schema (the name is not important)
-```
-CREATE DATABASE pepperlocal CHARACTER SET utf8 COLLATE utf8_general_ci;
-```
+    ```
+    CREATE DATABASE pepperlocal CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+    ```
 
 5. Create a new user and grant privileges to it (you can skip this step if you use `root` MySQL user).
 Note that the `RELOAD` priviledge is needed for some unit tests.
-```
-CREATE USER '[your db user]'@'%' IDENTIFIED BY '[your db password]';
-GRANT ALL ON pepperlocal.* TO '[your user]'@'%';
-GRANT RELOAD on *.* TO '[your user]'@'%';
-```
+    ```
+    CREATE USER '[your db user]'@'%' IDENTIFIED BY '[your db password]';
+    GRANT ALL ON pepperlocal.* TO '[your user]'@'%';
+    GRANT RELOAD on *.* TO '[your user]'@'%';
+    ```
 
-6. Add the following to the global MySQL configuration file (`/etc/mysql/my.cnf`):
-```
-[mysqld]
-max_allowed_packet=32M
-character-set-server = utf8
-collation-server = utf8_unicode_ci
-skip-character-set-client-handshake
-```
-Restart MySQL service after making changes (an Ubuntu Linux example):
-```
-$ service mysql restart
-```
+6. Add the following to the your MySQL server configuration file (`/etc/mysql/my.cnf` or `~/.my.cnf`):
+    ```
+    [mysqld]
+    character-set-server=utf8mb4
+    collation-server=utf8mb4_unicode_ci
+    max_allowed_packet=32M
+    skip-character-set-client-handshake
+    ```
 
-If you don't do that, MySQL won't handle Unicode strings properly (one of the manifestations are '???' symbols in the
-MySQL CLI output of internationalized strings). Since we support multiple languages, this is a must.
+    Restart MySQL service after making changes (an Ubuntu Linux example):
+    ```
+    $ service mysql restart
+    ```
+
+    If you don't do that, MySQL won't handle Unicode strings properly (one of the manifestations are '???' symbols in the
+    MySQL CLI output of internationalized strings). Since we support multiple languages, this is a must.
 
 7. Update the _rendered_ secrets file `*.conf` (**not** `*.conf.ctmpl`), for example `output-build-config/testing-inmemorydb.conf`.
-```
-...
-"dbUrl":"jdbc:mysql://127.0.0.1:3306/pepperlocal?user=[your db user]&password=[your db password]&serverTimezone=[your time zone]"
-...
-```
+    ```
+    "dbUrl":"jdbc:mysql://127.0.0.1:3306/pepperlocal?user=[your db user]&password=[your db password]&serverTimezone=[your time zone]"
+    ...
+    ```
 
 Note that our `.gitignore` files will ignore your local changes to rendered secrets files.  This is
 by design, so that we don't commit secrets to source code control.  If you re-render secrets between

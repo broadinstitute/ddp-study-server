@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.util;
 
+import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang.time.DateUtils.MILLIS_PER_SECOND;
 
 import java.text.ParseException;
@@ -37,7 +38,6 @@ import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.SqlConstants.MedicalProviderTable;
 import org.broadinstitute.ddp.db.DBUtils;
-import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceStatusDao;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
@@ -52,19 +52,19 @@ import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
 import org.broadinstitute.ddp.db.dao.JdbiMailAddress;
 import org.broadinstitute.ddp.db.dao.JdbiMailingList;
 import org.broadinstitute.ddp.db.dao.JdbiMedicalProvider;
-import org.broadinstitute.ddp.db.dao.JdbiProfile;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyLegacyData;
 import org.broadinstitute.ddp.db.dao.KitTypeDao;
 import org.broadinstitute.ddp.db.dao.MedicalProviderDao;
+import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.ClientDto;
 import org.broadinstitute.ddp.db.dto.MedicalProviderDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.UserDto;
-import org.broadinstitute.ddp.db.dto.UserProfileDto;
 import org.broadinstitute.ddp.exception.AddressVerificationException;
+import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.instance.answer.AgreementAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
@@ -80,6 +80,7 @@ import org.broadinstitute.ddp.model.address.MailAddress;
 import org.broadinstitute.ddp.model.migration.BaseSurvey;
 import org.broadinstitute.ddp.model.migration.SurveyAddress;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
+import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.service.AddressService;
 import org.broadinstitute.ddp.service.DsmAddressValidationStatus;
 import org.broadinstitute.ddp.service.OLCService;
@@ -101,6 +102,7 @@ public class StudyDataLoader {
 
     Map<String, List<String>> sourceDataSurveyQs;
     Map<String, String> altNames;
+    Map<String, String> dkAltNames;
     Map<Integer, String> yesNoDkLookup;
     Map<Integer, Boolean> booleanValueLookup;
     Auth0Util auth0Util;
@@ -131,8 +133,10 @@ public class StudyDataLoader {
         booleanValueLookup.put(0, false);
         booleanValueLookup.put(1, true);
 
+        dkAltNames = new HashMap<>();
+        dkAltNames.put("dk", "Don't know");
+
         altNames = new HashMap<>();
-        altNames.put("dk", "Don't know");
         altNames.put("AMERICAN_INDIAN", "American Indian or Native American");
         altNames.put("OTHER_EAST_ASIAN", "Other East Asian");
         altNames.put("SOUTH_EAST_ASIAN", "South East Asian or Indian");
@@ -206,9 +210,9 @@ public class StudyDataLoader {
 
         UserDto pepperUser = createLegacyPepperUser(userDao, clientDao, datstatData, userGuid, userHruid, clientDto);
 
-        JdbiProfile jdbiProfile = handle.attach(JdbiProfile.class);
         JdbiLanguageCode jdbiLanguageCode = handle.attach(JdbiLanguageCode.class);
-        addUserProfile(pepperUser, datstatData, jdbiLanguageCode, jdbiProfile);
+        UserProfileDao profileDao = handle.attach(UserProfileDao.class);
+        addUserProfile(pepperUser, datstatData, jdbiLanguageCode, profileDao);
 
         JdbiMailAddress jdbiMailAddress = handle.attach(JdbiMailAddress.class);
         MailAddress createdAddress = addUserAddress(handle, pepperUser,
@@ -280,13 +284,14 @@ public class StudyDataLoader {
                         null, null, null);
 
         //populate PREQUAL answers
-        JdbiProfile jdbiProfile = handle.attach(JdbiProfile.class);
-        UserProfileDto profileDto = jdbiProfile.getUserProfileByUserGuid(participantGuid);
+        UserProfileDao profileDao = handle.attach(UserProfileDao.class);
+        UserProfile profile = profileDao.findProfileByUserGuid(participantGuid)
+                .orElseThrow(() -> new DDPException("Could not find profile for use with guid " + participantGuid));
         answerTextQuestion("PREQUAL_FIRST_NAME", participantGuid, dto.getGuid(),
-                profileDto.getFirstName(), answerDao);
+                profile.getFirstName(), answerDao);
 
         answerTextQuestion("PREQUAL_LAST_NAME", participantGuid, dto.getGuid(),
-                profileDto.getLastName(), answerDao);
+                profile.getLastName(), answerDao);
 
         List<SelectedPicklistOption> options = new ArrayList<SelectedPicklistOption>();
         options.add(new SelectedPicklistOption("DIAGNOSED"));
@@ -569,6 +574,8 @@ public class StudyDataLoader {
         //MBC might have dup physicians because physician list comes in both release and bdrelease surveys
         processPhysicianList(handle, surveyData, userDto, studyDto,
                 "physician_list", InstitutionType.PHYSICIAN, "bdreleasesurvey", instanceDto);
+
+        updateUserStudyEnrollment(handle, surveyData, userDto.getUserGuid(), studyDto.getGuid());
     }
 
 
@@ -694,6 +701,12 @@ public class StudyDataLoader {
         LOG.info("Populating Followup Survey...");
         if (surveyData == null || surveyData.isJsonNull()) {
             LOG.warn("NO Followup Survey !");
+            return;
+        }
+
+        String status = getStringValueFromElement(surveyData, "survey_status");
+        if (status.equalsIgnoreCase("CREATED")) {
+            LOG.warn("Created followup survey instance but no data ");
             return;
         }
 
@@ -826,28 +839,23 @@ public class StudyDataLoader {
         return stringBuilder.toString();
     }
 
-    UserProfileDto addUserProfile(UserDto user,
-                                  JsonElement data,
-                                  JdbiLanguageCode jdbiLanguageCode,
-                                  JdbiProfile jdbiProfile) throws Exception {
+    UserProfile addUserProfile(UserDto user,
+                               JsonElement data,
+                               JdbiLanguageCode jdbiLanguageCode,
+                               UserProfileDao profileDao) {
 
         Boolean isDoNotContact = getBooleanValueFromElement(data, "ddp_do_not_contact");
         Long languageCodeId = jdbiLanguageCode.getLanguageCodeId(DEFAULT_PREFERRED_LANGUAGE_CODE);
 
-        UserProfileDto userProfileDto = new UserProfileDto(user.getUserId(),
-                data.getAsJsonObject().get("datstat_firstname").getAsString(),
-                data.getAsJsonObject().get("datstat_lastname").getAsString(),
-                null, null, languageCodeId,
-                DEFAULT_PREFERRED_LANGUAGE_CODE, isDoNotContact);
+        UserProfile profile = new UserProfile.Builder(user.getUserId())
+                .setFirstName(StringUtils.trim(data.getAsJsonObject().get("datstat_firstname").getAsString()))
+                .setLastName(StringUtils.trim(data.getAsJsonObject().get("datstat_lastname").getAsString()))
+                .setPreferredLangId(languageCodeId)
+                .setDoNotContact(isDoNotContact)
+                .build();
+        profileDao.createProfile(profile);
 
-        int numRowsInserted = jdbiProfile.insert(userProfileDto);
-
-        if (numRowsInserted != 1) {
-            LOG.info("Failed to save profile information.  " + numRowsInserted + " rows were updated");
-            throw new DaoException("Failed to save profile information.  " + numRowsInserted + " rows were updated");
-        }
-
-        return userProfileDto;
+        return profile;
     }
 
     MailAddress getUserAddress(Handle handle, JsonElement data,
@@ -906,12 +914,12 @@ public class StudyDataLoader {
         }
 
         String ddpCreated = getStringValueFromElement(data, "ddp_created");
-        long ddpCreatedAt = Instant.now().toEpochMilli();
+        long ddpCreatedAt = Instant.now().getEpochSecond();
         //use DDP_CREATED time for MailAddress creation time.
         if (ddpCreated != null) {
             Instant instant = Instant.parse(ddpCreated);
             if (instant != null) {
-                ddpCreatedAt = instant.toEpochMilli();
+                ddpCreatedAt = instant.getEpochSecond();
             }
         }
 
@@ -1201,28 +1209,45 @@ public class StudyDataLoader {
         optValuesList.addAll(Arrays.asList(optValues));
         optValuesList.replaceAll(String::trim);
 
+        List<String> pepperPLOptions = new ArrayList<>();
         JsonArray options = mapElement.getAsJsonObject().getAsJsonArray("options");
         for (JsonElement option : options) {
             JsonElement optionNameEl = option.getAsJsonObject().get("name");
             String optionName = optionNameEl.getAsString();
             if (altNames.get(optionName) != null) {
                 optionName = altNames.get(optionName);
+            } else if (dkAltNames.get(optionName) != null) {
+                optionName = dkAltNames.get(optionName);
             }
+            pepperPLOptions.add(optionName.toUpperCase());
             final String optName = optionName;
             if (optionName.equalsIgnoreCase(value.getAsString())
                     || optValuesList.stream().anyMatch(x -> x.equalsIgnoreCase(optName))) {
 
-                //todo.. handle other_text in a better way!
-                if (optionName.equalsIgnoreCase("Other")) {
-                    String otherDetails = null;
-                    if (optValuesList.size() > (selectedPicklistOptions.size() + 1)) {
-                        //there is Other text
-                        otherDetails = optValuesList.get(optValuesList.size() - 1);
-                    }
-                    selectedPicklistOptions.add(new SelectedPicklistOption(optionNameEl.getAsString().toUpperCase(), otherDetails));
-                } else {
+                if (!optionName.equalsIgnoreCase("Other")) {
                     selectedPicklistOptions.add(new SelectedPicklistOption(optionNameEl.getAsString().toUpperCase()));
+                } else {
+                    //currently only RACE has Other however Gen2 MBC has other details without user selecting "Other"
+                    //hence MBC Other is taken care below as special case..
+                    //after MBC below code should help
+                    //just select everything after Other (substr)
+                    /*String sourceValue = value.getAsString();
+                    String detailText = sourceValue.substring(sourceValue.lastIndexOf("Other") + 6);
+                    selectedPicklistOptions.add(new SelectedPicklistOption(optionNameEl.getAsString().toUpperCase(), detailText));*/
                 }
+            }
+        }
+
+        if ("RACE".equalsIgnoreCase(questionName)) {
+            //Gen2 MBC has other details without user selecting "Other"
+            //handle others by adding everything that doesn't match pepper options
+            List<String> otherText = optValuesList.stream().filter(opt -> !pepperPLOptions.contains(opt.toUpperCase())).collect(toList());
+            otherText.remove("Other");
+            String otherDetails = otherText.stream().collect(Collectors.joining(","));
+            if (StringUtils.isNotBlank(otherDetails)) {
+                selectedPicklistOptions.add(new SelectedPicklistOption(OTHER, otherDetails));
+            } else if (optValuesList.contains("Other")) {
+                selectedPicklistOptions.add(new SelectedPicklistOption(OTHER));
             }
         }
 
@@ -1238,8 +1263,9 @@ public class StudyDataLoader {
             JsonElement value = null;
             JsonElement optionName = option.getAsJsonObject().get("name");
             String key;
+            String optName = null;
             if (optionName != null && !optionName.isJsonNull()) {
-                String optName = optionName.getAsString();
+                optName = optionName.getAsString();
                 if (altNames.get(optName) != null) {
                     optName = altNames.get(optName);
                 }
@@ -1255,19 +1281,32 @@ public class StudyDataLoader {
             if (value != null && value.getAsInt() == 1) { //option checked
                 if (option.getAsJsonObject().get("text") != null) {
                     //other text details
-                    String otherTextKey = key.concat(".").concat(option.getAsJsonObject().get("text").getAsString());
-                    JsonElement otherTextEl = sourceDataElement.getAsJsonObject().get(otherTextKey);
-                    String otherText = null;
-                    if (otherTextEl != null && !otherTextEl.isJsonNull()) {
-                        otherText = otherTextEl.getAsString();
-                    }
+                    String otherText = getTextDetails(sourceDataElement, option, key);
                     selectedPicklistOptions.add(new SelectedPicklistOption(optionName.getAsString().toUpperCase(), otherText));
                 } else {
                     selectedPicklistOptions.add(new SelectedPicklistOption(optionName.getAsString().toUpperCase()));
                 }
+            } else if ("Other".equalsIgnoreCase(optName) && option.getAsJsonObject().get("text") != null) {
+                //additional check to handle scenarios where:
+                //Other is NOT checked but other_text details are entered
+                String otherText = getTextDetails(sourceDataElement, option, key);
+                if (StringUtils.isNotBlank(otherText)) {
+                    //other text details
+                    selectedPicklistOptions.add(new SelectedPicklistOption(optionName.getAsString().toUpperCase(), otherText));
+                }
             }
         }
         return selectedPicklistOptions;
+    }
+
+    private String getTextDetails(JsonElement sourceDataElement, JsonElement option, String key) {
+        String otherTextKey = key.concat(".").concat(option.getAsJsonObject().get("text").getAsString());
+        JsonElement otherTextEl = sourceDataElement.getAsJsonObject().get(otherTextKey);
+        String otherText = null;
+        if (otherTextEl != null && !otherTextEl.isJsonNull()) {
+            otherText = otherTextEl.getAsString();
+        }
+        return otherText;
     }
 
     private String processDateQuestion(JsonElement mapElement, JsonElement sourceDataElement, String surveyName,
@@ -1396,37 +1435,31 @@ public class StudyDataLoader {
         JsonArray children = mapElement.getAsJsonObject().getAsJsonArray("children");
         List<String> nestedQAGuids = new ArrayList<>();
         List<Integer> nestedAnsOrders = new ArrayList<>();
-        String childGuid;
         //todo.. This composite type does not handle array/list of answers. make it handle array for future study proof
         for (JsonElement childEl : children) {
-            nestedAnsOrders.add(0);
+            String childGuid = null;
             if (childEl != null && !childEl.isJsonNull()) {
                 String nestedQuestionType = getStringValueFromElement(childEl, "type");
                 switch (nestedQuestionType) {
                     case "Date":
                         childGuid = processDateQuestion(childEl, sourceDataElement, surveyName, participantGuid,
                                 instanceGuid, answerDao);
-                        nestedQAGuids.add(childGuid);
                         break;
                     case "string":
                         childGuid = processTextQuestion(childEl, sourceDataElement, surveyName,
                                 participantGuid, instanceGuid, answerDao);
-                        nestedQAGuids.add(childGuid);
                         break;
                     case "Picklist":
                         childGuid = processPicklistQuestion(childEl, sourceDataElement, surveyName,
                                 participantGuid, instanceGuid, answerDao);
-                        nestedQAGuids.add(childGuid);
                         break;
                     case "Boolean":
                         childGuid = processBooleanQuestion(childEl, sourceDataElement, surveyName,
                                 participantGuid, instanceGuid, answerDao);
-                        nestedQAGuids.add(childGuid);
                         break;
                     case "Agreement":
                         childGuid = processAgreementQuestion(childEl, sourceDataElement, surveyName,
                                 participantGuid, instanceGuid, answerDao);
-                        nestedQAGuids.add(childGuid);
                         break;
                     case "ClinicalTrialPicklist":
                         //todo .. revisit and make it generic
@@ -1434,13 +1467,11 @@ public class StudyDataLoader {
                         JsonElement thisDataArrayEl = sourceDataElement.getAsJsonObject().get(questionName);
                         if (thisDataArrayEl != null && !thisDataArrayEl.isJsonNull()) {
                             Boolean isClinicalTrial = getBooleanValueFromElement(thisDataArrayEl, "clinicaltrial");
-                            //thisDataArrayEl.getAsJsonObject().get("clinicaltrial").getAsBoolean();
                             if (isClinicalTrial) {
                                 List<SelectedPicklistOption> selectedPicklistOptions = new ArrayList<>();
                                 selectedPicklistOptions.add(new SelectedPicklistOption("IS_CLINICAL_TRIAL"));
                                 childGuid = answerPickListQuestion(childStableId, participantGuid,
                                         instanceGuid, selectedPicklistOptions, answerDao);
-                                nestedQAGuids.add(childGuid);
                             }
                         }
                         break;
@@ -1448,9 +1479,12 @@ public class StudyDataLoader {
                         LOG.warn(" Default ..Composite nested Q name: {} .. type: {} not supported", questionName,
                                 nestedQuestionType);
                 }
+                if (StringUtils.isNotBlank(childGuid)) {
+                    nestedQAGuids.add(childGuid);
+                    nestedAnsOrders.add(0);
+                }
             }
         }
-        nestedQAGuids.remove(null);
         if (CollectionUtils.isNotEmpty(nestedQAGuids)) {
             answerGuid = answerCompositeQuestion(handle, stableId, participantGuid, instanceGuid,
                     nestedQAGuids, nestedAnsOrders, answerDao);
@@ -1483,8 +1517,8 @@ public class StudyDataLoader {
                 compositeAnswerOrder++;
                 //handle children/nestedQA
                 JsonArray children = mapElement.getAsJsonObject().getAsJsonArray("children");
-                String childGuid;
                 for (JsonElement childEl : children) {
+                    String childGuid = null;
                     if (childEl != null && !childEl.isJsonNull()) {
                         String nestedQuestionType = getStringValueFromElement(childEl, "type");
 
@@ -1492,32 +1526,22 @@ public class StudyDataLoader {
                             case "Date":
                                 childGuid = processDateQuestion(childEl, thisDataEl, surveyName, participantGuid,
                                         instanceGuid, answerDao);
-                                nestedQAGuids.add(childGuid);
-                                nestedAnsOrders.add(compositeAnswerOrder);
                                 break;
                             case "string":
                                 childGuid = processTextQuestion(childEl, thisDataEl, surveyName,
                                         participantGuid, instanceGuid, answerDao);
-                                nestedQAGuids.add(childGuid);
-                                nestedAnsOrders.add(compositeAnswerOrder);
                                 break;
                             case "Picklist":
                                 childGuid = processPicklistQuestion(childEl, thisDataEl, surveyName,
                                         participantGuid, instanceGuid, answerDao);
-                                nestedQAGuids.add(childGuid);
-                                nestedAnsOrders.add(compositeAnswerOrder);
                                 break;
                             case "Boolean":
                                 childGuid = processBooleanQuestion(childEl, thisDataEl, surveyName,
                                         participantGuid, instanceGuid, answerDao);
-                                nestedQAGuids.add(childGuid);
-                                nestedAnsOrders.add(compositeAnswerOrder);
                                 break;
                             case "Agreement":
                                 childGuid = processAgreementQuestion(childEl, thisDataEl, surveyName,
                                         participantGuid, instanceGuid, answerDao);
-                                nestedQAGuids.add(childGuid);
-                                nestedAnsOrders.add(compositeAnswerOrder);
                                 break;
                             case "ClinicalTrialPicklist":
                                 //todo .. revisit and make it generic
@@ -1528,19 +1552,20 @@ public class StudyDataLoader {
                                     selectedPicklistOptions.add(new SelectedPicklistOption("IS_CLINICAL_TRIAL"));
                                     childGuid = answerPickListQuestion(childStableId, participantGuid,
                                             instanceGuid, selectedPicklistOptions, answerDao);
-                                    nestedQAGuids.add(childGuid);
-                                    nestedAnsOrders.add(compositeAnswerOrder);
                                 }
                                 break;
                             default:
                                 LOG.warn(" Default ..Composite nested Q name: {} .. type: {} ", questionName,
                                         nestedQuestionType);
                         }
+                        if (StringUtils.isNotBlank(childGuid)) {
+                            nestedQAGuids.add(childGuid);
+                            nestedAnsOrders.add(compositeAnswerOrder);
+                        }
                     }
                 }
             }
 
-            nestedQAGuids.remove(null);
             if (CollectionUtils.isNotEmpty(nestedQAGuids)) {
                 answerGuid = answerCompositeQuestion(handle, stableId, participantGuid, instanceGuid, nestedQAGuids,
                         nestedAnsOrders, answerDao);

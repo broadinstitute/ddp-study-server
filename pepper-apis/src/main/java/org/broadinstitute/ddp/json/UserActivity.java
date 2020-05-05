@@ -8,8 +8,7 @@ public class UserActivity implements TranslatedSummary {
 
     @SerializedName("guid")
     private String guid;
-    // todo: rename to `title`
-    @SerializedName("name")
+    @SerializedName("title")
     private String title;
     @SerializedName("subtitle")
     private String subtitle;

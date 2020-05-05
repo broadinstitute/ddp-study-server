@@ -10,9 +10,8 @@ import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.CopyConfigurationDao;
-import org.broadinstitute.ddp.db.dao.JdbiProfile;
+import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
-import org.broadinstitute.ddp.db.dto.UserProfileDto;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.copy.CopyAnswerLocation;
@@ -20,6 +19,7 @@ import org.broadinstitute.ddp.model.copy.CopyConfiguration;
 import org.broadinstitute.ddp.model.copy.CopyConfigurationPair;
 import org.broadinstitute.ddp.model.copy.CopyLocation;
 import org.broadinstitute.ddp.model.copy.CopyLocationType;
+import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.broadinstitute.ddp.util.TestFormActivity;
 import org.jdbi.v3.core.Handle;
@@ -53,7 +53,7 @@ public class CopyExecutorTest extends TxnAwareBaseTest {
 
             new CopyExecutor().execute(handle, testData.getUserId(), testData.getUserId(), config);
 
-            UserProfileDto profile = handle.attach(JdbiProfile.class).getUserProfileByUserId(testData.getUserId());
+            UserProfile profile = handle.attach(UserProfileDao.class).findProfileByUserId(testData.getUserId()).get();
             assertEquals("new-first-name", profile.getFirstName());
 
             handle.rollback();

@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.broadinstitute.ddp.db.dao.JdbiCompositeQuestion;
-import org.broadinstitute.ddp.db.dao.JdbiProfile;
+import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.CompositeQuestionDto;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.exception.DDPException;
@@ -27,14 +27,14 @@ public class AnswerToProfileCopier {
     private final Handle handle;
     private final long operatorId;
     private final JdbiCompositeQuestion jdbiCompositeQuestion;
-    private final JdbiProfile jdbiProfile;
+    private final UserProfileDao profileDao;
     private final Map<Long, CompositeQuestionDto> parentDtosByChildId = new HashMap<>();
 
     public AnswerToProfileCopier(Handle handle, long operatorId) {
         this.handle = handle;
         this.operatorId = operatorId;
         this.jdbiCompositeQuestion = handle.attach(JdbiCompositeQuestion.class);
-        this.jdbiProfile = handle.attach(JdbiProfile.class);
+        this.profileDao = handle.attach(UserProfileDao.class);
     }
 
     public void copy(FormResponse sourceInstance, QuestionDto sourceQuestion, CopyLocationType target) {
@@ -55,13 +55,13 @@ public class AnswerToProfileCopier {
     private void copySourceAnswer(FormResponse sourceInstance, Answer sourceAnswer, CopyLocationType target) {
         switch (target) {
             case OPERATOR_PROFILE_FIRST_NAME:
-                jdbiProfile.upsertFirstName(operatorId, extractValue(sourceAnswer, String.class));
+                profileDao.getUserProfileSql().upsertFirstName(operatorId, extractValue(sourceAnswer, String.class));
                 break;
             case OPERATOR_PROFILE_LAST_NAME:
-                jdbiProfile.upsertLastName(operatorId, extractValue(sourceAnswer, String.class));
+                profileDao.getUserProfileSql().upsertLastName(operatorId, extractValue(sourceAnswer, String.class));
                 break;
             case PARTICIPANT_PROFILE_BIRTH_DATE:
-                jdbiProfile.upsertBirthDate(
+                profileDao.getUserProfileSql().upsertBirthDate(
                         sourceInstance.getParticipantId(),
                         extractValue(sourceAnswer, DateValue.class)
                                 .asLocalDate()
@@ -69,10 +69,10 @@ public class AnswerToProfileCopier {
                                         "Could not copy invalid date from answer with id " + sourceAnswer.getAnswerId())));
                 break;
             case PARTICIPANT_PROFILE_FIRST_NAME:
-                jdbiProfile.upsertFirstName(sourceInstance.getParticipantId(), extractValue(sourceAnswer, String.class));
+                profileDao.getUserProfileSql().upsertFirstName(sourceInstance.getParticipantId(), extractValue(sourceAnswer, String.class));
                 break;
             case PARTICIPANT_PROFILE_LAST_NAME:
-                jdbiProfile.upsertLastName(sourceInstance.getParticipantId(), extractValue(sourceAnswer, String.class));
+                profileDao.getUserProfileSql().upsertLastName(sourceInstance.getParticipantId(), extractValue(sourceAnswer, String.class));
                 break;
             default:
                 throw new DDPException("Unhandled copying of source answer to location type " + target);

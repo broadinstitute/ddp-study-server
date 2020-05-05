@@ -40,8 +40,9 @@ build_docs() {
     rm -rf "${BUILD}" || true
     mkdir -p "${BUILD}"
 
-    $(npm bin)/swagger-cli bundle --outfile "${BUILD}/pepper.yml" "${SRC}/pepper.yml"
-    $(npm bin)/speccy lint --rules="rules.yml" "${BUILD}/pepper.yml"
+    $(npm bin)/swagger-cli bundle --type json --outfile "${BUILD}/pepper.json" "${SRC}/pepper.yml"
+    $(npm bin)/swagger-cli bundle --type yaml --outfile ${BUILD}/pepper.yaml  "${SRC}/pepper.yml"
+    $(npm bin)/speccy lint --rules="rules.yml" "${BUILD}/pepper.json"
     $(npm bin)/redoc-cli bundle --output "${BUILD}/pepper.html" "${SRC}/pepper.yml"
 }
 
