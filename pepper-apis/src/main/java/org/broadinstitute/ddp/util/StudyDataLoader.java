@@ -1020,10 +1020,12 @@ public class StudyDataLoader {
         String emailAddress = data.getAsJsonObject().get("datstat_email").getAsString();
 
         //If this is Prion, first check for an existing Auth0 user
+        String userAction = "created";
         User newAuth0User = null;
         if ("PRION".equals(studyGuid)) {
             List<User> auth0UsersByEmail = auth0Util.getAuth0UsersByEmail(emailAddress, mgmtToken);
             if (auth0UsersByEmail != null && auth0UsersByEmail.size() > 0) {
+                userAction = "found";
                 newAuth0User = auth0UsersByEmail.get(0);
                 LOG.info("Using existing Auth0 user");
             } else {
@@ -1033,6 +1035,9 @@ public class StudyDataLoader {
 
         if (newAuth0User == null) {
             // Create a user for the given domain
+            if ("PRION".equals(studyGuid)) {
+                LOG.info("WARNING: User not found--creating with random password");
+            }
             String randomPass = generateRandomPassword();
             newAuth0User = auth0Util.createAuth0User(emailAddress, randomPass, mgmtToken);
         }
@@ -1067,8 +1072,8 @@ public class StudyDataLoader {
                 shortId, createdAtMillis, updatedAtMillis);
         mgmtClient.setUserGuidForAuth0User(auth0UserId, clientDto.getAuth0ClientId(), newUser.getUserGuid());
 
-        LOG.info("User created: Auth0UserId = " + auth0UserId + ", GUID = " + userGuid + ", HRUID = " + userHruid + ", ALTPID = "
-                + altpid);
+        LOG.info("User " + userAction + ": Auth0UserId = " + auth0UserId + ", GUID = " + userGuid + ", HRUID = " + userHruid
+                + ", " + "ALTPID = " + altpid);
         return newUser;
     }
 
