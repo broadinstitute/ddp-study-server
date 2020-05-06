@@ -37,7 +37,7 @@ clients:
       - '##BASE_URL##'
       ##LOCALHOST_ORIGINS##
     client_metadata:
-      study: TESTBOSTON
+      study: testboston
 
   - name: testboston-crc-client
     app_type: spa
@@ -52,4 +52,4 @@ clients:
       - '##BASE_URL##'
       ##LOCALHOST_ORIGINS##
     client_metadata:
-      study: TESTBOSTON
+      study: testboston
