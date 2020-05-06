@@ -22,7 +22,7 @@ if [ -z "${SSH_HOST}" ]; then
     exit 3
 fi
 
-if [ -z "${ENV}" ]; then
+if [ -z "${ENVIRONMENT}" ]; then
     echo "FATAL ERROR: ENV undefined."
     exit 4
 fi
@@ -75,6 +75,6 @@ if [[ $PROJECT = "pepper-apis" ]]; then
         # run the smoketest for pepper-apis deployments to ensure that the app didn't croak after docker-compose up
         echo "starting smoketest..."
         #docker pull docker.io/broadinstitute/pepper-api-backend:"$VERSION"_"$ENV"
-        $SSHCMD $SSH_USER@$SSH_HOST "docker run --rm -v /app/application.conf:/app/config/application.conf -v /app/post_deploy_smoketest.sh:/app/post_deploy_smoketest.sh broadinstitute/pepper-api-backend:\"$VERSION\"_\"$ENV\" bash /app/post_deploy_smoketest.sh $SSH_HOST 60"
+        $SSHCMD $SSH_USER@$SSH_HOST "docker run --rm -v /app/application.conf:/app/config/application.conf -v /app/post_deploy_smoketest.sh:/app/post_deploy_smoketest.sh broadinstitute/pepper-api-backend:\"$VERSION\"_\"$ENVIRONMENT\" bash /app/post_deploy_smoketest.sh $SSH_HOST 60"
     fi
 fi

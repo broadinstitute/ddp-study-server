@@ -2,7 +2,6 @@
 
 {{with $environment := env "ENVIRONMENT"}}
 {{with $version := env "VERSION"}}
-{{with $gae := env "GAE"}}
 {{with $conf := vault (printf "secret/pepper/%s/%s/conf" $environment $version)}}
 {{with $dsm_conf := vault (printf "secret/pepper/%s/%s/dsm/config" $environment $version)}}
 {{with $auth0 := index $conf.Data "auth0"}}
@@ -11,19 +10,19 @@
 {{with $slack := index $conf.Data "slack"}}
 {{with $elasticsearchConf := vault (printf "secret/pepper/%s/%s/elasticsearch" $environment $version)}}
 {
-    {{if eq $gae "true"}}
-        "dbUrl": "{{$conf.Data.gaeDbUrl}}",
-        "housekeepingDbUrl": "{{$conf.Data.gaeHousekeepingDbUrl}}",
-    {{else}}
-        "dbUrl": "{{$conf.Data.dbUrl}}",
-        "housekeepingDbUrl": "{{$conf.Data.housekeepingDbUrl}}",
-    {{end}}
+    "dbUrl": "{{$conf.Data.dbUrl}}",
+    "housekeepingDbUrl": "{{$conf.Data.housekeepingDbUrl}}",
     "defaultTimezone": "{{$conf.Data.defaultTimezone}}",
     "maxConnections": {{$conf.Data.maxConnections}},
     "housekeepingMaxConnections": {{$conf.Data.housekeepingMaxConnections}},
     "port": {{$conf.Data.port}},
     "doLiquibase": {{$conf.Data.doLiquibase}},
     "threadTimeout": {{$conf.Data.threadTimeout}},
+    "auth0IpWhiteList": [
+    {{range $i, $ip := $conf.Data.auth0.ipWhiteList}}
+        {{if $i}},{{end}}"{{ $ip }}"
+    {{end}}
+    ],
     "auth0": {
         "domain": "{{$auth0.domain}}",
         "managementApiSecret": "{{$auth0.managementApiSecret}}",
@@ -43,6 +42,7 @@
     "usePubSubEmulator": false,
     "pubSubProject": "{{$conf.Data.pubSubProject}}",
     "runScheduler": {{$conf.Data.runScheduler}},
+    "restrictRegisterRoute": {{$conf.Data.restrictRegisterRoute}},
     "requireDefaultGcpCredentials": {{$conf.Data.requireDefaultGcpCredentials}},
     "googleProjectId": "{{$conf.Data.googleProjectId}}",
     "pdfArchiveBucket": "{{$conf.Data.pdfArchiveBucket}}",
@@ -107,7 +107,6 @@
         "dsmBaseUrl": "https://dsm.datadonationplatform.org:443"
     {{end}}
 }
-{{end}}
 {{end}}
 {{end}}
 {{end}}

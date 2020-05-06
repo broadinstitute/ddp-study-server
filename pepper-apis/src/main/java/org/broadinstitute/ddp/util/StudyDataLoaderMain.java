@@ -8,6 +8,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -80,6 +82,8 @@ public class StudyDataLoaderMain {
     private String googleBucketName = null;
     private String auth0ClientId = null;
     private Long auth0TenantId = null;
+    private List<String> failedList = null;
+    private List<String> skippedList = null;
 
     public static void main(String[] args) throws Exception {
         initDbConnection();
@@ -230,6 +234,8 @@ public class StudyDataLoaderMain {
 
         if (hasUserList) {
             altPidUserList = Arrays.asList(cmd.getOptionValue('u').split(","));
+            LOG.info("userList size: {}. users: {} ", altPidUserList.size(),
+                    Arrays.toString(altPidUserList.toArray()));
         }
 
         dataLoaderMain.mappingFileName = cmd.getOptionValue("mf");
@@ -246,12 +252,12 @@ public class StudyDataLoaderMain {
 
         if (isPreProcess) {
             LOG.info("Preprocessing Auth0 Email and Address verification");
+            Instant now = Instant.now();
             dataLoaderMain.serviceAccountFile = cmd.getOptionValue("gsa");
             dataLoaderMain.googleBucketName = cmd.getOptionValue("gb");
             PreProcessedData userPreProcessedDto = dataLoaderMain.preProcessAddressAndEmailVerification(cfg, null);
             Gson gson = new GsonBuilder().serializeNulls().create();
             String preProcessedData = gson.toJson(userPreProcessedDto);
-            //LOG.info(preProcessedData);
             if (StringUtils.isBlank(dataLoaderMain.preProcessFileName)) {
                 String dateTime = LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
                 String fileName = dateTime.concat("-preProcessedData.txt");
@@ -265,6 +271,23 @@ public class StudyDataLoaderMain {
                 Files.write(Paths.get(".", dataLoaderMain.preProcessFileName), preProcessedData.getBytes());
             }
             LOG.info("Created pre-processed data file: {} ", dataLoaderMain.preProcessFileName);
+            Instant now2 = Instant.now();
+            Duration duration = Duration.between(now, now2);
+            long secs = duration.getSeconds();
+            long mins = duration.toMinutes();
+            LOG.info("Completed preprocess of {} GB files: {} ", userPreProcessedDto.getAltpidBucketDataMap().size(), new Date());
+            LOG.info("Google Bucket preprocess took : {} secs .. minutes : {} ", secs, mins);
+
+            //Now try to read the file into memory just to make sure its good
+            PreProcessedData preProcessedDataJson = new Gson().fromJson(new FileReader(dataLoaderMain.preProcessFileName),
+                    PreProcessedData.class);
+            LOG.info("Loaded pre-processed data from {}", dataLoaderMain.preProcessFileName);
+            Map<String, Map> bucketData = preProcessedDataJson.getAltpidBucketDataMap();
+            LOG.info("Loaded bucket Data altpid count: {} ", bucketData.size());
+            String firstAltpid = bucketData.keySet().iterator().next();
+            Map<String, JsonElement> surveyData = bucketData.get(firstAltpid);
+            LOG.info("first altpid : {} .. surveyName: {} ",
+                    firstAltpid, surveyData.keySet().iterator().next(), surveyData.values().size());
         } else if (hasGoogleBucket) {
             dataLoaderMain.serviceAccountFile = cmd.getOptionValue("gsa");
             dataLoaderMain.googleBucketName = cmd.getOptionValue("gb");
@@ -337,7 +360,7 @@ public class StudyDataLoaderMain {
     public Map<String, JsonElement> loadDataMapping(String mappingFileName) {
 
         File mapFile = new File(mappingFileName);
-        Map<String, JsonElement> mappingData = new HashMap<String, JsonElement>();
+        Map<String, JsonElement> mappingData = new HashMap<>();
 
         try {
             JsonElement data = new Gson().fromJson(new FileReader(mapFile), new TypeToken<JsonObject>() {
@@ -374,6 +397,8 @@ public class StudyDataLoaderMain {
 
         setRunEmail(dryRun, surveyDataMap.get("datstatparticipantdata"));
         migrationRunReport = new ArrayList<>();
+        failedList = new ArrayList<>();
+        skippedList = new ArrayList<>();
         processParticipant(studyGuid, surveyDataMap, mappingData, dataLoader, null, addressService, olcService);
 
         try {
@@ -399,6 +424,8 @@ public class StudyDataLoaderMain {
         final OLCService olcService = new OLCService(cfg.getString(ConfigFile.GEOCODING_API_KEY));
         final AddressService addressService = new AddressService(cfg.getString(ConfigFile.EASY_POST_API_KEY),
                 cfg.getString(ConfigFile.GEOCODING_API_KEY));
+        //load all Bucket data into memory
+        Map<String, Map> altpidBucketDataMap = new HashMap<>();
         for (Blob file : bucket.list().iterateAll()) {
             if (!file.getName().startsWith("Participant_")) {
                 LOG.info("Skipping bucket file: {}", file.getName());
@@ -406,7 +433,6 @@ public class StudyDataLoaderMain {
                 //not a participant data .. continue to next file.
             }
             String data = new String(file.getContent());
-            LOG.debug(" Bucket File Name: {} \n DATA:\n", file.getName(), data);
             Map<String, JsonElement> surveyDataMap = null;
             try {
                 //load source survey data
@@ -419,6 +445,18 @@ public class StudyDataLoaderMain {
 
             JsonElement datstatData = surveyDataMap.get("datstatparticipantdata");
             String altpid = datstatData.getAsJsonObject().get("datstat_altpid").getAsString();
+            if (altPidUserList != null && !altPidUserList.isEmpty() && !altPidUserList.contains(altpid)) {
+                continue;
+                //skip this one
+            }
+
+            if (StringUtils.isNotBlank(altpid)) {
+                altpidBucketDataMap.put(altpid, surveyDataMap);
+            } else {
+                LOG.error("AltPid null for participant file: {} skipping the file ", file.getName());
+                continue;
+            }
+
             String email = datstatData.getAsJsonObject().get("datstat_email").getAsString();
             userEmailMap.put(altpid, email);
 
@@ -441,8 +479,14 @@ public class StudyDataLoaderMain {
         Set<String> emails = new HashSet<>(userEmailMap.values());
         Map<String, String> existingEmails = studyDataLoader.verifyAuth0Users(emails);
         existingAuth0Emails.addAll(existingEmails.keySet());
+        if (!existingAuth0Emails.isEmpty()) {
+            LOG.warn("Found {} existing emails \n{} ", existingAuth0Emails.size(), Arrays.toString(existingAuth0Emails.toArray()));
+        } else {
+            LOG.info("NO existing emails found.");
+        }
+        LOG.info("Apltpid Map size: {} ", altpidBucketDataMap.size());
 
-        return new PreProcessedData(userEmailMap, userAddressMap, existingAuth0Emails);
+        return new PreProcessedData(userEmailMap, userAddressMap, existingAuth0Emails, altpidBucketDataMap);
     }
 
     private Bucket getGoogleBucket() throws Exception {
@@ -456,13 +500,14 @@ public class StudyDataLoaderMain {
 
     public void processGoogleBucketParticipantFiles(Config cfg, String studyGuid, boolean dryRun) throws Exception {
 
-        LOG.info("processing google bucket files.");
+        LOG.info("Processing google bucket files. {} ", new Date());
+        Instant now = Instant.now();
         //Download files from Google storage
         //iterate through All buckets
-        Bucket bucket = getGoogleBucket();
-        String data;
         StudyDataLoader dataLoader = new StudyDataLoader(cfg);
         migrationRunReport = new ArrayList<>();
+        skippedList = new ArrayList<>();
+        failedList = new ArrayList<>();
 
         PreProcessedData preProcessedData;
         if (StringUtils.isNotEmpty(preProcessFileName)) {
@@ -472,8 +517,14 @@ public class StudyDataLoaderMain {
         } else {
             //load it now
             preProcessedData = preProcessAddressAndEmailVerification(cfg, dataLoader);
-            LOG.info("loaded pre-processed data");
+            LOG.info("loaded pre-processed data. {} ", new Date());
         }
+        Instant nowPreprocessDone = Instant.now();
+        Duration duration = Duration.between(now, nowPreprocessDone);
+        long secs = duration.getSeconds();
+        long mins = duration.toMinutes();
+        LOG.info("Completed preprocess for GB files: {} .. {}", preProcessedData.getAltpidBucketDataMap().size(), new Date());
+        LOG.info("Bucket preprocess load took : {} secs .. minutes : {} ", secs, mins);
 
         //load mapping data
         Map<String, JsonElement> mappingData = loadDataMapping(mappingFileName);
@@ -481,41 +532,22 @@ public class StudyDataLoaderMain {
         final AddressService addressService = new AddressService(cfg.getString(ConfigFile.EASY_POST_API_KEY),
                 cfg.getString(ConfigFile.GEOCODING_API_KEY));
 
-        int bucketCounter = 0;
-        for (Blob file : bucket.list().iterateAll()) {
-            if (!file.getName().startsWith("Participant_")) {
-                LOG.info("Skipping bucket file: {}", file.getName());
-                continue;
-                //not a participant data .. continue to next file.
-            }
-            data = new String(file.getContent());
-            LOG.debug(" Bucket File Name: {} \n DATA:\n", file.getName(), data);
-            Map<String, JsonElement> surveyDataMap = null;
-            try {
-                //load source survey data
-                surveyDataMap = loadSourceDataFile(data);
-            } catch (JsonSyntaxException e) {
-                e.printStackTrace();
-                LOG.error("JSON Exception: while processing participant file: " + e.toString());
-                continue;
-            }
+        Map<String, Map> altpidBucketDataMap = preProcessedData.getAltpidBucketDataMap();
+        for (String altpid : altpidBucketDataMap.keySet()) {
+            Map<String, JsonElement> surveyDataMap = altpidBucketDataMap.get(altpid);
 
             JsonElement datstatData = surveyDataMap.get("datstatparticipantdata");
-            String altpid = datstatData.getAsJsonObject().get("datstat_altpid").getAsString();
             String email = datstatData.getAsJsonObject().get("datstat_email").getAsString();
             setRunEmail(dryRun, datstatData);
 
             if (!dryRun && preProcessedData.getAuth0ExistingEmails().contains(email)) {
-                LOG.error("Skipped file: {} . Email : {} already exists in Auth0. ", file.getName(), email);
+                LOG.error("Skipped altpid: {} . Email : {} already exists in Auth0. ", altpid, email);
+                skippedList.add(altpid);
                 continue;
             }
             if (altPidUserList == null || altPidUserList.isEmpty() || altPidUserList.contains(altpid)) {
                 processParticipant(studyGuid, surveyDataMap, mappingData, dataLoader,
                         preProcessedData.getUserAddressData().get(altpid), addressService, olcService);
-                bucketCounter++;
-            }
-            if (bucketCounter % 100 == 0) {
-                LOG.info("Processed {} participant files. {}", bucketCounter, new Date());
             }
         }
         try {
@@ -528,6 +560,22 @@ public class StudyDataLoaderMain {
             deleteAuth0Emails(cfg, migrationRunReport);
         }
         LOG.info("completed processing google bucket files");
+        Instant nowDone = Instant.now();
+        duration = Duration.between(now, nowDone);
+        secs = duration.getSeconds();
+        mins = duration.toMinutes();
+        LOG.info("Completed processing & loading GB files {}", preProcessedData.getAltpidBucketDataMap().size(), new Date());
+        LOG.info("Bucket participant file load took : {} secs .. minutes : {} ", secs, mins);
+        if (!failedList.isEmpty()) {
+            LOG.error("Failed to load {} altpids: {} ", failedList.size(), Arrays.toString(failedList.toArray()));
+        } else {
+            LOG.info("NO failed load of Altpids...");
+        }
+        if (!skippedList.isEmpty()) {
+            LOG.warn("Skipped {} altpids: {} ", skippedList.size(), Arrays.toString(skippedList.toArray()));
+        } else {
+            LOG.info("NO skipped Altpids...");
+        }
     }
 
     private void processParticipant(String studyGuid, Map<String, JsonElement> sourceData,
@@ -714,10 +762,12 @@ public class StudyDataLoaderMain {
 
                     isSuccess = true;
                 } else {
+                    skippedList.add(altpid);
                     LOG.warn("Participant: {} already loaded into pepper. skipping ", userGuid);
                     previousRun = true;
                 }
             } catch (StudyDataLoader.UserExistsException e) {
+                failedList.add(altpid);
                 auth0Collision = true;
                 LOG.error("Failed to load Participant: " + e.getMessage());
                 e.printStackTrace();
@@ -725,6 +775,7 @@ public class StudyDataLoaderMain {
                 isSuccess = false;
                 LOG.error("Rolled back...");
             } catch (Exception e) {
+                failedList.add(altpid);
                 LOG.error("Failed to load Participant: " + e.getMessage());
                 e.printStackTrace();
                 handle.rollback();
@@ -756,6 +807,7 @@ public class StudyDataLoaderMain {
     private void setRunEmail(boolean dryRun, JsonElement datstatData) {
         if (dryRun) {
             //update email to generated dry run test email
+            String altPid = datstatData.getAsJsonObject().get("datstat_altpid").getAsString();
             String updatedEmail = generateDryRunEmail();
             datstatData.getAsJsonObject().addProperty("datstat_email", updatedEmail);
         }
@@ -872,12 +924,14 @@ public class StudyDataLoaderMain {
         private Map<String, String> userEmailData;
         private Map<String, MailAddress> userAddressData;
         private List<String> auth0ExistingEmails;
+        private Map<String, Map> altpidBucketDataMap = new HashMap<>();
 
         public PreProcessedData(Map<String, String> userEmailData, Map<String, MailAddress> userAddressData,
-                                List<String> auth0ExistingEmails) {
+                                List<String> auth0ExistingEmails, Map<String, Map> bucketDataMap) {
             this.userEmailData = userEmailData;
             this.userAddressData = userAddressData;
             this.auth0ExistingEmails = auth0ExistingEmails;
+            this.altpidBucketDataMap = bucketDataMap;
         }
 
         public Map<String, String> getUserEmailData() {
@@ -891,5 +945,10 @@ public class StudyDataLoaderMain {
         public List<String> getAuth0ExistingEmails() {
             return auth0ExistingEmails;
         }
+
+        public Map<String, Map> getAltpidBucketDataMap() {
+            return altpidBucketDataMap;
+        }
+
     }
 }

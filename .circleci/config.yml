@@ -1,28 +1,41 @@
 version: 2.1
 
 references:
+  tcell_dir: &tcell_dir
+      tcell
+  # to install a new version of tcell, do  "tar -cvfz tcell-x.y.z.tar.gz tcell" after expanding tcell's zip
+  tcell_gcp_path: &tcell_gcp_path
+      gs://ddp-tcell/tcell-1.11.0.tar.gz
   ci_support_image: &ci_support_image
-                       broadinstitute/study-server-build:2020-04-10G
+      broadinstitute/study-server-build:2020-04-30A
   root_path: &root_path
       /home/circleci
   repo_path: &repo_path
-              /home/circleci/repo
+      /home/circleci/repo
   m2_cache_key: &m2_cache_key
-                  pom.xml2-{{ checksum "pom.xml" }}
+      pom.xml2-{{ checksum "pom.xml" }}-{{ checksum "parent-pom.xml" }}
   m2_cache_restore_key: &m2_cache_keys
     keys:
       - *m2_cache_key
       - pom.xml2-
   m2_repo_path: &m2_repo_path
-             /home/circleci/.m2/repository
+      /home/circleci/.m2/repository
   pepper_apis_path: &pepper_apis_path
             /home/circleci/repo/pepper-apis
+  api-spec-path: &api-spec-path
+            /home/circleci/repo/pepper-apis/docs/specification
   circleci_path: &circleci_path
-            /home/circleci/repo/.circleci
+      /home/circleci/repo/.circleci
   builds_bucket: &builds_bucket
-            ddp-build-artifacts
+      ddp-build-artifacts
+  github_dispatch_repo_path: &github_dispatch_repo_path
+      /broadinstitute/ddp-angular
+  gitub_dispatch_config_path: &github_dispatch_config_path
+    /config/deployment
+  github_dispatch_config_branch: &github_dispatch_config_branch
+    develop
   jar_build_bucket_dir: &jar_build_bucket_dir
-        /ddp-study-server-pepper-apis
+      /ddp-study-server-pepper-apis
   housekeeping_test_db: &housekeeping_test_db
       housekeepingdb
   studyserver_test_db: &studyserver_test_db
@@ -32,9 +45,6 @@ references:
 
 
 executors:
-  build-executor:
-    docker:
-      - image: broadinstitute/study-server-build:java-2020-04-15A
   test-executor:
     docker:
       - image: broadinstitute/study-server-build:java-2020-04-20A
@@ -48,11 +58,34 @@ executors:
           MYSQL_PASSWORD: passw0rd
     resource_class: medium+ #default medium not big enough for tests
 
-  deploy-executor:
+  build-deploy-executor:
     docker: # todo: create new image endpoint, add this in admin tab for faster starts
     - image: *ci_support_image
 
 commands:
+  install-tcell:
+    parameters:
+      tcell_gcp_path:
+        type: string
+        default: *tcell_gcp_path
+    steps:
+      - run:
+          name: Download tcell files from bucket
+          command: |
+            TCELL_GCP_PATH='<<parameters.tcell_gcp_path>>'
+            vault read -format=json  secret/pepper/prod/v1/conf | jq -r .data.gcp.serviceKey | gcloud auth activate-service-account --key-file=-
+            TAR_FILE_URL=`gsutil ls $TCELL_GCP_PATH | sort -r | head -1`
+
+            if [ -z $TAR_FILE_URL ]
+            then
+              echo "Could not find tcell archive ${TCELL_GCP_PATH}"
+              exit 1
+            fi
+            TAR_FILE_PATH="/tmp/$(basename -- $TAR_FILE_URL)"
+            gsutil cp  $TAR_FILE_URL $TAR_FILE_PATH
+
+            # untarring will create a "tcell" dir
+            tar --no-same-owner -xvf $TAR_FILE_PATH
   build-jar:
     description: Build jar
     parameters:
@@ -88,14 +121,11 @@ commands:
               DEPLOY_ENV=dev
             ;;
             # @todo remove when done
-              study-server-parallel-tests)
+            GAE_Migration1)
               DEPLOY_ENV=dev
             ;;
             test)
               DEPLOY_ENV=test
-            ;;
-            test_deleteme1)
-              DEPLOY_ENV=dev
             ;;
             staging)
               DEPLOY_ENV=staging
@@ -110,7 +140,7 @@ commands:
             esac
             echo "Setting deployment ENVIRONMENT to $DEPLOY_ENV"
             echo "export ENVIRONMENT=$DEPLOY_ENV" >> $BASH_ENV
-            source $BASH_ENV          
+            source $BASH_ENV
 
   render-configs:
     description: render config files
@@ -143,7 +173,7 @@ commands:
             mysql -h 127.0.0.1 -u root --password=$MYSQL_ROOT_PASSWORD test_db --execute="CREATE DATABASE << parameters.studyserverdb >> CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
             mysql -h 127.0.0.1 -u root --password=$MYSQL_ROOT_PASSWORD test_db --execute="CREATE DATABASE << parameters.housekeepingdb >> CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
           environment: *DB_VARS
-    
+
   show-pipeline-vars:
     description: "Show pipeline vars"
     steps:
@@ -186,7 +216,7 @@ commands:
             JAR_BUCKET_URL="gs://${BUILDS_BUCKET}${JAR_BUILD_BUCKET_DIR}/${JAR_FILE_NAME}"
             gsutil cp "${LOCAL_JAR_FILE_PATH}" "${JAR_BUCKET_URL}"
             echo "${JAR_FILE_NAME} successfully uploaded to ${JAR_BUCKET_URL}"
-  
+
   retrieve-jar:
     description: Get <<parameters.jar_base_name>> jar from bucket
     parameters:
@@ -229,16 +259,23 @@ commands:
       deploy_dir:
         type: string
         default: deployment-assets
+      tcell_dir:
+        type: string
+        default: *tcell_dir
     steps:
       - set-deployment-env
       - render-configs
+      - install-tcell
       - run:
           name: Gather deployment assets
           command: |
             DEPLOY_DIR='<<parameters.deploy_dir>>'
+            TCELL_DIR='<<parameters.tcell_dir>>'
             rm -rf $DEPLOY_DIR
             mkdir -p $DEPLOY_DIR
             cd $DEPLOY_DIR
+            cp -r ../$TCELL_DIR .
+            cp ../output-config/tcell_agent.config $TCELL_DIR
             cp ../target/<<parameters.jar_base_name>>.jar .
             cp ../src/appengine/<<parameters.jar_base_name>>.yaml .
             cp ../output-config/application.conf .
@@ -250,12 +287,24 @@ commands:
             gcloud app deploy --version="${SHORT_GIT_SHA}" --stop-previous-version --project "broad-ddp-${ENVIRONMENT}" <<parameters.deploy_dir>>/<<parameters.jar_base_name>>.yaml
       - update-deployment-sheet:
           jar_base_name: <<parameters.jar_base_name>>
+      - delete-old-service-versions:
+          deploy_dir: <<parameters.deploy_dir>>
+          deploy_config_base_name: <<parameters.jar_base_name>>
+
+  delete-old-service-versions:
+    parameters:
+      deploy_dir:
+        type: string
+      deploy_config_base_name:
+        type: string
+        default: app
+    steps:
       - run:
           name: Delete previous versions of service
           command: |
             set +x
             # extract the service name from the GAE yaml file
-            CONFIG_FILE="<<parameters.deploy_dir>>/<<parameters.jar_base_name>>.yaml"
+            CONFIG_FILE="<<parameters.deploy_dir>>/<<parameters.deploy_config_base_name>>.yaml"
             SERVICE=$(grep -Eo -m1 "^service:\s*.*" "${CONFIG_FILE}" | awk '{print $2}')
             echo "The service name is *${SERVICE}*"
 
@@ -275,6 +324,40 @@ commands:
               gcloud app versions delete --quiet --service "$SERVICE" "$CURRENT_VERSION" --project "broad-ddp-${ENVIRONMENT}"
             done;
             exit 0
+
+  update-dispatch-rules:
+    parameters:
+      config_repo_path:
+        type: string
+        default: *github_dispatch_repo_path
+      config_file_path:
+        type: string
+        default: *github_dispatch_config_path
+      config_branch:
+        type: string
+        default: *github_dispatch_config_branch
+    steps:
+      - run:
+          name: Get dispatch.yaml file
+          command: |
+            # We are going to copy the dispatch file from the other repo
+            set -u
+            API_BASE_URL='https://api.github.com/repos'
+            API_BASE_PATH="<< parameters.config_repo_path >>/contents"
+            FILE_PATH="<< parameters.config_file_path >>/${ENVIRONMENT}/dispatch.yaml"
+            FILE_URL="${API_BASE_URL}${API_BASE_PATH}${FILE_PATH}"
+            BRANCH="<< parameters.config_branch >>"
+            FULL_URL="${FILE_URL}?ref=${BRANCH}"
+            curl \
+              -H 'Accept:application/vnd.github.v3.raw' \
+              "$FULL_URL" \
+              -o dispatch.yaml
+            cat dispatch.yaml
+      - run:
+          name: Update GAE dispatch config
+          command: |
+            set -u
+            gcloud app deploy --quiet --project "broad-ddp-${ENVIRONMENT}" dispatch.yaml
 
   update-deployment-sheet:
     parameters:
@@ -419,7 +502,6 @@ commands:
                     $CHECKSTYLE_OPTION \
                     $SKIPTESTS_OPTION \
                     -Ditext.license=output-config/itextkey.xml \
-                    -Dddp.firecloudKeysDir=output-config/fc_keys \
                     -Dconfig.file=output-build-config/testing-inmemorydb.conf  \
                     -Dmaven.repo.local=<< parameters.m2_repo >> <<parameters.additional_options>>
           background: <<parameters.background>>
@@ -467,6 +549,39 @@ commands:
           port: 5556
           timeout: 60
 
+  compile-all-jars:
+    description: Compile and run checkstyle on all jars
+    parameters:
+      m2_repo:
+        type: string
+        default: *m2_repo_path
+      repo_path:
+        type: string
+        default: *repo_path
+      restore_m2_cache:
+        type: boolean
+        default: false
+    steps:
+      - when:
+          condition: << parameters.restore_m2_cache >>
+          steps:
+            - restore_cache: *m2_cache_keys
+      - run:
+          name: Compile and run checkstyle on all jars
+          command: |
+            # Install pepper-apis to .m2 so we can compile study-builder
+            mvn install --batch-mode -DskipTests -Dmaven.repo.local=<< parameters.m2_repo >>
+
+            # Just need to get parent-pom into .m2 so don't need to run checkstyle.
+            mvn install -f parent-pom.xml --batch-mode -DskipTests -Dcheckstyle.skip -Dmaven.repo.local=<< parameters.m2_repo >>
+
+            # Compile housekeeping
+            mvn test-compile -f housekeeping-pom.xml --batch-mode -DskipTests -Dmaven.repo.local=<< parameters.m2_repo >>
+
+            # Compile study-builder
+            cd << parameters.repo_path >>/study-builder
+            mvn test-compile --batch-mode -DskipTests -Dmaven.repo.local=<< parameters.m2_repo >>
+
 jobs:
   compile-and-run-test-suite-job:
     executor:
@@ -476,14 +591,16 @@ jobs:
       - checkout:
           path: *repo_path
       - setup-shared-env
+      - compile-all-jars:
+          restore_m2_cache: true
       - render-configs
       - create-test-dbs
       - run-maven-with-pepper-options:
           phase: test
           skip_tests: false
-          skip_checkstyle: false
+          skip_checkstyle: true
           additional_options: '-Dtest=ServerInSameProcessIntegrationTestSuite'
-          restore_m2_cache: true
+          restore_m2_cache: false
 
   parallel-compile-and-test-job:
     executor:
@@ -511,6 +628,13 @@ jobs:
           skip_tests: false
           additional_options: '-PCircleciParallelBuild -Dsurefire.excludesFile=$IGNORE_CLASS_LIST_PATH'
           save_m2_cache: true
+      - run:
+          name: 'Check node index to save workspace only once'
+          command: |
+            if [[ "$CIRCLE_NODE_INDEX" -ne 0 ]]; then
+              echo "Skip persist workspace on this node";
+              circleci step halt;
+            fi
       - persist_to_workspace:
           root: *root_path
           paths:
@@ -518,7 +642,7 @@ jobs:
 
   store-jar-job:
     executor:
-      name: deploy-executor
+      name: build-deploy-executor
     working_directory: *pepper_apis_path
     steps:
       - attach_workspace:
@@ -535,7 +659,7 @@ jobs:
 
   deploy-jar-from-workspace-job:
     executor:
-      name: deploy-executor
+      name: build-deploy-executor
     working_directory: *pepper_apis_path
     steps:
       - attach_workspace:
@@ -549,10 +673,11 @@ jobs:
           pom_file: housekeeping-pom.xml
       - deploy-jar:
           jar_base_name: Housekeeping
+      - update-dispatch-rules
 
   deploy-stored-jar-job:
     executor:
-      name: deploy-executor
+      name: build-deploy-executor
     working_directory: *pepper_apis_path
     steps:
       - checkout:
@@ -565,7 +690,29 @@ jobs:
       - retrieve-jar:
           jar_base_name: Housekeeping
       - deploy-jar:
-          jar_base_name: Housekeeping    
+          jar_base_name: Housekeeping
+      - update-dispatch-rules
+
+  deploy-docs-job:
+    executor:
+      name: build-deploy-executor
+    working_directory: *api-spec-path
+    steps:
+      - checkout:
+          path: *repo_path
+      - run:
+          name: Build docs
+          command: ./build.sh documentation
+      - setup-shared-env
+      - set-deployment-env
+      - auth-gcp-service-account
+      - run:
+          name: Deploy docs website
+          command: |
+            set -u
+            gcloud app deploy --version="${SHORT_GIT_SHA}" --stop-previous-version --project "broad-ddp-${ENVIRONMENT}" deploy/app.yaml
+      - delete-old-service-versions:
+            deploy_dir: deploy
 
 parameters:
   on_demand:
@@ -585,7 +732,7 @@ workflows:
                 - develop
                 - &rc /^rc.*/
                 - &hotfix /^hotfix.*/
-                - study-server-parallel-tests
+                - GAE_Migration1
       - parallel-compile-and-test-job:
           parallelism: *test_parallelism
           <<: *compile_and_test_filters
@@ -594,7 +741,7 @@ workflows:
             branches:
               only:
                 - develop
-                - study-server-parallel-tests
+                - GAE_Migration1
           requires:
             - parallel-compile-and-test-job
             - compile-and-run-test-suite-job
@@ -604,7 +751,6 @@ workflows:
               only:
                 - *rc
                 - *hotfix
-                - study-server-parallel-tests
           requires:
             - compile-and-run-test-suite-job
             - parallel-compile-and-test-job
@@ -625,8 +771,12 @@ workflows:
                 - test
                 - staging
                 - production
-                # @todo remove when done
-                - test_deleteme1
 
-
+  deploy-api-docs-workflow:
+    jobs:
+      - deploy-docs-job:
+          filters:
+            branches:
+              only:
+                - develop
 

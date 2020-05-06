@@ -22,7 +22,7 @@ function build_docs_image {
             --user $(id -u ${USER}):$(id -g ${USER}) \
             --volume "${PWD}/${docs_path}":"/build" \
             --workdir "/build" \
-            node:8-slim \
+            node:10-slim \
             ./build.sh documentation
     else
         (
@@ -292,7 +292,7 @@ VERSION=$1
 ENVIRONMENT=$2
 DIR=$3
 VAULT_TOKEN=$VAULT_TOKEN
-tag=${VERSION}_${ENV}
+tag=${VERSION}_${ENVIRONMENT}
 
 GIT_SHA="${GIT_SHA:-$(git rev-parse --verify HEAD)}"
 GIT_SHA_SHORT=${GIT_SHA:0:12}

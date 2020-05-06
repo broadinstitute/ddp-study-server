@@ -172,6 +172,9 @@
             "activityVersion": {
               "type": "keyword"
             },
+            "guid": {
+              "type": "keyword"
+            },
             "status": {
               "type": "keyword"
             },

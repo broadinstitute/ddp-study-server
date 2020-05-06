@@ -751,6 +751,7 @@ public class DataExporter {
                 ActivityInstanceRecord activityInstanceRecord = new ActivityInstanceRecord(
                         instance.getActivityVersionTag(),
                         instance.getActivityCode(),
+                        instance.getGuid(),
                         lastStatus.getType(),
                         instance.getCreatedAt(),
                         instance.getFirstCompletedAt(),
