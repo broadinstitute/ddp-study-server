@@ -541,7 +541,6 @@ public class DataDonationPlatform {
             throw new DDPException("Could not initalize rate limits",e);
         }
         before("*", (req, res) -> {
-                LOG.info("throttle");
                 rateLimitFilter.doFilter(req.raw(), res.raw(), (request, response) -> {});
             }
         );
