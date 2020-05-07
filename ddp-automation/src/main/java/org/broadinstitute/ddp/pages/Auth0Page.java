@@ -126,32 +126,14 @@ public class Auth0Page extends DDPPage {
 
     public void inputApplicationUserName(String username) {
         waitUntilApplicationElementsAreDisplayed();
-        /*try {
-            logger.info("Waiting 60 seconds");
-            Thread.sleep(60000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }*/
         JDIPageUtils.inputText(applicationEmail.getWebElement(), username);
     }
 
     public void inputApplicationUserPassword(String password) {
-        /*try {
-            logger.info("Waiting 60 seconds");
-            Thread.sleep(60000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }*/
         applicationPassword.newInput(password);
     }
 
     public void clickApplicationSubmit() {
-        /*try {
-            logger.info("Waiting 60 seconds");
-            Thread.sleep(60000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }*/
         applicationLogin.click();
         JDIPageUtils.detectStalenessOfElement(applicationLogin.getLocator());
     }

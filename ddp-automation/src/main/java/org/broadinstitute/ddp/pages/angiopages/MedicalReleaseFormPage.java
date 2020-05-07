@@ -188,7 +188,6 @@ public class MedicalReleaseFormPage extends DDPPage {
     public void setOptionalStreetAddress(String streetAddress) {
         JDIPageUtils.scrollDownToElement(STREET_ADDRESS_OPTIONAL_INPUT_XPATH);
         JDIPageUtils.inputText(addressStreetOptional, streetAddress);
-        //JDIPageUtils.inputUsingJavaScript(streetAddress, addressStreetOptional);
         //The Tab key press is to get rid of the auto-complete suggestions
         addressStreetOptional.sendKeys(Keys.TAB);
         addressStreetOptional.sendKeys(Keys.RETURN);
@@ -340,7 +339,6 @@ public class MedicalReleaseFormPage extends DDPPage {
         shortWait.until(ExpectedConditions.visibilityOf(submit));
         JDIPageUtils.scrollDownToElement(SUBMIT_BUTTON_XPATH);
         submit.click();
-        //JDIPageUtils.doubleClickAndWait(submit);
     }
 
     public void waitUntilContentDisplayed() {

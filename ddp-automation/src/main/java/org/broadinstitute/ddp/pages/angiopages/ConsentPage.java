@@ -111,7 +111,6 @@ public class ConsentPage extends DDPPage {
         JDIPageUtils.scrollDownToElement(CONSENT_INSTRUCTIONS_XPATH);
         Assert.assertTrue(consentInstructions.isDisplayed());
         logger.info("Consent intructions are displayed");
-        //JDIPageUtils.scrollDownToElement(CONSENT_TEXT_CONTENT_XPATH);
     }
 
     public void setAgreeToSampleOfBloodBeingDrawn(String response) {

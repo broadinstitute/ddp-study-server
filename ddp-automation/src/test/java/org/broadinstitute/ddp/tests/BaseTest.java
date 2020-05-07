@@ -124,6 +124,7 @@ public abstract class BaseTest {
             buildName = System.getProperty(BUILD_PROPERTY);
             if (StringUtils.isBlank(buildName)) {
                 buildName = System.getProperty("user.name");
+                logger.info("Build Name: {}", buildName);
             }
         } catch (ExceptionInInitializerError error) {
             logger.info("Error info: {}", error.getCause());

@@ -95,15 +95,6 @@ public class DatabaseUtility {
     }
 
     public static void unlockGatekeeperPage(GatekeeperPage gatekeeperPage) {
-        /*TransactionWrapper.withTxn(handle -> {
-            //Database connection needs some work - connection related failures concerning TransactionWrapper
-            JdbiUmbrellaStudy umbrellaStudyDao = handle.attach(JdbiUmbrellaStudy.class);
-            String password = umbrellaStudyDao.getIrbPasswordUsingStudyGuid(ANGIO_STUDY_GUID);
-            logger.info("Password: {}", password);
-            gatekeeperPage.setPassword(IRB_PASSWORD);
-            return null;
-
-        });*/
         gatekeeperPage.setPassword(IRB_PASSWORD);
     }
 
