@@ -137,6 +137,7 @@ public class ConfigFile {
     public static final String USE_DISPOSABLE_TEST_DB = "useDisposableTestDbs";
 
     public static final String AUTH0_IP_WHITE_LIST = "auth0IpWhiteList";
+    public static final String PREFERRED_SOURCE_IP_HEADER = "preferredSourceIPHeader";
 
     public static final class SqlQuery {
         public static final String ACTIVITY_INSTANCE_GUID_AND_PARTICIPANT_ID_BY_STUDY_GUID =
@@ -147,6 +148,11 @@ public class ConfigFile {
 
         public static final String MAX_INSTANCES_PER_USER = "max_instances_per_user";
         public static final String NUM_INSTANCES_FOR_USER = "num_instances_for_user";
+    }
+
+    public static final class API_RATE_LIMIT {
+        public static final String MAX_QUERIES_PER_SECOND = "nginx.apiLimitRate";
+        public static final String BURST = "nginx.apiLimitBurst";
     }
 
     /**

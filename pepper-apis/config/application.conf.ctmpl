@@ -57,6 +57,7 @@
         "studyExport": "{{$conf.Data.schedules.studyExport}}",
         "tempUserCleanup": "{{$conf.Data.schedules.tempUserCleanup}}"
     },
+    "preferredSourceIPHeader":"X-AppEngine-User-IP",
     "sendgrid": {
         "fromName": "{{$conf.Data.sendgrid.fromName}}",
         "fromEmail": "{{$conf.Data.sendgrid.fromEmail}}"
