@@ -544,13 +544,12 @@ public class DataDonationPlatform {
                     "maxRequestsPerSec", Integer.toString(maxRequestsPerSecond),
                     "throttledRequests", Integer.toString(burst),
                     "tooManyCode", "503")));
-        } catch(ServletException e) {
-            throw new DDPException("Could not initalize rate limits",e);
+        } catch (ServletException e) {
+            throw new DDPException("Could not initalize rate limits", e);
         }
         before("*", (req, res) -> {
-                rateLimitFilter.doFilter(req.raw(), res.raw(), (request, response) -> {});
-            }
-        );
+            rateLimitFilter.doFilter(req.raw(), res.raw(), (request, response) -> { });
+        });
     }
 
     private static void setupApiActivityFilter() {
@@ -689,8 +688,10 @@ public class DataDonationPlatform {
             this.preferredIPSourceHeader = preferredIPSourceHeader;
         }
 
-        public EmbeddedServer create(Routes routeMatcher, StaticFilesConfiguration staticFilesConfiguration, ExceptionMapper exceptionMapper, boolean hasMultipleHandler) {
-            MatcherFilter matcherFilter = new MatcherFilter(routeMatcher, staticFilesConfiguration, exceptionMapper, false, hasMultipleHandler);
+        public EmbeddedServer create(Routes routeMatcher, StaticFilesConfiguration staticFilesConfiguration,
+                                     ExceptionMapper exceptionMapper, boolean hasMultipleHandler) {
+            MatcherFilter matcherFilter = new MatcherFilter(routeMatcher, staticFilesConfiguration, exceptionMapper, false,
+                    hasMultipleHandler);
             matcherFilter.init((FilterConfig)null);
             SessionHandler handler = new JettyCustomRemoteAddrHeaderHandler(matcherFilter, this.preferredIPSourceHeader);
             handler.getSessionCookieConfig().setHttpOnly(this.httpOnly);
@@ -722,7 +723,8 @@ public class DataDonationPlatform {
             this.preferredIPSourceHeader = preferredIPSourceHeader;
         }
 
-        public void doHandle(String target, org.eclipse.jetty.server.Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+        public void doHandle(String target, org.eclipse.jetty.server.Request baseRequest, HttpServletRequest request,
+                             HttpServletResponse response) throws IOException, ServletException {
             HttpRequestWrapper wrapper = new SourceIPHeaderRequestWrapper(request, preferredIPSourceHeader);
             this.filter.doFilter(wrapper, response, null);
             if (wrapper.notConsumed()) {
@@ -744,7 +746,8 @@ public class DataDonationPlatform {
             Server server;
             if (maxThreads > 0) {
                 int min = minThreads > 0 ? minThreads : 8;
-                int idleTimeout = threadTimeoutMillis > 0 ? threadTimeoutMillis : '\uea60';
+
+                int idleTimeout = threadTimeoutMillis > 0 ? threadTimeoutMillis : 30_000;
                 server = new Server(new QueuedThreadPool(maxThreads, min, idleTimeout));
             } else {
                 server = new Server();
