@@ -23,7 +23,7 @@ public class RateLimitFilter implements Filter {
         DoSFilter rateLimitFilter = new DoSFilter();
         rateLimitFilter.setEnabled(true);
         try {
-            rateLimitFilter.init(new FilterConfig("DOSFilter", Map.of("delayMs", "-1",
+            rateLimitFilter.init(new FilterConfig("DOSFilter", Map.of("delayMs", "0",
                     "maxRequestsPerSec", Integer.toString(maxRequestsPerSecond),
                     "throttledRequests", Integer.toString(burst),
                     "tooManyCode", "503")));
