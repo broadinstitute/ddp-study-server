@@ -1,12 +1,11 @@
 package org.broadinstitute.ddp.db.dao;
 
-import java.sql.Timestamp;
+import java.time.Instant;
 
 import org.broadinstitute.ddp.constants.SqlConstants;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.dto.InvitationDto;
 import org.broadinstitute.ddp.model.invitation.InvitationType;
-import org.broadinstitute.ddp.util.TimestampUtil;
 import org.jdbi.v3.sqlobject.SqlObject;
 
 public interface InvitationFactory extends SqlObject {
@@ -16,14 +15,12 @@ public interface InvitationFactory extends SqlObject {
      * using the current time as creation time and generating a new guid.
      */
     default InvitationDto createInvitation(InvitationType invitationType, long studyId, long userId, String email) {
-        Timestamp createdAt = TimestampUtil.now();
+        Instant createdAt = Instant.now();
         String guid = generateGuid();
-        long invitationId = getHandle().attach(InvitationSql.class).insertInvitation(invitationType, guid, studyId, userId, createdAt,
-                email);
-
+        long invitationId = getHandle().attach(InvitationSql.class)
+                .insertInvitation(invitationType, guid, studyId, userId, createdAt, email);
         return new InvitationDto(guid, invitationId, createdAt, null, null, null, studyId, userId,
                 invitationType, email);
-
     }
 
     /**

@@ -1,6 +1,6 @@
 package org.broadinstitute.ddp.db.dto;
 
-import java.sql.Timestamp;
+import java.time.Instant;
 
 import org.broadinstitute.ddp.model.invitation.InvitationType;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
@@ -14,15 +14,15 @@ public class InvitationDto {
     private String invitationGuid;
 
     // auto generated
-    private Long invitationId;
+    private long invitationId;
 
-    private Timestamp createdAt;
+    private Instant createdAt;
 
-    private Timestamp voidedAt;
+    private Instant voidedAt;
 
-    private Timestamp verifiedAt;
+    private Instant verifiedAt;
 
-    private Timestamp acceptedAt;
+    private Instant acceptedAt;
 
     private long studyId;
 
@@ -38,10 +38,10 @@ public class InvitationDto {
     @JdbiConstructor
     public InvitationDto(@ColumnName("invitation_guid") String invitationGuid,
                          @ColumnName("invitation_id") long invitationId,
-                         @ColumnName("created_at") Timestamp createdAt,
-                         @ColumnName("voided_at") Timestamp voidedAt,
-                         @ColumnName("verified_at") Timestamp verifiedAt,
-                         @ColumnName("accepted_at") Timestamp acceptedAt,
+                         @ColumnName("created_at") Instant createdAt,
+                         @ColumnName("voided_at") Instant voidedAt,
+                         @ColumnName("verified_at") Instant verifiedAt,
+                         @ColumnName("accepted_at") Instant acceptedAt,
                          @ColumnName("study_id") long studyId,
                          @ColumnName("user_id") long userId,
                          @ColumnName("invitation_type_code") InvitationType invitationType,
@@ -56,10 +56,9 @@ public class InvitationDto {
         this.userId = userId;
         this.invitationType = invitationType;
         this.contactEmail = email;
-
     }
 
-    public Long getInvitationId() {
+    public long getInvitationId() {
         return invitationId;
     }
 
@@ -67,19 +66,19 @@ public class InvitationDto {
         return invitationGuid;
     }
 
-    public Timestamp getCreatedAt() {
+    public Instant getCreatedAt() {
         return createdAt;
     }
 
-    public Timestamp getVoidedAt() {
+    public Instant getVoidedAt() {
         return voidedAt;
     }
 
-    public Timestamp getVerifiedAt() {
+    public Instant getVerifiedAt() {
         return verifiedAt;
     }
 
-    public Timestamp getAcceptedAt() {
+    public Instant getAcceptedAt() {
         return acceptedAt;
     }
 
@@ -95,7 +94,7 @@ public class InvitationDto {
         return invitationType;
     }
 
-    public void setCreatedAt(Timestamp createdAt) {
+    public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
     }
 

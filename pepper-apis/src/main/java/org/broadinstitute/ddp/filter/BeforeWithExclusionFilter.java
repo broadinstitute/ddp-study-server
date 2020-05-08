@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.filter;
 
+import static spark.Spark.after;
 import static spark.Spark.before;
 
 import java.util.List;
@@ -33,4 +34,11 @@ public class BeforeWithExclusionFilter {
         beforeWithExclusion(filterPath, List.of(pathToExclude), filter);
     }
 
+    public static void afterWithExclusion(String filterPath, List<String> pathsToExclude, Filter filter) {
+        after(filterPath, new ExcludePathFilterWrapper(filter, pathsToExclude));
+    }
+
+    public static void afterWithExclusion(String filterPath, String pathToExclude, Filter filter) {
+        afterWithExclusion(filterPath, List.of(pathToExclude), filter);
+    }
 }

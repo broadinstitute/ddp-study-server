@@ -4,8 +4,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -31,20 +31,20 @@ public class InvitationDaoTest extends TxnAwareBaseTest {
 
             // check some generated values
             assertNotNull(invitation.getInvitationId());
-            assertTrue(invitation.getCreatedAt().before(new Timestamp(Instant.now().toEpochMilli())));
+            assertTrue(invitation.getCreatedAt().isBefore(Instant.now()));
 
             // set various dates
-            Timestamp createdAt = invitation.getCreatedAt();
-            Timestamp acceptedAt = new Timestamp(createdAt.getTime() + (2 * 10000));
-            Timestamp verifiedAt = new Timestamp(createdAt.getTime() + (4 * 10000));
-            Timestamp voidedAt = new Timestamp(createdAt.getTime() + (6 * 10000));
+            Instant createdAt = invitation.getCreatedAt();
+            Instant acceptedAt = createdAt.plus(2 * 10000, ChronoUnit.MILLIS);
+            Instant verifiedAt = createdAt.plus(4 * 10000, ChronoUnit.MILLIS);
+            Instant voidedAt = createdAt.plus(6 * 10000, ChronoUnit.MILLIS);
 
-            invitationDao.updateAcceptedAt(acceptedAt, invitation.getInvitationGuid());
-            invitationDao.updateVerifiedAt(verifiedAt, invitation.getInvitationGuid());
-            invitationDao.updateVoidedAt(voidedAt, invitation.getInvitationGuid());
+            invitationDao.updateAcceptedAt(invitation.getInvitationId(), acceptedAt);
+            invitationDao.updateVerifiedAt(invitation.getInvitationId(), verifiedAt);
+            invitationDao.updateVoidedAt(invitation.getInvitationId(), voidedAt);
 
             // requery and verify
-            InvitationDto requeriedInvitation = invitationDao.findByInvitationGuid(invitation.getInvitationGuid()).get();
+            InvitationDto requeriedInvitation = invitationDao.findByInvitationGuid(studyId, invitation.getInvitationGuid()).get();
 
             assertEquals(createdAt, requeriedInvitation.getCreatedAt());
             assertEquals(acceptedAt, requeriedInvitation.getAcceptedAt());

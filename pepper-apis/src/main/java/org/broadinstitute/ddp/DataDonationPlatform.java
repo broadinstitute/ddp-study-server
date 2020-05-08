@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp;
 
 import static com.google.common.net.HttpHeaders.X_FORWARDED_FOR;
+import static org.broadinstitute.ddp.filter.BeforeWithExclusionFilter.afterWithExclusion;
 import static org.broadinstitute.ddp.filter.BeforeWithExclusionFilter.beforeWithExclusion;
 import static org.broadinstitute.ddp.filter.WhiteListFilter.whitelist;
 import static spark.Spark.after;
@@ -55,6 +56,7 @@ import org.broadinstitute.ddp.monitoring.StackdriverMetricsTracker;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.pex.TreeWalkInterpreter;
 import org.broadinstitute.ddp.route.AddProfileRoute;
+import org.broadinstitute.ddp.route.CheckInvitationRoute;
 import org.broadinstitute.ddp.route.CheckIrbPasswordRoute;
 import org.broadinstitute.ddp.route.CreateActivityInstanceRoute;
 import org.broadinstitute.ddp.route.CreateMailAddressRoute;
@@ -263,8 +265,12 @@ public class DataDonationPlatform {
         // - StudyLanguageContentLanguageSettingFilter sets the "Content-Language" header later on
         before(API.BASE + "/user/*/studies/*", new StudyLanguageResolutionFilter());
         after(API.BASE + "/user/*/studies/*", new StudyLanguageContentLanguageSettingFilter());
-        before(API.BASE + "/studies/*", new StudyLanguageResolutionFilter());
-        after(API.BASE + "/studies/*", new StudyLanguageContentLanguageSettingFilter());
+        beforeWithExclusion(API.BASE + "/studies/*",
+                List.of(API.INVITATIONS_VERIFY, API.INVITATIONS_CHECK),
+                new StudyLanguageResolutionFilter());
+        afterWithExclusion(API.BASE + "/studies/*",
+                List.of(API.INVITATIONS_VERIFY, API.INVITATIONS_CHECK),
+                new StudyLanguageContentLanguageSettingFilter());
 
         enableCORS("*", String.join(",", CORS_HTTP_METHODS), String.join(",", CORS_HTTP_HEADERS));
         setupCatchAllErrorHandling();
@@ -442,7 +448,8 @@ public class DataDonationPlatform {
                 responseSerializer
         );
 
-        post(API.VERIFY_INVITATION, new VerifyInvitationRoute(), responseSerializer);
+        post(API.INVITATIONS_VERIFY, new VerifyInvitationRoute(), responseSerializer);
+        post(API.INVITATIONS_CHECK, new CheckInvitationRoute(), responseSerializer);
 
         Runnable runnable = () -> {
             var dsm = new DsmClient(cfg);
