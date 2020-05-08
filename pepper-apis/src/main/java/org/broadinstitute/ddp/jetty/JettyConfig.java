@@ -138,9 +138,9 @@ public class JettyConfig {
             super(request);
             remoteAddr = request.getRemoteAddr();
             if (StringUtils.isNotBlank(preferredHeaderForIP)) {
-                String appEngineSourceIp = request.getHeader(preferredHeaderForIP);
-                if (StringUtils.isNotBlank(appEngineSourceIp)) {
-                    remoteAddr = appEngineSourceIp;
+                String IPFromHeader = request.getHeader(preferredHeaderForIP);
+                if (StringUtils.isNotBlank(IPFromHeader)) {
+                    remoteAddr = IPFromHeader;
                 }
             }
         }
