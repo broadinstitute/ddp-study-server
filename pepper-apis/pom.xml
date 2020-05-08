@@ -74,12 +74,4 @@
             </plugin>
         </plugins>
     </build>
-
-    <dependencies>
-        <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-servlets</artifactId>
-            <version>9.4.28.v20200408</version>
-        </dependency>
-    </dependencies>
 </project>
