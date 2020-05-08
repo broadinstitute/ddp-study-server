@@ -1,6 +1,6 @@
 package org.broadinstitute.ddp.db.dao;
 
-import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -22,21 +22,24 @@ public interface InvitationDao extends SqlObject {
 
     @SqlQuery("select i.*, it.invitation_type_code from invitation as i"
             + "  join invitation_type as it on i.invitation_type_id = it.invitation_type_id"
-            + " where i.invitation_guid = :guid")
+            + " where i.study_id = :studyId and i.invitation_guid = :guid")
     @RegisterConstructorMapper(InvitationDto.class)
-    Optional<InvitationDto> findByInvitationGuid(@Bind("guid") String invitationGuid);
+    Optional<InvitationDto> findByInvitationGuid(@Bind("studyId") long studyId, @Bind("guid") String invitationGuid);
 
-    @SqlUpdate("update invitation set voided_at = :voidedAt where invitation_guid = :invitationGuid")
-    int updateVoidedAt(@Bind("voidedAt") Timestamp voidedAt, @Bind("invitationGuid") String invitationGuid);
+    @SqlUpdate("update invitation set user_id = :userId, accepted_at = :acceptedAt where invitation_id = :id")
+    int assignAcceptingUser(@Bind("id") long invitationId, @Bind("userId") long userId, @Bind("acceptedAt") Instant acceptedAt);
 
-    @SqlUpdate("update invitation set verified_at = :verifiedAt where invitation_guid = :invitationGuid")
-    int updateVerifiedAt(@Bind("verifiedAt") Timestamp verifiedAt, @Bind("invitationGuid") String invitationGuid);
+    @SqlUpdate("update invitation set voided_at = :voidedAt where invitation_id = :id")
+    int updateVoidedAt(@Bind("id") long invitationId, @Bind("voidedAt") Instant voidedAt);
 
-    @SqlUpdate("update invitation set accepted_at = :acceptedAt where invitation_guid = :invitationGuid")
-    int updateAcceptedAt(@Bind("acceptedAt") Timestamp acceptedAt, @Bind("invitationGuid") String invitationGuid);
+    @SqlUpdate("update invitation set verified_at = :verifiedAt where invitation_id = :id")
+    int updateVerifiedAt(@Bind("id") long invitationId, @Bind("verifiedAt") Instant verifiedAt);
+
+    @SqlUpdate("update invitation set accepted_at = :acceptedAt where invitation_id = :id")
+    int updateAcceptedAt(@Bind("id") long invitationId, @Bind("acceptedAt") Instant acceptedAt);
 
     @SqlUpdate("update invitation set voided_at = :voidedAt where study_id = :studyId and user_id = :userId")
-    int bulkUpdateVoidedAt(@Bind("studyId") long studyId, @Bind("userId") long userId, @Bind("voidedAt") Timestamp voidedAt);
+    int bulkUpdateVoidedAt(@Bind("studyId") long studyId, @Bind("userId") long userId, @Bind("voidedAt") Instant voidedAt);
 
     /**
      * Sets nullable date columns to null for the given invitation.  Convenience for testing.

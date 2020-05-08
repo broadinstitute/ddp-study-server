@@ -1,6 +1,6 @@
 package org.broadinstitute.ddp.model.event;
 
-import java.sql.Timestamp;
+import java.time.Instant;
 
 import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.InvitationDao;
@@ -14,7 +14,6 @@ import org.broadinstitute.ddp.model.invitation.InvitationType;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.service.EventService;
 import org.broadinstitute.ddp.util.MiscUtil;
-import org.broadinstitute.ddp.util.TimestampUtil;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,10 +50,10 @@ public class CreateInvitationEventAction extends EventAction {
         }
 
         if (markExistingAsVoided) {
-            Timestamp now = TimestampUtil.now();
+            Instant now = Instant.now();
             int numVoided = handle.attach(InvitationDao.class)
                     .bulkUpdateVoidedAt(signal.getStudyId(), signal.getParticipantId(), now);
-            LOG.info("Marked {} existing invitations as voided at {}", numVoided, now.toInstant());
+            LOG.info("Marked {} existing invitations as voided at {}", numVoided, now);
         }
 
         InvitationDto invitationDto = handle.attach(InvitationFactory.class)

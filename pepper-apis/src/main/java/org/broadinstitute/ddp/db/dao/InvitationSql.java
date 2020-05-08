@@ -1,6 +1,6 @@
 package org.broadinstitute.ddp.db.dao;
 
-import java.sql.Timestamp;
+import java.time.Instant;
 
 import org.broadinstitute.ddp.model.invitation.InvitationType;
 import org.jdbi.v3.sqlobject.SqlObject;
@@ -18,6 +18,6 @@ public interface InvitationSql extends SqlObject {
                 @Bind("guid") String guid,
                 @Bind("studyId") long studyId,
                 @Bind("userId") long userId,
-                @Bind("createdAt") Timestamp createdAt,
+                @Bind("createdAt") Instant createdAt,
                 @Bind("email") String email);
 }

@@ -27,7 +27,6 @@ import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.invitation.InvitationType;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
-import org.broadinstitute.ddp.util.TimestampUtil;
 import org.jdbi.v3.core.Handle;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -129,7 +128,7 @@ public class NotificationEventActionTest extends TxnAwareBaseTest {
                     testData.getStudyId(), testData.getUserId(), "test333@datadonationplatform.org");
 
             var invitationDao = handle.attach(InvitationDao.class);
-            invitationDao.updateVoidedAt(TimestampUtil.now(), invitation1.getInvitationGuid());
+            invitationDao.updateVoidedAt(invitation1.getInvitationId(), Instant.now());
 
             var signal = new EventSignal(testData.getUserId(), testData.getUserId(), testData.getUserGuid(),
                     testData.getStudyId(), EventTriggerType.REACHED_AOM);

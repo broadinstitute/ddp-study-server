@@ -83,7 +83,6 @@ import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.util.Auth0Util;
 import org.broadinstitute.ddp.util.GuidUtils;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
-import org.broadinstitute.ddp.util.TimestampUtil;
 import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;
@@ -906,9 +905,10 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
                     .body("ddpUserGuid", Matchers.not(Matchers.isEmptyOrNullString()));
 
             TransactionWrapper.useTxn(handle -> {
-                var updatedInvitation = handle.attach(InvitationDao.class).findByInvitationGuid(invitationGuid).get();
+                var updatedInvitation = handle.attach(InvitationDao.class)
+                        .findByInvitationGuid(testStudy.get().getId(), invitationGuid).get();
                 assertNotNull(updatedInvitation.getAcceptedAt());
-                assertTrue(updatedInvitation.getAcceptedAt().before(TimestampUtil.now()));
+                assertTrue(updatedInvitation.getAcceptedAt().isBefore(Instant.now()));
 
                 User requeriedUser = handle.attach(UserDao.class).findUserByGuid(user.get().getGuid()).get();
                 assertEquals(auth0UserId, requeriedUser.getAuth0UserId());

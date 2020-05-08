@@ -5,7 +5,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import java.sql.Timestamp;
+import java.time.Instant;
 
 import com.google.gson.Gson;
 import okhttp3.HttpUrl;
@@ -18,7 +18,7 @@ import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.InvitationDao;
 import org.broadinstitute.ddp.db.dao.InvitationFactory;
 import org.broadinstitute.ddp.db.dto.InvitationDto;
-import org.broadinstitute.ddp.json.invitation.InvitationPayload;
+import org.broadinstitute.ddp.json.invitation.VerifyInvitationPayload;
 import org.broadinstitute.ddp.model.invitation.InvitationType;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.junit.Before;
@@ -56,13 +56,14 @@ public class VerifyInvitationRouteTest extends IntegrationTestSuite.TestCase {
     }
 
     private String buildInvitationVerificationUrl() {
-        String url = RouteTestUtil.getTestingBaseUrl() + RouteConstants.API.VERIFY_INVITATION;
+        String url = RouteTestUtil.getTestingBaseUrl() + RouteConstants.API.INVITATIONS_VERIFY;
+        url = url.replace(RouteConstants.PathParam.STUDY_GUID, testData.getStudyGuid());
         return HttpUrl.parse(url).newBuilder().build().toString();
     }
 
     @Test
     public void testVerificationOfGoodInvitation() throws Exception {
-        var invitationPayload = new InvitationPayload(invitation.getInvitationGuid());
+        var invitationPayload = new VerifyInvitationPayload(invitation.getInvitationGuid());
         Response response
                 = Request.Post(buildInvitationVerificationUrl()).bodyString(gson.toJson(invitationPayload), ContentType.APPLICATION_JSON)
                 .execute();
@@ -72,15 +73,15 @@ public class VerifyInvitationRouteTest extends IntegrationTestSuite.TestCase {
 
         TransactionWrapper.useTxn(handle -> {
             InvitationDto requeriedInvitation = handle.attach(InvitationDao.class)
-                    .findByInvitationGuid(invitation.getInvitationGuid()).get();
+                    .findByInvitationGuid(testData.getStudyId(), invitation.getInvitationGuid()).get();
             assertNotNull(requeriedInvitation.getVerifiedAt());
-            assertTrue(requeriedInvitation.getCreatedAt().before(new Timestamp(System.currentTimeMillis())));
+            assertTrue(requeriedInvitation.getCreatedAt().isBefore(Instant.now()));
         });
     }
 
     @Test
     public void testVerificationReturns200ForBogusInvitation() throws Exception {
-        var invitationPayload = new InvitationPayload("no one expects the spanish inquisitions");
+        var invitationPayload = new VerifyInvitationPayload("no one expects the spanish inquisitions");
         Response response
                 = Request.Post(buildInvitationVerificationUrl()).bodyString(gson.toJson(invitationPayload), ContentType.APPLICATION_JSON)
                 .execute();
@@ -91,11 +92,11 @@ public class VerifyInvitationRouteTest extends IntegrationTestSuite.TestCase {
 
     @Test
     public void testVerificationReturns200ForAlreadyVoidedInvitation() throws Exception {
-        var invitationPayload = new InvitationPayload(invitation.getInvitationGuid());
-        Timestamp voidedAt = new Timestamp(System.currentTimeMillis());
+        var invitationPayload = new VerifyInvitationPayload(invitation.getInvitationGuid());
+        Instant voidedAt = Instant.now();
 
         TransactionWrapper.useTxn(handle -> {
-            handle.attach(InvitationDao.class).updateVoidedAt(voidedAt, invitation.getInvitationGuid());
+            handle.attach(InvitationDao.class).updateVoidedAt(invitation.getInvitationId(), voidedAt);
         });
         Response response
                 = Request.Post(buildInvitationVerificationUrl()).bodyString(gson.toJson(invitationPayload), ContentType.APPLICATION_JSON)
@@ -105,7 +106,8 @@ public class VerifyInvitationRouteTest extends IntegrationTestSuite.TestCase {
                 HttpStatus.SC_OK, response.returnResponse().getStatusLine().getStatusCode());
 
         TransactionWrapper.useTxn(handle -> {
-            var queriedInvitation = handle.attach(InvitationDao.class).findByInvitationGuid(invitation.getInvitationGuid()).get();
+            var queriedInvitation = handle.attach(InvitationDao.class)
+                    .findByInvitationGuid(testData.getStudyId(), invitation.getInvitationGuid()).get();
             assertNull(queriedInvitation.getVerifiedAt());
             assertNotNull(queriedInvitation.getCreatedAt());
             assertNull(queriedInvitation.getAcceptedAt());

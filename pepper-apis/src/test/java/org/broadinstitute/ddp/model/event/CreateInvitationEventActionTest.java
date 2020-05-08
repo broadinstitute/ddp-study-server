@@ -172,7 +172,8 @@ public class CreateInvitationEventActionTest extends TxnAwareBaseTest {
             var action = new CreateInvitationEventAction(null, CONTACT_EMAIL_SID, true);
             action.doAction(null, handle, signal);
 
-            InvitationDto oldInvitation = handle.attach(InvitationDao.class).findByInvitationGuid(oldInvitationGuid).get();
+            InvitationDto oldInvitation = handle.attach(InvitationDao.class)
+                    .findByInvitationGuid(testData.getStudyId(), oldInvitationGuid).get();
             assertTrue(oldInvitation.isVoid());
 
             handle.rollback();

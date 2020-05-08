@@ -4,13 +4,13 @@ import javax.validation.constraints.NotEmpty;
 
 import com.google.gson.annotations.SerializedName;
 
-public class InvitationPayload {
+public class VerifyInvitationPayload {
 
     @NotEmpty
     @SerializedName("invitationId")
     private String invitationId;
 
-    public InvitationPayload(String invitationId) {
+    public VerifyInvitationPayload(String invitationId) {
         this.invitationId = invitationId;
     }
 

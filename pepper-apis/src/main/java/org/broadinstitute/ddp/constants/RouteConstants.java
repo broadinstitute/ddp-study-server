@@ -18,7 +18,6 @@ public class RouteConstants {
     public static final class API {
         public static final String VERSION = "v1";
         public static final String BASE = "/pepper/" + VERSION;
-        public static final String INVITATIONS = BASE + "/invitations";
 
         public static final String HEALTH_CHECK = "/" + VERSION + "/healthcheck";
         public static final String DEPLOYED_VERSION = BASE + "/version";
@@ -33,6 +32,10 @@ public class RouteConstants {
 
         public static final String PARTICIPANTS_INFO_FOR_STUDY =
                 fmt(STUDY_ALL + "/participant-info" + "/%s", PathParam.STUDY_GUID);
+
+        public static final String INVITATIONS = fmt(BASE + "/studies/%s/invitations", PathParam.STUDY_GUID);
+        public static final String INVITATIONS_VERIFY = INVITATIONS + "/verify";
+        public static final String INVITATIONS_CHECK = INVITATIONS + "/check";
 
         public static final String USER_ALL = fmt(BASE + "/user/%s/*", PathParam.USER_GUID);
         public static final String USER_SPECIFIC = fmt(BASE + "/user/%s", PathParam.USER_GUID);
@@ -120,8 +123,6 @@ public class RouteConstants {
                 DSM_STUDY + "/exitparticipantrequest/%s",
                 PathParam.USER_GUID
         );
-
-        public static final String VERIFY_INVITATION = INVITATIONS + "/verify";
 
         public static final String PARTICIPANT_STATUS = fmt(
                 BASE + "/user/%s/studies/%s/status",
