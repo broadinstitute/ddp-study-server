@@ -281,7 +281,15 @@ public class DataDonationPlatform {
 
         SimpleJsonTransformer responseSerializer = new SimpleJsonTransformer();
 
-        setupRateLimits(cfg.getInt(ConfigFile.API_RATE_LIMIT.MAX_QUERIES_PER_SECOND), cfg.getInt(ConfigFile.API_RATE_LIMIT.BURST));
+        int maxQueriesPerSecond = 10;
+        int burst = 15;
+        if (cfg.hasPath(ConfigFile.API_RATE_LIMIT.MAX_QUERIES_PER_SECOND)) {
+            maxQueriesPerSecond = cfg.getInt(ConfigFile.API_RATE_LIMIT.MAX_QUERIES_PER_SECOND);
+        }
+        if (cfg.hasPath(ConfigFile.API_RATE_LIMIT.BURST)) {
+            burst = cfg.getInt(ConfigFile.API_RATE_LIMIT.BURST);
+        }
+        setupRateLimits(maxQueriesPerSecond, burst);
         before("*", new HttpHeaderMDCFilter(X_FORWARDED_FOR));
         before("*", new MDCLogBreadCrumbFilter());
 
@@ -531,7 +539,6 @@ public class DataDonationPlatform {
 
         DoSFilter rateLimitFilter = new DoSFilter();
         rateLimitFilter.setEnabled(true);
-        rateLimitFilter.setTooManyCode(503);
         try {
             rateLimitFilter.init(new FilterConfig("DOSFilter", Map.of("delayMs", "-1",
                     "maxRequestsPerSec", Integer.toString(maxRequestsPerSecond),
