@@ -58,6 +58,10 @@
         "tempUserCleanup": "{{$conf.Data.schedules.tempUserCleanup}}"
     },
     "preferredSourceIPHeader":"X-AppEngine-User-IP",
+    "nginx": {
+        "apiLimitBurst": {{$conf.nginx.apiLimitBurst}},
+        "apiLimitRate": {{$conf.nginx.apiLimitRate}}
+    },
     "sendgrid": {
         "fromName": "{{$conf.Data.sendgrid.fromName}}",
         "fromEmail": "{{$conf.Data.sendgrid.fromEmail}}"
