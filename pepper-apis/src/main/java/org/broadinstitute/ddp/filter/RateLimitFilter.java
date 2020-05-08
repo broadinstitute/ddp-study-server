@@ -25,8 +25,7 @@ public class RateLimitFilter implements Filter {
         try {
             rateLimitFilter.init(new FilterConfig("DOSFilter", Map.of("delayMs", "0",
                     "maxRequestsPerSec", Integer.toString(maxRequestsPerSecond),
-                    "throttledRequests", Integer.toString(burst),
-                    "tooManyCode", "503")));
+                    "throttledRequests", Integer.toString(burst))));
         } catch (ServletException e) {
             throw new DDPException("Could not initalize rate limits", e);
         }
