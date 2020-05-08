@@ -12,15 +12,14 @@ import spark.Response;
 public class RateLimitFilter implements Filter {
 
     private final int maxRequestsPerSecond;
+
     private final int burst;
+
+    private final DoSFilter rateLimitFilter;
 
     public RateLimitFilter(int maxRequestsPerSecond, int burst) {
         this.maxRequestsPerSecond = maxRequestsPerSecond;
         this.burst = burst;
-    }
-
-    @Override
-    public void handle(Request request, Response response) throws Exception {
         DoSFilter rateLimitFilter = new DoSFilter();
         rateLimitFilter.setEnabled(true);
         try {
@@ -31,6 +30,11 @@ public class RateLimitFilter implements Filter {
         } catch (ServletException e) {
             throw new DDPException("Could not initalize rate limits", e);
         }
+        this.rateLimitFilter = rateLimitFilter;
+    }
+
+    @Override
+    public void handle(Request request, Response response) throws Exception {
         rateLimitFilter.doFilter(request.raw(), response.raw(), (req, res) -> { });
     }
 }
