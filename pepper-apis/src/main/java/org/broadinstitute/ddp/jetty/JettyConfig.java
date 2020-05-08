@@ -136,9 +136,9 @@ public class JettyConfig {
 
         public SourceIPHeaderRequestWrapper(HttpServletRequest request, String preferredHeaderForIP) {
             super(request);
+            remoteAddr = request.getRemoteAddr();
             if (StringUtils.isNotBlank(preferredHeaderForIP)) {
                 String appEngineSourceIp = request.getHeader(preferredHeaderForIP);
-                remoteAddr = request.getRemoteAddr();
                 if (StringUtils.isNotBlank(appEngineSourceIp)) {
                     remoteAddr = appEngineSourceIp;
                 }
