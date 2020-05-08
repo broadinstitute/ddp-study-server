@@ -166,6 +166,8 @@ public class DataDonationPlatform {
             "Content-Length", "Accept", "Origin", ""};
     private static final Map<String, String> pathToClass = new HashMap<>();
     public static final String PORT = "PORT";
+    public static final int DEFAULT_RATE_LIMIT_MAX_QUERIES_PER_SECOND = 10;
+    public static final int DEFAULT_RATE_LIMIT_BURST = 15;
     private static Scheduler scheduler = null;
 
     /**
@@ -260,8 +262,8 @@ public class DataDonationPlatform {
 
         SimpleJsonTransformer responseSerializer = new SimpleJsonTransformer();
 
-        int maxQueriesPerSecond = 10;
-        int burst = 15;
+        int maxQueriesPerSecond = DEFAULT_RATE_LIMIT_MAX_QUERIES_PER_SECOND;
+        int burst = DEFAULT_RATE_LIMIT_BURST;
         if (cfg.hasPath(ConfigFile.API_RATE_LIMIT.MAX_QUERIES_PER_SECOND)) {
             maxQueriesPerSecond = cfg.getInt(ConfigFile.API_RATE_LIMIT.MAX_QUERIES_PER_SECOND);
         }
