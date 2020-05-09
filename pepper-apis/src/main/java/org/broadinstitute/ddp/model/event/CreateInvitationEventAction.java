@@ -10,7 +10,6 @@ import org.broadinstitute.ddp.db.dto.InvitationDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
-import org.broadinstitute.ddp.model.invitation.InvitationType;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.service.EventService;
 import org.broadinstitute.ddp.util.MiscUtil;
@@ -57,7 +56,7 @@ public class CreateInvitationEventAction extends EventAction {
         }
 
         InvitationDto invitationDto = handle.attach(InvitationFactory.class)
-                .createInvitation(InvitationType.AGE_UP, signal.getStudyId(), signal.getParticipantId(), contactEmail);
+                .createAgeUpInvitation(signal.getStudyId(), signal.getParticipantId(), contactEmail);
         LOG.info("Created invitation {} for participant {} in study {}",
                 invitationDto.getInvitationGuid(), signal.getParticipantGuid(), signal.getStudyId());
 

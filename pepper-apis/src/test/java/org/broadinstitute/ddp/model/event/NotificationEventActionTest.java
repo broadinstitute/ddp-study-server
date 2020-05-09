@@ -25,7 +25,6 @@ import org.broadinstitute.ddp.db.dto.SendgridEmailEventActionDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
-import org.broadinstitute.ddp.model.invitation.InvitationType;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.jdbi.v3.core.Handle;
 import org.junit.BeforeClass;
@@ -64,7 +63,7 @@ public class NotificationEventActionTest extends TxnAwareBaseTest {
     public void test_invitationEmail_overridesRecipientEmail() {
         TransactionWrapper.useTxn(handle -> {
             var invitationFactory = handle.attach(InvitationFactory.class);
-            InvitationDto invitationDto = invitationFactory.createInvitation(InvitationType.AGE_UP,
+            InvitationDto invitationDto = invitationFactory.createAgeUpInvitation(
                     testData.getStudyId(), testData.getUserId(), "test@datadonationplatform.org");
 
             var signal = new EventSignal(testData.getUserId(), testData.getUserId(), testData.getUserGuid(),
@@ -86,7 +85,7 @@ public class NotificationEventActionTest extends TxnAwareBaseTest {
     public void test_invitationEmail_providesInvitationIdSubstitution() {
         TransactionWrapper.useTxn(handle -> {
             var invitationFactory = handle.attach(InvitationFactory.class);
-            InvitationDto invitationDto = invitationFactory.createInvitation(InvitationType.AGE_UP,
+            InvitationDto invitationDto = invitationFactory.createAgeUpInvitation(
                     testData.getStudyId(), testData.getUserId(), "test@datadonationplatform.org");
 
             var signal = new EventSignal(testData.getUserId(), testData.getUserId(), testData.getUserGuid(),
@@ -115,16 +114,16 @@ public class NotificationEventActionTest extends TxnAwareBaseTest {
     public void test_invitationEmail_usesLatestNonVoidedInvitation() {
         TransactionWrapper.useTxn(handle -> {
             var invitationFactory = handle.attach(InvitationFactory.class);
-            InvitationDto invitation1 = invitationFactory.createInvitation(InvitationType.AGE_UP,
+            InvitationDto invitation1 = invitationFactory.createAgeUpInvitation(
                     testData.getStudyId(), testData.getUserId(), "test111@datadonationplatform.org");
-            InvitationDto invitation2 = invitationFactory.createInvitation(InvitationType.AGE_UP,
+            InvitationDto invitation2 = invitationFactory.createAgeUpInvitation(
                     testData.getStudyId(), testData.getUserId(), "test222@datadonationplatform.org");
             try {
                 Thread.sleep(2);
             } catch (InterruptedException e) {
                 fail("Got interrupted while sleeping");
             }
-            InvitationDto invitation3 = invitationFactory.createInvitation(InvitationType.AGE_UP,
+            InvitationDto invitation3 = invitationFactory.createAgeUpInvitation(
                     testData.getStudyId(), testData.getUserId(), "test333@datadonationplatform.org");
 
             var invitationDao = handle.attach(InvitationDao.class);
@@ -149,9 +148,9 @@ public class NotificationEventActionTest extends TxnAwareBaseTest {
     public void test_invitationEmail_usesInvitationProvidedInSignal() {
         TransactionWrapper.useTxn(handle -> {
             var invitationFactory = handle.attach(InvitationFactory.class);
-            InvitationDto invitation1 = invitationFactory.createInvitation(InvitationType.AGE_UP,
+            InvitationDto invitation1 = invitationFactory.createAgeUpInvitation(
                     testData.getStudyId(), testData.getUserId(), "test111@datadonationplatform.org");
-            InvitationDto invitation2 = invitationFactory.createInvitation(InvitationType.AGE_UP,
+            InvitationDto invitation2 = invitationFactory.createAgeUpInvitation(
                     testData.getStudyId(), testData.getUserId(), "test222@datadonationplatform.org");
 
             var signal = new InvitationCreatedSignal(testData.getUserId(), testData.getUserId(), testData.getUserGuid(),

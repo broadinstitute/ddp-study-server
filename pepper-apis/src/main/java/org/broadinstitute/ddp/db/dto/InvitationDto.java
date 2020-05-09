@@ -26,13 +26,13 @@ public class InvitationDto {
 
     private long studyId;
 
-    private long userId;
+    private Long userId;
 
     private InvitationType invitationType;
 
     /**
      * This should only be used by JDBI on-the-fly.
-     * Please use {@link org.broadinstitute.ddp.db.dao.InvitationFactory#createInvitation(InvitationType, long, long, String)} to
+     * Please use {@link org.broadinstitute.ddp.db.dao.InvitationFactory#createAgeUpInvitation(long, long, String)} to
      * safely create a new one
      */
     @JdbiConstructor
@@ -43,7 +43,7 @@ public class InvitationDto {
                          @ColumnName("verified_at") Instant verifiedAt,
                          @ColumnName("accepted_at") Instant acceptedAt,
                          @ColumnName("study_id") long studyId,
-                         @ColumnName("user_id") long userId,
+                         @ColumnName("user_id") Long userId,
                          @ColumnName("invitation_type_code") InvitationType invitationType,
                          @ColumnName("contact_email") String email) {
         this.invitationId = invitationId;
@@ -86,7 +86,7 @@ public class InvitationDto {
         return studyId;
     }
 
-    public long getUserId() {
+    public Long getUserId() {
         return userId;
     }
 

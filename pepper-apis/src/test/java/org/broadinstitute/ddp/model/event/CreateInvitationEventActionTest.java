@@ -35,7 +35,6 @@ import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
-import org.broadinstitute.ddp.model.invitation.InvitationType;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.jdbi.v3.core.Handle;
 import org.junit.BeforeClass;
@@ -158,8 +157,8 @@ public class CreateInvitationEventActionTest extends TxnAwareBaseTest {
     @Test
     public void test_voidsOldInvitations() {
         TransactionWrapper.useTxn(handle -> {
-            String oldInvitationGuid = handle.attach(InvitationFactory.class).createInvitation(
-                    InvitationType.AGE_UP, testData.getStudyId(), testData.getUserId(), "t1@datadonationplatform.org")
+            String oldInvitationGuid = handle.attach(InvitationFactory.class).createAgeUpInvitation(
+                    testData.getStudyId(), testData.getUserId(), "t1@datadonationplatform.org")
                     .getInvitationGuid();
 
             FormActivityDef activity = newContactEmailActivity(handle);
