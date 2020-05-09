@@ -4,7 +4,7 @@ import javax.validation.constraints.NotEmpty;
 
 import com.google.gson.annotations.SerializedName;
 
-public class CheckInvitationPayload {
+public class CheckInvitationStatusPayload {
 
     @NotEmpty
     @SerializedName("auth0Domain")
@@ -22,7 +22,7 @@ public class CheckInvitationPayload {
     // @SerializedName("recaptchaToken")
     // private String recaptchaToken;
 
-    public CheckInvitationPayload(String auth0Domain, String auth0ClientId, String invitationGuid) {
+    public CheckInvitationStatusPayload(String auth0Domain, String auth0ClientId, String invitationGuid) {
         this.auth0Domain = auth0Domain;
         this.auth0ClientId = auth0ClientId;
         this.invitationGuid = invitationGuid;

@@ -10,19 +10,24 @@ import org.broadinstitute.ddp.db.dao.JdbiClientUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dto.InvitationDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
-import org.broadinstitute.ddp.json.invitation.CheckInvitationPayload;
+import org.broadinstitute.ddp.json.invitation.CheckInvitationStatusPayload;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 
-public class CheckInvitationRoute extends ValidatedJsonInputRoute<CheckInvitationPayload> {
+/**
+ * "check" here means we're checking the status of an invitation, e.g. does it exists and is valid?
+ *
+ * <p>NOTE: this is a public route. Be careful what we return in responses.
+ */
+public class CheckInvitationStatusRoute extends ValidatedJsonInputRoute<CheckInvitationStatusPayload> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(CheckInvitationRoute.class);
+    private static final Logger LOG = LoggerFactory.getLogger(CheckInvitationStatusRoute.class);
 
     @Override
-    public Object handle(Request request, Response response, CheckInvitationPayload payload) throws Exception {
+    public Object handle(Request request, Response response, CheckInvitationStatusPayload payload) throws Exception {
         String studyGuid = request.params(RouteConstants.PathParam.STUDY_GUID);
         String invitationGuid = payload.getInvitationGuid();
         LOG.info("Attempting to check invitation {} in study {}", invitationGuid, studyGuid);
@@ -66,6 +71,6 @@ public class CheckInvitationRoute extends ValidatedJsonInputRoute<CheckInvitatio
         });
 
         response.status(status);
-        return "";
+        return null;
     }
 }

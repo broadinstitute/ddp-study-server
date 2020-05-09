@@ -51,7 +51,7 @@ public class CreateInvitationEventAction extends EventAction {
         if (markExistingAsVoided) {
             Instant now = Instant.now();
             int numVoided = handle.attach(InvitationDao.class)
-                    .bulkUpdateVoidedAt(signal.getStudyId(), signal.getParticipantId(), now);
+                    .bulkMarkVoided(signal.getStudyId(), signal.getParticipantId(), now);
             LOG.info("Marked {} existing invitations as voided at {}", numVoided, now);
         }
 

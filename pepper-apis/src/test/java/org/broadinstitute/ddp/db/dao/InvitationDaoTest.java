@@ -38,9 +38,9 @@ public class InvitationDaoTest extends TxnAwareBaseTest {
             Instant verifiedAt = createdAt.plus(4 * 10000, ChronoUnit.MILLIS);
             Instant voidedAt = createdAt.plus(6 * 10000, ChronoUnit.MILLIS);
 
-            invitationDao.updateAcceptedAt(invitation.getInvitationId(), acceptedAt);
-            invitationDao.updateVerifiedAt(invitation.getInvitationId(), verifiedAt);
-            invitationDao.updateVoidedAt(invitation.getInvitationId(), voidedAt);
+            invitationDao.markAccepted(invitation.getInvitationId(), acceptedAt);
+            invitationDao.markVerified(invitation.getInvitationId(), verifiedAt);
+            invitationDao.markVoided(invitation.getInvitationId(), voidedAt);
 
             // requery and verify
             InvitationDto requeriedInvitation = invitationDao.findByInvitationGuid(studyId, invitation.getInvitationGuid()).get();

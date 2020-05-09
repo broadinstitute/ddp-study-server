@@ -46,6 +46,7 @@ import org.broadinstitute.ddp.db.dao.EventActionDao;
 import org.broadinstitute.ddp.db.dao.EventTriggerDao;
 import org.broadinstitute.ddp.db.dao.InvitationDao;
 import org.broadinstitute.ddp.db.dao.InvitationFactory;
+import org.broadinstitute.ddp.db.dao.InvitationSql;
 import org.broadinstitute.ddp.db.dao.JdbiAuth0Tenant;
 import org.broadinstitute.ddp.db.dao.JdbiEventConfiguration;
 import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
@@ -864,7 +865,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
                 invitation.set(handle.attach(InvitationFactory.class).createAgeUpInvitation(
                         testStudyId, user.get().getId(), "test+" + System.currentTimeMillis() + "@datadonationplatform.org"));
 
-                handle.attach(InvitationDao.class).clearDates(invitation.get().getInvitationGuid());
+                handle.attach(InvitationSql.class).clearDates(invitation.get().getInvitationGuid());
                 userDao.updateAuth0UserId(user.get().getGuid(), null);
 
                 var profileDao = handle.attach(UserProfileDao.class);

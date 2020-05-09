@@ -146,11 +146,11 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                 }
 
                 operatorUser = processInvitation(response, handle, study, invitation, auth0UserId.get(),
-                        auth0Domain, auth0ClientId, payload, clientConfig, auth0Util, mgmtClient);
+                        payload, clientConfig, auth0Util, mgmtClient);
                 ddpUserGuid.set(operatorUser.getGuid());
             } else if (operatorUser == null) {
-                operatorUser = signUpNewOperator(response, handle, study, auth0Domain, auth0ClientId,
-                        auth0UserId.get(), payload, clientConfig, auth0Util, mgmtClient);
+                operatorUser = signUpNewOperator(response, handle, study, auth0UserId.get(),
+                        payload, clientConfig, auth0Util, mgmtClient);
                 ddpUserGuid.set(operatorUser.getGuid());
             } else {
                 LOG.info("Attempting to register existing user {} with client {} and study {}", auth0UserId, auth0ClientId, studyGuid);
@@ -167,9 +167,10 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
     }
 
     private User processInvitation(Response response, Handle handle, StudyDto study, InvitationDto invitation, String auth0UserId,
-                                   String auth0Domain, String auth0ClientId, UserRegistrationPayload payload,
-                                   StudyClientConfiguration clientConfig, Auth0Util auth0Util, Auth0ManagementClient mgmtClient) {
-        UserDao userDao = handle.attach(UserDao.class);
+                                   UserRegistrationPayload payload, StudyClientConfiguration clientConfig,
+                                   Auth0Util auth0Util, Auth0ManagementClient mgmtClient) {
+        var invitationDao = handle.attach(InvitationDao.class);
+        var userDao = handle.attach(UserDao.class);
         String invitationGuid = invitation.getInvitationGuid();
         String studyGuid = study.getGuid();
 
@@ -193,10 +194,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                     }
                     LOG.info("User {} has been associated with auth0 id {}", user.getGuid(), auth0UserId);
 
-                    numRows = handle.attach(InvitationDao.class).updateAcceptedAt(invitation.getInvitationId(), Instant.now());
-                    if (numRows != 1) {
-                        throw new DDPException("Updated " + numRows + " for invitation " + invitationGuid);
-                    }
+                    invitationDao.markAccepted(invitation.getInvitationId(), Instant.now());
 
                     EventSignal signal = new EventSignal(user.getId(), user.getId(), user.getGuid(),
                             study.getId(), EventTriggerType.GOVERNED_USER_REGISTERED);
@@ -214,29 +212,23 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
 
             return user;
         } else if (invitation.getInvitationType() == InvitationType.RECRUITMENT) {
-            var user = signUpNewOperator(response, handle, study, auth0Domain, auth0ClientId,
-                    auth0UserId, payload, clientConfig, auth0Util, mgmtClient);
-
-            int numRows = handle.attach(InvitationDao.class)
-                    .assignAcceptingUser(invitation.getInvitationId(), user.getId(), Instant.now());
-            if (numRows != 1) {
-                throw new DDPException("Updated " + numRows + " for invitation " + invitationGuid);
-            }
-
+            var user = signUpNewOperator(response, handle, study, auth0UserId, payload, clientConfig, auth0Util, mgmtClient);
+            invitationDao.assignAcceptingUser(invitation.getInvitationId(), user.getId(), Instant.now());
             return user;
         } else {
             throw new DDPException("Unhandled invitation type " + invitation.getInvitationType());
         }
     }
 
-    private User signUpNewOperator(Response response, Handle handle, StudyDto study, String auth0Domain, String auth0ClientId,
-                                   String auth0UserId, UserRegistrationPayload payload, StudyClientConfiguration clientConfig,
+    private User signUpNewOperator(Response response, Handle handle, StudyDto study, String auth0UserId,
+                                   UserRegistrationPayload payload, StudyClientConfiguration clientConfig,
                                    Auth0Util auth0Util, Auth0ManagementClient mgmtClient) {
         String studyGuid = study.getGuid();
         LOG.info("Attempting to register new user {} with client {} and study {}",
-                auth0UserId, auth0ClientId, studyGuid);
+                auth0UserId, clientConfig.getAuth0ClientId(), studyGuid);
 
-        User operatorUser = registerUser(response, payload, handle, auth0Domain, auth0ClientId, auth0UserId);
+        User operatorUser = registerUser(response, payload, handle,
+                clientConfig.getAuth0Domain(), clientConfig.getAuth0ClientId(), auth0UserId);
 
         GovernancePolicy policy = handle.attach(StudyGovernanceDao.class).findPolicyByStudyGuid(studyGuid).orElse(null);
         User studyUser;

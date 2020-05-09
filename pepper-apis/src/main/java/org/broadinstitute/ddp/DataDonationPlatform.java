@@ -1,8 +1,6 @@
 package org.broadinstitute.ddp;
 
 import static com.google.common.net.HttpHeaders.X_FORWARDED_FOR;
-import static org.broadinstitute.ddp.filter.BeforeWithExclusionFilter.afterWithExclusion;
-import static org.broadinstitute.ddp.filter.BeforeWithExclusionFilter.beforeWithExclusion;
 import static org.broadinstitute.ddp.filter.WhiteListFilter.whitelist;
 import static spark.Spark.after;
 import static spark.Spark.afterAfter;
@@ -41,6 +39,7 @@ import org.broadinstitute.ddp.db.UserDao;
 import org.broadinstitute.ddp.db.UserDaoFactory;
 import org.broadinstitute.ddp.filter.AddDDPAuthLoggingFilter;
 import org.broadinstitute.ddp.filter.DsmAuthFilter;
+import org.broadinstitute.ddp.filter.ExcludePathFilter;
 import org.broadinstitute.ddp.filter.HttpHeaderMDCFilter;
 import org.broadinstitute.ddp.filter.MDCAttributeRemovalFilter;
 import org.broadinstitute.ddp.filter.MDCLogBreadCrumbFilter;
@@ -56,7 +55,7 @@ import org.broadinstitute.ddp.monitoring.StackdriverMetricsTracker;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.pex.TreeWalkInterpreter;
 import org.broadinstitute.ddp.route.AddProfileRoute;
-import org.broadinstitute.ddp.route.CheckInvitationRoute;
+import org.broadinstitute.ddp.route.CheckInvitationStatusRoute;
 import org.broadinstitute.ddp.route.CheckIrbPasswordRoute;
 import org.broadinstitute.ddp.route.CreateActivityInstanceRoute;
 import org.broadinstitute.ddp.route.CreateMailAddressRoute;
@@ -139,6 +138,7 @@ import org.broadinstitute.ddp.service.PdfBucketService;
 import org.broadinstitute.ddp.service.PdfGenerationService;
 import org.broadinstitute.ddp.service.PdfService;
 import org.broadinstitute.ddp.service.WorkflowService;
+import org.broadinstitute.ddp.transformers.NullableJsonTransformer;
 import org.broadinstitute.ddp.transformers.SimpleJsonTransformer;
 import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.ddp.util.LiquibaseUtil;
@@ -265,21 +265,21 @@ public class DataDonationPlatform {
         // - StudyLanguageContentLanguageSettingFilter sets the "Content-Language" header later on
         before(API.BASE + "/user/*/studies/*", new StudyLanguageResolutionFilter());
         after(API.BASE + "/user/*/studies/*", new StudyLanguageContentLanguageSettingFilter());
-        beforeWithExclusion(API.BASE + "/studies/*",
-                List.of(API.INVITATIONS_VERIFY, API.INVITATIONS_CHECK),
-                new StudyLanguageResolutionFilter());
-        afterWithExclusion(API.BASE + "/studies/*",
-                List.of(API.INVITATIONS_VERIFY, API.INVITATIONS_CHECK),
-                new StudyLanguageContentLanguageSettingFilter());
+        before(API.BASE + "/studies/*", new ExcludePathFilter(new StudyLanguageResolutionFilter(),
+                API.INVITATIONS_VERIFY, API.INVITATIONS_CHECK));
+        after(API.BASE + "/studies/*", new ExcludePathFilter(new StudyLanguageContentLanguageSettingFilter(),
+                API.INVITATIONS_VERIFY, API.INVITATIONS_CHECK));
 
         enableCORS("*", String.join(",", CORS_HTTP_METHODS), String.join(",", CORS_HTTP_HEADERS));
         setupCatchAllErrorHandling();
 
         // before filter converts jwt into DDP_AUTH request attribute
         // we exclude the DSM paths. DSM paths have own separate authentication
-        beforeWithExclusion(API.BASE + "/*", List.of(API.DSM_BASE + "/*", API.CHECK_IRB_PASSWORD),
-                new TokenConverterFilter(new JWTConverter(userDao)));
-        beforeWithExclusion(API.BASE + "/*", List.of(API.DSM_BASE + "/*", API.CHECK_IRB_PASSWORD), new AddDDPAuthLoggingFilter());
+        before(API.BASE + "/*", new ExcludePathFilter(new TokenConverterFilter(new JWTConverter(userDao)),
+                API.DSM_BASE + "/*", API.CHECK_IRB_PASSWORD));
+        before(API.BASE + "/*", new ExcludePathFilter(new AddDDPAuthLoggingFilter(),
+                API.DSM_BASE + "/*", API.CHECK_IRB_PASSWORD));
+
         // Internal routes
         get(API.HEALTH_CHECK, new HealthCheckRoute(healthcheckPassword), responseSerializer);
         get(API.DEPLOYED_VERSION, new GetDeployedAppVersionRoute(), responseSerializer);
@@ -448,8 +448,9 @@ public class DataDonationPlatform {
                 responseSerializer
         );
 
-        post(API.INVITATIONS_VERIFY, new VerifyInvitationRoute(), responseSerializer);
-        post(API.INVITATIONS_CHECK, new CheckInvitationRoute(), responseSerializer);
+        var jsonSerializer = new NullableJsonTransformer();
+        post(API.INVITATIONS_VERIFY, new VerifyInvitationRoute(), jsonSerializer);
+        post(API.INVITATIONS_CHECK, new CheckInvitationStatusRoute(), jsonSerializer);
 
         Runnable runnable = () -> {
             var dsm = new DsmClient(cfg);
