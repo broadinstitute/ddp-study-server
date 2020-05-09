@@ -118,16 +118,11 @@ public class NotificationEventActionTest extends TxnAwareBaseTest {
                     testData.getStudyId(), testData.getUserId(), "test111@datadonationplatform.org");
             InvitationDto invitation2 = invitationFactory.createAgeUpInvitation(
                     testData.getStudyId(), testData.getUserId(), "test222@datadonationplatform.org");
-            try {
-                Thread.sleep(2);
-            } catch (InterruptedException e) {
-                fail("Got interrupted while sleeping");
-            }
             InvitationDto invitation3 = invitationFactory.createAgeUpInvitation(
                     testData.getStudyId(), testData.getUserId(), "test333@datadonationplatform.org");
 
             var invitationDao = handle.attach(InvitationDao.class);
-            invitationDao.updateVoidedAt(invitation1.getInvitationId(), Instant.now());
+            invitationDao.markVoided(invitation1.getInvitationId(), Instant.now());
 
             var signal = new EventSignal(testData.getUserId(), testData.getUserId(), testData.getUserGuid(),
                     testData.getStudyId(), EventTriggerType.REACHED_AOM);

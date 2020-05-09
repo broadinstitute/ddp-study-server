@@ -17,6 +17,7 @@ import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.InvitationDao;
 import org.broadinstitute.ddp.db.dao.InvitationFactory;
+import org.broadinstitute.ddp.db.dao.InvitationSql;
 import org.broadinstitute.ddp.db.dto.InvitationDto;
 import org.broadinstitute.ddp.json.invitation.VerifyInvitationPayload;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
@@ -50,7 +51,7 @@ public class VerifyInvitationRouteTest extends IntegrationTestSuite.TestCase {
     @Before
     public void clearDates() {
         TransactionWrapper.useTxn(handle -> {
-            handle.attach(InvitationDao.class).clearDates(invitation.getInvitationGuid());
+            handle.attach(InvitationSql.class).clearDates(invitation.getInvitationGuid());
         });
     }
 
@@ -95,7 +96,7 @@ public class VerifyInvitationRouteTest extends IntegrationTestSuite.TestCase {
         Instant voidedAt = Instant.now();
 
         TransactionWrapper.useTxn(handle -> {
-            handle.attach(InvitationDao.class).updateVoidedAt(invitation.getInvitationId(), voidedAt);
+            handle.attach(InvitationDao.class).markVoided(invitation.getInvitationId(), voidedAt);
         });
         Response response
                 = Request.Post(buildInvitationVerificationUrl()).bodyString(gson.toJson(invitationPayload), ContentType.APPLICATION_JSON)

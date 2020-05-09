@@ -11,13 +11,18 @@ import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dto.InvitationDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.json.invitation.VerifyInvitationPayload;
-import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 
+/**
+ * "verify" here means an end-user is verifying that they received communication from us via the contact email on the
+ * invitation, mostly used in age-up scenarios.
+ *
+ * <p>NOTE: this is a public route. Be careful what we return in responses.
+ */
 public class VerifyInvitationRoute extends ValidatedJsonInputRoute<VerifyInvitationPayload> {
 
     private static final Logger LOG = LoggerFactory.getLogger(VerifyInvitationRoute.class);
@@ -42,11 +47,10 @@ public class VerifyInvitationRoute extends ValidatedJsonInputRoute<VerifyInvitat
 
             invitationDto.ifPresent(invite -> {
                 if (invite.canBeVerified()) {
-                    int numRows = invitationDao.updateVerifiedAt(invite.getInvitationId(), verifiedAt);
-                    if (numRows > 1) {
-                        LOG.error("Updated too many rows ("  + numRows + ") for invitation " + invitationGuid);
-                        throw ResponseUtil.haltError(response, HttpStatus.SC_INTERNAL_SERVER_ERROR, "");
-                    }
+                    invitationDao.markVerified(invite.getInvitationId(), verifiedAt);
+                    LOG.info("Invitation {} is verified at {}", invitationGuid, verifiedAt);
+                } else {
+                    LOG.warn("Invitation {} has already been verified or voided", invitationGuid);
                 }
             });
         });
@@ -54,6 +58,6 @@ public class VerifyInvitationRoute extends ValidatedJsonInputRoute<VerifyInvitat
         // whether or not the invitation exists, and regardless of whether it has already
         // been verified, return ok so that we don't leak information on an open route
         response.status(HttpStatus.SC_OK);
-        return "";
+        return null;
     }
 }
