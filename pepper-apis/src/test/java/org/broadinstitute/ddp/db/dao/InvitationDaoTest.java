@@ -10,7 +10,6 @@ import java.time.temporal.ChronoUnit;
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dto.InvitationDto;
-import org.broadinstitute.ddp.model.invitation.InvitationType;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.junit.Test;
 
@@ -26,7 +25,7 @@ public class InvitationDaoTest extends TxnAwareBaseTest {
 
             // create a new one
             InvitationDao invitationDao = handle.attach(InvitationDao.class);
-            InvitationDto invitation = handle.attach(InvitationFactory.class).createInvitation(InvitationType.AGE_UP,
+            InvitationDto invitation = handle.attach(InvitationFactory.class).createAgeUpInvitation(
                     studyId, userId, email);
 
             // check some generated values

@@ -11,12 +11,20 @@ import org.jdbi.v3.sqlobject.SqlObject;
 public interface InvitationFactory extends SqlObject {
 
     /**
-     * Creates a new {@link InvitationDto invitation}, writing a new row into the database
+     * Creates a new Age Up {@link InvitationDto invitation}, writing a new row into the database
      * using the current time as creation time and generating a new guid.
      */
-    default InvitationDto createInvitation(InvitationType invitationType, long studyId, long userId, String email) {
-        Instant createdAt = Instant.now();
+    default InvitationDto createAgeUpInvitation(long studyId, long userId, String email) {
         String guid = generateGuid();
+        return createInvitation(InvitationType.AGE_UP, guid, studyId, userId, email);
+    }
+
+    default InvitationDto createRecruitmentInvitation(long studyId, String guid) {
+        return createInvitation(InvitationType.RECRUITMENT, guid, studyId, null, null);
+    }
+
+    private InvitationDto createInvitation(InvitationType invitationType, String guid, long studyId, Long userId, String email) {
+        Instant createdAt = Instant.now();
         long invitationId = getHandle().attach(InvitationSql.class)
                 .insertInvitation(invitationType, guid, studyId, userId, createdAt, email);
         return new InvitationDto(guid, invitationId, createdAt, null, null, null, studyId, userId,

@@ -75,7 +75,6 @@ import org.broadinstitute.ddp.model.governance.AgeOfMajorityRule;
 import org.broadinstitute.ddp.model.governance.AgeUpCandidate;
 import org.broadinstitute.ddp.model.governance.Governance;
 import org.broadinstitute.ddp.model.governance.GovernancePolicy;
-import org.broadinstitute.ddp.model.invitation.InvitationType;
 import org.broadinstitute.ddp.model.pex.Expression;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.model.user.User;
@@ -862,7 +861,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
 
                 testStudy.set(TestDataSetupUtil.generateTestStudy(handle, RouteTestUtil.getConfig()));
                 long testStudyId = testStudy.get().getId();
-                invitation.set(handle.attach(InvitationFactory.class).createInvitation(InvitationType.AGE_UP,
+                invitation.set(handle.attach(InvitationFactory.class).createAgeUpInvitation(
                         testStudyId, user.get().getId(), "test+" + System.currentTimeMillis() + "@datadonationplatform.org"));
 
                 handle.attach(InvitationDao.class).clearDates(invitation.get().getInvitationGuid());

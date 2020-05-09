@@ -19,7 +19,6 @@ import org.broadinstitute.ddp.db.dao.InvitationDao;
 import org.broadinstitute.ddp.db.dao.InvitationFactory;
 import org.broadinstitute.ddp.db.dto.InvitationDto;
 import org.broadinstitute.ddp.json.invitation.VerifyInvitationPayload;
-import org.broadinstitute.ddp.model.invitation.InvitationType;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -40,7 +39,7 @@ public class VerifyInvitationRouteTest extends IntegrationTestSuite.TestCase {
         TransactionWrapper.useTxn(handle -> {
             testData = TestDataSetupUtil.generateBasicUserTestData(handle);
 
-            invitation = handle.attach(InvitationFactory.class).createInvitation(InvitationType.AGE_UP,
+            invitation = handle.attach(InvitationFactory.class).createAgeUpInvitation(
                     testData.getStudyId(),
                     testData.getUserId(),
                     "test" + System.currentTimeMillis() + "@datadonationplatform.org");
