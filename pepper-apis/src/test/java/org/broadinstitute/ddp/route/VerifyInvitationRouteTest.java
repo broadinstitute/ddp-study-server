@@ -21,6 +21,7 @@ import org.broadinstitute.ddp.db.dao.InvitationSql;
 import org.broadinstitute.ddp.db.dto.InvitationDto;
 import org.broadinstitute.ddp.json.invitation.VerifyInvitationPayload;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -39,19 +40,25 @@ public class VerifyInvitationRouteTest extends IntegrationTestSuite.TestCase {
     public static void createInvitation() {
         TransactionWrapper.useTxn(handle -> {
             testData = TestDataSetupUtil.generateBasicUserTestData(handle);
-
             invitation = handle.attach(InvitationFactory.class).createAgeUpInvitation(
                     testData.getStudyId(),
                     testData.getUserId(),
                     "test" + System.currentTimeMillis() + "@datadonationplatform.org");
         });
+    }
 
+    @AfterClass
+    public static void cleanupInvitation() {
+        if (invitation != null) {
+            TransactionWrapper.useTxn(handle ->
+                    handle.attach(InvitationSql.class).deleteById(invitation.getInvitationId()));
+        }
     }
 
     @Before
     public void clearDates() {
         TransactionWrapper.useTxn(handle -> {
-            handle.attach(InvitationSql.class).clearDates(invitation.getInvitationGuid());
+            handle.attach(InvitationSql.class).clearDates(invitation.getInvitationId());
         });
     }
 

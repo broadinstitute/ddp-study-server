@@ -67,6 +67,7 @@ import org.slf4j.LoggerFactory;
 @SuiteClasses({
         AuthFilterRouteTest.class,
         EventServiceTest.class,
+        CheckInvitationStatusRouteTest.class,
         CreateActivityInstanceRouteTest.class,
         CreateTemporaryUserRouteTest.class,
         DeleteMedicalProviderRouteTest.class,

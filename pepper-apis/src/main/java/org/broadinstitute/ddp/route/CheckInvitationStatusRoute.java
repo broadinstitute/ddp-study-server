@@ -12,6 +12,7 @@ import org.broadinstitute.ddp.db.dto.InvitationDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.json.invitation.CheckInvitationStatusPayload;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
+import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
@@ -37,45 +38,49 @@ public class CheckInvitationStatusRoute extends ValidatedJsonInputRoute<CheckInv
         String invitationGuid = payload.getInvitationGuid();
         LOG.info("Attempting to check invitation {} in study {}", invitationGuid, studyGuid);
 
-        int status = TransactionWrapper.withTxn(handle -> {
-            StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
-            if (studyDto == null) {
-                LOG.error("Invitation check called for non-existent study with guid {}", studyGuid);
-                return HttpStatus.SC_BAD_REQUEST;
-            }
-
-            List<String> permittedStudies = handle.attach(JdbiClientUmbrellaStudy.class)
-                    .findPermittedStudyGuidsByAuth0ClientIdAndAuth0Domain(payload.getAuth0ClientId(), payload.getAuth0Domain());
-            if (permittedStudies.contains(studyGuid)) {
-                LOG.info("Invitation check by client clientId={}, tenant={}",
-                        payload.getAuth0ClientId(), payload.getAuth0Domain());
-            } else {
-                LOG.error("Invitation check by client which does not have access to study: clientId={}, tenant={}",
-                        payload.getAuth0ClientId(), payload.getAuth0Domain());
-                return HttpStatus.SC_BAD_REQUEST;
-            }
-
-            // todo: check recaptcha
-
-            InvitationDao invitationDao = handle.attach(InvitationDao.class);
-            InvitationDto invitation = invitationDao.findByInvitationGuid(studyDto.getId(), invitationGuid).orElse(null);
-            if (invitation == null) {
-                // It might just be a typo, so do a warn instead of error log.
-                LOG.warn("Invitation {} does not exist", invitationGuid);
-                return HttpStatus.SC_BAD_REQUEST;
-            } else if (invitation.isVoid()) {
-                LOG.error("Invitation {} is voided", invitationGuid);
-                return HttpStatus.SC_BAD_REQUEST;
-            } else if (invitation.isAccepted()) {
-                LOG.error("Invitation {} has already been accepted", invitationGuid);
-                return HttpStatus.SC_BAD_REQUEST;
-            } else {
-                LOG.info("Invitation {} is valid", invitationGuid);
-                return HttpStatus.SC_OK;
-            }
-        });
+        int status = TransactionWrapper.withTxn(handle -> checkStatus(handle, studyGuid, payload));
 
         response.status(status);
         return null;
+    }
+
+    int checkStatus(Handle handle, String studyGuid, CheckInvitationStatusPayload payload) {
+        String invitationGuid = payload.getInvitationGuid();
+
+        StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
+        if (studyDto == null) {
+            LOG.error("Invitation check called for non-existent study with guid {}", studyGuid);
+            return HttpStatus.SC_BAD_REQUEST;
+        }
+
+        List<String> permittedStudies = handle.attach(JdbiClientUmbrellaStudy.class)
+                .findPermittedStudyGuidsByAuth0ClientIdAndAuth0Domain(payload.getAuth0ClientId(), payload.getAuth0Domain());
+        if (permittedStudies.contains(studyGuid)) {
+            LOG.info("Invitation check by client clientId={}, tenant={}",
+                    payload.getAuth0ClientId(), payload.getAuth0Domain());
+        } else {
+            LOG.error("Invitation check by client which does not have access to study: clientId={}, tenant={}",
+                    payload.getAuth0ClientId(), payload.getAuth0Domain());
+            return HttpStatus.SC_BAD_REQUEST;
+        }
+
+        // todo: check recaptcha
+
+        InvitationDao invitationDao = handle.attach(InvitationDao.class);
+        InvitationDto invitation = invitationDao.findByInvitationGuid(studyDto.getId(), invitationGuid).orElse(null);
+        if (invitation == null) {
+            // It might just be a typo, so do a warn instead of error log.
+            LOG.warn("Invitation {} does not exist", invitationGuid);
+            return HttpStatus.SC_BAD_REQUEST;
+        } else if (invitation.isVoid()) {
+            LOG.error("Invitation {} is voided", invitationGuid);
+            return HttpStatus.SC_BAD_REQUEST;
+        } else if (invitation.isAccepted()) {
+            LOG.error("Invitation {} has already been accepted", invitationGuid);
+            return HttpStatus.SC_BAD_REQUEST;
+        } else {
+            LOG.info("Invitation {} is valid", invitationGuid);
+            return HttpStatus.SC_OK;
+        }
     }
 }

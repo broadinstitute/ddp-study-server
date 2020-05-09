@@ -41,6 +41,9 @@ public interface InvitationSql extends SqlObject {
      * Sets nullable date columns to null for the given invitation.  Convenience for testing.
      */
     @SqlUpdate("update invitation set accepted_at = null, voided_at = null, verified_at = null"
-            + "  where invitation_guid = :guid")
-    int clearDates(@Bind("guid") String invitationGuid);
+            + "  where invitation_id = :id")
+    int clearDates(@Bind("id") long invitationId);
+
+    @SqlUpdate("delete from invitation where invitation_id = :id")
+    int deleteById(@Bind("id") long invitationId);
 }
