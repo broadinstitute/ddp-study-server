@@ -214,6 +214,8 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
         } else if (invitation.getInvitationType() == InvitationType.RECRUITMENT) {
             var user = signUpNewOperator(response, handle, study, auth0UserId, payload, clientConfig, auth0Util, mgmtClient);
             invitationDao.assignAcceptingUser(invitation.getInvitationId(), user.getId(), Instant.now());
+            LOG.info("Assigned invitation {} of type {} to user {}", invitation.getInvitationGuid(),
+                    invitation.getInvitationType(), user.getGuid());
             return user;
         } else {
             throw new DDPException("Unhandled invitation type " + invitation.getInvitationType());

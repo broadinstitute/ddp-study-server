@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.db.dao;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.time.Instant;
@@ -11,16 +12,27 @@ import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dto.InvitationDto;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 public class InvitationDaoTest extends TxnAwareBaseTest {
 
+    private static TestDataSetupUtil.GeneratedTestData testData;
+    private static long studyId;
+    private static long userId;
+
+    @BeforeClass
+    public static void setup() {
+        TransactionWrapper.useTxn(handle -> {
+            testData = TestDataSetupUtil.generateBasicUserTestData(handle);
+            studyId = testData.getStudyId();
+            userId = testData.getUserId();
+        });
+    }
+
     @Test
     public void testInsertUpdateAndRead() {
         TransactionWrapper.useTxn(handle -> {
-            TestDataSetupUtil.GeneratedTestData generatedTestData = TestDataSetupUtil.generateBasicUserTestData(handle);
-            long studyId = generatedTestData.getStudyId();
-            long userId = generatedTestData.getUserId();
             String email = "test" + System.currentTimeMillis() + "@datadonationplatform.org";
 
             // create a new one
@@ -29,7 +41,6 @@ public class InvitationDaoTest extends TxnAwareBaseTest {
                     studyId, userId, email);
 
             // check some generated values
-            assertNotNull(invitation.getInvitationId());
             assertTrue(invitation.getCreatedAt().isBefore(Instant.now()));
 
             // set various dates
@@ -51,6 +62,31 @@ public class InvitationDaoTest extends TxnAwareBaseTest {
             assertEquals(voidedAt, requeriedInvitation.getVoidedAt());
             assertEquals(invitation.getInvitationGuid(), requeriedInvitation.getInvitationGuid());
             assertEquals(email, requeriedInvitation.getContactEmail());
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testRecruitmentInvitations() {
+        TransactionWrapper.useTxn(handle -> {
+            var dao = handle.attach(InvitationDao.class);
+            var factory = handle.attach(InvitationFactory.class);
+
+            var invitation = factory.createRecruitmentInvitation(studyId, "foobar");
+            assertNotNull(invitation);
+            assertNull(invitation.getUserId());
+            assertEquals("foobar", invitation.getInvitationGuid());
+
+            Instant now = Instant.now();
+            dao.assignAcceptingUser(invitation.getInvitationId(), userId, now);
+
+            var updated = dao.findByInvitationGuid(studyId, invitation.getInvitationGuid()).orElse(null);
+            assertNotNull(updated);
+            assertEquals((Long) userId, updated.getUserId());
+            assertEquals(now, updated.getAcceptedAt());
+
+            handle.rollback();
         });
     }
 }
