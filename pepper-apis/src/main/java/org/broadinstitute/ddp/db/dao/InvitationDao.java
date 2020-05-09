@@ -21,6 +21,14 @@ public interface InvitationDao extends SqlObject {
 
     @SqlQuery("select i.*, it.invitation_type_code from invitation as i"
             + "  join invitation_type as it on i.invitation_type_id = it.invitation_type_id"
+            + "  join umbrella_study as s on s.umbrella_study_id = i.study_id"
+            + "  left join user as u on u.user_id = i.user_id"
+            + " where s.guid = :studyGuid and u.guid = :userGuid")
+    @RegisterConstructorMapper(InvitationDto.class)
+    List<InvitationDto> findInvitations(@Bind("studyGuid") String studyGuid, @Bind("userGuid") String userGuid);
+
+    @SqlQuery("select i.*, it.invitation_type_code from invitation as i"
+            + "  join invitation_type as it on i.invitation_type_id = it.invitation_type_id"
             + " where i.study_id = :studyId and i.invitation_guid = :guid")
     @RegisterConstructorMapper(InvitationDto.class)
     Optional<InvitationDto> findByInvitationGuid(@Bind("studyId") long studyId, @Bind("guid") String invitationGuid);
