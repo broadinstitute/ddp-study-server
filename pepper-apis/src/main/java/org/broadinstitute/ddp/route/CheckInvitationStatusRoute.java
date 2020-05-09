@@ -27,6 +27,11 @@ public class CheckInvitationStatusRoute extends ValidatedJsonInputRoute<CheckInv
     private static final Logger LOG = LoggerFactory.getLogger(CheckInvitationStatusRoute.class);
 
     @Override
+    protected int getValidationErrorStatus() {
+        return HttpStatus.SC_BAD_REQUEST;
+    }
+
+    @Override
     public Object handle(Request request, Response response, CheckInvitationStatusPayload payload) throws Exception {
         String studyGuid = request.params(RouteConstants.PathParam.STUDY_GUID);
         String invitationGuid = payload.getInvitationGuid();
