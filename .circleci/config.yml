@@ -124,7 +124,7 @@ commands:
             GAE_Migration1)
               DEPLOY_ENV=dev
             ;;
-	    # @todo remove when done
+            # @todo remove when done
             DDP-4648_studymanager-firewall)
               DEPLOY_ENV=dev
             ;;
@@ -737,7 +737,7 @@ workflows:
                 - &rc /^rc.*/
                 - &hotfix /^hotfix.*/
                 - GAE_Migration1
-		- DDP-4648_studymanager-firewall
+                - DDP-4648_studymanager-firewall
       - parallel-compile-and-test-job:
           parallelism: *test_parallelism
           <<: *compile_and_test_filters
@@ -747,7 +747,7 @@ workflows:
               only:
                 - develop
                 - GAE_Migration1
-		- DDP-4648_studymanager-firewall
+                - DDP-4648_studymanager-firewall
           requires:
             - parallel-compile-and-test-job
             - compile-and-run-test-suite-job
