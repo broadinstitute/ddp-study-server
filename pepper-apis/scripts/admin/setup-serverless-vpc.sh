@@ -1,9 +1,11 @@
 #!/bin/bash
 
-gcloud compute networks vpc-access connectors create appengine-connector \
---network managed \
---region us-central1 \
+gcloud --project broad-ddp-dev compute networks vpc-access connectors create appengine-default-connector \
+--network https://www.googleapis.com/compute/v1/projects/broad-ddp-dev/global/networks/default \
+--region us-central \
 --range 10.8.0.0/28
 
 # don't forget to change dsm's internal IP from ephemeral to static and then update application.conf.ctmpl
-# and add vpcaccess.connectors.use, compute.addresses.useInternal to SA
+# and add roles Compute Network User,  Serverless VPC Access User to the SA
+
+
