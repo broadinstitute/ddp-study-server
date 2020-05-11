@@ -93,7 +93,7 @@
     {{if eq $environment "dev"}}
         "baseTestUrl": "https://pepper-dev.datadonationplatform.org",
         "baseWebDriverUrl": "https://basil-dev.datadonationplatform.org",
-        "dsmBaseUrl": "https://10.128.0.6:443"
+        "dsmBaseUrl": "https://dsm-dev.datadonationplatform.org:443"
     {{end}}
     {{if eq $environment "test"}}
         "baseTestUrl": "https://pepper-test.datadonationplatform.org",
