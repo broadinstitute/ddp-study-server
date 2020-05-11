@@ -13,8 +13,10 @@ automatic_scaling:
   max_concurrent_requests: 10 #default is 10 . Max is 80. GCP recommends 10 max value.
   max_pending_latency: 60ms #Default is 30ms. Max time a request is allowed to wait in queue.
   min_pending_latency: 60ms #Default is 30ms. Threshold used to scale down
-network:
-  instance_tag: study-server # necessary for firewall rules so that DSM will accept https requests from pepper
+
+vpc_access_connector:
+  # temporary proof-of-concept.  how to parameterize $PROJECT_ID without copy-pasting yaml files?
+  name: "projects/broad-ddp-dev/locations/us-central1/connectors/appengine-connector"
 
 entrypoint: java -javaagent:tcell/tcellagent.jar -Xmx820m -Xmx820m -jar DataDonationPlatform.jar
 
