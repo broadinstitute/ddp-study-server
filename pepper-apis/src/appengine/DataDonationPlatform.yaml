@@ -16,7 +16,7 @@ automatic_scaling:
 
 vpc_access_connector:
   # temporary proof-of-concept.  how to parameterize $PROJECT_ID without copy-pasting yaml files?
-  name: "projects/broad-ddp-dev/locations/us-central1/connectors/appengine-connector"
+  name: "projects/broad-ddp-dev/locations/us-central1/connectors/appengine-default-connect"
 
 entrypoint: java -javaagent:tcell/tcellagent.jar -Xmx820m -Xmx820m -jar DataDonationPlatform.jar
 
