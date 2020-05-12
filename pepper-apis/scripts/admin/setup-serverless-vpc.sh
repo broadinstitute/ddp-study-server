@@ -9,3 +9,4 @@ gcloud --project broad-ddp-dev compute networks vpc-access connectors create app
 # and add roles Compute Network User,  Serverless VPC Access User to the SA
 
 
+# add firewall rule allowing vcp IP range to access DSM
