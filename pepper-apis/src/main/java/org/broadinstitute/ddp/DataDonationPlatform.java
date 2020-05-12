@@ -270,6 +270,8 @@ public class DataDonationPlatform {
         if (cfg.hasPath(ConfigFile.API_RATE_LIMIT.BURST)) {
             burst = cfg.getInt(ConfigFile.API_RATE_LIMIT.BURST);
         }
+
+        LOG.info("Will use rate limit {} with burst {}", maxQueriesPerSecond, burst);
         before("*", new RateLimitFilter(maxQueriesPerSecond, burst));
         before("*", new HttpHeaderMDCFilter(X_FORWARDED_FOR));
         before("*", new MDCLogBreadCrumbFilter());

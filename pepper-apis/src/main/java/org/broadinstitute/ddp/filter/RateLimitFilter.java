@@ -23,11 +23,12 @@ public class RateLimitFilter implements Filter {
         DoSFilter rateLimitFilter = new DoSFilter();
         rateLimitFilter.setEnabled(true);
         try {
-            rateLimitFilter.init(new FilterConfig("DOSFilter", Map.of("delayMs", "0",
+            rateLimitFilter.init(new FilterConfig("DOSFilter", Map.of("delayMs", "-1",
                     "maxRequestsPerSec", Integer.toString(maxRequestsPerSecond),
+                    "insertHeaders", "false",
                     "throttledRequests", Integer.toString(burst))));
         } catch (ServletException e) {
-            throw new DDPException("Could not initalize rate limits", e);
+            throw new DDPException("Could not initialize rate limits", e);
         }
         this.rateLimitFilter = rateLimitFilter;
     }
