@@ -63,7 +63,7 @@ public class VerifyInvitationRouteTest extends IntegrationTestSuite.TestCase {
     }
 
     private String buildInvitationVerificationUrl() {
-        String url = RouteTestUtil.getTestingBaseUrl() + RouteConstants.API.INVITATIONS_VERIFY;
+        String url = RouteTestUtil.getTestingBaseUrl() + RouteConstants.API.INVITATION_VERIFY;
         url = url.replace(RouteConstants.PathParam.STUDY_GUID, testData.getStudyGuid());
         return HttpUrl.parse(url).newBuilder().build().toString();
     }

@@ -121,7 +121,7 @@ public class CheckInvitationStatusRouteTest extends IntegrationTestSuite.TestCas
                     testData.getTestingClient().getAuth0Domain(),
                     testData.getAuth0ClientId(),
                     invitation.getInvitationGuid());
-            String url = RouteTestUtil.getTestingBaseUrl() + RouteConstants.API.INVITATIONS_CHECK;
+            String url = RouteTestUtil.getTestingBaseUrl() + RouteConstants.API.INVITATION_CHECK;
             url = url.replace(RouteConstants.PathParam.STUDY_GUID, testData.getStudyGuid());
             given().body(payload, ObjectMapperType.GSON)
                     .when().post(url)

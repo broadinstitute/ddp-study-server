@@ -268,9 +268,9 @@ public class DataDonationPlatform {
         before(API.BASE + "/user/*/studies/*", new StudyLanguageResolutionFilter());
         after(API.BASE + "/user/*/studies/*", new StudyLanguageContentLanguageSettingFilter());
         before(API.BASE + "/studies/*", new ExcludePathFilter(new StudyLanguageResolutionFilter(),
-                API.INVITATIONS + "/*"));
+                API.INVITATIONS + "/*", API.INVITATION_VERIFY, API.INVITATION_CHECK));
         after(API.BASE + "/studies/*", new ExcludePathFilter(new StudyLanguageContentLanguageSettingFilter(),
-                API.INVITATIONS + "/*"));
+                API.INVITATIONS + "/*", API.INVITATION_VERIFY, API.INVITATION_CHECK));
 
         enableCORS("*", String.join(",", CORS_HTTP_METHODS), String.join(",", CORS_HTTP_HEADERS));
         setupCatchAllErrorHandling();
@@ -451,8 +451,8 @@ public class DataDonationPlatform {
         );
 
         var jsonSerializer = new NullableJsonTransformer();
-        post(API.INVITATIONS_VERIFY, new VerifyInvitationRoute(), jsonSerializer);
-        post(API.INVITATIONS_CHECK, new CheckInvitationStatusRoute(), jsonSerializer);
+        post(API.INVITATION_VERIFY, new VerifyInvitationRoute(), jsonSerializer);
+        post(API.INVITATION_CHECK, new CheckInvitationStatusRoute(), jsonSerializer);
         get(API.INVITATION, new GetInvitationRoute(), jsonSerializer);
         patch(API.INVITATION, new UpdateInvitationRoute(), jsonSerializer);
 

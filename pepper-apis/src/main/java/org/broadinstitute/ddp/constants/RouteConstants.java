@@ -34,8 +34,8 @@ public class RouteConstants {
                 fmt(STUDY_ALL + "/participant-info" + "/%s", PathParam.STUDY_GUID);
 
         public static final String INVITATIONS = fmt(BASE + "/studies/%s/invitations", PathParam.STUDY_GUID);
-        public static final String INVITATIONS_VERIFY = INVITATIONS + "/verify";
-        public static final String INVITATIONS_CHECK = INVITATIONS + "/check";
+        public static final String INVITATION_VERIFY = fmt(BASE + "/studies/%s/invitation-verify", PathParam.STUDY_GUID);
+        public static final String INVITATION_CHECK = fmt(BASE + "/studies/%s/invitation-check", PathParam.STUDY_GUID);
         public static final String INVITATION = INVITATIONS + "/" + PathParam.INVITATION_ID;
 
         public static final String USER_ALL = fmt(BASE + "/user/%s/*", PathParam.USER_GUID);
