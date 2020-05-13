@@ -15,19 +15,11 @@ import static spark.Spark.port;
 import static spark.Spark.stop;
 import static spark.Spark.threadPool;
 
-import java.io.IOException;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.google.cloud.pubsub.v1.Subscriber;
-import com.google.cloud.pubsub.v1.SubscriptionAdminClient;
-import com.google.protobuf.Duration;
-import com.google.pubsub.v1.ExpirationPolicy;
-import com.google.pubsub.v1.ProjectSubscriptionName;
-import com.google.pubsub.v1.ProjectTopicName;
-import com.google.pubsub.v1.Subscription;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.apache.http.entity.ContentType;
@@ -46,8 +38,6 @@ import org.broadinstitute.ddp.db.StudyActivityDao;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.UserDao;
 import org.broadinstitute.ddp.db.UserDaoFactory;
-import org.broadinstitute.ddp.event.EventReceiver;
-import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.filter.AddDDPAuthLoggingFilter;
 import org.broadinstitute.ddp.filter.DsmAuthFilter;
 import org.broadinstitute.ddp.filter.HttpHeaderMDCFilter;
@@ -57,7 +47,6 @@ import org.broadinstitute.ddp.filter.StudyLanguageContentLanguageSettingFilter;
 import org.broadinstitute.ddp.filter.StudyLanguageResolutionFilter;
 import org.broadinstitute.ddp.filter.TokenConverterFilter;
 import org.broadinstitute.ddp.filter.UserAuthCheckFilter;
-import org.broadinstitute.ddp.housekeeping.PubSubConnectionManager;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.dsm.DrugStore;
 import org.broadinstitute.ddp.monitoring.PointsReducerFactory;
@@ -150,7 +139,6 @@ import org.broadinstitute.ddp.service.PdfService;
 import org.broadinstitute.ddp.service.WorkflowService;
 import org.broadinstitute.ddp.transformers.SimpleJsonTransformer;
 import org.broadinstitute.ddp.util.ConfigManager;
-import org.broadinstitute.ddp.util.GuidUtils;
 import org.broadinstitute.ddp.util.LiquibaseUtil;
 import org.broadinstitute.ddp.util.LogbackConfigurationPrinter;
 import org.broadinstitute.ddp.util.ResponseUtil;
@@ -178,7 +166,6 @@ public class DataDonationPlatform {
     private static final Map<String, String> pathToClass = new HashMap<>();
     public static final String PORT = "PORT";
     private static Scheduler scheduler = null;
-    private static Subscriber eventSubscriber = null;
 
     /**
      * Stop the server using the default wait time.
@@ -193,9 +180,6 @@ public class DataDonationPlatform {
      * @param millisecs milliseconds to wait for Spark to close
      */
     public static void shutdown(int millisecs) {
-        if (eventSubscriber != null) {
-            eventSubscriber.stopAsync();
-        }
         if (scheduler != null) {
             JobScheduler.shutdownScheduler(scheduler, false);
         }
@@ -474,30 +458,6 @@ public class DataDonationPlatform {
                 scheduler.triggerJob(DsmCancerLoaderJob.getKey());
             } catch (SchedulerException e) {
                 LOG.error("Could not trigger job to initialize drug/cancer lists", e);
-            }
-
-            // Setup event listener
-            if (!cfg.getBoolean(ConfigFile.USE_PUBSUB_EMULATOR)) {
-                var gcpProjectId = cfg.getString(ConfigFile.GOOGLE_PROJECT_ID);
-                var topicName = ProjectTopicName.of(gcpProjectId, cfg.getString(ConfigFile.PUBSUB_PEPPER_EVENTS_TOPIC));
-                var subName = ProjectSubscriptionName.of(gcpProjectId,
-                        String.format("%s-%s", topicName.getTopic(), GuidUtils.randomNanoId()));
-                try (var client = SubscriptionAdminClient.create()) {
-                    client.createSubscription(Subscription.newBuilder()
-                            .setName(subName.toString())
-                            .setTopic(topicName.toString())
-                            .setAckDeadlineSeconds(PubSubConnectionManager.ACK_DEADLINE_SECONDS)
-                            .setExpirationPolicy(ExpirationPolicy.newBuilder().setTtl(Duration.newBuilder()
-                                    .setSeconds(PubSubConnectionManager.SUB_EXPIRATION_DAYS * 24 * 60 * 60)
-                                    .build()).build())
-                            .build());
-                    LOG.info("Created pepper events subscription {}", subName);
-                } catch (IOException e) {
-                    throw new DDPException("Failed to create subscription to topic " + topicName);
-                }
-                eventSubscriber = Subscriber.newBuilder(subName, new EventReceiver(subName.getSubscription(), scheduler)).build();
-                eventSubscriber.startAsync();
-                LOG.info("Started pepper events subscriber to subscription {}", subName);
             }
         } else {
             LOG.info("DDP job scheduler is not set to run");

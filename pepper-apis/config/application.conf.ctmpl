@@ -47,7 +47,6 @@
     "pdfArchiveBucket": "{{$conf.Data.pdfArchiveBucket}}",
     "pdfArchiveUseFilesystem": false,
     "pubsub": {
-        "pepperEventsTopic": "{{$conf.Data.pubsub.pepperEventsTopic}}",
         "housekeepingEventsTopic": "{{$conf.Data.pubsub.housekeepingEventsTopic}}",
     },
     "studyExportBucket": "{{$conf.Data.studyExportBucket}}",
