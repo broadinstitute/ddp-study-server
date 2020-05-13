@@ -11,16 +11,20 @@ import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 public interface InvitationSql extends SqlObject {
 
     @GetGeneratedKeys
-    @SqlUpdate("insert into invitation (invitation_type_id, invitation_guid, study_id, user_id, created_at, contact_email)"
-            + " select invitation_type_id, :guid, :studyId, :userId, :createdAt, :email"
+    @SqlUpdate("insert into invitation (invitation_type_id, invitation_guid, study_id, user_id, created_at, contact_email, notes)"
+            + " select invitation_type_id, :guid, :studyId, :userId, :createdAt, :email, :notes"
             + "   from invitation_type where invitation_type_code = :type")
     long insertInvitation(
             @Bind("type") InvitationType invitationType,
             @Bind("guid") String guid,
             @Bind("studyId") long studyId,
             @Bind("userId") Long userId,
-            @Bind("createdAt") Instant createdAt,
-            @Bind("email") String email);
+            @Bind("email") String email,
+            @Bind("notes") String notes,
+            @Bind("createdAt") Instant createdAt);
+
+    @SqlUpdate("update invitation set notes = :notes where invitation_id = :id")
+    int updateNotes(@Bind("id") long invitationId, @Bind("notes") String notes);
 
     @SqlUpdate("update invitation set voided_at = :voidedAt where invitation_id = :id")
     int updateVoidedAt(@Bind("id") long invitationId, @Bind("voidedAt") Instant voidedAt);

@@ -137,7 +137,7 @@ public class CheckInvitationStatusRouteTest extends IntegrationTestSuite.TestCas
 
     private InvitationDto fakeInvitation(Instant created, Instant voided, Instant verified, Instant accepted) {
         Long userId = accepted == null ? null : testData.getUserId();
-        return new InvitationDto("guid", 1L, created, voided, verified, accepted,
-                testData.getStudyId(), userId, InvitationType.RECRUITMENT, null);
+        return new InvitationDto(1L, "guid", InvitationType.RECRUITMENT, created, voided, verified, accepted,
+                testData.getStudyId(), userId, null, null);
     }
 }

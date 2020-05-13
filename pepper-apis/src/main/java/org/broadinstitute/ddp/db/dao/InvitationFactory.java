@@ -26,9 +26,8 @@ public interface InvitationFactory extends SqlObject {
     private InvitationDto createInvitation(InvitationType invitationType, String guid, long studyId, Long userId, String email) {
         Instant createdAt = Instant.now();
         long invitationId = getHandle().attach(InvitationSql.class)
-                .insertInvitation(invitationType, guid, studyId, userId, createdAt, email);
-        return new InvitationDto(guid, invitationId, createdAt, null, null, null, studyId, userId,
-                invitationType, email);
+                .insertInvitation(invitationType, guid, studyId, userId, email, null, createdAt);
+        return new InvitationDto(invitationId, guid, invitationType, createdAt, null, null, null, studyId, userId, email, null);
     }
 
     /**

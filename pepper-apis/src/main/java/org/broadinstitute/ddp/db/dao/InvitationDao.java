@@ -33,6 +33,11 @@ public interface InvitationDao extends SqlObject {
     @RegisterConstructorMapper(InvitationDto.class)
     Optional<InvitationDto> findByInvitationGuid(@Bind("studyId") long studyId, @Bind("guid") String invitationGuid);
 
+    default void saveNotes(long invitationId, String notes) {
+        DBUtils.checkUpdate(1, getHandle().attach(InvitationSql.class)
+                .updateNotes(invitationId, notes));
+    }
+
     default void markVoided(long invitationId, Instant voidedAt) {
         DBUtils.checkUpdate(1, getHandle().attach(InvitationSql.class)
                 .updateVoidedAt(invitationId, voidedAt));

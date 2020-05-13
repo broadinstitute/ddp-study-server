@@ -14,6 +14,10 @@
         <modifyDataType tableName="invitation" columnName="verified_at" newDataType="datetime(6)"/>
         <modifyDataType tableName="invitation" columnName="voided_at" newDataType="datetime(6)"/>
         <modifyDataType tableName="invitation" columnName="accepted_at" newDataType="datetime(6)"/>
+
+        <addColumn tableName="invitation">
+            <column name="notes" type="varchar(16000)"/>
+        </addColumn>
     </changeSet>
 
     <changeSet author="yufeng" id="20200508-add-recruitment-invitation-type">

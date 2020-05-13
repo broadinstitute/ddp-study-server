@@ -87,6 +87,7 @@ import org.broadinstitute.ddp.route.GetDsmStudyParticipant;
 import org.broadinstitute.ddp.route.GetDsmTriggeredInstancesRoute;
 import org.broadinstitute.ddp.route.GetGovernedStudyParticipantsRoute;
 import org.broadinstitute.ddp.route.GetInstitutionSuggestionsRoute;
+import org.broadinstitute.ddp.route.GetInvitationRoute;
 import org.broadinstitute.ddp.route.GetMailAddressRoute;
 import org.broadinstitute.ddp.route.GetMailingListRoute;
 import org.broadinstitute.ddp.route.GetMedicalProviderListRoute;
@@ -116,6 +117,7 @@ import org.broadinstitute.ddp.route.SendDsmNotificationRoute;
 import org.broadinstitute.ddp.route.SendEmailRoute;
 import org.broadinstitute.ddp.route.SendExitNotificationRoute;
 import org.broadinstitute.ddp.route.SetParticipantDefaultMailAddressRoute;
+import org.broadinstitute.ddp.route.UpdateInvitationRoute;
 import org.broadinstitute.ddp.route.UpdateMailAddressRoute;
 import org.broadinstitute.ddp.route.UpdateUserEmailRoute;
 import org.broadinstitute.ddp.route.UpdateUserPasswordRoute;
@@ -266,9 +268,9 @@ public class DataDonationPlatform {
         before(API.BASE + "/user/*/studies/*", new StudyLanguageResolutionFilter());
         after(API.BASE + "/user/*/studies/*", new StudyLanguageContentLanguageSettingFilter());
         before(API.BASE + "/studies/*", new ExcludePathFilter(new StudyLanguageResolutionFilter(),
-                API.INVITATIONS_VERIFY, API.INVITATIONS_CHECK));
+                API.INVITATIONS + "/*"));
         after(API.BASE + "/studies/*", new ExcludePathFilter(new StudyLanguageContentLanguageSettingFilter(),
-                API.INVITATIONS_VERIFY, API.INVITATIONS_CHECK));
+                API.INVITATIONS + "/*"));
 
         enableCORS("*", String.join(",", CORS_HTTP_METHODS), String.join(",", CORS_HTTP_HEADERS));
         setupCatchAllErrorHandling();
@@ -451,6 +453,8 @@ public class DataDonationPlatform {
         var jsonSerializer = new NullableJsonTransformer();
         post(API.INVITATIONS_VERIFY, new VerifyInvitationRoute(), jsonSerializer);
         post(API.INVITATIONS_CHECK, new CheckInvitationStatusRoute(), jsonSerializer);
+        get(API.INVITATION, new GetInvitationRoute(), jsonSerializer);
+        patch(API.INVITATION, new UpdateInvitationRoute(), jsonSerializer);
 
         Runnable runnable = () -> {
             var dsm = new DsmClient(cfg);
