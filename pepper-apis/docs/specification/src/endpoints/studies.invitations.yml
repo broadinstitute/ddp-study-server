@@ -1,0 +1,101 @@
+parameters:
+  - in: path
+    name: study
+    required: true
+    description: the study guid
+    schema:
+      type: string
+  - in: path
+    name: invite
+    required: true
+    description: the invitation id
+    schema:
+      type: string
+
+get:
+  operationId: getInvitation
+  tags:
+    - Invitations
+  summary: GetInvitation
+  description: |
+    Fetch an invitation, along with associated user data.
+
+    Note: this API is restricted to study admins.
+  responses:
+    200:
+      description: invitation details
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - invitationId
+              - createdAt
+              - voidedAt
+              - verifiedAt
+              - acceptedAt
+              - notes
+              - userGuid
+              - userHruid
+              - userLoginEmail
+            properties:
+              invitationId:
+                description: the id of the invitation
+                type: string
+              createdAt:
+                description: UTC timestamp of when invitation was created, in ISO-8601 format
+                type: string
+                example: 2020-05-13T17:58:33.887Z
+              voidedAt:
+                description: UTC timestamp of when invitation is voided
+                type: string
+                nullable: true
+              verifiedAt:
+                description: UTC timestamp of when invitation is verified
+                type: string
+                nullable: true
+              acceptedAt:
+                description: UTC timestamp of when invitation is accepted
+                type: string
+                nullable: true
+              userGuid:
+                description: guid of associated user, if invitation is accepted
+                type: string
+                nullable: true
+              userHruid:
+                description: hruid of associated user, if invitation is accepted
+                type: string
+                nullable: true
+              userLoginEmail:
+                description: login email of associated user, if invitation is accepted and user has a login account
+                type: string
+                nullable: true
+    404:
+      description: invitation not found
+
+patch:
+  operationId: patchInvitation
+  tags:
+    - Invitations
+  summary: PatchInvitation
+  description: |
+    Update the notes of an invitation.
+
+    Note: this API is restricted to study admins.
+  requestBody:
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - notes
+          properties:
+            notes:
+              description: the notes to save for an inivitation
+              type: string
+              nullable: true
+  responses:
+    200:
+      description: invitation notes are saved
+    404:
+      description: invitation not found

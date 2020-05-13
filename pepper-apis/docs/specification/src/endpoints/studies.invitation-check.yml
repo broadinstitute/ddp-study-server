@@ -1,0 +1,35 @@
+post:
+  operationId: checkInvitationStatus
+  tags:
+    - Invitations
+  summary: CheckInvitationStatus
+  description: Check the status of an invitation, whether it exits and is valid or not.
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - auth0ClientId
+            - auth0Domain
+            - invitationId
+            - recaptchaToken
+          properties:
+            auth0ClientId:
+              description: the id of the client
+              type: string
+            auth0Domain:
+              description: the domain of the client
+              type: string
+            invitationId:
+              description: the id of the invitation
+              type: string
+            recaptchaToken:
+              description: the user's reCAPTCHA token
+              type: string
+  responses:
+    200:
+      description: invitation exists and is valid and can be used by user
+    400:
+      description: invitation not valid

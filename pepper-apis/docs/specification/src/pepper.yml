@@ -54,6 +54,12 @@ paths:
     $ref: 'endpoints/join.mailing.list.yml'
   /studies/{study}:
     $ref: 'endpoints/studies.study.yml'
+  /studies/{study}/invitation-check:
+    $ref: 'endpoints/studies.invitation-check.yml'
+  /studies/{study}/invitation-verify:
+    $ref: 'endpoints/studies.invitation-verify.yml'
+  /studies/{study}/invitations/{invite}:
+    $ref: 'endpoints/studies.invitations.yml'
   /studies/{study}/password-policy:
     $ref: 'endpoints/studies.password-policy.yml'
   /studies/{study}/suggestions/drugs:
@@ -106,8 +112,6 @@ paths:
     $ref: 'endpoints/cancers.yml'
   /autocomplete/institution:
     $ref: 'endpoints/autocomplete.institution.yml'
-  /invitations/verify:
-    $ref: 'endpoints/invitations.verify.yml'
 components:
   schemas:
     $ref: 'components/schemas.yml'
