@@ -1,5 +1,7 @@
 package org.broadinstitute.ddp;
 
+import static io.restassured.RestAssured.given;
+import static org.broadinstitute.ddp.constants.RouteConstants.API.DSM_ALL_KIT_REQUESTS;
 import static org.broadinstitute.ddp.route.IntegrationTestSuite.startupTestServer;
 import static org.broadinstitute.ddp.route.IntegrationTestSuite.tearDown;
 
@@ -11,11 +13,15 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.google.gson.JsonParser;
+import com.google.gson.JsonSyntaxException;
 import com.typesafe.config.Config;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.fluent.Request;
+import org.apache.http.util.EntityUtils;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.route.IntegrationTestSuite;
@@ -34,9 +40,9 @@ public class RateLimitTest extends IntegrationTestSuite.TestCase {
 
     private static final Logger LOG = LoggerFactory.getLogger(RateLimitTest.class);
 
-    private static String url;
+    private static String healthCheckUrl;
 
-    private static String password;
+    private static String healthCheckPassword;
 
     private static Map<String, String> originalRateLimitConfig = new HashMap<>();
 
@@ -44,10 +50,12 @@ public class RateLimitTest extends IntegrationTestSuite.TestCase {
     public static void cachePreviousRateLimitConfiguration() {
         Config originalConfig = ConfigManager.getInstance().getConfig();
         if (originalConfig.hasPath(ConfigFile.API_RATE_LIMIT.MAX_QUERIES_PER_SECOND)) {
-            originalRateLimitConfig.put(ConfigFile.API_RATE_LIMIT.MAX_QUERIES_PER_SECOND, originalConfig.getString(ConfigFile.API_RATE_LIMIT.MAX_QUERIES_PER_SECOND));
+            originalRateLimitConfig.put(ConfigFile.API_RATE_LIMIT.MAX_QUERIES_PER_SECOND,
+                    originalConfig.getString(ConfigFile.API_RATE_LIMIT.MAX_QUERIES_PER_SECOND));
         }
         if (originalConfig.hasPath(ConfigFile.API_RATE_LIMIT.BURST)) {
-            originalRateLimitConfig.put(ConfigFile.API_RATE_LIMIT.BURST, originalConfig.getString(ConfigFile.API_RATE_LIMIT.BURST));
+            originalRateLimitConfig.put(ConfigFile.API_RATE_LIMIT.BURST,
+                    originalConfig.getString(ConfigFile.API_RATE_LIMIT.BURST));
         }
     }
 
@@ -66,13 +74,20 @@ public class RateLimitTest extends IntegrationTestSuite.TestCase {
 
         startupTestServer();
 
-        url = RouteTestUtil.getTestingBaseUrl() + RouteConstants.API.HEALTH_CHECK;
-        password = RouteTestUtil.getConfig().getString(ConfigFile.HEALTHCHECK_PASSWORD);
+        healthCheckUrl = RouteTestUtil.getTestingBaseUrl() + RouteConstants.API.HEALTH_CHECK;
+        healthCheckPassword = RouteTestUtil.getConfig().getString(ConfigFile.HEALTHCHECK_PASSWORD);
     }
 
     @Test
     public void testThingsUnderTheLimitStillGetThrough() {
         runHealthChecksConcurrentlyAndCheckResults(1, 0);
+    }
+
+    @Test
+    public void testAuthFilterRunsWhenRateLimitIsEnabled() {
+        String urlForRouteWithAuthFilter = RouteTestUtil.getTestingBaseUrl() + DSM_ALL_KIT_REQUESTS;
+        given().when().get(urlForRouteWithAuthFilter).then().assertThat()
+                .statusCode(401);
     }
 
     @Test
@@ -101,21 +116,32 @@ public class RateLimitTest extends IntegrationTestSuite.TestCase {
         AtomicInteger rateLimitRejects = new AtomicInteger(0);
 
         List<Callable<Boolean>> healthCheckCalls = new ArrayList<>();
+        AtomicBoolean didRequestPassThrough = new AtomicBoolean();
 
         for (int i = 0; i < numConcurrentQueries; i++) {
             healthCheckCalls.add(() -> {
-               HttpResponse httpResponse = null;
-               try {
-                   httpResponse = Request.Get(url).addHeader("Host", password).execute().returnResponse();
-                   LOG.info(httpResponse.getStatusLine().getReasonPhrase());
-               } catch (IOException e) {
-                   LOG.info("Rate limit query test exception", e);
-               }
-               if (httpResponse != null && httpResponse.getStatusLine().getStatusCode() == HttpStatus.TOO_MANY_REQUESTS_429) {
-                   rateLimitRejects.incrementAndGet();
-                   return false;
-               }
-               return true;
+                HttpResponse httpResponse = null;
+                try {
+                    httpResponse = Request.Get(healthCheckUrl).addHeader("Host", healthCheckPassword).execute().returnResponse();
+                    int statusCode = httpResponse.getStatusLine().getStatusCode();
+                    LOG.info("Response {}", httpResponse.getStatusLine().getStatusCode());
+
+                    if (statusCode ==  HttpStatus.TOO_MANY_REQUESTS_429) {
+                        try {
+                            new JsonParser().parse(EntityUtils.toString(httpResponse.getEntity()));
+                            didRequestPassThrough.set(true);
+                        } catch (JsonSyntaxException ignored)  { }
+                    }
+                } catch (IOException e) {
+                    LOG.info("Rate limit query test exception", e);
+                    rateLimitRejects.incrementAndGet();
+                    return false;
+                }
+                if (httpResponse != null && httpResponse.getStatusLine().getStatusCode() == HttpStatus.TOO_MANY_REQUESTS_429) {
+                    rateLimitRejects.incrementAndGet();
+                    return false;
+                }
+                return true;
             });
         }
 
@@ -129,5 +155,7 @@ public class RateLimitTest extends IntegrationTestSuite.TestCase {
 
         Assert.assertTrue("Expected at least " + minimumFailures + " but got " + rateLimitRejects.get(),
                 rateLimitRejects.get() >= minimumFailures);
+
+        Assert.assertFalse("Request passed through rate limit filter", didRequestPassThrough.get());
     }
 }

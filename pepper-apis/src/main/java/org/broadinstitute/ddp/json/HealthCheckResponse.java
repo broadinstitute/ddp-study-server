@@ -13,6 +13,8 @@ public class HealthCheckResponse {
     public static final Integer HC_QUERY_TIMED_OUT = 1;
     public static final Integer HC_UNKNOWN_ERROR = 2;
 
+    public static final String RESULT_FIELD = "result";
+
     private static final Map<Integer, String> resultExplanationMap = new HashMap<>();
 
     static {
@@ -21,7 +23,7 @@ public class HealthCheckResponse {
         resultExplanationMap.put(HC_UNKNOWN_ERROR, "An unknown error occurred");
     }
 
-    @SerializedName("result")
+    @SerializedName(RESULT_FIELD)
     private Integer result;
     @SerializedName("resultExplanation")
     private String resultExplanation;
