@@ -262,17 +262,16 @@ public class DataDonationPlatform {
 
         SimpleJsonTransformer responseSerializer = new SimpleJsonTransformer();
 
-        int maxQueriesPerSecond = DEFAULT_RATE_LIMIT_MAX_QUERIES_PER_SECOND;
-        int burst = DEFAULT_RATE_LIMIT_BURST;
-        if (cfg.hasPath(ConfigFile.API_RATE_LIMIT.MAX_QUERIES_PER_SECOND)) {
-            maxQueriesPerSecond = cfg.getInt(ConfigFile.API_RATE_LIMIT.MAX_QUERIES_PER_SECOND);
-        }
-        if (cfg.hasPath(ConfigFile.API_RATE_LIMIT.BURST)) {
-            burst = cfg.getInt(ConfigFile.API_RATE_LIMIT.BURST);
+        if (cfg.hasPath(ConfigFile.API_RATE_LIMIT.MAX_QUERIES_PER_SECOND)  && cfg.hasPath(ConfigFile.API_RATE_LIMIT.BURST)) {
+            int maxQueriesPerSecond = cfg.getInt(ConfigFile.API_RATE_LIMIT.MAX_QUERIES_PER_SECOND);
+            int burst = cfg.getInt(ConfigFile.API_RATE_LIMIT.BURST);
+            LOG.info("Will use rate limit {} with burst {}", maxQueriesPerSecond, burst);
+            before("*", new RateLimitFilter(maxQueriesPerSecond, burst));
+        } else {
+            LOG.warn("No rate limit values given.  Rate limiting is disabled.");
         }
 
-        LOG.info("Will use rate limit {} with burst {}", maxQueriesPerSecond, burst);
-        before("*", new RateLimitFilter(maxQueriesPerSecond, burst));
+
         before("*", new HttpHeaderMDCFilter(X_FORWARDED_FOR));
         before("*", new MDCLogBreadCrumbFilter());
 

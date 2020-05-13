@@ -125,4 +125,10 @@ public class ConfigManager {
         return cfgWithOverride;
     }
 
+    /**
+     * Removes the given override
+     */
+    public void clearOverride(String configPath) {
+        overrides.remove(configPath);
+    }
 }

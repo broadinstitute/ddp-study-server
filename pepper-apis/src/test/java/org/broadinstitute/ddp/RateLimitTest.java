@@ -83,9 +83,15 @@ public class RateLimitTest extends IntegrationTestSuite.TestCase {
     @AfterClass
     public static void resetConfig() {
         tearDown();
-        for (Map.Entry<String, String> originalConfig : originalRateLimitConfig.entrySet()) {
-            LOG.info("Resetting rate limit {} to {}", originalConfig.getKey(), originalConfig.getValue());
-            ConfigManager.getInstance().overrideValue(originalConfig.getKey(), originalConfig.getValue());
+
+        if (!originalRateLimitConfig.isEmpty()) {
+            for (Map.Entry<String, String> originalConfig : originalRateLimitConfig.entrySet()) {
+                LOG.info("Resetting rate limit {} to {}", originalConfig.getKey(), originalConfig.getValue());
+                ConfigManager.getInstance().overrideValue(originalConfig.getKey(), originalConfig.getValue());
+            }
+        } else {
+            ConfigManager.getInstance().clearOverride(ConfigFile.API_RATE_LIMIT.MAX_QUERIES_PER_SECOND);
+            ConfigManager.getInstance().clearOverride(ConfigFile.API_RATE_LIMIT.BURST);
         }
         startupTestServer();
     }
