@@ -29,6 +29,7 @@ public class GoogleRecaptchaVerifyClient {
 
 
     public GoogleRecaptchaVerifyResponse verifyRecaptchaResponse(String userCaptchaResponse, String clientIpAddress) {
+        LOG.info("Calling reCaptcha verify on response from client with ip: {}", clientIpAddress);
         String responseJsonString = callVerifyService(userCaptchaResponse, clientIpAddress);
 
         GoogleRecaptchaVerifyResponse verifyResponse = new Gson().fromJson(responseJsonString, GoogleRecaptchaVerifyResponse.class);
