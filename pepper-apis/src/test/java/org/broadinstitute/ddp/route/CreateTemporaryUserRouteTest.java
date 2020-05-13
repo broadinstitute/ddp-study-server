@@ -15,18 +15,16 @@ import java.util.HashSet;
 import java.util.Set;
 
 import com.google.gson.Gson;
-
 import io.restassured.http.ContentType;
 import io.restassured.mapper.ObjectMapperType;
-
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.db.UserDao;
 import org.broadinstitute.ddp.db.dao.ClientDao;
 import org.broadinstitute.ddp.db.dao.JdbiAuth0Tenant;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
+import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dto.Auth0TenantDto;
 import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.json.CreateTemporaryUserPayload;
@@ -34,7 +32,6 @@ import org.broadinstitute.ddp.json.CreateTemporaryUserResponse;
 import org.broadinstitute.ddp.security.AesUtil;
 import org.broadinstitute.ddp.security.EncryptionKey;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
-
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;

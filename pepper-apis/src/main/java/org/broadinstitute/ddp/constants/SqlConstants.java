@@ -303,10 +303,6 @@ public class SqlConstants {
         public static final String FIRST_SELECTED_YEAR = "first_selected_year";
     }
 
-    public static final class FireCloud {
-        public static final String HAD_ADMIN_ACCESS_QUERY = "firecloud.hasAdminAccessQuery";
-    }
-
     public static final class EventConfigurationTable {
         public static final String ID = "event_configuration_id";
     }

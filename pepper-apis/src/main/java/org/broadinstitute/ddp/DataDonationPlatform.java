@@ -37,8 +37,6 @@ import org.broadinstitute.ddp.db.FormInstanceDao;
 import org.broadinstitute.ddp.db.SectionBlockDao;
 import org.broadinstitute.ddp.db.StudyActivityDao;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.db.UserDao;
-import org.broadinstitute.ddp.db.UserDaoFactory;
 import org.broadinstitute.ddp.filter.AddDDPAuthLoggingFilter;
 import org.broadinstitute.ddp.filter.DsmAuthFilter;
 import org.broadinstitute.ddp.filter.HttpHeaderMDCFilter;
@@ -254,8 +252,6 @@ public class DataDonationPlatform {
             LiquibaseUtil.runLiquibase(dbUrl, TransactionWrapper.DB.APIS);
         }
 
-        UserDao userDao = UserDaoFactory.createFromSqlConfig(sqlConfig);
-
         SectionBlockDao sectionBlockDao = new SectionBlockDao(new I18nContentRenderer());
 
         FormInstanceDao formInstanceDao = FormInstanceDao.fromDaoAndConfig(sectionBlockDao, sqlConfig);
@@ -299,7 +295,7 @@ public class DataDonationPlatform {
 
         // before filter converts jwt into DDP_AUTH request attribute
         // we exclude the DSM paths. DSM paths have own separate authentication
-        beforeWithExclusion(API.BASE + "/*", new TokenConverterFilter(new JWTConverter(userDao)),
+        beforeWithExclusion(API.BASE + "/*", new TokenConverterFilter(new JWTConverter()),
                 API.DSM_BASE + "/*", API.CHECK_IRB_PASSWORD);
         beforeWithExclusion(API.BASE + "/*", new AddDDPAuthLoggingFilter(),
                 API.DSM_BASE + "/*", API.CHECK_IRB_PASSWORD);
@@ -315,7 +311,7 @@ public class DataDonationPlatform {
 
         post(API.REGISTRATION, new UserRegistrationRoute(interpreter), responseSerializer);
 
-        post(API.TEMP_USERS, new CreateTemporaryUserRoute(userDao), responseSerializer);
+        post(API.TEMP_USERS, new CreateTemporaryUserRoute(), responseSerializer);
 
         // Study related routes
         get(API.STUDY_ALL, new GetStudiesRoute(), responseSerializer);
@@ -385,8 +381,6 @@ public class DataDonationPlatform {
         get(API.USER_STUDIES_CONSENT, new GetConsentSummaryRoute(consentService), responseSerializer);
 
         get(API.ACTIVITY_INSTANCE_STATUS_TYPE_LIST, new GetActivityInstanceStatusTypeListRoute(), responseSerializer);
-
-        // jenkins test
 
         // User activity instance routes
         get(API.USER_ACTIVITIES, new UserActivityInstanceListRoute(activityInstanceDao), responseSerializer);

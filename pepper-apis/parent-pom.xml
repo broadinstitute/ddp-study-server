@@ -600,7 +600,6 @@
                         <!-- please do not set them in the pom because local dev environments -->
                         <!-- and cloud jenkins/docker CI differ in terms of file system paths -->
                         <config.file>${config.file}</config.file>
-                        <ddp.firecloudKeysDir>${ddp.firecloudKeysDir}</ddp.firecloudKeysDir>
                         <buildDirectory>${project.build.directory}</buildDirectory>
                         <runOrder>alphabetical</runOrder>
                     </systemPropertyVariables>
