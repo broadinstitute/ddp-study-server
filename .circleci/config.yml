@@ -444,7 +444,7 @@ commands:
             # And ignore the Suite itself
             echo 'org.broadinstitute.ddp.route.IntegrationTestSuite'  >> $IGNORE_CLASS_LIST_PATH
 
-            cp $THIS_NODE_TESTS_PATH "${TEST_DATA_PATH}" /this_node_circleci_tests
+            cp $THIS_NODE_TESTS_PATH "${TEST_DATA_PATH}"
 
             # save path for next steps
             echo "export IGNORE_CLASS_LIST_PATH=${IGNORE_CLASS_LIST_PATH}" >> $BASH_ENV
