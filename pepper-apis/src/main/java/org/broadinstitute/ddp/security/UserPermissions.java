@@ -140,18 +140,12 @@ public class UserPermissions {
 
             // Check if it's a study admin and if requested user is in a study they have access to.
             if (!canAccess && isAdmin()) {
-                Set<String> userStudies = handle.attach(JdbiUserStudyEnrollment.class)
+                canAccess = handle.attach(JdbiUserStudyEnrollment.class)
                         .getAllLatestEnrollmentsForUser(requestedUserGuid)
                         .stream()
                         .filter(status -> !status.getEnrollmentStatus().isExited())
                         .map(EnrollmentStatusDto::getStudyGuid)
-                        .collect(Collectors.toSet());
-                for (var study : userStudies) {
-                    if (adminStudiesWithAccess.contains(study)) {
-                        canAccess = true;
-                        break;
-                    }
-                }
+                        .anyMatch(adminStudiesWithAccess::contains);
             }
 
             return canAccess;
