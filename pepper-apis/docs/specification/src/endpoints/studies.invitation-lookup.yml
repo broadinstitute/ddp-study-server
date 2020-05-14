@@ -8,7 +8,7 @@ post:
 
     Note: this API is restricted to study admins.
   parameters:
-    - $ref: '../pepper.yml#/components/parameters/path/studyGuid'
+    - $ref: '../pepper.yml#/components/parameters/studyGuid'
   requestBody:
     required: true
     content:

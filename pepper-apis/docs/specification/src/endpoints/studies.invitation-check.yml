@@ -5,7 +5,7 @@ post:
   summary: InvitationCheckStatus
   description: Check the status of an invitation, whether it exits and is valid or not.
   parameters:
-    - $ref: '../pepper.yml#/components/parameters/path/studyGuid'
+    - $ref: '../pepper.yml#/components/parameters/studyGuid'
   requestBody:
     required: true
     content:
