@@ -7,7 +7,7 @@ post:
     Marks an invitation as verified, e.g. the user is verifying that they can
     receive communications via the contact email associated with the invitation.
   parameters:
-    - $ref: '../pepper.yml#/components/parameters/path/studyGuid'
+    - $ref: '../pepper.yml#/components/parameters/studyGuid'
   requestBody:
     required: true
     content:
