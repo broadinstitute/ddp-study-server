@@ -72,6 +72,10 @@ get:
                 nullable: true
     404:
       description: invitation not found
+      content:
+        application/json:
+          schema:
+            $ref: '../pepper.yml#/components/schemas/Error.NotFound'
 
 patch:
   operationId: patchInvitation
@@ -99,3 +103,7 @@ patch:
       description: invitation notes are saved
     404:
       description: invitation not found
+      content:
+        application/json:
+          schema:
+            $ref: '../pepper.yml#/components/schemas/Error.NotFound'
