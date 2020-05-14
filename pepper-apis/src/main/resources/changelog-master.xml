@@ -199,5 +199,5 @@
     <include file="db-changes/schema/DDP-4458-truncate-varchar-for-utf8mb4.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-4552-modify-medicalprovider-street.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/refactor-invitations.xml" relativeToChangelogFile="true"/>
-    <include file="db-changes/schema/cleanup-firecloud.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/study-admin.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

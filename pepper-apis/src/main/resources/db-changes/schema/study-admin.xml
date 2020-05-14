@@ -9,4 +9,9 @@
         <dropTable tableName="firecloud_service_account"/>
     </changeSet>
 
+    <changeSet author="yufeng" id="2020513-add-study-admin-uk">
+        <addUniqueConstraint tableName="study_admin" columnNames="user_id, umbrella_study_id"
+                             constraintName="study_admin_user_study_uk"/>
+    </changeSet>
+
 </databaseChangeLog>

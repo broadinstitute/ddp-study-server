@@ -6,11 +6,13 @@ import static org.junit.Assert.assertEquals;
 import io.restassured.mapper.ObjectMapperType;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.db.dao.AuthDao;
 import org.broadinstitute.ddp.db.dao.InvitationDao;
 import org.broadinstitute.ddp.db.dao.InvitationFactory;
 import org.broadinstitute.ddp.db.dao.InvitationSql;
 import org.broadinstitute.ddp.json.InvitationUpdateDetailsPayload;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -25,13 +27,36 @@ public class InvitationUpdateDetailsRouteTest extends IntegrationTestSuite.TestC
                 .replace(RouteConstants.PathParam.STUDY_GUID, "{study}");
         TransactionWrapper.useTxn(handle -> {
             testData = TestDataSetupUtil.generateBasicUserTestData(handle);
+            handle.attach(AuthDao.class).assignStudyAdmin(testData.getUserId(), testData.getStudyId());
         });
+    }
+
+    @AfterClass
+    public static void cleanupData() {
+        TransactionWrapper.useTxn(handle -> {
+            handle.attach(AuthDao.class).removeAdminFromAllStudies(testData.getUserId());
+        });
+    }
+
+    @Test
+    public void testNotStudyAdmin() {
+        TransactionWrapper.useTxn(handle -> {
+            handle.attach(AuthDao.class).removeAdminFromAllStudies(testData.getUserId());
+        });
+        var payload = new InvitationUpdateDetailsPayload("foobar", "notes notes");
+        given().auth().oauth2(testData.getTestingUser().getToken())
+                .pathParam("study", testData.getStudyGuid())
+                .body(payload, ObjectMapperType.GSON)
+                .when().patch(urlTemplate)
+                .then().assertThat()
+                .statusCode(401);
     }
 
     @Test
     public void testInvitationNotFound() {
         var payload = new InvitationUpdateDetailsPayload("foobar", "notes notes");
-        given().pathParam("study", testData.getStudyGuid())
+        given().auth().oauth2(testData.getTestingUser().getToken())
+                .pathParam("study", testData.getStudyGuid())
                 .body(payload, ObjectMapperType.GSON)
                 .when().post(urlTemplate)
                 .then().assertThat()
@@ -44,7 +69,8 @@ public class InvitationUpdateDetailsRouteTest extends IntegrationTestSuite.TestC
                 .createRecruitmentInvitation(testData.getStudyId(), "invite" + System.currentTimeMillis()));
         try {
             var payload = new InvitationUpdateDetailsPayload(invitation.getInvitationGuid(), "notes notes");
-            given().pathParam("study", testData.getStudyGuid())
+            given().auth().oauth2(testData.getTestingUser().getToken())
+                    .pathParam("study", testData.getStudyGuid())
                     .body(payload, ObjectMapperType.GSON)
                     .when().post(urlTemplate)
                     .then().assertThat()

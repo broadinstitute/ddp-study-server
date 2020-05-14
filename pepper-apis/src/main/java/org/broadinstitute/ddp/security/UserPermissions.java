@@ -1,8 +1,13 @@
 package org.broadinstitute.ddp.security;
 
 import java.util.Collection;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
+import org.broadinstitute.ddp.db.dto.EnrollmentStatusDto;
+import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -90,6 +95,9 @@ public class UserPermissions {
             if (operatorGuid.equals(requestedUserGuid)) {
                 LOG.debug("Operator is the requested user");
                 return true;
+            } else if (hasAdminAccessToStudy(studyGuid)) {
+                LOG.debug("Operator has admin access to study {}", studyGuid);
+                return true;
             } else {
                 LOG.debug("The requested user GUID: {} is not the same as the operator GUID. About to check if this a managed user",
                         requestedUserGuid);
@@ -116,9 +124,9 @@ public class UserPermissions {
      * Returns whether or not this user can access
      * the profile for user requestedUserGuid.
      */
-    public boolean canAccessUserProfile(String requestedUserGuid) {
-        // a user may access another user's profile if the other use is
-        // in their list of governed users.
+    public boolean canAccessUserProfile(Handle handle, String requestedUserGuid) {
+        // A user may access another user's profile if the other user is
+        // in their list of governed users, or the user is a study admin.
         if (!isDisabled()) {
             boolean canAccess = operatorGuid.equals(requestedUserGuid);
             if (!canAccess) {
@@ -129,6 +137,23 @@ public class UserPermissions {
                     }
                 }
             }
+
+            // Check if it's a study admin and if requested user is in a study they have access to.
+            if (!canAccess && isAdmin()) {
+                Set<String> userStudies = handle.attach(JdbiUserStudyEnrollment.class)
+                        .getAllLatestEnrollmentsForUser(requestedUserGuid)
+                        .stream()
+                        .filter(status -> !status.getEnrollmentStatus().isExited())
+                        .map(EnrollmentStatusDto::getStudyGuid)
+                        .collect(Collectors.toSet());
+                for (var study : userStudies) {
+                    if (adminStudiesWithAccess.contains(study)) {
+                        canAccess = true;
+                        break;
+                    }
+                }
+            }
+
             return canAccess;
         }
         return false;

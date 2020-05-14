@@ -16,9 +16,18 @@ import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
+import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
 public interface AuthDao extends SqlObject {
+
+    @GetGeneratedKeys
+    @SqlUpdate("insert into study_admin (user_id, umbrella_study_id) values (:userId, :studyId)")
+    long assignStudyAdmin(@Bind("userId") long userId, @Bind("studyId") long studyId);
+
+    @SqlUpdate("delete from study_admin where user_id = :userId")
+    int removeAdminFromAllStudies(@Bind("userId") long userId);
 
     default UserPermissions findUserPermissions(String operatorGuid, String auth0ClientId, String auth0Domain) {
         UserClientStatus status = findUserClientStatus(operatorGuid, auth0ClientId, auth0Domain)

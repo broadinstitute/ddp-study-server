@@ -42,6 +42,7 @@ import org.broadinstitute.ddp.filter.DsmAuthFilter;
 import org.broadinstitute.ddp.filter.HttpHeaderMDCFilter;
 import org.broadinstitute.ddp.filter.MDCAttributeRemovalFilter;
 import org.broadinstitute.ddp.filter.MDCLogBreadCrumbFilter;
+import org.broadinstitute.ddp.filter.OnlyStudyAdminFilter;
 import org.broadinstitute.ddp.filter.RateLimitFilter;
 import org.broadinstitute.ddp.filter.StudyLanguageContentLanguageSettingFilter;
 import org.broadinstitute.ddp.filter.StudyLanguageResolutionFilter;
@@ -56,7 +57,6 @@ import org.broadinstitute.ddp.monitoring.StackdriverMetricsTracker;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.pex.TreeWalkInterpreter;
 import org.broadinstitute.ddp.route.AddProfileRoute;
-import org.broadinstitute.ddp.route.InvitationCheckStatusRoute;
 import org.broadinstitute.ddp.route.CheckIrbPasswordRoute;
 import org.broadinstitute.ddp.route.CreateActivityInstanceRoute;
 import org.broadinstitute.ddp.route.CreateMailAddressRoute;
@@ -88,7 +88,6 @@ import org.broadinstitute.ddp.route.GetDsmStudyParticipant;
 import org.broadinstitute.ddp.route.GetDsmTriggeredInstancesRoute;
 import org.broadinstitute.ddp.route.GetGovernedStudyParticipantsRoute;
 import org.broadinstitute.ddp.route.GetInstitutionSuggestionsRoute;
-import org.broadinstitute.ddp.route.InvitationLookupRoute;
 import org.broadinstitute.ddp.route.GetMailAddressRoute;
 import org.broadinstitute.ddp.route.GetMailingListRoute;
 import org.broadinstitute.ddp.route.GetMedicalProviderListRoute;
@@ -105,6 +104,10 @@ import org.broadinstitute.ddp.route.GetTempMailingAddressRoute;
 import org.broadinstitute.ddp.route.GetUserAnnouncementsRoute;
 import org.broadinstitute.ddp.route.GetWorkflowRoute;
 import org.broadinstitute.ddp.route.HealthCheckRoute;
+import org.broadinstitute.ddp.route.InvitationCheckStatusRoute;
+import org.broadinstitute.ddp.route.InvitationLookupRoute;
+import org.broadinstitute.ddp.route.InvitationUpdateDetailsRoute;
+import org.broadinstitute.ddp.route.InvitationVerifyRoute;
 import org.broadinstitute.ddp.route.JoinMailingListRoute;
 import org.broadinstitute.ddp.route.ListCancersRoute;
 import org.broadinstitute.ddp.route.PatchFormAnswersRoute;
@@ -118,13 +121,11 @@ import org.broadinstitute.ddp.route.SendDsmNotificationRoute;
 import org.broadinstitute.ddp.route.SendEmailRoute;
 import org.broadinstitute.ddp.route.SendExitNotificationRoute;
 import org.broadinstitute.ddp.route.SetParticipantDefaultMailAddressRoute;
-import org.broadinstitute.ddp.route.InvitationUpdateDetailsRoute;
 import org.broadinstitute.ddp.route.UpdateMailAddressRoute;
 import org.broadinstitute.ddp.route.UpdateUserEmailRoute;
 import org.broadinstitute.ddp.route.UpdateUserPasswordRoute;
 import org.broadinstitute.ddp.route.UserActivityInstanceListRoute;
 import org.broadinstitute.ddp.route.UserRegistrationRoute;
-import org.broadinstitute.ddp.route.InvitationVerifyRoute;
 import org.broadinstitute.ddp.route.VerifyMailAddressRoute;
 import org.broadinstitute.ddp.schedule.DsmCancerLoaderJob;
 import org.broadinstitute.ddp.schedule.DsmDrugLoaderJob;
@@ -152,6 +153,7 @@ import org.quartz.Scheduler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+import spark.Filter;
 import spark.Request;
 import spark.Response;
 import spark.ResponseTransformer;
@@ -472,6 +474,8 @@ public class DataDonationPlatform {
         post(API.INVITATION_LOOKUP, new InvitationLookupRoute(), jsonSerializer);
         post(API.INVITATION_DETAILS, new InvitationUpdateDetailsRoute(), jsonSerializer);
 
+        addBefore(new OnlyStudyAdminFilter(), API.INVITATION_LOOKUP, API.INVITATION_DETAILS);
+
         Runnable runnable = () -> {
             var dsm = new DsmClient(cfg);
 
@@ -581,6 +585,11 @@ public class DataDonationPlatform {
         Spark.patch(path, route, transformer);
     }
 
+    public static void addBefore(Filter filter, String... paths) {
+        for (var path : paths) {
+            before(path, filter);
+        }
+    }
 
     private static void setupCatchAllErrorHandling() {
         //JSON for Not Found (code 404) handling
