@@ -8,7 +8,7 @@ import org.broadinstitute.ddp.db.dao.InvitationDao;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dto.InvitationDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
-import org.broadinstitute.ddp.json.UpdateInvitationPayload;
+import org.broadinstitute.ddp.json.InvitationUpdateDetailsPayload;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
@@ -17,9 +17,9 @@ import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 
-public class UpdateInvitationRoute extends ValidatedJsonInputRoute<UpdateInvitationPayload> {
+public class InvitationUpdateDetailsRoute extends ValidatedJsonInputRoute<InvitationUpdateDetailsPayload> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(UpdateInvitationRoute.class);
+    private static final Logger LOG = LoggerFactory.getLogger(InvitationUpdateDetailsRoute.class);
 
     @Override
     protected int getValidationErrorStatus() {
@@ -27,9 +27,9 @@ public class UpdateInvitationRoute extends ValidatedJsonInputRoute<UpdateInvitat
     }
 
     @Override
-    public Object handle(Request request, Response response, UpdateInvitationPayload payload) {
+    public Object handle(Request request, Response response, InvitationUpdateDetailsPayload payload) {
         String studyGuid = request.params(RouteConstants.PathParam.STUDY_GUID);
-        String invitationGuid = request.params(RouteConstants.PathParam.INVITATION_ID);
+        String invitationGuid = payload.getInvitationGuid();
         LOG.info("Attempting to update invitation {} in study {}", invitationGuid, studyGuid);
 
         TransactionWrapper.useTxn(handle -> {

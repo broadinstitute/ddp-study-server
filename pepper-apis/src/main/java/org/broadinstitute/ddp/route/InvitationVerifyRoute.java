@@ -10,7 +10,7 @@ import org.broadinstitute.ddp.db.dao.InvitationDao;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dto.InvitationDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
-import org.broadinstitute.ddp.json.invitation.VerifyInvitationPayload;
+import org.broadinstitute.ddp.json.invitation.InvitationVerifyPayload;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,14 +23,14 @@ import spark.Response;
  *
  * <p>NOTE: this is a public route. Be careful what we return in responses.
  */
-public class VerifyInvitationRoute extends ValidatedJsonInputRoute<VerifyInvitationPayload> {
+public class InvitationVerifyRoute extends ValidatedJsonInputRoute<InvitationVerifyPayload> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(VerifyInvitationRoute.class);
+    private static final Logger LOG = LoggerFactory.getLogger(InvitationVerifyRoute.class);
 
     @Override
-    public Object handle(Request request, Response response, VerifyInvitationPayload invitation) throws Exception {
+    public Object handle(Request request, Response response, InvitationVerifyPayload invitation) throws Exception {
         String studyGuid = request.params(RouteConstants.PathParam.STUDY_GUID);
-        String invitationGuid = invitation.getInvitationId();
+        String invitationGuid = invitation.getInvitationGuid();
         Instant verifiedAt = Instant.now();
 
         LOG.info("Attempting to verify invitation {} in study {}", invitationGuid, studyGuid);

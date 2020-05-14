@@ -19,7 +19,7 @@ import org.broadinstitute.ddp.db.dao.InvitationDao;
 import org.broadinstitute.ddp.db.dao.InvitationFactory;
 import org.broadinstitute.ddp.db.dao.InvitationSql;
 import org.broadinstitute.ddp.db.dto.InvitationDto;
-import org.broadinstitute.ddp.json.invitation.VerifyInvitationPayload;
+import org.broadinstitute.ddp.json.invitation.InvitationVerifyPayload;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -28,9 +28,9 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class VerifyInvitationRouteTest extends IntegrationTestSuite.TestCase {
+public class InvitationVerifyRouteTest extends IntegrationTestSuite.TestCase {
 
-    private static final Logger LOG = LoggerFactory.getLogger(VerifyInvitationRouteTest.class);
+    private static final Logger LOG = LoggerFactory.getLogger(InvitationVerifyRouteTest.class);
 
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static Gson gson = new Gson();
@@ -70,7 +70,7 @@ public class VerifyInvitationRouteTest extends IntegrationTestSuite.TestCase {
 
     @Test
     public void testVerificationOfGoodInvitation() throws Exception {
-        var invitationPayload = new VerifyInvitationPayload(invitation.getInvitationGuid());
+        var invitationPayload = new InvitationVerifyPayload(invitation.getInvitationGuid());
         Response response
                 = Request.Post(buildInvitationVerificationUrl()).bodyString(gson.toJson(invitationPayload), ContentType.APPLICATION_JSON)
                 .execute();
@@ -88,7 +88,7 @@ public class VerifyInvitationRouteTest extends IntegrationTestSuite.TestCase {
 
     @Test
     public void testVerificationReturns200ForBogusInvitation() throws Exception {
-        var invitationPayload = new VerifyInvitationPayload("no one expects the spanish inquisitions");
+        var invitationPayload = new InvitationVerifyPayload("no one expects the spanish inquisitions");
         Response response
                 = Request.Post(buildInvitationVerificationUrl()).bodyString(gson.toJson(invitationPayload), ContentType.APPLICATION_JSON)
                 .execute();
@@ -99,7 +99,7 @@ public class VerifyInvitationRouteTest extends IntegrationTestSuite.TestCase {
 
     @Test
     public void testVerificationReturns200ForAlreadyVoidedInvitation() throws Exception {
-        var invitationPayload = new VerifyInvitationPayload(invitation.getInvitationGuid());
+        var invitationPayload = new InvitationVerifyPayload(invitation.getInvitationGuid());
         Instant voidedAt = Instant.now();
 
         TransactionWrapper.useTxn(handle -> {

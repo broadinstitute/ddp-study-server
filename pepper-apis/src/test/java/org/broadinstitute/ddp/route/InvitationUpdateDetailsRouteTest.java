@@ -9,21 +9,20 @@ import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.InvitationDao;
 import org.broadinstitute.ddp.db.dao.InvitationFactory;
 import org.broadinstitute.ddp.db.dao.InvitationSql;
-import org.broadinstitute.ddp.json.UpdateInvitationPayload;
+import org.broadinstitute.ddp.json.InvitationUpdateDetailsPayload;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class UpdateInvitationRouteTest extends IntegrationTestSuite.TestCase {
+public class InvitationUpdateDetailsRouteTest extends IntegrationTestSuite.TestCase {
 
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static String urlTemplate;
 
     @BeforeClass
     public static void setupData() {
-        urlTemplate = RouteTestUtil.getTestingBaseUrl() + RouteConstants.API.INVITATION
-                .replace(RouteConstants.PathParam.STUDY_GUID, "{study}")
-                .replace(RouteConstants.PathParam.INVITATION_ID, "{invite}");
+        urlTemplate = RouteTestUtil.getTestingBaseUrl() + RouteConstants.API.INVITATION_DETAILS
+                .replace(RouteConstants.PathParam.STUDY_GUID, "{study}");
         TransactionWrapper.useTxn(handle -> {
             testData = TestDataSetupUtil.generateBasicUserTestData(handle);
         });
@@ -31,11 +30,10 @@ public class UpdateInvitationRouteTest extends IntegrationTestSuite.TestCase {
 
     @Test
     public void testInvitationNotFound() {
-        var payload = new UpdateInvitationPayload("notes notes");
+        var payload = new InvitationUpdateDetailsPayload("foobar", "notes notes");
         given().pathParam("study", testData.getStudyGuid())
-                .pathParam("invite", "foobar")
                 .body(payload, ObjectMapperType.GSON)
-                .when().patch(urlTemplate)
+                .when().post(urlTemplate)
                 .then().assertThat()
                 .statusCode(404);
     }
@@ -45,11 +43,10 @@ public class UpdateInvitationRouteTest extends IntegrationTestSuite.TestCase {
         var invitation = TransactionWrapper.withTxn(handle -> handle.attach(InvitationFactory.class)
                 .createRecruitmentInvitation(testData.getStudyId(), "invite" + System.currentTimeMillis()));
         try {
-            var payload = new UpdateInvitationPayload("notes notes");
+            var payload = new InvitationUpdateDetailsPayload(invitation.getInvitationGuid(), "notes notes");
             given().pathParam("study", testData.getStudyGuid())
-                    .pathParam("invite", invitation.getInvitationGuid())
                     .body(payload, ObjectMapperType.GSON)
-                    .when().patch(urlTemplate)
+                    .when().post(urlTemplate)
                     .then().assertThat()
                     .statusCode(200);
             TransactionWrapper.useTxn(handle -> {

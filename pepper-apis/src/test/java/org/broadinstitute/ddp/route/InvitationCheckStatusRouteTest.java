@@ -22,7 +22,7 @@ import org.broadinstitute.ddp.db.dao.InvitationSql;
 import org.broadinstitute.ddp.db.dao.JdbiClientUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dto.InvitationDto;
-import org.broadinstitute.ddp.json.invitation.CheckInvitationStatusPayload;
+import org.broadinstitute.ddp.json.invitation.InvitationCheckStatusPayload;
 import org.broadinstitute.ddp.model.invitation.InvitationType;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.jdbi.v3.core.Handle;
@@ -30,7 +30,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class CheckInvitationStatusRouteTest extends IntegrationTestSuite.TestCase {
+public class InvitationCheckStatusRouteTest extends IntegrationTestSuite.TestCase {
 
     private static TestDataSetupUtil.GeneratedTestData testData;
 
@@ -38,7 +38,7 @@ public class CheckInvitationStatusRouteTest extends IntegrationTestSuite.TestCas
     private JdbiUmbrellaStudy mockJdbiStudy;
     private JdbiClientUmbrellaStudy mockClientStudy;
     private InvitationDao mockInviteDao;
-    private CheckInvitationStatusRoute route;
+    private InvitationCheckStatusRoute route;
 
     @BeforeClass
     public static void setupData() {
@@ -56,13 +56,13 @@ public class CheckInvitationStatusRouteTest extends IntegrationTestSuite.TestCas
         doReturn(mockJdbiStudy).when(mockHandle).attach(JdbiUmbrellaStudy.class);
         doReturn(mockClientStudy).when(mockHandle).attach(JdbiClientUmbrellaStudy.class);
         doReturn(mockInviteDao).when(mockHandle).attach(InvitationDao.class);
-        route = new CheckInvitationStatusRoute();
+        route = new InvitationCheckStatusRoute();
     }
 
     @Test
     public void testCheckStatus_studyNotFound() {
         doReturn(null).when(mockJdbiStudy).findByStudyGuid(any());
-        var payload = new CheckInvitationStatusPayload("foo", "bar", "invite");
+        var payload = new InvitationCheckStatusPayload("foo", "bar", "invite");
         int actual = route.checkStatus(mockHandle, "study", payload);
         assertEquals(HttpStatus.SC_BAD_REQUEST, actual);
     }
@@ -73,7 +73,7 @@ public class CheckInvitationStatusRouteTest extends IntegrationTestSuite.TestCas
         doReturn(Collections.emptyList()).when(mockClientStudy)
                 .findPermittedStudyGuidsByAuth0ClientIdAndAuth0Domain(any(), any());
 
-        var payload = new CheckInvitationStatusPayload("foo", "bar", "invite");
+        var payload = new InvitationCheckStatusPayload("foo", "bar", "invite");
         int actual = route.checkStatus(mockHandle, "study", payload);
         assertEquals(HttpStatus.SC_BAD_REQUEST, actual);
     }
@@ -84,7 +84,7 @@ public class CheckInvitationStatusRouteTest extends IntegrationTestSuite.TestCas
         doReturn(List.of("study1", "study2")).when(mockClientStudy)
                 .findPermittedStudyGuidsByAuth0ClientIdAndAuth0Domain(any(), any());
 
-        var payload = new CheckInvitationStatusPayload("foo", "bar", "invite");
+        var payload = new InvitationCheckStatusPayload("foo", "bar", "invite");
         int actual = route.checkStatus(mockHandle, "study", payload);
         assertEquals(HttpStatus.SC_BAD_REQUEST, actual);
     }
@@ -94,7 +94,7 @@ public class CheckInvitationStatusRouteTest extends IntegrationTestSuite.TestCas
         doReturn(testData.getTestingStudy()).when(mockJdbiStudy).findByStudyGuid(any());
         doReturn(List.of(testData.getStudyGuid())).when(mockClientStudy)
                 .findPermittedStudyGuidsByAuth0ClientIdAndAuth0Domain(any(), any());
-        var payload = new CheckInvitationStatusPayload("foo", "bar", "invite");
+        var payload = new InvitationCheckStatusPayload("foo", "bar", "invite");
 
         doReturn(Optional.empty()).when(mockInviteDao).findByInvitationGuid(anyLong(), any());
         int actual = route.checkStatus(mockHandle, "study", payload);
@@ -117,7 +117,7 @@ public class CheckInvitationStatusRouteTest extends IntegrationTestSuite.TestCas
         InvitationDto invitation = TransactionWrapper.withTxn(handle -> handle.attach(InvitationFactory.class)
                 .createRecruitmentInvitation(testData.getStudyId(), "invite" + System.currentTimeMillis()));
         try {
-            var payload = new CheckInvitationStatusPayload(
+            var payload = new InvitationCheckStatusPayload(
                     testData.getTestingClient().getAuth0Domain(),
                     testData.getAuth0ClientId(),
                     invitation.getInvitationGuid());

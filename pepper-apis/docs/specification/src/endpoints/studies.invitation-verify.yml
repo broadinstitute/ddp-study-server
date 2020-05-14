@@ -1,11 +1,13 @@
 post:
-  operationId: verifyInvitation
+  operationId: invitationVerify
   tags:
     - Invitations
-  summary: VerifyInvitation
+  summary: InvitationVerify
   description: |
     Marks an invitation as verified, e.g. the user is verifying that they can
     receive communications via the contact email associated with the invitation.
+  parameters:
+    - $ref: '../pepper.yml#/components/parameters/path/studyGuid'
   requestBody:
     required: true
     content:

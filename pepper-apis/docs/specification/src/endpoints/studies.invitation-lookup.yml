@@ -1,26 +1,26 @@
-parameters:
-  - in: path
-    name: study
-    required: true
-    description: the study guid
-    schema:
-      type: string
-  - in: path
-    name: invite
-    required: true
-    description: the invitation id
-    schema:
-      type: string
-
-get:
-  operationId: getInvitation
+post:
+  operationId: invitationLookup
   tags:
     - Invitations
-  summary: GetInvitation
+  summary: InvitationLookup
   description: |
     Fetch an invitation, along with associated user data.
 
     Note: this API is restricted to study admins.
+  parameters:
+    - $ref: '../pepper.yml#/components/parameters/path/studyGuid'
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - invitationId
+          properties:
+            invitationId:
+              description: the invitation id
+              type: string
   responses:
     200:
       description: invitation details
@@ -43,19 +43,19 @@ get:
                 description: the id of the invitation
                 type: string
               createdAt:
-                description: UTC timestamp of when invitation was created, in ISO-8601 format
+                description: timestamp of when invitation was created, in ISO-8601 UTC format
                 type: string
                 example: 2020-05-13T17:58:33.887Z
               voidedAt:
-                description: UTC timestamp of when invitation is voided
+                description: timestamp of when invitation is voided, in ISO-8601 UTC format
                 type: string
                 nullable: true
               verifiedAt:
-                description: UTC timestamp of when invitation is verified
+                description: timestamp of when invitation is verified, in ISO-8601 UTC format
                 type: string
                 nullable: true
               acceptedAt:
-                description: UTC timestamp of when invitation is accepted
+                description: timestamp of when invitation is accepted, in ISO-8601 UTC format
                 type: string
                 nullable: true
               userGuid:
@@ -70,37 +70,6 @@ get:
                 description: login email of associated user, if invitation is accepted and user has a login account
                 type: string
                 nullable: true
-    404:
-      description: invitation not found
-      content:
-        application/json:
-          schema:
-            $ref: '../pepper.yml#/components/schemas/Error.NotFound'
-
-patch:
-  operationId: patchInvitation
-  tags:
-    - Invitations
-  summary: PatchInvitation
-  description: |
-    Update the notes of an invitation.
-
-    Note: this API is restricted to study admins.
-  requestBody:
-    content:
-      application/json:
-        schema:
-          type: object
-          required:
-            - notes
-          properties:
-            notes:
-              description: the notes to save for an inivitation
-              type: string
-              nullable: true
-  responses:
-    200:
-      description: invitation notes are saved
     404:
       description: invitation not found
       content:

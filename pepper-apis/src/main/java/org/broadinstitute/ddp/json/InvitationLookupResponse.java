@@ -3,7 +3,7 @@ package org.broadinstitute.ddp.json;
 import com.google.gson.annotations.SerializedName;
 import org.broadinstitute.ddp.db.dto.InvitationDto;
 
-public class GetInvitationResponse {
+public class InvitationLookupResponse {
 
     @SerializedName("invitationId")
     private String invitationGuid;
@@ -24,7 +24,7 @@ public class GetInvitationResponse {
     @SerializedName("userLoginEmail")
     private String userLoginEmail;
 
-    public GetInvitationResponse(InvitationDto invitationDto, String userGuid, String userHruid, String userLoginEmail) {
+    public InvitationLookupResponse(InvitationDto invitationDto, String userGuid, String userHruid, String userLoginEmail) {
         this.invitationGuid = invitationDto.getInvitationGuid();
         this.createdAt = invitationDto.getCreatedAt().toString();
         this.voidedAt = invitationDto.isVoid() ? invitationDto.getVoidedAt().toString() : null;

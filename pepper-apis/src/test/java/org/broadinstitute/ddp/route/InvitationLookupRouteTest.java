@@ -9,25 +9,26 @@ import static org.hamcrest.Matchers.nullValue;
 import java.time.Instant;
 
 import io.restassured.http.ContentType;
+import io.restassured.mapper.ObjectMapperType;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.InvitationDao;
 import org.broadinstitute.ddp.db.dao.InvitationFactory;
 import org.broadinstitute.ddp.db.dao.InvitationSql;
+import org.broadinstitute.ddp.json.InvitationLookupPayload;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class GetInvitationRouteTest extends IntegrationTestSuite.TestCase {
+public class InvitationLookupRouteTest extends IntegrationTestSuite.TestCase {
 
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static String urlTemplate;
 
     @BeforeClass
     public static void setupData() {
-        urlTemplate = RouteTestUtil.getTestingBaseUrl() + RouteConstants.API.INVITATION
-                .replace(RouteConstants.PathParam.STUDY_GUID, "{study}")
-                .replace(RouteConstants.PathParam.INVITATION_ID, "{invite}");
+        urlTemplate = RouteTestUtil.getTestingBaseUrl() + RouteConstants.API.INVITATION_LOOKUP
+                .replace(RouteConstants.PathParam.STUDY_GUID, "{study}");
         TransactionWrapper.useTxn(handle -> {
             testData = TestDataSetupUtil.generateBasicUserTestData(handle);
         });
@@ -35,9 +36,10 @@ public class GetInvitationRouteTest extends IntegrationTestSuite.TestCase {
 
     @Test
     public void testInvitationNotFound() {
+        var payload = new InvitationLookupPayload("foobar");
         given().pathParam("study", testData.getStudyGuid())
-                .pathParam("invite", "foobar")
-                .when().get(urlTemplate)
+                .body(payload, ObjectMapperType.GSON)
+                .when().post(urlTemplate)
                 .then().assertThat()
                 .statusCode(404);
     }
@@ -47,9 +49,10 @@ public class GetInvitationRouteTest extends IntegrationTestSuite.TestCase {
         var invitation = TransactionWrapper.withTxn(handle -> handle.attach(InvitationFactory.class)
                 .createRecruitmentInvitation(testData.getStudyId(), "invite" + System.currentTimeMillis()));
         try {
+            var payload = new InvitationLookupPayload(invitation.getInvitationGuid());
             given().pathParam("study", testData.getStudyGuid())
-                    .pathParam("invite", invitation.getInvitationGuid())
-                    .when().get(urlTemplate)
+                    .body(payload, ObjectMapperType.GSON)
+                    .when().post(urlTemplate)
                     .then().assertThat()
                     .statusCode(200).contentType(ContentType.JSON)
                     .body("invitationId", equalTo(invitation.getInvitationGuid()))
@@ -73,9 +76,10 @@ public class GetInvitationRouteTest extends IntegrationTestSuite.TestCase {
             return invite;
         });
         try {
+            var payload = new InvitationLookupPayload(invitation.getInvitationGuid());
             given().pathParam("study", testData.getStudyGuid())
-                    .pathParam("invite", invitation.getInvitationGuid())
-                    .when().get(urlTemplate)
+                    .body(payload, ObjectMapperType.GSON)
+                    .when().post(urlTemplate)
                     .then().assertThat()
                     .statusCode(200).contentType(ContentType.JSON)
                     .body("invitationId", equalTo(invitation.getInvitationGuid()))

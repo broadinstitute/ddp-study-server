@@ -1,6 +1,8 @@
 package org.broadinstitute.ddp;
 
 import static com.google.common.net.HttpHeaders.X_FORWARDED_FOR;
+import static org.broadinstitute.ddp.filter.Exclusions.afterWithExclusion;
+import static org.broadinstitute.ddp.filter.Exclusions.beforeWithExclusion;
 import static org.broadinstitute.ddp.filter.WhiteListFilter.whitelist;
 import static spark.Spark.after;
 import static spark.Spark.afterAfter;
@@ -39,7 +41,6 @@ import org.broadinstitute.ddp.db.UserDao;
 import org.broadinstitute.ddp.db.UserDaoFactory;
 import org.broadinstitute.ddp.filter.AddDDPAuthLoggingFilter;
 import org.broadinstitute.ddp.filter.DsmAuthFilter;
-import org.broadinstitute.ddp.filter.ExcludePathFilter;
 import org.broadinstitute.ddp.filter.HttpHeaderMDCFilter;
 import org.broadinstitute.ddp.filter.MDCAttributeRemovalFilter;
 import org.broadinstitute.ddp.filter.MDCLogBreadCrumbFilter;
@@ -55,7 +56,7 @@ import org.broadinstitute.ddp.monitoring.StackdriverMetricsTracker;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.pex.TreeWalkInterpreter;
 import org.broadinstitute.ddp.route.AddProfileRoute;
-import org.broadinstitute.ddp.route.CheckInvitationStatusRoute;
+import org.broadinstitute.ddp.route.InvitationCheckStatusRoute;
 import org.broadinstitute.ddp.route.CheckIrbPasswordRoute;
 import org.broadinstitute.ddp.route.CreateActivityInstanceRoute;
 import org.broadinstitute.ddp.route.CreateMailAddressRoute;
@@ -87,7 +88,7 @@ import org.broadinstitute.ddp.route.GetDsmStudyParticipant;
 import org.broadinstitute.ddp.route.GetDsmTriggeredInstancesRoute;
 import org.broadinstitute.ddp.route.GetGovernedStudyParticipantsRoute;
 import org.broadinstitute.ddp.route.GetInstitutionSuggestionsRoute;
-import org.broadinstitute.ddp.route.GetInvitationRoute;
+import org.broadinstitute.ddp.route.InvitationLookupRoute;
 import org.broadinstitute.ddp.route.GetMailAddressRoute;
 import org.broadinstitute.ddp.route.GetMailingListRoute;
 import org.broadinstitute.ddp.route.GetMedicalProviderListRoute;
@@ -117,13 +118,13 @@ import org.broadinstitute.ddp.route.SendDsmNotificationRoute;
 import org.broadinstitute.ddp.route.SendEmailRoute;
 import org.broadinstitute.ddp.route.SendExitNotificationRoute;
 import org.broadinstitute.ddp.route.SetParticipantDefaultMailAddressRoute;
-import org.broadinstitute.ddp.route.UpdateInvitationRoute;
+import org.broadinstitute.ddp.route.InvitationUpdateDetailsRoute;
 import org.broadinstitute.ddp.route.UpdateMailAddressRoute;
 import org.broadinstitute.ddp.route.UpdateUserEmailRoute;
 import org.broadinstitute.ddp.route.UpdateUserPasswordRoute;
 import org.broadinstitute.ddp.route.UserActivityInstanceListRoute;
 import org.broadinstitute.ddp.route.UserRegistrationRoute;
-import org.broadinstitute.ddp.route.VerifyInvitationRoute;
+import org.broadinstitute.ddp.route.InvitationVerifyRoute;
 import org.broadinstitute.ddp.route.VerifyMailAddressRoute;
 import org.broadinstitute.ddp.schedule.DsmCancerLoaderJob;
 import org.broadinstitute.ddp.schedule.DsmDrugLoaderJob;
@@ -267,20 +268,20 @@ public class DataDonationPlatform {
         // - StudyLanguageContentLanguageSettingFilter sets the "Content-Language" header later on
         before(API.BASE + "/user/*/studies/*", new StudyLanguageResolutionFilter());
         after(API.BASE + "/user/*/studies/*", new StudyLanguageContentLanguageSettingFilter());
-        before(API.BASE + "/studies/*", new ExcludePathFilter(new StudyLanguageResolutionFilter(),
-                API.INVITATIONS + "/*", API.INVITATION_VERIFY, API.INVITATION_CHECK));
-        after(API.BASE + "/studies/*", new ExcludePathFilter(new StudyLanguageContentLanguageSettingFilter(),
-                API.INVITATIONS + "/*", API.INVITATION_VERIFY, API.INVITATION_CHECK));
+        beforeWithExclusion(API.BASE + "/studies/*", new StudyLanguageResolutionFilter(),
+                API.INVITATION_VERIFY, API.INVITATION_CHECK, API.INVITATION_LOOKUP, API.INVITATION_DETAILS);
+        afterWithExclusion(API.BASE + "/studies/*", new StudyLanguageContentLanguageSettingFilter(),
+                API.INVITATION_VERIFY, API.INVITATION_CHECK, API.INVITATION_LOOKUP, API.INVITATION_DETAILS);
 
         enableCORS("*", String.join(",", CORS_HTTP_METHODS), String.join(",", CORS_HTTP_HEADERS));
         setupCatchAllErrorHandling();
 
         // before filter converts jwt into DDP_AUTH request attribute
         // we exclude the DSM paths. DSM paths have own separate authentication
-        before(API.BASE + "/*", new ExcludePathFilter(new TokenConverterFilter(new JWTConverter(userDao)),
-                API.DSM_BASE + "/*", API.CHECK_IRB_PASSWORD));
-        before(API.BASE + "/*", new ExcludePathFilter(new AddDDPAuthLoggingFilter(),
-                API.DSM_BASE + "/*", API.CHECK_IRB_PASSWORD));
+        beforeWithExclusion(API.BASE + "/*", new TokenConverterFilter(new JWTConverter(userDao)),
+                API.DSM_BASE + "/*", API.CHECK_IRB_PASSWORD);
+        beforeWithExclusion(API.BASE + "/*", new AddDDPAuthLoggingFilter(),
+                API.DSM_BASE + "/*", API.CHECK_IRB_PASSWORD);
 
         // Internal routes
         get(API.HEALTH_CHECK, new HealthCheckRoute(healthcheckPassword), responseSerializer);
@@ -451,10 +452,10 @@ public class DataDonationPlatform {
         );
 
         var jsonSerializer = new NullableJsonTransformer();
-        post(API.INVITATION_VERIFY, new VerifyInvitationRoute(), jsonSerializer);
-        post(API.INVITATION_CHECK, new CheckInvitationStatusRoute(), jsonSerializer);
-        get(API.INVITATION, new GetInvitationRoute(), jsonSerializer);
-        patch(API.INVITATION, new UpdateInvitationRoute(), jsonSerializer);
+        post(API.INVITATION_VERIFY, new InvitationVerifyRoute(), jsonSerializer);
+        post(API.INVITATION_CHECK, new InvitationCheckStatusRoute(), jsonSerializer);
+        post(API.INVITATION_LOOKUP, new InvitationLookupRoute(), jsonSerializer);
+        post(API.INVITATION_DETAILS, new InvitationUpdateDetailsRoute(), jsonSerializer);
 
         Runnable runnable = () -> {
             var dsm = new DsmClient(cfg);

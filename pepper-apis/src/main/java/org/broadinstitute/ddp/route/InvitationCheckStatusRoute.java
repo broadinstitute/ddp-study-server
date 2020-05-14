@@ -10,7 +10,7 @@ import org.broadinstitute.ddp.db.dao.JdbiClientUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dto.InvitationDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
-import org.broadinstitute.ddp.json.invitation.CheckInvitationStatusPayload;
+import org.broadinstitute.ddp.json.invitation.InvitationCheckStatusPayload;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
@@ -23,9 +23,9 @@ import spark.Response;
  *
  * <p>NOTE: this is a public route. Be careful what we return in responses.
  */
-public class CheckInvitationStatusRoute extends ValidatedJsonInputRoute<CheckInvitationStatusPayload> {
+public class InvitationCheckStatusRoute extends ValidatedJsonInputRoute<InvitationCheckStatusPayload> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(CheckInvitationStatusRoute.class);
+    private static final Logger LOG = LoggerFactory.getLogger(InvitationCheckStatusRoute.class);
 
     @Override
     protected int getValidationErrorStatus() {
@@ -33,7 +33,7 @@ public class CheckInvitationStatusRoute extends ValidatedJsonInputRoute<CheckInv
     }
 
     @Override
-    public Object handle(Request request, Response response, CheckInvitationStatusPayload payload) throws Exception {
+    public Object handle(Request request, Response response, InvitationCheckStatusPayload payload) throws Exception {
         String studyGuid = request.params(RouteConstants.PathParam.STUDY_GUID);
         String invitationGuid = payload.getInvitationGuid();
         LOG.info("Attempting to check invitation {} in study {}", invitationGuid, studyGuid);
@@ -44,7 +44,7 @@ public class CheckInvitationStatusRoute extends ValidatedJsonInputRoute<CheckInv
         return null;
     }
 
-    int checkStatus(Handle handle, String studyGuid, CheckInvitationStatusPayload payload) {
+    int checkStatus(Handle handle, String studyGuid, InvitationCheckStatusPayload payload) {
         String invitationGuid = payload.getInvitationGuid();
 
         StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);

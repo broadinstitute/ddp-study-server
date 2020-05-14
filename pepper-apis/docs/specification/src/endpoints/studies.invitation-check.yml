@@ -1,9 +1,11 @@
 post:
-  operationId: checkInvitationStatus
+  operationId: invitationCheckStatus
   tags:
     - Invitations
-  summary: CheckInvitationStatus
+  summary: InvitationCheckStatus
   description: Check the status of an invitation, whether it exits and is valid or not.
+  parameters:
+    - $ref: '../pepper.yml#/components/parameters/path/studyGuid'
   requestBody:
     required: true
     content:
