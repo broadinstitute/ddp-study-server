@@ -4,21 +4,24 @@ import static io.restassured.RestAssured.given;
 import static org.broadinstitute.ddp.constants.RouteConstants.API.DSM_ALL_KIT_REQUESTS;
 import static org.broadinstitute.ddp.route.IntegrationTestSuite.startupTestServer;
 import static org.broadinstitute.ddp.route.IntegrationTestSuite.tearDown;
+import static org.broadinstitute.ddp.route.IntegrationTestSuite.tearDownSuiteServer;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
 import com.typesafe.config.Config;
+import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.util.EntityUtils;
@@ -65,7 +68,7 @@ public class RateLimitTest extends IntegrationTestSuite.TestCase {
      */
     @Before
     public void shutdownDDPAndLowerRateLimits() {
-        tearDown();
+        tearDownSuiteServer(5_000);
 
         ConfigManager configManager = ConfigManager.getInstance();
 
@@ -114,9 +117,10 @@ public class RateLimitTest extends IntegrationTestSuite.TestCase {
     private static void runHealthChecksConcurrentlyAndCheckResults(int numConcurrentQueries, int minimumFailures) {
         ExecutorService executorService = Executors.newFixedThreadPool(numConcurrentQueries);
         AtomicInteger rateLimitRejects = new AtomicInteger(0);
+        AtomicInteger numHealthCheckResults = new AtomicInteger(0);
+        List<String> otherErrors = Collections.synchronizedList(new ArrayList<>());
 
         List<Callable<Boolean>> healthCheckCalls = new ArrayList<>();
-        AtomicBoolean didRequestPassThrough = new AtomicBoolean();
 
         for (int i = 0; i < numConcurrentQueries; i++) {
             healthCheckCalls.add(() -> {
@@ -126,11 +130,24 @@ public class RateLimitTest extends IntegrationTestSuite.TestCase {
                     int statusCode = httpResponse.getStatusLine().getStatusCode();
                     LOG.info("Response {}", httpResponse.getStatusLine().getStatusCode());
 
-                    if (statusCode ==  HttpStatus.TOO_MANY_REQUESTS_429) {
-                        try {
-                            new JsonParser().parse(EntityUtils.toString(httpResponse.getEntity()));
-                            didRequestPassThrough.set(true);
-                        } catch (JsonSyntaxException ignored)  { }
+                    JsonElement responseObject = null;
+                    try {
+                        responseObject = new JsonParser().parse(EntityUtils.toString(httpResponse.getEntity()));
+                    } catch (JsonSyntaxException ignored)  { }
+
+                    if (statusCode == HttpStatus.OK_200) {
+                        if (responseObject != null) {
+                            numHealthCheckResults.incrementAndGet();
+                        } else {
+                            otherErrors.add("Got " + statusCode + " when expecting a clean health check result");
+                        }
+                    } else if (statusCode == HttpStatus.TOO_MANY_REQUESTS_429) {
+                        if (responseObject == null) {
+                            rateLimitRejects.incrementAndGet();
+                        } else {
+                            otherErrors.add("Got " + statusCode + " and complete healthcheck result "
+                                    + "when expecting the route to be blocked");
+                        }
                     }
                 } catch (IOException e) {
                     LOG.info("Rate limit query test exception", e);
@@ -156,6 +173,6 @@ public class RateLimitTest extends IntegrationTestSuite.TestCase {
         Assert.assertTrue("Expected at least " + minimumFailures + " but got " + rateLimitRejects.get(),
                 rateLimitRejects.get() >= minimumFailures);
 
-        Assert.assertFalse("Request passed through rate limit filter", didRequestPassThrough.get());
+        Assert.assertTrue("Unexpected results: " + StringUtils.join(otherErrors, "\n"), otherErrors.isEmpty());
     }
 }

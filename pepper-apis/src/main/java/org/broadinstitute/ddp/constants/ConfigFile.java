@@ -151,8 +151,8 @@ public class ConfigFile {
     }
 
     public static final class API_RATE_LIMIT {
-        public static final String MAX_QUERIES_PER_SECOND = "nginx.apiLimitRate";
-        public static final String BURST = "nginx.apiLimitBurst";
+        public static final String MAX_QUERIES_PER_SECOND = "rateLimit.apiLimitRate";
+        public static final String BURST = "rateLimit.apiLimitBurst";
     }
 
     /**

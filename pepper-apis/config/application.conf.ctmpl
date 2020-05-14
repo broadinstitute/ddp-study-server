@@ -62,6 +62,10 @@
         "apiLimitBurst": {{$conf.Data.nginx.apiLimitBurst}},
         "apiLimitRate": {{$conf.Data.nginx.apiLimitRate}}
     },
+    "rateLimit": {
+        "apiLimitBurst": {{$conf.Data.rateLimit.apiLimitBurst}},
+        "apiLimitRate": {{$conf.Data.rateLimit.apiLimitRate}}
+    },
     "sendgrid": {
         "fromName": "{{$conf.Data.sendgrid.fromName}}",
         "fromEmail": "{{$conf.Data.sendgrid.fromEmail}}"
