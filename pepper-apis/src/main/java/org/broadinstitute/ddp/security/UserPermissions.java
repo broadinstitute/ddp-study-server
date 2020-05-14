@@ -1,8 +1,6 @@
 package org.broadinstitute.ddp.security;
 
 import java.util.Collection;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
@@ -10,7 +8,6 @@ import org.broadinstitute.ddp.db.dto.EnrollmentStatusDto;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 
 /**
  * The guts of our logic for figuring out whether
