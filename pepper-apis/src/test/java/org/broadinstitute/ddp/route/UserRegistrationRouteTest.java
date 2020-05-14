@@ -46,6 +46,7 @@ import org.broadinstitute.ddp.db.dao.EventActionDao;
 import org.broadinstitute.ddp.db.dao.EventTriggerDao;
 import org.broadinstitute.ddp.db.dao.InvitationDao;
 import org.broadinstitute.ddp.db.dao.InvitationFactory;
+import org.broadinstitute.ddp.db.dao.InvitationSql;
 import org.broadinstitute.ddp.db.dao.JdbiAuth0Tenant;
 import org.broadinstitute.ddp.db.dao.JdbiEventConfiguration;
 import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
@@ -75,7 +76,6 @@ import org.broadinstitute.ddp.model.governance.AgeOfMajorityRule;
 import org.broadinstitute.ddp.model.governance.AgeUpCandidate;
 import org.broadinstitute.ddp.model.governance.Governance;
 import org.broadinstitute.ddp.model.governance.GovernancePolicy;
-import org.broadinstitute.ddp.model.invitation.InvitationType;
 import org.broadinstitute.ddp.model.pex.Expression;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.model.user.User;
@@ -83,7 +83,6 @@ import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.util.Auth0Util;
 import org.broadinstitute.ddp.util.GuidUtils;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
-import org.broadinstitute.ddp.util.TimestampUtil;
 import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;
@@ -852,9 +851,9 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
         AtomicReference<GovernancePolicy> governancePolicy = new AtomicReference<>();
         AtomicReference<StudyDto> testStudy = new AtomicReference<>();
         AtomicBoolean shouldDeleteProfile = new AtomicBoolean(false);
-        try {
-            var invitation = new AtomicReference<InvitationDto>();
+        var invitation = new AtomicReference<InvitationDto>();
 
+        try {
             // clear the auth0 user id from the test account and send in an invitation-based registration
             TransactionWrapper.useTxn(handle -> {
                 var userDao = handle.attach(UserDao.class);
@@ -863,10 +862,10 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
 
                 testStudy.set(TestDataSetupUtil.generateTestStudy(handle, RouteTestUtil.getConfig()));
                 long testStudyId = testStudy.get().getId();
-                invitation.set(handle.attach(InvitationFactory.class).createInvitation(InvitationType.AGE_UP,
+                invitation.set(handle.attach(InvitationFactory.class).createAgeUpInvitation(
                         testStudyId, user.get().getId(), "test+" + System.currentTimeMillis() + "@datadonationplatform.org"));
 
-                handle.attach(InvitationDao.class).clearDates(invitation.get().getInvitationGuid());
+                handle.attach(InvitationSql.class).clearDates(invitation.get().getInvitationId());
                 userDao.updateAuth0UserId(user.get().getGuid(), null);
 
                 var profileDao = handle.attach(UserProfileDao.class);
@@ -906,9 +905,10 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
                     .body("ddpUserGuid", Matchers.not(Matchers.isEmptyOrNullString()));
 
             TransactionWrapper.useTxn(handle -> {
-                var updatedInvitation = handle.attach(InvitationDao.class).findByInvitationGuid(invitationGuid).get();
+                var updatedInvitation = handle.attach(InvitationDao.class)
+                        .findByInvitationGuid(testStudy.get().getId(), invitationGuid).get();
                 assertNotNull(updatedInvitation.getAcceptedAt());
-                assertTrue(updatedInvitation.getAcceptedAt().before(TimestampUtil.now()));
+                assertTrue(updatedInvitation.getAcceptedAt().isBefore(Instant.now()));
 
                 User requeriedUser = handle.attach(UserDao.class).findUserByGuid(user.get().getGuid()).get();
                 assertEquals(auth0UserId, requeriedUser.getAuth0UserId());
@@ -938,9 +938,70 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
                     handle.attach(UserProfileDao.class).getUserProfileSql().deleteByUserId(user.get().getId());
                 }
 
-                if (testStudy.get() != null) {
+                if (testStudy.get() != null && user.get() != null) {
                     handle.attach(JdbiUserStudyEnrollment.class)
                             .deleteByUserGuidStudyGuid(user.get().getGuid(), testStudy.get().getGuid());
+                }
+
+                if (invitation.get() != null) {
+                    handle.attach(InvitationSql.class).deleteById(invitation.get().getInvitationId());
+                }
+            });
+        }
+    }
+
+    @Test
+    public void testRecruitmentInvitation() {
+        var createdUser = new AtomicReference<User>();
+        var testStudy = new AtomicReference<StudyDto>();
+        var invitation = new AtomicReference<InvitationDto>();
+        try {
+            TransactionWrapper.useTxn(handle -> {
+                testStudy.set(TestDataSetupUtil.generateTestStudy(handle, RouteTestUtil.getConfig()));
+                invitation.set(handle.attach(InvitationFactory.class).createRecruitmentInvitation(
+                        testStudy.get().getId(), "invite" + System.currentTimeMillis()));
+            });
+
+            String invitationGuid = invitation.get().getInvitationGuid();
+            String fakeAuth0UserId = "fake_auth0_id" + System.currentTimeMillis();
+            var payload = new UserRegistrationPayload(fakeAuth0UserId, auth0ClientId,
+                    EN_LANG_CODE, testStudy.get().getGuid(), auth0Domain, null, null, invitationGuid);
+
+            String createdUserGuid = makeRequestWith(payload)
+                    .then().assertThat()
+                    .statusCode(200).contentType(ContentType.JSON)
+                    .body("ddpUserGuid", Matchers.not(Matchers.isEmptyOrNullString()))
+                    .extract().path("ddpUserGuid");
+
+            TransactionWrapper.useTxn(handle -> {
+                var userDao = handle.attach(UserDao.class);
+                createdUser.set(userDao.findUserByGuid(createdUserGuid).get());
+                assertEquals(fakeAuth0UserId, createdUser.get().getAuth0UserId());
+
+                var updatedInvitation = handle.attach(InvitationDao.class)
+                        .findByInvitationGuid(testStudy.get().getId(), invitationGuid).get();
+                assertNotNull("invitation should be accepted", updatedInvitation.getAcceptedAt());
+                assertTrue(updatedInvitation.getAcceptedAt().isBefore(Instant.now()));
+                assertEquals("invitation should be assigned to newly created user",
+                        (Long) createdUser.get().getId(), updatedInvitation.getUserId());
+
+                EnrollmentStatusType status = handle.attach(JdbiUserStudyEnrollment.class)
+                        .getEnrollmentStatusByUserAndStudyIds(createdUser.get().getId(), testStudy.get().getId())
+                        .orElse(null);
+                assertNotNull("newly created user should be in study", status);
+                assertEquals(EnrollmentStatusType.REGISTERED, status);
+            });
+        } finally {
+            TransactionWrapper.useTxn(handle -> {
+                if (createdUser.get() != null) {
+                    userGuidsToDelete.add(createdUser.get().getGuid());
+                    if (testStudy.get() != null) {
+                        handle.attach(JdbiUserStudyEnrollment.class)
+                                .deleteByUserGuidStudyGuid(createdUser.get().getGuid(), testStudy.get().getGuid());
+                    }
+                }
+                if (invitation.get() != null) {
+                    handle.attach(InvitationSql.class).deleteById(invitation.get().getInvitationId());
                 }
             });
         }

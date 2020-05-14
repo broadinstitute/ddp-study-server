@@ -113,7 +113,7 @@ public class SendEmailRouteTest extends IntegrationTestSuite.TestCase {
     @Test
     public void testEmailResendToKnownUser() {
         int numStartingQueuedEvents = getNumPendingEventsInSeparateTransaction();
-        SendEmailPayload payload = new SendEmailPayload(testData.getTestingUser().getEmailAddress());
+        SendEmailPayload payload = new SendEmailPayload(testData.getTestingUser().getEmail());
         postResendAndAssert200(payload);
 
         TransactionWrapper.useTxn(handle -> {
