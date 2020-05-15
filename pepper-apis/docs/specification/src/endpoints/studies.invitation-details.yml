@@ -1,0 +1,37 @@
+post:
+  operationId: invitationUpdateDetails
+  tags:
+    - Invitations
+  summary: InvitationUpdateDetails
+  description: |
+    Update the notes of an invitation.
+
+    Note: this API is restricted to study admins.
+  parameters:
+    - $ref: '../pepper.yml#/components/parameters/studyGuid'
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - invitationId
+            - notes
+          properties:
+            invitationId:
+              description: the invitation id
+              type: string
+            notes:
+              description: the notes to save for an inivitation
+              type: string
+              nullable: true
+  responses:
+    200:
+      description: invitation notes are saved
+    404:
+      description: invitation not found
+      content:
+        application/json:
+          schema:
+            $ref: '../pepper.yml#/components/schemas/Error.NotFound'

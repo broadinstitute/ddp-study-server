@@ -11,7 +11,7 @@ function (user, context, callback) {
     user.app_metadata = user.app_metadata || {};
     user.app_metadata.pepper_user_guids = user.app_metadata.pepper_user_guids || {};
 
-    var m2mClients = ['dsm', 'Salt CMS'];
+    var m2mClients = ['dsm', 'Count Me In (Salt CMS)'];
     if (m2mClients.includes(context.clientName)) {
         return callback(null, user, context);
     }
@@ -102,6 +102,12 @@ function (user, context, callback) {
         }
 
         console.log(context);
+
+        // This is the token renewal case. Let's avoid going through pepper registration
+        if (context.request.query.renew_token_only) {
+            context.idToken[pepperUserGuidClaim] = user.app_metadata.user_guid;
+            return callback(null, user, context);
+        }
 
         // In order to get a refresh token, the client must go through one of the other methods
         // to get an id/access token first (oauth2-password, oidc-implicit-profile, etc).

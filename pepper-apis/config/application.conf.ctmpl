@@ -9,15 +9,20 @@
 {{with $testingAuth := index $testingConf.Data "auth0"}}
 {{with $slack := index $conf.Data "slack"}}
 {{with $elasticsearchConf := vault (printf "secret/pepper/%s/%s/elasticsearch" $environment $version)}}
-
 {
     "dbUrl": "{{$conf.Data.dbUrl}}",
-    "maxConnections": {{$conf.Data.maxConnections}},
     "housekeepingDbUrl": "{{$conf.Data.housekeepingDbUrl}}",
+    "defaultTimezone": "{{$conf.Data.defaultTimezone}}",
+    "maxConnections": {{$conf.Data.maxConnections}},
     "housekeepingMaxConnections": {{$conf.Data.housekeepingMaxConnections}},
     "port": {{$conf.Data.port}},
     "doLiquibase": {{$conf.Data.doLiquibase}},
     "threadTimeout": {{$conf.Data.threadTimeout}},
+    "auth0IpWhiteList": [
+    {{range $i, $ip := $conf.Data.auth0.ipWhiteList}}
+        {{if $i}},{{end}}"{{ $ip }}"
+    {{end}}
+    ],
     "auth0": {
         "domain": "{{$auth0.domain}}",
         "managementApiSecret": "{{$auth0.managementApiSecret}}",
@@ -37,6 +42,7 @@
     "usePubSubEmulator": false,
     "pubSubProject": "{{$conf.Data.pubSubProject}}",
     "runScheduler": {{$conf.Data.runScheduler}},
+    "restrictRegisterRoute": {{$conf.Data.restrictRegisterRoute}},
     "requireDefaultGcpCredentials": {{$conf.Data.requireDefaultGcpCredentials}},
     "googleProjectId": "{{$conf.Data.googleProjectId}}",
     "pdfArchiveBucket": "{{$conf.Data.pdfArchiveBucket}}",
@@ -81,18 +87,12 @@
 {{end}}{{end}}
     "elasticsearchUsername": "pepper_backend",
     "elasticsearchBatchSize": 100,
-    "dbDsmInstance": "{{$conf.Data.dbDsmInstance}}",
-    "dbApiInstance": "{{$conf.Data.dbApiInstance}}",
-    "dbHousekeepingInstance": "{{$conf.Data.dbHousekeepingInstance}}",
+    "dbInstanceId": "{{$conf.Data.dbInstanceId}}",
     "dsmJwtSecret": "{{$dsm_conf.Data.portal.jwtDdpSecret}}",
     "dsmJwtSigner": "org.broadinstitute.kdux",
     {{if eq $environment "dev"}}
         "baseTestUrl": "https://pepper-dev.datadonationplatform.org",
         "baseWebDriverUrl": "https://basil-dev.datadonationplatform.org",
-        "firecloud": {
-            "testWorkspaceNamespace":"pepper-dev2",
-            "testWorkspace":"pepper-dev-playground"
-        },
         "dsmBaseUrl": "https://dsm-dev.datadonationplatform.org:443"
     {{end}}
     {{if eq $environment "test"}}

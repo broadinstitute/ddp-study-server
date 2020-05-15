@@ -3,18 +3,15 @@ package org.broadinstitute.ddp.db;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TimeZone;
 import java.util.concurrent.TimeUnit;
 
 import com.typesafe.config.Config;
-import org.apache.commons.dbcp2.DriverManagerConnectionFactory;
-import org.apache.commons.dbcp2.PoolableConnection;
-import org.apache.commons.dbcp2.PoolableConnectionFactory;
-import org.apache.commons.dbcp2.PoolingDataSource;
-import org.apache.commons.pool2.ObjectPool;
-import org.apache.commons.pool2.impl.GenericObjectPool;
-import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.exception.DDPException;
+import org.broadinstitute.ddp.exception.InvalidConfigurationException;
 import org.broadinstitute.ddp.util.ConfigManager;
 import org.jdbi.v3.core.ConnectionException;
 import org.jdbi.v3.core.Handle;
@@ -33,6 +30,14 @@ import org.slf4j.LoggerFactory;
  * are re-thrown after making an attempt to rollback the transaction.
  */
 public class TransactionWrapper {
+    // We are setting the VMs default timezone expectation that it will be same on server
+    // or at least specified in DB connection URL
+    // if timezones don't match, times and dates might be miscalculated/improperly converted by JDBC connector
+    // https://bugs.mysql.com/bug.php?id=91112
+    // Note 03/10/2020: Release of fixed Java connector is imminent and this might no longer be necessary
+    static {
+        TimeZone.setDefault(TimeZone.getTimeZone(ConfigManager.getInstance().getConfig().getString(ConfigFile.DEFAULT_TIMEZONE)));
+    }
 
     private static final Logger LOG = LoggerFactory.getLogger(TransactionWrapper.class);
 
@@ -50,7 +55,9 @@ public class TransactionWrapper {
      */
     private static final int PASSWORD_ROTATION_MAX_RETRIES = 2;
 
-    private PoolingDataSource dataSource;
+    public static final String COULD_NOT_GET_CONNECTION = "Could not get a connection from the pool";
+
+    private HikariDataSource dataSource;
     private final String dbUrl;
     private final Jdbi jdbi;
 
@@ -61,33 +68,10 @@ public class TransactionWrapper {
         return isInitialized;
     }
 
-    /**
-     * Closes and re-creates the underlying connection
-     * pools.  Should only be used from tests.
-     */
-    public static void invalidateAllConnections() {
-        var dbConfigs = new ArrayList<DbConfiguration>();
-
-        for (Map.Entry<DB, TransactionWrapper> conn : gTxnWrapper.entrySet()) {
-            try {
-                conn.getValue().dataSource.close();
-            } catch (Exception e) {
-                throw new DDPException("Could not invalidate connection", e);
-            }
-            String dbUrl = conn.getValue().dbUrl;
-            int maxConnections = conn.getValue().maxConnections;
-            dbConfigs.add(new DbConfiguration(conn.getKey(), maxConnections, dbUrl));
-        }
-        reset();
-        init(dbConfigs.toArray(new DbConfiguration[0]));
-    }
-
-
     public enum DB {
 
         APIS(ConfigFile.DB_URL, ConfigFile.NUM_POOLED_CONNECTIONS),
         HOUSEKEEPING(ConfigFile.HOUSEKEEPING_DB_URL, ConfigFile.HOUSEKEEPING_NUM_POOLED_CONNECTIONS);
-
 
         private final String dbUrlConfigKey;
         private final String poolSizeConfigKey;
@@ -106,10 +90,13 @@ public class TransactionWrapper {
         }
     }
 
-    private TransactionWrapper(int maxConnections, String dbUrl) {
+    private TransactionWrapper(int maxConnections, String dbUrl, DB db) {
         this.dbUrl = dbUrl;
         this.maxConnections = maxConnections;
-        dataSource = createDataSource(maxConnections, dbUrl);
+        if (dataSource != null) {
+            dataSource.close();
+        }
+        dataSource = createDataSource(maxConnections, dbUrl, db);
         jdbi = Jdbi.create(dataSource);
         jdbi.installPlugin(new SqlObjectPlugin());
     }
@@ -128,6 +115,16 @@ public class TransactionWrapper {
         }
         gTxnWrapper.clear();
         isInitialized = false;
+    }
+
+    /**
+     * Should only be called during testing to force connection pool
+     * to create new connections on operations.
+     */
+    public static synchronized void closePool() {
+        for (Map.Entry<DB, TransactionWrapper> db : gTxnWrapper.entrySet()) {
+            db.getValue().dataSource.close();
+        }
     }
 
     public static class DbConfiguration {
@@ -157,7 +154,11 @@ public class TransactionWrapper {
         }
     }
 
-    public static synchronized void init(DbConfiguration...dbConfigs) {
+    public static synchronized void init(DbConfiguration... dbConfigs) {
+        if (dbConfigs.length == 0) {
+            throw new IllegalArgumentException("must have at least one dbConfig");
+        }
+
         for (DbConfiguration dbConfig : dbConfigs) {
             if (gTxnWrapper.containsKey(dbConfig.getDb())) {
                 TransactionWrapper transactionWrapper = gTxnWrapper.get(dbConfig.getDb());
@@ -165,15 +166,15 @@ public class TransactionWrapper {
                 String dbUrl = dbConfig.getDbUrl();
                 if (transactionWrapper.maxConnections != maxConnections || !transactionWrapper.dbUrl.equals(dbUrl)) {
                     throw new RuntimeException("init() has already been called with "
-                                               + transactionWrapper.maxConnections + " and "
-                                               + transactionWrapper.dbUrl + "; " +  "you cannot re-initialize "
-                                               + "it with different params " + maxConnections
-                                               + " and " + dbUrl);
+                            + transactionWrapper.maxConnections + " and "
+                            + transactionWrapper.dbUrl + "; " +  "you cannot re-initialize "
+                            + "it with different params " + maxConnections
+                            + " and " + dbUrl);
                 } else {
                     LOG.warn("TransactionWrapper has already been initialized.");
                 }
             }
-            gTxnWrapper.put(dbConfig.getDb(), new TransactionWrapper(dbConfig.getMaxConnections(), dbConfig.getDbUrl()));
+            gTxnWrapper.put(dbConfig.getDb(), new TransactionWrapper(dbConfig.getMaxConnections(), dbConfig.getDbUrl(), dbConfig.getDb()));
         }
         isInitialized = true;
     }
@@ -207,17 +208,39 @@ public class TransactionWrapper {
     }
 
     /**
-     * Re-reads the database pool configuration values in an uncached
-     * fashion.  Should only be called internally or by test code.
+     * Re-reads the database pool configuration values.
+     * @param useCache if true, pool is initialized with cached config values.  If false, config file is re-read from underlying storage.
+     * @throws InvalidConfigurationException if the configuration is invalid and cannot be used to create a new pool
      */
-    public static void reloadDbPoolConfiguration() {
+    public static synchronized void reloadDbPoolConfiguration(boolean useCache) throws InvalidConfigurationException {
         // save current list of DBs before clearing
         var dbs = new ArrayList<DB>();
         dbs.addAll(gTxnWrapper.keySet());
+
+        Config cfg = ConfigManager.getInstance().getConfig();
+        if (!useCache) {
+            cfg = ConfigManager.parseConfig();
+        }
+
+        // check configuration values first.  If they're no good, we don't want to
+        // silently get the pool into  an invalid state
+        StringBuilder invalidConfigMessage  = new StringBuilder();
+        for (DB db : dbs) {
+            if (!cfg.hasPath(db.getDbUrlConfigKey())) {
+                invalidConfigMessage.append("Config does not have " + db.getDbUrlConfigKey() + " for " + getDB());
+            }
+            if  (!cfg.hasPath(db.getDbPoolSizeConfigKey())) {
+                invalidConfigMessage.append("Config does not have " + db.getDbPoolSizeConfigKey() + " for " + getDB());
+            }
+        }
+
+        if (invalidConfigMessage.length() > 0) {
+            throw new InvalidConfigurationException(invalidConfigMessage.toString());
+        }
+
         reset();
 
-        Config cfg = ConfigManager.parseConfig();
-        // now add configurations after re-reading them from underlying config storage
+        // now add configurations after re-reading them
         var dbConfigs = new ArrayList<DbConfiguration>();
         for (DB db : dbs) {
             String dbUrl = cfg.getString(db.getDbUrlConfigKey());
@@ -255,7 +278,7 @@ public class TransactionWrapper {
                 return h.inTransaction(callback);
             }
         } catch (ConnectionException e) {
-            throw new DDPException("Unable to get a connection from data source", e);
+            throw new DDPException(COULD_NOT_GET_CONNECTION, e);
         }
     }
 
@@ -277,7 +300,7 @@ public class TransactionWrapper {
                 return h.inTransaction(callback);
             }
         } catch (ConnectionException e) {
-            throw new DDPException("Unable to get a connection from data source", e);
+            throw new DDPException(COULD_NOT_GET_CONNECTION, e);
         }
     }
 
@@ -289,8 +312,7 @@ public class TransactionWrapper {
         Handle h;
         for (int tryCount = 0; tryCount < PASSWORD_ROTATION_MAX_RETRIES; tryCount++) {
             try {
-                h = getInstance(db).jdbi.open();
-                return h;
+                return getInstance(db).jdbi.open();
             } catch (ConnectionException e) {
                 if (isAuthException(e)) {
                     LOG.info("Database pool credentials have been rejected; pausing and reloading creds from config file.", e);
@@ -299,14 +321,16 @@ public class TransactionWrapper {
                     } catch (InterruptedException interrupted) {
                         LOG.error("Sleep before dbpool credential reload has been interrupted", interrupted);
                     }
-                    reloadDbPoolConfiguration();
+                    reloadDbPoolConfiguration(false);
                 } else {
-                    throw new DDPException("Unable to get a connection from data source", e);
+                    throw new DDPException(COULD_NOT_GET_CONNECTION, e);
                 }
+            } catch (InvalidConfigurationException e) {
+                LOG.error("Database connection configuration is invalid.  Proceeding with original configuration values.");
             }
         }
         // if here, we've tried a few times, but are still unable to get a connection.
-        throw new DDPException("Unable to get a connection from data source");
+        throw new DDPException(COULD_NOT_GET_CONNECTION);
     }
 
     /**
@@ -321,7 +345,7 @@ public class TransactionWrapper {
         try (Handle h = openJdbiWithAuthRetry(db)) {
             h.useTransaction(callback);
         } catch (ConnectionException e) {
-            throw new DDPException("Unable to get a connection from data source", e);
+            throw new DDPException(COULD_NOT_GET_CONNECTION, e);
         }
     }
 
@@ -337,9 +361,30 @@ public class TransactionWrapper {
         try (Handle h = openJdbiWithAuthRetry(getDB())) {
             h.useTransaction(callback);
         } catch (ConnectionException e) {
-            throw new DDPException("Unable to get a connection from data source", e);
+            throw new DDPException(COULD_NOT_GET_CONNECTION, e);
         }
     }
+
+    private HikariDataSource createDataSource(int maxConnections, String dbUrl, DB db) {
+        HikariConfig config = new HikariConfig();
+        config.setJdbcUrl(dbUrl);
+        config.addDataSourceProperty("cachePrepStmts", "true");
+        config.addDataSourceProperty("prepStmtCacheSize", "250");
+        config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
+        config.addDataSourceProperty("cacheServerConfiguration", "true");
+        config.setInitializationFailTimeout(0); // don't fail to  create the pool if the db is not available
+        config.setAutoCommit(true); // will be managed by jdbi, which expects autcommit to be enabled initially
+        config.setTransactionIsolation("TRANSACTION_READ_COMMITTED");
+        config.setMaximumPoolSize(maxConnections);
+        config.setConnectionTimeout(1000);
+        config.setMaxLifetime((28800 * 1000) - (3 * 60 * 1000));  // as per hikari docs, a few minutes less than mysql wait_timeout
+        config.setPoolName(db.name());
+
+        // todo arz leverage allowPoolSuspension and mxbeans to fully  automate password rotation
+
+        return new HikariDataSource(config);
+    }
+
 
     /**
      * Use the given handle within a savepoint. This manages creating/releasing/rolling back the savepoint. The callback will be given the
@@ -365,29 +410,5 @@ public class TransactionWrapper {
             throw original;
         }
     }
-
-    public static PoolingDataSource<PoolableConnection> createDataSource(int maxConnections, String dbUrl) {
-        org.apache.commons.dbcp2.ConnectionFactory connectionFactory = new DriverManagerConnectionFactory(dbUrl, null);
-        PoolableConnectionFactory poolableConnectionFactory = new PoolableConnectionFactory(connectionFactory, null);
-        poolableConnectionFactory.setDefaultAutoCommit(true); // will be managed by jdbi
-
-        GenericObjectPoolConfig poolConfig = new GenericObjectPoolConfig();
-        poolConfig.setMaxTotal(maxConnections);
-        poolConfig.setTestOnBorrow(false);
-        poolConfig.setBlockWhenExhausted(false);
-        poolConfig.setTestWhileIdle(true);
-        poolConfig.setMinIdle(5);
-        poolConfig.setMinEvictableIdleTimeMillis(TimeUnit.MINUTES.toMillis(5));
-        poolConfig.setTimeBetweenEvictionRunsMillis(TimeUnit.HOURS.toMillis(1));
-
-        poolableConnectionFactory.setValidationQueryTimeout(1);
-        poolableConnectionFactory.setMaxConnLifetimeMillis(TimeUnit.HOURS.toMillis(3));
-
-        ObjectPool<PoolableConnection> connectionPool = new GenericObjectPool<>(poolableConnectionFactory, poolConfig);
-        poolableConnectionFactory.setPool(connectionPool);
-        return new PoolingDataSource<>(connectionPool);
-    }
-
-
-
 }
+

@@ -15,7 +15,7 @@ public class MedicalReleaseFormPage extends DDPPage {
     private static final Logger logger = LoggerFactory.getLogger(MedicalReleaseFormPage.class);
 
     //Medicial release form content
-    private static final String MEDICAL_RELEASE_FORM_CONTENT_XPATH = "//article[@class='PageContent']";
+    private static final String MEDICAL_RELEASE_FORM_CONTENT_XPATH = "//article[contains(@class, 'PageContent')]";
 
     //Subtitle containing email and phone number
     private static final String HELP_INFORMATION_SUBTITLE = "//div[contains(@class, 'subtitle')]";
@@ -190,6 +190,7 @@ public class MedicalReleaseFormPage extends DDPPage {
         JDIPageUtils.inputText(addressStreetOptional, streetAddress);
         //The Tab key press is to get rid of the auto-complete suggestions
         addressStreetOptional.sendKeys(Keys.TAB);
+        addressStreetOptional.sendKeys(Keys.RETURN);
     }
 
     public void setCity(String city) {
@@ -203,7 +204,8 @@ public class MedicalReleaseFormPage extends DDPPage {
      */
     public void setState(String state) {
         JDIPageUtils.scrollDownToElement(STATE_ADDRESS_DROPDOWN_MENU_XPATH);
-        JDIPageUtils.selectDropdownMenuOptionUsingOptionName(state, addressStateDropdownMenu);
+        String capitalizedState = state.toUpperCase();
+        JDIPageUtils.selectDropdownMenuOptionUsingOptionName(capitalizedState, addressStateDropdownMenu);
     }
 
     public void setZipcode(String zipcode) {
@@ -334,9 +336,9 @@ public class MedicalReleaseFormPage extends DDPPage {
     }
 
     public void clickSubmit() {
-        JDIPageUtils.scrollDownToElement(SUBMIT_BUTTON_XPATH);
         shortWait.until(ExpectedConditions.visibilityOf(submit));
-        JDIPageUtils.clickUsingJavaScript(SUBMIT_BUTTON_XPATH, XPATH);
+        JDIPageUtils.scrollDownToElement(SUBMIT_BUTTON_XPATH);
+        submit.click();
     }
 
     public void waitUntilContentDisplayed() {
