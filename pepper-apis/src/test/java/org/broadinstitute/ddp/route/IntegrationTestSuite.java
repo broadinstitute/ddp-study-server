@@ -274,12 +274,8 @@ public class IntegrationTestSuite {
     }
 
     public static void tearDownSuiteServer() {
-        tearDownSuiteServer(1_000);
-    }
-
-    public static void tearDownSuiteServer(int millisToWait) {
         // todo(yufeng) figure out how to shutdown server running in separate process
-        DataDonationPlatform.shutdown(millisToWait);
+        DataDonationPlatform.shutdown();
         TransactionWrapper.reset();
     }
 

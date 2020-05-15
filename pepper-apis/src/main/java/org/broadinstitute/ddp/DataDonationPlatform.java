@@ -174,7 +174,7 @@ public class DataDonationPlatform {
      * Stop the server using the default wait time.
      */
     public static void shutdown() {
-        shutdown(1_000);
+        shutdown(1000);
     }
 
     /**
