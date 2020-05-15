@@ -59,16 +59,6 @@ JoinMailingListPayload:
       description: The studyGuid of the mailing list the user is interested in (one of umbrellaId OR studyGuid but not both is required)
       example: ANGIO
       type: string
-Invitation:
-  type: object
-  title: Invitation
-  required:
-    - invitationId
-  properties:
-    invitationId:
-      description: the id of the invitation
-      type: string
-      example: 7dcf79aa-1aba-11ea-978f-2e728ce88125
 ListStyle:
   title: ListStyle
   type: string

@@ -4,6 +4,7 @@ import com.epam.jdi.uitests.web.selenium.elements.common.Button;
 import com.epam.jdi.uitests.web.selenium.elements.composite.WebPage;
 import org.broadinstitute.ddp.pages.util.JDIPageUtils;
 import org.junit.Assert;
+import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.FindBy;
 import org.openqa.selenium.support.ui.ExpectedConditions;
@@ -32,10 +33,36 @@ public abstract class DDPPage extends WebPage {
     private static final String MOBILE_MENU_LOGOUT_XPATH = "//body//a//ddp-login//button[@data-ddp-test='logoutButton']";
     private static final String LOGO_XPATH = "//mat-toolbar//div[contains(@class, 'Header-logoText')]";
     private static final String HEADER_XPATH = "//mat-toolbar";
+    private static final String USER_MENU_ICON = "//mat-toolbar//ddp-user-menu//button";
+    private static final String USER_MENU_DASHBOARD_OPTION = "//button[@role='menuitem']//span[contains(text(), 'Dashboard')]";
+    private static final String USER_MENU_SIGN_OUT_OPTION = "//button[@role='menuitem']//span[contains(text(), 'Sign Out')]";
     protected static final String CHECKTYPE_EQUAL = "EQUAL";
     protected static final String CHECKTYPE_CONTAINS = "CONTAINS";
     protected static final String CHECKTYPE_MATCH = "MATCH";
     private static final String CHECKTYPE_MATCH_REGEX = "^[A-Za-z0-9\\d_-]";
+
+    //Question numbers, used to get which one to answer
+    public static final String QUESTION_ONE = "1";
+    public static final String QUESTION_TWO = "2";
+    public static final String QUESTION_THREE = "3";
+    public static final String QUESTION_FOUR = "4";
+    public static final String QUESTION_FIVE = "5";
+    public static final String QUESTION_SIX = "6";
+    public static final String QUESTION_SEVEN = "7";
+    public static final String QUESTION_EIGHT = "8";
+    public static final String QUESTION_NINE = "9";
+    public static final String QUESTION_TEN = "10";
+    public static final String QUESTION_ELEVEN = "11";
+    public static final String QUESTION_TWELVE = "12";
+    public static final String QUESTION_THIRTEEN = "13";
+    public static final String QUESTION_FOURTEEN = "14";
+    public static final String QUESTION_FIFTEEN = "15";
+    public static final String QUESTION_SIXTEEN = "16";
+    public static final String QUESTION_SEVENTEEN = "17";
+    public static final String CONDITIONAL_SPECIFIER_FIRST = "[1]";
+    public static final String CONDITIONAL_SPECIFIER_SECOND = "[2]";
+    public static final String CONDITIONAL_SPECIFIER_THIRD = "[3]";
+    public static final String CONDITIONAL_SPECIFIER_FOURTH = "[4]";
 
     //shortWait was previously set to 90
     protected WebDriverWait shortWait = new WebDriverWait(getDriver(), 60);
@@ -44,6 +71,15 @@ public abstract class DDPPage extends WebPage {
 
     @FindBy(xpath = GENERAL_PAGE_CONTENT_XPATH)
     private WebElement generalContent;
+
+    @FindBy(xpath = USER_MENU_ICON)
+    private WebElement userMenu;
+
+    @FindBy(xpath = USER_MENU_DASHBOARD_OPTION)
+    private WebElement userMenuDashboardOption;
+
+    @FindBy(xpath = USER_MENU_SIGN_OUT_OPTION)
+    private WebElement usereMenuSignOutOption;
 
     @FindBy(xpath = HEADER_XPATH)
     private WebElement basilHeader;
@@ -62,6 +98,29 @@ public abstract class DDPPage extends WebPage {
 
     @FindBy(xpath = MOBILE_MENU_LOGOUT_XPATH)
     private Button basilMobileLogoutButton;
+
+
+    public WebElement getWebElementUsingXPath(String xpathSelector) {
+        return this.getDriver().findElement(By.xpath(xpathSelector));
+    }
+
+    /**
+     * Deals with naviagating to dashboard using the header in angio
+     */
+    public void clickUserMenuOption() {
+        shortWait.until(ExpectedConditions.visibilityOf(userMenu));
+        JDIPageUtils.clickButtonUsingJDI(USER_MENU_ICON, XPATH);
+    }
+
+    public void clickDashboardOption() {
+        shortWait.until(ExpectedConditions.visibilityOf(userMenuDashboardOption));
+        JDIPageUtils.clickButtonUsingJDI(USER_MENU_DASHBOARD_OPTION, XPATH);
+    }
+
+    public void clickSignOutOption() {
+        shortWait.until(ExpectedConditions.visibilityOf(usereMenuSignOutOption));
+        JDIPageUtils.clickButtonUsingJDI(USER_MENU_SIGN_OUT_OPTION, XPATH);
+    }
 
     /**
      * Click the logout button in the header/menu

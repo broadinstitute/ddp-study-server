@@ -1,6 +1,6 @@
 ## A word on runtime parameters
 Although JDI exposes many things via annotations, in order to run across environments, we should avoid hardcoding
-fields that change at runtime depending on environment--for example, `basil-dev`, `basil-test`, etc.  We'll specify
+fields that change at runtime depending on environment--for example, `pepper-dev`, `pepper-test`, etc.  We'll specify
 these values using typesafe config, similar to what we do in pepper-apis.  `DDPWebSite.CONFIG` holds the
 config file that is loaded via `-Dconfig.file`.  All secrets should be loaded via this config file, which is
 itself rendered via vault.  **Do not commit secrets to source control.**
@@ -39,6 +39,11 @@ os, browser, auth keys, etc.  These files are in src/test/resources/conf.
 
 
 ## Running tests via Intellij
+
+Protip: If local test runs e.g. runs using browsers on your own computer seem to croak for no reason
+and in the logs, the Driver info given is `RemoteDriver` (when you are trying to use `chromedriver` or
+`geckodriver`), check to make sure that your chromedriver/geckodriver is up to date and is meant to be used with the
+Chrome or Firefox version on your computer. 
 
 ## SqlProxy
 Some webdriver tests that run via `webdriver_tests.sh` connect to the cloud database in order to assert that what was entered on the frontend made it
@@ -101,7 +106,8 @@ Run maven:
 
 You can use Control + C to stop the tests entirely in maven or to skip a browser's e.g chrome's
 tests when used with `./webdriver_tests.sh ...` commands such as `./webdriver_tests.sh v1 test . --test` 
-(Basil-App flow test) and `./webdriver_tests.sh v1 test . --angio-test` (Pepper Angio flow test)
+(Basil-App flow test) and `./webdriver_tests.sh v1 test . --angio-test` (Pepper Angio flow test on the test environment)
+as well as `./webdriver_tests.sh v1 test . --brain-test` for the (Pepper Brain flow tests)
 
 ### Running your tests on BrowserStack with maven
 We use different profiles in pom.xml to simplify setup with different os/browser combinations.  As the project evolves,
