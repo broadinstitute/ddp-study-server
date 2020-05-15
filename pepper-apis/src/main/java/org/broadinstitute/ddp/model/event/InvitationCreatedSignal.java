@@ -23,7 +23,7 @@ public class InvitationCreatedSignal extends EventSignal {
                 + "invitationId=" + invitationDto.getInvitationId()
                 + ", invitationGuid=" + invitationDto.getInvitationGuid()
                 + ", invitationContactEmail=" + invitationDto.getContactEmail()
-                + ", invitationCreatedAt=" + invitationDto.getCreatedAt().toInstant()
+                + ", invitationCreatedAt=" + invitationDto.getCreatedAt()
                 + '}';
     }
 }

@@ -38,7 +38,6 @@ import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.governance.AgeOfMajorityRule;
 import org.broadinstitute.ddp.model.governance.AgeUpCandidate;
 import org.broadinstitute.ddp.model.governance.GovernancePolicy;
-import org.broadinstitute.ddp.model.invitation.InvitationType;
 import org.broadinstitute.ddp.model.pex.Expression;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.model.user.User;
@@ -77,7 +76,7 @@ public class AgeUpServiceTest extends TxnAwareBaseTest {
             User user1 = createAgeUpTestCandidate(handle, EnrollmentStatusType.REGISTERED, null);
             User user2 = createAgeUpTestCandidate(handle, EnrollmentStatusType.REGISTERED, LocalDate.of(2000, 1, 14));
             handle.attach(InvitationFactory.class)
-                    .createInvitation(InvitationType.AGE_UP, testData.getStudyId(), user2.getId(), "test@datadonationplatform.org");
+                    .createAgeUpInvitation(testData.getStudyId(), user2.getId(), "test@datadonationplatform.org");
 
             GovernancePolicy policy = new GovernancePolicy(1L, testData.getStudyId(), testData.getStudyGuid(), new Expression("true"));
             policy.addAgeOfMajorityRule(new AgeOfMajorityRule("true", 20, null));
@@ -137,7 +136,7 @@ public class AgeUpServiceTest extends TxnAwareBaseTest {
 
             // Create invitation so they're ready for age-up
             handle.attach(InvitationFactory.class)
-                    .createInvitation(InvitationType.AGE_UP, testData.getStudyId(), user1.getId(), "test@datadonationplatform.org");
+                    .createAgeUpInvitation(testData.getStudyId(), user1.getId(), "test@datadonationplatform.org");
             assertEquals(1, service.runAgeUpCheck(handle, interpreter, policy));
 
             List<AgeUpCandidate> candidates = handle.attach(StudyGovernanceDao.class)
@@ -194,7 +193,7 @@ public class AgeUpServiceTest extends TxnAwareBaseTest {
             User user1 = createAgeUpTestCandidate(handle, EnrollmentStatusType.REGISTERED, LocalDate.of(2000, 1, 14));
             User user2 = createAgeUpTestCandidate(handle, EnrollmentStatusType.REGISTERED, LocalDate.of(2000, 1, 24));
             handle.attach(InvitationFactory.class)
-                    .createInvitation(InvitationType.AGE_UP, testData.getStudyId(), user1.getId(), "test@datadonationplatform.org");
+                    .createAgeUpInvitation(testData.getStudyId(), user1.getId(), "test@datadonationplatform.org");
 
             // Setup downstream event which will fail for second candidate
             long triggerId = handle.attach(EventTriggerDao.class)
