@@ -1,4 +1,4 @@
-package org.broadinstitute.ddp.model;
+package org.broadinstitute.ddp.model.kit;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -8,9 +8,12 @@ import static org.junit.Assert.assertTrue;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.constants.ConfigFile;
+import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
@@ -28,10 +31,6 @@ import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.FormType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.address.MailAddress;
-import org.broadinstitute.ddp.model.kit.KitConfiguration;
-import org.broadinstitute.ddp.model.kit.KitCountryRule;
-import org.broadinstitute.ddp.model.kit.KitPexRule;
-import org.broadinstitute.ddp.model.kit.KitRuleType;
 import org.broadinstitute.ddp.service.AddressService;
 import org.broadinstitute.ddp.service.DsmAddressValidationStatus;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
@@ -193,6 +192,35 @@ public class KitConfigurationTest extends TxnAwareBaseTest {
     public void testValidatePex() {
         TransactionWrapper.useTxn(handle -> {
             assertTrue(kitPexRule.validate(handle, userGuid, activityInstanceGuid));
+        });
+    }
+
+    @Test
+    public void testKitZipCodeRule() {
+        TransactionWrapper.useTxn(handle -> {
+            var dao = handle.attach(KitConfigurationDao.class);
+            long ruleId = dao.addZipCodeRule(configurationId, Set.of(mailAddress.getZip(), "12345"));
+
+            // Test only this specific rule, so filter things down and construct a new config.
+            var config = dao.kitConfigurationFactory()
+                    .stream()
+                    .filter(kc -> kc.getId() == configurationId)
+                    .map(kc -> {
+                        var theRule = kc.getRules().stream().filter(rule -> rule.getId() == ruleId).findFirst().get();
+                        return new KitConfiguration(
+                                kc.getId(),
+                                kc.getNumKits(),
+                                kc.getKitType(),
+                                kc.getStudyGuid(),
+                                List.of(theRule));
+                    })
+                    .findFirst()
+                    .get();
+
+            assertTrue("should lookup zip code from mailing address", config.evaluate(handle, userGuid));
+            assertFalse("no address means no zip code", config.evaluate(handle, "foobar"));
+
+            handle.rollback();
         });
     }
 }
