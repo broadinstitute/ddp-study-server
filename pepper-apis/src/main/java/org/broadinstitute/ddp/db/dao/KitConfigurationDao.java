@@ -95,6 +95,13 @@ public interface KitConfigurationDao extends SqlObject {
     @SqlQuery("select kc.kit_configuration_id, kc.number_of_kits, kc.kit_type_id, kc.study_id,"
             + "       (select guid from umbrella_study where umbrella_study_id = kc.study_id) as study_guid"
             + "  from kit_configuration as kc"
+            + " where kc.study_id = :studyId")
+    @RegisterConstructorMapper(KitConfigurationDto.class)
+    List<KitConfigurationDto> getKitConfigurationDtosByStudyId(@Bind("studyId") long studyId);
+
+    @SqlQuery("select kc.kit_configuration_id, kc.number_of_kits, kc.kit_type_id, kc.study_id,"
+            + "       (select guid from umbrella_study where umbrella_study_id = kc.study_id) as study_guid"
+            + "  from kit_configuration as kc"
             + " where kc.kit_configuration_id = :id")
     @RegisterConstructorMapper(KitConfigurationDto.class)
     KitConfigurationDto getKitConfigurationDto(@Bind("id") long id);
@@ -102,6 +109,14 @@ public interface KitConfigurationDao extends SqlObject {
     default List<KitConfiguration> kitConfigurationFactory() {
         List<KitConfiguration> kitConfigurations = new ArrayList<>();
         for (KitConfigurationDto kitConfigurationDto : getKitConfigurationDtos()) {
+            kitConfigurations.add(getKitConfigurationForDto(kitConfigurationDto));
+        }
+        return kitConfigurations;
+    }
+
+    default List<KitConfiguration> findStudyKitConfigurations(long studyId) {
+        List<KitConfiguration> kitConfigurations = new ArrayList<>();
+        for (KitConfigurationDto kitConfigurationDto : getKitConfigurationDtosByStudyId(studyId)) {
             kitConfigurations.add(getKitConfigurationForDto(kitConfigurationDto));
         }
         return kitConfigurations;

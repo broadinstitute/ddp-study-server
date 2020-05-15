@@ -72,4 +72,7 @@ public class ErrorCodes {
     public static final String PASSWORD_TOO_WEAK = "PASSWORD_TOO_WEAK";
     public static final String MALFORMED_EMAIL = "MALFORMED_EMAIL";
     public static final String EMAIL_ALREADY_EXISTS = "EMAIL_ALREADY_EXISTS";
+
+    public static final String INVALID_INVITATION = "INVALID_INVITATION";
+    public static final String INVALID_INVITATION_QUALIFICATIONS = "INVALID_INVITATION_QUALIFICATIONS";
 }

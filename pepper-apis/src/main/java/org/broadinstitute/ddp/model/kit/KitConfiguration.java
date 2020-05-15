@@ -71,7 +71,7 @@ public class KitConfiguration {
                     zipCodeSuccess.add(kitRule.validate(handle, address == null ? null : address.getZip()));
                     break;
                 default:
-                    LOG.warn("Unknown rule type");
+                    LOG.error("Unknown rule type {}", kitRule.getType());
             }
         }
         if (countryRuleSuccess.size() > 0) {
@@ -79,6 +79,8 @@ public class KitConfiguration {
         }
         if (success && zipCodeSuccess.size() > 0) {
             success = zipCodeSuccess.contains(true);
+            LOG.warn("Study has kit configuration with zip code rule but user's zip code does not"
+                    + " match any accepted zip codes, studyGuid={} userGuid={}", studyGuid, userGuid);
         }
         if (success && pexRuleSuccess.size() > 0) {
             return pexRuleSuccess.contains(true);
