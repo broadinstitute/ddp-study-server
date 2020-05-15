@@ -74,7 +74,6 @@ public class RateLimitTest {
                 }
             });
             post(TEST_ROUTE, (req, res) -> {
-                System.out.println("oooh");
                 return PASS;
             });
 
