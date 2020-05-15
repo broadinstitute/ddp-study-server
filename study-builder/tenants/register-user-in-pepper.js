@@ -56,14 +56,8 @@ function (user, context, callback) {
         var pepper_params = {
             auth0UserId: user.user_id,
             auth0ClientId: context.clientID,
-            auth0Domain: tenantDomain,
-            auth0ClientCountryCode: 'us'
+            auth0Domain: tenantDomain
         };
-
-        if (context.request.geoip.country_code) {
-            pepper_params.auth0ClientCountryCode = context.request.geoip.country_code;
-            console.log('Using country code (via auth0) = ' + pepper_params.auth0ClientCountryCode);
-        }
 
         if (context.request.query.study_guid) {
             pepper_params.studyGuid = context.request.query.study_guid;
@@ -104,11 +98,11 @@ function (user, context, callback) {
         }
 
         if (context.request.query.language) {
-            pepper_params.language = context.request.query.language;
-            console.log('User language passed in (via query) = ' + pepper_params.language);
+            pepper_params.languageCode = context.request.query.language;
+            console.log('User language passed in (via query) = ' + pepper_params.languageCode);
         } else if (context.request.body.language) {
-            pepper_params.language = context.request.body.language;
-            console.log('User language passed in (via body) = ' + pepper_params.language);
+            pepper_params.languageCode = context.request.body.language;
+            console.log('User language passed in (via body) = ' + pepper_params.languageCode);
         }
 
         console.log(context);

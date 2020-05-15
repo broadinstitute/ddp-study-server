@@ -5,6 +5,7 @@ import static spark.Spark.halt;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.auth0.exception.Auth0Exception;
@@ -19,18 +20,19 @@ import org.broadinstitute.ddp.db.dao.ClientDao;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
 import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.InvitationDao;
-import org.broadinstitute.ddp.db.dao.JdbiCountry;
 import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
 import org.broadinstitute.ddp.db.dao.JdbiMailingList;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dao.QueuedEventDao;
+import org.broadinstitute.ddp.db.dao.StudyDao;
 import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.EventConfigurationDto;
 import org.broadinstitute.ddp.db.dto.InvitationDto;
+import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.json.LocalRegistrationResponse;
@@ -318,7 +320,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
             user = userDao.createUser(auth0Domain, auth0ClientId, auth0UserId);
             LOG.info("Registered user {} with client {}", auth0UserId, auth0ClientId);
         }
-        initProfilePreferredLanguage(handle, user, payload.getAuth0ClientCountryCode());
+        initializeProfile(handle, user, payload);
         return user;
     }
 
@@ -345,7 +347,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
 
         User governedUser = handle.attach(UserDao.class).findUserById(gov.getGovernedUserId())
                 .orElseThrow(() -> new DDPException("Could not find governed user with id " + gov.getGovernedUserId()));
-        initProfilePreferredLanguage(handle, governedUser, payload.getAuth0ClientCountryCode());
+        initializeProfile(handle, governedUser, payload);
 
         int numInstancesReassigned = handle.attach(ActivityInstanceDao.class)
                 .reassignInstancesInStudy(policy.getStudyId(), operatorUser.getId(), gov.getGovernedUserId());
@@ -454,25 +456,62 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
         return userDao.findUserByGuid(tempUserGuid).orElseThrow(() -> new DDPException("Could not find user with guid " + tempUserGuid));
     }
 
-    private void initProfilePreferredLanguage(Handle handle, User user, String auth0ClientCountryCode) {
-        Long languageId = handle.attach(JdbiCountry.class).getPrimaryLanguageIdByCountryCode(auth0ClientCountryCode);
+    private void initializeProfile(Handle handle, User user, UserRegistrationPayload payload) {
+        Long languageId = null;
+        Set<LanguageDto> supportedLanguages = handle.attach(StudyDao.class)
+                .findSupportedLanguagesByGuid(payload.getStudyGuid());
+        for (var language : supportedLanguages) {
+            if (language.getIsoCode().equalsIgnoreCase(payload.getLanguageCode())) {
+                languageId = language.getId();
+                break;
+            }
+        }
+
+        // If no language provided or language is not one of study's supported ones,
+        // then use study's default language. If all else fails, fallback to English.
         if (languageId == null) {
-            languageId = handle.attach(JdbiLanguageCode.class).getLanguageCodeId(EN_LANGUAGE_CODE);
+            languageId = supportedLanguages.stream()
+                    // .filter(lang -> lang.isDefault())     TODO: use the filter when ready
+                    .map(LanguageDto::getId)
+                    .findFirst()
+                    .orElseGet(() -> handle.attach(JdbiLanguageCode.class).getLanguageCodeId(EN_LANGUAGE_CODE));
         }
 
         var profileDao = handle.attach(UserProfileDao.class);
         UserProfile profile = profileDao.findProfileByUserId(user.getId()).orElse(null);
 
+        // If any name part is blank, then don't use it.
+        String firstName = StringUtils.defaultIfBlank(payload.getFirstName(), null);
+        String lastName = StringUtils.defaultIfBlank(payload.getLastName(), null);
+
         if (profile == null) {
-            profile = new UserProfile.Builder(user.getId()).setPreferredLangId(languageId).build();
+            profile = new UserProfile.Builder(user.getId())
+                    .setFirstName(firstName)
+                    .setLastName(lastName)
+                    .setPreferredLangId(languageId)
+                    .build();
             profileDao.createProfile(profile);
             LOG.info("Initialized user profile for user with guid {}", user.getGuid());
-        } else if (profile.getPreferredLangId() == null) {
-            int numUpdated = profileDao.getUserProfileSql().updatePreferredLangId(user.getId(), languageId);
-            if (numUpdated != 1) {
-                throw new DDPException(String.format(
-                        "Could not update preferred language for user with guid '%s'",
-                        user.getGuid()));
+        } else {
+            boolean shouldUpdate = false;
+            var updated = new UserProfile.Builder(profile);
+
+            if (profile.getFirstName() == null) {
+                updated.setFirstName(firstName);
+                shouldUpdate = true;
+            }
+            if (profile.getLastName() == null) {
+                updated.setLastName(lastName);
+                shouldUpdate = true;
+            }
+            if (profile.getPreferredLangId() == null) {
+                updated.setPreferredLangId(languageId);
+                shouldUpdate = true;
+            }
+
+            if (shouldUpdate) {
+                profileDao.updateProfile(updated.build());
+                LOG.info("Updated user profile for user with guid {}", user.getGuid());
             }
         }
     }
