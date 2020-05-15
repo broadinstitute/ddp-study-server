@@ -62,7 +62,7 @@ public class InvitationCheckStatusRouteTest extends IntegrationTestSuite.TestCas
     @Test
     public void testCheckStatus_studyNotFound() {
         doReturn(null).when(mockJdbiStudy).findByStudyGuid(any());
-        var payload = new InvitationCheckStatusPayload("foo", "bar", "invite");
+        var payload = new InvitationCheckStatusPayload("foo", "invite");
         int actual = route.checkStatus(mockHandle, "study", payload);
         assertEquals(HttpStatus.SC_BAD_REQUEST, actual);
     }
@@ -73,7 +73,7 @@ public class InvitationCheckStatusRouteTest extends IntegrationTestSuite.TestCas
         doReturn(Collections.emptyList()).when(mockClientStudy)
                 .findPermittedStudyGuidsByAuth0ClientIdAndAuth0Domain(any(), any());
 
-        var payload = new InvitationCheckStatusPayload("foo", "bar", "invite");
+        var payload = new InvitationCheckStatusPayload("foo", "invite");
         int actual = route.checkStatus(mockHandle, "study", payload);
         assertEquals(HttpStatus.SC_BAD_REQUEST, actual);
     }
@@ -84,7 +84,7 @@ public class InvitationCheckStatusRouteTest extends IntegrationTestSuite.TestCas
         doReturn(List.of("study1", "study2")).when(mockClientStudy)
                 .findPermittedStudyGuidsByAuth0ClientIdAndAuth0Domain(any(), any());
 
-        var payload = new InvitationCheckStatusPayload("foo", "bar", "invite");
+        var payload = new InvitationCheckStatusPayload("foo", "invite");
         int actual = route.checkStatus(mockHandle, "study", payload);
         assertEquals(HttpStatus.SC_BAD_REQUEST, actual);
     }
@@ -94,7 +94,7 @@ public class InvitationCheckStatusRouteTest extends IntegrationTestSuite.TestCas
         doReturn(testData.getTestingStudy()).when(mockJdbiStudy).findByStudyGuid(any());
         doReturn(List.of(testData.getStudyGuid())).when(mockClientStudy)
                 .findPermittedStudyGuidsByAuth0ClientIdAndAuth0Domain(any(), any());
-        var payload = new InvitationCheckStatusPayload("foo", "bar", "invite");
+        var payload = new InvitationCheckStatusPayload("foo", "invite");
 
         doReturn(Optional.empty()).when(mockInviteDao).findByInvitationGuid(anyLong(), any());
         int actual = route.checkStatus(mockHandle, "study", payload);
@@ -118,7 +118,6 @@ public class InvitationCheckStatusRouteTest extends IntegrationTestSuite.TestCas
                 .createRecruitmentInvitation(testData.getStudyId(), "invite" + System.currentTimeMillis()));
         try {
             var payload = new InvitationCheckStatusPayload(
-                    testData.getTestingClient().getAuth0Domain(),
                     testData.getAuth0ClientId(),
                     invitation.getInvitationGuid());
             String url = RouteTestUtil.getTestingBaseUrl() + RouteConstants.API.INVITATION_CHECK;

@@ -54,13 +54,13 @@ public class InvitationCheckStatusRoute extends ValidatedJsonInputRoute<Invitati
         }
 
         List<String> permittedStudies = handle.attach(JdbiClientUmbrellaStudy.class)
-                .findPermittedStudyGuidsByAuth0ClientIdAndAuth0Domain(payload.getAuth0ClientId(), payload.getAuth0Domain());
+                .findPermittedStudyGuidsByAuth0ClientIdAndAuth0TenantId(payload.getAuth0ClientId(), studyDto.getAuth0TenantId());
         if (permittedStudies.contains(studyGuid)) {
-            LOG.info("Invitation check by client clientId={}, tenant={}",
-                    payload.getAuth0ClientId(), payload.getAuth0Domain());
+            LOG.info("Invitation check by client clientId={}, study={}",
+                    payload.getAuth0ClientId(), studyGuid);
         } else {
-            LOG.error("Invitation check by client which does not have access to study: clientId={}, tenant={}",
-                    payload.getAuth0ClientId(), payload.getAuth0Domain());
+            LOG.error("Invitation check by client which does not have access to study: clientId={}, study={}",
+                    payload.getAuth0ClientId(), studyGuid);
             return HttpStatus.SC_BAD_REQUEST;
         }
 

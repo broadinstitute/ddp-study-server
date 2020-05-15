@@ -14,15 +14,11 @@ post:
           type: object
           required:
             - auth0ClientId
-            - auth0Domain
             - invitationId
             - recaptchaToken
           properties:
             auth0ClientId:
               description: the id of the client
-              type: string
-            auth0Domain:
-              description: the domain of the client
               type: string
             invitationId:
               description: the id of the invitation
