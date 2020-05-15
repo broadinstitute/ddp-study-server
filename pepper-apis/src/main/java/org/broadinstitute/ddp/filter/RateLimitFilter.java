@@ -47,7 +47,6 @@ public class RateLimitFilter implements Filter {
         rateLimitFilter.doFilter(request.raw(), response.raw(), (req, res) -> { });
         if (HttpStatus.TOO_MANY_REQUESTS_429 == response.raw().getStatus()) {
             response.status(HttpStatus.TOO_MANY_REQUESTS_429);
-            LOG.info("REJECTED!");
             ResponseUtil.haltError(HttpStatus.TOO_MANY_REQUESTS_429, new ApiError(TOO_MANY_REQUESTS, TOO_MANY_REQUESTS));
         }
     }

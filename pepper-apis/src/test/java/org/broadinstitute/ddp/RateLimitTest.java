@@ -1,123 +1,128 @@
 package org.broadinstitute.ddp;
 
-import static io.restassured.RestAssured.given;
-import static org.broadinstitute.ddp.constants.RouteConstants.API.DSM_ALL_KIT_REQUESTS;
-import static org.broadinstitute.ddp.route.IntegrationTestSuite.startupTestServer;
-import static org.broadinstitute.ddp.route.IntegrationTestSuite.tearDown;
-import static org.broadinstitute.ddp.route.IntegrationTestSuite.tearDownSuiteServer;
+import static spark.Spark.awaitInitialization;
+import static spark.Spark.awaitStop;
+import static spark.Spark.before;
+import static spark.Spark.port;
+import static spark.Spark.post;
+import static spark.Spark.stop;
 
 import java.io.IOException;
+import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
-import com.google.gson.JsonSyntaxException;
-import com.typesafe.config.Config;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.fluent.Request;
+import org.apache.http.entity.ContentType;
 import org.apache.http.util.EntityUtils;
-import org.broadinstitute.ddp.constants.ConfigFile;
-import org.broadinstitute.ddp.constants.RouteConstants;
-import org.broadinstitute.ddp.route.IntegrationTestSuite;
-import org.broadinstitute.ddp.route.RouteTestUtil;
-import org.broadinstitute.ddp.util.ConfigManager;
+import org.broadinstitute.ddp.filter.RateLimitFilter;
 import org.eclipse.jetty.http.HttpStatus;
-import org.junit.AfterClass;
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class RateLimitTest extends IntegrationTestSuite.TestCase {
+public class RateLimitTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(RateLimitTest.class);
+    public static final String PASS = "{1}";
+    public static final String TEST_ROUTE = "/test";
 
-    private static String healthCheckUrl;
+    private static String valueToCaptureInOtherFilter;
 
-    private static String healthCheckPassword;
+    private static int DEFAULT_PORT = 6701;
 
-    private static Map<String, String> originalRateLimitConfig = new HashMap<>();
+    private static String localhost;
 
-    @BeforeClass
-    public static void cachePreviousRateLimitConfiguration() {
-        Config originalConfig = ConfigManager.getInstance().getConfig();
-        if (originalConfig.hasPath(ConfigFile.API_RATE_LIMIT.MAX_QUERIES_PER_SECOND)) {
-            originalRateLimitConfig.put(ConfigFile.API_RATE_LIMIT.MAX_QUERIES_PER_SECOND,
-                    originalConfig.getString(ConfigFile.API_RATE_LIMIT.MAX_QUERIES_PER_SECOND));
+    private static final AtomicReference<String> inputFromOtherFilter = new AtomicReference<>();
+
+    public static class TestServer {
+
+        /**
+         * Start up a server on a random port
+         */
+        static void startServerWithRateLimits(int apiRateLimit, int burstRateLimit) {
+            int port = DEFAULT_PORT;
+            ServerSocket portFinder = null;
+            try {
+                portFinder = new ServerSocket(0);
+                port = portFinder.getLocalPort();
+                portFinder.close();
+            } catch (IOException e) {
+                // possible race condition here if something else grabs the port
+                LOG.info("Could not find available port; will use " + DEFAULT_PORT);
+            }
+            LOG.info("Starting test server on port {}", port);
+            port(port);
+            localhost =  "http://localhost:" + port + TEST_ROUTE;
+
+            before("*", new RateLimitFilter(apiRateLimit, burstRateLimit));
+            before(TEST_ROUTE, (req, res) -> {
+                synchronized (inputFromOtherFilter) {
+                    inputFromOtherFilter.set(req.body());
+                }
+            });
+            post(TEST_ROUTE, (req, res) -> {
+                System.out.println("oooh");
+                return PASS;
+            });
+
+            awaitInitialization();
         }
-        if (originalConfig.hasPath(ConfigFile.API_RATE_LIMIT.BURST)) {
-            originalRateLimitConfig.put(ConfigFile.API_RATE_LIMIT.BURST,
-                    originalConfig.getString(ConfigFile.API_RATE_LIMIT.BURST));
+
+        static void stopServer() {
+            stop();
+            awaitStop();
         }
     }
 
-    /**
-     * Before each test, we shut down and reboot the backend
-     * so that we clear DOSFilter's current rate calculations.
-     */
     @Before
-    public void shutdownDDPAndLowerRateLimits() {
-        tearDownSuiteServer(5_000);
-
-        ConfigManager configManager = ConfigManager.getInstance();
-
-        configManager.overrideValue(ConfigFile.API_RATE_LIMIT.MAX_QUERIES_PER_SECOND, "1");
-        configManager.overrideValue(ConfigFile.API_RATE_LIMIT.BURST, "1");
-
-        startupTestServer();
-
-        healthCheckUrl = RouteTestUtil.getTestingBaseUrl() + RouteConstants.API.HEALTH_CHECK;
-        healthCheckPassword = RouteTestUtil.getConfig().getString(ConfigFile.HEALTHCHECK_PASSWORD);
+    public void setUp() {
+        valueToCaptureInOtherFilter = "filter" + System.currentTimeMillis();
+        inputFromOtherFilter.set(null);
     }
+
 
     @Test
     public void testThingsUnderTheLimitStillGetThrough() {
-        runHealthChecksConcurrentlyAndCheckResults(1, 0);
+        TestServer.startServerWithRateLimits(100, 100);
+        hitRoutesConcurrentlyAndCheckResults(2, 0);
+        Assert.assertEquals(valueToCaptureInOtherFilter, inputFromOtherFilter.get());
+    }
+
+    @After
+    public void shutdownServer() {
+        TestServer.stopServer();
     }
 
     @Test
     public void testAuthFilterRunsWhenRateLimitIsEnabled() {
-        String urlForRouteWithAuthFilter = RouteTestUtil.getTestingBaseUrl() + DSM_ALL_KIT_REQUESTS;
-        given().when().get(urlForRouteWithAuthFilter).then().assertThat()
-                .statusCode(401);
+        TestServer.startServerWithRateLimits(100, 100);
+        hitRoutesConcurrentlyAndCheckResults(1, 0);
+        Assert.assertEquals(valueToCaptureInOtherFilter, inputFromOtherFilter.get());
     }
 
     @Test
     public void testThingsOverTheLimitAreRejected() {
-        runHealthChecksConcurrentlyAndCheckResults(10, 2);
+        TestServer.startServerWithRateLimits(1, 0);
+        hitRoutesConcurrentlyAndCheckResults(10, 2);
     }
 
-    @AfterClass
-    public static void resetConfig() {
-        tearDown();
-
-        if (!originalRateLimitConfig.isEmpty()) {
-            for (Map.Entry<String, String> originalConfig : originalRateLimitConfig.entrySet()) {
-                LOG.info("Resetting rate limit {} to {}", originalConfig.getKey(), originalConfig.getValue());
-                ConfigManager.getInstance().overrideValue(originalConfig.getKey(), originalConfig.getValue());
-            }
-        } else {
-            ConfigManager.getInstance().clearOverride(ConfigFile.API_RATE_LIMIT.MAX_QUERIES_PER_SECOND);
-            ConfigManager.getInstance().clearOverride(ConfigFile.API_RATE_LIMIT.BURST);
-        }
-        startupTestServer();
-    }
-
-    private static void runHealthChecksConcurrentlyAndCheckResults(int numConcurrentQueries, int minimumFailures) {
+    private static void hitRoutesConcurrentlyAndCheckResults(int numConcurrentQueries, int minimumFailures) {
         ExecutorService executorService = Executors.newFixedThreadPool(numConcurrentQueries);
         AtomicInteger rateLimitRejects = new AtomicInteger(0);
-        AtomicInteger numHealthCheckResults = new AtomicInteger(0);
+        AtomicInteger numRouteResponses = new AtomicInteger(0);
         List<String> otherErrors = Collections.synchronizedList(new ArrayList<>());
 
         List<Callable<Boolean>> healthCheckCalls = new ArrayList<>();
@@ -126,36 +131,30 @@ public class RateLimitTest extends IntegrationTestSuite.TestCase {
             healthCheckCalls.add(() -> {
                 HttpResponse httpResponse = null;
                 try {
-                    httpResponse = Request.Get(healthCheckUrl).addHeader("Host", healthCheckPassword).execute().returnResponse();
+                    httpResponse = Request.Post(localhost).bodyString(valueToCaptureInOtherFilter, ContentType.APPLICATION_JSON)
+                            .execute().returnResponse();
                     int statusCode = httpResponse.getStatusLine().getStatusCode();
-                    LOG.info("Response {}", httpResponse.getStatusLine().getStatusCode());
-
-                    JsonElement responseObject = null;
-                    try {
-                        responseObject = new JsonParser().parse(EntityUtils.toString(httpResponse.getEntity()));
-                    } catch (JsonSyntaxException ignored)  { }
+                    String responseString = EntityUtils.toString(httpResponse.getEntity());
 
                     if (statusCode == HttpStatus.OK_200) {
-                        if (responseObject != null) {
-                            numHealthCheckResults.incrementAndGet();
+                        if (PASS.equals(responseString)) {
+                            numRouteResponses.incrementAndGet();
                         } else {
-                            otherErrors.add("Got " + statusCode + " when expecting a clean health check result");
+                            otherErrors.add("Got " + responseString + " when expecting a clean health check result");
                         }
                     } else if (statusCode == HttpStatus.TOO_MANY_REQUESTS_429) {
-                        if (responseObject == null) {
+                        if (!PASS.equals(responseString)) {
                             rateLimitRejects.incrementAndGet();
                         } else {
                             otherErrors.add("Got " + statusCode + " and complete healthcheck result "
                                     + "when expecting the route to be blocked");
                         }
+                    } else {
+                        otherErrors.add("Got response " + statusCode);
                     }
                 } catch (IOException e) {
                     LOG.info("Rate limit query test exception", e);
-                    rateLimitRejects.incrementAndGet();
-                    return false;
-                }
-                if (httpResponse != null && httpResponse.getStatusLine().getStatusCode() == HttpStatus.TOO_MANY_REQUESTS_429) {
-                    rateLimitRejects.incrementAndGet();
+                    otherErrors.add(e.getMessage());
                     return false;
                 }
                 return true;
@@ -170,9 +169,15 @@ public class RateLimitTest extends IntegrationTestSuite.TestCase {
 
         executorService.shutdown();
 
-        Assert.assertTrue("Expected at least " + minimumFailures + " but got " + rateLimitRejects.get(),
-                rateLimitRejects.get() >= minimumFailures);
+        try {
+            executorService.awaitTermination(30, TimeUnit.SECONDS);
+        } catch (InterruptedException e) {
+            LOG.error("Interrupted while shutting down client threads", e);
+        }
 
         Assert.assertTrue("Unexpected results: " + StringUtils.join(otherErrors, "\n"), otherErrors.isEmpty());
+
+        Assert.assertTrue("Expected at least " + minimumFailures + " but got " + rateLimitRejects.get(),
+                rateLimitRejects.get() >= minimumFailures);
     }
 }
