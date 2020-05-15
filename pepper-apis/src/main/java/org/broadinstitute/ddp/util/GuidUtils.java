@@ -72,7 +72,7 @@ public final class GuidUtils {
         return UUID.randomUUID().toString();
     }
 
-    public static String randomNanoId() {
+    public static String randomAlphaNumeric() {
         return NanoIdUtils.randomNanoId(NanoIdUtils.DEFAULT_NUMBER_GENERATOR, ALPHA_NUMERIC, NanoIdUtils.DEFAULT_SIZE);
     }
 }

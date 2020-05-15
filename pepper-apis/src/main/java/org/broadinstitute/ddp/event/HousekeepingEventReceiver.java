@@ -82,7 +82,7 @@ public class HousekeepingEventReceiver implements MessageReceiver {
 
     private void handleCleanupTempUsers(PubsubMessage message, AckReplyConsumer reply) {
         if (message.getAttributesOrDefault(ATTR_SUB, null) == null) {
-            LOG.error("Target subscription name is required for ELASTIC_EXPORT event message, ack-ing");
+            LOG.error("Target subscription name is required for CLEANUP_TEMP_USERS event message, ack-ing");
             reply.ack();
             return;
         }
@@ -100,7 +100,7 @@ public class HousekeepingEventReceiver implements MessageReceiver {
 
     private void handleElasticExport(PubsubMessage message, AckReplyConsumer reply) {
         if (message.getAttributesOrDefault(ATTR_SUB, null) == null) {
-            LOG.error("Target subscription name is required for CLEANUP_TEMP_USERS event message, ack-ing");
+            LOG.error("Target subscription name is required for ELASTIC_EXPORT event message, ack-ing");
             reply.ack();
             return;
         }

@@ -213,7 +213,7 @@ public class Housekeeping {
 
             var topicName = ProjectTopicName.of(pubSubProject, cfg.getString(ConfigFile.PUBSUB_HKEEP_EVENTS_TOPIC));
             var subName = ProjectSubscriptionName.of(pubSubProject,
-                    String.format("%s-%s", topicName.getTopic(), GuidUtils.randomNanoId()));
+                    String.format("%s-%s", topicName.getTopic(), GuidUtils.randomAlphaNumeric()));
             pubsubConnectionManager.createSubscriptionIfNotExists(Subscription.newBuilder()
                     .setName(subName.toString())
                     .setTopic(topicName.toString())
