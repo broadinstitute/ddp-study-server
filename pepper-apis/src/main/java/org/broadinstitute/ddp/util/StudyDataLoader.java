@@ -165,7 +165,7 @@ public class StudyDataLoader {
         for (JsonElement thisEl : dataArray) {
             dateCreatedEl = thisEl.getAsJsonObject().get("datecreated");
             if (dateCreatedEl != null && !dateCreatedEl.isJsonNull()) {
-                dateCreatedMillis = dateCreatedEl.getAsNumber().longValue() * MILLIS_PER_SECOND;
+                dateCreatedMillis = dateCreatedEl.getAsNumber().longValue();
             }
             firstName = getStringValueFromElement(thisEl, "firstname");
             lastName = getStringValueFromElement(thisEl, "lastname");
