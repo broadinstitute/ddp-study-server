@@ -163,7 +163,7 @@
                 placeholder: "Your first name",
                 validator: function(input) {
                   return {
-                     valid: input != null && input.length > 0,
+                     valid: input != null && input.trim().length > 0,
                      hint: "Can't be blank"
                   };
                 }
@@ -173,7 +173,7 @@
                 placeholder: "Your last name",
                 validator: function(input) {
                     return {
-                        valid: input != null && input.length > 0,
+                        valid: input != null && input.trim().length > 0,
                         hint: "Can't be blank"
                     }
                 }

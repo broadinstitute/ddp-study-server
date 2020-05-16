@@ -456,33 +456,39 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
         return userDao.findUserByGuid(tempUserGuid).orElseThrow(() -> new DDPException("Could not find user with guid " + tempUserGuid));
     }
 
-    private void initializeProfile(Handle handle, User user, UserRegistrationPayload payload) {
-        Long languageId = null;
+    private LanguageDto determineUserLanguage(Handle handle, UserRegistrationPayload payload) {
+        LanguageDto userLanguage = null;
         Set<LanguageDto> supportedLanguages = handle.attach(StudyDao.class)
                 .findSupportedLanguagesByGuid(payload.getStudyGuid());
         for (var language : supportedLanguages) {
             if (language.getIsoCode().equalsIgnoreCase(payload.getLanguageCode())) {
-                languageId = language.getId();
+                userLanguage = language;
                 break;
             }
         }
 
         // If no language provided or language is not one of study's supported ones,
         // then use study's default language. If all else fails, fallback to English.
-        if (languageId == null) {
-            languageId = supportedLanguages.stream()
+        if (userLanguage == null) {
+            userLanguage = supportedLanguages.stream()
                     // .filter(lang -> lang.isDefault())     TODO: use the filter when ready
-                    .map(LanguageDto::getId)
                     .findFirst()
-                    .orElseGet(() -> handle.attach(JdbiLanguageCode.class).getLanguageCodeId(EN_LANGUAGE_CODE));
+                    .orElseGet(() -> handle.attach(JdbiLanguageCode.class).findLanguageDtoByCode(EN_LANGUAGE_CODE));
         }
 
+        return userLanguage;
+    }
+
+    private void initializeProfile(Handle handle, User user, UserRegistrationPayload payload) {
         var profileDao = handle.attach(UserProfileDao.class);
         UserProfile profile = profileDao.findProfileByUserId(user.getId()).orElse(null);
 
         // If any name part is blank, then don't use it.
-        String firstName = StringUtils.defaultIfBlank(payload.getFirstName(), null);
-        String lastName = StringUtils.defaultIfBlank(payload.getLastName(), null);
+        String firstName = payload.getFirstName();
+        firstName = StringUtils.isNotBlank(firstName) ? firstName.trim() : null;
+        String lastName = payload.getLastName();
+        lastName = StringUtils.isNotBlank(lastName) ? lastName.trim() : null;
+        long languageId = determineUserLanguage(handle, payload).getId();
 
         if (profile == null) {
             profile = new UserProfile.Builder(user.getId())
