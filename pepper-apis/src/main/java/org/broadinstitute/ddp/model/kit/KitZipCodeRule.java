@@ -2,10 +2,13 @@ package org.broadinstitute.ddp.model.kit;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 import org.jdbi.v3.core.Handle;
 
 public class KitZipCodeRule extends KitRule<String> {
+
+    public static final Pattern ZIP_PATTERN = Pattern.compile("\\d{5}(-\\d{4})?");
 
     private final Set<String> zipCodes;
 
@@ -16,6 +19,13 @@ public class KitZipCodeRule extends KitRule<String> {
 
     @Override
     public boolean validate(Handle handle, String inputZipCode) {
-        return inputZipCode != null && zipCodes.contains(inputZipCode.trim());
+        if (inputZipCode == null) {
+            return false;
+        }
+        String normalizedZip = inputZipCode.trim();
+        if (ZIP_PATTERN.matcher(normalizedZip).matches()) {
+            normalizedZip = normalizedZip.split("-")[0];
+        }
+        return zipCodes.contains(normalizedZip);
     }
 }
