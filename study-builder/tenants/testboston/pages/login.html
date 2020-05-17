@@ -64,7 +64,7 @@
 
     var mode = config.extraParams.mode;
     var study_guid = config.extraParams.study_guid;
-    var headerLogo = '##BASE_URL##/logo.png';
+    var headerLogo = '##ASSETS_BUCKET_URL##/logo.png';
     var headerText = "Test Boston";
     var studyColor = 'rgb(24, 130, 194)';
     var studyHelpEmail = 'testboston@datadonationplatform.org';
@@ -78,7 +78,7 @@
     }
 
     var loginUrl = config.callbackURL + '/login';
-    var registerUrl = '##ANGIO_BASE_URL##/count-me-in';
+    var registerUrl = '##BASE_URL##';
 
     var connection = config.connection;
     var prompt = !prompt;
@@ -154,6 +154,31 @@
 
     if (config.extraParams.password_was_reset) {
         showPasswordRecentText = true;
+    }
+
+    if (mode === 'signup') {
+        realOptions.additionalSignUpFields = [
+            {
+                name: "first_name",
+                placeholder: "Your first name",
+                validator: function(input) {
+                  return {
+                     valid: input != null && input.trim().length > 0,
+                     hint: "Can't be blank"
+                  };
+                }
+            },
+            {
+                name: "last_name",
+                placeholder: "Your last name",
+                validator: function(input) {
+                    return {
+                        valid: input != null && input.trim().length > 0,
+                        hint: "Can't be blank"
+                    }
+                }
+            }
+        ];
     }
 
     var lock = new Auth0Lock(config.clientID, config.auth0Domain, realOptions);
