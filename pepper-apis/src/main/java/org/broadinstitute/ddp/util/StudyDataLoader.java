@@ -165,7 +165,7 @@ public class StudyDataLoader {
         for (JsonElement thisEl : dataArray) {
             dateCreatedEl = thisEl.getAsJsonObject().get("datecreated");
             if (dateCreatedEl != null && !dateCreatedEl.isJsonNull()) {
-                dateCreatedMillis = dateCreatedEl.getAsNumber().longValue() * MILLIS_PER_SECOND;
+                dateCreatedMillis = dateCreatedEl.getAsNumber().longValue();
             }
             firstName = getStringValueFromElement(thisEl, "firstname");
             lastName = getStringValueFromElement(thisEl, "lastname");
@@ -1246,6 +1246,8 @@ public class StudyDataLoader {
             String otherDetails = otherText.stream().collect(Collectors.joining(","));
             if (StringUtils.isNotBlank(otherDetails)) {
                 selectedPicklistOptions.add(new SelectedPicklistOption(OTHER, otherDetails));
+            } else if (optValuesList.contains("Other")) {
+                selectedPicklistOptions.add(new SelectedPicklistOption(OTHER));
             }
         }
 

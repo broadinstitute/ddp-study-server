@@ -19,7 +19,7 @@ public class AboutYouPage extends DDPPage {
     private static final Logger logger = LoggerFactory.getLogger(AboutYouPage.class);
 
     //General Content
-    private static final String GENERAL_PAGE_CONTENT = "//article[@class='PageContent']";
+    private static final String GENERAL_PAGE_CONTENT = "//article[contains(@class, 'PageContent')]";
 
     //Introduction text box
     private static final String INTRODUCTION_TEXT_BOX_XPATH = "//div[@class='PageContent-box']";
@@ -88,7 +88,12 @@ public class AboutYouPage extends DDPPage {
             + "(//ddp-activity-checkboxes-picklist-question//mat-list)[7]";
 
     //Angiosarcoma treatment text input
-    private static final String ALL_USED_TREATMENTS_TEXT_INPUT_XPATH = "//textarea[contains(@data-ddp-test, 'answer:ALL_TREATMENTS')]";
+    private static final String TREATMENTS_SUGGESTION_LIST_INPUT_XPATH = "//li[@value=7]"
+            + "//input[contains(@data-ddp-test, 'TREATMENTS_LIST_NAME')]";
+
+    //Add another medication/chemotherapy button for above question
+    private static final String ADD_ANOTHER_MEDICATION_CHEMOTHERAPY_BUTTON_XPATH = ""
+            + "//button[contains(text(), 'ADD ANOTHER MEDICATION/CHEMOTHERAPY')]";
 
     //Currently being treated for angiosarcoma
     private static final String CURRENTLY_BEING_TREATED_FOR_ANGIOSARCOMA_XPATH = ""
@@ -239,8 +244,11 @@ public class AboutYouPage extends DDPPage {
     @FindBy(xpath = ANGIOSARCOMA_HAD_RADIATION_BEFORE_AFTER_SURGERY_XPATH)
     private WebElement treatedAngiosarcomaBeforeAfterSurgery;
 
-    @FindBy(xpath = ALL_USED_TREATMENTS_TEXT_INPUT_XPATH)
-    private WebElement allUsedTreatments;
+    @FindBy(xpath = TREATMENTS_SUGGESTION_LIST_INPUT_XPATH)
+    private WebElement treatmentSuggestionList;
+
+    @FindBy(xpath = ADD_ANOTHER_MEDICATION_CHEMOTHERAPY_BUTTON_XPATH)
+    private WebElement addAnotherMedicationChemmotherapyButton;
 
     @FindBy(xpath = CURRENTLY_BEING_TREATED_FOR_ANGIOSARCOMA_XPATH)
     private WebElement currentlyBeingTreatedForAngiosarcoma;
@@ -308,7 +316,7 @@ public class AboutYouPage extends DDPPage {
         shortWait.until(ExpectedConditions.visibilityOf(locationsOfHistoricalDiagnosisList));
         shortWait.until(ExpectedConditions.visibilityOf(locationsOfCurrentDiagnosisList));
         shortWait.until(ExpectedConditions.visibilityOf(requestOfTreatmentInformationText));
-        shortWait.until(ExpectedConditions.visibilityOf(allUsedTreatments));
+        shortWait.until(ExpectedConditions.visibilityOf(treatmentSuggestionList));
         shortWait.until(ExpectedConditions.visibilityOf(referralSource));
         shortWait.until(ExpectedConditions.visibilityOf(angiosarcomaExperienceOptionalInput));
         shortWait.until(ExpectedConditions.visibilityOf(ethnicityHispanicLatinxSpanish));
@@ -467,9 +475,9 @@ public class AboutYouPage extends DDPPage {
         JDIPageUtils.clickUsingJavaScript(responseXPath, XPATH);
     }
 
-    public void setAllTreatmentsPrescribed(String treatment) {
-        JDIPageUtils.scrollDownToElement(ALL_USED_TREATMENTS_TEXT_INPUT_XPATH);
-        JDIPageUtils.inputUsingJavaScript(treatment, allUsedTreatments);
+    public void setTreatmentsPrescribed(String treatment) {
+        JDIPageUtils.scrollDownToElement(TREATMENTS_SUGGESTION_LIST_INPUT_XPATH);
+        JDIPageUtils.inputUsingJavaScript(treatment, treatmentSuggestionList);
     }
 
     public void setCurrentlyBeingTreatedForAngiosarcoma(String response) {
@@ -513,12 +521,12 @@ public class AboutYouPage extends DDPPage {
         JDIPageUtils.inputUsingJavaScript(response, locationOfRadiationTreatmentForOtherCancer);
     }
 
-    public void setReferralSource(String source) {
+    public void inputReferralSource(String source) {
         JDIPageUtils.scrollDownToElement(ANGIOSARCOMA_HOW_HEARD_ABOUT_PROJECT_XPATH);
         JDIPageUtils.inputUsingJavaScript(source, referralSource);
     }
 
-    public void setExperienceWithAngiosarcomaOptionalInput(String input) {
+    public void inputExperienceWithAngiosarcomaOptionalInput(String input) {
         JDIPageUtils.scrollDownToElement(ANGIOSARCOMA_EXPERIENCE_OPTIONAL_TEXT_INPUT_XPATH);
         JDIPageUtils.inputUsingJavaScript(input, angiosarcomaExperienceOptionalInput);
     }
@@ -558,12 +566,13 @@ public class AboutYouPage extends DDPPage {
         countryOfResidenceDropdown.selectByVisibleText(country);
     }
 
-    public void setZipcode(String zipcode) {
+    public void inputZipcode(String zipcode) {
         JDIPageUtils.scrollDownToElement(ZIP_OR_POSTAL_CODE_XPATH);
         JDIPageUtils.inputUsingJavaScript(zipcode, zipPostalCode);
     }
 
     public void clickSubmit() {
+        shortWait.until(ExpectedConditions.visibilityOf(submit));
         JDIPageUtils.scrollDownToElement(SUBMIT_BUTTON_XPATH);
         JDIPageUtils.clickButtonUsingJDI(SUBMIT_BUTTON_XPATH, XPATH);
     }

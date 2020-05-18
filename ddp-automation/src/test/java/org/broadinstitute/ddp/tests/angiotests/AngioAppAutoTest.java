@@ -5,10 +5,14 @@ import static org.broadinstitute.ddp.AngioAppSite.auth0Page;
 import static org.broadinstitute.ddp.AngioAppSite.consentPage;
 import static org.broadinstitute.ddp.AngioAppSite.countMeInPage;
 import static org.broadinstitute.ddp.AngioAppSite.dashboardPage;
+import static org.broadinstitute.ddp.AngioAppSite.gatekeeperPage;
 import static org.broadinstitute.ddp.AngioAppSite.homePage;
 import static org.broadinstitute.ddp.AngioAppSite.joinMailingList;
+import static org.broadinstitute.ddp.AngioAppSite.lovedOnePage;
+import static org.broadinstitute.ddp.AngioAppSite.lovedOneThankYouPage;
 import static org.broadinstitute.ddp.AngioAppSite.medicalReleaseFormPage;
 import static org.broadinstitute.ddp.AngioAppSite.stayInformedPage;
+import static org.broadinstitute.ddp.AngioWebsite.environmentContainsGatekeeper;
 import static org.broadinstitute.ddp.DDPWebSite.CONFIG;
 
 import org.broadinstitute.ddp.AngioAppSite;
@@ -53,6 +57,7 @@ public class AngioAppAutoTest extends BaseTest {
     private static final String DIAGNOSIS_LOCATION_ABDOMINAL_AREA_DETAILS = "Near the stomach";
     private static final String DIAGNOSIS_LOCATION_OTHER = "Other";
     private static final String DIAGNOSIS_LOCATION_OTHER_DETAILS = "Skin";
+    private static final String DIAGNOSIS_LOCATION_OTHER_DETAILS_GENERIC = "The doctor will be able to give more details";
     private static final String DIAGNOSIS_LOCATION_I_DONT_KNOW = "I don't know";
     private static final String DIAGNOSIS_LOCATION_NO_EVIDENCE_OF_DISEASE = "No Evidence of Disease";
 
@@ -86,7 +91,7 @@ public class AngioAppAutoTest extends BaseTest {
     private static final String ETHNICITY_OTHER_DETAILS = "Gallifreyan";
 
     private static final String YEAR_OF_BIRTH = "1990";
-    private static final String COUNTRY_OF_RESIDENCE = "Canada";
+    private static final String COUNTRY_OF_RESIDENCE = "Puerto Rico";
     private static final String ZIP_OR_POSTAL_CODE = "02142";
 
     //Consent status
@@ -96,11 +101,11 @@ public class AngioAppAutoTest extends BaseTest {
 
     //U.S. Test Address
     private static final String COUNTRY_UNITED_STATES = "UNITED STATES";
-    private static final String UNITED_STATES_STREET_ONE_ADDRESS = "105 Broadway";
-    private static final String UNITED_STATES_STREET_TWO_ADDRESS = "ATTN: Broad Institute";
-    private static final String UNITED_STATES_CITY = "Cambridge";
-    private static final String UNITED_STATES_STATE = "MASSACHUSETTS";
-    private static final String UNITED_STATES_ZIPCODE = "02142";
+    private static final String UNITED_STATES_STREET_ONE_ADDRESS = "418 South Water Street";
+    private static final String UNITED_STATES_STREET_TWO_ADDRESS = "";
+    private static final String UNITED_STATES_CITY = "Sparta";
+    private static final String UNITED_STATES_STATE = "Wisconsin";
+    private static final String UNITED_STATES_ZIPCODE = "54656";
 
     //Canada Test Address
     private static final String COUNTRY_CANADA = "CANADA";
@@ -110,7 +115,9 @@ public class AngioAppAutoTest extends BaseTest {
     private static final String CANADA_PROVINCE = "ONTARIO";
     private static final String CANADA_POSTAL_CODE = "M2K 3C7";
     private static final String PHONE_NUMBER = "123-456-7890";
+    //todo code smell here - reading it for using as parameter makes sense but reading as variable does not
     private static final Boolean USE_SUGGESTED_ADDRESS = true;
+    private static final Boolean USE_AS_ENTERED_ADDRESS = false;
 
     //Physician information
     private static final String PHYSICIAN_NAME = "Doctor Nicolas Riveria";
@@ -119,14 +126,60 @@ public class AngioAppAutoTest extends BaseTest {
     private static final String PHYSICIAN_STATE = "Oregon";
 
     //Initial biopsy hospital/institution information
-    private static final String INITIAL_BIOPSY_INSTITUTION_NAME = "UCLA Medical Center";
-    private static final String INITIAL_BIOPSY_INSTITUTION_CITY = "Los Angeles";
-    private static final String INITIAL_BIOPSY_INSTITUTION_STATE = "California";
+    private static final String INITIAL_BIOPSY_INSTITUTION_NAME = "UW Health University Hospital";
+    private static final String INITIAL_BIOPSY_INSTITUTION_CITY = "Madison";
+    private static final String INITIAL_BIOPSY_INSTITUTION_STATE = "Wisconsin";
 
     //Additional biopsies/surgeries information
     private static final String ADDITIONAL_BIOPSIES_SURGERIES_INSTITUTION_NAME = "UCSF Medical Center";
     private static final String ADDITIONAL_BIOPSIES_SURGERIES_INSTITUTION_CITY = "San Francisco";
     private static final String ADDITIONAL_BIOPSIES_SURGERIES_INSTITUTION_STATE = "California";
+
+    //Loved One activity information
+
+    //Relationship to loved one
+    private static final String RELATIONSHIP_TO_LOVED_ONE_PARENT = "Parent";
+    private static final String RELATIONSHIP_TO_LOVED_ONE_SIBLING = "Sibling";
+    private static final String RELATIONSHIP_TO_LOVED_ONE_CHILD = "Child";
+    private static final String RELATIONSHIP_TO_LOVED_ONE_AUNT_OR_UNCLE = "Aunt/Uncle";
+    private static final String RELATIONSHIP_TO_LOVED_ONE_SPOUSE = "Spouse";
+    private static final String RELATIONSHIP_TO_LOVED_ONE_FRIEND = "Friend";
+    private static final String RELATIONSHIP_TO_LOVED_ONE_OTHER = "Other";
+    private static final String RELATIONSHIP_TO_LOVED_ONE_OTHER_SPECIFIC_DESCRIPTION = "Time Lord Companion";
+    private static final String RELATIONSHIP_TO_LOVED_ONE_NO_SPECIFICS_NEEDED = "N/A";
+
+    //Loved One's first name
+    private static final String LOVED_ONE_FIRST_NAME = "Doctor";
+
+    //Loved One's last name
+    private static final String LOVED_ONE_LAST_NAME = "Who";
+
+    //Loved One's Date of Birth
+    private static final String LOVED_ONE_BIRTH_INFORMATION = "01/01/1900";
+
+    //Loved One's zipcode while living
+    private static final String LOVED_ONE_ZIPCODE_WHILE_ALIVE = "CF10 1JL";
+
+    //Loved One's zipcode at moment of death
+    private static final String LOVED_ONE_ZIPCODE_AT_MOMENT_OF_PASSING = "10119";
+
+    //Loved One - month and year of angiosarcoma diagnosis
+    private static final String LOVED_ONE_DIAGNOSIS_MONTH = "May";
+    private static final String LOVED_ONE_DIAGNOSIS_YEAR = "2000";
+
+    //Loved One - month and year of death due to angiosarcoma
+    private static final String LOVED_ONE_MONTH_OF_PASSING = "October";
+    private static final String LOVED_ONE_YEAR_OF_PASSING = "2001";
+
+    //Loved One - radiation as treatment for their other cancer
+    private static final String LOVED_ONE_RADIATION_INFORMATION = "I am unsure where.";
+
+    //Loved One - more information about other cancer
+    private static final String LOVED_ONE_EXPERIENCE_OF_OTHER_CANCER = "Previously had breast cancer.";
+
+    //Loved One - experience
+    private static final String LOVED_ONE_EXPERIENCE = "The doctor may be able to provide more information about the progression.";
+
 
     //For email registration
     String testUserEmailAddress;
@@ -152,12 +205,13 @@ public class AngioAppAutoTest extends BaseTest {
         testUserFirstName = JDITestUtils.generateNewUserName(FIRST_NAME_DESCRIPTION);
         testUserLastName = JDITestUtils.generateNewUserName(LAST_NAME_DESCRIPTION);
         testUserFullName = JDITestUtils.getFullName(testUserFirstName, testUserLastName);
-        logger.info("User: {}", testUserFullName);
 
-        //Get past the gatekeeper
-        /*gatekeeperPage.verifyPageIsOpened();
-        DatabaseUtility.unlockGatekeeperPage(gatekeeperPage);
-        gatekeeperPage.clickSubmit();*/
+        //Get past the gatekeeper - if there is one
+        if (environmentContainsGatekeeper()) {
+            gatekeeperPage.verifyPageIsOpened();
+            DatabaseUtility.unlockGatekeeperPage(gatekeeperPage);
+            gatekeeperPage.clickSubmit();
+        }
     }
 
     @Test
@@ -181,10 +235,14 @@ public class AngioAppAutoTest extends BaseTest {
         auth0Page.verifyPageIsOpened();
         auth0Page.inputApplicationUserName(testUserEmailAddress);
         auth0Page.inputApplicationUserPassword(testUserPassword);
+        //waitSomeSeconds(5);
         auth0Page.clickApplicationSubmit();
-        DatabaseUtility.verifyUserExists();
+        //DatabaseUtility.verifyUserExists();
 
-        //Complete about-you
+        //Complete about-youl
+        /*waitSomeSeconds(5);
+        refreshPage();
+        waitSomeSeconds(5);*/
         aboutYouPage.verifyPageIsOpened();
 
         //1. When were you first diagnosed with angiosarcoma?
@@ -234,7 +292,7 @@ public class AngioAppAutoTest extends BaseTest {
 
         //7. Please list the medications, drugs, and chemotherapies you have been prescribed specifically for the treatment of angiosarcoma.
         //   It's okay if there are treatments you don't remember.
-        aboutYouPage.setAllTreatmentsPrescribed(ALL_TREATMENTS);
+        aboutYouPage.setTreatmentsPrescribed(ALL_TREATMENTS);
 
         //8. Are you currently being treated for your angiosarcoma?
         //8.1 Please list the therapies you are currently receiving for angiosarcoma
@@ -245,7 +303,7 @@ public class AngioAppAutoTest extends BaseTest {
         //9. Were you ever diagnosed with any other kind of cancer(s)?
         //9.1 Please list which cancer(s) and approximate year(s) of diagnosis.
         aboutYouPage.setHaveBeenDiagnosedWithDifferentCancer(RESPONSE_YES);
-        aboutYouPage.inputDiseaseNameAndYearOfDiagnosis(DISEASE_NAME, DISEASE_DIAGNOSIS_YEAR);
+        //aboutYouPage.inputDiseaseNameAndYearOfDiagnosis(DISEASE_NAME, DISEASE_DIAGNOSIS_YEAR);
 
         //10. Have you had radiation as a treatment for another cancer(s)?
         //10.1 In what part of your body did you receive radiation for your other cancer(s)?
@@ -253,12 +311,12 @@ public class AngioAppAutoTest extends BaseTest {
         aboutYouPage.inputLocationOfRadioationForOtherCancer(DIAGNOSIS_LOCATION_ABDOMINAL_AREA);
 
         //11. How did you hear about The Angiosarcoma Project?
-        aboutYouPage.setReferralSource(REFERRAL_SOURCE);
+        aboutYouPage.inputReferralSource(REFERRAL_SOURCE);
 
         //12. Optional: Tell us anything else you want about yourself and your experience with angiosarcoma.
         //    We are asking this so you have an opportunity to tell us things that you feel are important
         //    for our understanding of this disease.
-        aboutYouPage.setExperienceWithAngiosarcomaOptionalInput(EXPERIENCE_WITH_ANGIOSARCOMA);
+        aboutYouPage.inputExperienceWithAngiosarcomaOptionalInput(EXPERIENCE_WITH_ANGIOSARCOMA);
 
         //13. Do you consider yourself Hispanic, Latino/a or Spanish?
         aboutYouPage.setUserEthnicityAsHispanicLatinxOrSpanish(ETHNICITY_IS_HISPANIC_LATINO_SPANISH);
@@ -275,7 +333,7 @@ public class AngioAppAutoTest extends BaseTest {
         aboutYouPage.setCountryOfResidence(COUNTRY_OF_RESIDENCE);
 
         //17. What is your ZIP or postal code?
-        aboutYouPage.setZipcode(ZIP_OR_POSTAL_CODE);
+        aboutYouPage.inputZipcode(ZIP_OR_POSTAL_CODE);
 
         aboutYouPage.clickSubmit();
 
@@ -284,10 +342,12 @@ public class AngioAppAutoTest extends BaseTest {
 
         //1. Key Points
         consentPage.verifyGeneralConsentContentDisplayed();
+        consentPage.verifyDateConsentLastUpdatedDisplayed();
         consentPage.clickNext();
 
         //2. Full Form
         consentPage.verifyGeneralConsentContentDisplayed();
+        consentPage.verifyDateConsentLastUpdatedDisplayed();
         consentPage.clickNext();
 
         //3. Sign Consent
@@ -370,7 +430,7 @@ public class AngioAppAutoTest extends BaseTest {
         joinMailingList.clickJoin();
 
         //Check database to make sure user has joined
-        DatabaseUtility.checkUserSignedUpForMailingList(testUserEmailAddress);
+        //DatabaseUtility.checkUserSignedUpForMailingList(testUserEmailAddress);
 
         //Be redirected to stay informed page
         stayInformedPage.verifyPageIsOpened();
@@ -378,6 +438,102 @@ public class AngioAppAutoTest extends BaseTest {
 
         //Check clicking [Return Home] leads back to homepage
         homePage.verifyPageIsOpened();
+    }
+
+    @Test
+    @Category(SmokeTests.class)
+    @DisplayName("Pepper-Angio: I have a loved one that has passed away from angiosarcoma")
+    public void testAngiosarcomaIHaveLostALovedOne() {
+        //Go to count me in
+        homePage.verifyPageIsOpened();
+        homePage.clickCountMeIn();
+
+        //Fill out name and select "I have a loved one..." and then Submit
+        countMeInPage.verifyPageIsOpened();
+        countMeInPage.inputFirstName(testUserFirstName);
+        countMeInPage.inputLastName(testUserLastName);
+        countMeInPage.selectAngiosarcomaStatus(NOT_DIAGNOSED_WITH_ANGIOSARCOMA_BUT_LOST_LOVED_ONE);
+        countMeInPage.clickSubmit();
+
+        //Register
+        auth0Page.verifyPageIsOpened();
+        auth0Page.inputApplicationUserName(testUserEmailAddress);
+        auth0Page.inputApplicationUserPassword(testUserPassword);
+        auth0Page.clickApplicationSubmit();
+
+        //Verify navigation to Lvoed One activity
+        lovedOnePage.verifyPageIsOpened();
+
+        //Answer Loved One activity questions
+
+        //1. What is your relation to your loved one?
+        lovedOnePage.setRelationshipToPatient(RELATIONSHIP_TO_LOVED_ONE_OTHER, RELATIONSHIP_TO_LOVED_ONE_OTHER_SPECIFIC_DESCRIPTION);
+
+        //2. What is your loved one's first name?
+        lovedOnePage.inputFirstName(LOVED_ONE_FIRST_NAME);
+
+        //3. What is your loved one's last name?
+        lovedOnePage.inputLastName(LOVED_ONE_LAST_NAME);
+
+        //4. What is your loved one's date of birth? (MM-DD-YYYY)
+        lovedOnePage.inputDateOfBirth(LOVED_ONE_BIRTH_INFORMATION);
+
+        //5. What zip code did your loved one live in when diagnosed with angiosarcoma?
+        lovedOnePage.inputZipcodeAtDiagnosis(LOVED_ONE_ZIPCODE_WHILE_ALIVE);
+
+        //6. What zip code did your loved one live in when they passed?
+        lovedOnePage.inputZipcodeAtDeath(LOVED_ONE_ZIPCODE_AT_MOMENT_OF_PASSING);
+
+        //7. When was your loved one diagnosed with angiosarcoma?
+        lovedOnePage.setDateOfDiagnosis(LOVED_ONE_DIAGNOSIS_MONTH, LOVED_ONE_DIAGNOSIS_YEAR);
+
+        //8. When did your loved one pass away?
+        lovedOnePage.setDateOfPassing(LOVED_ONE_MONTH_OF_PASSING, LOVED_ONE_YEAR_OF_PASSING);
+
+        //9. When your loved one was first diagnosed with angiosarcoma, where in their body was it found?
+        lovedOnePage.setLocationOfInititalDiagnosis(DIAGNOSIS_LOCATION_BONE_LIMB);
+        lovedOnePage.setLocationOfInitialDiagnosisDetails(DIAGNOSIS_LOCATION_OTHER_DETAILS_GENERIC);
+
+        //10. Please list where else in their body your loved one's angiosarcoma spread.
+        lovedOnePage.setLocationOfHistoricalDiagnosis(DIAGNOSIS_LOCATION_HEAD_FACE_NECK_BUT_NOT_SCALP);
+        lovedOnePage.setLocationOfHistoricalDiagnosis(DIAGNOSIS_LOCATION_SCALP);
+        lovedOnePage.setLocationOfHistoricalDiagnosis(DIAGNOSIS_LOCATION_BONE_LIMB);
+        lovedOnePage.inputHisotricalDiagnosisBoneLimbDetails(DIAGNOSIS_LOCATION_OTHER_DETAILS_GENERIC);
+
+        lovedOnePage.setLocationOfHistoricalDiagnosis(DIAGNOSIS_LOCATION_ABDOMINAL_AREA);
+        lovedOnePage.inputHisotricalDiagnosisAbdominalAreaDetails(DIAGNOSIS_LOCATION_OTHER_DETAILS_GENERIC);
+
+        lovedOnePage.setLocationOfHistoricalDiagnosis(DIAGNOSIS_LOCATION_OTHER);
+        lovedOnePage.inputHisotricalDiagnosisOtherDetails(DIAGNOSIS_LOCATION_OTHER_DETAILS_GENERIC);
+
+        //11. Was your loved one ever diagnosed with another kind of cancer(s)?
+        lovedOnePage.setDiagnosedWithOtherCancer(RESPONSE_YES);
+        lovedOnePage.setHaveHadRadiationAsTreatmentForOtherCancer(RESPONSE_YES);
+
+        //12. Please tell us anything you think is important for us to know about your loved one's experience with angiosarcoma.
+        lovedOnePage.inputExperience(LOVED_ONE_EXPERIENCE);
+
+        //13. We are currently exploring ways to include medical records and tissue from loved ones in our studies,
+        //    may we contact you in the future regarding this?
+        lovedOnePage.setAgreementTobeContactedInFuture(RESPONSE_NO);
+
+        //Submit Loved One activity
+        lovedOnePage.clickSubmit();
+
+        //Verify navigation to Thank You Page
+        lovedOneThankYouPage.verifyPageIsOpened();
+        lovedOneThankYouPage.verifyHeaderDisplayed();
+        lovedOneThankYouPage.verifyThankYouMessageDisplayed();
+
+        //Navigate to dashboard
+        lovedOneThankYouPage.clickUserMenuOption();
+        lovedOneThankYouPage.clickDashboardOption();
+
+        //Verify navigation to the dashboard
+        dashboardPage.verifyPageIsOpened();
+        dashboardPage.waitUntilDashboardContentDisplayed();
+        dashboardPage.verifyDashboardDisplayed();
+        dashboardPage.listAllActivitiesWithStatuses();
     }
 
     @Override

@@ -67,6 +67,7 @@ import org.slf4j.LoggerFactory;
 @SuiteClasses({
         AuthFilterRouteTest.class,
         EventServiceTest.class,
+        InvitationCheckStatusRouteTest.class,
         CreateActivityInstanceRouteTest.class,
         CreateTemporaryUserRouteTest.class,
         DeleteMedicalProviderRouteTest.class,
@@ -82,6 +83,7 @@ import org.slf4j.LoggerFactory;
         GetDsmTriggeredInstancesRouteTest.class,
         GetDsmMedicalRecordRouteTest.class,
         GetGovernedStudyParticipantsRouteTest.class,
+        InvitationLookupRouteTest.class,
         GetInstitutionSuggestionsRouteTest.class,
         GetMailAddressInfoRouteTest.class,
         GetMedicalProviderListRouteTest.class,
@@ -97,6 +99,7 @@ import org.slf4j.LoggerFactory;
         ProfileRouteTest.class,
         PutFormAnswersRouteTest.class,
         JoinMailingListRouteTest.class,
+        InvitationUpdateDetailsRouteTest.class,
         UserActivityInstanceListRouteTest.class,
         UserAuthCheckFilterTest.class,
         UserRegistrationRouteTest.class,
@@ -122,7 +125,7 @@ import org.slf4j.LoggerFactory;
         UpdateUserPasswordRouteTest.class,
         UpdateUserEmailRouteTest.class,
         GetStudiesRouteTest.class,
-        VerifyInvitationRouteTest.class,
+        InvitationVerifyRouteTest.class,
         StudyLanguageContentLanguageSettingFilterTest.class,
         GetStudyDetailRouteTest.class
 })

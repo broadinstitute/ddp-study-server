@@ -60,6 +60,7 @@ public class JDIPageUtils {
     private static final String CHECKLIST_TEXT_XPATH = "//span[@class='mat-checkbox-label']";
     private static final int COORDINATE_Y_LIMIT = 555;
     private static final int SCROLL_INCREMENT_AMOUNT = 57;
+    private static final String CONDITIONAL_SPECIFIER = "[2]";
 
     /**
      * For use when a list of options can be given using //mat-option//span[@class='mat-option-text']
@@ -87,10 +88,192 @@ public class JDIPageUtils {
         }
     }
 
+    private static String adjustConditionalSpecifier(String conditionalSpecifier) {
+        if (conditionalSpecifier == null) {
+            conditionalSpecifier = "[1]";
+        }
+
+        return conditionalSpecifier;
+    }
+
+    /**
+     * Use this to create the xpath for general picklist/checkbox questions
+     * @param questionNumber the question number
+     * @param checkboxText the text/label of the picklist/checkbox e.g. Other, I prefer not to answer
+     * @param conditionalSpecifier specify which instance of the webelement you are looking for e.g. if a question has 2 buttons,
+     *                             put [1] to get the first button, [2] to get the second button, etc. (with brackets). If no
+     *                             conditional, put in null.
+     * @return the xpath as a string
+     */
+    public static String createXPathForGeneralCheckboxWebElement(String questionNumber, String checkboxText, String conditionalSpecifier) {
+        conditionalSpecifier = adjustConditionalSpecifier(conditionalSpecifier);
+
+        String responseXPath = "(//li[@value=" + questionNumber + "]"
+                + "//span[contains(@class, 'mat-checkbox-label')][normalize-space(text()) = '" + checkboxText + "']"
+                + "//preceding-sibling::div)" + conditionalSpecifier + "";
+
+        logger.info("XPATH: {}", responseXPath);
+        return responseXPath;
+    }
+
+    /**
+     * Use this to create the xpath for general radio button questions
+     * @param questionNumber the question number
+     * @param radioButtonText the text/label of the picklist/checkbox e.g.
+     * @return
+     */
+    public static String createXPathForGeneralRadioButtonWebElement(String questionNumber,
+                                                                    String radioButtonText,
+                                                                    String conditionalSpecifier) {
+
+        conditionalSpecifier = adjustConditionalSpecifier(conditionalSpecifier);
+
+        String responseXPath = "(//li[@value=" + questionNumber + "]"
+                + "//mat-radio-group"
+                + "//div[normalize-space(text()) = '" + radioButtonText + "']"
+                + "//preceding-sibling::div)" + conditionalSpecifier + "";
+
+        logger.info("XPATH: {}", responseXPath);
+        return responseXPath;
+    }
+
+    /**
+     * Use this to create the xpath for general conditional textfields (textfields that appear after selecting a picklist question)
+     * @param questionNumber the question number
+     * @param parentText the text of the conditional picklist question e.g. selecting the checkbox labeled 'Other', generates a textfield
+     *                   with the placeholder 'Please provide details'
+     * @return
+     */
+    public static String createXPathForGeneralConditionalTextfieldWebElement(String questionNumber,
+                                                                             String parentText,
+                                                                             String conditionalSpecifier) {
+        conditionalSpecifier = adjustConditionalSpecifier(conditionalSpecifier);
+
+        String responseXPath = "(//li[@value=" + questionNumber + "]"
+                + "//mat-checkbox[contains(normalize-space(.), '" + parentText + "')]"
+                + "//following-sibling::mat-form-field//input)" + conditionalSpecifier + "";
+
+        logger.info("XPATH: {}", responseXPath);
+        return responseXPath;
+    }
+
+    /**
+     * Use this to create the xpath for general input webelements using that have the stableid '@data-ddp-test'
+     * @param questionNumber the question number
+     * @param stableId the stableid e.g. given the attribute data-ddp-test='ABC', ABC is the stable id
+     * @return
+     */
+    public static String createXPathForInputWebElementUsingStableId(String questionNumber, String stableId, String conditionalSpecifier) {
+        conditionalSpecifier = adjustConditionalSpecifier(conditionalSpecifier);
+
+        String responseXPath = "(//li[@value=" + questionNumber + "]"
+                + "//input[contains(@data-ddp-test, '" + stableId + "')])" + conditionalSpecifier + "";
+
+        logger.info("XPATH: {}", responseXPath);
+        return responseXPath;
+    }
+
+
+    /**
+     * Use this to create the xpath for general buttons using the button text (text must be exact)
+     * @param questionNumber the question number e.g. a button in question 3 - send in the string "3"
+     * @param buttonText the text of the button
+     * @return
+     */
+    public static String createXPathForButtonWebElementsUsingButtonText(String questionNumber,
+                                                                        String buttonText,
+                                                                        String conditionalSpecifier) {
+        conditionalSpecifier = adjustConditionalSpecifier(conditionalSpecifier);
+
+        String responseXPath = "(//li[@value=" + questionNumber + "]"
+                + "//button[normalize-space(text()) = '" + buttonText + "'])" + conditionalSpecifier + "";
+
+        logger.info("XPATH: {}", responseXPath);
+        return  responseXPath;
+    }
+
+
+    /**
+     * Use this to create the xpath for general input webelements using that have the stableid '@data-ddp-test'
+     * @param questionNumber the question number
+     * @param stableId the stableid e.g. given the attribute data-ddp-test='ABC', ABC is the stable id
+     * @return
+     */
+    public static String createXPathForTextareaWebElementsUsingStableId(String questionNumber,
+                                                                        String stableId,
+                                                                        String conditionalSpecifier) {
+
+        conditionalSpecifier = adjustConditionalSpecifier(conditionalSpecifier);
+
+        String responseXPath = "(//li[@value=" + questionNumber + "]"
+                + "//textarea[contains(@data-ddp-test, '" + stableId + "')])" + conditionalSpecifier + "";
+
+        logger.info("XPATH: {}", responseXPath);
+        return  responseXPath;
+    }
+
+    public static String createXPathforInputWebElementUsingPlaceholder(String questionNumber,
+                                                                       String placeholderText,
+                                                                       String conditionalSpecifier) {
+
+        conditionalSpecifier = adjustConditionalSpecifier(conditionalSpecifier);
+        String responseXPath = "(//li[@value=" + questionNumber + "]"
+                + "//input[contains(@placeholder, '" + placeholderText + "')])" + conditionalSpecifier + "";
+
+        logger.info("XPATH: {}", responseXPath);
+        return  responseXPath;
+    }
+
     public static void verifyCheckBoxClicked(WebElement element) {
         String checkboxSelectionAttribute = element.getAttribute(CHECKBOX_OPTION_SELECTED_ATTRIBUTE);
         boolean checkboxSelectionStatus = Boolean.parseBoolean(checkboxSelectionAttribute);
         Assert.assertTrue(checkboxSelectionStatus);
+    }
+
+    public static void doubleClickAndWait(WebElement button) {
+        button.click();
+        try {
+            logger.info("Waiting for 2 seconds");
+            Thread.sleep(2000);
+            logger.info("Finished waiting");
+
+        } catch (InterruptedException error) {
+            error.printStackTrace();
+        }
+
+        //Ensure that button is still displayed after the initial click
+        //if the button is a submit-type then occasionally the first click will
+        //process quickly instead of needing 2 clicks - needed because it's
+        //difficult to do hovring actions on automated tests (where hovering triggers a valdiation check)
+        if (button.isDisplayed()) {
+            button.click();
+        }
+    }
+
+    /**
+     * Get the checkbox using the question number and the checkbox label name
+     * @param questionNumber the number of the question e.g. 1, 2, 3, 4, 5
+     * @param optionName the checkbox label name e.g. Yes, No, I don't Know
+     * @return
+     */
+    public static String getPicklistWebElementXPathByName(String questionNumber, String optionName, boolean conditionallyShown) {
+        String checkboxOptionXPath = null;
+
+        if (conditionallyShown) {
+            //Find xpath based on the question number and picklist option text
+            checkboxOptionXPath =  "(//li[@value=" + questionNumber + "]"
+                    + "//span[normalize-space(text()) = '" + optionName + "']"
+                    + "/preceding-sibling::div[@class='mat-checkbox-inner-container'])" + CONDITIONAL_SPECIFIER + "";
+
+        } else {
+            //Find xpath of condtionally shown question based on question number and picklist option text
+            checkboxOptionXPath =  "//li[@value= " + questionNumber + "]"
+                    + "//span[normalize-space(text()) = '" + optionName + "']"
+                    + "/preceding-sibling::div[@class='mat-checkbox-inner-container']";
+
+        }
+
+        return checkboxOptionXPath;
     }
 
     /**
@@ -140,6 +323,7 @@ public class JDIPageUtils {
     public static String getWebElementTextWithoutIcon(WebElement element) {
         String textWithIcon = getWebElementText(element);
         String[] textDivided = textWithIcon.split(" ");
+
         //String[0] = icon text e.g. 'person'
         //String[1] = actual username e.g. test@tester.org
         return textDivided[USERNAME];
@@ -573,7 +757,10 @@ public class JDIPageUtils {
     public static void inputText(WebElement textFieldElement, String textAnswer) {
         TextField textField = new TextField(textFieldElement);
         textField.clear();
+        logger.info("Writing: {}", textAnswer);
+        //textField.setValue(textAnswer);
         textField.newInput(textAnswer);
+        logger.info("Text in text field: {}", textField.getText());
     }
 
     /**
@@ -652,3 +839,4 @@ public class JDIPageUtils {
     }
 
 }
+

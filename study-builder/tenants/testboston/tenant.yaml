@@ -1,0 +1,55 @@
+rules:
+  - name: Register User in Pepper
+    script: ../register-user-in-pepper.js
+    stage: login_success
+    enabled: true
+    order: 1
+
+pages:
+  - name: login
+    html: ./pages/login.html
+    enabled: true
+  - name: password_reset
+    html: ./pages/password_reset.html
+    enabled: true
+
+emailTemplates:
+  - template: reset_email
+    body: ./emails/change_password.html
+    from: Test Boston Study <testboston@datadonationplatform.org>
+    resultUrl: '##SERVER_BASE_URL##/pepper/v1/post-password-reset?clientId={{ application.clientID }}'
+    subject: Test Boston Study
+    urlLifetimeInSeconds: 432000
+    syntax: liquid
+    enabled: true
+
+clients:
+  - name: testboston-app-client
+    app_type: spa
+    callbacks:
+      - '##BASE_URL##/login-landing'
+      ##LOCALHOST_CALLBACKS##
+    allowed_logout_urls:
+      - '##BASE_URL##'
+      - '##BASE_URL##/session-expired'
+      ##LOCALHOST_LOGOUTS##
+    web_origins:
+      - '##BASE_URL##'
+      ##LOCALHOST_ORIGINS##
+    client_metadata:
+      study: testboston
+
+  - name: testboston-crc-client
+    app_type: spa
+    callbacks:
+      - '##BASE_URL##/login-landing'
+      ##LOCALHOST_CALLBACKS##
+    allowed_logout_urls:
+      - '##BASE_URL##'
+      - '##BASE_URL##/session-expired'
+      ##LOCALHOST_LOGOUTS##
+    web_origins:
+      - '##BASE_URL##'
+      ##LOCALHOST_ORIGINS##
+    client_metadata:
+      study: testboston

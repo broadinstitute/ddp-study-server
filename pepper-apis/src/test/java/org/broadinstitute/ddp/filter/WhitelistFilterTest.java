@@ -4,6 +4,7 @@ import static org.broadinstitute.ddp.filter.WhiteListFilter.whitelist;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static spark.Spark.awaitInitialization;
+import static spark.Spark.awaitStop;
 import static spark.Spark.get;
 import static spark.Spark.port;
 import static spark.Spark.stop;
@@ -51,6 +52,7 @@ public class WhitelistFilterTest {
 
         static void stopServer() {
             stop();
+            awaitStop();
         }
     }
 

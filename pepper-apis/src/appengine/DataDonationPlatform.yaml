@@ -16,9 +16,11 @@ automatic_scaling:
 network:
   instance_tag: study-server # necessary for firewall rules so that DSM will accept https requests from pepper
 
-entrypoint: java -Xmx820m -Xmx820m -jar DataDonationPlatform.jar
+entrypoint: java -javaagent:tcell/tcellagent.jar -Xmx820m -Xmx820m -jar DataDonationPlatform.jar
 
 # GAE does not like the "=" character in entrypoint and does not support "." in environment variables
 env_variables:
   config_file: application.conf
+  TCELL_AGENT_HOST_IDENTIFIER: study-server
+  TCELL_AGENT_CACHE_DIR: /tmp
 

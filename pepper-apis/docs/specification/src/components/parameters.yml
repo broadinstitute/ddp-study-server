@@ -1,0 +1,7 @@
+studyGuid:
+  in: path
+  name: study
+  required: true
+  description: the study guid
+  schema:
+    type: string
