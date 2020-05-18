@@ -23,7 +23,7 @@ import org.broadinstitute.ddp.db.dao.KitTypeDao;
 import org.broadinstitute.ddp.db.dao.QueuedEventDao;
 import org.broadinstitute.ddp.db.dao.StudyDao;
 import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
-import org.broadinstitute.ddp.db.dao.StudyLanguageSql;
+import org.broadinstitute.ddp.db.dao.StudyLanguageDao;
 import org.broadinstitute.ddp.db.dto.Auth0TenantDto;
 import org.broadinstitute.ddp.db.dto.ClientDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
@@ -368,9 +368,11 @@ public class StudyBuilder {
     private void insertStudyDetails(Handle handle, long studyId) {
         JdbiUmbrellaStudyI18n jdbiStudyI18n = handle.attach(JdbiUmbrellaStudyI18n.class);
         JdbiLanguageCode jdbiLangCode = handle.attach(JdbiLanguageCode.class);
-        StudyLanguageSql studyLanguageSql = handle.attach(StudyLanguageSql.class);
+        //StudyLanguageSql studyLanguageSql = handle.attach(StudyLanguageSql.class);
+        StudyLanguageDao studyLanguageDao = handle.attach(StudyLanguageDao.class);
 
         boolean defaultSet = false;
+        Long defaultLanguageCodeId = null;
         for (Config detailCfg : cfg.getConfigList("studyDetails")) {
             String lang = detailCfg.getString("language");
             Boolean isDefault = detailCfg.getBoolean("isDefault");
@@ -381,22 +383,28 @@ public class StudyBuilder {
             if (langCodeId == null) {
                 throw new DDPException("Could not find language using code: " + lang);
             }
-            if (defaultSet && isDefault) {
-                //no more than 1 language can be set as default
-                throw new DDPException("Cannot set isDefault: true for more than 1 language ");
+            if (isDefault) {
+                if (defaultSet) {
+                    //no more than 1 language can be set as default
+                    throw new DDPException("Cannot set isDefault: true for more than 1 language ");
+                } else {
+                    defaultLanguageCodeId = langCodeId;
+                    defaultSet = true;
+                }
             }
 
             //insert into study_language
-            long studyLanguageId = studyLanguageSql.insert(studyId, langCodeId, isDefault);
+            long studyLanguageId = studyLanguageDao.insert(studyId, langCodeId);
             LOG.info("Created language study details with id={}, language={}, isDefault={} ", studyLanguageId, lang, isDefault);
 
             long detailId = jdbiStudyI18n.insert(studyId, langCodeId, name, summary);
             LOG.info("Created study details with id={}, language={}, name={}, summary={}",
                     detailId, lang, name, StringUtils.abbreviate(summary, 50));
+        }
 
-            if (isDefault) {
-                defaultSet = true;
-            }
+        //set default language
+        if (defaultSet) {
+            studyLanguageDao.setAsDefaultLanguage(studyId, defaultLanguageCodeId);
         }
     }
 
