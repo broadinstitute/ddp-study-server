@@ -72,7 +72,22 @@ public final class GuidUtils {
         return UUID.randomUUID().toString();
     }
 
+    /**
+     * Returns a random id using alphanumerics and default size of 21.
+     */
     public static String randomAlphaNumeric() {
         return NanoIdUtils.randomNanoId(NanoIdUtils.DEFAULT_NUMBER_GENERATOR, ALPHA_NUMERIC, NanoIdUtils.DEFAULT_SIZE);
+    }
+
+    /**
+     * Generate random id using prefix.
+     *
+     * @param prefix   the prefix
+     * @param alphabet the alphabet
+     * @param length   the total size, including prefix
+     * @return a random id
+     */
+    public static String randomWithPrefix(String prefix, char[] alphabet, int length) {
+        return prefix + NanoIdUtils.randomNanoId(NanoIdUtils.DEFAULT_NUMBER_GENERATOR, alphabet, length - prefix.length());
     }
 }
