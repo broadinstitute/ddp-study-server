@@ -60,6 +60,7 @@ import org.broadinstitute.ddp.route.AddProfileRoute;
 import org.broadinstitute.ddp.route.CheckIrbPasswordRoute;
 import org.broadinstitute.ddp.route.CreateActivityInstanceRoute;
 import org.broadinstitute.ddp.route.CreateMailAddressRoute;
+import org.broadinstitute.ddp.route.CreateStudyParticipantRoute;
 import org.broadinstitute.ddp.route.CreateTemporaryUserRoute;
 import org.broadinstitute.ddp.route.DeleteMailAddressRoute;
 import org.broadinstitute.ddp.route.DeleteMedicalProviderRoute;
@@ -288,9 +289,11 @@ public class DataDonationPlatform {
         before(API.BASE + "/user/*/studies/*", new StudyLanguageResolutionFilter());
         after(API.BASE + "/user/*/studies/*", new StudyLanguageContentLanguageSettingFilter());
         beforeWithExclusion(API.BASE + "/studies/*", new StudyLanguageResolutionFilter(),
-                API.INVITATION_VERIFY, API.INVITATION_CHECK, API.INVITATION_LOOKUP, API.INVITATION_DETAILS);
+                API.INVITATION_VERIFY, API.INVITATION_CHECK, API.INVITATION_LOOKUP, API.INVITATION_DETAILS,
+                API.STUDY_PARTICIPANTS);
         afterWithExclusion(API.BASE + "/studies/*", new StudyLanguageContentLanguageSettingFilter(),
-                API.INVITATION_VERIFY, API.INVITATION_CHECK, API.INVITATION_LOOKUP, API.INVITATION_DETAILS);
+                API.INVITATION_VERIFY, API.INVITATION_CHECK, API.INVITATION_LOOKUP, API.INVITATION_DETAILS,
+                API.STUDY_PARTICIPANTS);
 
         enableCORS("*", String.join(",", CORS_HTTP_METHODS), String.join(",", CORS_HTTP_HEADERS));
         setupCatchAllErrorHandling();
@@ -315,10 +318,21 @@ public class DataDonationPlatform {
 
         post(API.TEMP_USERS, new CreateTemporaryUserRoute(), responseSerializer);
 
+        var jsonSerializer = new NullableJsonTransformer();
+
         // Study related routes
         get(API.STUDY_ALL, new GetStudiesRoute(), responseSerializer);
         get(API.STUDY_DETAIL, new GetStudyDetailRoute(), responseSerializer);
         get(API.STUDY_PASSWORD_POLICY, new GetStudyPasswordPolicyRoute(), responseSerializer);
+        post(API.STUDY_PARTICIPANTS, new CreateStudyParticipantRoute(), jsonSerializer);
+
+        post(API.INVITATION_VERIFY, new InvitationVerifyRoute(), jsonSerializer);
+        post(API.INVITATION_CHECK, new InvitationCheckStatusRoute(), jsonSerializer);
+        post(API.INVITATION_LOOKUP, new InvitationLookupRoute(), jsonSerializer);
+        post(API.INVITATION_DETAILS, new InvitationUpdateDetailsRoute(), jsonSerializer);
+
+        addBefore(new OnlyStudyAdminFilter(), API.INVITATION_LOOKUP, API.INVITATION_DETAILS,
+                API.STUDY_PARTICIPANTS);
 
         get(API.ADDRESS_COUNTRIES, new GetCountryAddressInfoSummariesRoute(), responseSerializer);
         get(API.ADDRESS_COUNTRY_DETAILS, new GetCountryAddressInfoRoute(), responseSerializer);
@@ -467,14 +481,6 @@ public class DataDonationPlatform {
                 new UpdateUserEmailRoute(),
                 responseSerializer
         );
-
-        var jsonSerializer = new NullableJsonTransformer();
-        post(API.INVITATION_VERIFY, new InvitationVerifyRoute(), jsonSerializer);
-        post(API.INVITATION_CHECK, new InvitationCheckStatusRoute(), jsonSerializer);
-        post(API.INVITATION_LOOKUP, new InvitationLookupRoute(), jsonSerializer);
-        post(API.INVITATION_DETAILS, new InvitationUpdateDetailsRoute(), jsonSerializer);
-
-        addBefore(new OnlyStudyAdminFilter(), API.INVITATION_LOOKUP, API.INVITATION_DETAILS);
 
         Runnable runnable = () -> {
             var dsm = new DsmClient(cfg);

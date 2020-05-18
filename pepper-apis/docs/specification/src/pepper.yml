@@ -62,6 +62,8 @@ paths:
     $ref: 'endpoints/studies.invitation-lookup.yml'
   /studies/{study}/invitation-verify:
     $ref: 'endpoints/studies.invitation-verify.yml'
+  /studies/{study}/participants:
+    $ref: 'endpoints/studies.participants.yml'
   /studies/{study}/password-policy:
     $ref: 'endpoints/studies.password-policy.yml'
   /studies/{study}/suggestions/drugs:

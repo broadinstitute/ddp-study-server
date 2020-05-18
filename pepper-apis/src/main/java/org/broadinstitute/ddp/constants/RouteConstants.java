@@ -29,7 +29,7 @@ public class RouteConstants {
 
         public static final String STUDY_ALL = BASE + "/studies";
         public static final String STUDY_DETAIL = fmt(STUDY_ALL + "/%s", PathParam.STUDY_GUID);
-
+        public static final String STUDY_PARTICIPANTS = fmt(BASE + "/studies/%s/participants", PathParam.STUDY_GUID);
         public static final String PARTICIPANTS_INFO_FOR_STUDY =
                 fmt(STUDY_ALL + "/participant-info" + "/%s", PathParam.STUDY_GUID);
 

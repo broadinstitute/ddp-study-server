@@ -69,6 +69,7 @@ import org.slf4j.LoggerFactory;
         EventServiceTest.class,
         InvitationCheckStatusRouteTest.class,
         CreateActivityInstanceRouteTest.class,
+        CreateStudyParticipantRouteTest.class,
         CreateTemporaryUserRouteTest.class,
         DeleteMedicalProviderRouteTest.class,
         DsmTriggerOnDemandActivityRouteTest.class,

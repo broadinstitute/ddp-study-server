@@ -1,0 +1,61 @@
+post:
+  operationId: createStudyParticipant
+  tags:
+    - Studies
+  summary: CreateStudyParticipant
+  description: |
+    Create a new participant in study, and associate the provided invitation to it.
+
+    Note: this API is restricted to study admins.
+  parameters:
+    - $ref: '../pepper.yml#/components/parameters/studyGuid'
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - invitationId
+          properties:
+            invitationId:
+              description: the invitation id
+              type: string
+  responses:
+    200:
+      description: created participant
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - userGuid
+            properties:
+              userGuid:
+                description: guid of created participant user
+                type: string
+    400:
+      description: invitation id is missing
+      content:
+        application/json:
+          schema:
+            $ref: '../pepper.yml#/components/schemas/Error.BadPayload'
+    404:
+      description: invitation not found
+      content:
+        application/json:
+          schema:
+            $ref: '../pepper.yml#/components/schemas/Error.NotFound'
+    422:
+      description: invitation is already accepted or invalid
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '../pepper.yml#/components/schemas/Error'
+              - type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - INVALID_INVITATION
