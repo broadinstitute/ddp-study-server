@@ -7,6 +7,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -196,8 +197,14 @@ public class KitConfigurationTest extends TxnAwareBaseTest {
     @Test
     public void testKitZipCodeRule() {
         TransactionWrapper.useTxn(handle -> {
+            Set<String> zipCodes = new HashSet<>();
+            zipCodes.add(mailAddress.getZip());
+            for (int i = 0; i < 500; i++) {
+                zipCodes.add(String.format("12%03d", i));
+            }
+
             var dao = handle.attach(KitConfigurationDao.class);
-            long ruleId = dao.addZipCodeRule(configurationId, Set.of(mailAddress.getZip(), "12345"));
+            long ruleId = dao.addZipCodeRule(configurationId, zipCodes);
 
             // Test only this specific rule, so filter things down and construct a new config.
             var config = dao.kitConfigurationFactory()
@@ -215,6 +222,8 @@ public class KitConfigurationTest extends TxnAwareBaseTest {
                     .findFirst()
                     .get();
 
+            KitZipCodeRule actualRule = (KitZipCodeRule) config.getRules().iterator().next();
+            assertTrue(actualRule.getZipCodes().containsAll(zipCodes));
             assertTrue("should lookup zip code from mailing address", config.evaluate(handle, userGuid));
             assertFalse("no address means no zip code", config.evaluate(handle, "foobar"));
 
