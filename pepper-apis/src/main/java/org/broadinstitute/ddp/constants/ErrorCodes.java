@@ -75,4 +75,6 @@ public class ErrorCodes {
 
     public static final String INVALID_INVITATION = "INVALID_INVITATION";
     public static final String INVALID_INVITATION_QUALIFICATIONS = "INVALID_INVITATION_QUALIFICATIONS";
+
+    public static final String TOO_MANY_REQUESTS = "TOO_MANY_REQUESTS";
 }
