@@ -425,6 +425,12 @@
             <version>v1beta4-rev69-1.25.0</version>
         </dependency>
 
+        <dependency>
+            <groupId>org.eclipse.jetty</groupId>
+            <artifactId>jetty-servlets</artifactId>
+            <version>9.4.28.v20200408</version>
+        </dependency>
+
     </dependencies>
 
     <dependencyManagement>
@@ -455,6 +461,7 @@
                 <artifactId>c3p0</artifactId>
                 <version>0.9.5.4</version>
             </dependency>
+
         </dependencies>
     </dependencyManagement>
 

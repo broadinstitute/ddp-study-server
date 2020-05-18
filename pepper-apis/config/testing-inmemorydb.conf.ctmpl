@@ -95,6 +95,10 @@
         "fromName": "Pepper Local",
         "fromEmail": "noreply@datadonationplatform.org"
     },
+    "rateLimit": {
+        "apiLimitBurst": 100,
+        "apiLimitRate": 100
+    },
     "sendgridToken": "{{$testingConf.Data.sendgridToken}}",
     "sendgridTemplates": {
         {{if eq $environment "dev"}}
