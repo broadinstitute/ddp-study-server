@@ -200,4 +200,5 @@
     <include file="db-changes/schema/DDP-4552-modify-medicalprovider-street.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/refactor-invitations.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-4655-kit-zip-codes.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/study-admin.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
