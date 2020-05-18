@@ -333,22 +333,6 @@ public class SqlConstants {
         public static final String NAME = "name";
     }
 
-    public static final class KitConfigurationTable {
-        public static final String KIT_CONFIGURATION_ID = "kit_configuration_id";
-        public static final String STUDY_ID = "study_id";
-        public static final String NUMBER_OF_KITS = "number_of_kits";
-        public static final String KIT_TYPE_ID = "kit_type_id";
-    }
-
-    public static final class KitRuleTable {
-        public static final String ID = "kit_rule_id";
-        public static final String TYPE_ID = "kit_rule_type_id";
-    }
-
-    public static final class KitRuleTypeTable {
-        public static final String CODE = "kit_rule_type_code";
-    }
-
     public static final class KitCountryRuleTable {
         public static final String KIT_COUNTRY_RULE_ID = "kit_country_rule_id";
         public static final String RULE_ID = "kit_rule_id";

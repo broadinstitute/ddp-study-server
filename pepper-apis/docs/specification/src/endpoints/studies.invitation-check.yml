@@ -16,6 +16,7 @@ post:
             - auth0ClientId
             - invitationId
             - recaptchaToken
+            - qualificationDetails
           properties:
             auth0ClientId:
               description: the id of the client
@@ -26,8 +27,27 @@ post:
             recaptchaToken:
               description: the user's reCAPTCHA token
               type: string
+            qualificationDetails:
+              description: additional user qualifications for checking the invitation
+              type: object
+                properties:
+                  zipCode:
+                    description: user's current zip code for invitation qualification
+                    type: string
   responses:
     200:
       description: invitation exists and is valid and can be used by user
     400:
       description: invitation not valid
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '../pepper.yml#/components/schemas/Error'
+              - type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - INVALID_INVITATION
+                      - INVALID_INVITATION_QUALIFICATIONS
