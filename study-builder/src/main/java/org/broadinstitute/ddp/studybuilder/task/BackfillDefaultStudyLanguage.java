@@ -39,6 +39,7 @@ public class BackfillDefaultStudyLanguage implements CustomTask {
         studyList.add("ANGIO");
         studyList.add("cmi-brain");
         studyList.add("CMI-OSTEO");
+        studyList.add("cmi-mbc");
         boolean isDefault = true;
         for (String studyGuid : studyList) {
             //get studyId

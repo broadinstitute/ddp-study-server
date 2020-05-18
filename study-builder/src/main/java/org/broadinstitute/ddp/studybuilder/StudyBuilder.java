@@ -368,7 +368,6 @@ public class StudyBuilder {
     private void insertStudyDetails(Handle handle, long studyId) {
         JdbiUmbrellaStudyI18n jdbiStudyI18n = handle.attach(JdbiUmbrellaStudyI18n.class);
         JdbiLanguageCode jdbiLangCode = handle.attach(JdbiLanguageCode.class);
-        //StudyLanguageSql studyLanguageSql = handle.attach(StudyLanguageSql.class);
         StudyLanguageDao studyLanguageDao = handle.attach(StudyLanguageDao.class);
 
         boolean defaultSet = false;
