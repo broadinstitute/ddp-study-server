@@ -457,6 +457,10 @@ public class StudyBuilder {
                     String country = ruleCfg.getString("country");
                     long ruleId = kitDao.addCountryRule(kitId, country);
                     LOG.info("Added country rule to kit configuration {} with id={}, country={}", kitId, ruleId, country);
+                } else if (ruleType == KitRuleType.ZIP_CODE) {
+                    Set<String> zipCodes = Set.copyOf(ruleCfg.getStringList("zipCodes"));
+                    long ruleId = kitDao.addZipCodeRule(kitId, zipCodes);
+                    LOG.info("Added zip code rule to kit configuration {} with id={}, zipCodes={}", kitId, ruleId, zipCodes);
                 } else {
                     throw new DDPException("Unsupported kit rule type " + ruleType);
                 }
