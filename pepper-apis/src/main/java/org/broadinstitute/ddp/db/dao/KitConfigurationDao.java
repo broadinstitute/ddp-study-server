@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.db.dao;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -139,13 +140,14 @@ public interface KitConfigurationDao extends SqlObject {
             + "       krt.kit_rule_type_code as kit_rule_type,"
             + "       pe.expression_text as pex_expression,"
             + "       (select country_code from country where country_id = kc.country_id) as country_code,"
-            + "       (select group_concat(zip_code separator ',') from kit_zip_code where kit_rule_id = kr.kit_rule_id) as zip_codes"
+            + "       kz.zip_code as zip_code"
             + "  from kit_configuration__kit_rule as kckr"
             + "  join kit_rule as kr on kr.kit_rule_id = kckr.kit_rule_id"
             + "  join kit_rule_type as krt on krt.kit_rule_type_id = kr.kit_rule_type_id"
             + "  left join kit_pex_rule as kp on kp.kit_rule_id = kr.kit_rule_id"
             + "  left join expression as pe on pe.expression_id = kp.expression_id"
             + "  left join kit_country_rule as kc on kc.kit_rule_id = kr.kit_rule_id"
+            + "  left join kit_zip_code as kz on kz.kit_rule_id = kr.kit_rule_id"
             + " where kckr.kit_configuration_id = :configId")
     @UseRowReducer(KitRuleReducer.class)
     List<KitRule> findRulesByConfigId(@Bind("configId") long configId);
@@ -166,8 +168,10 @@ public interface KitConfigurationDao extends SqlObject {
                     rule = new KitCountryRule(ruleId, countryCode);
                     break;
                 case ZIP_CODE:
-                    String[] zipCodes = view.getColumn("zip_codes", String.class).split(",");
-                    rule = new KitZipCodeRule(ruleId, Set.of(zipCodes));
+                    KitZipCodeRule zipCodeRule = (KitZipCodeRule) container
+                            .computeIfAbsent(ruleId, id -> new KitZipCodeRule(id, new HashSet<>()));
+                    zipCodeRule.addZipCode(view.getColumn("zip_code", String.class));
+                    rule = zipCodeRule;
                     break;
                 default:
                     throw new DaoException("Unhandled kit rule type: " + type);

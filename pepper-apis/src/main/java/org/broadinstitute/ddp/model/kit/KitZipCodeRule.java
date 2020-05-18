@@ -17,6 +17,14 @@ public class KitZipCodeRule extends KitRule<String> {
         this.zipCodes = new HashSet<>(zipCodes);
     }
 
+    public Set<String> getZipCodes() {
+        return Set.copyOf(zipCodes);
+    }
+
+    public void addZipCode(String zipCode) {
+        this.zipCodes.add(zipCode);
+    }
+
     @Override
     public boolean validate(Handle handle, String inputZipCode) {
         if (inputZipCode == null) {
