@@ -1,52 +1,47 @@
 package org.broadinstitute.ddp.db.dto.kit;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
-
-import org.broadinstitute.ddp.constants.SqlConstants.KitConfigurationTable;
-import org.broadinstitute.ddp.constants.SqlConstants.KitTypeTable;
-import org.broadinstitute.ddp.model.dsm.KitTypes;
-import org.jdbi.v3.core.mapper.RowMapper;
-import org.jdbi.v3.core.statement.StatementContext;
+import org.jdbi.v3.core.mapper.reflect.ColumnName;
+import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
 public class KitConfigurationDto {
 
     private long id;
-    private Long studyId;
-    private Long numberOfKits;
-    private KitTypes kitType;
+    private long studyId;
+    private String studyGuid;
+    private long numberOfKits;
+    private long kitTypeId;
 
-    public KitConfigurationDto(long id, Long studyId, Long numberOfKits, KitTypes kitType) {
+    @JdbiConstructor
+    public KitConfigurationDto(
+            @ColumnName("kit_configuration_id") long id,
+            @ColumnName("study_id") long studyId,
+            @ColumnName("study_guid") String studyGuid,
+            @ColumnName("number_of_kits") long numberOfKits,
+            @ColumnName("kit_type_id") long kitTypeId) {
         this.id = id;
         this.studyId = studyId;
+        this.studyGuid = studyGuid;
         this.numberOfKits = numberOfKits;
-        this.kitType = kitType;
+        this.kitTypeId = kitTypeId;
     }
 
     public long getId() {
         return id;
     }
 
-    public Long getStudyId() {
+    public long getStudyId() {
         return studyId;
+    }
+
+    public String getStudyGuid() {
+        return studyGuid;
     }
 
     public long getNumberOfKits() {
         return numberOfKits;
     }
 
-    public String getKitType() {
-        return kitType.toString();
-    }
-
-    public static class KitConfigurationDtoMapper implements RowMapper<KitConfigurationDto> {
-        @Override
-        public KitConfigurationDto map(ResultSet rs, StatementContext ctx) throws SQLException {
-            return new KitConfigurationDto(
-                    rs.getLong(KitConfigurationTable.KIT_CONFIGURATION_ID),
-                    rs.getLong(KitConfigurationTable.STUDY_ID),
-                    rs.getLong(KitConfigurationTable.NUMBER_OF_KITS),
-                    KitTypes.valueOf(rs.getString(KitTypeTable.NAME)));
-        }
+    public long getKitTypeId() {
+        return kitTypeId;
     }
 }
