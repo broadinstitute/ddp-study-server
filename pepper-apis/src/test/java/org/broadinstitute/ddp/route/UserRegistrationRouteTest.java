@@ -345,7 +345,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
     @Test
     public void testRegister_missingDomain() {
         UserRegistrationPayload payload = new UserRegistrationPayload(auth0UserId, auth0ClientId,
-                EN_LANG_CODE, study1.getGuid(), null);
+                study1.getGuid(), null);
         makeRequestWith(payload).then().assertThat()
                 .statusCode(400)
                 .contentType(ContentType.JSON)
@@ -356,7 +356,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
     @Test
     public void testRegister_missingUserId() {
         UserRegistrationPayload payload = new UserRegistrationPayload(null, auth0ClientId,
-                EN_LANG_CODE, study1.getGuid(), auth0Domain);
+                study1.getGuid(), auth0Domain);
         makeRequestWith(payload).then().assertThat()
                 .statusCode(400)
                 .contentType(ContentType.JSON)
@@ -369,7 +369,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
         RouteTestUtil.revokeTestClient();
         try {
             UserRegistrationPayload payload = new UserRegistrationPayload(auth0UserId, auth0ClientId,
-                    EN_LANG_CODE, study1.getGuid(), auth0Domain);
+                    study1.getGuid(), auth0Domain);
             makeRequestWith(payload).then().assertThat().statusCode(401);
         } finally {
             RouteTestUtil.enableTestClient();
@@ -387,7 +387,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
         });
 
         UserRegistrationPayload payload = new UserRegistrationPayload(auth0UserId, auth0ClientId,
-                EN_LANG_CODE, study.getGuid(), auth0Domain);
+                study.getGuid(), auth0Domain);
 
         makeRequestWith(payload).then().assertThat()
                 .statusCode(404)
@@ -406,8 +406,11 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
         });
         auth0UserIdsToDelete.add(testAuth0UserId);
 
-        UserRegistrationPayload payload = new UserRegistrationPayload(testAuth0UserId, auth0ClientId,
-                EN_LANG_CODE, study1.getGuid(), auth0Domain);
+        UserRegistrationPayload payload = new UserRegistrationPayload(
+                testAuth0UserId, auth0ClientId, study1.getGuid(), auth0Domain)
+                .setLanguageCode(EN_LANG_CODE)
+                .setFirstName("foo")
+                .setLastName("bar");
 
         Instant start = Instant.now();
         String newUserGuid = makeRequestWith(payload).then().assertThat()
@@ -426,7 +429,9 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
             UserProfile profile = handle.attach(UserProfileDao.class).findProfileByUserId(userDto.getUserId()).get();
 
             Long enLanguageCodeId = handle.attach(JdbiLanguageCode.class).getLanguageCodeId(EN_LANG_CODE);
-            assertEquals(profile.getPreferredLangId(), enLanguageCodeId);
+            assertEquals(enLanguageCodeId, profile.getPreferredLangId());
+            assertEquals("foo", profile.getFirstName());
+            assertEquals("bar", profile.getLastName());
 
             JdbiUserStudyEnrollment jdbiEnrollment = handle.attach(JdbiUserStudyEnrollment.class);
             Optional<EnrollmentStatusType> enrollment = jdbiEnrollment
@@ -455,7 +460,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
 
         String fakeAuth0Id = "fake|" + Instant.now().toEpochMilli();
         UserRegistrationPayload payload = new UserRegistrationPayload(fakeAuth0Id, auth0ClientId,
-                EN_LANG_CODE, testStudy.getGuid(), auth0Domain, tempUser.getGuid(), null);
+                testStudy.getGuid(), auth0Domain, tempUser.getGuid(), null);
 
         String operatorUserGuid = makeRequestWith(payload).then().assertThat()
                 .statusCode(200)
@@ -510,7 +515,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
 
         String fakeAuth0Id = "fake|" + Instant.now().toEpochMilli();
         UserRegistrationPayload payload = new UserRegistrationPayload(fakeAuth0Id, auth0ClientId,
-                EN_LANG_CODE, testStudy.getGuid(), auth0Domain, tempUser.getGuid(), null);
+                testStudy.getGuid(), auth0Domain, tempUser.getGuid(), null);
 
         String operatorUserGuid = makeRequestWith(payload).then().assertThat()
                 .statusCode(200)
@@ -568,7 +573,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
         String expectedUserGuid = RouteTestUtil.getUnverifiedUserGuidFromToken(token);
 
         UserRegistrationPayload payload = new UserRegistrationPayload(auth0UserId, auth0ClientId,
-                EN_LANG_CODE, study1.getGuid(), auth0Domain);
+                study1.getGuid(), auth0Domain);
 
         makeRequestWith(payload).then().assertThat()
                 .statusCode(200)
@@ -585,7 +590,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
                 .isPresent()));
 
         UserRegistrationPayload payload = new UserRegistrationPayload(auth0UserId, auth0ClientId,
-                EN_LANG_CODE, tempStudy.getGuid(), auth0Domain, null, "login");
+                tempStudy.getGuid(), auth0Domain, null, "login");
 
         makeRequestWith(payload).then().assertThat()
                 .statusCode(HttpStatus.SC_UNPROCESSABLE_ENTITY)
@@ -611,7 +616,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
         });
 
         UserRegistrationPayload payload = new UserRegistrationPayload(auth0UserId, auth0ClientId,
-                EN_LANG_CODE, tempStudy.getGuid(), auth0Domain, null, "login");
+                tempStudy.getGuid(), auth0Domain, null, "login");
 
         makeRequestWith(payload).then().assertThat()
                 .statusCode(200)
@@ -624,7 +629,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
         String fakeAuth0Id = "this-has-no-email" + Instant.now().toEpochMilli();
 
         UserRegistrationPayload payload = new UserRegistrationPayload(fakeAuth0Id, auth0ClientId,
-                EN_LANG_CODE, study1.getGuid(), auth0Domain);
+                study1.getGuid(), auth0Domain);
 
         String newUserGuid = makeRequestWith(payload).then().assertThat()
                 .statusCode(200)
@@ -655,7 +660,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
 
         try {
             UserRegistrationPayload payload = new UserRegistrationPayload(auth0UserId, auth0ClientId,
-                    EN_LANG_CODE, study1.getGuid(), auth0Domain);
+                    study1.getGuid(), auth0Domain);
             makeRequestWith(payload).then().assertThat().statusCode(200);
 
             TransactionWrapper.useTxn(handle -> {
@@ -678,7 +683,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
                 handle.attach(JdbiUser.class).findByUserId(user1Id).getAuth0UserId());
 
         UserRegistrationPayload payload = new UserRegistrationPayload(auth0UserIdForUser1, auth0ClientId,
-                EN_LANG_CODE, study1.getGuid(), auth0Domain);
+                study1.getGuid(), auth0Domain);
 
         makeRequestWith(payload).then().assertThat().statusCode(200);
     }
@@ -703,7 +708,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
 
         String fakeAuth0Id = "fake|" + Instant.now().toEpochMilli();
         UserRegistrationPayload payload = new UserRegistrationPayload(fakeAuth0Id, auth0ClientId,
-                EN_LANG_CODE, testStudy.getGuid(), auth0Domain, tempUser.getGuid(), null);
+                testStudy.getGuid(), auth0Domain, tempUser.getGuid(), null);
 
         String actualUserGuid = makeRequestWith(payload).then().assertThat()
                 .statusCode(200)
@@ -740,7 +745,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
 
         String fakeAuth0Id = "fake|" + Instant.now().toEpochMilli();
         UserRegistrationPayload payload = new UserRegistrationPayload(fakeAuth0Id, auth0ClientId,
-                EN_LANG_CODE, tempStudy.getGuid(), auth0Domain, tempUser.getGuid(), null);
+                tempStudy.getGuid(), auth0Domain, tempUser.getGuid(), null);
 
         String actualUserGuid = makeRequestWith(payload).then().assertThat()
                 .statusCode(200)
@@ -780,7 +785,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
         userGuidsToDelete.add(tempUser.getGuid());
 
         UserRegistrationPayload payload = new UserRegistrationPayload(auth0UserId, auth0ClientId,
-                EN_LANG_CODE, tempStudy.getGuid(), auth0Domain, tempUser.getGuid(), null);
+                tempStudy.getGuid(), auth0Domain, tempUser.getGuid(), null);
 
         makeRequestWith(payload).then().assertThat()
                 .statusCode(422)
@@ -801,7 +806,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
 
         String fakeAuth0Id = "fake|" + Instant.now().toEpochMilli();
         UserRegistrationPayload payload = new UserRegistrationPayload(fakeAuth0Id, auth0ClientId,
-                EN_LANG_CODE, tempStudy.getGuid(), auth0Domain, tempUser.getUserGuid(), null);
+                tempStudy.getGuid(), auth0Domain, tempUser.getUserGuid(), null);
 
         makeRequestWith(payload).then().assertThat()
                 .statusCode(422)
@@ -815,7 +820,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
         String existingUserGuid = RouteTestUtil.getUnverifiedUserGuidFromToken(token);
 
         UserRegistrationPayload payload = new UserRegistrationPayload(auth0UserId, auth0ClientId,
-                EN_LANG_CODE, tempStudy.getGuid(), auth0Domain, existingUserGuid, null);
+                tempStudy.getGuid(), auth0Domain, existingUserGuid, null);
 
         makeRequestWith(payload).then().assertThat()
                 .statusCode(422)
@@ -827,7 +832,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
     @Test
     public void testUpgradeTempUser_whenGivenNonExistingTempUser_returnsError() {
         UserRegistrationPayload payload = new UserRegistrationPayload(auth0UserId, auth0ClientId,
-                EN_LANG_CODE, tempStudy.getGuid(), auth0Domain, "non-existing-temp-guid", null);
+                tempStudy.getGuid(), auth0Domain, "non-existing-temp-guid", null);
 
         makeRequestWith(payload).then().assertThat()
                 .statusCode(422)
@@ -897,7 +902,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
             String invitationGuid = invitation.get().getInvitationGuid();
 
             UserRegistrationPayload payload = new UserRegistrationPayload(auth0UserId, auth0ClientId,
-                    EN_LANG_CODE, testStudy.get().getGuid(), auth0Domain, null, null, invitationGuid);
+                    testStudy.get().getGuid(), auth0Domain, null, null, invitationGuid);
 
             makeRequestWith(payload).then().assertThat()
                     .statusCode(200)
@@ -965,7 +970,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
             String invitationGuid = invitation.get().getInvitationGuid();
             String fakeAuth0UserId = "fake_auth0_id" + System.currentTimeMillis();
             var payload = new UserRegistrationPayload(fakeAuth0UserId, auth0ClientId,
-                    EN_LANG_CODE, testStudy.get().getGuid(), auth0Domain, null, null, invitationGuid);
+                    testStudy.get().getGuid(), auth0Domain, null, null, invitationGuid);
 
             String createdUserGuid = makeRequestWith(payload)
                     .then().assertThat()

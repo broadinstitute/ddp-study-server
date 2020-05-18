@@ -43,10 +43,12 @@ import org.broadinstitute.ddp.filter.DsmAuthFilter;
 import org.broadinstitute.ddp.filter.HttpHeaderMDCFilter;
 import org.broadinstitute.ddp.filter.MDCAttributeRemovalFilter;
 import org.broadinstitute.ddp.filter.MDCLogBreadCrumbFilter;
+import org.broadinstitute.ddp.filter.RateLimitFilter;
 import org.broadinstitute.ddp.filter.StudyLanguageContentLanguageSettingFilter;
 import org.broadinstitute.ddp.filter.StudyLanguageResolutionFilter;
 import org.broadinstitute.ddp.filter.TokenConverterFilter;
 import org.broadinstitute.ddp.filter.UserAuthCheckFilter;
+import org.broadinstitute.ddp.jetty.JettyConfig;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.dsm.DrugStore;
 import org.broadinstitute.ddp.monitoring.PointsReducerFactory;
@@ -169,6 +171,8 @@ public class DataDonationPlatform {
             "Content-Length", "Accept", "Origin", ""};
     private static final Map<String, String> pathToClass = new HashMap<>();
     public static final String PORT = "PORT";
+    public static final int DEFAULT_RATE_LIMIT_MAX_QUERIES_PER_SECOND = 10;
+    public static final int DEFAULT_RATE_LIMIT_BURST = 15;
     private static Scheduler scheduler = null;
 
     /**
@@ -222,6 +226,13 @@ public class DataDonationPlatform {
 
         // GAE specifies port to use via environment variable
         String appEnginePort = System.getenv(PORT);
+
+        String preferredSourceIPHeader = null;
+        if (cfg.hasPath(ConfigFile.PREFERRED_SOURCE_IP_HEADER)) {
+            preferredSourceIPHeader = cfg.getString(ConfigFile.PREFERRED_SOURCE_IP_HEADER);
+        }
+        JettyConfig.setupJetty(preferredSourceIPHeader);
+
         if (appEnginePort != null) {
             port(Integer.parseInt(appEnginePort));
         } else {
@@ -255,6 +266,16 @@ public class DataDonationPlatform {
         final ActivityValidationService activityValidationService = new ActivityValidationService();
 
         SimpleJsonTransformer responseSerializer = new SimpleJsonTransformer();
+
+        if (cfg.hasPath(ConfigFile.API_RATE_LIMIT.MAX_QUERIES_PER_SECOND)  && cfg.hasPath(ConfigFile.API_RATE_LIMIT.BURST)) {
+            int maxQueriesPerSecond = cfg.getInt(ConfigFile.API_RATE_LIMIT.MAX_QUERIES_PER_SECOND);
+            int burst = cfg.getInt(ConfigFile.API_RATE_LIMIT.BURST);
+            LOG.info("Will use rate limit {} with burst {}", maxQueriesPerSecond, burst);
+            before("*", new RateLimitFilter(maxQueriesPerSecond, burst));
+        } else {
+            LOG.warn("No rate limit values given.  Rate limiting is disabled.");
+        }
+
 
         before("*", new HttpHeaderMDCFilter(X_FORWARDED_FOR));
         before("*", new MDCLogBreadCrumbFilter());
