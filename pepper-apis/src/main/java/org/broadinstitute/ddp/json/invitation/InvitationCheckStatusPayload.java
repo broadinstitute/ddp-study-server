@@ -39,6 +39,9 @@ public class InvitationCheckStatusPayload {
     }
 
     public Map<String, Object> getQualificationDetails() {
+        if (qualificationDetails == null) {
+            qualificationDetails = new HashMap<>();
+        }
         return qualificationDetails;
     }
 }

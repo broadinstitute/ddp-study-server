@@ -1,5 +1,7 @@
 package org.broadinstitute.ddp.route;
 
+import static org.broadinstitute.ddp.json.invitation.InvitationCheckStatusPayload.QUALIFICATION_ZIP_CODE;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -108,7 +110,7 @@ public class InvitationCheckStatusRoute extends ValidatedJsonInputRoute<Invitati
             LOG.info("Study {} has {} kit configurations which has kit zip code rules,"
                             + " checking user's zip code qualification to ensure it matches for all these kits",
                     studyGuid, kitZipCodeRules.size());
-            String userZipCode = (String) payload.getQualificationDetails().getOrDefault("zipCode", "");
+            String userZipCode = (String) payload.getQualificationDetails().getOrDefault(QUALIFICATION_ZIP_CODE, "");
             for (var rules : kitZipCodeRules) {
                 boolean matched = rules.stream().anyMatch(rule -> rule.validate(handle, userZipCode));
                 if (!matched) {

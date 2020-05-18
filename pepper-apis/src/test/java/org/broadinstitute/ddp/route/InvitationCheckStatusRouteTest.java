@@ -182,6 +182,14 @@ public class InvitationCheckStatusRouteTest extends IntegrationTestSuite.TestCas
                     .statusCode(400).contentType(ContentType.JSON)
                     .body("code", equalTo(ErrorCodes.INVALID_INVITATION_QUALIFICATIONS));
 
+            // Test null zip code
+            payload.getQualificationDetails().put(QUALIFICATION_ZIP_CODE, null);
+            given().body(payload, ObjectMapperType.GSON)
+                    .when().post(url)
+                    .then().assertThat()
+                    .statusCode(400).contentType(ContentType.JSON)
+                    .body("code", equalTo(ErrorCodes.INVALID_INVITATION_QUALIFICATIONS));
+
             // Test zip code match success
             payload.getQualificationDetails().put(QUALIFICATION_ZIP_CODE, "12345");
             given().body(payload, ObjectMapperType.GSON)
