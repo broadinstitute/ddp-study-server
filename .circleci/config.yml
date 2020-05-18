@@ -583,6 +583,17 @@ commands:
             mvn test-compile --batch-mode -DskipTests -Dmaven.repo.local=<< parameters.m2_repo >>
 
 jobs:
+  build-api-docs-job:
+    executor:
+      name: build-deploy-executor
+    working_directory: *api-spec-path
+    steps:
+      - checkout:
+          path: *repo_path
+      - run:
+          name: Build docs
+          command: ./build.sh documentation
+
   compile-and-run-test-suite-job:
     executor:
       name: test-executor
@@ -591,6 +602,11 @@ jobs:
       - checkout:
           path: *repo_path
       - setup-shared-env
+      - run:
+          name: Build api docs
+          command: |
+            cd docs/specification
+            ./build.sh documentation
       - compile-all-jars:
           restore_m2_cache: true
       - render-configs
@@ -736,6 +752,8 @@ workflows:
       - parallel-compile-and-test-job:
           parallelism: *test_parallelism
           <<: *compile_and_test_filters
+      - build-api-docs-job:
+          <<: *compile_and_test_filters
       - deploy-jar-from-workspace-job:
           filters:
             branches:
@@ -761,6 +779,7 @@ workflows:
       - compile-and-run-test-suite-job
       - parallel-compile-and-test-job:
           parallelism: *test_parallelism
+      - build-api-docs-job
 
   deploy-workflow:
     jobs:
