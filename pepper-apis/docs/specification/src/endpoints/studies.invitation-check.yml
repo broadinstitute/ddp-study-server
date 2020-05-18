@@ -30,10 +30,10 @@ post:
             qualificationDetails:
               description: additional user qualifications for checking the invitation
               type: object
-                properties:
-                  zipCode:
-                    description: user's current zip code for invitation qualification
-                    type: string
+              properties:
+                zipCode:
+                  description: user's current zip code for invitation qualification
+                  type: string
   responses:
     200:
       description: invitation exists and is valid and can be used by user

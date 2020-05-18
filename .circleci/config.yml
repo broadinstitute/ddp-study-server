@@ -602,11 +602,6 @@ jobs:
       - checkout:
           path: *repo_path
       - setup-shared-env
-      - run:
-          name: Build api docs
-          command: |
-            cd docs/specification
-            ./build.sh documentation
       - compile-all-jars:
           restore_m2_cache: true
       - render-configs
