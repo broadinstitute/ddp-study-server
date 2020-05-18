@@ -85,7 +85,7 @@
     </changeSet>
 
     <changeSet author="yufeng" id="baseline-seed-test-data-test-admin-user">
-        <validCheckSum>8:e473c4e24f73e2ffb441fd8dcc061de8</validCheckSum>
+        <validCheckSum>8:52721d61ce840801ee7b0000823e7dc2</validCheckSum>
         <preConditions onFail="MARK_RAN">
             <sqlCheck expectedResult="0">
                 select count(*) from user where guid = 'CA390377Y7D18X4CB2SS'
@@ -102,13 +102,6 @@
         <insert tableName="study_admin">
             <column name="user_id" valueComputed="(select user_id from user where guid = 'CA390377Y7D18X4CB2SS')"/>
             <column name="umbrella_study_id" valueComputed="(select umbrella_study_id from umbrella_study where guid = 'TESTSTUDY1')"/>
-        </insert>
-        <insert tableName="firecloud_service_account">
-            <column name="account_key_location" value="ddp-testing.json"/>
-        </insert>
-        <insert tableName="firecloud_admin_service_account">
-            <column name="study_admin_id" valueComputed="(select study_admin_id from study_admin where user_id = (select user_id from user where guid = 'CA390377Y7D18X4CB2SS'))"/>
-            <column name="firecloud_service_account_id" valueComputed="(select firecloud_service_account_id from firecloud_service_account where account_key_location = 'ddp-testing.json')" />
         </insert>
     </changeSet>
 

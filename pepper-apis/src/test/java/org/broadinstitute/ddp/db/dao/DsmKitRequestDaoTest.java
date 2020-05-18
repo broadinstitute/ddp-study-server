@@ -20,8 +20,6 @@ import java.util.function.Predicate;
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.db.UserDao;
-import org.broadinstitute.ddp.db.UserDaoFactory;
 import org.broadinstitute.ddp.db.dto.dsm.DsmKitRequest;
 import org.broadinstitute.ddp.model.address.MailAddress;
 import org.broadinstitute.ddp.model.dsm.KitType;
@@ -44,7 +42,6 @@ public class DsmKitRequestDaoTest extends TxnAwareBaseTest {
     private KitTypeDao kitTypeDao;
     private Set<Long> requestKitsIdsToDelete = new HashSet<>();
     private Set<Long> mailAddressesToDelete = new HashSet<>();
-    private UserDao userDao;
     private MailAddress testAddress;
 
     @BeforeClass
@@ -62,7 +59,6 @@ public class DsmKitRequestDaoTest extends TxnAwareBaseTest {
         //mailDao = new MailAddressDao();
         testAddress = createTestAddress(TEST_USER_GUID);
         mailAddressesToDelete.add(testAddress.getId());
-        userDao = UserDaoFactory.createFromSqlConfig(sqlConfig);
     }
 
     @Test

@@ -9,8 +9,6 @@ import com.typesafe.config.Config;
 import org.broadinstitute.ddp.constants.Auth0Constants;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.db.UserDao;
-import org.broadinstitute.ddp.db.UserDaoFactory;
 import org.broadinstitute.ddp.route.IntegrationTestSuite;
 import org.broadinstitute.ddp.route.RouteTestUtil;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
@@ -20,7 +18,6 @@ import org.junit.Test;
 public class JWTConverterTest extends IntegrationTestSuite.TestCase {
 
     private static Config auth0Config;
-    private static UserDao userDao;
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static String token;
 
@@ -29,7 +26,6 @@ public class JWTConverterTest extends IntegrationTestSuite.TestCase {
         TransactionWrapper.useTxn(handle -> testData = TestDataSetupUtil.generateBasicUserTestData(handle));
         token = testData.getTestingUser().getToken();
         auth0Config = RouteTestUtil.getConfig().getConfig(ConfigFile.AUTH0);
-        userDao = UserDaoFactory.createFromSqlConfig(RouteTestUtil.getSqlConfig());
     }
 
     @Test
@@ -44,7 +40,7 @@ public class JWTConverterTest extends IntegrationTestSuite.TestCase {
         String expectedUserGuid = testData.getUserGuid();
         String expectedClient = testData.getTestingClient().getAuth0ClientId();
 
-        JWTConverter jwtConverter = new JWTConverter(userDao);
+        JWTConverter jwtConverter = new JWTConverter();
         DDPAuth ddpAuth = jwtConverter.convertJWTFromHeader("Bearer " + token);
 
         assertTrue(ddpAuth.isActive());
