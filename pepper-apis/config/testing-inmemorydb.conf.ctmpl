@@ -73,13 +73,15 @@
     "socialTestEmail": "{{$testingConf.Data.socialTestEmail}}",
     "socialTestPassword": "{{$testingConf.Data.socialTestPassword}}",
     "usePubSubEmulator": true,
-    "pubSubProject": "testing",
     "runScheduler": false,
     "sendMetrics": false,
     "requireDefaultGcpCredentials": false,
     "googleProjectId": "broad-ddp-dev",
     "pdfArchiveBucket": "pepper-pdf-dev",
     "pdfArchiveUseFilesystem": true,
+    "pubsub": {
+        "housekeepingEventsTopic": "local-housekeeping-events",
+    },
     "studyExportBucket": "ddp-dev-study-exports-testing",
     "schedules": {
         "checkAgeUp": "0 0 7 ? * * *",
