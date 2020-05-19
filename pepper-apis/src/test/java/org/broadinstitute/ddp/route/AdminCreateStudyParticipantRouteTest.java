@@ -24,20 +24,20 @@ import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dao.UserProfileSql;
-import org.broadinstitute.ddp.json.CreateStudyParticipantPayload;
+import org.broadinstitute.ddp.json.admin.CreateStudyParticipantPayload;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class CreateStudyParticipantRouteTest extends IntegrationTestSuite.TestCase {
+public class AdminCreateStudyParticipantRouteTest extends IntegrationTestSuite.TestCase {
 
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static String urlTemplate;
 
     @BeforeClass
     public static void setupData() {
-        urlTemplate = RouteTestUtil.getTestingBaseUrl() + RouteConstants.API.STUDY_PARTICIPANTS
+        urlTemplate = RouteTestUtil.getTestingBaseUrl() + RouteConstants.API.ADMIN_STUDY_PARTICIPANTS
                 .replace(RouteConstants.PathParam.STUDY_GUID, "{study}");
         TransactionWrapper.useTxn(handle -> {
             testData = TestDataSetupUtil.generateBasicUserTestData(handle);

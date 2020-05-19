@@ -13,8 +13,8 @@ import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dto.InvitationDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
-import org.broadinstitute.ddp.json.InvitationLookupPayload;
-import org.broadinstitute.ddp.json.InvitationLookupResponse;
+import org.broadinstitute.ddp.json.admin.LookupInvitationPayload;
+import org.broadinstitute.ddp.json.admin.LookupInvitationResponse;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.util.Auth0Util;
@@ -25,9 +25,9 @@ import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 
-public class InvitationLookupRoute extends ValidatedJsonInputRoute<InvitationLookupPayload> {
+public class AdminLookupInvitationRoute extends ValidatedJsonInputRoute<LookupInvitationPayload> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(InvitationLookupRoute.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AdminLookupInvitationRoute.class);
 
     @Override
     protected int getValidationErrorStatus() {
@@ -35,7 +35,7 @@ public class InvitationLookupRoute extends ValidatedJsonInputRoute<InvitationLoo
     }
 
     @Override
-    public Object handle(Request request, Response response, InvitationLookupPayload payload) {
+    public Object handle(Request request, Response response, LookupInvitationPayload payload) {
         String studyGuid = request.params(RouteConstants.PathParam.STUDY_GUID);
         String invitationGuid = payload.getInvitationGuid();
         LOG.info("Attempting to get invitation {} in study {}", invitationGuid, studyGuid);
@@ -57,7 +57,7 @@ public class InvitationLookupRoute extends ValidatedJsonInputRoute<InvitationLoo
             }
 
             if (invitation.getUserId() == null) {
-                return new InvitationLookupResponse(invitation, null, null, null);
+                return new LookupInvitationResponse(invitation, null, null, null);
             } else {
                 User user = handle.attach(UserDao.class).findUserById(invitation.getUserId()).orElse(null);
                 if (user == null) {
@@ -73,7 +73,7 @@ public class InvitationLookupRoute extends ValidatedJsonInputRoute<InvitationLoo
                     loginEmail = emailResults.get(user.getAuth0UserId());
                 }
 
-                return new InvitationLookupResponse(invitation, user.getGuid(), user.getHruid(), loginEmail);
+                return new LookupInvitationResponse(invitation, user.getGuid(), user.getHruid(), loginEmail);
             }
         });
 

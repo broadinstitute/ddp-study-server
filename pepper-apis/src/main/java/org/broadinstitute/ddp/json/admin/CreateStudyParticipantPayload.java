@@ -1,16 +1,16 @@
-package org.broadinstitute.ddp.json;
+package org.broadinstitute.ddp.json.admin;
 
-import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotBlank;
 
 import com.google.gson.annotations.SerializedName;
 
-public class InvitationLookupPayload {
+public class CreateStudyParticipantPayload {
 
-    @NotEmpty
+    @NotBlank
     @SerializedName("invitationId")
     private String invitationGuid;
 
-    public InvitationLookupPayload(String invitationGuid) {
+    public CreateStudyParticipantPayload(String invitationGuid) {
         this.invitationGuid = invitationGuid;
     }
 

@@ -2,7 +2,7 @@ package org.broadinstitute.ddp.filter;
 
 import static spark.Spark.halt;
 
-import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
+import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.security.DDPAuth;
 import org.broadinstitute.ddp.util.RouteUtil;
 import org.slf4j.Logger;
@@ -14,9 +14,9 @@ import spark.Response;
 /**
  * A filter that only allows access to study admins.
  */
-public class OnlyStudyAdminFilter implements Filter {
+public class StudyAdminAuthFilter implements Filter {
 
-    private static final Logger LOG = LoggerFactory.getLogger(OnlyStudyAdminFilter.class);
+    private static final Logger LOG = LoggerFactory.getLogger(StudyAdminAuthFilter.class);
     private static final AuthPathRegexUtil pathMatcher = new AuthPathRegexUtil();
 
     @Override
@@ -31,9 +31,12 @@ public class OnlyStudyAdminFilter implements Filter {
         boolean canAccess = ddpAuth.isAdmin();
 
         String path = request.pathInfo();
-        if (pathMatcher.isStudyRoute(path)) {
+        if (pathMatcher.isAdminStudyRoute(path)) {
             // If it's a study-specific route, make sure study admin has access to this particular study.
-            String studyGuid = request.params(PathParam.STUDY_GUID);
+            String studyGuid = RouteUtil.parseAdminStudyGuid(path);
+            if (studyGuid == null) {
+                throw new DDPException("Unable to parse admin study guid from request uri path: " + path);
+            }
             canAccess = ddpAuth.hasAdminAccessToStudy(studyGuid);
         }
 

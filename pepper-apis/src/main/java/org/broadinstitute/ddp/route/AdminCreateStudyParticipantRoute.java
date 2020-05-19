@@ -17,8 +17,8 @@ import org.broadinstitute.ddp.db.dto.Auth0TenantDto;
 import org.broadinstitute.ddp.db.dto.InvitationDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
-import org.broadinstitute.ddp.json.CreateStudyParticipantPayload;
-import org.broadinstitute.ddp.json.CreateStudyParticipantResponse;
+import org.broadinstitute.ddp.json.admin.CreateStudyParticipantPayload;
+import org.broadinstitute.ddp.json.admin.CreateStudyParticipantResponse;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.model.user.User;
@@ -32,9 +32,9 @@ import org.slf4j.LoggerFactory;
 import spark.Request;
 import spark.Response;
 
-public class CreateStudyParticipantRoute extends ValidatedJsonInputRoute<CreateStudyParticipantPayload> {
+public class AdminCreateStudyParticipantRoute extends ValidatedJsonInputRoute<CreateStudyParticipantPayload> {
 
-    private static final Logger LOG = LoggerFactory.getLogger(CreateStudyParticipantRoute.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AdminCreateStudyParticipantRoute.class);
 
     @Override
     protected int getValidationErrorStatus() {

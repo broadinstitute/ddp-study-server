@@ -1,4 +1,4 @@
-package org.broadinstitute.ddp.json;
+package org.broadinstitute.ddp.json.admin;
 
 import com.google.gson.annotations.SerializedName;
 
