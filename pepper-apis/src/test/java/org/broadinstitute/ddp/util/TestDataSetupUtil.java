@@ -43,8 +43,6 @@ import org.broadinstitute.ddp.constants.SqlConstants;
 import org.broadinstitute.ddp.constants.TestConstants;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.db.UserDao;
-import org.broadinstitute.ddp.db.UserDaoFactory;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
@@ -148,7 +146,6 @@ public class TestDataSetupUtil {
     private static final String password = auth0Config.getString(AUTH0_TEST_PASSWORD);
     private static final List<GeneratedTestData> testDataToDelete = new ArrayList<>();
     private static final String CONSENT_PDF_LOCATION = "src/test/resources/ConsentForm.pdf";
-    private static UserDao userDao = UserDaoFactory.createFromSqlConfig(sqlConfig);
 
     public static void main(String[] args) throws Exception {
         Logger root = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);

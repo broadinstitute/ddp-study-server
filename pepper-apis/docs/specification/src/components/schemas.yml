@@ -36,10 +36,12 @@ JoinMailingListPayload:
       description: users first name
       type: string
       example: John
+      minLength: 0
     lastName:
       description: users last name
       type: string
       example: Doe
+      minLength: 0
     emailAddress:
       description: users email address
       type: string

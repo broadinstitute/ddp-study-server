@@ -22,11 +22,9 @@ import spark.Response;
 import spark.route.HttpMethod;
 
 /**
- * Checks route params and compares the requested user guid
- * and requested study guid with the corresponding
- * data encoded in the {@link DDPAuth ddpAuth} parsed from
- * the JWT token.  If the JWT's access matches the route params,  no action is taken.
- * If JWT does not grant access, the route is halted.
+ * Checks route params and compares the requested user guid and requested study guid with the corresponding data encoded
+ * in the {@link DDPAuth ddpAuth} parsed from the JWT token.  If the JWT's access matches the route params,  no action
+ * is taken. If JWT does not grant access, the route is halted.
  */
 public class UserAuthCheckFilter implements Filter {
 
@@ -36,9 +34,9 @@ public class UserAuthCheckFilter implements Filter {
     private final List<WhitelistEntry> tempUserWhitelist = new ArrayList<>();
 
     /**
-     * Add a route to the whitelist that enables temporary user access. If the route endpoint path has path parameters, it should be using
-     * SparkJava's colon syntax (see {@link PathParam}). These path parameters will be converted to regex in order to match the whole path
-     * to incoming requests.
+     * Add a route to the whitelist that enables temporary user access. If the route endpoint path has path parameters,
+     * it should be using SparkJava's colon syntax (see {@link PathParam}). These path parameters will be converted to
+     * regex in order to match the whole path to incoming requests.
      *
      * @param method   the http method name
      * @param endpoint the endpoint path, using path-param colon syntax as needed
@@ -70,7 +68,7 @@ public class UserAuthCheckFilter implements Filter {
         String path = request.pathInfo();
         boolean canAccess = false;
 
-        if (pathMatcher.isStudyRoute(path)) {
+        if (pathMatcher.isUserStudyRoute(path)) {
             // Need to do our own parsing since Spark does not parse out all params.
             String study = RouteUtil.parseStudyGuid(path);
             if (study == null) {
@@ -82,7 +80,8 @@ public class UserAuthCheckFilter implements Filter {
                 canAccess = ddpAuth.canAccessStudyDataForUser(requestedUserGuid, study);
             }
         } else if (pathMatcher.isProfileRoute(path)) {
-            canAccess = ddpAuth.canAccessUserProfile(requestedUserGuid);
+            canAccess = TransactionWrapper.withTxn(apiHandle ->
+                    ddpAuth.canAccessUserProfile(apiHandle, requestedUserGuid));
         } else if (pathMatcher.isUpdateUserPasswordRoute(path) || pathMatcher.isUpdateUserEmailRoute(path)) {
             canAccess = ddpAuth.canUpdateLoginData(requestedUserGuid);
         } else if (pathMatcher.isGovernedParticipantsRoute(path)) {

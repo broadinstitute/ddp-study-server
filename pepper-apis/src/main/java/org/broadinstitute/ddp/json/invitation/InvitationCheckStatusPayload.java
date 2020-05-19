@@ -1,10 +1,14 @@
 package org.broadinstitute.ddp.json.invitation;
 
+import java.util.HashMap;
+import java.util.Map;
 import javax.validation.constraints.NotEmpty;
 
 import com.google.gson.annotations.SerializedName;
 
 public class InvitationCheckStatusPayload {
+
+    public static final String QUALIFICATION_ZIP_CODE = "zipCode";
 
     @NotEmpty
     @SerializedName("auth0ClientId")
@@ -13,6 +17,9 @@ public class InvitationCheckStatusPayload {
     @NotEmpty
     @SerializedName("invitationId")
     private String invitationGuid;
+
+    @SerializedName("qualificationDetails")
+    private Map<String, Object> qualificationDetails = new HashMap<>();
 
     // @NotEmpty
     // @SerializedName("recaptchaToken")
@@ -29,5 +36,12 @@ public class InvitationCheckStatusPayload {
 
     public String getInvitationGuid() {
         return invitationGuid;
+    }
+
+    public Map<String, Object> getQualificationDetails() {
+        if (qualificationDetails == null) {
+            qualificationDetails = new HashMap<>();
+        }
+        return qualificationDetails;
     }
 }

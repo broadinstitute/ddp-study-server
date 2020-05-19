@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.json;
 import java.util.List;
 import javax.validation.constraints.Email;
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 
 import com.google.gson.annotations.SerializedName;
 
@@ -13,11 +14,11 @@ public class JoinMailingListPayload {
     @SerializedName("studyGuid")
     private String studyGuid;
 
-    @NotEmpty
+    @NotNull
     @SerializedName("firstName")
     private String firstName;
 
-    @NotEmpty
+    @NotNull
     @SerializedName("lastName")
     private String lastName;
 

@@ -1,7 +1,10 @@
 package org.broadinstitute.ddp.route;
 
 import static io.restassured.RestAssured.given;
+import static org.broadinstitute.ddp.json.invitation.InvitationCheckStatusPayload.QUALIFICATION_ZIP_CODE;
+import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doReturn;
@@ -11,9 +14,12 @@ import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
 
+import io.restassured.http.ContentType;
 import io.restassured.mapper.ObjectMapperType;
-import org.apache.http.HttpStatus;
+import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.InvitationDao;
@@ -21,6 +27,8 @@ import org.broadinstitute.ddp.db.dao.InvitationFactory;
 import org.broadinstitute.ddp.db.dao.InvitationSql;
 import org.broadinstitute.ddp.db.dao.JdbiClientUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
+import org.broadinstitute.ddp.db.dao.KitConfigurationDao;
+import org.broadinstitute.ddp.db.dao.KitTypeDao;
 import org.broadinstitute.ddp.db.dto.InvitationDto;
 import org.broadinstitute.ddp.json.invitation.InvitationCheckStatusPayload;
 import org.broadinstitute.ddp.model.invitation.InvitationType;
@@ -63,8 +71,9 @@ public class InvitationCheckStatusRouteTest extends IntegrationTestSuite.TestCas
     public void testCheckStatus_studyNotFound() {
         doReturn(null).when(mockJdbiStudy).findByStudyGuid(any());
         var payload = new InvitationCheckStatusPayload("foo", "invite");
-        int actual = route.checkStatus(mockHandle, "study", payload);
-        assertEquals(HttpStatus.SC_BAD_REQUEST, actual);
+        var actual = route.checkStatus(mockHandle, "study", payload);
+        assertNotNull(actual);
+        assertEquals(ErrorCodes.INVALID_INVITATION, actual.getCode());
     }
 
     @Test
@@ -74,8 +83,9 @@ public class InvitationCheckStatusRouteTest extends IntegrationTestSuite.TestCas
                 .findPermittedStudyGuidsByAuth0ClientIdAndAuth0Domain(any(), any());
 
         var payload = new InvitationCheckStatusPayload("foo", "invite");
-        int actual = route.checkStatus(mockHandle, "study", payload);
-        assertEquals(HttpStatus.SC_BAD_REQUEST, actual);
+        var actual = route.checkStatus(mockHandle, "study", payload);
+        assertNotNull(actual);
+        assertEquals(ErrorCodes.INVALID_INVITATION, actual.getCode());
     }
 
     @Test
@@ -85,8 +95,9 @@ public class InvitationCheckStatusRouteTest extends IntegrationTestSuite.TestCas
                 .findPermittedStudyGuidsByAuth0ClientIdAndAuth0Domain(any(), any());
 
         var payload = new InvitationCheckStatusPayload("foo", "invite");
-        int actual = route.checkStatus(mockHandle, "study", payload);
-        assertEquals(HttpStatus.SC_BAD_REQUEST, actual);
+        var actual = route.checkStatus(mockHandle, "study", payload);
+        assertNotNull(actual);
+        assertEquals(ErrorCodes.INVALID_INVITATION, actual.getCode());
     }
 
     @Test
@@ -97,19 +108,19 @@ public class InvitationCheckStatusRouteTest extends IntegrationTestSuite.TestCas
         var payload = new InvitationCheckStatusPayload("foo", "invite");
 
         doReturn(Optional.empty()).when(mockInviteDao).findByInvitationGuid(anyLong(), any());
-        int actual = route.checkStatus(mockHandle, "study", payload);
-        assertEquals(HttpStatus.SC_BAD_REQUEST, actual);
+        var actual = route.checkStatus(mockHandle, "study", payload);
+        assertEquals(ErrorCodes.INVALID_INVITATION, actual.getCode());
 
         var now = Instant.now();
         var voided = fakeInvitation(now, now, null, null);
         doReturn(Optional.of(voided)).when(mockInviteDao).findByInvitationGuid(anyLong(), any());
         actual = route.checkStatus(mockHandle, "study", payload);
-        assertEquals(HttpStatus.SC_BAD_REQUEST, actual);
+        assertEquals(ErrorCodes.INVALID_INVITATION, actual.getCode());
 
         var accepted = fakeInvitation(now, null, null, now);
         doReturn(Optional.of(accepted)).when(mockInviteDao).findByInvitationGuid(anyLong(), any());
         actual = route.checkStatus(mockHandle, "study", payload);
-        assertEquals(HttpStatus.SC_BAD_REQUEST, actual);
+        assertEquals(ErrorCodes.INVALID_INVITATION, actual.getCode());
     }
 
     @Test
@@ -131,6 +142,68 @@ public class InvitationCheckStatusRouteTest extends IntegrationTestSuite.TestCas
                 TransactionWrapper.useTxn(handle -> handle.attach(InvitationSql.class)
                         .deleteById(invitation.getInvitationId()));
             }
+        }
+    }
+
+    @Test
+    public void testZipCodeCheck() {
+        var kitConfigId = new AtomicReference<Long>();
+        var kitRuleId = new AtomicReference<Long>();
+        InvitationDto invitation = TransactionWrapper.withTxn(handle -> {
+            var kitDao = handle.attach(KitConfigurationDao.class);
+            long configId = kitDao.insertConfiguration(testData.getStudyId(), 1,
+                    handle.attach(KitTypeDao.class).getSalivaKitType().getId());
+            long ruleId = kitDao.addZipCodeRule(configId, Set.of("12345"));
+            kitConfigId.set(configId);
+            kitRuleId.set(ruleId);
+            return handle.attach(InvitationFactory.class)
+                    .createRecruitmentInvitation(testData.getStudyId(), "invite" + System.currentTimeMillis());
+        });
+
+        String url = RouteTestUtil.getTestingBaseUrl() + RouteConstants.API.INVITATION_CHECK;
+        url = url.replace(RouteConstants.PathParam.STUDY_GUID, testData.getStudyGuid());
+        var payload = new InvitationCheckStatusPayload(
+                testData.getAuth0ClientId(),
+                invitation.getInvitationGuid());
+
+        try {
+            // Test no zip code in request
+            given().body(payload, ObjectMapperType.GSON)
+                    .when().post(url)
+                    .then().assertThat()
+                    .statusCode(400).contentType(ContentType.JSON)
+                    .body("code", equalTo(ErrorCodes.INVALID_INVITATION_QUALIFICATIONS));
+
+            // Test no zip code match
+            payload.getQualificationDetails().put(QUALIFICATION_ZIP_CODE, "foobar");
+            given().body(payload, ObjectMapperType.GSON)
+                    .when().post(url)
+                    .then().assertThat()
+                    .statusCode(400).contentType(ContentType.JSON)
+                    .body("code", equalTo(ErrorCodes.INVALID_INVITATION_QUALIFICATIONS));
+
+            // Test null zip code
+            payload.getQualificationDetails().put(QUALIFICATION_ZIP_CODE, null);
+            given().body(payload, ObjectMapperType.GSON)
+                    .when().post(url)
+                    .then().assertThat()
+                    .statusCode(400).contentType(ContentType.JSON)
+                    .body("code", equalTo(ErrorCodes.INVALID_INVITATION_QUALIFICATIONS));
+
+            // Test zip code match success
+            payload.getQualificationDetails().put(QUALIFICATION_ZIP_CODE, "12345");
+            given().body(payload, ObjectMapperType.GSON)
+                    .when().post(url)
+                    .then().assertThat()
+                    .statusCode(200);
+        } finally {
+            TransactionWrapper.useTxn(handle -> {
+                var kitDao = handle.attach(KitConfigurationDao.class);
+                kitDao.getJdbiKitRules().deleteRuleFromConfiguration(kitConfigId.get(), kitRuleId.get());
+                kitDao.getJdbiKitRules().deleteRuleById(kitRuleId.get());
+                kitDao.deleteConfiguration(kitConfigId.get());
+                handle.attach(InvitationSql.class).deleteById(invitation.getInvitationId());
+            });
         }
     }
 

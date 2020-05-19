@@ -36,13 +36,12 @@ import org.broadinstitute.ddp.db.FormInstanceDao;
 import org.broadinstitute.ddp.db.SectionBlockDao;
 import org.broadinstitute.ddp.db.StudyActivityDao;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.db.UserDao;
-import org.broadinstitute.ddp.db.UserDaoFactory;
 import org.broadinstitute.ddp.filter.AddDDPAuthLoggingFilter;
 import org.broadinstitute.ddp.filter.DsmAuthFilter;
 import org.broadinstitute.ddp.filter.HttpHeaderMDCFilter;
 import org.broadinstitute.ddp.filter.MDCAttributeRemovalFilter;
 import org.broadinstitute.ddp.filter.MDCLogBreadCrumbFilter;
+import org.broadinstitute.ddp.filter.OnlyStudyAdminFilter;
 import org.broadinstitute.ddp.filter.RateLimitFilter;
 import org.broadinstitute.ddp.filter.StudyLanguageContentLanguageSettingFilter;
 import org.broadinstitute.ddp.filter.StudyLanguageResolutionFilter;
@@ -154,6 +153,7 @@ import org.quartz.SchedulerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+import spark.Filter;
 import spark.Request;
 import spark.Response;
 import spark.ResponseTransformer;
@@ -254,8 +254,6 @@ public class DataDonationPlatform {
             LiquibaseUtil.runLiquibase(dbUrl, TransactionWrapper.DB.APIS);
         }
 
-        UserDao userDao = UserDaoFactory.createFromSqlConfig(sqlConfig);
-
         SectionBlockDao sectionBlockDao = new SectionBlockDao(new I18nContentRenderer());
 
         FormInstanceDao formInstanceDao = FormInstanceDao.fromDaoAndConfig(sectionBlockDao, sqlConfig);
@@ -299,7 +297,7 @@ public class DataDonationPlatform {
 
         // before filter converts jwt into DDP_AUTH request attribute
         // we exclude the DSM paths. DSM paths have own separate authentication
-        beforeWithExclusion(API.BASE + "/*", new TokenConverterFilter(new JWTConverter(userDao)),
+        beforeWithExclusion(API.BASE + "/*", new TokenConverterFilter(new JWTConverter()),
                 API.DSM_BASE + "/*", API.CHECK_IRB_PASSWORD);
         beforeWithExclusion(API.BASE + "/*", new AddDDPAuthLoggingFilter(),
                 API.DSM_BASE + "/*", API.CHECK_IRB_PASSWORD);
@@ -315,7 +313,7 @@ public class DataDonationPlatform {
 
         post(API.REGISTRATION, new UserRegistrationRoute(interpreter), responseSerializer);
 
-        post(API.TEMP_USERS, new CreateTemporaryUserRoute(userDao), responseSerializer);
+        post(API.TEMP_USERS, new CreateTemporaryUserRoute(), responseSerializer);
 
         // Study related routes
         get(API.STUDY_ALL, new GetStudiesRoute(), responseSerializer);
@@ -385,8 +383,6 @@ public class DataDonationPlatform {
         get(API.USER_STUDIES_CONSENT, new GetConsentSummaryRoute(consentService), responseSerializer);
 
         get(API.ACTIVITY_INSTANCE_STATUS_TYPE_LIST, new GetActivityInstanceStatusTypeListRoute(), responseSerializer);
-
-        // jenkins test
 
         // User activity instance routes
         get(API.USER_ACTIVITIES, new UserActivityInstanceListRoute(activityInstanceDao), responseSerializer);
@@ -478,6 +474,8 @@ public class DataDonationPlatform {
         post(API.INVITATION_LOOKUP, new InvitationLookupRoute(), jsonSerializer);
         post(API.INVITATION_DETAILS, new InvitationUpdateDetailsRoute(), jsonSerializer);
 
+        addBefore(new OnlyStudyAdminFilter(), API.INVITATION_LOOKUP, API.INVITATION_DETAILS);
+
         boolean runScheduler = cfg.getBoolean(ConfigFile.RUN_SCHEDULER);
         if (runScheduler) {
             // Setup DDP JobScheduler on server startup
@@ -566,6 +564,11 @@ public class DataDonationPlatform {
         Spark.patch(path, route, transformer);
     }
 
+    public static void addBefore(Filter filter, String... paths) {
+        for (var path : paths) {
+            before(path, filter);
+        }
+    }
 
     private static void setupCatchAllErrorHandling() {
         //JSON for Not Found (code 404) handling

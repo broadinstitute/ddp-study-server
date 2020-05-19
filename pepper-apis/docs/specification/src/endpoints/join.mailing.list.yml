@@ -1,7 +1,7 @@
 post:
   operationId: joinMailingList
   tags:
-    - Operator & Participant
+    - Studies
   summary: joinMailingList
   description: add a user to a studies email list or to a mailing list for a study that does not exist
   requestBody:
