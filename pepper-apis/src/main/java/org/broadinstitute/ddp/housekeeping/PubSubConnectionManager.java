@@ -38,6 +38,7 @@ public class PubSubConnectionManager {
     private static final Logger LOG = LoggerFactory.getLogger(PubSubConnectionManager.class);
 
     public static final int ACK_DEADLINE_SECONDS = 60;
+    public static final long SUB_EXPIRATION_DAYS = 10L;
 
     private final boolean useEmulator;
 
@@ -114,19 +115,24 @@ public class PubSubConnectionManager {
      */
     public Subscription createSubscriptionIfNotExists(ProjectSubscriptionName projectSubscriptionName,
                                                       ProjectTopicName projectTopicName) {
-        Subscription subscription = null;
+        return createSubscriptionIfNotExists(Subscription.newBuilder()
+                .setName(projectSubscriptionName.toString())
+                .setTopic(projectTopicName.toString())
+                .setPushConfig(PushConfig.getDefaultInstance())
+                .setAckDeadlineSeconds(ACK_DEADLINE_SECONDS)
+                .build());
+    }
+
+    public Subscription createSubscriptionIfNotExists(Subscription subscription) {
         try {
-            subscriptionAdminClient.createSubscription(projectSubscriptionName,
-                                                       projectTopicName,
-                                                       PushConfig.getDefaultInstance(),
-                                                       ACK_DEADLINE_SECONDS);
+            subscriptionAdminClient.createSubscription(subscription);
         } catch (ApiException e) {
             if (e.getStatusCode().getCode() != StatusCode.Code.ALREADY_EXISTS) {
                 throw new RuntimeException(String.format("Error creating subscription %s to topic %s",
-                                                         projectSubscriptionName,
-                                                         projectTopicName));
+                        subscription.getName(),
+                        subscription.getTopic()));
             } else {
-                LOG.info("Subscription {} for topic {} already exists", projectSubscriptionName, projectTopicName);
+                LOG.info("Subscription {} for topic {} already exists", subscription.getName(), subscription.getTopic());
             }
         }
         return subscription;

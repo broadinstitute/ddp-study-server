@@ -18,7 +18,6 @@ import static spark.Spark.threadPool;
 
 import java.time.Instant;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import com.typesafe.config.Config;
@@ -150,6 +149,7 @@ import org.broadinstitute.ddp.util.LogbackConfigurationPrinter;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
 import org.quartz.Scheduler;
+import org.quartz.SchedulerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -476,41 +476,20 @@ public class DataDonationPlatform {
 
         addBefore(new OnlyStudyAdminFilter(), API.INVITATION_LOOKUP, API.INVITATION_DETAILS);
 
-        Runnable runnable = () -> {
-            var dsm = new DsmClient(cfg);
-
-            // initialize drug list
-            var result = dsm.listDrugs();
-            if (result.getStatusCode() == 200) {
-                List<String> drugNames = result.getBody();
-                DrugStore.getInstance().populateDrugList(drugNames);
-                LOG.info("Loaded {} drugs into pepper", drugNames == null ? 0 : drugNames.size());
-            } else {
-                LOG.error("Could not initialize DSM drug list, got response status code {}",
-                        result.getStatusCode(), result.getThrown());
-            }
-
-            // initialize cancer list
-            result = dsm.listCancers();
-            if (result.getStatusCode() == 200) {
-                List<String> cancerNames = result.getBody();
-                CancerStore.getInstance().populate(cancerNames);
-                LOG.info("Loaded {} cancers into pepper", cancerNames == null ? 0 : cancerNames.size());
-            } else {
-                LOG.error("Could not initialize DSM cancer list, got response status code {}",
-                        result.getStatusCode(), result.getThrown());
-            }
-        };
-
         boolean runScheduler = cfg.getBoolean(ConfigFile.RUN_SCHEDULER);
         if (runScheduler) {
-            Thread threadDL = new Thread(runnable);
-            threadDL.start();
-
-            //setup DDP JobScheduler on server startup
+            // Setup DDP JobScheduler on server startup
             scheduler = JobScheduler.initializeWith(cfg,
                     DsmDrugLoaderJob::register,
                     DsmCancerLoaderJob::register);
+
+            // Initialize drug/cancer list on startup
+            try {
+                scheduler.triggerJob(DsmDrugLoaderJob.getKey());
+                scheduler.triggerJob(DsmCancerLoaderJob.getKey());
+            } catch (SchedulerException e) {
+                LOG.error("Could not trigger job to initialize drug/cancer lists", e);
+            }
         } else {
             LOG.info("DDP job scheduler is not set to run");
         }
