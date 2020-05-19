@@ -29,8 +29,8 @@ public class BackfillDefaultStudyLanguage implements CustomTask {
         JdbiUmbrellaStudy jdbiUmbrellaStudy = handle.attach(JdbiUmbrellaStudy.class);
         JdbiLanguageCode jdbiLangCode = handle.attach(JdbiLanguageCode.class);
         String languageName = "English";
-        StudyLanguageDao dao = handle.attach(StudyLanguageDao.class);
         String languageCode = "en";
+        StudyLanguageDao dao = handle.attach(StudyLanguageDao.class);
         Long langCodeId = jdbiLangCode.getLanguageCodeId(languageCode);
         if (langCodeId == null) {
             throw new DDPException("Could not find language using code: en");
