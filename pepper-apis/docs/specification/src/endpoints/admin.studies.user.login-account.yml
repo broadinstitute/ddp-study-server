@@ -1,0 +1,59 @@
+post:
+  operationId: createUserLoginAccount
+  tags:
+    - Study Admin
+  summary: CreateUserLoginAccount
+  description: |
+    Create an auth0 login account for user and trigger password reset flow.
+
+    Note: requires study admin ID token.
+  parameters:
+    - $ref: '../pepper.yml#/components/parameters/studyGuid'
+    - $ref: '../pepper.yml#/components/parameters/userGuid'
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - auth0ClientId
+            - email
+            - redirectUrl
+          properties:
+            auth0ClientId:
+              description: the client to use when creating login account
+              type: string
+            email:
+              description: the user's email
+              type: string
+              format: email
+            redirectUrl:
+              description: URL to go to after user has finished password reset flow
+              type: string
+              format: uri
+  responses:
+    201:
+      description: login account created
+    400:
+      description: invalid request, such as bad inputs, user already has login account, or client does not have database connection
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '../pepper.yml#/components/schemas/Error'
+              - type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - BAD_PAYLOAD
+                      - OPERATION_NOT_ALLOWED
+    404:
+      description: user is not found
+      content:
+        application/json:
+          schema:
+            $ref: '../pepper.yml#/components/schemas/Error.NotFound'
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'
