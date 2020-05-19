@@ -11,12 +11,12 @@ import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 public interface StudyLanguageSql extends SqlObject {
 
     @SqlUpdate("insert into study_language "
-            + "(umbrella_study_id, language_code_id, is_default) values "
-            + "(:studyId, :languageCodeId, :isDefault)")
+            + "(umbrella_study_id, language_code_id, name) values "
+            + "(:studyId, :languageCodeId, :name)")
     @GetGeneratedKeys()
     long insert(@Bind("studyId") long studyId,
                 @Bind("languageCodeId") long languageCodeId,
-                @Bind("isDefault") boolean isDefault);
+                @Bind("name") String name);
 
     @SqlUpdate("insert into study_language "
             + "(umbrella_study_id, language_code_id) values "

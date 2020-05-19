@@ -23,7 +23,11 @@ public interface StudyLanguageDao extends SqlObject {
         return getStudyLanguageSql().insert(umbrellaStudyId, languageCodeId);
     }
 
-    default long insert(String studyGuid, String languageCode) {
+    default long insert(long umbrellaStudyId, long languageCodeId, String name) {
+        return getStudyLanguageSql().insert(umbrellaStudyId, languageCodeId, name);
+    }
+
+    default long insert(String studyGuid, String languageCode, String name) {
         StudyDto studyDto = getUmbrellaStudy().findByStudyGuid(studyGuid);
         if (studyDto == null) {
             throw new DDPException("Study not found for guid : " + studyGuid);
@@ -34,7 +38,7 @@ public interface StudyLanguageDao extends SqlObject {
             throw new DDPException("Language code : " + languageCode + " not found ");
         }
 
-        return getStudyLanguageSql().insert(studyDto.getId(), languageCodeId);
+        return getStudyLanguageSql().insert(studyDto.getId(), languageCodeId, name);
     }
 
     default int setAsDefaultLanguage(long umbrellaStudyId, long languageCodeId) {

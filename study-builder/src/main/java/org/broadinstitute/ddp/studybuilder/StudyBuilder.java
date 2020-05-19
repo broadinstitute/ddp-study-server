@@ -402,6 +402,11 @@ public class StudyBuilder {
                 isDefault = languageCfg.getBoolean("isDefault");
             }
 
+            String name = null;
+            if (languageCfg.hasPath("name")) {
+                name = languageCfg.getString("name");
+            }
+
             Long langCodeId = jdbiLangCode.getLanguageCodeId(lang);
             if (langCodeId == null) {
                 throw new DDPException("Could not find language using code: " + lang);
@@ -418,8 +423,8 @@ public class StudyBuilder {
             }
 
             //insert into study_language
-            long studyLanguageId = studyLanguageDao.insert(studyId, langCodeId);
-            LOG.info("Created study language with id={}, language={} ", studyLanguageId, lang);
+            long studyLanguageId = studyLanguageDao.insert(studyId, langCodeId, name);
+            LOG.info("Created study language with id={}, languageCode={} languageName={}", studyLanguageId, lang, name);
         }
 
         //set default language

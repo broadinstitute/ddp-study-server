@@ -7,7 +7,7 @@ import java.util.List;
 import com.typesafe.config.Config;
 import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
-import org.broadinstitute.ddp.db.dao.StudyLanguageSql;
+import org.broadinstitute.ddp.db.dao.StudyLanguageDao;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.jdbi.v3.core.Handle;
@@ -28,7 +28,8 @@ public class BackfillDefaultStudyLanguage implements CustomTask {
     public void run(Handle handle) {
         JdbiUmbrellaStudy jdbiUmbrellaStudy = handle.attach(JdbiUmbrellaStudy.class);
         JdbiLanguageCode jdbiLangCode = handle.attach(JdbiLanguageCode.class);
-        StudyLanguageSql studyLanguageSql = handle.attach(StudyLanguageSql.class);
+        String languageName = "English";
+        StudyLanguageDao dao = handle.attach(StudyLanguageDao.class);
         String languageCode = "en";
         Long langCodeId = jdbiLangCode.getLanguageCodeId(languageCode);
         if (langCodeId == null) {
@@ -50,9 +51,11 @@ public class BackfillDefaultStudyLanguage implements CustomTask {
             }
             long studyId = dto.getId();
             //insert into study_language
-            long studyLanguageId = studyLanguageSql.insert(studyId, langCodeId, isDefault);
-            LOG.info("Populated study language with id={}, language={}, isDefault={} study: {} ", studyLanguageId, languageCode,
-                    isDefault, studyGuid);
+            long studyLanguageId = dao.insert(studyId, langCodeId, languageName);
+            //now set as default
+            dao.setAsDefaultLanguage(studyId, langCodeId);
+            LOG.info("Populated study language with id={}, languageCode={}, languageName={} isDefault={} study: {} ",
+                    studyLanguageId, languageCode, languageName, isDefault, studyGuid);
         }
     }
 
