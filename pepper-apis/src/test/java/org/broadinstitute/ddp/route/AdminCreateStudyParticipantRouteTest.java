@@ -89,7 +89,7 @@ public class AdminCreateStudyParticipantRouteTest extends IntegrationTestSuite.T
                     .body(payload, ObjectMapperType.GSON)
                     .when().post(urlTemplate)
                     .then().assertThat()
-                    .statusCode(422).contentType(ContentType.JSON)
+                    .statusCode(400).contentType(ContentType.JSON)
                     .body("code", equalTo(ErrorCodes.INVALID_INVITATION));
         } finally {
             TransactionWrapper.useTxn(handle -> handle.attach(InvitationSql.class)
@@ -111,7 +111,7 @@ public class AdminCreateStudyParticipantRouteTest extends IntegrationTestSuite.T
                     .body(payload, ObjectMapperType.GSON)
                     .when().post(urlTemplate)
                     .then().assertThat()
-                    .statusCode(200).contentType(ContentType.JSON)
+                    .statusCode(201).contentType(ContentType.JSON)
                     .body("userGuid", not(isEmptyOrNullString()))
                     .extract().body().path("userGuid");
             createdUserGuid.set(userGuid);

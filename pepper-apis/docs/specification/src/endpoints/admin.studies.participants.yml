@@ -22,7 +22,7 @@ post:
               description: the invitation id
               type: string
   responses:
-    200:
+    201:
       description: created participant
       content:
         application/json:
@@ -35,19 +35,7 @@ post:
                 description: guid of created participant user
                 type: string
     400:
-      description: invitation id is missing
-      content:
-        application/json:
-          schema:
-            $ref: '../pepper.yml#/components/schemas/Error.BadPayload'
-    404:
-      description: invitation not found
-      content:
-        application/json:
-          schema:
-            $ref: '../pepper.yml#/components/schemas/Error.NotFound'
-    422:
-      description: invitation is already accepted or invalid
+      description: invalid request, such as bad inputs, or invitation is already accepted
       content:
         application/json:
           schema:
@@ -58,4 +46,11 @@ post:
                   code:
                     type: string
                     enum:
+                      - BAD_PAYLOAD
                       - INVALID_INVITATION
+    404:
+      description: invitation not found
+      content:
+        application/json:
+          schema:
+            $ref: '../pepper.yml#/components/schemas/Error.NotFound'

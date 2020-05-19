@@ -70,15 +70,15 @@ public class AdminCreateStudyParticipantRoute extends ValidatedJsonInputRoute<Cr
             } else if (invitation.isVoid()) {
                 String msg = String.format("Invitation %s is voided", invitationGuid);
                 LOG.error(msg);
-                throw ResponseUtil.haltError(HttpStatus.SC_UNPROCESSABLE_ENTITY, new ApiError(ErrorCodes.INVALID_INVITATION, msg));
+                throw ResponseUtil.haltError(HttpStatus.SC_BAD_REQUEST, new ApiError(ErrorCodes.INVALID_INVITATION, msg));
             } else if (invitation.isAccepted()) {
                 String msg = String.format("Invitation %s has already been accepted", invitationGuid);
                 LOG.error(msg);
-                throw ResponseUtil.haltError(HttpStatus.SC_UNPROCESSABLE_ENTITY, new ApiError(ErrorCodes.INVALID_INVITATION, msg));
+                throw ResponseUtil.haltError(HttpStatus.SC_BAD_REQUEST, new ApiError(ErrorCodes.INVALID_INVITATION, msg));
             } else if (invitation.getUserId() != null) {
                 String msg = String.format("Invitation %s has already been assigned to another user", invitationGuid);
                 LOG.error(msg);
-                throw ResponseUtil.haltError(HttpStatus.SC_UNPROCESSABLE_ENTITY, new ApiError(ErrorCodes.INVALID_INVITATION, msg));
+                throw ResponseUtil.haltError(HttpStatus.SC_BAD_REQUEST, new ApiError(ErrorCodes.INVALID_INVITATION, msg));
             }
 
             User user = handle.attach(UserDao.class).createUser(tenantDto.getDomain(), ddpAuth.getClient(), null);
@@ -98,6 +98,7 @@ public class AdminCreateStudyParticipantRoute extends ValidatedJsonInputRoute<Cr
             invitationDao.assignAcceptingUser(invitation.getInvitationId(), user.getId(), Instant.now());
             LOG.info("Assigned invitation {} to user {}", invitationGuid, user.getGuid());
 
+            response.status(HttpStatus.SC_CREATED);
             return new CreateStudyParticipantResponse(user.getGuid());
         });
     }
