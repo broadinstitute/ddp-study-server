@@ -431,6 +431,9 @@ public class StudyBuilder {
         if (defaultSet) {
             LOG.info("Setting language {} as default", defaultLanguageCode);
             studyLanguageDao.setAsDefaultLanguage(studyId, defaultLanguageCodeId);
+        } else {
+            LOG.error("No language is set as default. Please set default language");
+            throw new DDPException("No language is set as default ");
         }
     }
 

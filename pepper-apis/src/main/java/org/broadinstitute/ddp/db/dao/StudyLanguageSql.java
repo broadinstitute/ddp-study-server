@@ -26,14 +26,14 @@ public interface StudyLanguageSql extends SqlObject {
                 @Bind("languageCodeId") long languageCodeId);
 
     @SqlUpdate("update study_language "
-            + " set is_default := :isDefault  "
+            + " set is_default = :isDefault  "
             + " where umbrella_study_id = :studyId and language_code_id = :languageCodeId")
     int updateDefaultLanguage(@Bind("studyId") long studyId,
                 @Bind("languageCodeId") long languageCodeId,
                 @Bind("isDefault") boolean isDefault);
 
     @SqlUpdate("update study_language "
-            + " set is_default := false  "
+            + " set is_default = false  "
             + " where umbrella_study_id = :studyId")
     int updateExistingAsNonDefaultLanguages(@Bind("studyId") long studyId);
 
