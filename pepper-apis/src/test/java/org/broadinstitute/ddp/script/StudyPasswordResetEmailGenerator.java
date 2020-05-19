@@ -67,6 +67,33 @@ public class StudyPasswordResetEmailGenerator {
         return recipientProfiles;
     }
 
+    public List<ProfileWithEmail> getProfileWithEmailForEmailAddressesBulk(Handle handle,
+                                                                           Set<String> recipientEmailAddresses,
+                                                                           String auth0Domain,
+                                                                           String mgmtApiToken) {
+        List<ProfileWithEmail> recipientProfiles = new ArrayList<>();
+        Auth0Util auth0Util = buildAuth0Util(auth0Domain);
+        Auth0TenantDto auth0TenantDto = handle.attach(JdbiAuth0Tenant.class).findByDomain(auth0Domain);
+        Map<String, String> auth0EmailUserMap = auth0Util.getAuth0UsersByEmails(recipientEmailAddresses, mgmtApiToken);
+        for (String emailAddress : recipientEmailAddresses) {
+            String auth0UserId = auth0EmailUserMap.get(emailAddress);
+            if (StringUtils.isBlank(auth0UserId)) {
+                LOG.error("Could not find auth0UserID for {}", emailAddress);
+                continue;
+            }
+            UserDto userDto = handle.attach(JdbiUser.class).findByAuth0UserId(auth0UserId, auth0TenantDto.getId());
+            UserProfile userProfile = handle.attach(UserProfileDao.class).findProfileByUserGuid(userDto.getUserGuid()).orElse(null);
+
+            if (userProfile == null) {
+                LOG.error("Could not find profile for {} ", emailAddress);
+            } else {
+                recipientProfiles.add(new ProfileWithEmail(userProfile, emailAddress));
+            }
+        }
+
+        return recipientProfiles;
+    }
+
     /**
      * Send emails with reset links to specified addressees using the SendGrid API key associated with the study.
      * @param studyGuid the study GUID
