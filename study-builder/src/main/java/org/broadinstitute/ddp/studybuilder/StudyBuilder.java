@@ -21,8 +21,8 @@ import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.KitConfigurationDao;
 import org.broadinstitute.ddp.db.dao.KitTypeDao;
 import org.broadinstitute.ddp.db.dao.QueuedEventDao;
-import org.broadinstitute.ddp.db.dao.StudyDao;
 import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
+import org.broadinstitute.ddp.db.dao.StudyLanguageDao;
 import org.broadinstitute.ddp.db.dto.Auth0TenantDto;
 import org.broadinstitute.ddp.db.dto.ClientDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
@@ -86,7 +86,7 @@ public class StudyBuilder {
 
         insertStudyGovernance(handle, studyDto);
         insertStudyDetails(handle, studyDto.getId());
-        insertStudySupportedLanguages(handle, studyDto);
+        insertStudyLanguages(handle, studyDto.getId());
         insertSendgrid(handle, studyDto.getId());
         insertKits(handle, studyDto.getId());
 
@@ -384,20 +384,57 @@ public class StudyBuilder {
         }
     }
 
-    private void insertStudySupportedLanguages(Handle handle, StudyDto studyDto) {
+    private void insertStudyLanguages(Handle handle, long studyId) {
         if (!cfg.hasPath("supportedLanguages")) {
             return;
         }
-        cfg.getStringList("supportedLanguages").forEach(
-                isoCode -> {
-                    Long langCodeId = handle.attach(JdbiLanguageCode.class).getLanguageCodeId(isoCode);
-                    Optional.ofNullable(langCodeId).orElseThrow(
-                            () -> new DDPException("Could not find language using code: " + langCodeId)
-                    );
-                    handle.attach(StudyDao.class).addSupportedLanguage(studyDto.getGuid(), isoCode);
-                    LOG.info("Added a supported language '{}' to the study {}", isoCode, studyDto.getGuid());
+
+        JdbiLanguageCode jdbiLangCode = handle.attach(JdbiLanguageCode.class);
+        StudyLanguageDao studyLanguageDao = handle.attach(StudyLanguageDao.class);
+
+        boolean defaultSet = false;
+        Long defaultLanguageCodeId = null;
+        String defaultLanguageCode = null;
+        for (Config languageCfg : cfg.getConfigList("supportedLanguages")) {
+            String lang = languageCfg.getString("language");
+            Boolean isDefault = false;
+            if (languageCfg.hasPath("isDefault")) {
+                isDefault = languageCfg.getBoolean("isDefault");
+            }
+
+            String name = null;
+            if (languageCfg.hasPath("name")) {
+                name = languageCfg.getString("name");
+            }
+
+            Long langCodeId = jdbiLangCode.getLanguageCodeId(lang);
+            if (langCodeId == null) {
+                throw new DDPException("Could not find language using code: " + lang);
+            }
+            if (isDefault) {
+                if (defaultSet) {
+                    //no more than 1 language can be set as default
+                    throw new DDPException("Cannot set isDefault: true for more than 1 language ");
+                } else {
+                    defaultLanguageCodeId = langCodeId;
+                    defaultLanguageCode = lang;
+                    defaultSet = true;
                 }
-        );
+            }
+
+            //insert into study_language
+            long studyLanguageId = studyLanguageDao.insert(studyId, langCodeId, name);
+            LOG.info("Created study language with id={}, languageCode={} languageName={}", studyLanguageId, lang, name);
+        }
+
+        //set default language
+        if (defaultSet) {
+            LOG.info("Setting language {} as default", defaultLanguageCode);
+            studyLanguageDao.setAsDefaultLanguage(studyId, defaultLanguageCodeId);
+        } else {
+            LOG.error("No language is set as default. Please set default language");
+            throw new DDPException("No language is set as default ");
+        }
     }
 
     private void insertSendgrid(Handle handle, long studyId) {
