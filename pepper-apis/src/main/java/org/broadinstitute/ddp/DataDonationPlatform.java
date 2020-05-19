@@ -41,8 +41,8 @@ import org.broadinstitute.ddp.filter.DsmAuthFilter;
 import org.broadinstitute.ddp.filter.HttpHeaderMDCFilter;
 import org.broadinstitute.ddp.filter.MDCAttributeRemovalFilter;
 import org.broadinstitute.ddp.filter.MDCLogBreadCrumbFilter;
-import org.broadinstitute.ddp.filter.OnlyStudyAdminFilter;
 import org.broadinstitute.ddp.filter.RateLimitFilter;
+import org.broadinstitute.ddp.filter.StudyAdminAuthFilter;
 import org.broadinstitute.ddp.filter.StudyLanguageContentLanguageSettingFilter;
 import org.broadinstitute.ddp.filter.StudyLanguageResolutionFilter;
 import org.broadinstitute.ddp.filter.TokenConverterFilter;
@@ -56,6 +56,9 @@ import org.broadinstitute.ddp.monitoring.StackdriverMetricsTracker;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.pex.TreeWalkInterpreter;
 import org.broadinstitute.ddp.route.AddProfileRoute;
+import org.broadinstitute.ddp.route.AdminCreateStudyParticipantRoute;
+import org.broadinstitute.ddp.route.AdminLookupInvitationRoute;
+import org.broadinstitute.ddp.route.AdminUpdateInvitationDetailsRoute;
 import org.broadinstitute.ddp.route.CheckIrbPasswordRoute;
 import org.broadinstitute.ddp.route.CreateActivityInstanceRoute;
 import org.broadinstitute.ddp.route.CreateMailAddressRoute;
@@ -104,8 +107,6 @@ import org.broadinstitute.ddp.route.GetUserAnnouncementsRoute;
 import org.broadinstitute.ddp.route.GetWorkflowRoute;
 import org.broadinstitute.ddp.route.HealthCheckRoute;
 import org.broadinstitute.ddp.route.InvitationCheckStatusRoute;
-import org.broadinstitute.ddp.route.InvitationLookupRoute;
-import org.broadinstitute.ddp.route.InvitationUpdateDetailsRoute;
 import org.broadinstitute.ddp.route.InvitationVerifyRoute;
 import org.broadinstitute.ddp.route.JoinMailingListRoute;
 import org.broadinstitute.ddp.route.ListCancersRoute;
@@ -153,7 +154,6 @@ import org.quartz.SchedulerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
-import spark.Filter;
 import spark.Request;
 import spark.Response;
 import spark.ResponseTransformer;
@@ -263,6 +263,7 @@ public class DataDonationPlatform {
         final ActivityInstanceService actInstService = new ActivityInstanceService(activityInstanceDao, interpreter);
         final ActivityValidationService activityValidationService = new ActivityValidationService();
 
+        var jsonSerializer = new NullableJsonTransformer();
         SimpleJsonTransformer responseSerializer = new SimpleJsonTransformer();
 
         if (cfg.hasPath(ConfigFile.API_RATE_LIMIT.MAX_QUERIES_PER_SECOND)  && cfg.hasPath(ConfigFile.API_RATE_LIMIT.BURST)) {
@@ -277,21 +278,9 @@ public class DataDonationPlatform {
 
         before("*", new HttpHeaderMDCFilter(X_FORWARDED_FOR));
         before("*", new MDCLogBreadCrumbFilter());
-
         before("*", (Request request, Response response) -> {
             MDC.put(MDC_STUDY, RouteUtil.parseStudyGuid(request.pathInfo()));
         });
-
-        // These filters work in a tandem:
-        // - StudyLanguageResolutionFilter figures out and sets the user language in the attribute store
-        // - StudyLanguageContentLanguageSettingFilter sets the "Content-Language" header later on
-        before(API.BASE + "/user/*/studies/*", new StudyLanguageResolutionFilter());
-        after(API.BASE + "/user/*/studies/*", new StudyLanguageContentLanguageSettingFilter());
-        beforeWithExclusion(API.BASE + "/studies/*", new StudyLanguageResolutionFilter(),
-                API.INVITATION_VERIFY, API.INVITATION_CHECK, API.INVITATION_LOOKUP, API.INVITATION_DETAILS);
-        afterWithExclusion(API.BASE + "/studies/*", new StudyLanguageContentLanguageSettingFilter(),
-                API.INVITATION_VERIFY, API.INVITATION_CHECK, API.INVITATION_LOOKUP, API.INVITATION_DETAILS);
-
         enableCORS("*", String.join(",", CORS_HTTP_METHODS), String.join(",", CORS_HTTP_HEADERS));
         setupCatchAllErrorHandling();
 
@@ -312,13 +301,30 @@ public class DataDonationPlatform {
         }
 
         post(API.REGISTRATION, new UserRegistrationRoute(interpreter), responseSerializer);
-
         post(API.TEMP_USERS, new CreateTemporaryUserRoute(), responseSerializer);
+
+        // Admin APIs
+        before(API.ADMIN_BASE + "/*", new StudyAdminAuthFilter());
+        post(API.ADMIN_STUDY_PARTICIPANTS, new AdminCreateStudyParticipantRoute(), jsonSerializer);
+        post(API.ADMIN_STUDY_INVITATION_LOOKUP, new AdminLookupInvitationRoute(), jsonSerializer);
+        post(API.ADMIN_STUDY_INVITATION_DETAILS, new AdminUpdateInvitationDetailsRoute(), jsonSerializer);
+
+        // These filters work in a tandem:
+        // - StudyLanguageResolutionFilter figures out and sets the user language in the attribute store
+        // - StudyLanguageContentLanguageSettingFilter sets the "Content-Language" header later on
+        before(API.BASE + "/user/*/studies/*", new StudyLanguageResolutionFilter());
+        after(API.BASE + "/user/*/studies/*", new StudyLanguageContentLanguageSettingFilter());
+        beforeWithExclusion(API.BASE + "/studies/*", new StudyLanguageResolutionFilter(),
+                API.INVITATION_VERIFY, API.INVITATION_CHECK);
+        afterWithExclusion(API.BASE + "/studies/*", new StudyLanguageContentLanguageSettingFilter(),
+                API.INVITATION_VERIFY, API.INVITATION_CHECK);
 
         // Study related routes
         get(API.STUDY_ALL, new GetStudiesRoute(), responseSerializer);
         get(API.STUDY_DETAIL, new GetStudyDetailRoute(), responseSerializer);
         get(API.STUDY_PASSWORD_POLICY, new GetStudyPasswordPolicyRoute(), responseSerializer);
+        post(API.INVITATION_VERIFY, new InvitationVerifyRoute(), jsonSerializer);
+        post(API.INVITATION_CHECK, new InvitationCheckStatusRoute(), jsonSerializer);
 
         get(API.ADDRESS_COUNTRIES, new GetCountryAddressInfoSummariesRoute(), responseSerializer);
         get(API.ADDRESS_COUNTRY_DETAILS, new GetCountryAddressInfoRoute(), responseSerializer);
@@ -468,14 +474,6 @@ public class DataDonationPlatform {
                 responseSerializer
         );
 
-        var jsonSerializer = new NullableJsonTransformer();
-        post(API.INVITATION_VERIFY, new InvitationVerifyRoute(), jsonSerializer);
-        post(API.INVITATION_CHECK, new InvitationCheckStatusRoute(), jsonSerializer);
-        post(API.INVITATION_LOOKUP, new InvitationLookupRoute(), jsonSerializer);
-        post(API.INVITATION_DETAILS, new InvitationUpdateDetailsRoute(), jsonSerializer);
-
-        addBefore(new OnlyStudyAdminFilter(), API.INVITATION_LOOKUP, API.INVITATION_DETAILS);
-
         boolean runScheduler = cfg.getBoolean(ConfigFile.RUN_SCHEDULER);
         if (runScheduler) {
             // Setup DDP JobScheduler on server startup
@@ -562,12 +560,6 @@ public class DataDonationPlatform {
     public static void patch(String path, Route route, ResponseTransformer transformer) {
         setupMDC(path, route);
         Spark.patch(path, route, transformer);
-    }
-
-    public static void addBefore(Filter filter, String... paths) {
-        for (var path : paths) {
-            before(path, filter);
-        }
     }
 
     private static void setupCatchAllErrorHandling() {

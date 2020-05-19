@@ -14,9 +14,9 @@ public class AuthPathRegexUtil {
 
     private static final String BASE_REGEX = "\\/pepper\\/" + VERSION_PATTERN;
 
-    private static final String BASE_STUDY_REGEX = BASE_REGEX + "\\/studies\\/";
-
-    private static final Pattern STUDY_ROUTE_REGEX = Pattern.compile(BASE_STUDY_REGEX + GUID_PATTERN + "(\\/.*)?");
+    private static final Pattern ADMIN_ROUTE_REGEX = Pattern.compile(BASE_REGEX + "\\/admin(\\/.*)?");
+    private static final Pattern ADMIN_STUDY_ROUTE_REGEX = Pattern.compile(
+            BASE_REGEX + "\\/admin\\/studies\\/" + GUID_PATTERN + "(\\/.*)?");
 
     private static final String BASE_USER_REGEX = BASE_REGEX + "\\/user\\/";
 
@@ -31,8 +31,6 @@ public class AuthPathRegexUtil {
     private static final Pattern PROFILE_SUB_PATH_ROUTE_REGEX = Pattern.compile(PROFILE_ROUTE_REGEX + "\\/.*");
 
     private static final Pattern GOVERNED_PARTICIPANTS_REGEX = Pattern.compile(BASE_USER_REGEX + GUID_PATTERN + "\\/participants");
-
-    private static final Pattern ADMIN_ROUTE_REGEX = Pattern.compile(BASE_REGEX + "\\/admin\\/.*");
 
     private static final Pattern AUTOCOMPLETE_ROUTE_REGEX = Pattern.compile(BASE_REGEX + "\\/autocomplete\\/.+");
 
@@ -64,10 +62,6 @@ public class AuthPathRegexUtil {
         return USER_STUDY_ROUTE_REGEX.matcher(path).matches();
     }
 
-    public boolean isAdminRoute(String path) {
-        return ADMIN_ROUTE_REGEX.matcher(path).matches();
-    }
-
     public boolean isAutocompleteRoute(String path) {
         return AUTOCOMPLETE_ROUTE_REGEX.matcher(path).matches();
     }
@@ -88,7 +82,11 @@ public class AuthPathRegexUtil {
         return UPDATE_USER_EMAIL_ROUTE_REGEX.matcher(path).matches();
     }
 
-    public boolean isStudyRoute(String path) {
-        return STUDY_ROUTE_REGEX.matcher(path).matches();
+    public boolean isAdminRoute(String path) {
+        return ADMIN_ROUTE_REGEX.matcher(path).matches();
+    }
+
+    public boolean isAdminStudyRoute(String path) {
+        return ADMIN_STUDY_ROUTE_REGEX.matcher(path).matches();
     }
 }

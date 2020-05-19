@@ -1,12 +1,12 @@
 post:
-  operationId: invitationUpdateDetails
+  operationId: updateInvitationDetails
   tags:
-    - Invitations
-  summary: InvitationUpdateDetails
+    - Study Admin
+  summary: UpdateInvitationDetails
   description: |
     Update the notes of an invitation.
 
-    Note: this API is restricted to study admins.
+    Note: requires study admin ID token.
   parameters:
     - $ref: '../pepper.yml#/components/parameters/studyGuid'
   requestBody:

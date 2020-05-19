@@ -1,10 +1,10 @@
-package org.broadinstitute.ddp.json;
+package org.broadinstitute.ddp.json.admin;
 
 import javax.validation.constraints.NotEmpty;
 
 import com.google.gson.annotations.SerializedName;
 
-public class InvitationUpdateDetailsPayload {
+public class UpdateInvitationDetailsPayload {
 
     @NotEmpty
     @SerializedName("invitationId")
@@ -13,7 +13,7 @@ public class InvitationUpdateDetailsPayload {
     @SerializedName("notes")
     private String notes;
 
-    public InvitationUpdateDetailsPayload(String invitationGuid, String notes) {
+    public UpdateInvitationDetailsPayload(String invitationGuid, String notes) {
         this.invitationGuid = invitationGuid;
         this.notes = notes;
     }

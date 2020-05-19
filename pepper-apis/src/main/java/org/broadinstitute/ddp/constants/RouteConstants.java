@@ -27,16 +27,20 @@ public class RouteConstants {
         public static final String TEMP_USERS = BASE + "/temporary-users";
         public static final String ACTIVITY_INSTANCE_STATUS_TYPE_LIST = BASE + "/activity-instance-status-types";
 
+        public static final String ADMIN_BASE = BASE + "/admin";
+        public static final String ADMIN_STUDY_PARTICIPANTS =
+                fmt(ADMIN_BASE + "/studies/%s/participants", PathParam.STUDY_GUID);
+        public static final String ADMIN_STUDY_INVITATION_LOOKUP =
+                fmt(ADMIN_BASE + "/studies/%s/invitation-lookup", PathParam.STUDY_GUID);
+        public static final String ADMIN_STUDY_INVITATION_DETAILS =
+                fmt(ADMIN_BASE + "/studies/%s/invitation-details", PathParam.STUDY_GUID);
+
         public static final String STUDY_ALL = BASE + "/studies";
         public static final String STUDY_DETAIL = fmt(STUDY_ALL + "/%s", PathParam.STUDY_GUID);
-
         public static final String PARTICIPANTS_INFO_FOR_STUDY =
                 fmt(STUDY_ALL + "/participant-info" + "/%s", PathParam.STUDY_GUID);
-
         public static final String INVITATION_VERIFY = fmt(BASE + "/studies/%s/invitation-verify", PathParam.STUDY_GUID);
         public static final String INVITATION_CHECK = fmt(BASE + "/studies/%s/invitation-check", PathParam.STUDY_GUID);
-        public static final String INVITATION_LOOKUP = fmt(BASE + "/studies/%s/invitation-lookup", PathParam.STUDY_GUID);
-        public static final String INVITATION_DETAILS = fmt(BASE + "/studies/%s/invitation-details", PathParam.STUDY_GUID);
 
         public static final String USER_ALL = fmt(BASE + "/user/%s/*", PathParam.USER_GUID);
         public static final String USER_SPECIFIC = fmt(BASE + "/user/%s", PathParam.USER_GUID);
