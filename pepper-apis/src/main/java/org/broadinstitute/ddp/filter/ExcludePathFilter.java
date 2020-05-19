@@ -16,7 +16,7 @@ import spark.utils.SparkUtils;
  * for a given pattern. This deals with the situation where you want to apply the filter to
  * a path such as /* <b>EXCEPT </b> /dir1/myExcludedStuff/*
  */
-public class ExcludePathFilterWrapper implements Filter {
+public class ExcludePathFilter implements Filter {
     private Set<String> pathsToExclude = new HashSet<>();
     private Filter wrappedFilter;
 
@@ -25,7 +25,7 @@ public class ExcludePathFilterWrapper implements Filter {
      * @param filterToWrap the filter
      * @param pathsToExclude the paths to exclude. Wildcards are fine. Use same notation as Spark.
      */
-    public ExcludePathFilterWrapper(Filter filterToWrap, String... pathsToExclude) {
+    public ExcludePathFilter(Filter filterToWrap, String... pathsToExclude) {
         this.wrappedFilter = filterToWrap;
         Collections.addAll(this.pathsToExclude, pathsToExclude);
     }
@@ -35,7 +35,7 @@ public class ExcludePathFilterWrapper implements Filter {
      * @param filterToWrap the filter
      * @param pathsToExclude the paths to exclude. Wildcards are fine. Use same notation as Spark.
      */
-    public ExcludePathFilterWrapper(Filter filterToWrap, Collection<String> pathsToExclude) {
+    public ExcludePathFilter(Filter filterToWrap, Collection<String> pathsToExclude) {
         this.wrappedFilter = filterToWrap;
         this.pathsToExclude.addAll(pathsToExclude);
     }

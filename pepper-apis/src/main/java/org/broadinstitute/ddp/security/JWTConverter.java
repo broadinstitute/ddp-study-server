@@ -15,7 +15,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.constants.Auth0Constants;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.db.UserDao;
+import org.broadinstitute.ddp.db.dao.AuthDao;
 import org.broadinstitute.ddp.db.dao.ClientDao;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
@@ -30,11 +30,6 @@ public class JWTConverter {
     private static final Logger LOG = LoggerFactory.getLogger(JWTConverter.class);
     private static final String DEFAULT_ISO_LANGUAGE_CODE = "en";
     private Map<String, JwkProvider> jwkProviderMap = new HashMap<>(); // Map of Auth0ClientIds -> jwkProviders
-    private UserDao userDao;
-
-    public JWTConverter(UserDao userDao) {
-        this.userDao = userDao;
-    }
 
     public static JwkProvider defaultProvider(String auth0Domain) {
         return new JwkProviderBuilder(auth0Domain).cached(100, 3L, TimeUnit.HOURS).build();
@@ -131,12 +126,8 @@ public class JWTConverter {
                     try {
                         DecodedJWT validToken = verifyDDPToken(jwt, jwkProvider);
                         String ddpUserGuid = validToken.getClaim(Auth0Constants.DDP_USER_ID_CLAIM).asString();
-                        UserPermissions userPermissions = userDao.queryUserPermissions(
-                                handle,
-                                ddpUserGuid,
-                                auth0ClientId,
-                                auth0Domain
-                        );
+                        UserPermissions userPermissions = handle.attach(AuthDao.class)
+                                .findUserPermissions(ddpUserGuid, auth0ClientId, auth0Domain);
                         String preferredLanguage = getPreferredLanguageCodeForUser(handle, ddpUserGuid);
                         txnDdpAuth = new DDPAuth(auth0ClientId, ddpUserGuid, jwt, userPermissions, preferredLanguage);
                     } catch (Exception e) {

@@ -120,10 +120,6 @@ commands:
             develop)
               DEPLOY_ENV=dev
             ;;
-            # @todo remove when done
-            GAE_Migration1)
-              DEPLOY_ENV=dev
-            ;;
             test)
               DEPLOY_ENV=test
             ;;
@@ -444,7 +440,7 @@ commands:
             # And ignore the Suite itself
             echo 'org.broadinstitute.ddp.route.IntegrationTestSuite'  >> $IGNORE_CLASS_LIST_PATH
 
-            cp $THIS_NODE_TESTS_PATH "${TEST_DATA_PATH}" /this_node_circleci_tests
+            cp $THIS_NODE_TESTS_PATH "${TEST_DATA_PATH}"
 
             # save path for next steps
             echo "export IGNORE_CLASS_LIST_PATH=${IGNORE_CLASS_LIST_PATH}" >> $BASH_ENV
@@ -583,6 +579,17 @@ commands:
             mvn test-compile --batch-mode -DskipTests -Dmaven.repo.local=<< parameters.m2_repo >>
 
 jobs:
+  build-api-docs-job:
+    executor:
+      name: build-deploy-executor
+    working_directory: *api-spec-path
+    steps:
+      - checkout:
+          path: *repo_path
+      - run:
+          name: Build docs
+          command: ./build.sh documentation
+
   compile-and-run-test-suite-job:
     executor:
       name: test-executor
@@ -732,16 +739,16 @@ workflows:
                 - develop
                 - &rc /^rc.*/
                 - &hotfix /^hotfix.*/
-                - GAE_Migration1
       - parallel-compile-and-test-job:
           parallelism: *test_parallelism
+          <<: *compile_and_test_filters
+      - build-api-docs-job:
           <<: *compile_and_test_filters
       - deploy-jar-from-workspace-job:
           filters:
             branches:
               only:
                 - develop
-                - GAE_Migration1
           requires:
             - parallel-compile-and-test-job
             - compile-and-run-test-suite-job
@@ -761,6 +768,7 @@ workflows:
       - compile-and-run-test-suite-job
       - parallel-compile-and-test-job:
           parallelism: *test_parallelism
+      - build-api-docs-job
 
   deploy-workflow:
     jobs:

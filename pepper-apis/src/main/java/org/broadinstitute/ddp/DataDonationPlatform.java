@@ -1,7 +1,8 @@
 package org.broadinstitute.ddp;
 
 import static com.google.common.net.HttpHeaders.X_FORWARDED_FOR;
-import static org.broadinstitute.ddp.filter.BeforeWithExclusionFilter.beforeWithExclusion;
+import static org.broadinstitute.ddp.filter.Exclusions.afterWithExclusion;
+import static org.broadinstitute.ddp.filter.Exclusions.beforeWithExclusion;
 import static org.broadinstitute.ddp.filter.WhiteListFilter.whitelist;
 import static spark.Spark.after;
 import static spark.Spark.afterAfter;
@@ -36,17 +37,18 @@ import org.broadinstitute.ddp.db.FormInstanceDao;
 import org.broadinstitute.ddp.db.SectionBlockDao;
 import org.broadinstitute.ddp.db.StudyActivityDao;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.db.UserDao;
-import org.broadinstitute.ddp.db.UserDaoFactory;
 import org.broadinstitute.ddp.filter.AddDDPAuthLoggingFilter;
 import org.broadinstitute.ddp.filter.DsmAuthFilter;
 import org.broadinstitute.ddp.filter.HttpHeaderMDCFilter;
 import org.broadinstitute.ddp.filter.MDCAttributeRemovalFilter;
 import org.broadinstitute.ddp.filter.MDCLogBreadCrumbFilter;
+import org.broadinstitute.ddp.filter.OnlyStudyAdminFilter;
+import org.broadinstitute.ddp.filter.RateLimitFilter;
 import org.broadinstitute.ddp.filter.StudyLanguageContentLanguageSettingFilter;
 import org.broadinstitute.ddp.filter.StudyLanguageResolutionFilter;
 import org.broadinstitute.ddp.filter.TokenConverterFilter;
 import org.broadinstitute.ddp.filter.UserAuthCheckFilter;
+import org.broadinstitute.ddp.jetty.JettyConfig;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.dsm.DrugStore;
 import org.broadinstitute.ddp.monitoring.PointsReducerFactory;
@@ -102,6 +104,10 @@ import org.broadinstitute.ddp.route.GetTempMailingAddressRoute;
 import org.broadinstitute.ddp.route.GetUserAnnouncementsRoute;
 import org.broadinstitute.ddp.route.GetWorkflowRoute;
 import org.broadinstitute.ddp.route.HealthCheckRoute;
+import org.broadinstitute.ddp.route.InvitationCheckStatusRoute;
+import org.broadinstitute.ddp.route.InvitationLookupRoute;
+import org.broadinstitute.ddp.route.InvitationUpdateDetailsRoute;
+import org.broadinstitute.ddp.route.InvitationVerifyRoute;
 import org.broadinstitute.ddp.route.JoinMailingListRoute;
 import org.broadinstitute.ddp.route.ListCancersRoute;
 import org.broadinstitute.ddp.route.PatchFormAnswersRoute;
@@ -120,7 +126,6 @@ import org.broadinstitute.ddp.route.UpdateUserEmailRoute;
 import org.broadinstitute.ddp.route.UpdateUserPasswordRoute;
 import org.broadinstitute.ddp.route.UserActivityInstanceListRoute;
 import org.broadinstitute.ddp.route.UserRegistrationRoute;
-import org.broadinstitute.ddp.route.VerifyInvitationRoute;
 import org.broadinstitute.ddp.route.VerifyMailAddressRoute;
 import org.broadinstitute.ddp.schedule.DsmCancerLoaderJob;
 import org.broadinstitute.ddp.schedule.DsmDrugLoaderJob;
@@ -137,6 +142,7 @@ import org.broadinstitute.ddp.service.PdfBucketService;
 import org.broadinstitute.ddp.service.PdfGenerationService;
 import org.broadinstitute.ddp.service.PdfService;
 import org.broadinstitute.ddp.service.WorkflowService;
+import org.broadinstitute.ddp.transformers.NullableJsonTransformer;
 import org.broadinstitute.ddp.transformers.SimpleJsonTransformer;
 import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.ddp.util.LiquibaseUtil;
@@ -147,6 +153,7 @@ import org.quartz.Scheduler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+import spark.Filter;
 import spark.Request;
 import spark.Response;
 import spark.ResponseTransformer;
@@ -164,6 +171,8 @@ public class DataDonationPlatform {
             "Content-Length", "Accept", "Origin", ""};
     private static final Map<String, String> pathToClass = new HashMap<>();
     public static final String PORT = "PORT";
+    public static final int DEFAULT_RATE_LIMIT_MAX_QUERIES_PER_SECOND = 10;
+    public static final int DEFAULT_RATE_LIMIT_BURST = 15;
     private static Scheduler scheduler = null;
 
     /**
@@ -217,6 +226,13 @@ public class DataDonationPlatform {
 
         // GAE specifies port to use via environment variable
         String appEnginePort = System.getenv(PORT);
+
+        String preferredSourceIPHeader = null;
+        if (cfg.hasPath(ConfigFile.PREFERRED_SOURCE_IP_HEADER)) {
+            preferredSourceIPHeader = cfg.getString(ConfigFile.PREFERRED_SOURCE_IP_HEADER);
+        }
+        JettyConfig.setupJetty(preferredSourceIPHeader);
+
         if (appEnginePort != null) {
             port(Integer.parseInt(appEnginePort));
         } else {
@@ -238,8 +254,6 @@ public class DataDonationPlatform {
             LiquibaseUtil.runLiquibase(dbUrl, TransactionWrapper.DB.APIS);
         }
 
-        UserDao userDao = UserDaoFactory.createFromSqlConfig(sqlConfig);
-
         SectionBlockDao sectionBlockDao = new SectionBlockDao(new I18nContentRenderer());
 
         FormInstanceDao formInstanceDao = FormInstanceDao.fromDaoAndConfig(sectionBlockDao, sqlConfig);
@@ -250,6 +264,16 @@ public class DataDonationPlatform {
         final ActivityValidationService activityValidationService = new ActivityValidationService();
 
         SimpleJsonTransformer responseSerializer = new SimpleJsonTransformer();
+
+        if (cfg.hasPath(ConfigFile.API_RATE_LIMIT.MAX_QUERIES_PER_SECOND)  && cfg.hasPath(ConfigFile.API_RATE_LIMIT.BURST)) {
+            int maxQueriesPerSecond = cfg.getInt(ConfigFile.API_RATE_LIMIT.MAX_QUERIES_PER_SECOND);
+            int burst = cfg.getInt(ConfigFile.API_RATE_LIMIT.BURST);
+            LOG.info("Will use rate limit {} with burst {}", maxQueriesPerSecond, burst);
+            before("*", new RateLimitFilter(maxQueriesPerSecond, burst));
+        } else {
+            LOG.warn("No rate limit values given.  Rate limiting is disabled.");
+        }
+
 
         before("*", new HttpHeaderMDCFilter(X_FORWARDED_FOR));
         before("*", new MDCLogBreadCrumbFilter());
@@ -263,17 +287,21 @@ public class DataDonationPlatform {
         // - StudyLanguageContentLanguageSettingFilter sets the "Content-Language" header later on
         before(API.BASE + "/user/*/studies/*", new StudyLanguageResolutionFilter());
         after(API.BASE + "/user/*/studies/*", new StudyLanguageContentLanguageSettingFilter());
-        before(API.BASE + "/studies/*", new StudyLanguageResolutionFilter());
-        after(API.BASE + "/studies/*", new StudyLanguageContentLanguageSettingFilter());
+        beforeWithExclusion(API.BASE + "/studies/*", new StudyLanguageResolutionFilter(),
+                API.INVITATION_VERIFY, API.INVITATION_CHECK, API.INVITATION_LOOKUP, API.INVITATION_DETAILS);
+        afterWithExclusion(API.BASE + "/studies/*", new StudyLanguageContentLanguageSettingFilter(),
+                API.INVITATION_VERIFY, API.INVITATION_CHECK, API.INVITATION_LOOKUP, API.INVITATION_DETAILS);
 
         enableCORS("*", String.join(",", CORS_HTTP_METHODS), String.join(",", CORS_HTTP_HEADERS));
         setupCatchAllErrorHandling();
 
         // before filter converts jwt into DDP_AUTH request attribute
         // we exclude the DSM paths. DSM paths have own separate authentication
-        beforeWithExclusion(API.BASE + "/*", List.of(API.DSM_BASE + "/*", API.CHECK_IRB_PASSWORD),
-                new TokenConverterFilter(new JWTConverter(userDao)));
-        beforeWithExclusion(API.BASE + "/*", List.of(API.DSM_BASE + "/*", API.CHECK_IRB_PASSWORD), new AddDDPAuthLoggingFilter());
+        beforeWithExclusion(API.BASE + "/*", new TokenConverterFilter(new JWTConverter()),
+                API.DSM_BASE + "/*", API.CHECK_IRB_PASSWORD);
+        beforeWithExclusion(API.BASE + "/*", new AddDDPAuthLoggingFilter(),
+                API.DSM_BASE + "/*", API.CHECK_IRB_PASSWORD);
+
         // Internal routes
         get(API.HEALTH_CHECK, new HealthCheckRoute(healthcheckPassword), responseSerializer);
         get(API.DEPLOYED_VERSION, new GetDeployedAppVersionRoute(), responseSerializer);
@@ -285,7 +313,7 @@ public class DataDonationPlatform {
 
         post(API.REGISTRATION, new UserRegistrationRoute(interpreter), responseSerializer);
 
-        post(API.TEMP_USERS, new CreateTemporaryUserRoute(userDao), responseSerializer);
+        post(API.TEMP_USERS, new CreateTemporaryUserRoute(), responseSerializer);
 
         // Study related routes
         get(API.STUDY_ALL, new GetStudiesRoute(), responseSerializer);
@@ -355,8 +383,6 @@ public class DataDonationPlatform {
         get(API.USER_STUDIES_CONSENT, new GetConsentSummaryRoute(consentService), responseSerializer);
 
         get(API.ACTIVITY_INSTANCE_STATUS_TYPE_LIST, new GetActivityInstanceStatusTypeListRoute(), responseSerializer);
-
-        // jenkins test
 
         // User activity instance routes
         get(API.USER_ACTIVITIES, new UserActivityInstanceListRoute(activityInstanceDao), responseSerializer);
@@ -442,7 +468,13 @@ public class DataDonationPlatform {
                 responseSerializer
         );
 
-        post(API.VERIFY_INVITATION, new VerifyInvitationRoute(), responseSerializer);
+        var jsonSerializer = new NullableJsonTransformer();
+        post(API.INVITATION_VERIFY, new InvitationVerifyRoute(), jsonSerializer);
+        post(API.INVITATION_CHECK, new InvitationCheckStatusRoute(), jsonSerializer);
+        post(API.INVITATION_LOOKUP, new InvitationLookupRoute(), jsonSerializer);
+        post(API.INVITATION_DETAILS, new InvitationUpdateDetailsRoute(), jsonSerializer);
+
+        addBefore(new OnlyStudyAdminFilter(), API.INVITATION_LOOKUP, API.INVITATION_DETAILS);
 
         Runnable runnable = () -> {
             var dsm = new DsmClient(cfg);
@@ -553,6 +585,11 @@ public class DataDonationPlatform {
         Spark.patch(path, route, transformer);
     }
 
+    public static void addBefore(Filter filter, String... paths) {
+        for (var path : paths) {
+            before(path, filter);
+        }
+    }
 
     private static void setupCatchAllErrorHandling() {
         //JSON for Not Found (code 404) handling

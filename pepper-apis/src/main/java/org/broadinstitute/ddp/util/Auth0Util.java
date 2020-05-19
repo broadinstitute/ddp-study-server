@@ -609,10 +609,6 @@ public class Auth0Util {
             this.token = token;
         }
 
-        public String getEmailAddress() {
-            return email;
-        }
-
         public Long getUserId() {
             return userId;
         }

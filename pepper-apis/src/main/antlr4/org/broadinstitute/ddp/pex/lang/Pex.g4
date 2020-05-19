@@ -33,9 +33,10 @@ form : 'forms' '[' STR ']' ;
 instance : 'instances' '[' INSTANCE_TYPE ']' ;
 question : 'questions' '[' STR ']' ;
 
-// A predicate evaluating to true if a user has aged up (reached the age of maturity) for this study
+// Predicates operating on study-level data
 studyPredicate
   : 'hasAgedUp' '(' ')'  # HasAgedUpPredicate
+  | 'hasInvitation' '(' STR ')'   # HasInvitationPredicate
   ;
 
 // Form predicate functions that operate on a single piece of data
