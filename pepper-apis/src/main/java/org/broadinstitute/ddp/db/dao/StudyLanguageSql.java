@@ -16,7 +16,7 @@ public interface StudyLanguageSql extends SqlObject {
     @GetGeneratedKeys()
     long insert(@Bind("studyId") long studyId,
                 @Bind("languageCodeId") long languageCodeId,
-                @Bind("isDefault") Boolean isDefault);
+                @Bind("isDefault") boolean isDefault);
 
     @SqlUpdate("insert into study_language "
             + "(umbrella_study_id, language_code_id) values "
@@ -30,11 +30,11 @@ public interface StudyLanguageSql extends SqlObject {
             + " where umbrella_study_id = :studyId and language_code_id = :languageCodeId")
     int updateDefaultLanguage(@Bind("studyId") long studyId,
                 @Bind("languageCodeId") long languageCodeId,
-                @Bind("isDefault") Boolean isDefault);
+                @Bind("isDefault") boolean isDefault);
 
     @SqlUpdate("update study_language "
             + " set is_default := false  "
-            + " where umbrella_study_id = :studyId and is_default = false")
+            + " where umbrella_study_id = :studyId")
     int updateExistingAsNonDefaultLanguages(@Bind("studyId") long studyId);
 
     @SqlQuery("select language_code_id from study_language "
