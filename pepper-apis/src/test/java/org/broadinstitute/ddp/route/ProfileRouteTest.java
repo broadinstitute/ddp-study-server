@@ -238,7 +238,7 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
         Assert.assertEquals(birthDayInMonth, queriedProfile.getBirthDayInMonth());
         Assert.assertEquals(birthMonth, queriedProfile.getBirthMonth());
         Assert.assertEquals(birthYear, queriedProfile.getBirthYear());
-        Assert.assertEquals(birthDate, queriedProfile.getBirthDate());
+        Assert.assertEquals(birthDate.toString(), queriedProfile.getBirthDate());
         Assert.assertEquals(preferredLanguage, queriedProfile.getPreferredLanguage());
     }
 
@@ -297,7 +297,7 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
         String bodyToString = EntityUtils.toString(res.getEntity());
         Profile queriedProfile = gson.fromJson(bodyToString, Profile.class);
         Assert.assertEquals(UserProfile.SexType.MALE.name(), queriedProfile.getSex());
-        Assert.assertEquals(dummyBirthDate, queriedProfile.getBirthDate());
+        Assert.assertEquals(dummyBirthDate.toString(), queriedProfile.getBirthDate());
         Assert.assertEquals("ru", queriedProfile.getPreferredLanguage());
         Assert.assertEquals("foo", queriedProfile.getFirstName());
         Assert.assertEquals("bar", queriedProfile.getLastName());
@@ -342,7 +342,7 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
         Assert.assertEquals(birthDayInMonth, queriedProfile.getBirthDayInMonth());
         Assert.assertEquals(birthMonth, queriedProfile.getBirthMonth());
         Assert.assertEquals(birthYear, queriedProfile.getBirthYear());
-        Assert.assertEquals(birthDate, queriedProfile.getBirthDate());
+        Assert.assertEquals(birthDate.toString(), queriedProfile.getBirthDate());
         Assert.assertEquals(preferredLanguage, queriedProfile.getPreferredLanguage());
         Assert.assertEquals(firstName, queriedProfile.getFirstName());
         Assert.assertEquals(lastName, queriedProfile.getLastName());
