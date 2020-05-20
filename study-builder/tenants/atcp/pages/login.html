@@ -1,0 +1,935 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <title>Global A-T Family Data Platform | Activate Account Notification</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+    <link id="app-favicon" rel="icon" type="image/x-icon"
+          href="https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/favicon.ico">
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <link href="https://fonts.googleapis.com/css?family=Lato:400,700,700italic,400italic,300,300italic" rel="stylesheet"
+          type="text/css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <style>
+
+        a, a:active, a:focus, a:hover, a:link {
+            text-decoration: none !important;
+            outline: 0 !important
+        }
+
+        b {
+            font-weight: 700
+        }
+
+        .tooltip-inner {
+            min-width: 300px !important;
+            padding: 10px 10px 10px 15px;
+            color: #346391;
+            text-align: left;
+            background-color: #eee;
+            border-radius: 2px;
+            font-family: Lato, sans-serif;
+            font-size: 13px
+        }
+
+        .tooltip.bottom .tooltip-arrow {
+            border-bottom-color: #eee;
+            left: 50% !important
+        }
+
+        .tooltip.bottom .tooltip-arrow {
+            border-right-color: #eee;
+        }
+
+        .tooltip.bottom {
+            left: 0 !important
+        }
+
+        .Italic {
+            font-style: italic !important
+        }
+
+        .Normal {
+            font-weight: 400 !important
+        }
+
+        .BlueColor {
+            color: #4274bc
+        }
+
+        .NoPadding {
+            padding: 0 !important
+        }
+
+        .NoMargin {
+            margin: 0 !important
+        }
+
+        .AlignedLeft {
+            text-align: left !important
+        }
+
+        .AlignedCenter {
+            text-align: center
+        }
+
+        .OverLine {
+            position: relative;
+            margin: 45px 0 30px 0
+        }
+
+        .OverLine-comment {
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            background: #fff;
+            padding: 0 10px;
+            margin-left: -22px
+        }
+
+        .OverLine-line {
+            margin: 0 !important
+        }
+
+        .Line--dark {
+            border-color: #afafaf
+        }
+
+        .Line--noBottom {
+            margin-bottom: 0 !important
+        }
+
+        .BtnBordered {
+            padding: 7px 20px 9px 20px;
+            border-radius: 2px;
+            border: 1px solid !important;
+            font-size: 16px;
+            font-weight: 700;
+            text-align: center;
+            transition: border .3s ease, color .3s ease;
+            cursor: pointer !important
+        }
+
+        .BtnBordered:active, .BtnBordered:visited {
+            background-color: #fff !important
+        }
+
+        .BtnBordered--neutral a {
+            color: #7f7f7f !important
+        }
+
+        .BtnFilled {
+            padding: 8px 20px 10px 20px;
+            border-radius: 2px;
+            font-size: 16px;
+            text-align: center;
+            transition: background .3s ease, color .3s ease;
+            color: #fff !important
+        }
+
+        .BtnFilled--blue {
+            margin-top: 15px;
+            background: #4274bc
+        }
+
+        .BtnFilled--blue:hover {
+            background: #559be0
+        }
+
+        .BtnFilled--blue:active {
+            background: #346391
+        }
+
+        .BtnFilled--red {
+            margin-top: 15px;
+            background: #db2c2c
+        }
+
+        .BtnFilled--red:hover {
+            background: #559be0
+        }
+
+        .BtnFilled--red:active {
+            background: #db2c2c
+        }
+
+        .SignHelp {
+            text-align: center;
+            font-size: 13px;
+            padding-top: 15px !important;
+            color: #4274bc
+        }
+
+        .SignHelp:hover {
+            color: #559be0
+        }
+
+        .Title {
+            font-size: 24px;
+            font-weight: 700;
+            display: inline;
+            padding: 20px 0 15px 0 !important
+        }
+
+        .Subtitle {
+            font-size: 18px;
+            font-weight: 700;
+            line-height: 22px;
+            padding-bottom: 5px;
+            margin-top: 10px
+        }
+
+        .Subtitle--light {
+            font-weight: 300
+        }
+
+        .NoticesModal {
+            padding: 0
+        }
+
+        .NoticesModal .modal-content, .NoticesModal .modal-dialog {
+            border-radius: 0 !important
+        }
+
+        .NoticesModal-body {
+            position: relative;
+            border-radius: 0;
+            padding: 0
+        }
+
+        .NoticesModal .close {
+            position: absolute;
+            right: 15px;
+            top: 10px
+        }
+
+        .NoticesModal-text {
+            font-size: 18px;
+            font-weight: 700;
+            padding-left: 25px
+        }
+
+        .NoticesModal--success {
+            color: #666;
+            padding: 25px 25px 25px 0;
+            border-left: 10px solid #5cb85c;
+            background-color: #eaf6ea
+        }
+
+        .NoticesModal--danger {
+            color: #666;
+            padding: 25px 25px 25px 0;
+            border-left: 10px solid #d9534f;
+            background-color: #fdf7f7
+        }
+        .Header {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 0 25px 0 25px;
+            margin-bottom: 15px;
+            z-index: 20;
+            display: flex;
+            background-color: #4274bc
+        }
+
+        @media (min-width: 911px) {
+            .Header {
+                flex-direction: row;
+                padding: 0 40px;
+                justify-content: space-between
+            }
+        }
+
+        @media (min-width: 1281px) {
+            .Header {
+                padding: 0 50px
+            }
+        }
+
+        .Header .logo {
+            margin: 18px 0 0 0;
+            height: 45px
+        }
+
+        @media (min-width: 911px) {
+            .Header .logo {
+                margin: 18px 0
+            }
+        }
+
+        .Header nav {
+            margin: 28px 0 0 0
+        }
+
+        @media (min-width: 666px) {
+            .Header nav {
+                margin: 28px 0 20px 0
+            }
+        }
+
+        .Header nav > ul {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 0;
+            margin: 0
+        }
+
+        @media (min-width: 666px) {
+            .Header nav > ul {
+                flex-direction: row;
+                margin-bottom: 10px
+            }
+        }
+
+        .Header nav > ul > li {
+            display: inline !important;
+            padding-left: 20px;
+            text-decoration: none;
+            margin-bottom: 20px
+        }
+
+        @media (min-width: 666px) {
+            .Header nav > ul > li {
+                margin-bottom: 0
+            }
+        }
+
+        .Header nav > ul > li > a {
+            font-weight: 700;
+            font-size: 16px;
+            color: #fff;
+            transition: color .3s ease
+        }
+
+        .Header nav > ul > li button {
+            background-color: rgba(0, 0, 0, 0);
+            border: none;
+            color: #fff;
+            font-family: Lato, sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            padding: 0
+        }
+
+        .Header nav > ul > li button:hover {
+            color: #93c453 !important;
+            text-decoration: none
+        }
+
+        .Header nav > ul > li .dropdown-menu {
+            margin-top: 15px;
+            padding: 0 !important;
+            border-radius: 2px;
+            box-shadow: 0 1px 2px #ccc;
+            font-size: 15px;
+            text-align: right
+        }
+
+        .Header nav > ul > li .dropdown-menu a {
+            padding: 10px 20px 10px 20px
+        }
+
+        .Header nav > ul > li .dropdown-menu.languages {
+            font-size: 14px;
+            text-align: left !important
+        }
+
+        .Header nav > ul > li .divider {
+            margin: 0
+        }
+
+        .Header nav a:hover {
+            color: #93c453 !important;
+            text-decoration: none
+        }
+
+        .footer {
+            text-align: center
+        }
+
+        @media (min-width: 627px) {
+            .footer {
+                display: flex;
+                justify-content: space-between;
+                padding: 0 50px
+            }
+        }
+
+        .footer > div {
+            padding: 20px 0;
+            display: inline-block;
+            text-align: left
+        }
+
+        .footer > a {
+            padding: 20px 0;
+            display: block
+        }
+
+        .main {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        .footer {
+            margin-top: auto;
+        }
+
+        .main-offset {
+            margin: 30px 25px 0 25px;
+        }
+
+        .form-group.error .FormItem-label {
+            color: #DB2C2C !important;
+        }
+
+        .form-group.error input {
+            border: 1px solid #DB2C2C !important;
+            border-left: 3px solid #DB2C2C !important;
+        }
+
+        .form-group .message {
+            display: none;
+        }
+
+        .form-group.error .message {
+            display: block;
+            color: #DB2C2C !important;
+        }
+
+        @media only screen and (min-width: 800px) {
+            .main-offset {
+                margin: 30px 40px 0 40px;
+            }
+        }
+
+        @media only screen and (min-width: 1280px) {
+            .main-offset {
+                margin: 30px 50px 0 50px;
+            }
+        }
+
+        .SimpleButton {
+            background: 0 0;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            color: #1d1b25;
+            text-decoration: none;
+            font-size: 1.0625rem;
+            line-height: 1.375rem;
+            font-family: inherit;
+            white-space: nowrap
+        }
+
+        .SimpleButton:hover {
+            color: #bbbbbe;
+            text-decoration: underline
+        }
+
+        .SimpleButton:focus {
+            text-decoration: underline
+        }
+        .FormItem-label {
+            font-size: 14px;
+            font-weight: 400;
+            color: #666
+        }
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%
+        }
+
+        body {
+            font-family: Lato, sans-serif;
+            font-size: 16px
+        }
+
+        hr {
+            margin-top: 20px;
+            margin-bottom: 20px;
+            border: 0;
+            border-top: 1px solid #eeeeee;
+        }
+
+        .path {
+            height: 0;
+            overflow: hidden;
+        }
+
+        .visible {
+            height: auto;
+            overflow: unset;
+        }
+
+        .not-visible {
+            height: 0;
+            overflow: hidden;
+            margin: 0;
+        }
+
+        .margin-0 {
+            margin: 0;
+        }
+    </style>
+</head>
+<body class="main">
+<header class="Header">
+    <a href="/" class="prepare-link-host">
+        <img alt="A-T Portal Logo" class="logo"
+             src="https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/assets/images/atcp/original-logo-white.svg">
+    </a>
+    <nav>
+        <ul>
+            <li class="dropdown">
+                <a class="Link dropdown-toggle" data-toggle="dropdown" href="#">
+                    For Researchers
+                    <span class="caret"></span>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-right">
+                    <li>
+                        <a class="prepare-link-host" href="/data_access">
+                            Data Access Request
+                        </a>
+                    </li>
+                </ul>
+            </li>
+            <li class="dropdown">
+                <a aria-expanded="false"
+                   aria-haspopup="true"
+                   class="dropdown-toggle"
+                   data-toggle="dropdown"
+                   href="#"
+                   role="button">
+                    Learn More<span class="caret"></span>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-right dropdown">
+                    <li>
+                        <a id="about_us"
+                           class="prepare-link-host"
+                           href="/about-us">
+                            About Us
+                        </a>
+                    </li>
+                    <li class="divider"></li>
+                    <li>
+                        <a id="about_initiative"
+                           class="prepare-link-host"
+                           href="/about_initiative">About this Initiative</a>
+                    </li>
+                </ul>
+            </li>
+            <li class="dropdown">
+                <a class="BtnBordered white prepare-link-host"
+                   id="join-us-nav"
+                   href="/join-us">Join Us</a>
+            </li>
+            <li>
+                <a href="#"
+                   onclick="onActivateSignIn(event)"
+                   class="prepare-link-auth SimpleButton">Sign In</a>
+            </li>
+        </ul>
+    </nav>
+</header>
+
+<div class="main-offset activate-account path">
+    <div class="col-lg-5 col-md-5 col-sm-6 col-xs-10 NoPadding">
+        <h1 class="Title BlueColor">Account Activation</h1>
+        <h2 class="Subtitle Subtitle--light">You are almost done! Please check your email: <span class="Normal"
+                                                                                                 id="checkEmail">adgdag@srhr.com</span>.
+            An email has been sent there with the guidelines to activate your account.</h2>
+
+        <hr class="Line--noBottom">
+        <div class="SignHelp Italic AlignedLeft">
+            <a data-toggle="tooltip"
+               data-placement="bottom"
+               title=""
+               href="#"
+               data-original-title="Wait a little longer. Sometimes delivery of email can be delayed by processes outside our control. You can also check the junk folder of your email account. The email sometimes ends up there.">
+                Still waiting for your email?
+            </a><br>
+            <a href="#" onclick="onActivateResendConfirmation(event)">Resend confirmation instructions</a>
+        </div>
+    </div>
+</div>
+
+<div class="main-offset path reset-password">
+    <div class="row margin-0">
+        <div class="col-lg-5 col-md-5 col-sm-6 col-xs-10 NoPadding">
+            <h1 class="Title BlueColor">Forgot your password?</h1>
+            <h2 class="Subtitle Subtitle--light">Please enter your email address and we will send you password reset
+                instructions.</h2>
+        </div>
+    </div>
+    <div class="Content col-lg-5 col-md-5 col-sm-6 col-xs-10 NoPadding">
+        <form class="form" id="reset-password">
+            <div class="form-group">
+                <label class="FormItem-label" for="email">Email</label><br>
+                <input autofocus="autofocus" class="form-control FormItem-input" type="email" value="" name="email"
+                       id="email">
+                <div class="message">
+                    Email not found
+                </div>
+            </div>
+            <hr class="Line--noBottom">
+            <br>
+            <div class="AlignedCenter">
+                <button class="BtnFilled BtnFilled--blue">Send me reset password instructions</button>
+            </div>
+        </form>
+        <div class="SignHelp Italic">
+            <a href="#" onclick="onActivateSignIn(event)">Sign In</a><br>
+            <a href="#" onclick="onActivateResendConfirmation(event)">Resend confirmation instructions</a><br>
+        </div>
+    </div>
+</div>
+
+<div class="main-offset path resend-confirmation">
+    <div class="row margin-0">
+        <div class="col-lg-5 col-md-5 col-sm-6 col-xs-10 NoPadding">
+            <h1 class="Title BlueColor">Resend confirmation instructions</h1>
+            <h2 class="Subtitle Subtitle--light">If you did not receive your confirmation instructions, you can enter
+                your email address to generate another confirmation email.</h2>
+        </div>
+    </div>
+    <div class="Content col-lg-5 col-md-5 col-sm-6 col-xs-10 NoPadding">
+        <form id="resend">
+            <div class="form-group">
+                <label class="FormItem-label" for="email">Email</label>
+                <input autofocus="autofocus"
+                       value=""
+                       class="form-control FormItem-input"
+                       type="email"
+                       name="email"
+                       id="email">
+            </div>
+
+            <hr class="Line--noBottom">
+            <br>
+            <div class="AlignedCenter">
+                <button class="BtnFilled BtnFilled--blue"
+                        id="confirm">
+                    Resend confirmation instructions
+                </button>
+            </div>
+        </form>
+        <div class="SignHelp Italic">
+            <a href="#" onclick="onActivateSignIn(event)">Sign In</a><br>
+            <a href="#" onclick="onActivateResetPassword(event)">Forgot your password?</a><br>
+        </div>
+    </div>
+</div>
+
+<div class="main-offset login path">
+    <div class="row">
+        <div class="col-lg-5 col-md-6 col-sm-8 col-xs-10">
+            <h1 class="Title BlueColor">Sign In</h1>
+            <h2 class="Subtitle Subtitle--light">
+                You can log into the Global A-T Family Data Platform using your email address or with your Google
+                account.
+            </h2>
+            <h2 class="Subtitle Normal">Use your email address:</h2>
+            <form id="login">
+                <div class="form-group">
+                    <label class="FormItem-label" for="email">Email address</label>
+                    <input class="form-control FormItem-input" type="text" name="email" id="email">
+                </div>
+                <div class="form-group">
+                    <label class="FormItem-label" for="password">Password</label>
+                    <input class="form-control FormItem-input" type="password" name="password" id="password">
+                </div>
+                <div class="AlignedCenter">
+                    <button class="BtnFilled BtnFilled--blue">Sign In</button>
+                </div>
+            </form>
+            <div class="OverLine">
+                <hr class="Line--dark OverLine-line">
+                <div class="OverLine-comment">OR</div>
+            </div>
+            <div class="AlignedCenter">
+                <a class="BtnFilled BtnFilled--red" id="google-sign" href="/users/auth/google_oauth2?locale=en">
+                    Sign In with Google
+                </a>
+            </div>
+            <hr class="Line--noBottom">
+            <div class="SignHelp Italic">
+                <a href="#" onclick="onActivateResetPassword(event)">Forgot your password?</a><br>
+                <a href="#" onclick="onActivateResendConfirmation(event)">
+                    Resend confirmation instructions
+                </a>
+                <br>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="main-offset signup path">
+    <div class="row">
+        <div class="col-lg-5 col-md-6 col-sm-8 col-xs-10">
+            <h1 class="Title BlueColor">Join Us</h1>
+            <h2 class="Subtitle Subtitle--light">
+                Do you or your child have A-T? Tell us about it and join us in making a difference…
+            </h2>
+            <form id="signUp">
+                <div class="form-group">
+                    <label class="FormItem-label" for="email">Email address</label>
+                    <input class="form-control FormItem-input" type="text" name="email" id="email">
+                </div>
+                <div class="form-group">
+                    <label class="FormItem-label" for="password">Password</label>
+                    <input class="form-control FormItem-input" type="password" name="password" id="password">
+                    <div class="message">
+                        at least 8 characters including: a lower-case letter, an upper-case letter, a number, a special
+                        character (such as !@#$%^&*).
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="FormItem-label" for="password_confirm">Reenter password</label>
+                    <input class="form-control FormItem-input local-field" type="password" name="password_confirm"
+                           id="password_confirm">
+                    <div class="message">
+                        Password confirmation doesn't match Password
+                    </div>
+                </div>
+                <hr class="NoMargin">
+                <div class="row NoMargin">
+                    <button class="col-lg-4 col-lg-offset-4 col-md-4 col-md-offset-4 col-sm-6 col-sm-offset-3 col-xs-8 col-xs-offset-2 BtnFilled BtnFilled--blue"
+                            id="join-us">
+                        Join Us
+                    </button>
+                </div>
+                <div class="SignHelp Italic">
+                    <a href="#" class="change-mode" onclick="onActivateSignIn(event)">
+                        Already registered? Sign In here
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<footer class="footer">
+    <div>
+        <div>
+            <i class="fa fa-fw fa-envelope-square"></i>
+            <a class="footer-link" href="mailto:support@atfamilies.org">support@atfamilies.org</a>
+        </div>
+        <div class="contacts__entry">
+            <i class="fa fa-fw fa-phone-square"></i>
+            +1 954-481-6611
+        </div>
+    </div>
+    <a href="/" class="prepare-link-host">
+        <img src="https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/assets/images/atcp/original-logo-color.svg">
+    </a>
+</footer>
+<div class="NoPadding NoticesModal modal" id="message_modal" tabindex="-1" role="dialog"
+     aria-labelledby="message_modalLabel" aria-hidden="true">
+    <div class="modal-dialog NoPadding">
+        <div class="modal-content NoPadding">
+            <div class="modal-body NoticesModal-body NoPadding">
+                <button class="close" onclick="hideModal()" data-dismiss="modal">×</button>
+                <div class="NoticesModal--success">
+                    <div class="NoticesModal-text" id="modal-text">
+                        Your password has been changed successfully.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!--[if IE 8]>
+<script src="//cdnjs.cloudflare.com/ajax/libs/ie8/0.2.5/ie8.js"></script>
+<![endif]-->
+<script src="https://cdn.auth0.com/js/auth0/9.11/auth0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/validate-js/2.0.1/validate.min.js"></script>
+
+<script>
+  /**
+   * start config for auth
+   */
+  const config = JSON.parse(decodeURIComponent(escape(window.atob('@@config@@'))));
+  let mainUrl = '';
+  const authLoc = Math.max(config.callbackURL.indexOf('/auth'), config.callbackURL.indexOf('/login-landing'));
+  if (authLoc === -1) {
+    mainUrl = config.callbackURL;
+  } else {
+    mainUrl = config.callbackURL.substring(0, authLoc);
+  }
+  const webAuth = new auth0.WebAuth({
+    domain: config.auth0Domain,
+    clientID: config.clientID,
+    redirectUri: config.callbackURL,
+    responseType: (config.internalOptions || {}).response_type ||
+    config.callbackOnLocationHash ? 'token' : 'code',
+    params: config.internalOptions,
+    configurationBaseUrl: config.clientConfigurationBaseUrl,
+    overrides: {
+      __tenant: config.auth0Tenant,
+      __token_issuer: mainUrl
+    },
+  });
+  /**
+   * end config for auth
+   */
+
+  $('[data-toggle="tooltip"]').tooltip();
+  $('#google-sign').on('click', e => {
+    e.preventDefault();
+    webAuth.popup.authorize({
+      redirectUri: config.callbackURL,
+      connection: 'google',
+    }, () => {});
+  });
+
+  /**
+   * start changing href from links
+   */
+  $('.prepare-link-host').map((i, el) => {
+    const $el = $(el);
+    $el.attr('href', mainUrl + $el.attr('href'));
+  });
+  $('.prepare-link-auth').map((i, el) => {
+    const $el = $(el);
+    $el.attr('href', config.authorizationServer.url + $el.attr('href') + '?state=' + config.extraParams.state);
+  });
+  /**
+   * end changing href from links
+   */
+  /**
+   * start validate-js for checking forms
+   */
+  let userEmail = '';
+  let errorsFromRouse = false;
+  const commonChecks = [
+    {
+      name: 'email',
+      rules: 'required|callback_check_email',
+    }, {
+      name: 'password',
+      rules: 'required|min_length[8]|callback_check_password'
+    }
+  ];
+  const CreateForm = (id, checks, cb) => {
+    new FormValidator(id, checks, (errors, event) => {
+      event.preventDefault();
+      $('#' + id + ' .form-group').removeClass('error');
+      if (errors.length > 0) {
+        errors.forEach(item => {
+          $('#' + id + ' #' + item.name).closest('.form-group').addClass('error');
+        });
+      } else {
+        cb();
+      }
+    });
+  };
+  CreateForm('signUp', [...commonChecks, {
+    name: 'password_confirm',
+    rules: 'required|matches[password]'
+  }
+  ], () => {
+    webAuth.signup({
+      connection: 'Username-Password-Authentication',
+      email: $('#signUp #email').val(),
+      password: $('#signUp #password').val(),
+      user_metadata: {
+        temp_user_guid: config.extraParams.temp_user_guid,
+      }
+    }, () => {
+      userEmail = $('#signUp #email').val();
+      onActivateActivateAccount();
+    })
+  });
+  CreateForm('login', [...commonChecks, {
+    name: 'password',
+    rules: 'required|callback_check_password'
+  }], () => {
+    webAuth.login({
+      state: config.extraParams.state,
+      realm: 'Username-Password-Authentication',
+      email: $('#login #email').val(),
+      password: $('#login #password').val(),
+    }, () => {
+      $('#modal-text').text('Invalid email or password');
+      $('.NoticesModal--success').addClass('NoticesModal--danger');
+      errorsFromRouse = true;
+      showModal();
+    });
+  });
+  CreateForm('resend', [commonChecks[0]], () => {});
+  CreateForm('reset-password', [commonChecks[0]], () => {
+    webAuth.changePassword({
+      connection: 'Username-Password-Authentication',
+      email: $('#reset-password #email').val()
+    }, function (err, resp) {
+      if (err) {
+        $('#reset-password .form-group').addClass('error');
+      } else {
+        $('#modal-text').text('You will receive an email with instructions on how to reset your password in a few minutes.');
+        showModal();
+      }
+    });
+  });
+  const onChangePath = (pathName) => {
+    $('.path').addClass('not-visible');
+    $('.path.' + pathName).removeClass('not-visible');
+    $('.path.' + pathName).addClass('visible');
+  };
+  const onActivateActivateAccount = (event) => {
+    event && event.preventDefault();
+    $('#checkEmail').text(userEmail);
+    onChangePath('activate-account');
+  };
+  const onActivateResetPassword = (event) => {
+    event && event.preventDefault();
+    onChangePath('reset-password');
+  };
+  const onActivateResendConfirmation = (event) => {
+    event && event.preventDefault();
+    onChangePath('resend-confirmation');
+    if (userEmail) {
+      $('#resend #email').val(userEmail);
+    }
+  };
+  const onActivateSignIn = (event) => {
+    event && event.preventDefault();
+    onChangePath('login');
+  };
+  let timeoutId;
+  const showModal = () => {
+    $('#message_modal').addClass('show');
+    if (!errorsFromRouse) {
+      onActivateSignIn();
+    }
+    timeoutId = setTimeout(() => {
+      hideModal();
+    }, 5000);
+  };
+  const hideModal = () => {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+    $('#message_modal').removeClass('show');
+    if (!errorsFromRouse) {
+      onActivateSignIn();
+    }
+    errorsFromRouse = false;
+    $('.NoticesModal--success').removeClass('NoticesModal--danger');
+  };
+  // open login or signUp form after loaded page
+  onChangePath(config.extraParams.mode === 'login' ? 'login' : config.extraParams.mode);
+</script>
+</body>
+</html>

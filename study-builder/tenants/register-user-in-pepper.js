@@ -81,6 +81,9 @@ function (user, context, callback) {
         } else if (context.request.body.temp_user_guid) {
             pepper_params.tempUserGuid = context.request.body.temp_user_guid;
             console.log('Temp user guid passed in (via body) = ' + pepper_params.tempUserGuid);
+        } else if (user.user_metadata && user.user_metadata.temp_user_guid) {
+            pepper_params.tempUserGuid = user.user_metadata.temp_user_guid;
+            console.log('Temp user guid passed in (via user_metadata) = ' + pepper_params.tempUserGuid);
         } else {
             console.log('No temp user guid passed in request');
         }
