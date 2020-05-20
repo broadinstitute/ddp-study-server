@@ -19,10 +19,13 @@ public class Profile {
     public static final String FIRST_NAME = "firstName";
     public static final String LAST_NAME = "lastName";
 
+    @Deprecated
     @SerializedName(BIRTH_MONTH)
     private Integer birthMonth;
+    @Deprecated
     @SerializedName(BIRTH_YEAR)
     private Integer birthYear;
+    @Deprecated
     @SerializedName(BIRTH_DAY_IN_MONTH)
     private Integer birthDayInMonth;
     @SerializedName(SEX)
