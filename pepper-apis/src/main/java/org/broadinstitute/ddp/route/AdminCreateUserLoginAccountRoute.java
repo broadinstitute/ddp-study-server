@@ -1,5 +1,8 @@
 package org.broadinstitute.ddp.route;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 import com.auth0.json.mgmt.Connection;
 import org.apache.http.HttpStatus;
 import org.apache.http.entity.ContentType;
@@ -7,11 +10,13 @@ import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.db.dao.ClientDao;
 import org.broadinstitute.ddp.db.dao.JdbiAuth0Tenant;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dto.Auth0TenantDto;
+import org.broadinstitute.ddp.db.dto.ClientDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.json.admin.CreateUserLoginAccountPayload;
@@ -20,8 +25,8 @@ import org.broadinstitute.ddp.model.event.LoginAccountCreatedSignal;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.security.DDPAuth;
+import org.broadinstitute.ddp.service.Auth0Service;
 import org.broadinstitute.ddp.service.EventService;
-import org.broadinstitute.ddp.util.GuidUtils;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
@@ -95,58 +100,71 @@ public class AdminCreateUserLoginAccountRoute extends ValidatedJsonInputRoute<Cr
                         new ApiError(ErrorCodes.OPERATION_NOT_ALLOWED, "User is a temporary user"));
             }
 
-            Auth0ManagementClient auth0Mgmt = createManagementClient(handle, studyGuid);
-            String auth0ClientId = payload.getAuth0ClientId();
+            Auth0Service auth0Service = getAuth0Service(handle, studyGuid);
 
-            // Find database connection to sign up new user
-            var listResult = auth0Mgmt.listClientConnections(auth0ClientId);
-            if (listResult.hasThrown() || listResult.hasError()) {
-                Exception e = listResult.hasThrown() ? listResult.getThrown() : listResult.getError();
+            // Figure out what client to use
+            List<ClientDto> webClients = handle.attach(ClientDao.class)
+                    .findAllPermittedClientsForStudy(studyDto.getId())
+                    .stream()
+                    .filter(client -> client.getWebPasswordRedirectUrl() != null)
+                    .collect(Collectors.toList());
+            if (webClients.size() != 1) {
+                LOG.error("Expected to find one client with web password redirect url"
+                                + " for study {} but found {}, unable to proceed with login account creation",
+                        studyGuid, webClients.size());
+                throw ResponseUtil.haltError(HttpStatus.SC_INTERNAL_SERVER_ERROR,
+                        new ApiError(ErrorCodes.SERVER_ERROR, "Error looking up client"));
+            }
+            ClientDto client = webClients.get(0);
+            String auth0ClientId = client.getAuth0ClientId();
+            String auth0Domain = client.getAuth0Domain();
+
+            // Figure out client's database connection
+            Connection dbConn;
+            try {
+                dbConn = auth0Service.findClientDBConnection(auth0ClientId);
+            } catch (Exception e) {
                 LOG.warn("Error getting client connections for auth0 client {}", auth0ClientId, e);
                 throw ResponseUtil.haltError(HttpStatus.SC_INTERNAL_SERVER_ERROR,
                         new ApiError(ErrorCodes.SERVER_ERROR, "Error looking up client"));
             }
-
-            Connection dbConn = listResult.getBody().stream()
-                    .filter(conn -> conn.getStrategy().equals(Auth0ManagementClient.DB_CONNECTION_STRATEGY))
-                    .findFirst()
-                    .orElse(null);
             if (dbConn == null) {
-                LOG.error("Client {} does not have database connection", auth0ClientId);
                 throw ResponseUtil.haltError(HttpStatus.SC_BAD_REQUEST,
                         new ApiError(ErrorCodes.OPERATION_NOT_ALLOWED, "Client has no database connection"));
             } else {
                 LOG.info("Using database connection with name {} for client {}", dbConn.getName(), auth0ClientId);
             }
 
-            // Create auth0 user
-            String email = payload.getEmail();
-            String randomPassword = GuidUtils.randomPassword();
-            var userResult = auth0Mgmt.createAuth0User(dbConn.getName(), email, randomPassword);
-            if (userResult.hasThrown() || userResult.hasError()) {
-                Exception e = userResult.hasThrown() ? userResult.getThrown() : userResult.getError();
-                LOG.error("Error creating new auth0 account for user {}", user.getGuid(), e);
+            // Construct redirect URL
+            String redirectUrl;
+            try {
+                redirectUrl = auth0Service.generatePasswordResetRedirectUrl(auth0ClientId, auth0Domain);
+            } catch (Exception e) {
+                LOG.error("Error constructing password reset redirect URL for user {}", user.getGuid(), e);
                 throw ResponseUtil.haltError(HttpStatus.SC_INTERNAL_SERVER_ERROR,
                         new ApiError(ErrorCodes.SERVER_ERROR, "Error setting up login account"));
-            } else {
-                LOG.info("Created auth0 account for user {}", user.getGuid());
+            }
+            LOG.info("User will be redirected here after password reset: {}", redirectUrl);
+
+            // Create the login account
+            Auth0Service.UserWithPasswordTicket userWithTicket;
+            try {
+                userWithTicket = auth0Service.createUserWithPasswordTicket(dbConn, payload.getEmail(), redirectUrl);
+            } catch (Exception e) {
+                LOG.error("Error creating auth0 account for user {}", user.getGuid(), e);
+                throw ResponseUtil.haltError(HttpStatus.SC_INTERNAL_SERVER_ERROR,
+                        new ApiError(ErrorCodes.SERVER_ERROR, "Error setting up login account"));
+            }
+            if (userWithTicket == null) {
+                LOG.warn("Email already exists in connection {}", dbConn.getName());
+                throw ResponseUtil.haltError(HttpStatus.SC_BAD_REQUEST,
+                        new ApiError(ErrorCodes.EMAIL_ALREADY_EXISTS, "Email already exists"));
             }
 
             // Link auth0 user id
-            var auth0User = userResult.getBody();
+            var auth0User = userWithTicket.getUser();
             userDao.assignAuth0UserId(user.getGuid(), auth0User.getId());
             LOG.info("Assigned auth0 user id to user {}", user.getGuid());
-
-            // Create password reset ticket
-            var ticketResult = auth0Mgmt.createPasswordResetTicket(auth0User.getId(), payload.getRedirectUrl());
-            if (ticketResult.hasThrown() || ticketResult.hasError()) {
-                Exception e = ticketResult.hasThrown() ? ticketResult.getThrown() : ticketResult.getError();
-                LOG.error("Error creating password reset ticket for user {}", user.getGuid(), e);
-                throw ResponseUtil.haltError(HttpStatus.SC_INTERNAL_SERVER_ERROR,
-                        new ApiError(ErrorCodes.SERVER_ERROR, "Error setting up login account"));
-            } else {
-                LOG.info("Created password reset ticket for user {}", user.getGuid());
-            }
 
             // Run downstream study events
             User operator = userDao.findUserByGuid(ddpAuth.getOperator())
@@ -156,7 +174,7 @@ public class AdminCreateUserLoginAccountRoute extends ValidatedJsonInputRoute<Cr
                     user.getId(),
                     user.getGuid(),
                     studyDto.getId(),
-                    ticketResult.getBody());
+                    userWithTicket.getTicket());
             triggerEvents(handle, signal);
         });
 
@@ -164,12 +182,12 @@ public class AdminCreateUserLoginAccountRoute extends ValidatedJsonInputRoute<Cr
         return null;
     }
 
-    Auth0ManagementClient createManagementClient(Handle handle, String studyGuid) {
+    Auth0Service getAuth0Service(Handle handle, String studyGuid) {
         Auth0TenantDto tenantDto = handle.attach(JdbiAuth0Tenant.class).findByStudyGuid(studyGuid);
-        return new Auth0ManagementClient(
+        return new Auth0Service(new Auth0ManagementClient(
                 tenantDto.getDomain(),
                 tenantDto.getManagementClientId(),
-                tenantDto.getManagementClientSecret());
+                tenantDto.getManagementClientSecret()));
     }
 
     void triggerEvents(Handle handle, LoginAccountCreatedSignal signal) {

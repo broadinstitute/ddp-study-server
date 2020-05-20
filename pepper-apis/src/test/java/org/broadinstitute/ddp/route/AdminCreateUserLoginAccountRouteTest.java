@@ -15,19 +15,18 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import com.auth0.json.mgmt.Connection;
 import io.restassured.http.ContentType;
 import io.restassured.mapper.ObjectMapperType;
 import org.broadinstitute.ddp.TxnAwareBaseTest;
-import org.broadinstitute.ddp.client.ApiResult;
 import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.AuthDao;
+import org.broadinstitute.ddp.db.dao.JdbiClient;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.filter.StudyAdminAuthFilter;
@@ -36,6 +35,7 @@ import org.broadinstitute.ddp.json.admin.CreateUserLoginAccountPayload;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.security.JWTConverter;
+import org.broadinstitute.ddp.service.Auth0Service;
 import org.broadinstitute.ddp.transformers.NullableJsonTransformer;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.junit.AfterClass;
@@ -68,6 +68,8 @@ public class AdminCreateUserLoginAccountRouteTest extends TxnAwareBaseTest {
         TransactionWrapper.useTxn(handle -> {
             testData = TestDataSetupUtil.generateBasicUserTestData(handle);
             handle.attach(AuthDao.class).assignStudyAdmin(testData.getUserId(), testData.getStudyId());
+            handle.attach(JdbiClient.class).updateWebPasswordRedirectUrlByAuth0ClientIdAndAuth0Domain(
+                    "http://localhost", testData.getAuth0ClientId(), testData.getTestingClient().getAuth0Domain());
         });
     }
 
@@ -77,6 +79,8 @@ public class AdminCreateUserLoginAccountRouteTest extends TxnAwareBaseTest {
         Spark.awaitStop();
 
         TransactionWrapper.useTxn(handle -> {
+            handle.attach(JdbiClient.class).updateWebPasswordRedirectUrlByAuth0ClientIdAndAuth0Domain(
+                    null, testData.getAuth0ClientId(), testData.getTestingClient().getAuth0Domain());
             handle.attach(AuthDao.class).removeAdminFromAllStudies(testData.getUserId());
 
             JdbiUserStudyEnrollment jdbiEnrollment = handle.attach(JdbiUserStudyEnrollment.class);
@@ -89,7 +93,7 @@ public class AdminCreateUserLoginAccountRouteTest extends TxnAwareBaseTest {
 
     @Test
     public void testStudyNotFound() {
-        var payload = new CreateUserLoginAccountPayload("client", "foo@datadonationplatform.org", "http://localhost");
+        var payload = new CreateUserLoginAccountPayload("foo@datadonationplatform.org");
         given().auth().oauth2(testData.getTestingUser().getToken())
                 .pathParam("study", "foo")
                 .pathParam("user", "bar")
@@ -101,7 +105,7 @@ public class AdminCreateUserLoginAccountRouteTest extends TxnAwareBaseTest {
 
     @Test
     public void testUserNotFound() {
-        var payload = new CreateUserLoginAccountPayload("client", "foo@datadonationplatform.org", "http://localhost");
+        var payload = new CreateUserLoginAccountPayload("foo@datadonationplatform.org");
         given().auth().oauth2(testData.getTestingUser().getToken())
                 .pathParam("study", testData.getStudyGuid())
                 .pathParam("user", "bar")
@@ -114,7 +118,7 @@ public class AdminCreateUserLoginAccountRouteTest extends TxnAwareBaseTest {
     @Test
     public void testUserNotInStudy() {
         User user = createDummyUser(null, false);
-        var payload = new CreateUserLoginAccountPayload("client", "foo@datadonationplatform.org", "http://localhost");
+        var payload = new CreateUserLoginAccountPayload("foo@datadonationplatform.org");
         given().auth().oauth2(testData.getTestingUser().getToken())
                 .pathParam("study", testData.getStudyGuid())
                 .pathParam("user", user.getGuid())
@@ -127,7 +131,7 @@ public class AdminCreateUserLoginAccountRouteTest extends TxnAwareBaseTest {
     @Test
     public void testUserAlreadyHasLoginAccount() {
         User user = createDummyUser("fake" + System.currentTimeMillis(), true);
-        var payload = new CreateUserLoginAccountPayload("client", "foo@datadonationplatform.org", "http://localhost");
+        var payload = new CreateUserLoginAccountPayload("foo@datadonationplatform.org");
         given().auth().oauth2(testData.getTestingUser().getToken())
                 .pathParam("study", testData.getStudyGuid())
                 .pathParam("user", user.getGuid())
@@ -140,12 +144,12 @@ public class AdminCreateUserLoginAccountRouteTest extends TxnAwareBaseTest {
 
     @Test
     public void testClientHasNoDBConnection() {
-        var mockAuth0 = mock(Auth0ManagementClient.class);
-        doReturn(mockAuth0).when(routeSpy).createManagementClient(any(), any());
-        doReturn(ApiResult.ok(200, List.of())).when(mockAuth0).listClientConnections(any());
+        var mockAuth0 = mock(Auth0Service.class);
+        doReturn(mockAuth0).when(routeSpy).getAuth0Service(any(), any());
+        doReturn(null).when(mockAuth0).findClientDBConnection(any());
 
         User user = createDummyUser(null, true);
-        var payload = new CreateUserLoginAccountPayload("client", "foo@datadonationplatform.org", "http://localhost");
+        var payload = new CreateUserLoginAccountPayload("foo@datadonationplatform.org");
         given().auth().oauth2(testData.getTestingUser().getToken())
                 .pathParam("study", testData.getStudyGuid())
                 .pathParam("user", user.getGuid())
@@ -157,39 +161,16 @@ public class AdminCreateUserLoginAccountRouteTest extends TxnAwareBaseTest {
     }
 
     @Test
-    public void testCreateAuth0AccountFails() {
+    public void testUserCreationFails() {
         var dbConn = new Connection("db", Auth0ManagementClient.DB_CONNECTION_STRATEGY);
 
-        var mockAuth0 = mock(Auth0ManagementClient.class);
-        doReturn(mockAuth0).when(routeSpy).createManagementClient(any(), any());
-        doReturn(ApiResult.ok(200, List.of(dbConn))).when(mockAuth0).listClientConnections(any());
-        doThrow(new RuntimeException("from test")).when(mockAuth0).createAuth0User(any(), any(), any());
+        var mockAuth0 = mock(Auth0Service.class);
+        doReturn(mockAuth0).when(routeSpy).getAuth0Service(any(), any());
+        doReturn(dbConn).when(mockAuth0).findClientDBConnection(any());
+        doThrow(new RuntimeException("from test")).when(mockAuth0).createUserWithPasswordTicket(any(), any(), any());
 
         User user = createDummyUser(null, true);
-        var payload = new CreateUserLoginAccountPayload("client", "foo@datadonationplatform.org", "http://localhost");
-        given().auth().oauth2(testData.getTestingUser().getToken())
-                .pathParam("study", testData.getStudyGuid())
-                .pathParam("user", user.getGuid())
-                .body(payload, ObjectMapperType.GSON)
-                .when().post(urlTemplate)
-                .then().assertThat()
-                .statusCode(500);
-    }
-
-    @Test
-    public void testCreatePasswordResetTicketFails() {
-        var dbConn = new Connection("db", Auth0ManagementClient.DB_CONNECTION_STRATEGY);
-        var auth0User = new com.auth0.json.mgmt.users.User();
-        auth0User.setId("fake-auth0-id");
-
-        var mockAuth0 = mock(Auth0ManagementClient.class);
-        doReturn(mockAuth0).when(routeSpy).createManagementClient(any(), any());
-        doReturn(ApiResult.ok(200, List.of(dbConn))).when(mockAuth0).listClientConnections(any());
-        doReturn(ApiResult.ok(200, auth0User)).when(mockAuth0).createAuth0User(any(), any(), any());
-        doThrow(new RuntimeException("from test")).when(mockAuth0).createPasswordResetTicket(any(), any());
-
-        User user = createDummyUser(null, true);
-        var payload = new CreateUserLoginAccountPayload("client", "foo@datadonationplatform.org", "http://localhost");
+        var payload = new CreateUserLoginAccountPayload("foo@datadonationplatform.org");
         given().auth().oauth2(testData.getTestingUser().getToken())
                 .pathParam("study", testData.getStudyGuid())
                 .pathParam("user", user.getGuid())
@@ -204,17 +185,17 @@ public class AdminCreateUserLoginAccountRouteTest extends TxnAwareBaseTest {
         var dbConn = new Connection("db", Auth0ManagementClient.DB_CONNECTION_STRATEGY);
         var auth0User = new com.auth0.json.mgmt.users.User();
         auth0User.setId("fake-auth0-id");
+        var userWithTicket = new Auth0Service.UserWithPasswordTicket(auth0User, "the-ticket-url");
 
-        var mockAuth0 = mock(Auth0ManagementClient.class);
-        doReturn(ApiResult.ok(200, List.of(dbConn))).when(mockAuth0).listClientConnections(any());
-        doReturn(ApiResult.ok(200, auth0User)).when(mockAuth0).createAuth0User(any(), any(), any());
-        doReturn(ApiResult.ok(200, "the-ticket-url")).when(mockAuth0).createPasswordResetTicket(any(), any());
+        var mockAuth0 = mock(Auth0Service.class);
+        doReturn(dbConn).when(mockAuth0).findClientDBConnection(any());
+        doReturn(userWithTicket).when(mockAuth0).createUserWithPasswordTicket(any(), any(), any());
 
-        doReturn(mockAuth0).when(routeSpy).createManagementClient(any(), any());
+        doReturn(mockAuth0).when(routeSpy).getAuth0Service(any(), any());
         doNothing().when(routeSpy).triggerEvents(any(), any());
 
         User user = createDummyUser(null, true);
-        var payload = new CreateUserLoginAccountPayload("client", "foo@datadonationplatform.org", "http://localhost");
+        var payload = new CreateUserLoginAccountPayload("foo@datadonationplatform.org");
         given().auth().oauth2(testData.getTestingUser().getToken())
                 .pathParam("study", testData.getStudyGuid())
                 .pathParam("user", user.getGuid())
@@ -223,9 +204,11 @@ public class AdminCreateUserLoginAccountRouteTest extends TxnAwareBaseTest {
                 .then().assertThat()
                 .statusCode(201);
 
-        verify(mockAuth0, times(1)).listClientConnections("client");
-        verify(mockAuth0, times(1)).createAuth0User(eq("db"), eq(payload.getEmail()), any());
-        verify(mockAuth0, times(1)).createPasswordResetTicket("fake-auth0-id", payload.getRedirectUrl());
+        verify(mockAuth0, times(1)).findClientDBConnection(testData.getAuth0ClientId());
+        verify(mockAuth0, times(1)).createUserWithPasswordTicket(argThat(connection -> {
+            assertEquals("db", connection.getName());
+            return true;
+        }), eq(payload.getEmail()), any());
         verify(routeSpy, times(1)).triggerEvents(any(), argThat(signal -> {
             assertEquals("the-ticket-url", signal.getPasswordResetTicketUrl());
             return true;
