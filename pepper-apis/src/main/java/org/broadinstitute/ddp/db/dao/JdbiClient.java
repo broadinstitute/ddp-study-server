@@ -132,8 +132,8 @@ public interface JdbiClient extends SqlObject {
             @Bind("auth0TenantId") long auth0TenantId
     );
 
-    @SqlQuery("SELECT *, (select auth0_domain from auth0_tenant as t where t.auth0_tenant_id = auth0_tenant_id) as auth0_domain"
-            + "  FROM client WHERE auth0_client_id = :auth0ClientId AND auth0_tenant_id = :auth0TenantId")
+    @SqlQuery("SELECT c.*, (select auth0_domain from auth0_tenant as t where t.auth0_tenant_id = c.auth0_tenant_id) as auth0_domain"
+            + "  FROM client c WHERE c.auth0_client_id = :auth0ClientId AND c.auth0_tenant_id = :auth0TenantId")
     @RegisterConstructorMapper(ClientDto.class)
     Optional<ClientDto> findByAuth0ClientIdAndAuth0TenantId(
             @Bind("auth0ClientId") String auth0ClientId,
