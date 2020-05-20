@@ -17,9 +17,9 @@ import org.quartz.SchedulerException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class HousekeepingEventReceiver implements MessageReceiver {
+public class HousekeepingTaskReceiver implements MessageReceiver {
 
-    private static final Logger LOG = LoggerFactory.getLogger(HousekeepingEventReceiver.class);
+    private static final Logger LOG = LoggerFactory.getLogger(HousekeepingTaskReceiver.class);
     private static final Gson gson = GsonUtil.standardGson();
     private static final String ATTR_TYPE = "type";
     private static final String ATTR_SUB = "sub";
@@ -27,36 +27,36 @@ public class HousekeepingEventReceiver implements MessageReceiver {
     private final String subscriptionName;
     private final Scheduler scheduler;
 
-    public HousekeepingEventReceiver(String subscriptionName, Scheduler scheduler) {
+    public HousekeepingTaskReceiver(String subscriptionName, Scheduler scheduler) {
         this.subscriptionName = subscriptionName;
         this.scheduler = scheduler;
     }
 
     @Override
     public void receiveMessage(PubsubMessage message, AckReplyConsumer reply) {
-        LOG.info("Received pubsub event message {}", message.getMessageId());
+        LOG.info("Received pubsub task message {}", message.getMessageId());
 
         String targetSubName = message.getAttributesOrDefault(ATTR_SUB, null);
         if (targetSubName != null && !subscriptionName.equals(targetSubName)) {
-            LOG.info("Received event message for target subscription {} and not our current subscription {}, ack-ing",
+            LOG.info("Received task message for target subscription {} and not our current subscription {}, ack-ing",
                     targetSubName, subscriptionName);
             reply.ack();
             return;
         }
 
-        EventType type;
+        TaskType type;
         try {
-            type = EventType.valueOf(message.getAttributesOrDefault(ATTR_TYPE, null));
-            LOG.info("Type of event message is: {}", type);
+            type = TaskType.valueOf(message.getAttributesOrDefault(ATTR_TYPE, null));
+            LOG.info("Type of task message is: {}", type);
         } catch (Exception e) {
-            LOG.error("Could not determine event type for message {}, ack-ing", message.getMessageId());
+            LOG.error("Could not determine task type for message {}, ack-ing", message.getMessageId());
             reply.ack();
             return;
         }
 
         switch (type) {
             case PING:
-                LOG.info("Received PING event message on subscription {}", subscriptionName);
+                LOG.info("Received PING task message on subscription {}", subscriptionName);
                 break;
             case CLEAR_CACHE:
                 handleClearCache(message, reply);
@@ -68,7 +68,7 @@ public class HousekeepingEventReceiver implements MessageReceiver {
                 handleElasticExport(message, reply);
                 break;
             default:
-                throw new DDPException("Unhandled event type: " + type);
+                throw new DDPException("Unhandled task type: " + type);
         }
     }
 
@@ -82,7 +82,7 @@ public class HousekeepingEventReceiver implements MessageReceiver {
 
     private void handleCleanupTempUsers(PubsubMessage message, AckReplyConsumer reply) {
         if (message.getAttributesOrDefault(ATTR_SUB, null) == null) {
-            LOG.error("Target subscription name is required for CLEANUP_TEMP_USERS event message, ack-ing");
+            LOG.error("Target subscription name is required for CLEANUP_TEMP_USERS task message, ack-ing");
             reply.ack();
             return;
         }
@@ -100,7 +100,7 @@ public class HousekeepingEventReceiver implements MessageReceiver {
 
     private void handleElasticExport(PubsubMessage message, AckReplyConsumer reply) {
         if (message.getAttributesOrDefault(ATTR_SUB, null) == null) {
-            LOG.error("Target subscription name is required for ELASTIC_EXPORT event message, ack-ing");
+            LOG.error("Target subscription name is required for ELASTIC_EXPORT task message, ack-ing");
             reply.ack();
             return;
         }
@@ -108,7 +108,7 @@ public class HousekeepingEventReceiver implements MessageReceiver {
         String data = message.getData().toStringUtf8();
         var payload = gson.fromJson(data, ElasticExportPayload.class);
         if (payload.getStudy() == null) {
-            LOG.error("Study needs to be provided for ELASTIC_EXPORT event message, ack-ing");
+            LOG.error("Study needs to be provided for ELASTIC_EXPORT task message, ack-ing");
             reply.ack();
             return;
         }
@@ -128,7 +128,7 @@ public class HousekeepingEventReceiver implements MessageReceiver {
         }
     }
 
-    public enum EventType {
+    public enum TaskType {
         CLEAR_CACHE,
         CLEANUP_TEMP_USERS,
         ELASTIC_EXPORT,

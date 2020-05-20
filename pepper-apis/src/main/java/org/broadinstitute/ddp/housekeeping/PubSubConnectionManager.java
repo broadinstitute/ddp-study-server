@@ -130,7 +130,7 @@ public class PubSubConnectionManager {
             if (e.getStatusCode().getCode() != StatusCode.Code.ALREADY_EXISTS) {
                 throw new RuntimeException(String.format("Error creating subscription %s to topic %s",
                         subscription.getName(),
-                        subscription.getTopic()));
+                        subscription.getTopic()), e);
             } else {
                 LOG.info("Subscription {} for topic {} already exists", subscription.getName(), subscription.getTopic());
             }
