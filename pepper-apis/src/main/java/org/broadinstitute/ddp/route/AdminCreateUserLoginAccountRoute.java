@@ -129,8 +129,8 @@ public class AdminCreateUserLoginAccountRoute extends ValidatedJsonInputRoute<Cr
                         new ApiError(ErrorCodes.SERVER_ERROR, "Error looking up client"));
             }
             if (dbConn == null) {
-                throw ResponseUtil.haltError(HttpStatus.SC_BAD_REQUEST,
-                        new ApiError(ErrorCodes.OPERATION_NOT_ALLOWED, "Client has no database connection"));
+                throw ResponseUtil.haltError(HttpStatus.SC_INTERNAL_SERVER_ERROR,
+                        new ApiError(ErrorCodes.SERVER_ERROR, "Error looking up client"));
             } else {
                 LOG.info("Using database connection with name {} for client {}", dbConn.getName(), auth0ClientId);
             }
@@ -142,7 +142,7 @@ public class AdminCreateUserLoginAccountRoute extends ValidatedJsonInputRoute<Cr
             } catch (Exception e) {
                 LOG.error("Error constructing password reset redirect URL for user {}", user.getGuid(), e);
                 throw ResponseUtil.haltError(HttpStatus.SC_INTERNAL_SERVER_ERROR,
-                        new ApiError(ErrorCodes.SERVER_ERROR, "Error setting up login account"));
+                        new ApiError(ErrorCodes.SERVER_ERROR, "Error looking up client"));
             }
             LOG.info("User will be redirected here after password reset: {}", redirectUrl);
 

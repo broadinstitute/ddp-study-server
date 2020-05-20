@@ -17,26 +17,17 @@ post:
         schema:
           type: object
           required:
-            - auth0ClientId
             - email
-            - redirectUrl
           properties:
-            auth0ClientId:
-              description: the client to use when creating login account
-              type: string
             email:
               description: the user's email
               type: string
               format: email
-            redirectUrl:
-              description: URL to go to after user has finished password reset flow
-              type: string
-              format: uri
   responses:
     201:
       description: login account created
     400:
-      description: invalid request, such as bad inputs, user already has login account, or client does not have database connection
+      description: invalid request, such as bad inputs, user already has login account, or email already exists
       content:
         application/json:
           schema:
@@ -48,6 +39,7 @@ post:
                     type: string
                     enum:
                       - BAD_PAYLOAD
+                      - EMAIL_ALREADY_EXISTS
                       - OPERATION_NOT_ALLOWED
     404:
       description: user is not found
