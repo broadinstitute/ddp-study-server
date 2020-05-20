@@ -35,14 +35,6 @@ public class AuthPathRegexUtilTest {
     }
 
     @Test
-    public void testAdminPathMatching() {
-        Assert.assertTrue(authPathRegexUtil.isAdminRoute("/pepper/v1/admin/blah/"));
-        Assert.assertTrue(authPathRegexUtil.isAdminRoute("/pepper/v25/admin/blah/"));
-        Assert.assertFalse(authPathRegexUtil.isAdminRoute("/pepper/v1/user/admin/"));
-        Assert.assertTrue(authPathRegexUtil.isAdminRoute("/pepper/v5/admin/"));
-    }
-
-    @Test
     public void testAutocompletePathMatching() {
         Assert.assertTrue(authPathRegexUtil.isAutocompleteRoute("/pepper/v1/autocomplete/blah/"));
         Assert.assertTrue(authPathRegexUtil.isAutocompleteRoute("/pepper/v1/autocomplete/blah"));
@@ -67,13 +59,24 @@ public class AuthPathRegexUtilTest {
     }
 
     @Test
-    public void testStudyPathMatching() {
-        Assert.assertTrue(authPathRegexUtil.isStudyRoute("/pepper/v1/studies/yxz"));
-        Assert.assertTrue(authPathRegexUtil.isStudyRoute("/pepper/v2/studies/xyz/"));
-        Assert.assertTrue(authPathRegexUtil.isStudyRoute("/pepper/v2/studies/xyz-abc/"));
-        Assert.assertTrue(authPathRegexUtil.isStudyRoute("/pepper/v3/studies/xyz/foo/bar"));
-        Assert.assertFalse(authPathRegexUtil.isStudyRoute("/pepper/v1/user/blah/"));
-        Assert.assertFalse(authPathRegexUtil.isStudyRoute("/pepper/v1/user/study"));
-        Assert.assertFalse(authPathRegexUtil.isStudyRoute("/pepper/v5/user/"));
+    public void testAdminPathMatching() {
+        Assert.assertTrue(authPathRegexUtil.isAdminRoute("/pepper/v1/admin/blah/"));
+        Assert.assertTrue(authPathRegexUtil.isAdminRoute("/pepper/v25/admin/blah/"));
+        Assert.assertTrue(authPathRegexUtil.isAdminRoute("/pepper/v5/admin/studies"));
+        Assert.assertTrue(authPathRegexUtil.isAdminRoute("/pepper/v5/admin/"));
+        Assert.assertTrue(authPathRegexUtil.isAdminRoute("/pepper/v5/admin"));
+        Assert.assertFalse(authPathRegexUtil.isAdminRoute("/pepper/v1/user/admin/"));
+    }
+
+    @Test
+    public void testAdminStudyPathMatching() {
+        Assert.assertTrue(authPathRegexUtil.isAdminStudyRoute("/pepper/v1/admin/studies/yxz"));
+        Assert.assertTrue(authPathRegexUtil.isAdminStudyRoute("/pepper/v2/admin/studies/xyz/"));
+        Assert.assertTrue(authPathRegexUtil.isAdminStudyRoute("/pepper/v2/admin/studies/xyz-abc/"));
+        Assert.assertTrue(authPathRegexUtil.isAdminStudyRoute("/pepper/v3/admin/studies/xyz/foo/bar"));
+        Assert.assertFalse(authPathRegexUtil.isAdminStudyRoute("/pepper/v1/studies/blah/"));
+        Assert.assertFalse(authPathRegexUtil.isAdminStudyRoute("/pepper/v1/user/blah/"));
+        Assert.assertFalse(authPathRegexUtil.isAdminStudyRoute("/pepper/v1/user/study"));
+        Assert.assertFalse(authPathRegexUtil.isAdminStudyRoute("/pepper/v5/user/"));
     }
 }

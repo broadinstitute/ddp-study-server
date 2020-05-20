@@ -1,12 +1,12 @@
 post:
-  operationId: invitationLookup
+  operationId: lookupInvitation
   tags:
-    - Invitations
-  summary: InvitationLookup
+    - Study Admin
+  summary: LookupInvitation
   description: |
     Fetch an invitation, along with associated user data.
 
-    Note: this API is restricted to study admins.
+    Note: requires study admin ID token.
   parameters:
     - $ref: '../pepper.yml#/components/parameters/studyGuid'
   requestBody:

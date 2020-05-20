@@ -16,20 +16,20 @@ import org.broadinstitute.ddp.db.dao.AuthDao;
 import org.broadinstitute.ddp.db.dao.InvitationDao;
 import org.broadinstitute.ddp.db.dao.InvitationFactory;
 import org.broadinstitute.ddp.db.dao.InvitationSql;
-import org.broadinstitute.ddp.json.InvitationLookupPayload;
+import org.broadinstitute.ddp.json.admin.LookupInvitationPayload;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class InvitationLookupRouteTest extends IntegrationTestSuite.TestCase {
+public class AdminLookupInvitationRouteTest extends IntegrationTestSuite.TestCase {
 
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static String urlTemplate;
 
     @BeforeClass
     public static void setupData() {
-        urlTemplate = RouteTestUtil.getTestingBaseUrl() + RouteConstants.API.INVITATION_LOOKUP
+        urlTemplate = RouteTestUtil.getTestingBaseUrl() + RouteConstants.API.ADMIN_STUDY_INVITATION_LOOKUP
                 .replace(RouteConstants.PathParam.STUDY_GUID, "{study}");
         TransactionWrapper.useTxn(handle -> {
             testData = TestDataSetupUtil.generateBasicUserTestData(handle);
@@ -49,7 +49,7 @@ public class InvitationLookupRouteTest extends IntegrationTestSuite.TestCase {
         TransactionWrapper.useTxn(handle -> {
             handle.attach(AuthDao.class).removeAdminFromAllStudies(testData.getUserId());
         });
-        var payload = new InvitationLookupPayload("foobar");
+        var payload = new LookupInvitationPayload("foobar");
         given().auth().oauth2(testData.getTestingUser().getToken())
                 .pathParam("study", testData.getStudyGuid())
                 .body(payload, ObjectMapperType.GSON)
@@ -60,7 +60,7 @@ public class InvitationLookupRouteTest extends IntegrationTestSuite.TestCase {
 
     @Test
     public void testInvitationNotFound() {
-        var payload = new InvitationLookupPayload("foobar");
+        var payload = new LookupInvitationPayload("foobar");
         given().auth().oauth2(testData.getTestingUser().getToken())
                 .pathParam("study", testData.getStudyGuid())
                 .body(payload, ObjectMapperType.GSON)
@@ -74,7 +74,7 @@ public class InvitationLookupRouteTest extends IntegrationTestSuite.TestCase {
         var invitation = TransactionWrapper.withTxn(handle -> handle.attach(InvitationFactory.class)
                 .createRecruitmentInvitation(testData.getStudyId(), "invite" + System.currentTimeMillis()));
         try {
-            var payload = new InvitationLookupPayload(invitation.getInvitationGuid());
+            var payload = new LookupInvitationPayload(invitation.getInvitationGuid());
             given().auth().oauth2(testData.getTestingUser().getToken())
                     .pathParam("study", testData.getStudyGuid())
                     .body(payload, ObjectMapperType.GSON)
@@ -102,7 +102,7 @@ public class InvitationLookupRouteTest extends IntegrationTestSuite.TestCase {
             return invite;
         });
         try {
-            var payload = new InvitationLookupPayload(invitation.getInvitationGuid());
+            var payload = new LookupInvitationPayload(invitation.getInvitationGuid());
             given().auth().oauth2(testData.getTestingUser().getToken())
                     .pathParam("study", testData.getStudyGuid())
                     .body(payload, ObjectMapperType.GSON)

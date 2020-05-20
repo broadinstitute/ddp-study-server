@@ -21,6 +21,8 @@ import com.google.cloud.pubsub.v1.MessageReceiver;
 import com.google.cloud.pubsub.v1.Publisher;
 import com.google.cloud.pubsub.v1.Subscriber;
 import com.google.gson.Gson;
+import com.google.protobuf.Duration;
+import com.google.pubsub.v1.ExpirationPolicy;
 import com.google.pubsub.v1.ProjectSubscriptionName;
 import com.google.pubsub.v1.ProjectTopicName;
 import com.google.pubsub.v1.PubsubMessage;
@@ -42,6 +44,7 @@ import org.broadinstitute.ddp.db.dto.QueuedEventDto;
 import org.broadinstitute.ddp.db.housekeeping.dao.JdbiEvent;
 import org.broadinstitute.ddp.db.housekeeping.dao.JdbiMessage;
 import org.broadinstitute.ddp.db.housekeeping.dao.KitCheckDao;
+import org.broadinstitute.ddp.event.HousekeepingEventReceiver;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.exception.MessageBuilderException;
 import org.broadinstitute.ddp.housekeeping.PubSubConnectionManager;
@@ -57,6 +60,7 @@ import org.broadinstitute.ddp.housekeeping.schedule.CheckAgeUpJob;
 import org.broadinstitute.ddp.housekeeping.schedule.DataSyncJob;
 import org.broadinstitute.ddp.housekeeping.schedule.DatabaseBackupCheckJob;
 import org.broadinstitute.ddp.housekeeping.schedule.DatabaseBackupJob;
+import org.broadinstitute.ddp.housekeeping.schedule.OnDemandExportJob;
 import org.broadinstitute.ddp.housekeeping.schedule.StudyDataExportJob;
 import org.broadinstitute.ddp.housekeeping.schedule.TemporaryUserCleanupJob;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
@@ -72,6 +76,7 @@ import org.broadinstitute.ddp.service.PdfBucketService;
 import org.broadinstitute.ddp.service.PdfGenerationService;
 import org.broadinstitute.ddp.service.PdfService;
 import org.broadinstitute.ddp.util.ConfigManager;
+import org.broadinstitute.ddp.util.GuidUtils;
 import org.broadinstitute.ddp.util.LiquibaseUtil;
 import org.broadinstitute.ddp.util.LogbackConfigurationPrinter;
 import org.quartz.Scheduler;
@@ -150,6 +155,9 @@ public class Housekeeping {
      */
     private static AfterHandlerCallback afterHandling;
 
+    private static Scheduler scheduler;
+    private static Subscriber eventSubscriber;
+
     public static void setAfterHandler(AfterHandlerCallback afterHandler) {
         synchronized (afterHandlerGuard) {
             afterHandling = afterHandler;
@@ -167,7 +175,7 @@ public class Housekeeping {
         Config cfg = ConfigManager.getInstance().getConfig();
         boolean doLiquibase = cfg.getBoolean(ConfigFile.DO_LIQUIBASE);
         int maxConnections = cfg.getInt(ConfigFile.HOUSEKEEPING_NUM_POOLED_CONNECTIONS);
-        String pubSubProject = cfg.getString(ConfigFile.PUBSUB_PROJECT);
+        String pubSubProject = cfg.getString(ConfigFile.GOOGLE_PROJECT_ID);
 
         boolean usePubSubEmulator = cfg.getBoolean(ConfigFile.USE_PUBSUB_EMULATOR);
         String housekeepingDbUrl = cfg.getString(TransactionWrapper.DB.HOUSEKEEPING.getDbUrlConfigKey());
@@ -189,9 +197,9 @@ public class Housekeeping {
             LiquibaseUtil.runLiquibase(housekeepingDbUrl, TransactionWrapper.DB.HOUSEKEEPING);
         }
 
-        boolean runScheduler = cfg.getBoolean(ConfigFile.RUN_SCHEDULER);
-        Scheduler scheduler = null;
+        final PubSubConnectionManager pubsubConnectionManager = new PubSubConnectionManager(usePubSubEmulator);
 
+        boolean runScheduler = cfg.getBoolean(ConfigFile.RUN_SCHEDULER);
         if (runScheduler) {
             LOG.info("Booting job scheduler...");
             scheduler = JobScheduler.initializeWith(cfg,
@@ -199,13 +207,30 @@ public class Housekeeping {
                     DataSyncJob::register,
                     DatabaseBackupJob::register,
                     DatabaseBackupCheckJob::register,
+                    OnDemandExportJob::register,
                     TemporaryUserCleanupJob::register,
                     StudyDataExportJob::register);
+
+            var topicName = ProjectTopicName.of(pubSubProject, cfg.getString(ConfigFile.PUBSUB_HKEEP_EVENTS_TOPIC));
+            var subName = ProjectSubscriptionName.of(pubSubProject,
+                    String.format("%s-%s", topicName.getTopic(), GuidUtils.randomAlphaNumeric()));
+            pubsubConnectionManager.createSubscriptionIfNotExists(Subscription.newBuilder()
+                    .setName(subName.toString())
+                    .setTopic(topicName.toString())
+                    .setAckDeadlineSeconds(PubSubConnectionManager.ACK_DEADLINE_SECONDS)
+                    .setExpirationPolicy(ExpirationPolicy.newBuilder().setTtl(Duration.newBuilder()
+                            .setSeconds(PubSubConnectionManager.SUB_EXPIRATION_DAYS * 24 * 60 * 60)
+                            .build()).build())
+                    .build());
+            LOG.info("Created housekeeping events subscription {}", subName);
+
+            HousekeepingEventReceiver receiver = new HousekeepingEventReceiver(subName.getSubscription(), scheduler);
+            eventSubscriber = pubsubConnectionManager.subscribe(subName, receiver);
+            eventSubscriber.startAsync();
+            LOG.info("Started housekeeping events subscriber to subscription {}", subName);
         } else {
             LOG.info("Housekeeping job scheduler is not set to run");
         }
-
-        final PubSubConnectionManager pubsubConnectionManager = new PubSubConnectionManager(usePubSubEmulator);
 
         TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, handle -> {
             JdbiMessageDestination messageDestinationDao = handle.attach(JdbiMessageDestination.class);
@@ -387,6 +412,9 @@ public class Housekeeping {
             }
         }
         pubsubConnectionManager.close();
+        if (eventSubscriber != null) {
+            eventSubscriber.stopAsync();
+        }
         if (scheduler != null) {
             JobScheduler.shutdownScheduler(scheduler, true);
         }
