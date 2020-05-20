@@ -56,10 +56,8 @@ public class PatchProfileRoute implements Route {
         boolean providedLastName = json.has(Profile.LAST_NAME);
         String lastName = providedLastName ? payload.getLastName() : null;
 
-        boolean providedBirthDate = json.has(Profile.BIRTH_YEAR)
-                && json.has(Profile.BIRTH_MONTH)
-                && json.has(Profile.BIRTH_DAY_IN_MONTH);
-        LocalDate birthDate = providedBirthDate ? parseBirthDate(payload) : null;
+        boolean providedBirthDate = json.has(Profile.BIRTH_DATE);
+        String birthDate = payload.getBirthDate();
 
         Profile modifiedProfile = TransactionWrapper.withTxn((Handle handle) -> {
             boolean providedLanguage = json.has(Profile.PREFERRED_LANGUAGE);
@@ -84,7 +82,7 @@ public class PatchProfileRoute implements Route {
                 builder.setSexType(sexType);
             }
             if (providedBirthDate) {
-                builder.setBirthDate(birthDate);
+                builder.setBirthDate(birthDate != null ? LocalDate.parse(birthDate) : null);
             }
             if (providedLanguage) {
                 builder.setPreferredLangId(languageId);

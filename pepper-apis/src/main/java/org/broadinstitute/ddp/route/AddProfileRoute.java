@@ -1,5 +1,7 @@
 package org.broadinstitute.ddp.route;
 
+import java.time.LocalDate;
+
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
@@ -66,7 +68,7 @@ public class AddProfileRoute extends ValidatedJsonInputRoute<Profile> {
                             .setFirstName(profile.getFirstName())
                             .setLastName(profile.getLastName())
                             .setSexType(sexType)
-                            .setBirthDate(profile.getBirthDate())
+                            .setBirthDate(profile.getBirthDate() != null ? LocalDate.parse(profile.getBirthDate()) : null)
                             .setPreferredLangId(langId)
                             .build());
                 } catch (Exception e) {
