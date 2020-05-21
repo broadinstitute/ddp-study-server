@@ -16,6 +16,7 @@ public class StudyDto {
     private OLCPrecision olcPrecision;
     private boolean shareParticipantLocation;
     private String studyEmail;
+    private String recapchaSiteKey;
     private boolean dataExportEnabled;
 
     @JdbiConstructor
@@ -85,5 +86,9 @@ public class StudyDto {
 
     public boolean isDataExportEnabled() {
         return dataExportEnabled;
+    }
+
+    public String getRecapchaSiteKey() {
+        return recapchaSiteKey;
     }
 }
