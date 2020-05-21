@@ -63,29 +63,21 @@ public class InvitationCheckStatusRoute extends ValidatedJsonInputRoute<Invitati
 
     ApiError checkStatus(Handle handle, String studyGuid, String ipAddress, InvitationCheckStatusPayload payload) {
 
-        StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
+        StudyDto studyDto = findStudy(handle, studyGuid);
         if (studyDto == null) {
             LOG.error("Invitation check called for non-existent study with guid {}", studyGuid);
             return new ApiError(ErrorCodes.INVALID_INVITATION, "Invalid invitation");
         }
 
-        if (studyDto.getRecapchaSiteKey() == null) {
+        if (studyDto.getRecaptchaSiteKey() == null) {
             LOG.error("ReCaptcha has not been enabled for study with guid: {}", studyGuid);
             throw new DDPException("Server configuration problem");
-
         }
-
-        var recaptchaVerifier = new GoogleRecaptchaVerifyClient(studyDto.getRecapchaSiteKey());
-        GoogleRecaptchaVerifyResponse recaptchaResponse = recaptchaVerifier.verifyRecaptchaResponse(payload.getRecaptchaToken());
-
-        if (!recaptchaResponse.isSuccess()) {
-            LOG.error("Recaptcha validation was unsuccessful: {}", new Gson().toJson(recaptchaResponse));
+        if (!isUserRecaptchaTokenValid(payload.getRecaptchaToken(), studyDto.getRecaptchaSiteKey(), ipAddress)) {
             return new ApiError(ErrorCodes.BAD_PAYLOAD, "Request was invalid");
         }
 
         String invitationGuid = payload.getInvitationGuid();
-
-
 
         List<String> permittedStudies = handle.attach(JdbiClientUmbrellaStudy.class)
                 .findPermittedStudyGuidsByAuth0ClientIdAndAuth0TenantId(payload.getAuth0ClientId(), studyDto.getAuth0TenantId());
@@ -97,8 +89,6 @@ public class InvitationCheckStatusRoute extends ValidatedJsonInputRoute<Invitati
                     payload.getAuth0ClientId(), studyGuid);
             return new ApiError(ErrorCodes.INVALID_INVITATION, "Invalid invitation");
         }
-
-
 
         InvitationDao invitationDao = handle.attach(InvitationDao.class);
         InvitationDto invitation = invitationDao.findByInvitationGuid(studyDto.getId(), invitationGuid).orElse(null);
@@ -143,5 +133,23 @@ public class InvitationCheckStatusRoute extends ValidatedJsonInputRoute<Invitati
         }
 
         return null;
+    }
+
+    StudyDto findStudy(Handle handle, String studyGuid) {
+        return handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
+    }
+
+    boolean isUserRecaptchaTokenValid(String recaptchaToken, String recaptchaSiteKey, String clientIpAddress) {
+        var recaptchaVerifier = new GoogleRecaptchaVerifyClient(recaptchaSiteKey);
+        GoogleRecaptchaVerifyResponse recaptchaResponse = recaptchaVerifier.verifyRecaptchaResponse(recaptchaToken, clientIpAddress);
+        if (!recaptchaResponse.isSuccess()) {
+            LOG.error("Recaptcha validation was unsuccessful: {}", new Gson().toJson(recaptchaResponse));
+        }
+        return recaptchaResponse.isSuccess();
+    }
+
+    @Override
+    protected Class<InvitationCheckStatusPayload> getTargetClass(Request request) {
+        return InvitationCheckStatusPayload.class;
     }
 }
