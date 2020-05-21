@@ -806,6 +806,7 @@ Error.ProfileUpdate:
             - INVALID_LANGUAGE_PREFERENCE
             - INVALID_SEX
             - MISSING_PROFILE
+            - INVALID_DATE
 Error.ProviderNotFound:
   allOf:
     - $ref: '../pepper.yml#/components/schemas/Error'
@@ -1078,7 +1079,8 @@ ProfileModel:
         deprecated: true
       birthDate:
         type: string
-        example: 2019-10-19
+        format: date
+        example: 1999-09-19
       sex:
         type: string
         enum:

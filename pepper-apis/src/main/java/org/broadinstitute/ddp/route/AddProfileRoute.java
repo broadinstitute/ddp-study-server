@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.route;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.constants.ErrorCodes;
@@ -71,6 +72,9 @@ public class AddProfileRoute extends ValidatedJsonInputRoute<Profile> {
                             .setBirthDate(profile.getBirthDate() != null ? LocalDate.parse(profile.getBirthDate()) : null)
                             .setPreferredLangId(langId)
                             .build());
+                } catch (DateTimeParseException e) {
+                    ResponseUtil.halt400ErrorResponse(response, ErrorCodes.INVALID_DATE);
+                    return;
                 } catch (Exception e) {
                     throw new DDPException("Error adding profile for user with guid " + userGuid, e);
                 }

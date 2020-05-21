@@ -36,6 +36,7 @@ public class ErrorCodes {
     public static final String AUTH_CANNOT_BE_DETERMINED = "AUTH_CANNOT_BE_DETERMINED";
     public static final String INVALID_LANGUAGE_PREFERENCE = "INVALID_LANGUAGE_PREFERENCE";
     public static final String INVALID_SEX = "INVALID_SEX";
+    public static final String INVALID_DATE = "INVALID_DATE";
 
     public static final String GOVERNANCE_POLICY_VIOLATION = "GOVERNANCE_POLICY_VIOLATION";
 

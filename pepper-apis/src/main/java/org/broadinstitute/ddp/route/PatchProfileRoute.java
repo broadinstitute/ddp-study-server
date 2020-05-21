@@ -1,7 +1,7 @@
 package org.broadinstitute.ddp.route;
 
-import java.time.DateTimeException;
 import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
@@ -82,7 +82,12 @@ public class PatchProfileRoute implements Route {
                 builder.setSexType(sexType);
             }
             if (providedBirthDate) {
-                builder.setBirthDate(birthDate != null ? LocalDate.parse(birthDate) : null);
+                try {
+                    builder.setBirthDate(birthDate != null ? LocalDate.parse(birthDate) : null);
+                } catch (DateTimeParseException e) {
+                    ResponseUtil.halt400ErrorResponse(response, ErrorCodes.INVALID_DATE);
+                    return null;
+                }
             }
             if (providedLanguage) {
                 builder.setPreferredLangId(languageId);
@@ -108,25 +113,6 @@ public class PatchProfileRoute implements Route {
             LOG.warn("Provided invalid profile sex type: {}", sexStr, e);
             ResponseUtil.halt400ErrorResponse(response, ErrorCodes.INVALID_SEX);
             return null;
-        }
-    }
-
-    private LocalDate parseBirthDate(Profile payload) {
-        Integer year = payload.getBirthYear();
-        Integer month = payload.getBirthMonth();
-        Integer day = payload.getBirthDayInMonth();
-        if (year == null && month == null && day == null) {
-            return null;
-        } else if (year != null && month != null && day != null) {
-            try {
-                return LocalDate.of(year, month, day);
-            } catch (DateTimeException e) {
-                LOG.warn("Invalid birth date", e);
-                throw ResponseUtil.haltError(400, new ApiError(ErrorCodes.BAD_PAYLOAD, "Invalid birth date"));
-            }
-        } else {
-            LOG.warn("Full birth date was not provided");
-            throw ResponseUtil.haltError(400, new ApiError(ErrorCodes.BAD_PAYLOAD, "Need to provide full birth date"));
         }
     }
 

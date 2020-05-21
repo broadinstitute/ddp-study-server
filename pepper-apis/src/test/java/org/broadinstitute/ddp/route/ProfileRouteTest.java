@@ -38,6 +38,7 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
     private static final Integer birthDayInMonth = 15;
     private static final Integer birthYear = 1995;
     private static final LocalDate birthDate = LocalDate.of(1995, Month.MARCH, 15);
+    private static final String invalidBirthDate = "1999-29-09"; //yyyy-mm-dd
     private static final String firstName = "Fakie";
     private static final String lastName = "McFakerton";
     private static final String preferredLanguage = Locale.ENGLISH.getLanguage();
@@ -224,6 +225,25 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
         Assert.assertEquals(ErrorCodes.INVALID_SEX, error.getErrorCode());
     }
 
+    /**
+     * tests to make sure if invalid birthDate string, throws 400 error.
+     */
+    @Test
+    public void testAddProfileBadBirthDate() throws Exception {
+        profileUserIdsToDelete.add(guid);
+        JsonObject profile = new JsonObject();
+        profile.addProperty(Profile.BIRTH_DATE, invalidBirthDate);
+
+        Response response = RouteTestUtil.buildAuthorizedPostRequest(token, url, profile.toString()).execute();
+        HttpResponse res = response.returnResponse();
+        Assert.assertEquals(400, res.getStatusLine().getStatusCode());
+
+        HttpEntity entity = res.getEntity();
+        String bodyToString = EntityUtils.toString(entity);
+        Error error = gson.fromJson(bodyToString, Error.class);
+        Assert.assertEquals(ErrorCodes.INVALID_DATE, error.getErrorCode());
+    }
+
     //tests that if there is an existing user with a complete profile, you can retrieve it.
     @Test
     public void testGetFullProfile() throws Exception {
@@ -405,4 +425,20 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
         HttpResponse res = response.returnResponse();
         Assert.assertEquals(400, res.getStatusLine().getStatusCode());
     }
+
+    /**
+     * makes sure if trying to patch with invalid birthDate throws 400 error.
+     */
+    @Test
+    public void testPatchBadBirthDate() throws Exception {
+        postDummyProfile();
+        JsonObject updatedProfile = createProfileJsonObject(sex, birthDate, null,
+                firstName, lastName);
+        updatedProfile.addProperty(Profile.BIRTH_DATE, invalidBirthDate);
+
+        Response response = RouteTestUtil.buildAuthorizedPatchRequest(token, url, updatedProfile.toString()).execute();
+        HttpResponse res = response.returnResponse();
+        Assert.assertEquals(400, res.getStatusLine().getStatusCode());
+    }
+
 }
