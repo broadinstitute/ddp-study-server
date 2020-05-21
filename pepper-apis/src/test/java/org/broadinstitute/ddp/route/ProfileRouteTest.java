@@ -38,7 +38,7 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
     private static final Integer birthDayInMonth = 15;
     private static final Integer birthYear = 1995;
     private static final LocalDate birthDate = LocalDate.of(1995, Month.MARCH, 15);
-    private static final String invalidBirthDate = "1999-29-09"; //yyyy-mm-dd
+    private static final String invalidBirthDate = "1999-29-09";
     private static final String firstName = "Fakie";
     private static final String lastName = "McFakerton";
     private static final String preferredLanguage = Locale.ENGLISH.getLanguage();
@@ -439,6 +439,45 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
         Response response = RouteTestUtil.buildAuthorizedPatchRequest(token, url, updatedProfile.toString()).execute();
         HttpResponse res = response.returnResponse();
         Assert.assertEquals(400, res.getStatusLine().getStatusCode());
+    }
+
+    /**
+     * make sure patch works with both full birthDate and deprecated birthDate elements.
+     */
+    @Test
+    public void testPatchProfileWithBirthDateElements() throws Exception {
+        Integer birthYear = 1988;
+        Integer birthMonth = 06;
+        Integer birthDayOfMonth = 04;
+        postDummyProfile();
+        JsonObject updatedProfile = createProfileJsonObject(sex, null, null, firstName, lastName);
+        updatedProfile.remove(Profile.BIRTH_DATE);
+        updatedProfile.addProperty(Profile.BIRTH_YEAR, birthYear);
+        updatedProfile.addProperty(Profile.BIRTH_MONTH, birthMonth);
+        updatedProfile.addProperty(Profile.BIRTH_DAY_IN_MONTH, birthDayOfMonth);
+
+        Response response = RouteTestUtil.buildAuthorizedPatchRequest(token, url, updatedProfile.toString()).execute();
+        HttpResponse res = response.returnResponse();
+        Assert.assertEquals(200, res.getStatusLine().getStatusCode());
+
+        String bodyToString = EntityUtils.toString(res.getEntity());
+        Profile queriedProfile = gson.fromJson(bodyToString, Profile.class);
+        Assert.assertEquals(birthYear, queriedProfile.getBirthYear());
+        Assert.assertEquals(birthMonth, queriedProfile.getBirthMonth());
+        Assert.assertEquals(birthDayOfMonth, queriedProfile.getBirthDayInMonth());
+
+        //now pass full birthDate too
+        updatedProfile.addProperty(Profile.BIRTH_DATE, "2000-10-30");
+        response = RouteTestUtil.buildAuthorizedPatchRequest(token, url, updatedProfile.toString()).execute();
+        res = response.returnResponse();
+        Assert.assertEquals(200, res.getStatusLine().getStatusCode());
+
+        bodyToString = EntityUtils.toString(res.getEntity());
+        queriedProfile = gson.fromJson(bodyToString, Profile.class);
+        Assert.assertEquals("2000-10-30", queriedProfile.getBirthDate());
+        Assert.assertEquals(Integer.valueOf(2000), queriedProfile.getBirthYear());
+        Assert.assertEquals(Integer.valueOf(10), queriedProfile.getBirthMonth());
+        Assert.assertEquals(Integer.valueOf(30), queriedProfile.getBirthDayInMonth());
     }
 
 }

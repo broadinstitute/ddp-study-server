@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.route;
 
+import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 
@@ -59,6 +60,11 @@ public class PatchProfileRoute implements Route {
         boolean providedBirthDate = json.has(Profile.BIRTH_DATE);
         String birthDate = payload.getBirthDate();
 
+        boolean providedBirthDateElements = json.has(Profile.BIRTH_YEAR)
+                && json.has(Profile.BIRTH_MONTH)
+                && json.has(Profile.BIRTH_DAY_IN_MONTH);
+        LocalDate parsedBirthDate = providedBirthDateElements ? parseBirthDate(payload) : null;
+
         Profile modifiedProfile = TransactionWrapper.withTxn((Handle handle) -> {
             boolean providedLanguage = json.has(Profile.PREFERRED_LANGUAGE);
             Long languageId = providedLanguage ? parseLanguage(response, handle, payload) : null;
@@ -81,6 +87,7 @@ public class PatchProfileRoute implements Route {
             if (providedSexStr) {
                 builder.setSexType(sexType);
             }
+
             if (providedBirthDate) {
                 try {
                     builder.setBirthDate(birthDate != null ? LocalDate.parse(birthDate) : null);
@@ -88,7 +95,10 @@ public class PatchProfileRoute implements Route {
                     ResponseUtil.halt400ErrorResponse(response, ErrorCodes.INVALID_DATE);
                     return null;
                 }
+            } else if (providedBirthDateElements) {
+                builder.setBirthDate(parsedBirthDate);
             }
+
             if (providedLanguage) {
                 builder.setPreferredLangId(languageId);
             }
@@ -113,6 +123,26 @@ public class PatchProfileRoute implements Route {
             LOG.warn("Provided invalid profile sex type: {}", sexStr, e);
             ResponseUtil.halt400ErrorResponse(response, ErrorCodes.INVALID_SEX);
             return null;
+        }
+    }
+
+
+    private LocalDate parseBirthDate(Profile payload) {
+        Integer year = payload.getBirthYear();
+        Integer month = payload.getBirthMonth();
+        Integer day = payload.getBirthDayInMonth();
+        if (year == null && month == null && day == null) {
+            return null;
+        } else if (year != null && month != null && day != null) {
+            try {
+                return LocalDate.of(year, month, day);
+            } catch (DateTimeException e) {
+                LOG.warn("Invalid birth date", e);
+                throw ResponseUtil.haltError(400, new ApiError(ErrorCodes.BAD_PAYLOAD, "Invalid birth date"));
+            }
+        } else {
+            LOG.warn("Full birth date was not provided");
+            throw ResponseUtil.haltError(400, new ApiError(ErrorCodes.BAD_PAYLOAD, "Need to provide full birth date"));
         }
     }
 
