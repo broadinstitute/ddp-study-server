@@ -5,7 +5,10 @@ import static org.broadinstitute.ddp.json.invitation.InvitationCheckStatusPayloa
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.google.gson.Gson;
 import org.apache.http.HttpStatus;
+import org.broadinstitute.ddp.client.GoogleRecaptchaVerifyClient;
+import org.broadinstitute.ddp.client.GoogleRecaptchaVerifyResponse;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -15,6 +18,7 @@ import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.KitConfigurationDao;
 import org.broadinstitute.ddp.db.dto.InvitationDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
+import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.json.invitation.InvitationCheckStatusPayload;
 import org.broadinstitute.ddp.model.kit.KitRule;
@@ -47,7 +51,7 @@ public class InvitationCheckStatusRoute extends ValidatedJsonInputRoute<Invitati
         String invitationGuid = payload.getInvitationGuid();
         LOG.info("Attempting to check invitation {} in study {}", invitationGuid, studyGuid);
 
-        ApiError error = TransactionWrapper.withTxn(handle -> checkStatus(handle, studyGuid, payload));
+        ApiError error = TransactionWrapper.withTxn(handle -> checkStatus(handle, studyGuid, request.ip(), payload));
 
         if (error != null) {
             throw ResponseUtil.haltError(response, HttpStatus.SC_BAD_REQUEST, error);
@@ -57,14 +61,31 @@ public class InvitationCheckStatusRoute extends ValidatedJsonInputRoute<Invitati
         }
     }
 
-    ApiError checkStatus(Handle handle, String studyGuid, InvitationCheckStatusPayload payload) {
-        String invitationGuid = payload.getInvitationGuid();
+    ApiError checkStatus(Handle handle, String studyGuid, String ipAddress, InvitationCheckStatusPayload payload) {
 
         StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
         if (studyDto == null) {
             LOG.error("Invitation check called for non-existent study with guid {}", studyGuid);
             return new ApiError(ErrorCodes.INVALID_INVITATION, "Invalid invitation");
         }
+
+        if (studyDto.getRecapchaSiteKey() == null) {
+            LOG.error("ReCaptcha has not been enabled for study with guid: {}", studyGuid);
+            throw new DDPException("Server configuration problem");
+
+        }
+
+        var recaptchaVerifier = new GoogleRecaptchaVerifyClient(studyDto.getRecapchaSiteKey());
+        GoogleRecaptchaVerifyResponse recaptchaResponse = recaptchaVerifier.verifyRecaptchaResponse(payload.getRecaptchaToken());
+
+        if (!recaptchaResponse.isSuccess()) {
+            LOG.error("Recaptcha validation was unsuccessful: {}", new Gson().toJson(recaptchaResponse));
+            return new ApiError(ErrorCodes.BAD_PAYLOAD, "Request was invalid");
+        }
+
+        String invitationGuid = payload.getInvitationGuid();
+
+
 
         List<String> permittedStudies = handle.attach(JdbiClientUmbrellaStudy.class)
                 .findPermittedStudyGuidsByAuth0ClientIdAndAuth0TenantId(payload.getAuth0ClientId(), studyDto.getAuth0TenantId());
@@ -77,7 +98,7 @@ public class InvitationCheckStatusRoute extends ValidatedJsonInputRoute<Invitati
             return new ApiError(ErrorCodes.INVALID_INVITATION, "Invalid invitation");
         }
 
-        // todo: check recaptcha
+
 
         InvitationDao invitationDao = handle.attach(InvitationDao.class);
         InvitationDto invitation = invitationDao.findByInvitationGuid(studyDto.getId(), invitationGuid).orElse(null);

@@ -21,9 +21,9 @@ public class InvitationCheckStatusPayload {
     @SerializedName("qualificationDetails")
     private Map<String, Object> qualificationDetails = new HashMap<>();
 
-    // @NotEmpty
-    // @SerializedName("recaptchaToken")
-    // private String recaptchaToken;
+    @NotEmpty
+    @SerializedName("recaptchaToken")
+    private String recaptchaToken;
 
     public InvitationCheckStatusPayload(String auth0ClientId, String invitationGuid) {
         this.auth0ClientId = auth0ClientId;
@@ -43,5 +43,9 @@ public class InvitationCheckStatusPayload {
             qualificationDetails = new HashMap<>();
         }
         return qualificationDetails;
+    }
+
+    public String getRecaptchaToken() {
+        return recaptchaToken;
     }
 }

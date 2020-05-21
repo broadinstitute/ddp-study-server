@@ -71,7 +71,7 @@ public class InvitationCheckStatusRouteTest extends IntegrationTestSuite.TestCas
     public void testCheckStatus_studyNotFound() {
         doReturn(null).when(mockJdbiStudy).findByStudyGuid(any());
         var payload = new InvitationCheckStatusPayload("foo", "invite");
-        var actual = route.checkStatus(mockHandle, "study", payload);
+        var actual = route.checkStatus(mockHandle, "study", "", payload);
         assertNotNull(actual);
         assertEquals(ErrorCodes.INVALID_INVITATION, actual.getCode());
     }
@@ -83,7 +83,7 @@ public class InvitationCheckStatusRouteTest extends IntegrationTestSuite.TestCas
                 .findPermittedStudyGuidsByAuth0ClientIdAndAuth0Domain(any(), any());
 
         var payload = new InvitationCheckStatusPayload("foo", "invite");
-        var actual = route.checkStatus(mockHandle, "study", payload);
+        var actual = route.checkStatus(mockHandle, "study", "", payload);
         assertNotNull(actual);
         assertEquals(ErrorCodes.INVALID_INVITATION, actual.getCode());
     }
@@ -95,7 +95,7 @@ public class InvitationCheckStatusRouteTest extends IntegrationTestSuite.TestCas
                 .findPermittedStudyGuidsByAuth0ClientIdAndAuth0Domain(any(), any());
 
         var payload = new InvitationCheckStatusPayload("foo", "invite");
-        var actual = route.checkStatus(mockHandle, "study", payload);
+        var actual = route.checkStatus(mockHandle, "study", "", payload);
         assertNotNull(actual);
         assertEquals(ErrorCodes.INVALID_INVITATION, actual.getCode());
     }
@@ -108,18 +108,18 @@ public class InvitationCheckStatusRouteTest extends IntegrationTestSuite.TestCas
         var payload = new InvitationCheckStatusPayload("foo", "invite");
 
         doReturn(Optional.empty()).when(mockInviteDao).findByInvitationGuid(anyLong(), any());
-        var actual = route.checkStatus(mockHandle, "study", payload);
+        var actual = route.checkStatus(mockHandle, "study", "", payload);
         assertEquals(ErrorCodes.INVALID_INVITATION, actual.getCode());
 
         var now = Instant.now();
         var voided = fakeInvitation(now, now, null, null);
         doReturn(Optional.of(voided)).when(mockInviteDao).findByInvitationGuid(anyLong(), any());
-        actual = route.checkStatus(mockHandle, "study", payload);
+        actual = route.checkStatus(mockHandle, "study", "", payload);
         assertEquals(ErrorCodes.INVALID_INVITATION, actual.getCode());
 
         var accepted = fakeInvitation(now, null, null, now);
         doReturn(Optional.of(accepted)).when(mockInviteDao).findByInvitationGuid(anyLong(), any());
-        actual = route.checkStatus(mockHandle, "study", payload);
+        actual = route.checkStatus(mockHandle, "study", "", payload);
         assertEquals(ErrorCodes.INVALID_INVITATION, actual.getCode());
     }
 
