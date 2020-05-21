@@ -143,6 +143,7 @@ public class InvitationCheckStatusRouteTest extends IntegrationTestSuite.TestCas
 
     @Test
     public void testGoodInvitation() {
+        doReturn(testData.getTestingStudy()).when(route).findStudy(any(Handle.class), anyString());
         InvitationDto invitation = TransactionWrapper.withTxn(handle -> handle.attach(InvitationFactory.class)
                 .createRecruitmentInvitation(testData.getStudyId(), "invite" + System.currentTimeMillis()));
         try {
@@ -202,6 +203,7 @@ public class InvitationCheckStatusRouteTest extends IntegrationTestSuite.TestCas
 
     @Test
     public void testZipCodeCheck() {
+        doReturn(testData.getTestingStudy()).when(route).findStudy(any(Handle.class), anyString());
         var kitConfigId = new AtomicReference<Long>();
         var kitRuleId = new AtomicReference<Long>();
         InvitationDto invitation = TransactionWrapper.withTxn(handle -> {
