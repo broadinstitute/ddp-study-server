@@ -8,7 +8,7 @@ import spark.Service;
  * Little utility for when we you need to create your own server to do stuff
  */
 public class TestServer {
-    static public int PORT = 6666;
+    public static int PORT = 6666;
     private Consumer<Service> setupServer;
     private Service service;
 
@@ -16,6 +16,7 @@ public class TestServer {
         this.setupServer = setup;
 
     }
+
     public TestServer startServer() {
         service = Service.ignite().port(PORT);
         setupServer.accept(service);
@@ -28,6 +29,7 @@ public class TestServer {
         service.awaitStop();
         return this;
     }
+
     public String baseUrl() {
         return "http://localhost:" + PORT;
     }

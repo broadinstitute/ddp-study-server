@@ -176,7 +176,7 @@ public class InvitationCheckStatusRouteTest extends IntegrationTestSuite.TestCas
         doReturn(false).when(route)
                 .isUserRecaptchaTokenValid(badTokenValue, testData.getTestingStudy().getRecaptchaSiteKey(), localIp);
         try {
-            var badTokenPayload = new InvitationCheckStatusPayload(testData.getAuth0ClientId(),invitation.getInvitationGuid(),
+            var badTokenPayload = new InvitationCheckStatusPayload(testData.getAuth0ClientId(), invitation.getInvitationGuid(),
                     badTokenValue);
             String url = testServer.baseUrl() + RouteConstants.API.INVITATION_CHECK;
             url = url.replace(RouteConstants.PathParam.STUDY_GUID, testData.getStudyGuid());
@@ -185,7 +185,7 @@ public class InvitationCheckStatusRouteTest extends IntegrationTestSuite.TestCas
                     .then().assertThat()
                     .statusCode(HttpStatus.SC_BAD_REQUEST);
 
-            var goodTokenPayload = new InvitationCheckStatusPayload(testData.getAuth0ClientId(),invitation.getInvitationGuid(),
+            var goodTokenPayload = new InvitationCheckStatusPayload(testData.getAuth0ClientId(), invitation.getInvitationGuid(),
                     goodToken);
             given().body(goodTokenPayload, ObjectMapperType.GSON)
                     .when().post(url)
