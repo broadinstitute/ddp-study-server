@@ -25,9 +25,10 @@ public class InvitationCheckStatusPayload {
     @SerializedName("recaptchaToken")
     private String recaptchaToken;
 
-    public InvitationCheckStatusPayload(String auth0ClientId, String invitationGuid) {
+    public InvitationCheckStatusPayload(String auth0ClientId, String invitationGuid, String recaptchaUserToken) {
         this.auth0ClientId = auth0ClientId;
         this.invitationGuid = invitationGuid;
+        this.recaptchaToken = recaptchaUserToken;
     }
 
     public String getAuth0ClientId() {
