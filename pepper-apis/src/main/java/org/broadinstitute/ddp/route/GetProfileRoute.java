@@ -6,6 +6,7 @@ import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.json.Profile;
+import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.slf4j.Logger;
@@ -34,8 +35,8 @@ public class GetProfileRoute implements Route {
             if (profile != null) {
                 return new Profile(profile);    // Convert to json view.
             } else {
-                ResponseUtil.halt400ErrorResponse(response, ErrorCodes.MISSING_PROFILE);
-                return null;
+                String errorMsg = "Profile not found for user with guid: " + userGuid;
+                throw ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.MISSING_PROFILE, errorMsg));
             }
         });
     }
