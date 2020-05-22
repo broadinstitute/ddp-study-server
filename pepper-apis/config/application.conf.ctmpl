@@ -40,13 +40,15 @@
     "healthcheckPassword": "{{$conf.Data.healthcheckPassword}}",
     "easyPostApiKey": "{{$conf.Data.easyPostApiKey}}",
     "usePubSubEmulator": false,
-    "pubSubProject": "{{$conf.Data.pubSubProject}}",
     "runScheduler": {{$conf.Data.runScheduler}},
     "restrictRegisterRoute": {{$conf.Data.restrictRegisterRoute}},
     "requireDefaultGcpCredentials": {{$conf.Data.requireDefaultGcpCredentials}},
     "googleProjectId": "{{$conf.Data.googleProjectId}}",
     "pdfArchiveBucket": "{{$conf.Data.pdfArchiveBucket}}",
     "pdfArchiveUseFilesystem": false,
+    "pubsub": {
+        "housekeepingEventsTopic": "{{$conf.Data.pubsub.housekeepingEventsTopic}}",
+    },
     "studyExportBucket": "{{$conf.Data.studyExportBucket}}",
     "schedules": {
         "checkAgeUp": "{{$conf.Data.schedules.checkAgeUp}}",
@@ -56,6 +58,15 @@
         "cancerLoader": "{{$conf.Data.schedules.cancerLoader}}",
         "studyExport": "{{$conf.Data.schedules.studyExport}}",
         "tempUserCleanup": "{{$conf.Data.schedules.tempUserCleanup}}"
+    },
+    "preferredSourceIPHeader":"X-AppEngine-User-IP",
+    "nginx": {
+        "apiLimitBurst": {{$conf.Data.nginx.apiLimitBurst}},
+        "apiLimitRate": {{$conf.Data.nginx.apiLimitRate}}
+    },
+    "rateLimit": {
+        "apiLimitBurst": {{$conf.Data.rateLimit.apiLimitBurst}},
+        "apiLimitRate": {{$conf.Data.rateLimit.apiLimitRate}}
     },
     "sendgrid": {
         "fromName": "{{$conf.Data.sendgrid.fromName}}",
@@ -93,7 +104,7 @@
     {{if eq $environment "dev"}}
         "baseTestUrl": "https://pepper-dev.datadonationplatform.org",
         "baseWebDriverUrl": "https://basil-dev.datadonationplatform.org",
-        "dsmBaseUrl": "https://dsm-dev.datadonationplatform.org:443"
+        "dsmBaseUrl": "https://dsm-dev.internal.datadonationplatform.org:443"
     {{end}}
     {{if eq $environment "test"}}
         "baseTestUrl": "https://pepper-test.datadonationplatform.org",

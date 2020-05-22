@@ -21,12 +21,9 @@ import org.broadinstitute.ddp.filter.TokenConverterFilter;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.security.DDPAuth;
-
 import org.jdbi.v3.core.Handle;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import spark.Request;
 import spark.Response;
 import spark.utils.SparkUtils;
@@ -38,6 +35,8 @@ public class RouteUtil {
     private static final String STUDIES_PATH_MARKER = "studies";
     private static final int STUDIES_MARKER_IDX = 4;
     private static final int STUDY_GUID_IDX = 5;
+    private static final int ADMIN_STUDIES_MARKER_IDX = 3;
+    private static final int ADMIN_STUDY_GUID_IDX = 4;
 
     /**
      * Returns the {@link org.broadinstitute.ddp.security.DDPAuth auth object} associated with this request.  Will always be non-null.
@@ -110,6 +109,21 @@ public class RouteUtil {
         String studyGuid = null;
         if (parts.size() > STUDY_GUID_IDX && STUDIES_PATH_MARKER.equals(parts.get(STUDIES_MARKER_IDX))) {
             studyGuid = parts.get(STUDY_GUID_IDX);
+        }
+        return studyGuid;
+    }
+
+    /**
+     * Grab the study guid from the Admin URI path, e.g. `/pepper/v1/admin/studies/...`.
+     *
+     * @param path the admin URI path
+     * @return the study guid or null if the study could not be parsed
+     */
+    public static String parseAdminStudyGuid(String path) {
+        List<String> parts = SparkUtils.convertRouteToList(path);
+        String studyGuid = null;
+        if (parts.size() > ADMIN_STUDY_GUID_IDX && STUDIES_PATH_MARKER.equals(parts.get(ADMIN_STUDIES_MARKER_IDX))) {
+            studyGuid = parts.get(ADMIN_STUDY_GUID_IDX);
         }
         return studyGuid;
     }

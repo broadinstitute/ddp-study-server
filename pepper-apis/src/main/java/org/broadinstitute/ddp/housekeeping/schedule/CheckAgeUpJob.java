@@ -42,19 +42,19 @@ public class CheckAgeUpJob implements Job {
     }
 
     public static void register(Scheduler scheduler, Config cfg) throws SchedulerException {
-        String schedule = ConfigUtil.getStrIfPresent(cfg, ConfigFile.CHECK_AGE_UP_SCHEDULE);
-        if (schedule == null || schedule.equalsIgnoreCase("off")) {
-            LOG.warn("Job '{}' is set to be turned off", getKey());
-            return;
-        }
-
         JobDetail job = JobBuilder.newJob(CheckAgeUpJob.class)
                 .withIdentity(getKey())
                 .requestRecovery(false)
                 .storeDurably(true)
                 .build();
         scheduler.addJob(job, true);
-        LOG.info("Added job '{}' to scheduler", getKey());
+        LOG.info("Added job {} to scheduler", getKey());
+
+        String schedule = ConfigUtil.getStrIfPresent(cfg, ConfigFile.CHECK_AGE_UP_SCHEDULE);
+        if (schedule == null || schedule.equalsIgnoreCase("off")) {
+            LOG.warn("Job {} is set to be turned off, no trigger added", getKey());
+            return;
+        }
 
         Trigger trigger = TriggerBuilder.newTrigger()
                 .withIdentity(Keys.AgeUp.CheckTrigger)
@@ -66,19 +66,19 @@ public class CheckAgeUpJob implements Job {
                 .startNow()
                 .build();
         scheduler.scheduleJob(trigger);
-        LOG.info("Added trigger '{}' for job '{}' with schedule '{}'", trigger.getKey(), getKey(), schedule);
+        LOG.info("Added trigger {} for job {} with schedule '{}'", trigger.getKey(), getKey(), schedule);
     }
 
     @Override
     public void execute(JobExecutionContext context) throws JobExecutionException {
         try {
-            LOG.info("Running job '{}'", getKey());
+            LOG.info("Running job {}", getKey());
             long start = Instant.now().toEpochMilli();
             run();
             long elapsed = Instant.now().toEpochMilli() - start;
-            LOG.info("Job '{}' completed in {} ms", getKey(), elapsed);
+            LOG.info("Job {} completed in {} ms", getKey(), elapsed);
         } catch (Exception e) {
-            LOG.error("Error while executing job '{}' ", getKey(), e);
+            LOG.error("Error while executing job {} ", getKey(), e);
             throw new JobExecutionException(e, false);
         }
     }

@@ -1,65 +1,60 @@
 package org.broadinstitute.ddp.db.dto;
 
-import java.sql.Timestamp;
+import java.time.Instant;
 
 import org.broadinstitute.ddp.model.invitation.InvitationType;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
-
 public class InvitationDto {
 
-    private String contactEmail;
     // don't set this in client code--it will be generated safely on insert
     private String invitationGuid;
 
     // auto generated
-    private Long invitationId;
-
-    private Timestamp createdAt;
-
-    private Timestamp voidedAt;
-
-    private Timestamp verifiedAt;
-
-    private Timestamp acceptedAt;
-
-    private long studyId;
-
-    private long userId;
-
+    private long invitationId;
     private InvitationType invitationType;
+    private Instant createdAt;
+    private Instant voidedAt;
+    private Instant verifiedAt;
+    private Instant acceptedAt;
+    private long studyId;
+    private Long userId;
+    private String contactEmail;
+    private String notes;
 
     /**
      * This should only be used by JDBI on-the-fly.
-     * Please use {@link org.broadinstitute.ddp.db.dao.InvitationFactory#createInvitation(InvitationType, long, long, String)} to
+     * Please use {@link org.broadinstitute.ddp.db.dao.InvitationFactory#createAgeUpInvitation(long, long, String)} to
      * safely create a new one
      */
     @JdbiConstructor
-    public InvitationDto(@ColumnName("invitation_guid") String invitationGuid,
-                         @ColumnName("invitation_id") long invitationId,
-                         @ColumnName("created_at") Timestamp createdAt,
-                         @ColumnName("voided_at") Timestamp voidedAt,
-                         @ColumnName("verified_at") Timestamp verifiedAt,
-                         @ColumnName("accepted_at") Timestamp acceptedAt,
-                         @ColumnName("study_id") long studyId,
-                         @ColumnName("user_id") long userId,
-                         @ColumnName("invitation_type_code") InvitationType invitationType,
-                         @ColumnName("contact_email") String email) {
+    public InvitationDto(
+            @ColumnName("invitation_id") long invitationId,
+            @ColumnName("invitation_guid") String invitationGuid,
+            @ColumnName("invitation_type_code") InvitationType invitationType,
+            @ColumnName("created_at") Instant createdAt,
+            @ColumnName("voided_at") Instant voidedAt,
+            @ColumnName("verified_at") Instant verifiedAt,
+            @ColumnName("accepted_at") Instant acceptedAt,
+            @ColumnName("study_id") long studyId,
+            @ColumnName("user_id") Long userId,
+            @ColumnName("contact_email") String email,
+            @ColumnName("notes") String notes) {
         this.invitationId = invitationId;
         this.invitationGuid = invitationGuid;
+        this.invitationType = invitationType;
         this.createdAt = createdAt;
         this.voidedAt = voidedAt;
         this.verifiedAt = verifiedAt;
         this.acceptedAt = acceptedAt;
         this.studyId = studyId;
         this.userId = userId;
-        this.invitationType = invitationType;
         this.contactEmail = email;
-
+        this.notes = notes;
     }
 
-    public Long getInvitationId() {
+    public long getInvitationId() {
         return invitationId;
     }
 
@@ -67,19 +62,23 @@ public class InvitationDto {
         return invitationGuid;
     }
 
-    public Timestamp getCreatedAt() {
+    public InvitationType getInvitationType() {
+        return invitationType;
+    }
+
+    public Instant getCreatedAt() {
         return createdAt;
     }
 
-    public Timestamp getVoidedAt() {
+    public Instant getVoidedAt() {
         return voidedAt;
     }
 
-    public Timestamp getVerifiedAt() {
+    public Instant getVerifiedAt() {
         return verifiedAt;
     }
 
-    public Timestamp getAcceptedAt() {
+    public Instant getAcceptedAt() {
         return acceptedAt;
     }
 
@@ -87,20 +86,16 @@ public class InvitationDto {
         return studyId;
     }
 
-    public long getUserId() {
+    public Long getUserId() {
         return userId;
-    }
-
-    public InvitationType getInvitationType() {
-        return invitationType;
-    }
-
-    public void setCreatedAt(Timestamp createdAt) {
-        this.createdAt = createdAt;
     }
 
     public String getContactEmail() {
         return contactEmail;
+    }
+
+    public String getNotes() {
+        return notes;
     }
 
     public boolean isVoid() {
@@ -108,14 +103,13 @@ public class InvitationDto {
     }
 
     /**
-     * Returns true if this invitation hasn't
-     * been voided or verified
+     * Returns true if this invitation hasn't been voided or verified
      */
     public boolean canBeVerified() {
         return !isVoid() && !isVerified();
     }
 
-    private boolean isVerified() {
+    public boolean isVerified() {
         return verifiedAt != null;
     }
 

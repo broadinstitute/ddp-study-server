@@ -14,20 +14,16 @@ public class CountMeInPage extends DDPPage {
     private static final Logger logger = LoggerFactory.getLogger(CountMeInPage.class);
 
     //Count-Me-In content xpath
-    private static final String CONTENT_XPATH = "//article[@class='PageContent']";
+    private static final String CONTENT_XPATH = "//div[@class='MainContainer']";
 
     //Contact information xpaths
-    private static final String FIRST_NAME_INPUT_XPATH = "//input[@formcontrolname='firstName']";
-    private static final String LAST_NAME_INPUT_XPATH = "//input[@formcontrolname='lastName']";
+    private static final String FIRST_NAME_INPUT_XPATH = "//input[contains(@data-ddp-test, 'PREQUAL_FIRST_NAME')]";
+    private static final String LAST_NAME_INPUT_XPATH = "//input[contains(@data-ddp-test, 'PREQUAL_LAST_NAME')]";
 
     //Diagnosed status xpaths - strange case of xpaths for radio button leading off page, going to use label instead
-    private static final String DIAGNOSED_WITH_ANGIOSARCOMA_LABEL_XPATH = "//div/label[@for='roleTypeParticipant']";
-    private static final String DIAGNOSED_WITH_ANGIOSARCOMA_ID = "roleTypeParticipant";
-    private static final String NOT_DIAGNOSED_WITH_ANGIOSARCOMA_BUT_WANT_TO_STAY_INFORMED_LABEL_XPATH = "//div"
-            + "/label[@for='roleTypeContact']";
-    private static final String NOT_DIAGNOSED_WITH_ANGIOSARCOMA_BUT_WANT_TO_STAY_INFORMED_ID = "roleTypeContact";
-    private static final String NOT_DIAGNOSED_WITH_ANGIOSARCOMA_BUT_LOST_LOVED_ONE_LABEL_XPATH = "//div/label[@for='roleTypeLovedOne']";
-    private static final String NOT_DIAGNOSED_WITH_ANGIOSARCOMA_BUT_LOST_LOVED_ONE_ID = "roleTypeLovedOne";
+    private static final String DIAGNOSED_WITH_ANGIOSARCOMA_LABEL_XPATH = "(//mat-radio-button)[1]";
+    private static final String NOT_DIAGNOSED_WITH_ANGIOSARCOMA_BUT_WANT_TO_STAY_INFORMED_LABEL_XPATH = "(//mat-radio-button)[2]";
+    private static final String NOT_DIAGNOSED_WITH_ANGIOSARCOMA_BUT_LOST_LOVED_ONE_LABEL_XPATH = "(//mat-radio-button)[3]";
 
     private static final String SUBMIT_BUTTON_XPATH = "//button[normalize-space(text())='SUBMIT']";
 
@@ -59,6 +55,7 @@ public class CountMeInPage extends DDPPage {
 
 
     public void inputFirstName(String name) {
+        shortWait.until(ExpectedConditions.visibilityOf(firstName));
         JDIPageUtils.scrollDownToElement(FIRST_NAME_INPUT_XPATH);
         JDIPageUtils.inputText(firstName, name);
     }
@@ -85,20 +82,21 @@ public class CountMeInPage extends DDPPage {
 
     private void clickDiagnosedWithAngiosarcoma() {
         JDIPageUtils.scrollDownToElement(DIAGNOSED_WITH_ANGIOSARCOMA_LABEL_XPATH);
-        JDIPageUtils.clickElementUsingId(DIAGNOSED_WITH_ANGIOSARCOMA_ID);
+        JDIPageUtils.clickButtonUsingJDI(DIAGNOSED_WITH_ANGIOSARCOMA_LABEL_XPATH, XPATH);
     }
 
     private void clickNotDiagnosedButWantToStayInformed() {
         JDIPageUtils.scrollDownToElement(NOT_DIAGNOSED_WITH_ANGIOSARCOMA_BUT_WANT_TO_STAY_INFORMED_LABEL_XPATH);
-        JDIPageUtils.clickElementUsingId(NOT_DIAGNOSED_WITH_ANGIOSARCOMA_BUT_WANT_TO_STAY_INFORMED_ID);
+        JDIPageUtils.clickButtonUsingJDI(NOT_DIAGNOSED_WITH_ANGIOSARCOMA_BUT_WANT_TO_STAY_INFORMED_LABEL_XPATH, XPATH);
     }
 
     private void clickNotDiagnosedButLostLovedOne() {
         JDIPageUtils.scrollDownToElement(NOT_DIAGNOSED_WITH_ANGIOSARCOMA_BUT_LOST_LOVED_ONE_LABEL_XPATH);
-        JDIPageUtils.clickElementUsingId(NOT_DIAGNOSED_WITH_ANGIOSARCOMA_BUT_LOST_LOVED_ONE_ID);
+        JDIPageUtils.clickButtonUsingJDI(NOT_DIAGNOSED_WITH_ANGIOSARCOMA_BUT_LOST_LOVED_ONE_LABEL_XPATH, XPATH);
     }
 
     public void clickSubmit() {
+        shortWait.until(ExpectedConditions.visibilityOf(submit.getWebElement()));
         JDIPageUtils.scrollDownToElement(SUBMIT_BUTTON_XPATH);
         logger.info("[Submit] is displayed: {}", submit.isDisplayed());
         JDIPageUtils.clickUsingJavaScript(submit.getWebElement());

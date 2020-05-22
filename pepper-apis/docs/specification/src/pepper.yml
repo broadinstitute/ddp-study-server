@@ -33,6 +33,8 @@ tags:
     description: participant & operator related calls
   - name: Studies
     description: view study-specific details
+  - name: Study Admin
+    description: study administration
   - name: Suggestion
     description: endpoints offering autosuggestion options
   - name: Temporary Users
@@ -52,8 +54,18 @@ paths:
     $ref: 'endpoints/studies.yml'
   /mailing-list:
     $ref: 'endpoints/join.mailing.list.yml'
+  /admin/studies/{study}/invitation-details:
+    $ref: 'endpoints/admin.studies.invitation-details.yml'
+  /admin/studies/{study}/invitation-lookup:
+    $ref: 'endpoints/admin.studies.invitation-lookup.yml'
+  /admin/studies/{study}/participants:
+    $ref: 'endpoints/admin.studies.participants.yml'
   /studies/{study}:
     $ref: 'endpoints/studies.study.yml'
+  /studies/{study}/invitation-check:
+    $ref: 'endpoints/studies.invitation-check.yml'
+  /studies/{study}/invitation-verify:
+    $ref: 'endpoints/studies.invitation-verify.yml'
   /studies/{study}/password-policy:
     $ref: 'endpoints/studies.password-policy.yml'
   /studies/{study}/suggestions/drugs:
@@ -106,9 +118,9 @@ paths:
     $ref: 'endpoints/cancers.yml'
   /autocomplete/institution:
     $ref: 'endpoints/autocomplete.institution.yml'
-  /invitations/verify:
-    $ref: 'endpoints/invitations.verify.yml'
 components:
+  parameters:
+    $ref: 'components/parameters.yml'
   schemas:
     $ref: 'components/schemas.yml'
   responses:

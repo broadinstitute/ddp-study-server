@@ -168,7 +168,6 @@ function run_tests() {
 
             TESTCONTAINERS_RYUK_DISABLED=true \
             mvn -Ditext.license=/app/itextkey.xml \
-                -Dddp.firecloudKeysDir=fc_keys \
                 -Dmaven.repo.local=/app/repo \
                 -Dconfig.file=config/testing-inmemorydb.conf \
                 -o \
@@ -177,7 +176,6 @@ function run_tests() {
 
             # NOTE: sonarqube currently does not support Java 11.
             # mvn -Ditext.license=/app/itextkey.xml \
-            #     -Dddp.firecloudKeysDir=fc_keys \
             #     -Dmaven.repo.local=/app/repo \
             #     -Dsonar.host.url=$sonar_server \
             #     -Dconfig.file=config/testing-inmemorydb.conf \

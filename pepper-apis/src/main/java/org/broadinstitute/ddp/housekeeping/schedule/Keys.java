@@ -24,6 +24,7 @@ public class Keys {
 
     public static class Export {
         public static final JobKey DataExportJob = JobKey.jobKey("data", "export");
+        public static final JobKey OnDemandJob = JobKey.jobKey("on-demand", "export");
         public static final JobKey SyncJob = JobKey.jobKey("sync", "export");
         public static final TriggerKey DataExportTrigger = TriggerKey.triggerKey("data", "export");
         public static final TriggerKey SyncTrigger = TriggerKey.triggerKey("sync", "export");

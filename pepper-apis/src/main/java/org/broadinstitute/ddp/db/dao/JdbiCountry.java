@@ -13,6 +13,9 @@ public interface JdbiCountry extends SqlObject {
     @SqlQuery("select country_name from country where country_id = :countryId")
     String getCountryNameById(@Bind Long countryId);
 
+    @SqlQuery("select country_code from country where country_id = :countryId")
+    String getCountryCodeById(@Bind Long countryId);
+
     @SqlQuery("select country_id from country where country_code = :code")
     public Long getCountryIdByCode(@Bind String code);
 
