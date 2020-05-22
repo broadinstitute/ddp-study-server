@@ -794,8 +794,6 @@ Error.ProfileGet:
           type: string
           enum:
             - MISSING_PROFILE
-        message:
-          type: string
 Error.ProfileUpdate:
   allOf:
     - $ref: '../pepper.yml#/components/schemas/Error'
@@ -809,8 +807,6 @@ Error.ProfileUpdate:
             - INVALID_SEX
             - MISSING_PROFILE
             - INVALID_DATE
-        message:
-          type: string
 Error.ProviderNotFound:
   allOf:
     - $ref: '../pepper.yml#/components/schemas/Error'

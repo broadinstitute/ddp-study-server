@@ -24,11 +24,6 @@ public class GetProfileRoute implements Route {
         String userGuid = request.params(RouteConstants.PathParam.USER_GUID);
         LOG.info("Retrieving profile for user with guid {}", userGuid);
 
-        if (StringUtils.isBlank(userGuid)) {
-            ResponseUtil.halt400ErrorResponse(response, ErrorCodes.MISSING_USER_GUID);
-            return null;
-        }
-
         return TransactionWrapper.withTxn((handle) -> {
             UserProfile profile = handle.attach(UserProfileDao.class)
                     .findProfileByUserGuid(userGuid).orElse(null);

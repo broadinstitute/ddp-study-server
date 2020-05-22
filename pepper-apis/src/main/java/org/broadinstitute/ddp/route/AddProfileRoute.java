@@ -33,10 +33,6 @@ public class AddProfileRoute extends ValidatedJsonInputRoute<Profile> {
         String userGuid = request.params(RouteConstants.PathParam.USER_GUID);
         LOG.info("Creating profile for user with guid {}", userGuid);
 
-        if (profile == null) {
-            throw ResponseUtil.haltError(400, new ApiError(ErrorCodes.MISSING_BODY, "Missing body in payload"));
-        }
-
         UserProfile.SexType sex = null;
         if (profile.getSex() != null) {
             try {
