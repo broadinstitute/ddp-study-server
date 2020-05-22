@@ -458,7 +458,7 @@ public class StudyDataLoaderMain {
             }
 
             String email = datstatData.getAsJsonObject().get("datstat_email").getAsString();
-            userEmailMap.put(altpid, email);
+            userEmailMap.put(altpid, email.toLowerCase());
 
             String phoneNumber = null;
             JsonElement releaseSurvey = surveyDataMap.get("releasesurvey");
@@ -537,7 +537,7 @@ public class StudyDataLoaderMain {
             Map<String, JsonElement> surveyDataMap = altpidBucketDataMap.get(altpid);
 
             JsonElement datstatData = surveyDataMap.get("datstatparticipantdata");
-            String email = datstatData.getAsJsonObject().get("datstat_email").getAsString();
+            String email = datstatData.getAsJsonObject().get("datstat_email").getAsString().toLowerCase();
             setRunEmail(dryRun, datstatData);
 
             if (!dryRun && preProcessedData.getAuth0ExistingEmails().contains(email)) {
@@ -586,7 +586,7 @@ public class StudyDataLoaderMain {
         JsonElement datstatParticipantMappingData = mappingData.get("datstatparticipantdata");
 
         String altpid = datstatParticipantData.getAsJsonObject().get("datstat_altpid").getAsString();
-        String emailAddress = datstatParticipantData.getAsJsonObject().get("datstat_email").getAsString();
+        String emailAddress = datstatParticipantData.getAsJsonObject().get("datstat_email").getAsString().toLowerCase();
         String createdAt = datstatParticipantData.getAsJsonObject().get("ddp_created").getAsString();
         LOG.info("loading participant: {} email: {} ", altpid, emailAddress);
 
@@ -820,7 +820,7 @@ public class StudyDataLoaderMain {
         generatedEmail.append(System.currentTimeMillis());
         generatedEmail.append("@");
         generatedEmail.append(emailSplit[1]);
-        return generatedEmail.toString();
+        return generatedEmail.toString().toLowerCase();
     }
 
     public void processGoogleBucketMailingListFiles(Config cfg, String studyGuid) throws Exception {

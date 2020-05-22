@@ -23,9 +23,13 @@ import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
+import org.broadinstitute.ddp.db.dao.InvitationDao;
+import org.broadinstitute.ddp.db.dao.InvitationFactory;
 import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
+import org.broadinstitute.ddp.db.dto.InvitationDto;
+import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.model.activity.definition.ConditionalBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
@@ -55,7 +59,9 @@ import org.broadinstitute.ddp.model.activity.types.TemplateType;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
 import org.broadinstitute.ddp.model.governance.AgeOfMajorityRule;
 import org.broadinstitute.ddp.model.governance.GovernancePolicy;
+import org.broadinstitute.ddp.model.invitation.InvitationType;
 import org.broadinstitute.ddp.model.pex.Expression;
+import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.broadinstitute.ddp.util.TestUtil;
 import org.jdbi.v3.core.Handle;
@@ -67,6 +73,7 @@ import org.junit.rules.ExpectedException;
 public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
 
     private static TestDataSetupUtil.GeneratedTestData testData;
+    private static StudyDto testStudy;
     private static String userGuid;
     private static String studyGuid;
     private static String activityCode;
@@ -87,6 +94,7 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
     public static void setup() {
         TransactionWrapper.useTxn(handle -> {
             testData = TestDataSetupUtil.generateBasicUserTestData(handle);
+            testStudy = TestDataSetupUtil.generateTestStudy(handle, ConfigManager.getInstance().getConfig());
             userGuid = testData.getTestingUser().getUserGuid();
             setupActivityAndInstance(handle);
         });
@@ -1179,6 +1187,30 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
             } catch (PexFetchException e) {
                 assertTrue(e.getMessage().contains("does not have birth date"));
             }
+
+            handle.rollback();
+        });
+    }
+
+    @Test
+    public void testEval_hasInvitation() {
+        TransactionWrapper.useTxn(handle -> {
+            String fmt = "user.studies[\"%s\"].hasInvitation(\"%s\")";
+            String expr = String.format(fmt, testStudy.getGuid(), InvitationType.RECRUITMENT);
+            assertFalse(run(handle, expr));
+
+            var factory = handle.attach(InvitationFactory.class);
+            var inviteDao = handle.attach(InvitationDao.class);
+            InvitationDto invitation = factory.createRecruitmentInvitation(testStudy.getId(), "invite" + System.currentTimeMillis());
+            inviteDao.assignAcceptingUser(invitation.getInvitationId(), testData.getUserId(), Instant.now());
+            assertTrue(run(handle, expr));
+
+            expr = String.format(fmt, testStudy.getGuid(), InvitationType.AGE_UP);
+            assertFalse(run(handle, expr));
+
+            factory.createAgeUpInvitation(testStudy.getId(), testData.getUserId(),
+                    "invite" + System.currentTimeMillis() + "@datadonationplatform.org");
+            assertTrue(run(handle, expr));
 
             handle.rollback();
         });

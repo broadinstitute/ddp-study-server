@@ -225,14 +225,7 @@ public class JoinMailingListRouteTest extends IntegrationTestSuite.TestCase {
     @Test
     public void testAddMissingFieldsFails() {
         addUserAndAssertStatusCode(new JoinMailingListPayload(null,
-                        "lastName",
-                        "foo@datadonationplatform.org",
-                        studyGuid,
                         null,
-                        null),
-                422);
-        addUserAndAssertStatusCode(new JoinMailingListPayload("first name",
-                        "",
                         "foo@datadonationplatform.org",
                         studyGuid,
                         null,
@@ -245,6 +238,31 @@ public class JoinMailingListRouteTest extends IntegrationTestSuite.TestCase {
                         null,
                         null),
                 422);
+    }
+
+    @Test
+    public void testAddEmptyNamePasses() {
+        addUserAndAssertStatusCode(new JoinMailingListPayload("",
+                        "lastName",
+                        "foo" + System.currentTimeMillis() + "@datadonationplatform.org",
+                        studyGuid,
+                        null,
+                        null),
+                204);
+        addUserAndAssertStatusCode(new JoinMailingListPayload("firstName",
+                        "",
+                        "foo" + System.currentTimeMillis() + "@datadonationplatform.org",
+                        studyGuid,
+                        null,
+                        null),
+                204);
+        addUserAndAssertStatusCode(new JoinMailingListPayload("",
+                        "",
+                        "foo" + System.currentTimeMillis() + "@datadonationplatform.org",
+                        studyGuid,
+                        null,
+                        null),
+                204);
     }
 
     @AfterClass

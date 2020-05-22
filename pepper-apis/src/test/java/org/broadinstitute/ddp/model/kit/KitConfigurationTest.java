@@ -1,4 +1,4 @@
-package org.broadinstitute.ddp.model;
+package org.broadinstitute.ddp.model.kit;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -7,7 +7,9 @@ import static org.junit.Assert.assertTrue;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.constants.ConfigFile;
@@ -28,10 +30,6 @@ import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.FormType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.address.MailAddress;
-import org.broadinstitute.ddp.model.kit.KitConfiguration;
-import org.broadinstitute.ddp.model.kit.KitCountryRule;
-import org.broadinstitute.ddp.model.kit.KitPexRule;
-import org.broadinstitute.ddp.model.kit.KitRuleType;
 import org.broadinstitute.ddp.service.AddressService;
 import org.broadinstitute.ddp.service.DsmAddressValidationStatus;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
@@ -193,6 +191,43 @@ public class KitConfigurationTest extends TxnAwareBaseTest {
     public void testValidatePex() {
         TransactionWrapper.useTxn(handle -> {
             assertTrue(kitPexRule.validate(handle, userGuid, activityInstanceGuid));
+        });
+    }
+
+    @Test
+    public void testKitZipCodeRule() {
+        TransactionWrapper.useTxn(handle -> {
+            Set<String> zipCodes = new HashSet<>();
+            zipCodes.add(mailAddress.getZip());
+            for (int i = 0; i < 500; i++) {
+                zipCodes.add(String.format("12%03d", i));
+            }
+
+            var dao = handle.attach(KitConfigurationDao.class);
+            long ruleId = dao.addZipCodeRule(configurationId, zipCodes);
+
+            // Test only this specific rule, so filter things down and construct a new config.
+            var config = dao.kitConfigurationFactory()
+                    .stream()
+                    .filter(kc -> kc.getId() == configurationId)
+                    .map(kc -> {
+                        var theRule = kc.getRules().stream().filter(rule -> rule.getId() == ruleId).findFirst().get();
+                        return new KitConfiguration(
+                                kc.getId(),
+                                kc.getNumKits(),
+                                kc.getKitType(),
+                                kc.getStudyGuid(),
+                                List.of(theRule));
+                    })
+                    .findFirst()
+                    .get();
+
+            KitZipCodeRule actualRule = (KitZipCodeRule) config.getRules().iterator().next();
+            assertTrue(actualRule.getZipCodes().containsAll(zipCodes));
+            assertTrue("should lookup zip code from mailing address", config.evaluate(handle, userGuid));
+            assertFalse("no address means no zip code", config.evaluate(handle, "foobar"));
+
+            handle.rollback();
         });
     }
 }

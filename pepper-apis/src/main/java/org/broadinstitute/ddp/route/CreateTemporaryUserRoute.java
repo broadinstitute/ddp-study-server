@@ -3,35 +3,26 @@ package org.broadinstitute.ddp.route;
 import java.util.List;
 
 import org.apache.http.HttpStatus;
-
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.db.UserDao;
 import org.broadinstitute.ddp.db.dao.JdbiClient;
+import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dto.ClientDto;
-import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.json.CreateTemporaryUserPayload;
 import org.broadinstitute.ddp.json.CreateTemporaryUserResponse;
 import org.broadinstitute.ddp.json.errors.ApiError;
+import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import spark.Request;
 import spark.Response;
 
 public class CreateTemporaryUserRoute extends ValidatedJsonInputRoute<CreateTemporaryUserPayload> {
 
     private static final Logger LOG = LoggerFactory.getLogger(CreateTemporaryUserRoute.class);
-
-    private final UserDao userDao;
-
-    public CreateTemporaryUserRoute(UserDao userDao) {
-        this.userDao = userDao;
-    }
 
     @Override
     protected int getValidationErrorStatus() {
@@ -76,8 +67,8 @@ public class CreateTemporaryUserRoute extends ValidatedJsonInputRoute<CreateTemp
             }
 
             try {
-                UserDto userDto = userDao.createTemporaryUser(handle, auth0ClientId);
-                return new CreateTemporaryUserResponse(userDto.getUserGuid(), userDto.getExpiresAtMillis());
+                User user = handle.attach(UserDao.class).createTempUser(clientDto.getId());
+                return new CreateTemporaryUserResponse(user.getGuid(), user.getExpiresAt());
             } catch (DaoException e) {
                 String msg = "Error while creating temporary user";
                 LOG.error(msg, e);

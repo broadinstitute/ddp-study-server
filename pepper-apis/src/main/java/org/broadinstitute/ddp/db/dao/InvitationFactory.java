@@ -1,29 +1,33 @@
 package org.broadinstitute.ddp.db.dao;
 
-import java.sql.Timestamp;
+import java.time.Instant;
 
 import org.broadinstitute.ddp.constants.SqlConstants;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.dto.InvitationDto;
 import org.broadinstitute.ddp.model.invitation.InvitationType;
-import org.broadinstitute.ddp.util.TimestampUtil;
 import org.jdbi.v3.sqlobject.SqlObject;
 
 public interface InvitationFactory extends SqlObject {
 
     /**
-     * Creates a new {@link InvitationDto invitation}, writing a new row into the database
+     * Creates a new Age Up {@link InvitationDto invitation}, writing a new row into the database
      * using the current time as creation time and generating a new guid.
      */
-    default InvitationDto createInvitation(InvitationType invitationType, long studyId, long userId, String email) {
-        Timestamp createdAt = TimestampUtil.now();
+    default InvitationDto createAgeUpInvitation(long studyId, long userId, String email) {
         String guid = generateGuid();
-        long invitationId = getHandle().attach(InvitationSql.class).insertInvitation(invitationType, guid, studyId, userId, createdAt,
-                email);
+        return createInvitation(InvitationType.AGE_UP, guid, studyId, userId, email);
+    }
 
-        return new InvitationDto(guid, invitationId, createdAt, null, null, null, studyId, userId,
-                invitationType, email);
+    default InvitationDto createRecruitmentInvitation(long studyId, String guid) {
+        return createInvitation(InvitationType.RECRUITMENT, guid, studyId, null, null);
+    }
 
+    private InvitationDto createInvitation(InvitationType invitationType, String guid, long studyId, Long userId, String email) {
+        Instant createdAt = Instant.now();
+        long invitationId = getHandle().attach(InvitationSql.class)
+                .insertInvitation(invitationType, guid, studyId, userId, email, null, createdAt);
+        return new InvitationDto(invitationId, guid, invitationType, createdAt, null, null, null, studyId, userId, email, null);
     }
 
     /**
