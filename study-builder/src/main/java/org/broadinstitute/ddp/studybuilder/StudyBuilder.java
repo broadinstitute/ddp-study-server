@@ -252,6 +252,9 @@ public class StudyBuilder {
             olcPrecision = OLCPrecision.valueOf(olcPrecisionString);
         }
 
+        String recaptchaSiteKey = ConfigUtil.getStrIfPresent(studyCfg, "recaptchaSiteKey");
+
+
         boolean shareLocationInformation = studyCfg.getBoolean("shareParticipantLocation");
 
         JdbiUmbrellaStudy jdbiStudy = handle.attach(JdbiUmbrellaStudy.class);
@@ -265,7 +268,7 @@ public class StudyBuilder {
                 olcPrecisionId = handle.attach(JdbiOLCPrecision.class).findDtoForCode(olcPrecision).getId();
             }
             long studyId = jdbiStudy.insert(name, guid, umbrellaId, baseWebUrl,
-                    tenantId, irbPassword, olcPrecisionId, shareLocationInformation, studyEmail);
+                    tenantId, irbPassword, olcPrecisionId, shareLocationInformation, studyEmail, recaptchaSiteKey);
             dto = handle.attach(JdbiUmbrellaStudy.class).findById(studyId);
             LOG.info("Created study with id={}, name={}, guid={}", studyId, name, guid);
         } else {

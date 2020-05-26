@@ -21,8 +21,8 @@ import org.broadinstitute.ddp.constants.RouteConstants.API;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
+import org.broadinstitute.ddp.json.Error;
 import org.broadinstitute.ddp.json.Profile;
-import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.user.UserProfile;
 import org.json.JSONObject;
 import org.junit.After;
@@ -201,9 +201,8 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
 
         HttpEntity entity = res.getEntity();
         String bodyToString = EntityUtils.toString(entity);
-        ApiError error = gson.fromJson(bodyToString, ApiError.class);
-        Assert.assertEquals(ErrorCodes.INVALID_LANGUAGE_PREFERENCE, error.getCode());
-        Assert.assertTrue(error.getMessage().contains("Invalid preferred language"));
+        Error error = gson.fromJson(bodyToString, Error.class);
+        Assert.assertEquals(ErrorCodes.INVALID_LANGUAGE_PREFERENCE, error.getErrorCode());
     }
 
     /**
@@ -222,9 +221,8 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
 
         HttpEntity entity = res.getEntity();
         String bodyToString = EntityUtils.toString(entity);
-        ApiError error = gson.fromJson(bodyToString, ApiError.class);
-        Assert.assertEquals(ErrorCodes.INVALID_SEX, error.getCode());
-        Assert.assertTrue(error.getMessage().contains("Provided invalid profile sex type"));
+        Error error = gson.fromJson(bodyToString, Error.class);
+        Assert.assertEquals(ErrorCodes.INVALID_SEX, error.getErrorCode());
     }
 
     /**
@@ -242,9 +240,8 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
 
         HttpEntity entity = res.getEntity();
         String bodyToString = EntityUtils.toString(entity);
-        ApiError error = gson.fromJson(bodyToString, ApiError.class);
-        Assert.assertEquals(ErrorCodes.INVALID_DATE, error.getCode());
-        Assert.assertTrue(error.getMessage().equalsIgnoreCase("Provided birth date is not a valid date"));
+        Error error = gson.fromJson(bodyToString, Error.class);
+        Assert.assertEquals(ErrorCodes.INVALID_DATE, error.getErrorCode());
     }
 
     //tests that if there is an existing user with a complete profile, you can retrieve it.
@@ -290,20 +287,19 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
     }
 
     /**
-     * tests that if there is an existing user with a profile not in database, there is a 404 error message for a
+     * tests that if there is an existing user with a profile not in database, there is a 422 error message for a
      * missing profile.
      */
     @Test
     public void testGetProfileNotInDatabase() throws Exception {
         Response response = RouteTestUtil.buildAuthorizedGetRequest(token, url).execute();
         HttpResponse res = response.returnResponse();
-        Assert.assertEquals(404, res.getStatusLine().getStatusCode());
+        Assert.assertEquals(400, res.getStatusLine().getStatusCode());
 
         HttpEntity entity = res.getEntity();
         String bodyToString = EntityUtils.toString(entity);
-        ApiError error = gson.fromJson(bodyToString, ApiError.class);
-        Assert.assertEquals(ErrorCodes.MISSING_PROFILE, error.getCode());
-        Assert.assertTrue(error.getMessage().contains("Profile not found for user with guid"));
+        Error error = gson.fromJson(bodyToString, Error.class);
+        Assert.assertEquals(error.getErrorCode(), ErrorCodes.MISSING_PROFILE);
     }
 
     // For existing profile and user, update all information.
@@ -380,12 +376,11 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
 
         Response response = RouteTestUtil.buildAuthorizedPatchRequest(token, url, updatedProfile.toString()).execute();
         HttpResponse res = response.returnResponse();
-        Assert.assertEquals(404, res.getStatusLine().getStatusCode());
+        Assert.assertEquals(400, res.getStatusLine().getStatusCode());
 
         String bodyToString = EntityUtils.toString(res.getEntity());
-        ApiError error = gson.fromJson(bodyToString, ApiError.class);
-        Assert.assertEquals(ErrorCodes.MISSING_PROFILE, error.getCode());
-        Assert.assertTrue(error.getMessage().contains("Profile not found for user with guid"));
+        Error error = gson.fromJson(bodyToString, Error.class);
+        Assert.assertEquals(error.getErrorCode(), ErrorCodes.MISSING_PROFILE);
     }
 
     // test where pass in empty string instead of profile.
@@ -399,9 +394,8 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
         Assert.assertEquals(400, res.getStatusLine().getStatusCode());
 
         String bodyToString = EntityUtils.toString(res.getEntity());
-        ApiError error = gson.fromJson(bodyToString, ApiError.class);
-        Assert.assertEquals(ErrorCodes.MISSING_BODY, error.getCode());
-        Assert.assertTrue(error.getMessage().contains("Missing body"));
+        Error error = gson.fromJson(bodyToString, Error.class);
+        Assert.assertEquals(error.getErrorCode(), ErrorCodes.MISSING_BODY);
     }
 
     /**

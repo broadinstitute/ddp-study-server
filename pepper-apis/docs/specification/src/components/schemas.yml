@@ -802,24 +802,10 @@ Error.ProfileUpdate:
         code:
           type: string
           enum:
-            - BAD_PAYLOAD
             - MISSING_BODY
+            - INVALID_LANGUAGE_PREFERENCE
+            - INVALID_SEX
             - MISSING_PROFILE
-            - INVALID_LANGUAGE_PREFERENCE
-            - INVALID_SEX
-            - INVALID_DATE
-Error.ProfileAdd:
-  allOf:
-    - $ref: '../pepper.yml#/components/schemas/Error'
-    - type: object
-      properties:
-        code:
-          type: string
-          enum:
-            - BAD_PAYLOAD
-            - DUPLICATE_PROFILE
-            - INVALID_LANGUAGE_PREFERENCE
-            - INVALID_SEX
             - INVALID_DATE
 Error.ProviderNotFound:
   allOf:
