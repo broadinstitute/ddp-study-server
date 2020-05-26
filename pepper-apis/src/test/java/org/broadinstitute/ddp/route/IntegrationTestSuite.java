@@ -78,7 +78,7 @@ import org.slf4j.LoggerFactory;
         GetActivityInstanceRouteTest.class,
         GetConsentSummariesRouteTest.class,
         GetConsentSummaryRouteTest.class,
-        GetDsmKitRequestRouteTest.class,
+        GetDsmKitRequestsRouteTest.class,
         GetDsmOnDemandActivitiesRouteTest.class,
         GetDsmReleasePdfRouteTest.class,
         GetDsmTriggeredInstancesRouteTest.class,
