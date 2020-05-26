@@ -133,7 +133,7 @@ public class FormInstanceDaoTest extends TxnAwareBaseTest {
             assertEquals(FormType.GENERAL, inst.getFormType());
             assertEquals("test activity", inst.getTitle());
             assertEquals(instanceGuid, inst.getGuid());
-            assertEquals("New", inst.getStatus());
+            assertEquals(InstanceStatusType.CREATED, inst.getStatusType());
             assertTrue(form.getSections().isEmpty());
 
             handle.rollback();

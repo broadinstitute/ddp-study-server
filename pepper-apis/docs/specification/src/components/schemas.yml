@@ -110,7 +110,7 @@ Activity:
     - title
     - subtitle
     - readonly
-    - status
+    - statusCode
     - listStyleHint
     - sections
     - lastUpdatedText
@@ -127,8 +127,9 @@ Activity:
     guid:
       type: string
       description: unique identifier for this instance of the activity
-    status:
-      type: string
+    statusCode:
+      $ref: "../pepper.yml#/components/schemas/ActivityInstanceStatusType"
+      example: IN_PROGRESS
     title:
       type: string
       description: title of the activity to be displayed
