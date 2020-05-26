@@ -10,6 +10,7 @@ import org.broadinstitute.ddp.db.dto.InvitationDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.util.GuidUtils;
 import org.jdbi.v3.core.Handle;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +19,7 @@ import org.slf4j.LoggerFactory;
  * Script for registering auth0 clients and setting which studies
  * they have access to.
  */
-
+@Ignore
 public class InsertInvitationRecruitmentCodesScript extends TxnAwareBaseTest {
 
     private static final Logger LOG = LoggerFactory.getLogger(InsertInvitationRecruitmentCodesScript.class);
@@ -41,7 +42,6 @@ public class InsertInvitationRecruitmentCodesScript extends TxnAwareBaseTest {
             });
         });
     }
-
     @Test
     public void generateTestBostonInvitationCodes() {
         insertRecruitmentInvitationCodes("testboston", "TB", 100);
