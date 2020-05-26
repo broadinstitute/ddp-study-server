@@ -1,6 +1,5 @@
 package org.broadinstitute.ddp.route;
 
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
