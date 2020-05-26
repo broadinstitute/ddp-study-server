@@ -16,6 +16,7 @@ public class StudyDto {
     private OLCPrecision olcPrecision;
     private boolean shareParticipantLocation;
     private String studyEmail;
+    private String recaptchaSiteKey;
     private boolean dataExportEnabled;
 
     @JdbiConstructor
@@ -29,6 +30,7 @@ public class StudyDto {
                     @ColumnName("olc_precision_code") OLCPrecision olcPrecision,
                     @ColumnName("share_participant_location") boolean shareParticipantLocation,
                     @ColumnName("study_email") String studyEmail,
+                    @ColumnName("recaptcha_site_key") String recaptchaSiteKey,
                     @ColumnName("enable_data_export") boolean dataExportEnabled) {
         this.id = id;
         this.guid = guid;
@@ -40,6 +42,7 @@ public class StudyDto {
         this.olcPrecision = olcPrecision;
         this.shareParticipantLocation = shareParticipantLocation;
         this.studyEmail = studyEmail;
+        this.recaptchaSiteKey = recaptchaSiteKey;
         this.dataExportEnabled = dataExportEnabled;
     }
 
@@ -85,5 +88,13 @@ public class StudyDto {
 
     public boolean isDataExportEnabled() {
         return dataExportEnabled;
+    }
+
+    public String getRecaptchaSiteKey() {
+        return recaptchaSiteKey;
+    }
+
+    public void setRecaptchaSiteKey(String key) {
+        this.recaptchaSiteKey = key;
     }
 }

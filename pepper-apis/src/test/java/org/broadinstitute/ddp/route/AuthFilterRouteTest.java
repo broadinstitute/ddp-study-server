@@ -248,7 +248,7 @@ public class AuthFilterRouteTest extends IntegrationTestSuite.TestCase {
 
     @Test
     public void testProfilePostRequestPassesAuthFilterWithGoodToken() throws Exception {
-        String profilePayload = new Gson().toJson(new Profile(null, null, null, null, "en", null, null));
+        String profilePayload = new Gson().toJson(new Profile(null, null, "en", null, null));
         Request saveProfileRequest =
                 RouteTestUtil.buildAuthorizedPostRequest(testUserToken, buildProfileUrl(), profilePayload);
         int statusCode = saveProfileRequest.execute().returnResponse().getStatusLine().getStatusCode();

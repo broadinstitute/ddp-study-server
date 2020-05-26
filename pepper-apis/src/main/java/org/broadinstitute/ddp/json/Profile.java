@@ -10,19 +10,22 @@ import org.broadinstitute.ddp.model.user.UserProfile;
  */
 public class Profile {
 
-    // todo: refactor to use single birth date
     public static final String BIRTH_DAY_IN_MONTH = "birthDayInMonth";
     public static final String BIRTH_MONTH = "birthMonth";
     public static final String BIRTH_YEAR = "birthYear";
+    public static final String BIRTH_DATE = "birthDate";
     public static final String SEX = "sex";
     public static final String PREFERRED_LANGUAGE = "preferredLanguage";
     public static final String FIRST_NAME = "firstName";
     public static final String LAST_NAME = "lastName";
 
+    @Deprecated
     @SerializedName(BIRTH_MONTH)
     private Integer birthMonth;
+    @Deprecated
     @SerializedName(BIRTH_YEAR)
     private Integer birthYear;
+    @Deprecated
     @SerializedName(BIRTH_DAY_IN_MONTH)
     private Integer birthDayInMonth;
     @SerializedName(SEX)
@@ -33,10 +36,13 @@ public class Profile {
     private String firstName;
     @SerializedName(LAST_NAME)
     private String lastName;
+    @SerializedName(BIRTH_DATE)
+    private String birthDate;
 
     public Profile(UserProfile other) {
         LocalDate birthDate = other.getBirthDate();
         UserProfile.SexType sexType = other.getSexType();
+        this.birthDate = birthDate != null ? birthDate.toString() : null;
         this.birthDayInMonth = birthDate != null ? birthDate.getDayOfMonth() : null;
         this.birthMonth = birthDate != null ? birthDate.getMonthValue() : null;
         this.birthYear = birthDate != null ? birthDate.getYear() : null;
@@ -46,15 +52,17 @@ public class Profile {
         this.lastName = other.getLastName();
     }
 
-    public Profile(Integer birthDayInMonth, Integer birthMonth, Integer birthYear,
+    public Profile(LocalDate birthDate,
                    String sex, String preferredLanguage, String firstName, String lastName) {
-        this.birthDayInMonth = birthDayInMonth;
-        this.birthMonth = birthMonth;
-        this.birthYear = birthYear;
+
+        this.birthDate = birthDate != null ? birthDate.toString() : null;
         this.sex = sex;
         this.preferredLanguage = preferredLanguage;
         this.firstName = firstName;
         this.lastName = lastName;
+        this.birthDayInMonth = birthDate != null ? birthDate.getDayOfMonth() : null;
+        this.birthMonth = birthDate != null ? birthDate.getMonthValue() : null;
+        this.birthYear = birthDate != null ? birthDate.getYear() : null;
     }
 
     public Integer getBirthDayInMonth() {
@@ -85,11 +93,7 @@ public class Profile {
         return lastName;
     }
 
-    public LocalDate getBirthDate() {
-        try {
-            return LocalDate.of(getBirthYear(), getBirthMonth(), getBirthDayInMonth());
-        } catch (Exception ignored) {
-            return null;
-        }
+    public String getBirthDate() {
+        return birthDate;
     }
 }

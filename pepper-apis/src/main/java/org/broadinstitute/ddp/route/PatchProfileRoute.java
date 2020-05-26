@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.route;
 
 import java.time.DateTimeException;
 import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
@@ -56,10 +57,13 @@ public class PatchProfileRoute implements Route {
         boolean providedLastName = json.has(Profile.LAST_NAME);
         String lastName = providedLastName ? payload.getLastName() : null;
 
-        boolean providedBirthDate = json.has(Profile.BIRTH_YEAR)
+        boolean providedBirthDate = json.has(Profile.BIRTH_DATE);
+        String birthDate = payload.getBirthDate();
+
+        boolean providedBirthDateElements = json.has(Profile.BIRTH_YEAR)
                 && json.has(Profile.BIRTH_MONTH)
                 && json.has(Profile.BIRTH_DAY_IN_MONTH);
-        LocalDate birthDate = providedBirthDate ? parseBirthDate(payload) : null;
+        LocalDate parsedBirthDate = providedBirthDateElements ? parseBirthDate(payload) : null;
 
         Profile modifiedProfile = TransactionWrapper.withTxn((Handle handle) -> {
             boolean providedLanguage = json.has(Profile.PREFERRED_LANGUAGE);
@@ -83,9 +87,18 @@ public class PatchProfileRoute implements Route {
             if (providedSexStr) {
                 builder.setSexType(sexType);
             }
+
             if (providedBirthDate) {
-                builder.setBirthDate(birthDate);
+                try {
+                    builder.setBirthDate(birthDate != null ? LocalDate.parse(birthDate) : null);
+                } catch (DateTimeParseException e) {
+                    ResponseUtil.halt400ErrorResponse(response, ErrorCodes.INVALID_DATE);
+                    return null;
+                }
+            } else if (providedBirthDateElements) {
+                builder.setBirthDate(parsedBirthDate);
             }
+
             if (providedLanguage) {
                 builder.setPreferredLangId(languageId);
             }
@@ -112,6 +125,7 @@ public class PatchProfileRoute implements Route {
             return null;
         }
     }
+
 
     private LocalDate parseBirthDate(Profile payload) {
         Integer year = payload.getBirthYear();
