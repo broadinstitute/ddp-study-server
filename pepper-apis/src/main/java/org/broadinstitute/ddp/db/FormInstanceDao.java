@@ -92,7 +92,6 @@ public class FormInstanceDao {
                 FormType formType = FormType.valueOf(rs.getString(FormTypeTable.CODE));
                 String title = rs.getString(ActivityInstanceTable.TITLE);
                 String subtitle = rs.getString(ActivityInstanceTable.SUBTITLE);
-                String status = rs.getString(ActivityInstanceTable.STATUS_TYPE_NAME);
                 String activityCode = rs.getString(StudyActivityTable.CODE);
 
                 String listStyleHintCode = rs.getString("list_style_hint_code");
@@ -123,7 +122,7 @@ public class FormInstanceDao {
                         instanceGuid,
                         title,
                         subtitle,
-                        status,
+                        statusTypeCode,
                         isReadonly,
                         hint,
                         readonlyHintTemplateId,

@@ -75,6 +75,7 @@ import org.broadinstitute.ddp.model.activity.types.DateFieldType;
 import org.broadinstitute.ddp.model.activity.types.DateRenderMode;
 import org.broadinstitute.ddp.model.activity.types.FormSectionState;
 import org.broadinstitute.ddp.model.activity.types.FormType;
+import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.activity.types.PicklistRenderMode;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.activity.types.RuleType;
@@ -266,6 +267,7 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
         assertEquals(ActivityType.FORMS, inst.getActivityType());
         assertEquals(instanceDto.getGuid(), inst.getGuid());
         assertEquals(activityCode, inst.getActivityCode());
+        assertEquals(InstanceStatusType.CREATED, inst.getStatusType());
     }
 
     @Test
