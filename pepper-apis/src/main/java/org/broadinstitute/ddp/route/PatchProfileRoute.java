@@ -143,7 +143,8 @@ public class PatchProfileRoute implements Route {
             }
         } else {
             LOG.warn("Full birth date was not provided");
-            throw ResponseUtil.haltError(HttpStatus.SC_BAD_REQUEST, new ApiError(ErrorCodes.INVALID_DATE, "Need to provide full birth date"));
+            throw ResponseUtil.haltError(HttpStatus.SC_BAD_REQUEST,
+                    new ApiError(ErrorCodes.INVALID_DATE, "Need to provide full birth date"));
         }
     }
 
@@ -156,7 +157,8 @@ public class PatchProfileRoute implements Route {
         if (languageId != null) {
             return languageId;
         } else {
-            throw ResponseUtil.haltError(HttpStatus.SC_BAD_REQUEST, new ApiError(ErrorCodes.INVALID_LANGUAGE_PREFERENCE, "Invalid preferred language"));
+            throw ResponseUtil.haltError(HttpStatus.SC_BAD_REQUEST,
+                    new ApiError(ErrorCodes.INVALID_LANGUAGE_PREFERENCE, "Invalid preferred language"));
         }
     }
 }

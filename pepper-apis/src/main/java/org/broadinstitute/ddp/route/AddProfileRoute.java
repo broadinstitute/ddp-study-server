@@ -50,7 +50,8 @@ public class AddProfileRoute extends ValidatedJsonInputRoute<Profile> {
             String langCode = profile.getPreferredLanguage();
             Long langId = handle.attach(JdbiLanguageCode.class).getLanguageCodeId(langCode);
             if (StringUtils.isNotBlank(langCode) && langId == null) {
-                throw ResponseUtil.haltError(HttpStatus.SC_BAD_REQUEST, new ApiError(ErrorCodes.INVALID_LANGUAGE_PREFERENCE, "Invalid preferred language"));
+                throw ResponseUtil.haltError(HttpStatus.SC_BAD_REQUEST,
+                        new ApiError(ErrorCodes.INVALID_LANGUAGE_PREFERENCE, "Invalid preferred language"));
             }
 
             UserProfileDao profileDao = handle.attach(UserProfileDao.class);

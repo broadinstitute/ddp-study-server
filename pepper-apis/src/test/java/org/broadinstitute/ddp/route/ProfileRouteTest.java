@@ -14,6 +14,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
 import org.apache.http.client.fluent.Response;
 import org.apache.http.util.EntityUtils;
 import org.broadinstitute.ddp.constants.ErrorCodes;
@@ -76,7 +77,7 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
     private Profile successfulAddPostCheck(Profile payload) throws IOException {
         Response response = RouteTestUtil.buildAuthorizedPostRequest(token, url, gson.toJson(payload)).execute();
         HttpResponse res = response.returnResponse();
-        Assert.assertEquals(201, res.getStatusLine().getStatusCode());
+        Assert.assertEquals(HttpStatus.SC_CREATED, res.getStatusLine().getStatusCode());
 
         //validate profile generatedTestData
         String bodyToString = EntityUtils.toString(res.getEntity());
@@ -93,7 +94,7 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
     private void failedAddCheck(Profile payload) throws IOException {
         Response response = RouteTestUtil.buildAuthorizedPostRequest(token, url, gson.toJson(payload)).execute();
         HttpResponse res = response.returnResponse();
-        Assert.assertEquals(400, res.getStatusLine().getStatusCode());
+        Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, res.getStatusLine().getStatusCode());
     }
 
     private void checkNumProfile(Connection conn, int expectedProfileNum) throws SQLException {
@@ -145,7 +146,7 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
         JsonObject payload = createProfileJsonObject(null, null, null, null, null);
         Response response = RouteTestUtil.buildAuthorizedPostRequest(token, url, payload.toString()).execute();
         HttpResponse res = response.returnResponse();
-        Assert.assertEquals(201, res.getStatusLine().getStatusCode());
+        Assert.assertEquals(HttpStatus.SC_CREATED, res.getStatusLine().getStatusCode());
 
         String bodyToString = EntityUtils.toString(res.getEntity());
         Profile queriedProfile = gson.fromJson(bodyToString, Profile.class);
@@ -178,7 +179,7 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
         Response response = RouteTestUtil.buildAuthorizedPostRequest(token, url, gson.toJson(payload)).execute();
         HttpResponse res = response.returnResponse();
 
-        Assert.assertEquals(400, res.getStatusLine().getStatusCode());
+        Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, res.getStatusLine().getStatusCode());
 
         TransactionWrapper.withTxn((handle) -> {
             checkNumProfile(handle.getConnection(), 0);
@@ -187,7 +188,7 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
     }
 
     /**
-     * tests to make sure that throws 400 Error when given a preferred language not in table.
+     * tests to make sure that throws HttpStatus.SC_BAD_REQUEST Error when given a preferred language not in table.
      */
     @Test
     public void testAddProfileBadLanguage() throws Exception {
@@ -197,7 +198,7 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
 
         Response response = RouteTestUtil.buildAuthorizedPostRequest(token, url, gson.toJson(payload)).execute();
         HttpResponse res = response.returnResponse();
-        Assert.assertEquals(400, res.getStatusLine().getStatusCode());
+        Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, res.getStatusLine().getStatusCode());
 
         HttpEntity entity = res.getEntity();
         String bodyToString = EntityUtils.toString(entity);
@@ -218,7 +219,7 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
 
         Response response = RouteTestUtil.buildAuthorizedPostRequest(token, url, profile.toString()).execute();
         HttpResponse res = response.returnResponse();
-        Assert.assertEquals(400, res.getStatusLine().getStatusCode());
+        Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, res.getStatusLine().getStatusCode());
 
         HttpEntity entity = res.getEntity();
         String bodyToString = EntityUtils.toString(entity);
@@ -238,7 +239,7 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
 
         Response response = RouteTestUtil.buildAuthorizedPostRequest(token, url, profile.toString()).execute();
         HttpResponse res = response.returnResponse();
-        Assert.assertEquals(400, res.getStatusLine().getStatusCode());
+        Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, res.getStatusLine().getStatusCode());
 
         HttpEntity entity = res.getEntity();
         String bodyToString = EntityUtils.toString(entity);
@@ -253,7 +254,7 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
         postDummyProfile();
         Response response = RouteTestUtil.buildAuthorizedGetRequest(token, url).execute();
         HttpResponse res = response.returnResponse();
-        Assert.assertEquals(200, res.getStatusLine().getStatusCode());
+        Assert.assertEquals(HttpStatus.SC_OK, res.getStatusLine().getStatusCode());
 
         String bodyToString = EntityUtils.toString(res.getEntity());
         Profile queriedProfile = gson.fromJson(bodyToString, Profile.class);
@@ -272,11 +273,11 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
         JsonObject payload = createProfileJsonObject(null, null, null, null, null);
         Response response = RouteTestUtil.buildAuthorizedPostRequest(token, url, payload.toString()).execute();
         HttpResponse res = response.returnResponse();
-        Assert.assertEquals(201, res.getStatusLine().getStatusCode());
+        Assert.assertEquals(HttpStatus.SC_CREATED, res.getStatusLine().getStatusCode());
 
         response = RouteTestUtil.buildAuthorizedGetRequest(token, url).execute();
         res = response.returnResponse();
-        Assert.assertEquals(200, res.getStatusLine().getStatusCode());
+        Assert.assertEquals(HttpStatus.SC_OK, res.getStatusLine().getStatusCode());
 
         HttpEntity entity = res.getEntity();
         String bodyToString = EntityUtils.toString(entity);
@@ -297,7 +298,7 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
     public void testGetProfileNotInDatabase() throws Exception {
         Response response = RouteTestUtil.buildAuthorizedGetRequest(token, url).execute();
         HttpResponse res = response.returnResponse();
-        Assert.assertEquals(404, res.getStatusLine().getStatusCode());
+        Assert.assertEquals(HttpStatus.SC_NOT_FOUND, res.getStatusLine().getStatusCode());
 
         HttpEntity entity = res.getEntity();
         String bodyToString = EntityUtils.toString(entity);
@@ -316,7 +317,7 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
 
         Response response = RouteTestUtil.buildAuthorizedPatchRequest(token, url, updatedProfile.toString()).execute();
         HttpResponse res = response.returnResponse();
-        Assert.assertEquals(200, res.getStatusLine().getStatusCode());
+        Assert.assertEquals(HttpStatus.SC_OK, res.getStatusLine().getStatusCode());
 
         String bodyToString = EntityUtils.toString(res.getEntity());
         Profile queriedProfile = gson.fromJson(bodyToString, Profile.class);
@@ -338,7 +339,7 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
 
         Response response = RouteTestUtil.buildAuthorizedPatchRequest(token, url, updatedProfile.toString()).execute();
         HttpResponse res = response.returnResponse();
-        Assert.assertEquals(200, res.getStatusLine().getStatusCode());
+        Assert.assertEquals(HttpStatus.SC_OK, res.getStatusLine().getStatusCode());
 
         String bodyToString = EntityUtils.toString(res.getEntity());
         Profile queriedProfile = gson.fromJson(bodyToString, Profile.class);
@@ -358,7 +359,7 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
 
         Response response = RouteTestUtil.buildAuthorizedPatchRequest(token, url, updatedProfile.toString()).execute();
         HttpResponse res = response.returnResponse();
-        Assert.assertEquals(200, res.getStatusLine().getStatusCode());
+        Assert.assertEquals(HttpStatus.SC_OK, res.getStatusLine().getStatusCode());
 
         String bodyToString = EntityUtils.toString(res.getEntity());
         Profile queriedProfile = gson.fromJson(bodyToString, Profile.class);
@@ -380,7 +381,7 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
 
         Response response = RouteTestUtil.buildAuthorizedPatchRequest(token, url, updatedProfile.toString()).execute();
         HttpResponse res = response.returnResponse();
-        Assert.assertEquals(404, res.getStatusLine().getStatusCode());
+        Assert.assertEquals(HttpStatus.SC_NOT_FOUND, res.getStatusLine().getStatusCode());
 
         String bodyToString = EntityUtils.toString(res.getEntity());
         ApiError error = gson.fromJson(bodyToString, ApiError.class);
@@ -396,7 +397,7 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
 
         Response response = RouteTestUtil.buildAuthorizedPatchRequest(token, url, updatedProfile.toString()).execute();
         HttpResponse res = response.returnResponse();
-        Assert.assertEquals(400, res.getStatusLine().getStatusCode());
+        Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, res.getStatusLine().getStatusCode());
 
         String bodyToString = EntityUtils.toString(res.getEntity());
         ApiError error = gson.fromJson(bodyToString, ApiError.class);
@@ -415,7 +416,7 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
 
         Response response = RouteTestUtil.buildAuthorizedPatchRequest(token, url, updatedProfile.toString()).execute();
         HttpResponse res = response.returnResponse();
-        Assert.assertEquals(400, res.getStatusLine().getStatusCode());
+        Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, res.getStatusLine().getStatusCode());
     }
 
     /**
@@ -429,7 +430,7 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
 
         Response response = RouteTestUtil.buildAuthorizedPatchRequest(token, url, updatedProfile.toString()).execute();
         HttpResponse res = response.returnResponse();
-        Assert.assertEquals(400, res.getStatusLine().getStatusCode());
+        Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, res.getStatusLine().getStatusCode());
     }
 
     /**
@@ -444,7 +445,7 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
 
         Response response = RouteTestUtil.buildAuthorizedPatchRequest(token, url, updatedProfile.toString()).execute();
         HttpResponse res = response.returnResponse();
-        Assert.assertEquals(400, res.getStatusLine().getStatusCode());
+        Assert.assertEquals(HttpStatus.SC_BAD_REQUEST, res.getStatusLine().getStatusCode());
     }
 
     /**
@@ -464,7 +465,7 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
 
         Response response = RouteTestUtil.buildAuthorizedPatchRequest(token, url, updatedProfile.toString()).execute();
         HttpResponse res = response.returnResponse();
-        Assert.assertEquals(200, res.getStatusLine().getStatusCode());
+        Assert.assertEquals(HttpStatus.SC_OK, res.getStatusLine().getStatusCode());
 
         String bodyToString = EntityUtils.toString(res.getEntity());
         Profile queriedProfile = gson.fromJson(bodyToString, Profile.class);
@@ -476,7 +477,7 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
         updatedProfile.addProperty(Profile.BIRTH_DATE, "2000-10-30");
         response = RouteTestUtil.buildAuthorizedPatchRequest(token, url, updatedProfile.toString()).execute();
         res = response.returnResponse();
-        Assert.assertEquals(200, res.getStatusLine().getStatusCode());
+        Assert.assertEquals(HttpStatus.SC_OK, res.getStatusLine().getStatusCode());
 
         bodyToString = EntityUtils.toString(res.getEntity());
         queriedProfile = gson.fromJson(bodyToString, Profile.class);
