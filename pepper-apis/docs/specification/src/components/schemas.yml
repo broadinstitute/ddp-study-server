@@ -1718,25 +1718,10 @@ Suggestion.Match:
     length:
       type: integer
       minimum: 0
-MailingAddress:
+
+BaseMailAddress:
   type: object
-  description: a participant's mailing address, to be used for delivery.
-  required:
-    - description
-    - name
-    - street1
-    - city
-    - state
-    - country
-    - zip
-    - phone
   properties:
-    guid:
-      type: string
-      description: the server-generated unique identifier for the mailing address
-    description:
-      type: string
-      description: the user-entered description for this address
     name:
       type: string
       description: the participant's full name
@@ -1756,26 +1741,103 @@ MailingAddress:
       type: string
     phone:
       type: string
-    plusCode:
+MailingAddress:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/BaseMailAddress'
+    - type: object
+      description: a participant's mailing address, to be used for delivery.
+      required:
+        - description
+        - name
+        - street1
+        - city
+        - state
+        - country
+        - zip
+        - phone
+      properties:
+        guid:
+          type: string
+          description: the server-generated unique identifier for the mailing address
+        description:
+          type: string
+          description: the user-entered description for this address
+        plusCode:
+          type: string
+          description: the server-generated PlusCode for the participant's location
+        isDefault:
+          type: boolean
+          description: is this the participant's default address?
+        validationStatus:
+          type: integer
+          description: >
+            ### Address Validation States
+              * **0** - *INVALID_ADDRESS*
+                * The address failed to be validated by EasyPost, and there were no suggestions made. This address may not be able to be used as a delivery address.
+              * **1** - *SUGGESTED_ADDRESS*
+                * The address contains changes from EasyPost to improve deliverability.
+              * **2** - *VALID_ADDRESS*
+                * The originally entered address was successfully validated by EasyPost.
+          enum:
+            - 0
+            - 1
+            - 2
+AddressWarning:
+  type: object
+  required:
+    - code
+    - message
+  properties:
+    code:
       type: string
-      description: the server-generated PlusCode for the participant's location
-    isDefault:
-      type: boolean
-      description: is this the participant's default address?
-    validationStatus:
-      type: integer
-      description: >
-        ### Address Validation States
-          * **0** - *INVALID_ADDRESS*
-            * The address failed to be validated by EasyPost, and there were no suggestions made. This address may not be able to be used as a delivery address.
-          * **1** - *SUGGESTED_ADDRESS*
-            * The address contains changes from EasyPost to improve deliverability.
-          * **2** - *VALID_ADDRESS*
-            * The originally entered address was successfully validated by EasyPost.
+      description: machine readable description of the problem
       enum:
-        - 0
-        - 1
-        - 2
+        - W.ZIP.UNSUPPORTED
+    message:
+      type: string
+      description: human readable description of the problem
+      example: Zip code is not supported
+AddressVerifyError:
+  type: object
+  description: error from verifying address with EasyPost
+  required:
+    - code
+    - message
+    - errors
+  properties:
+    code:
+      type: string
+      description: machine readable description of the problem
+      example: ADDRESS.VERIFY.FAILURE
+    message:
+      type: string
+      description: human readable description of the problem
+      example: Unable to verify address.
+    errors:
+      type: array
+      description: errors for specific fields of the address
+      items:
+        $ref: '../pepper.yml#/components/schemas/AddressFieldError'
+AddressFieldError:
+  type: object
+  required:
+    - code
+    - message
+    - field
+  properties:
+    code:
+      type: string
+      description: machine readable description of field error
+      example: E.HOUSE_NUMBER.MISSING
+    message:
+      type: string
+      description: human readable description of field error
+      example: House number is missing
+    field:
+      type: string
+      description: the address field, where `address` means the general address instead of a single field
+      example: street1
+
 MedicalProvider:
   type: object
   required:
