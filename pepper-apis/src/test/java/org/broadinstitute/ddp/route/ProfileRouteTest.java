@@ -188,7 +188,7 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
     }
 
     /**
-     * tests to make sure that throws HttpStatus.SC_BAD_REQUEST Error when given a preferred language not in table.
+     * tests to make sure that throws 400 Error when given a preferred language not in table.
      */
     @Test
     public void testAddProfileBadLanguage() throws Exception {
