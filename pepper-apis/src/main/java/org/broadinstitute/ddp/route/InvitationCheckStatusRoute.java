@@ -126,7 +126,8 @@ public class InvitationCheckStatusRoute extends ValidatedJsonInputRoute<Invitati
                 boolean matched = rules.stream().anyMatch(rule -> rule.validate(handle, userZipCode));
                 if (!matched) {
                     LOG.warn("User provided zip code does not match, invitation={} zipCode={}", invitationGuid, userZipCode);
-                    return new ApiError(ErrorCodes.INVALID_INVITATION_QUALIFICATIONS, "Invalid invitation qualifications");
+                    String msg = "Study is not currently enrolling participants in this zip code";
+                    return new ApiError(ErrorCodes.INVALID_INVITATION_QUALIFICATIONS, msg);
                 }
             }
             LOG.info("User provided zip code {} matched for all kit configurations", userZipCode);
