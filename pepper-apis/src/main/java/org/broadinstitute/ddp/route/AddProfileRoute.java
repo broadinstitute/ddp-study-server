@@ -4,6 +4,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -13,6 +14,7 @@ import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.json.Profile;
+import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.util.ResponseUtil;
@@ -32,19 +34,14 @@ public class AddProfileRoute extends ValidatedJsonInputRoute<Profile> {
         String userGuid = request.params(RouteConstants.PathParam.USER_GUID);
         LOG.info("Creating profile for user with guid {}", userGuid);
 
-        if (profile == null) {
-            ResponseUtil.halt400ErrorResponse(response, ErrorCodes.MISSING_BODY);
-            return null;
-        }
-
         UserProfile.SexType sex = null;
         if (profile.getSex() != null) {
             try {
                 sex = UserProfile.SexType.valueOf(profile.getSex());
             } catch (IllegalArgumentException e) {
                 LOG.warn("Provided invalid profile sex type: {}", profile.getSex(), e);
-                ResponseUtil.halt400ErrorResponse(response, ErrorCodes.INVALID_SEX);
-                return null;
+                throw ResponseUtil.haltError(HttpStatus.SC_BAD_REQUEST, new ApiError(ErrorCodes.INVALID_SEX,
+                        "Provided invalid profile sex type: " + profile.getSex()));
             }
         }
         UserProfile.SexType sexType = sex;
@@ -53,8 +50,8 @@ public class AddProfileRoute extends ValidatedJsonInputRoute<Profile> {
             String langCode = profile.getPreferredLanguage();
             Long langId = handle.attach(JdbiLanguageCode.class).getLanguageCodeId(langCode);
             if (StringUtils.isNotBlank(langCode) && langId == null) {
-                ResponseUtil.halt400ErrorResponse(response, ErrorCodes.INVALID_LANGUAGE_PREFERENCE);
-                return;
+                throw ResponseUtil.haltError(HttpStatus.SC_BAD_REQUEST,
+                        new ApiError(ErrorCodes.INVALID_LANGUAGE_PREFERENCE, "Invalid preferred language"));
             }
 
             UserProfileDao profileDao = handle.attach(UserProfileDao.class);
@@ -73,20 +70,20 @@ public class AddProfileRoute extends ValidatedJsonInputRoute<Profile> {
                             .setPreferredLangId(langId)
                             .build());
                 } catch (DateTimeParseException e) {
-                    ResponseUtil.halt400ErrorResponse(response, ErrorCodes.INVALID_DATE);
-                    return;
+                    String errorMsg = "Provided birth date is not a valid date";
+                    throw ResponseUtil.haltError(response, HttpStatus.SC_BAD_REQUEST, new ApiError(ErrorCodes.INVALID_DATE, errorMsg));
                 } catch (Exception e) {
                     throw new DDPException("Error adding profile for user with guid " + userGuid, e);
                 }
             } else {
-                ResponseUtil.halt400ErrorResponse(response, ErrorCodes.DUPLICATE_PROFILE);
-                return;
+                String errorMsg = "Profile already exists for user with guid: " + userGuid;
+                throw ResponseUtil.haltError(response, HttpStatus.SC_BAD_REQUEST, new ApiError(ErrorCodes.DUPLICATE_PROFILE, errorMsg));
             }
 
             handle.attach(DataExportDao.class).queueDataSync(userGuid);
         });
 
-        response.status(201);
+        response.status(HttpStatus.SC_CREATED);
         return profile;
     }
 }
