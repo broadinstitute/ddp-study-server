@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.route;
 
+import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -30,7 +31,7 @@ public class GetProfileRoute implements Route {
                 return new Profile(profile);    // Convert to json view.
             } else {
                 String errorMsg = "Profile not found for user with guid: " + userGuid;
-                throw ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.MISSING_PROFILE, errorMsg));
+                throw ResponseUtil.haltError(response, HttpStatus.SC_NOT_FOUND, new ApiError(ErrorCodes.MISSING_PROFILE, errorMsg));
             }
         });
     }
