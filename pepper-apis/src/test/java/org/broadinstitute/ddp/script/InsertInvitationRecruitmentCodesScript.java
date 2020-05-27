@@ -41,6 +41,7 @@ public class InsertInvitationRecruitmentCodesScript extends TxnAwareBaseTest {
             });
         });
     }
+
     @Test
     public void generateTestBostonInvitationCodes() {
         insertRecruitmentInvitationCodes("testboston", "TB", 100);
