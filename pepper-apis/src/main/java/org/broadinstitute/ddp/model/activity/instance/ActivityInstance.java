@@ -7,6 +7,7 @@ import javax.validation.constraints.NotNull;
 import com.google.gson.annotations.SerializedName;
 
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
+import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.util.MiscUtil;
 
 public class ActivityInstance {
@@ -21,8 +22,8 @@ public class ActivityInstance {
     @SerializedName("activityCode")
     private String activityCode;
 
-    @SerializedName("status")
-    private String status;
+    @SerializedName("statusCode")
+    private InstanceStatusType statusType;
 
     @SerializedName("readonly")
     private Boolean readonly;
@@ -43,7 +44,7 @@ public class ActivityInstance {
 
     public ActivityInstance(
             long instanceId, long activityId, ActivityType activityType, String guid, String title, String subtitle,
-            String status, Boolean readonly, String activityCode, long createdAtMillis, Long firstCompletedAt,
+            String statusTypeCode, Boolean readonly, String activityCode, long createdAtMillis, Long firstCompletedAt,
             boolean isFollowup
     ) {
         this.instanceId = instanceId;
@@ -52,7 +53,7 @@ public class ActivityInstance {
         this.guid = guid;
         this.title = title;
         this.subtitle = subtitle;
-        this.status = status;
+        this.statusType = InstanceStatusType.valueOf(statusTypeCode);
         this.readonly = readonly;
         this.activityCode = activityCode;
         this.createdAtMillis = createdAtMillis;
@@ -68,8 +69,8 @@ public class ActivityInstance {
         return guid;
     }
 
-    public String getStatus() {
-        return status;
+    public InstanceStatusType getStatusType() {
+        return statusType;
     }
 
     public boolean isReadonly() {

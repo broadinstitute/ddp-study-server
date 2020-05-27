@@ -75,7 +75,7 @@ public final class FormInstance extends ActivityInstance {
             String guid,
             String title,
             String subtitle,
-            String status,
+            String statusTypeCode,
             Boolean readonly,
             ListStyleHint listStyleHint,
             Long readonlyHintTemplateId,
@@ -87,7 +87,7 @@ public final class FormInstance extends ActivityInstance {
             LocalDateTime activityDefinitionLastUpdated,
             boolean isFollowup
     ) {
-        super(instanceId, activityId, ActivityType.FORMS, guid, title, subtitle, status, readonly, activityCode,
+        super(instanceId, activityId, ActivityType.FORMS, guid, title, subtitle, statusTypeCode, readonly, activityCode,
                 createdAtMillis, firstCompletedAt, isFollowup);
         this.formType = MiscUtil.checkNonNull(formType, "formType");
         if (listStyleHint != null) {
