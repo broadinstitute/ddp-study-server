@@ -16,8 +16,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Script for registering auth0 clients and setting which studies
- * they have access to.
+ * Script for generating and inserting invite codes.
  */
 @Ignore
 public class InsertInvitationRecruitmentCodesScript extends TxnAwareBaseTest {
