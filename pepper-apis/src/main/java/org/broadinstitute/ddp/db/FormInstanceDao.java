@@ -100,6 +100,7 @@ public class FormInstanceDao {
                 Long introductionSectionId = (Long) rs.getObject("introduction_section_id");
                 Long closingSectionId = (Long) rs.getObject("closing_section_id");
 
+                long participantUserId = rs.getLong("participant_user_id");
                 long instanceId = rs.getLong(ActivityInstanceTable.ID);
                 long activityId = rs.getLong(StudyActivityTable.ID);
                 String statusTypeCode = rs.getString(ActivityInstanceStatusTypeTable.ACTIVITY_STATUS_TYPE_CODE);
@@ -115,6 +116,7 @@ public class FormInstanceDao {
                 boolean isFollowup = rs.getBoolean(StudyActivityTable.IS_FOLLOWUP);
 
                 form = new FormInstance(
+                        participantUserId,
                         instanceId,
                         activityId,
                         activityCode,
