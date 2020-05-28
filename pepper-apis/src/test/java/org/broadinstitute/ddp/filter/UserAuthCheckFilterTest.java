@@ -89,7 +89,7 @@ public class UserAuthCheckFilterTest extends IntegrationTestSuite.TestCase {
         User tempUser = createTempUserAndDeferCleanup();
         String profileUrl = makeUrl(API.USER_PROFILE
                 .replace(PathParam.USER_GUID, tempUser.getGuid()));
-        Response response = RouteTestUtil.buildAuthorizedPostRequest(testData.getTestingUser().getToken(), profileUrl, null).execute();
+        Response response = RouteTestUtil.buildAuthorizedPostRequest("", profileUrl, null).execute();
         HttpResponse res = response.returnResponse();
         Assert.assertEquals(HttpStatus.SC_UNAUTHORIZED, res.getStatusLine().getStatusCode());
 
