@@ -19,6 +19,7 @@ import org.broadinstitute.ddp.model.address.AddressWarning;
 import org.broadinstitute.ddp.model.address.MailAddress;
 import org.broadinstitute.ddp.service.AddressService;
 import org.broadinstitute.ddp.util.ResponseUtil;
+import org.broadinstitute.ddp.util.RouteUtil;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,10 +59,12 @@ public class VerifyMailAddressRoute extends ValidatedJsonInputRoute<VerifyAddres
                         throw ResponseUtil.haltError(response, HttpStatus.SC_BAD_REQUEST,
                                 new ApiError(ErrorCodes.BAD_PAYLOAD, "Invalid study"));
                     }
+                    String langCode = RouteUtil.resolveLanguage(request, handle, studyDto.getGuid(),
+                            RouteUtil.getDDPAuth(request).getPreferredLocale());
                     LOG.info("Checking entered address against rules for study {}", studyDto.getGuid());
-                    warningsForEntered.addAll(addressService.checkStudyAddress(handle, studyDto.getId(), entered));
+                    warningsForEntered.addAll(addressService.checkStudyAddress(handle, studyDto.getId(), langCode, entered));
                     LOG.info("Checking suggested address against rules for study {}", studyDto.getGuid());
-                    warningsForSuggested.addAll(addressService.checkStudyAddress(handle, studyDto.getId(), suggested));
+                    warningsForSuggested.addAll(addressService.checkStudyAddress(handle, studyDto.getId(), langCode, suggested));
                 });
             }
             return new VerifyAddressResponse(payload.getStudyGuid(), suggested, warningsForEntered, warningsForSuggested);

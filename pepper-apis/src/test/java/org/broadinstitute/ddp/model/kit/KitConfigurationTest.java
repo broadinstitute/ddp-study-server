@@ -21,11 +21,13 @@ import org.broadinstitute.ddp.db.dao.JdbiExpression;
 import org.broadinstitute.ddp.db.dao.JdbiKitRequest;
 import org.broadinstitute.ddp.db.dao.JdbiKitRules;
 import org.broadinstitute.ddp.db.dao.JdbiMailAddress;
+import org.broadinstitute.ddp.db.dao.JdbiRevision;
 import org.broadinstitute.ddp.db.dao.KitConfigurationDao;
 import org.broadinstitute.ddp.db.dao.KitTypeDao;
 import org.broadinstitute.ddp.db.dto.kit.KitConfigurationDto;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
+import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.FormType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
@@ -203,8 +205,13 @@ public class KitConfigurationTest extends TxnAwareBaseTest {
                 zipCodes.add(String.format("12%03d", i));
             }
 
+            Template errorMsg = Template.text("zip error");
+            Template warningMsg = Template.text("zip warning");
+            long revisionId = handle.attach(JdbiRevision.class)
+                    .insertStart(Instant.now().toEpochMilli(), data.getUserId(), "test");
+
             var dao = handle.attach(KitConfigurationDao.class);
-            long ruleId = dao.addZipCodeRule(configurationId, zipCodes);
+            long ruleId = dao.addZipCodeRule(configurationId, zipCodes, errorMsg, warningMsg, revisionId);
 
             // Test only this specific rule, so filter things down and construct a new config.
             var config = dao.kitConfigurationFactory()
@@ -226,6 +233,8 @@ public class KitConfigurationTest extends TxnAwareBaseTest {
             assertTrue(actualRule.getZipCodes().containsAll(zipCodes));
             assertTrue("should lookup zip code from mailing address", config.evaluate(handle, userGuid));
             assertFalse("no address means no zip code", config.evaluate(handle, "foobar"));
+            assertEquals(errorMsg.getTemplateId(), actualRule.getErrorMessageTemplateId());
+            assertEquals(warningMsg.getTemplateId(), actualRule.getWarningMessageTemplateId());
 
             handle.rollback();
         });
