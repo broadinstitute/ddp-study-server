@@ -3,9 +3,14 @@ package org.broadinstitute.ddp.db.dao;
 import java.util.Optional;
 import java.util.Set;
 
+import org.broadinstitute.ddp.db.DBUtils;
+import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dto.LanguageDto;
+import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.study.StudyExitRequest;
 
+import org.broadinstitute.ddp.model.study.StudyInviteSetting;
+import org.jdbi.v3.sqlobject.CreateSqlObject;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
@@ -15,6 +20,13 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
 public interface StudyDao extends SqlObject {
+
+    @CreateSqlObject
+    StudySql getStudySql();
+
+    //
+    // Exit requests
+    //
 
     @GetGeneratedKeys
     @SqlUpdate("insert into study_exit_request (study_id, user_id, notes, created_at)"
@@ -27,6 +39,10 @@ public interface StudyDao extends SqlObject {
     @SqlQuery("select * from study_exit_request where user_id = :userId")
     @RegisterConstructorMapper(StudyExitRequest.class)
     Optional<StudyExitRequest> findExitRequestForUser(@Bind("userId") long userId);
+
+    //
+    // Supported languages
+    //
 
     @SqlQuery(
             "select lc.language_code_id, lc.iso_language_code from study_language sl"
@@ -43,4 +59,21 @@ public interface StudyDao extends SqlObject {
             + " (select language_code_id from language_code where iso_language_code = :isoCode))"
     )
     long addSupportedLanguage(@Bind("studyGuid") String umbrellaStudyGuid, @Bind("isoCode") String isoLanguageCode);
+
+    //
+    // Invite settings
+    //
+
+    default void addInviteSetting(long studyId, Template inviteError, Long revisionId) {
+        if (inviteError != null && revisionId == null) {
+            throw new DaoException("Revision is needed to insert templates");
+        }
+        Long inviteErrorTmplId = inviteError == null ? null
+                : getHandle().attach(TemplateDao.class).insertTemplate(inviteError, revisionId);
+        DBUtils.checkInsert(1, getStudySql().insertInviteSetting(studyId, inviteErrorTmplId));
+    }
+
+    @SqlQuery("select * from study_invite_setting where umbrella_study_id = :studyId")
+    @RegisterConstructorMapper(StudyInviteSetting.class)
+    Optional<StudyInviteSetting> findInviteSetting(@Bind("studyId") long studyId);
 }

@@ -23,6 +23,7 @@ import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.KitConfigurationDao;
 import org.broadinstitute.ddp.db.dao.KitTypeDao;
 import org.broadinstitute.ddp.db.dao.QueuedEventDao;
+import org.broadinstitute.ddp.db.dao.StudyDao;
 import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
 import org.broadinstitute.ddp.db.dao.StudyLanguageDao;
 import org.broadinstitute.ddp.db.dto.Auth0TenantDto;
@@ -90,6 +91,7 @@ public class StudyBuilder {
         insertStudyGovernance(handle, studyDto);
         insertStudyDetails(handle, studyDto.getId());
         insertStudyLanguages(handle, studyDto.getId());
+        insertInviteSetting(handle, studyDto, adminDto.getUserId());
         insertSendgrid(handle, studyDto.getId());
         insertKits(handle, studyDto.getId(), adminDto.getUserId());
 
@@ -441,6 +443,33 @@ public class StudyBuilder {
             LOG.error("No language is set as default. Please set default language");
             throw new DDPException("No language is set as default ");
         }
+    }
+
+    private void insertInviteSetting(Handle handle, StudyDto studyDto, long userId) {
+        if (!cfg.hasPath("inviteSetting")) {
+            LOG.info("No invite setting configured for study {}", studyDto.getGuid());
+            return;
+        }
+
+        Config inviteSettingCfg = cfg.getConfig("inviteSetting");
+
+        Template inviteError = BuilderUtils.parseTemplate(inviteSettingCfg, "inviteErrorTemplate");
+        if (inviteError != null) {
+            String errors = BuilderUtils.validateTemplate(inviteError);
+            if (errors != null) {
+                throw new DDPException("Invite error template has validation errors: " + errors);
+            }
+        }
+
+        Long revisionId = null;
+        if (inviteError != null) {
+            revisionId = handle.attach(JdbiRevision.class).insertStart(
+                    Instant.now().toEpochMilli(), userId, "Insert invite setting");
+        }
+
+        handle.attach(StudyDao.class).addInviteSetting(studyDto.getId(), inviteError, revisionId);
+        LOG.info("Created invite setting for study={}, inviteErrorTmplId={}",
+                studyDto.getGuid(), inviteError == null ? null : inviteError.getTemplateId());
     }
 
     private void insertSendgrid(Handle handle, long studyId) {
