@@ -133,7 +133,7 @@ public class UserAuthCheckFilter implements Filter {
             message = "User is not a temporary user";
             canAccess = false;
         } else if (tempUser.isExpired()) {
-            LOG.error("Temporary user with guid '{}' had already expired at time {}ms", tempUserGuid, tempUser.getExpiresAtMillis());
+            LOG.warn("Temporary user with guid '{}' had already expired at time {}ms", tempUserGuid, tempUser.getExpiresAtMillis());
             message = "Temporary user passed expiration time";
             canAccess = false;
         }
