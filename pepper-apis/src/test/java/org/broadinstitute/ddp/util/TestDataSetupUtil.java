@@ -99,6 +99,7 @@ import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.DateFieldType;
 import org.broadinstitute.ddp.model.activity.types.DateRenderMode;
+import org.broadinstitute.ddp.model.activity.types.DsmNotificationEventType;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.activity.types.FormType;
@@ -622,7 +623,8 @@ public class TestDataSetupUtil {
         // setup a status change event trigger so that when status changes, an event is queued
         long eventTriggerId = eventTriggerDao.insert(EventTriggerType.DSM_NOTIFICATION);
 
-        Optional<Long> dsmNotificationEventTypeId = dsmNotificationEventTypeDao.findIdByCode(JdbiDsmNotificationEventType.SALIVA_RECEIVED);
+        Optional<Long> dsmNotificationEventTypeId = dsmNotificationEventTypeDao
+                .findIdByCode(DsmNotificationEventType.SALIVA_RECEIVED.name());
 
         // create an instance of the DSM notication trigger subclass
         handle.attach(JdbiDsmNotificationTrigger.class).insert(
