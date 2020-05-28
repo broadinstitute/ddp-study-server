@@ -11,18 +11,27 @@ import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.google.gson.Gson;
 import io.restassured.http.ContentType;
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
+import org.apache.http.client.fluent.Response;
+import org.apache.http.util.EntityUtils;
+import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.API;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
+import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.route.IntegrationTestSuite;
 import org.broadinstitute.ddp.route.RouteTestUtil;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -30,12 +39,11 @@ public class UserAuthCheckFilterTest extends IntegrationTestSuite.TestCase {
 
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static Set<String> userGuidsToDelete = new HashSet<>();
-    private static String auth0ClientId;
+    private static final Gson gson = new Gson();
 
     @BeforeClass
     public static void setup() {
         testData = TransactionWrapper.withTxn(TestDataSetupUtil::generateBasicUserTestData);
-        auth0ClientId = testData.getTestingClient().getAuth0ClientId();
     }
 
     @AfterClass
@@ -62,13 +70,13 @@ public class UserAuthCheckFilterTest extends IntegrationTestSuite.TestCase {
                     .body(String.format("{\"firstName\":\"%s\"}", newName))
                     .when().patch(profileUrl)
                     .then().assertThat()
-                    .statusCode(200);
+                    .statusCode(HttpStatus.SC_OK);
 
             // Can use a whitelisted route
             given().auth().oauth2(testData.getTestingUser().getToken())
                     .when().get(profileUrl)
                     .then().assertThat()
-                    .statusCode(200).contentType(ContentType.JSON)
+                    .statusCode(HttpStatus.SC_OK).contentType(ContentType.JSON)
                     .body("firstName", equalTo(newName));
         } finally {
             TransactionWrapper.useTxn(handle -> assertEquals(1, handle.attach(UserProfileDao.class)
@@ -77,22 +85,39 @@ public class UserAuthCheckFilterTest extends IntegrationTestSuite.TestCase {
     }
 
     @Test
-    public void testTempUser_accessRouteNotInWhitelist_denied() {
+    public void testTempUser_accessRouteNotInWhitelist_denied() throws Exception {
         User tempUser = createTempUserAndDeferCleanup();
         String profileUrl = makeUrl(API.USER_PROFILE
                 .replace(PathParam.USER_GUID, tempUser.getGuid()));
-        when().post(profileUrl).then().assertThat().statusCode(401);
+        Response response = RouteTestUtil.buildAuthorizedPostRequest(testData.getTestingUser().getToken(), profileUrl, null).execute();
+        HttpResponse res = response.returnResponse();
+        Assert.assertEquals(HttpStatus.SC_UNAUTHORIZED, res.getStatusLine().getStatusCode());
+
+        HttpEntity entity = res.getEntity();
+        String bodyToString = EntityUtils.toString(entity);
+        ApiError error = gson.fromJson(bodyToString, ApiError.class);
+        Assert.assertEquals(ErrorCodes.AUTH_CANNOT_BE_DETERMINED, error.getCode());
+        Assert.assertEquals("Request is not in temp-user whitelist", error.getMessage());
     }
 
     @Test
-    public void testTempUser_notFound_denied() {
+    public void testTempUser_notFound_denied() throws Exception {
         String profileUrl = makeUrl(API.USER_PROFILE
                 .replace(PathParam.USER_GUID, "not-found"));
-        when().get(profileUrl).then().assertThat().statusCode(401);
+
+        Response response = RouteTestUtil.buildAuthorizedPostRequest(testData.getTestingUser().getToken(), profileUrl, null).execute();
+        HttpResponse res = response.returnResponse();
+        Assert.assertEquals(HttpStatus.SC_UNAUTHORIZED, res.getStatusLine().getStatusCode());
+
+        HttpEntity entity = res.getEntity();
+        String bodyToString = EntityUtils.toString(entity);
+        ApiError error = gson.fromJson(bodyToString, ApiError.class);
+        Assert.assertEquals(ErrorCodes.AUTH_CANNOT_BE_DETERMINED, error.getCode());
+        Assert.assertEquals("Authorization cannot be determined", error.getMessage());
     }
 
     @Test
-    public void testTempUser_notTemporary_denied() {
+    public void testTempUser_notTemporary_denied() throws Exception {
         User userDto = createTempUserAndDeferCleanup();
         TransactionWrapper.useTxn(handle -> {
             // Upgrade temp user to permanent user for testing purposes.
@@ -100,11 +125,19 @@ public class UserAuthCheckFilterTest extends IntegrationTestSuite.TestCase {
         });
         String profileUrl = makeUrl(API.USER_PROFILE
                 .replace(PathParam.USER_GUID, userDto.getGuid()));
-        when().get(profileUrl).then().assertThat().statusCode(401);
+        Response response = RouteTestUtil.buildAuthorizedGetRequest(testData.getTestingUser().getToken(), profileUrl).execute();
+        HttpResponse res = response.returnResponse();
+        Assert.assertEquals(HttpStatus.SC_UNAUTHORIZED, res.getStatusLine().getStatusCode());
+
+        HttpEntity entity = res.getEntity();
+        String bodyToString = EntityUtils.toString(entity);
+        ApiError error = gson.fromJson(bodyToString, ApiError.class);
+        Assert.assertEquals(ErrorCodes.AUTH_CANNOT_BE_DETERMINED, error.getCode());
+        Assert.assertEquals("Authorization cannot be determined", error.getMessage());
     }
 
     @Test
-    public void testTempUser_expired_denied() {
+    public void testTempUser_expired_denied() throws Exception {
         User tempUser = createTempUserAndDeferCleanup();
         TransactionWrapper.useTxn(handle -> {
             long expiredTimestamp = Instant.now().minus(2, ChronoUnit.HOURS).toEpochMilli();
@@ -112,7 +145,15 @@ public class UserAuthCheckFilterTest extends IntegrationTestSuite.TestCase {
         });
         String profileUrl = makeUrl(API.USER_PROFILE
                 .replace(PathParam.USER_GUID, tempUser.getGuid()));
-        when().get(profileUrl).then().assertThat().statusCode(401);
+        Response response = RouteTestUtil.buildAuthorizedGetRequest(testData.getTestingUser().getToken(), profileUrl).execute();
+        HttpResponse res = response.returnResponse();
+        Assert.assertEquals(HttpStatus.SC_UNAUTHORIZED, res.getStatusLine().getStatusCode());
+
+        HttpEntity entity = res.getEntity();
+        String bodyToString = EntityUtils.toString(entity);
+        ApiError error = gson.fromJson(bodyToString, ApiError.class);
+        Assert.assertEquals(ErrorCodes.AUTH_CANNOT_BE_DETERMINED, error.getCode());
+        Assert.assertEquals("Authorization cannot be determined", error.getMessage());
     }
 
     @Test
@@ -120,7 +161,7 @@ public class UserAuthCheckFilterTest extends IntegrationTestSuite.TestCase {
         User tempUser = createTempUserAndDeferCleanup();
         String profileUrl = makeUrl(API.USER_PROFILE
                 .replace(PathParam.USER_GUID, tempUser.getGuid()));
-        when().get(profileUrl).then().assertThat().statusCode(not(401));
+        when().get(profileUrl).then().assertThat().statusCode(not(HttpStatus.SC_UNAUTHORIZED));
     }
 
     @Test
@@ -129,7 +170,7 @@ public class UserAuthCheckFilterTest extends IntegrationTestSuite.TestCase {
         String workflowUrl = makeUrl(API.USER_STUDY_WORKFLOW
                 .replace(PathParam.USER_GUID, tempUser.getGuid())
                 .replace(PathParam.STUDY_GUID, "not-found"));
-        when().get(workflowUrl).then().assertThat().statusCode(not(401));
+        when().get(workflowUrl).then().assertThat().statusCode(not(HttpStatus.SC_UNAUTHORIZED));
     }
 
     @Test
@@ -139,7 +180,7 @@ public class UserAuthCheckFilterTest extends IntegrationTestSuite.TestCase {
                 .replace(PathParam.USER_GUID, tempUser.getGuid())
                 .replace(PathParam.STUDY_GUID, "not-found-1")
                 .replace(PathParam.INSTANCE_GUID, "not-found-2"));
-        when().get(instanceUrl).then().assertThat().statusCode(not(401));
+        when().get(instanceUrl).then().assertThat().statusCode(not(HttpStatus.SC_UNAUTHORIZED));
     }
 
     @Test
@@ -149,8 +190,8 @@ public class UserAuthCheckFilterTest extends IntegrationTestSuite.TestCase {
                 .replace(PathParam.USER_GUID, tempUser.getGuid())
                 .replace(PathParam.STUDY_GUID, "not-found-1")
                 .replace(PathParam.INSTANCE_GUID, "not-found-2"));
-        when().patch(answerUrl).then().assertThat().statusCode(not(401));
-        when().put(answerUrl).then().assertThat().statusCode(not(401));
+        when().patch(answerUrl).then().assertThat().statusCode(not(HttpStatus.SC_UNAUTHORIZED));
+        when().put(answerUrl).then().assertThat().statusCode(not(HttpStatus.SC_UNAUTHORIZED));
     }
 
     private String makeUrl(String path) {
