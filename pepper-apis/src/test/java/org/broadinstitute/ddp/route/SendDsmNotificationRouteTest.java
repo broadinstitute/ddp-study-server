@@ -12,11 +12,11 @@ import org.broadinstitute.ddp.constants.RouteConstants.API;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.EventDao;
-import org.broadinstitute.ddp.db.dao.JdbiDsmNotificationEventType;
 import org.broadinstitute.ddp.db.dao.QueuedEventDao;
 import org.broadinstitute.ddp.db.dto.QueuedEventDto;
 import org.broadinstitute.ddp.db.dto.QueuedNotificationDto;
 import org.broadinstitute.ddp.json.dsm.DsmNotificationEvent;
+import org.broadinstitute.ddp.model.activity.types.DsmNotificationEventType;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.junit.After;
@@ -88,7 +88,7 @@ public class SendDsmNotificationRouteTest extends DsmRouteTest {
                 handle.attach(EventDao.class).findPublishableQueuedEvents().size());
 
         LOG.info("testCreateDsmNotification_Success");
-        DsmNotificationEvent dsmEvent = makeDsmNotificationEvent(JdbiDsmNotificationEventType.SALIVA_RECEIVED);
+        DsmNotificationEvent dsmEvent = makeDsmNotificationEvent(DsmNotificationEventType.SALIVA_RECEIVED.name());
         HttpResponse response = sendRequestAndReturnResponse(generatedTestData.getStudyGuid(), legacyAltPid, dsmEvent);
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
@@ -128,7 +128,7 @@ public class SendDsmNotificationRouteTest extends DsmRouteTest {
         });
 
         LOG.info("testCreateDsmNotification_Success");
-        DsmNotificationEvent dsmEvent = makeDsmNotificationEvent(JdbiDsmNotificationEventType.SALIVA_RECEIVED);
+        DsmNotificationEvent dsmEvent = makeDsmNotificationEvent(DsmNotificationEventType.SALIVA_RECEIVED.name());
         HttpResponse response = sendRequestAndReturnResponse(generatedTestData.getStudyGuid(), generatedTestData.getUserGuid(), dsmEvent);
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
@@ -139,7 +139,7 @@ public class SendDsmNotificationRouteTest extends DsmRouteTest {
     @Test
     public void testCreateDsmNotification_NoStudySpecified_Got404() throws Exception {
         LOG.info("testCreateDsmNotification_NoStudySpecified_Got404");
-        DsmNotificationEvent dsmEvent = makeDsmNotificationEvent(JdbiDsmNotificationEventType.SALIVA_RECEIVED);
+        DsmNotificationEvent dsmEvent = makeDsmNotificationEvent(DsmNotificationEventType.SALIVA_RECEIVED.name());
         HttpResponse response = sendRequestAndReturnResponse("BADDCAFE00", generatedTestData.getUserGuid(), dsmEvent);
         Assert.assertEquals(404, response.getStatusLine().getStatusCode());
     }
@@ -147,7 +147,7 @@ public class SendDsmNotificationRouteTest extends DsmRouteTest {
     @Test
     public void testCreateDsmNotification_NoUserSpecified_Got404() throws Exception {
         LOG.info("testCreateDsmNotification_NoUserSpeficied_Got404");
-        DsmNotificationEvent dsmEvent = makeDsmNotificationEvent(JdbiDsmNotificationEventType.SALIVA_RECEIVED);
+        DsmNotificationEvent dsmEvent = makeDsmNotificationEvent(DsmNotificationEventType.SALIVA_RECEIVED.name());
         HttpResponse response = sendRequestAndReturnResponse(generatedTestData.getStudyGuid(), "BADDCAFE00", dsmEvent);
         Assert.assertEquals(404, response.getStatusLine().getStatusCode());
     }
@@ -163,7 +163,7 @@ public class SendDsmNotificationRouteTest extends DsmRouteTest {
     @Test
     public void testCreateDsmNotification_NoEventConfigSpecified_ButSuccess() throws Exception {
         LOG.info("testCreateDsmNotification_NoEventConfigSpecified_ButSuccess");
-        DsmNotificationEvent dsmEvent = makeDsmNotificationEvent(JdbiDsmNotificationEventType.SALIVA_RECEIVED);
+        DsmNotificationEvent dsmEvent = makeDsmNotificationEvent(DsmNotificationEventType.SALIVA_RECEIVED.name());
         HttpResponse response = sendRequestAndReturnResponse(generatedTestData.getStudyGuid(), generatedTestData.getUserGuid(), dsmEvent);
         deleteTestData();
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
