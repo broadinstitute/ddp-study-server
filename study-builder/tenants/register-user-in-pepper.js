@@ -1,4 +1,5 @@
 function (user, context, callback) {
+    var q = require('q');
     // Environment stabilization. This will save us a number of
     // overly complex if statements later
     context.clientMetadata = context.clientMetadata || {};
@@ -26,6 +27,7 @@ function (user, context, callback) {
 
     var mockRegistration = context.clientMetadata.mockRegistration;
     var doLocalRegistration = context.clientMetadata.doLocalRegistration;
+    var forceClearTempUserGuid = false;
 
     if (mockRegistration) {
         var overrideUserGuid;
@@ -82,6 +84,7 @@ function (user, context, callback) {
             pepper_params.tempUserGuid = context.request.body.temp_user_guid;
             console.log('Temp user guid passed in (via body) = ' + pepper_params.tempUserGuid);
         } else if (user.user_metadata && user.user_metadata.temp_user_guid) {
+            forceClearTempUserGuid = true;
             pepper_params.tempUserGuid = user.user_metadata.temp_user_guid;
             console.log('Temp user guid passed in (via user_metadata) = ' + pepper_params.tempUserGuid);
         } else {
@@ -151,23 +154,27 @@ function (user, context, callback) {
                     // all is well
                     var ddpUserGuid = body.ddpUserGuid;
                     user.app_metadata.user_guid = ddpUserGuid;
-
-                    auth0.users.updateAppMetadata(user.user_id, user.app_metadata)
-                        .then(function(){
-                            context.idToken[pepperUserGuidClaim] = ddpUserGuid;
-                            console.log('Registered pepper user ' + ddpUserGuid + ' for auth0 user ' + user.user_id);
-                            return callback(null, user, context);
-                        })
-                        .catch(function(err){
-                            console.log('Error updating metadata for auth0 user ' + user.user_id);
-                            console.log(err);
-                            let error = new Error(JSON.stringify({
-                                code: err.code,
-                                message: err.message,
-                                statusCode: 500
-                            }));
-                            return callback(error);
-                        });
+                    const promises = [auth0.users.updateAppMetadata(user.user_id, user.app_metadata)];
+                    if (forceClearTempUserGuid) {
+                        user.user_metadata.temp_user_guid = null;
+                        promises.push(auth0.users.updateUserMetadata(user.user_id, user.user_metadata));
+                    }
+                    q.all(promises)
+                      .then(function(){
+                          context.idToken[pepperUserGuidClaim] = ddpUserGuid;
+                          console.log('Registered pepper user ' + ddpUserGuid + ' for auth0 user ' + user.user_id);
+                          return callback(null, user, context);
+                      })
+                      .catch(function(err){
+                          console.log('Error updating metadata for auth0 user ' + user.user_id);
+                          console.log(err);
+                          let error = new Error(JSON.stringify({
+                              code: err.code,
+                              message: err.message,
+                              statusCode: 500
+                          }));
+                          return callback(error);
+                      });
                 }
             });
         }
