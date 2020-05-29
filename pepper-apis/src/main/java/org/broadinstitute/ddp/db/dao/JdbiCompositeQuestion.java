@@ -68,6 +68,10 @@ public interface JdbiCompositeQuestion extends SqlObject {
     @SqlQuery("queryCompositeQuestionIdByChildQuestionStableId")
     Optional<Long> findParentQuestionIdByChildQuestionStableId(@Bind("childQuestionStableId") String childQuestionStableId);
 
+    @UseStringTemplateSqlLocator
+    @SqlQuery("queryCompositeQuestionIdByChildQuestionId")
+    Optional<Long> findParentQuestionIdByChildQuestionId(@Bind("childQuestionId") long childQuestionId);
+
     class RowReducer implements LinkedHashMapRowReducer<Long, CompositeQuestionDto> {
         @Override
         public void accumulate(Map<Long, CompositeQuestionDto> map, RowView rowView) {

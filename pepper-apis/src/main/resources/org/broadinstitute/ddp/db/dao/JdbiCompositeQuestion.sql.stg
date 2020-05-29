@@ -77,3 +77,10 @@ join question q on cq.child_question_id = q.question_id
 join question_stable_code as qsc on q.question_stable_code_id = qsc.question_stable_code_id
 and qsc.stable_id = :childQuestionStableId
 >>
+
+queryCompositeQuestionIdByChildQuestionId() ::= <<
+select parent_question_id
+from composite_question__question
+where child_question_id = :childQuestionId
+>>
+
