@@ -600,7 +600,7 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
         assertEquals(HttpStatus.NOT_FOUND_404, response404.getStatusLine().getStatusCode());
         String bodyToString = EntityUtils.toString(response404.getEntity());
         ApiError error = gson.fromJson(bodyToString, ApiError.class);
-        assertEquals(ErrorCodes.QUESTION_REQUIREMENTS_NOT_MET, error.getCode());
+        assertEquals(ErrorCodes.OPERATION_NOT_ALLOWED, error.getCode());
         assertEquals("Only entire Composite question answer can be updated", error.getMessage());
 
         this.answerGuidsToDelete.put(QuestionType.COMPOSITE, new ArrayList<>(Arrays.asList(resp.getAnswers().get(0)
