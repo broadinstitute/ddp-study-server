@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.model.study.StudyLanguage;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -24,6 +25,11 @@ public class StudyLanguageDaoTest extends TxnAwareBaseTest {
     public void testInsertStudyLanguage() {
         TransactionWrapper.useTxn(handle -> {
             StudyLanguageDao dao = handle.attach(StudyLanguageDao.class);
+
+            //First make sure we don't run into errors when languages haven't been specified
+            List<StudyLanguage> studyLanguageList = dao.selectStudyLanguages(testData.getStudyId());
+            Assert.assertEquals(0, studyLanguageList.size());
+
             Long englishLangCodeId = handle.attach(JdbiLanguageCode.class).getLanguageCodeId("en");
             dao.insert(testData.getStudyId(), englishLangCodeId, "english");
 
@@ -41,6 +47,19 @@ public class StudyLanguageDaoTest extends TxnAwareBaseTest {
             assertNotNull(defaultLangs);
             Assert.assertTrue(defaultLangs.size() == 1);
             Assert.assertEquals(englishLangCodeId, defaultLangs.get(0));
+
+            //Test getting full language information
+            studyLanguageList = dao.selectStudyLanguages(testData.getStudyId());
+            Assert.assertNotNull(studyLanguageList);
+            Assert.assertEquals(studyLanguageList.size(), 2);
+            StudyLanguage toCheck = studyLanguageList.get(0);
+            Assert.assertEquals(toCheck.getDisplayName(), "english");
+            Assert.assertTrue(toCheck.getIsDefault());
+            Assert.assertEquals(toCheck.getLanguageCode(), "en");
+            toCheck = studyLanguageList.get(1);
+            Assert.assertEquals(toCheck.getDisplayName(), "french");
+            Assert.assertFalse(toCheck.getIsDefault());
+            Assert.assertEquals(toCheck.getLanguageCode(), "fr");
 
             handle.rollback();
         });

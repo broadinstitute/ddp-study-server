@@ -5,6 +5,7 @@ import java.util.List;
 import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
+import org.broadinstitute.ddp.model.study.StudyLanguage;
 import org.jdbi.v3.sqlobject.CreateSqlObject;
 import org.jdbi.v3.sqlobject.SqlObject;
 
@@ -41,6 +42,10 @@ public interface StudyLanguageDao extends SqlObject {
         return getStudyLanguageSql().insert(studyDto.getId(), languageCodeId, name);
     }
 
+    default int deleteStudyLanguageById(long studyLanguageId) {
+        return getStudyLanguageSql().deleteById(studyLanguageId);
+    }
+
     default int setAsDefaultLanguage(long umbrellaStudyId, long languageCodeId) {
         //select first to see if we have any default language set
         //if we do: update All existing languages as isDefault false if different language is default or
@@ -63,4 +68,7 @@ public interface StudyLanguageDao extends SqlObject {
         return setAsDefaultLanguage(umbrellaStudyId, getLanguageCode().getLanguageCodeId(languageCode));
     }
 
+    default List<StudyLanguage> selectStudyLanguages(long umbrellaStudyId) {
+        return getStudyLanguageSql().selectStudyLanguages(umbrellaStudyId);
+    }
 }
