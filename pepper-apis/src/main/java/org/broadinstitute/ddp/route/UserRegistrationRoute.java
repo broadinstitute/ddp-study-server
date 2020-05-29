@@ -103,14 +103,20 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
 
         return TransactionWrapper.withTxn(handle -> {
             auth0UserId.set(payload.getAuth0UserId());
-            StudyDto study = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
+            String auth0Domain = payload.getAuth0Domain();
+
+            StudyDto study = null;
+            if (doLocalRegistration && StringUtils.isBlank(auth0Domain)) {
+                study = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
+            } else {
+                study = handle.attach(JdbiUmbrellaStudy.class).findByDomainAndStudyGuid(auth0Domain, studyGuid);
+            }
             if (study == null) {
                 ApiError err = new ApiError(ErrorCodes.STUDY_NOT_FOUND, "Could not find study with guid " + studyGuid);
                 LOG.warn(err.getMessage());
                 throw ResponseUtil.haltError(response, HttpStatus.SC_NOT_FOUND, err);
             }
 
-            String auth0Domain = payload.getAuth0Domain();
             if (doLocalRegistration && StringUtils.isBlank(auth0Domain)) {
                 auth0Domain = handle.attach(JdbiAuth0Tenant.class).findById(study.getAuth0TenantId())
                         .map(Auth0TenantDto::getDomain)
