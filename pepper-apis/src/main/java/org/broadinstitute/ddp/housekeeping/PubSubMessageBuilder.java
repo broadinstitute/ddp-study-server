@@ -24,6 +24,7 @@ import com.typesafe.config.Config;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.NotificationTemplateVariables;
+import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
@@ -37,6 +38,7 @@ import org.broadinstitute.ddp.exception.MessageBuilderException;
 import org.broadinstitute.ddp.housekeeping.message.NotificationMessage;
 import org.broadinstitute.ddp.housekeeping.message.PdfGenerationMessage;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
+import org.broadinstitute.ddp.model.event.NotificationTemplate;
 import org.broadinstitute.ddp.model.event.NotificationType;
 import org.broadinstitute.ddp.model.governance.Governance;
 import org.broadinstitute.ddp.model.user.UserProfile;
@@ -77,11 +79,16 @@ public class PubSubMessageBuilder {
                 // todo techdebt: set email field in QueuedEventDao instead of querying it here. make a list of
                 // size one for now.
 
+                String userPreferredLangCode = null;
                 if (NotificationType.STUDY_EMAIL == queuedNotificationDto.getNotificationType()) {
                     sendToList.add(queuedNotificationDto.getStudyFromEmail());
+                    // No user language since email is sent to study staff instead. Use study default language instead.
+                    userPreferredLangCode = null;
                 } else if (StringUtils.isNotBlank(queuedNotificationDto.getToEmail())) {
                     // if there's a non-user email address specified, use it
                     sendToList.add(queuedNotificationDto.getToEmail());
+                    // Likely a non-user, so use study default language instead.
+                    userPreferredLangCode = null;
                 } else {
                     // otherwise, lookup address information for the auth0 account
                     UserDao userDao = apisHandle.attach(UserDao.class);
@@ -126,6 +133,8 @@ public class PubSubMessageBuilder {
                             queuedNotificationDto.addTemplateSubstitutions(
                                     new NotificationTemplateSubstitutionDto(DDP_PROXY_FIRST_NAME, profile.getFirstName()),
                                     new NotificationTemplateSubstitutionDto(DDP_PROXY_LAST_NAME, profile.getLastName()));
+                            // User proxy's preferred language since email will be sent to proxy.
+                            userPreferredLangCode = profile.getPreferredLangCode();
                         }
                     }
 
@@ -147,6 +156,15 @@ public class PubSubMessageBuilder {
                         throw new MessageBuilderException("Cannot send email to ddp user " + participantGuid
                                 + " because they have no auth0 account");
                     }
+
+                    if (userPreferredLangCode == null) {
+                        // Either email is not being sent to proxy or proxy does not have preferred language,
+                        // so try getting it from participant's own profile.
+                        userPreferredLangCode = apisHandle.attach(UserProfileDao.class)
+                                .findProfileByUserGuid(participantGuid)
+                                .map(UserProfile::getPreferredLangCode)
+                                .orElse(null);
+                    }
                 }
 
                 String fromName = queuedNotificationDto.getStudyFromName();
@@ -155,6 +173,16 @@ public class PubSubMessageBuilder {
                     fromName = cfg.getString(ConfigFile.Sendgrid.FROM_NAME);
                     fromEmail = cfg.getString(ConfigFile.Sendgrid.FROM_EMAIL);
                 }
+
+                NotificationTemplate template = determineEmailTemplate(
+                        apisHandle,
+                        queuedNotificationDto.getEventConfigurationId(),
+                        queuedNotificationDto.getStudyGuid(),
+                        userPreferredLangCode);
+                String templateKey = template.getTemplateKey();
+                String templateLanguage = template.getLanguageCode();
+                LOG.info("Using notification template with key={} and language={} for queued event {}",
+                        templateKey, templateLanguage, queuedNotificationDto.getQueuedEventId());
 
                 // Override the activity instance substitution for email if it has a linked activity.
                 boolean shouldSearchForActivityInstance = (queuedNotificationDto.getParticipantGuid() != null
@@ -177,7 +205,7 @@ public class PubSubMessageBuilder {
                         LOG.error("Could not find latest activity instance for notification template substitution:"
                                         + " queuedEventId={}, userGuid={}, studyGuid={}, linkedActivityId={}, templateKey={}",
                                 queuedNotificationDto.getQueuedEventId(), queuedNotificationDto.getParticipantGuid(), studyGuid,
-                                queuedNotificationDto.getLinkedActivityId(), queuedNotificationDto.getTemplateKey());
+                                queuedNotificationDto.getLinkedActivityId(), templateKey);
                     }
                 }
 
@@ -187,7 +215,7 @@ public class PubSubMessageBuilder {
                 NotificationMessage notificationMessage = new NotificationMessage(
                         queuedNotificationDto.getNotificationType(),
                         queuedNotificationDto.getNotificationServiceType(),
-                        queuedNotificationDto.getTemplateKey(),
+                        templateKey,
                         sendToList,
                         queuedNotificationDto.getParticipantFirstName(),
                         queuedNotificationDto.getParticipantLastName(),
@@ -235,5 +263,29 @@ public class PubSubMessageBuilder {
 
         messageBuilder.build();
         return messageBuilder.build();
+    }
+
+    NotificationTemplate determineEmailTemplate(Handle handle, long eventConfigId, String studyGuid, String userPreferredLangCode) {
+        List<NotificationTemplate> templates = handle.attach(EventDao.class).getNotificationTemplatesForEvent(eventConfigId);
+        if (templates.isEmpty()) {
+            throw new DDPException("Event configuration with id " + eventConfigId + " is missing notification templates");
+        } else if (templates.size() == 1) {
+            return templates.get(0);    // There's only one configured so use it.
+        }
+
+        NotificationTemplate preferredTemplate = null;
+        if (userPreferredLangCode != null) {
+            preferredTemplate = templates.stream()
+                    .filter(tmpl -> tmpl.getLanguageCode().equalsIgnoreCase(userPreferredLangCode))
+                    .findFirst()
+                    .orElse(null);
+        }
+
+        if (preferredTemplate == null) {
+            // todo: find study default language and grep for that in template list
+            preferredTemplate = templates.get(0);
+        }
+
+        return preferredTemplate;
     }
 }

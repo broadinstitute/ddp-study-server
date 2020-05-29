@@ -3,11 +3,11 @@ package org.broadinstitute.ddp.studybuilder.task;
 import java.nio.file.Path;
 
 import com.typesafe.config.Config;
-import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
-import org.broadinstitute.ddp.db.dao.JdbiNotificationTemplate;
+import org.broadinstitute.ddp.db.dao.EventActionSql;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
+import org.broadinstitute.ddp.model.event.NotificationTemplate;
 import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.sqlobject.SqlObject;
@@ -61,10 +61,10 @@ public class FixWelcomeEmailEvents implements CustomTask {
 
     private void updateNotificationAction(Handle handle, StudyDto studyDto, String templateKey, String activityCode) {
         SqlHelper helper = handle.attach(SqlHelper.class);
-        long langId = handle.attach(JdbiLanguageCode.class).getLanguageCodeId(EN_LANG_CODE);
-
-        long notificationTemplateId = handle.attach(JdbiNotificationTemplate.class)
-                .findByKeyAndLanguage(templateKey, langId).get();
+        long notificationTemplateId = handle.attach(EventActionSql.class)
+                .findNotificationTemplate(templateKey, EN_LANG_CODE)
+                .map(NotificationTemplate::getId)
+                .get();
         long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
         helper.updateLinkedActivityId(studyDto.getId(), notificationTemplateId, activityId);
 
@@ -75,7 +75,9 @@ public class FixWelcomeEmailEvents implements CustomTask {
     private interface SqlHelper extends SqlObject {
 
         @SqlUpdate("UPDATE user_notification_event_action AS act"
-                + "   JOIN notification_template AS t ON t.notification_template_id = act.notification_template_id"
+                + "   JOIN user_notification_template AS unt"
+                + "        ON unt.user_notification_event_action_id = act.user_notification_event_action_id"
+                + "   JOIN notification_template AS t ON t.notification_template_id = unt.notification_template_id"
                 + "   JOIN event_configuration as e on e.event_action_id = act.user_notification_event_action_id"
                 + "    SET act.linked_activity_id = :linkedActivityId"
                 + "  WHERE t.notification_template_id = :notificationTemplateId"

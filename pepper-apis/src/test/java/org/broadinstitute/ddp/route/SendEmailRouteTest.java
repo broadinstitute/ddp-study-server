@@ -117,13 +117,16 @@ public class SendEmailRouteTest extends IntegrationTestSuite.TestCase {
         postResendAndAssert200(payload);
 
         TransactionWrapper.useTxn(handle -> {
-            List<QueuedEventDto> pendingEvents = handle.attach(EventDao.class).findPublishableQueuedEvents();
+            EventDao eventDao = handle.attach(EventDao.class);
+            List<QueuedEventDto> pendingEvents = eventDao.findPublishableQueuedEvents();
             int numQueuedEvents = 0;
             for (QueuedEventDto pendingEvent : pendingEvents) {
                 if (pendingEvent.getEventConfigurationId() == insertedKnownUserEventConfigId) {
                     QueuedNotificationDto notificationDto = (QueuedNotificationDto) pendingEvent;
 
-                    Assert.assertEquals(notificationDto.getTemplateKey(), resendEmailTemplateKey);
+                    var templates = eventDao.getNotificationTemplatesForEvent(notificationDto.getEventConfigurationId());
+                    Assert.assertEquals(1, templates.size());
+                    Assert.assertEquals(resendEmailTemplateKey, templates.get(0).getTemplateKey());
                     Collection<NotificationTemplateSubstitutionDto> templateSubstitutions = notificationDto
                             .getTemplateSubstitutions();
 
@@ -155,14 +158,16 @@ public class SendEmailRouteTest extends IntegrationTestSuite.TestCase {
         postResendAndAssert200(payload);
 
         TransactionWrapper.useTxn(handle -> {
-            List<QueuedEventDto> pendingEvents = handle.attach(EventDao.class).findPublishableQueuedEvents();
+            EventDao eventDao = handle.attach(EventDao.class);
+            List<QueuedEventDto> pendingEvents = eventDao.findPublishableQueuedEvents();
             int numQueuedEvents = 0;
             for (QueuedEventDto pendingEvent : pendingEvents) {
                 if (pendingEvent.getEventConfigurationId() == insertedUnknownUserEventConfigId) {
                     QueuedNotificationDto notificationDto = (QueuedNotificationDto) pendingEvent;
 
-                    Assert.assertEquals(notificationDto.getTemplateKey(), userNotInStudyTemplateKey);
-
+                    var templates = eventDao.getNotificationTemplatesForEvent(notificationDto.getEventConfigurationId());
+                    Assert.assertEquals(1, templates.size());
+                    Assert.assertEquals(userNotInStudyTemplateKey, templates.get(0).getTemplateKey());
                     Collection<NotificationTemplateSubstitutionDto> templateSubstitutions = notificationDto.getTemplateSubstitutions();
 
                     boolean foundEmail = false;
