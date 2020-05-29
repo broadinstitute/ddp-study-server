@@ -182,7 +182,7 @@ public class PatchFormAnswersRoute implements Route {
                         LOG.warn("Passed question stable ID : " + questionStableId + " is a Composite child question. "
                                 + "Only entire Composite question answer can be updated ");
                         throw ResponseUtil.haltError(response, HttpStatus.SC_NOT_FOUND, new ApiError(
-                                ErrorCodes.OPERATION_NOT_ALLOWED, "Only entire Composite question answer can be updated"));
+                                ErrorCodes.QUESTION_NOT_FOUND, "Only entire Composite question answer can be updated"));
                     }
 
                     Answer answer = convertAnswer(handle, response, instanceGuid, questionStableId,
