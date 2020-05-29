@@ -1,14 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg width="25px" height="25px" viewBox="0 0 25 25" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-    <!-- Generator: Sketch 55.2 (78181) - https://sketchapp.com -->
-    <title>Complete Icon@1x</title>
-    <desc>Created with Sketch.</desc>
-    <g id="11/20" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-        <g id="Aged-up-Participant-Dashboard-after-they-have-registered-for-the-study-but-have-not-re-consented." transform="translate(-969.000000, -485.000000)">
-            <g id="Complete-Icon" transform="translate(969.000000, 485.000000)">
-                <rect id="Rectangle-Copy-7" fill="#00D39D" x="0" y="0" width="25" height="25" rx="12.5"></rect>
-                <g id="Fill-1245-Copy" transform="translate(6.000000, 6.000000)" fill="#FFFFFF">
-                    <path d="M11.0537035,0.243045906 C10.9690261,0.158368486 10.831371,0.158368486 10.7466935,0.243045906 L4.05630893,6.93343052 L2.29328164,5.17083747 C2.20860422,5.08572581 2.07094913,5.08572581 1.98627171,5.17083747 L0.0699565757,7.08715261 C-0.0147208437,7.17183002 -0.0147208437,7.30905087 0.0699565757,7.39416253 L3.90258685,11.2267928 C3.94514268,11.2689144 4.00072581,11.2901923 4.05630893,11.2901923 C4.11189206,11.2901923 4.16747519,11.2689144 4.20959677,11.2267928 L12.9700186,2.46637097 C13.0108375,2.42555211 13.0334181,2.37040323 13.0334181,2.31264888 C13.0334181,2.25532878 13.0108375,2.2001799 12.9700186,2.15936104 L11.0537035,0.243045906 Z" id="Fill-1245"></path>
+<svg width="24px" height="24px" viewBox="0 0 24 24" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>612C2AC9-2776-44DB-9532-65884F31BF0A@1x</title>
+    <g id="Subject-Facing" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Status-Icons" transform="translate(-90.000000, -32.000000)">
+            <g id="Complete" transform="translate(90.000000, 32.000000)">
+                <g id="Group-3-Copy-6">
+                    <circle id="Oval" fill="#39B54A" cx="12" cy="12" r="12"></circle>
+                    <path d="M17.7835907,9.42873995 L10.2824361,16.4293946 C10.2062903,16.5007813 10.1095217,16.5364746 10.0119599,16.5364746 C9.91043213,16.5364746 9.8089044,16.4976085 9.73196541,16.4198763 L7.23184493,13.9197559 C7.07638058,13.7642915 7.07638058,13.5136449 7.23184493,13.3589738 C7.38651608,13.2035094 7.63716268,13.2035094 7.79262703,13.3589738 L10.0214781,15.5878248 L17.2426383,8.8489214 C17.4020685,8.69980253 17.6535083,8.70773439 17.8026272,8.86795785 C17.9525392,9.0281813 17.9438142,9.27962109 17.7835907,9.42873995" id="Path" stroke="#FFFFFF" stroke-width="2" fill="#FFFFFF"></path>
                 </g>
             </g>
         </g>
