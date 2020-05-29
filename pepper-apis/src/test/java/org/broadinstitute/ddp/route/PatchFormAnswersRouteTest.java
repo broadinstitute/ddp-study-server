@@ -589,6 +589,20 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
             assertEquals(textValue, childAnswers.get(0).getValues().get(0).getValue());
             assertEquals(dateValue, childAnswers.get(0).getValues().get(1).getValue());
         });
+
+
+        //try updating just child answer. should return 404
+        data = new PatchAnswerPayload();
+        data.addSubmission(childTextAnswer1);
+
+        request = RouteTestUtil.buildAuthorizedPatchRequest(token, url, gson.toJson(data));
+        HttpResponse response404 = request.execute().returnResponse();
+        assertEquals(HttpStatus.NOT_FOUND_404, response404.getStatusLine().getStatusCode());
+        String bodyToString = EntityUtils.toString(response404.getEntity());
+        ApiError error = gson.fromJson(bodyToString, ApiError.class);
+        assertEquals(ErrorCodes.QUESTION_REQUIREMENTS_NOT_MET, error.getCode());
+        assertEquals("Only entire Composite question answer can be updated", error.getMessage());
+
         this.answerGuidsToDelete.put(QuestionType.COMPOSITE, new ArrayList<>(Arrays.asList(resp.getAnswers().get(0)
                 .getAnswerGuid())));
     }

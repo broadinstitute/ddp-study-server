@@ -170,6 +170,16 @@ public class PatchFormAnswersRoute implements Route {
                 for (AnswerSubmission submission : submissions) {
                     String questionStableId = extractQuestionStableId(submission, response);
 
+                    //validation to check if question answer is a composite child
+                    Optional<Long> parentQuestionId = handle.attach(JdbiCompositeQuestion.class)
+                            .findParentQuestionIdByChildQuestionStableId(questionStableId);
+                    if (parentQuestionId.isPresent()) {
+                        LOG.warn("Passed question stable ID : " + questionStableId + " is a Composite child question. "
+                                + "Only entire Composite question answer can be updated ");
+                        throw ResponseUtil.haltError(response, HttpStatus.SC_NOT_FOUND, new ApiError(
+                                ErrorCodes.QUESTION_REQUIREMENTS_NOT_MET, "Only entire Composite question answer can be updated"));
+                    }
+
                     Optional<QuestionDto> optDto = jdbiQuestion.findDtoByStableIdAndInstanceGuid(questionStableId, instanceGuid);
                     QuestionDto questionDto = extractQuestionDto(response, questionStableId, optDto);
                     Question question = handle.attach(QuestionDao.class).getQuestionByActivityInstanceAndDto(questionDto,
