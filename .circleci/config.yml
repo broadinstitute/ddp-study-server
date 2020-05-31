@@ -120,6 +120,9 @@ commands:
             develop)
               DEPLOY_ENV=dev
             ;;
+            scaling_experiment)
+              DEPLOY_ENV=dev
+            ;;
             test)
               DEPLOY_ENV=test
             ;;
@@ -737,6 +740,7 @@ workflows:
             branches:
               only:
                 - develop
+                - scaling_experiment
                 - &rc /^rc.*/
                 - &hotfix /^hotfix.*/
       - parallel-compile-and-test-job:
