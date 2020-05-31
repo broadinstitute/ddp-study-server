@@ -753,6 +753,7 @@ workflows:
             branches:
               only:
                 - develop
+                - scaling_experiment
           requires:
             - parallel-compile-and-test-job
             - compile-and-run-test-suite-job
