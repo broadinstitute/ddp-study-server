@@ -17,6 +17,7 @@ import org.broadinstitute.ddp.model.activity.instance.validation.Rule;
 import org.broadinstitute.ddp.model.activity.types.DateFieldType;
 import org.broadinstitute.ddp.model.activity.types.DateRenderMode;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
+import org.broadinstitute.ddp.model.activity.types.RuleType;
 import org.broadinstitute.ddp.util.MiscUtil;
 
 public class DateQuestion extends Question<DateAnswer> {
@@ -90,6 +91,31 @@ public class DateQuestion extends Question<DateAnswer> {
             }
         }
         return true;
+    }
+
+    public boolean hasRequiredFields(DateAnswer answer) {
+        DateValue value = answer.getValue();
+        boolean hasFieldRule = false;
+        for (var rule : validations) {
+            if (rule.getRuleType() == RuleType.YEAR_REQUIRED) {
+                hasFieldRule = true;
+                if (value.getYear() == null) {
+                    return false;
+                }
+            } else if (rule.getRuleType() == RuleType.MONTH_REQUIRED) {
+                hasFieldRule = true;
+                if (value.getMonth() == null) {
+                    return false;
+                }
+            } else if (rule.getRuleType() == RuleType.DAY_REQUIRED) {
+                hasFieldRule = true;
+                if (value.getDay() == null) {
+                    return false;
+                }
+            }
+        }
+        // There are field rules and date has value for those rules, so return true.
+        return hasFieldRule;
     }
 
     @Override
