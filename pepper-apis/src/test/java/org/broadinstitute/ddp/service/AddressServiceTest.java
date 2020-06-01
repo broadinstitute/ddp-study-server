@@ -240,12 +240,12 @@ public class AddressServiceTest extends TxnAwareBaseTest {
         doReturn(List.of(kitConfig)).when(mockKitDao).findStudyKitConfigurations(anyLong());
 
         addr.setZip("02115");
-        List<AddressWarning> actual = service.checkStudyAddress(mockHandle, testData.getStudyId(), addr);
+        List<AddressWarning> actual = service.checkStudyAddress(mockHandle, testData.getStudyId(), "en", addr);
         assertNotNull(actual);
         assertTrue(actual.isEmpty());
 
         addr.setZip("02161");
-        actual = service.checkStudyAddress(mockHandle, testData.getStudyId(), addr);
+        actual = service.checkStudyAddress(mockHandle, testData.getStudyId(), "en", addr);
         assertEquals(1, actual.size());
         assertEquals(AddressWarning.Warn.ZIP_UNSUPPORTED.getCode(), actual.get(0).getCode());
     }

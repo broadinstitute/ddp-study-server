@@ -15,7 +15,6 @@ import java.util.function.BiFunction;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.constants.TestConstants;
-import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
@@ -40,7 +39,7 @@ public class ActivityInstanceDaoTest extends TxnAwareBaseTest {
 
     @BeforeClass
     public static void setup() {
-        SectionBlockDao sectionBlockDao = new SectionBlockDao(new I18nContentRenderer());
+        SectionBlockDao sectionBlockDao = new SectionBlockDao();
         FormInstanceDao formInstanceDao = FormInstanceDao.fromDaoAndConfig(sectionBlockDao, sqlConfig);
         dao = new ActivityInstanceDao(formInstanceDao);
         TransactionWrapper.useTxn(handle -> {

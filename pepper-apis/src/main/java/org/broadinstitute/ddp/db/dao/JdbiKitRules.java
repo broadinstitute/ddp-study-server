@@ -158,6 +158,13 @@ public interface JdbiKitRules extends SqlObject {
     @SqlUpdate("delete from kit_pex_rule where kit_rule_id = :id")
     int deletePexRuleById(Long id);
 
+    @SqlUpdate("insert into kit_zip_code_rule (kit_rule_id, error_message_template_id, warning_message_template_id)"
+            + " values (:ruleId, :errorTmplId, :warningTmplId)")
+    int insertZipCodeRule(
+            @Bind("ruleId") long ruleId,
+            @Bind("errorTmplId") Long errorMessageTemplateId,
+            @Bind("warningTmplId") Long warningMessageTemplateId);
+
     @SqlBatch("insert into kit_zip_code (kit_rule_id, zip_code) values (:ruleId, :zipCode)")
     int[] bulkInsertKitZipCodes(@Bind("ruleId") long kitRuleId, @Bind("zipCode") Set<String> zipCodes);
 }

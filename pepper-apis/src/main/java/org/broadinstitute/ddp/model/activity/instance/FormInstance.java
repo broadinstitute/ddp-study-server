@@ -20,13 +20,16 @@ import org.broadinstitute.ddp.content.HtmlConverter;
 import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.content.I18nTemplateConstants;
 import org.broadinstitute.ddp.content.Renderable;
+import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
 import org.broadinstitute.ddp.model.activity.types.FormType;
 import org.broadinstitute.ddp.model.activity.types.ListStyleHint;
+import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.pex.PexException;
 import org.broadinstitute.ddp.pex.PexInterpreter;
+import org.broadinstitute.ddp.transformers.DateTimeFormatUtils;
 import org.broadinstitute.ddp.transformers.LocalDateTimeAdapter;
 import org.broadinstitute.ddp.util.MiscUtil;
 
@@ -68,6 +71,7 @@ public final class FormInstance extends ActivityInstance {
     private transient Long lastUpdatedTextTemplateId;
 
     public FormInstance(
+            long participantUserId,
             long instanceId,
             long activityId,
             String activityCode,
@@ -87,7 +91,7 @@ public final class FormInstance extends ActivityInstance {
             LocalDateTime activityDefinitionLastUpdated,
             boolean isFollowup
     ) {
-        super(instanceId, activityId, ActivityType.FORMS, guid, title, subtitle, statusTypeCode, readonly, activityCode,
+        super(participantUserId, instanceId, activityId, ActivityType.FORMS, guid, title, subtitle, statusTypeCode, readonly, activityCode,
                 createdAtMillis, firstCompletedAt, isFollowup);
         this.formType = MiscUtil.checkNonNull(formType, "formType");
         if (listStyleHint != null) {
@@ -185,7 +189,8 @@ public final class FormInstance extends ActivityInstance {
             section.registerTemplateIds(consumer);
         }
 
-        Map<Long, String> rendered = renderer.bulkRender(handle, templateIds, langCodeId);
+        Map<String, String> context = buildRenderContext(handle);
+        Map<Long, String> rendered = renderer.bulkRender(handle, templateIds, langCodeId, context);
         Renderable.Provider<String> provider = rendered::get;
 
         for (FormSection section : allSections) {
@@ -218,6 +223,26 @@ public final class FormInstance extends ActivityInstance {
                 activityDefinitionLastUpdatedText = HtmlConverter.getPlainText(activityDefinitionLastUpdatedText);
             }
         }
+    }
+
+    private Map<String, String> buildRenderContext(Handle handle) {
+        var context = new HashMap<String, String>();
+        context.put(I18nTemplateConstants.DASHED_DATE,
+                DateTimeFormatUtils.MONTH_FIRST_DASHED_DATE_FORMATTER.format(LocalDate.now()));
+
+        UserProfile profile = handle.attach(UserProfileDao.class)
+                .findProfileByUserId(getParticipantUserId())
+                .orElse(null);
+        if (profile != null) {
+            if (profile.getFirstName() != null) {
+                context.put(I18nTemplateConstants.PARTICIPANT_FIRST_NAME, profile.getFirstName());
+            }
+            if (profile.getLastName() != null) {
+                context.put(I18nTemplateConstants.PARTICIPANT_LAST_NAME, profile.getLastName());
+            }
+        }
+
+        return context;
     }
 
     /**
