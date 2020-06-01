@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.db.dao.ComponentDao;
 import org.broadinstitute.ddp.db.dao.JdbiBlockContent;
 import org.broadinstitute.ddp.db.dao.JdbiBlockGroupHeader;
@@ -31,12 +30,6 @@ import org.slf4j.LoggerFactory;
 public class SectionBlockDao {
 
     private static final Logger LOG = LoggerFactory.getLogger(SectionBlockDao.class);
-
-    private final I18nContentRenderer i18nRenderer;
-
-    public SectionBlockDao(I18nContentRenderer i18nRenderer) {
-        this.i18nRenderer = i18nRenderer;
-    }
 
     /**
      * Find and build all blocks for given sections, respecting the display order of blocks within each section.
@@ -97,7 +90,7 @@ public class SectionBlockDao {
                 break;
             case COMPONENT:
                 ComponentDao componentDao = handle.attach(ComponentDao.class);
-                FormComponent formComponent = componentDao.findByBlockId(instanceGuid, dto.getId(), i18nRenderer, langCodeId);
+                FormComponent formComponent = componentDao.findByBlockId(instanceGuid, dto.getId());
                 block = new ComponentBlock(formComponent);
                 break;
             case CONDITIONAL:

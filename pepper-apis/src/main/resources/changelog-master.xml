@@ -204,4 +204,5 @@
     <include file="db-changes/schema/DDP-4475-modify-studylanguage.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/add-recaptcha-site-secret.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/seed/DDP-4627-testboston-kit-type.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/zip-code-messages.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

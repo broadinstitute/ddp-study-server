@@ -254,7 +254,7 @@ public class DataDonationPlatform {
             LiquibaseUtil.runLiquibase(dbUrl, TransactionWrapper.DB.APIS);
         }
 
-        SectionBlockDao sectionBlockDao = new SectionBlockDao(new I18nContentRenderer());
+        SectionBlockDao sectionBlockDao = new SectionBlockDao();
 
         FormInstanceDao formInstanceDao = FormInstanceDao.fromDaoAndConfig(sectionBlockDao, sqlConfig);
         ActivityInstanceDao activityInstanceDao = new ActivityInstanceDao(formInstanceDao);

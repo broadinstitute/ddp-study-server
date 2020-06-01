@@ -1,14 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg width="25px" height="25px" viewBox="0 0 25 25" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-    <!-- Generator: Sketch 55.2 (78181) - https://sketchapp.com -->
-    <title>In Progress@1x</title>
-    <desc>Created with Sketch.</desc>
-    <g id="11/20" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
-        <g id="In-Progress">
-            <g id="Group-5-Copy" fill="#7154FF">
-                <rect id="Rectangle-Copy-7" x="0" y="0" width="25" height="25" rx="12.5"></rect>
+<svg width="24px" height="24px" viewBox="0 0 24 24" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>A75EF6D0-3746-4498-8183-2C3DB98C14A1@1x</title>
+    <g id="Subject-Facing" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="Status-Icons" transform="translate(-59.000000, -33.000000)">
+            <g id="In-Progress" transform="translate(59.000000, 33.000000)">
+                <g id="Group">
+                    <g id="Group-3-Copy-5" fill="#F6BB2D">
+                        <circle id="Oval" cx="12" cy="12" r="12"></circle>
+                    </g>
+                    <circle id="Oval" fill="#FFFFFF" cx="6" cy="12" r="2"></circle>
+                    <circle id="Oval" fill="#FFFFFF" cx="12" cy="12" r="2"></circle>
+                    <circle id="Oval" fill="#FFFFFF" cx="18" cy="12" r="2"></circle>
+                </g>
             </g>
-            <path d="M7.55,14.18 C6.68,14.18 6.05,13.49 6.05,12.62 C6.05,11.75 6.68,11.06 7.55,11.06 C8.42,11.06 9.05,11.75 9.05,12.62 C9.05,13.49 8.42,14.18 7.55,14.18 Z M12.5,14.18 C11.63,14.18 11,13.49 11,12.62 C11,11.75 11.63,11.06 12.5,11.06 C13.37,11.06 14,11.75 14,12.62 C14,13.49 13.37,14.18 12.5,14.18 Z M17.45,14.18 C16.58,14.18 15.95,13.49 15.95,12.62 C15.95,11.75 16.58,11.06 17.45,11.06 C18.32,11.06 18.95,11.75 18.95,12.62 C18.95,13.49 18.32,14.18 17.45,14.18 Z" id="…" fill="#FFFFFF" fill-rule="nonzero"></path>
         </g>
     </g>
 </svg>
