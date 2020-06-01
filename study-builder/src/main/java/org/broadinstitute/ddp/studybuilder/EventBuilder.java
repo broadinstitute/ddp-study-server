@@ -7,7 +7,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import com.google.gson.Gson;
 import com.typesafe.config.Config;
 import org.broadinstitute.ddp.db.dao.EventActionDao;
 import org.broadinstitute.ddp.db.dao.EventTriggerDao;
@@ -36,9 +35,6 @@ import org.broadinstitute.ddp.model.workflow.ActivityState;
 import org.broadinstitute.ddp.model.workflow.StateType;
 import org.broadinstitute.ddp.model.workflow.StaticState;
 import org.broadinstitute.ddp.util.ConfigUtil;
-import org.broadinstitute.ddp.util.GsonPojoValidator;
-import org.broadinstitute.ddp.util.GsonUtil;
-import org.broadinstitute.ddp.util.JsonValidationError;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,15 +48,11 @@ public class EventBuilder {
     private static final String ACTIVITY_CODE_FIELD = "activityCode";
     private static final String WORKFLOW_STATE_FIELD = "state";
 
-    private Gson gson;
-    private GsonPojoValidator validator;
     private Config cfg;
     private StudyDto studyDto;
     private long adminUserId;
 
     public EventBuilder(Config cfg, StudyDto studyDto, long adminUserId) {
-        this.gson = GsonUtil.standardGson();
-        this.validator = new GsonPojoValidator();
         this.cfg = cfg;
         this.studyDto = studyDto;
         this.adminUserId = adminUserId;
@@ -179,9 +171,7 @@ public class EventBuilder {
             long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
             return actionDao.insertInstanceCreationAction(activityId);
         } else if (EventActionType.ANNOUNCEMENT.name().equals(type)) {
-            Config msgCfg = actionCfg.getConfig("msgTemplate");
-            Template tmpl = gson.fromJson(ConfigUtil.toJson(msgCfg), Template.class);
-            validateAnnouncementTemplate(tmpl);
+            Template tmpl = BuilderUtils.parseAndValidateTemplate(actionCfg, "msgTemplate");
 
             String reason = String.format("Create announcement event message template for study=%s", studyDto.getGuid());
             long revId = handle.attach(JdbiRevision.class).insertStart(Instant.now().toEpochMilli(), adminUserId, reason);
@@ -300,16 +290,6 @@ public class EventBuilder {
             return handle.attach(JdbiExpression.class).insertExpression(expr).getId();
         } else {
             return null;
-        }
-    }
-
-    private void validateAnnouncementTemplate(Template tmpl) {
-        List<JsonValidationError> errors = validator.validateAsJson(tmpl);
-        if (!errors.isEmpty()) {
-            String msg = errors.stream()
-                    .map(JsonValidationError::toDisplayMessage)
-                    .collect(Collectors.joining(", "));
-            throw new DDPException(String.format("Announcement message template has validation errors: %s", msg));
         }
     }
 }
