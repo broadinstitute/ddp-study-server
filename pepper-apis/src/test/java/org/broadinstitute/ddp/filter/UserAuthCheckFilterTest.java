@@ -40,7 +40,7 @@ public class UserAuthCheckFilterTest extends IntegrationTestSuite.TestCase {
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static Set<String> userGuidsToDelete = new HashSet<>();
     private static final Gson gson = new Gson();
-
+    private static final String INVALID_TEMP_USER_MSG = "Invalid temporary user";
     @BeforeClass
     public static void setup() {
         testData = TransactionWrapper.withTxn(TestDataSetupUtil::generateBasicUserTestData);
@@ -105,7 +105,7 @@ public class UserAuthCheckFilterTest extends IntegrationTestSuite.TestCase {
         String profileUrl = makeUrl(API.USER_PROFILE
                 .replace(PathParam.USER_GUID, "not-found"));
 
-        Response response = RouteTestUtil.buildAuthorizedPostRequest(testData.getTestingUser().getToken(), profileUrl, null).execute();
+        Response response = RouteTestUtil.buildAuthorizedGetRequest("", profileUrl).execute();
         HttpResponse res = response.returnResponse();
         Assert.assertEquals(HttpStatus.SC_UNAUTHORIZED, res.getStatusLine().getStatusCode());
 
@@ -113,7 +113,7 @@ public class UserAuthCheckFilterTest extends IntegrationTestSuite.TestCase {
         String bodyToString = EntityUtils.toString(entity);
         ApiError error = gson.fromJson(bodyToString, ApiError.class);
         Assert.assertEquals(ErrorCodes.AUTH_CANNOT_BE_DETERMINED, error.getCode());
-        Assert.assertEquals("Authorization cannot be determined", error.getMessage());
+        Assert.assertEquals(INVALID_TEMP_USER_MSG, error.getMessage());
     }
 
     @Test
@@ -125,7 +125,7 @@ public class UserAuthCheckFilterTest extends IntegrationTestSuite.TestCase {
         });
         String profileUrl = makeUrl(API.USER_PROFILE
                 .replace(PathParam.USER_GUID, userDto.getGuid()));
-        Response response = RouteTestUtil.buildAuthorizedGetRequest(testData.getTestingUser().getToken(), profileUrl).execute();
+        Response response = RouteTestUtil.buildAuthorizedGetRequest("", profileUrl).execute();
         HttpResponse res = response.returnResponse();
         Assert.assertEquals(HttpStatus.SC_UNAUTHORIZED, res.getStatusLine().getStatusCode());
 
@@ -133,7 +133,7 @@ public class UserAuthCheckFilterTest extends IntegrationTestSuite.TestCase {
         String bodyToString = EntityUtils.toString(entity);
         ApiError error = gson.fromJson(bodyToString, ApiError.class);
         Assert.assertEquals(ErrorCodes.AUTH_CANNOT_BE_DETERMINED, error.getCode());
-        Assert.assertEquals("Authorization cannot be determined", error.getMessage());
+        Assert.assertEquals(INVALID_TEMP_USER_MSG, error.getMessage());
     }
 
     @Test
@@ -145,7 +145,7 @@ public class UserAuthCheckFilterTest extends IntegrationTestSuite.TestCase {
         });
         String profileUrl = makeUrl(API.USER_PROFILE
                 .replace(PathParam.USER_GUID, tempUser.getGuid()));
-        Response response = RouteTestUtil.buildAuthorizedGetRequest(testData.getTestingUser().getToken(), profileUrl).execute();
+        Response response = RouteTestUtil.buildAuthorizedGetRequest("", profileUrl).execute();
         HttpResponse res = response.returnResponse();
         Assert.assertEquals(HttpStatus.SC_UNAUTHORIZED, res.getStatusLine().getStatusCode());
 
@@ -153,7 +153,7 @@ public class UserAuthCheckFilterTest extends IntegrationTestSuite.TestCase {
         String bodyToString = EntityUtils.toString(entity);
         ApiError error = gson.fromJson(bodyToString, ApiError.class);
         Assert.assertEquals(ErrorCodes.AUTH_CANNOT_BE_DETERMINED, error.getCode());
-        Assert.assertEquals("Authorization cannot be determined", error.getMessage());
+        Assert.assertEquals(INVALID_TEMP_USER_MSG, error.getMessage());
     }
 
     @Test

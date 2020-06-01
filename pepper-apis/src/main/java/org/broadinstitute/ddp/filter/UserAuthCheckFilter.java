@@ -122,24 +122,20 @@ public class UserAuthCheckFilter implements Filter {
                 handle.attach(JdbiUser.class).findByUserGuid(tempUserGuid));
 
         boolean canAccess = true;
-        String message = null;
         if (tempUser == null) {
             LOG.warn("Could not find temporary user with guid '{}'", tempUserGuid);
-            message = "Could not find temporary user with guid: " + tempUserGuid;
             canAccess = false;
         } else if (!tempUser.isTemporary()) {
             LOG.error("User with guid '{}' is not a temporary user but is used to access"
                     + " temp-user whitelisted path without a token", tempUserGuid);
-            message = "User is not a temporary user";
             canAccess = false;
         } else if (tempUser.isExpired()) {
             LOG.warn("Temporary user with guid '{}' had already expired at time {}ms", tempUserGuid, tempUser.getExpiresAtMillis());
-            message = "Temporary user passed expiration time";
             canAccess = false;
         }
 
         if (!canAccess) {
-            ApiError apiError = new ApiError(ErrorCodes.AUTH_CANNOT_BE_DETERMINED, message);
+            ApiError apiError = new ApiError(ErrorCodes.AUTH_CANNOT_BE_DETERMINED,"Invalid temporary user");
             throw ResponseUtil.haltError(HttpStatus.SC_UNAUTHORIZED, apiError);
         }
     }
