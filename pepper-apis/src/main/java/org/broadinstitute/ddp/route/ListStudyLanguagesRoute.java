@@ -20,7 +20,7 @@ public class ListStudyLanguagesRoute implements Route {
 
     @Override public Object handle(Request request, Response response) throws Exception {
         String studyGuid = request.params(RouteConstants.PathParam.STUDY_GUID);
-        LOG.debug("Received request for supported languages for study {}", studyGuid);
+        LOG.info("Received request for supported languages for study {}", studyGuid);
 
         var result = TransactionWrapper.withTxn(handle -> {
             //Get the umbrella study id
@@ -33,7 +33,7 @@ public class ListStudyLanguagesRoute implements Route {
 
             long umbrellaStudyId = studyDto.getId();
             var studyLanguageDao = handle.attach(StudyLanguageDao.class);
-            return studyLanguageDao.selectStudyLanguages(umbrellaStudyId);
+            return studyLanguageDao.findLanguages(umbrellaStudyId);
         });
 
         response.status(HttpStatus.SC_OK);

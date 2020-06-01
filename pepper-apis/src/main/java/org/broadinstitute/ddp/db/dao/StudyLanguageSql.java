@@ -46,16 +46,15 @@ public interface StudyLanguageSql extends SqlObject {
             + " where umbrella_study_id = :studyId and is_default = true")
     List<Long> selectDefaultLanguageCodeId(long studyId);
 
-    @SqlQuery("select language_code.iso_language_code as 'languageCode', "
-            + "study_language.name as 'displayName', "
-            + "study_language.is_default as 'isDefault', "
-            + "study_language.umbrella_study_id as 'studyId',"
-            + "study_language.language_code_id as 'languageId' "
-            + "FROM language_code, study_language "
-            + "where language_code.language_code_id = study_language.language_code_id "
-            + "and "
-            + "study_language.umbrella_study_id = :umbrellaStudyId "
-            + "order by 'isDefault' DESC, languageCode ASC")
+    @SqlQuery("select lc.iso_language_code, "
+            + "sl.name, "
+            + "sl.is_default, "
+            + "sl.umbrella_study_id, "
+            + "sl.language_code_id "
+            + "from study_language as sl join language_code as lc "
+            + "on sl.language_code_id = lc.language_code_id "
+            + "where sl.umbrella_study_id = :umbrellaStudyId "
+            + "order by sl.is_default desc")
     @RegisterConstructorMapper(StudyLanguage.class)
     List<StudyLanguage> selectStudyLanguages(@Bind("umbrellaStudyId") long umbrellaStudyId);
 

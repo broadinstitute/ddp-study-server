@@ -97,15 +97,10 @@ public class ListStudyLanguagesRouteTest extends IntegrationTestSuite.TestCase {
         assertEquals("English", lang.getDisplayName());
         assertTrue(lang.getIsDefault());
         assertEquals("en", lang.getLanguageCode());
-        assertEquals(testData.getStudyId(), lang.getStudyId());
-        assertEquals((long)englishLangCodeId, lang.getLanguageId());
         lang = languageList.get(1);
         assertEquals("French", lang.getDisplayName());
         assertFalse(lang.getIsDefault());
         assertEquals("fr", lang.getLanguageCode());
-        assertEquals(testData.getStudyId(), lang.getStudyId());
-        assertEquals((long)frenchLangCodeId, lang.getLanguageId());
 
-        deleteTestData();
     }
 }

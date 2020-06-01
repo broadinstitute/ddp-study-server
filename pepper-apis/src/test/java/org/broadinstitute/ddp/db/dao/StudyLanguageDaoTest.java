@@ -27,7 +27,7 @@ public class StudyLanguageDaoTest extends TxnAwareBaseTest {
             StudyLanguageDao dao = handle.attach(StudyLanguageDao.class);
 
             //First make sure we don't run into errors when languages haven't been specified
-            List<StudyLanguage> studyLanguageList = dao.selectStudyLanguages(testData.getStudyId());
+            List<StudyLanguage> studyLanguageList = dao.findLanguages(testData.getStudyId());
             Assert.assertEquals(0, studyLanguageList.size());
 
             Long englishLangCodeId = handle.attach(JdbiLanguageCode.class).getLanguageCodeId("en");
@@ -49,7 +49,7 @@ public class StudyLanguageDaoTest extends TxnAwareBaseTest {
             Assert.assertEquals(englishLangCodeId, defaultLangs.get(0));
 
             //Test getting full language information
-            studyLanguageList = dao.selectStudyLanguages(testData.getStudyId());
+            studyLanguageList = dao.findLanguages(testData.getStudyId());
             Assert.assertNotNull(studyLanguageList);
             Assert.assertEquals(studyLanguageList.size(), 2);
             StudyLanguage toCheck = studyLanguageList.get(0);
