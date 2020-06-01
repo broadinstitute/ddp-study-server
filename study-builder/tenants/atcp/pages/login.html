@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-    <title>Global A-T Family Data Platform | Activate Account Notification</title>
+    <title data-translate="title">Global A-T Family Data Platform | Activate Account Notification</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
     <link id="app-favicon" rel="icon" type="image/x-icon"
           href="https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/favicon.ico">
@@ -26,13 +26,25 @@
     <nav>
         <ul>
             <li class="dropdown">
-                <a class="Link dropdown-toggle" data-toggle="dropdown" href="#">
+                <a class="dropdown-toggle" data-toggle="dropdown" href="#" translate="" ng-reflect-translate="">
+                    <i class="fa fa-globe language-dropdown"></i>Language
+                    <i class="caret"></i>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-right languages"></ul>
+            </li>
+            <li class="dropdown">
+                <a class="Link dropdown-toggle"
+                   data-toggle="dropdown"
+                   data-translate="header.researchers"
+                   href="#">
                     For Researchers
                     <span class="caret"></span>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-right">
                     <li>
-                        <a class="prepare-link-host" href="/data_access">
+                        <a class="prepare-link-host"
+                           data-translate="header.dataAccessRequest"
+                           href="/data_access">
                             Data Access Request
                         </a>
                     </li>
@@ -43,6 +55,7 @@
                    aria-haspopup="true"
                    class="dropdown-toggle"
                    data-toggle="dropdown"
+                   data-translate="header.learnMore"
                    href="#"
                    role="button">
                     Learn More<span class="caret"></span>
@@ -51,6 +64,7 @@
                     <li>
                         <a id="about_us"
                            class="prepare-link-host"
+                           data-translate="header.aboutUs"
                            href="/about-us">
                             About Us
                         </a>
@@ -59,6 +73,7 @@
                     <li>
                         <a id="about_initiative"
                            class="prepare-link-host"
+                           data-translate="header.aboutThisInitiative"
                            href="/about_initiative">About this Initiative</a>
                     </li>
                 </ul>
@@ -66,10 +81,12 @@
             <li class="dropdown">
                 <a class="BtnBordered white prepare-link-host"
                    id="join-us-nav"
+                   data-translate="header.joinUs"
                    href="/join-us">Join Us</a>
             </li>
             <li>
                 <a href="#"
+                   data-translate="header.signIn"
                    class="SimpleButton onActivateSignIn">Sign In</a>
             </li>
         </ul>
@@ -78,11 +95,17 @@
 
 <div class="main-offset activate-account path">
     <div class="col-lg-5 col-md-5 col-sm-6 col-xs-10 NoPadding">
-        <h1 class="Title BlueColor">Account Activation</h1>
-        <h2 class="Subtitle Subtitle--light">You are almost done! Please check your email:
+        <h1 class="Title BlueColor" data-translate="activateAccount.title">Account Activation</h1>
+        <h2 class="Subtitle Subtitle--light">
+            <span data-translate="activateAccount.checkEmail">
+                You are almost done! Please check your email:
+            </span>
             <span class="Normal"
                   id="enteredEmail"></span>.
-            An email has been sent there with the guidelines to activate your account.</h2>
+            <span data-translate="activateAccount.activateAccount">
+                An email has been sent there with the guidelines to activate your account.
+            </span>
+        </h2>
 
         <hr class="Line--noBottom">
         <div class="SignHelp Italic AlignedLeft">
@@ -91,9 +114,15 @@
                title=""
                href="#"
                data-original-title="Wait a little longer. Sometimes delivery of email can be delayed by processes outside our control. You can also check the junk folder of your email account. The email sometimes ends up there.">
-                Still waiting for your email?
+                <span data-translate="activateAccount.stillWaiting">
+                    Still waiting for your email?
+                </span>
             </a><br>
-            <a href="#" class="onActivateResendInstructions">Resend confirmation instructions</a>
+            <a href="#"
+               class="onActivateResendInstructions"
+               data-translate="common.resendInstructions">
+                Resend confirmation instructions
+            </a>
         </div>
     </div>
 </div>
@@ -101,30 +130,49 @@
 <div class="main-offset path forgot-password">
     <div class="row margin-0">
         <div class="col-lg-5 col-md-5 col-sm-6 col-xs-10 NoPadding">
-            <h1 class="Title BlueColor">Forgot your password?</h1>
-            <h2 class="Subtitle Subtitle--light">Please enter your email address and we will send you password reset
-                instructions.</h2>
+            <h1 class="Title BlueColor"
+                data-translate="forgotPassword.title">
+                Forgot your password?
+            </h1>
+            <h2 class="Subtitle Subtitle--light"
+                data-translate="forgotPassword.enterEmail">
+                Please enter your email address and we will send you password reset instructions.
+            </h2>
         </div>
     </div>
     <div class="Content col-lg-5 col-md-5 col-sm-6 col-xs-10 NoPadding">
         <form class="form" id="forgot-password">
             <div class="form-group">
-                <label class="FormItem-label" for="email">Email</label><br>
-                <input autofocus="autofocus" class="form-control FormItem-input" type="email" value="" name="email"
+                <label class="FormItem-label"
+                       data-translate="common.email.label"
+                       for="email">Email</label><br>
+                <input autofocus="autofocus"
+                       class="form-control FormItem-input"
+                       type="email"
+                       value=""
+                       name="email"
                        id="email">
-                <div class="message">
+                <div class="message"
+                     data-translate="common.email.error">
                     Email not found
                 </div>
             </div>
             <hr class="Line--noBottom">
             <br>
             <div class="AlignedCenter">
-                <button class="BtnFilled BtnFilled--blue">Send me reset password instructions</button>
+                <button class="BtnFilled BtnFilled--blue"
+                        data-translate="forgotPassword.submit">
+                    Send me reset password instructions
+                </button>
             </div>
         </form>
         <div class="SignHelp Italic">
-            <a href="#" class="onActivateSignIn">Sign In</a><br>
-            <a href="#" class="onActivateResendInstructions">Resend confirmation instructions</a><br>
+            <a href="#"
+               class="onActivateSignIn"
+               data-translate="common.signin">Sign In</a><br>
+            <a href="#"
+               class="onActivateResendInstructions"
+               data-translate="common.resendInstructions">Resend confirmation instructions</a><br>
         </div>
     </div>
 </div>
@@ -132,15 +180,21 @@
 <div class="main-offset path resend-instructions">
     <div class="row margin-0">
         <div class="col-lg-5 col-md-5 col-sm-6 col-xs-10 NoPadding">
-            <h1 class="Title BlueColor">Resend confirmation instructions</h1>
-            <h2 class="Subtitle Subtitle--light">If you did not receive your confirmation instructions, you can enter
-                your email address to generate another confirmation email.</h2>
+            <h1 class="Title BlueColor"
+                data-translate="resendInstructions.title">Resend confirmation instructions</h1>
+            <h2 class="Subtitle Subtitle--light"
+                data-translate="resendInstructions.subTitle">
+                If you did not receive your confirmation instructions, you can enter your email address to generate
+                another confirmation email.
+            </h2>
         </div>
     </div>
     <div class="Content col-lg-5 col-md-5 col-sm-6 col-xs-10 NoPadding">
         <form id="resend-instructions">
             <div class="form-group">
-                <label class="FormItem-label" for="email">Email</label>
+                <label class="FormItem-label"
+                       data-translate="common.email.label"
+                       for="email">Email</label>
                 <input autofocus="autofocus"
                        value=""
                        class="form-control FormItem-input"
@@ -153,14 +207,25 @@
             <br>
             <div class="AlignedCenter">
                 <button class="BtnFilled BtnFilled--blue"
+                        data-translate="resendInstructions.submit"
                         id="confirm">
                     Resend confirmation instructions
                 </button>
             </div>
         </form>
         <div class="SignHelp Italic">
-            <a href="#" class="onActivateSignIn">Sign In</a><br>
-            <a href="#" class="onActivateForgotPassword" >Forgot your password?</a><br>
+            <a href="#"
+               class="onActivateSignIn"
+               data-translate="common.signin">
+                Sign In
+            </a>
+            <br>
+            <a href="#"
+               class="onActivateForgotPassword"
+               data-translate="common.forgotPassword">
+                Forgot your password?
+            </a>
+            <br>
         </div>
     </div>
 </div>
@@ -168,38 +233,55 @@
 <div class="main-offset login path">
     <div class="row">
         <div class="col-lg-5 col-md-6 col-sm-8 col-xs-10">
-            <h1 class="Title BlueColor">Sign In</h1>
-            <h2 class="Subtitle Subtitle--light">
+            <h1 class="Title BlueColor" data-translate="common.signin">Sign In</h1>
+            <h2 class="Subtitle Subtitle--light"
+                data-translate="login.title">
                 You can log into the Global A-T Family Data Platform using your email address or with your Google
                 account.
             </h2>
-            <h2 class="Subtitle Normal">Use your email address:</h2>
+            <h2 class="Subtitle Normal" data-translate="login.useEmail">
+                see your email address:
+            </h2>
             <form id="login">
                 <div class="form-group">
-                    <label class="FormItem-label" for="email">Email address</label>
+                    <label class="FormItem-label"
+                           for="email"
+                           data-translate="common.email.label">Email address</label>
                     <input class="form-control FormItem-input" type="text" name="email" id="email">
                 </div>
                 <div class="form-group">
-                    <label class="FormItem-label" for="password">Password</label>
+                    <label class="FormItem-label"
+                           for="password"
+                           data-translate="common.password.label">Password</label>
                     <input class="form-control FormItem-input" type="password" name="password" id="password">
                 </div>
                 <div class="AlignedCenter">
-                    <button class="BtnFilled BtnFilled--blue">Sign In</button>
+                    <button class="BtnFilled BtnFilled--blue" data-translate="common.signin">Sign In</button>
                 </div>
             </form>
             <div class="OverLine">
                 <hr class="Line--dark OverLine-line">
-                <div class="OverLine-comment">OR</div>
+                <div class="OverLine-comment"
+                     data-translate="login.or">OR</div>
             </div>
             <div class="AlignedCenter">
-                <a class="BtnFilled BtnFilled--red" id="google-sign" href="/users/auth/google_oauth2?locale=en">
+                <a class="BtnFilled BtnFilled--red"
+                   id="google-sign"
+                   href="/users/auth/google_oauth2?locale=en"
+                   data-translate="common.signinWithGoogle">
                     Sign In with Google
                 </a>
             </div>
             <hr class="Line--noBottom">
             <div class="SignHelp Italic">
-                <a href="#" class="onActivateForgotPassword">Forgot your password?</a><br>
-                <a href="#" class="onActivateResendInstructions">
+                <a href="#"
+                   class="onActivateForgotPassword"
+                   data-translate="common.forgotPassword">
+                    Forgot your password?
+                </a><br>
+                <a href="#"
+                   class="onActivateResendInstructions"
+                   data-translate="common.resendInstructions">
                     Resend confirmation instructions
                 </a>
                 <br>
@@ -211,40 +293,50 @@
 <div class="main-offset sign-up path">
     <div class="row">
         <div class="col-lg-5 col-md-6 col-sm-8 col-xs-10">
-            <h1 class="Title BlueColor">Join Us</h1>
-            <h2 class="Subtitle Subtitle--light">
+            <h1 class="Title BlueColor" data-translate="signUp.title">Join Us</h1>
+            <h2 class="Subtitle Subtitle--light"
+                data-translate="signUp.subTitle">
                 Do you or your child have A-T? Tell us about it and join us in making a difference…
             </h2>
             <form id="sign-up">
                 <div class="form-group">
-                    <label class="FormItem-label" for="email">Email address</label>
+                    <label class="FormItem-label"
+                           data-translate="common.email.label"
+                           for="email">Email address</label>
                     <input class="form-control FormItem-input" type="text" name="email" id="email">
                 </div>
                 <div class="form-group">
-                    <label class="FormItem-label" for="password">Password</label>
+                    <label class="FormItem-label"
+                           for="password"
+                           data-translate="common.password.label">Password</label>
                     <input class="form-control FormItem-input" type="password" name="password" id="password">
-                    <div class="message">
+                    <div class="message" data-translate="common.password.error">
                         at least 8 characters including: a lower-case letter, an upper-case letter, a number, a special
                         character (such as !@#$%^&*).
                     </div>
                 </div>
                 <div class="form-group">
-                    <label class="FormItem-label" for="password_confirm">Reenter password</label>
+                    <label class="FormItem-label"
+                           for="password_confirm"
+                           data-translate="common.reenter.label">Reenter password</label>
                     <input class="form-control FormItem-input local-field" type="password" name="password_confirm"
                            id="password_confirm">
-                    <div class="message">
+                    <div class="message"
+                         data-translate="common.reenter.error">
                         Password confirmation doesn't match Password
                     </div>
                 </div>
                 <hr class="NoMargin">
                 <div class="row NoMargin">
                     <button class="col-lg-4 col-lg-offset-4 col-md-4 col-md-offset-4 col-sm-6 col-sm-offset-3 col-xs-8 col-xs-offset-2 BtnFilled BtnFilled--blue"
-                            id="join-us">
+                            id="join-us"
+                            data-translate="common.joinUs">
                         Join Us
                     </button>
                 </div>
                 <div class="SignHelp Italic">
-                    <a href="#" class="onActivateSignIn">
+                    <a href="#" class="onActivateSignIn"
+                       data-translate="common.alreadyRegistered">
                         Already registered? Sign In here
                     </a>
                 </div>
@@ -256,7 +348,8 @@
     <div>
         <div>
             <i class="fa fa-fw fa-envelope-square"></i>
-            <a class="footer-link" href="mailto:support@atfamilies.org">support@atfamilies.org</a>
+            <a class="footer-link"
+               href="mailto:support@atfamilies.org">support@atfamilies.org</a>
         </div>
         <div class="contacts__entry">
             <i class="fa fa-fw fa-phone-square"></i>
