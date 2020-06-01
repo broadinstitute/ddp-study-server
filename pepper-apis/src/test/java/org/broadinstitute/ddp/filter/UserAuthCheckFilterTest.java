@@ -41,6 +41,7 @@ public class UserAuthCheckFilterTest extends IntegrationTestSuite.TestCase {
     private static Set<String> userGuidsToDelete = new HashSet<>();
     private static final Gson gson = new Gson();
     private static final String INVALID_TEMP_USER_MSG = "Invalid temporary user";
+
     @BeforeClass
     public static void setup() {
         testData = TransactionWrapper.withTxn(TestDataSetupUtil::generateBasicUserTestData);
