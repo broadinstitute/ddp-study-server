@@ -12,7 +12,6 @@ import java.util.function.Function;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.content.ContentStyle;
-import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
@@ -25,7 +24,6 @@ import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.FormType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
-
 import org.jdbi.v3.core.Handle;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -40,7 +38,7 @@ public class FormInstanceDaoTest extends TxnAwareBaseTest {
 
     @BeforeClass
     public static void setup() {
-        SectionBlockDao sectionBlockDao = new SectionBlockDao(new I18nContentRenderer());
+        SectionBlockDao sectionBlockDao = new SectionBlockDao();
         dao = FormInstanceDao.fromDaoAndConfig(sectionBlockDao, sqlConfig);
         TransactionWrapper.useTxn(handle -> {
             data = TestDataSetupUtil.generateBasicUserTestData(handle);
