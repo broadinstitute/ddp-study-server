@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.route;
 import static org.broadinstitute.ddp.json.invitation.InvitationCheckStatusPayload.QUALIFICATION_ZIP_CODE;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import com.google.gson.Gson;
@@ -16,6 +17,7 @@ import org.broadinstitute.ddp.db.dao.InvitationDao;
 import org.broadinstitute.ddp.db.dao.JdbiClientUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.KitConfigurationDao;
+import org.broadinstitute.ddp.db.dao.TemplateDao;
 import org.broadinstitute.ddp.db.dto.InvitationDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
@@ -23,7 +25,9 @@ import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.json.invitation.InvitationCheckStatusPayload;
 import org.broadinstitute.ddp.model.kit.KitRule;
 import org.broadinstitute.ddp.model.kit.KitRuleType;
+import org.broadinstitute.ddp.model.kit.KitZipCodeRule;
 import org.broadinstitute.ddp.util.ResponseUtil;
+import org.broadinstitute.ddp.util.RouteUtil;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
@@ -39,6 +43,7 @@ import spark.Response;
 public class InvitationCheckStatusRoute extends ValidatedJsonInputRoute<InvitationCheckStatusPayload> {
 
     private static final Logger LOG = LoggerFactory.getLogger(InvitationCheckStatusRoute.class);
+    private static final String DEFAULT_ZIP_CODE_ERROR_MSG = "Invalid zip code invitation qualification";
 
     @Override
     protected int getValidationErrorStatus() {
@@ -51,7 +56,10 @@ public class InvitationCheckStatusRoute extends ValidatedJsonInputRoute<Invitati
         String invitationGuid = payload.getInvitationGuid();
         LOG.info("Attempting to check invitation {} in study {}", invitationGuid, studyGuid);
 
-        ApiError error = TransactionWrapper.withTxn(handle -> checkStatus(handle, studyGuid, request.ip(), payload));
+        ApiError error = TransactionWrapper.withTxn(handle -> {
+            String langCode = RouteUtil.resolveLanguage(request, handle, studyGuid, null);
+            return checkStatus(handle, studyGuid, request.ip(), langCode, payload);
+        });
 
         if (error != null) {
             throw ResponseUtil.haltError(response, HttpStatus.SC_BAD_REQUEST, error);
@@ -61,8 +69,7 @@ public class InvitationCheckStatusRoute extends ValidatedJsonInputRoute<Invitati
         }
     }
 
-    ApiError checkStatus(Handle handle, String studyGuid, String ipAddress, InvitationCheckStatusPayload payload) {
-
+    ApiError checkStatus(Handle handle, String studyGuid, String ipAddress, String langCode, InvitationCheckStatusPayload payload) {
         StudyDto studyDto = findStudy(handle, studyGuid);
         if (studyDto == null) {
             LOG.error("Invitation check called for non-existent study with guid {}", studyGuid);
@@ -126,7 +133,15 @@ public class InvitationCheckStatusRoute extends ValidatedJsonInputRoute<Invitati
                 boolean matched = rules.stream().anyMatch(rule -> rule.validate(handle, userZipCode));
                 if (!matched) {
                     LOG.warn("User provided zip code does not match, invitation={} zipCode={}", invitationGuid, userZipCode);
-                    String msg = "Study is not currently enrolling participants in this zip code";
+                    String msg = DEFAULT_ZIP_CODE_ERROR_MSG;
+                    Long errorTmplId = rules.stream()
+                            .map(rule -> ((KitZipCodeRule) rule).getErrorMessageTemplateId())
+                            .filter(Objects::nonNull)
+                            .findFirst()
+                            .orElse(null);
+                    if (errorTmplId != null) {
+                        msg = handle.attach(TemplateDao.class).loadTemplateById(errorTmplId).render(langCode);
+                    }
                     return new ApiError(ErrorCodes.INVALID_INVITATION_QUALIFICATIONS, msg);
                 }
             }

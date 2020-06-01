@@ -19,7 +19,6 @@ import java.util.Optional;
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.content.ContentStyle;
 import org.broadinstitute.ddp.content.HtmlConverter;
-import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.db.FormInstanceDao;
 import org.broadinstitute.ddp.db.SectionBlockDao;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -106,8 +105,7 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
     @BeforeClass
     public static void setup() {
         org.broadinstitute.ddp.db.ActivityInstanceDao actInstDao = new org.broadinstitute.ddp.db.ActivityInstanceDao(
-                FormInstanceDao.fromDaoAndConfig(
-                        new SectionBlockDao(new I18nContentRenderer()), sqlConfig));
+                FormInstanceDao.fromDaoAndConfig(new SectionBlockDao(), sqlConfig));
         service = new ActivityInstanceService(actInstDao, new TreeWalkInterpreter());
         TransactionWrapper.useTxn(handle -> testData = TestDataSetupUtil.generateBasicUserTestData(handle));
     }
