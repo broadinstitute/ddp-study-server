@@ -40,7 +40,7 @@ public class UserAuthCheckFilterTest extends IntegrationTestSuite.TestCase {
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static Set<String> userGuidsToDelete = new HashSet<>();
     private static final Gson gson = new Gson();
-    private static final String INVALID_TEMP_USER_MSG = "Invalid temporary user";
+    private static final String INVALID_TEMP_USER_MSG = "user is not authorized";
 
     @BeforeClass
     public static void setup() {

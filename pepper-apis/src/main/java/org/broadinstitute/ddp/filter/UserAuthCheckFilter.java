@@ -135,7 +135,7 @@ public class UserAuthCheckFilter implements Filter {
         }
 
         if (!canAccess) {
-            ApiError apiError = new ApiError(ErrorCodes.AUTH_CANNOT_BE_DETERMINED, "Invalid temporary user");
+            ApiError apiError = new ApiError(ErrorCodes.AUTH_CANNOT_BE_DETERMINED, "user is not authorized");
             throw ResponseUtil.haltError(HttpStatus.SC_UNAUTHORIZED, apiError);
         }
     }
