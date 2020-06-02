@@ -12,7 +12,6 @@ import com.auth0.exception.Auth0Exception;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.client.Auth0ManagementClient;
-import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
@@ -20,6 +19,7 @@ import org.broadinstitute.ddp.db.dao.ClientDao;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
 import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.InvitationDao;
+import org.broadinstitute.ddp.db.dao.JdbiAuth0Tenant;
 import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
 import org.broadinstitute.ddp.db.dao.JdbiMailingList;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
@@ -30,6 +30,7 @@ import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
+import org.broadinstitute.ddp.db.dto.Auth0TenantDto;
 import org.broadinstitute.ddp.db.dto.EventConfigurationDto;
 import org.broadinstitute.ddp.db.dto.InvitationDto;
 import org.broadinstitute.ddp.db.dto.LanguageDto;
@@ -52,7 +53,6 @@ import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.security.StudyClientConfiguration;
 import org.broadinstitute.ddp.service.EventService;
 import org.broadinstitute.ddp.util.Auth0Util;
-import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
 import org.jdbi.v3.core.Handle;
@@ -74,6 +74,8 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
 
     private static final String EN_LANGUAGE_CODE = "en";
     private static final String MODE_LOGIN = "login";
+    private static final String METADATA_FIRST_NAME = "first_name";
+    private static final String METADATA_LAST_NAME = "last_name";
 
     private final PexInterpreter interpreter;
 
@@ -102,16 +104,24 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
         return TransactionWrapper.withTxn(handle -> {
             auth0UserId.set(payload.getAuth0UserId());
             String auth0Domain = payload.getAuth0Domain();
-            if (doLocalRegistration && StringUtils.isBlank(auth0Domain)) {
-                auth0Domain = ConfigManager.getInstance().getConfig().getConfig(ConfigFile.AUTH0).getString(ConfigFile.DOMAIN);
-                LOG.info("Using auth0 domain {} for local registration", auth0Domain);
-            }
 
-            StudyDto study = handle.attach(JdbiUmbrellaStudy.class).findByDomainAndStudyGuid(auth0Domain, studyGuid);
+            StudyDto study = null;
+            if (doLocalRegistration && StringUtils.isBlank(auth0Domain)) {
+                study = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
+            } else {
+                study = handle.attach(JdbiUmbrellaStudy.class).findByDomainAndStudyGuid(auth0Domain, studyGuid);
+            }
             if (study == null) {
                 ApiError err = new ApiError(ErrorCodes.STUDY_NOT_FOUND, "Could not find study with guid " + studyGuid);
                 LOG.warn(err.getMessage());
                 throw ResponseUtil.haltError(response, HttpStatus.SC_NOT_FOUND, err);
+            }
+
+            if (doLocalRegistration && StringUtils.isBlank(auth0Domain)) {
+                auth0Domain = handle.attach(JdbiAuth0Tenant.class).findById(study.getAuth0TenantId())
+                        .map(Auth0TenantDto::getDomain)
+                        .orElse(null);
+                LOG.info("Using auth0 domain {} for local registration", auth0Domain);
             }
 
             StudyClientConfiguration clientConfig = handle.attach(ClientDao.class).getConfiguration(auth0ClientId, auth0Domain);
@@ -130,6 +140,19 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                         auth0ClientSecret, payload.getRedirectUri());
                 auth0UserId.set(Auth0Util.getVerifiedAuth0UserId(auth0RefreshResponse.getIdToken(), auth0Domain));
                 LOG.info("Successfully exchanged auth0 code for auth0UserId {} for local registration", auth0UserId);
+
+                // Look for potential user metadata.
+                var auth0User = auth0Util.getAuth0User(auth0UserId.get(), mgmtClient.getToken());
+                if (auth0User.getUserMetadata() != null) {
+                    if (payload.getFirstName() == null) {
+                        Object value = auth0User.getUserMetadata().get(METADATA_FIRST_NAME);
+                        payload.setFirstName(value == null ? null : (String) value);
+                    }
+                    if (payload.getLastName() == null) {
+                        Object value = auth0User.getUserMetadata().get(METADATA_LAST_NAME);
+                        payload.setLastName(value == null ? null : (String) value);
+                    }
+                }
             }
 
             var userDao = handle.attach(UserDao.class);
