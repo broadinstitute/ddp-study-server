@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-    <title>Test Boston</title>
+    <title>TestBoston</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
     <link href="https://fonts.googleapis.com/css?family=Roboto:400,300,300italic,400italic,700,700italic|Source+Serif+Pro:600&display=swap" rel="stylesheet" type="text/css">
 </head>
@@ -55,6 +55,16 @@
     a:link {
         text-decoration: underline !important;
     }
+
+    #ddp-header {
+        padding-top: 30px;
+    }
+
+    #ddp-header .auth0-lock-header-logo {
+        max-width: 100%;
+        height: auto;
+        margin-bottom: 5px;
+    }
 </style>
 
 <script>
@@ -64,10 +74,10 @@
 
     var mode = config.extraParams.mode;
     var study_guid = config.extraParams.study_guid;
-    var headerLogo = '##ASSETS_BUCKET_URL##/logo.png';
-    var headerText = "Test Boston";
-    var studyColor = 'rgb(24, 130, 194)';
-    var studyHelpEmail = 'testboston@datadonationplatform.org';
+    var headerLogo = '##BASE_URL##/assets/images/logo-testboston.png';
+    var headerText = "";
+    var studyColor = '#2760b2';   // button primary color
+    var studyHelpEmail = '##STUDY_EMAIL##';
 
     var title = 'Welcome!';
     if (mode === 'login') {
@@ -210,7 +220,7 @@
             if (!document.getElementById('ddp-header')) {
                 // tweak the header
                 var header = document.createElement('div');
-                header.innerHTML = '<div id="ddp-header" style="display:flex;flex-direction:row;justify-content: flex-start;align-items:center;"><img class="auth0-lock-header-logo" src="' + headerLogo + '"><div style="padding-left:8px;">' + headerText + '</div></div></div>';
+                header.innerHTML = '<div id="ddp-header" style="display:flex;flex-direction:row;justify-content: flex-start;align-items:center;"><img class="auth0-lock-header-logo" src="' + headerLogo + '"></div>';
                 var auth0LockHeader = document.getElementsByClassName('auth0-lock-header-logo')[0];
 
                 if (auth0LockHeader) {
@@ -222,8 +232,8 @@
                         : null);
                     //document.getElementsByClassName('auth0-lock-header-welcome')[0].prepend(header);
                 }
-
             }
+
             if (!document.getElementById('ddp-help')) {
                 var lockForm = document.getElementsByClassName('auth0-lock-form');
                 var showSignUpHelp = document.getElementsByClassName('auth0-lock-last-login-pane').length === 0;

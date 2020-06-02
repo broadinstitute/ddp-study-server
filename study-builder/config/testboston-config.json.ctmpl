@@ -19,8 +19,12 @@
     "LOCALHOST_LOGOUTS": "",
     "LOCALHOST_ORIGINS": "",
   {{end}}
+  {{if eq $environment "prod"}}
+    "STUDY_EMAIL": "info@testboston.org",
+  {{else}}
+    "STUDY_EMAIL": "testboston@{{$environment}}.datadonationplatform.org",
+  {{end}}
     "BASE_URL": "{{$conf.baseWebUrl}}",
-    "ASSETS_BUCKET_URL": "{{$conf.assetsBucketUrl}}",
     "LOGIN_DOMAIN": "{{$conf.auth0.loginDomain}}",
     "SERVER_BASE_URL": "{{$conf.serverBaseUrl}}"
   },

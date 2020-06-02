@@ -939,7 +939,8 @@ public interface QuestionDao extends SqlObject {
                         config.getYearsForward(),
                         config.getYearsBack(),
                         config.getYearAnchor(),
-                        config.getFirstSelectedYear());
+                        config.getFirstSelectedYear(),
+                        config.shouldAllowFutureYears());
                 if (numInserted != 1) {
                     throw new DaoException("Inserted " + numInserted + " for date question "
                             + dateQuestion.getStableId() + " year picklist");

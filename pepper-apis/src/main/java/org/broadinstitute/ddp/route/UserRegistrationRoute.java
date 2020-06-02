@@ -3,7 +3,6 @@ package org.broadinstitute.ddp.route;
 import static spark.Spark.halt;
 
 import java.time.Instant;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -18,7 +17,6 @@ import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.AuthDao;
 import org.broadinstitute.ddp.db.dao.ClientDao;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
-import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.InvitationDao;
 import org.broadinstitute.ddp.db.dao.JdbiAuth0Tenant;
 import org.broadinstitute.ddp.db.dao.JdbiMailingList;
@@ -31,7 +29,6 @@ import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.Auth0TenantDto;
-import org.broadinstitute.ddp.db.dto.EventConfigurationDto;
 import org.broadinstitute.ddp.db.dto.InvitationDto;
 import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
@@ -40,7 +37,6 @@ import org.broadinstitute.ddp.json.LocalRegistrationResponse;
 import org.broadinstitute.ddp.json.UserRegistrationPayload;
 import org.broadinstitute.ddp.json.UserRegistrationResponse;
 import org.broadinstitute.ddp.json.errors.ApiError;
-import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.event.EventSignal;
 import org.broadinstitute.ddp.model.governance.Governance;
@@ -174,8 +170,10 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                         payload, clientConfig, auth0Util, mgmtClient);
                 ddpUserGuid.set(operatorUser.getGuid());
             } else if (operatorUser == null) {
-                operatorUser = signUpNewOperator(response, handle, study, auth0UserId.get(),
+                var pair = signUpNewOperator(response, handle, study, auth0UserId.get(),
                         payload, clientConfig, auth0Util, mgmtClient);
+                operatorUser = pair.getOperatorUser();
+                triggerUserRegisteredEvents(handle, study, operatorUser, pair.getParticipantUser());
                 ddpUserGuid.set(operatorUser.getGuid());
             } else {
                 LOG.info("Attempting to register existing user {} with client {} and study {}", auth0UserId, auth0ClientId, studyGuid);
@@ -237,19 +235,20 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
 
             return user;
         } else if (invitation.getInvitationType() == InvitationType.RECRUITMENT) {
-            var user = signUpNewOperator(response, handle, study, auth0UserId, payload, clientConfig, auth0Util, mgmtClient);
-            invitationDao.assignAcceptingUser(invitation.getInvitationId(), user.getId(), Instant.now());
-            LOG.info("Assigned invitation {} of type {} to user {}", invitation.getInvitationGuid(),
-                    invitation.getInvitationType(), user.getGuid());
-            return user;
+            var pair = signUpNewOperator(response, handle, study, auth0UserId, payload, clientConfig, auth0Util, mgmtClient);
+            invitationDao.assignAcceptingUser(invitation.getInvitationId(), pair.getParticipantUser().getId(), Instant.now());
+            LOG.info("Assigned invitation {} of type {} to participant user {}", invitation.getInvitationGuid(),
+                    invitation.getInvitationType(), pair.getParticipantUser().getGuid());
+            triggerUserRegisteredEvents(handle, study, pair.getOperatorUser(), pair.getParticipantUser());
+            return pair.getOperatorUser();
         } else {
             throw new DDPException("Unhandled invitation type " + invitation.getInvitationType());
         }
     }
 
-    private User signUpNewOperator(Response response, Handle handle, StudyDto study, String auth0UserId,
-                                   UserRegistrationPayload payload, StudyClientConfiguration clientConfig,
-                                   Auth0Util auth0Util, Auth0ManagementClient mgmtClient) {
+    private UserPair signUpNewOperator(Response response, Handle handle, StudyDto study, String auth0UserId,
+                                       UserRegistrationPayload payload, StudyClientConfiguration clientConfig,
+                                       Auth0Util auth0Util, Auth0ManagementClient mgmtClient) {
         String studyGuid = study.getGuid();
         LOG.info("Attempting to register new user {} with client {} and study {}",
                 auth0UserId, clientConfig.getAuth0ClientId(), studyGuid);
@@ -258,20 +257,19 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                 clientConfig.getAuth0Domain(), clientConfig.getAuth0ClientId(), auth0UserId);
 
         GovernancePolicy policy = handle.attach(StudyGovernanceDao.class).findPolicyByStudyGuid(studyGuid).orElse(null);
-        User studyUser;
+        User participantUser;
         if (policy == null) {
             LOG.info("No study governance policy found, continuing with operator user as the study user");
-            studyUser = operatorUser;
+            participantUser = operatorUser;
         } else {
-            studyUser = handleGovernancePolicy(response, payload, handle, policy, operatorUser, clientConfig);
+            participantUser = handleGovernancePolicy(response, payload, handle, policy, operatorUser, clientConfig);
         }
 
-        registerUserWithStudy(handle, study, studyUser);
-        queueUserRegisteredEvents(handle, study, operatorUser, studyUser);
-        handle.attach(DataExportDao.class).queueDataSync(studyUser.getId());
+        registerUserWithStudy(handle, study, participantUser);
+        handle.attach(DataExportDao.class).queueDataSync(participantUser.getId());
 
         unregisterEmailFromStudyMailingList(handle, study, operatorUser, auth0Util, mgmtClient);
-        return operatorUser;
+        return new UserPair(operatorUser, participantUser);
     }
 
     private void checkRequiredPayloadProperties(Response response, UserRegistrationPayload payload) {
@@ -331,7 +329,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                 throw ResponseUtil.haltError(response, HttpStatus.SC_UNPROCESSABLE_ENTITY, new ApiError(ErrorCodes.SIGNUP_REQUIRED, msg));
             } else {
                 registerUserWithStudy(handle, study, user);
-                queueUserRegisteredEvents(handle, study, user, user);
+                triggerUserRegisteredEvents(handle, study, user, user);
                 handle.attach(DataExportDao.class).queueDataSync(user.getId());
                 unregisterEmailFromStudyMailingList(handle, study, user, auth0Util, mgmtClient);
                 return user.getGuid();
@@ -566,33 +564,31 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
         }
     }
 
-    private void queueUserRegisteredEvents(Handle handle, StudyDto studyDto, User operator, User participant) {
-        QueuedEventDao queuedEventDao = handle.attach(QueuedEventDao.class);
-        List<EventConfigurationDto> configs = handle.attach(EventDao.class)
-                .getActiveDispatchConfigsByStudyIdAndTrigger(studyDto.getId(), EventTriggerType.USER_REGISTERED);
+    private void triggerUserRegisteredEvents(Handle handle, StudyDto studyDto, User operator, User participant) {
+        var signal = new EventSignal(
+                operator.getId(),
+                participant.getId(),
+                participant.getGuid(),
+                studyDto.getId(),
+                EventTriggerType.USER_REGISTERED);
+        EventService.getInstance().processAllActionsForEventSignal(handle, signal);
+    }
 
-        for (EventConfigurationDto config : configs) {
-            if (config.getEventActionType() != EventActionType.NOTIFICATION) {
-                LOG.error("Event action type {} (in eventConfigurationId={}) is currently not supported for trigger type {}, skipping",
-                        config.getEventActionType(), config.getEventConfigurationId(), EventTriggerType.USER_REGISTERED);
-                continue;
-            }
+    private static class UserPair {
+        private User operatorUser;
+        private User participantUser;
 
-            Integer delayBeforePosting = config.getPostDelaySeconds();
-            if (delayBeforePosting == null) {
-                delayBeforePosting = 0;
-            }
-            long postAfter = Instant.now().getEpochSecond() + delayBeforePosting;
+        public UserPair(User operatorUser, User participantUser) {
+            this.operatorUser = operatorUser;
+            this.participantUser = participantUser;
+        }
 
-            long queuedEventId = queuedEventDao.insertNotification(
-                    config.getEventConfigurationId(),
-                    postAfter,
-                    participant.getId(),
-                    operator.getId(),
-                    Collections.emptyMap());
+        public User getOperatorUser() {
+            return operatorUser;
+        }
 
-            LOG.info("Queued notification event with id={} for eventConfigurationId={} postAfter={} participantGuid={} operatorGuid={}",
-                    queuedEventId, config.getEventConfigurationId(), postAfter, participant.getGuid(), operator.getGuid());
+        public User getParticipantUser() {
+            return participantUser;
         }
     }
 }
