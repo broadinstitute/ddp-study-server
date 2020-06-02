@@ -1,16 +1,16 @@
 package org.broadinstitute.ddp.filter;
 
-import static spark.Spark.halt;
-
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.exception.DDPException;
+import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.security.DDPAuth;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
@@ -89,12 +89,11 @@ public class UserAuthCheckFilter implements Filter {
         } else if (pathMatcher.isAutocompleteRoute(path)
                 || pathMatcher.isDrugSuggestionRoute(path) || pathMatcher.isCancerSuggestionRoute(path)) {
             canAccess = ddpAuth.isActive();
-        } else {
-            ResponseUtil.halt400ErrorResponse(response, ErrorCodes.AUTH_CANNOT_BE_DETERMINED);
         }
 
         if (!canAccess) {
-            halt(401);
+            throw ResponseUtil.haltError(HttpStatus.SC_UNAUTHORIZED,
+                    new ApiError(ErrorCodes.AUTH_CANNOT_BE_DETERMINED, "Authorization cannot be determined"));
         }
     }
 
@@ -115,7 +114,8 @@ public class UserAuthCheckFilter implements Filter {
 
         if (!inWhitelist) {
             LOG.warn("Request '{} {}' is not in temp-user whitelist", requestedMethod, requestedPath);
-            throw halt(401);
+            throw ResponseUtil.haltError(HttpStatus.SC_UNAUTHORIZED,
+                    new ApiError(ErrorCodes.AUTH_CANNOT_BE_DETERMINED, "Request is not in temp-user whitelist"));
         }
 
         UserDto tempUser = TransactionWrapper.withTxn(handle ->
@@ -130,12 +130,13 @@ public class UserAuthCheckFilter implements Filter {
                     + " temp-user whitelisted path without a token", tempUserGuid);
             canAccess = false;
         } else if (tempUser.isExpired()) {
-            LOG.error("Temporary user with guid '{}' had already expired at time {}ms", tempUserGuid, tempUser.getExpiresAtMillis());
+            LOG.warn("Temporary user with guid '{}' had already expired at time {}ms", tempUserGuid, tempUser.getExpiresAtMillis());
             canAccess = false;
         }
 
         if (!canAccess) {
-            throw halt(401);
+            ApiError apiError = new ApiError(ErrorCodes.AUTH_CANNOT_BE_DETERMINED, "user is not authorized");
+            throw ResponseUtil.haltError(HttpStatus.SC_UNAUTHORIZED, apiError);
         }
     }
 
