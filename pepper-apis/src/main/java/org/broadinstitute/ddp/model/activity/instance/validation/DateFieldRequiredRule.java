@@ -41,7 +41,7 @@ public class DateFieldRequiredRule extends Rule<DateAnswer> {
 
     @Override
     public boolean validate(Question<DateAnswer> question, DateAnswer answer) {
-        if (answer != null && answer.getValue() != null) {
+        if (answer != null && answer.getValue() != null && !answer.getValue().isBlank()) {
             DateValue value = answer.getValue();
             if (type.equals(RuleType.DAY_REQUIRED)) {
                 return value.getDay() != null;
@@ -51,6 +51,6 @@ public class DateFieldRequiredRule extends Rule<DateAnswer> {
                 return value.getYear() != null;
             }
         }
-        return false;
+        return true;
     }
 }
