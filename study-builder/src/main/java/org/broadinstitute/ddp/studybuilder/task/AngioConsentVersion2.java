@@ -537,7 +537,7 @@ public class AngioConsentVersion2 implements CustomTask {
         long lastUpdatedTemplateId = templateDao.insertTemplate(lastUpdatedTemplate, versionDto.getRevId());
         long newSettingId = jdbiFormSetting.insert(activityId, settings.getListStyleHint(),
                 settings.getIntroductionSectionId(), settings.getClosingSectionId(), versionDto.getRevId(),
-                settings.getReadonlyHintTemplateId(), lastUpdated, lastUpdatedTemplateId);
+                settings.getReadonlyHintTemplateId(), lastUpdated, lastUpdatedTemplateId, false);
 
         LOG.info("Created new form activity setting with id={}, lastUpdatedTemplateText='{}', lastUpdated={}",
                 newSettingId, lastUpdatedTemplate.getTemplateText(), lastUpdated);
