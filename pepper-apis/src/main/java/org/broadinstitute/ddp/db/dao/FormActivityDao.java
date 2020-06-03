@@ -139,7 +139,8 @@ public interface FormActivityDao extends SqlObject {
 
         getJdbiFormActivitySetting().insert(
                 activityId, activity.getListStyleHint(), introductionSectionId,
-                closingSectionId, revisionId, readonlyHintTemplateId, activity.getLastUpdated(), lastUpdatedTextTemplateId);
+                closingSectionId, revisionId, readonlyHintTemplateId, activity.getLastUpdated(), lastUpdatedTextTemplateId,
+                activity.shouldSnapshotSubstitutionsOnSubmit());
     }
 
     default FormActivityDef findDefByDtoAndVersion(ActivityDto activityDto, ActivityVersionDto revisionDto) {

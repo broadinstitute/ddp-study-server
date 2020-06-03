@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.db.dao;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -15,11 +16,21 @@ import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.customizer.Define;
+import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
+import org.jdbi.v3.sqlobject.statement.SqlBatch;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.UseRowReducer;
 import org.jdbi.v3.stringtemplate4.UseStringTemplateSqlLocator;
 
 public interface ActivityInstanceSql extends SqlObject {
+
+    @GetGeneratedKeys
+    @SqlBatch("insert into activity_instance_substitution (activity_instance_id, variable_name, value)"
+            + "values (:instanceId, :var, :value)")
+    long[] bulkInsertSubstitutions(
+            @Bind("instanceId") long instanceId,
+            @Bind("var") List<String> variableNames,
+            @Bind("value") List<String> values);
 
     @UseStringTemplateSqlLocator
     @SqlQuery("queryFormResponseWithAnswers")
