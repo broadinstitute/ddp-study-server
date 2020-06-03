@@ -8,8 +8,8 @@ import java.util.Arrays;
 import java.util.NoSuchElementException;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
+import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
 import org.broadinstitute.ddp.db.dao.JdbiRevision;
 import org.broadinstitute.ddp.db.dao.TemplateDao;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
@@ -40,7 +40,6 @@ public class I18nContentRendererTest extends TxnAwareBaseTest {
     public void testRenderContentSuccess() {
         TransactionWrapper.useTxn(handle -> {
             TemplateDao tmplDao = handle.attach(TemplateDao.class);
-            JdbiLanguageCode jdbiLang = handle.attach(JdbiLanguageCode.class);
             JdbiRevision jdbiRev = handle.attach(JdbiRevision.class);
 
             Template tmpl = new Template(TemplateType.HTML, null, "<em>$what_age</em>");
@@ -51,12 +50,12 @@ public class I18nContentRendererTest extends TxnAwareBaseTest {
             tmplDao.insertTemplate(tmpl, revId);
             assertNotNull(tmpl.getTemplateId());
 
-            long langId = jdbiLang.getLanguageCodeId("en");
+            long langId = LanguageStore.getOrComputeDefault(handle).getId();
             String expected = "<em>How old are you?</em>";
             String actual = renderer.renderContent(handle, tmpl.getTemplateId(), langId);
             assertEquals(expected, actual);
 
-            langId = jdbiLang.getLanguageCodeId("ru");
+            langId = LanguageStore.getOrCompute(handle, "ru").getId();
             expected = "<em>Сколько вам лет?</em>";
             actual = renderer.renderContent(handle, tmpl.getTemplateId(), langId);
             assertEquals(expected, actual);

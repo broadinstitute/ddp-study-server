@@ -22,13 +22,16 @@ import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.PubsubMessage;
 import com.typesafe.config.Config;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.NotificationTemplateVariables;
 import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
+import org.broadinstitute.ddp.db.dao.StudyLanguageDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
+import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.db.dto.NotificationTemplateSubstitutionDto;
 import org.broadinstitute.ddp.db.dto.QueuedEventDto;
 import org.broadinstitute.ddp.db.dto.QueuedNotificationDto;
@@ -41,6 +44,7 @@ import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.event.NotificationTemplate;
 import org.broadinstitute.ddp.model.event.NotificationType;
 import org.broadinstitute.ddp.model.governance.Governance;
+import org.broadinstitute.ddp.model.study.StudyLanguage;
 import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.util.Auth0Util;
 import org.broadinstitute.ddp.util.GsonUtil;
@@ -282,8 +286,27 @@ public class PubSubMessageBuilder {
         }
 
         if (preferredTemplate == null) {
-            // todo: find study default language and grep for that in template list
-            preferredTemplate = templates.get(0);
+            List<StudyLanguage> studyLanguages = handle.attach(StudyLanguageDao.class).findLanguages(studyGuid);
+            LanguageDto languageDto = studyLanguages.stream()
+                    .filter(StudyLanguage::isDefault)
+                    .findFirst()
+                    .map(StudyLanguage::toLanguageDto)
+                    .orElse(null);
+            if (languageDto == null && !studyLanguages.isEmpty()) {
+                languageDto = studyLanguages.get(0).toLanguageDto();
+                LOG.warn("Study {} does not have a default language, will fallback to {}", studyGuid, languageDto.getIsoCode());
+            } else if (languageDto == null) {
+                languageDto = LanguageStore.getOrComputeDefault(handle);
+                LOG.warn("Study {} does not have any languages, will fallback to {}", studyGuid, languageDto.getIsoCode());
+            }
+
+            String langCode = languageDto.getIsoCode();
+            preferredTemplate = templates.stream()
+                    .filter(tmpl -> tmpl.getLanguageCode().equalsIgnoreCase(langCode))
+                    .findFirst()
+                    .orElseThrow(() -> new DDPException(String.format(
+                            "Could not find notification template for event configuration id %d and study language %s",
+                            eventConfigId, langCode)));
         }
 
         return preferredTemplate;

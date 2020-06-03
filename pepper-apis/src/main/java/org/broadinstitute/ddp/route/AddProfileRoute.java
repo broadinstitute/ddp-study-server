@@ -5,13 +5,14 @@ import java.time.format.DateTimeParseException;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
+import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
-import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
+import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.json.Profile;
 import org.broadinstitute.ddp.json.errors.ApiError;
@@ -48,7 +49,8 @@ public class AddProfileRoute extends ValidatedJsonInputRoute<Profile> {
 
         TransactionWrapper.useTxn((Handle handle) -> {
             String langCode = profile.getPreferredLanguage();
-            Long langId = handle.attach(JdbiLanguageCode.class).getLanguageCodeId(langCode);
+            LanguageDto languageDto = LanguageStore.getOrCompute(handle, langCode);
+            Long langId = languageDto != null ? languageDto.getId() : null;
             if (StringUtils.isNotBlank(langCode) && langId == null) {
                 throw ResponseUtil.haltError(HttpStatus.SC_BAD_REQUEST,
                         new ApiError(ErrorCodes.INVALID_LANGUAGE_PREFERENCE, "Invalid preferred language"));

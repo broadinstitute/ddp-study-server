@@ -1,7 +1,5 @@
 package org.broadinstitute.ddp.db;
 
-import static org.broadinstitute.ddp.content.I18nContentRenderer.DEFAULT_LANGUAGE_CODE;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -9,7 +7,7 @@ import java.util.Optional;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
-import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
+import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.db.dao.QuestionDao;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.definition.ConditionalBlockDef;
@@ -70,8 +68,9 @@ public class ActivityDefStore {
                                                                       String isoLanguageCode) {
         FormActivityDef formActivityDef = getActivityDef(studyId, activityCode, versionTag);
 
-        long langCodeId = Optional.ofNullable(handle.attach(JdbiLanguageCode.class).getLanguageCodeId(isoLanguageCode))
-                .orElseGet(() -> handle.attach(JdbiLanguageCode.class).getLanguageCodeId(DEFAULT_LANGUAGE_CODE));
+        long langCodeId = Optional.ofNullable(LanguageStore.getOrCompute(handle, isoLanguageCode))
+                .orElseGet(() -> LanguageStore.getOrComputeDefault(handle))
+                .getId();
 
         int numQuestions = 0;
         int numQuestionsAnswered = 0;

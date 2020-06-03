@@ -5,12 +5,12 @@ import static spark.Spark.halt;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.auth0.exception.Auth0Exception;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
+import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -21,13 +21,12 @@ import org.broadinstitute.ddp.db.dao.DataExportDao;
 import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.InvitationDao;
 import org.broadinstitute.ddp.db.dao.JdbiAuth0Tenant;
-import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
 import org.broadinstitute.ddp.db.dao.JdbiMailingList;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dao.QueuedEventDao;
-import org.broadinstitute.ddp.db.dao.StudyDao;
 import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
+import org.broadinstitute.ddp.db.dao.StudyLanguageDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
@@ -47,6 +46,7 @@ import org.broadinstitute.ddp.model.event.EventSignal;
 import org.broadinstitute.ddp.model.governance.Governance;
 import org.broadinstitute.ddp.model.governance.GovernancePolicy;
 import org.broadinstitute.ddp.model.invitation.InvitationType;
+import org.broadinstitute.ddp.model.study.StudyLanguage;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.model.user.UserProfile;
@@ -73,7 +73,6 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
 
     private static final Logger LOG = LoggerFactory.getLogger(UserRegistrationRoute.class);
 
-    private static final String EN_LANGUAGE_CODE = "en";
     private static final String MODE_LOGIN = "login";
     private static final String METADATA_FIRST_NAME = "first_name";
     private static final String METADATA_LAST_NAME = "last_name";
@@ -491,26 +490,37 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
     }
 
     private LanguageDto determineUserLanguage(Handle handle, UserRegistrationPayload payload) {
-        LanguageDto userLanguage = null;
-        Set<LanguageDto> supportedLanguages = handle.attach(StudyDao.class)
-                .findSupportedLanguagesByGuid(payload.getStudyGuid());
-        for (var language : supportedLanguages) {
-            if (language.getIsoCode().equalsIgnoreCase(payload.getLanguageCode())) {
+        String studyGuid = payload.getStudyGuid();
+        StudyLanguage userLanguage = null;
+        List<StudyLanguage> studyLanguages = handle.attach(StudyLanguageDao.class).findLanguages(studyGuid);
+        for (var language : studyLanguages) {
+            if (language.getLanguageCode().equalsIgnoreCase(payload.getLanguageCode())) {
                 userLanguage = language;
                 break;
             }
         }
 
         // If no language provided or language is not one of study's supported ones,
-        // then use study's default language. If all else fails, fallback to English.
+        // then use study's default language. If all else fails, fallback to first study language.
         if (userLanguage == null) {
-            userLanguage = supportedLanguages.stream()
-                    // .filter(lang -> lang.isDefault())     TODO: use the filter when ready
+            userLanguage = studyLanguages.stream()
+                    .filter(StudyLanguage::isDefault)
                     .findFirst()
-                    .orElseGet(() -> handle.attach(JdbiLanguageCode.class).findLanguageDtoByCode(EN_LANGUAGE_CODE));
+                    .orElse(null);
+            if (userLanguage == null && !studyLanguages.isEmpty()) {
+                userLanguage = studyLanguages.get(0);
+                LOG.warn("Study {} does not have a default language, falling back to {}",
+                        studyGuid, userLanguage.getLanguageCode());
+            }
         }
 
-        return userLanguage;
+        if (userLanguage != null) {
+            return userLanguage.toLanguageDto();
+        } else {
+            LOG.warn("Study {} does not have any languages configured, falling back to {}",
+                    studyGuid, LanguageStore.DEFAULT_LANG_CODE);
+            return LanguageStore.getOrComputeDefault(handle);
+        }
     }
 
     private void initializeProfile(Handle handle, User user, UserRegistrationPayload payload) {

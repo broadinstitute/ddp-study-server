@@ -1,13 +1,21 @@
 package org.broadinstitute.ddp.route;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+import java.io.IOException;
+import java.lang.reflect.Type;
+import java.util.List;
+
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.util.EntityUtils;
+import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
 import org.broadinstitute.ddp.db.dao.StudyLanguageDao;
 import org.broadinstitute.ddp.model.study.StudyLanguage;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
@@ -16,14 +24,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.lang.reflect.Type;
-import java.util.List;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 public class ListStudyLanguagesRouteTest extends IntegrationTestSuite.TestCase {
 
@@ -57,9 +57,9 @@ public class ListStudyLanguagesRouteTest extends IntegrationTestSuite.TestCase {
         TransactionWrapper.useTxn(
                 handle -> {
                         StudyLanguageDao dao = handle.attach(StudyLanguageDao.class);
-                        englishLangCodeId = handle.attach(JdbiLanguageCode.class).getLanguageCodeId("en");
+                        englishLangCodeId = LanguageStore.getOrComputeDefault(handle).getId();
                         idsToDelete[0] = dao.insert(testData.getStudyId(), englishLangCodeId, "English");
-                        frenchLangCodeId = handle.attach(JdbiLanguageCode.class).getLanguageCodeId("fr");
+                        frenchLangCodeId = LanguageStore.getOrCompute(handle, "fr").getId();
                         idsToDelete[1] = dao.insert(testData.getStudyId(), frenchLangCodeId, "French");
                         dao.setAsDefaultLanguage(testData.getStudyId(), englishLangCodeId);
                 }
@@ -95,11 +95,11 @@ public class ListStudyLanguagesRouteTest extends IntegrationTestSuite.TestCase {
 
         StudyLanguage lang = languageList.get(0);
         assertEquals("English", lang.getDisplayName());
-        assertTrue(lang.getIsDefault());
+        assertTrue(lang.isDefault());
         assertEquals("en", lang.getLanguageCode());
         lang = languageList.get(1);
         assertEquals("French", lang.getDisplayName());
-        assertFalse(lang.getIsDefault());
+        assertFalse(lang.isDefault());
         assertEquals("fr", lang.getLanguageCode());
 
     }

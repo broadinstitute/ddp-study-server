@@ -3,14 +3,15 @@ package org.broadinstitute.ddp.route;
 import java.time.Instant;
 
 import org.apache.http.HttpStatus;
+import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.InvitationDao;
 import org.broadinstitute.ddp.db.dao.JdbiAuth0Tenant;
-import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
+import org.broadinstitute.ddp.db.dao.StudyLanguageDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.Auth0TenantDto;
@@ -20,6 +21,7 @@ import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.json.admin.CreateStudyParticipantPayload;
 import org.broadinstitute.ddp.json.admin.CreateStudyParticipantResponse;
 import org.broadinstitute.ddp.json.errors.ApiError;
+import org.broadinstitute.ddp.model.study.StudyLanguage;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.model.user.UserProfile;
@@ -84,9 +86,17 @@ public class AdminCreateStudyParticipantRoute extends ValidatedJsonInputRoute<Cr
             User user = handle.attach(UserDao.class).createUser(tenantDto.getDomain(), ddpAuth.getClient(), null);
             LOG.info("Created user with guid {}", user.getGuid());
 
+            long defaultLangId = handle.attach(StudyLanguageDao.class)
+                    .findLanguages(studyDto.getId())
+                    .stream()
+                    .filter(StudyLanguage::isDefault)
+                    .findFirst()
+                    .map(StudyLanguage::toLanguageDto)
+                    .orElseGet(() -> LanguageStore.getOrComputeDefault(handle))
+                    .getId();
+
             UserProfile profile = new UserProfile.Builder(user.getId())
-                    // .setPreferredLangId(handle.attach(StudyDao.class).findDefaultLanguage());
-                    .setPreferredLangId(handle.attach(JdbiLanguageCode.class).getLanguageCodeId("en"))
+                    .setPreferredLangId(defaultLangId)
                     .build();
             handle.attach(UserProfileDao.class).createProfile(profile);
             LOG.info("Created profile for user {}", user.getGuid());
