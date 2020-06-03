@@ -1,12 +1,15 @@
 package org.broadinstitute.ddp.db.dao;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
@@ -16,7 +19,9 @@ import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
 import org.jdbi.v3.core.result.RowView;
 import org.jdbi.v3.sqlobject.CreateSqlObject;
 import org.jdbi.v3.sqlobject.SqlObject;
+import org.jdbi.v3.sqlobject.config.KeyColumn;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
+import org.jdbi.v3.sqlobject.config.ValueColumn;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.customizer.BindList.EmptyHandling;
@@ -194,6 +199,21 @@ public interface ActivityInstanceDao extends SqlObject {
         return _deleteAllInstancesByIds(instanceIds);
     }
 
+    default void saveSubstitutions(long instanceId, Map<String, String> substitutions) {
+        List<String> variables = new ArrayList<>();
+        List<String> values = new ArrayList<>();
+        for (var key : substitutions.keySet()) {
+            variables.add(key);
+            values.add(StringUtils.defaultString(substitutions.get(key), ""));
+        }
+        long[] inserted = getActivityInstanceSql().bulkInsertSubstitutions(instanceId, variables, values);
+        DBUtils.checkInsert(variables.size(), inserted.length);
+    }
+
+    @SqlQuery("select variable_name, value from activity_instance_substitution where activity_instance_id = :instanceId")
+    @KeyColumn("variable_name")
+    @ValueColumn("value")
+    Map<String, String> findSubstitutions(@Bind("instanceId") long instanceId);
 
     @UseStringTemplateSqlLocator
     @SqlQuery("queryBaseResponsesByInstanceId")

@@ -21,11 +21,12 @@ public class FormActivitySettingDto {
     private Long readonlyHintTemplateId;
     private Long lastUpdatedTextTemplateId;
     private LocalDateTime lastUpdated;
+    private boolean snapshotSubstitutionsOnSubmit;
     private long revisionId;
 
     public FormActivitySettingDto(long id, ListStyleHint hint, Long introductionSectionId, Long closingSectionId,
                                   Long readonlyHintTemplateId, Long lastUpdatedTextTemplateId, LocalDateTime lastUpdated,
-                                  long revisionId) {
+                                  boolean snapshotSubstitutionsOnSubmit, long revisionId) {
         this.id = id;
         this.listStyleHint = hint;
         this.introductionSectionId = introductionSectionId;
@@ -34,6 +35,7 @@ public class FormActivitySettingDto {
         this.lastUpdatedTextTemplateId = lastUpdatedTextTemplateId;
         this.lastUpdated = lastUpdated;
         this.revisionId = revisionId;
+        this.snapshotSubstitutionsOnSubmit = snapshotSubstitutionsOnSubmit;
     }
 
     public long getId() {
@@ -64,6 +66,10 @@ public class FormActivitySettingDto {
         return lastUpdated;
     }
 
+    public boolean shouldSnapshotSubstitutionsOnSubmit() {
+        return snapshotSubstitutionsOnSubmit;
+    }
+
     public long getRevisionId() {
         return revisionId;
     }
@@ -85,6 +91,7 @@ public class FormActivitySettingDto {
                     (Long) rs.getObject(FormActivitySettingTable.READONLY_HINT_TEMPLATE_ID),
                     (Long) rs.getObject(FormActivitySettingTable.LAST_UPDATED_TEXT_TEMPLATE_ID),
                     lastUpdated,
+                    rs.getBoolean(FormActivitySettingTable.SNAPSHOT_SUBSTITUTIONS_ON_SUBMIT),
                     rs.getLong(FormActivitySettingTable.REVISION_ID));
         }
     }

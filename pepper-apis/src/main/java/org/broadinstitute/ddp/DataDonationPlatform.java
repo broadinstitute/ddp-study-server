@@ -110,6 +110,7 @@ import org.broadinstitute.ddp.route.InvitationCheckStatusRoute;
 import org.broadinstitute.ddp.route.InvitationVerifyRoute;
 import org.broadinstitute.ddp.route.JoinMailingListRoute;
 import org.broadinstitute.ddp.route.ListCancersRoute;
+import org.broadinstitute.ddp.route.ListStudyLanguagesRoute;
 import org.broadinstitute.ddp.route.PatchFormAnswersRoute;
 import org.broadinstitute.ddp.route.PatchMedicalProviderRoute;
 import org.broadinstitute.ddp.route.PatchProfileRoute;
@@ -254,7 +255,7 @@ public class DataDonationPlatform {
             LiquibaseUtil.runLiquibase(dbUrl, TransactionWrapper.DB.APIS);
         }
 
-        SectionBlockDao sectionBlockDao = new SectionBlockDao(new I18nContentRenderer());
+        SectionBlockDao sectionBlockDao = new SectionBlockDao();
 
         FormInstanceDao formInstanceDao = FormInstanceDao.fromDaoAndConfig(sectionBlockDao, sqlConfig);
         ActivityInstanceDao activityInstanceDao = new ActivityInstanceDao(formInstanceDao);
@@ -323,6 +324,7 @@ public class DataDonationPlatform {
         get(API.STUDY_ALL, new GetStudiesRoute(), responseSerializer);
         get(API.STUDY_DETAIL, new GetStudyDetailRoute(), responseSerializer);
         get(API.STUDY_PASSWORD_POLICY, new GetStudyPasswordPolicyRoute(), responseSerializer);
+        get(API.STUDY_LANGUAGES, new ListStudyLanguagesRoute(), responseSerializer);
         post(API.INVITATION_VERIFY, new InvitationVerifyRoute(), jsonSerializer);
         post(API.INVITATION_CHECK, new InvitationCheckStatusRoute(), jsonSerializer);
 

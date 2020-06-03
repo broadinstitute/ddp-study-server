@@ -7,7 +7,9 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.time.Instant;
@@ -15,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
@@ -24,6 +27,7 @@ import io.restassured.http.ContentType;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.API;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
+import org.broadinstitute.ddp.content.I18nTemplateConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
@@ -137,6 +141,7 @@ public class PutFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
                 .addSubtitle(new Translation("en", "subtitle of activity"))
                 .addSection(new FormSectionDef(null, TestUtil.wrapQuestions(question)))
                 .addSection(new FormSectionDef(null, Collections.singletonList(conditionalBlock)))
+                .setSnapshotSubstitutionsOnSubmit(true)
                 .build();
         handle.attach(ActivityDao.class).insertActivity(form, RevisionMetadata.now(userId, "test"));
         return form;
@@ -681,6 +686,26 @@ public class PutFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
                 handle.attach(JdbiActivity.class).deleteValidationsByCode(form.getActivityId());
             });
         }
+    }
+
+    @Test
+    public void testSnapshotSubstitutions() {
+        ActivityInstanceDto instanceDto = TransactionWrapper.withTxn(handle ->
+                insertNewInstanceAndDeferCleanup(handle, form.getActivityId()));
+
+        given().auth().oauth2(token)
+                .pathParam("instanceGuid", instanceDto.getGuid())
+                .when().put(urlTemplate).then().assertThat()
+                .statusCode(200);
+
+        TransactionWrapper.useTxn(handle -> {
+            Map<String, String> subs = handle.attach(ActivityInstanceDao.class).findSubstitutions(instanceDto.getId());
+            assertNotNull(subs);
+            assertFalse(subs.isEmpty());
+            assertTrue(subs.containsKey(I18nTemplateConstants.DASHED_DATE));
+            assertTrue(subs.containsKey(I18nTemplateConstants.PARTICIPANT_FIRST_NAME));
+            assertTrue(subs.containsKey(I18nTemplateConstants.PARTICIPANT_LAST_NAME));
+        });
     }
 
     private io.restassured.response.Response callEndpoint(String instanceGuid) {

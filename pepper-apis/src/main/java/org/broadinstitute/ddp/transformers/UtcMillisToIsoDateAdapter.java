@@ -1,6 +1,6 @@
 package org.broadinstitute.ddp.transformers;
 
-import static org.broadinstitute.ddp.transformers.DateTimeFormatUtils.UTC_ISO8601_DATE_TIME_FOMATTER;
+import static org.broadinstitute.ddp.transformers.DateTimeFormatUtils.UTC_ISO8601_DATE_TIME_FORMATTER;
 import static org.broadinstitute.ddp.transformers.DateTimeFormatUtils.convertUtcMillisToUtcIso8601String;
 
 import java.io.IOException;
@@ -27,7 +27,7 @@ public class UtcMillisToIsoDateAdapter extends TypeAdapter<Long> {
             in.nextNull();
             return null;
         }
-        return Instant.from(UTC_ISO8601_DATE_TIME_FOMATTER.parse(in.nextString())).toEpochMilli();
+        return Instant.from(UTC_ISO8601_DATE_TIME_FORMATTER.parse(in.nextString())).toEpochMilli();
     }
 
 }

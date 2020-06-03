@@ -37,16 +37,19 @@ public class ActivityInstance {
     @SerializedName("isFollowup")
     private boolean isFollowup;
 
+    private transient long participantUserId;
     private transient long instanceId;
     private transient long activityId;
     private transient long createdAtMillis;
     private transient Long firstCompletedAt;
 
     public ActivityInstance(
+            long participantUserId,
             long instanceId, long activityId, ActivityType activityType, String guid, String title, String subtitle,
             String statusTypeCode, Boolean readonly, String activityCode, long createdAtMillis, Long firstCompletedAt,
             boolean isFollowup
     ) {
+        this.participantUserId = participantUserId;
         this.instanceId = instanceId;
         this.activityId = activityId;
         this.activityType = MiscUtil.checkNonNull(activityType, "activityType");
@@ -59,6 +62,10 @@ public class ActivityInstance {
         this.createdAtMillis = createdAtMillis;
         this.firstCompletedAt = firstCompletedAt;
         this.isFollowup = isFollowup;
+    }
+
+    public long getParticipantUserId() {
+        return participantUserId;
     }
 
     public ActivityType getActivityType() {

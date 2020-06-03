@@ -62,6 +62,7 @@ import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionD
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
+import org.broadinstitute.ddp.model.activity.definition.template.TemplateVariable;
 import org.broadinstitute.ddp.model.activity.definition.validation.DateFieldRequiredRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.DateRangeRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.LengthRuleDef;
@@ -83,6 +84,8 @@ import org.broadinstitute.ddp.model.activity.types.SuggestionType;
 import org.broadinstitute.ddp.model.activity.types.TemplateType;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
+import org.broadinstitute.ddp.model.user.UserProfile;
+import org.broadinstitute.ddp.transformers.DateTimeFormatUtils;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.broadinstitute.ddp.util.TestUtil;
 import org.jdbi.v3.core.Handle;
@@ -152,7 +155,10 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
         txt2 = TextQuestionDef.builder(TextInputType.TEXT, "TEXT_DRUG", newTemplate())
                 .setSuggestionType(SuggestionType.DRUG)
                 .build();
-        FormSectionDef textSection = new FormSectionDef(null, TestUtil.wrapQuestions(txt1, txt2));
+        Template txt3Tmpl = Template.html("$foo $DDP_PARTICIPANT_FIRST_NAME's favorite color?");
+        txt3Tmpl.addVariable(TemplateVariable.single("foo", "en", "What is"));
+        TextQuestionDef txt3 = TextQuestionDef.builder(TextInputType.TEXT, "TEXT_WITH_SPECIAL_VARS", txt3Tmpl).build();
+        FormSectionDef textSection = new FormSectionDef(null, TestUtil.wrapQuestions(txt1, txt2, txt3));
 
         PicklistQuestionDef p1 = PicklistQuestionDef
                 .buildSingleSelect(PicklistRenderMode.LIST, "PL_NO_OTHER", newTemplate())
@@ -193,7 +199,9 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
         Template contentTitle = new Template(TemplateType.HTML, null, "<p>hello title</p>");
         Template contentBody = new Template(TemplateType.HTML, null, "<p>hello body</p>");
         ContentBlockDef contentDef = new ContentBlockDef(contentTitle, contentBody);
-        FormSectionDef contentSection = new FormSectionDef(null, Collections.singletonList(contentDef));
+        ContentBlockDef content2 = new ContentBlockDef(null, Template.html(
+                "<p>$DDP_PARTICIPANT_FIRST_NAME<br/>$DDP_PARTICIPANT_LAST_NAME<br/>$DDP_DASHED_DATE</p>"));
+        FormSectionDef contentSection = new FormSectionDef(null, List.of(contentDef, content2));
 
         Template nameTmpl = Template.text("icon section");
         SectionIcon icon1 = new SectionIcon(FormSectionState.COMPLETE, 100, 100);
@@ -412,7 +420,7 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
     public void testGet_textQuestion_withSuggestionType() {
         testFor200()
                 .body("sections.size()", equalTo(activity.getSections().size()))
-                .body("sections[1].blocks.size()", equalTo(2))
+                .body("sections[1].blocks.size()", equalTo(3))
                 .root("sections[1].blocks[1].question")
                 .body("stableId", equalTo("TEXT_DRUG"))
                 .body("inputType", equalTo(TextInputType.TEXT.name()))
@@ -467,7 +475,7 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
         resp.then().assertThat()
                 .body("sections.size()", equalTo(activity.getSections().size()))
                 .body("sections[0].blocks.size()", equalTo(3))
-                .body("sections[1].blocks.size()", equalTo(2))
+                .body("sections[1].blocks.size()", equalTo(3))
                 .body("sections[2].blocks.size()", equalTo(3));
 
         // Check rules are rendered
@@ -695,6 +703,19 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
             TransactionWrapper.useTxn(handle -> assertEquals(1, handle.attach(ActivityInstanceDao.class)
                     .bulkUpdateIsHiddenByActivityIds(testData.getUserId(), false, Set.of(activity.getActivityId()))));
         }
+    }
+
+    @Test
+    public void testSpecialVarsSubstitutions() {
+        UserProfile profile = testData.getProfile();
+        Response resp = testFor200AndExtractResponse();
+
+        String expectedPrompt = "What is " + profile.getFirstName() + "'s favorite color?";
+        resp.then().assertThat().body("sections[1].blocks[2].question.prompt", equalTo(expectedPrompt));
+
+        String expectedBody = String.format("<p>%s<br/>%s<br/>%s</p>", profile.getFirstName(), profile.getLastName(),
+                DateTimeFormatUtils.MONTH_FIRST_DASHED_DATE_FORMATTER.format(LocalDate.now()));
+        resp.then().assertThat().body("sections[5].blocks[1].body", equalTo(expectedBody));
     }
 
     private Response testFor200AndExtractResponse() {

@@ -7,7 +7,10 @@ import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.db.FormInstanceDao;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
+import org.broadinstitute.ddp.db.dao.JdbiFormActivitySetting;
+import org.broadinstitute.ddp.db.dto.FormActivitySettingDto;
 import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.json.PutAnswersResponse;
 import org.broadinstitute.ddp.json.errors.ApiError;
@@ -24,10 +27,8 @@ import org.broadinstitute.ddp.service.WorkflowService;
 import org.broadinstitute.ddp.util.FormActivityStatusUtil;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import spark.Request;
 import spark.Response;
 import spark.Route;
@@ -66,7 +67,7 @@ public class PutFormAnswersRoute implements Route {
 
         PutAnswersResponse resp = TransactionWrapper.withTxn(
                 handle -> {
-                    RouteUtil.findAccessibleInstanceOrHalt(response, handle, userGuid, studyGuid, instanceGuid);
+                    var instanceDto = RouteUtil.findAccessibleInstanceOrHalt(response, handle, userGuid, studyGuid, instanceGuid);
 
                     LanguageDto preferredUserLanguage = RouteUtil.getUserLanguage(request);
                     String isoLangCode = preferredUserLanguage.getIsoCode();
@@ -104,6 +105,16 @@ public class PutFormAnswersRoute implements Route {
                                 .stream().map(failure -> failure.getErrorMessage()).collect(Collectors.toList());
                         LOG.info(msg + ", reasons: {}", validationErrorSummaries);
                         throw ResponseUtil.haltError(response, 422, new ApiError(ErrorCodes.ACTIVITY_VALIDATION, msg));
+                    }
+
+                    boolean shouldSnapshotSubstitutions = handle.attach(JdbiFormActivitySetting.class)
+                            .findSettingDtoByInstanceGuid(instanceGuid)
+                            .map(FormActivitySettingDto::shouldSnapshotSubstitutionsOnSubmit)
+                            .orElse(false);
+                    if (instanceDto.getFirstCompletedAt() == null && shouldSnapshotSubstitutions) {
+                        // This is the first submit for the activity instance, so save a snapshot of substitutions.
+                        handle.attach(ActivityInstanceDao.class)
+                                .saveSubstitutions(form.getInstanceId(), form.buildRenderContext(handle));
                     }
 
                     FormActivityStatusUtil.updateFormActivityStatus(
