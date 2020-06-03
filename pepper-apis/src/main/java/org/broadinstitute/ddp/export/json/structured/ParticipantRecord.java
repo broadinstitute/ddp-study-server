@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import com.google.gson.annotations.SerializedName;
+import org.broadinstitute.ddp.db.dto.InvitationDto;
 import org.broadinstitute.ddp.db.dto.MedicalProviderDto;
 import org.broadinstitute.ddp.model.address.MailAddress;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
@@ -24,6 +25,8 @@ public class ParticipantRecord {
     private List<ProviderRecord> medicalProviders;
     @SerializedName("activities")
     private List<ActivityInstanceRecord> activityInstanceRecords;
+    @SerializedName("invitations")
+    private List<InvitationRecord> invitations;
     @SerializedName("dsm")
     private DsmComputedRecord dsmComputedRecord;
     @SerializedName("proxies")
@@ -37,7 +40,8 @@ public class ParticipantRecord {
             List<MedicalProviderDto> medicalProviders,
             MailAddress mailAddress,
             DsmComputedRecord dsmComputedRecord,
-            List<String> proxies
+            List<String> proxies,
+            List<InvitationDto> invitations
     ) {
         this.status = enrollmentStatus;
         this.statusTimestamp = enrollmentStatusTimestamp;
@@ -54,5 +58,9 @@ public class ParticipantRecord {
 
         this.dsmComputedRecord = dsmComputedRecord;
         this.proxies = proxies;
+
+        this.invitations = invitations.stream()
+                .map(InvitationRecord::new)
+                .collect(Collectors.toList());
     }
 }

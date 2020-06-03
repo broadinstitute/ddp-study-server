@@ -33,6 +33,12 @@ public interface InvitationDao extends SqlObject {
     @RegisterConstructorMapper(InvitationDto.class)
     Optional<InvitationDto> findByInvitationGuid(@Bind("studyId") long studyId, @Bind("guid") String invitationGuid);
 
+    @SqlQuery("select i.*, it.invitation_type_code from invitation as i"
+            + "  join invitation_type as it on i.invitation_type_id = it.invitation_type_id"
+            + " where i.study_id = :studyId")
+    @RegisterConstructorMapper(InvitationDto.class)
+    List<InvitationDto> findAllInvitations(@Bind("studyId") long studyId);
+
     default void saveNotes(long invitationId, String notes) {
         DBUtils.checkUpdate(1, getHandle().attach(InvitationSql.class)
                 .updateNotes(invitationId, notes));
