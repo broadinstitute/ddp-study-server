@@ -4,6 +4,7 @@ import javax.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -21,6 +22,7 @@ import org.broadinstitute.ddp.content.RenderValueProvider;
 import org.broadinstitute.ddp.content.Renderable;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.exception.DDPException;
+import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
 import org.broadinstitute.ddp.model.activity.types.FormType;
@@ -336,5 +338,43 @@ public final class FormInstance extends ActivityInstance {
             startingNumber = setNumberables(getClosing().getBlocks(), startingNumber);
         }
         return startingNumber;
+    }
+
+    /**
+     * Collect all answers that are within hidden blocks.
+     *
+     * @return all hidden answers
+     */
+    public List<Answer> collectHiddenAnswers() {
+        List<Answer> hidden = new ArrayList<>();
+        for (var section : getAllSections()) {
+            for (var block : section.getBlocks()) {
+                if (!block.isShown()) {
+                    hidden.addAll(collectAnswers(block));
+                }
+                List<FormBlock> children = new ArrayList<>();
+                if (block.getBlockType() == BlockType.CONDITIONAL) {
+                    children = ((ConditionalBlock) block).getNested();
+                } else if (block.getBlockType() == BlockType.GROUP) {
+                    children = ((GroupBlock) block).getNested();
+                }
+                for (FormBlock child : children) {
+                    if (!child.isShown()) {
+                        hidden.addAll(collectAnswers(child));
+                    }
+                }
+            }
+        }
+        return hidden;
+    }
+
+    private List<Answer> collectAnswers(FormBlock block) {
+        if (block.getBlockType() == BlockType.QUESTION) {
+            return ((QuestionBlock) block).getQuestion().getAnswers();
+        } else if (block.getBlockType() == BlockType.CONDITIONAL) {
+            return ((ConditionalBlock) block).getControl().getAnswers();
+        } else {
+            return Collections.emptyList();
+        }
     }
 }
