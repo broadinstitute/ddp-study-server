@@ -156,6 +156,10 @@ public interface UserDao extends SqlObject {
         return numDeleted;
     }
 
+    default void assignAuth0UserId(String userGuid, String auth0UserId) {
+        DBUtils.checkUpdate(1, updateAuth0UserId(userGuid, auth0UserId));
+    }
+
     @SqlUpdate("update user set auth0_user_id  = :auth0UserId where guid = :guid")
     int updateAuth0UserId(@Bind("guid") String guid, @Bind("auth0UserId") String auth0UserId);
 

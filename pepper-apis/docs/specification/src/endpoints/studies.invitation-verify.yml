@@ -24,3 +24,5 @@ post:
   responses:
     200:
       description: the invitation was marked as verified
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'
