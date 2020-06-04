@@ -156,3 +156,24 @@ JoinMailingListPayload:
     application/json:
       schema:
         $ref: '../pepper.yml#/components/schemas/JoinMailingListPayload'
+UpdateUserLastVisitedSectionRequestBody:
+  description: to update user's last visited section
+  required: true
+  content:
+    application/json:
+      schema:
+        type: object
+        required:
+          - userGuid
+          - studyGuid
+          - instanceGuid
+          - lastVisitedSection
+        properties:
+          userGuid:
+            type: string
+          studyGuid:
+            type: string
+          instanceGuid:
+            type: string
+          lastVisitedSection:
+            type: integer

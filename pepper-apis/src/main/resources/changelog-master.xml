@@ -202,4 +202,5 @@
     <include file="db-changes/schema/DDP-4655-kit-zip-codes.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/study-admin.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-4475-modify-studylanguage.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/add-last-visited-activity-section-column-to-activity-instance.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

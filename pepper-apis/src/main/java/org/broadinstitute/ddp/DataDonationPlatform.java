@@ -111,6 +111,7 @@ import org.broadinstitute.ddp.route.InvitationVerifyRoute;
 import org.broadinstitute.ddp.route.JoinMailingListRoute;
 import org.broadinstitute.ddp.route.ListCancersRoute;
 import org.broadinstitute.ddp.route.PatchFormAnswersRoute;
+import org.broadinstitute.ddp.route.PatchLastVisitedActivitySectionRoute;
 import org.broadinstitute.ddp.route.PatchMedicalProviderRoute;
 import org.broadinstitute.ddp.route.PatchProfileRoute;
 import org.broadinstitute.ddp.route.PostMedicalProviderRoute;
@@ -398,6 +399,7 @@ public class DataDonationPlatform {
                 new GetActivityInstanceRoute(actInstService, activityValidationService, interpreter),
                 responseSerializer
         );
+        patch(API.USER_LAST_VISITED_SECTION, new PatchLastVisitedActivitySectionRoute(actInstService), responseSerializer);
 
         // User activity answers routes
         FormActivityService formService = new FormActivityService(interpreter);

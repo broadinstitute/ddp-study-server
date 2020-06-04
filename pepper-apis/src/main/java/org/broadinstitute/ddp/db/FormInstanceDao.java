@@ -114,6 +114,7 @@ public class FormInstanceDao {
                 Long lastUpdatedTemplateId = (Long)rs.getObject(FormActivitySettingTable.LAST_UPDATED_TEXT_TEMPLATE_ID);
                 LocalDateTime lastUpdated = rs.getObject(FormActivitySettingTable.LAST_UPDATED, LocalDateTime.class);
                 boolean isFollowup = rs.getBoolean(StudyActivityTable.IS_FOLLOWUP);
+                int lastVisitedActivitySection = rs.getInt(ActivityInstanceTable.LAST_VISITED_ACTIVITY_SECTION);
 
                 form = new FormInstance(
                         instanceId,
@@ -133,7 +134,8 @@ public class FormInstanceDao {
                         firstCompletedAt,
                         lastUpdatedTemplateId,
                         lastUpdated,
-                        isFollowup
+                        isFollowup,
+                        lastVisitedActivitySection
                 );
 
                 if (rs.next()) {
