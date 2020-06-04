@@ -69,6 +69,8 @@ public class RouteConstants {
                 PathParam.USER_GUID, PathParam.STUDY_GUID);
         public static final String USER_ACTIVITIES_INSTANCE = fmt(BASE + "/user/%s/studies/%s/activities/%s",
                 PathParam.USER_GUID, PathParam.STUDY_GUID, PathParam.INSTANCE_GUID);
+        public static final String USER_LAST_VISITED_SECTION = fmt(BASE + "/user/%s/studies/%s/activities/%s/lastVisitedSection",
+                PathParam.USER_GUID, PathParam.STUDY_GUID, PathParam.INSTANCE_GUID);
         public static final String USER_ACTIVITY_ANSWERS = fmt(BASE + "/user/%s/studies/%s/activities/%s/answers",
                 PathParam.USER_GUID, PathParam.STUDY_GUID, PathParam.INSTANCE_GUID);
         public static final String USER_MEDICAL_PROVIDERS = fmt(
@@ -177,6 +179,7 @@ public class RouteConstants {
         public static final String TYPEAHEAD_QUERY = "q";
         public static final String TYPEAHEAD_QUERY_LIMIT = "limit";
         public static final String ERROR_CODE = "errorCode";
+        public static final String LAST_VISITED_ACTIVITY_SECTION = "lastVisitedActivitySection";
     }
 
     public static final class FireCloud {

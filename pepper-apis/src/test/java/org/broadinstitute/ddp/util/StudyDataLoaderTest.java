@@ -247,7 +247,7 @@ public class StudyDataLoaderTest {
                 1L, 2L, null, false, null, false);
 
         ActivityInstanceDto instanceDto = new ActivityInstanceDto(1L, pretendInstanceGuid, 1L, 1L, 1L,
-                1L, 1L, true, false, null, null, null, true);
+                1L, 1L, true, false, null, null, null, true, 0);
 
         mockDataLoader.loadReleaseSurveyData(
                 mockHandle,
@@ -340,7 +340,7 @@ public class StudyDataLoaderTest {
         StudyDto studyDto = new StudyDto(pretendStudyId, pretendStudyGuid, "MBC", null, null,
                 1L, 2L, null, false, null, false);
         ActivityInstanceDto instanceDto = new ActivityInstanceDto(1L, pretendInstanceGuid, 1L, 1L, 1L,
-                1L, 1L, true, false, null, null, null, true);
+                1L, 1L, true, false, null, null, null, true, 0);
         mockDataLoader.loadBloodReleaseSurveyData(
                 mockHandle,
                 sourceDataMap.get("bdreleasesurvey"),
@@ -399,7 +399,7 @@ public class StudyDataLoaderTest {
                 1L, 2L, null, false, null, false);
 
         ActivityInstanceDto instanceDto = new ActivityInstanceDto(1L, pretendInstanceGuid, 1L, 1L, 1L,
-                1L, 1L, true, false, null, null, null, true);
+                1L, 1L, true, false, null, null, null, true, 0);
 
         mockDataLoader.loadAboutYouSurveyData(
                 mockHandle,
@@ -731,7 +731,7 @@ public class StudyDataLoaderTest {
                 1L, 2L, null, false, null, false);
 
         ActivityInstanceDto instanceDto = new ActivityInstanceDto(1L, pretendInstanceGuid, 1L, 1L, 1L,
-                1L, 1L, true, false, null, null, null, true);
+                1L, 1L, true, false, null, null, null, true, 0);
 
         doCallRealMethod().when(mockDataLoader).loadFollowupSurveyData(
                 any(Handle.class),
@@ -857,7 +857,7 @@ public class StudyDataLoaderTest {
                 1L, 2L, null, false, null, false);
 
         ActivityInstanceDto instanceDto = new ActivityInstanceDto(1L, pretendInstanceGuid, 1L, 1L, 1L,
-                1L, 1L, true, false, null, null, null, true);
+                1L, 1L, true, false, null, null, null, true, 0);
 
         doCallRealMethod().when(mockDataLoader).loadTissueConsentSurveyData(
                 any(Handle.class),
@@ -919,7 +919,7 @@ public class StudyDataLoaderTest {
                 1L, 2L, null, false, null, false);
 
         ActivityInstanceDto instanceDto = new ActivityInstanceDto(1L, pretendInstanceGuid, 1L, 1L, 1L,
-                1L, 1L, true, false, null, null, null, true);
+                1L, 1L, true, false, null, null, null, true, 0);
 
         doCallRealMethod().when(mockDataLoader).loadConsentSurveyData(
                 any(Handle.class),

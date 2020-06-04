@@ -195,4 +195,5 @@
     <include file="db-changes/schema/DDP-4070-drop-not-null-constraint-for-is-readonly-column.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-4502-remove-study-password-requirements.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-4511-change-false-values-to-null-for-is-readonly.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/add-last-visited-activity-section-column-to-activity-instance.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
