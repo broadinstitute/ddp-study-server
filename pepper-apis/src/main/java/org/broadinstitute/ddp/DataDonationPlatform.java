@@ -171,6 +171,7 @@ public class DataDonationPlatform {
     public static final int DEFAULT_RATE_LIMIT_MAX_QUERIES_PER_SECOND = 10;
     public static final int DEFAULT_RATE_LIMIT_BURST = 15;
     private static final Logger LOG = LoggerFactory.getLogger(DataDonationPlatform.class);
+    private static final String GAE_START_HOOK_ENDPOINT = "/_ah/start";
     private static final String[] CORS_HTTP_METHODS = new String[] {"GET", "PUT", "POST", "OPTIONS", "PATCH"};
     private static final String[] CORS_HTTP_HEADERS = new String[] {"Content-Type", "Authorization", "X-Requested-With",
             "Content-Length", "Accept", "Origin", ""};
@@ -277,6 +278,11 @@ public class DataDonationPlatform {
             LOG.warn("No rate limit values given.  Rate limiting is disabled.");
         }
 
+        // Respond to GAE lifecycle call.
+        get(GAE_START_HOOK_ENDPOINT, (request, response) -> {
+            response.status(200);
+            return "";
+        });
 
         before("*", new HttpHeaderMDCFilter(X_FORWARDED_FOR));
         before("*", new MDCLogBreadCrumbFilter());
