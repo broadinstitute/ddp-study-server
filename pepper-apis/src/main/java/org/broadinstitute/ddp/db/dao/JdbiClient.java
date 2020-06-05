@@ -57,8 +57,7 @@ public interface JdbiClient extends SqlObject {
                                                      @Bind("auth0Domain") String auth0Domain);
 
     @SqlQuery("SELECT "
-            + "     c.client_id, c.auth0_client_id, c.auth0_signing_secret, "
-            + "     c.web_password_redirect_url, c.is_revoked, c.auth0_tenant_id "
+            + "     c.*, t.auth0_domain "
             + "FROM "
             + "     client c, auth0_tenant t "
             + "WHERE "
@@ -72,12 +71,11 @@ public interface JdbiClient extends SqlObject {
 
     // Left for backward compatiblity
     @SqlQuery("SELECT "
-            + "     client_id, auth0_client_id, auth0_signing_secret, "
-            + "     web_password_redirect_url, is_revoked, auth0_tenant_id "
+            + "     c.*, t.auth0_domain "
             + "FROM "
-            + "     client c "
+            + "     client c, auth0_tenant t "
             + "WHERE "
-            + "     auth0_client_id = :auth0ClientId"
+            + "     c.auth0_client_id = :auth0ClientId AND t.auth0_tenant_id = c.auth0_tenant_id"
     )
     @RegisterConstructorMapper(ClientDto.class)
     Optional<ClientDto> getClientByAuth0ClientId(
@@ -86,12 +84,11 @@ public interface JdbiClient extends SqlObject {
 
     // Left for backward compatiblity
     @SqlQuery("SELECT "
-            + "     client_id, auth0_client_id, auth0_signing_secret, "
-            + "     web_password_redirect_url, is_revoked, auth0_tenant_id "
+            + "     c.*, t.auth0_domain "
             + "FROM "
-            + "     client c "
+            + "     client c, auth0_tenant t "
             + "WHERE "
-            + "     auth0_client_id = :auth0ClientId"
+            + "     c.auth0_client_id = :auth0ClientId AND t.auth0_tenant_id = c.auth0_tenant_id"
     )
     @RegisterConstructorMapper(ClientDto.class)
     List<ClientDto> getClientsByAuth0ClientId(
@@ -135,8 +132,8 @@ public interface JdbiClient extends SqlObject {
             @Bind("auth0TenantId") long auth0TenantId
     );
 
-    @SqlQuery("SELECT client_id,auth0_client_id,auth0_signing_secret,web_password_redirect_url,is_revoked,auth0_tenant_id"
-            + "  FROM client WHERE auth0_client_id = :auth0ClientId AND auth0_tenant_id = :auth0TenantId")
+    @SqlQuery("SELECT c.*, (select auth0_domain from auth0_tenant as t where t.auth0_tenant_id = c.auth0_tenant_id) as auth0_domain"
+            + "  FROM client c WHERE c.auth0_client_id = :auth0ClientId AND c.auth0_tenant_id = :auth0TenantId")
     @RegisterConstructorMapper(ClientDto.class)
     Optional<ClientDto> findByAuth0ClientIdAndAuth0TenantId(
             @Bind("auth0ClientId") String auth0ClientId,

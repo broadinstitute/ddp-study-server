@@ -17,6 +17,7 @@ import com.typesafe.config.Config;
 import io.restassured.RestAssured;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.Header;
+import org.apache.http.HttpStatus;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.util.EntityUtils;
@@ -154,8 +155,25 @@ public class AuthFilterRouteTest extends IntegrationTestSuite.TestCase {
                         .addHeader(authHeader)
                         .execute()
                         .handleResponse(res -> {
-                            Assert.assertEquals(401, res.getStatusLine().getStatusCode());
+                            Assert.assertEquals(HttpStatus.SC_UNAUTHORIZED, res.getStatusLine().getStatusCode());
                             Assert.assertTrue(StringUtils.isEmpty(EntityUtils.toString(res.getEntity())));
+                            return null;
+                        });
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+
+    private void assert401(String endpoint, Header authHeader) {
+        List<Function<String, Request>> methods = List.of(Request::Get, Request::Post, Request::Patch, Request::Put);
+        methods.forEach(method -> {
+            try {
+                method.apply(endpoint)
+                        .addHeader(authHeader)
+                        .execute()
+                        .handleResponse(res -> {
+                            Assert.assertEquals(HttpStatus.SC_UNAUTHORIZED, res.getStatusLine().getStatusCode());
                             return null;
                         });
             } catch (IOException e) {
@@ -190,7 +208,7 @@ public class AuthFilterRouteTest extends IntegrationTestSuite.TestCase {
                 + getStudyEndpoint(generatedTestDataUser1.getUserGuid(), generatedTestDataUser1.getStudyGuid()));
 
         int statusCode = activitiesGetRequest.execute().returnResponse().getStatusLine().getStatusCode();
-        Assert.assertTrue((statusCode == 200));
+        Assert.assertTrue((statusCode == HttpStatus.SC_OK));
 
 
         // Can user2 access study2?
@@ -199,19 +217,19 @@ public class AuthFilterRouteTest extends IntegrationTestSuite.TestCase {
                 + getStudyEndpoint(generatedTestDataUser2.getUserGuid(), generatedTestDataUser2.getStudyGuid()));
 
         statusCode = activitiesGetRequest.execute().returnResponse().getStatusLine().getStatusCode();
-        Assert.assertTrue((statusCode == 200));
+        Assert.assertTrue((statusCode == HttpStatus.SC_OK));
 
         // Can user1 access study2?
         activitiesGetRequest = RouteTestUtil.buildAuthorizedGetRequest(user1IdToken, RouteTestUtil.getTestingBaseUrl()
                 + getStudyEndpoint(generatedTestDataUser2.getUserGuid(), generatedTestDataUser2.getStudyGuid()));
 
         statusCode = activitiesGetRequest.execute().returnResponse().getStatusLine().getStatusCode();
-        Assert.assertTrue((statusCode == 401));
+        Assert.assertTrue((statusCode == HttpStatus.SC_UNAUTHORIZED));
     }
 
     @Test
     public void testProfileRequestsFailsWithNoToken() {
-        assert401NoBodyForStandardVerbs(buildProfileUrl(), null);
+        assert401(buildProfileUrl(), null);
     }
 
     @Test
@@ -227,13 +245,13 @@ public class AuthFilterRouteTest extends IntegrationTestSuite.TestCase {
     @Test
     public void testProfileRequestsFailsWithRevokedClient() throws Exception {
         RouteTestUtil.revokeTestClient();
-        assert401NoBodyForStandardVerbs(buildProfileUrl(), RouteTestUtil.buildTestUserAuthHeader());
+        assert401(buildProfileUrl(), RouteTestUtil.buildTestUserAuthHeader());
     }
 
     @Test
     public void testProfileRequestsFailsWithLockedUserAccount() throws Exception {
         RouteTestUtil.disableTestUserAccount(!isAdmin);
-        assert401NoBodyForStandardVerbs(buildProfileUrl(), RouteTestUtil.buildTestUserAuthHeader());
+        assert401(buildProfileUrl(), RouteTestUtil.buildTestUserAuthHeader());
     }
 
     @Test
@@ -243,16 +261,16 @@ public class AuthFilterRouteTest extends IntegrationTestSuite.TestCase {
                 RouteTestUtil.getTestingBaseUrl() + getBaseUserEndpoint(generatedTestDataUser1.getUserGuid()) + "/profile");
 
         int statusCode = profileGetRequest.execute().returnResponse().getStatusLine().getStatusCode();
-        Assert.assertTrue((statusCode == 200));
+        Assert.assertTrue((statusCode == HttpStatus.SC_OK));
     }
 
     @Test
     public void testProfilePostRequestPassesAuthFilterWithGoodToken() throws Exception {
-        String profilePayload = new Gson().toJson(new Profile(null, null, null, null, "en", null, null));
+        String profilePayload = new Gson().toJson(new Profile(null, null, "en", null, null));
         Request saveProfileRequest =
                 RouteTestUtil.buildAuthorizedPostRequest(testUserToken, buildProfileUrl(), profilePayload);
         int statusCode = saveProfileRequest.execute().returnResponse().getStatusLine().getStatusCode();
-        Assert.assertTrue((statusCode == 201));
+        Assert.assertTrue((statusCode == HttpStatus.SC_CREATED));
     }
 
     // todo arz duplicate study and participants route security with good token, disabled client, disabled user
@@ -261,7 +279,7 @@ public class AuthFilterRouteTest extends IntegrationTestSuite.TestCase {
 
     @Test
     public void testGovernedStudyParticipants_requestFailsWithNoToken() {
-        assert401NoBodyForStandardVerbs(buildGovernedStudyParticipantsUrl(), null);
+        assert401(buildGovernedStudyParticipantsUrl(), null);
     }
 
     @Test
@@ -277,13 +295,13 @@ public class AuthFilterRouteTest extends IntegrationTestSuite.TestCase {
     @Test
     public void testGovernedStudyParticipants_requestFailsWithRevokedClient() throws Exception {
         RouteTestUtil.revokeTestClient();
-        assert401NoBodyForStandardVerbs(buildGovernedStudyParticipantsUrl(), RouteTestUtil.buildTestUserAuthHeader());
+        assert401(buildGovernedStudyParticipantsUrl(), RouteTestUtil.buildTestUserAuthHeader());
     }
 
     @Test
     public void testGovernedStudyParticipants_requestFailsWithLockedUserAccount() throws Exception {
         RouteTestUtil.disableTestUserAccount(!isAdmin);
-        assert401NoBodyForStandardVerbs(buildGovernedStudyParticipantsUrl(), RouteTestUtil.buildTestUserAuthHeader());
+        assert401(buildGovernedStudyParticipantsUrl(), RouteTestUtil.buildTestUserAuthHeader());
     }
 
     @Test
@@ -291,7 +309,7 @@ public class AuthFilterRouteTest extends IntegrationTestSuite.TestCase {
         RestAssured.given().auth().oauth2(testUserToken)
                 .when().get(buildGovernedStudyParticipantsUrl())
                 .then().assertThat()
-                .statusCode(Matchers.isOneOf(200, 422));
+                .statusCode(Matchers.isOneOf(HttpStatus.SC_OK, HttpStatus.SC_UNPROCESSABLE_ENTITY));
     }
 
     @Test
@@ -301,12 +319,12 @@ public class AuthFilterRouteTest extends IntegrationTestSuite.TestCase {
         RestAssured.given().auth().oauth2(testUserToken)
                 .when().get(url)
                 .then().assertThat()
-                .statusCode(401);
+                .statusCode(HttpStatus.SC_UNAUTHORIZED);
     }
 
     @Test
     public void testStudyRequestsFailsWithNoToken() {
-        assert401NoBodyForStandardVerbs(buildStudyUrl(), null);
+        assert401(buildStudyUrl(), null);
     }
 
     @Test
@@ -316,32 +334,32 @@ public class AuthFilterRouteTest extends IntegrationTestSuite.TestCase {
 
     @Test
     public void testStudyRequestsFailsWithExpiredToken() {
-        assert401NoBodyForStandardVerbs(buildStudyUrl(), EXPIRED_AUTH_HEADER);
+        assert401(buildStudyUrl(), EXPIRED_AUTH_HEADER);
     }
 
 
     @Test
     public void testStudyRequestsFailsWithRevokedClient() throws Exception {
         RouteTestUtil.revokeTestClient();
-        assert401NoBodyForStandardVerbs(buildStudyUrl(), RouteTestUtil.buildTestUserAuthHeader());
+        assert401(buildStudyUrl(), RouteTestUtil.buildTestUserAuthHeader());
     }
 
     @Test
     public void testStudyRequestFailsWithLockedUserAccount() throws Exception {
         RouteTestUtil.disableTestUserAccount(!isAdmin);
-        assert401NoBodyForStandardVerbs(buildStudyUrl(), RouteTestUtil.buildTestUserAuthHeader());
+        assert401(buildStudyUrl(), RouteTestUtil.buildTestUserAuthHeader());
     }
 
     @Test
     public void testStudyRequestFailsWithClientThatDoesNotHaveAccessToStudy() throws Exception {
-        assert401NoBodyForStandardVerbs(buildStudy2Url(), RouteTestUtil.buildTestUserAuthHeader());
+        assert401(buildStudy2Url(), RouteTestUtil.buildTestUserAuthHeader());
     }
 
     @Test
     public void testStudyActivitiesGetRequestPassesAuthFilterWithGoodToken() throws Exception {
         Request activitiesGetRequest = RouteTestUtil.buildAuthorizedGetRequest(testUserToken, buildStudyUrl());
         int statusCode = activitiesGetRequest.execute().returnResponse().getStatusLine().getStatusCode();
-        Assert.assertEquals(200, statusCode);
+        Assert.assertEquals(HttpStatus.SC_OK, statusCode);
     }
 
     @After

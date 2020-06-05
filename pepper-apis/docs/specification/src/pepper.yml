@@ -60,6 +60,8 @@ paths:
     $ref: 'endpoints/admin.studies.invitation-lookup.yml'
   /admin/studies/{study}/participants:
     $ref: 'endpoints/admin.studies.participants.yml'
+  /admin/studies/{study}/user/{user}/login-account:
+    $ref: 'endpoints/admin.studies.user.login-account.yml'
   /studies/{study}:
     $ref: 'endpoints/studies.study.yml'
   /studies/{study}/invitation-check:

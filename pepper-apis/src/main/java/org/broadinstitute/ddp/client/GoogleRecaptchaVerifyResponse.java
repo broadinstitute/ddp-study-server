@@ -19,7 +19,7 @@ public class GoogleRecaptchaVerifyResponse {
      */
     private boolean success;
     /**
-     * the score for this request (0.0 - 1.0)
+     *Applicable for Recaptcha v3 only. the score for this request (0.0 - 1.0)
      */
     private Double score;
     /**
@@ -33,7 +33,7 @@ public class GoogleRecaptchaVerifyResponse {
      */
     private String hostname;
     /**
-     * the action name for this request
+     * Applicable for Recaptcha v3 only. the action name for this request
      */
     private String action;
     /**

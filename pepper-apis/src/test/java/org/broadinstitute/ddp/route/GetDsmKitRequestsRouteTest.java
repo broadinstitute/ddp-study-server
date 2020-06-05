@@ -34,7 +34,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-public class GetDsmKitRequestRouteTest extends DsmRouteTest {
+public class GetDsmKitRequestsRouteTest extends DsmRouteTest {
     private static final int NUM_TEST_KIT_REQUESTS = 4;
 
     private Set<Long> requestKitsIdsToDelete = new HashSet<>();
@@ -121,7 +121,9 @@ public class GetDsmKitRequestRouteTest extends DsmRouteTest {
                     jsonItem.getAsJsonPrimitive("participantId").getAsString());
             Assert.assertTrue(jsonItem.has("kitType"));
             Assert.assertTrue(jsonItem.has("kitRequestId"));
-
+            Assert.assertTrue(jsonItem.has("needsApproval"));
+            boolean actualNeedsApproval = jsonItem.get("needsApproval").getAsBoolean();
+            Assert.assertFalse("should be set to false", actualNeedsApproval);
         });
         List<DsmKitRequest> results = new Gson().fromJson(jsonArray, listType);
         assertTrue(results.stream().allMatch(item -> expectedParticipantId

@@ -54,3 +54,5 @@ post:
         application/json:
           schema:
             $ref: '../pepper.yml#/components/schemas/Error.NotFound'
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'

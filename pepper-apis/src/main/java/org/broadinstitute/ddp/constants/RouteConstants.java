@@ -34,16 +34,21 @@ public class RouteConstants {
                 fmt(ADMIN_BASE + "/studies/%s/invitation-lookup", PathParam.STUDY_GUID);
         public static final String ADMIN_STUDY_INVITATION_DETAILS =
                 fmt(ADMIN_BASE + "/studies/%s/invitation-details", PathParam.STUDY_GUID);
+        public static final String ADMIN_STUDY_USER_LOGIN_ACCOUNT =
+                fmt(ADMIN_BASE + "/studies/%s/user/%s/login-account", PathParam.STUDY_GUID, PathParam.USER_GUID);
 
         public static final String STUDY_ALL = BASE + "/studies";
         public static final String STUDY_DETAIL = fmt(STUDY_ALL + "/%s", PathParam.STUDY_GUID);
         public static final String PARTICIPANTS_INFO_FOR_STUDY =
                 fmt(STUDY_ALL + "/participant-info" + "/%s", PathParam.STUDY_GUID);
+        public static final String STUDY_LANGUAGES = fmt(BASE + "/studies/%s/languages", PathParam.STUDY_GUID);
         public static final String INVITATION_VERIFY = fmt(BASE + "/studies/%s/invitation-verify", PathParam.STUDY_GUID);
         public static final String INVITATION_CHECK = fmt(BASE + "/studies/%s/invitation-check", PathParam.STUDY_GUID);
 
         public static final String USER_ALL = fmt(BASE + "/user/%s/*", PathParam.USER_GUID);
         public static final String USER_SPECIFIC = fmt(BASE + "/user/%s", PathParam.USER_GUID);
+        public static final String UPDATE_USER_PASSWORD = USER_SPECIFIC + "/password";
+        public static final String UPDATE_USER_EMAIL = USER_SPECIFIC + "/email";
 
         public static final String USER_PROFILE = fmt(BASE + "/user/%s/profile", PathParam.USER_GUID);
 
@@ -148,8 +153,6 @@ public class RouteConstants {
         );
 
         public static final String STUDY_PASSWORD_POLICY = STUDY_DETAIL + "/password-policy";
-        public static final String UPDATE_USER_PASSWORD = USER_SPECIFIC + "/password";
-        public static final String UPDATE_USER_EMAIL = USER_SPECIFIC + "/email";
     }
 
     public static final class PathParam {

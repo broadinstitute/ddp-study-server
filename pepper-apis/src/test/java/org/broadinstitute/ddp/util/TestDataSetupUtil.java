@@ -99,6 +99,7 @@ import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.DateFieldType;
 import org.broadinstitute.ddp.model.activity.types.DateRenderMode;
+import org.broadinstitute.ddp.model.activity.types.DsmNotificationEventType;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.activity.types.FormType;
@@ -545,10 +546,10 @@ public class TestDataSetupUtil {
                 encryptedSecret);
 
         long studyId = handle.attach(JdbiUmbrellaStudy.class).insert(studyName, studyGuid, umbrellaId, webBaseUrl,
-                auth0TenantDto.getId(), studyPrecision, shareParticipantLocation, null);
+                auth0TenantDto.getId(), studyPrecision, shareParticipantLocation, null, null);
         return new StudyDto(studyId, studyGuid, studyName, null, webBaseUrl, umbrellaId, auth0TenantDto.getId(),
                 studyPrecision,
-                shareParticipantLocation, null, false);
+                shareParticipantLocation, null, null, false);
     }
 
     public static FormActivityDef generateTestFormActivityForUser(Handle handle, String userGuid, String studyGuid) {
@@ -622,7 +623,8 @@ public class TestDataSetupUtil {
         // setup a status change event trigger so that when status changes, an event is queued
         long eventTriggerId = eventTriggerDao.insert(EventTriggerType.DSM_NOTIFICATION);
 
-        Optional<Long> dsmNotificationEventTypeId = dsmNotificationEventTypeDao.findIdByCode(JdbiDsmNotificationEventType.SALIVA_RECEIVED);
+        Optional<Long> dsmNotificationEventTypeId = dsmNotificationEventTypeDao
+                .findIdByCode(DsmNotificationEventType.SALIVA_RECEIVED.name());
 
         // create an instance of the DSM notication trigger subclass
         handle.attach(JdbiDsmNotificationTrigger.class).insert(

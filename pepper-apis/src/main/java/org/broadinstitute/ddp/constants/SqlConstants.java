@@ -136,6 +136,7 @@ public class SqlConstants {
         public static final String READONLY_HINT_TEMPLATE_ID = "readonly_hint_template_id";
         public static final String LAST_UPDATED_TEXT_TEMPLATE_ID = "last_updated_text_template_id";
         public static final String LAST_UPDATED = "last_updated";
+        public static final String SNAPSHOT_SUBSTITUTIONS_ON_SUBMIT = "snapshot_substitutions_on_submit";
     }
 
     public static final class ListStyleHintTable {

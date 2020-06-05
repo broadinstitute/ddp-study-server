@@ -172,10 +172,11 @@ public class I18nContentRenderer {
      * @param handle      the database handle
      * @param templateIds the set of template ids
      * @param langCodeId  the language code id
+     * @param context     the additional context containing variable substitutions to use
      * @return mapping of template id to its rendered template string
      * @throws NoSuchElementException when any one of the templates is not found
      */
-    public Map<Long, String> bulkRender(Handle handle, Set<Long> templateIds, long langCodeId) {
+    public Map<Long, String> bulkRender(Handle handle, Set<Long> templateIds, long langCodeId, Map<String, String> context) {
         if (templateIds == null || templateIds.isEmpty()) {
             return new HashMap<>();
         }
@@ -197,10 +198,18 @@ public class I18nContentRenderer {
                         templateId, vars.size(), data.getVarCount());
             }
 
+            // Var count is the count of explicitly declared variables in template,
+            // which excludes special vars. So we add context here after the count check.
+            vars.putAll(context);
+
             rendered.put(templateId, renderToString(data.getText(), vars));
         }
 
         return rendered;
+    }
+
+    public Map<Long, String> bulkRender(Handle handle, Set<Long> templateIds, long langCodeId) {
+        return bulkRender(handle, templateIds, langCodeId, Collections.emptyMap());
     }
 
     /**

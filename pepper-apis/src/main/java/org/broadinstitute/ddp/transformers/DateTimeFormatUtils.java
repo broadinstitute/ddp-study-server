@@ -15,10 +15,11 @@ public class DateTimeFormatUtils {
     private static final String YYYY_MM_DASH_SEPARATED_FORMAT = "%04d-%02d";
     private static final String YYYY_MM_DD_DASH_SEPARATED_FORMAT = "%04d-%02d-%02d";
 
-    public static final DateTimeFormatter UTC_ISO8601_DATE_TIME_FOMATTER = DateTimeFormatter.ISO_DATE_TIME;
+    public static final DateTimeFormatter UTC_ISO8601_DATE_TIME_FORMATTER = DateTimeFormatter.ISO_DATE_TIME;
     public static final DateTimeFormatter DEFAULT_DATE_FORMATTER = DateTimeFormatter.ofPattern(DEFAULT_DATE_PATTERN);
     public static final DateTimeFormatter DEFAULT_MONTH_YEAR_FORMATTER = DateTimeFormatter.ofPattern("MM/yyyy");
     public static final DateTimeFormatter DEFAULT_MONTH_DAY_FORMATTER = DateTimeFormatter.ofPattern("MM/dd");
+    public static final DateTimeFormatter MONTH_FIRST_DASHED_DATE_FORMATTER = DateTimeFormatter.ofPattern("MM-dd-uuuu");
 
     public static ZonedDateTime convertUtcMillisToUtcZonedDateTime(long timeInMillis) {
         return ZonedDateTime.ofInstant(Instant.ofEpochMilli(timeInMillis), ZoneId.of("UTC"));
@@ -29,7 +30,7 @@ public class DateTimeFormatUtils {
     }
 
     public static String convertUtcMillisToUtcIso8601String(long timeInMillis) {
-        return UTC_ISO8601_DATE_TIME_FOMATTER.format(convertUtcMillisToUtcZonedDateTime(timeInMillis));
+        return UTC_ISO8601_DATE_TIME_FORMATTER.format(convertUtcMillisToUtcZonedDateTime(timeInMillis));
     }
 
     // DSM-specific format

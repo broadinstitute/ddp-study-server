@@ -1,8 +1,9 @@
 package org.broadinstitute.ddp.studybuilder;
 
 import java.nio.file.Path;
+import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 import com.typesafe.config.Config;
@@ -13,6 +14,7 @@ import org.broadinstitute.ddp.db.dao.JdbiClient;
 import org.broadinstitute.ddp.db.dao.JdbiClientUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
 import org.broadinstitute.ddp.db.dao.JdbiOLCPrecision;
+import org.broadinstitute.ddp.db.dao.JdbiRevision;
 import org.broadinstitute.ddp.db.dao.JdbiSendgridConfiguration;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrella;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
@@ -29,6 +31,7 @@ import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.UmbrellaDto;
 import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.exception.DDPException;
+import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.address.OLCPrecision;
 import org.broadinstitute.ddp.model.dsm.KitType;
 import org.broadinstitute.ddp.model.governance.AgeOfMajorityRule;
@@ -79,16 +82,20 @@ public class StudyBuilder {
         UmbrellaDto umbrellaDto = getUmbrellaOrInsert(handle);
         StudyDto studyDto = getStudyOrInsert(handle, tenantDto.getId(), umbrellaDto.getId());
 
-        ClientDto clientDto = getClientOrInsert(handle, tenantDto.getId());
-        grantClientAccessToStudy(handle, clientDto, studyDto);
+        List<ClientDto> clientDtos = getClientsOrInsert(handle, tenantDto);
+        grantClientsAccessToStudy(handle, clientDtos, studyDto);
 
-        UserDto adminDto = getAdminUserOrInsert(handle, clientDto.getId());
+        ClientDto webClient = clientDtos.stream()
+                .filter(client -> client.getWebPasswordRedirectUrl() != null)
+                .findFirst()
+                .orElse(clientDtos.get(0));
+        UserDto adminDto = getAdminUserOrInsert(handle, webClient.getId());
 
         insertStudyGovernance(handle, studyDto);
         insertStudyDetails(handle, studyDto.getId());
         insertStudyLanguages(handle, studyDto.getId());
         insertSendgrid(handle, studyDto.getId());
-        insertKits(handle, studyDto.getId());
+        insertKits(handle, studyDto.getId(), adminDto.getUserId());
 
         Path dirPath = cfgPath.getParent();
         new ActivityBuilder(dirPath, cfg, varsCfg, studyDto, adminDto.getUserId()).run(handle);
@@ -252,6 +259,9 @@ public class StudyBuilder {
             olcPrecision = OLCPrecision.valueOf(olcPrecisionString);
         }
 
+        String recaptchaSiteKey = ConfigUtil.getStrIfPresent(studyCfg, "recaptchaSiteKey");
+
+
         boolean shareLocationInformation = studyCfg.getBoolean("shareParticipantLocation");
 
         JdbiUmbrellaStudy jdbiStudy = handle.attach(JdbiUmbrellaStudy.class);
@@ -265,7 +275,7 @@ public class StudyBuilder {
                 olcPrecisionId = handle.attach(JdbiOLCPrecision.class).findDtoForCode(olcPrecision).getId();
             }
             long studyId = jdbiStudy.insert(name, guid, umbrellaId, baseWebUrl,
-                    tenantId, irbPassword, olcPrecisionId, shareLocationInformation, studyEmail);
+                    tenantId, irbPassword, olcPrecisionId, shareLocationInformation, studyEmail, recaptchaSiteKey);
             dto = handle.attach(JdbiUmbrellaStudy.class).findById(studyId);
             LOG.info("Created study with id={}, name={}, guid={}", studyId, name, guid);
         } else {
@@ -275,41 +285,57 @@ public class StudyBuilder {
         return dto;
     }
 
-    private ClientDto getClientOrInsert(Handle handle, long tenantId) {
-        Config clientCfg = cfg.getConfig("client");
-        String clientId = clientCfg.getString("id");
-        String clientSecret = clientCfg.getString("secret");
-        String passwordRedirectUrl = clientCfg.getString("passwordRedirectUrl");
+    private List<ClientDto> getClientsOrInsert(Handle handle, Auth0TenantDto tenantDto) {
+        List<Config> clientsCfg = new ArrayList<>();
+        if (cfg.hasPath("client")) {
+            clientsCfg.add(cfg.getConfig("client"));
+        } else {
+            clientsCfg.addAll(cfg.getConfigList("clients"));
+        }
 
+        long tenantId = tenantDto.getId();
         JdbiClient jdbiClient = handle.attach(JdbiClient.class);
-        Optional<ClientDto> clientDto = jdbiClient.findByAuth0ClientIdAndAuth0TenantId(clientId, tenantId);
+        List<ClientDto> clientDtos = new ArrayList<>();
+        boolean alreadyHasRedirectUrl = false;
 
-        return clientDto.map(
-            dto -> {
-                LOG.warn("Client already exists with id={}, auth0ClientId={}", dto.getId(), dto.getAuth0ClientId());
-                return dto;
+        for (var clientCfg : clientsCfg) {
+            String clientId = clientCfg.getString("id");
+            String clientSecret = clientCfg.getString("secret");
+            String passwordRedirectUrl = ConfigUtil.getStrIfPresent(clientCfg, "passwordRedirectUrl");
+            if (passwordRedirectUrl != null && alreadyHasRedirectUrl) {
+                throw new DDPException("There is already a client with a password redirect URL. Currently only one is allowed.");
             }
-        ).orElseGet(
-            () -> {
-                String encryptedSecret = AesUtil.encrypt(clientSecret, EncryptionKey.getEncryptionKey());
-                long id = jdbiClient.insertClient(clientId, encryptedSecret, tenantId, passwordRedirectUrl);
-                LOG.info("Created client with id={}, auth0ClientId={}", id, clientId);
-                return new ClientDto(id, clientId, encryptedSecret, passwordRedirectUrl, false, tenantId);
-            }
-        );
+            ClientDto clientDto = jdbiClient
+                    .findByAuth0ClientIdAndAuth0TenantId(clientId, tenantId)
+                    .map(dto -> {
+                        LOG.warn("Client already exists with id={}, auth0ClientId={}", dto.getId(), dto.getAuth0ClientId());
+                        return dto;
+                    }).orElseGet(() -> {
+                        String encryptedSecret = AesUtil.encrypt(clientSecret, EncryptionKey.getEncryptionKey());
+                        long id = jdbiClient.insertClient(clientId, encryptedSecret, tenantId, passwordRedirectUrl);
+                        LOG.info("Created client with id={}, auth0ClientId={}", id, clientId);
+                        return new ClientDto(id, clientId, encryptedSecret, passwordRedirectUrl, false, tenantId, tenantDto.getDomain());
+                    });
+            alreadyHasRedirectUrl = alreadyHasRedirectUrl || passwordRedirectUrl != null;
+            clientDtos.add(clientDto);
+        }
+
+        return clientDtos;
     }
 
-    private void grantClientAccessToStudy(Handle handle, ClientDto clientDto, StudyDto studyDto) {
+    private void grantClientsAccessToStudy(Handle handle, List<ClientDto> clientDtos, StudyDto studyDto) {
         JdbiClientUmbrellaStudy jdbiACL = handle.attach(JdbiClientUmbrellaStudy.class);
-        List<String> studyGuids = jdbiACL.findPermittedStudyGuidsByAuth0ClientIdAndAuth0TenantId(
-                clientDto.getAuth0ClientId(),
-                clientDto.getAuth0TenantId()
-        );
-        if (!studyGuids.contains(studyDto.getGuid())) {
-            jdbiACL.insert(clientDto.getId(), studyDto.getId());
-            LOG.info("Granted client {} access to study {}", clientDto.getAuth0ClientId(), studyDto.getGuid());
-        } else {
-            LOG.warn("Client {} already has access to study {}", clientDto.getAuth0ClientId(), studyDto.getGuid());
+        for (var clientDto : clientDtos) {
+            List<String> studyGuids = jdbiACL.findPermittedStudyGuidsByAuth0ClientIdAndAuth0TenantId(
+                    clientDto.getAuth0ClientId(),
+                    clientDto.getAuth0TenantId()
+            );
+            if (!studyGuids.contains(studyDto.getGuid())) {
+                jdbiACL.insert(clientDto.getId(), studyDto.getId());
+                LOG.info("Granted client {} access to study {}", clientDto.getAuth0ClientId(), studyDto.getGuid());
+            } else {
+                LOG.warn("Client {} already has access to study {}", clientDto.getAuth0ClientId(), studyDto.getGuid());
+            }
         }
     }
 
@@ -448,7 +474,7 @@ public class StudyBuilder {
         LOG.info("Created sendgrid configuration with id={}, fromName={}, fromEmail={}", id, fromName, fromEmail);
     }
 
-    private void insertKits(Handle handle, long studyId) {
+    private void insertKits(Handle handle, long studyId, long userId) {
         KitConfigurationDao kitDao = handle.attach(KitConfigurationDao.class);
         KitTypeDao kitTypeDao = handle.attach(KitTypeDao.class);
 
@@ -472,14 +498,44 @@ public class StudyBuilder {
                     long ruleId = kitDao.addCountryRule(kitId, country);
                     LOG.info("Added country rule to kit configuration {} with id={}, country={}", kitId, ruleId, country);
                 } else if (ruleType == KitRuleType.ZIP_CODE) {
-                    Set<String> zipCodes = Set.copyOf(ruleCfg.getStringList("zipCodes"));
-                    long ruleId = kitDao.addZipCodeRule(kitId, zipCodes);
-                    LOG.info("Added zip code rule to kit configuration {} with id={}, zipCodes={}", kitId, ruleId, zipCodes);
+                    insertKipZipCodeRule(handle, ruleCfg, kitId, userId);
                 } else {
                     throw new DDPException("Unsupported kit rule type " + ruleType);
                 }
             }
         }
+    }
+
+    private void insertKipZipCodeRule(Handle handle, Config ruleCfg, long kitConfigId, long userId) {
+        Template errorMsg = BuilderUtils.parseTemplate(ruleCfg, "errorMessageTemplate");
+        if (errorMsg != null) {
+            String errors = BuilderUtils.validateTemplate(errorMsg);
+            if (errors != null) {
+                throw new DDPException("Error message template has validation errors: " + errors);
+            }
+        }
+
+        Template warningMsg = BuilderUtils.parseTemplate(ruleCfg, "warningMessageTemplate");
+        if (warningMsg != null) {
+            String errors = BuilderUtils.validateTemplate(warningMsg);
+            if (errors != null) {
+                throw new DDPException("Warning message template has validation errors: " + errors);
+            }
+        }
+
+        Long revisionId = null;
+        if (errorMsg != null || warningMsg != null) {
+            revisionId = handle.attach(JdbiRevision.class).insertStart(
+                    Instant.now().toEpochMilli(), userId, "Insert kit zip code rule messages");
+        }
+
+        Set<String> zipCodes = Set.copyOf(ruleCfg.getStringList("zipCodes"));
+        long ruleId = handle.attach(KitConfigurationDao.class)
+                .addZipCodeRule(kitConfigId, zipCodes, errorMsg, warningMsg, revisionId);
+        LOG.info("Added zip code rule to kit configuration {} with id={}, zipCodes={}, errorTmplId={}, warningTmplId={}",
+                kitConfigId, ruleId, zipCodes,
+                errorMsg == null ? null : errorMsg.getTemplateId(),
+                warningMsg == null ? null : warningMsg.getTemplateId());
     }
 
     public interface StudyInvalidationHelper extends SqlObject {

@@ -48,6 +48,9 @@ public class FormActivityDef extends ActivityDef {
     @SerializedName("lastUpdated")
     protected LocalDateTime lastUpdated;
 
+    @SerializedName("snapshotSubstitutionsOnSubmit")
+    protected boolean snapshotSubstitutionsOnSubmit;
+
     public static FormBuilder formBuilder() {
         return new FormBuilder();
     }
@@ -141,6 +144,10 @@ public class FormActivityDef extends ActivityDef {
         return lastUpdated;
     }
 
+    public boolean shouldSnapshotSubstitutionsOnSubmit() {
+        return snapshotSubstitutionsOnSubmit;
+    }
+
     public List<FormSectionDef> getAllSections() {
         List<FormSectionDef> allSections = new ArrayList<>();
         if (introduction != null) {
@@ -164,6 +171,7 @@ public class FormActivityDef extends ActivityDef {
         private FormSectionDef closing = null;
         private Template lastUpdatedTextTemplate = null;
         private LocalDateTime lastUpdated = null;
+        private boolean snapshotSubstitutionsOnSubmit = false;
 
         protected FormBuilder() {
             // Use static factories.
@@ -219,6 +227,10 @@ public class FormActivityDef extends ActivityDef {
             return this;
         }
 
+        public FormBuilder setSnapshotSubstitutionsOnSubmit(boolean snapshotSubstitutionsOnSubmit) {
+            this.snapshotSubstitutionsOnSubmit = snapshotSubstitutionsOnSubmit;
+            return this;
+        }
 
         public FormActivityDef build() {
             FormActivityDef form = new FormActivityDef(
@@ -246,6 +258,7 @@ public class FormActivityDef extends ActivityDef {
             form.listStyleHint = listStyleHint;
             form.introduction = introduction;
             form.closing = closing;
+            form.snapshotSubstitutionsOnSubmit = snapshotSubstitutionsOnSubmit;
             return form;
         }
     }

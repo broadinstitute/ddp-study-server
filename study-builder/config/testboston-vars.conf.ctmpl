@@ -15,6 +15,7 @@
     "mgmtClientSecret": "{{$conf.auth0.mgmtClientSecret}}",
   },
   "baseWebUrl": "{{$conf.baseWebUrl}}",
+  "recaptchaSiteKey": "{{$conf.recaptchaSiteServerKey}}",
   "passwordRedirectUrl": "{{$conf.passwordRedirectUrl}}",
   "assetsBucketName": "{{$conf.assetsBucketName}}",
   "sendgridApiKey": "{{$conf.sendgridApiKey}}",

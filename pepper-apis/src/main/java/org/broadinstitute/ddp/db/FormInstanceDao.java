@@ -92,7 +92,6 @@ public class FormInstanceDao {
                 FormType formType = FormType.valueOf(rs.getString(FormTypeTable.CODE));
                 String title = rs.getString(ActivityInstanceTable.TITLE);
                 String subtitle = rs.getString(ActivityInstanceTable.SUBTITLE);
-                String status = rs.getString(ActivityInstanceTable.STATUS_TYPE_NAME);
                 String activityCode = rs.getString(StudyActivityTable.CODE);
 
                 String listStyleHintCode = rs.getString("list_style_hint_code");
@@ -101,6 +100,7 @@ public class FormInstanceDao {
                 Long introductionSectionId = (Long) rs.getObject("introduction_section_id");
                 Long closingSectionId = (Long) rs.getObject("closing_section_id");
 
+                long participantUserId = rs.getLong("participant_user_id");
                 long instanceId = rs.getLong(ActivityInstanceTable.ID);
                 long activityId = rs.getLong(StudyActivityTable.ID);
                 String statusTypeCode = rs.getString(ActivityInstanceStatusTypeTable.ACTIVITY_STATUS_TYPE_CODE);
@@ -117,6 +117,7 @@ public class FormInstanceDao {
                 int lastVisitedActivitySection = rs.getInt(ActivityInstanceTable.LAST_VISITED_ACTIVITY_SECTION);
 
                 form = new FormInstance(
+                        participantUserId,
                         instanceId,
                         activityId,
                         activityCode,
@@ -124,7 +125,7 @@ public class FormInstanceDao {
                         instanceGuid,
                         title,
                         subtitle,
-                        status,
+                        statusTypeCode,
                         isReadonly,
                         hint,
                         readonlyHintTemplateId,

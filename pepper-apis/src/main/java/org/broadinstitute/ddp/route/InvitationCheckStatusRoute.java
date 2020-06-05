@@ -3,9 +3,13 @@ package org.broadinstitute.ddp.route;
 import static org.broadinstitute.ddp.json.invitation.InvitationCheckStatusPayload.QUALIFICATION_ZIP_CODE;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
+import com.google.gson.Gson;
 import org.apache.http.HttpStatus;
+import org.broadinstitute.ddp.client.GoogleRecaptchaVerifyClient;
+import org.broadinstitute.ddp.client.GoogleRecaptchaVerifyResponse;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -13,13 +17,17 @@ import org.broadinstitute.ddp.db.dao.InvitationDao;
 import org.broadinstitute.ddp.db.dao.JdbiClientUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.KitConfigurationDao;
+import org.broadinstitute.ddp.db.dao.TemplateDao;
 import org.broadinstitute.ddp.db.dto.InvitationDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
+import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.json.invitation.InvitationCheckStatusPayload;
 import org.broadinstitute.ddp.model.kit.KitRule;
 import org.broadinstitute.ddp.model.kit.KitRuleType;
+import org.broadinstitute.ddp.model.kit.KitZipCodeRule;
 import org.broadinstitute.ddp.util.ResponseUtil;
+import org.broadinstitute.ddp.util.RouteUtil;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
@@ -35,6 +43,7 @@ import spark.Response;
 public class InvitationCheckStatusRoute extends ValidatedJsonInputRoute<InvitationCheckStatusPayload> {
 
     private static final Logger LOG = LoggerFactory.getLogger(InvitationCheckStatusRoute.class);
+    private static final String DEFAULT_ZIP_CODE_ERROR_MSG = "Invalid zip code invitation qualification";
 
     @Override
     protected int getValidationErrorStatus() {
@@ -47,7 +56,10 @@ public class InvitationCheckStatusRoute extends ValidatedJsonInputRoute<Invitati
         String invitationGuid = payload.getInvitationGuid();
         LOG.info("Attempting to check invitation {} in study {}", invitationGuid, studyGuid);
 
-        ApiError error = TransactionWrapper.withTxn(handle -> checkStatus(handle, studyGuid, payload));
+        ApiError error = TransactionWrapper.withTxn(handle -> {
+            String langCode = RouteUtil.resolveLanguage(request, handle, studyGuid, null);
+            return checkStatus(handle, studyGuid, request.ip(), langCode, payload);
+        });
 
         if (error != null) {
             throw ResponseUtil.haltError(response, HttpStatus.SC_BAD_REQUEST, error);
@@ -57,14 +69,22 @@ public class InvitationCheckStatusRoute extends ValidatedJsonInputRoute<Invitati
         }
     }
 
-    ApiError checkStatus(Handle handle, String studyGuid, InvitationCheckStatusPayload payload) {
-        String invitationGuid = payload.getInvitationGuid();
-
-        StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
+    ApiError checkStatus(Handle handle, String studyGuid, String ipAddress, String langCode, InvitationCheckStatusPayload payload) {
+        StudyDto studyDto = findStudy(handle, studyGuid);
         if (studyDto == null) {
             LOG.error("Invitation check called for non-existent study with guid {}", studyGuid);
             return new ApiError(ErrorCodes.INVALID_INVITATION, "Invalid invitation");
         }
+
+        if (studyDto.getRecaptchaSiteKey() == null) {
+            LOG.error("ReCaptcha has not been enabled for study with guid: {}", studyGuid);
+            throw new DDPException("Server configuration problem");
+        }
+        if (!isUserRecaptchaTokenValid(payload.getRecaptchaToken(), studyDto.getRecaptchaSiteKey(), ipAddress)) {
+            return new ApiError(ErrorCodes.BAD_PAYLOAD, "Request was invalid");
+        }
+
+        String invitationGuid = payload.getInvitationGuid();
 
         List<String> permittedStudies = handle.attach(JdbiClientUmbrellaStudy.class)
                 .findPermittedStudyGuidsByAuth0ClientIdAndAuth0TenantId(payload.getAuth0ClientId(), studyDto.getAuth0TenantId());
@@ -76,8 +96,6 @@ public class InvitationCheckStatusRoute extends ValidatedJsonInputRoute<Invitati
                     payload.getAuth0ClientId(), studyGuid);
             return new ApiError(ErrorCodes.INVALID_INVITATION, "Invalid invitation");
         }
-
-        // todo: check recaptcha
 
         InvitationDao invitationDao = handle.attach(InvitationDao.class);
         InvitationDto invitation = invitationDao.findByInvitationGuid(studyDto.getId(), invitationGuid).orElse(null);
@@ -115,12 +133,39 @@ public class InvitationCheckStatusRoute extends ValidatedJsonInputRoute<Invitati
                 boolean matched = rules.stream().anyMatch(rule -> rule.validate(handle, userZipCode));
                 if (!matched) {
                     LOG.warn("User provided zip code does not match, invitation={} zipCode={}", invitationGuid, userZipCode);
-                    return new ApiError(ErrorCodes.INVALID_INVITATION_QUALIFICATIONS, "Invalid invitation qualifications");
+                    String msg = DEFAULT_ZIP_CODE_ERROR_MSG;
+                    Long errorTmplId = rules.stream()
+                            .map(rule -> ((KitZipCodeRule) rule).getErrorMessageTemplateId())
+                            .filter(Objects::nonNull)
+                            .findFirst()
+                            .orElse(null);
+                    if (errorTmplId != null) {
+                        msg = handle.attach(TemplateDao.class).loadTemplateById(errorTmplId).render(langCode);
+                    }
+                    return new ApiError(ErrorCodes.INVALID_INVITATION_QUALIFICATIONS, msg);
                 }
             }
             LOG.info("User provided zip code {} matched for all kit configurations", userZipCode);
         }
 
         return null;
+    }
+
+    StudyDto findStudy(Handle handle, String studyGuid) {
+        return handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
+    }
+
+    boolean isUserRecaptchaTokenValid(String recaptchaToken, String recaptchaSiteKey, String clientIpAddress) {
+        var recaptchaVerifier = new GoogleRecaptchaVerifyClient(recaptchaSiteKey);
+        GoogleRecaptchaVerifyResponse recaptchaResponse = recaptchaVerifier.verifyRecaptchaResponse(recaptchaToken, clientIpAddress);
+        if (!recaptchaResponse.isSuccess()) {
+            LOG.error("Recaptcha validation was unsuccessful: {}", new Gson().toJson(recaptchaResponse));
+        }
+        return recaptchaResponse.isSuccess();
+    }
+
+    @Override
+    protected Class<InvitationCheckStatusPayload> getTargetClass(Request request) {
+        return InvitationCheckStatusPayload.class;
     }
 }

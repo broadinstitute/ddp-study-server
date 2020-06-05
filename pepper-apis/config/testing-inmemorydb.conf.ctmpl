@@ -69,6 +69,7 @@
     "easyPostApiKey": "{{$testingConf.Data.easyPostApiKey}}",
     # by default, boot in-processs for testing.  change rendered .conf file manually for local development
     "bootTestAppInSeparateProcess": false,
+    "apiBaseUrl": "http://localhost:5555",
     "baseTestUrl": "http://localhost:5556",
     "socialTestEmail": "{{$testingConf.Data.socialTestEmail}}",
     "socialTestPassword": "{{$testingConf.Data.socialTestPassword}}",
@@ -80,7 +81,8 @@
     "pdfArchiveBucket": "pepper-pdf-dev",
     "pdfArchiveUseFilesystem": true,
     "pubsub": {
-        "housekeepingEventsTopic": "local-housekeeping-events",
+        "enableHousekeepingTasks": false,
+        "housekeepingTasksTopic": "local-housekeeping-tasks",
     },
     "studyExportBucket": "ddp-dev-study-exports-testing",
     "schedules": {

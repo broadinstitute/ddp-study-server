@@ -202,5 +202,10 @@
     <include file="db-changes/schema/DDP-4655-kit-zip-codes.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/study-admin.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-4475-modify-studylanguage.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/add-recaptcha-site-secret.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/seed/DDP-4627-testboston-kit-type.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/zip-code-messages.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-4703-activity-instance-substitutions.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/seed/DDP-4674-login-account-created-event-type.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/add-last-visited-activity-section-column-to-activity-instance.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

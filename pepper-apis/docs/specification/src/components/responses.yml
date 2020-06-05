@@ -267,6 +267,12 @@ ProfileUpdateErrorResponse:
     application/json:
       schema:
         $ref: '../pepper.yml#/components/schemas/Error.ProfileUpdate'
+ProfileAddErrorResponse:
+  description: failed to update the requested profile
+  content:
+    application/json:
+      schema:
+        $ref: '../pepper.yml#/components/schemas/Error.ProfileAdd'
 ProfileResponse:
   description: user profile
   content:
