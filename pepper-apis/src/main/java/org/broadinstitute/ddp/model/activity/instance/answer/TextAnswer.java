@@ -26,4 +26,10 @@ public class TextAnswer extends Answer<String> {
     public void setValue(String value) {
         this.value = value;
     }
+
+    @Override
+    public boolean isEmpty() {
+        // Does whitespace count?
+        return value == null || value.isEmpty();
+    }
 }
