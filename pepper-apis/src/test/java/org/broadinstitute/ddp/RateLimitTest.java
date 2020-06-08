@@ -8,7 +8,6 @@ import static spark.Spark.post;
 import static spark.Spark.stop;
 
 import java.io.IOException;
-import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -25,6 +24,7 @@ import org.apache.http.client.fluent.Request;
 import org.apache.http.entity.ContentType;
 import org.apache.http.util.EntityUtils;
 import org.broadinstitute.ddp.filter.RateLimitFilter;
+import org.broadinstitute.ddp.route.RouteTestUtil;
 import org.eclipse.jetty.http.HttpStatus;
 import org.junit.After;
 import org.junit.Assert;
@@ -53,16 +53,7 @@ public class RateLimitTest {
          * Start up a server on a random port
          */
         static void startServerWithRateLimits(int apiRateLimit, int burstRateLimit) {
-            int port = DEFAULT_PORT;
-            ServerSocket portFinder = null;
-            try {
-                portFinder = new ServerSocket(0);
-                port = portFinder.getLocalPort();
-                portFinder.close();
-            } catch (IOException e) {
-                // possible race condition here if something else grabs the port
-                LOG.info("Could not find available port; will use " + DEFAULT_PORT);
-            }
+            int port = RouteTestUtil.findOpenPortOrDefault(DEFAULT_PORT);
             LOG.info("Starting test server on port {}", port);
             port(port);
             localhost =  "http://localhost:" + port + TEST_ROUTE;

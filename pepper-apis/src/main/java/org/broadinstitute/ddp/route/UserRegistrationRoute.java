@@ -15,6 +15,7 @@ import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
+import org.broadinstitute.ddp.db.dao.AuthDao;
 import org.broadinstitute.ddp.db.dao.ClientDao;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
 import org.broadinstitute.ddp.db.dao.EventDao;
@@ -315,7 +316,17 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
             if (numGovernances > 0) {
                 LOG.info("Existing user {} is a proxy of {} users in study {}", user.getGuid(), numGovernances, study.getGuid());
                 return user.getGuid();
-            } else if (MODE_LOGIN.equals(payload.getMode())) {
+            }
+
+            boolean isStudyAdmin = handle.attach(AuthDao.class)
+                    .findAdminAccessibleStudyGuids(user.getGuid())
+                    .contains(study.getGuid());
+            if (isStudyAdmin) {
+                LOG.info("Existing user {} is an admin in study {}", user.getGuid(), study.getGuid());
+                return user.getGuid();
+            }
+
+            if (MODE_LOGIN.equals(payload.getMode())) {
                 String msg = String.format("User needs to register with study '%s' before logging in", study.getGuid());
                 LOG.warn(msg);
                 throw ResponseUtil.haltError(response, HttpStatus.SC_UNPROCESSABLE_ENTITY, new ApiError(ErrorCodes.SIGNUP_REQUIRED, msg));

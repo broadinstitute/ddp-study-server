@@ -1,11 +1,16 @@
 package org.broadinstitute.ddp.db.dao;
 
 import java.util.Collection;
+import java.util.List;
 
+import org.broadinstitute.ddp.db.dto.ClientDto;
 import org.broadinstitute.ddp.security.AesUtil;
 import org.broadinstitute.ddp.security.StudyClientConfiguration;
 import org.jdbi.v3.sqlobject.CreateSqlObject;
 import org.jdbi.v3.sqlobject.SqlObject;
+import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
+import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -103,4 +108,14 @@ public interface ClientDao extends SqlObject {
     default boolean isAuth0ClientActive(String auth0ClientId, String auth0Domain) {
         return getClientDao().isAuth0ClientIdRevoked(auth0ClientId, auth0Domain).orElse(1) != 1;
     }
+
+    @SqlQuery("select c.*, t.auth0_domain"
+            + "  from client__umbrella_study as cus"
+            + "  join client as c on c.client_id = cus.client_id"
+            + "  join umbrella_study as us on us.umbrella_study_id = cus.umbrella_study_id"
+            + "  join auth0_tenant as t on t.auth0_tenant_id = us.auth0_tenant_id and t.auth0_tenant_id = c.auth0_tenant_id"
+            + " where us.umbrella_study_id = :studyId"
+            + "   and not c.is_revoked")
+    @RegisterConstructorMapper(ClientDto.class)
+    List<ClientDto> findAllPermittedClientsForStudy(@Bind("studyId") long studyId);
 }
