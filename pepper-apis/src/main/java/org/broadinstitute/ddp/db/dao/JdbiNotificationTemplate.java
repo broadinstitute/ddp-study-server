@@ -28,8 +28,8 @@ public interface JdbiNotificationTemplate extends SqlObject {
     long insert(@Bind("templateKey") String templateKey, @Bind("languageCodeId") long languageCodeId);
 
     @SqlUpdate("insert into notification_template (template_key, language_code_id, is_dynamic) "
-            + "values (:templateKey, :languageCodeId, :is_default)")
+            + "values (:templateKey, :languageCodeId, :isDynamic)")
     @GetGeneratedKeys
     long insert(@Bind("templateKey") String templateKey, @Bind("languageCodeId") long languageCodeId,
-                @Bind("isDefault") boolean isDefault);
+                @Bind("isDynamic") boolean isDynamic);
 }
