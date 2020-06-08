@@ -1,7 +1,7 @@
 {{with $environment := env "ENVIRONMENT"}}
 service: pepper-backend
 runtime: java11
-instance_class: B4
+instance_class: B8
 {{if eq $environment "prod"}}
 basic_scaling:
   max_instances: 6
