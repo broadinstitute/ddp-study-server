@@ -21,6 +21,10 @@ public class StudyAdminAuthFilter implements Filter {
 
     @Override
     public void handle(Request request, Response response) {
+        if (request.requestMethod().equals("OPTIONS")) {
+            return;
+        }
+
         DDPAuth ddpAuth = RouteUtil.getDDPAuth(request);
         if (ddpAuth.getToken() == null || ddpAuth.getOperator() == null) {
             LOG.error("Expects study admin operator but no auth token found in request");
