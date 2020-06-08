@@ -31,6 +31,10 @@ public class QueuedNotificationDto extends QueuedEventDto {
         return notificationDetailsDto.getTemplateKey();
     }
 
+    public boolean isDynamicTemplate() {
+        return notificationDetailsDto.isDynamicTemplate();
+    }
+
     public Long getLinkedActivityId() {
         return notificationDetailsDto.getLinkedActivityId();
     }

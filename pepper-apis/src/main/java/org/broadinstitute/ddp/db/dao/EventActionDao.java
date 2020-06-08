@@ -74,7 +74,7 @@ public interface EventActionDao extends SqlObject {
         String templateKey = eventAction.getTemplateKey();
         long notificationTemplateId = notificationTemplateDao
                 .findByKeyAndLanguage(templateKey, languageCodeId)
-                .orElseGet(() -> notificationTemplateDao.insert(templateKey, languageCodeId));
+                .orElseGet(() -> notificationTemplateDao.insert(templateKey, languageCodeId, eventAction.isDynamicTemplate()));
 
         long eventActionId = eventActionDao.insert(messageDestinationId, EventActionType.NOTIFICATION);
 

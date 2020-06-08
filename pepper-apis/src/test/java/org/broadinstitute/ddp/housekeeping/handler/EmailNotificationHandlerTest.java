@@ -152,7 +152,7 @@ public class EmailNotificationHandlerTest extends TxnAwareBaseTest {
     public void testBuildSubstitutions() {
         var msg = new NotificationMessage(
                 NotificationType.EMAIL, NotificationServiceType.SENDGRID,
-                "template", List.of("to@ddp.org"), "first", "last", "guid",
+                "template", false, List.of("to@ddp.org"), "first", "last", "guid",
                 "study", "pepper", "from@ddp.org", "key", "salutation",
                 List.of(new NotificationTemplateSubstitutionDto("foo", "bar"),
                         new NotificationTemplateSubstitutionDto("alice", "bob")),
@@ -290,7 +290,7 @@ public class EmailNotificationHandlerTest extends TxnAwareBaseTest {
         // Run test and capture
         var msg = new NotificationMessage(
                 NotificationType.EMAIL, NotificationServiceType.SENDGRID,
-                "template1", List.of("to@ddp.org"), "first", "last", "guid",
+                "template1", false, List.of("to@ddp.org"), "first", "last", "guid",
                 "study", "pepper", "from@ddp.org", "key", "salutation", List.of(), "url", 1L);
         spiedHandler.handleMessage(msg);
 
@@ -331,7 +331,7 @@ public class EmailNotificationHandlerTest extends TxnAwareBaseTest {
         // Run test and capture
         var msg = new NotificationMessage(
                 NotificationType.EMAIL, NotificationServiceType.SENDGRID,
-                "template1", List.of("join.mailing.list@ddp.org"), null, null, null,    // no participant guid
+                "template1", false, List.of("join.mailing.list@ddp.org"), null, null, null,    // no participant guid
                 "study", "pepper", "from@ddp.org", "key", "salutation", List.of(), "url", 1L);
         spiedHandler.handleMessage(msg);
 
@@ -355,7 +355,7 @@ public class EmailNotificationHandlerTest extends TxnAwareBaseTest {
 
         var msg = new NotificationMessage(
                 NotificationType.EMAIL, NotificationServiceType.SENDGRID,
-                "template1", List.of("to@ddp.org"), "first", "last", "guid", "study",
+                "template1", false, List.of("to@ddp.org"), "first", "last", "guid", "study",
                 "pepper", "from@ddp.org", "key", "salutation", List.of(), "url", 1L);
         spiedHandler.handleMessage(msg);
 
@@ -377,7 +377,7 @@ public class EmailNotificationHandlerTest extends TxnAwareBaseTest {
         try {
             var msg = new NotificationMessage(
                     NotificationType.EMAIL, NotificationServiceType.SENDGRID,
-                    "abcxyz", List.of("to@ddp.org"), null, null, null,
+                    "abcxyz", false, List.of("to@ddp.org"), null, null, null,
                     "study", "pepper", "from@ddp.org", "key", "salutation", List.of(), "url", 1L);
             spiedHandler.handleMessage(msg);
             fail("expected exception not thrown");
@@ -399,7 +399,7 @@ public class EmailNotificationHandlerTest extends TxnAwareBaseTest {
 
         var msg = new NotificationMessage(
                 NotificationType.EMAIL, NotificationServiceType.SENDGRID,
-                "abcxyz", List.of("to@ddp.org"), null, null, null,
+                "abcxyz", false, List.of("to@ddp.org"), null, null, null,
                 "study", "pepper", "from@ddp.org", "key", "salutation", List.of(), "url", 1L);
 
         when(mockSendGrid.sendMail(any()))

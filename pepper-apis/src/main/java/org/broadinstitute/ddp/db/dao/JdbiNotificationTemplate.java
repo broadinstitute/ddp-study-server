@@ -15,7 +15,21 @@ public interface JdbiNotificationTemplate extends SqlObject {
     Optional<Long> findByKeyAndLanguage(@Bind("templateKey") String templateKey,
                                         @Bind("languageCodeId") long languageCodeId);
 
+    @SqlQuery("select is_dynamic from notification_template where template_key = :templateKey "
+            + "and language_code_id = :languageCodeId")
+    boolean isDynamicTemplate(@Bind("templateKey") String templateKey,
+                                        @Bind("languageCodeId") long languageCodeId);
+
+    @SqlQuery("select is_dynamic from notification_template where notification_template_id = :notificationTemplateId ")
+    boolean isDynamicTemplate(@Bind("notificationTemplateId") long notificationTemplateId);
+
     @SqlUpdate("insert into notification_template (template_key, language_code_id) values (:templateKey, :languageCodeId)")
     @GetGeneratedKeys
     long insert(@Bind("templateKey") String templateKey, @Bind("languageCodeId") long languageCodeId);
+
+    @SqlUpdate("insert into notification_template (template_key, language_code_id, is_dynamic) "
+            + "values (:templateKey, :languageCodeId, :is_default)")
+    @GetGeneratedKeys
+    long insert(@Bind("templateKey") String templateKey, @Bind("languageCodeId") long languageCodeId,
+                @Bind("isDefault") boolean isDefault);
 }

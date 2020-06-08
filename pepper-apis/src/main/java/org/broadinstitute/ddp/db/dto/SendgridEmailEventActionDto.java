@@ -5,10 +5,17 @@ public class SendgridEmailEventActionDto {
     private String templateKey;
     private String languageCode;
     private Long linkedActivityId;
+    private boolean isDynamic;
 
     public SendgridEmailEventActionDto(String templateKey, String languageCode) {
         this.templateKey = templateKey;
         this.languageCode = languageCode;
+    }
+
+    public SendgridEmailEventActionDto(String templateKey, String languageCode, boolean isDynamic) {
+        this.templateKey = templateKey;
+        this.languageCode = languageCode;
+        this.isDynamic = isDynamic;
     }
 
     public SendgridEmailEventActionDto(String templateKey, String languageCode, Long linkedActivityId) {
@@ -28,5 +35,10 @@ public class SendgridEmailEventActionDto {
     public Long getLinkedActivityId() {
         return linkedActivityId;
     }
+
+    public boolean isDynamicTemplate() {
+        return isDynamic;
+    }
+
 }
 

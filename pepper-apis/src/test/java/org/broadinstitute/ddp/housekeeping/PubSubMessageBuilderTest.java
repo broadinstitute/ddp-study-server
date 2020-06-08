@@ -50,7 +50,7 @@ public class PubSubMessageBuilderTest extends TxnAwareBaseTest {
                         1L, EventTriggerType.REACHED_AOM, EventActionType.NOTIFICATION, null, null,
                         "topic", null, null, testData.getStudyGuid()),
                 new NotificationDetailsDto(NotificationType.EMAIL, NotificationServiceType.SENDGRID,
-                        "template", null, null, "url", "apiKey", "fromName", "fromEmail",
+                        "template", false, null, null, "url", "apiKey", "fromName", "fromEmail",
                         "salutation", "first", "last"));
 
         PubsubMessage msg = TransactionWrapper.withTxn(handle -> builder.createMessage("test", event, handle));
@@ -75,7 +75,7 @@ public class PubSubMessageBuilderTest extends TxnAwareBaseTest {
                             1L, EventTriggerType.REACHED_AOM, EventActionType.NOTIFICATION, null, null,
                             "topic", null, null, testData.getStudyGuid()),
                     new NotificationDetailsDto(NotificationType.EMAIL, NotificationServiceType.SENDGRID,
-                            "template", null, null, "url", "apiKey", "fromName", "fromEmail",
+                            "template", false, null, null, "url", "apiKey", "fromName", "fromEmail",
                             "salutation", "first", "last"));
 
             PubsubMessage msg = new PubSubMessageBuilder(cfg).createMessage("test", event, handle);
@@ -113,7 +113,7 @@ public class PubSubMessageBuilderTest extends TxnAwareBaseTest {
                             1L, EventTriggerType.REACHED_AOM, EventActionType.NOTIFICATION, null, null,
                             "topic", null, null, testData.getStudyGuid()),
                     new NotificationDetailsDto(NotificationType.EMAIL, NotificationServiceType.SENDGRID,
-                            "template", null, null, "url", "apiKey", "fromName", "fromEmail",
+                            "template", false, null, null, "url", "apiKey", "fromName", "fromEmail",
                             "salutation", "first", "last"));
 
             PubsubMessage msg = new PubSubMessageBuilder(cfg).createMessage("test", event, handle);

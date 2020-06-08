@@ -1,11 +1,17 @@
 package org.broadinstitute.ddp.housekeeping.handler;
 
+import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.BASE_WEB_URL;
 import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.DDP_BASE_WEB_URL;
 import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.DDP_PARTICIPANT_FIRST_NAME;
 import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.DDP_PARTICIPANT_GUID;
 import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.DDP_PARTICIPANT_LAST_NAME;
 import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.DDP_SALUTATION;
 import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.DDP_STUDY_GUID;
+import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.PARTICIPANT_FIRST_NAME;
+import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.PARTICIPANT_GUID;
+import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.PARTICIPANT_LAST_NAME;
+import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.SALUTATION;
+import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.STUDY_GUID;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -117,7 +123,14 @@ public class EmailNotificationHandler implements HousekeepingMessageHandler<Noti
             }
         }
 
-        buildSubstitutions(message).forEach(personalization::addSubstitution);
+        if (message.isDynamicTemplate()) {
+            //add dynamic data
+            Map<String, Object> dynamicData = getDynamicData(message);
+            dynamicData.forEach(personalization::addDynamicTemplateData);
+        } else {
+            //legacy template
+            buildSubstitutions(message).forEach(personalization::addSubstitution);
+        }
         mail.addPersonalization(personalization);
 
         var versionResult = sendGrid.getTemplateActiveVersionId(templateId);
@@ -148,6 +161,31 @@ public class EmailNotificationHandler implements HousekeepingMessageHandler<Noti
                     + " failed with " + sendResult.getStatusCode() + ":" + sendResult.getError(), true);
         }
     }
+
+    private Map<String, Object> getDynamicData(NotificationMessage message) {
+        Map<String, Object> dynamicData = new HashMap<>();
+
+        String salutation = generateSalutation(
+                message.getParticipantFirstName(),
+                message.getParticipantLastName(),
+                message.getDefaultSalutation());
+
+        dynamicData.put(SALUTATION, salutation);
+        dynamicData.put(BASE_WEB_URL, message.getWebBaseUrl());
+        dynamicData.put(STUDY_GUID, message.getStudyGuid());
+        dynamicData.put(PARTICIPANT_GUID, message.getParticipantGuid());
+        dynamicData.put(PARTICIPANT_FIRST_NAME, message.getParticipantFirstName());
+        dynamicData.put(PARTICIPANT_LAST_NAME, message.getParticipantLastName());
+
+        for (NotificationTemplateSubstitutionDto sub : message.getTemplateSubstitutions()) {
+            if (!sub.getVariableName().startsWith("-")) {
+                dynamicData.put(sub.getVariableName(), sub.getValue());
+            }
+        }
+
+        return dynamicData;
+    }
+
 
     /**
      * Checks if the notification message should be ignored. This can be the case when a user exited the study or
@@ -199,7 +237,9 @@ public class EmailNotificationHandler implements HousekeepingMessageHandler<Noti
         subs.put(DDP_PARTICIPANT_LAST_NAME, message.getParticipantLastName());
 
         for (NotificationTemplateSubstitutionDto sub : message.getTemplateSubstitutions()) {
-            subs.put(sub.getVariableName(), sub.getValue());
+            if (sub.getVariableName().startsWith("-")) {
+                subs.put(sub.getVariableName(), sub.getValue());
+            }
         }
 
         return subs;

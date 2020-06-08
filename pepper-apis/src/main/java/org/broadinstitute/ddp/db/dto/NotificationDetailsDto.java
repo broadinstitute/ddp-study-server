@@ -13,6 +13,7 @@ public class NotificationDetailsDto {
     private NotificationType notificationType;
     private NotificationServiceType serviceType;
     private String templateKey;
+    private boolean isDynamicTemplate;
     private Long linkedActivityId;
     private String toEmailAddress;
     private String webBaseUrl;
@@ -29,6 +30,7 @@ public class NotificationDetailsDto {
             @ColumnName("notification_type") NotificationType notificationType,
             @ColumnName("service_type") NotificationServiceType serviceType,
             @ColumnName("template_key") String templateKey,
+            @ColumnName("is_dynamic") boolean isDynamic,
             @ColumnName("linked_activity_id") Long linkedActivityId,
             @ColumnName("to_email_address") String toEmailAddress,
             @ColumnName("study_web_base_url") String webBaseUrl,
@@ -50,6 +52,7 @@ public class NotificationDetailsDto {
         this.defaultSalutation = defaultSalutation;
         this.participantFirstName = participantFirstName;
         this.participantLastName = participantLastName;
+        this.isDynamicTemplate = isDynamic;
     }
 
     public NotificationType getNotificationType() {
@@ -98,6 +101,10 @@ public class NotificationDetailsDto {
 
     public String getParticipantLastName() {
         return participantLastName;
+    }
+
+    public boolean isDynamicTemplate() {
+        return isDynamicTemplate;
     }
 
     public List<NotificationTemplateSubstitutionDto> getTemplateSubstitutions() {
