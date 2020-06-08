@@ -120,7 +120,7 @@ commands:
             develop)
               DEPLOY_ENV=dev
             ;;
-            scaling_experiment)
+            GAE_Backend_Deployment_Config)
               DEPLOY_ENV=dev
             ;;
             test)
@@ -746,7 +746,7 @@ workflows:
             branches:
               only:
                 - develop
-                - scaling_experiment
+                - GAE_Backend_Deployment_Config
                 - &rc /^rc.*/
                 - &hotfix /^hotfix.*/
       - parallel-compile-and-test-job:
@@ -760,6 +760,7 @@ workflows:
               only:
                 - develop
                 - scaling_experiment
+                - GAE_Backend_Deployment_Config
           requires:
             - parallel-compile-and-test-job
             - compile-and-run-test-suite-job
