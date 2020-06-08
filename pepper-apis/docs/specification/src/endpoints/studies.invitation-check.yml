@@ -51,3 +51,5 @@ post:
                     enum:
                       - INVALID_INVITATION
                       - INVALID_INVITATION_QUALIFICATIONS
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'

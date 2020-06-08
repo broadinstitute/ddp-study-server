@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.model.study;
 
+import java.util.HashSet;
 import java.util.Set;
 
 import com.google.gson.annotations.SerializedName;
@@ -79,7 +80,7 @@ public class PasswordPolicy {
         return minLength;
     }
 
-    public Integer getMinCharClasses() {
+    public int getMinCharClasses() {
         return minCharClasses;
     }
 
@@ -89,6 +90,73 @@ public class PasswordPolicy {
 
     public Integer getMaxRepeatedChars() {
         return maxRepeatedChars;
+    }
+
+    /**
+     * Check if given password satisfies this password policy.
+     *
+     * @param password the password
+     * @return true if satisfied, otherwise false
+     */
+    public boolean checkPassword(String password) {
+        if (password.length() < minLength) {
+            return false;
+        }
+        if (minCharClasses > 0) {
+            Set<CharClass> pwdCharClasses = classifyPassword(password);
+            pwdCharClasses.retainAll(charClasses); // Set intersection
+            int numClasses = pwdCharClasses.size();
+            if (numClasses < minCharClasses) {
+                return false;
+            }
+        }
+        if (maxRepeatedChars != null) {
+            int maxRepeated = countMaxConsecutiveRepeatedChars(password);
+            if (maxRepeated > maxRepeatedChars) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private Set<CharClass> classifyPassword(String password) {
+        int max = CharClass.values().length;
+        Set<CharClass> charClasses = new HashSet<>();
+        for (var ch : password.toCharArray()) {
+            if (Character.isDigit(ch)) {
+                charClasses.add(CharClass.NUMBER);
+            } else if (Character.isUpperCase(ch)) {
+                charClasses.add(CharClass.UPPER);
+            } else if (Character.isLowerCase(ch)) {
+                charClasses.add(CharClass.LOWER);
+            } else {
+                // Auth0 doesn't say what special chars are, so assume that's what is left.
+                charClasses.add(CharClass.SPECIAL);
+            }
+            if (charClasses.size() == max) {
+                break; // Already have all char classes, no need to classify the rest.
+            }
+        }
+        return charClasses;
+    }
+
+    private int countMaxConsecutiveRepeatedChars(String password) {
+        char[] chars = password.toCharArray();
+        int maxLen = 0;
+        int curr = 0;
+        while (curr < chars.length) {
+            char ch = chars[curr];
+            int j = curr + 1;
+            while (j < chars.length && chars[j] == ch) {
+                j++;
+            }
+            int len = j - curr;
+            if (len > maxLen) {
+                maxLen = len;
+            }
+            curr = j; // Can skip over contiguous sequence since any further counts will be less.
+        }
+        return maxLen;
     }
 
     public enum PolicyType {
