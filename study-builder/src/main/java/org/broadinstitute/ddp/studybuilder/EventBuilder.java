@@ -132,16 +132,20 @@ public class EventBuilder {
                 // Handle old format.
                 String emailTemplate = actionCfg.getString("emailTemplate");
                 String language = actionCfg.getString("language");
-                actionDto = new SendgridEmailEventActionDto(emailTemplate, language);
+                actionDto = new SendgridEmailEventActionDto(emailTemplate, language, false);
             } else {
                 // Handle new format.
                 for (Config tmplCfg : actionCfg.getConfigList("templates")) {
                     String emailTemplate = tmplCfg.getString("emailTemplate");
                     String language = tmplCfg.getString("language");
+                    boolean isDynamicTemplate = false;
+                    if (tmplCfg.hasPath("is_dynamic")) {
+                        isDynamicTemplate = tmplCfg.getBoolean("is_dynamic");
+                    }
                     if (actionDto == null) {
-                        actionDto = new SendgridEmailEventActionDto(emailTemplate, language);
+                        actionDto = new SendgridEmailEventActionDto(emailTemplate, language, isDynamicTemplate);
                     } else {
-                        actionDto.addTemplate(emailTemplate, language);
+                        actionDto.addTemplate(emailTemplate, language, isDynamicTemplate);
                     }
                 }
             }

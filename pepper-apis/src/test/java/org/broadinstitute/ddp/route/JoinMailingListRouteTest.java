@@ -100,7 +100,7 @@ public class JoinMailingListRouteTest extends IntegrationTestSuite.TestCase {
 
         EventTriggerDao eventTriggerDao = handle.attach(EventTriggerDao.class);
 
-        SendgridEmailEventActionDto eventAction = new SendgridEmailEventActionDto(mailingListTemplateKey, "en");
+        SendgridEmailEventActionDto eventAction = new SendgridEmailEventActionDto(mailingListTemplateKey, "en", false);
         long emailActionId = eventActionDao.insertNotificationAction(eventAction);
 
         long eventTriggerId = eventTriggerDao.insertMailingListTrigger();
