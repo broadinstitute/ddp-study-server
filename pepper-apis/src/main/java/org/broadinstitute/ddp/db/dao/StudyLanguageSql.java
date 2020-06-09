@@ -58,4 +58,11 @@ public interface StudyLanguageSql extends SqlObject {
     @RegisterConstructorMapper(StudyLanguage.class)
     List<StudyLanguage> selectStudyLanguages(@Bind("umbrellaStudyId") long umbrellaStudyId);
 
+    @SqlQuery("select lc.iso_language_code, sl.*"
+            + "  from study_language as sl"
+            + "  join language_code as lc on lc.language_code_id = sl.language_code_id"
+            + " where sl.umbrella_study_id = (select umbrella_study_id from umbrella_study where guid = :studyGuid)"
+            + " order by sl.is_default desc")
+    @RegisterConstructorMapper(StudyLanguage.class)
+    List<StudyLanguage> selectStudyLanguages(@Bind("studyGuid") String studyGuid);
 }

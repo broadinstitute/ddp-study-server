@@ -93,17 +93,20 @@ public class SendDsmNotificationRouteTest extends DsmRouteTest {
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
         // verify that notification was queued
-        checkifNotificationQueued(numStartingQueuedEvents);
+        checkIfNotificationQueued(numStartingQueuedEvents);
     }
 
-    private void checkifNotificationQueued(int numStartingQueuedEvents) {
+    private void checkIfNotificationQueued(int numStartingQueuedEvents) {
         TransactionWrapper.useTxn(handle -> {
-            List<QueuedEventDto> pendingEvents = handle.attach(EventDao.class).findPublishableQueuedEvents();
+            EventDao eventDao = handle.attach(EventDao.class);
+            List<QueuedEventDto> pendingEvents = eventDao.findPublishableQueuedEvents();
             boolean foundQueuedTemplate = false;
             for (QueuedEventDto pendingEvent : pendingEvents) {
                 if (pendingEvent instanceof QueuedNotificationDto) {
                     QueuedNotificationDto notificationDto = (QueuedNotificationDto) pendingEvent;
-                    if (SENDGRID_TEST_TEMPLATE.equals(notificationDto.getTemplateKey())) {
+                    var templates = eventDao.getNotificationTemplatesForEvent(notificationDto.getEventConfigurationId());
+                    Assert.assertEquals(1, templates.size());
+                    if (SENDGRID_TEST_TEMPLATE.equals(templates.get(0).getTemplateKey())) {
                         foundQueuedTemplate = true;
                     }
                 }
@@ -133,7 +136,7 @@ public class SendDsmNotificationRouteTest extends DsmRouteTest {
         Assert.assertEquals(200, response.getStatusLine().getStatusCode());
 
         // verify that notification was queued
-        checkifNotificationQueued(numStartingQueuedEvents);
+        checkIfNotificationQueued(numStartingQueuedEvents);
     }
 
     @Test

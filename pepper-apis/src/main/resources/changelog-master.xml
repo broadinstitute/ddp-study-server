@@ -207,5 +207,6 @@
     <include file="db-changes/schema/zip-code-messages.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-4703-activity-instance-substitutions.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/seed/DDP-4674-login-account-created-event-type.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-1855-user-notification-templates.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/add-last-visited-activity-section-column-to-activity-instance.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

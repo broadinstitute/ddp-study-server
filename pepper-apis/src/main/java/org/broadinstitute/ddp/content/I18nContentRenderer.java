@@ -16,15 +16,13 @@ import java.util.Set;
 
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
-import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
+import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.db.dao.TemplateDao;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class I18nContentRenderer {
-
-    public static final String DEFAULT_LANGUAGE_CODE = "en";
 
     private static final Logger LOG = LoggerFactory.getLogger(I18nContentRenderer.class);
     private static final String TEMPLATE_NAME = "template";
@@ -37,7 +35,7 @@ public class I18nContentRenderer {
         if (defaultLangId != null) {
             return defaultLangId;
         } else {
-            defaultLangId = handle.attach(JdbiLanguageCode.class).getLanguageCodeId(DEFAULT_LANGUAGE_CODE);
+            defaultLangId = LanguageStore.getOrComputeDefault(handle).getId();
             return defaultLangId;
         }
     }

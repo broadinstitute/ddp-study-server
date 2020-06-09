@@ -10,20 +10,20 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
+import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudyI18n;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
-import org.broadinstitute.ddp.db.dao.StudyDao;
+import org.broadinstitute.ddp.db.dao.StudyLanguageDao;
 import org.broadinstitute.ddp.db.dto.EnrollmentStatusDto;
-import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.StudyI18nDto;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.study.EnrollmentStatusCount;
+import org.broadinstitute.ddp.model.study.StudyLanguage;
 import org.broadinstitute.ddp.model.study.StudySummary;
 import org.broadinstitute.ddp.security.DDPAuth;
 import org.broadinstitute.ddp.util.I18nUtil;
@@ -72,12 +72,13 @@ public class GetStudiesRoute implements Route {
             List<StudySummary> umbrellaStudies = new ArrayList<>();
             for (StudyDto study : studiesDto) {
                 JdbiUmbrellaStudyI18n translationDao = handle.attach(JdbiUmbrellaStudyI18n.class);
-                Set<LanguageDto> supportedLanguages = handle.attach(StudyDao.class).findSupportedLanguagesByGuid(study.getGuid());
-                Set<Locale> supportedLocales = supportedLanguages.stream()
-                        .map(LanguageDto::toLocale)
+                Set<Locale> supportedLocales = handle.attach(StudyLanguageDao.class)
+                        .findLanguages(study.getGuid())
+                        .stream()
+                        .map(StudyLanguage::toLocale)
                         .collect(Collectors.toSet());
                 Locale userLocale = I18nUtil.resolvePreferredLanguage(authInfo.getPreferredLocale(), acceptLanguages, supportedLocales);
-                Long langCodeId = handle.attach(JdbiLanguageCode.class).getLanguageCodeId(userLocale.toLanguageTag());
+                long langCodeId = LanguageStore.getOrCompute(handle, userLocale.toLanguageTag()).getId();
                 Optional<StudyI18nDto> preferredTranslation = translationDao.findTranslationByStudyIdAndLanguageCodeId(
                         study.getId(),
                         langCodeId

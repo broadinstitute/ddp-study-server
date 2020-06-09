@@ -13,9 +13,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
+import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
-import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
 import org.broadinstitute.ddp.db.dao.JdbiQuestion;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.model.activity.definition.ConditionalBlockDef;
@@ -59,7 +59,7 @@ public class SectionBlockDaoTest extends TxnAwareBaseTest {
             data = TestDataSetupUtil.generateBasicUserTestData(handle);
             userGuid = data.getTestingUser().getUserGuid();
             studyGuid = data.getStudyGuid();
-            langCodeId = handle.attach(JdbiLanguageCode.class).getLanguageCodeId("en");
+            langCodeId = LanguageStore.getOrComputeDefault(handle).getId();
         });
     }
 
