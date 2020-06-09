@@ -15,6 +15,7 @@ import org.broadinstitute.ddp.db.dto.QueuedPdfGenerationDto;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.event.EventConfiguration;
+import org.broadinstitute.ddp.model.event.NotificationTemplate;
 import org.broadinstitute.ddp.model.event.PdfAttachment;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
 import org.jdbi.v3.core.result.RowView;
@@ -141,6 +142,11 @@ public interface EventDao extends SqlObject {
     @RegisterConstructorMapper(PdfAttachment.class)
     List<PdfAttachment> getPdfAttachmentsForEvent(@Bind("eventConfigId") long eventConfigurationId);
 
+    @UseStringTemplateSqlLocator
+    @SqlQuery("getNotificationTemplatesForEvent")
+    @RegisterConstructorMapper(NotificationTemplate.class)
+    List<NotificationTemplate> getNotificationTemplatesForEvent(@Bind("eventConfigId") long eventConfigurationId);
+
     @SqlQuery("getDsmNotificationConfigurationIds")
     @UseStringTemplateSqlLocator
     List<Long> getDsmNotificationConfigurationIds(
@@ -157,6 +163,7 @@ public interface EventDao extends SqlObject {
     @SqlQuery("getNotificationConfigsForMailingListByEventType")
     @UseStringTemplateSqlLocator
     @RegisterConstructorMapper(EventConfigurationDto.class)
+    @UseRowReducer(EventConfigurationActionReducer.class)
     List<EventConfigurationDto> getNotificationConfigsForMailingListByEventType(@Bind("studyGuid") String studyGuid,
                                                                                 @Bind("eventTriggerType")
                                                                                         EventTriggerType eventTriggerType);
@@ -168,6 +175,7 @@ public interface EventDao extends SqlObject {
     @SqlQuery("getNotificationConfigsForWorkflowState")
     @UseStringTemplateSqlLocator
     @RegisterConstructorMapper(EventConfigurationDto.class)
+    @UseRowReducer(EventConfigurationActionReducer.class)
     List<EventConfigurationDto> getNotificationConfigsForWorkflowState(@Bind("studyGuid") String studyGuid,
                                                                        @Bind("workflowStateId") long workflowStateId);
 

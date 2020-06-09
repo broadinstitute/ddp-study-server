@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="20200528-user-notification-template-table">
+        <createTable tableName="user_notification_template">
+            <column name="user_notification_template_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="user_notification_template_pk"/>
+            </column>
+            <column name="user_notification_event_action_id" type="bigint">
+                <constraints nullable="false"
+                             references="user_notification_event_action(user_notification_event_action_id)"
+                             foreignKeyName="user_notification_template_user_notification_event_action_fk"
+                             deleteCascade="true"/>
+            </column>
+            <column name="notification_template_id" type="bigint">
+                <constraints nullable="false"
+                             references="notification_template(notification_template_id)"
+                             foreignKeyName="user_notification_template_notification_template_fk"/>
+            </column>
+        </createTable>
+        <addUniqueConstraint tableName="user_notification_template"
+                             columnNames="user_notification_event_action_id, notification_template_id"
+                             constraintName="user_notification_template_action_template_uk"/>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20200528-migrate-to-user-notification-template-table">
+        <sql>
+            insert into user_notification_template (user_notification_event_action_id, notification_template_id)
+            select user_notification_event_action_id, notification_template_id
+              from user_notification_event_action
+        </sql>
+        <dropForeignKeyConstraint baseTableName="user_notification_event_action" constraintName="user_notification_event_action_template_fk"/>
+        <dropColumn tableName="user_notification_event_action" columnName="notification_template_id"/>
+    </changeSet>
+
+</databaseChangeLog>
