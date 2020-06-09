@@ -1,17 +1,17 @@
 package org.broadinstitute.ddp.tests.basiltests;
 
-import static org.broadinstitute.ddp.BasilAppSite.auth0Page;
-import static org.broadinstitute.ddp.BasilAppSite.dashboardPage;
-import static org.broadinstitute.ddp.BasilAppSite.homePage;
-import static org.broadinstitute.ddp.BasilAppSite.notQualifiedPage;
-import static org.broadinstitute.ddp.BasilAppSite.prequalifierActivityPage;
-import static org.broadinstitute.ddp.BasilAppSite.prequalifierPage;
 import static org.broadinstitute.ddp.DDPWebSite.CONFIG;
+import static org.broadinstitute.ddp.earlypepper.BasilAppSite.auth0Page;
+import static org.broadinstitute.ddp.earlypepper.BasilAppSite.dashboardPage;
+import static org.broadinstitute.ddp.earlypepper.BasilAppSite.homePage;
+import static org.broadinstitute.ddp.earlypepper.BasilAppSite.notQualifiedPage;
+import static org.broadinstitute.ddp.earlypepper.BasilAppSite.prequalifierActivityPage;
+import static org.broadinstitute.ddp.earlypepper.BasilAppSite.prequalifierPage;
 
-import org.broadinstitute.ddp.BasilAppSite;
-import org.broadinstitute.ddp.BasilAppWebsite;
 import org.broadinstitute.ddp.ConfigFile;
 import org.broadinstitute.ddp.DDPWebSite;
+import org.broadinstitute.ddp.earlypepper.BasilAppSite;
+import org.broadinstitute.ddp.earlypepper.BasilAppWebsite;
 import org.broadinstitute.ddp.tests.BaseTest;
 import org.broadinstitute.ddp.tests.DatabaseUtility;
 import org.broadinstitute.ddp.tests.FeatureTests;

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="20200527-kit-zip-code-rule">
+        <createTable tableName="kit_zip_code_rule">
+            <column name="kit_rule_id" type="bigint">
+                <constraints primaryKey="true" primaryKeyName="kit_zip_code_rule_pk"
+                             references="kit_rule(kit_rule_id)" foreignKeyName="kit_zip_code_rule_kit_rule_fk"
+                             deleteCascade="true"/>
+            </column>
+            <column name="error_message_template_id" type="bigint">
+                <constraints nullable="true"
+                             references="template(template_id)"
+                             foreignKeyName="kit_zip_code_rule_error_msg_tmpl_fk"/>
+            </column>
+            <column name="warning_message_template_id" type="bigint">
+                <constraints nullable="true"
+                             references="template(template_id)"
+                             foreignKeyName="kit_zip_code_rule_warning_msg_tmpl_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+</databaseChangeLog>

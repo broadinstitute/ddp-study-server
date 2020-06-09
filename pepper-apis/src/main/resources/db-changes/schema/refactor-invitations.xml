@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="20200508-refactor-invitations">
+        <dropNotNullConstraint tableName="invitation" columnName="user_id" columnDataType="bigint"/>
+        <dropNotNullConstraint tableName="invitation" columnName="contact_email" columnDataType="varchar(255)"/>
+        <dropUniqueConstraint tableName="invitation" constraintName="invitation_guid_uk"/>
+
+        <addUniqueConstraint tableName="invitation" columnNames="study_id, invitation_guid" constraintName="invitation_study_uk"/>
+        <modifyDataType tableName="invitation" columnName="created_at" newDataType="datetime(6)"/>
+        <modifyDataType tableName="invitation" columnName="verified_at" newDataType="datetime(6)"/>
+        <modifyDataType tableName="invitation" columnName="voided_at" newDataType="datetime(6)"/>
+        <modifyDataType tableName="invitation" columnName="accepted_at" newDataType="datetime(6)"/>
+
+        <addColumn tableName="invitation">
+            <column name="notes" type="varchar(16000)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20200508-add-recruitment-invitation-type">
+        <insert tableName="invitation_type">
+            <column name="invitation_type_code" value="RECRUITMENT"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

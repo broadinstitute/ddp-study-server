@@ -7,6 +7,7 @@ import javax.validation.constraints.NotNull;
 import com.google.gson.annotations.SerializedName;
 
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
+import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.util.MiscUtil;
 
 public class ActivityInstance {
@@ -21,8 +22,8 @@ public class ActivityInstance {
     @SerializedName("activityCode")
     private String activityCode;
 
-    @SerializedName("status")
-    private String status;
+    @SerializedName("statusCode")
+    private InstanceStatusType statusType;
 
     @SerializedName("readonly")
     private Boolean readonly;
@@ -36,28 +37,35 @@ public class ActivityInstance {
     @SerializedName("isFollowup")
     private boolean isFollowup;
 
+    private transient long participantUserId;
     private transient long instanceId;
     private transient long activityId;
     private transient long createdAtMillis;
     private transient Long firstCompletedAt;
 
     public ActivityInstance(
+            long participantUserId,
             long instanceId, long activityId, ActivityType activityType, String guid, String title, String subtitle,
-            String status, Boolean readonly, String activityCode, long createdAtMillis, Long firstCompletedAt,
+            String statusTypeCode, Boolean readonly, String activityCode, long createdAtMillis, Long firstCompletedAt,
             boolean isFollowup
     ) {
+        this.participantUserId = participantUserId;
         this.instanceId = instanceId;
         this.activityId = activityId;
         this.activityType = MiscUtil.checkNonNull(activityType, "activityType");
         this.guid = guid;
         this.title = title;
         this.subtitle = subtitle;
-        this.status = status;
+        this.statusType = InstanceStatusType.valueOf(statusTypeCode);
         this.readonly = readonly;
         this.activityCode = activityCode;
         this.createdAtMillis = createdAtMillis;
         this.firstCompletedAt = firstCompletedAt;
         this.isFollowup = isFollowup;
+    }
+
+    public long getParticipantUserId() {
+        return participantUserId;
     }
 
     public ActivityType getActivityType() {
@@ -68,8 +76,8 @@ public class ActivityInstance {
         return guid;
     }
 
-    public String getStatus() {
-        return status;
+    public InstanceStatusType getStatusType() {
+        return statusType;
     }
 
     public boolean isReadonly() {

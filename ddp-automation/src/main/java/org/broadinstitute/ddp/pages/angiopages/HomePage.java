@@ -21,7 +21,7 @@ public class HomePage extends DDPPage {
     private static final String HEADER_COUNT_ME_IN_BUTTON_XPATH = "//span[@class='CountButton'][contains(text(), 'count me in')]";
 
     //Main page content xpaths
-    private static final String HOMEPAGE_CONTENT_TAG = "toolkit-welcome";
+    private static final String HOMEPAGE_CONTENT_XPATH = "//div[contains(@class, 'MainContainer')]";
     private static final String HOMEPAGE_INTRODUCTION_ARROW_XPATH = "//div[@class='Intro-arrow']//a[@href='#secondView']";
     private static final String HOMEPAGE_INTRODUCTION_ARROW_RESULT_SECTION_ONE_XPATH = "//div[4]";
     private static final String HOMEPAGE_INTRODUCTION_ARROW_RESULT_SECTION_TWO_XPATH = "//div[5]";
@@ -82,7 +82,7 @@ public class HomePage extends DDPPage {
 
 
     //Main page content webelements
-    @ByTag(HOMEPAGE_CONTENT_TAG)
+    @FindBy(xpath = HOMEPAGE_CONTENT_XPATH)
     private WebElement homepageContent;
 
     @FindBy(xpath = HOMEPAGE_INTRODUCTION_ARROW_XPATH)
@@ -182,6 +182,7 @@ public class HomePage extends DDPPage {
      * after getting the full explanation of the study
      */
     public void clickCountMeIn() {
+        JDIPageUtils.scrollDownToElement(HOMEPAGE_PLEASE_JOIN_US_COUNT_ME_IN_BUTTON_XPATH);
         JDIPageUtils.clickButtonUsingJDI(HOMEPAGE_PLEASE_JOIN_US_COUNT_ME_IN_BUTTON_XPATH, XPATH);
     }
 

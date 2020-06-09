@@ -1,6 +1,6 @@
 package org.broadinstitute.ddp.transformers;
 
-import static org.broadinstitute.ddp.transformers.DateTimeFormatUtils.UTC_ISO8601_DATE_TIME_FOMATTER;
+import static org.broadinstitute.ddp.transformers.DateTimeFormatUtils.UTC_ISO8601_DATE_TIME_FORMATTER;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -19,7 +19,7 @@ public class LocalDateTimeAdapter extends TypeAdapter<LocalDateTime> {
         if (dateTime == null) {
             writer.nullValue();
         } else {
-            writer.value(UTC_ISO8601_DATE_TIME_FOMATTER.format(dateTime));
+            writer.value(UTC_ISO8601_DATE_TIME_FORMATTER.format(dateTime));
         }
     }
 
@@ -29,7 +29,7 @@ public class LocalDateTimeAdapter extends TypeAdapter<LocalDateTime> {
             jsonReader.nextNull();
             return null;
         } else {
-            return LocalDateTime.parse(jsonReader.nextString(), UTC_ISO8601_DATE_TIME_FOMATTER);
+            return LocalDateTime.parse(jsonReader.nextString(), UTC_ISO8601_DATE_TIME_FORMATTER);
         }
     }
 

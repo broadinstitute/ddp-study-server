@@ -87,7 +87,7 @@ public class StudyDataExportJobTest {
 
         // minimal studyDto that will make this work. Really irrelevant for our tests except needed to avoid null pointer exceptions.
         StudyDto testStudyDto = new StudyDto(123, "theguid", "studyname", null,
-                "http://blah.boo.com", 2, 1, null, false, null, true);
+                "http://blah.boo.com", 2, 1, null, false, null, null, true);
 
         // run the real thing when we call this
         when(job.exportStudyToGoogleBucket(testStudyDto, null, null, List.of(), List.of())).thenCallRealMethod();

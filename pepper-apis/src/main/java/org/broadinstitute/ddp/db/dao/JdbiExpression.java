@@ -20,11 +20,11 @@ public interface JdbiExpression extends SqlObject {
     }
 
     @SqlQuery("select expression_text from expression where expression_id = :id")
-    String getExpressionById(Long id);
+    String getExpressionById(@Bind("id") Long id);
 
     @SqlUpdate("insert into expression(expression_guid, expression_text) values (:expressionGuid,:expressionText)")
     @GetGeneratedKeys
-    long insert(String expressionGuid, String expressionText);
+    long insert(@Bind("expressionGuid") String expressionGuid, @Bind("expressionText") String expressionText);
 
     default Expression insertExpression(String text) {
         String guid = generateUniqueGuid();
@@ -32,7 +32,7 @@ public interface JdbiExpression extends SqlObject {
     }
 
     @SqlUpdate("update expression set expression_text = :text where expression_guid = :guid")
-    int updateByGuid(String guid, String text);
+    int updateByGuid(@Bind("guid") String guid, @Bind("text") String text);
 
     @SqlUpdate("update expression set expression_text = :text where expression_id = :expressionId")
     int updateById(@Bind("expressionId") long expressionId, @Bind("text") String text);

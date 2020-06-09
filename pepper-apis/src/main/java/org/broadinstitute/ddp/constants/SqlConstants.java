@@ -135,6 +135,7 @@ public class SqlConstants {
         public static final String READONLY_HINT_TEMPLATE_ID = "readonly_hint_template_id";
         public static final String LAST_UPDATED_TEXT_TEMPLATE_ID = "last_updated_text_template_id";
         public static final String LAST_UPDATED = "last_updated";
+        public static final String SNAPSHOT_SUBSTITUTIONS_ON_SUBMIT = "snapshot_substitutions_on_submit";
     }
 
     public static final class ListStyleHintTable {
@@ -303,20 +304,6 @@ public class SqlConstants {
         public static final String FIRST_SELECTED_YEAR = "first_selected_year";
     }
 
-    public static final class FirecloudServiceAccountTable {
-        public static final String ACCOUNT_KEY_LOCATION = "account_key_location";
-    }
-
-    public static final class FireCloud {
-        public static final String FIRECLOUD_STUDY_QUERY = "firecloud.fireCloudStudyExport";
-        public static final String STUDY_NAMES_FOR_ADMIN_GUID = "firecloud.getStudyNamesForUserAdminGuid";
-        public static final String STUDY_PARTICIPANT_COUNT = "firecloud.getStudyParticipantCount";
-        public static final String HAD_ADMIN_ACCESS_QUERY = "firecloud.hasAdminAccessQuery";
-        public static final String SERVICE_ACCOUNT_PATH_WITH_STUDY_QUERY = "firecloud.serviceAccountPathWithStudyQuery";
-        public static final String SERVICE_ACCOUNT_PATH_WITHOUT_STUDY_QUERY
-                = "firecloud.serviceAccountPathWithoutStudyQuery";
-    }
-
     public static final class EventConfigurationTable {
         public static final String ID = "event_configuration_id";
     }
@@ -341,22 +328,6 @@ public class SqlConstants {
     public static final class KitTypeTable {
         public static final String ID = "kit_type_id";
         public static final String NAME = "name";
-    }
-
-    public static final class KitConfigurationTable {
-        public static final String KIT_CONFIGURATION_ID = "kit_configuration_id";
-        public static final String STUDY_ID = "study_id";
-        public static final String NUMBER_OF_KITS = "number_of_kits";
-        public static final String KIT_TYPE_ID = "kit_type_id";
-    }
-
-    public static final class KitRuleTable {
-        public static final String ID = "kit_rule_id";
-        public static final String TYPE_ID = "kit_rule_type_id";
-    }
-
-    public static final class KitRuleTypeTable {
-        public static final String CODE = "kit_rule_type_code";
     }
 
     public static final class KitCountryRuleTable {

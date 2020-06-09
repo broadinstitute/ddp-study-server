@@ -5,6 +5,7 @@
 
 {
     "dbUrl": "{{$conf.dbUrl}}",
+    "defaultTimezone": "{{$conf.defaultTimezone}}",
     "auth0": {
         "encryptionSecret": "{{$conf.auth0.encryptionSecret}}"
     }
