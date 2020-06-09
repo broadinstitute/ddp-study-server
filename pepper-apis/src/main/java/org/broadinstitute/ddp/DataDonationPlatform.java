@@ -590,6 +590,9 @@ public class DataDonationPlatform {
             if (accessControlRequestMethod != null) {
                 response.header("Access-Control-Allow-Methods", accessControlRequestMethod);
             }
+            if (accessControlRequestMethod != null || accessControlRequestHeaders != null) {
+                response.header("Access-Control-Max-Age", "172800");
+            }
 
             return "OK";
         });
