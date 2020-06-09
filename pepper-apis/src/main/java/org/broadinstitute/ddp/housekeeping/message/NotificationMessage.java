@@ -56,7 +56,7 @@ public class NotificationMessage implements HousekeepingMessage {
     @SerializedName("eventConfigId")
     private long eventConfigurationId;
 
-    private transient boolean isDynamicTemplate;
+    private boolean isDynamicTemplate;
 
     public NotificationMessage(NotificationType notificationType,
                                NotificationServiceType service,
