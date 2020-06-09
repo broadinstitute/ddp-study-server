@@ -28,7 +28,6 @@ public class NotificationEventAction extends EventAction {
 
     private NotificationType notificationType;
     private NotificationServiceType notificationServiceType;
-    private long notificationTemplateId;
     private Long linkedActivityId; // Allowed to be null
     private List<PdfAttachment> pdfAttachments = new ArrayList<>();
 
@@ -36,7 +35,6 @@ public class NotificationEventAction extends EventAction {
         super(eventConfiguration, dto);
         this.notificationType = dto.getNotificationType();
         this.notificationServiceType = dto.getNotificationServiceType();
-        this.notificationTemplateId = dto.getNotificationTemplateId();
         this.linkedActivityId = dto.getLinkedActivityId();
     }
 
@@ -124,10 +122,6 @@ public class NotificationEventAction extends EventAction {
 
     public NotificationServiceType getNotificationServiceType() {
         return notificationServiceType;
-    }
-
-    public long getNotificationTemplateId() {
-        return notificationTemplateId;
     }
 
     public Long getLinkedActivityId() {

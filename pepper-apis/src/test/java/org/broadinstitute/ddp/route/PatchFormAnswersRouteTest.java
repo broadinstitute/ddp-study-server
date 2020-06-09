@@ -1,7 +1,6 @@
 package org.broadinstitute.ddp.route;
 
 import static io.restassured.RestAssured.given;
-
 import static org.hamcrest.Matchers.allOf;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
@@ -9,7 +8,6 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.isEmptyOrNullString;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
@@ -34,17 +32,14 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonNull;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
-
 import io.restassured.http.ContentType;
 import io.restassured.mapper.ObjectMapperType;
 import io.restassured.response.Response;
-
 import liquibase.util.StringUtils;
-
 import org.apache.http.HttpResponse;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.util.EntityUtils;
-
+import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.API;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
@@ -56,7 +51,6 @@ import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstanceStatusType;
-import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
 import org.broadinstitute.ddp.db.dao.JdbiQuestion;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.QuestionDao;
@@ -111,11 +105,8 @@ import org.broadinstitute.ddp.model.activity.types.TemplateType;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.broadinstitute.ddp.util.TestUtil;
-
 import org.eclipse.jetty.http.HttpStatus;
-
 import org.jdbi.v3.core.Handle;
-
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -737,7 +728,7 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
             assertTrue(optCompQuestion.isPresent());
             Question compositeQuestionWithAnswers = handle.attach(QuestionDao.class)
                     .getQuestionByIdAndActivityInstanceGuid(optCompQuestion.get().getId(), instanceGuid,
-                            handle.attach(JdbiLanguageCode.class).getLanguageCodeId("en"));
+                            LanguageStore.getOrComputeDefault(handle).getId());
             assertTrue(compositeQuestionWithAnswers instanceof CompositeQuestion);
             List<CompositeAnswer> savedCompositeAnswers = ((CompositeQuestion) compositeQuestionWithAnswers).getAnswers();
             assertEquals(1, savedCompositeAnswers.size());

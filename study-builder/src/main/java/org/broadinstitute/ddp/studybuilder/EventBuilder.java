@@ -125,20 +125,35 @@ public class EventBuilder {
     private long insertEventAction(Handle handle, Config actionCfg) {
         EventActionDao actionDao = handle.attach(EventActionDao.class);
         String type = actionCfg.getString("type");
-        boolean isDynamicTemplate = false;
-        if (actionCfg.hasPath("is_dynamic")) {
-            isDynamicTemplate = actionCfg.getBoolean("is_dynamic");
-        }
 
         if (ACTION_SENDGRID_EMAIL.equals(type) || ACTION_STUDY_EMAIL.equals(type) || ACTION_INVITATION_EMAIL.equals(type)) {
-            String emailTemplate = actionCfg.getString("emailTemplate");
-            String language = actionCfg.getString("language");
-            SendgridEmailEventActionDto actionDto = new SendgridEmailEventActionDto(emailTemplate, language, isDynamicTemplate);
+            SendgridEmailEventActionDto actionDto = null;
+            if (actionCfg.hasPath("emailTemplate")) {
+                // Handle old format.
+                String emailTemplate = actionCfg.getString("emailTemplate");
+                String language = actionCfg.getString("language");
+                actionDto = new SendgridEmailEventActionDto(emailTemplate, language);
+            } else {
+                // Handle new format.
+                for (Config tmplCfg : actionCfg.getConfigList("templates")) {
+                    String emailTemplate = tmplCfg.getString("emailTemplate");
+                    String language = tmplCfg.getString("language");
+                    if (actionDto == null) {
+                        actionDto = new SendgridEmailEventActionDto(emailTemplate, language);
+                    } else {
+                        actionDto.addTemplate(emailTemplate, language);
+                    }
+                }
+            }
+
+            if (actionDto == null) {
+                throw new DDPException("Need at least one email template for event action " + type);
+            }
 
             String linkedActivityCode = ConfigUtil.getStrIfPresent(actionCfg, "linkedActivityCode");
             if (linkedActivityCode != null) {
                 long linkedActivityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), linkedActivityCode);
-                actionDto = new SendgridEmailEventActionDto(emailTemplate, language, linkedActivityId, isDynamicTemplate);
+                actionDto.setLinkedActivityId(linkedActivityId);
             }
 
             long actionId;
