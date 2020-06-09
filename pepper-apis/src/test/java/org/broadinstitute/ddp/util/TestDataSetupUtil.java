@@ -38,6 +38,7 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Options;
 import org.apache.commons.io.IOUtils;
+import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.SqlConstants;
 import org.broadinstitute.ddp.constants.TestConstants;
@@ -61,7 +62,6 @@ import org.broadinstitute.ddp.db.dao.JdbiEventConfiguration;
 import org.broadinstitute.ddp.db.dao.JdbiEventConfigurationOccurrenceCounter;
 import org.broadinstitute.ddp.db.dao.JdbiEventTrigger;
 import org.broadinstitute.ddp.db.dao.JdbiExpression;
-import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
 import org.broadinstitute.ddp.db.dao.JdbiMailAddress;
 import org.broadinstitute.ddp.db.dao.JdbiMedicalProvider;
 import org.broadinstitute.ddp.db.dao.JdbiRevision;
@@ -697,8 +697,9 @@ public class TestDataSetupUtil {
                                 : TestConstants.TEST_USER_PROFILE_BIRTH_MONTH,
                         random ? rand.ints(1, 28).findFirst().getAsInt()
                                 : TestConstants.TEST_USER_PROFILE_BIRTH_DAY))
-                .setPreferredLangId(handle.attach(JdbiLanguageCode.class)
-                        .getLanguageCodeId(TestConstants.TEST_USER_PROFILE_PREFERRED_LANGUAGE))
+                .setPreferredLangId(LanguageStore
+                        .getOrCompute(handle, TestConstants.TEST_USER_PROFILE_PREFERRED_LANGUAGE)
+                        .getId())
                 .build();
         handle.attach(UserProfileDao.class).createProfile(profile);
         return profile;

@@ -32,6 +32,7 @@ import io.restassured.http.ContentType;
 import io.restassured.mapper.ObjectMapperType;
 import io.restassured.response.Response;
 import org.apache.http.HttpStatus;
+import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.constants.Auth0Constants;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.ErrorCodes;
@@ -49,7 +50,6 @@ import org.broadinstitute.ddp.db.dao.InvitationFactory;
 import org.broadinstitute.ddp.db.dao.InvitationSql;
 import org.broadinstitute.ddp.db.dao.JdbiAuth0Tenant;
 import org.broadinstitute.ddp.db.dao.JdbiEventConfiguration;
-import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
 import org.broadinstitute.ddp.db.dao.JdbiMailingList;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
@@ -428,7 +428,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
 
             UserProfile profile = handle.attach(UserProfileDao.class).findProfileByUserId(userDto.getUserId()).get();
 
-            Long enLanguageCodeId = handle.attach(JdbiLanguageCode.class).getLanguageCodeId(EN_LANG_CODE);
+            Long enLanguageCodeId = LanguageStore.getOrComputeDefault(handle).getId();
             assertEquals(enLanguageCodeId, profile.getPreferredLangId());
             assertEquals("foo", profile.getFirstName());
             assertEquals("bar", profile.getLastName());
@@ -765,7 +765,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
             assertEquals(fakeAuth0Id, actualUser.getAuth0UserId());
 
             UserProfile profile = handle.attach(UserProfileDao.class).findProfileByUserId(actualUser.getUserId()).get();
-            Long enLanguageCodeId = handle.attach(JdbiLanguageCode.class).getLanguageCodeId(EN_LANG_CODE);
+            Long enLanguageCodeId = LanguageStore.getOrComputeDefault(handle).getId();
             assertEquals(profile.getPreferredLangId(), enLanguageCodeId);
 
             JdbiUserStudyEnrollment jdbiEnrollment = handle.attach(JdbiUserStudyEnrollment.class);

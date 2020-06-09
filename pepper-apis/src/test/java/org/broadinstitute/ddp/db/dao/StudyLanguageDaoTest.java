@@ -5,6 +5,7 @@ import static org.junit.Assert.assertNotNull;
 import java.util.List;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
+import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.model.study.StudyLanguage;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
@@ -30,7 +31,7 @@ public class StudyLanguageDaoTest extends TxnAwareBaseTest {
             List<StudyLanguage> studyLanguageList = dao.findLanguages(testData.getStudyId());
             Assert.assertEquals(0, studyLanguageList.size());
 
-            Long englishLangCodeId = handle.attach(JdbiLanguageCode.class).getLanguageCodeId("en");
+            Long englishLangCodeId = LanguageStore.getOrComputeDefault(handle).getId();
             dao.insert(testData.getStudyId(), englishLangCodeId, "english");
 
             StudyLanguageSql studyLanguageSql = handle.attach(StudyLanguageSql.class);
@@ -38,7 +39,7 @@ public class StudyLanguageDaoTest extends TxnAwareBaseTest {
             assertNotNull(defaultLangs);
             Assert.assertTrue(defaultLangs.isEmpty());
 
-            Long frenchLangCodeId = handle.attach(JdbiLanguageCode.class).getLanguageCodeId("fr");
+            Long frenchLangCodeId = LanguageStore.getOrCompute(handle, "fr").getId();
             dao.insert(testData.getStudyId(), frenchLangCodeId, "french");
 
             //now set as default
@@ -54,11 +55,11 @@ public class StudyLanguageDaoTest extends TxnAwareBaseTest {
             Assert.assertEquals(studyLanguageList.size(), 2);
             StudyLanguage toCheck = studyLanguageList.get(0);
             Assert.assertEquals(toCheck.getDisplayName(), "english");
-            Assert.assertTrue(toCheck.getIsDefault());
+            Assert.assertTrue(toCheck.isDefault());
             Assert.assertEquals(toCheck.getLanguageCode(), "en");
             toCheck = studyLanguageList.get(1);
             Assert.assertEquals(toCheck.getDisplayName(), "french");
-            Assert.assertFalse(toCheck.getIsDefault());
+            Assert.assertFalse(toCheck.isDefault());
             Assert.assertEquals(toCheck.getLanguageCode(), "fr");
 
             handle.rollback();

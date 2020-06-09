@@ -42,8 +42,8 @@ clients:
   - name: testboston-crc-client
     app_type: spa
     callbacks:
-      - '##BASE_URL##/login-landing'
-      ##LOCALHOST_CALLBACKS##
+      - '##BASE_URL##/admin-login-landing'
+      ##LOCALHOST_ADMIN_CALLBACKS##
     allowed_logout_urls:
       - '##BASE_URL##'
       - '##BASE_URL##/session-expired'

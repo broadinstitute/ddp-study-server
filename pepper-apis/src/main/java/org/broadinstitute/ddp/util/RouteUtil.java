@@ -3,21 +3,16 @@ package org.broadinstitute.ddp.util;
 import static org.broadinstitute.ddp.constants.RouteConstants.Header.BEARER;
 
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 
-import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.content.ContentStyle;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
-import org.broadinstitute.ddp.db.dao.StudyDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.LanguageDto;
@@ -190,19 +185,7 @@ public class RouteUtil {
      */
     public static String resolveLanguage(Request request, Handle handle, String studyGuid, Locale userPreferredLocale) {
         String acceptLanguageHeader = request.headers(RouteConstants.Header.ACCEPT_LANGUAGE);
-        List<Locale.LanguageRange> acceptLanguages = StringUtils.isNotEmpty(acceptLanguageHeader)
-                ? Locale.LanguageRange.parse(acceptLanguageHeader) : Collections.emptyList();
-
-        Set<Locale> studyLanguages = new HashSet<>();
-        if (studyGuid != null) {
-            studyLanguages = handle.attach(StudyDao.class)
-                    .findSupportedLanguagesByGuid(studyGuid)
-                    .stream()
-                    .map(LanguageDto::toLocale)
-                    .collect(Collectors.toSet());
-        }
-
-        Locale resolved = I18nUtil.resolvePreferredLanguage(userPreferredLocale, acceptLanguages, studyLanguages);
-        return resolved.getLanguage();
+        Locale locale = I18nUtil.resolveLocale(handle, studyGuid, userPreferredLocale, acceptLanguageHeader);
+        return locale.getLanguage();
     }
 }

@@ -9,6 +9,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
+import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
@@ -96,7 +97,7 @@ public class UserDaoTest extends TxnAwareBaseTest {
     }
 
     private void populateData(Handle handle, User tempUser) {
-        long langId = handle.attach(JdbiLanguageCode.class).getLanguageCodeId("en");
+        long langId = LanguageStore.getOrComputeDefault(handle).getId();
 
         handle.attach(UserProfileDao.class).createProfile(
                 new UserProfile.Builder(tempUser.getId())
