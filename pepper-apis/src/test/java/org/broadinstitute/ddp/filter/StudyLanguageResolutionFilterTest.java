@@ -4,12 +4,10 @@ import java.util.Locale;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.db.dao.StudyDao;
+import org.broadinstitute.ddp.db.dao.StudyLanguageDao;
 import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
-
 import org.jdbi.v3.core.Handle;
-
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -103,6 +101,6 @@ public class StudyLanguageResolutionFilterTest extends TxnAwareBaseTest {
     }
 
     private void enableLanguageSupportForStudy(Handle handle, String studyGuid, String isoLanguageCode) {
-        handle.attach(StudyDao.class).addSupportedLanguage(studyGuid, isoLanguageCode);
+        handle.attach(StudyLanguageDao.class).insert(studyGuid, isoLanguageCode, null);
     }
 }

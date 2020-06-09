@@ -3,7 +3,9 @@ package org.broadinstitute.ddp.db.dao;
 import java.util.List;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.db.DBUtils;
+import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.study.StudyLanguage;
@@ -17,9 +19,6 @@ public interface StudyLanguageDao extends SqlObject {
 
     @CreateSqlObject
     JdbiUmbrellaStudy getUmbrellaStudy();
-
-    @CreateSqlObject
-    JdbiLanguageCode getLanguageCode();
 
     default long insert(long umbrellaStudyId, long languageCodeId) {
         return getStudyLanguageSql().insert(umbrellaStudyId, languageCodeId);
@@ -35,7 +34,8 @@ public interface StudyLanguageDao extends SqlObject {
             throw new DDPException("Study not found for guid : " + studyGuid);
         }
 
-        Long languageCodeId = getLanguageCode().getLanguageCodeId(languageCode);
+        LanguageDto languageDto = LanguageStore.getOrCompute(getHandle(), languageCode);
+        Long languageCodeId = languageDto != null ? languageDto.getId() : null;
         if (languageCodeId == null) {
             throw new DDPException("Language code : " + languageCode + " not found ");
         }
@@ -68,10 +68,15 @@ public interface StudyLanguageDao extends SqlObject {
     }
 
     default int setAsDefaultLanguage(long umbrellaStudyId, String languageCode) {
-        return setAsDefaultLanguage(umbrellaStudyId, getLanguageCode().getLanguageCodeId(languageCode));
+        long languageCodeId = LanguageStore.getOrCompute(getHandle(), languageCode).getId();
+        return setAsDefaultLanguage(umbrellaStudyId, languageCodeId);
     }
 
     default List<StudyLanguage> findLanguages(long umbrellaStudyId) {
         return getStudyLanguageSql().selectStudyLanguages(umbrellaStudyId);
+    }
+
+    default List<StudyLanguage> findLanguages(String studyGuid) {
+        return getStudyLanguageSql().selectStudyLanguages(studyGuid);
     }
 }
