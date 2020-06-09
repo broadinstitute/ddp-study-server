@@ -178,9 +178,7 @@ public class EmailNotificationHandler implements HousekeepingMessageHandler<Noti
         dynamicData.put(PARTICIPANT_LAST_NAME, message.getParticipantLastName());
 
         for (NotificationTemplateSubstitutionDto sub : message.getTemplateSubstitutions()) {
-            if (!sub.getVariableName().startsWith("-")) {
-                dynamicData.put(sub.getVariableName(), sub.getValue());
-            }
+            dynamicData.put(sub.getVariableName(), sub.getValue());
         }
 
         return dynamicData;
@@ -237,9 +235,7 @@ public class EmailNotificationHandler implements HousekeepingMessageHandler<Noti
         subs.put(DDP_PARTICIPANT_LAST_NAME, message.getParticipantLastName());
 
         for (NotificationTemplateSubstitutionDto sub : message.getTemplateSubstitutions()) {
-            if (sub.getVariableName().startsWith("-")) {
-                subs.put(sub.getVariableName(), sub.getValue());
-            }
+            subs.put(sub.getVariableName(), sub.getValue());
         }
 
         return subs;
