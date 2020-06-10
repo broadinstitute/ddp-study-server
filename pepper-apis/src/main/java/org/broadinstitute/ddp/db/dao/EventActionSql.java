@@ -58,7 +58,7 @@ public interface EventActionSql extends SqlObject {
             @Bind("linkedActivityId") Long linkedActivityId);
 
     @GetGeneratedKeys
-    @SqlUpdate("insert into notification_template (template_key, language_code_id)"
+    @SqlUpdate("insert into notification_template (template_key, language_code_id, is_dynamic)"
             + " values (:tmplKey, (select language_code_id from language_code where iso_language_code = :langCode), :isDynamic)")
     long insertNotificationTemplate(@Bind("tmplKey") String templateKey, @Bind("langCode") String isoLanguageCode,
                                     @Bind("isDynamic") boolean isDynamic);
