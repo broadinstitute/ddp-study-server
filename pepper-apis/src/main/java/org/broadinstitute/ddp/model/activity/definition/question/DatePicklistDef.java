@@ -40,11 +40,6 @@ public class DatePicklistDef {
     private boolean allowFutureYears;
 
     public DatePicklistDef(Boolean useMonthNames, Integer yearsForward, Integer yearsBack, Integer yearAnchor,
-                           Integer firstSelectedYear) {
-        this(useMonthNames, yearsForward, yearsBack, yearAnchor, firstSelectedYear, false);
-    }
-
-    public DatePicklistDef(Boolean useMonthNames, Integer yearsForward, Integer yearsBack, Integer yearAnchor,
                            Integer firstSelectedYear, boolean allowFutureYears) {
         this.useMonthNames = useMonthNames;
         this.yearsForward = checkInt(yearsForward, (n -> n >= 0), "yearsForward should be positive or zero");
