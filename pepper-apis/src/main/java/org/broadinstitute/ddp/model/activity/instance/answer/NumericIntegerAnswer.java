@@ -25,4 +25,9 @@ public class NumericIntegerAnswer extends NumericAnswer<Long> {
     public void setValue(Long value) {
         this.value = value;
     }
+
+    @Override
+    public boolean isEmpty() {
+        return value == null;
+    }
 }

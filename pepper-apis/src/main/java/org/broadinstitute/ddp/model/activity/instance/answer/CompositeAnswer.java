@@ -36,6 +36,14 @@ public class CompositeAnswer extends Answer<List<AnswerRow>> {
         this.values = new ArrayList<>(value);
     }
 
+    @Override
+    public boolean isEmpty() {
+        // List is null, empty, rows are all empty, or row child are all empty.
+        return values == null || values.stream().allMatch(
+                row -> row == null || row.getValues().stream().allMatch(
+                        child -> child == null || child.isEmpty()));
+    }
+
     public void addRowOfChildAnswers(List<Answer> valuesInSingleRow) {
         values.add(new AnswerRow(valuesInSingleRow));
     }

@@ -3,22 +3,22 @@ package org.broadinstitute.ddp.db;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
-import org.broadinstitute.ddp.cache.LanguageStore;
-import org.broadinstitute.ddp.db.dao.QuestionDao;
+import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.definition.ConditionalBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormBlockDef;
-import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
 import org.broadinstitute.ddp.model.activity.definition.GroupBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
+import org.broadinstitute.ddp.model.activity.definition.question.CompositeQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
+import org.broadinstitute.ddp.model.activity.instance.FormResponse;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
+import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.pex.PexException;
-import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.pex.TreeWalkInterpreter;
 import org.jdbi.v3.core.Handle;
 
@@ -26,12 +26,9 @@ public class ActivityDefStore {
 
     private static ActivityDefStore instance;
     private static volatile Object lockVar = "lock";
+
     private TreeWalkInterpreter interpreter;
     private Map<String, FormActivityDef> activityDefMap;
-
-    private ActivityDefStore() {
-        activityDefMap = new HashMap<>();
-    }
 
     public static ActivityDefStore getInstance() {
         if (instance == null) {
@@ -43,6 +40,10 @@ public class ActivityDefStore {
             }
         }
         return instance;
+    }
+
+    private ActivityDefStore() {
+        activityDefMap = new HashMap<>();
     }
 
     public void clear() {
@@ -63,23 +64,23 @@ public class ActivityDefStore {
         }
     }
 
-    public Pair<Integer, Integer> countQuestionsAndAnswersForActivity(Handle handle, String studyId, String activityCode,
-                                                                      String versionTag, String userGuid, String instanceGuid,
-                                                                      String isoLanguageCode) {
-        FormActivityDef formActivityDef = getActivityDef(studyId, activityCode, versionTag);
-
-        long langCodeId = Optional.ofNullable(LanguageStore.getOrCompute(handle, isoLanguageCode))
-                .orElseGet(() -> LanguageStore.getOrComputeDefault(handle))
-                .getId();
+    public Pair<Integer, Integer> countQuestionsAndAnswers(Handle handle, String userGuid,
+                                                           FormActivityDef formActivityDef,
+                                                           String instanceGuid) {
+        FormResponse formResponse = handle.attach(ActivityInstanceDao.class)
+                .findFormResponseWithAnswersByInstanceGuid(instanceGuid)
+                .orElse(null);
+        if (formResponse != null) {
+            formResponse.unwrapComposites();
+        }
 
         int numQuestions = 0;
-        int numQuestionsAnswered = 0;
-        for (FormSectionDef section : formActivityDef.getAllSections()) {
-            for (FormBlockDef block : section.getBlocks()) {
-                Pair<Integer, Integer> counts = countQuestionsAndAnswersForBlock(handle, interpreter, block, userGuid, instanceGuid,
-                        langCodeId);
+        int numAnswered = 0;
+        for (var section : formActivityDef.getAllSections()) {
+            for (var block : section.getBlocks()) {
+                Pair<Integer, Integer> counts = countBlock(handle, userGuid, block, formResponse);
                 numQuestions += counts.getLeft();
-                numQuestionsAnswered += counts.getRight();
+                numAnswered += counts.getRight();
                 if (block.getBlockType().isContainerBlock()) {
                     List<FormBlockDef> children;
                     if (block.getBlockType() == BlockType.CONDITIONAL) {
@@ -89,57 +90,61 @@ public class ActivityDefStore {
                     } else {
                         throw new DDPException("Unhandled container block type " + block.getBlockType());
                     }
-                    for (FormBlockDef child : children) {
-                        counts = countQuestionsAndAnswersForBlock(handle, interpreter, child, userGuid, instanceGuid, langCodeId);
+                    for (var child : children) {
+                        counts = countBlock(handle, userGuid, child, formResponse);
                         numQuestions += counts.getLeft();
-                        numQuestionsAnswered += counts.getRight();
+                        numAnswered += counts.getRight();
                     }
                 }
             }
         }
-        return new ImmutablePair<>(numQuestions, numQuestionsAnswered);
+
+        return new ImmutablePair<>(numQuestions, numAnswered);
     }
 
-    private Pair<Integer, Integer> countQuestionsAndAnswersForBlock(Handle handle, PexInterpreter interpreter,
-                                                                    FormBlockDef formBlockDef, String userGuid, String instanceGuid,
-                                                                    long isoLanguageCode) {
-        int isQuestion = 0;
-        int isQuestionAnswered = 0;
+    private Pair<Integer, Integer> countBlock(Handle handle, String userGuid, FormBlockDef block, FormResponse formResponse) {
+        int numQuestions = 0;
+        int numAnswered = 0;
         boolean shown = true;
+        String instanceGuid = formResponse != null ? formResponse.getGuid() : null;
 
-        if (formBlockDef.getShownExpr() != null) {
+        if (block.getShownExpr() != null) {
             try {
-                shown = interpreter.eval(formBlockDef.getShownExpr(), handle, userGuid, instanceGuid);
+                shown = interpreter.eval(block.getShownExpr(), handle, userGuid, instanceGuid);
             } catch (PexException e) {
                 String msg = String.format("Error evaluating pex expression for formBlockDef def %s: `%s`",
-                        formBlockDef.getBlockGuid(), formBlockDef.getShownExpr());
+                        block.getBlockGuid(), block.getShownExpr());
                 throw new DDPException(msg, e);
             }
         }
 
         if (shown) {
-            if (formBlockDef.getBlockType() == BlockType.CONDITIONAL) {
-                ConditionalBlockDef conditionalBlockDef = (ConditionalBlockDef) formBlockDef;
-                if (!conditionalBlockDef.getControl().isDeprecated()) {
-                    isQuestion++;
-                    isQuestionAnswered += handle.attach(QuestionDao.class).getControlQuestionByBlockId(conditionalBlockDef.getBlockId(),
-                            instanceGuid,
-                            false,
-                            isoLanguageCode)
-                            .map(question -> question.isAnswered() ? 1 : 0)
-                            .orElse(0);
-                }
-            } else if (formBlockDef.getBlockType() == BlockType.QUESTION) {
-                QuestionBlockDef questionBlockDef = (QuestionBlockDef) formBlockDef;
-                if (!questionBlockDef.getQuestion().isDeprecated()) {
-                    isQuestion++;
-                    isQuestionAnswered += handle.attach(QuestionDao.class).getQuestionByBlockId(formBlockDef.getBlockId(), instanceGuid,
-                            false, isoLanguageCode)
-                            .map(question -> question.isAnswered() ? 1 : 0)
-                            .orElse(0);
+            QuestionDef questionDef = null;
+            if (block.getBlockType() == BlockType.CONDITIONAL) {
+                ConditionalBlockDef conditionalBlockDef = (ConditionalBlockDef) block;
+                questionDef = conditionalBlockDef.getControl();
+            } else if (block.getBlockType() == BlockType.QUESTION) {
+                QuestionBlockDef questionBlockDef = (QuestionBlockDef) block;
+                questionDef = questionBlockDef.getQuestion();
+            }
+
+            if (questionDef != null && !questionDef.isDeprecated()) {
+                if (questionDef.getQuestionType() == QuestionType.COMPOSITE
+                        && ((CompositeQuestionDef) questionDef).shouldUnwrapChildQuestions()) {
+                    // If configured to unwrap, then treat it as multiple individual questions.
+                    for (var child : ((CompositeQuestionDef) questionDef).getChildren()) {
+                        numQuestions++;
+                        var answer = formResponse != null ? formResponse.getAnswer(child.getStableId()) : null;
+                        numAnswered += (answer != null && !answer.isEmpty()) ? 1 : 0;
+                    }
+                } else {
+                    numQuestions++;
+                    var answer = formResponse != null ? formResponse.getAnswer(questionDef.getStableId()) : null;
+                    numAnswered += (answer != null && !answer.isEmpty()) ? 1 : 0;
                 }
             }
         }
-        return new ImmutablePair<>(isQuestion, isQuestionAnswered);
+
+        return new ImmutablePair<>(numQuestions, numAnswered);
     }
 }

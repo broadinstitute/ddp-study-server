@@ -34,4 +34,9 @@ public class DateAnswer extends Answer<DateValue> {
     public void setValue(DateValue value) {
         this.value = value;
     }
+
+    @Override
+    public boolean isEmpty() {
+        return value == null || value.isBlank();
+    }
 }
