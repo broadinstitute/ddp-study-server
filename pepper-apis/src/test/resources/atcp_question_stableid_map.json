@@ -1,0 +1,19 @@
+{
+  "study": {
+    "guid": "ATCP",
+    "survey": [
+      {
+        "name": "atcp_registry_questionnaire_legacy",
+        "activity_code": "MEDICAL_HISTORY",
+        "question_answer_stables": [
+          {
+            "name": "cancer_diagnosis_age",
+            "stable_id": "CANCER_DIAGNOSED_AGE",
+            "type": "numeric",
+            "source_type": "integer"
+          }
+        ]
+      }
+    ]
+  }
+}
