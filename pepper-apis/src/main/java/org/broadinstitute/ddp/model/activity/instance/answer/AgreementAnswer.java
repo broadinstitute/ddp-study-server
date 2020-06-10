@@ -22,4 +22,9 @@ public final class AgreementAnswer extends Answer<Boolean> {
     public void setValue(Boolean value) {
         this.value = value;
     }
+
+    @Override
+    public boolean isEmpty() {
+        return value == null;
+    }
 }
