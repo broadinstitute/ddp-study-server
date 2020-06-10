@@ -2,11 +2,13 @@ package org.broadinstitute.ddp.route;
 
 import java.time.DateTimeException;
 import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -35,7 +37,7 @@ public class PatchProfileRoute implements Route {
 
         JsonElement data = new JsonParser().parse(request.body());
         if (!data.isJsonObject() || data.getAsJsonObject().entrySet().size() == 0) {
-            ResponseUtil.halt400ErrorResponse(response, ErrorCodes.MISSING_BODY);
+            throw ResponseUtil.haltError(HttpStatus.SC_BAD_REQUEST, new ApiError(ErrorCodes.MISSING_BODY, "Missing body in payload"));
         }
         JsonObject json = data.getAsJsonObject();
 
@@ -44,7 +46,7 @@ public class PatchProfileRoute implements Route {
             payload = new Gson().fromJson(json, Profile.class);
         } catch (Exception e) {
             LOG.warn("Error while parsing json", e);
-            throw ResponseUtil.haltError(400, new ApiError(ErrorCodes.BAD_PAYLOAD, "Error parsing payload"));
+            throw ResponseUtil.haltError(HttpStatus.SC_BAD_REQUEST, new ApiError(ErrorCodes.BAD_PAYLOAD, "Error parsing payload"));
         }
 
         boolean providedSexStr = json.has(Profile.SEX);
@@ -56,10 +58,13 @@ public class PatchProfileRoute implements Route {
         boolean providedLastName = json.has(Profile.LAST_NAME);
         String lastName = providedLastName ? payload.getLastName() : null;
 
-        boolean providedBirthDate = json.has(Profile.BIRTH_YEAR)
+        boolean providedBirthDate = json.has(Profile.BIRTH_DATE);
+        String birthDate = payload.getBirthDate();
+
+        boolean providedBirthDateElements = json.has(Profile.BIRTH_YEAR)
                 && json.has(Profile.BIRTH_MONTH)
                 && json.has(Profile.BIRTH_DAY_IN_MONTH);
-        LocalDate birthDate = providedBirthDate ? parseBirthDate(payload) : null;
+        LocalDate parsedBirthDate = providedBirthDateElements ? parseBirthDate(payload) : null;
 
         Profile modifiedProfile = TransactionWrapper.withTxn((Handle handle) -> {
             boolean providedLanguage = json.has(Profile.PREFERRED_LANGUAGE);
@@ -68,8 +73,8 @@ public class PatchProfileRoute implements Route {
             var profileDao = handle.attach(UserProfileDao.class);
             UserProfile profile = profileDao.findProfileByUserGuid(userGuid).orElse(null);
             if (profile == null) {
-                ResponseUtil.halt400ErrorResponse(response, ErrorCodes.MISSING_PROFILE);
-                return null;
+                String errorMsg = "Profile not found for user with guid: " + userGuid;
+                throw ResponseUtil.haltError(response, HttpStatus.SC_NOT_FOUND, new ApiError(ErrorCodes.MISSING_PROFILE, errorMsg));
             }
 
             // Patch the existing profile with only things that were provided in payload.
@@ -83,9 +88,18 @@ public class PatchProfileRoute implements Route {
             if (providedSexStr) {
                 builder.setSexType(sexType);
             }
+
             if (providedBirthDate) {
-                builder.setBirthDate(birthDate);
+                try {
+                    builder.setBirthDate(birthDate != null ? LocalDate.parse(birthDate) : null);
+                } catch (DateTimeParseException e) {
+                    String errorMsg = "Provided birth date is not a valid date";
+                    throw ResponseUtil.haltError(response, HttpStatus.SC_BAD_REQUEST, new ApiError(ErrorCodes.INVALID_DATE, errorMsg));
+                }
+            } else if (providedBirthDateElements) {
+                builder.setBirthDate(parsedBirthDate);
             }
+
             if (providedLanguage) {
                 builder.setPreferredLangId(languageId);
             }
@@ -95,7 +109,7 @@ public class PatchProfileRoute implements Route {
             return new Profile(profile);    // Convert to json view.
         });
 
-        response.status(200);
+        response.status(HttpStatus.SC_OK);
         return modifiedProfile;
     }
 
@@ -108,10 +122,11 @@ public class PatchProfileRoute implements Route {
             return UserProfile.SexType.valueOf(sexStr);
         } catch (IllegalArgumentException e) {
             LOG.warn("Provided invalid profile sex type: {}", sexStr, e);
-            ResponseUtil.halt400ErrorResponse(response, ErrorCodes.INVALID_SEX);
-            return null;
+            String errorMsg = "Provided invalid profile sex type: " + sexStr;
+            throw ResponseUtil.haltError(response, HttpStatus.SC_BAD_REQUEST, new ApiError(ErrorCodes.INVALID_SEX, errorMsg));
         }
     }
+
 
     private LocalDate parseBirthDate(Profile payload) {
         Integer year = payload.getBirthYear();
@@ -124,11 +139,12 @@ public class PatchProfileRoute implements Route {
                 return LocalDate.of(year, month, day);
             } catch (DateTimeException e) {
                 LOG.warn("Invalid birth date", e);
-                throw ResponseUtil.haltError(400, new ApiError(ErrorCodes.BAD_PAYLOAD, "Invalid birth date"));
+                throw ResponseUtil.haltError(HttpStatus.SC_BAD_REQUEST, new ApiError(ErrorCodes.INVALID_DATE, "Invalid birth date"));
             }
         } else {
             LOG.warn("Full birth date was not provided");
-            throw ResponseUtil.haltError(400, new ApiError(ErrorCodes.BAD_PAYLOAD, "Need to provide full birth date"));
+            throw ResponseUtil.haltError(HttpStatus.SC_BAD_REQUEST,
+                    new ApiError(ErrorCodes.INVALID_DATE, "Need to provide full birth date"));
         }
     }
 
@@ -141,8 +157,8 @@ public class PatchProfileRoute implements Route {
         if (languageId != null) {
             return languageId;
         } else {
-            ResponseUtil.halt400ErrorResponse(response, ErrorCodes.INVALID_LANGUAGE_PREFERENCE);
-            return null;
+            throw ResponseUtil.haltError(HttpStatus.SC_BAD_REQUEST,
+                    new ApiError(ErrorCodes.INVALID_LANGUAGE_PREFERENCE, "Invalid preferred language"));
         }
     }
 }

@@ -13,7 +13,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
-import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
@@ -55,7 +54,7 @@ public class SectionBlockDaoTest extends TxnAwareBaseTest {
 
     @BeforeClass
     public static void setUp() {
-        dao = new SectionBlockDao(new I18nContentRenderer());
+        dao = new SectionBlockDao();
         TransactionWrapper.useTxn(handle -> {
             data = TestDataSetupUtil.generateBasicUserTestData(handle);
             userGuid = data.getTestingUser().getUserGuid();

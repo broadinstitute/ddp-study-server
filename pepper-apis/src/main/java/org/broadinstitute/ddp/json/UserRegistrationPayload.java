@@ -41,38 +41,43 @@ public class UserRegistrationPayload {
     @SerializedName("tempUserGuid")
     private String tempUserGuid;
 
-    @SerializedName("auth0ClientCountryCode")
-    private String auth0ClientCountryCode;
-
     @SerializedName("mode")
     private String mode;
 
     @SerializedName("invitationId")
     private String invitationGuid;
 
-    public UserRegistrationPayload(String auth0UserId, String auth0ClientId, String auth0ClientCountryCode,
+    @SerializedName("languageCode")
+    private String languageCode;
+
+    @SerializedName("firstName")
+    private String firstName;
+
+    @SerializedName("lastName")
+    private String lastName;
+
+    public UserRegistrationPayload(String auth0UserId, String auth0ClientId,
                                    String studyGuid, String auth0Domain, String tempUserGuid, String mode) {
-        this(auth0UserId, auth0ClientId, auth0ClientCountryCode, studyGuid, auth0Domain, tempUserGuid, mode, null);
+        this(auth0UserId, auth0ClientId, studyGuid, auth0Domain, tempUserGuid, mode, null);
     }
 
-    public UserRegistrationPayload(String auth0UserId, String auth0ClientId, String auth0ClientCountryCode,
+    public UserRegistrationPayload(String auth0UserId, String auth0ClientId,
                                    String studyGuid, String auth0Domain, String tempUserGuid, String mode,
                                    String invitationGuid) {
-        this(auth0UserId, auth0ClientId, auth0ClientCountryCode, studyGuid, auth0Domain, invitationGuid);
+        this(auth0UserId, auth0ClientId, studyGuid, auth0Domain, invitationGuid);
         this.tempUserGuid = tempUserGuid;
         this.mode = mode;
     }
 
-    public UserRegistrationPayload(String auth0UserId, String auth0ClientId, String auth0ClientCountryCode,
+    public UserRegistrationPayload(String auth0UserId, String auth0ClientId,
                                    String studyGuid, String auth0Domain) {
-        this(auth0UserId, auth0ClientId, auth0ClientCountryCode, studyGuid, auth0Domain, null);
+        this(auth0UserId, auth0ClientId, studyGuid, auth0Domain, null);
     }
 
-    public UserRegistrationPayload(String auth0UserId, String auth0ClientId, String auth0ClientCountryCode,
+    public UserRegistrationPayload(String auth0UserId, String auth0ClientId,
                                    String studyGuid, String auth0Domain, String invitationGuid) {
         this.auth0UserId = auth0UserId;
         this.auth0ClientId = auth0ClientId;
-        this.auth0ClientCountryCode = auth0ClientCountryCode;
         this.studyGuid = studyGuid;
         this.auth0Domain = auth0Domain;
         this.invitationGuid = invitationGuid;
@@ -98,10 +103,6 @@ public class UserRegistrationPayload {
         return auth0ClientId;
     }
 
-    public String getAuth0ClientCountryCode() {
-        return auth0ClientCountryCode;
-    }
-
     public String getStudyGuid() {
         return studyGuid;
     }
@@ -120,5 +121,32 @@ public class UserRegistrationPayload {
 
     public String getInvitationGuid() {
         return invitationGuid;
+    }
+
+    public String getLanguageCode() {
+        return languageCode;
+    }
+
+    public UserRegistrationPayload setLanguageCode(String languageCode) {
+        this.languageCode = languageCode;
+        return this;
+    }
+
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public UserRegistrationPayload setFirstName(String firstName) {
+        this.firstName = firstName;
+        return this;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public UserRegistrationPayload setLastName(String lastName) {
+        this.lastName = lastName;
+        return this;
     }
 }

@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -21,6 +22,8 @@ import com.google.cloud.pubsub.v1.MessageReceiver;
 import com.google.cloud.pubsub.v1.Publisher;
 import com.google.cloud.pubsub.v1.Subscriber;
 import com.google.gson.Gson;
+import com.google.protobuf.Duration;
+import com.google.pubsub.v1.ExpirationPolicy;
 import com.google.pubsub.v1.ProjectSubscriptionName;
 import com.google.pubsub.v1.ProjectTopicName;
 import com.google.pubsub.v1.PubsubMessage;
@@ -42,6 +45,7 @@ import org.broadinstitute.ddp.db.dto.QueuedEventDto;
 import org.broadinstitute.ddp.db.housekeeping.dao.JdbiEvent;
 import org.broadinstitute.ddp.db.housekeeping.dao.JdbiMessage;
 import org.broadinstitute.ddp.db.housekeeping.dao.KitCheckDao;
+import org.broadinstitute.ddp.event.HousekeepingTaskReceiver;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.exception.MessageBuilderException;
 import org.broadinstitute.ddp.housekeeping.PubSubConnectionManager;
@@ -57,6 +61,7 @@ import org.broadinstitute.ddp.housekeeping.schedule.CheckAgeUpJob;
 import org.broadinstitute.ddp.housekeeping.schedule.DataSyncJob;
 import org.broadinstitute.ddp.housekeeping.schedule.DatabaseBackupCheckJob;
 import org.broadinstitute.ddp.housekeeping.schedule.DatabaseBackupJob;
+import org.broadinstitute.ddp.housekeeping.schedule.OnDemandExportJob;
 import org.broadinstitute.ddp.housekeeping.schedule.StudyDataExportJob;
 import org.broadinstitute.ddp.housekeeping.schedule.TemporaryUserCleanupJob;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
@@ -72,11 +77,13 @@ import org.broadinstitute.ddp.service.PdfBucketService;
 import org.broadinstitute.ddp.service.PdfGenerationService;
 import org.broadinstitute.ddp.service.PdfService;
 import org.broadinstitute.ddp.util.ConfigManager;
+import org.broadinstitute.ddp.util.GuidUtils;
 import org.broadinstitute.ddp.util.LiquibaseUtil;
 import org.broadinstitute.ddp.util.LogbackConfigurationPrinter;
 import org.quartz.Scheduler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import spark.Spark;
 
 public class Housekeeping {
 
@@ -133,6 +140,9 @@ public class Housekeeping {
     private static final AtomicBoolean afterHandlerGuard = new AtomicBoolean();
     public static final String IGNORE_EVENT_LOG_MESSAGE = "Ignoring and removing occurrence of event ";
 
+    private static final String ENV_PORT = "PORT";
+    private static final String GAE_START_HOOK_ENDPOINT = "/_ah/start";
+
     /**
      * How many milliseconds to wait between writing error log entry
      * for the same exception
@@ -149,6 +159,9 @@ public class Housekeeping {
      * that runs after a message is handled
      */
     private static AfterHandlerCallback afterHandling;
+
+    private static Scheduler scheduler;
+    private static Subscriber eventSubscriber;
 
     public static void setAfterHandler(AfterHandlerCallback afterHandler) {
         synchronized (afterHandlerGuard) {
@@ -167,7 +180,7 @@ public class Housekeeping {
         Config cfg = ConfigManager.getInstance().getConfig();
         boolean doLiquibase = cfg.getBoolean(ConfigFile.DO_LIQUIBASE);
         int maxConnections = cfg.getInt(ConfigFile.HOUSEKEEPING_NUM_POOLED_CONNECTIONS);
-        String pubSubProject = cfg.getString(ConfigFile.PUBSUB_PROJECT);
+        String pubSubProject = cfg.getString(ConfigFile.GOOGLE_PROJECT_ID);
 
         boolean usePubSubEmulator = cfg.getBoolean(ConfigFile.USE_PUBSUB_EMULATOR);
         String housekeepingDbUrl = cfg.getString(TransactionWrapper.DB.HOUSEKEEPING.getDbUrlConfigKey());
@@ -189,9 +202,9 @@ public class Housekeeping {
             LiquibaseUtil.runLiquibase(housekeepingDbUrl, TransactionWrapper.DB.HOUSEKEEPING);
         }
 
-        boolean runScheduler = cfg.getBoolean(ConfigFile.RUN_SCHEDULER);
-        Scheduler scheduler = null;
+        final PubSubConnectionManager pubsubConnectionManager = new PubSubConnectionManager(usePubSubEmulator);
 
+        boolean runScheduler = cfg.getBoolean(ConfigFile.RUN_SCHEDULER);
         if (runScheduler) {
             LOG.info("Booting job scheduler...");
             scheduler = JobScheduler.initializeWith(cfg,
@@ -199,13 +212,36 @@ public class Housekeeping {
                     DataSyncJob::register,
                     DatabaseBackupJob::register,
                     DatabaseBackupCheckJob::register,
+                    OnDemandExportJob::register,
                     TemporaryUserCleanupJob::register,
                     StudyDataExportJob::register);
+
+            if (cfg.getBoolean(ConfigFile.PUBSUB_ENABLE_HKEEP_TASKS)) {
+                var topicName = ProjectTopicName.of(pubSubProject, cfg.getString(ConfigFile.PUBSUB_HKEEP_TASKS_TOPIC));
+                pubsubConnectionManager.createTopicIfNotExists(topicName);
+
+                var subName = ProjectSubscriptionName.of(pubSubProject,
+                        String.format("%s-%s", topicName.getTopic(), GuidUtils.randomAlphaNumeric()));
+                pubsubConnectionManager.createSubscriptionIfNotExists(Subscription.newBuilder()
+                        .setName(subName.toString())
+                        .setTopic(topicName.toString())
+                        .setAckDeadlineSeconds(PubSubConnectionManager.ACK_DEADLINE_SECONDS)
+                        .setExpirationPolicy(ExpirationPolicy.newBuilder().setTtl(Duration.newBuilder()
+                                .setSeconds(PubSubConnectionManager.SUB_EXPIRATION_DAYS * 24 * 60 * 60)
+                                .build()).build())
+                        .build());
+                LOG.info("Created housekeeping tasks subscription {}", subName);
+
+                HousekeepingTaskReceiver receiver = new HousekeepingTaskReceiver(subName.getSubscription(), scheduler);
+                eventSubscriber = pubsubConnectionManager.subscribe(subName, receiver);
+                eventSubscriber.startAsync();
+                LOG.info("Started housekeeping tasks subscriber to subscription {}", subName);
+            } else {
+                LOG.warn("Housekeeping tasks is not enabled");
+            }
         } else {
             LOG.info("Housekeeping job scheduler is not set to run");
         }
-
-        final PubSubConnectionManager pubsubConnectionManager = new PubSubConnectionManager(usePubSubEmulator);
 
         TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, handle -> {
             JdbiMessageDestination messageDestinationDao = handle.attach(JdbiMessageDestination.class);
@@ -233,6 +269,12 @@ public class Housekeeping {
 
         heartbeatMonitor = new StackdriverMetricsTracker(StackdriverCustomMetric.HOUSEKEEPING_CYCLES,
                 PointsReducerFactory.buildMaxPointReducer());
+
+        String envPort = System.getenv(ENV_PORT);
+        if (envPort != null) {
+            // We're likely in an GAE environment, so respond to the start hook before starting main event loop.
+            respondToGAEStartHook(envPort);
+        }
 
         //loop to pickup pending events on main DB API and create messages to send over to Housekeeping
         while (!stop) {
@@ -387,10 +429,46 @@ public class Housekeeping {
             }
         }
         pubsubConnectionManager.close();
+        if (eventSubscriber != null) {
+            eventSubscriber.stopAsync();
+        }
         if (scheduler != null) {
             JobScheduler.shutdownScheduler(scheduler, true);
         }
         LOG.info("Housekeeping is shutting down");
+    }
+
+    private static void respondToGAEStartHook(String envPort) {
+        var receivedPing = new AtomicBoolean(false);
+
+        Spark.port(Integer.parseInt(envPort));
+        Spark.get(GAE_START_HOOK_ENDPOINT, (request, response) -> {
+            receivedPing.set(true);
+            response.status(200);
+            return "";
+        });
+        Spark.awaitInitialization();
+        LOG.info("Started HTTP server on port {} and waiting for ping from GAE", envPort);
+
+        long startMillis = Instant.now().toEpochMilli();
+        while (!receivedPing.get()) {
+            if (Instant.now().toEpochMilli() - startMillis > SLEEP_MILLIS) {
+                break;
+            }
+            try {
+                TimeUnit.SECONDS.sleep(1);
+            } catch (InterruptedException e) {
+                LOG.warn("Wait interrupted", e);
+            }
+        }
+
+        Spark.stop();
+        Spark.awaitStop();
+        if (receivedPing.get()) {
+            LOG.info("Received ping from GAE, proceeding with Housekeeping startup");
+        } else {
+            LOG.error("Did not receive ping from GAE but proceeding with Housekeeping startup");
+        }
     }
 
     private static void sendKitMetrics(KitCheckDao.KitCheckResult kitCheckResult) {
@@ -430,9 +508,8 @@ public class Housekeeping {
     }
 
     /**
-     * Sets up post-publish callbacks.  When the event is published
-     * successfully, it's deleted from the queue.  If there is an error
-     * during publishing, the event is requeued.
+     * Sets up post-publish callbacks.  When the event is published successfully, it's deleted from the queue.  If there
+     * is an error during publishing, the event is requeued.
      */
     private static void setPostPublishingCallbacks(ApiFuture future, long queuedEventId) {
         ApiFutures.addCallback(future, new ApiFutureCallback<String>() {
@@ -591,14 +668,12 @@ public class Housekeeping {
     }
 
     /**
-     * Callback fired after a message is
-     * handled.  Primarily used for testing.
+     * Callback fired after a message is handled.  Primarily used for testing.
      */
     public interface AfterHandlerCallback {
 
         /**
-         * Method runs immediately after a message is
-         * handled
+         * Method runs immediately after a message is handled
          *
          * @param message              the message
          * @param eventConfigurationId the event_configuration_id for the event

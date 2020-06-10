@@ -10,7 +10,7 @@
   "AUTH0_KEYWORD_REPLACE_MAPPINGS": {
   {{if eq $environment "dev"}}
     {{/* These end up being a line item in a yaml file, so the hyphen in front is needed. */}}
-    "LOCALHOST_CALLBACKS": "- http://localhost:4200/login-landing",
+    "LOCALHOST_CALLBACKS": "- http://localhost:4200/auth, http://localhost:4200/login-landing",
     "LOCALHOST_LOGOUTS": "- http://localhost:4200, http://localhost:4200/session-expired",
     "LOCALHOST_ORIGINS": "- http://localhost:4200",
   {{else}}

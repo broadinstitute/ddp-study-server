@@ -1,16 +1,15 @@
 package org.broadinstitute.ddp.db.dao;
 
-import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
+import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.dto.InvitationDto;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
-import org.jdbi.v3.sqlobject.statement.SqlUpdate;
-
 
 public interface InvitationDao extends SqlObject {
 
@@ -22,26 +21,50 @@ public interface InvitationDao extends SqlObject {
 
     @SqlQuery("select i.*, it.invitation_type_code from invitation as i"
             + "  join invitation_type as it on i.invitation_type_id = it.invitation_type_id"
-            + " where i.invitation_guid = :guid")
+            + "  join umbrella_study as s on s.umbrella_study_id = i.study_id"
+            + "  left join user as u on u.user_id = i.user_id"
+            + " where s.guid = :studyGuid and u.guid = :userGuid")
     @RegisterConstructorMapper(InvitationDto.class)
-    Optional<InvitationDto> findByInvitationGuid(@Bind("guid") String invitationGuid);
+    List<InvitationDto> findInvitations(@Bind("studyGuid") String studyGuid, @Bind("userGuid") String userGuid);
 
-    @SqlUpdate("update invitation set voided_at = :voidedAt where invitation_guid = :invitationGuid")
-    int updateVoidedAt(@Bind("voidedAt") Timestamp voidedAt, @Bind("invitationGuid") String invitationGuid);
+    @SqlQuery("select i.*, it.invitation_type_code from invitation as i"
+            + "  join invitation_type as it on i.invitation_type_id = it.invitation_type_id"
+            + " where i.study_id = :studyId and i.invitation_guid = :guid")
+    @RegisterConstructorMapper(InvitationDto.class)
+    Optional<InvitationDto> findByInvitationGuid(@Bind("studyId") long studyId, @Bind("guid") String invitationGuid);
 
-    @SqlUpdate("update invitation set verified_at = :verifiedAt where invitation_guid = :invitationGuid")
-    int updateVerifiedAt(@Bind("verifiedAt") Timestamp verifiedAt, @Bind("invitationGuid") String invitationGuid);
+    @SqlQuery("select i.*, it.invitation_type_code from invitation as i"
+            + "  join invitation_type as it on i.invitation_type_id = it.invitation_type_id"
+            + " where i.study_id = :studyId")
+    @RegisterConstructorMapper(InvitationDto.class)
+    List<InvitationDto> findAllInvitations(@Bind("studyId") long studyId);
 
-    @SqlUpdate("update invitation set accepted_at = :acceptedAt where invitation_guid = :invitationGuid")
-    int updateAcceptedAt(@Bind("acceptedAt") Timestamp acceptedAt, @Bind("invitationGuid") String invitationGuid);
+    default void saveNotes(long invitationId, String notes) {
+        DBUtils.checkUpdate(1, getHandle().attach(InvitationSql.class)
+                .updateNotes(invitationId, notes));
+    }
 
-    @SqlUpdate("update invitation set voided_at = :voidedAt where study_id = :studyId and user_id = :userId")
-    int bulkUpdateVoidedAt(@Bind("studyId") long studyId, @Bind("userId") long userId, @Bind("voidedAt") Timestamp voidedAt);
+    default void markVoided(long invitationId, Instant voidedAt) {
+        DBUtils.checkUpdate(1, getHandle().attach(InvitationSql.class)
+                .updateVoidedAt(invitationId, voidedAt));
+    }
 
-    /**
-     * Sets nullable date columns to null for the given invitation.  Convenience for testing.
-     */
-    @SqlUpdate("update invitation set accepted_at = null, voided_at = null, verified_at = null "
-             + "where invitation_guid = :guid")
-    int clearDates(@Bind("guid") String invitationGuid);
+    default void markVerified(long invitationId, Instant verifiedAt) {
+        DBUtils.checkUpdate(1, getHandle().attach(InvitationSql.class)
+                .updateVerifiedAt(invitationId, verifiedAt));
+    }
+
+    default void markAccepted(long invitationId, Instant acceptedAt) {
+        DBUtils.checkUpdate(1, getHandle().attach(InvitationSql.class)
+                .updateAcceptedAt(invitationId, acceptedAt));
+    }
+
+    default void assignAcceptingUser(long invitationId, long userId, Instant acceptedAt) {
+        DBUtils.checkUpdate(1, getHandle().attach(InvitationSql.class)
+                .updateAcceptingUser(invitationId, userId, acceptedAt));
+    }
+
+    default int bulkMarkVoided(long studyId, long userId, Instant voidedAt) {
+        return getHandle().attach(InvitationSql.class).bulkUpdateVoidedAt(studyId, userId, voidedAt);
+    }
 }

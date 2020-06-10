@@ -34,11 +34,15 @@ public interface KitTypeDao extends SqlObject {
     Optional<KitType> getKitTypeById(@Bind Long id);
 
     default KitType getSalivaKitType() {
-        return this.getKitTypeByName(SALIVA).orElse(null);
+        return getKitTypeByName(SALIVA).orElse(null);
     }
 
     default KitType getBloodKitType() {
-        return this.getKitTypeByName(BLOOD).orElse(null);
+        return getKitTypeByName(BLOOD).orElse(null);
+    }
+
+    default KitType getTestBostonKitType() {
+        return getKitTypeByName(KitTypes.TESTBOSTON.name()).orElse(null);
     }
 
     class KitTypeRowMapper implements RowMapper<KitType> {

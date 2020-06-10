@@ -18,6 +18,8 @@ public class ParticipantProfile {
     private String lastName;
     @SerializedName("email")
     private String email;
+    @SerializedName("preferredLanguage")
+    private String preferredLanguage;
     @SerializedName("doNotContact")
     private boolean doNotContact;
     @SerializedName("createdAt")
@@ -31,6 +33,7 @@ public class ParticipantProfile {
             String legacyAltPid,
             String legacyShortId,
             String email,
+            String preferredLanguage,
             Boolean doNotContact,
             long createdAt
     ) {
@@ -41,6 +44,7 @@ public class ParticipantProfile {
         this.legacyAltPid = legacyAltPid;
         this.legacyShortId = legacyShortId;
         this.email = email;
+        this.preferredLanguage = preferredLanguage;
         this.doNotContact = (doNotContact == null ? false : doNotContact);
         this.createdAt = createdAt;
     }
@@ -57,6 +61,7 @@ public class ParticipantProfile {
         private String legacyAltPid;
         private String legacyShortId;
         private String email;
+        private String preferredLanguage;
         private Boolean doNotContact;
         private long createdAt;
 
@@ -69,6 +74,7 @@ public class ParticipantProfile {
                     legacyAltPid,
                     legacyShortId,
                     email,
+                    preferredLanguage,
                     doNotContact,
                     createdAt
             );
@@ -106,6 +112,11 @@ public class ParticipantProfile {
 
         public Builder setEmail(String email) {
             this.email = email;
+            return this;
+        }
+
+        public Builder setPreferredLanguage(String preferredLanguage) {
+            this.preferredLanguage = preferredLanguage;
             return this;
         }
 

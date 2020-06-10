@@ -17,13 +17,12 @@ import org.broadinstitute.ddp.model.activity.instance.question.DateQuestion;
 import org.broadinstitute.ddp.model.activity.types.DateFieldType;
 import org.broadinstitute.ddp.model.activity.types.DateRenderMode;
 import org.broadinstitute.ddp.model.activity.types.RuleType;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
 public class DateRangeRuleTest {
 
-    @Rule
+    @org.junit.Rule
     public ExpectedException thrown = ExpectedException.none();
 
     @Test
@@ -199,5 +198,25 @@ public class DateRangeRuleTest {
         DateQuestion question = new DateQuestion("sid", 1L, emptyList(), emptyList(), DateRenderMode.TEXT, false, fields);
         DateRangeRule rule = DateRangeRule.of("msg", "hint", false, LocalDate.of(1900, 2, 2), LocalDate.of(1900, 2, 22));
         assertTrue(rule.validate(question, new DateAnswer(null, "q", "a", null, 3, 12)));
+    }
+
+    @Test
+    public void testValidate_requiredFieldsArePresent() {
+        List<DateFieldType> fields = Arrays.asList(MONTH, YEAR);
+        List<Rule<DateAnswer>> rules = List.of(
+                DateFieldRequiredRule.of(RuleType.MONTH_REQUIRED, "", "", false),
+                DateFieldRequiredRule.of(RuleType.YEAR_REQUIRED, "", "", false));
+        DateQuestion question = new DateQuestion("sid", 1L, emptyList(), rules, DateRenderMode.TEXT, false, fields);
+        DateRangeRule rule = DateRangeRule.of("msg", "hint", false, LocalDate.of(2020, 1, 1), LocalDate.of(2020, 5, 22));
+        assertTrue("required fields are not filled yet",
+                rule.validate(question, new DateAnswer(null, "q", "a", null, null, null)));
+        assertTrue("required fields are not filled yet",
+                rule.validate(question, new DateAnswer(null, "q", "a", 1990, null, null)));
+        assertTrue("required fields are not filled yet",
+                rule.validate(question, new DateAnswer(null, "q", "a", null, 3, null)));
+        assertTrue("should be within range",
+                rule.validate(question, new DateAnswer(null, "q", "a", 2020, 3, null)));
+        assertFalse("should be outside range",
+                rule.validate(question, new DateAnswer(null, "q", "a", 2020, 6, 13)));
     }
 }

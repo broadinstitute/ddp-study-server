@@ -9,6 +9,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.fluent.Response;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.conn.HttpHostConnectException;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -149,6 +154,29 @@ public class PubSubEmulator {
     }
 
     public static synchronized boolean hasStarted() {
-        return pubsubProcess != null;
+        // We might be running a Docker based emulator
+        if (isExternalEmulatorRunning()) {
+            LOG.info("An emulator already running at " + EMULATOR_HOST);
+            return true;
+        } else {
+            return pubsubProcess != null;
+        }
+    }
+
+    private static boolean isExternalEmulatorRunning() {
+        try (
+                CloseableHttpClient httpClient = HttpClients.createDefault();
+        ) {
+            CloseableHttpResponse response =
+                    httpClient.execute(new HttpGet(PUBSUB_BASE_URL));
+            return response.getStatusLine().getStatusCode() == 200;
+        } catch (HttpHostConnectException e) {
+            LOG.debug("Could not connect to pubsub server. Must not be running");
+            return false;
+        } catch (IOException e) {
+            String msg = "There was problem initializing CloseableHttpClient";
+            LOG.error(msg, e);
+            throw new DDPException(msg, e);
+        }
     }
 }

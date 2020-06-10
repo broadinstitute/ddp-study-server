@@ -10,9 +10,7 @@ import java.util.List;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.db.UserDaoFactory;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
-import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
 import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
@@ -22,6 +20,7 @@ import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
+import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.jdbi.v3.core.Handle;
@@ -68,19 +67,19 @@ public class UserDaoTest extends TxnAwareBaseTest {
     @Test
     public void testDeleteTempUsers_onlyDeletesDataForExpiredTempUsers() {
         TransactionWrapper.useTxn(handle -> {
-            UserDto tempUser1 = newTempUser(handle);
+            User tempUser1 = newTempUser(handle);
             populateData(handle, tempUser1);
 
-            UserDto tempUser2 = newTempUser(handle);
+            User tempUser2 = newTempUser(handle);
             populateData(handle, tempUser2);
 
-            UserDto permUser = newTempUser(handle);
+            User permUser = newTempUser(handle);
             populateData(handle, permUser);
-            handle.attach(UserDao.class).upgradeUserToPermanentById(permUser.getUserId(), "fake123");
+            handle.attach(UserDao.class).upgradeUserToPermanentById(permUser.getId(), "fake123");
 
             // Expire the temp user
             long now = Instant.now().toEpochMilli();
-            handle.attach(JdbiUser.class).updateExpiresAtById(tempUser1.getUserId(), now - 10000);
+            handle.attach(JdbiUser.class).updateExpiresAtById(tempUser1.getId(), now - 10000);
 
             UserDao userDao = handle.attach(UserDao.class);
             assertEquals(1, userDao.deleteAllExpiredTemporaryUsers());
@@ -92,32 +91,31 @@ public class UserDaoTest extends TxnAwareBaseTest {
         });
     }
 
-    private UserDto newTempUser(Handle handle) {
-        return UserDaoFactory.createFromSqlConfig(sqlConfig)
-                .createTemporaryUser(handle, testData.getAuth0ClientId());
+    private User newTempUser(Handle handle) {
+        return handle.attach(UserDao.class).createTempUser(testData.getTestingClient().getClientId());
     }
 
-    private void populateData(Handle handle, UserDto tempUser) {
+    private void populateData(Handle handle, User tempUser) {
         long langId = handle.attach(JdbiLanguageCode.class).getLanguageCodeId("en");
 
         handle.attach(UserProfileDao.class).createProfile(
-                new UserProfile.Builder(tempUser.getUserId())
+                new UserProfile.Builder(tempUser.getId())
                         .setFirstName("first").setLastName("last").setPreferredLangId(langId).setDoNotContact(false)
                         .build());
 
         ActivityInstanceDto instance = handle.attach(ActivityInstanceDao.class)
-                .insertInstance(form.getActivityId(), tempUser.getUserGuid());
+                .insertInstance(form.getActivityId(), tempUser.getGuid());
 
         assertNotNull(handle.attach(AnswerDao.class)
-                .createAnswer(tempUser.getUserId(), instance.getId(), new TextAnswer(null, textSid, null, "ans")));
+                .createAnswer(tempUser.getId(), instance.getId(), new TextAnswer(null, textSid, null, "ans")));
     }
 
-    private void ensureDataExists(Handle handle, UserDto userDto) {
+    private void ensureDataExists(Handle handle, User user) {
         assertTrue(handle.attach(UserProfileDao.class)
-                .findProfileByUserId(userDto.getUserId()).isPresent());
+                .findProfileByUserId(user.getId()).isPresent());
 
         List<ActivityInstanceDto> instances = handle.attach(JdbiActivityInstance.class)
-                .findAllByUserIdAndStudyId(userDto.getUserId(), testData.getStudyId());
+                .findAllByUserIdAndStudyId(user.getId(), testData.getStudyId());
 
         assertEquals(1, instances.size());
         assertTrue(handle.attach(AnswerDao.class)

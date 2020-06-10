@@ -82,7 +82,7 @@
       <dependency>
           <groupId>org.broadinstitute.ddp</groupId>
           <artifactId>pepper-apis</artifactId>
-          <version>SNAPSHOT</version>
+          <version>1.0</version>
           <type>jar</type>
       </dependency>
   </dependencies>
@@ -107,10 +107,10 @@
             <plugin>
         		<groupId>org.apache.maven.plugins</groupId>
         		<artifactId>maven-compiler-plugin</artifactId>
-        		<version>3.7.0</version>
+        		<version>3.8.0</version>
         		<configuration>
-        			 <source>1.8</source>
-         			 <target>1.8</target>
+        			 <source>11</source>
+         			 <target>11</target>
         		</configuration>
      	   </plugin>
           <plugin>
@@ -121,7 +121,7 @@
               <dependency>
                 <groupId>com.puppycrawl.tools</groupId>
                 <artifactId>checkstyle</artifactId>
-                <version>8.18</version>
+                <version>8.29</version>
               </dependency>
             </dependencies>
             <executions>
@@ -174,7 +174,7 @@
                     <artifactId>maven-surefire-plugin</artifactId>
                     <configuration>
                         <includes>
-                            <include>org/broadinstitute/ddp/tests/TestAppAutoTests.java</include>
+                            <include>org/broadinstitute/ddp/tests/AngioAppAutoTests.java</include>
                         </includes>
                         <systemPropertyVariables>
                             <config>windows-chrome.conf</config>
@@ -194,7 +194,7 @@
                     <artifactId>maven-surefire-plugin</artifactId>
                     <configuration>
                         <includes>
-                            <include>org/broadinstitute/ddp/tests/TestAppAutoTests.java</include>
+                            <include>org/broadinstitute/ddp/tests/AngioAppAutoTests.java</include>
                         </includes>
                         <systemPropertyVariables>
                             <config>osx-chrome.conf</config>
@@ -412,26 +412,6 @@
             </build>
         </profile>
         <profile>
-            <id>SmokeTestsAngioWindowsIE</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-surefire-plugin</artifactId>
-                        <configuration>
-                            <includes>
-                                <include>org/broadinstitute/ddp/tests/SmokeTestSuiteAngio.java</include>
-                            </includes>
-                            <systemPropertyVariables>
-                                <config>windows-ie.conf</config>
-                                <org.datadonationplatform.doBrowserStack>true</org.datadonationplatform.doBrowserStack>
-                            </systemPropertyVariables>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        <profile>
             <id>SmokeTestsAngioNexus6</id>
             <build>
                 <plugins>
@@ -481,6 +461,128 @@
                         <configuration>
                             <includes>
                                 <include>org/broadinstitute/ddp/tests/SmokeTestSuiteAngio.java</include>
+                            </includes>
+                            <systemPropertyVariables>
+                                <config>osx-chrome.conf</config>
+                                <org.datadonationplatform.doBrowserStack>true</org.datadonationplatform.doBrowserStack>
+                            </systemPropertyVariables>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!-- Pepper Brain Smoke Tests-->
+        <profile>
+            <id>SmokeTestsBrainWindowsFirefox</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <includes>
+                                <include>org/broadinstitute/ddp/tests/SmokeTestSuiteBrain.java</include>
+                            </includes>
+                            <systemPropertyVariables>
+                                <config>windows-firefox.conf</config>
+                                <org.datadonationplatform.doBrowserStack>true</org.datadonationplatform.doBrowserStack>
+                            </systemPropertyVariables>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>SmokeTestsBrainWindowsChrome</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <includes>
+                                <include>org/broadinstitute/ddp/tests/SmokeTestSuiteBrain.java</include>
+                            </includes>
+                            <systemPropertyVariables>
+                                <config>windows-chrome.conf</config>
+                                <org.datadonationplatform.doBrowserStack>true</org.datadonationplatform.doBrowserStack>
+                            </systemPropertyVariables>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>SmokeTestsBrainMacSafari</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <includes>
+                                <include>org/broadinstitute/ddp/tests/SmokeTestSuiteBrain.java</include>
+                            </includes>
+                            <systemPropertyVariables>
+                                <config>osx-safari.conf</config>
+                                <org.datadonationplatform.doBrowserStack>true</org.datadonationplatform.doBrowserStack>
+                            </systemPropertyVariables>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>SmokeTestsBrainNexus6</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <includes>
+                                <include>org/broadinstitute/ddp/tests/SmokeTestSuiteBrain.java</include>
+                            </includes>
+                            <systemPropertyVariables>
+                                <config>mobile-nexus-6.conf</config>
+                                <org.datadonationplatform.doBrowserStack>true</org.datadonationplatform.doBrowserStack>
+                            </systemPropertyVariables>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>SmokeTestsBrainiPhoneX</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <includes>
+                                <include>org/broadinstitute/ddp/tests/SmokeTestSuiteBrain.java</include>
+                            </includes>
+                            <systemPropertyVariables>
+                                <config>mobile-iphone-X.conf</config>
+                                <org.datadonationplatform.doBrowserStack>true</org.datadonationplatform.doBrowserStack>
+                            </systemPropertyVariables>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>SmokeTestsBrainMacChrome</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <configuration>
+                            <includes>
+                                <include>org/broadinstitute/ddp/tests/SmokeTestSuiteBrain.java</include>
                             </includes>
                             <systemPropertyVariables>
                                 <config>osx-chrome.conf</config>

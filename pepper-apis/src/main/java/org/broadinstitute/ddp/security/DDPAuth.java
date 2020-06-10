@@ -1,10 +1,10 @@
 package org.broadinstitute.ddp.security;
 
 import java.util.Locale;
-
 import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
+import org.jdbi.v3.core.Handle;
 
 /**
  * Access control object for a user. The existence
@@ -12,7 +12,7 @@ import org.apache.commons.lang3.StringUtils;
  * ACL checks.
  * Use #{@link #canAccessStudyDataForUser(String, String)} to confirm
  * they have access to a given user's data in a given study.
- * Use #{@link #canAccessUserProfile(String)} to confirm they
+ * Use #{@link #canAccessUserProfile(Handle, String)} to confirm they
  * can access the profile for a given user.
  * Use #{@link #isActive()} to determine whether this user
  * has been disabled
@@ -55,15 +55,14 @@ public class DDPAuth {
     }
 
     /**
-     * Determines whether this user can access the profile
-     * for the given userGuid.
+     * Determines whether this user can access the profile for the given userGuid.
      *
-     * @param userGuid the guid of the user who's profile
-     *                 you'd like to access
+     * @param handle   the database handle
+     * @param userGuid the guid of the user who's profile you'd like to access
      */
-    public boolean canAccessUserProfile(String userGuid) {
+    public boolean canAccessUserProfile(Handle handle, String userGuid) {
         if (userPermissions != null) {
-            return userPermissions.canAccessUserProfile(userGuid);
+            return userPermissions.canAccessUserProfile(handle, userGuid);
         } else {
             return false;
         }
@@ -154,7 +153,7 @@ public class DDPAuth {
     public String getPreferredLanguage() {
         return preferredLanguage;
     }
-    
+
     @Nullable
     public Locale getPreferredLocale() {
         String preferredLanguage = getPreferredLanguage();
