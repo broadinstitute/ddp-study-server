@@ -16,9 +16,9 @@ basic_scaling:
 network:
   instance_tag: study-server # necessary for firewall rules so that DSM will accept https requests from pepper
 {{if and (eq $environment "dev") (eq $gae "true") }}
-entrypoint: java -javaagent:tcell/tcellagent.jar -agentpath:/opt/cprof/profiler_java_agent.so=-cprof_enable_heap_sampling=true,-cprof_service=pepper-backend,-cprof_cpu_use_per_thread_timers=true -Xmx1640m -Xmx1640m -jar DataDonationPlatform.jar
+entrypoint: java -javaagent:tcell/tcellagent.jar -agentpath:/opt/cprof/profiler_java_agent.so=-cprof_enable_heap_sampling=true,-cprof_service=pepper-backend,-cprof_cpu_use_per_thread_timers=true -Xms1640m -Xmx1640m -jar DataDonationPlatform.jar
 {{else}}
-entrypoint: java -javaagent:tcell/tcellagent.jar -Xmx1640m -Xmx1640m -jar DataDonationPlatform.jar
+entrypoint: java -javaagent:tcell/tcellagent.jar -Xms1640m -Xmx1640m -jar DataDonationPlatform.jar
 {{end}}
 # GAE does not like the "=" character in entrypoint and does not support "." in environment variables
 env_variables:
