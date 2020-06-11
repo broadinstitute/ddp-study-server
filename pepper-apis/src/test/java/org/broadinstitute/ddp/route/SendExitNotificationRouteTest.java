@@ -190,7 +190,7 @@ public class SendExitNotificationRouteTest extends IntegrationTestSuite.TestCase
     private long setupStudyExitConfiguration(Handle handle) {
         long triggerId = handle.attach(EventTriggerDao.class).insertExitRequestTrigger();
         long actionId = handle.attach(EventActionDao.class).insertStudyNotificationAction(
-                new SendgridEmailEventActionDto("template", "en"));
+                new SendgridEmailEventActionDto("template", "en", false));
 
         return handle.attach(JdbiEventConfiguration.class).insert(triggerId, actionId, testData.getStudyId(),
                 Instant.now().toEpochMilli(), null, null, null, null, true, 1);

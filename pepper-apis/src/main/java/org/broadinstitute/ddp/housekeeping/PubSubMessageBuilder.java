@@ -220,6 +220,7 @@ public class PubSubMessageBuilder {
                         queuedNotificationDto.getNotificationType(),
                         queuedNotificationDto.getNotificationServiceType(),
                         templateKey,
+                        template.isDynamic(),
                         sendToList,
                         queuedNotificationDto.getParticipantFirstName(),
                         queuedNotificationDto.getParticipantLastName(),

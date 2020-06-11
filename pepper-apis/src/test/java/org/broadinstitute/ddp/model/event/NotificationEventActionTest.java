@@ -185,7 +185,7 @@ public class NotificationEventActionTest extends TxnAwareBaseTest {
     private long insertInvitationEmailEventConfiguration(Handle handle, EventTriggerType staticTriggerType) {
         long triggerId = handle.attach(EventTriggerDao.class).insertStaticTrigger(staticTriggerType);
         long actionId = handle.attach(EventActionDao.class).insertInvitationEmailNotificationAction(
-                new SendgridEmailEventActionDto("dummy-template-key", "en"));
+                new SendgridEmailEventActionDto("dummy-template-key", "en", false));
         return handle.attach(JdbiEventConfiguration.class).insert(triggerId, actionId, testData.getStudyId(),
                 Instant.now().toEpochMilli(), null, 0, null, null, true, 1);
     }
