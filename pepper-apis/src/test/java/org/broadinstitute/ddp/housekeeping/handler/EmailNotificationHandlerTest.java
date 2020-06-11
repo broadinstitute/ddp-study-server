@@ -1,10 +1,15 @@
 package org.broadinstitute.ddp.housekeeping.handler;
 
+import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.BASE_WEB_URL;
 import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.DDP_BASE_WEB_URL;
 import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.DDP_PARTICIPANT_FIRST_NAME;
 import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.DDP_PARTICIPANT_GUID;
 import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.DDP_PARTICIPANT_LAST_NAME;
 import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.DDP_SALUTATION;
+import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.PARTICIPANT_FIRST_NAME;
+import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.PARTICIPANT_GUID;
+import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.PARTICIPANT_LAST_NAME;
+import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.SALUTATION;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -165,6 +170,29 @@ public class EmailNotificationHandlerTest extends TxnAwareBaseTest {
         assertEquals("last", subs.get(DDP_PARTICIPANT_LAST_NAME));
         assertEquals("bar", subs.get("-ddp.foo-"));
         assertEquals("bob", subs.get("-ddp.alice-"));
+    }
+
+    @Test
+    public void testBuildDynamcSubstitutions() {
+        var msg = new NotificationMessage(
+                NotificationType.EMAIL, NotificationServiceType.SENDGRID,
+                "template", false, List.of("to@ddp.org"), "first", "last", "guid",
+                "study", "pepper", "from@ddp.org", "key", "salutation",
+                List.of(new NotificationTemplateSubstitutionDto("-ddp.foo-", "bar"),
+                        new NotificationTemplateSubstitutionDto("-ddp.activityInstanceGuid-", "AIXX8967"),
+                        new NotificationTemplateSubstitutionDto("-ddp.participant.firstName-", "first name"),
+                        new NotificationTemplateSubstitutionDto("dynamicVar", "dynamic var value")),
+                "url", 1L);
+        var subs = handler.getDynamicData(msg);
+        assertEquals("Dear first last,", subs.get(SALUTATION));
+        assertEquals("url", subs.get(BASE_WEB_URL));
+        assertEquals("guid", subs.get(PARTICIPANT_GUID));
+        assertEquals("first", subs.get(PARTICIPANT_FIRST_NAME));
+        assertEquals("last", subs.get(PARTICIPANT_LAST_NAME));
+        assertEquals("bar", subs.get("foo"));
+        assertEquals("AIXX8967", subs.get("activityInstanceGuid"));
+        assertEquals("first name", subs.get("firstName"));
+        assertEquals("dynamic var value", subs.get("dynamicVar"));
     }
 
     @Test

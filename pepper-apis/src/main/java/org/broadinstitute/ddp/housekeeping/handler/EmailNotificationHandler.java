@@ -162,7 +162,7 @@ public class EmailNotificationHandler implements HousekeepingMessageHandler<Noti
         }
     }
 
-    private Map<String, Object> getDynamicData(NotificationMessage message) {
+    Map<String, Object> getDynamicData(NotificationMessage message) {
         Map<String, Object> dynamicData = new HashMap<>();
 
         String salutation = generateSalutation(
@@ -178,7 +178,18 @@ public class EmailNotificationHandler implements HousekeepingMessageHandler<Noti
         dynamicData.put(PARTICIPANT_LAST_NAME, message.getParticipantLastName());
 
         for (NotificationTemplateSubstitutionDto sub : message.getTemplateSubstitutions()) {
-            dynamicData.put(sub.getVariableName(), sub.getValue());
+            //hack to use current (legacy) substitutions from variables like "-ddp.abc.xyz-"
+            String variableName = sub.getVariableName();
+            if (variableName.contains(".")) {
+                variableName = variableName.substring(variableName.lastIndexOf(".") + 1);
+            }
+            if (variableName.startsWith("-")) {
+                variableName = variableName.substring(1);
+            }
+            if (variableName.endsWith("-")) {
+                variableName = variableName.substring(0, variableName.length() - 1);
+            }
+            dynamicData.put(variableName, sub.getValue());
         }
 
         return dynamicData;
