@@ -181,17 +181,20 @@ public class EmailNotificationHandlerTest extends TxnAwareBaseTest {
                 List.of(new NotificationTemplateSubstitutionDto("-ddp.foo-", "bar"),
                         new NotificationTemplateSubstitutionDto("-ddp.activityInstanceGuid-", "AIXX8967"),
                         new NotificationTemplateSubstitutionDto("-ddp.participant.firstName-", "first name"),
+                        new NotificationTemplateSubstitutionDto("-ddp.abc.xyz.guid-", "abc xyz guid"),
+                        new NotificationTemplateSubstitutionDto("-ddpabc.xyz.guid-", "ddpabc xyz guid"),
                         new NotificationTemplateSubstitutionDto("dynamicVar", "dynamic var value")),
                 "url", 1L);
         var subs = handler.getDynamicData(msg);
         assertEquals("Dear first last,", subs.get(SALUTATION));
         assertEquals("url", subs.get(BASE_WEB_URL));
         assertEquals("guid", subs.get(PARTICIPANT_GUID));
-        assertEquals("first", subs.get(PARTICIPANT_FIRST_NAME));
+        assertEquals("first name", subs.get(PARTICIPANT_FIRST_NAME));
         assertEquals("last", subs.get(PARTICIPANT_LAST_NAME));
         assertEquals("bar", subs.get("foo"));
         assertEquals("AIXX8967", subs.get("activityInstanceGuid"));
-        assertEquals("first name", subs.get("firstName"));
+        assertEquals("abc xyz guid", subs.get("abc_xyz_guid"));
+        assertEquals("ddpabc xyz guid", subs.get("ddpabc_xyz_guid"));
         assertEquals("dynamic var value", subs.get("dynamicVar"));
     }
 

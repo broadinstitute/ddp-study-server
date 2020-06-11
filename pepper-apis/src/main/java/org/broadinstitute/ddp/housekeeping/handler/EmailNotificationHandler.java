@@ -178,13 +178,16 @@ public class EmailNotificationHandler implements HousekeepingMessageHandler<Noti
         dynamicData.put(PARTICIPANT_LAST_NAME, message.getParticipantLastName());
 
         for (NotificationTemplateSubstitutionDto sub : message.getTemplateSubstitutions()) {
-            //hack to use current (legacy) substitutions from variables like "-ddp.abc.xyz-"
+            //hack to translate use current (legacy) substitutions from variables like "-ddp.abc.xyz-" to "abc_xyz" in dynamic templates
             String variableName = sub.getVariableName();
-            if (variableName.contains(".")) {
-                variableName = variableName.substring(variableName.lastIndexOf(".") + 1);
-            }
             if (variableName.startsWith("-")) {
                 variableName = variableName.substring(1);
+            }
+            if (variableName.startsWith("ddp.")) {
+                variableName = variableName.substring(4);
+            }
+            if (variableName.contains(".")) {
+                variableName = variableName.replace(".", "_");
             }
             if (variableName.endsWith("-")) {
                 variableName = variableName.substring(0, variableName.length() - 1);
