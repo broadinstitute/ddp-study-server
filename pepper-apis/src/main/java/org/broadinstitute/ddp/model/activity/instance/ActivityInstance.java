@@ -29,10 +29,10 @@ public class ActivityInstance {
     private Boolean readonly;
 
     @SerializedName("title")
-    private String title;
+    protected String title;
 
     @SerializedName("subtitle")
-    private String subtitle;
+    protected String subtitle;
 
     @SerializedName("isFollowup")
     private boolean isFollowup;
@@ -112,10 +112,6 @@ public class ActivityInstance {
         return subtitle;
     }
 
-    public void setSubtitle(String subtitle) {
-        this.subtitle = subtitle;
-    }
-
     public long getCreatedAtMillis() {
         return createdAtMillis;
     }
@@ -123,5 +119,4 @@ public class ActivityInstance {
     public Long getFirstCompletedAt() {
         return firstCompletedAt;
     }
-
 }

@@ -115,12 +115,13 @@ public class FormInstanceTest extends TxnAwareBaseTest {
 
         ContentBlock content = new ContentBlock(1L, 2L);
         FormSection s1 = new FormSection(Collections.singletonList(content));
-        FormInstance form = buildEmptyTestInstanceWithHtmlInSubtitle();
+        FormInstance form = buildEmptyTestInstanceWithHtmlInTitleAndSubtitle();
         form.addBodySections(Collections.singletonList(s1));
 
         form.renderContent(mockHandle, mockRenderer, 1L, ContentStyle.BASIC);
-        assertEquals("this is title", content.getTitle());
+        assertEquals("title", form.getTitle());
         assertEquals("subtitle", form.getSubtitle());
+        assertEquals("this is title", content.getTitle());
         assertEquals(fixture.get(2L), content.getBody());
     }
 
@@ -474,9 +475,9 @@ public class FormInstanceTest extends TxnAwareBaseTest {
         );
     }
 
-    private FormInstance buildEmptyTestInstanceWithHtmlInSubtitle() {
+    private FormInstance buildEmptyTestInstanceWithHtmlInTitleAndSubtitle() {
         return new FormInstance(
-                1L, 1L, 1L, "SOME_CODE", FormType.GENERAL, "SOME_GUID", "name", "<em>subtitle</em>", "CREATED", false,
+                1L, 1L, 1L, "SOME_CODE", FormType.GENERAL, "SOME_GUID", "<div>title</div>", "<em>subtitle</em>", "CREATED", false,
                 ListStyleHint.NUMBER, null, null, null, Instant.now().toEpochMilli(), null, null, null, false
         );
     }
