@@ -698,7 +698,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
             long triggerId = handle.attach(EventTriggerDao.class)
                     .insertUserRegisteredTrigger();
             long actionId = handle.attach(EventActionDao.class)
-                    .insertNotificationAction(new SendgridEmailEventActionDto("abc", "en"));
+                    .insertNotificationAction(new SendgridEmailEventActionDto("abc", "en", false));
             return handle.attach(JdbiEventConfiguration.class)
                     .insert(triggerId, actionId, testStudy.getId(), Instant.now().toEpochMilli(), null, null, null, null, true, 1);
         });
