@@ -7,7 +7,7 @@ public class NotificationTemplate {
 
     private long id;
     private String templateKey;
-    private boolean isDynamicTemplate;
+    private boolean isDynamic;
     private long languageId;
     private String languageCode;
 
@@ -20,7 +20,7 @@ public class NotificationTemplate {
             @ColumnName("iso_language_code") String languageCode) {
         this.id = id;
         this.templateKey = templateKey;
-        this.isDynamicTemplate = isDynamic;
+        this.isDynamic = isDynamic;
         this.languageId = languageId;
         this.languageCode = languageCode;
     }
@@ -41,7 +41,7 @@ public class NotificationTemplate {
         return languageCode;
     }
 
-    public boolean isDynamicTemplate() {
-        return isDynamicTemplate;
+    public boolean isDynamic() {
+        return isDynamic;
     }
 }

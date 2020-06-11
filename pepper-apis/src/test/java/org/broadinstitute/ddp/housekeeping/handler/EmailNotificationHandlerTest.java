@@ -154,8 +154,8 @@ public class EmailNotificationHandlerTest extends TxnAwareBaseTest {
                 NotificationType.EMAIL, NotificationServiceType.SENDGRID,
                 "template", false, List.of("to@ddp.org"), "first", "last", "guid",
                 "study", "pepper", "from@ddp.org", "key", "salutation",
-                List.of(new NotificationTemplateSubstitutionDto("-ddp.foo", "bar"),
-                        new NotificationTemplateSubstitutionDto("-ddp.alice", "bob")),
+                List.of(new NotificationTemplateSubstitutionDto("-ddp.foo-", "bar"),
+                        new NotificationTemplateSubstitutionDto("-ddp.alice-", "bob")),
                 "url", 1L);
         var subs = handler.buildSubstitutions(msg);
         assertEquals("Dear first last,", subs.get(DDP_SALUTATION));
@@ -163,8 +163,8 @@ public class EmailNotificationHandlerTest extends TxnAwareBaseTest {
         assertEquals("guid", subs.get(DDP_PARTICIPANT_GUID));
         assertEquals("first", subs.get(DDP_PARTICIPANT_FIRST_NAME));
         assertEquals("last", subs.get(DDP_PARTICIPANT_LAST_NAME));
-        assertEquals("bar", subs.get("-ddp.foo"));
-        assertEquals("bob", subs.get("-ddp.alice"));
+        assertEquals("bar", subs.get("-ddp.foo-"));
+        assertEquals("bob", subs.get("-ddp.alice-"));
     }
 
     @Test

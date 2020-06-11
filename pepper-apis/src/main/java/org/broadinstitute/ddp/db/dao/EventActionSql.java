@@ -71,12 +71,6 @@ public interface EventActionSql extends SqlObject {
             @Bind("tmplKey") String templateKey,
             @Bind("langCode") String isoLanguageCode);
 
-    default long findOrInsertNotificationTemplateId(String templateKey, String langCode) {
-        return findNotificationTemplate(templateKey, langCode)
-                .map(NotificationTemplate::getId)
-                .orElseGet(() -> insertNotificationTemplate(templateKey, langCode, false));
-    }
-
     default long findOrInsertNotificationTemplateId(String templateKey, String langCode, boolean isDynamic) {
         return findNotificationTemplate(templateKey, langCode)
                 .map(NotificationTemplate::getId)
