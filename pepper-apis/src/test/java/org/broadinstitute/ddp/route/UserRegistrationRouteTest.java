@@ -50,6 +50,7 @@ import org.broadinstitute.ddp.db.dao.InvitationFactory;
 import org.broadinstitute.ddp.db.dao.InvitationSql;
 import org.broadinstitute.ddp.db.dao.JdbiAuth0Tenant;
 import org.broadinstitute.ddp.db.dao.JdbiEventConfiguration;
+import org.broadinstitute.ddp.db.dao.JdbiEventConfigurationOccurrenceCounter;
 import org.broadinstitute.ddp.db.dao.JdbiMailingList;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
@@ -725,6 +726,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
         } finally {
             TransactionWrapper.useTxn(handle -> {
                 handle.attach(QueuedEventDao.class).deleteQueuedEventsByEventConfigurationId(eventConfigId);
+                handle.attach(JdbiEventConfigurationOccurrenceCounter.class).deleteById(eventConfigId, tempUser.getId());
                 JdbiUserStudyEnrollment jdbiEnrollment = handle.attach(JdbiUserStudyEnrollment.class);
                 for (EnrollmentStatusDto enrollment : jdbiEnrollment.findByStudyGuid(testStudy.getGuid())) {
                     jdbiEnrollment.deleteById(enrollment.getUserStudyEnrollmentId());

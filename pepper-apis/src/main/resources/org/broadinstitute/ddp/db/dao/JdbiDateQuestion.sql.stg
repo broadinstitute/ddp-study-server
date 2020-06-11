@@ -31,7 +31,8 @@ select
   dqyp.years_forward,
   dqyp.years_back,
   dqyp.year_anchor,
-  dqyp.first_selected_year
+  dqyp.first_selected_year,
+  dqyp.allow_future_years
 from date_question as dq
 left join date_question_month_picklist as dqmp
   on dq.question_id = dqmp.date_question_id

@@ -192,7 +192,7 @@ public class EmailBuilder {
     }
 
     private String renderHtmlContent(String name, String rawHtml) {
-        var ctx = new VelocityContext(varsCfg.root().unwrapped());
+        var ctx = new VelocityContext(varsCfg.resolve().root().unwrapped());
         StringWriter writer = new StringWriter();
         velocity.evaluate(ctx, writer, name, rawHtml);
         return writer.toString();
