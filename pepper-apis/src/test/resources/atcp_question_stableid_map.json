@@ -1,0 +1,157 @@
+{
+  "study": {
+    "guid": "atcp",
+    "survey": [
+      {
+        "name":"atcp_registry_questionnaire",
+        "activity_code": "MEDICAL_HISTORY",
+        "question_answer_stables": [
+          {
+            "name": "diagnoses",
+            "type": "Boolean",
+            "source_type": "integer",
+            "stable_id": "DIAGNOSED"
+          },
+          {
+            "name": "age_diagnosis_years",
+            "type": "Numeric",
+            "source_type": "integer",
+            "stable_id": "YEARS"
+          },
+          {
+            "name": "age_diagnosis_months",
+            "type": "Numeric",
+            "source_type": "integer",
+            "stable_id": "MONTHS"
+          },
+          {
+            "name": "age_first_symp",
+            "type": "Numeric",
+            "source_type": "integer",
+            "stable_id": "FIRST_SYMPTOM"
+          },
+          {
+            "name": "age_first_neurologic",
+            "type": "Numeric",
+            "source_type": "integer",
+            "stable_id": "NEUROLOGIC_PROBLEM"
+          },
+          {
+            "name": "diagnosis_criteria",
+            "type": "Picklist",
+            "source_type": "string",
+            "options": [
+              {
+                "name": "analysis",
+                "type": "integer"
+              },
+              {
+                "name": "afp",
+                "type": "integer"
+              },
+              {
+                "name": "exam",
+                "type": "integer"
+              },
+              {
+                "name": "radio_assay",
+                "type": "integer"
+              },
+              {
+                "name": "breakage",
+                "type": "integer"
+              },
+              {
+                "name": "western",
+                "type": "integer"
+              },
+              {
+                "name": "fatm",
+                "type": "integer"
+              },
+              {
+                "name": "hist_bio",
+                "type": "integer"
+              },
+              {
+                "name": "img_ct",
+                "type": "integer"
+              },
+              {
+                "name": "img_mri",
+                "type": "integer"
+              },
+              {
+                "name": "img_pet",
+                "type": "integer"
+              },
+              {
+                "name": "unknown",
+                "type": "integer"
+              },
+              {
+                "name": "other",
+                "type": "integer"
+              },
+              {
+                "name": "other",
+                "text": "text",
+                "type": "string"
+              }
+            ],
+            "stable_id": "DETERMINED"
+          },
+          {
+            "name": "mutation_determination",
+            "type": "string",
+            "stable_id": "ATM_MUTATIONS"
+          },
+          {
+            "name": "who_made_diagnosis",
+            "type": "Composite",
+            "children": [
+              {
+                "name": "name",
+                "type": "string",
+                "stable_id": "NAME_PHYSICIAN"
+              },
+              {
+                "name": "phone",
+                "type": "string",
+                "stable_id": "PHYSICIAN_TELEPHONE_NUMBER"
+              }
+            ],
+            "stable_id": "WHO_MADE_DIAGNOSIS"
+          },
+          {
+            "name": "where_diagnosis_made",
+            "type": "Composite",
+            "children": [
+              {
+                "name": "hospital",
+                "type": "string",
+                "stable_id": "HOSPITAL"
+              },
+              {
+                "name": "city",
+                "type": "string",
+                "stable_id": "CITY"
+              },
+              {
+                "name": "state",
+                "type": "string",
+                "stable_id": "STATE"
+              },
+              {
+                "name": "country",
+                "type": "string",
+                "stable_id": "COUNTRY"
+              }
+            ],
+            "stable_id": "WHERE_DIAGNOSIS_MADE"
+          }
+        ]
+      }
+    ]
+  }
+}
