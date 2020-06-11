@@ -71,7 +71,7 @@ public class HousekeepingSendgridEmailNotificationTest extends HousekeepingTest 
             JdbiActivityInstanceStatusType statusTypeDao = apisHandle.attach(JdbiActivityInstanceStatusType.class);
             JdbiEventConfiguration eventConfigDao = apisHandle.attach(JdbiEventConfiguration.class);
 
-            SendgridEmailEventActionDto eventAction = new SendgridEmailEventActionDto(template, "en");
+            SendgridEmailEventActionDto eventAction = new SendgridEmailEventActionDto(template, "en", false);
             long testEmailActionId = eventActionDao.insertNotificationAction(eventAction);
             TestDataSetupUtil.GeneratedTestData generatedTestData = TestDataSetupUtil.generateBasicUserTestData(apisHandle);
 

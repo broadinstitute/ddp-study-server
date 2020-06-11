@@ -596,7 +596,7 @@ public class TestDataSetupUtil {
         JdbiEventConfiguration eventConfigDao = handle.attach(JdbiEventConfiguration.class);
         JdbiDsmNotificationEventType dsmNotificationEventTypeDao = handle.attach(JdbiDsmNotificationEventType.class);
 
-        SendgridEmailEventActionDto eventActionDto = new SendgridEmailEventActionDto(sendgridTemplateGuid, "en");
+        SendgridEmailEventActionDto eventActionDto = new SendgridEmailEventActionDto(sendgridTemplateGuid, "en", false);
         long testEmailActionId = eventActionDao.insertNotificationAction(eventActionDto);
 
         // create a new activity
