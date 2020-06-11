@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import javax.validation.constraints.NotNull;
@@ -206,12 +205,10 @@ public final class FormInstance extends ActivityInstance {
             }
         }
 
-        // Strip down HTML tags from subtitle if requested
-        String subtitle = getSubtitle();
-        subtitle = Optional.ofNullable(subtitle).map(
-            sub -> style != ContentStyle.BASIC ? sub : HtmlConverter.getPlainText(sub)
-        ).orElse(null);
-        setSubtitle(subtitle);
+        if (style == ContentStyle.BASIC) {
+            title = HtmlConverter.getPlainText(title);
+            subtitle = HtmlConverter.getPlainText(subtitle);
+        }
 
         if (lastUpdatedTextTemplateId != null) {
             Map<String, Object> varNameToValueMap = new HashMap<>();
