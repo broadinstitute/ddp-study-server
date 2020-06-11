@@ -565,7 +565,7 @@ public class StudyDataLoaderMain {
                         }
                     }
                     StudyDto studyDto = jdbiUmbrellaStudy.findByStudyGuid(studyGuid);
-                    Optional<ClientDto> clientDtoOpt = handle.attach(JdbiClient.class).findByClientName(auth0ClientName);
+                    Optional<ClientDto> clientDtoOpt = handle.attach(JdbiClient.class).findByAuth0ClientId(auth0ClientName);
                     if (clientDtoOpt.isEmpty()) {
                         throw new Exception("No client found for client name: " + auth0ClientName);
                     }
