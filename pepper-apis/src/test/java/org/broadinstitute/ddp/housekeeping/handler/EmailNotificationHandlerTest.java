@@ -173,7 +173,7 @@ public class EmailNotificationHandlerTest extends TxnAwareBaseTest {
     }
 
     @Test
-    public void testBuildDynamcSubstitutions() {
+    public void testBuildDynamicTemplateSubstitutions() {
         var msg = new NotificationMessage(
                 NotificationType.EMAIL, NotificationServiceType.SENDGRID,
                 "template", false, List.of("to@ddp.org"), "first", "last", "guid",
