@@ -42,6 +42,9 @@ public abstract class Question<T extends Answer> implements Renderable {
     @SerializedName("textPrompt")
     protected String textPrompt;
 
+    @SerializedName("tooltip")
+    protected Tooltip tooltip;
+
     @Nullable
     @SerializedName("additionalInfoHeader")
     protected String additionalInfoHeader;
@@ -73,12 +76,13 @@ public abstract class Question<T extends Answer> implements Renderable {
     private transient boolean shouldHideQuestionNumber;
 
     public Question(QuestionType questionType, String stableId, long promptTemplateId,
-                    boolean isRestricted, boolean isDeprecated,
+                    boolean isRestricted, boolean isDeprecated, Tooltip tooltip,
                     Long additionalInfoHeaderTemplateId, Long additionalInfoFooterTemplateId,
                     List<T> answers, List<Rule<T>> validations) {
         this(questionType, stableId, promptTemplateId, answers, validations);
         this.isRestricted = isRestricted;
         this.isDeprecated = isDeprecated;
+        this.tooltip = tooltip;
         this.additionalInfoHeaderTemplateId = additionalInfoHeaderTemplateId;
         this.additionalInfoFooterTemplateId = additionalInfoFooterTemplateId;
     }
@@ -106,6 +110,10 @@ public abstract class Question<T extends Answer> implements Renderable {
 
     public String getTextPrompt() {
         return textPrompt;
+    }
+
+    public Tooltip getTooltip() {
+        return tooltip;
     }
 
     public String getAdditionalInfoHeader() {
@@ -232,12 +240,16 @@ public abstract class Question<T extends Answer> implements Renderable {
     public void registerTemplateIds(Consumer<Long> registry) {
         registry.accept(promptTemplateId);
 
+        if (tooltip != null) {
+            tooltip.registerTemplateIds(registry);
+        }
+
         if (additionalInfoHeaderTemplateId != null) {
-            registry.accept(additionalInfoHeaderTemplateId.longValue());
+            registry.accept(additionalInfoHeaderTemplateId);
         }
 
         if (additionalInfoFooterTemplateId != null) {
-            registry.accept(additionalInfoFooterTemplateId.longValue());
+            registry.accept(additionalInfoFooterTemplateId);
         }
     }
 
@@ -253,12 +265,16 @@ public abstract class Question<T extends Answer> implements Renderable {
             prompt = HtmlConverter.getSimpleText(prompt);
         }
 
+        if (tooltip != null) {
+            tooltip.applyRenderedTemplates(rendered, style);
+        }
+
         if (additionalInfoHeaderTemplateId != null) {
-            this.additionalInfoHeader = rendered.get(additionalInfoHeaderTemplateId.longValue());
+            additionalInfoHeader = rendered.get(additionalInfoHeaderTemplateId);
         }
 
         if (additionalInfoFooterTemplateId != null) {
-            this.additionalInfoFooter = rendered.get(additionalInfoFooterTemplateId.longValue());
+            additionalInfoFooter = rendered.get(additionalInfoFooterTemplateId);
         }
     }
 

@@ -13,6 +13,8 @@ select
     q.revision_id,
     q.study_activity_id,
     q.hide_number,
+    q.tooltip_id as tt_tooltip_id,
+    (select text_template_id from tooltip where tooltip_id = q.tooltip_id) as tt_text_template_id,
     rev.start_date as revision_start,
     rev.end_date as revision_end
 from

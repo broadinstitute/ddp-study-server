@@ -4,6 +4,7 @@ import java.util.Optional;
 
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.db.dto.TypedQuestionId;
+import org.broadinstitute.ddp.model.activity.instance.question.Tooltip;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
@@ -33,12 +34,14 @@ public interface JdbiBlockQuestion extends SqlObject {
     @RegisterRowMapper(TypedQuestionId.TypedQuestionIdMapper.class)
     Optional<TypedQuestionId> getActiveTypedQuestionId(long blockId);
 
-    @SqlQuery("select qt.question_type_code, qsc.stable_id, q.*, rev.start_date as revision_start, rev.end_date as revision_end"
+    @SqlQuery("select qt.question_type_code, qsc.stable_id, q.*, rev.start_date as revision_start, rev.end_date as revision_end,"
+            + "       tt.tooltip_id as tt_tooltip_id, tt.text_template_id as tt_text_template_id"
             + "  from block__question as b_q"
             + "  join question as q on b_q.question_id = q.question_id"
             + "  join question_type as qt on q.question_type_id = qt.question_type_id"
             + "  join question_stable_code as qsc on q.question_stable_code_id = qsc.question_stable_code_id"
             + "  join revision as rev on q.revision_id = rev.revision_id"
+            + "  left join tooltip as tt on tt.tooltip_id = q.tooltip_id"
             + " where b_q.block_id = :blockId"
             + "   and rev.start_date <= :timestamp"
             + "   and (rev.end_date is null or :timestamp < rev.end_date)")

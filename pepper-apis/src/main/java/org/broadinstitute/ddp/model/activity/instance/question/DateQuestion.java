@@ -39,7 +39,7 @@ public class DateQuestion extends Question<DateAnswer> {
     protected transient Long placeholderTemplateId;
 
     public DateQuestion(String stableId, long promptTemplateId,
-                        boolean isRestricted, boolean isDeprecated,
+                        boolean isRestricted, boolean isDeprecated, Tooltip tooltip,
                         @Nullable Long additionalInfoHeaderTemplateId, @Nullable Long additionalInfoFooterTemplateId,
                         List<DateAnswer> answers, List<Rule<DateAnswer>> validations,
                         DateRenderMode renderMode, boolean displayCalendar, List<DateFieldType> fields, Long placeholderTemplateId) {
@@ -48,6 +48,7 @@ public class DateQuestion extends Question<DateAnswer> {
                 promptTemplateId,
                 isRestricted,
                 isDeprecated,
+                tooltip,
                 additionalInfoHeaderTemplateId,
                 additionalInfoFooterTemplateId,
                 answers,
@@ -66,7 +67,7 @@ public class DateQuestion extends Question<DateAnswer> {
     public DateQuestion(String stableId, long promptTemplateId,
                         List<DateAnswer> answers, List<Rule<DateAnswer>> validations,
                         DateRenderMode renderMode, boolean displayCalendar, List<DateFieldType> fields) {
-        this(stableId, promptTemplateId, false, false, null, null, answers, validations, renderMode, displayCalendar, fields, null);
+        this(stableId, promptTemplateId, false, false, null, null, null, answers, validations, renderMode, displayCalendar, fields, null);
     }
 
     public DateRenderMode getRenderMode() {

@@ -61,6 +61,7 @@ import org.broadinstitute.ddp.model.activity.definition.question.PicklistGroupDe
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.TooltipDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.definition.template.TemplateVariable;
 import org.broadinstitute.ddp.model.activity.definition.validation.DateFieldRequiredRuleDef;
@@ -157,7 +158,9 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
                 .build();
         Template txt3Tmpl = Template.html("$foo $DDP_PARTICIPANT_FIRST_NAME's favorite color?");
         txt3Tmpl.addVariable(TemplateVariable.single("foo", "en", "What is"));
-        TextQuestionDef txt3 = TextQuestionDef.builder(TextInputType.TEXT, "TEXT_WITH_SPECIAL_VARS", txt3Tmpl).build();
+        TextQuestionDef txt3 = TextQuestionDef.builder(TextInputType.TEXT, "TEXT_WITH_SPECIAL_VARS", txt3Tmpl)
+                .setTooltipDef(new TooltipDef(null, Template.text("some helper text")))
+                .build();
         FormSectionDef textSection = new FormSectionDef(null, TestUtil.wrapQuestions(txt1, txt2, txt3));
 
         PicklistQuestionDef p1 = PicklistQuestionDef
@@ -190,6 +193,7 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
         AgreementQuestionDef a1 = new AgreementQuestionDef("AGREEMENT_Q",
                 false,
                 newTemplate("I agree with the preceding text"),
+                null,
                 newTemplate("info header"),
                 newTemplate("info footer"),
                 Arrays.asList(new RequiredRuleDef(newTemplate())),
@@ -716,6 +720,14 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
         String expectedBody = String.format("<p>%s<br/>%s<br/>%s</p>", profile.getFirstName(), profile.getLastName(),
                 DateTimeFormatUtils.MONTH_FIRST_DASHED_DATE_FORMATTER.format(LocalDate.now()));
         resp.then().assertThat().body("sections[5].blocks[1].body", equalTo(expectedBody));
+    }
+
+    @Test
+    public void testTooltip() {
+        testFor200AndExtractResponse()
+                .then().assertThat()
+                .root("sections[1].blocks[2].question")
+                .body("tooltip.text", equalTo("some helper text"));
     }
 
     private Response testFor200AndExtractResponse() {

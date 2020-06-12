@@ -7,6 +7,8 @@ select drm.date_render_mode_code,
        qt.question_type_code,
        qsc.stable_id,
        q.*,
+       tt.tooltip_id as tt_tooltip_id,
+       tt.text_template_id as tt_text_template_id,
        rev.start_date as revision_start,
        rev.end_date as revision_end
   from date_question as dq
@@ -15,6 +17,7 @@ select drm.date_render_mode_code,
   join question_type as qt on qt.question_type_id = q.question_type_id
   join question_stable_code as qsc on qsc.question_stable_code_id = q.question_stable_code_id
   join revision as rev on rev.revision_id = q.revision_id
+  left join tooltip as tt on tt.tooltip_id = q.tooltip_id
  where dq.question_id = :questionId
 >>
 

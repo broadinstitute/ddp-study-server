@@ -12,6 +12,7 @@ public final class AgreementQuestionDef extends QuestionDef {
             String stableId,
             boolean isRestricted,
             Template promptTemplate,
+            TooltipDef tooltipDef,
             Template additionalInfoHeaderTemplate,
             Template additionalInfoFooterTemplate,
             List<RuleDef> validations,
@@ -25,6 +26,7 @@ public final class AgreementQuestionDef extends QuestionDef {
                 additionalInfoFooterTemplate,
                 validations,
                 hideNumber);
+        this.tooltipDef = tooltipDef;
     }
 
     public void setDeprecated(boolean deprecated) {

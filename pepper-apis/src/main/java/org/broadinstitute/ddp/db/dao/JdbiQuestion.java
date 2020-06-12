@@ -18,14 +18,15 @@ import org.jdbi.v3.stringtemplate4.UseStringTemplateSqlLocator;
 public interface JdbiQuestion extends SqlObject {
 
     @SqlUpdate("insert into question (question_type_id, is_restricted, question_stable_code_id,"
-            + " question_prompt_template_id, info_header_template_id, info_footer_template_id,"
+            + " question_prompt_template_id, tooltip_id, info_header_template_id, info_footer_template_id,"
             + " revision_id, study_activity_id, hide_number, is_deprecated)"
-            + " values(:questionTypeId, :isRestricted, :stableCodeId, :promptTemplateId,"
+            + " values(:questionTypeId, :isRestricted, :stableCodeId, :promptTemplateId, :tooltipId,"
             + " :infoHeaderTemplateId, :infoFooterTemplateId, :revisionId, :activityId,"
             + " :hideNumber, :isDeprecated)")
     @GetGeneratedKeys
     long insert(@Bind("questionTypeId") long questionTypeId, @Bind("isRestricted") boolean isRestricted,
                 @Bind("stableCodeId") long stableCodeId, @Bind("promptTemplateId") long promptTemplateId,
+                @Bind("tooltipId") Long tooltipId,
                 @Bind("infoHeaderTemplateId") Long infoHeaderTemplateId, @Bind("infoFooterTemplateId") Long infoFooterTemplateId,
                 @Bind("revisionId") long revisionId, @Bind("activityId") long activityId,
                 @Bind("hideNumber") boolean hideNumber, @Bind("isDeprecated") boolean isDeprecated);

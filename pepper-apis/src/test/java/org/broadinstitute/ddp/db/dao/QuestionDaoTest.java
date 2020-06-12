@@ -1552,6 +1552,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             AgreementQuestionDef question = new AgreementQuestionDef(sid,
                     false,
                     agreeTmpl,
+                    null,
                     header,
                     footer,
                     Arrays.asList(rule),

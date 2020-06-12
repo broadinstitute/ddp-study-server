@@ -169,6 +169,7 @@ public class TestFormActivity {
                         Template.text("agreement prompt"),
                         null,
                         null,
+                        null,
                         List.of(new RequiredRuleDef(Template.text("agreement required"))),
                         false);
                 result.agreementQuestion = question;

@@ -12,6 +12,8 @@ select qt.question_type_code,
        q.revision_id,
        q.study_activity_id,
        q.hide_number,
+       tt.tooltip_id as tt_tooltip_id,
+       tt.text_template_id as tt_text_template_id,
        rev.start_date as revision_start,
        rev.end_date as revision_end
   from block_conditional_control as bcc
@@ -20,6 +22,7 @@ select qt.question_type_code,
   join question_type as qt on qt.question_type_id = q.question_type_id
   join question_stable_code as qsc on qsc.question_stable_code_id = q.question_stable_code_id
   join revision as rev on rev.revision_id = q.revision_id
+  left join tooltip as tt on tt.tooltip_id = q.tooltip_id
   join activity_instance as ai on ai.study_activity_id = q.study_activity_id
  where b.block_id = :blockId
    and ai.activity_instance_guid = :instanceGuid

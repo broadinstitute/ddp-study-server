@@ -16,6 +16,7 @@ public final class AgreementQuestion extends Question<AgreementAnswer> {
             long promptTemplateId,
             boolean isRestricted,
             boolean isDeprecated,
+            Tooltip tooltip,
             Long additionalInfoHeaderTemplateId,
             Long additionalInfoFooterTemplateId,
             List<AgreementAnswer> answers,
@@ -26,6 +27,7 @@ public final class AgreementQuestion extends Question<AgreementAnswer> {
                 promptTemplateId,
                 isRestricted,
                 isDeprecated,
+                tooltip,
                 additionalInfoHeaderTemplateId,
                 additionalInfoFooterTemplateId,
                 answers,
@@ -38,7 +40,7 @@ public final class AgreementQuestion extends Question<AgreementAnswer> {
             List<AgreementAnswer> answers,
             List<Rule<AgreementAnswer>> validations
     ) {
-        this(stableId, promptTemplateId, false, false, null, null, answers, validations);
+        this(stableId, promptTemplateId, false, false, null, null, null, answers, validations);
     }
 
     @Override

@@ -14,6 +14,8 @@ select pq.question_id                  p_question_id,
        pq.revision_id                  p_revision_id,
        prev.start_date                 p_revision_start,
        prev.end_date                   p_revision_end,
+       ptt.tooltip_id                  p_tt_tooltip_id,
+       ptt.text_template_id            p_tt_text_template_id,
        p.allow_multiple                p_allow_multiple,
        p.unwrap_on_export              p_unwrap_on_export,
        p.add_button_template_id        p_add_button_template_id,
@@ -31,16 +33,20 @@ select pq.question_id                  p_question_id,
        cq.hide_number                  c_hide_number,
        cq.revision_id                  c_revision_id,
        crev.start_date                 c_revision_start,
-       crev.end_date                   c_revision_end
+       crev.end_date                   c_revision_end,
+       ctt.tooltip_id                  c_tt_tooltip_id,
+       ctt.text_template_id            c_tt_text_template_id
   from composite_question as p
   join question as pq on pq.question_id = p.question_id
   join question_stable_code as pqsc on pq.question_stable_code_id = pqsc.question_stable_code_id
   join revision as prev on prev.revision_id = pq.revision_id
+  left join tooltip as ptt on ptt.tooltip_id = pq.tooltip_id
   left join orientation_type as ot on ot.orientation_type_id = p.child_orientation_type_id
   left join (composite_question__question as c
        join question as cq on c.child_question_id = cq.question_id
        join question_stable_code as cqsc on cq.question_stable_code_id = cqsc.question_stable_code_id
        join revision as crev on crev.revision_id = cq.revision_id
+       left join tooltip as ctt on ctt.tooltip_id = cq.tooltip_id
        ) on p.question_id = c.parent_question_id
 >>
 

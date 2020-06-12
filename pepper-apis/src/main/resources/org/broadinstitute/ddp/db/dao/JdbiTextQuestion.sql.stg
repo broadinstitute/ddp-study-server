@@ -1,24 +1,5 @@
 group JdbiTextQuestion;
 
-queryDtoByQuestionId() ::= <<
-select tqit.text_question_input_type_code as input_type_code,
-       st.suggestion_type_code,
-       tq.placeholder_template_id,
-       qt.question_type_code,
-       qsc.stable_id,
-       q.*,
-       rev.start_date as revision_start,
-       rev.end_date as revision_end
-  from text_question as tq
-  join question as q on q.question_id = tq.question_id
-  join question_type as qt on qt.question_type_id = q.question_type_id
-  join question_stable_code as qsc on qsc.question_stable_code_id = q.question_stable_code_id
-  join revision as rev on rev.revision_id = q.revision_id
-  join text_question_input_type as tqit on tqit.text_question_input_type_id = tq.input_type_id
-  left join suggestion_type as st on st.suggestion_type_id = tq.suggestion_type_id
- where tq.question_id = :questionId
->>
-
 queryDtoAndSuggestionsByQuestionId() ::= <<
 select tqit.text_question_input_type_code   p_input_type_code,
        st.suggestion_type_code              p_suggestion_type_code,
@@ -39,6 +20,8 @@ select tqit.text_question_input_type_code   p_input_type_code,
        q.revision_id                        p_revision_id,
        q.hide_number                        p_hide_number,
        q.is_deprecated                      p_is_deprecated,
+       tt.tooltip_id                        p_tt_tooltip_id,
+       tt.text_template_id                  p_tt_text_template_id,
        rev.start_date                       p_revision_start,
        rev.end_date                         p_revision_end,
        tqs.suggestion                       c_suggestion
@@ -48,6 +31,7 @@ select tqit.text_question_input_type_code   p_input_type_code,
   join question_stable_code as qsc on qsc.question_stable_code_id = q.question_stable_code_id
   join revision as rev on rev.revision_id = q.revision_id
   join text_question_input_type as tqit on tqit.text_question_input_type_id = tq.input_type_id
+  left join tooltip as tt on tt.tooltip_id = q.tooltip_id
   left join suggestion_type as st on st.suggestion_type_id = tq.suggestion_type_id
   left join text_question_suggestion tqs on tqs.text_question_id = tq.question_id
  where tq.question_id = :questionId
