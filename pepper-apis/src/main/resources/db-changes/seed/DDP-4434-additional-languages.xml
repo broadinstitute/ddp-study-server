@@ -77,37 +77,6 @@
     </changeSet>
 
     <changeSet author="charlotte" id="20200611-cd-additional-trans-question-validation-rule-type">
-        <insert tableName="i18n_validation_msg_trans">
-            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'DATE_AFTER')"/>
-            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'es')"/>
-            <column name="translation_text" value="La fecha seleccionada no puede estar en el pasado."/>
-        </insert>
-        <insert tableName="i18n_validation_msg_trans">
-            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'DATE_AFTER')"/>
-            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'he')"/>
-            <column name="translation_text" value="התאריך שנבחר לא יכול היה להיות בעבר."/>
-        </insert>
-        <insert tableName="i18n_validation_msg_trans">
-            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'DATE_AFTER')"/>
-            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'zh')"/>
-            <column name="translation_text" value="所選日期不能是過去的日期。"/>
-        </insert>
-
-        <insert tableName="i18n_validation_msg_trans">
-            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'DATE_BEFORE')"/>
-            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'es')"/>
-            <column name="translation_text" value="La fecha seleccionada no puede ser en el futuro."/>
-        </insert>
-        <insert tableName="i18n_validation_msg_trans">
-            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'DATE_BEFORE')"/>
-            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'he')"/>
-            <column name="translation_text" value="התאריך שנבחר לא יכול להיות בעתיד."/>
-        </insert>
-        <insert tableName="i18n_validation_msg_trans">
-            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'DATE_BEFORE')"/>
-            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'zh')"/>
-            <column name="translation_text" value="所選日期不能是將來的日期。"/>
-        </insert>
 
         <insert tableName="i18n_validation_msg_trans">
             <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'DAY_REQUIRED')"/>
@@ -219,6 +188,70 @@
             <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'YEAR_REQUIRED')"/>
             <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'zh')"/>
             <column name="translation_text" value="年字段為必填項。"/>
+        </insert>
+
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'DATE_RANGE')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'es')"/>
+            <column name="translation_text" value="La fecha seleccionada debe estar dentro del rango de fechas."/>
+        </insert>
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'DATE_RANGE')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'he')"/>
+            <column name="translation_text" value="התאריך שנבחר חייב להיות בטווח התאריכים."/>
+        </insert>
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'DATE_RANGE')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'zh')"/>
+            <column name="translation_text" value="所選日期必須在日期範圍內。"/>
+        </insert>
+
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'COMPLETE')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'es')"/>
+            <column name="translation_text" value="Esta pregunta debe completarse por completo."/>
+        </insert>
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'COMPLETE')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'he')"/>
+            <column name="translation_text" value="צריך למלא את השאלה הזו לחלוטין."/>
+        </insert>
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'COMPLETE')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'zh')"/>
+            <column name="translation_text" value="這個問題需要完全填寫。"/>
+        </insert>
+
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'AGE_RANGE')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'es')"/>
+            <column name="translation_text" value="La edad debe estar dentro de los valores especificados."/>
+        </insert>
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'AGE_RANGE')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'he')"/>
+            <column name="translation_text" value="הגיל חייב להיות בערכים שצוינו."/>
+        </insert>
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'AGE_RANGE')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'zh')"/>
+            <column name="translation_text" value="年齡必須在指定的值內。"/>
+        </insert>
+
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'INT_RANGE')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'es')"/>
+            <column name="translation_text" value="No se cumple el requisito de número mínimo o máximo."/>
+        </insert>
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'INT_RANGE')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'he')"/>
+            <column name="translation_text" value="דרישת המספר המינימלי או המרבי אינה עומדת."/>
+        </insert>
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'INT_RANGE')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'zh')"/>
+            <column name="translation_text" value="不滿足最小或最大數量要求。"/>
         </insert>
     </changeSet>
 
