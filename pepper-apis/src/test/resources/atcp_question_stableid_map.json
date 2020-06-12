@@ -176,6 +176,7 @@
             "name": "cancer_type",
             "type": "Picklist",
             "source_type": "string",
+            "stable_id": "TYPE_OF_CANCER",
             "options": [
               {
                 "name": "leukemia",
@@ -269,6 +270,7 @@
           {
             "name": "at_symptoms",
             "type": "Picklist",
+            "stable_id": "SYMPTOMS_OR_CONDITIONS",
             "source_type": "string",
             "options": [
               {
@@ -376,12 +378,11 @@
                 "text": "text2",
                 "type": "string"
               }
-            ],
-            "stable_id": "SYMPTOMS_OR_CONDITIONS"
+            ]
           },
           {
             "name": "other_symptoms",
-            "stableId": "OTHER_SYMPTOMS_OR_CONDITIONS",
+            "stable_id": "OTHER_SYMPTOMS_OR_CONDITIONS",
             "type": "Picklist",
             "source_type": "string",
             "options": [
@@ -448,7 +449,7 @@
           {
             "_comment": "TODO, such page doesn't exist in legacy, we don't have answers to incontinence question in data",
             "name": "incontinence_type",
-            "stableId": "INCONTINENCE",
+            "stable_id": "INCONTINENCE",
             "type": "Picklist",
             "source_type": "string",
             "options": [
@@ -456,7 +457,7 @@
           },
           {
             "name": "infectious_diseases",
-            "stableId": "INFECTIOUS_DISEASES",
+            "stable_id": "INFECTIOUS_DISEASES",
             "type": "Picklist",
             "source_type": "string",
             "options": [
@@ -504,7 +505,7 @@
           },
           {
             "name": "immunodeficiency_type_all",
-            "stableId": "IMMUNODEFICIENCY_TYPE",
+            "stable_id": "IMMUNODEFICIENCY_TYPE",
             "type": "Picklist",
             "source_type": "string",
             "options": [
@@ -532,7 +533,7 @@
           },
           {
             "name": "vaccine_infection",
-            "stableId": "IMMUNODEFICIENCY_TYPE",
+            "stable_id": "IMMUNODEFICIENCY_TYPE",
             "type": "Picklist",
             "source_type": "string",
             "options": [
@@ -544,7 +545,7 @@
           },
           {
             "name": "surgeries",
-            "stableId": "SURGERIES",
+            "stable_id": "SURGERIES",
             "type": "Picklist",
             "source_type": "string",
             "options": [
@@ -578,6 +579,886 @@
               }
             ]
           },
+          {
+            "name": "surgery_1",
+            "stable_id": "SURGERY_1",
+            "type": "Composite",
+            "children": [
+              {
+                "name": "other_surgeries_1_type",
+                "type": "string",
+                "stable_id": "SURGERY_1_TYPE_OF_SURGERY"
+              },
+              {
+                "name": "other_surgeries_1_age",
+                "type": "string",
+                "stable_id": "SURGERY_1_AGE_OF_SURGERY"
+              },
+              {
+                "name": "other_surgeries_1_desc",
+                "type": "string",
+                "stable_id": "SURGERY_1_DESCRIPTION_OF_SURGERY"
+              }
+            ]
+          },
+          {
+            "name": "surgery_2",
+            "stable_id": "SURGERY_2",
+            "type": "Composite",
+            "children": [
+              {
+                "name": "other_surgeries_2_type",
+                "type": "string",
+                "stable_id": "SURGERY_2_TYPE_OF_SURGERY"
+              },
+              {
+                "name": "other_surgeries_2_age",
+                "type": "string",
+                "stable_id": "SURGERY_2_AGE_OF_SURGERY"
+              },
+              {
+                "name": "other_surgeries_2_desc",
+                "type": "string",
+                "stable_id": "SURGERY_2_DESCRIPTION_OF_SURGERY"
+              }
+            ]
+          },
+          {
+            "name": "surgery_3",
+            "stable_id": "SURGERY_3",
+            "type": "Composite",
+            "children": [
+              {
+                "name": "other_surgeries_3_type",
+                "type": "string",
+                "stable_id": "SURGERY_3_TYPE_OF_SURGERY"
+              },
+              {
+                "name": "other_surgeries_3_age",
+                "type": "string",
+                "stable_id": "SURGERY_3_AGE_OF_SURGERY"
+              },
+              {
+                "name": "other_surgeries_3_desc",
+                "type": "string",
+                "stable_id": "SURGERY_3_DESCRIPTION_OF_SURGERY"
+              }
+            ]
+          },
+          {
+            "name": "surgery_4",
+            "stable_id": "SURGERY_4",
+            "type": "Composite",
+            "children": [
+              {
+                "name": "other_surgeries_4_type",
+                "type": "string",
+                "stable_id": "SURGERY_4_TYPE_OF_SURGERY"
+              },
+              {
+                "name": "other_surgeries_4_age",
+                "type": "string",
+                "stable_id": "SURGERY_4_AGE_OF_SURGERY"
+              },
+              {
+                "name": "other_surgeries_4_desc",
+                "type": "string",
+                "stable_id": "SURGERY_4_DESCRIPTION_OF_SURGERY"
+              }
+            ]
+          },
+          {
+            "name": "surgery_5",
+            "stable_id": "SURGERY_5",
+            "type": "Composite",
+            "children": [
+              {
+                "name": "other_surgeries_5_type",
+                "type": "string",
+                "stable_id": "SURGERY_5_TYPE_OF_SURGERY"
+              },
+              {
+                "name": "other_surgeries_5_age",
+                "type": "string",
+                "stable_id": "SURGERY_5_AGE_OF_SURGERY"
+              },
+              {
+                "name": "other_surgeries_5_desc",
+                "type": "string",
+                "stable_id": "SURGERY_5_DESCRIPTION_OF_SURGERY"
+              }
+            ]
+          },
+          {
+            "name": "medication_category_1",
+            "stable_id": "MEDICATION_CATEGORY1",
+            "type": "Composite",
+            "children": [
+              {
+                "name": "medication_1_category",
+                "type": "Picklist",
+                "stable_id": "MEDICATION_CATEGORY_PICK_LIST1",
+                "options": [
+                  {
+                    "type": "integer",
+                    "stable_id": "PROPHYLACTIC_ANTIBIOTICS1"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "ANTI_TREMOR1"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "ANTI_SEIZURE1"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "ANTI_DROOLING1"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "DIABETES1"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "ANTI_DEPRESSANT1"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "STEROID1"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "CHEMOTHERAPY1"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "BIRTH_CONTROL1"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "OTHER1"
+                  }
+                ]
+              },
+              {
+                "name": "medication_1_name",
+                "type": "string",
+                "stable_id": "MEDICATION_NAME1"
+              },
+              {
+                "name": "medication_1_age",
+                "type": "string",
+                "stable_id": "BEGAN_TAKING_AT_AGE1"
+              }
+            ]
+          },
+          {
+            "name": "medication_category_2",
+            "stable_id": "MEDICATION_CATEGORY2",
+            "type": "Composite",
+            "children": [
+              {
+                "name": "medication_2_category",
+                "type": "Picklist",
+                "stable_id": "MEDICATION_CATEGORY_PICK_LIST2",
+                "options": [
+                  {
+                    "type": "integer",
+                    "stable_id": "PROPHYLACTIC_ANTIBIOTICS2"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "ANTI_TREMOR2"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "ANTI_SEIZURE2"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "ANTI_DROOLING2"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "DIABETES2"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "ANTI_DEPRESSANT2"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "STEROID2"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "CHEMOTHERAPY2"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "BIRTH_CONTROL2"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "OTHER2"
+                  }
+                ]
+              },
+              {
+                "name": "medication_2_name",
+                "type": "string",
+                "stable_id": "MEDICATION_NAME2"
+              },
+              {
+                "name": "medication_2_age",
+                "type": "string",
+                "stable_id": "BEGAN_TAKING_AT_AGE2"
+              }
+            ]
+          },
+          {
+            "name": "medication_category_3",
+            "stable_id": "MEDICATION_CATEGORY3",
+            "type": "Composite",
+            "children": [
+              {
+                "name": "medication_3_category",
+                "type": "Picklist",
+                "stable_id": "MEDICATION_CATEGORY_PICK_LIST3",
+                "options": [
+                  {
+                    "type": "integer",
+                    "stable_id": "PROPHYLACTIC_ANTIBIOTICS3"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "ANTI_TREMOR3"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "ANTI_SEIZURE3"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "ANTI_DROOLING3"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "DIABETES3"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "ANTI_DEPRESSANT3"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "STEROID3"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "CHEMOTHERAPY3"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "BIRTH_CONTROL3"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "OTHER3"
+                  }
+                ]
+              },
+              {
+                "name": "medication_3_name",
+                "type": "string",
+                "stable_id": "MEDICATION_NAME3"
+              },
+              {
+                "name": "medication_3_age",
+                "type": "string",
+                "stable_id": "BEGAN_TAKING_AT_AGE3"
+              }
+            ]
+          },
+          {
+            "name": "medication_category_4",
+            "stable_id": "MEDICATION_CATEGORY4",
+            "type": "Composite",
+            "children": [
+              {
+                "name": "medication_4_category",
+                "type": "Picklist",
+                "stable_id": "MEDICATION_CATEGORY_PICK_LIST4",
+                "options": [
+                  {
+                    "type": "integer",
+                    "stable_id": "PROPHYLACTIC_ANTIBIOTICS4"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "ANTI_TREMOR4"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "ANTI_SEIZURE4"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "ANTI_DROOLING4"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "DIABETES4"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "ANTI_DEPRESSANT4"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "STEROID4"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "CHEMOTHERAPY4"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "BIRTH_CONTROL4"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "OTHER4"
+                  }
+                ]
+              },
+              {
+                "name": "medication_4_name",
+                "type": "string",
+                "stable_id": "MEDICATION_NAME4"
+              },
+              {
+                "name": "medication_4_age",
+                "type": "string",
+                "stable_id": "BEGAN_TAKING_AT_AGE4"
+              }
+            ]
+          },
+          {
+            "name": "medication_category_5",
+            "stable_id": "MEDICATION_CATEGORY5",
+            "type": "Composite",
+            "children": [
+              {
+                "name": "medication_5_category",
+                "type": "Picklist",
+                "stable_id": "MEDICATION_CATEGORY_PICK_LIST5",
+                "options": [
+                  {
+                    "type": "integer",
+                    "stable_id": "PROPHYLACTIC_ANTIBIOTICS5"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "ANTI_TREMOR5"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "ANTI_SEIZURE5"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "ANTI_DROOLING5"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "DIABETES5"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "ANTI_DEPRESSANT5"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "STEROID5"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "CHEMOTHERAPY5"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "BIRTH_CONTROL5"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "OTHER5"
+                  }
+                ]
+              },
+              {
+                "name": "medication_5_name",
+                "type": "string",
+                "stable_id": "MEDICATION_NAME5"
+              },
+              {
+                "name": "medication_5_age",
+                "type": "string",
+                "stable_id": "BEGAN_TAKING_AT_AGE5"
+              }
+            ]
+          },
+          {
+            "name": "medication_category_6",
+            "stable_id": "MEDICATION_CATEGORY6",
+            "type": "Composite",
+            "children": [
+              {
+                "name": "medication_6_category",
+                "type": "Picklist",
+                "stable_id": "MEDICATION_CATEGORY_PICK_LIST6",
+                "options": [
+                  {
+                    "type": "integer",
+                    "stable_id": "PROPHYLACTIC_ANTIBIOTICS6"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "ANTI_TREMOR6"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "ANTI_SEIZURE6"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "ANTI_DROOLING6"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "DIABETES6"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "ANTI_DEPRESSANT6"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "STEROID6"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "CHEMOTHERAPY6"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "BIRTH_CONTROL6"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "OTHER6"
+                  }
+                ]
+              },
+              {
+                "name": "medication_6_name",
+                "type": "string",
+                "stable_id": "MEDICATION_NAME6"
+              },
+              {
+                "name": "medication_6_age",
+                "type": "string",
+                "stable_id": "BEGAN_TAKING_AT_AGE6"
+              }
+            ]
+          },
+          {
+            "name": "medication_category_7",
+            "stable_id": "MEDICATION_CATEGORY7",
+            "type": "Composite",
+            "children": [
+              {
+                "name": "medication_7_category",
+                "type": "Picklist",
+                "stable_id": "MEDICATION_CATEGORY_PICK_LIST7",
+                "options": [
+                  {
+                    "type": "integer",
+                    "stable_id": "PROPHYLACTIC_ANTIBIOTICS7"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "ANTI_TREMOR7"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "ANTI_SEIZURE7"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "ANTI_DROOLING7"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "DIABETES7"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "ANTI_DEPRESSANT7"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "STEROID7"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "CHEMOTHERAPY7"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "BIRTH_CONTROL7"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "OTHER7"
+                  }
+                ]
+              },
+              {
+                "name": "medication_7_name",
+                "type": "string",
+                "stable_id": "MEDICATION_NAME7"
+              },
+              {
+                "name": "medication_7_age",
+                "type": "string",
+                "stable_id": "BEGAN_TAKING_AT_AGE7"
+              }
+            ]
+          },
+          {
+            "name": "medication_category_8",
+            "stable_id": "MEDICATION_CATEGORY8",
+            "type": "Composite",
+            "children": [
+              {
+                "name": "medication_8_category",
+                "type": "Picklist",
+                "stable_id": "MEDICATION_CATEGORY_PICK_LIST8",
+                "options": [
+                  {
+                    "type": "integer",
+                    "stable_id": "PROPHYLACTIC_ANTIBIOTICS8"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "ANTI_TREMOR8"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "ANTI_SEIZURE8"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "ANTI_DROOLING8"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "DIABETES8"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "ANTI_DEPRESSANT8"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "STEROID8"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "CHEMOTHERAPY8"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "BIRTH_CONTROL8"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "OTHER8"
+                  }
+                ]
+              },
+              {
+                "name": "medication_8_name",
+                "type": "string",
+                "stable_id": "MEDICATION_NAME8"
+              },
+              {
+                "name": "medication_8_age",
+                "type": "string",
+                "stable_id": "BEGAN_TAKING_AT_AGE8"
+              }
+            ]
+          },
+          {
+            "name": "medication_category_9",
+            "stable_id": "MEDICATION_CATEGORY9",
+            "type": "Composite",
+            "children": [
+              {
+                "name": "medication_9_category",
+                "type": "Picklist",
+                "stable_id": "MEDICATION_CATEGORY_PICK_LIST9",
+                "options": [
+                  {
+                    "type": "integer",
+                    "stable_id": "PROPHYLACTIC_ANTIBIOTICS9"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "ANTI_TREMOR9"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "ANTI_SEIZURE9"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "ANTI_DROOLING9"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "DIABETES9"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "ANTI_DEPRESSANT9"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "STEROID9"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "CHEMOTHERAPY9"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "BIRTH_CONTROL9"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "OTHER9"
+                  }
+                ]
+              },
+              {
+                "name": "medication_9_name",
+                "type": "string",
+                "stable_id": "MEDICATION_NAME9"
+              },
+              {
+                "name": "medication_9_age",
+                "type": "string",
+                "stable_id": "BEGAN_TAKING_AT_AGE9"
+              }
+            ]
+          },
+          {
+            "name": "supplements",
+            "stable_id": "NUTRITIONAL_SUPPLEMENTS",
+            "type": "Picklist",
+            "source_type": "string",
+            "options": [
+              {
+                "name": "text",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "consanguineous",
+            "stable_id": "CONSANGUINEOUS_PARENTS",
+            "type": "Picklist",
+            "source_type": "integer",
+            "options": [
+              {
+                "type": "integer",
+                "stable_id": "YES"
+              },
+              {
+                "type": "integer",
+                "stable_id": "NO"
+              },
+              {
+                "type": "integer",
+                "stable_id": "DONT_KNOW"
+              }
+            ]
+          },
+          {
+            "name": "sibling_2",
+            "stable_id": "SIBLING_2",
+            "type": "Composite",
+            "children": [
+              {
+                "name": "sibling_2_sex",
+                "type": "Picklist",
+                "stable_id": "SEX_PICKLIST_2",
+                "options": [
+                  {
+                    "type": "integer",
+                    "stable_id": "DROPDOWN_MALE_2"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "DROPDOWN_FEMALE_2"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "DROPDOWN_OTHER_2"
+                  }
+                ]
+              },
+              {
+                "name": "sibling_2_age",
+                "type": "integer",
+                "stable_id": "AGE_2"
+              },
+              {
+                "name": "sibling_2_dob",
+                "stable_id": "DATE_OF_BIRTH_2",
+                "type": "Date",
+                "format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+              },
+              {
+                "name": "sibling_2_age_death",
+                "stable_id": "AGE_AT_DEATH_2",
+                "type": "Numeric",
+                "source_type": "integer"
+              },
+              {
+                "name": "sibling_2_at_diagnosis",
+                "type": "Picklist",
+                "stable_id": "DIAGNOSIS_PICKLIST_2",
+                "options": [
+                  {
+                    "type": "integer",
+                    "stable_id": "DIAGNOSIS_DROPDOWN_YES_2"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "DIAGNOSIS_DROPDOWN_NO_2"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "DIAGNOSIS_DROPDOWN_UNKNOWN_2"
+                  }
+                ]
+              },
+              {
+                "name": "sibling_2_at_carrier",
+                "type": "Picklist",
+                "stable_id": "CARRIER_PICKLIST_2",
+                "options": [
+                  {
+                    "type": "integer",
+                    "stable_id": "CARRIER_DROPDOWN_YES_2"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "CARRIER_DROPDOWN_NO_2"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "CARRIER_DROPDOWN_UNKNOWN_2"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "sibling_2",
+            "stable_id": "SIBLING_2",
+            "type": "Composite",
+            "children": [
+              {
+                "name": "sibling_2_sex",
+                "type": "Picklist",
+                "stable_id": "SEX_PICKLIST_2",
+                "options": [
+                  {
+                    "type": "integer",
+                    "stable_id": "DROPDOWN_MALE_2"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "DROPDOWN_FEMALE_2"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "DROPDOWN_OTHER_2"
+                  }
+                ]
+              },
+              {
+                "name": "sibling_2_age",
+                "type": "integer",
+                "stable_id": "AGE_2"
+              },
+              {
+                "name": "sibling_2_dob",
+                "stable_id": "DATE_OF_BIRTH_2",
+                "type": "Date",
+                "format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+              },
+              {
+                "name": "sibling_2_age_death",
+                "stable_id": "AGE_AT_DEATH_2",
+                "type": "Numeric",
+                "source_type": "integer"
+              },
+              {
+                "name": "sibling_2_at_diagnosis",
+                "type": "Picklist",
+                "stable_id": "DIAGNOSIS_PICKLIST_2",
+                "options": [
+                  {
+                    "type": "integer",
+                    "stable_id": "DIAGNOSIS_DROPDOWN_YES_2"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "DIAGNOSIS_DROPDOWN_NO_2"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "DIAGNOSIS_DROPDOWN_UNKNOWN_2"
+                  }
+                ]
+              },
+              {
+                "name": "sibling_2_at_carrier",
+                "type": "Picklist",
+                "stable_id": "CARRIER_PICKLIST_2",
+                "options": [
+                  {
+                    "type": "integer",
+                    "stable_id": "CARRIER_DROPDOWN_YES_2"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "CARRIER_DROPDOWN_NO_2"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "CARRIER_DROPDOWN_UNKNOWN_2"
+                  }
+                ]
+              }
+            ]
+          }
         ]
       }
     ]
