@@ -258,12 +258,12 @@
     <changeSet author="charlotte" id="20200611-cd-additional-trans-form-activity-type">
         <insert tableName="i18n_activity_type_name_trans">
             <column name="activity_type_id" valueComputed="(select activity_type_id from activity_type where activity_type_code = 'FORMS')"/>
-            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'es)"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'es')"/>
             <column name="translation_text" value="Formas"/>
         </insert>
         <insert tableName="i18n_activity_type_name_trans">
             <column name="activity_type_id" valueComputed="(select activity_type_id from activity_type where activity_type_code = 'FORMS')"/>
-            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'he)"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'he')"/>
             <column name="translation_text" value="טפסים"/>
         </insert>
         <insert tableName="i18n_activity_type_name_trans">
