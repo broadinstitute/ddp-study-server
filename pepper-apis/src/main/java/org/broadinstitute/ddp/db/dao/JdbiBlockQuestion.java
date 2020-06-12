@@ -4,7 +4,6 @@ import java.util.Optional;
 
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.db.dto.TypedQuestionId;
-import org.broadinstitute.ddp.model.activity.instance.question.Tooltip;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
