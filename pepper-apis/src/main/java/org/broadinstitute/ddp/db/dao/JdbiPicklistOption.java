@@ -24,6 +24,7 @@ public interface JdbiPicklistOption extends SqlObject {
     long insert(@Bind("picklistQuestionId") long picklistQuestionId,
                 @Bind("stableId") String stableId,
                 @Bind("optionLabelTemplateId") long optionLabelTemplateId,
+                @Bind("tooltipId") Long tooltipId,
                 @Bind("detailLabelTemplateId") Long detailLabelTemplateId,
                 @Bind("allowDetails") boolean allowDetails,
                 @Bind("isExclusive") boolean isExclusive,

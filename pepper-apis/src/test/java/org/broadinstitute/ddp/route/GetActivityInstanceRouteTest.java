@@ -174,7 +174,8 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
         PicklistQuestionDef p3 = PicklistQuestionDef
                 .buildMultiSelect(PicklistRenderMode.LIST, "PL_GROUPS", newTemplate())
                 .addGroup(new PicklistGroupDef("G1", newTemplate(), Arrays.asList(
-                        new PicklistOptionDef("G1_OPT1", newTemplate()))))
+                        new PicklistOptionDef(null, "G1_OPT1", newTemplate(),
+                                new TooltipDef(null, Template.text("option tooltip")), null, false))))
                 .addGroup(new PicklistGroupDef("G2", newTemplate(), Arrays.asList(
                         new PicklistOptionDef("G2_OPT1", newTemplate()),
                         new PicklistOptionDef("G2_OPT2", newTemplate()))))
@@ -727,7 +728,10 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
         testFor200AndExtractResponse()
                 .then().assertThat()
                 .root("sections[1].blocks[2].question")
-                .body("tooltip.text", equalTo("some helper text"));
+                .body("tooltip.text", equalTo("some helper text"))
+                .root("sections[2].blocks[2].question")
+                .body("picklistOptions[1].stableId", equalTo("G1_OPT1"))
+                .body("picklistOptions[1].tooltip.text", equalTo("option tooltip"));
     }
 
     private Response testFor200AndExtractResponse() {

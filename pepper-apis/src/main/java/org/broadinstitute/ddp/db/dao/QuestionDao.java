@@ -71,6 +71,7 @@ import org.slf4j.LoggerFactory;
 public interface QuestionDao extends SqlObject {
 
     Logger LOG = LoggerFactory.getLogger(QuestionDao.class);
+    int DISPLAY_ORDER_GAP = 10;
 
     @CreateSqlObject
     JdbiActivity getJdbiActivity();
@@ -144,8 +145,6 @@ public interface QuestionDao extends SqlObject {
     @CreateSqlObject
     AnswerDao getAnswerDao();
 
-    int DISPLAY_ORDER_GAP = 10;
-
     /**
      * Get the non-deprecated question for a given block.
      *
@@ -200,8 +199,8 @@ public interface QuestionDao extends SqlObject {
     }
 
     /**
-     * Get the control question for a conditional block.
-     * This allows fetching deprecated control questions. Prefer the other method that excludes them.
+     * Get the control question for a conditional block. This allows fetching deprecated control questions. Prefer the
+     * other method that excludes them.
      *
      * @param blockId              the block id
      * @param activityInstanceGuid the form instance guid
@@ -416,7 +415,7 @@ public interface QuestionDao extends SqlObject {
         // Put the ungrouped options in the list first.
         for (PicklistOptionDto optionDto : container.getUngroupedOptions()) {
             allOptions.add(new PicklistOption(optionDto.getStableId(),
-                    optionDto.getOptionLabelTemplateId(), optionDto.getDetailLabelTemplateId(),
+                    optionDto.getOptionLabelTemplateId(), optionDto.getTooltip(), optionDto.getDetailLabelTemplateId(),
                     optionDto.getAllowDetails(), optionDto.isExclusive()));
         }
 
@@ -426,7 +425,7 @@ public interface QuestionDao extends SqlObject {
             List<PicklistOptionDto> optionDtos = container.getGroupIdToOptions().get(groupDto.getId());
             for (PicklistOptionDto optionDto : optionDtos) {
                 allOptions.add(new PicklistOption(groupDto.getStableId(), optionDto.getStableId(),
-                        optionDto.getOptionLabelTemplateId(), optionDto.getDetailLabelTemplateId(),
+                        optionDto.getOptionLabelTemplateId(), optionDto.getTooltip(), optionDto.getDetailLabelTemplateId(),
                         optionDto.getAllowDetails(), optionDto.isExclusive()));
             }
         }
@@ -1169,8 +1168,8 @@ public interface QuestionDao extends SqlObject {
 
 
     /**
-     * End currently active agreement question by terminating common data and agreement question specific data
-     * Since the agreement question doesn't have any specific data so far, it boils down to the former
+     * End currently active agreement question by terminating common data and agreement question specific data Since the
+     * agreement question doesn't have any specific data so far, it boils down to the former
      */
     default void disableAgreementQuestion(long questionId, RevisionMetadata meta) {
         AgreementQuestionDto questionDto = getJdbiAgreementQuestion().findDtoByQuestionId(questionId).orElse(null);
@@ -1435,6 +1434,7 @@ public interface QuestionDao extends SqlObject {
         PicklistQuestionDao.GroupAndOptionDtos container = getPicklistQuestionDao()
                 .findOrderedGroupAndOptionDtos(questionDto.getId(), timestamp);
 
+        TooltipDao tooltipDao = getHandle().attach(TooltipDao.class);
         List<PicklistGroupDef> groups = new ArrayList<>();
         for (PicklistGroupDto dto : container.getGroups()) {
             Template nameTemplate = getTemplateDao().loadTemplateById(dto.getNameTemplateId());
@@ -1442,8 +1442,9 @@ public interface QuestionDao extends SqlObject {
                     .stream().map(optionDto -> {
                         Template optionLabel = getTemplateDao().loadTemplateById(optionDto.getOptionLabelTemplateId());
                         Template detailLabel = optionDto.getAllowDetails() ? Template.text("") : null;
+                        TooltipDef tooltipDef = optionDto.getTooltip() != null ? tooltipDao.findDef(optionDto.getTooltip()) : null;
                         return new PicklistOptionDef(optionDto.getId(), optionDto.getStableId(),
-                                optionLabel, detailLabel, optionDto.isExclusive());
+                                optionLabel, tooltipDef, detailLabel, optionDto.isExclusive());
                     })
                     .collect(Collectors.toList());
             groups.add(new PicklistGroupDef(dto.getId(), dto.getStableId(), nameTemplate, options));
@@ -1453,8 +1454,9 @@ public interface QuestionDao extends SqlObject {
                 .stream().map(optionDto -> {
                     Template optionLabel = getTemplateDao().loadTemplateById(optionDto.getOptionLabelTemplateId());
                     Template detailLabel = optionDto.getAllowDetails() ? Template.text("") : null;
+                    TooltipDef tooltipDef = optionDto.getTooltip() != null ? tooltipDao.findDef(optionDto.getTooltip()) : null;
                     return new PicklistOptionDef(optionDto.getId(), optionDto.getStableId(),
-                            optionLabel, detailLabel, optionDto.isExclusive());
+                            optionLabel, tooltipDef, detailLabel, optionDto.isExclusive());
                 })
                 .collect(Collectors.toList());
 
@@ -1464,7 +1466,7 @@ public interface QuestionDao extends SqlObject {
 
         TooltipDef tooltipDef = null;
         if (questionDto.getTooltip() != null) {
-            tooltipDef = getHandle().attach(TooltipDao.class).findDef(questionDto.getTooltip());
+            tooltipDef = tooltipDao.findDef(questionDto.getTooltip());
         }
 
         Template label = null;

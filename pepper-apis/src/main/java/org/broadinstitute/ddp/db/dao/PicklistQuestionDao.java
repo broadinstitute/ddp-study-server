@@ -134,7 +134,12 @@ public interface PicklistQuestionDao extends SqlObject {
             detailLabelTmplId = option.getDetailLabelTemplate().getTemplateId();
         }
 
-        long optionId = jdbiOption.insert(questionId, option.getStableId(), optionLabelTmplId,
+        Long tooltipId = null;
+        if (option.getTooltipDef() != null) {
+            tooltipId = getHandle().attach(TooltipDao.class).insertDef(option.getTooltipDef(), revisionId);
+        }
+
+        long optionId = jdbiOption.insert(questionId, option.getStableId(), optionLabelTmplId, tooltipId,
                 detailLabelTmplId, option.isDetailsAllowed(), option.isExclusive(), displayOrder, revisionId);
         option.setOptionId(optionId);
 
@@ -286,10 +291,14 @@ public interface PicklistQuestionDao extends SqlObject {
             }
         }
 
+        TooltipDao tooltipDao = getHandle().attach(TooltipDao.class);
         for (PicklistOptionDto option : options) {
             tmplDao.disableTemplate(option.getOptionLabelTemplateId(), meta);
             if (option.getDetailLabelTemplateId() != null) {
                 tmplDao.disableTemplate(option.getDetailLabelTemplateId(), meta);
+            }
+            if (option.getTooltip() != null) {
+                tooltipDao.disableTooltip(option.getTooltip(), meta);
             }
         }
 
@@ -323,6 +332,10 @@ public interface PicklistQuestionDao extends SqlObject {
         tmplDao.disableTemplate(optionDto.getOptionLabelTemplateId(), meta);
         if (optionDto.getDetailLabelTemplateId() != null) {
             tmplDao.disableTemplate(optionDto.getDetailLabelTemplateId(), meta);
+        }
+
+        if (optionDto.getTooltip() != null) {
+            getHandle().attach(TooltipDao.class).disableTooltip(optionDto.getTooltip(), meta);
         }
 
         if (jdbiRev.tryDeleteOrphanedRevision(oldRevId)) {

@@ -32,7 +32,7 @@ public class NumOptionsSelectedRuleTest {
     @BeforeClass
     public static void setup() {
         unused = new PicklistQuestion("sid", 1L, emptyList(), emptyList(), PicklistSelectMode.SINGLE,
-                PicklistRenderMode.LIST, 2L, singletonList(new PicklistOption("opt", 3L, null, false, false)));
+                PicklistRenderMode.LIST, 2L, singletonList(new PicklistOption("opt", 3L, null, null, false, false)));
     }
 
     @Test
