@@ -100,8 +100,9 @@ public class EmailBuilder {
         }
         String subject = emailCfg.getString("subject");
         String name = emailCfg.getString("name");
+        boolean isDynamic = emailCfg.getBoolean("isDynamic");
 
-        var templateResult = sendGrid.createTemplate(name);
+        var templateResult = sendGrid.createTemplate(name, isDynamic);
         templateResult.rethrowIfThrown(e -> new DDPException("Error while creating email " + key, e));
         if (templateResult.hasError()) {
             LOG.error("Error while creating email {}: {}", key, templateResult.getError());
