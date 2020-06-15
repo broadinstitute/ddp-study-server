@@ -45,7 +45,7 @@ public interface JdbiActivityInstance extends SqlObject {
 
     @SqlQuery("select activity_instance_id from activity_instance where "
             + "activity_instance_guid = :activityInstanceGuid")
-    long getActivityInstanceId(String activityInstanceGuid);
+    long getActivityInstanceId(@Bind("activityInstanceGuid") String activityInstanceGuid);
 
     @SqlQuery("select activity_instance_guid from activity_instance where "
             + "activity_instance_id = :activityInstanceId")
@@ -187,6 +187,11 @@ public interface JdbiActivityInstance extends SqlObject {
             + " where participant_id = :userId and activity_instance_id = :activityInstanceId")
     int updateOndemandTriggerId(@Bind("userId") long userId, @Bind("activityInstanceId") long activityInstanceId,
                                         @Bind("triggerId") long triggerId);
+
+    @SqlUpdate("update activity_instance set last_visited_section = :lastVisitedActivitySection "
+            + " where activity_instance_guid = :instanceGuid")
+    void updateLastVisitedActivitySection(@Bind("instanceGuid") String instanceGuid,
+                                   @Bind("lastVisitedActivitySection") int lastVisitedActivitySection);
 
     @SqlQuery("queryLatestGuidByUserGuidAndCodesOfActivities")
     @UseStringTemplateSqlLocator

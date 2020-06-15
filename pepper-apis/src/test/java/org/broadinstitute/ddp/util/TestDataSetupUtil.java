@@ -18,7 +18,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.FileInputStream;
-import java.sql.Driver;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -44,8 +43,6 @@ import org.broadinstitute.ddp.constants.SqlConstants;
 import org.broadinstitute.ddp.constants.TestConstants;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.db.UserDao;
-import org.broadinstitute.ddp.db.UserDaoFactory;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
@@ -102,6 +99,7 @@ import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.DateFieldType;
 import org.broadinstitute.ddp.model.activity.types.DateRenderMode;
+import org.broadinstitute.ddp.model.activity.types.DsmNotificationEventType;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.activity.types.FormType;
@@ -136,12 +134,10 @@ import org.slf4j.LoggerFactory;
  */
 public class TestDataSetupUtil {
 
-    public static final String TEMP_DISABLE_CLIENT_STUDY_TENANT_CONSTRAINTS =
-            "src/test/resources/db-testscripts/disable-tenant-constraints.xml";
+    public static final String TEMP_DISABLE_CLIENT_STUDY_TENANT_CONSTRAINTS = "db-testscripts/disable-tenant-constraints.xml";
     public static final String MIGRATE_LEGACY_STUDY_CLIENT_TENANT_AND_ENABLE_CONSTRAINTS =
-            "src/test/resources/db-testscripts/backfill-test-tenants-and-re-enable-tenant-constrains.xml";
-    public static final String BASELINE_SEED_TEST_DATA =
-            "src/test/resources/db-testscripts/baseline-seed-test-data.xml";
+            "db-testscripts/backfill-test-tenants-and-re-enable-tenant-constrains.xml";
+    public static final String BASELINE_SEED_TEST_DATA = "db-testscripts/baseline-seed-test-data.xml";
     private static final org.slf4j.Logger LOG = LoggerFactory.getLogger(TestDataSetupUtil.class);
     private static final Config cfg = ConfigManager.getInstance().getConfig();
     private static final Config auth0Config = cfg.getConfig(ConfigFile.AUTH0);
@@ -151,7 +147,6 @@ public class TestDataSetupUtil {
     private static final String password = auth0Config.getString(AUTH0_TEST_PASSWORD);
     private static final List<GeneratedTestData> testDataToDelete = new ArrayList<>();
     private static final String CONSENT_PDF_LOCATION = "src/test/resources/ConsentForm.pdf";
-    private static UserDao userDao = UserDaoFactory.createFromSqlConfig(sqlConfig);
 
     public static void main(String[] args) throws Exception {
         Logger root = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
@@ -373,7 +368,6 @@ public class TestDataSetupUtil {
                     mgmtClientId,
                     encryptedSecret);
             clientId = clientDao.registerClient(
-                    auth0clientName,
                     auth0clientId,
                     auth0Secret,
                     Collections.singletonList(study.getGuid()),
@@ -504,12 +498,10 @@ public class TestDataSetupUtil {
         scripts.add(BASELINE_SEED_TEST_DATA);
         scripts.add(MIGRATE_LEGACY_STUDY_CLIENT_TENANT_AND_ENABLE_CONSTRAINTS);
         try {
-            Driver driver = new com.mysql.jdbc.Driver();
-
             for (String script : scripts) {
                 LOG.info("Running legacy test setup script {}", script);
                 String dbUrl = cfg.getString(TransactionWrapper.DB.APIS.getDbUrlConfigKey());
-                LiquibaseUtil.runChangeLog(driver, dbUrl, script);
+                LiquibaseUtil.runChangeLog(dbUrl, script);
             }
         } catch (Exception e) {
             LOG.error("Failed to insert static test account data", e);
@@ -554,10 +546,10 @@ public class TestDataSetupUtil {
                 encryptedSecret);
 
         long studyId = handle.attach(JdbiUmbrellaStudy.class).insert(studyName, studyGuid, umbrellaId, webBaseUrl,
-                auth0TenantDto.getId(), studyPrecision, shareParticipantLocation, null);
+                auth0TenantDto.getId(), studyPrecision, shareParticipantLocation, null, null);
         return new StudyDto(studyId, studyGuid, studyName, null, webBaseUrl, umbrellaId, auth0TenantDto.getId(),
                 studyPrecision,
-                shareParticipantLocation, null, false);
+                shareParticipantLocation, null, null, false);
     }
 
     public static FormActivityDef generateTestFormActivityForUser(Handle handle, String userGuid, String studyGuid) {
@@ -631,7 +623,8 @@ public class TestDataSetupUtil {
         // setup a status change event trigger so that when status changes, an event is queued
         long eventTriggerId = eventTriggerDao.insert(EventTriggerType.DSM_NOTIFICATION);
 
-        Optional<Long> dsmNotificationEventTypeId = dsmNotificationEventTypeDao.findIdByCode(JdbiDsmNotificationEventType.SALIVA_RECEIVED);
+        Optional<Long> dsmNotificationEventTypeId = dsmNotificationEventTypeDao
+                .findIdByCode(DsmNotificationEventType.SALIVA_RECEIVED.name());
 
         // create an instance of the DSM notication trigger subclass
         handle.attach(JdbiDsmNotificationTrigger.class).insert(

@@ -45,6 +45,9 @@
                 }
               }
             },
+            "preferredLanguage": {
+              "type": "keyword"
+            },
             "doNotContact": {
               "type": "boolean"
             },
@@ -172,6 +175,9 @@
             "activityVersion": {
               "type": "keyword"
             },
+            "guid": {
+              "type": "keyword"
+            },
             "status": {
               "type": "keyword"
             },
@@ -234,6 +240,47 @@
                   }
                 }
               }
+            }
+          }
+        },
+        "invitations": {
+          "properties": {
+            "type": {
+              "type": "keyword"
+            },
+            "guid": {
+              "type": "keyword"
+            },
+            "createdAt": {
+              "type": "date",
+              "ignore_malformed": false,
+              "format": "strict_date_time||strict_date_time_no_millis||epoch_millis"
+            },
+            "voidedAt": {
+              "type": "date",
+              "ignore_malformed": false,
+              "format": "strict_date_time||strict_date_time_no_millis||epoch_millis"
+            },
+            "verifiedAt": {
+              "type": "date",
+              "ignore_malformed": false,
+              "format": "strict_date_time||strict_date_time_no_millis||epoch_millis"
+            },
+            "acceptedAt": {
+              "type": "date",
+              "ignore_malformed": false,
+              "format": "strict_date_time||strict_date_time_no_millis||epoch_millis"
+            },
+            "contactEmail": {
+              "type": "keyword",
+              "fields": {
+                "text": {
+                  "type": "text"
+                }
+              }
+            },
+            "notes": {
+              "type": "text"
             }
           }
         },

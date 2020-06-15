@@ -9,18 +9,27 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.client.EasyPostClient;
 import org.broadinstitute.ddp.client.EasyPostVerifyError;
 import org.broadinstitute.ddp.db.dao.JdbiCountryAddressInfo;
 import org.broadinstitute.ddp.db.dao.JdbiMailAddress;
+import org.broadinstitute.ddp.db.dao.KitConfigurationDao;
+import org.broadinstitute.ddp.db.dao.TemplateDao;
 import org.broadinstitute.ddp.exception.AddressVerificationException;
+import org.broadinstitute.ddp.model.address.AddressWarning;
 import org.broadinstitute.ddp.model.address.CountryAddressInfo;
 import org.broadinstitute.ddp.model.address.MailAddress;
 import org.broadinstitute.ddp.model.address.OLCPrecision;
+import org.broadinstitute.ddp.model.kit.KitRule;
+import org.broadinstitute.ddp.model.kit.KitRuleType;
+import org.broadinstitute.ddp.model.kit.KitZipCodeRule;
 import org.broadinstitute.ddp.util.JsonValidationError;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
@@ -325,6 +334,51 @@ public class AddressService {
         } else {
             throw new AddressVerificationException(result.getError());
         }
+    }
+
+    /**
+     * Check the given address against study configuration for any potential warnings.
+     *
+     * @param handle   the database handle
+     * @param studyId  the study id
+     * @param address  the address
+     * @param langCode the language code
+     * @return list of warnings, or empty
+     */
+    public List<AddressWarning> checkStudyAddress(Handle handle, long studyId, String langCode, MailAddress address) {
+        List<List<KitRule>> kitZipCodeRules = handle.attach(KitConfigurationDao.class)
+                .findStudyKitConfigurations(studyId)
+                .stream()
+                .map(kit -> kit.getRules().stream()
+                        .filter(rule -> rule.getType() == KitRuleType.ZIP_CODE)
+                        .collect(Collectors.toList()))
+                .filter(rules -> !rules.isEmpty())
+                .collect(Collectors.toList());
+
+        List<AddressWarning> warns = new ArrayList<>();
+        if (!kitZipCodeRules.isEmpty()) {
+            LOG.info("Checking address zip code against kit configurations for study with id {}", studyId);
+            String zipCode = StringUtils.defaultString(address.getZip(), "");
+            for (var rules : kitZipCodeRules) {
+                boolean matched = rules.stream().anyMatch(rule -> rule.validate(handle, zipCode));
+                if (!matched) {
+                    LOG.warn("Address zip code does not match, studyId={} zipCode={}", studyId, zipCode);
+                    String msg = AddressWarning.Warn.ZIP_UNSUPPORTED.getMessage();
+                    Long warningTmplId = rules.stream()
+                            .map(rule -> ((KitZipCodeRule) rule).getWarningMessageTemplateId())
+                            .filter(Objects::nonNull)
+                            .findFirst()
+                            .orElse(null);
+                    if (warningTmplId != null) {
+                        msg = handle.attach(TemplateDao.class).loadTemplateById(warningTmplId).render(langCode);
+                    }
+                    warns.add(new AddressWarning(AddressWarning.Warn.ZIP_UNSUPPORTED.getCode(), msg));
+                    break;
+                }
+            }
+        }
+
+        return warns;
     }
 
     private EasyPostVerifyError buildGenericVerificationError() {

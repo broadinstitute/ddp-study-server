@@ -5,32 +5,36 @@ import static spark.Spark.halt;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.auth0.exception.Auth0Exception;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.client.Auth0ManagementClient;
-import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
+import org.broadinstitute.ddp.db.dao.AuthDao;
 import org.broadinstitute.ddp.db.dao.ClientDao;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
 import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.InvitationDao;
-import org.broadinstitute.ddp.db.dao.JdbiCountry;
+import org.broadinstitute.ddp.db.dao.JdbiAuth0Tenant;
 import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
 import org.broadinstitute.ddp.db.dao.JdbiMailingList;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dao.QueuedEventDao;
+import org.broadinstitute.ddp.db.dao.StudyDao;
 import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
+import org.broadinstitute.ddp.db.dto.Auth0TenantDto;
 import org.broadinstitute.ddp.db.dto.EventConfigurationDto;
 import org.broadinstitute.ddp.db.dto.InvitationDto;
+import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.json.LocalRegistrationResponse;
@@ -42,17 +46,15 @@ import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.event.EventSignal;
 import org.broadinstitute.ddp.model.governance.Governance;
 import org.broadinstitute.ddp.model.governance.GovernancePolicy;
+import org.broadinstitute.ddp.model.invitation.InvitationType;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.pex.PexInterpreter;
-import org.broadinstitute.ddp.pex.TreeWalkInterpreter;
 import org.broadinstitute.ddp.security.StudyClientConfiguration;
 import org.broadinstitute.ddp.service.EventService;
 import org.broadinstitute.ddp.util.Auth0Util;
-import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.ddp.util.ResponseUtil;
-import org.broadinstitute.ddp.util.TimestampUtil;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
@@ -73,6 +75,8 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
 
     private static final String EN_LANGUAGE_CODE = "en";
     private static final String MODE_LOGIN = "login";
+    private static final String METADATA_FIRST_NAME = "first_name";
+    private static final String METADATA_LAST_NAME = "last_name";
 
     private final PexInterpreter interpreter;
 
@@ -94,7 +98,6 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
         String studyGuid = payload.getStudyGuid();
         String invitationGuid = payload.getInvitationGuid();
         final var auth0UserId = new AtomicReference<String>();
-        final PexInterpreter pexInterpreter = new TreeWalkInterpreter();
         AtomicReference<String> ddpUserGuid = new AtomicReference<>();
 
         LOG.info("Attempting registration with client {}, study {} and invitation {}", auth0ClientId, studyGuid, invitationGuid);
@@ -102,16 +105,24 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
         return TransactionWrapper.withTxn(handle -> {
             auth0UserId.set(payload.getAuth0UserId());
             String auth0Domain = payload.getAuth0Domain();
-            if (doLocalRegistration && StringUtils.isBlank(auth0Domain)) {
-                auth0Domain = ConfigManager.getInstance().getConfig().getConfig(ConfigFile.AUTH0).getString(ConfigFile.DOMAIN);
-                LOG.info("Using auth0 domain {} for local registration", auth0Domain);
-            }
 
-            StudyDto study = handle.attach(JdbiUmbrellaStudy.class).findByDomainAndStudyGuid(auth0Domain, studyGuid);
+            StudyDto study = null;
+            if (doLocalRegistration && StringUtils.isBlank(auth0Domain)) {
+                study = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
+            } else {
+                study = handle.attach(JdbiUmbrellaStudy.class).findByDomainAndStudyGuid(auth0Domain, studyGuid);
+            }
             if (study == null) {
                 ApiError err = new ApiError(ErrorCodes.STUDY_NOT_FOUND, "Could not find study with guid " + studyGuid);
                 LOG.warn(err.getMessage());
                 throw ResponseUtil.haltError(response, HttpStatus.SC_NOT_FOUND, err);
+            }
+
+            if (doLocalRegistration && StringUtils.isBlank(auth0Domain)) {
+                auth0Domain = handle.attach(JdbiAuth0Tenant.class).findById(study.getAuth0TenantId())
+                        .map(Auth0TenantDto::getDomain)
+                        .orElse(null);
+                LOG.info("Using auth0 domain {} for local registration", auth0Domain);
             }
 
             StudyClientConfiguration clientConfig = handle.attach(ClientDao.class).getConfiguration(auth0ClientId, auth0Domain);
@@ -130,86 +141,42 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                         auth0ClientSecret, payload.getRedirectUri());
                 auth0UserId.set(Auth0Util.getVerifiedAuth0UserId(auth0RefreshResponse.getIdToken(), auth0Domain));
                 LOG.info("Successfully exchanged auth0 code for auth0UserId {} for local registration", auth0UserId);
+
+                // Look for potential user metadata.
+                var auth0User = auth0Util.getAuth0User(auth0UserId.get(), mgmtClient.getToken());
+                if (auth0User.getUserMetadata() != null) {
+                    if (payload.getFirstName() == null) {
+                        Object value = auth0User.getUserMetadata().get(METADATA_FIRST_NAME);
+                        payload.setFirstName(value == null ? null : (String) value);
+                    }
+                    if (payload.getLastName() == null) {
+                        Object value = auth0User.getUserMetadata().get(METADATA_LAST_NAME);
+                        payload.setLastName(value == null ? null : (String) value);
+                    }
+                }
             }
 
             var userDao = handle.attach(UserDao.class);
             User operatorUser = userDao.findUserByAuth0UserId(auth0UserId.get(), study.getAuth0TenantId()).orElse(null);
 
             if (StringUtils.isNotBlank(invitationGuid) && operatorUser == null) {
-                // when processing an invitation-based registration, we don't create a new user.
-                // instead, we associate the existing user with a new auth0 user id.
                 var invitationDao = handle.attach(InvitationDao.class);
-                var invitationDto = invitationDao.findByInvitationGuid(invitationGuid);
-                InvitationDto invitation = invitationDto.orElseThrow(() -> new DDPException("Could not find invitation "
-                        + invitationGuid + " for user " + auth0UserId));
+                InvitationDto invitation = invitationDao.findByInvitationGuid(study.getId(), invitationGuid)
+                        .orElseThrow(() -> new DDPException("Could not find invitation "
+                                + invitationGuid + " for user " + auth0UserId));
 
-                // if the invitation is revoked or there's already an account for the user, error out.
                 if (invitation.isVoid()) {
-                    throw new DDPException("Invalid invitation " + invitationGuid + " for user " + auth0UserId);
+                    throw new DDPException("Invitation " + invitationGuid + " for user " + auth0UserId + "is voided");
                 } else if (invitation.isAccepted()) {
                     throw new DDPException("Invitation " + invitationGuid + " has already been accepted");
                 }
 
-                var user = userDao.findUserById(invitation.getUserId()).orElseThrow(() -> new DDPException("Could not find user "
-                        + invitation.getUserId()));
-
-                if (user.hasAuth0Account()) {
-                    throw new DDPException("There is already an account-bearing user for invitation " + invitationGuid);
-                }
-
-                ddpUserGuid.set(user.getGuid());
-                // verify that there is governance policy configured for the study and that the
-                // user has reached age of majority.
-                handle.attach(StudyGovernanceDao.class).findPolicyByStudyGuid(studyGuid).ifPresentOrElse(policy -> {
-                    if (policy.hasReachedAgeOfMajority(handle, pexInterpreter, ddpUserGuid.get())) {
-                        LOG.info("Assigning {} to user {} for invitation {}", auth0UserId, user.getGuid(), invitationGuid);
-
-                        var numRows = userDao.updateAuth0UserId(user.getGuid(), auth0UserId.get());
-                        if (numRows != 1) {
-                            throw new DDPException("Updated " + numRows + " for " + auth0UserId.get());
-                        }
-                        LOG.info("User {} has been associated with auth0 id {}", user.getGuid(), auth0UserId.get());
-
-                        invitationDao.updateAcceptedAt(TimestampUtil.now(), invitationGuid);
-
-                        EventSignal signal = new EventSignal(user.getId(), user.getId(), user.getGuid(),
-                                study.getId(), EventTriggerType.GOVERNED_USER_REGISTERED);
-                        EventService.getInstance().processAllActionsForEventSignal(handle, signal);
-                    } else {
-                        LOG.error("User {} is not allowed to create an account yet because they have not reached age of majority "
-                                + " in study {} with invitation {}", ddpUserGuid.get(), studyGuid, invitationGuid);
-                        ResponseUtil.halt422ErrorResponse(response, ErrorCodes.GOVERNANCE_POLICY_VIOLATION);
-                    }
-                },
-                        () -> {
-                            LOG.error("No governance policy for study {}.  Why is a client registering user {} with invitation {} ?",
-                                    studyGuid, auth0UserId, invitationGuid);
-                            ResponseUtil.halt422ErrorResponse(response, ErrorCodes.GOVERNANCE_POLICY_VIOLATION);
-                        }
-                );
-
-
+                operatorUser = processInvitation(response, handle, study, invitation, auth0UserId.get(),
+                        payload, clientConfig, auth0Util, mgmtClient);
+                ddpUserGuid.set(operatorUser.getGuid());
             } else if (operatorUser == null) {
-                LOG.info("Attempting to register new user {} with client {} and study {}",
-                        auth0UserId, auth0ClientId, studyGuid);
-
-                operatorUser = registerUser(response, payload, handle, auth0Domain, auth0ClientId, auth0UserId.get());
-
-                GovernancePolicy policy = handle.attach(StudyGovernanceDao.class).findPolicyByStudyGuid(studyGuid).orElse(null);
-                User studyUser;
-                if (policy == null) {
-                    LOG.info("No study governance policy found, continuing with operator user as the study user");
-                    studyUser = operatorUser;
-                } else {
-                    studyUser = handleGovernancePolicy(response, payload, handle, policy, operatorUser, clientConfig);
-                }
-
-                registerUserWithStudy(handle, study, studyUser);
-                queueUserRegisteredEvents(handle, study, operatorUser, studyUser);
-                handle.attach(DataExportDao.class).queueDataSync(studyUser.getId());
-
-                unregisterEmailFromStudyMailingList(handle, study, operatorUser, auth0Util, mgmtClient);
-
+                operatorUser = signUpNewOperator(response, handle, study, auth0UserId.get(),
+                        payload, clientConfig, auth0Util, mgmtClient);
                 ddpUserGuid.set(operatorUser.getGuid());
             } else {
                 LOG.info("Attempting to register existing user {} with client {} and study {}", auth0UserId, auth0ClientId, studyGuid);
@@ -223,6 +190,89 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                 return new UserRegistrationResponse(ddpUserGuid.get());
             }
         });
+    }
+
+    private User processInvitation(Response response, Handle handle, StudyDto study, InvitationDto invitation, String auth0UserId,
+                                   UserRegistrationPayload payload, StudyClientConfiguration clientConfig,
+                                   Auth0Util auth0Util, Auth0ManagementClient mgmtClient) {
+        var invitationDao = handle.attach(InvitationDao.class);
+        var userDao = handle.attach(UserDao.class);
+        String invitationGuid = invitation.getInvitationGuid();
+        String studyGuid = study.getGuid();
+
+        if (invitation.getInvitationType() == InvitationType.AGE_UP) {
+            var user = userDao.findUserById(invitation.getUserId())
+                    .orElseThrow(() -> new DDPException("Could not find user " + invitation.getUserId()));
+            if (user.hasAuth0Account()) {
+                throw new DDPException("There is already an account-bearing user for invitation " + invitationGuid);
+            }
+
+            // verify that there is governance policy configured for the study and that the
+            // user has reached age of majority.
+            GovernancePolicy policy = handle.attach(StudyGovernanceDao.class).findPolicyByStudyGuid(studyGuid).orElse(null);
+            if (policy != null) {
+                if (policy.hasReachedAgeOfMajority(handle, interpreter, user.getGuid())) {
+                    LOG.info("Assigning {} to user {} for invitation {}", auth0UserId, user.getGuid(), invitationGuid);
+
+                    var numRows = userDao.updateAuth0UserId(user.getGuid(), auth0UserId);
+                    if (numRows != 1) {
+                        throw new DDPException("Updated " + numRows + " for " + auth0UserId);
+                    }
+                    LOG.info("User {} has been associated with auth0 id {}", user.getGuid(), auth0UserId);
+
+                    invitationDao.markAccepted(invitation.getInvitationId(), Instant.now());
+
+                    EventSignal signal = new EventSignal(user.getId(), user.getId(), user.getGuid(),
+                            study.getId(), EventTriggerType.GOVERNED_USER_REGISTERED);
+                    EventService.getInstance().processAllActionsForEventSignal(handle, signal);
+                } else {
+                    LOG.error("User {} is not allowed to create an account yet because they have not reached age of majority "
+                            + " in study {} with invitation {}", user.getGuid(), studyGuid, invitationGuid);
+                    ResponseUtil.halt422ErrorResponse(response, ErrorCodes.GOVERNANCE_POLICY_VIOLATION);
+                }
+            } else {
+                LOG.error("No governance policy for study {}.  Why is a client registering user {} with invitation {} ?",
+                        studyGuid, auth0UserId, invitationGuid);
+                ResponseUtil.halt422ErrorResponse(response, ErrorCodes.GOVERNANCE_POLICY_VIOLATION);
+            }
+
+            return user;
+        } else if (invitation.getInvitationType() == InvitationType.RECRUITMENT) {
+            var user = signUpNewOperator(response, handle, study, auth0UserId, payload, clientConfig, auth0Util, mgmtClient);
+            invitationDao.assignAcceptingUser(invitation.getInvitationId(), user.getId(), Instant.now());
+            LOG.info("Assigned invitation {} of type {} to user {}", invitation.getInvitationGuid(),
+                    invitation.getInvitationType(), user.getGuid());
+            return user;
+        } else {
+            throw new DDPException("Unhandled invitation type " + invitation.getInvitationType());
+        }
+    }
+
+    private User signUpNewOperator(Response response, Handle handle, StudyDto study, String auth0UserId,
+                                   UserRegistrationPayload payload, StudyClientConfiguration clientConfig,
+                                   Auth0Util auth0Util, Auth0ManagementClient mgmtClient) {
+        String studyGuid = study.getGuid();
+        LOG.info("Attempting to register new user {} with client {} and study {}",
+                auth0UserId, clientConfig.getAuth0ClientId(), studyGuid);
+
+        User operatorUser = registerUser(response, payload, handle,
+                clientConfig.getAuth0Domain(), clientConfig.getAuth0ClientId(), auth0UserId);
+
+        GovernancePolicy policy = handle.attach(StudyGovernanceDao.class).findPolicyByStudyGuid(studyGuid).orElse(null);
+        User studyUser;
+        if (policy == null) {
+            LOG.info("No study governance policy found, continuing with operator user as the study user");
+            studyUser = operatorUser;
+        } else {
+            studyUser = handleGovernancePolicy(response, payload, handle, policy, operatorUser, clientConfig);
+        }
+
+        registerUserWithStudy(handle, study, studyUser);
+        queueUserRegisteredEvents(handle, study, operatorUser, studyUser);
+        handle.attach(DataExportDao.class).queueDataSync(studyUser.getId());
+
+        unregisterEmailFromStudyMailingList(handle, study, operatorUser, auth0Util, mgmtClient);
+        return operatorUser;
     }
 
     private void checkRequiredPayloadProperties(Response response, UserRegistrationPayload payload) {
@@ -266,7 +316,17 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
             if (numGovernances > 0) {
                 LOG.info("Existing user {} is a proxy of {} users in study {}", user.getGuid(), numGovernances, study.getGuid());
                 return user.getGuid();
-            } else if (MODE_LOGIN.equals(payload.getMode())) {
+            }
+
+            boolean isStudyAdmin = handle.attach(AuthDao.class)
+                    .findAdminAccessibleStudyGuids(user.getGuid())
+                    .contains(study.getGuid());
+            if (isStudyAdmin) {
+                LOG.info("Existing user {} is an admin in study {}", user.getGuid(), study.getGuid());
+                return user.getGuid();
+            }
+
+            if (MODE_LOGIN.equals(payload.getMode())) {
                 String msg = String.format("User needs to register with study '%s' before logging in", study.getGuid());
                 LOG.warn(msg);
                 throw ResponseUtil.haltError(response, HttpStatus.SC_UNPROCESSABLE_ENTITY, new ApiError(ErrorCodes.SIGNUP_REQUIRED, msg));
@@ -294,7 +354,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
             user = userDao.createUser(auth0Domain, auth0ClientId, auth0UserId);
             LOG.info("Registered user {} with client {}", auth0UserId, auth0ClientId);
         }
-        initProfilePreferredLanguage(handle, user, payload.getAuth0ClientCountryCode());
+        initializeProfile(handle, user, payload);
         return user;
     }
 
@@ -321,7 +381,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
 
         User governedUser = handle.attach(UserDao.class).findUserById(gov.getGovernedUserId())
                 .orElseThrow(() -> new DDPException("Could not find governed user with id " + gov.getGovernedUserId()));
-        initProfilePreferredLanguage(handle, governedUser, payload.getAuth0ClientCountryCode());
+        initializeProfile(handle, governedUser, payload);
 
         int numInstancesReassigned = handle.attach(ActivityInstanceDao.class)
                 .reassignInstancesInStudy(policy.getStudyId(), operatorUser.getId(), gov.getGovernedUserId());
@@ -430,25 +490,68 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
         return userDao.findUserByGuid(tempUserGuid).orElseThrow(() -> new DDPException("Could not find user with guid " + tempUserGuid));
     }
 
-    private void initProfilePreferredLanguage(Handle handle, User user, String auth0ClientCountryCode) {
-        Long languageId = handle.attach(JdbiCountry.class).getPrimaryLanguageIdByCountryCode(auth0ClientCountryCode);
-        if (languageId == null) {
-            languageId = handle.attach(JdbiLanguageCode.class).getLanguageCodeId(EN_LANGUAGE_CODE);
+    private LanguageDto determineUserLanguage(Handle handle, UserRegistrationPayload payload) {
+        LanguageDto userLanguage = null;
+        Set<LanguageDto> supportedLanguages = handle.attach(StudyDao.class)
+                .findSupportedLanguagesByGuid(payload.getStudyGuid());
+        for (var language : supportedLanguages) {
+            if (language.getIsoCode().equalsIgnoreCase(payload.getLanguageCode())) {
+                userLanguage = language;
+                break;
+            }
         }
 
+        // If no language provided or language is not one of study's supported ones,
+        // then use study's default language. If all else fails, fallback to English.
+        if (userLanguage == null) {
+            userLanguage = supportedLanguages.stream()
+                    // .filter(lang -> lang.isDefault())     TODO: use the filter when ready
+                    .findFirst()
+                    .orElseGet(() -> handle.attach(JdbiLanguageCode.class).findLanguageDtoByCode(EN_LANGUAGE_CODE));
+        }
+
+        return userLanguage;
+    }
+
+    private void initializeProfile(Handle handle, User user, UserRegistrationPayload payload) {
         var profileDao = handle.attach(UserProfileDao.class);
         UserProfile profile = profileDao.findProfileByUserId(user.getId()).orElse(null);
 
+        // If any name part is blank, then don't use it.
+        String firstName = payload.getFirstName();
+        firstName = StringUtils.isNotBlank(firstName) ? firstName.trim() : null;
+        String lastName = payload.getLastName();
+        lastName = StringUtils.isNotBlank(lastName) ? lastName.trim() : null;
+        long languageId = determineUserLanguage(handle, payload).getId();
+
         if (profile == null) {
-            profile = new UserProfile.Builder(user.getId()).setPreferredLangId(languageId).build();
+            profile = new UserProfile.Builder(user.getId())
+                    .setFirstName(firstName)
+                    .setLastName(lastName)
+                    .setPreferredLangId(languageId)
+                    .build();
             profileDao.createProfile(profile);
             LOG.info("Initialized user profile for user with guid {}", user.getGuid());
-        } else if (profile.getPreferredLangId() == null) {
-            int numUpdated = profileDao.getUserProfileSql().updatePreferredLangId(user.getId(), languageId);
-            if (numUpdated != 1) {
-                throw new DDPException(String.format(
-                        "Could not update preferred language for user with guid '%s'",
-                        user.getGuid()));
+        } else {
+            boolean shouldUpdate = false;
+            var updated = new UserProfile.Builder(profile);
+
+            if (profile.getFirstName() == null) {
+                updated.setFirstName(firstName);
+                shouldUpdate = true;
+            }
+            if (profile.getLastName() == null) {
+                updated.setLastName(lastName);
+                shouldUpdate = true;
+            }
+            if (profile.getPreferredLangId() == null) {
+                updated.setPreferredLangId(languageId);
+                shouldUpdate = true;
+            }
+
+            if (shouldUpdate) {
+                profileDao.updateProfile(updated.build());
+                LOG.info("Updated user profile for user with guid {}", user.getGuid());
             }
         }
     }

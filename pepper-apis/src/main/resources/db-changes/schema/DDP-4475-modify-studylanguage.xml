@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+    <changeSet id="20200519-modify-studylanguage" author="sampath">
+
+        <addColumn tableName="study_language">
+            <column name="is_default" type="boolean" defaultValueBoolean="false">
+                <constraints nullable="false"></constraints>
+            </column>
+            <column name="name" type="varchar(80)">
+            </column>
+        </addColumn>
+
+    </changeSet>
+
+</databaseChangeLog>

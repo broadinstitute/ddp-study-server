@@ -49,10 +49,14 @@ public class DateRangeRule extends Rule<DateAnswer> {
     @Override
     public boolean validate(Question<DateAnswer> question, DateAnswer answer) {
         if (answer != null && answer.getValue() != null) {
-            if (!((DateQuestion) question).isSpecifiedFieldsPresent(answer)) {
+            DateQuestion dateQuestion = (DateQuestion) question;
+            if (!dateQuestion.isSpecifiedFieldsPresent(answer) && !dateQuestion.hasRequiredFields(answer)) {
                 // Don't run range check unless specified fields are in answer. We might be in the middle of auto-save
                 // where we only have a partial answer. Also, since these fields are not required, we don't try to
                 // force it to be present. If they're needed, the RequiredRule should take care of that.
+                //
+                // If question has "field required" rules and answer does not have those fields filled in,
+                // then let's skip the range check. Otherwise, proceed to check range.
                 return true;
             }
             return isWithinRange(answer.getValue());

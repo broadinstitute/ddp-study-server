@@ -5,13 +5,15 @@ import static com.epam.jdi.uitests.core.interfaces.complex.tables.interfaces.Che
 
 import com.epam.jdi.uitests.web.selenium.elements.pageobjects.annotations.JPage;
 import org.broadinstitute.ddp.pages.Auth0Page;
+import org.broadinstitute.ddp.pages.GatekeeperPage;
 import org.broadinstitute.ddp.pages.angiopages.AboutYouPage;
 import org.broadinstitute.ddp.pages.angiopages.ConsentPage;
 import org.broadinstitute.ddp.pages.angiopages.CountMeInPage;
 import org.broadinstitute.ddp.pages.angiopages.DashboardPage;
-import org.broadinstitute.ddp.pages.angiopages.GatekeeperPage;
 import org.broadinstitute.ddp.pages.angiopages.HomePage;
 import org.broadinstitute.ddp.pages.angiopages.JoinMailingList;
+import org.broadinstitute.ddp.pages.angiopages.LovedOnePage;
+import org.broadinstitute.ddp.pages.angiopages.LovedOneThankYouPage;
 import org.broadinstitute.ddp.pages.angiopages.MedicalReleaseFormPage;
 import org.broadinstitute.ddp.pages.angiopages.StayInformedPage;
 import org.slf4j.Logger;
@@ -23,12 +25,14 @@ public class AngioAppSite extends AngioWebsite {
     private static final String GATEKEEPER_PAGE_URL_TEMPLATE = "/password";
     private static final String HOME_PAGE_URL_TEMPLATE = "/";
     private static final String COUNT_ME_IN_PAGE_URL_TEMPLATE = "/count-me-in";
-    private static final String AUTH0_PAGE_URL_TEMPLATE = "login-test";
+    private static final String AUTH0_PAGE_URL_TEMPLATE = "/login";
     private static final String ABOUT_YOU_PAGE_URL_TEMPLATE = "/about-you";
     private static final String CONSENT_PAGE_URL_TEMPLATE = "/consent";
     private static final String MEDICAL_RELEASE_PAGE_URL_TEMPLATE = "/release-survey";
     private static final String DASHBOARD_PAGE_URL_TEMPLATE = "/dashboard";
     private static final String STAY_INFORMED_PAGE_URL_TEMPLATE = "/stay-informed";
+    private static final String LOVED_ONE_PAGE_URL_TEMPLATE = "/loved-one";
+    private static final String LOVED_ONE_THANK_YOU_PAGE_URL_TEMPLATE = "/loved-one-thank-you";
 
     @JPage(urlTemplate = GATEKEEPER_PAGE_URL_TEMPLATE, urlCheckType = CONTAINS)
     public static GatekeeperPage gatekeeperPage;
@@ -59,4 +63,10 @@ public class AngioAppSite extends AngioWebsite {
 
     @JPage(urlTemplate = STAY_INFORMED_PAGE_URL_TEMPLATE, urlCheckType = CONTAINS)
     public static StayInformedPage stayInformedPage;
+
+    @JPage(urlTemplate = LOVED_ONE_PAGE_URL_TEMPLATE, urlCheckType = CONTAINS)
+    public static LovedOnePage lovedOnePage;
+
+    @JPage(urlTemplate = LOVED_ONE_THANK_YOU_PAGE_URL_TEMPLATE, urlCheckType = CONTAINS)
+    public static LovedOneThankYouPage lovedOneThankYouPage;
 }

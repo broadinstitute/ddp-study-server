@@ -1,9 +1,6 @@
 package org.broadinstitute.ddp.route;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import com.auth0.json.mgmt.Connection;
 import org.apache.http.entity.ContentType;
@@ -18,6 +15,7 @@ import org.broadinstitute.ddp.db.dto.Auth0TenantDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.study.PasswordPolicy;
+import org.broadinstitute.ddp.service.Auth0Service;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,6 +39,7 @@ public class GetStudyPasswordPolicyRoute implements Route {
             throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.BAD_PAYLOAD, msg));
         }
 
+        response.type(ContentType.APPLICATION_JSON.getMimeType());
         PasswordPolicy policy = TransactionWrapper.withTxn(handle -> {
             StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
             if (studyDto == null) {
@@ -50,7 +49,8 @@ public class GetStudyPasswordPolicyRoute implements Route {
             }
 
             List<String> permittedStudies = handle.attach(JdbiClientUmbrellaStudy.class)
-                    .findPermittedStudyGuidsByAuth0ClientId(clientId);
+                    .findPermittedStudyGuidsByAuth0ClientIdAndAuth0TenantId(clientId, studyDto.getAuth0TenantId());
+
             if (!permittedStudies.contains(studyGuid)) {
                 LOG.warn("Either client does not exist or client does not have access to study " + studyGuid);
                 String msg = "Could not find client with id " + clientId;
@@ -65,7 +65,6 @@ public class GetStudyPasswordPolicyRoute implements Route {
                         throw ResponseUtil.haltError(response, 500, new ApiError(ErrorCodes.SERVER_ERROR, msg));
                     });
 
-            response.type(ContentType.APPLICATION_JSON.getMimeType());
             return lookupPasswordPolicy(tenantDto, clientId);
         });
 
@@ -81,55 +80,25 @@ public class GetStudyPasswordPolicyRoute implements Route {
 
     PasswordPolicy lookupPasswordPolicy(Auth0TenantDto tenantDto, String clientId) {
         var auth0Mgmt = createManagementClient(tenantDto);
-        var listResult = auth0Mgmt.listClientConnections(clientId);
+        var auth0Service = new Auth0Service(auth0Mgmt);
 
-        if (listResult.hasThrown() || listResult.hasError()) {
-            Exception e = listResult.hasThrown() ? listResult.getThrown() : listResult.getError();
+        Connection conn;
+        try {
+            conn = auth0Service.findClientDBConnection(clientId);
+            if (conn == null) {
+                return null; // No connection so no password policy.
+            }
+        } catch (Exception e) {
             LOG.warn("Error getting client connections", e);
             throw ResponseUtil.haltError(500, new ApiError(ErrorCodes.SERVER_ERROR, "Error looking up password policy"));
         }
 
-        List<Connection> dbConnections = listResult.getBody().stream()
-                .filter(conn -> conn.getStrategy().equals(Auth0ManagementClient.DB_CONNECTION_STRATEGY))
-                .collect(Collectors.toList());
-        if (dbConnections.isEmpty()) {
-            LOG.error("Password policies are only set on database connections but none were found for client {}", clientId);
-            return null;
-        } else if (dbConnections.size() > 1) {
-            LOG.error("More than one database connection found for client {}, will attempt to use default one", clientId);
-            // Attempt to put the default one in front, if there is one.
-            dbConnections.sort((conn1, conn2) -> {
-                if (conn1.getName().equals(Auth0ManagementClient.DEFAULT_DB_CONN_NAME)) {
-                    return -1;
-                } else if (conn2.getName().equals(Auth0ManagementClient.DEFAULT_DB_CONN_NAME)) {
-                    return 1;
-                } else {
-                    return 0;
-                }
-            });
-        }
-
-        Connection conn = dbConnections.get(0);
-        String policyName = (String) conn.getOptions().get(Auth0ManagementClient.KEY_PASSWORD_POLICY);
-        Map<String, Object> passwordOptions = (Map<String, Object>) conn.getOptions()
-                .getOrDefault(Auth0ManagementClient.KEY_PASSWORD_COMPLEXITY_OPTIONS, new HashMap<>());
-        Integer minLength = (Integer) passwordOptions.get(Auth0ManagementClient.KEY_MIN_LENGTH);
-
-        if (minLength != null && minLength > PasswordPolicy.MAX_PASSWORD_LENGTH) {
-            LOG.error("Password minimum length exceeds the maximum of {}", PasswordPolicy.MAX_PASSWORD_LENGTH);
-            throw ResponseUtil.haltError(500, new ApiError(ErrorCodes.SERVER_ERROR, "Error looking up password policy"));
-        }
-
-        PasswordPolicy.PolicyType type;
         try {
-            // Somehow Auth0 returns `null` when it's supposed to be `none`.
-            type = (policyName == null ? PasswordPolicy.PolicyType.NONE : PasswordPolicy.PolicyType.valueOf(policyName.toUpperCase()));
-        } catch (IllegalArgumentException e) {
-            LOG.error("Could not convert from password policy name '{}'", policyName);
+            return auth0Service.extractPasswordPolicy(conn);
+        } catch (Exception e) {
+            LOG.error("Error extracting password policy from connection {}", conn.getName(), e);
             throw ResponseUtil.haltError(500, new ApiError(ErrorCodes.SERVER_ERROR, "Error looking up password policy"));
         }
-
-        return PasswordPolicy.fromType(type, minLength);
     }
 
     Auth0ManagementClient createManagementClient(Auth0TenantDto tenantDto) {

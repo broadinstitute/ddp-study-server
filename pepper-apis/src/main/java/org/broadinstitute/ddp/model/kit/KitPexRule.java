@@ -8,8 +8,8 @@ public class KitPexRule extends KitRule<String> {
     PexInterpreter pexInterpreter;
     String pexExpression;
 
-    public KitPexRule(PexInterpreter pexInterpreter, String pexExpression) {
-        super(KitRuleType.PEX);
+    public KitPexRule(long id, PexInterpreter pexInterpreter, String pexExpression) {
+        super(id, KitRuleType.PEX);
         this.pexInterpreter = pexInterpreter;
         this.pexExpression = pexExpression;
     }

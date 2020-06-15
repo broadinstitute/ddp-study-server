@@ -18,6 +18,7 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
+import org.broadinstitute.ddp.db.dao.InvitationDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
@@ -31,6 +32,7 @@ import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.governance.GovernancePolicy;
+import org.broadinstitute.ddp.model.invitation.InvitationType;
 import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.pex.lang.PexBaseVisitor;
 import org.broadinstitute.ddp.pex.lang.PexParser;
@@ -203,6 +205,19 @@ public class TreeWalkInterpreter implements PexInterpreter {
             }
 
             return policy.hasReachedAgeOfMajority(ictx.getHandle(), new TreeWalkInterpreter(), userGuid, profile.getBirthDate());
+        } else if (predCtx instanceof PexParser.HasInvitationPredicateContext) {
+            String str = extractString(((PexParser.HasInvitationPredicateContext) predCtx).STR());
+            InvitationType inviteType;
+            try {
+                inviteType = InvitationType.valueOf(str.toUpperCase());
+            } catch (Exception e) {
+                throw new PexUnsupportedException("Invalid invitation type for hasInvitation() predicate: " + str, e);
+            }
+            return ictx.getHandle()
+                    .attach(InvitationDao.class)
+                    .findInvitations(studyGuid, ictx.getUserGuid())
+                    .stream()
+                    .anyMatch(invite -> invite.getInvitationType() == inviteType);
         } else {
             throw new PexUnsupportedException("Unsupported study predicate: " + predCtx.getText());
         }

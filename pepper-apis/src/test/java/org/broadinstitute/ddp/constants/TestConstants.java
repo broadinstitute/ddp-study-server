@@ -20,13 +20,6 @@ public class TestConstants {
     public static final String TEST_USER_GUID = "19i3-test-user-48f0";
     public static final String TEST_ADMIN_GUID = "CA390377Y7D18X4CB2SS";
 
-    // name of the file that contains the google service account key we use ONLY FOR TESTING integration with firecloud.
-    // the real keys are pepper client specific and should live in the database
-    public static final String FIRECLOUD_TEST_SERVICE_ACCOUNT_FILE = "ddp-testing.json";
-
-    // A placeholder pattern for a pex string that can be used in Java's string formatting.
-    public static final String PEX_STR_FMT = "\"%s\"";
-
     // Some profile info for our test user
     public static final String TEST_USER_HRUID = "ABCDE";
     public static final String TEST_USER_PROFILE_FIRST_NAME = "Grace";
@@ -50,7 +43,6 @@ public class TestConstants {
     public static final String TEST_INSTITUTION_PHYSICIAN_NAME = "House MD";
     public static final String TEST_INSTITUTION_CITY = "West Windsor Township";
     public static final String TEST_INSTITUTION_STATE = "New Jersey";
-    public static final String WEB_DEMO_CLIENT_NAME = "demo-web-client";
     public static final String TEST_INSTITUTION_ZIP = "02144";
     public static final String TEST_INSTITUTION_PHONE = "617-867-5309";
     public static final String TEST_INSTITUTION_LEGACY_GUID = "GUID.GUID.GUID.123456";

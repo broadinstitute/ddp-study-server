@@ -16,7 +16,7 @@ get:
   responses:
     200:
       $ref: '../pepper.yml#/components/responses/ProfileResponse'
-    400:
+    404:
       $ref: '../pepper.yml#/components/responses/ProfileGetErrorResponse'
     default:
       $ref: '../pepper.yml#/components/responses/ErrorResponse'
@@ -38,7 +38,7 @@ post:
     200:
       $ref: '../pepper.yml#/components/responses/ProfileResponse'
     400:
-      $ref: '../pepper.yml#/components/responses/ProfileUpdateErrorResponse'
+      $ref: '../pepper.yml#/components/responses/ProfileAddErrorResponse'
     default:
       $ref: '../pepper.yml#/components/responses/ErrorResponse'
 patch:
