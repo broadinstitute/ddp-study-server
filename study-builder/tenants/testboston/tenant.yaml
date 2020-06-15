@@ -1,3 +1,6 @@
+tenant:
+  default_directory: Username-Password-Authentication
+
 rules:
   - name: Register User in Pepper
     script: ../register-user-in-pepper.js
@@ -16,9 +19,9 @@ pages:
 emailTemplates:
   - template: reset_email
     body: ./emails/change_password.html
-    from: Test Boston Study <testboston@datadonationplatform.org>
+    from: TestBoston <##STUDY_EMAIL##>
     resultUrl: '##SERVER_BASE_URL##/pepper/v1/post-password-reset?clientId={{ application.clientID }}'
-    subject: Test Boston Study
+    subject: TestBoston password reset
     urlLifetimeInSeconds: 432000
     syntax: liquid
     enabled: true

@@ -77,4 +77,21 @@ public class NotificationTemplateVariables {
      * The invitation guid
      */
     public static final String DDP_INVITATION_ID = "-ddp.invitationId-";
+
+    //Dynamic template variables
+    public static final String PARTICIPANT_FIRST_NAME = "participant_firstName";
+    public static final String PARTICIPANT_LAST_NAME = "participant_lastName";
+    public static final String PARTICIPANT_GUID = "participant_guid";
+    public static final String PARTICIPANT_HRUID = "participant_hruid";
+    public static final String PARTICIPANT_EXIT_NOTES = "participant_exitNotes";
+    public static final String SALUTATION = "salutation";
+    public static final String PROXY_FIRST_NAME = "proxy_firstName";
+    public static final String PROXY_LAST_NAME = "proxy_lastName";
+    public static final String ACTIVITY_INSTANCE_GUID = "activityInstance_guid";
+    public static final String PARTICIPANT_FROM_EMAIL = "participant_fromEmail";
+    public static final String BASE_WEB_URL = "baseWebUrl";
+    public static final String LINK = "link";
+    public static final String STUDY_GUID = "study_guid";
+    public static final String INVITATION_ID = "invitationId";
+
 }

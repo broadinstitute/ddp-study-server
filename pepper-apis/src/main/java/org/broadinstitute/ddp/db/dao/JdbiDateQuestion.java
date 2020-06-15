@@ -65,14 +65,16 @@ public interface JdbiDateQuestion extends SqlObject {
 
             // Grab year picklist data if available
             Long yearIndicator = (Long) rs.getObject("dqyp_id");
+            boolean allowFutureYears = false;
             if (yearIndicator != null) {
                 yearsForward = (Integer) rs.getObject(DateQuestionYearPicklistTable.YEARS_FORWARD);
                 yearsBack = (Integer) rs.getObject(DateQuestionYearPicklistTable.YEARS_BACK);
                 yearAnchor = (Integer) rs.getObject(DateQuestionYearPicklistTable.YEAR_ANCHOR);
                 firstSelectedYear = (Integer) rs.getObject(DateQuestionYearPicklistTable.FIRST_SELECTED_YEAR);
+                allowFutureYears = rs.getBoolean(DateQuestionYearPicklistTable.ALLOW_FUTURE_YEARS);
             }
 
-            return new DatePicklistDef(useMonthNames, yearsForward, yearsBack, yearAnchor, firstSelectedYear);
+            return new DatePicklistDef(useMonthNames, yearsForward, yearsBack, yearAnchor, firstSelectedYear, allowFutureYears);
         }
     }
 }

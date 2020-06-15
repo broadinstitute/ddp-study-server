@@ -56,7 +56,8 @@ public interface EventActionDao extends SqlObject {
                 actionId, notificationType, NotificationServiceType.SENDGRID, eventAction.getLinkedActivityId()));
 
         Set<Long> notificationTemplateIds = eventAction.getTemplates().stream()
-                .map(tmpl -> eventActionSql.findOrInsertNotificationTemplateId(tmpl.getTemplateKey(), tmpl.getLanguageCode()))
+                .map(tmpl -> eventActionSql.findOrInsertNotificationTemplateId(tmpl.getTemplateKey(), tmpl.getLanguageCode(),
+                        tmpl.isDynamicTemplate()))
                 .collect(Collectors.toSet());
 
         long[] numInserted = eventActionSql.bulkAddNotificationTemplatesToAction(actionId, notificationTemplateIds);

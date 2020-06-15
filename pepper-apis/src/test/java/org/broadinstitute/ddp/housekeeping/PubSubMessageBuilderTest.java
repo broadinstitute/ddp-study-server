@@ -54,7 +54,7 @@ public class PubSubMessageBuilderTest extends TxnAwareBaseTest {
     @Test
     public void testCreateMessage_participantHasAuth0Account() {
         PubSubMessageBuilder builder = spy(new PubSubMessageBuilder(cfg));
-        doReturn(new NotificationTemplate(1L, "template", 1L, "en"))
+        doReturn(new NotificationTemplate(1L, "template", false, 1L, "en"))
                 .when(builder).determineEmailTemplate(any(), anyLong(), any(), any());
 
         QueuedEventDto event = new QueuedNotificationDto(
@@ -91,7 +91,7 @@ public class PubSubMessageBuilderTest extends TxnAwareBaseTest {
                             "salutation", "first", "last"));
 
             PubSubMessageBuilder builder = spy(new PubSubMessageBuilder(cfg));
-            doReturn(new NotificationTemplate(1L, "template", 1L, "en"))
+            doReturn(new NotificationTemplate(1L, "template", false, 1L, "en"))
                     .when(builder).determineEmailTemplate(any(), anyLong(), any(), any());
 
             PubsubMessage msg = builder.createMessage("test", event, handle);
@@ -133,7 +133,7 @@ public class PubSubMessageBuilderTest extends TxnAwareBaseTest {
                             "salutation", "first", "last"));
 
             PubSubMessageBuilder builder = spy(new PubSubMessageBuilder(cfg));
-            doReturn(new NotificationTemplate(1L, "template", 1L, "en"))
+            doReturn(new NotificationTemplate(1L, "template", false, 1L, "en"))
                     .when(builder).determineEmailTemplate(any(), anyLong(), any(), any());
 
             PubsubMessage msg = builder.createMessage("test", event, handle);
@@ -160,8 +160,8 @@ public class PubSubMessageBuilderTest extends TxnAwareBaseTest {
     @Test
     public void testDetermineEmailTemplate() {
         List<NotificationTemplate> templates = List.of(
-                new NotificationTemplate(1L, "t1", 1L, "en"),
-                new NotificationTemplate(2L, "t2", 2L, "fr"));
+                new NotificationTemplate(1L, "t1", false, 1L, "en"),
+                new NotificationTemplate(2L, "t2", false, 2L, "fr"));
 
         Handle mockHandle = mock(Handle.class);
         EventDao mockEvenDao = mock(EventDao.class);

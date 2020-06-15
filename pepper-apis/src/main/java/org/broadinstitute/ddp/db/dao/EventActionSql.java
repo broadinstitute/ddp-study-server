@@ -58,9 +58,10 @@ public interface EventActionSql extends SqlObject {
             @Bind("linkedActivityId") Long linkedActivityId);
 
     @GetGeneratedKeys
-    @SqlUpdate("insert into notification_template (template_key, language_code_id)"
-            + " values (:tmplKey, (select language_code_id from language_code where iso_language_code = :langCode))")
-    long insertNotificationTemplate(@Bind("tmplKey") String templateKey, @Bind("langCode") String isoLanguageCode);
+    @SqlUpdate("insert into notification_template (template_key, language_code_id, is_dynamic)"
+            + " values (:tmplKey, (select language_code_id from language_code where iso_language_code = :langCode), :isDynamic)")
+    long insertNotificationTemplate(@Bind("tmplKey") String templateKey, @Bind("langCode") String isoLanguageCode,
+                                    @Bind("isDynamic") boolean isDynamic);
 
     @SqlQuery("select nt.*, lc.iso_language_code from notification_template as nt"
             + "  join language_code as lc on lc.language_code_id = nt.language_code_id"
@@ -70,10 +71,10 @@ public interface EventActionSql extends SqlObject {
             @Bind("tmplKey") String templateKey,
             @Bind("langCode") String isoLanguageCode);
 
-    default long findOrInsertNotificationTemplateId(String templateKey, String langCode) {
+    default long findOrInsertNotificationTemplateId(String templateKey, String langCode, boolean isDynamic) {
         return findNotificationTemplate(templateKey, langCode)
                 .map(NotificationTemplate::getId)
-                .orElseGet(() -> insertNotificationTemplate(templateKey, langCode));
+                .orElseGet(() -> insertNotificationTemplate(templateKey, langCode, isDynamic));
     }
 
     @GetGeneratedKeys
