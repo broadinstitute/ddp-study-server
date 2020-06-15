@@ -17,6 +17,7 @@ import org.broadinstitute.ddp.db.dto.RevisionDto;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistGroupDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
+import org.broadinstitute.ddp.model.activity.types.TemplateType;
 import org.jdbi.v3.core.mapper.reflect.ConstructorMapper;
 import org.jdbi.v3.sqlobject.CreateSqlObject;
 import org.jdbi.v3.sqlobject.SqlObject;
@@ -130,6 +131,9 @@ public interface PicklistQuestionDao extends SqlObject {
 
         Long tooltipTmplId = null;
         if (option.getTooltipTemplate() != null) {
+            if (option.getTooltipTemplate().getTemplateType() != TemplateType.TEXT) {
+                throw new DaoException("Only TEXT template type is supported for tooltips");
+            }
             tooltipTmplId = templateDao.insertTemplate(option.getTooltipTemplate(), revisionId);
         }
 
