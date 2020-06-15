@@ -2,6 +2,8 @@ package org.broadinstitute.ddp.constants;
 
 public class ConfigFile {
 
+    public static final String API_BASE_URL = "apiBaseUrl";
+
     // field that specifies the url to the database
     public static final String DB_URL = "dbUrl";
 

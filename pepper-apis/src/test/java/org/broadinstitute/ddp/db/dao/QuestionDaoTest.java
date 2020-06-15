@@ -18,6 +18,7 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
+import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.QuestionStableIdExistsException;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -1310,7 +1311,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
         TransactionWrapper.useTxn(handle -> {
             DateRangeRuleDef rule = new DateRangeRuleDef(Template.text("Pi Day to today"),
                     LocalDate.of(2018, 3, 14), null, true);
-            DatePicklistDef datePicklistDef = new DatePicklistDef(true, 3, 80, null, 1988);
+            DatePicklistDef datePicklistDef = new DatePicklistDef(true, 3, 80, null, 1988, true);
             DateQuestionDef question = DateQuestionDef.builder(DateRenderMode.PICKLIST, sid, prompt)
                     .addFields(DateFieldType.DAY, DateFieldType.MONTH, DateFieldType.YEAR)
                     .addValidation(rule)
@@ -1516,7 +1517,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
 
             Question actual = handle.attach(QuestionDao.class)
                     .getQuestionByActivityInstanceAndDto(questionDto, instanceDto.getGuid(),
-                            handle.attach(JdbiLanguageCode.class).getLanguageCodeId("en"));
+                            LanguageStore.getOrComputeDefault(handle).getId());
             assertEquals(QuestionType.NUMERIC, actual.getQuestionType());
             assertEquals(sid, actual.getStableId());
             assertEquals(prompt.getTemplateId(), (Long) actual.getPromptTemplateId());

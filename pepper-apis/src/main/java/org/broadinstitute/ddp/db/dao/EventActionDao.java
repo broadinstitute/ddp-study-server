@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.db.dao;
 import static org.broadinstitute.ddp.model.event.MessageDestination.PARTICIPANT_NOTIFICATION;
 
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
@@ -17,25 +18,10 @@ import org.jdbi.v3.sqlobject.SqlObject;
 public interface EventActionDao extends SqlObject {
 
     @CreateSqlObject
-    JdbiNotificationTemplate getNotificationTemplate();
-
-    @CreateSqlObject
-    JdbiLanguageCode getLanguageCodeDao();
-
-    @CreateSqlObject
     JdbiEventAction getJdbiEventAction();
 
     @CreateSqlObject
     JdbiMessageDestination getMessageDestinationDao();
-
-    @CreateSqlObject
-    JdbiNotificationService getNotificationServiceDao();
-
-    @CreateSqlObject
-    JdbiNotificationType getNotificationTypeDao();
-
-    @CreateSqlObject
-    JdbiUserNotificationEventAction getNotificationEventActionDao();
 
     @CreateSqlObject
     JdbiUserAnnouncementEventAction getJdbiUserAnnouncementEventAction();
@@ -63,28 +49,21 @@ public interface EventActionDao extends SqlObject {
 
     private long insertNotificationAction(SendgridEmailEventActionDto eventAction, NotificationType notificationType) {
         long messageDestinationId = getMessageDestinationDao().findByTopic(PARTICIPANT_NOTIFICATION);
-        long notificationServiceId = getNotificationServiceDao().findByType(NotificationServiceType.SENDGRID);
-        long notificationTypeId = getNotificationTypeDao().findByType(notificationType);
-        long languageCodeId = getLanguageCodeDao().getLanguageCodeId(eventAction.getLanguageCode());
+        EventActionSql eventActionSql = getEventActionSql();
 
-        JdbiNotificationTemplate notificationTemplateDao = getNotificationTemplate();
-        JdbiEventAction eventActionDao = getJdbiEventAction();
-        JdbiUserNotificationEventAction notificationEventActionDao = getNotificationEventActionDao();
+        long actionId = getJdbiEventAction().insert(messageDestinationId, EventActionType.NOTIFICATION);
+        DBUtils.checkInsert(1, eventActionSql.insertUserNotificationAction(
+                actionId, notificationType, NotificationServiceType.SENDGRID, eventAction.getLinkedActivityId()));
 
-        String templateKey = eventAction.getTemplateKey();
-        long notificationTemplateId = notificationTemplateDao
-                .findByKeyAndLanguage(templateKey, languageCodeId)
-                .orElseGet(() -> notificationTemplateDao.insert(templateKey, languageCodeId));
+        Set<Long> notificationTemplateIds = eventAction.getTemplates().stream()
+                .map(tmpl -> eventActionSql.findOrInsertNotificationTemplateId(tmpl.getTemplateKey(), tmpl.getLanguageCode(),
+                        tmpl.isDynamicTemplate()))
+                .collect(Collectors.toSet());
 
-        long eventActionId = eventActionDao.insert(messageDestinationId, EventActionType.NOTIFICATION);
+        long[] numInserted = eventActionSql.bulkAddNotificationTemplatesToAction(actionId, notificationTemplateIds);
+        DBUtils.checkInsert(notificationTemplateIds.size(), numInserted.length);
 
-        int numRowsInserted = notificationEventActionDao.insert(eventActionId, notificationTypeId,
-                notificationServiceId, notificationTemplateId, eventAction.getLinkedActivityId());
-        if (numRowsInserted != 1) {
-            throw new DaoException("Could not insert user notification event");
-        }
-
-        return eventActionId;
+        return actionId;
     }
 
     default long insertInstanceCreationAction(long targetActivityId) {

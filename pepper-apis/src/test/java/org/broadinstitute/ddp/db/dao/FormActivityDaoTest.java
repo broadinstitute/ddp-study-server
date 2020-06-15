@@ -458,7 +458,7 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
             DatePicklistDef picklistDef = null;
             if (isPicklist) {
                 mode = DateRenderMode.PICKLIST;
-                picklistDef = new DatePicklistDef(true, 35, 125, 2012, 1988);
+                picklistDef = new DatePicklistDef(true, 35, 125, 2012, 1988, true);
             }
 
             DateQuestionDef dateQuestion = new DateQuestionDef(DUMMY_QSID,
@@ -621,7 +621,7 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
 
             questionSection.getBlocks().add(new QuestionBlockDef(DateQuestionDef
                     .builder(DateRenderMode.PICKLIST, "DATE", Template.text("date prompt"))
-                    .setPicklistDef(new DatePicklistDef(true, 10, 100, 2018, 1988))
+                    .setPicklistDef(new DatePicklistDef(true, 10, 100, 2018, 1988, true))
                     .setDisplayCalendar(true)
                     .setRestricted(true)
                     .setDeprecated(true)

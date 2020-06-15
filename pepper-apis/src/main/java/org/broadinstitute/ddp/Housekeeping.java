@@ -33,6 +33,7 @@ import com.typesafe.config.ConfigFactory;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.client.SendGridClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
+import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -141,7 +142,6 @@ public class Housekeeping {
     public static final String IGNORE_EVENT_LOG_MESSAGE = "Ignoring and removing occurrence of event ";
 
     private static final String ENV_PORT = "PORT";
-    private static final String GAE_START_HOOK_ENDPOINT = "/_ah/start";
 
     /**
      * How many milliseconds to wait between writing error log entry
@@ -442,7 +442,7 @@ public class Housekeeping {
         var receivedPing = new AtomicBoolean(false);
 
         Spark.port(Integer.parseInt(envPort));
-        Spark.get(GAE_START_HOOK_ENDPOINT, (request, response) -> {
+        Spark.get(RouteConstants.GAE.START_ENDPOINT, (request, response) -> {
             receivedPing.set(true);
             response.status(200);
             return "";

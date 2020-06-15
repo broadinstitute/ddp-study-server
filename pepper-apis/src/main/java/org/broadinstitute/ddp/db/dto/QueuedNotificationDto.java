@@ -27,10 +27,6 @@ public class QueuedNotificationDto extends QueuedEventDto {
         return notificationDetailsDto.getServiceType();
     }
 
-    public String getTemplateKey() {
-        return notificationDetailsDto.getTemplateKey();
-    }
-
     public Long getLinkedActivityId() {
         return notificationDetailsDto.getLinkedActivityId();
     }

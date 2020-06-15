@@ -28,7 +28,6 @@ public class NotificationEventAction extends EventAction {
 
     private NotificationType notificationType;
     private NotificationServiceType notificationServiceType;
-    private long notificationTemplateId;
     private Long linkedActivityId; // Allowed to be null
     private List<PdfAttachment> pdfAttachments = new ArrayList<>();
 
@@ -36,7 +35,6 @@ public class NotificationEventAction extends EventAction {
         super(eventConfiguration, dto);
         this.notificationType = dto.getNotificationType();
         this.notificationServiceType = dto.getNotificationServiceType();
-        this.notificationTemplateId = dto.getNotificationTemplateId();
         this.linkedActivityId = dto.getLinkedActivityId();
     }
 
@@ -66,6 +64,9 @@ public class NotificationEventAction extends EventAction {
             ActivityInstanceStatusChangeSignal activityInstanceStatusChangeSignal = (ActivityInstanceStatusChangeSignal) signal;
             templateSubstitutions.put(NotificationTemplateVariables.DDP_ACTIVITY_INSTANCE_GUID, jdbiActivityInstance
                     .getActivityInstanceGuid(activityInstanceStatusChangeSignal.getActivityInstanceIdThatChanged()));
+        } else if (signal.getEventTriggerType() == EventTriggerType.LOGIN_ACCOUNT_CREATED) {
+            String ticketUrl = ((LoginAccountCreatedSignal) signal).getPasswordResetTicketUrl();
+            templateSubstitutions.put(NotificationTemplateVariables.DDP_LINK, ticketUrl);
         }
 
         long queuedEventId = queuedEventDao.insertNotification(eventConfiguration.getEventConfigurationId(),
@@ -121,10 +122,6 @@ public class NotificationEventAction extends EventAction {
 
     public NotificationServiceType getNotificationServiceType() {
         return notificationServiceType;
-    }
-
-    public long getNotificationTemplateId() {
-        return notificationTemplateId;
     }
 
     public Long getLinkedActivityId() {

@@ -32,11 +32,12 @@ import com.opencsv.CSVWriter;
 import com.typesafe.config.Config;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
+import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.constants.ConfigFile;
-import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dao.FormActivityDao;
+import org.broadinstitute.ddp.db.dao.InvitationDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
 import org.broadinstitute.ddp.db.dao.ParticipantDao;
@@ -48,6 +49,7 @@ import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceStatusDto;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.EnrollmentStatusDto;
+import org.broadinstitute.ddp.db.dto.InvitationDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.elastic.ElasticSearchIndexType;
 import org.broadinstitute.ddp.exception.DDPException;
@@ -345,7 +347,7 @@ public class DataExporter {
 
         for (ActivityExtract activity : activityExtracts) {
             String activityName = activity.getDefinition().getTranslatedNames().stream()
-                    .filter(name -> name.getLanguageCode().equals(I18nContentRenderer.DEFAULT_LANGUAGE_CODE))
+                    .filter(name -> name.getLanguageCode().equals(LanguageStore.DEFAULT_LANG_CODE))
                     .map(Translation::getText)
                     .findFirst()
                     .orElse("");
@@ -469,9 +471,12 @@ public class DataExporter {
                                         Map<String, Set<String>> proxiesMap,
                                         Map<String, Set<String>> governedUsersMap) {
         UserProfile userProfile = user.getProfile();
+        if (userProfile == null) {
+            userProfile = new UserProfile.Builder(user.getId()).build();
+        }
         ParticipantProfile profile = new ParticipantProfile(userProfile.getFirstName(), userProfile.getLastName(),
                 user.getGuid(), user.getHruid(), user.getLegacyAltPid(), user.getLegacyShortId(), user.getEmail(),
-                userProfile.getDoNotContact(), user.getCreatedAt());
+                userProfile.getPreferredLangCode(), userProfile.getDoNotContact(), user.getCreatedAt());
 
         Set<String> proxies = new HashSet<>();
         Set<String> governedUsers = new HashSet<>();
@@ -562,11 +567,13 @@ public class DataExporter {
 
         enrichWithDSMEventDates(handle, medicalRecordService, governancePolicy, studyDto.getId(), dataset);
 
+        List<InvitationDto> invitations = handle.attach(InvitationDao.class)
+                .findAllInvitations(studyDto.getId());
         StudyExtract studyExtract = new StudyExtract(activities,
                 studyPdfConfigs,
                 configPdfVersions,
-                participantProxyGuids);
-
+                participantProxyGuids,
+                invitations);
 
         Map<String, String> participantRecords = prepareParticipantRecordsForJSONExport(
                 studyExtract, dataset, exportStructuredDocument, handle, medicalRecordService);
@@ -729,6 +736,7 @@ public class DataExporter {
         if (userProfile != null) {
             builder.setFirstName(userProfile.getFirstName());
             builder.setLastName(userProfile.getLastName());
+            builder.setPreferredLanguage(userProfile.getPreferredLangCode());
             builder.setDoNotContact(userProfile.getDoNotContact());
         }
         builder.setGuid(user.getGuid())
@@ -794,6 +802,9 @@ public class DataExporter {
         if (proxies == null) {
             proxies = List.of();
         }
+        List<InvitationDto> invitations = studyExtract.getInvitations().stream()
+                .filter(invite -> invite.getUserId() != null && invite.getUserId().equals(user.getId()))
+                .collect(Collectors.toList());
         ParticipantRecord participantRecord = new ParticipantRecord(
                 statusDto.getEnrollmentStatus(),
                 statusDto.getValidFromMillis(),
@@ -802,7 +813,8 @@ public class DataExporter {
                 participant.getProviders(),
                 user.getAddress(),
                 dsmComputedRecord,
-                proxies
+                proxies,
+                invitations
         );
         return gson.toJson(participantRecord);
     }

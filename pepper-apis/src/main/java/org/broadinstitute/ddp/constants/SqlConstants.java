@@ -135,6 +135,7 @@ public class SqlConstants {
         public static final String READONLY_HINT_TEMPLATE_ID = "readonly_hint_template_id";
         public static final String LAST_UPDATED_TEXT_TEMPLATE_ID = "last_updated_text_template_id";
         public static final String LAST_UPDATED = "last_updated";
+        public static final String SNAPSHOT_SUBSTITUTIONS_ON_SUBMIT = "snapshot_substitutions_on_submit";
     }
 
     public static final class ListStyleHintTable {
@@ -301,6 +302,7 @@ public class SqlConstants {
         public static final String YEARS_BACK = "years_back";
         public static final String YEAR_ANCHOR = "year_anchor";
         public static final String FIRST_SELECTED_YEAR = "first_selected_year";
+        public static final String ALLOW_FUTURE_YEARS = "allow_future_years";
     }
 
     public static final class EventConfigurationTable {

@@ -7,19 +7,18 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import javax.validation.constraints.NotNull;
 
 import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
-
 import org.broadinstitute.ddp.content.ContentStyle;
 import org.broadinstitute.ddp.content.HtmlConverter;
 import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.content.I18nTemplateConstants;
 import org.broadinstitute.ddp.content.Renderable;
+import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
@@ -32,7 +31,6 @@ import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.transformers.DateTimeFormatUtils;
 import org.broadinstitute.ddp.transformers.LocalDateTimeAdapter;
 import org.broadinstitute.ddp.util.MiscUtil;
-
 import org.jdbi.v3.core.Handle;
 
 public final class FormInstance extends ActivityInstance {
@@ -190,6 +188,8 @@ public final class FormInstance extends ActivityInstance {
         }
 
         Map<String, String> context = buildRenderContext(handle);
+        context.putAll(handle.attach(ActivityInstanceDao.class).findSubstitutions(getInstanceId()));
+
         Map<Long, String> rendered = renderer.bulkRender(handle, templateIds, langCodeId, context);
         Renderable.Provider<String> provider = rendered::get;
 
@@ -205,12 +205,10 @@ public final class FormInstance extends ActivityInstance {
             }
         }
 
-        // Strip down HTML tags from subtitle if requested
-        String subtitle = getSubtitle();
-        subtitle = Optional.ofNullable(subtitle).map(
-            sub -> style != ContentStyle.BASIC ? sub : HtmlConverter.getPlainText(sub)
-        ).orElse(null);
-        setSubtitle(subtitle);
+        if (style == ContentStyle.BASIC) {
+            title = HtmlConverter.getPlainText(title);
+            subtitle = HtmlConverter.getPlainText(subtitle);
+        }
 
         if (lastUpdatedTextTemplateId != null) {
             Map<String, Object> varNameToValueMap = new HashMap<>();
@@ -225,7 +223,7 @@ public final class FormInstance extends ActivityInstance {
         }
     }
 
-    private Map<String, String> buildRenderContext(Handle handle) {
+    public Map<String, String> buildRenderContext(Handle handle) {
         var context = new HashMap<String, String>();
         context.put(I18nTemplateConstants.DASHED_DATE,
                 DateTimeFormatUtils.MONTH_FIRST_DASHED_DATE_FORMATTER.format(LocalDate.now()));

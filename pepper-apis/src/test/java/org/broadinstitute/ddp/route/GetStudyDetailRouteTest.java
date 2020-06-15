@@ -1,15 +1,12 @@
 package org.broadinstitute.ddp.route;
 
 import io.restassured.RestAssured;
-
+import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudyI18n;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
-
 import org.hamcrest.Matchers;
-
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -41,7 +38,7 @@ public class GetStudyDetailRouteTest extends IntegrationTestSuite.TestCase {
     @Test
     public void test_givenStudyExists_andIsTranslated_whenRouteIsCalled_thenItReturns200_andTranslatedDetails() {
         long translationId = TransactionWrapper.withTxn(handle -> {
-            long languageCodeId = handle.attach(JdbiLanguageCode.class).getLanguageCodeId("en");
+            long languageCodeId = LanguageStore.getOrComputeDefault(handle).getId();
             return handle.attach(JdbiUmbrellaStudyI18n.class).insert(
                     testData.getStudyId(),
                     languageCodeId,

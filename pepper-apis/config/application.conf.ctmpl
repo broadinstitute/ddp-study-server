@@ -102,6 +102,7 @@
     "dbInstanceId": "{{$conf.Data.dbInstanceId}}",
     "dsmJwtSecret": "{{$dsm_conf.Data.portal.jwtDdpSecret}}",
     "dsmJwtSigner": "org.broadinstitute.kdux",
+    "apiBaseUrl": "{{$conf.Data.apiBaseUrl}}",
     {{if eq $environment "dev"}}
         "baseTestUrl": "https://pepper-dev.datadonationplatform.org",
         "baseWebDriverUrl": "https://basil-dev.datadonationplatform.org",

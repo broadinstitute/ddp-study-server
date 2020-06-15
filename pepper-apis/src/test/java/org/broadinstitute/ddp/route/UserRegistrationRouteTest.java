@@ -32,6 +32,7 @@ import io.restassured.http.ContentType;
 import io.restassured.mapper.ObjectMapperType;
 import io.restassured.response.Response;
 import org.apache.http.HttpStatus;
+import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.constants.Auth0Constants;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.ErrorCodes;
@@ -49,7 +50,7 @@ import org.broadinstitute.ddp.db.dao.InvitationFactory;
 import org.broadinstitute.ddp.db.dao.InvitationSql;
 import org.broadinstitute.ddp.db.dao.JdbiAuth0Tenant;
 import org.broadinstitute.ddp.db.dao.JdbiEventConfiguration;
-import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
+import org.broadinstitute.ddp.db.dao.JdbiEventConfigurationOccurrenceCounter;
 import org.broadinstitute.ddp.db.dao.JdbiMailingList;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
@@ -428,7 +429,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
 
             UserProfile profile = handle.attach(UserProfileDao.class).findProfileByUserId(userDto.getUserId()).get();
 
-            Long enLanguageCodeId = handle.attach(JdbiLanguageCode.class).getLanguageCodeId(EN_LANG_CODE);
+            Long enLanguageCodeId = LanguageStore.getOrComputeDefault(handle).getId();
             assertEquals(enLanguageCodeId, profile.getPreferredLangId());
             assertEquals("foo", profile.getFirstName());
             assertEquals("bar", profile.getLastName());
@@ -697,7 +698,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
             long triggerId = handle.attach(EventTriggerDao.class)
                     .insertUserRegisteredTrigger();
             long actionId = handle.attach(EventActionDao.class)
-                    .insertNotificationAction(new SendgridEmailEventActionDto("abc", "en"));
+                    .insertNotificationAction(new SendgridEmailEventActionDto("abc", "en", false));
             return handle.attach(JdbiEventConfiguration.class)
                     .insert(triggerId, actionId, testStudy.getId(), Instant.now().toEpochMilli(), null, null, null, null, true, 1);
         });
@@ -725,6 +726,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
         } finally {
             TransactionWrapper.useTxn(handle -> {
                 handle.attach(QueuedEventDao.class).deleteQueuedEventsByEventConfigurationId(eventConfigId);
+                handle.attach(JdbiEventConfigurationOccurrenceCounter.class).deleteById(eventConfigId, tempUser.getId());
                 JdbiUserStudyEnrollment jdbiEnrollment = handle.attach(JdbiUserStudyEnrollment.class);
                 for (EnrollmentStatusDto enrollment : jdbiEnrollment.findByStudyGuid(testStudy.getGuid())) {
                     jdbiEnrollment.deleteById(enrollment.getUserStudyEnrollmentId());
@@ -765,7 +767,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
             assertEquals(fakeAuth0Id, actualUser.getAuth0UserId());
 
             UserProfile profile = handle.attach(UserProfileDao.class).findProfileByUserId(actualUser.getUserId()).get();
-            Long enLanguageCodeId = handle.attach(JdbiLanguageCode.class).getLanguageCodeId(EN_LANG_CODE);
+            Long enLanguageCodeId = LanguageStore.getOrComputeDefault(handle).getId();
             assertEquals(profile.getPreferredLangId(), enLanguageCodeId);
 
             JdbiUserStudyEnrollment jdbiEnrollment = handle.attach(JdbiUserStudyEnrollment.class);

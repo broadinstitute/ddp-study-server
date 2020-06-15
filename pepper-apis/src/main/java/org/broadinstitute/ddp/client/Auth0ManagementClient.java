@@ -18,6 +18,8 @@ import com.auth0.client.mgmt.ManagementAPI;
 import com.auth0.exception.APIException;
 import com.auth0.json.mgmt.Connection;
 import com.auth0.json.mgmt.ConnectionsPage;
+import com.auth0.json.mgmt.tickets.PasswordChangeTicket;
+import com.auth0.json.mgmt.users.User;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.exceptions.JWTDecodeException;
 import com.auth0.jwt.interfaces.DecodedJWT;
@@ -185,6 +187,51 @@ public class Auth0ManagementClient {
             return new ApiResult<>(res.getStatusCode(), matches, res.getError());
         } else {
             return res;
+        }
+    }
+
+    /**
+     * Create a new auth0 user account. Note: need database connection for creating email/password account.
+     *
+     * @param connection the database connection name
+     * @param email      the user's email
+     * @param password   the user's password
+     * @return result with created user, or error response
+     */
+    public ApiResult<User, APIException> createAuth0User(String connection, String email, String password) {
+        try {
+            mgmtApi.setApiToken(getToken());
+            User user = new User();
+            user.setEmail(email);
+            user.setPassword(password);
+            user.setConnection(connection);
+            User createdUser = mgmtApi.users().create(user).execute();
+            return ApiResult.ok(200, createdUser);
+        } catch (APIException e) {
+            return ApiResult.err(e.getStatusCode(), e);
+        } catch (Exception e) {
+            return ApiResult.thrown(e);
+        }
+    }
+
+    /**
+     * Initiate password reset flow and get the ticket URL.
+     *
+     * @param auth0UserId the user to do password reset for
+     * @param redirectUrl the URL to go to after user has finished password reset
+     * @return result with ticket URL, or error response
+     */
+    public ApiResult<String, APIException> createPasswordResetTicket(String auth0UserId, String redirectUrl) {
+        try {
+            mgmtApi.setApiToken(getToken());
+            var ticket = new PasswordChangeTicket(auth0UserId);
+            ticket.setResultUrl(redirectUrl);
+            PasswordChangeTicket createdTicket = mgmtApi.tickets().requestPasswordChange(ticket).execute();
+            return ApiResult.ok(200, createdTicket.getTicket());
+        } catch (APIException e) {
+            return ApiResult.err(e.getStatusCode(), e);
+        } catch (Exception e) {
+            return ApiResult.thrown(e);
         }
     }
 

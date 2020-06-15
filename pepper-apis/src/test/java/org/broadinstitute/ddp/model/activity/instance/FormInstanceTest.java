@@ -11,6 +11,7 @@ import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -33,7 +34,9 @@ import org.broadinstitute.ddp.content.HtmlConverter;
 import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.content.I18nTemplateConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
+import org.broadinstitute.ddp.db.dao.UserProfileSql;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
 import org.broadinstitute.ddp.model.activity.instance.question.BoolQuestion;
@@ -75,8 +78,11 @@ public class FormInstanceTest extends TxnAwareBaseTest {
     public void setupMocks() {
         mockHandle = mock(Handle.class);
         var mockProfleDao = mock(UserProfileDao.class);
+        var mockActInstDao = mock(ActivityInstanceDao.class);
         doReturn(mockProfleDao).when(mockHandle).attach(UserProfileDao.class);
+        doReturn(mockActInstDao).when(mockHandle).attach(ActivityInstanceDao.class);
         doReturn(Optional.empty()).when(mockProfleDao).findProfileByUserId(anyLong());
+        doNothing().when(mockActInstDao).saveSubstitutions(anyLong(), any());
     }
 
     @Test
@@ -109,12 +115,13 @@ public class FormInstanceTest extends TxnAwareBaseTest {
 
         ContentBlock content = new ContentBlock(1L, 2L);
         FormSection s1 = new FormSection(Collections.singletonList(content));
-        FormInstance form = buildEmptyTestInstanceWithHtmlInSubtitle();
+        FormInstance form = buildEmptyTestInstanceWithHtmlInTitleAndSubtitle();
         form.addBodySections(Collections.singletonList(s1));
 
         form.renderContent(mockHandle, mockRenderer, 1L, ContentStyle.BASIC);
-        assertEquals("this is title", content.getTitle());
+        assertEquals("title", form.getTitle());
         assertEquals("subtitle", form.getSubtitle());
+        assertEquals("this is title", content.getTitle());
         assertEquals(fixture.get(2L), content.getBody());
     }
 
@@ -196,19 +203,21 @@ public class FormInstanceTest extends TxnAwareBaseTest {
     public void testRenderContent_specialVarsContext() {
         TransactionWrapper.useTxn(handle -> {
             var testData = TestDataSetupUtil.generateBasicUserTestData(handle);
+            handle.attach(UserProfileSql.class).upsertFirstName(testData.getUserId(), "foo");
+            handle.attach(UserProfileSql.class).upsertLastName(testData.getUserId(), "bar");
 
             I18nContentRenderer mockRenderer = mock(I18nContentRenderer.class);
             doReturn(Collections.emptyMap()).when(mockRenderer).bulkRender(any(), any(), anyLong(), any());
             doReturn(handle.attach(UserProfileDao.class)).when(mockHandle).attach(UserProfileDao.class);
 
-            FormInstance form = buildEmptyTestInstance();
+            FormInstance form = buildEmptyTestInstance(testData.getUserId());
             form.renderContent(mockHandle, mockRenderer, 1L, ContentStyle.BASIC);
 
             verify(mockRenderer, times(1)).bulkRender(any(), anySet(), anyLong(), argThat(context -> {
                 assertFalse(context.isEmpty());
                 assertNotNull(context.get(I18nTemplateConstants.DASHED_DATE));
-                assertEquals(testData.getProfile().getFirstName(), context.get(I18nTemplateConstants.PARTICIPANT_FIRST_NAME));
-                assertEquals(testData.getProfile().getLastName(), context.get(I18nTemplateConstants.PARTICIPANT_LAST_NAME));
+                assertEquals("foo", context.get(I18nTemplateConstants.PARTICIPANT_FIRST_NAME));
+                assertEquals("bar", context.get(I18nTemplateConstants.PARTICIPANT_LAST_NAME));
                 return true;
             }));
 
@@ -456,15 +465,19 @@ public class FormInstanceTest extends TxnAwareBaseTest {
     }
 
     private FormInstance buildEmptyTestInstance() {
+        return buildEmptyTestInstance(1L);
+    }
+
+    private FormInstance buildEmptyTestInstance(long participantUserId) {
         return new FormInstance(
-                1L, 1L, 1L, "SOME_CODE", FormType.GENERAL, "SOME_GUID", "name", "subtitle", "CREATED", false,
+                participantUserId, 1L, 1L, "SOME_CODE", FormType.GENERAL, "SOME_GUID", "name", "subtitle", "CREATED", false,
                 ListStyleHint.NUMBER, null, null, null, Instant.now().toEpochMilli(), null, null, null, false
         );
     }
 
-    private FormInstance buildEmptyTestInstanceWithHtmlInSubtitle() {
+    private FormInstance buildEmptyTestInstanceWithHtmlInTitleAndSubtitle() {
         return new FormInstance(
-                1L, 1L, 1L, "SOME_CODE", FormType.GENERAL, "SOME_GUID", "name", "<em>subtitle</em>", "CREATED", false,
+                1L, 1L, 1L, "SOME_CODE", FormType.GENERAL, "SOME_GUID", "<div>title</div>", "<em>subtitle</em>", "CREATED", false,
                 ListStyleHint.NUMBER, null, null, null, Instant.now().toEpochMilli(), null, null, null, false
         );
     }

@@ -5,25 +5,32 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Locale.LanguageRange;
 import java.util.Map;
 import java.util.Set;
-
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.ObjectUtils;
-
 import org.broadinstitute.ddp.constants.LanguageConstants;
+import org.broadinstitute.ddp.db.dao.StudyLanguageDao;
 import org.broadinstitute.ddp.json.activity.TranslatedSummary;
+import org.broadinstitute.ddp.model.study.StudyLanguage;
+import org.jdbi.v3.core.Handle;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class I18nUtil {
     // Might want to pull this from a config file at some point, although
     // there is also Locale.getDefault() (bskinner)
     public static final Locale DEFAULT_LOCALE = Locale.ENGLISH;
+
+    private static final Logger LOG = LoggerFactory.getLogger(I18nUtil.class);
 
     /**
      * Given a collection of summaries, groups them by GUID and language code
@@ -84,6 +91,50 @@ public class I18nUtil {
                 }
         );
         return (List)summariesTranslatedToPreferredLang;
+    }
+
+    /**
+     * Select best available locale option based on given parameters. If study is provided, it will be used to lookup
+     * supported languages. If header is provided, it will be used to set priority of languages. If preferred locale is
+     * provided, it will come after the accepted languages. If nothing is provided, will fallback to the default.
+     *
+     * @param handle               the database handle
+     * @param studyGuid            the study guid, optional
+     * @param preferredLocale      the preferred locale, optional
+     * @param acceptLanguageHeader the request header, optional
+     * @return the resolved locale
+     */
+    public static Locale resolveLocale(Handle handle, String studyGuid, Locale preferredLocale, String acceptLanguageHeader) {
+        List<Locale.LanguageRange> acceptedRanges = Collections.emptyList();
+        if (StringUtils.isNotEmpty(acceptLanguageHeader)) {
+            try {
+                acceptedRanges = Locale.LanguageRange.parse(acceptLanguageHeader);
+            } catch (Exception e) {
+                LOG.warn("Error while parsing Accept-Language header '{}', will disregard and continue", acceptLanguageHeader, e);
+            }
+        }
+
+        Locale studyDefault = null;
+        Set<Locale> studyLocales = new HashSet<>();
+        if (studyGuid != null) {
+            List<StudyLanguage> studyLanguages = handle.attach(StudyLanguageDao.class).findLanguages(studyGuid);
+            for (StudyLanguage language : studyLanguages) {
+                Locale locale = language.toLocale();
+                studyLocales.add(locale);
+                if (language.isDefault()) {
+                    studyDefault = locale;
+                }
+            }
+        }
+
+        if (studyDefault == null) {
+            studyDefault = I18nUtil.DEFAULT_LOCALE;
+            if (studyGuid != null) {
+                LOG.warn("Study {} does not have a default language, will fallback to {}", studyGuid, studyDefault.getLanguage());
+            }
+        }
+
+        return resolvePreferredLanguage(preferredLocale, studyDefault, acceptedRanges, studyLocales);
     }
 
     /**

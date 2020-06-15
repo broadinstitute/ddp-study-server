@@ -26,6 +26,7 @@ import org.apache.http.entity.ContentType;
 import org.broadinstitute.ddp.client.DsmClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.ErrorCodes;
+import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.constants.RouteConstants.API;
 import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.db.ActivityInstanceDao;
@@ -57,6 +58,7 @@ import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.pex.TreeWalkInterpreter;
 import org.broadinstitute.ddp.route.AddProfileRoute;
 import org.broadinstitute.ddp.route.AdminCreateStudyParticipantRoute;
+import org.broadinstitute.ddp.route.AdminCreateUserLoginAccountRoute;
 import org.broadinstitute.ddp.route.AdminLookupInvitationRoute;
 import org.broadinstitute.ddp.route.AdminUpdateInvitationDetailsRoute;
 import org.broadinstitute.ddp.route.CheckIrbPasswordRoute;
@@ -110,6 +112,7 @@ import org.broadinstitute.ddp.route.InvitationCheckStatusRoute;
 import org.broadinstitute.ddp.route.InvitationVerifyRoute;
 import org.broadinstitute.ddp.route.JoinMailingListRoute;
 import org.broadinstitute.ddp.route.ListCancersRoute;
+import org.broadinstitute.ddp.route.ListStudyLanguagesRoute;
 import org.broadinstitute.ddp.route.PatchFormAnswersRoute;
 import org.broadinstitute.ddp.route.PatchMedicalProviderRoute;
 import org.broadinstitute.ddp.route.PatchProfileRoute;
@@ -165,14 +168,14 @@ public class DataDonationPlatform {
 
     public static final String MDC_STUDY = "Study";
     public static final String MDC_ROUTE_CLASS = "RouteClass";
+    public static final String PORT = "PORT";
+    public static final int DEFAULT_RATE_LIMIT_MAX_QUERIES_PER_SECOND = 10;
+    public static final int DEFAULT_RATE_LIMIT_BURST = 15;
     private static final Logger LOG = LoggerFactory.getLogger(DataDonationPlatform.class);
     private static final String[] CORS_HTTP_METHODS = new String[] {"GET", "PUT", "POST", "OPTIONS", "PATCH"};
     private static final String[] CORS_HTTP_HEADERS = new String[] {"Content-Type", "Authorization", "X-Requested-With",
             "Content-Length", "Accept", "Origin", ""};
     private static final Map<String, String> pathToClass = new HashMap<>();
-    public static final String PORT = "PORT";
-    public static final int DEFAULT_RATE_LIMIT_MAX_QUERIES_PER_SECOND = 10;
-    public static final int DEFAULT_RATE_LIMIT_BURST = 15;
     private static Scheduler scheduler = null;
 
     /**
@@ -266,7 +269,7 @@ public class DataDonationPlatform {
         var jsonSerializer = new NullableJsonTransformer();
         SimpleJsonTransformer responseSerializer = new SimpleJsonTransformer();
 
-        if (cfg.hasPath(ConfigFile.API_RATE_LIMIT.MAX_QUERIES_PER_SECOND)  && cfg.hasPath(ConfigFile.API_RATE_LIMIT.BURST)) {
+        if (cfg.hasPath(ConfigFile.API_RATE_LIMIT.MAX_QUERIES_PER_SECOND) && cfg.hasPath(ConfigFile.API_RATE_LIMIT.BURST)) {
             int maxQueriesPerSecond = cfg.getInt(ConfigFile.API_RATE_LIMIT.MAX_QUERIES_PER_SECOND);
             int burst = cfg.getInt(ConfigFile.API_RATE_LIMIT.BURST);
             LOG.info("Will use rate limit {} with burst {}", maxQueriesPerSecond, burst);
@@ -274,7 +277,6 @@ public class DataDonationPlatform {
         } else {
             LOG.warn("No rate limit values given.  Rate limiting is disabled.");
         }
-
 
         before("*", new HttpHeaderMDCFilter(X_FORWARDED_FOR));
         before("*", new MDCLogBreadCrumbFilter());
@@ -308,6 +310,7 @@ public class DataDonationPlatform {
         post(API.ADMIN_STUDY_PARTICIPANTS, new AdminCreateStudyParticipantRoute(), jsonSerializer);
         post(API.ADMIN_STUDY_INVITATION_LOOKUP, new AdminLookupInvitationRoute(), jsonSerializer);
         post(API.ADMIN_STUDY_INVITATION_DETAILS, new AdminUpdateInvitationDetailsRoute(), jsonSerializer);
+        post(API.ADMIN_STUDY_USER_LOGIN_ACCOUNT, new AdminCreateUserLoginAccountRoute(), jsonSerializer);
 
         // These filters work in a tandem:
         // - StudyLanguageResolutionFilter figures out and sets the user language in the attribute store
@@ -323,6 +326,7 @@ public class DataDonationPlatform {
         get(API.STUDY_ALL, new GetStudiesRoute(), responseSerializer);
         get(API.STUDY_DETAIL, new GetStudyDetailRoute(), responseSerializer);
         get(API.STUDY_PASSWORD_POLICY, new GetStudyPasswordPolicyRoute(), responseSerializer);
+        get(API.STUDY_LANGUAGES, new ListStudyLanguagesRoute(), responseSerializer);
         post(API.INVITATION_VERIFY, new InvitationVerifyRoute(), jsonSerializer);
         post(API.INVITATION_CHECK, new InvitationCheckStatusRoute(), jsonSerializer);
 
@@ -337,6 +341,8 @@ public class DataDonationPlatform {
                 .addTempUserWhitelist(HttpMethod.patch, API.USER_ACTIVITY_ANSWERS)
                 .addTempUserWhitelist(HttpMethod.put, API.USER_ACTIVITY_ANSWERS)
         );
+        patch(API.UPDATE_USER_PASSWORD, new UpdateUserPasswordRoute(), responseSerializer);
+        patch(API.UPDATE_USER_EMAIL, new UpdateUserEmailRoute(), responseSerializer);
 
         // Governed participant routes
         get(API.USER_STUDY_PARTICIPANTS, new GetGovernedStudyParticipantsRoute(), responseSerializer);
@@ -463,17 +469,6 @@ public class DataDonationPlatform {
         // Routes calling DSM
         get(API.PARTICIPANT_STATUS, new GetDsmParticipantStatusRoute(new DsmClient(cfg)), responseSerializer);
 
-        patch(
-                API.UPDATE_USER_PASSWORD,
-                new UpdateUserPasswordRoute(),
-                responseSerializer
-        );
-        patch(
-                API.UPDATE_USER_EMAIL,
-                new UpdateUserEmailRoute(),
-                responseSerializer
-        );
-
         boolean runScheduler = cfg.getBoolean(ConfigFile.RUN_SCHEDULER);
         if (runScheduler) {
             // Setup DDP JobScheduler on server startup
@@ -500,6 +495,18 @@ public class DataDonationPlatform {
                 MDC_ROUTE_CLASS,
                 X_FORWARDED_FOR,
                 MDCLogBreadCrumbFilter.LOG_BREADCRUMB));
+
+        // Respond to GAE lifecycle calls.
+        get(RouteConstants.GAE.START_ENDPOINT, (request, response) -> {
+            LOG.info("Received GAE start request [{}]", RouteConstants.GAE.START_ENDPOINT);
+            response.status(200);
+            return "";
+        });
+        get(RouteConstants.GAE.STOP_ENDPOINT, (request, response) -> {
+            LOG.info("Received GAE stop request [{}]", RouteConstants.GAE.STOP_ENDPOINT);
+            response.status(200);
+            return "";
+        });
 
         awaitInitialization();
         LOG.info("ddp startup complete");

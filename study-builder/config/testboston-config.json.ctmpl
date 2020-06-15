@@ -9,16 +9,22 @@
   "AUTH0_CLIENT_SECRET": "{{$conf.auth0.deployClientSecret}}",
   "AUTH0_KEYWORD_REPLACE_MAPPINGS": {
   {{if eq $environment "dev"}}
-    "LOCALHOST_CALLBACKS": "- http://localhost:4200/login-landing",
+    "LOCALHOST_ADMIN_CALLBACKS": "- http://localhost:4200/auth, http://localhost:4200/admin-login-landing",
+    "LOCALHOST_CALLBACKS": "- http://localhost:4200/auth, http://localhost:4200/login-landing",
     "LOCALHOST_LOGOUTS": "- http://localhost:4200, http://localhost:4200/session-expired",
     "LOCALHOST_ORIGINS": "- http://localhost:4200",
   {{else}}
+    "LOCALHOST_ADMIN_CALLBACKS": "",
     "LOCALHOST_CALLBACKS": "",
     "LOCALHOST_LOGOUTS": "",
     "LOCALHOST_ORIGINS": "",
   {{end}}
+  {{if eq $environment "prod"}}
+    "STUDY_EMAIL": "info@testboston.org",
+  {{else}}
+    "STUDY_EMAIL": "testboston@{{$environment}}.datadonationplatform.org",
+  {{end}}
     "BASE_URL": "{{$conf.baseWebUrl}}",
-    "ASSETS_BUCKET_URL": "{{$conf.assetsBucketUrl}}",
     "LOGIN_DOMAIN": "{{$conf.auth0.loginDomain}}",
     "SERVER_BASE_URL": "{{$conf.serverBaseUrl}}"
   },

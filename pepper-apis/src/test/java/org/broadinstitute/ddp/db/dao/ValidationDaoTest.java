@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
+import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
@@ -56,7 +57,7 @@ public class ValidationDaoTest extends TxnAwareBaseTest {
             testData = TestDataSetupUtil.generateBasicUserTestData(handle);
             userGuid = testData.getTestingUser().getUserGuid();
             studyGuid = testData.getStudyGuid();
-            enLangId = handle.attach(JdbiLanguageCode.class).getLanguageCodeId("en");
+            enLangId = LanguageStore.getOrComputeDefault(handle).getId();
         });
     }
 

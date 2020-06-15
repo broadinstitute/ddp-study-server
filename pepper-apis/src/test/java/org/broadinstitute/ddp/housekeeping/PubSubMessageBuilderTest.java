@@ -5,14 +5,22 @@ import static org.broadinstitute.ddp.Housekeeping.DDP_STUDY_GUID;
 import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.DDP_PROXY_FIRST_NAME;
 import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.DDP_PROXY_LAST_NAME;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 
+import java.util.List;
 import java.util.Optional;
 
 import com.google.gson.Gson;
 import com.google.pubsub.v1.PubsubMessage;
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dto.NotificationDetailsDto;
@@ -22,11 +30,13 @@ import org.broadinstitute.ddp.housekeeping.message.NotificationMessage;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.event.NotificationServiceType;
+import org.broadinstitute.ddp.model.event.NotificationTemplate;
 import org.broadinstitute.ddp.model.event.NotificationType;
 import org.broadinstitute.ddp.model.governance.Governance;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.util.GsonUtil;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
+import org.jdbi.v3.core.Handle;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -43,14 +53,16 @@ public class PubSubMessageBuilderTest extends TxnAwareBaseTest {
 
     @Test
     public void testCreateMessage_participantHasAuth0Account() {
-        PubSubMessageBuilder builder = new PubSubMessageBuilder(cfg);
+        PubSubMessageBuilder builder = spy(new PubSubMessageBuilder(cfg));
+        doReturn(new NotificationTemplate(1L, "template", false, 1L, "en"))
+                .when(builder).determineEmailTemplate(any(), anyLong(), any(), any());
 
         QueuedEventDto event = new QueuedNotificationDto(
                 new QueuedEventDto(1L, testData.getUserId(), testData.getUserGuid(), testData.getUserHruid(),
                         1L, EventTriggerType.REACHED_AOM, EventActionType.NOTIFICATION, null, null,
                         "topic", null, null, testData.getStudyGuid()),
                 new NotificationDetailsDto(NotificationType.EMAIL, NotificationServiceType.SENDGRID,
-                        "template", null, null, "url", "apiKey", "fromName", "fromEmail",
+                        null, null, "url", "apiKey", "fromName", "fromEmail",
                         "salutation", "first", "last"));
 
         PubsubMessage msg = TransactionWrapper.withTxn(handle -> builder.createMessage("test", event, handle));
@@ -75,10 +87,14 @@ public class PubSubMessageBuilderTest extends TxnAwareBaseTest {
                             1L, EventTriggerType.REACHED_AOM, EventActionType.NOTIFICATION, null, null,
                             "topic", null, null, testData.getStudyGuid()),
                     new NotificationDetailsDto(NotificationType.EMAIL, NotificationServiceType.SENDGRID,
-                            "template", null, null, "url", "apiKey", "fromName", "fromEmail",
+                            null, null, "url", "apiKey", "fromName", "fromEmail",
                             "salutation", "first", "last"));
 
-            PubsubMessage msg = new PubSubMessageBuilder(cfg).createMessage("test", event, handle);
+            PubSubMessageBuilder builder = spy(new PubSubMessageBuilder(cfg));
+            doReturn(new NotificationTemplate(1L, "template", false, 1L, "en"))
+                    .when(builder).determineEmailTemplate(any(), anyLong(), any(), any());
+
+            PubsubMessage msg = builder.createMessage("test", event, handle);
             assertEquals("test", msg.getAttributesOrThrow(DDP_MESSAGE_ID));
             assertEquals(testData.getStudyGuid(), msg.getAttributesOrThrow(DDP_STUDY_GUID));
 
@@ -113,10 +129,14 @@ public class PubSubMessageBuilderTest extends TxnAwareBaseTest {
                             1L, EventTriggerType.REACHED_AOM, EventActionType.NOTIFICATION, null, null,
                             "topic", null, null, testData.getStudyGuid()),
                     new NotificationDetailsDto(NotificationType.EMAIL, NotificationServiceType.SENDGRID,
-                            "template", null, null, "url", "apiKey", "fromName", "fromEmail",
+                            null, null, "url", "apiKey", "fromName", "fromEmail",
                             "salutation", "first", "last"));
 
-            PubsubMessage msg = new PubSubMessageBuilder(cfg).createMessage("test", event, handle);
+            PubSubMessageBuilder builder = spy(new PubSubMessageBuilder(cfg));
+            doReturn(new NotificationTemplate(1L, "template", false, 1L, "en"))
+                    .when(builder).determineEmailTemplate(any(), anyLong(), any(), any());
+
+            PubsubMessage msg = builder.createMessage("test", event, handle);
             assertEquals("test", msg.getAttributesOrThrow(DDP_MESSAGE_ID));
             assertEquals(testData.getStudyGuid(), msg.getAttributesOrThrow(DDP_STUDY_GUID));
 
@@ -135,5 +155,24 @@ public class PubSubMessageBuilderTest extends TxnAwareBaseTest {
 
             handle.rollback();
         });
+    }
+
+    @Test
+    public void testDetermineEmailTemplate() {
+        List<NotificationTemplate> templates = List.of(
+                new NotificationTemplate(1L, "t1", false, 1L, "en"),
+                new NotificationTemplate(2L, "t2", false, 2L, "fr"));
+
+        Handle mockHandle = mock(Handle.class);
+        EventDao mockEvenDao = mock(EventDao.class);
+        doReturn(mockEvenDao).when(mockHandle).attach(EventDao.class);
+        doReturn(templates).when(mockEvenDao).getNotificationTemplatesForEvent(anyLong());
+
+        PubSubMessageBuilder builder = new PubSubMessageBuilder(cfg);
+        NotificationTemplate actual = builder.determineEmailTemplate(mockHandle, 1L, testData.getStudyGuid(), "fr");
+
+        assertNotNull(actual);
+        assertEquals("t2", actual.getTemplateKey());
+        assertEquals("fr", actual.getLanguageCode());
     }
 }

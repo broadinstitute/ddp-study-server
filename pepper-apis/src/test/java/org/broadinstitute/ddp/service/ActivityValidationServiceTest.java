@@ -4,12 +4,12 @@ import java.time.Instant;
 import java.util.List;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
+import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
-import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
@@ -47,8 +47,6 @@ public class ActivityValidationServiceTest extends TxnAwareBaseTest {
     private static TextQuestionDef txt1;
     private static TextQuestionDef txt2;
 
-    private static final String EN_LANGUAGE_CODE = "en";
-
     @BeforeClass
     public static void setup() throws Exception {
         TransactionWrapper.useTxn(handle -> {
@@ -85,7 +83,7 @@ public class ActivityValidationServiceTest extends TxnAwareBaseTest {
                 new TextAnswer(null, txt1.getStableId(), null, "answer to question 1"));
         answerDao.createAnswer(testData.getUserId(), instanceDto.getId(),
                 new TextAnswer(null, txt2.getStableId(), null, "answer to question 2"));
-        langCodeId = handle.attach(JdbiLanguageCode.class).getLanguageCodeId(EN_LANGUAGE_CODE);
+        langCodeId = LanguageStore.getOrComputeDefault(handle).getId();
     }
 
     private static Template newTemplate(String templateCode) {
