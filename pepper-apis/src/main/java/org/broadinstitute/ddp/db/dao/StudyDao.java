@@ -6,7 +6,7 @@ import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.study.StudyExitRequest;
-import org.broadinstitute.ddp.model.study.StudyInviteSetting;
+import org.broadinstitute.ddp.model.study.StudySettings;
 import org.jdbi.v3.sqlobject.CreateSqlObject;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
@@ -38,19 +38,19 @@ public interface StudyDao extends SqlObject {
     Optional<StudyExitRequest> findExitRequestForUser(@Bind("userId") long userId);
 
     //
-    // Invite settings
+    // Study settings
     //
 
-    default void addInviteSetting(long studyId, Template inviteError, Long revisionId) {
+    default void addSettings(long studyId, Template inviteError, Long revisionId) {
         if (inviteError != null && revisionId == null) {
             throw new DaoException("Revision is needed to insert templates");
         }
         Long inviteErrorTmplId = inviteError == null ? null
                 : getHandle().attach(TemplateDao.class).insertTemplate(inviteError, revisionId);
-        DBUtils.checkInsert(1, getStudySql().insertInviteSetting(studyId, inviteErrorTmplId));
+        DBUtils.checkInsert(1, getStudySql().insertSettings(studyId, inviteErrorTmplId));
     }
 
-    @SqlQuery("select * from study_invite_setting where umbrella_study_id = :studyId")
-    @RegisterConstructorMapper(StudyInviteSetting.class)
-    Optional<StudyInviteSetting> findInviteSetting(@Bind("studyId") long studyId);
+    @SqlQuery("select * from study_settings where umbrella_study_id = :studyId")
+    @RegisterConstructorMapper(StudySettings.class)
+    Optional<StudySettings> findSettings(@Bind("studyId") long studyId);
 }

@@ -95,7 +95,7 @@ public class StudyBuilder {
         insertStudyGovernance(handle, studyDto);
         insertStudyDetails(handle, studyDto.getId());
         insertStudyLanguages(handle, studyDto.getId());
-        insertInviteSetting(handle, studyDto, adminDto.getUserId());
+        insertSettings(handle, studyDto, adminDto.getUserId());
         insertSendgrid(handle, studyDto.getId());
         insertKits(handle, studyDto.getId(), adminDto.getUserId());
 
@@ -465,15 +465,15 @@ public class StudyBuilder {
         }
     }
 
-    private void insertInviteSetting(Handle handle, StudyDto studyDto, long userId) {
-        if (!cfg.hasPath("inviteSetting")) {
-            LOG.info("No invite setting configured for study {}", studyDto.getGuid());
+    private void insertSettings(Handle handle, StudyDto studyDto, long userId) {
+        if (!cfg.hasPath("settings")) {
+            LOG.info("No additional settings configured for study {}", studyDto.getGuid());
             return;
         }
 
-        Config inviteSettingCfg = cfg.getConfig("inviteSetting");
+        Config settingsCfg = cfg.getConfig("settings");
 
-        Template inviteError = BuilderUtils.parseTemplate(inviteSettingCfg, "inviteErrorTemplate");
+        Template inviteError = BuilderUtils.parseTemplate(settingsCfg, "inviteErrorTemplate");
         if (inviteError != null) {
             String errors = BuilderUtils.validateTemplate(inviteError);
             if (errors != null) {
@@ -484,11 +484,11 @@ public class StudyBuilder {
         Long revisionId = null;
         if (inviteError != null) {
             revisionId = handle.attach(JdbiRevision.class).insertStart(
-                    Instant.now().toEpochMilli(), userId, "Insert invite setting");
+                    Instant.now().toEpochMilli(), userId, "Insert study settings");
         }
 
-        handle.attach(StudyDao.class).addInviteSetting(studyDto.getId(), inviteError, revisionId);
-        LOG.info("Created invite setting for study={}, inviteErrorTmplId={}",
+        handle.attach(StudyDao.class).addSettings(studyDto.getId(), inviteError, revisionId);
+        LOG.info("Created settings for study={}, inviteErrorTmplId={}",
                 studyDto.getGuid(), inviteError == null ? null : inviteError.getTemplateId());
     }
 

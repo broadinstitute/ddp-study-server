@@ -3,13 +3,13 @@ package org.broadinstitute.ddp.model.study;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
-public class StudyInviteSetting {
+public class StudySettings {
 
     private long studyId;
     private Long inviteErrorTemplateId;
 
     @JdbiConstructor
-    public StudyInviteSetting(
+    public StudySettings(
             @ColumnName("umbrella_study_id") long studyId,
             @ColumnName("invite_error_template_id") Long inviteErrorTemplateId) {
         this.studyId = studyId;

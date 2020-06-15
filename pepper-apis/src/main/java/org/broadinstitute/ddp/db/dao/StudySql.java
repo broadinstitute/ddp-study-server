@@ -7,15 +7,15 @@ import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 public interface StudySql extends SqlObject {
 
     //
-    // Invite settings
+    // Study settings
     //
 
-    @SqlUpdate("insert into study_invite_setting (umbrella_study_id, invite_error_template_id)"
+    @SqlUpdate("insert into study_settings (umbrella_study_id, invite_error_template_id)"
             + " values (:studyId, :inviteErrorTmplId)")
-    int insertInviteSetting(
+    int insertSettings(
             @Bind("studyId") long studyId,
             @Bind("inviteErrorTmplId") Long inviteErrorTemplateId);
 
-    @SqlUpdate("delete from study_invite_setting where umbrella_study_id = :studyId")
-    int deleteInviteSetting(@Bind("studyId") long studyId);
+    @SqlUpdate("delete from study_settings where umbrella_study_id = :studyId")
+    int deleteSettings(@Bind("studyId") long studyId);
 }

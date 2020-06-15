@@ -27,7 +27,7 @@ import org.broadinstitute.ddp.json.invitation.InvitationCheckStatusPayload;
 import org.broadinstitute.ddp.model.kit.KitRule;
 import org.broadinstitute.ddp.model.kit.KitRuleType;
 import org.broadinstitute.ddp.model.kit.KitZipCodeRule;
-import org.broadinstitute.ddp.model.study.StudyInviteSetting;
+import org.broadinstitute.ddp.model.study.StudySettings;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
@@ -169,8 +169,8 @@ public class InvitationCheckStatusRoute extends ValidatedJsonInputRoute<Invitati
 
     String getInviteErrorMessage(Handle handle, long studyId, String langCode) {
         Long inviteErrorTmplId = handle.attach(StudyDao.class)
-                .findInviteSetting(studyId)
-                .map(StudyInviteSetting::getInviteErrorTemplateId)
+                .findSettings(studyId)
+                .map(StudySettings::getInviteErrorTemplateId)
                 .orElse(null);
         if (inviteErrorTmplId != null) {
             return handle.attach(TemplateDao.class)
