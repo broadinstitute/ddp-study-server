@@ -1269,7 +1269,7 @@
             "name": "supplements",
             "stable_id": "NUTRITIONAL_SUPPLEMENTS",
             "type": "Picklist",
-            "source_type": "string",
+            "source_type": "integer",
             "options": [
               {
                 "name": "text",
@@ -1298,77 +1298,77 @@
             ]
           },
           {
-            "name": "sibling_2",
-            "stable_id": "SIBLING_2",
+            "name": "sibling_1",
+            "stable_id": "SIBLING_1",
             "type": "Composite",
             "children": [
               {
-                "name": "sibling_2_sex",
+                "name": "sibling_1_sex",
                 "type": "Picklist",
-                "stable_id": "SEX_PICKLIST_2",
+                "stable_id": "SEX_PICKLIST_1",
                 "options": [
                   {
                     "type": "integer",
-                    "stable_id": "DROPDOWN_MALE_2"
+                    "stable_id": "DROPDOWN_MALE_1"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "DROPDOWN_FEMALE_2"
+                    "stable_id": "DROPDOWN_FEMALE_1"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "DROPDOWN_OTHER_2"
+                    "stable_id": "DROPDOWN_OTHER_1"
                   }
                 ]
               },
               {
-                "name": "sibling_2_age",
+                "name": "sibling_1_age",
                 "type": "integer",
-                "stable_id": "AGE_2"
+                "stable_id": "AGE_1"
               },
               {
-                "name": "sibling_2_dob",
-                "stable_id": "DATE_OF_BIRTH_2",
+                "name": "sibling_1_dob",
+                "stable_id": "DATE_OF_BIRTH_1",
                 "type": "Date",
                 "format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
               },
               {
-                "name": "sibling_2_age_death",
-                "stable_id": "AGE_AT_DEATH_2",
+                "name": "sibling_1_age_death",
+                "stable_id": "AGE_AT_DEATH_1",
                 "type": "Numeric",
                 "source_type": "integer"
               },
               {
-                "name": "sibling_2_at_diagnosis",
+                "name": "sibling_1_at_diagnosis",
                 "type": "Picklist",
-                "stable_id": "DIAGNOSIS_PICKLIST_2",
+                "stable_id": "DIAGNOSIS_PICKLIST_1",
                 "options": [
                   {
                     "type": "integer",
-                    "stable_id": "DIAGNOSIS_DROPDOWN_YES_2"
+                    "stable_id": "DIAGNOSIS_DROPDOWN_YES_1"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "DIAGNOSIS_DROPDOWN_NO_2"
+                    "stable_id": "DIAGNOSIS_DROPDOWN_NO_1"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "DIAGNOSIS_DROPDOWN_UNKNOWN_2"
+                    "stable_id": "DIAGNOSIS_DROPDOWN_UNKNOWN_1"
                   }
                 ]
               },
               {
-                "name": "sibling_2_at_carrier",
+                "name": "sibling_1_at_carrier",
                 "type": "Picklist",
-                "stable_id": "CARRIER_PICKLIST_2",
+                "stable_id": "CARRIER_PICKLIST_1",
                 "options": [
                   {
                     "type": "integer",
-                    "stable_id": "CARRIER_DROPDOWN_YES_2"
+                    "stable_id": "CARRIER_DROPDOWN_YES_1"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "CARRIER_DROPDOWN_NO_2"
+                    "stable_id": "CARRIER_DROPDOWN_NO_1"
                   },
                   {
                     "type": "integer",
@@ -1702,7 +1702,50 @@
               }
             ]
           },
-
+          {
+            "name": "clinical_trials_prev",
+            "stable_id": "PREVIOUSLY_PARTICIPATED",
+            "type": "Picklist",
+            "source_type": "integer",
+            "options": [
+              {
+                "name": "text",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "clinical_trials_current",
+            "stable_id": "currently_participate",
+            "type": "Picklist",
+            "source_type": "integer",
+            "options": [
+              {
+                "name": "text",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "sample_donated",
+            "stable_id": "PREVIOUSLY_DONATED",
+            "type": "Picklist",
+            "source_type": "integer",
+            "options": [
+              {
+                "type": "integer",
+                "stable_id": "YES"
+              },
+              {
+                "type": "integer",
+                "stable_id": "NO"
+              },
+              {
+                "type": "integer",
+                "stable_id": "DONT_KNOW"
+              }
+            ]
+          }
         ]
       }
     ]
