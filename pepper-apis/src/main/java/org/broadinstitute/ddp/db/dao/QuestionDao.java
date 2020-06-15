@@ -35,7 +35,6 @@ import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionD
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.TooltipDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.definition.validation.RequiredRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.RuleDef;
@@ -63,6 +62,7 @@ import org.broadinstitute.ddp.model.activity.types.DateFieldType;
 import org.broadinstitute.ddp.model.activity.types.DateRenderMode;
 import org.broadinstitute.ddp.model.activity.types.PicklistRenderMode;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
+import org.broadinstitute.ddp.model.activity.types.TemplateType;
 import org.jdbi.v3.sqlobject.CreateSqlObject;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.slf4j.Logger;
@@ -365,7 +365,7 @@ public interface QuestionDao extends SqlObject {
                 .collect(toList());
 
         return new BoolQuestion(dto.getStableId(), dto.getPromptTemplateId(),
-                dto.isRestricted(), dto.isDeprecated(), dto.getTooltip(),
+                dto.isRestricted(), dto.isDeprecated(), dto.getTooltipTemplateId(),
                 dto.getAdditionalInfoHeaderTemplateId(), dto.getAdditionalInfoFooterTemplateId(),
                 boolAnswers, rules, booleanQuestionDto.getTrueTemplateId(),
                 booleanQuestionDto.getFalseTemplateId());
@@ -415,7 +415,7 @@ public interface QuestionDao extends SqlObject {
         // Put the ungrouped options in the list first.
         for (PicklistOptionDto optionDto : container.getUngroupedOptions()) {
             allOptions.add(new PicklistOption(optionDto.getStableId(),
-                    optionDto.getOptionLabelTemplateId(), optionDto.getTooltip(), optionDto.getDetailLabelTemplateId(),
+                    optionDto.getOptionLabelTemplateId(), optionDto.getTooltipTemplateId(), optionDto.getDetailLabelTemplateId(),
                     optionDto.getAllowDetails(), optionDto.isExclusive()));
         }
 
@@ -425,13 +425,13 @@ public interface QuestionDao extends SqlObject {
             List<PicklistOptionDto> optionDtos = container.getGroupIdToOptions().get(groupDto.getId());
             for (PicklistOptionDto optionDto : optionDtos) {
                 allOptions.add(new PicklistOption(groupDto.getStableId(), optionDto.getStableId(),
-                        optionDto.getOptionLabelTemplateId(), optionDto.getTooltip(), optionDto.getDetailLabelTemplateId(),
+                        optionDto.getOptionLabelTemplateId(), optionDto.getTooltipTemplateId(), optionDto.getDetailLabelTemplateId(),
                         optionDto.getAllowDetails(), optionDto.isExclusive()));
             }
         }
 
         return new PicklistQuestion(dto.getStableId(), dto.getPromptTemplateId(),
-                dto.isRestricted(), dto.isDeprecated(), dto.getTooltip(),
+                dto.isRestricted(), dto.isDeprecated(), dto.getTooltipTemplateId(),
                 dto.getAdditionalInfoHeaderTemplateId(), dto.getAdditionalInfoFooterTemplateId(),
                 picklistAnswers, rules,
                 picklistQuestionDto.getSelectMode(),
@@ -472,7 +472,7 @@ public interface QuestionDao extends SqlObject {
                 textQuestionDto.getPlaceholderTemplateId(),
                 textQuestionDto.isRestricted(),
                 textQuestionDto.isDeprecated(),
-                textQuestionDto.getTooltip(),
+                textQuestionDto.getTooltipTemplateId(),
                 textQuestionDto.getAdditionalInfoHeaderTemplateId(),
                 textQuestionDto.getAdditionalInfoFooterTemplateId(),
                 textAnswers,
@@ -522,7 +522,7 @@ public interface QuestionDao extends SqlObject {
         if (dateQuestionDto.getRenderMode().equals(DateRenderMode.PICKLIST)) {
             DatePicklistDef config = getJdbiDateQuestion().getDatePicklistDefByQuestionId(dto.getId()).get();
             return new DatePicklistQuestion(dto.getStableId(), dto.getPromptTemplateId(),
-                    dto.isRestricted(), dto.isDeprecated(), dto.getTooltip(),
+                    dto.isRestricted(), dto.isDeprecated(), dto.getTooltipTemplateId(),
                     dto.getAdditionalInfoHeaderTemplateId(), dto.getAdditionalInfoFooterTemplateId(),
                     dateAnswers, rules, dateQuestionDto.getRenderMode(), dateQuestionDto.shouldDisplayCalendar(),
                     fieldTypes, dateQuestionDto.getPlaceholderTemplateId(), config.getUseMonthNames(), config.getStartYear(),
@@ -530,7 +530,7 @@ public interface QuestionDao extends SqlObject {
         } else {
             return new DateQuestion(dto.getStableId(), dto.getPromptTemplateId(),
                     dto.isRestricted(), dto.isDeprecated(),
-                    dto.getTooltip(),
+                    dto.getTooltipTemplateId(),
                     dto.getAdditionalInfoHeaderTemplateId(),
                     dto.getAdditionalInfoFooterTemplateId(),
                     dateAnswers,
@@ -570,7 +570,7 @@ public interface QuestionDao extends SqlObject {
                 numericQuestionDto.getPlaceholderTemplateId(),
                 dto.isRestricted(),
                 dto.isDeprecated(),
-                dto.getTooltip(),
+                dto.getTooltipTemplateId(),
                 dto.getAdditionalInfoHeaderTemplateId(),
                 dto.getAdditionalInfoFooterTemplateId(),
                 answers,
@@ -601,7 +601,7 @@ public interface QuestionDao extends SqlObject {
                 .collect(toList());
 
         return new AgreementQuestion(dto.getStableId(), dto.getPromptTemplateId(),
-                dto.isRestricted(), dto.isDeprecated(), dto.getTooltip(),
+                dto.isRestricted(), dto.isDeprecated(), dto.getTooltipTemplateId(),
                 dto.getAdditionalInfoHeaderTemplateId(), dto.getAdditionalInfoFooterTemplateId(),
                 agreementAnswers, rules);
     }
@@ -644,7 +644,7 @@ public interface QuestionDao extends SqlObject {
                 .collect(toList());
 
         return new CompositeQuestion(dto.getStableId(), dto.getPromptTemplateId(),
-                dto.isRestricted(), dto.isDeprecated(), dto.getTooltip(),
+                dto.isRestricted(), dto.isDeprecated(), dto.getTooltipTemplateId(),
                 dto.getAdditionalInfoHeaderTemplateId(), dto.getAdditionalInfoFooterTemplateId(),
                 rules, compositeQuestionDto.isAllowMultiple(), compositeQuestionDto.isUnwrapOnExport(),
                 compositeQuestionDto.getAddButtonTemplateId(), compositeQuestionDto.getAdditionalItemTemplateId(),
@@ -759,9 +759,12 @@ public interface QuestionDao extends SqlObject {
         TemplateDao templateDao = getTemplateDao();
         templateDao.insertTemplate(question.getPromptTemplate(), revisionId);
 
-        Long tooltipId = null;
-        if (question.getTooltipDef() != null) {
-            tooltipId = getHandle().attach(TooltipDao.class).insertDef(question.getTooltipDef(), revisionId);
+        Long tooltipTemplateId = null;
+        if (question.getTooltipTemplate() != null) {
+            if (question.getTooltipTemplate().getTemplateType() != TemplateType.TEXT) {
+                throw new DaoException("Only TEXT template type is supported for tooltips");
+            }
+            tooltipTemplateId = templateDao.insertTemplate(question.getTooltipTemplate(), revisionId);
         }
 
         Template footerTemplate = question.getAdditionalInfoFooterTemplate();
@@ -783,7 +786,7 @@ public interface QuestionDao extends SqlObject {
                 question.isRestricted(),
                 stableCodeId,
                 question.getPromptTemplate().getTemplateId(),
-                tooltipId,
+                tooltipTemplateId,
                 headerTemplateId,
                 footerTemplateId,
                 revisionId, activityId, question.shouldHideNumber(),
@@ -808,8 +811,8 @@ public interface QuestionDao extends SqlObject {
         JdbiQuestion jdbiQuestion = getJdbiQuestion();
         TemplateDao tmplDao = getTemplateDao();
 
-        if (question.getTooltip() != null) {
-            getHandle().attach(TooltipDao.class).disableTooltip(question.getTooltip(), meta);
+        if (question.getTooltipTemplateId() != null) {
+            tmplDao.disableTemplate(question.getTooltipTemplateId(), meta);
         }
 
         tmplDao.disableTemplate(question.getPromptTemplateId(), meta);
@@ -1246,15 +1249,12 @@ public interface QuestionDao extends SqlObject {
     }
 
     default AgreementQuestionDef findAgreementQuestionDefByDtoAndTimestamp(QuestionDto questionDto, long timestamp) {
-
-        Template prompt = getTemplateDao().loadTemplateById(questionDto.getPromptTemplateId());
+        TemplateDao templateDao = getTemplateDao();
+        Template prompt = templateDao.loadTemplateById(questionDto.getPromptTemplateId());
+        Template tooltipTemplate = questionDto.getTooltipTemplateId() == null ? null
+                : templateDao.loadTemplateById(questionDto.getTooltipTemplateId());
         Template additionalInfoHeader = Template.text("");
         Template additionalInfoFooter = Template.text("");
-
-        TooltipDef tooltipDef = null;
-        if (questionDto.getTooltip() != null) {
-            tooltipDef = getHandle().attach(TooltipDao.class).findDef(questionDto.getTooltip());
-        }
 
         List<RuleDef> validations = getValidationDao()
                 .findRuleDefsByQuestionIdAndTimestamp(questionDto.getId(), timestamp);
@@ -1263,7 +1263,7 @@ public interface QuestionDao extends SqlObject {
                 questionDto.getStableId(),
                 questionDto.isRestricted(),
                 prompt,
-                tooltipDef,
+                tooltipTemplate,
                 additionalInfoHeader, additionalInfoFooter,
                 validations,
                 questionDto.shouldHideNumber());
@@ -1274,21 +1274,19 @@ public interface QuestionDao extends SqlObject {
     }
 
     default BoolQuestionDef findBoolQuestionDefByDtoAndTimestamp(QuestionDto questionDto, long timestamp) {
-        Template prompt = getTemplateDao().loadTemplateById(questionDto.getPromptTemplateId());
+        TemplateDao templateDao = getTemplateDao();
+        Template prompt = templateDao.loadTemplateById(questionDto.getPromptTemplateId());
+        Template tooltipTemplate = questionDto.getTooltipTemplateId() == null ? null
+                : templateDao.loadTemplateById(questionDto.getTooltipTemplateId());
         Template additionalInfoHeader = Template.text("");
         Template additionalInfoFooter = Template.text("");
-
-        TooltipDef tooltipDef = null;
-        if (questionDto.getTooltip() != null) {
-            tooltipDef = getHandle().attach(TooltipDao.class).findDef(questionDto.getTooltip());
-        }
 
         List<RuleDef> validations = getValidationDao()
                 .findRuleDefsByQuestionIdAndTimestamp(questionDto.getId(), timestamp);
 
         return BoolQuestionDef.builder(questionDto.getStableId(), prompt, Template.text("yes"), Template.text("no"))
                 .setQuestionId(questionDto.getId())
-                .setTooltipDef(tooltipDef)
+                .setTooltip(tooltipTemplate)
                 .setAdditionalInfoHeader(additionalInfoHeader)
                 .setAdditionalInfoFooter(additionalInfoFooter)
                 .setRestricted(questionDto.isRestricted())
@@ -1304,14 +1302,12 @@ public interface QuestionDao extends SqlObject {
                         "Could not find text question dto with question id=%d while querying text question definition",
                         questionDto.getId())));
 
-        Template prompt = getTemplateDao().loadTemplateById(questionDto.getPromptTemplateId());
+        TemplateDao templateDao = getTemplateDao();
+        Template prompt = templateDao.loadTemplateById(questionDto.getPromptTemplateId());
+        Template tooltipTemplate = questionDto.getTooltipTemplateId() == null ? null
+                : templateDao.loadTemplateById(questionDto.getTooltipTemplateId());
         Template additionalInfoHeader = Template.text("");
         Template additionalInfoFooter = Template.text("");
-
-        TooltipDef tooltipDef = null;
-        if (questionDto.getTooltip() != null) {
-            tooltipDef = getHandle().attach(TooltipDao.class).findDef(questionDto.getTooltip());
-        }
 
         //query suggestions
         List<String> suggestions = getJdbiTextQuestionSuggestion().getTextQuestionSuggestions(textDto.getId());
@@ -1321,16 +1317,16 @@ public interface QuestionDao extends SqlObject {
 
         Template confirmPromptTemplate = null;
         if (textDto.getConfirmPromptTemplateId() != null) {
-            confirmPromptTemplate = getTemplateDao().loadTemplateById(textDto.getConfirmPromptTemplateId());
+            confirmPromptTemplate = templateDao.loadTemplateById(textDto.getConfirmPromptTemplateId());
         }
         Template mismatchMessageTemplate = null;
         if (textDto.getMismatchMessageTemplateId() != null) {
-            mismatchMessageTemplate = getTemplateDao().loadTemplateById(textDto.getMismatchMessageTemplateId());
+            mismatchMessageTemplate = templateDao.loadTemplateById(textDto.getMismatchMessageTemplateId());
         }
         return TextQuestionDef.builder(textDto.getInputType(), textDto.getStableId(), prompt)
                 .setSuggestionType(textDto.getSuggestionType())
                 .setPlaceholderTemplate(Template.text("placeholder"))
-                .setTooltipDef(tooltipDef)
+                .setTooltip(tooltipTemplate)
                 .setAdditionalInfoHeader(additionalInfoHeader)
                 .setAdditionalInfoFooter(additionalInfoFooter)
                 .setQuestionId(textDto.getId())
@@ -1361,14 +1357,12 @@ public interface QuestionDao extends SqlObject {
         List<DateFieldType> fields = getJdbiDateQuestionFieldOrder()
                 .getOrderedFieldsByQuestionId(questionDto.getId());
 
-        Template prompt = getTemplateDao().loadTemplateById(questionDto.getPromptTemplateId());
+        TemplateDao templateDao = getTemplateDao();
+        Template prompt = templateDao.loadTemplateById(questionDto.getPromptTemplateId());
+        Template tooltipTemplate = questionDto.getTooltipTemplateId() == null ? null
+                : templateDao.loadTemplateById(questionDto.getTooltipTemplateId());
         Template additionalInfoHeader = Template.text("");
         Template additionalInfoFooter = Template.text("");
-
-        TooltipDef tooltipDef = null;
-        if (questionDto.getTooltip() != null) {
-            tooltipDef = getHandle().attach(TooltipDao.class).findDef(questionDto.getTooltip());
-        }
 
         List<RuleDef> validations = getValidationDao()
                 .findRuleDefsByQuestionIdAndTimestamp(questionDto.getId(), timestamp);
@@ -1377,7 +1371,7 @@ public interface QuestionDao extends SqlObject {
                 .setDisplayCalendar(dateDto.shouldDisplayCalendar())
                 .setPicklistDef(picklistDef)
                 .setQuestionId(questionDto.getId())
-                .setTooltipDef(tooltipDef)
+                .setTooltip(tooltipTemplate)
                 .setAdditionalInfoHeader(additionalInfoHeader)
                 .setAdditionalInfoFooter(additionalInfoFooter)
                 .setRestricted(questionDto.isRestricted())
@@ -1396,6 +1390,8 @@ public interface QuestionDao extends SqlObject {
 
         TemplateDao templateDao = getTemplateDao();
         Template prompt = templateDao.loadTemplateById(questionDto.getPromptTemplateId());
+        Template tooltipTemplate = questionDto.getTooltipTemplateId() == null
+                ? null : templateDao.loadTemplateById(questionDto.getTooltipTemplateId());
         Template additionalInfoHeader = (questionDto.getAdditionalInfoHeaderTemplateId() == null)
                 ? null : templateDao.loadTemplateById(questionDto.getAdditionalInfoHeaderTemplateId());
         Template additionalInfoFooter = (questionDto.getAdditionalInfoFooterTemplateId() == null)
@@ -1403,18 +1399,13 @@ public interface QuestionDao extends SqlObject {
         Template placeholderTemplate = (numericQuestionDto.getPlaceholderTemplateId() == null)
                 ? null : templateDao.loadTemplateById(numericQuestionDto.getPlaceholderTemplateId());
 
-        TooltipDef tooltipDef = null;
-        if (questionDto.getTooltip() != null) {
-            tooltipDef = getHandle().attach(TooltipDao.class).findDef(questionDto.getTooltip());
-        }
-
         List<RuleDef> validations = getValidationDao()
                 .findRuleDefsByQuestionIdAndTimestamp(questionDto.getId(), timestamp);
 
         return NumericQuestionDef
                 .builder(numericQuestionDto.getNumericType(), questionDto.getStableId(), prompt)
                 .setPlaceholderTemplate(placeholderTemplate)
-                .setTooltipDef(tooltipDef)
+                .setTooltip(tooltipTemplate)
                 .setAdditionalInfoHeader(additionalInfoHeader)
                 .setAdditionalInfoFooter(additionalInfoFooter)
                 .setQuestionId(questionDto.getId())
@@ -1434,17 +1425,18 @@ public interface QuestionDao extends SqlObject {
         PicklistQuestionDao.GroupAndOptionDtos container = getPicklistQuestionDao()
                 .findOrderedGroupAndOptionDtos(questionDto.getId(), timestamp);
 
-        TooltipDao tooltipDao = getHandle().attach(TooltipDao.class);
+        TemplateDao templateDao = getTemplateDao();
         List<PicklistGroupDef> groups = new ArrayList<>();
         for (PicklistGroupDto dto : container.getGroups()) {
-            Template nameTemplate = getTemplateDao().loadTemplateById(dto.getNameTemplateId());
+            Template nameTemplate = templateDao.loadTemplateById(dto.getNameTemplateId());
             List<PicklistOptionDef> options = container.getGroupIdToOptions().get(dto.getId())
                     .stream().map(optionDto -> {
-                        Template optionLabel = getTemplateDao().loadTemplateById(optionDto.getOptionLabelTemplateId());
+                        Template optionLabel = templateDao.loadTemplateById(optionDto.getOptionLabelTemplateId());
                         Template detailLabel = optionDto.getAllowDetails() ? Template.text("") : null;
-                        TooltipDef tooltipDef = optionDto.getTooltip() != null ? tooltipDao.findDef(optionDto.getTooltip()) : null;
+                        Template tooltipTemplate = optionDto.getTooltipTemplateId() == null ? null
+                                : templateDao.loadTemplateById(optionDto.getTooltipTemplateId());
                         return new PicklistOptionDef(optionDto.getId(), optionDto.getStableId(),
-                                optionLabel, tooltipDef, detailLabel, optionDto.isExclusive());
+                                optionLabel, tooltipTemplate, detailLabel, optionDto.isExclusive());
                     })
                     .collect(Collectors.toList());
             groups.add(new PicklistGroupDef(dto.getId(), dto.getStableId(), nameTemplate, options));
@@ -1452,22 +1444,20 @@ public interface QuestionDao extends SqlObject {
 
         List<PicklistOptionDef> ungroupedOptions = container.getUngroupedOptions()
                 .stream().map(optionDto -> {
-                    Template optionLabel = getTemplateDao().loadTemplateById(optionDto.getOptionLabelTemplateId());
+                    Template optionLabel = templateDao.loadTemplateById(optionDto.getOptionLabelTemplateId());
                     Template detailLabel = optionDto.getAllowDetails() ? Template.text("") : null;
-                    TooltipDef tooltipDef = optionDto.getTooltip() != null ? tooltipDao.findDef(optionDto.getTooltip()) : null;
+                    Template tooltipTemplate = optionDto.getTooltipTemplateId() == null ? null
+                            : templateDao.loadTemplateById(optionDto.getTooltipTemplateId());
                     return new PicklistOptionDef(optionDto.getId(), optionDto.getStableId(),
-                            optionLabel, tooltipDef, detailLabel, optionDto.isExclusive());
+                            optionLabel, tooltipTemplate, detailLabel, optionDto.isExclusive());
                 })
                 .collect(Collectors.toList());
 
-        Template prompt = getTemplateDao().loadTemplateById(questionDto.getPromptTemplateId());
+        Template prompt = templateDao.loadTemplateById(questionDto.getPromptTemplateId());
+        Template tooltipTemplate = questionDto.getTooltipTemplateId() == null ? null
+                : templateDao.loadTemplateById(questionDto.getTooltipTemplateId());
         Template additionalInfoHeader = Template.text("");
         Template additionalInfoFooter = Template.text("");
-
-        TooltipDef tooltipDef = null;
-        if (questionDto.getTooltip() != null) {
-            tooltipDef = tooltipDao.findDef(questionDto.getTooltip());
-        }
 
         Template label = null;
         if (picklistDto.getRenderMode() == PicklistRenderMode.DROPDOWN) {
@@ -1480,7 +1470,7 @@ public interface QuestionDao extends SqlObject {
         return PicklistQuestionDef.builder(picklistDto.getSelectMode(), picklistDto.getRenderMode(), questionDto.getStableId(), prompt)
                 .setLabel(label)
                 .setQuestionId(questionDto.getId())
-                .setTooltipDef(tooltipDef)
+                .setTooltip(tooltipTemplate)
                 .setAdditionalInfoHeader(additionalInfoHeader)
                 .setAdditionalInfoFooter(additionalInfoFooter)
                 .setRestricted(questionDto.isRestricted())
@@ -1502,14 +1492,12 @@ public interface QuestionDao extends SqlObject {
                 .stream().map(child -> findQuestionDefByDtoAndTimestamp(child, timestamp))
                 .collect(toList());
 
-        Template prompt = getTemplateDao().loadTemplateById(questionDto.getPromptTemplateId());
+        TemplateDao templateDao = getTemplateDao();
+        Template prompt = templateDao.loadTemplateById(questionDto.getPromptTemplateId());
+        Template tooltipTemplate = questionDto.getTooltipTemplateId() == null ? null
+                : templateDao.loadTemplateById(questionDto.getTooltipTemplateId());
         Template additionalInfoHeader = Template.text("");
         Template additionalInfoFooter = Template.text("");
-
-        TooltipDef tooltipDef = null;
-        if (questionDto.getTooltip() != null) {
-            tooltipDef = getHandle().attach(TooltipDao.class).findDef(questionDto.getTooltip());
-        }
 
         Template buttonTmpl = null;
         if (compositeDto.getAddButtonTemplateId() != null) {
@@ -1533,7 +1521,7 @@ public interface QuestionDao extends SqlObject {
                 .setAdditionalItemTemplate(addItemTmpl)
                 .setAdditionalInfoHeader(additionalInfoHeader)
                 .setAdditionalInfoFooter(additionalInfoFooter)
-                .setTooltipDef(tooltipDef)
+                .setTooltip(tooltipTemplate)
                 .setQuestionId(questionDto.getId())
                 .setRestricted(questionDto.isRestricted())
                 .setDeprecated(questionDto.isDeprecated())

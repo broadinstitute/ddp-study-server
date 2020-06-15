@@ -25,8 +25,6 @@ public interface JdbiNumericQuestion extends SqlObject {
             + "       qt.question_type_code,"
             + "       qsc.stable_id,"
             + "       q.*,"
-            + "       tt.tooltip_id as tt_tooltip_id,"
-            + "       tt.text_template_id as tt_text_template_id,"
             + "       rev.start_date as revision_start,"
             + "       rev.end_date as revision_end"
             + "  from numeric_question as nq"
@@ -35,7 +33,6 @@ public interface JdbiNumericQuestion extends SqlObject {
             + "  join question_type as qt on qt.question_type_id = q.question_type_id"
             + "  join question_stable_code as qsc on qsc.question_stable_code_id = q.question_stable_code_id"
             + "  join revision as rev on rev.revision_id = q.revision_id"
-            + "  left join tooltip as tt on tt.tooltip_id = q.tooltip_id"
             + " where nq.question_id = :questionId")
     @RegisterConstructorMapper(NumericQuestionDto.class)
     Optional<NumericQuestionDto> findDtoByQuestionId(@Bind("questionId") long questionId);

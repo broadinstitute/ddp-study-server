@@ -39,7 +39,7 @@ public class DateQuestion extends Question<DateAnswer> {
     protected transient Long placeholderTemplateId;
 
     public DateQuestion(String stableId, long promptTemplateId,
-                        boolean isRestricted, boolean isDeprecated, Tooltip tooltip,
+                        boolean isRestricted, boolean isDeprecated, Long tooltipTemplateId,
                         @Nullable Long additionalInfoHeaderTemplateId, @Nullable Long additionalInfoFooterTemplateId,
                         List<DateAnswer> answers, List<Rule<DateAnswer>> validations,
                         DateRenderMode renderMode, boolean displayCalendar, List<DateFieldType> fields, Long placeholderTemplateId) {
@@ -48,7 +48,7 @@ public class DateQuestion extends Question<DateAnswer> {
                 promptTemplateId,
                 isRestricted,
                 isDeprecated,
-                tooltip,
+                tooltipTemplateId,
                 additionalInfoHeaderTemplateId,
                 additionalInfoFooterTemplateId,
                 answers,

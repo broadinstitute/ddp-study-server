@@ -2,7 +2,6 @@ package org.broadinstitute.ddp.model.activity.instance.question;
 
 import java.util.NoSuchElementException;
 import java.util.function.Consumer;
-import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
@@ -22,9 +21,8 @@ public class PicklistOption implements Renderable {
     @SerializedName("optionLabel")
     private String optionLabel;
 
-    @Valid
     @SerializedName("tooltip")
-    private Tooltip tooltip;
+    private String tooltip;
 
     @SerializedName("detailLabel")
     private String detailLabel;
@@ -39,16 +37,17 @@ public class PicklistOption implements Renderable {
     private String groupStableId;
 
     private transient long optionLabelTemplateId;
+    private transient Long tooltipTemplateId;
     private transient Long detailLabelTemplateId;
 
     /**
      * Constructs a picklist option. The detail label is required if detail field is allowed.
      */
-    public PicklistOption(String stableId, long optionLabelTemplateId, Tooltip tooltip,
+    public PicklistOption(String stableId, long optionLabelTemplateId, Long tooltipTemplateId,
                           Long detailLabelTemplateId, boolean isDetailsAllowed, boolean isExclusive) {
         this.stableId = MiscUtil.checkNotBlank(stableId, "stableId");
         this.optionLabelTemplateId = optionLabelTemplateId;
-        this.tooltip = tooltip;
+        this.tooltipTemplateId = tooltipTemplateId;
         this.isDetailsAllowed = isDetailsAllowed;
         this.isExclusive = isExclusive;
         if (isDetailsAllowed) {
@@ -59,9 +58,9 @@ public class PicklistOption implements Renderable {
         }
     }
 
-    public PicklistOption(String groupStableId, String stableId, long optionLabelTemplateId, Tooltip tooltip,
+    public PicklistOption(String groupStableId, String stableId, long optionLabelTemplateId, Long tooltipTemplateId,
                           Long detailLabelTemplateId, boolean isDetailsAllowed, boolean isExclusive) {
-        this(stableId, optionLabelTemplateId, tooltip, detailLabelTemplateId, isDetailsAllowed, isExclusive);
+        this(stableId, optionLabelTemplateId, tooltipTemplateId, detailLabelTemplateId, isDetailsAllowed, isExclusive);
         this.groupStableId = groupStableId;
     }
 
@@ -73,7 +72,7 @@ public class PicklistOption implements Renderable {
         return optionLabel;
     }
 
-    public Tooltip getTooltip() {
+    public String getTooltip() {
         return tooltip;
     }
 
@@ -93,6 +92,10 @@ public class PicklistOption implements Renderable {
         return optionLabelTemplateId;
     }
 
+    public Long getTooltipTemplateId() {
+        return tooltipTemplateId;
+    }
+
     public Long getDetailLabelTemplateId() {
         return detailLabelTemplateId;
     }
@@ -107,8 +110,8 @@ public class PicklistOption implements Renderable {
         if (detailLabelTemplateId != null) {
             registry.accept(detailLabelTemplateId);
         }
-        if (tooltip != null) {
-            tooltip.registerTemplateIds(registry);
+        if (tooltipTemplateId != null) {
+            registry.accept(tooltipTemplateId);
         }
     }
 
@@ -126,13 +129,16 @@ public class PicklistOption implements Renderable {
             }
         }
 
+        if (tooltipTemplateId != null) {
+            tooltip = HtmlConverter.getPlainText(rendered.get(tooltipTemplateId));
+            if (tooltip == null) {
+                throw new NoSuchElementException("No rendered template found for tooltip with id " + tooltipTemplateId);
+            }
+        }
+
         if (style == ContentStyle.BASIC) {
             optionLabel = HtmlConverter.getPlainText(optionLabel);
             detailLabel = HtmlConverter.getPlainText(detailLabel);
-        }
-
-        if (tooltip != null) {
-            tooltip.applyRenderedTemplates(rendered, style);
         }
     }
 }

@@ -128,18 +128,18 @@ public interface PicklistQuestionDao extends SqlObject {
         templateDao.insertTemplate(option.getOptionLabelTemplate(), revisionId);
         long optionLabelTmplId = option.getOptionLabelTemplate().getTemplateId();
 
+        Long tooltipTmplId = null;
+        if (option.getTooltipTemplate() != null) {
+            tooltipTmplId = templateDao.insertTemplate(option.getTooltipTemplate(), revisionId);
+        }
+
         Long detailLabelTmplId = null;
         if (option.isDetailsAllowed()) {
             templateDao.insertTemplate(option.getDetailLabelTemplate(), revisionId);
             detailLabelTmplId = option.getDetailLabelTemplate().getTemplateId();
         }
 
-        Long tooltipId = null;
-        if (option.getTooltipDef() != null) {
-            tooltipId = getHandle().attach(TooltipDao.class).insertDef(option.getTooltipDef(), revisionId);
-        }
-
-        long optionId = jdbiOption.insert(questionId, option.getStableId(), optionLabelTmplId, tooltipId,
+        long optionId = jdbiOption.insert(questionId, option.getStableId(), optionLabelTmplId, tooltipTmplId,
                 detailLabelTmplId, option.isDetailsAllowed(), option.isExclusive(), displayOrder, revisionId);
         option.setOptionId(optionId);
 
@@ -291,14 +291,13 @@ public interface PicklistQuestionDao extends SqlObject {
             }
         }
 
-        TooltipDao tooltipDao = getHandle().attach(TooltipDao.class);
         for (PicklistOptionDto option : options) {
             tmplDao.disableTemplate(option.getOptionLabelTemplateId(), meta);
             if (option.getDetailLabelTemplateId() != null) {
                 tmplDao.disableTemplate(option.getDetailLabelTemplateId(), meta);
             }
-            if (option.getTooltip() != null) {
-                tooltipDao.disableTooltip(option.getTooltip(), meta);
+            if (option.getTooltipTemplateId() != null) {
+                tmplDao.disableTemplate(option.getTooltipTemplateId(), meta);
             }
         }
 
@@ -334,8 +333,8 @@ public interface PicklistQuestionDao extends SqlObject {
             tmplDao.disableTemplate(optionDto.getDetailLabelTemplateId(), meta);
         }
 
-        if (optionDto.getTooltip() != null) {
-            getHandle().attach(TooltipDao.class).disableTooltip(optionDto.getTooltip(), meta);
+        if (optionDto.getTooltipTemplateId() != null) {
+            tmplDao.disableTemplate(optionDto.getTooltipTemplateId(), meta);
         }
 
         if (jdbiRev.tryDeleteOrphanedRevision(oldRevId)) {

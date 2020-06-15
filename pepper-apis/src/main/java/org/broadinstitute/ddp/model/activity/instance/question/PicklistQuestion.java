@@ -47,7 +47,7 @@ public final class PicklistQuestion extends Question<PicklistAnswer> {
      * <p>The additional header and footer template IDs may be null.
      */
     public PicklistQuestion(String stableId, long promptTemplateId,
-                            boolean isRestricted, boolean isDeprecated, Tooltip tooltip,
+                            boolean isRestricted, boolean isDeprecated, Long tooltipTemplateId,
                             @Nullable Long additionalInfoHeaderTemplateId, @Nullable Long additionalInfoFooterTemplateId,
                             List<PicklistAnswer> answers, List<Rule<PicklistAnswer>> validations,
                             PicklistSelectMode selectMode, PicklistRenderMode renderMode,
@@ -58,7 +58,7 @@ public final class PicklistQuestion extends Question<PicklistAnswer> {
                 promptTemplateId,
                 isRestricted,
                 isDeprecated,
-                tooltip,
+                tooltipTemplateId,
                 additionalInfoHeaderTemplateId,
                 additionalInfoFooterTemplateId,
                 answers,

@@ -13,6 +13,7 @@ select tqit.text_question_input_type_code   p_input_type_code,
        q.question_type_id                   p_question_type_id,
        q.question_stable_code_id            p_question_stable_code_id,
        q.question_prompt_template_id        p_question_prompt_template_id,
+       q.tooltip_template_id                p_tooltip_template_id,
        q.info_header_template_id            p_info_header_template_id,
        q.info_footer_template_id            p_info_footer_template_id,
        q.study_activity_id                  p_study_activity_id,
@@ -20,8 +21,6 @@ select tqit.text_question_input_type_code   p_input_type_code,
        q.revision_id                        p_revision_id,
        q.hide_number                        p_hide_number,
        q.is_deprecated                      p_is_deprecated,
-       tt.tooltip_id                        p_tt_tooltip_id,
-       tt.text_template_id                  p_tt_text_template_id,
        rev.start_date                       p_revision_start,
        rev.end_date                         p_revision_end,
        tqs.suggestion                       c_suggestion
@@ -31,7 +30,6 @@ select tqit.text_question_input_type_code   p_input_type_code,
   join question_stable_code as qsc on qsc.question_stable_code_id = q.question_stable_code_id
   join revision as rev on rev.revision_id = q.revision_id
   join text_question_input_type as tqit on tqit.text_question_input_type_id = tq.input_type_id
-  left join tooltip as tt on tt.tooltip_id = q.tooltip_id
   left join suggestion_type as st on st.suggestion_type_id = tq.suggestion_type_id
   left join text_question_suggestion tqs on tqs.text_question_id = tq.question_id
  where tq.question_id = :questionId

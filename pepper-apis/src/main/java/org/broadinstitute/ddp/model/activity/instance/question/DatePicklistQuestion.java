@@ -26,7 +26,7 @@ public class DatePicklistQuestion extends DateQuestion {
      * Instantiates DatePicklistQuestion object.
      */
     public DatePicklistQuestion(String stableId, long promptTemplateId,
-                                boolean isRestricted, boolean isDeprecated, Tooltip tooltip,
+                                boolean isRestricted, boolean isDeprecated, Long tooltipTemplateId,
                                 Long additionalInfoHeaderTemplateId, Long additionalInfoFooterTemplateId,
                                 List<DateAnswer> answers, List<Rule<DateAnswer>> validations,
                                 DateRenderMode renderMode, Boolean displayCalendar, List<DateFieldType> fields, Long placeholderTemplateId,
@@ -35,7 +35,7 @@ public class DatePicklistQuestion extends DateQuestion {
                 promptTemplateId,
                 isRestricted,
                 isDeprecated,
-                tooltip,
+                tooltipTemplateId,
                 additionalInfoHeaderTemplateId,
                 additionalInfoFooterTemplateId,
                 answers,

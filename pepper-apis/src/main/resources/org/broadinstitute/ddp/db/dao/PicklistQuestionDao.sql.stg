@@ -4,13 +4,12 @@ queryAllOrderedGroupsAndOptionsByQuestionIdAndTimestamp() ::= <<
 select po.picklist_option_id        as po_picklist_option_id,
        po.picklist_option_stable_id as po_picklist_option_stable_id,
        po.option_label_template_id  as po_option_label_template_id,
+       po.tooltip_template_id       as po_tooltip_template_id,
        po.detail_label_template_id  as po_detail_label_template_id,
        po.allow_details             as po_allow_details,
        po.is_exclusive              as po_is_exclusive,
        po.display_order             as po_display_order,
        po.revision_id               as po_revision_id,
-       tt.tooltip_id                as po_tt_tooltip_id,
-       tt.text_template_id          as po_tt_text_template_id,
        pg.picklist_group_id as pg_picklist_group_id,
        pg.group_stable_id   as pg_group_stable_id,
        pg.name_template_id  as pg_name_template_id,
@@ -21,7 +20,6 @@ select po.picklist_option_id        as po_picklist_option_id,
   left join picklist_grouped_option as pgo on pgo.picklist_option_id = po.picklist_option_id
   left join picklist_group as pg on pg.picklist_group_id = pgo.picklist_group_id
   left join revision as group_rev on group_rev.revision_id = pg.revision_id
-  left join tooltip as tt on tt.tooltip_id = po.tooltip_id
  where po.picklist_question_id = :questionId
    and option_rev.start_date \<= :timestamp
    and (option_rev.end_date is null or :timestamp \< option_rev.end_date)

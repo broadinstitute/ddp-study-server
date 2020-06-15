@@ -1,16 +1,16 @@
 group JdbiPicklistOption;
 
 insertOption() ::= <<
-insert into picklist_option (picklist_question_id, picklist_option_stable_id, tooltip_id,
+insert into picklist_option (picklist_question_id, picklist_option_stable_id, tooltip_template_id,
        option_label_template_id, detail_label_template_id, allow_details, is_exclusive, display_order, revision_id)
-values (:picklistQuestionId, :stableId, :tooltipId,
+values (:picklistQuestionId, :stableId, :tooltipTemplateId,
        :optionLabelTemplateId, :detailLabelTemplateId, :allowDetails, :isExclusive, :displayOrder, :revisionId)
 >>
 
 insertOptionByDto() ::= <<
-insert into picklist_option (picklist_question_id, picklist_option_stable_id, tooltip_id,
+insert into picklist_option (picklist_question_id, picklist_option_stable_id, tooltip_template_id,
        option_label_template_id, detail_label_template_id, allow_details, is_exclusive, display_order, revision_id)
-values (:picklistQuestionId, :dto.getStableId, :dto.getTooltipId,
+values (:picklistQuestionId, :dto.getStableId, :dto.getTooltipTemplateId,
        :dto.getOptionLabelTemplateId, :dto.getDetailLabelTemplateId,
        :dto.getAllowDetails, :dto.isExclusive, :dto.getDisplayOrder, :revisionId)
 >>
@@ -20,13 +20,12 @@ select
     po.picklist_option_id,
     po.picklist_option_stable_id,
     po.option_label_template_id,
+    po.tooltip_template_id,
     po.detail_label_template_id,
     po.allow_details,
     po.is_exclusive,
     po.display_order,
-    po.revision_id,
-    po.tooltip_id as tt_tooltip_id,
-    (select text_template_id from tooltip where tooltip_id = po.tooltip_id) as tt_text_template_id
+    po.revision_id
 from
     activity_instance as ai,
     picklist_option as po,
@@ -45,13 +44,12 @@ select
     po.picklist_option_id,
     po.picklist_option_stable_id,
     po.option_label_template_id,
+    po.tooltip_template_id,
     po.detail_label_template_id,
     po.allow_details,
     po.is_exclusive,
     po.display_order,
-    po.revision_id,
-    po.tooltip_id as tt_tooltip_id,
-    (select text_template_id from tooltip where tooltip_id = po.tooltip_id) as tt_text_template_id
+    po.revision_id
 from
     activity_instance as ai,
     picklist_option as po,
@@ -70,17 +68,15 @@ queryOptionsByStableIdsQuestionIdAndRevision(stableIds) ::= <<
 select po.picklist_option_id,
        po.picklist_option_stable_id,
        po.option_label_template_id,
+       po.tooltip_template_id,
        po.detail_label_template_id,
        po.allow_details,
        po.is_exclusive,
        po.display_order,
-       po.revision_id,
-       tt.tooltip_id as tt_tooltip_id,
-       tt.text_template_id as tt_text_template_id
+       po.revision_id
   from picklist_option as po
   join revision as rev on po.revision_id = rev.revision_id
   join activity_instance as ai on ai.activity_instance_guid = :instanceGuid
-  left join tooltip as tt on tt.tooltip_id = po.tooltip_id
  where po.picklist_question_id = :questionId
    and po.picklist_option_stable_id in (<stableIds>)
    and rev.start_date \<= ai.created_at
@@ -92,13 +88,12 @@ select
     po.picklist_option_id,
     po.picklist_option_stable_id,
     po.option_label_template_id,
+    po.tooltip_template_id,
     po.detail_label_template_id,
     po.allow_details,
     po.is_exclusive,
     po.display_order,
-    po.revision_id,
-    po.tooltip_id as tt_tooltip_id,
-    (select text_template_id from tooltip where tooltip_id = po.tooltip_id) as tt_text_template_id
+    po.revision_id
 from
     picklist_option as po,
     revision as rev
@@ -112,16 +107,14 @@ queryAllActiveOrderedOptionsByQuestionId() ::= <<
 select po.picklist_option_id,
        po.picklist_option_stable_id,
        po.option_label_template_id,
+       po.tooltip_template_id,
        po.detail_label_template_id,
        po.allow_details,
        po.is_exclusive,
        po.display_order,
-       po.revision_id,
-       tt.tooltip_id as tt_tooltip_id,
-       tt.text_template_id as tt_text_template_id
+       po.revision_id
   from picklist_option as po
   join revision as rev on rev.revision_id = po.revision_id
-  left join tooltip as tt on tt.tooltip_id = po.tooltip_id
  where po.picklist_question_id = :questionId
    and rev.end_date is null
  order by po.display_order asc, po.picklist_option_id asc

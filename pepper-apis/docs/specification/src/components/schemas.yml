@@ -1050,7 +1050,8 @@ PicklistOption:
     optionLabel:
       type: string
     tooltip:
-      $ref: '../pepper.yml#/components/schemas/Tooltip'
+      type: string
+      description: tooltip for the option, in plain text
     detailLabel:
       type: string
     exclusive:
@@ -1116,15 +1117,6 @@ ProfileModel:
         type: string
         example: Barium
 
-Tooltip:
-  type: object
-  required:
-    - text
-  properties:
-    text:
-      type: string
-      description: the tooltip content, in plain text
-
 #####
 #
 # Questions
@@ -1153,8 +1145,8 @@ Question:
       description: 'the text that should be displayed for the question with all embedded HTML tags flattened and stripped.'
       example: 'What color is the sky?'
     tooltip:
-      description: tooltip for the question
-      $ref: '../pepper.yml#/components/schemas/Tooltip'
+      type: string
+      description: tooltip for the question, in plain text
     additionalInfoHeader:
       type: string
       description: a plain text string for additional information to be presented before the user responds to a question

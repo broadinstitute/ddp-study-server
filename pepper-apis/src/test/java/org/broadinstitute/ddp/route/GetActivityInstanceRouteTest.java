@@ -61,7 +61,6 @@ import org.broadinstitute.ddp.model.activity.definition.question.PicklistGroupDe
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.TooltipDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.definition.template.TemplateVariable;
 import org.broadinstitute.ddp.model.activity.definition.validation.DateFieldRequiredRuleDef;
@@ -159,7 +158,7 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
         Template txt3Tmpl = Template.html("$foo $DDP_PARTICIPANT_FIRST_NAME's favorite color?");
         txt3Tmpl.addVariable(TemplateVariable.single("foo", "en", "What is"));
         TextQuestionDef txt3 = TextQuestionDef.builder(TextInputType.TEXT, "TEXT_WITH_SPECIAL_VARS", txt3Tmpl)
-                .setTooltipDef(new TooltipDef(null, Template.text("some helper text")))
+                .setTooltip(Template.text("some helper text"))
                 .build();
         FormSectionDef textSection = new FormSectionDef(null, TestUtil.wrapQuestions(txt1, txt2, txt3));
 
@@ -175,7 +174,7 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
                 .buildMultiSelect(PicklistRenderMode.LIST, "PL_GROUPS", newTemplate())
                 .addGroup(new PicklistGroupDef("G1", newTemplate(), Arrays.asList(
                         new PicklistOptionDef(null, "G1_OPT1", newTemplate(),
-                                new TooltipDef(null, Template.text("option tooltip")), null, false))))
+                                Template.text("option tooltip"), null, false))))
                 .addGroup(new PicklistGroupDef("G2", newTemplate(), Arrays.asList(
                         new PicklistOptionDef("G2_OPT1", newTemplate()),
                         new PicklistOptionDef("G2_OPT2", newTemplate()))))
@@ -728,10 +727,10 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
         testFor200AndExtractResponse()
                 .then().assertThat()
                 .root("sections[1].blocks[2].question")
-                .body("tooltip.text", equalTo("some helper text"))
+                .body("tooltip", equalTo("some helper text"))
                 .root("sections[2].blocks[2].question")
                 .body("picklistOptions[1].stableId", equalTo("G1_OPT1"))
-                .body("picklistOptions[1].tooltip.text", equalTo("option tooltip"));
+                .body("picklistOptions[1].tooltip", equalTo("option tooltip"));
     }
 
     private Response testFor200AndExtractResponse() {

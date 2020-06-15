@@ -42,8 +42,8 @@ public abstract class QuestionDef {
     protected Template promptTemplate;
 
     @Valid
-    @SerializedName("tooltip")
-    protected TooltipDef tooltipDef;
+    @SerializedName("tooltipTemplate")
+    protected Template tooltipTemplate;
 
     @Valid
     @Nullable
@@ -98,8 +98,8 @@ public abstract class QuestionDef {
         return promptTemplate;
     }
 
-    public TooltipDef getTooltipDef() {
-        return tooltipDef;
+    public Template getTooltipTemplate() {
+        return tooltipTemplate;
     }
 
     @Nullable
@@ -137,7 +137,7 @@ public abstract class QuestionDef {
 
         protected String stableId;
         protected Template prompt;
-        protected TooltipDef tooltipDef;
+        protected Template tooltip;
         private Template additionalInfoHeader;
         private Template additionalInfoFooter;
         protected boolean hideNumber;
@@ -160,7 +160,7 @@ public abstract class QuestionDef {
         protected void configure(QuestionDef question) {
             question.setQuestionId(questionId);
             question.isDeprecated = isDeprecated;
-            question.tooltipDef = tooltipDef;
+            question.tooltipTemplate = tooltip;
         }
 
         public T setStableId(String stableId) {
@@ -178,8 +178,8 @@ public abstract class QuestionDef {
             return self();
         }
 
-        public T setTooltipDef(TooltipDef tooltipDef) {
-            this.tooltipDef = tooltipDef;
+        public T setTooltip(Template tooltip) {
+            this.tooltip = tooltip;
             return self();
         }
 

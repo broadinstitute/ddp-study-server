@@ -2,7 +2,6 @@ package org.broadinstitute.ddp.db.dto;
 
 import javax.annotation.Nullable;
 
-import org.broadinstitute.ddp.model.activity.instance.question.Tooltip;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
@@ -13,7 +12,7 @@ public class QuestionDto {
     private long id;
     private String stableId;
     private long promptTemplateId;
-    private Tooltip tooltip;
+    private Long tooltipTemplateId;
     private Long additionalInfoHeaderTemplateId;
     private Long additionalInfoFooterTemplateId;
     private long activityId;
@@ -29,8 +28,7 @@ public class QuestionDto {
                        @ColumnName("question_id") long id,
                        @ColumnName("stable_id") String stableId,
                        @ColumnName("question_prompt_template_id") long promptTemplateId,
-                       @ColumnName("tt_tooltip_id") Long tooltipId,
-                       @ColumnName("tt_text_template_id") Long tooltipTextTemplateId,
+                       @ColumnName("tooltip_template_id") Long tooltipTemplateId,
                        @ColumnName("info_header_template_id") Long additionalInfoHeaderTemplateId,
                        @ColumnName("info_footer_template_id") Long additionalInfoFooterTemplateId,
                        @ColumnName("study_activity_id") long activityId,
@@ -44,6 +42,7 @@ public class QuestionDto {
         this.id = id;
         this.stableId = stableId;
         this.promptTemplateId = promptTemplateId;
+        this.tooltipTemplateId = tooltipTemplateId;
         this.additionalInfoHeaderTemplateId = additionalInfoHeaderTemplateId;
         this.additionalInfoFooterTemplateId = additionalInfoFooterTemplateId;
         this.activityId = activityId;
@@ -53,9 +52,6 @@ public class QuestionDto {
         this.revisionId = revisionId;
         this.revisionStart = revisionStart;
         this.revisionEnd = revisionEnd;
-        if (tooltipId != null) {
-            this.tooltip = new Tooltip(tooltipId, tooltipTextTemplateId);
-        }
     }
 
     public QuestionDto(QuestionType type,
@@ -71,7 +67,7 @@ public class QuestionDto {
                        long revisionId,
                        long revisionStart,
                        Long revisionEnd) {
-        this(type, id, stableId, promptTemplateId, null, null,
+        this(type, id, stableId, promptTemplateId, null,
                 additionalInfoHeaderTemplateId, additionalInfoFooterTemplateId,
                 activityId, isRestricted, isDeprecated, hideNumber,
                 revisionId, revisionStart, revisionEnd);
@@ -82,7 +78,7 @@ public class QuestionDto {
         this.id = other.id;
         this.stableId = other.stableId;
         this.promptTemplateId = other.promptTemplateId;
-        this.tooltip = other.tooltip;
+        this.tooltipTemplateId = other.tooltipTemplateId;
         this.additionalInfoHeaderTemplateId = other.additionalInfoHeaderTemplateId;
         this.additionalInfoFooterTemplateId = other.additionalInfoFooterTemplateId;
         this.activityId = other.activityId;
@@ -110,8 +106,8 @@ public class QuestionDto {
         return promptTemplateId;
     }
 
-    public Tooltip getTooltip() {
-        return tooltip;
+    public Long getTooltipTemplateId() {
+        return tooltipTemplateId;
     }
 
     @Nullable
