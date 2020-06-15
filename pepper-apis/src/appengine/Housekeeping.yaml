@@ -5,7 +5,7 @@ instance_class: B4
 manual_scaling:
   instances: 1
 # todo arz give housekeeping and backends different app names for tcell
-entrypoint: java -javaagent:tcell/tcellagent.jar -Xmx820m -Xmx820m -jar Housekeeping.jar
+entrypoint: java -javaagent:tcell/tcellagent.jar -Xms820m -Xmx820m -jar Housekeeping.jar
 
 # GAE does not like the "=" character in entrypoint and does not support "." in environment variables
 env_variables:
