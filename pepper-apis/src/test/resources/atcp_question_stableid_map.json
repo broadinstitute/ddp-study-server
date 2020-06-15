@@ -1458,7 +1458,251 @@
                 ]
               }
             ]
-          }
+          },
+          {
+            "name": "sibling_3",
+            "stable_id": "SIBLING_3",
+            "type": "Composite",
+            "children": [
+              {
+                "name": "sibling_3_sex",
+                "type": "Picklist",
+                "stable_id": "SEX_PICKLIST_3",
+                "options": [
+                  {
+                    "type": "integer",
+                    "stable_id": "DROPDOWN_MALE_3"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "DROPDOWN_FEMALE_3"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "DROPDOWN_OTHER_3"
+                  }
+                ]
+              },
+              {
+                "name": "sibling_3_age",
+                "type": "integer",
+                "stable_id": "AGE_3"
+              },
+              {
+                "name": "sibling_3_dob",
+                "stable_id": "DATE_OF_BIRTH_3",
+                "type": "Date",
+                "format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+              },
+              {
+                "name": "sibling_3_age_death",
+                "stable_id": "AGE_AT_DEATH_3",
+                "type": "Numeric",
+                "source_type": "integer"
+              },
+              {
+                "name": "sibling_3_at_diagnosis",
+                "type": "Picklist",
+                "stable_id": "DIAGNOSIS_PICKLIST_3",
+                "options": [
+                  {
+                    "type": "integer",
+                    "stable_id": "DIAGNOSIS_DROPDOWN_YES_3"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "DIAGNOSIS_DROPDOWN_NO_3"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "DIAGNOSIS_DROPDOWN_UNKNOWN_3"
+                  }
+                ]
+              },
+              {
+                "name": "sibling_3_at_carrier",
+                "type": "Picklist",
+                "stable_id": "CARRIER_PICKLIST_3",
+                "options": [
+                  {
+                    "type": "integer",
+                    "stable_id": "CARRIER_DROPDOWN_YES_3"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "CARRIER_DROPDOWN_NO_3"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "CARRIER_DROPDOWN_UNKNOWN_3"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "sibling_5",
+            "stable_id": "SIBLING_5",
+            "type": "Composite",
+            "children": [
+              {
+                "name": "sibling_5_sex",
+                "type": "Picklist",
+                "stable_id": "SEX_PICKLIST_5",
+                "options": [
+                  {
+                    "type": "integer",
+                    "stable_id": "DROPDOWN_MALE_5"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "DROPDOWN_FEMALE_5"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "DROPDOWN_OTHER_5"
+                  }
+                ]
+              },
+              {
+                "name": "sibling_5_age",
+                "type": "integer",
+                "stable_id": "AGE_5"
+              },
+              {
+                "name": "sibling_5_dob",
+                "stable_id": "DATE_OF_BIRTH_5",
+                "type": "Date",
+                "format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+              },
+              {
+                "name": "sibling_5_age_death",
+                "stable_id": "AGE_AT_DEATH_5",
+                "type": "Numeric",
+                "source_type": "integer"
+              },
+              {
+                "name": "sibling_5_at_diagnosis",
+                "type": "Picklist",
+                "stable_id": "DIAGNOSIS_PICKLIST_5",
+                "options": [
+                  {
+                    "type": "integer",
+                    "stable_id": "DIAGNOSIS_DROPDOWN_YES_5"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "DIAGNOSIS_DROPDOWN_NO_5"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "DIAGNOSIS_DROPDOWN_UNKNOWN_5"
+                  }
+                ]
+              },
+              {
+                "name": "sibling_5_at_carrier",
+                "type": "Picklist",
+                "stable_id": "CARRIER_PICKLIST_5",
+                "options": [
+                  {
+                    "type": "integer",
+                    "stable_id": "CARRIER_DROPDOWN_YES_5"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "CARRIER_DROPDOWN_NO_5"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "CARRIER_DROPDOWN_UNKNOWN_5"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "name": "sibling_5",
+            "stable_id": "SIBLING_5",
+            "type": "Composite",
+            "children": [
+              {
+                "name": "sibling_5_sex",
+                "type": "Picklist",
+                "stable_id": "SEX_PICKLIST_5",
+                "options": [
+                  {
+                    "type": "integer",
+                    "stable_id": "DROPDOWN_MALE_5"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "DROPDOWN_FEMALE_5"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "DROPDOWN_OTHER_5"
+                  }
+                ]
+              },
+              {
+                "name": "sibling_5_age",
+                "type": "integer",
+                "stable_id": "AGE_5"
+              },
+              {
+                "name": "sibling_5_dob",
+                "stable_id": "DATE_OF_BIRTH_5",
+                "type": "Date",
+                "format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+              },
+              {
+                "name": "sibling_5_age_death",
+                "stable_id": "AGE_AT_DEATH_5",
+                "type": "Numeric",
+                "source_type": "integer"
+              },
+              {
+                "name": "sibling_5_at_diagnosis",
+                "type": "Picklist",
+                "stable_id": "DIAGNOSIS_PICKLIST_5",
+                "options": [
+                  {
+                    "type": "integer",
+                    "stable_id": "DIAGNOSIS_DROPDOWN_YES_5"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "DIAGNOSIS_DROPDOWN_NO_5"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "DIAGNOSIS_DROPDOWN_UNKNOWN_5"
+                  }
+                ]
+              },
+              {
+                "name": "sibling_5_at_carrier",
+                "type": "Picklist",
+                "stable_id": "CARRIER_PICKLIST_5",
+                "options": [
+                  {
+                    "type": "integer",
+                    "stable_id": "CARRIER_DROPDOWN_YES_5"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "CARRIER_DROPDOWN_NO_5"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "CARRIER_DROPDOWN_UNKNOWN_5"
+                  }
+                ]
+              }
+            ]
+          },
+
         ]
       }
     ]
