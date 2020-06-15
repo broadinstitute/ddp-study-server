@@ -702,9 +702,9 @@ public class PutFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
             Map<String, String> subs = handle.attach(ActivityInstanceDao.class).findSubstitutions(instanceDto.getId());
             assertNotNull(subs);
             assertFalse(subs.isEmpty());
-            assertTrue(subs.containsKey(I18nTemplateConstants.DASHED_DATE));
-            assertTrue(subs.containsKey(I18nTemplateConstants.PARTICIPANT_FIRST_NAME));
-            assertTrue(subs.containsKey(I18nTemplateConstants.PARTICIPANT_LAST_NAME));
+            assertTrue(subs.containsKey(I18nTemplateConstants.Snapshot.DATE));
+            assertTrue(subs.containsKey(I18nTemplateConstants.Snapshot.PARTICIPANT_FIRST_NAME));
+            assertTrue(subs.containsKey(I18nTemplateConstants.Snapshot.PARTICIPANT_LAST_NAME));
         });
     }
 
