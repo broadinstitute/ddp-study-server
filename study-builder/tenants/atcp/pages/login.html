@@ -294,29 +294,52 @@
 <div class="main-offset sign-up path">
     <div class="row">
         <div class="col-lg-5 col-md-6 col-sm-8 col-xs-10">
-            <h1 class="Title BlueColor" data-translate="signUp.title">Join Us</h1>
+            <h1 class="Title BlueColor" data-translate="signUp.title">Create an Account</h1>
             <h2 class="Subtitle Subtitle--light"
                 data-translate="signUp.subTitle">
-                Do you or your child have A-T? Tell us about it and join us in making a difference…
+                You can log into the Platform with your email address by creating a password, or with your Google account. We will use this email address to communicate with you regarding the Global A-T Family Data Platform.
             </h2>
+            <h2 class="Subtitle Normal">Use your email address</h2>
             <form id="sign-up">
                 <div class="form-group">
-                    <label class="FormItem-label"
+                    <label class="FormItem-label  FormItem-label-email"
                            data-translate="common.email.label"
-                           for="email">Email address</label>
+                           for="email">
+                        Email address
+                        <a class="FormItem-help"
+                           data-toggle="tooltip"
+                           data-placement="right"
+                           title=""
+                           href="#"
+                           data-original-title="If you are a parent/legal guardian of a child(ren) with A-T, please use your own email address.  We will use this address to correspond with you regarding anyone you register in The Global A-T Family Data Platform.">
+                            <span data-translate="common.email.whoseEmail">
+                                Whose email should I input?
+                            </span>
+                        </a>
+                        <div class="tooltip fade right" role="tooltip">
+                            <div class="tooltip-arrow"></div>
+                            <div class="tooltip-inner">
+                                If you are a parent/legal guardian of a child(ren) with A-T, please use your own email address.
+                                We will use this address to correspond with you regarding anyone you register in The Global A-T Family Data Platform.
+                            </div>
+                        </div>
+                    </label>
                     <input class="form-control FormItem-input" type="text" name="email" id="email">
                 </div>
                 <div class="form-group">
                     <label class="FormItem-label"
                            for="password"
-                           data-translate="common.password.label">Password</label>
+                           data-translate="common.password.label">
+                        Password
+                        <span class="Italic">(8 characters minimum)</span>
+                    </label>
                     <input class="form-control FormItem-input" type="password" name="password" id="password">
                     <div class="message" data-translate="common.password.error">
                         at least 8 characters including: a lower-case letter, an upper-case letter, a number, a special
                         character (such as !@#$%^&*).
                     </div>
                 </div>
-                <div class="form-group">
+                <div class="form-group NoMargin">
                     <label class="FormItem-label"
                            for="password_confirm"
                            data-translate="common.reenter.label">Reenter password</label>
@@ -327,21 +350,45 @@
                         Password confirmation doesn't match Password
                     </div>
                 </div>
-                <hr class="NoMargin">
-                <div class="row NoMargin">
-                    <button class="col-lg-4 col-lg-offset-4 col-md-4 col-md-offset-4 col-sm-6 col-sm-offset-3 col-xs-8 col-xs-offset-2 BtnFilled BtnFilled--blue"
+                <div class="row NoMargin AlignedCenter">
+                    <button class="BtnFilled BtnFilled--blue"
                             id="join-us"
                             data-translate="common.joinUs">
-                        Join Us
+                        Create Account
                     </button>
                 </div>
-                <div class="SignHelp Italic">
-                    <a href="#" class="onActivateSignIn"
-                       data-translate="common.alreadyRegistered">
-                        Already registered? Sign In here
-                    </a>
-                </div>
             </form>
+            <div class="OverLine">
+                <hr class="Line--dark OverLine-line">
+                <div class="OverLine-comment">OR</div>
+            </div>
+            <h2 class="Subtitle Normal">Use your Google account</h2>
+            <form class="form" id="google-form" action="" accept-charset="UTF-8" method="post">
+                <div class="form-group">
+                    <div class="PositionRelative">
+                        <label class="FormItem-label FormItem-label-email" for="user_email">
+                            Google email address
+                            <a class="FormItem-help" data-toggle="tooltip" data-placement="right" title="" href="#"
+                               data-original-title="If you are a parent/legal guardian of a child(ren) with A-T, please use your own email address.  We will use this address to correspond with you regarding anyone you register in The Global A-T Family Data Platform.">
+                                <span data-translate="common.email.whoseEmail">
+                                    Whose email should I input?
+                                </span>
+                            </a>
+                        </label>
+                    </div>
+                    <input class="form-control FormItem-input google-field" type="text" value="" name="user[email]" id="user_email">
+                </div>
+                <div class="AlignedCenter">
+                    <a class="BtnFilled BtnFilled--red" id="google" href="#">Create Account with Google</a>
+                </div>
+                <hr class="Line--noBottom">
+            </form>
+            <div class="SignHelp Italic">
+                <a href="#" class="onActivateSignIn"
+                   data-translate="common.alreadyRegistered">
+                    Already registered? Sign In here
+                </a>
+            </div>
         </div>
     </div>
 </div>
