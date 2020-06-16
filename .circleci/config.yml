@@ -50,8 +50,8 @@ executors:
       - image: broadinstitute/study-server-build:java-2020-04-20A
       # start pubsub emulator
       - image: broadinstitute/study-server-build:pubsub-1
-      - image: circleci/mysql:5.7-ram
       - image: circleci/redis:4-alpine
+      - image: circleci/mysql:5.7-ram
         environment: &DB_VARS
           MYSQL_ROOT_PASSWORD: rootpw
           MYSQL_DATABASE: test_db
