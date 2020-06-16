@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.db.dao;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 
 import org.broadinstitute.ddp.model.user.UserProfile;
 import org.jdbi.v3.sqlobject.SqlObject;
@@ -16,14 +17,15 @@ public interface UserProfileSql extends SqlObject {
 
     @GetGeneratedKeys
     @SqlUpdate("insert into user_profile (user_id, first_name, last_name, sex, birth_date,"
-            + "        preferred_language_id, do_not_contact, is_deceased)"
-            + " values (:userId, :firstName, :lastName, :sex, :birthDate, :langId, :doNotContact, :isDeceased)")
+            + "        preferred_language_id, time_zone, do_not_contact, is_deceased)"
+            + " values (:userId, :firstName, :lastName, :sex, :birthDate, :langId, :tz, :doNotContact, :isDeceased)")
     long insert(@Bind("userId") long userId,
                 @Bind("firstName") String firstName,
                 @Bind("lastName") String lastName,
                 @Bind("sex") UserProfile.SexType sexType,
                 @Bind("birthDate") LocalDate birthDate,
                 @Bind("langId") Long preferredLangId,
+                @Bind("tz") ZoneId timeZone,
                 @Bind("doNotContact") Boolean doNotContact,
                 @Bind("isDeceased") Boolean isDeceased);
 
@@ -49,7 +51,8 @@ public interface UserProfileSql extends SqlObject {
 
     @SqlUpdate("update user_profile"
             + "    set first_name = :firstName, last_name = :lastName, sex = :sex, birth_date = :birthDate,"
-            + "        preferred_language_id = :langId, do_not_contact = :doNotContact, is_deceased = :isDeceased"
+            + "        preferred_language_id = :langId, do_not_contact = :doNotContact, is_deceased = :isDeceased,"
+            + "        time_zone = :tz"
             + "  where user_id = :userId")
     int update(@Bind("userId") long userId,
                @Bind("firstName") String firstName,
@@ -57,6 +60,7 @@ public interface UserProfileSql extends SqlObject {
                @Bind("sex") UserProfile.SexType sexType,
                @Bind("birthDate") LocalDate birthDate,
                @Bind("langId") Long preferredLangId,
+               @Bind("tz") ZoneId timeZone,
                @Bind("doNotContact") Boolean doNotContact,
                @Bind("isDeceased") Boolean isDeceased);
 

@@ -16,6 +16,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -410,6 +411,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
         UserRegistrationPayload payload = new UserRegistrationPayload(
                 testAuth0UserId, auth0ClientId, study1.getGuid(), auth0Domain)
                 .setLanguageCode(EN_LANG_CODE)
+                .setTimeZone("America/Los_Angeles") // Pacific time, -8 or -7.
                 .setFirstName("foo")
                 .setLastName("bar");
 
@@ -431,6 +433,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
 
             Long enLanguageCodeId = LanguageStore.getOrComputeDefault(handle).getId();
             assertEquals(enLanguageCodeId, profile.getPreferredLangId());
+            assertEquals(ZoneId.of("America/Los_Angeles"), profile.getTimeZone());
             assertEquals("foo", profile.getFirstName());
             assertEquals("bar", profile.getLastName());
 
@@ -769,6 +772,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
             UserProfile profile = handle.attach(UserProfileDao.class).findProfileByUserId(actualUser.getUserId()).get();
             Long enLanguageCodeId = LanguageStore.getOrComputeDefault(handle).getId();
             assertEquals(profile.getPreferredLangId(), enLanguageCodeId);
+            assertNull("should not have timezone since none were provided", profile.getTimeZone());
 
             JdbiUserStudyEnrollment jdbiEnrollment = handle.attach(JdbiUserStudyEnrollment.class);
             Optional<EnrollmentStatusType> enrollment = jdbiEnrollment

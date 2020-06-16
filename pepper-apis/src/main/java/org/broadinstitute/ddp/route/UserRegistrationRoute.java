@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.route;
 import static spark.Spark.halt;
 
 import java.time.Instant;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -521,6 +522,23 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
         }
     }
 
+    private ZoneId parseUserTimeZone(String givenTimeZone) {
+        if (givenTimeZone != null) {
+            if (ZoneId.getAvailableZoneIds().contains(givenTimeZone)) {
+                try {
+                    return ZoneId.of(givenTimeZone);
+                } catch (Exception e) {
+                    LOG.warn("Provided timezone '{}' is invalid", givenTimeZone, e);
+                }
+            } else {
+                LOG.warn("Provided timezone '{}' is not a recognized region id", givenTimeZone);
+            }
+        } else {
+            LOG.info("No user timezone is provided");
+        }
+        return null;
+    }
+
     private void initializeProfile(Handle handle, User user, UserRegistrationPayload payload) {
         var profileDao = handle.attach(UserProfileDao.class);
         UserProfile profile = profileDao.findProfileByUserId(user.getId()).orElse(null);
@@ -531,12 +549,14 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
         String lastName = payload.getLastName();
         lastName = StringUtils.isNotBlank(lastName) ? lastName.trim() : null;
         long languageId = determineUserLanguage(handle, payload).getId();
+        ZoneId timeZone = parseUserTimeZone(payload.getTimeZone());
 
         if (profile == null) {
             profile = new UserProfile.Builder(user.getId())
                     .setFirstName(firstName)
                     .setLastName(lastName)
                     .setPreferredLangId(languageId)
+                    .setTimeZone(timeZone)
                     .build();
             profileDao.createProfile(profile);
             LOG.info("Initialized user profile for user with guid {}", user.getGuid());
@@ -554,6 +574,10 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
             }
             if (profile.getPreferredLangId() == null) {
                 updated.setPreferredLangId(languageId);
+                shouldUpdate = true;
+            }
+            if (profile.getTimeZone() == null) {
+                updated.setTimeZone(timeZone);
                 shouldUpdate = true;
             }
 

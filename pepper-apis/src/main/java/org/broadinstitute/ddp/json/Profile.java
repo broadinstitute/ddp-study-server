@@ -50,6 +50,7 @@ public class Profile {
         this.preferredLanguage = other.getPreferredLangCode();
         this.firstName = other.getFirstName();
         this.lastName = other.getLastName();
+        // NOTE: timezone is currently not exposed in Profile API JSON.
     }
 
     public Profile(LocalDate birthDate,
