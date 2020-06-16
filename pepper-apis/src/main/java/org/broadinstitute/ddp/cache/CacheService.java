@@ -17,36 +17,42 @@ import javax.cache.configuration.MutableConfiguration;
 import javax.cache.expiry.CreatedExpiryPolicy;
 import javax.cache.expiry.Duration;
 
+import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.exception.DDPException;
+import org.broadinstitute.ddp.util.ConfigManager;
 import org.jdbi.v3.core.Handle;
 
 
 public class CacheService {
-    private static CacheService instance;
+    private static volatile CacheService INSTANCE;
     private CacheManager cacheManager;
     private Map<ModelChangeType, Collection<String>> modelChangeTypeToCacheName = new ConcurrentHashMap<>();
     private Map<String, IdToCacheKeyMapper<?>> cacheNameToCacheKeyMapper = new ConcurrentHashMap<>();
     private Map<String, IdToCacheKeyCollectionMapper<?>> cacheNameToCacheKeyCollectionMapper = new ConcurrentHashMap<>();
 
     public static CacheService getInstance() {
-        if (instance != null) {
-            return instance;
+        if (INSTANCE != null) {
+            return INSTANCE;
         } else {
             synchronized (CacheService.class) {
-                if (instance == null) {
-                    instance = new CacheService();
+                if (INSTANCE == null) {
+                    INSTANCE = new CacheService();
                 }
             }
-            return instance;
+            return INSTANCE;
         }
     }
 
     private CacheService() {
-        cacheManager = buildCacheManager();
+        String configFileName = ConfigManager.getInstance().getConfig().getString(ConfigFile.JCACHE_CONFIGURATION_FILE);
+        cacheManager = buildCacheManager(configFileName);
     }
 
-    private CacheManager buildCacheManager() {
-        URL resourceUrl = CacheService.class.getResource("/redisson-jcache.yaml");
+    private CacheManager buildCacheManager(String configFileName) {
+        URL resourceUrl = CacheService.class.getResource(configFileName);
+        if (resourceUrl == null) {
+            throw new DDPException("Could not find JCache config file with name:" + configFileName);
+        }
 
         URI redissonConfigUri;
         try {

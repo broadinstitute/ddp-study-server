@@ -57,6 +57,7 @@
         "backendTestClientName2": "{{$testingAuth.backendTestClientName2}}"
     },
     "googleGeocodingApiKey": "{{$testingConf.Data.geocodingKey}}",
+    "jcacheConfigurationFile": "/redisson-test-jcache.yaml",
     "elasticsearch": {
         "syncEnabled": false,
         "syncIntervalSecs": 10
