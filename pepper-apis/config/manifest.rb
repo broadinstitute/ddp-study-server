@@ -1,3 +1,4 @@
+render "redisson-jcache.yaml.ctmpl"
 render "application.conf.ctmpl"
 render "docker-compose.yaml.ctmpl"
 render "housekeeping-docker-compose.yaml.ctmpl"

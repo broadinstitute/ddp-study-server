@@ -28,7 +28,9 @@ import org.broadinstitute.ddp.db.dao.QueuedEventDao;
 import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
 import org.broadinstitute.ddp.db.dao.StudyLanguageDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
+import org.broadinstitute.ddp.db.dao.UserGovernanceCachedDao;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
+import org.broadinstitute.ddp.db.dao.UserProfileCachedDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.Auth0TenantDto;
 import org.broadinstitute.ddp.db.dto.EventConfigurationDto;
@@ -372,7 +374,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
             return operatorUser;
         }
 
-        UserGovernanceDao userGovernanceDao = handle.attach(UserGovernanceDao.class);
+        UserGovernanceDao userGovernanceDao = new UserGovernanceCachedDao(handle);
         Governance gov = userGovernanceDao.createGovernedUserWithGuidAlias(clientConfig.getClientId(), operatorUser.getId());
         userGovernanceDao.grantGovernedStudy(gov.getId(), policy.getStudyId());
         LOG.info("Created governed user with guid {} and granted access to study {} for proxy {}",
@@ -524,7 +526,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
     }
 
     private void initializeProfile(Handle handle, User user, UserRegistrationPayload payload) {
-        var profileDao = handle.attach(UserProfileDao.class);
+        var profileDao = new UserProfileCachedDao(handle);
         UserProfile profile = profileDao.findProfileByUserId(user.getId()).orElse(null);
 
         // If any name part is blank, then don't use it.

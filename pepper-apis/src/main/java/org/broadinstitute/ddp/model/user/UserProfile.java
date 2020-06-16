@@ -1,11 +1,12 @@
 package org.broadinstitute.ddp.model.user;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
-public class UserProfile {
+public class  UserProfile implements Serializable {
 
     private long userId;
     private String firstName;

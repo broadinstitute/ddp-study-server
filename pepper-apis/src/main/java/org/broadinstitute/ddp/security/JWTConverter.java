@@ -1,8 +1,14 @@
 package org.broadinstitute.ddp.security;
 
+import static java.util.concurrent.TimeUnit.MINUTES;
+
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import javax.cache.Cache;
+import javax.cache.expiry.Duration;
 
 import com.auth0.jwk.JwkProvider;
 import com.auth0.jwk.JwkProviderBuilder;
@@ -12,12 +18,14 @@ import com.auth0.jwt.exceptions.TokenExpiredException;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.auth0.jwt.interfaces.RSAKeyProvider;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.cache.CacheService;
+import org.broadinstitute.ddp.cache.IdToCacheKeyCollectionMapper;
+import org.broadinstitute.ddp.cache.ModelChangeType;
 import org.broadinstitute.ddp.constants.Auth0Constants;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.AuthDao;
 import org.broadinstitute.ddp.db.dao.ClientDao;
-import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.exception.DDPTokenException;
 import org.broadinstitute.ddp.model.user.UserProfile;
@@ -30,6 +38,8 @@ public class JWTConverter {
     private static final Logger LOG = LoggerFactory.getLogger(JWTConverter.class);
     private static final String DEFAULT_ISO_LANGUAGE_CODE = "en";
     private Map<String, JwkProvider> jwkProviderMap = new HashMap<>(); // Map of Auth0ClientIds -> jwkProviders
+    private Cache<String, DDPAuth> jwtToDDPAuthCache;
+    private Cache<Long, Set<String>> userIdToJwtCache;
 
     public static JwkProvider defaultProvider(String auth0Domain) {
         return new JwkProviderBuilder(auth0Domain).cached(100, 3L, TimeUnit.HOURS).build();
@@ -83,26 +93,47 @@ public class JWTConverter {
         }
         return null;
     }
+    public JWTConverter() {
+        super();
+        initializeCaching();
+    }
 
-    private String getPreferredLanguageCodeForUser(Handle handle, String userGuid) {
-        JdbiUser userDao = handle.attach(JdbiUser.class);
-        Long userId = userDao.getUserIdByGuid(userGuid);
-        var profileDao = handle.attach(UserProfileDao.class);
-        UserProfile userProfile = profileDao.findProfileByUserId(userId).orElse(null);
-        String preferredIsoLanguageCode;
-        if (userProfile != null && userProfile.getPreferredLangCode() != null) {
-            preferredIsoLanguageCode = userProfile.getPreferredLangCode();
-            LOG.info("The preferred language code for the user with GUID {} is '{}'",
-                    userGuid, preferredIsoLanguageCode);
-        } else {
-            LOG.info("There is no preferred language code for the user with GUID {}, using a default one ('{}')",
-                    userGuid, DEFAULT_ISO_LANGUAGE_CODE);
-            preferredIsoLanguageCode = DEFAULT_ISO_LANGUAGE_CODE;
+    void resetCaching(){
+        jwtToDDPAuthCache.clear();
+        userIdToJwtCache.clear();
+    }
+
+    private void initializeCaching() {
+        userIdToJwtCache = CacheService.getInstance().getOrCreateCache("userIdToJwtCache",
+                                                new Duration(MINUTES, 11), this);
+
+
+        jwtToDDPAuthCache = CacheService.getInstance().getOrCreateCache("jwtToDDPAuth",
+                new Duration(MINUTES, 10),
+                (IdToCacheKeyCollectionMapper)(id, handle) -> userIdToJwtCache.get(id), ModelChangeType.USER, this);
+    }
+
+    private String getPreferredLanguageCodeForUser(UserProfile userProfile, String userGuid) {
+        String preferredIsoLanguageCode = DEFAULT_ISO_LANGUAGE_CODE;
+        if (userProfile ==  null) {
+            if (userProfile.getPreferredLangCode() != null) {
+                preferredIsoLanguageCode = userProfile.getPreferredLangCode();
+                LOG.info("The preferred language code for the user with GUID {} is '{}'",
+                        userGuid, preferredIsoLanguageCode);
+            }
         }
         return preferredIsoLanguageCode;
     }
+    private UserProfile findUserProfile(Handle handle, String userGuid) {
+        return handle.attach(UserProfileDao.class).findProfileByUserGuid(userGuid).orElse(null);
+    }
 
     private DDPAuth convertJWT(String jwt) {
+        DDPAuth cachedAuth = jwtToDDPAuthCache.get(jwt);
+        if (cachedAuth != null) {
+            LOG.debug("Auth found in cache");
+            return cachedAuth;
+        }
         DDPAuth ddpAuth =
                 TransactionWrapper.withTxn(handle -> {
                     DDPAuth txnDdpAuth = null;
@@ -119,16 +150,17 @@ public class JWTConverter {
                             throw new DDPTokenException("Could not find configuration with auth0clientId: " + auth0ClientId
                                     + " auth0Domain: " + auth0Domain);
                         }
-                        jwkProvider = new JwkProviderBuilder(configuration.getAuth0Domain()).cached(100, 3L, TimeUnit.MINUTES).build();
+                        jwkProvider = new JwkProviderBuilder(configuration.getAuth0Domain()).cached(100, 3L, MINUTES).build();
                         jwkProviderMap.put(auth0ClientId, jwkProvider);
                     }
-
+                    UserProfile userProfile;
                     try {
                         DecodedJWT validToken = verifyDDPToken(jwt, jwkProvider);
                         String ddpUserGuid = validToken.getClaim(Auth0Constants.DDP_USER_ID_CLAIM).asString();
                         UserPermissions userPermissions = handle.attach(AuthDao.class)
                                 .findUserPermissions(ddpUserGuid, auth0ClientId, auth0Domain);
-                        String preferredLanguage = getPreferredLanguageCodeForUser(handle, ddpUserGuid);
+                        userProfile = findUserProfile(handle, ddpUserGuid);
+                        String preferredLanguage = getPreferredLanguageCodeForUser(userProfile, ddpUserGuid);
                         txnDdpAuth = new DDPAuth(auth0ClientId, ddpUserGuid, jwt, userPermissions, preferredLanguage);
                     } catch (Exception e) {
                         LOG.warn("Could not verify token. User "
@@ -137,11 +169,19 @@ public class JWTConverter {
                                 + auth0ClientId);
                         throw e;
                     }
-
+                    Set<String> existingJwts = userIdToJwtCache.get(userProfile.getUserId());
+                    if (existingJwts == null) {
+                        userIdToJwtCache.put(userProfile.getUserId(), Set.of(jwt));
+                    } else {
+                        Set<String> newSet = new HashSet(existingJwts);
+                        newSet.add(jwt);
+                        userIdToJwtCache.put(userProfile.getUserId(), newSet);
+                    }
+                    jwtToDDPAuthCache.put(jwt, txnDdpAuth);
                     return txnDdpAuth;
                 });
-
         return ddpAuth;
+
     }
 
     /**

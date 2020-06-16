@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.security;
 
+import java.io.Serializable;
 import java.util.Locale;
 import javax.annotation.Nullable;
 
@@ -17,7 +18,7 @@ import org.jdbi.v3.core.Handle;
  * Use #{@link #isActive()} to determine whether this user
  * has been disabled
  */
-public class DDPAuth {
+public class DDPAuth implements Serializable {
 
     private String client = null;
 
