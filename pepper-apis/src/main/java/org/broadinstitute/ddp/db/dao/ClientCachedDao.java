@@ -114,6 +114,6 @@ public class ClientCachedDao extends SQLObjectWrapper<ClientDao> implements Clie
 
     @Override
     public boolean isAuth0ClientActive(String auth0ClientId, String auth0Domain) {
-        return false;
+        return target.isAuth0ClientActive(auth0ClientId, auth0Domain);
     }
 }
