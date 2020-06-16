@@ -6,7 +6,6 @@ import static org.junit.Assert.assertTrue;
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.interfaces.DecodedJWT;
 import com.typesafe.config.Config;
-import org.broadinstitute.ddp.cache.CacheService;
 import org.broadinstitute.ddp.constants.Auth0Constants;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.TransactionWrapper;

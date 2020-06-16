@@ -16,9 +16,11 @@ import org.jdbi.v3.core.Handle;
 
 public class ClientCachedDao extends SQLObjectWrapper<ClientDao> implements ClientDao {
     private static final String CACHE_NAME = "StudyClientConfigCache.byStudyClientConfigCacheKey";
+
     private class StudyClientConfigCacheKey implements Serializable {
         String auth0ClientId;
         String auth0Domain;
+
         StudyClientConfigCacheKey(String auth0ClientId, String auth0Domain) {
             this.auth0ClientId = auth0ClientId;
             this.auth0Domain = auth0Domain;
@@ -48,7 +50,9 @@ public class ClientCachedDao extends SQLObjectWrapper<ClientDao> implements Clie
             return result;
         }
     }
+
     private static Cache<StudyClientConfigCacheKey, StudyClientConfiguration> CLIENT_STUDY_CONFIG_CACHE;
+
     private static void initCache() {
         if (CLIENT_STUDY_CONFIG_CACHE == null || CLIENT_STUDY_CONFIG_CACHE.isClosed()) {
             CLIENT_STUDY_CONFIG_CACHE = CacheService.getInstance().getOrCreateCache(CACHE_NAME, new Duration(MINUTES, 10),

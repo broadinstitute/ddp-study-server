@@ -25,7 +25,7 @@ public class UserProfileCachedDao extends SQLObjectWrapper<UserProfileDao> imple
 
     public UserProfileCachedDao(Handle handle) {
         super(handle, UserProfileDao.class);
-      //  initCache();
+        //  initCache();
     }
 
     @Override
@@ -54,13 +54,13 @@ public class UserProfileCachedDao extends SQLObjectWrapper<UserProfileDao> imple
     @Override
     public Optional<UserProfile> findProfileByUserGuid(String userGuid) {
         return target.findProfileByUserGuid(userGuid);
-//        var profile =  userProfileCache.get(userGuid);
-//        if (profile == null) {
-//            var optionalProfile = getHandle().attach(UserProfileDao.class).findProfileByUserGuid(userGuid);
-//            if (optionalProfile.isPresent()) {
-//                userProfileCache.put(userGuid, profile);
-//            }
-//        }
-//        return Optional.ofNullable(profile);
+        //        var profile =  userProfileCache.get(userGuid);
+        //        if (profile == null) {
+        //            var optionalProfile = getHandle().attach(UserProfileDao.class).findProfileByUserGuid(userGuid);
+        //            if (optionalProfile.isPresent()) {
+        //                userProfileCache.put(userGuid, profile);
+        //            }
+        //        }
+        //        return Optional.ofNullable(profile);
     }
 }

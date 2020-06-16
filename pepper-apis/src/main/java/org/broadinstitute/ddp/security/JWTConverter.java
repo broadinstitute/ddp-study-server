@@ -52,7 +52,7 @@ public class JWTConverter {
      * @param jwt         the token to verify
      * @param jwkProvider the provider of jwk data, typically auth0's jwk endpoint
      * @return a verified, decoded JWT
-     * @throws DDPTokenException if issues with key provider
+     * @throws DDPTokenException                                 if issues with key provider
      * @throws com.auth0.jwt.exceptions.JWTVerificationException if issues with jwt, e.g. token expired, invalid claims, etc.
      */
     public static DecodedJWT verifyDDPToken(String jwt, JwkProvider jwkProvider) {
@@ -93,29 +93,30 @@ public class JWTConverter {
         }
         return null;
     }
+
     public JWTConverter() {
         super();
         initializeCaching();
     }
 
-    void resetCaching(){
+    void resetCaching() {
         jwtToDDPAuthCache.clear();
         userIdToJwtCache.clear();
     }
 
     private void initializeCaching() {
         userIdToJwtCache = CacheService.getInstance().getOrCreateCache("userIdToJwtCache",
-                                                new Duration(MINUTES, 11), this);
+                new Duration(MINUTES, 11), this);
 
 
         jwtToDDPAuthCache = CacheService.getInstance().getOrCreateCache("jwtToDDPAuth",
                 new Duration(MINUTES, 10),
-                (IdToCacheKeyCollectionMapper)(id, handle) -> userIdToJwtCache.get(id), ModelChangeType.USER, this);
+                (IdToCacheKeyCollectionMapper) (id, handle) -> userIdToJwtCache.get(id), ModelChangeType.USER, this);
     }
 
     private String getPreferredLanguageCodeForUser(UserProfile userProfile, String userGuid) {
         String preferredIsoLanguageCode = DEFAULT_ISO_LANGUAGE_CODE;
-        if (userProfile ==  null) {
+        if (userProfile == null) {
             if (userProfile.getPreferredLangCode() != null) {
                 preferredIsoLanguageCode = userProfile.getPreferredLangCode();
                 LOG.info("The preferred language code for the user with GUID {} is '{}'",
@@ -124,6 +125,7 @@ public class JWTConverter {
         }
         return preferredIsoLanguageCode;
     }
+
     private UserProfile findUserProfile(Handle handle, String userGuid) {
         return handle.attach(UserProfileDao.class).findProfileByUserGuid(userGuid).orElse(null);
     }
@@ -131,7 +133,7 @@ public class JWTConverter {
     private DDPAuth convertJWT(String jwt) {
         DDPAuth cachedAuth = jwtToDDPAuthCache.get(jwt);
         if (cachedAuth != null) {
-            LOG.debug("Auth found in cache");
+            LOG.info("Auth found in cache");
             return cachedAuth;
         }
         DDPAuth ddpAuth =

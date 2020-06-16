@@ -19,6 +19,7 @@ public class UserGovernanceCachedDao extends SQLObjectWrapper<UserGovernanceDao>
         notifyModelUpdated(ModelChangeType.USER, proxyUserId);
         return result;
     }
+
     public Governance createGovernedUserWithGuidAlias(long clientId, long proxyUserId) {
         var result = target.createGovernedUserWithGuidAlias(clientId, proxyUserId);
         notifyModelUpdated(ModelChangeType.USER, proxyUserId);

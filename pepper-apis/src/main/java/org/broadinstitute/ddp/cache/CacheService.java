@@ -32,7 +32,7 @@ public class CacheService {
         if (instance != null) {
             return instance;
         } else {
-            synchronized(CacheService.class) {
+            synchronized (CacheService.class) {
                 if (instance == null) {
                     instance = new CacheService();
                 }
@@ -48,7 +48,7 @@ public class CacheService {
     private CacheManager buildCacheManager() {
         URL resourceUrl = CacheService.class.getResource("/redisson-jcache.yaml");
 
-        URI redissonConfigUri = null;
+        URI redissonConfigUri;
         try {
             redissonConfigUri = resourceUrl.toURI();
         } catch (URISyntaxException e) {
@@ -58,41 +58,45 @@ public class CacheService {
         return Caching.getCachingProvider().getCacheManager(redissonConfigUri, null);
     }
 
-    public <K, V> Cache<K, V> getOrCreateCache(String cacheName, Duration entryDuration, IdToCacheKeyMapper<K> mapper, ModelChangeType evictionModelChangeType, Object cacheParentObject) {
-        Cache existingCache = cacheManager.getCache(cacheName);
-        if (existingCache == null || existingCache.isClosed()) {
-            synchronized (cacheParentObject) {
-                Cache cache = _getOrCreateCache(cacheName, entryDuration);
-                cacheNameToCacheKeyMapper.put(cacheName, mapper);
-                updateChangeTypeToCacheName(evictionModelChangeType, cacheName);
-                return cache;
-            }
-        } else {
-            return existingCache;
-        }
+    public <K, V> Cache<K, V> getOrCreateCache(String cacheName, Duration entryDuration, IdToCacheKeyMapper<K> mapper,
+                                               ModelChangeType evictionModelChangeType, Object cacheParentObject) {
+        return _getOrCreateCache(cacheName, entryDuration, mapper, evictionModelChangeType, cacheParentObject);
     }
 
-    public <K, V> Cache<K, V> getOrCreateCache(String cacheName, Duration entryDuration, IdToCacheKeyCollectionMapper<K> mapper, ModelChangeType evictionModelChangeType, Object cacheParentObject) {
-        Cache existingCache = cacheManager.getCache(cacheName);
-        if (existingCache == null || existingCache.isClosed()) {
-            synchronized (cacheParentObject) {
-                Cache cache = _getOrCreateCache(cacheName, entryDuration);
-                cacheNameToCacheKeyCollectionMapper.put(cacheName, mapper);
-                updateChangeTypeToCacheName(evictionModelChangeType, cacheName);
-                return cache;
-            }
-        } else {
-            return existingCache;
-        }
+    public <K, V> Cache<K, V> getOrCreateCache(String cacheName, Duration entryDuration, IdToCacheKeyCollectionMapper<K> mapper,
+                                               ModelChangeType evictionModelChangeType, Object cacheParentObject) {
+        return _getOrCreateCache(cacheName, entryDuration, mapper, evictionModelChangeType, cacheParentObject);
     }
 
-    public <K, V> Cache<K ,V> getOrCreateCache(String cacheName, Duration entryDuration, Object cacheParentObject) {
+    public <K, V> Cache<K, V> getOrCreateCache(String cacheName, Duration entryDuration, Object cacheParentObject) {
         synchronized (cacheParentObject) {
             return _getOrCreateCache(cacheName, entryDuration);
         }
     }
 
-    private <K, V> Cache<K ,V> _getOrCreateCache(String cacheName, Duration entryDuration) {
+    private <K, V> Cache<K, V> _getOrCreateCache(String cacheName, Duration entryDuration, Object mapper,
+                                                 ModelChangeType evictionModelChangeType,
+                                                 Object cacheParentObject) {
+        Cache existingCache = cacheManager.getCache(cacheName);
+        if (existingCache == null || existingCache.isClosed()) {
+            synchronized (cacheParentObject) {
+                Cache<K, V> cache = _getOrCreateCache(cacheName, entryDuration);
+                if (mapper instanceof IdToCacheKeyCollectionMapper) {
+                    cacheNameToCacheKeyCollectionMapper.put(cacheName, (IdToCacheKeyCollectionMapper) mapper);
+                } else if (mapper instanceof IdToCacheKeyMapper) {
+                    cacheNameToCacheKeyMapper.put(cacheName, (IdToCacheKeyMapper) mapper);
+                } else {
+                    throw new DDPException("Unrecognized mapper type");
+                }
+                updateChangeTypeToCacheName(evictionModelChangeType, cacheName);
+                return cache;
+            }
+        } else {
+            return (Cache<K, V>) existingCache;
+        }
+    }
+
+    private <K, V> Cache<K, V> _getOrCreateCache(String cacheName, Duration entryDuration) {
         Cache cache = cacheManager.getCache(cacheName);
         if (cache == null || cache.isClosed()) {
             var cacheConfig = new MutableConfiguration<K, V>()
@@ -100,12 +104,13 @@ public class CacheService {
                     .setStatisticsEnabled(true);
             cache = cacheManager.createCache(cacheName, cacheConfig);
         }
-        return cache;
+        return (Cache<K, V>) cache;
     }
 
     public void destroyCache(String name) {
         cacheManager.destroyCache(name);
     }
+
     private void updateChangeTypeToCacheName(ModelChangeType evictionModelChangeType, String cacheName) {
         Collection<String> existingCacheNames = modelChangeTypeToCacheName.get(evictionModelChangeType);
         List<String> newListOfCacheNames;
@@ -119,23 +124,30 @@ public class CacheService {
     }
 
     public void modelUpdated(ModelChangeType changeType, Handle handle, long id) {
-        findCacheByEventType(changeType).forEach(cache -> {
-            IdToCacheKeyMapper<?> mapper = cacheNameToCacheKeyMapper.get(cache.getName());
-            if (mapper != null) {
-                Object cacheKey = cacheNameToCacheKeyMapper.get(cache.getName()).mapToKey(id, handle);
-                cache.remove(cacheKey);
-            } else {
-                IdToCacheKeyCollectionMapper<?> keyCollectionMapper = cacheNameToCacheKeyCollectionMapper.get(cache.getName());
+        findCacheNameByEventType(changeType).forEach(cacheName -> {
+            Cache cache = cacheManager.getCache(cacheName);
+            if (cache != null) {
+                IdToCacheKeyMapper<?> mapper = cacheNameToCacheKeyMapper.get(cacheName);
+                if (mapper != null) {
+                    Object cacheKey = cacheNameToCacheKeyMapper.get(cacheName).mapToKey(id, handle);
+                    if (cacheKey != null) {
+                        cache.remove(cacheKey);
+                    }
+                } else {
+                    IdToCacheKeyCollectionMapper<?> keyCollectionMapper = cacheNameToCacheKeyCollectionMapper.get(cacheName);
 
-                if (keyCollectionMapper != null) {
-                    Set<?> keys = keyCollectionMapper.mapToKeys(id, handle);
-                    cache.removeAll(keys);
+                    if (keyCollectionMapper != null) {
+                        Set<?> keys = keyCollectionMapper.mapToKeys(id, handle);
+                        if (keys != null) {
+                            cache.removeAll(keys);
+                        }
+                    }
                 }
             }
         });
     }
 
-    public Collection<Cache> findCacheByEventType(ModelChangeType changeType) {
-        return modelChangeTypeToCacheName.getOrDefault(changeType, Collections.EMPTY_LIST);
+    private Collection<String> findCacheNameByEventType(ModelChangeType changeType) {
+        return modelChangeTypeToCacheName.getOrDefault(changeType, Collections.emptyList());
     }
 }

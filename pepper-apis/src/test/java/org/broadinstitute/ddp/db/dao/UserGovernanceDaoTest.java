@@ -10,21 +10,15 @@ import java.util.Collection;
 import java.util.List;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
-import org.broadinstitute.ddp.cache.CacheService;
+import org.broadinstitute.ddp.cache.DaoBuilder;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.model.governance.Governance;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
-import org.jdbi.v3.core.Handle;
-import org.jdbi.v3.sqlobject.SqlObject;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-
-interface DaoBuilder<T extends SqlObject> {
-    T buildDao(Handle handle);
-}
 
 @RunWith(Parameterized.class)
 public class UserGovernanceDaoTest extends TxnAwareBaseTest {
