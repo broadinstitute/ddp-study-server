@@ -199,7 +199,7 @@ public class AgeUpServiceTest extends TxnAwareBaseTest {
             long triggerId = handle.attach(EventTriggerDao.class)
                     .insertStaticTrigger(EventTriggerType.REACHED_AOM_PREP);
             long actionId = handle.attach(EventActionDao.class)
-                    .insertInvitationEmailNotificationAction(new SendgridEmailEventActionDto("template", "en"));
+                    .insertInvitationEmailNotificationAction(new SendgridEmailEventActionDto("template", "en", false));
             handle.attach(JdbiEventConfiguration.class).insert(triggerId, actionId, testData.getStudyId(),
                     Instant.now().toEpochMilli(), null, 0, null, null, true, 1);
 

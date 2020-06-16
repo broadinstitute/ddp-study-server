@@ -1,5 +1,6 @@
 render "redisson-jcache.yaml.ctmpl"
 render "application.conf.ctmpl"
+render "DataDonationPlatform.yaml.ctmpl"
 render "docker-compose.yaml.ctmpl"
 render "housekeeping-docker-compose.yaml.ctmpl"
 render "startup.sh.ctmpl"
