@@ -21,9 +21,12 @@ import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.util.ConfigManager;
 import org.jdbi.v3.core.Handle;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 public class CacheService {
+    private static final Logger LOG = LoggerFactory.getLogger(CacheService.class);
     private static volatile CacheService INSTANCE;
     private CacheManager cacheManager;
     private Map<ModelChangeType, Collection<String>> modelChangeTypeToCacheName = new ConcurrentHashMap<>();
@@ -44,11 +47,13 @@ public class CacheService {
     }
 
     private CacheService() {
-        String configFileName = ConfigManager.getInstance().getConfig().getString(ConfigFile.JCACHE_CONFIGURATION_FILE);
-        if (true) {
-            cacheManager = new NullCacheManager();
-        } else {
+        boolean configFileSet = ConfigManager.getInstance().getConfig().hasPath(ConfigFile.JCACHE_CONFIGURATION_FILE);
+        if (configFileSet) {
+            String configFileName = ConfigManager.getInstance().getConfig().getString(ConfigFile.JCACHE_CONFIGURATION_FILE);
             cacheManager = buildCacheManager(configFileName);
+        } else {
+            LOG.warn("Configuration file not set: " + ConfigFile.JCACHE_CONFIGURATION_FILE + "JCache is not enabled");
+            cacheManager = new NullCacheManager();
         }
     }
 
