@@ -95,7 +95,7 @@ public class StudyDataLoader {
     public static final String DK = "DK";
     private static final Logger LOG = LoggerFactory.getLogger(StudyDataLoader.class);
     private static final String DEFAULT_PREFERRED_LANGUAGE_CODE = "en";
-    private static final String DATSTAT_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss'Z'";
+    private static final String DATSTAT_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS";
     private static final int DSM_DEFAULT_ON_DEMAND_TRIGGER_ID = -2;
     private Long defaultKitCreationEpoch = null;
 
@@ -217,12 +217,13 @@ public class StudyDataLoader {
                 olcService, addressService);
 
         String ddpCreated = getStringValueFromElement(datstatData, "datstat_created");
+        LocalDateTime ddpCreatedLocalDateTime = LocalDateTime.parse(ddpCreated, DateTimeFormatter.ofPattern(DATSTAT_DATE_FORMAT));
         Long ddpCreatedAt = null;
         boolean couldNotParse = false;
 
         try {
             if (ddpCreated != null) {
-                Instant instant = Instant.parse(ddpCreated);
+                Instant instant = ddpCreatedLocalDateTime.toInstant(ZoneOffset.UTC);
                 if (instant != null) {
                     ddpCreatedAt = instant.toEpochMilli();
                 }
@@ -784,12 +785,11 @@ public class StudyDataLoader {
         if (lastModifiedStr != null && !lastModifiedStr.isEmpty()) {
             lastModifiedDate = LocalDateTime.parse(lastModifiedStr);
         }
-        System.out.println("-----------------tytyt");
 
         long createdAtMillis = createdAtDate.toInstant(ZoneOffset.UTC).toEpochMilli();
         long updatedAtMillis = lastModifiedDate.toInstant(ZoneOffset.UTC).toEpochMilli();
 
-        String shortId = data.getAsJsonObject().get("ddp_participant_shortid").getAsString();
+        String shortId = null;
         String altpid = data.getAsJsonObject().get("datstat_altpid").getAsString();
         long userId = userDao.insertMigrationUser(auth0UserId, userGuid, clientDto.getId(), userHruid,
                 altpid, shortId, createdAtMillis, updatedAtMillis);
