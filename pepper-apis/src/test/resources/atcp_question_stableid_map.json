@@ -447,15 +447,6 @@
             ]
           },
           {
-            "_comment": "TODO, such page doesn't exist in legacy, we don't have answers to incontinence question in data",
-            "name": "incontinence_type",
-            "stable_id": "INCONTINENCE",
-            "type": "Picklist",
-            "source_type": "string",
-            "options": [
-            ]
-          },
-          {
             "name": "infectious_diseases",
             "stable_id": "INFECTIOUS_DISEASES",
             "type": "Picklist",

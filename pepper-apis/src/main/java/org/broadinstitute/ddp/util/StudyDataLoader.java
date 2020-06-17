@@ -196,15 +196,14 @@ public class StudyDataLoader {
             //watch out.. early return
         }
 
-        //get default kit creation date
-        String defaultKitCreationDate = mappingData.getAsJsonArray().get(2).getAsJsonObject()
-                .get("default_kit_creation_date").getAsString();
         userGuid = DBUtils.uniqueUserGuid(handle);
         String userHruid = DBUtils.uniqueUserHruid(handle);
         JdbiUser userDao = handle.attach(JdbiUser.class);
         JdbiClient clientDao = handle.attach(JdbiClient.class);
 
         UserDto pepperUser = createLegacyPepperUser(userDao, clientDao, datstatData, userGuid, userHruid, clientDto);
+
+
 
         JdbiLanguageCode jdbiLanguageCode = handle.attach(JdbiLanguageCode.class);
         UserProfileDao profileDao = handle.attach(UserProfileDao.class);
@@ -217,20 +216,7 @@ public class StudyDataLoader {
                 jdbiMailAddress,
                 olcService, addressService);
 
-        String kitRequestId = getStringValueFromElement(datstatData, "ddp_spit_kit_request_id");
-        if (kitRequestId != null) {
-            KitTypeDao kitTypeDao = handle.attach(KitTypeDao.class);
-            DsmKitRequestDao dsmKitRequestDao = handle.attach(DsmKitRequestDao.class);
-            addKitDetails(dsmKitRequestDao,
-                    kitTypeDao,
-                    pepperUser.getUserId(),
-                    createdAddress.getId(),
-                    kitRequestId,
-                    studyDto.getGuid(),
-                    defaultKitCreationDate);
-        }
-
-        String ddpCreated = getStringValueFromElement(datstatData, "ddp_created");
+        String ddpCreated = getStringValueFromElement(datstatData, "datstat_created");
         Long ddpCreatedAt = null;
         boolean couldNotParse = false;
 
@@ -790,14 +776,15 @@ public class StudyDataLoader {
 
         String auth0UserId = newAuth0User.getId();
 
-        String userCreatedAt = getStringValueFromElement(data, "ddp_created");
+        String userCreatedAt = getStringValueFromElement(data, "datstat_created");
         LocalDateTime createdAtDate = LocalDateTime.parse(userCreatedAt, DateTimeFormatter.ofPattern(DATSTAT_DATE_FORMAT));
 
-        String lastModifiedStr = getStringValueFromElement(data, "ddp_last_updated");
+        String lastModifiedStr = getStringValueFromElement(data, "datstat_lastmodified");
         LocalDateTime lastModifiedDate = createdAtDate;
         if (lastModifiedStr != null && !lastModifiedStr.isEmpty()) {
             lastModifiedDate = LocalDateTime.parse(lastModifiedStr);
         }
+        System.out.println("-----------------tytyt");
 
         long createdAtMillis = createdAtDate.toInstant(ZoneOffset.UTC).toEpochMilli();
         long updatedAtMillis = lastModifiedDate.toInstant(ZoneOffset.UTC).toEpochMilli();
@@ -873,7 +860,7 @@ public class StudyDataLoader {
 
         //no addressvalid flag in MBC.
         //if kit exists consider address as valid else validate address
-        String kitRequestId = getStringValueFromElement(data, "ddp_spit_kit_request_id");
+        String kitRequestId = "";
         if (StringUtils.isNotBlank(kitRequestId)) {
             mailAddress.setValidationStatus(DsmAddressValidationStatus.DSM_VALID_ADDRESS_STATUS);
             mailAddress.setPlusCode(olcService.calculatePlusCodeWithPrecision(mailAddress, OLCService.DEFAULT_OLC_PRECISION));

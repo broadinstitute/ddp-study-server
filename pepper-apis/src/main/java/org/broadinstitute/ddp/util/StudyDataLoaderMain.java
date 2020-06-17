@@ -528,7 +528,7 @@ public class StudyDataLoaderMain {
 
         String altpid = datstatParticipantData.getAsJsonObject().get("datstat_altpid").getAsString();
         String emailAddress = datstatParticipantData.getAsJsonObject().get("datstat_email").getAsString();
-        String createdAt = datstatParticipantData.getAsJsonObject().get("ddp_created").getAsString();
+        String createdAt = datstatParticipantData.getAsJsonObject().get("datstat_created").getAsString();
         LOG.info("loading participant: {} email: {} ", altpid, emailAddress);
 
         TransactionWrapper.useTxn(handle -> {
@@ -546,7 +546,6 @@ public class StudyDataLoaderMain {
 
             boolean auth0Collision = false;
             try {
-
                 //verify if participant is already loaded..
                 JdbiUser jdbiUser = handle.attach(JdbiUser.class);
                 userGuid = jdbiUser.getUserGuidByAltpid(altpid);
@@ -692,7 +691,6 @@ public class StudyDataLoaderMain {
                                 mappingData.get("followupsurvey"),
                                 studyDto, userDto, instanceDto, activityInstanceDao.getJdbiActivityInstance(), answerDao);
                     }
-
                     JsonElement ddpExitedDt = datstatParticipantData.getAsJsonObject().get("ddp_exited_dt");
                     if (ddpExitedDt != null && !ddpExitedDt.isJsonNull()) {
                         dataLoader.addUserStudyExit(handle, ddpExitedDt.getAsString(), userGuid, studyGuid);
