@@ -20,6 +20,10 @@ public class PicklistOptionDef {
     private Template optionLabelTemplate;
 
     @Valid
+    @SerializedName("tooltipTemplate")
+    private Template tooltipTemplate;
+
+    @Valid
     @SerializedName("detailLabelTemplate")
     private Template detailLabelTemplate;
 
@@ -66,11 +70,12 @@ public class PicklistOptionDef {
         }
     }
 
-    public PicklistOptionDef(Long optionId, String stableId, Template optionLabelTemplate,
+    public PicklistOptionDef(Long optionId, String stableId, Template optionLabelTemplate, Template tooltipTemplate,
                              Template detailLabelTemplate, boolean isExclusive) {
         this.optionId = optionId;
         this.stableId = MiscUtil.checkNotBlank(stableId, "stableId");
         this.optionLabelTemplate = MiscUtil.checkNonNull(optionLabelTemplate, "optionLabelTemplate");
+        this.tooltipTemplate = tooltipTemplate;
         this.isDetailsAllowed = (detailLabelTemplate != null);
         this.detailLabelTemplate = detailLabelTemplate;
         this.isExclusive = isExclusive;
@@ -82,6 +87,10 @@ public class PicklistOptionDef {
 
     public Template getOptionLabelTemplate() {
         return optionLabelTemplate;
+    }
+
+    public Template getTooltipTemplate() {
+        return tooltipTemplate;
     }
 
     public Template getDetailLabelTemplate() {

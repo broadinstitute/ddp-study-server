@@ -6,6 +6,7 @@ select
     q.question_id,
     qsc.stable_id,
     q.question_prompt_template_id,
+    q.tooltip_template_id,
     q.info_header_template_id,
     q.info_footer_template_id,
     q.is_restricted,

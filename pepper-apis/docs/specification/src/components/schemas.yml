@@ -1049,6 +1049,9 @@ PicklistOption:
       type: boolean
     optionLabel:
       type: string
+    tooltip:
+      type: string
+      description: tooltip for the option, in plain text
     detailLabel:
       type: string
     exclusive:
@@ -1113,6 +1116,7 @@ ProfileModel:
       lastName:
         type: string
         example: Barium
+
 #####
 #
 # Questions
@@ -1140,6 +1144,9 @@ Question:
       type: string
       description: 'the text that should be displayed for the question with all embedded HTML tags flattened and stripped.'
       example: 'What color is the sky?'
+    tooltip:
+      type: string
+      description: tooltip for the question, in plain text
     additionalInfoHeader:
       type: string
       description: a plain text string for additional information to be presented before the user responds to a question
