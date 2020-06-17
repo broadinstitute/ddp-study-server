@@ -37,6 +37,9 @@
                 }
               }
             },
+            "preferredLanguage": {
+              "type": "keyword"
+            },
             "doNotContact": {
               "type": "boolean"
             },

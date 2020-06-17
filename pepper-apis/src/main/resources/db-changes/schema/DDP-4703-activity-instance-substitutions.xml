@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="20200601-activity-instance-substitution-table">
+        <createTable tableName="activity_instance_substitution">
+            <column name="activity_instance_substitution_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="activity_instance_substitution_pk"/>
+            </column>
+            <column name="activity_instance_id" type="bigint">
+                <constraints nullable="false"
+                             references="activity_instance(activity_instance_id)" foreignKeyName="act_inst_sub_act_inst_fk"
+                             deleteCascade="true"/>
+            </column>
+            <column name="variable_name" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="value" type="varchar(500)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addUniqueConstraint tableName="activity_instance_substitution"
+                             columnNames="activity_instance_id, variable_name"
+                             constraintName="act_inst_sub_activity_variable_uk"/>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20200601-activity-setting-snapshot-substitutions-on-submit">
+        <addColumn tableName="form_activity_setting">
+            <column name="snapshot_substitutions_on_submit" type="boolean" defaultValueBoolean="false"/>
+        </addColumn>
+
+        <update tableName="form_activity_setting">
+            <column name="snapshot_substitutions_on_submit" valueBoolean="false"/>
+            <where>snapshot_substitutions_on_submit is null</where>
+        </update>
+
+        <addNotNullConstraint tableName="form_activity_setting" columnName="snapshot_substitutions_on_submit" columnDataType="boolean"/>
+    </changeSet>
+
+</databaseChangeLog>

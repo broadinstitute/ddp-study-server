@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="20200514-kit-zip-code-table">
+        <createTable tableName="kit_zip_code">
+            <column name="kit_zip_code_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="kit_zip_code_pk"/>
+            </column>
+            <column name="kit_rule_id" type="bigint">
+                <constraints nullable="false"
+                             references="kit_rule(kit_rule_id)" foreignKeyName="kit_zip_code_kit_rule_fk"
+                             deleteCascade="true"/>
+            </column>
+            <column name="zip_code" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20200514-kit-zip-code-type">
+        <insert tableName="kit_rule_type">
+            <column name="kit_rule_type_code" value="ZIP_CODE"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

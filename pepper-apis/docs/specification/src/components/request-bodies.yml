@@ -78,6 +78,9 @@ CreateTempUserRequestBody:
           auth0ClientId:
             type: string
             description: the client making the request
+          auth0Domain:
+            type: string
+            description: the domain of the client making the request
 MailingAddress:
   description: payload for setting a participant's address
   required: true
@@ -153,14 +156,6 @@ JoinMailingListPayload:
     application/json:
       schema:
         $ref: '../pepper.yml#/components/schemas/JoinMailingListPayload'
-VerifyInvitationPayload:
-  description: payload that identifies which invitation to mark
-  required: true
-  content:
-    application/json:
-      schema:
-        $ref: '../pepper.yml#/components/schemas/Invitation'
-
 UpdateUserLastVisitedSectionRequestBody:
   description: to update user's last visited section
   required: true

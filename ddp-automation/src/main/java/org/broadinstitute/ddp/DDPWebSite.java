@@ -9,6 +9,7 @@ import com.typesafe.config.ConfigFactory;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.TransactionWrapper.DB;
 import org.broadinstitute.ddp.db.TransactionWrapper.DbConfiguration;
+import org.openqa.selenium.WebDriver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,13 +24,19 @@ public class DDPWebSite extends WebSite {
         initializeDb();
     }
 
-    public static void init(Class site) {
+    public static void init(Class site, boolean useSafari, WebDriver safariDriver) {
+        String driverName = null;
+        WebCascadeInit webCascadeInit = null;
+
         if (!WebSettings.getDriverFactory().hasDrivers()) {
             WebSettings.useDriver(DriverTypes.CHROME);
         }
 
-        String driverName = WebSettings.getDriverFactory().currentDriverName();
-        (new WebCascadeInit()).initStaticPages(site, driverName);
+        driverName = WebSettings.getDriverFactory().currentDriverName();
+        LOG.info("Website info: {}", site.getSimpleName());
+        LOG.info("Driver name info: {}", driverName);
+        webCascadeInit.initStaticPages(site, driverName);
+
         currentSite = site;
     }
 

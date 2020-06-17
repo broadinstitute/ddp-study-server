@@ -32,6 +32,7 @@ import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.export.ActivityExtract;
 import org.broadinstitute.ddp.export.DataExporter;
+import org.broadinstitute.ddp.model.study.Participant;
 
 /**
  * Utility to run data export via command-line. Note that a config file is required, and the main thing we look for in the configuration
@@ -71,6 +72,7 @@ public class DataExporterCli {
         options.addOption("s", "structured", false, "export a structured document");
         options.addOption("u", "users", false, "export study users document");
         options.addOption("ad", "activitydefinitions", false, "export study activity definitions to elasticsearch");
+        options.addOption(null, "all-elastic", false, "export all elasticsearch indices for study");
 
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, args);
@@ -93,11 +95,13 @@ public class DataExporterCli {
         boolean exportStructuredDocument = cmd.hasOption("s");
         boolean exportActivityDefinitions = cmd.hasOption("ad");
         boolean exportUsersDocument = cmd.hasOption("u");
+        boolean allElastic = cmd.hasOption("all-elastic");
 
         int choicesMade = (csvExport ? 1 : 0) + (elasticExport ? 1 : 0) + (mappingFileOnly ? 1 : 0)
-                + (exportActivityDefinitions ? 1 : 0) + (exportUsersDocument ? 1 : 0);
+                + (exportActivityDefinitions ? 1 : 0) + (exportUsersDocument ? 1 : 0)
+                + (allElastic ? 1 : 0);
         if (choicesMade != 1) {
-            formatter.printHelp(80, USAGE, "You must select only one of: [c, e, u, ad or m]", options, "");
+            formatter.printHelp(80, USAGE, "You must select only one of: [c, e, u, ad, m, or all-elastic]", options, "");
             return;
         }
 
@@ -127,6 +131,8 @@ public class DataExporterCli {
             runActivityDefinitionExportToES(studyGuid);
         } else if (exportUsersDocument) {
             runUsersExportToElasticsearch(studyGuid);
+        } else if (allElastic) {
+            runAllElasticExports(studyGuid);
         }
     }
 
@@ -149,13 +155,56 @@ public class DataExporterCli {
         exporter = new DataExporter(cfg);
     }
 
+    private void runAllElasticExports(String studyGuid) {
+        long begin = System.currentTimeMillis();
+        TransactionWrapper.useTxn(handle -> {
+            System.out.println("[export] warming up caches...");
+
+            StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
+            DataExporter.fetchAndCacheAuth0Emails(handle, studyGuid, handle
+                    .select("select auth0_user_id from user")
+                    .mapTo(String.class)
+                    .stream()
+                    .collect(Collectors.toSet()));
+
+            System.out.println("[export] extracting participants...");
+            long start = System.currentTimeMillis();
+            List<Participant> participants = exporter.extractParticipantDataSet(handle, studyDto);
+            long elapsed = System.currentTimeMillis() - start;
+            System.out.println(String.format("[export] took %d ms (%.2f s)", elapsed, elapsed / 1000.0));
+
+            System.out.println("[export] starting activity definitions export...");
+            start = System.currentTimeMillis();
+            List<ActivityExtract> activities = exporter.exportActivityDefinitionsToElasticsearch(handle, studyDto, cfg);
+            elapsed = System.currentTimeMillis() - start;
+            System.out.println(String.format("[export] took %d ms (%.2f s)", elapsed, elapsed / 1000.0));
+
+            System.out.println("[export] starting structured json export...");
+            start = System.currentTimeMillis();
+            exporter.exportToElasticsearch(handle, studyDto, activities, participants, true);
+            elapsed = System.currentTimeMillis() - start;
+            System.out.println(String.format("[export] took %d ms (%.2f s)", elapsed, elapsed / 1000.0));
+
+            System.out.println("[export] starting flattened json export...");
+            start = System.currentTimeMillis();
+            exporter.exportToElasticsearch(handle, studyDto, activities, participants, false);
+            elapsed = System.currentTimeMillis() - start;
+            System.out.println(String.format("[export] took %d ms (%.2f s)", elapsed, elapsed / 1000.0));
+
+            System.out.println("[export] starting users export...");
+            start = System.currentTimeMillis();
+            exporter.exportUsersToElasticsearch(handle, studyDto, null);
+            elapsed = System.currentTimeMillis() - start;
+            System.out.println(String.format("[export] took %d ms (%.2f s)", elapsed, elapsed / 1000.0));
+        });
+        long total = System.currentTimeMillis() - begin;
+        System.out.println(String.format("[export] entire process took %.2f mins", total / 1000.0 / 60.0));
+    }
+
     private void runEsExport(String studyGuid, Set<String> participantGuids, boolean exportStructuredDocument) {
         TransactionWrapper.useTxn(handle -> {
             System.out.println("[export] warming up caches...");
             StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
-
-            // Warm up the activity cache
-            exporter.extractActivities(handle, studyDto);
 
             // Warm up the emails cache
             DataExporter.fetchAndCacheAuth0Emails(handle, studyGuid,

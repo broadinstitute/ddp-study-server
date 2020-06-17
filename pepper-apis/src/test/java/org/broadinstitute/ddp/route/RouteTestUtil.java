@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.route;
 
 import java.io.IOException;
+import java.net.ServerSocket;
 import java.nio.file.Paths;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
@@ -399,6 +400,18 @@ public class RouteTestUtil {
             FormActivityDef activity, String expr, String errorMessage, List<String> affectedQuestionStableIds
     ) {
         return createActivityValidationDto(activity, null, expr, errorMessage, affectedQuestionStableIds);
+    }
+
+    public static int findOpenPortOrDefault(int fallbackPort) {
+        int port = fallbackPort;
+        try {
+            var portFinder = new ServerSocket(0);
+            port = portFinder.getLocalPort();
+            portFinder.close();
+        } catch (IOException e) {
+            LOG.info("Could not find available port, will use fallback: " + fallbackPort);
+        }
+        return port;
     }
 
     public enum RequestMethod {

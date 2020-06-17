@@ -19,7 +19,7 @@ public class DashboardPage extends DDPPage {
     private static final String DASHBOARD_ANNOUNCEMENT_MESSAGE_XPATH = "//section[contains(@class, 'Dashboard-info-section')]";
     private static final String DASHBOARD_ANNOUNCEMENT_CLOSE_ICON_XPATH = "//mat-icon[contains(@class, 'close')]";
     private static final String DASHBOARD_ACTIVITIES_XPATH = "//*[@data-ddp-test='activitiesTable']//mat-row";
-    private static final String DASHBOARD_ACTIVITIES_NAME_XPATH = "//a[contains(@data-ddp-test, 'activityName')]";
+    private static final String DASHBOARD_ACTIVITIES_NAME_XPATH = "//button[contains(@data-ddp-test, 'activityName')]";
     private static final String DASHBOARD_ACTIVITIES_STATUS_XPATH = "//mat-cell[contains(@data-ddp-test, 'activityStatus')]";
 
     @FindBy(xpath = DASHBOARD_XPATH)

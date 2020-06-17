@@ -1,10 +1,13 @@
 package org.broadinstitute.ddp.model.study;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
+import org.testcontainers.shaded.org.apache.commons.lang.StringUtils;
 
 public class PasswordPolicyTest {
 
@@ -14,7 +17,7 @@ public class PasswordPolicyTest {
         assertNotNull(policy);
         assertEquals(PasswordPolicy.PolicyType.FAIR, policy.getType());
         assertEquals(32, policy.getMinLength());
-        assertEquals((Integer) 3, policy.getMinCharClasses());
+        assertEquals(3, policy.getMinCharClasses());
         assertEquals(3, policy.getCharClasses().size());
         assertNull(policy.getMaxRepeatedChars());
     }
@@ -31,5 +34,28 @@ public class PasswordPolicyTest {
         assertEquals(PasswordPolicy.PolicyType.GOOD.getDefaultMinPasswordLength(), policy.getMinLength());
         policy = PasswordPolicy.excellent(null);
         assertEquals(PasswordPolicy.PolicyType.EXCELLENT.getDefaultMinPasswordLength(), policy.getMinLength());
+    }
+
+    @Test
+    public void testCheckPassword_checkLength() {
+        var policy = PasswordPolicy.none(100);
+        assertFalse(policy.checkPassword("foobar"));
+        assertTrue(policy.checkPassword(StringUtils.repeat("1234567890", 12)));
+    }
+
+    @Test
+    public void testCheckPassword_checkCharClasses() {
+        var policy = PasswordPolicy.excellent(5);
+        assertFalse(policy.checkPassword("foobar"));
+        assertFalse(policy.checkPassword("FooBar"));
+        assertTrue(policy.checkPassword("FooBar123"));
+        assertTrue(policy.checkPassword("FooBar123!@#"));
+    }
+
+    @Test
+    public void testCheckPassword_checkRepeats() {
+        var policy = PasswordPolicy.excellent(5);
+        assertTrue(policy.checkPassword("Foobar123!@#"));
+        assertFalse(policy.checkPassword("Foooooobar123!@#"));
     }
 }

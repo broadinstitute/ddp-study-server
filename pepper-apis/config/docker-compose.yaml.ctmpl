@@ -18,7 +18,6 @@ backend:
     - {{$dir}}/application.conf:/app/config/application.conf
     - {{$dir}}/startup.sh:/app/startup.sh
     - {{$dir}}/post_deploy_smoketest.sh:/app/post_deploy_smoketest.sh
-    - {{$dir}}/fc_keys/ddp-testing.json:/app/fc_keys/ddp-testing.json
     - {{$dir}}/housekeeping-service-account.json:/app/housekeeping-service-account.json
   environment:
     - GOOGLE_APPLICATION_CREDENTIALS=/app/housekeeping-service-account.json

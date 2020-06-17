@@ -12,9 +12,62 @@ post:
   tags:
     - Mailing Address
   requestBody:
-    $ref: '../pepper.yml#/components/requestBodies/MailingAddress'
+    required: true
+    content:
+      application/json:
+        schema:
+          allOf:
+            - $ref: '../pepper.yml#/components/schemas/BaseMailAddress'
+            - type: object
+              properties:
+                studyGuid:
+                  type: string
+                  description: if provided, will check address against study rules for any potential issues
   responses:
     200:
-      $ref: '../pepper.yml#/components/responses/MailingAddress'
+      description: a corrected address that's better suited for deliverability, along with any warnings
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '../pepper.yml#/components/schemas/BaseMailAddress'
+              - type: object
+                required:
+                  - studyGuid
+                  - warnings
+                properties:
+                  studyGuid:
+                    type: string
+                    description: the study guid, if provided in request
+                    nullable: true
+                  warnings:
+                    type: object
+                    description: warnings of potential issues with address or deliverability
+                    required:
+                      - entered
+                      - suggested
+                    properties:
+                      entered:
+                        type: array
+                        description: warnings for entered address as provided in request
+                        items:
+                          $ref: '../pepper.yml#/components/schemas/AddressWarning'
+                      suggested:
+                        type: array
+                        description: warnings for suggested address as provided in response
+                        items:
+                          $ref: '../pepper.yml#/components/schemas/AddressWarning'
+    400:
+      description: issues with request or study guid
+      content:
+        application/json:
+          schema:
+            $ref: '../pepper.yml#/components/schemas/Error.BadPayload'
+    422:
+      description: issues with address or deliverability
+      content:
+        application/json:
+          schema:
+            $ref: '../pepper.yml#/components/schemas/AddressVerifyError'
     default:
       $ref: '../pepper.yml#/components/responses/ErrorResponse'

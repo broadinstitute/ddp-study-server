@@ -22,7 +22,7 @@ function build_docs_image {
             --user $(id -u ${USER}):$(id -g ${USER}) \
             --volume "${PWD}/${docs_path}":"/build" \
             --workdir "/build" \
-            node:8-slim \
+            node:10-slim \
             ./build.sh documentation
     else
         (
@@ -52,15 +52,19 @@ function push_docs_image {
 }
 
 function render_config() {
-    # render build configs
-    echo "rendering buildtime configs"
-    INPUT_DIR=config DOCS_PROXIED_HOST=$DOCS_PROXIED_HOST NGINX_PROXIED_HOST=$NGINX_PROXIED_HOST OUTPUT_DIR=$BUILD_OUTDIR ENV=$ENV VERSION=$VERSION DIR=$DIR MANIFEST=build-manifest.rb ruby configure.rb -y
+  # render build configs
+  GAE=false
+  if [[ "$1" =  "gae" ]]; then
+    GAE=true
+  fi
+  echo "rendering buildtime configs"
+  INPUT_DIR=config DOCS_PROXIED_HOST=$DOCS_PROXIED_HOST NGINX_PROXIED_HOST=$NGINX_PROXIED_HOST OUTPUT_DIR=$BUILD_OUTDIR ENVIRONMENT=$ENVIRONMENT VERSION=$VERSION DIR=$DIR GAE=$GAE MANIFEST=build-manifest.rb ruby configure.rb -y
 
-    if [[ "$1" == "local" ]]; then
-        echo "rendering runtime configs locally"
-        INPUT_DIR=config NO_SYSLOG=true DOCS_PROXIED_HOST=$DOCS_PROXIED_HOST NGINX_PROXIED_HOST=$NGINX_PROXIED_HOST OUTPUT_DIR=$OUTDIR ENV=$ENV DIR=$DIR/$OUTDIR VERSION=$VERSION ruby configure.rb -y
-        cp $OUTDIR/docker-compose.yaml $DIR
-    fi
+  if [[ "$1" == "local" ]] || [[ "$1" == "gae" ]]; then
+      echo "rendering runtime configs locally"
+      INPUT_DIR=config NO_SYSLOG=true DOCS_PROXIED_HOST=$DOCS_PROXIED_HOST NGINX_PROXIED_HOST=$NGINX_PROXIED_HOST OUTPUT_DIR=$OUTDIR ENVIRONMENT=$ENVIRONMENT DIR=$DIR/$OUTDIR VERSION=$VERSION GAE=$GAE ruby configure.rb -y
+      cp $OUTDIR/docker-compose.yaml $DIR
+  fi
 }
 
 function docker_build() {
@@ -164,7 +168,6 @@ function run_tests() {
 
             TESTCONTAINERS_RYUK_DISABLED=true \
             mvn -Ditext.license=/app/itextkey.xml \
-                -Dddp.firecloudKeysDir=fc_keys \
                 -Dmaven.repo.local=/app/repo \
                 -Dconfig.file=config/testing-inmemorydb.conf \
                 -o \
@@ -173,7 +176,6 @@ function run_tests() {
 
             # NOTE: sonarqube currently does not support Java 11.
             # mvn -Ditext.license=/app/itextkey.xml \
-            #     -Dddp.firecloudKeysDir=fc_keys \
             #     -Dmaven.repo.local=/app/repo \
             #     -Dsonar.host.url=$sonar_server \
             #     -Dconfig.file=config/testing-inmemorydb.conf \
@@ -285,10 +287,10 @@ BUILD_OUTDIR=output-build-config
 NGINX_PROXIED_HOST=$NGINX_PROXIED_HOST
 DOCS_PROXIED_HOST=$DOCS_PROXIED_HOST
 VERSION=$1
-ENV=$2
+ENVIRONMENT=$2
 DIR=$3
 VAULT_TOKEN=$VAULT_TOKEN
-tag=${VERSION}_${ENV}
+tag=${VERSION}_${ENVIRONMENT}
 
 GIT_SHA="${GIT_SHA:-$(git rev-parse --verify HEAD)}"
 GIT_SHA_SHORT=${GIT_SHA:0:12}
@@ -304,6 +306,9 @@ while [[ -n "$1" ]]; do
         ;;
         --config)
             render_config "local"
+        ;;
+      --gae-config)
+            render_config "gae"
         ;;
         --docker-build)
             render_config "local"

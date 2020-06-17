@@ -36,6 +36,7 @@ public class ErrorCodes {
     public static final String AUTH_CANNOT_BE_DETERMINED = "AUTH_CANNOT_BE_DETERMINED";
     public static final String INVALID_LANGUAGE_PREFERENCE = "INVALID_LANGUAGE_PREFERENCE";
     public static final String INVALID_SEX = "INVALID_SEX";
+    public static final String INVALID_DATE = "INVALID_DATE";
 
     public static final String GOVERNANCE_POLICY_VIOLATION = "GOVERNANCE_POLICY_VIOLATION";
 
@@ -73,9 +74,8 @@ public class ErrorCodes {
     public static final String MALFORMED_EMAIL = "MALFORMED_EMAIL";
     public static final String EMAIL_ALREADY_EXISTS = "EMAIL_ALREADY_EXISTS";
 
-    public static final class FireCloudErrors {
-        public static final String MISSING_WORKSPACE_NAME = "MISSING_WORKSPACE_NAME";
-        public static final String MISSING_WORKSPACE_NAMESPACE = "MISSING_WORKSPACE_NAMESPACE";
-        public static final String INVALID_AFTER_DATE = "INVALID_AFTER_DATE";
-    }
+    public static final String INVALID_INVITATION = "INVALID_INVITATION";
+    public static final String INVALID_INVITATION_QUALIFICATIONS = "INVALID_INVITATION_QUALIFICATIONS";
+
+    public static final String TOO_MANY_REQUESTS = "TOO_MANY_REQUESTS";
 }

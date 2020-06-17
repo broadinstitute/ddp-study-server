@@ -66,6 +66,9 @@ public class NotificationEventAction extends EventAction {
             ActivityInstanceStatusChangeSignal activityInstanceStatusChangeSignal = (ActivityInstanceStatusChangeSignal) signal;
             templateSubstitutions.put(NotificationTemplateVariables.DDP_ACTIVITY_INSTANCE_GUID, jdbiActivityInstance
                     .getActivityInstanceGuid(activityInstanceStatusChangeSignal.getActivityInstanceIdThatChanged()));
+        } else if (signal.getEventTriggerType() == EventTriggerType.LOGIN_ACCOUNT_CREATED) {
+            String ticketUrl = ((LoginAccountCreatedSignal) signal).getPasswordResetTicketUrl();
+            templateSubstitutions.put(NotificationTemplateVariables.DDP_LINK, ticketUrl);
         }
 
         long queuedEventId = queuedEventDao.insertNotification(eventConfiguration.getEventConfigurationId(),

@@ -8,5 +8,5 @@ if (( $# < 2 )); then
 fi
 
 INPUT_DIR=config OUTPUT_DIR=output-config NO_SYSLOG=true \
-  VERSION="$1" ENV="$2" \
+  VERSION="$1" ENVIRONMENT="$2" \
   ruby ../pepper-apis/configure.rb -y

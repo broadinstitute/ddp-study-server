@@ -2,13 +2,13 @@ package org.broadinstitute.ddp.util;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.sql.Connection;
-import java.sql.Driver;
 import java.sql.SQLException;
 import java.time.Instant;
 
 import com.typesafe.config.Config;
 
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import liquibase.Contexts;
 import liquibase.Liquibase;
 import liquibase.database.jvm.JdbcConnection;
@@ -16,8 +16,7 @@ import liquibase.exception.LiquibaseException;
 import liquibase.exception.MigrationFailedException;
 import liquibase.exception.RollbackFailedException;
 import liquibase.lockservice.DatabaseChangeLogLock;
-import liquibase.resource.FileSystemResourceAccessor;
-import org.apache.commons.dbcp2.DriverManagerConnectionFactory;
+import liquibase.resource.ClassLoaderResourceAccessor;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -31,21 +30,29 @@ import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class LiquibaseUtil {
+public class LiquibaseUtil implements  AutoCloseable {
 
-    public static final String PEPPER_APIS_GLOBAL_MIGRATIONS = "src/main/resources/changelog-master.xml";
+    public static final String PEPPER_APIS_GLOBAL_MIGRATIONS = "changelog-master.xml";
 
-    public static final String HOUSEKEEPING_GLOBAL_MIGRATIONS = "src/main/resources/housekeeping-changelog-master.xml";
+    public static final String HOUSEKEEPING_GLOBAL_MIGRATIONS = "housekeeping-changelog-master.xml";
 
     private static final Logger LOG = LoggerFactory.getLogger(LiquibaseUtil.class);
 
-    public static final String AUTH0_TENANT_MIGRATION = "src/main/resources/db-changes/tenant-migration.xml";
+    public static final String AUTH0_TENANT_MIGRATION = "db-changes/tenant-migration.xml";
 
-    private Connection conn;
+    private HikariDataSource dataSource;
 
-    private static Connection createLiquibaseConnection(String dbUrl) throws SQLException {
-        DriverManagerConnectionFactory driverManagerConnectionFactory = new DriverManagerConnectionFactory(dbUrl, null);
-        return driverManagerConnectionFactory.createConnection();
+    private LiquibaseUtil(String dbUrl)  {
+        HikariConfig config = new HikariConfig();
+        config.setJdbcUrl(dbUrl);
+        dataSource = new HikariDataSource(config);
+    }
+
+    @Override
+    public void close()  {
+        if (dataSource != null) {
+            dataSource.close();
+        }
     }
 
     /**
@@ -53,14 +60,14 @@ public class LiquibaseUtil {
      */
     public static void runLiquibase(String dbUrl, DB db) {
         try {
-            try (Connection liquibaseConnection = LiquibaseUtil.createLiquibaseConnection(dbUrl)) {
-                LiquibaseUtil liquibaseUtil = new LiquibaseUtil(liquibaseConnection);
+            try (LiquibaseUtil liquibaseUtil = new LiquibaseUtil(dbUrl)) {
+
                 if (db == DB.APIS) {
                     liquibaseUtil.runPepperAPIsGlobalMigrations();
                 } else if (db == DB.HOUSEKEEPING) {
                     liquibaseUtil.runHousekeepingGlobalMigrations();
                 } else {
-                    throw new DDPException("Unknow database: " + db.name());
+                    throw new DDPException("Unknown database: " + db.name());
                 }
             }
         } catch (Exception e) {
@@ -72,10 +79,9 @@ public class LiquibaseUtil {
      * Runs migrations using given changelog file and a connection that's auto-closed. This is useful for test classes
      * that want to load their own custom data for a test.
      */
-    public static void runChangeLog(Driver jdbcDriver, String dbUrl, String changeLogFile) {
+    public static void runChangeLog(String dbUrl, String changeLogFile) {
         try {
-            try (Connection liquibaseConnection = jdbcDriver.connect(dbUrl, null)) {
-                LiquibaseUtil util = new LiquibaseUtil(liquibaseConnection);
+            try (LiquibaseUtil util = new LiquibaseUtil(dbUrl)) {
                 util.runMigrations(changeLogFile);
             }
         } catch (Exception e) {
@@ -83,15 +89,11 @@ public class LiquibaseUtil {
         }
     }
 
-    private LiquibaseUtil(Connection conn) {
-        this.conn = conn;
-    }
-
     /**
      * Runs the global migration scripts.  These are the scripts from {@link #PEPPER_APIS_GLOBAL_MIGRATIONS here}
      * which will be applied to test databases as well as production.
      */
-    private void runPepperAPIsGlobalMigrations() throws LiquibaseException {
+    private void runPepperAPIsGlobalMigrations() throws LiquibaseException, SQLException {
         runMigrations(PEPPER_APIS_GLOBAL_MIGRATIONS);
         insertLegacyTenant();
         // run script to update client -> tenant and study -> tenant and enable constraints
@@ -104,18 +106,18 @@ public class LiquibaseUtil {
      *
      * @throws LiquibaseException if something goes wrong
      */
-    private void runHousekeepingGlobalMigrations() throws LiquibaseException {
+    private void runHousekeepingGlobalMigrations() throws LiquibaseException, SQLException {
         runMigrations(HOUSEKEEPING_GLOBAL_MIGRATIONS);
     }
 
     /**
      * Runs the specific changelog file. When migration fails, this will attempt to rollback the changes, as applicable.
      */
-    private void runMigrations(String changelogFile) throws LiquibaseException {
+    private void runMigrations(String changelogFile) throws LiquibaseException, SQLException {
         Liquibase liquibase = null;
         String tag = null;
         try {
-            liquibase = new Liquibase(changelogFile, new FileSystemResourceAccessor(), new JdbcConnection(conn));
+            liquibase = new Liquibase(changelogFile, new ClassLoaderResourceAccessor(), new JdbcConnection(dataSource.getConnection()));
             logLocks(liquibase.listLocks());
 
             tag = generateDatabaseTag();

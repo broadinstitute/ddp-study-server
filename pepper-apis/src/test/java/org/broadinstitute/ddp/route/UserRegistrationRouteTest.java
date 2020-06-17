@@ -31,6 +31,7 @@ import com.typesafe.config.Config;
 import io.restassured.http.ContentType;
 import io.restassured.mapper.ObjectMapperType;
 import io.restassured.response.Response;
+import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.Auth0Constants;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.ErrorCodes;
@@ -45,6 +46,7 @@ import org.broadinstitute.ddp.db.dao.EventActionDao;
 import org.broadinstitute.ddp.db.dao.EventTriggerDao;
 import org.broadinstitute.ddp.db.dao.InvitationDao;
 import org.broadinstitute.ddp.db.dao.InvitationFactory;
+import org.broadinstitute.ddp.db.dao.InvitationSql;
 import org.broadinstitute.ddp.db.dao.JdbiAuth0Tenant;
 import org.broadinstitute.ddp.db.dao.JdbiEventConfiguration;
 import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
@@ -74,7 +76,6 @@ import org.broadinstitute.ddp.model.governance.AgeOfMajorityRule;
 import org.broadinstitute.ddp.model.governance.AgeUpCandidate;
 import org.broadinstitute.ddp.model.governance.Governance;
 import org.broadinstitute.ddp.model.governance.GovernancePolicy;
-import org.broadinstitute.ddp.model.invitation.InvitationType;
 import org.broadinstitute.ddp.model.pex.Expression;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.model.user.User;
@@ -82,7 +83,6 @@ import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.util.Auth0Util;
 import org.broadinstitute.ddp.util.GuidUtils;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
-import org.broadinstitute.ddp.util.TimestampUtil;
 import org.hamcrest.Matchers;
 import org.junit.After;
 import org.junit.Before;
@@ -90,7 +90,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.testcontainers.shaded.org.apache.http.HttpStatus;
+
 
 public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
 
@@ -142,13 +142,11 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
             Long clientId1 = clientDao.registerClient(
                     GuidUtils.randomStringFromDictionary(UPPER_ALPHA_NUMERIC, 20),
                     GuidUtils.randomStringFromDictionary(UPPER_ALPHA_NUMERIC, 20),
-                    GuidUtils.randomStringFromDictionary(UPPER_ALPHA_NUMERIC, 20),
                     Collections.singletonList(study1.getGuid()),
                     GuidUtils.randomStringFromDictionary(UPPER_ALPHA_NUMERIC, 20),
                     study1.getAuth0TenantId());
 
             Long clientId2 = clientDao.registerClient(
-                    GuidUtils.randomStringFromDictionary(UPPER_ALPHA_NUMERIC, 20),
                     GuidUtils.randomStringFromDictionary(UPPER_ALPHA_NUMERIC, 20),
                     GuidUtils.randomStringFromDictionary(UPPER_ALPHA_NUMERIC, 20),
                     Collections.singletonList(study1.getGuid()),
@@ -347,7 +345,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
     @Test
     public void testRegister_missingDomain() {
         UserRegistrationPayload payload = new UserRegistrationPayload(auth0UserId, auth0ClientId,
-                EN_LANG_CODE, study1.getGuid(), null);
+                study1.getGuid(), null);
         makeRequestWith(payload).then().assertThat()
                 .statusCode(400)
                 .contentType(ContentType.JSON)
@@ -358,7 +356,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
     @Test
     public void testRegister_missingUserId() {
         UserRegistrationPayload payload = new UserRegistrationPayload(null, auth0ClientId,
-                EN_LANG_CODE, study1.getGuid(), auth0Domain);
+                study1.getGuid(), auth0Domain);
         makeRequestWith(payload).then().assertThat()
                 .statusCode(400)
                 .contentType(ContentType.JSON)
@@ -371,7 +369,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
         RouteTestUtil.revokeTestClient();
         try {
             UserRegistrationPayload payload = new UserRegistrationPayload(auth0UserId, auth0ClientId,
-                    EN_LANG_CODE, study1.getGuid(), auth0Domain);
+                    study1.getGuid(), auth0Domain);
             makeRequestWith(payload).then().assertThat().statusCode(401);
         } finally {
             RouteTestUtil.enableTestClient();
@@ -389,7 +387,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
         });
 
         UserRegistrationPayload payload = new UserRegistrationPayload(auth0UserId, auth0ClientId,
-                EN_LANG_CODE, study.getGuid(), auth0Domain);
+                study.getGuid(), auth0Domain);
 
         makeRequestWith(payload).then().assertThat()
                 .statusCode(404)
@@ -408,8 +406,11 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
         });
         auth0UserIdsToDelete.add(testAuth0UserId);
 
-        UserRegistrationPayload payload = new UserRegistrationPayload(testAuth0UserId, auth0ClientId,
-                EN_LANG_CODE, study1.getGuid(), auth0Domain);
+        UserRegistrationPayload payload = new UserRegistrationPayload(
+                testAuth0UserId, auth0ClientId, study1.getGuid(), auth0Domain)
+                .setLanguageCode(EN_LANG_CODE)
+                .setFirstName("foo")
+                .setLastName("bar");
 
         Instant start = Instant.now();
         String newUserGuid = makeRequestWith(payload).then().assertThat()
@@ -428,7 +429,9 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
             UserProfile profile = handle.attach(UserProfileDao.class).findProfileByUserId(userDto.getUserId()).get();
 
             Long enLanguageCodeId = handle.attach(JdbiLanguageCode.class).getLanguageCodeId(EN_LANG_CODE);
-            assertEquals(profile.getPreferredLangId(), enLanguageCodeId);
+            assertEquals(enLanguageCodeId, profile.getPreferredLangId());
+            assertEquals("foo", profile.getFirstName());
+            assertEquals("bar", profile.getLastName());
 
             JdbiUserStudyEnrollment jdbiEnrollment = handle.attach(JdbiUserStudyEnrollment.class);
             Optional<EnrollmentStatusType> enrollment = jdbiEnrollment
@@ -457,7 +460,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
 
         String fakeAuth0Id = "fake|" + Instant.now().toEpochMilli();
         UserRegistrationPayload payload = new UserRegistrationPayload(fakeAuth0Id, auth0ClientId,
-                EN_LANG_CODE, testStudy.getGuid(), auth0Domain, tempUser.getGuid(), null);
+                testStudy.getGuid(), auth0Domain, tempUser.getGuid(), null);
 
         String operatorUserGuid = makeRequestWith(payload).then().assertThat()
                 .statusCode(200)
@@ -512,7 +515,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
 
         String fakeAuth0Id = "fake|" + Instant.now().toEpochMilli();
         UserRegistrationPayload payload = new UserRegistrationPayload(fakeAuth0Id, auth0ClientId,
-                EN_LANG_CODE, testStudy.getGuid(), auth0Domain, tempUser.getGuid(), null);
+                testStudy.getGuid(), auth0Domain, tempUser.getGuid(), null);
 
         String operatorUserGuid = makeRequestWith(payload).then().assertThat()
                 .statusCode(200)
@@ -570,7 +573,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
         String expectedUserGuid = RouteTestUtil.getUnverifiedUserGuidFromToken(token);
 
         UserRegistrationPayload payload = new UserRegistrationPayload(auth0UserId, auth0ClientId,
-                EN_LANG_CODE, study1.getGuid(), auth0Domain);
+                study1.getGuid(), auth0Domain);
 
         makeRequestWith(payload).then().assertThat()
                 .statusCode(200)
@@ -587,7 +590,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
                 .isPresent()));
 
         UserRegistrationPayload payload = new UserRegistrationPayload(auth0UserId, auth0ClientId,
-                EN_LANG_CODE, tempStudy.getGuid(), auth0Domain, null, "login");
+                tempStudy.getGuid(), auth0Domain, null, "login");
 
         makeRequestWith(payload).then().assertThat()
                 .statusCode(HttpStatus.SC_UNPROCESSABLE_ENTITY)
@@ -613,7 +616,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
         });
 
         UserRegistrationPayload payload = new UserRegistrationPayload(auth0UserId, auth0ClientId,
-                EN_LANG_CODE, tempStudy.getGuid(), auth0Domain, null, "login");
+                tempStudy.getGuid(), auth0Domain, null, "login");
 
         makeRequestWith(payload).then().assertThat()
                 .statusCode(200)
@@ -626,7 +629,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
         String fakeAuth0Id = "this-has-no-email" + Instant.now().toEpochMilli();
 
         UserRegistrationPayload payload = new UserRegistrationPayload(fakeAuth0Id, auth0ClientId,
-                EN_LANG_CODE, study1.getGuid(), auth0Domain);
+                study1.getGuid(), auth0Domain);
 
         String newUserGuid = makeRequestWith(payload).then().assertThat()
                 .statusCode(200)
@@ -657,7 +660,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
 
         try {
             UserRegistrationPayload payload = new UserRegistrationPayload(auth0UserId, auth0ClientId,
-                    EN_LANG_CODE, study1.getGuid(), auth0Domain);
+                    study1.getGuid(), auth0Domain);
             makeRequestWith(payload).then().assertThat().statusCode(200);
 
             TransactionWrapper.useTxn(handle -> {
@@ -680,7 +683,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
                 handle.attach(JdbiUser.class).findByUserId(user1Id).getAuth0UserId());
 
         UserRegistrationPayload payload = new UserRegistrationPayload(auth0UserIdForUser1, auth0ClientId,
-                EN_LANG_CODE, study1.getGuid(), auth0Domain);
+                study1.getGuid(), auth0Domain);
 
         makeRequestWith(payload).then().assertThat().statusCode(200);
     }
@@ -705,7 +708,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
 
         String fakeAuth0Id = "fake|" + Instant.now().toEpochMilli();
         UserRegistrationPayload payload = new UserRegistrationPayload(fakeAuth0Id, auth0ClientId,
-                EN_LANG_CODE, testStudy.getGuid(), auth0Domain, tempUser.getGuid(), null);
+                testStudy.getGuid(), auth0Domain, tempUser.getGuid(), null);
 
         String actualUserGuid = makeRequestWith(payload).then().assertThat()
                 .statusCode(200)
@@ -742,7 +745,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
 
         String fakeAuth0Id = "fake|" + Instant.now().toEpochMilli();
         UserRegistrationPayload payload = new UserRegistrationPayload(fakeAuth0Id, auth0ClientId,
-                EN_LANG_CODE, tempStudy.getGuid(), auth0Domain, tempUser.getGuid(), null);
+                tempStudy.getGuid(), auth0Domain, tempUser.getGuid(), null);
 
         String actualUserGuid = makeRequestWith(payload).then().assertThat()
                 .statusCode(200)
@@ -782,7 +785,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
         userGuidsToDelete.add(tempUser.getGuid());
 
         UserRegistrationPayload payload = new UserRegistrationPayload(auth0UserId, auth0ClientId,
-                EN_LANG_CODE, tempStudy.getGuid(), auth0Domain, tempUser.getGuid(), null);
+                tempStudy.getGuid(), auth0Domain, tempUser.getGuid(), null);
 
         makeRequestWith(payload).then().assertThat()
                 .statusCode(422)
@@ -803,7 +806,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
 
         String fakeAuth0Id = "fake|" + Instant.now().toEpochMilli();
         UserRegistrationPayload payload = new UserRegistrationPayload(fakeAuth0Id, auth0ClientId,
-                EN_LANG_CODE, tempStudy.getGuid(), auth0Domain, tempUser.getUserGuid(), null);
+                tempStudy.getGuid(), auth0Domain, tempUser.getUserGuid(), null);
 
         makeRequestWith(payload).then().assertThat()
                 .statusCode(422)
@@ -817,7 +820,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
         String existingUserGuid = RouteTestUtil.getUnverifiedUserGuidFromToken(token);
 
         UserRegistrationPayload payload = new UserRegistrationPayload(auth0UserId, auth0ClientId,
-                EN_LANG_CODE, tempStudy.getGuid(), auth0Domain, existingUserGuid, null);
+                tempStudy.getGuid(), auth0Domain, existingUserGuid, null);
 
         makeRequestWith(payload).then().assertThat()
                 .statusCode(422)
@@ -829,7 +832,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
     @Test
     public void testUpgradeTempUser_whenGivenNonExistingTempUser_returnsError() {
         UserRegistrationPayload payload = new UserRegistrationPayload(auth0UserId, auth0ClientId,
-                EN_LANG_CODE, tempStudy.getGuid(), auth0Domain, "non-existing-temp-guid", null);
+                tempStudy.getGuid(), auth0Domain, "non-existing-temp-guid", null);
 
         makeRequestWith(payload).then().assertThat()
                 .statusCode(422)
@@ -853,9 +856,9 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
         AtomicReference<GovernancePolicy> governancePolicy = new AtomicReference<>();
         AtomicReference<StudyDto> testStudy = new AtomicReference<>();
         AtomicBoolean shouldDeleteProfile = new AtomicBoolean(false);
-        try {
-            var invitation = new AtomicReference<InvitationDto>();
+        var invitation = new AtomicReference<InvitationDto>();
 
+        try {
             // clear the auth0 user id from the test account and send in an invitation-based registration
             TransactionWrapper.useTxn(handle -> {
                 var userDao = handle.attach(UserDao.class);
@@ -864,10 +867,10 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
 
                 testStudy.set(TestDataSetupUtil.generateTestStudy(handle, RouteTestUtil.getConfig()));
                 long testStudyId = testStudy.get().getId();
-                invitation.set(handle.attach(InvitationFactory.class).createInvitation(InvitationType.AGE_UP,
+                invitation.set(handle.attach(InvitationFactory.class).createAgeUpInvitation(
                         testStudyId, user.get().getId(), "test+" + System.currentTimeMillis() + "@datadonationplatform.org"));
 
-                handle.attach(InvitationDao.class).clearDates(invitation.get().getInvitationGuid());
+                handle.attach(InvitationSql.class).clearDates(invitation.get().getInvitationId());
                 userDao.updateAuth0UserId(user.get().getGuid(), null);
 
                 var profileDao = handle.attach(UserProfileDao.class);
@@ -899,7 +902,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
             String invitationGuid = invitation.get().getInvitationGuid();
 
             UserRegistrationPayload payload = new UserRegistrationPayload(auth0UserId, auth0ClientId,
-                    EN_LANG_CODE, testStudy.get().getGuid(), auth0Domain, null, null, invitationGuid);
+                    testStudy.get().getGuid(), auth0Domain, null, null, invitationGuid);
 
             makeRequestWith(payload).then().assertThat()
                     .statusCode(200)
@@ -907,9 +910,10 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
                     .body("ddpUserGuid", Matchers.not(Matchers.isEmptyOrNullString()));
 
             TransactionWrapper.useTxn(handle -> {
-                var updatedInvitation = handle.attach(InvitationDao.class).findByInvitationGuid(invitationGuid).get();
+                var updatedInvitation = handle.attach(InvitationDao.class)
+                        .findByInvitationGuid(testStudy.get().getId(), invitationGuid).get();
                 assertNotNull(updatedInvitation.getAcceptedAt());
-                assertTrue(updatedInvitation.getAcceptedAt().before(TimestampUtil.now()));
+                assertTrue(updatedInvitation.getAcceptedAt().isBefore(Instant.now()));
 
                 User requeriedUser = handle.attach(UserDao.class).findUserByGuid(user.get().getGuid()).get();
                 assertEquals(auth0UserId, requeriedUser.getAuth0UserId());
@@ -939,9 +943,70 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
                     handle.attach(UserProfileDao.class).getUserProfileSql().deleteByUserId(user.get().getId());
                 }
 
-                if (testStudy.get() != null) {
+                if (testStudy.get() != null && user.get() != null) {
                     handle.attach(JdbiUserStudyEnrollment.class)
                             .deleteByUserGuidStudyGuid(user.get().getGuid(), testStudy.get().getGuid());
+                }
+
+                if (invitation.get() != null) {
+                    handle.attach(InvitationSql.class).deleteById(invitation.get().getInvitationId());
+                }
+            });
+        }
+    }
+
+    @Test
+    public void testRecruitmentInvitation() {
+        var createdUser = new AtomicReference<User>();
+        var testStudy = new AtomicReference<StudyDto>();
+        var invitation = new AtomicReference<InvitationDto>();
+        try {
+            TransactionWrapper.useTxn(handle -> {
+                testStudy.set(TestDataSetupUtil.generateTestStudy(handle, RouteTestUtil.getConfig()));
+                invitation.set(handle.attach(InvitationFactory.class).createRecruitmentInvitation(
+                        testStudy.get().getId(), "invite" + System.currentTimeMillis()));
+            });
+
+            String invitationGuid = invitation.get().getInvitationGuid();
+            String fakeAuth0UserId = "fake_auth0_id" + System.currentTimeMillis();
+            var payload = new UserRegistrationPayload(fakeAuth0UserId, auth0ClientId,
+                    testStudy.get().getGuid(), auth0Domain, null, null, invitationGuid);
+
+            String createdUserGuid = makeRequestWith(payload)
+                    .then().assertThat()
+                    .statusCode(200).contentType(ContentType.JSON)
+                    .body("ddpUserGuid", Matchers.not(Matchers.isEmptyOrNullString()))
+                    .extract().path("ddpUserGuid");
+
+            TransactionWrapper.useTxn(handle -> {
+                var userDao = handle.attach(UserDao.class);
+                createdUser.set(userDao.findUserByGuid(createdUserGuid).get());
+                assertEquals(fakeAuth0UserId, createdUser.get().getAuth0UserId());
+
+                var updatedInvitation = handle.attach(InvitationDao.class)
+                        .findByInvitationGuid(testStudy.get().getId(), invitationGuid).get();
+                assertNotNull("invitation should be accepted", updatedInvitation.getAcceptedAt());
+                assertTrue(updatedInvitation.getAcceptedAt().isBefore(Instant.now()));
+                assertEquals("invitation should be assigned to newly created user",
+                        (Long) createdUser.get().getId(), updatedInvitation.getUserId());
+
+                EnrollmentStatusType status = handle.attach(JdbiUserStudyEnrollment.class)
+                        .getEnrollmentStatusByUserAndStudyIds(createdUser.get().getId(), testStudy.get().getId())
+                        .orElse(null);
+                assertNotNull("newly created user should be in study", status);
+                assertEquals(EnrollmentStatusType.REGISTERED, status);
+            });
+        } finally {
+            TransactionWrapper.useTxn(handle -> {
+                if (createdUser.get() != null) {
+                    userGuidsToDelete.add(createdUser.get().getGuid());
+                    if (testStudy.get() != null) {
+                        handle.attach(JdbiUserStudyEnrollment.class)
+                                .deleteByUserGuidStudyGuid(createdUser.get().getGuid(), testStudy.get().getGuid());
+                    }
+                }
+                if (invitation.get() != null) {
+                    handle.attach(InvitationSql.class).deleteById(invitation.get().getInvitationId());
                 }
             });
         }

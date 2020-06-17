@@ -8,6 +8,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.activity.instance.question.DateQuestion;
 import org.broadinstitute.ddp.model.activity.types.DateRenderMode;
 import org.broadinstitute.ddp.model.activity.types.RuleType;
@@ -48,7 +49,8 @@ public class DateFieldRequiredRuleTest {
     @Test
     public void testValidate_noValue() {
         DateFieldRequiredRule rule = DateFieldRequiredRule.of(RuleType.DAY_REQUIRED, "msg", "hint", false);
-        assertFalse(rule.validate(unused, null));
+        assertTrue(rule.validate(unused, null));
+        assertTrue(rule.validate(unused, new DateAnswer(null, "q", "a", new DateValue(null, null, null))));
     }
 
     @Test

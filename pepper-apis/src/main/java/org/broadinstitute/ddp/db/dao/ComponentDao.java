@@ -1,6 +1,5 @@
 package org.broadinstitute.ddp.db.dao;
 
-import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dto.ComponentDto;
@@ -43,7 +42,7 @@ public interface ComponentDao extends SqlObject {
     JdbiInstitutionPhysicianComponent getJdbiInstitutionPhysicianComponent();
 
 
-    default FormComponent findByBlockId(String activityInstanceGuid, long blockId, I18nContentRenderer i18nRenderer, long languageCodeId) {
+    default FormComponent findByBlockId(String activityInstanceGuid, long blockId) {
         // query for component type by block id
         JdbiComponent jdbiComponent = getJdbiComponent();
 
@@ -67,15 +66,10 @@ public interface ComponentDao extends SqlObject {
             MailingAddressComponentDto mailingAddressComponentDto = getJdbiComponent()
                     .findMailingAddressComponentDtoById(componentId)
                     .orElseThrow(() -> new DaoException("Could not find mailing address component with id " + componentId));
-            String titleText = null;
-            if (mailingAddressComponentDto.getTitleTemplateId() != null) {
-                titleText = i18nRenderer.renderContent(getHandle(), mailingAddressComponentDto.getTitleTemplateId(), languageCodeId);
-            }
-            String subtitleText = null;
-            if (mailingAddressComponentDto.getSubtitleTemplateId() != null) {
-                subtitleText = i18nRenderer.renderContent(getHandle(), mailingAddressComponentDto.getSubtitleTemplateId(), languageCodeId);
-            }
-            formComponent = new MailingAddressComponent(titleText, subtitleText, componentDto.shouldHideNumber());
+            formComponent = new MailingAddressComponent(
+                    mailingAddressComponentDto.getTitleTemplateId(),
+                    mailingAddressComponentDto.getSubtitleTemplateId(),
+                    componentDto.shouldHideNumber());
         } else {
             throw new DaoException("Cannot process component type " + componentDto.getComponentType());
         }

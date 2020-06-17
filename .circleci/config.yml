@@ -1,0 +1,795 @@
+version: 2.1
+
+references:
+  tcell_dir: &tcell_dir
+      tcell
+  # to install a new version of tcell, do  "tar -cvfz tcell-x.y.z.tar.gz tcell" after expanding tcell's zip
+  tcell_gcp_path: &tcell_gcp_path
+      gs://ddp-tcell/tcell-1.11.0.tar.gz
+  ci_support_image: &ci_support_image
+      broadinstitute/study-server-build:2020-04-30A
+  root_path: &root_path
+      /home/circleci
+  repo_path: &repo_path
+      /home/circleci/repo
+  m2_cache_key: &m2_cache_key
+      pom.xml2-{{ checksum "pom.xml" }}-{{ checksum "parent-pom.xml" }}
+  m2_cache_restore_key: &m2_cache_keys
+    keys:
+      - *m2_cache_key
+      - pom.xml2-
+  m2_repo_path: &m2_repo_path
+      /home/circleci/.m2/repository
+  pepper_apis_path: &pepper_apis_path
+            /home/circleci/repo/pepper-apis
+  api-spec-path: &api-spec-path
+            /home/circleci/repo/pepper-apis/docs/specification
+  circleci_path: &circleci_path
+      /home/circleci/repo/.circleci
+  builds_bucket: &builds_bucket
+      ddp-build-artifacts
+  github_dispatch_repo_path: &github_dispatch_repo_path
+      /broadinstitute/ddp-angular
+  gitub_dispatch_config_path: &github_dispatch_config_path
+    /config/deployment
+  github_dispatch_config_branch: &github_dispatch_config_branch
+    develop
+  jar_build_bucket_dir: &jar_build_bucket_dir
+      /ddp-study-server-pepper-apis
+  housekeeping_test_db: &housekeeping_test_db
+      housekeepingdb
+  studyserver_test_db: &studyserver_test_db
+      studyservicedb
+  test_parallellism: &test_parallelism 15
+  ddp_server_port: &ddp_server_port 5556
+
+
+executors:
+  test-executor:
+    docker:
+      - image: broadinstitute/study-server-build:java-2020-04-20A
+      # start pubsub emulator
+      - image: broadinstitute/study-server-build:pubsub-1
+      - image: circleci/mysql:5.7-ram
+        environment: &DB_VARS
+          MYSQL_ROOT_PASSWORD: rootpw
+          MYSQL_DATABASE: test_db
+          MYSQL_USER: user
+          MYSQL_PASSWORD: passw0rd
+    resource_class: medium+ #default medium not big enough for tests
+
+  build-deploy-executor:
+    docker: # todo: create new image endpoint, add this in admin tab for faster starts
+    - image: *ci_support_image
+
+commands:
+  install-tcell:
+    parameters:
+      tcell_gcp_path:
+        type: string
+        default: *tcell_gcp_path
+    steps:
+      - run:
+          name: Download tcell files from bucket
+          command: |
+            TCELL_GCP_PATH='<<parameters.tcell_gcp_path>>'
+            vault read -format=json  secret/pepper/prod/v1/conf | jq -r .data.gcp.serviceKey | gcloud auth activate-service-account --key-file=-
+            TAR_FILE_URL=`gsutil ls $TCELL_GCP_PATH | sort -r | head -1`
+
+            if [ -z $TAR_FILE_URL ]
+            then
+              echo "Could not find tcell archive ${TCELL_GCP_PATH}"
+              exit 1
+            fi
+            TAR_FILE_PATH="/tmp/$(basename -- $TAR_FILE_URL)"
+            gsutil cp  $TAR_FILE_URL $TAR_FILE_PATH
+
+            # untarring will create a "tcell" dir
+            tar --no-same-owner -xvf $TAR_FILE_PATH
+  build-jar:
+    description: Build jar
+    parameters:
+      pom_file:
+        type: string
+      m2_repo:
+        type: string
+        default: *m2_repo_path
+    steps:
+      - restore_cache: *m2_cache_keys
+      - run:
+          name: Run maven package
+          command: |
+            mvn package -DskipTests -file << parameters.pom_file >> -Dcheckstyle.skip -Dmaven.repo.local=<< parameters.m2_repo >>
+  setup-shared-env:
+    description: "Setup shared ENV vars used by multiple scripts"
+    steps:
+      - run:
+          name: Set environment to be used by build
+          command: |
+            echo "export VAULT_TOKEN=$(vault write -field=token auth/approle/login role_id=$VAULT_ROLE_ID secret_id=$VAULT_ROLE_SECRET_ID)" >> $BASH_ENV
+            echo "export SHORT_GIT_SHA=$(echo $CIRCLE_SHA1 | cut -c 1-7)" >> $BASH_ENV
+            source $BASH_ENV
+
+  set-deployment-env:
+    description: "Determine the deploy target and set the ENVIRONMENT var"
+    steps:
+      - run:
+          name: Determine deployment environment for branch << pipeline.git.branch >>
+          command: |
+            case "${CIRCLE_BRANCH}" in
+            develop)
+              DEPLOY_ENV=dev
+            ;;
+            scaling_experiment)
+              DEPLOY_ENV=dev
+            ;;
+            test)
+              DEPLOY_ENV=test
+            ;;
+            staging)
+              DEPLOY_ENV=staging
+            ;;
+            production)
+              DEPLOY_ENV=prod
+            ;;
+            *)
+              echo "Cannot map << pipeline.git.branch >> to a deployment environment"
+              exit 17
+            ;;
+            esac
+            echo "Setting deployment ENVIRONMENT to $DEPLOY_ENV"
+            echo "export ENVIRONMENT=$DEPLOY_ENV" >> $BASH_ENV
+            source $BASH_ENV
+
+  render-configs:
+    description: render config files
+    steps:
+      - run:
+          name: show environment variables
+          command: env
+      - run:
+          name: api-build.sh
+          command: ./api-build.sh v1 ${ENVIRONMENT:-dev} . --gae-config
+          environment:
+            USE_DOCKER: false
+
+  create-test-dbs:
+    description: setup the test databases. Ensure up and running
+    parameters:
+      studyserverdb:
+        type: string
+        default: *studyserver_test_db
+      housekeepingdb:
+        type: string
+        default: *housekeeping_test_db
+    steps:
+      - wait_for_server:
+          port: 3306
+          timeout: 15
+      - run:
+          name: Setup test databases
+          command: |
+            mysql -h 127.0.0.1 -u root --password=$MYSQL_ROOT_PASSWORD test_db --execute="CREATE DATABASE << parameters.studyserverdb >> CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+            mysql -h 127.0.0.1 -u root --password=$MYSQL_ROOT_PASSWORD test_db --execute="CREATE DATABASE << parameters.housekeepingdb >> CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+          environment: *DB_VARS
+
+  show-pipeline-vars:
+    description: "Show pipeline vars"
+    steps:
+      - run:
+          name: Show pipeline vars
+          command: |
+            echo "pipeline.id << pipeline.id >>"
+            echo "pipeline.number  << pipeline.number  >>"
+            echo "pipeline.project.git_url << pipeline.project.git_url >>"
+            echo "pipeline.project.type << pipeline.project.type >>"
+            echo "pipeline.git.tag << pipeline.git.tag >>"
+            echo "pipeline.git.branch << pipeline.git.branch >>"
+            echo "pipeline.git.revision << pipeline.git.revision >>"
+            echo "pipeline.git.base_revision << pipeline.git.base_revision >>"
+
+  store-jar:
+    description: Store jar in bucket
+    parameters:
+      jar_base_name:
+        type: string
+      builds_bucket:
+        type: string
+        default: *builds_bucket
+      jar_build_bucket_dir:
+        type: string
+        default: *jar_build_bucket_dir
+    steps:
+      - auth-gcp-service-account:
+          env: prod
+      - run:
+          name: Store jar <<parameters.jar_base_name>>
+          command: |
+            set -u
+            DATE=`date +%F`
+            BUILDS_BUCKET='<<parameters.builds_bucket>>'
+            JAR_BASE_NAME='<<parameters.jar_base_name>>'
+            JAR_BUILD_BUCKET_DIR='<<parameters.jar_build_bucket_dir>>'
+            JAR_FILE_NAME="${JAR_BASE_NAME}_${DATE}_${SHORT_GIT_SHA}.jar"
+            LOCAL_JAR_FILE_PATH="./target/${JAR_BASE_NAME}.jar"
+            JAR_BUCKET_URL="gs://${BUILDS_BUCKET}${JAR_BUILD_BUCKET_DIR}/${JAR_FILE_NAME}"
+            gsutil cp "${LOCAL_JAR_FILE_PATH}" "${JAR_BUCKET_URL}"
+            echo "${JAR_FILE_NAME} successfully uploaded to ${JAR_BUCKET_URL}"
+
+  retrieve-jar:
+    description: Get <<parameters.jar_base_name>> jar from bucket
+    parameters:
+      jar_base_name:
+        type: string
+      builds_bucket:
+        type: string
+        default: *builds_bucket
+      jar_build_bucket_dir:
+        type: string
+        default: *jar_build_bucket_dir
+    steps:
+      - auth-gcp-service-account:
+          env: prod
+      - run:
+          name: Retrieve <<parameters.jar_base_name>> jar from bucket
+          command: |
+            set -u
+            set +e
+            BUILDS_BUCKET='<<parameters.builds_bucket>>'
+            JAR_BASE_NAME='<<parameters.jar_base_name>>'
+            JAR_BUILD_BUCKET_DIR='<<parameters.jar_build_bucket_dir>>'
+            JAR_FILE_URL_PATTERN="gs://${BUILDS_BUCKET}${JAR_BUILD_BUCKET_DIR}/${JAR_BASE_NAME}_*_${SHORT_GIT_SHA}.jar"
+            echo "Checking for ${JAR_FILE_URL_PATTERN}"
+            # For some reason following line generating exit code 1 every time in CircleCI. Use set +e so script can continue
+            JAR_FILE_URL=`gsutil ls $JAR_FILE_URL_PATTERN  | sort -r | head -1`
+            if [ -z $JAR_FILE_URL ]
+              then
+                echo "Could not find archive using pattern ${JAR_FILE_URL_PATTERN}"
+                exit 1
+            fi
+            JAR_FILE_PATH="target/${JAR_BASE_NAME}.jar"
+            mkdir -p $(dirname $JAR_FILE_PATH)
+            gsutil cp  $JAR_FILE_URL $JAR_FILE_PATH
+            echo ""
+  deploy-jar:
+    parameters:
+      jar_base_name:
+        type: string
+      deploy_dir:
+        type: string
+        default: deployment-assets
+      tcell_dir:
+        type: string
+        default: *tcell_dir
+    steps:
+      - set-deployment-env
+      - render-configs
+      - install-tcell
+      - run:
+          name: Gather deployment assets
+          command: |
+            DEPLOY_DIR='<<parameters.deploy_dir>>'
+            TCELL_DIR='<<parameters.tcell_dir>>'
+            rm -rf $DEPLOY_DIR
+            mkdir -p $DEPLOY_DIR
+            cd $DEPLOY_DIR
+            cp -r ../$TCELL_DIR .
+            cp ../output-config/tcell_agent.config $TCELL_DIR
+            cp ../target/<<parameters.jar_base_name>>.jar .
+            cp ../src/appengine/<<parameters.jar_base_name>>.yaml .
+            cp ../output-config/application.conf .
+      - auth-gcp-service-account
+      - run:
+          name: Deploy <<parameters.jar_base_name>> to GAE
+          command: |
+            set -u
+            gcloud app deploy --version="${SHORT_GIT_SHA}" --stop-previous-version --project "broad-ddp-${ENVIRONMENT}" <<parameters.deploy_dir>>/<<parameters.jar_base_name>>.yaml
+      - update-deployment-sheet:
+          jar_base_name: <<parameters.jar_base_name>>
+      - delete-old-service-versions:
+          deploy_dir: <<parameters.deploy_dir>>
+          deploy_config_base_name: <<parameters.jar_base_name>>
+
+  delete-old-service-versions:
+    parameters:
+      deploy_dir:
+        type: string
+      deploy_config_base_name:
+        type: string
+        default: app
+    steps:
+      - run:
+          name: Delete previous versions of service
+          command: |
+            set +x
+            # extract the service name from the GAE yaml file
+            CONFIG_FILE="<<parameters.deploy_dir>>/<<parameters.deploy_config_base_name>>.yaml"
+            SERVICE=$(grep -Eo -m1 "^service:\s*.*" "${CONFIG_FILE}" | awk '{print $2}')
+            echo "The service name is *${SERVICE}*"
+
+            # find what other versions are currently running
+            # skip first line, exclude our version, print 2nd column
+            AWK_COMMMAND="NR > 1 && !/${SHORT_GIT_SHA}/ {print \$2}"
+            VERSIONS_TO_DELETE=$(gcloud app versions list --service "${SERVICE}" --project "broad-ddp-${ENVIRONMENT}" | awk "${AWK_COMMMAND}")
+
+            # Sometime deleting versions fails. If there are less than 3 versions then we are not going to worry about it
+            # and set flag so this job step does not fail when exit error value is generated
+            if [[ ! -z $VERSIONS_TO_DELETE ]] && [[ "${#VERSIONS_TO_DELETE[@]}" -lt 3 ]]; then
+              set +e
+            fi
+
+            for CURRENT_VERSION in $VERSIONS_TO_DELETE; do
+              echo "Deleting version $CURRENT_VERSION of service $SERVICE"
+              gcloud app versions delete --quiet --service "$SERVICE" "$CURRENT_VERSION" --project "broad-ddp-${ENVIRONMENT}"
+            done;
+            exit 0
+
+  update-dispatch-rules:
+    parameters:
+      config_repo_path:
+        type: string
+        default: *github_dispatch_repo_path
+      config_file_path:
+        type: string
+        default: *github_dispatch_config_path
+      config_branch:
+        type: string
+        default: *github_dispatch_config_branch
+    steps:
+      - run:
+          name: Get dispatch.yaml file
+          command: |
+            # We are going to copy the dispatch file from the other repo
+            set -u
+            API_BASE_URL='https://api.github.com/repos'
+            API_BASE_PATH="<< parameters.config_repo_path >>/contents"
+            FILE_PATH="<< parameters.config_file_path >>/${ENVIRONMENT}/dispatch.yaml"
+            FILE_URL="${API_BASE_URL}${API_BASE_PATH}${FILE_PATH}"
+            BRANCH="<< parameters.config_branch >>"
+            FULL_URL="${FILE_URL}?ref=${BRANCH}"
+            curl \
+              -H 'Accept:application/vnd.github.v3.raw' \
+              "$FULL_URL" \
+              -o dispatch.yaml
+            cat dispatch.yaml
+      - run:
+          name: Update GAE dispatch config
+          command: |
+            set -u
+            gcloud app deploy --quiet --project "broad-ddp-${ENVIRONMENT}" dispatch.yaml
+
+  update-deployment-sheet:
+    parameters:
+      jar_base_name:
+        type: string
+    steps:
+      - run:
+          name: Update deployments sheet
+          command: |
+            set -u
+            set +x
+            vault read -format=json secret/pepper/${ENVIRONMENT}/v1/conf  | jq -r .data.gcp.serviceKey |
+            /opt/build-utils/reportdeploy.sh "$RELEASE_SHEET_ID" '<<parameters.jar_base_name>> server' "$ENVIRONMENT" "$CIRCLE_BUILD_NUM" "$CIRCLE_BUILD_URL"
+
+  auth-gcp-service-account:
+    parameters:
+      env:
+        type: string
+        default: ''
+    steps:
+      - run:
+          name: Call authenticate with GCP with in deployment environment
+          command: |
+            PARAM_ENV='<< parameters.env >>'
+            TARGET_ENV="${PARAM_ENV:-${ENVIRONMENT}}"
+            if [[ -z $TARGET_ENV ]]; then
+              echo "Target environment was not set"
+              exit 1
+            else
+              echo "Target vault env: $TARGET_ENV"
+              echo "From $PWD"
+            fi
+            vault read --format=json secret/pepper/${TARGET_ENV}/v1/conf |
+              jq -r .data.gcp.serviceKey |
+              gcloud auth activate-service-account --key-file=-
+
+  compute-parallel-test-split:
+    description: >
+      Use CircleCi utility to compute tests to be run in a parallel test job.
+      Note that we try to exclude IntegrationTestSuite tests from running in a parallel.
+      In current workflow IntegrationTestSuite runs in its own dedicated job.
+    parameters:
+      circleci_path:
+        type: string
+        default: *circleci_path
+    steps:
+      - run:
+          name: Split tests
+          command: |
+            set +x
+            set +e
+            TEST_DATA_PATH='<< parameters.circleci_path >>/tests'
+            mkdir -p "$TEST_DATA_PATH"
+
+            TEST_SRC_DIRECTORY='src/test/java'
+            TEST_SEARCH_PATTERN='**/*Test.java'
+
+            ALL_TEST_CLASS_NAMES_PATH="${TEST_DATA_PATH}/allTestClassNames.txt"
+            SUREFIRE_CLASS_NAMES_PATH="${TEST_DATA_PATH}/surefire_classnames"
+
+            # generate list of tests to be processed
+            circleci tests glob "${TEST_SRC_DIRECTORY}/${TEST_SEARCH_PATTERN}" | # fancy circleci 'find' command
+              sed -e "s#^${TEST_SRC_DIRECTORY}/\(.*\)\.java#\1#" | # Strip out '.java' and parent directory path
+              tr "/" "." >  "$SUREFIRE_CLASS_NAMES_PATH" # Convert to a class name of form org.package.ClassName
+
+            echo "Total number of test class names collected: $(wc -l $SUREFIRE_CLASS_NAMES_PATH)"
+
+            # tests split will figure out which tests to run in this node
+            THIS_NODE_TESTS_PATH=/tmp/this_node_tests
+
+            cat $SUREFIRE_CLASS_NAMES_PATH |
+              circleci tests split --split-by=timings --timings-type=classname > $THIS_NODE_TESTS_PATH
+
+            echo "Number of test classes circleci wants to execute on this node: $(wc -l < $THIS_NODE_TESTS_PATH)"
+
+            IGNORE_CLASS_LIST_PATH="${TEST_DATA_PATH}/surefire_classnames_ignore_list"
+
+
+            # Specify the tests to run by substraction: we tell Surefire what NOT to run
+            # Make sure the one CircleCi has calculated are removed from the "ignore" list
+            cat $SUREFIRE_CLASS_NAMES_PATH |
+              grep -xvf $THIS_NODE_TESTS_PATH > $IGNORE_CLASS_LIST_PATH
+
+            # And ignore the Suite itself
+            echo 'org.broadinstitute.ddp.route.IntegrationTestSuite'  >> $IGNORE_CLASS_LIST_PATH
+
+            cp $THIS_NODE_TESTS_PATH "${TEST_DATA_PATH}"
+
+            # save path for next steps
+            echo "export IGNORE_CLASS_LIST_PATH=${IGNORE_CLASS_LIST_PATH}" >> $BASH_ENV
+            source $BASH_ENV
+            echo "Total number of test classes that will be skipped in this node: $(wc -l $IGNORE_CLASS_LIST_PATH)"
+      - store_artifacts:
+          path: << parameters.circleci_path>>/tests/
+
+  run-maven-with-pepper-options:
+    parameters:
+      phase:
+        type: string
+      pom_file:
+        type: string
+        default: pom.xml
+      additional_options:
+        type: string
+        default: ''
+      skip_checkstyle:
+        type: boolean
+        default: true
+      skip_tests:
+        type: boolean
+        default: true
+      m2_repo:
+        type: string
+        default: *m2_repo_path
+      restore_m2_cache:
+        type: boolean
+        default: false
+      save_m2_cache:
+        type: boolean
+        default: false
+      background:
+        type: boolean
+        default: false
+      root_path:
+        type: string
+        default: *root_path
+    steps:
+      - when:
+          condition: << parameters.restore_m2_cache >>
+          steps:
+            - restore_cache: *m2_cache_keys
+      - run:
+          name: 'Run maven <<parameters.phase>> with options: <<parameters.additional_options>>'
+          command: |
+            CHECKSTYLE_OPTION=''
+            if [[ << parameters.skip_checkstyle >> = true ]]; then
+              CHECKSTYLE_OPTION='-Dcheckstyle.skip'
+            fi
+            SKIPTESTS_OPTION='-DskipTests=<< parameters.skip_tests >>'
+            mvn <<parameters.phase>> --batch-mode \
+                    -f <<parameters.pom_file>> \
+                    $CHECKSTYLE_OPTION \
+                    $SKIPTESTS_OPTION \
+                    -Ditext.license=output-config/itextkey.xml \
+                    -Dconfig.file=output-build-config/testing-inmemorydb.conf  \
+                    -Dmaven.repo.local=<< parameters.m2_repo >> <<parameters.additional_options>>
+          background: <<parameters.background>>
+      - when:
+          condition: << parameters.save_m2_cache >>
+          steps:
+            - save_cache:
+                key: *m2_cache_key
+                paths:
+                  - << parameters.root_path >>/.m2
+      - store_test_results:
+          path: target/surefire-reports
+
+  wait_for_server:
+    description: Wait for a server to respond for specific period of time
+    parameters:
+      server_address:
+        type: string
+        default: '127.0.0.1'
+      port:
+        type: integer
+      timeout:
+        type: integer
+        default: 60
+    steps:
+      - run:
+          name: Waiting for server to start
+          command: |
+            for i in `seq 1 << parameters.timeout >>`;
+            do
+              nc -z << parameters.server_address >> << parameters.port >> && echo Success && exit 0
+              echo -n .
+              sleep 1
+            done
+            echo Failed waiting for << parameters.server_address >> << parameters.port >> to start && exit 1
+
+  start-ddp-test-server:
+    description: Run test server that applies liquibase and load test data
+    steps:
+      - run-maven-with-pepper-options:
+          phase: exec:java
+          additional_options: '-Dexec.mainClass=org.broadinstitute.ddp.route.IntegrationTestSuite -Dexec.classpathScope=test'
+          background: true
+      - wait_for_server:
+          port: 5556
+          timeout: 60
+
+  compile-all-jars:
+    description: Compile and run checkstyle on all jars
+    parameters:
+      m2_repo:
+        type: string
+        default: *m2_repo_path
+      repo_path:
+        type: string
+        default: *repo_path
+      restore_m2_cache:
+        type: boolean
+        default: false
+    steps:
+      - when:
+          condition: << parameters.restore_m2_cache >>
+          steps:
+            - restore_cache: *m2_cache_keys
+      - run:
+          name: Compile and run checkstyle on all jars
+          command: |
+            # Install pepper-apis to .m2 so we can compile study-builder
+            mvn install --batch-mode -DskipTests -Dmaven.repo.local=<< parameters.m2_repo >>
+
+            # Just need to get parent-pom into .m2 so don't need to run checkstyle.
+            mvn install -f parent-pom.xml --batch-mode -DskipTests -Dcheckstyle.skip -Dmaven.repo.local=<< parameters.m2_repo >>
+
+            # Compile housekeeping
+            mvn test-compile -f housekeeping-pom.xml --batch-mode -DskipTests -Dmaven.repo.local=<< parameters.m2_repo >>
+
+            # Compile study-builder
+            cd << parameters.repo_path >>/study-builder
+            mvn test-compile --batch-mode -DskipTests -Dmaven.repo.local=<< parameters.m2_repo >>
+
+jobs:
+  build-api-docs-job:
+    executor:
+      name: build-deploy-executor
+    working_directory: *api-spec-path
+    steps:
+      - checkout:
+          path: *repo_path
+      - run:
+          name: Build docs
+          command: ./build.sh documentation
+
+  compile-and-run-test-suite-job:
+    executor:
+      name: test-executor
+    working_directory: *pepper_apis_path
+    steps:
+      - checkout:
+          path: *repo_path
+      - setup-shared-env
+      - compile-all-jars:
+          restore_m2_cache: true
+      - render-configs
+      - create-test-dbs
+      - run-maven-with-pepper-options:
+          phase: test
+          skip_tests: false
+          skip_checkstyle: true
+          additional_options: '-Dtest=ServerInSameProcessIntegrationTestSuite'
+          restore_m2_cache: false
+
+  parallel-compile-and-test-job:
+    executor:
+      name: test-executor
+    working_directory: *pepper_apis_path
+    parallelism: <<parameters.parallelism>>
+    parameters:
+      parallelism:
+        default: 2
+        type: integer
+    steps:
+      - checkout:
+          path: *repo_path
+      - setup-shared-env
+      - run-maven-with-pepper-options:
+          phase: process-test-classes
+          restore_m2_cache: true
+          skip_checkstyle: true
+      - render-configs
+      - create-test-dbs
+      - start-ddp-test-server # starts DDP server. And execute Liquibase DB population
+      - compute-parallel-test-split
+      - run-maven-with-pepper-options:
+          phase: test
+          skip_tests: false
+          additional_options: '-PCircleciParallelBuild -Dsurefire.excludesFile=$IGNORE_CLASS_LIST_PATH'
+          save_m2_cache: true
+      - run:
+          name: 'Check node index to save workspace only once'
+          command: |
+            if [[ "$CIRCLE_NODE_INDEX" -ne 0 ]]; then
+              echo "Skip persist workspace on this node";
+              circleci step halt;
+            fi
+      - persist_to_workspace:
+          root: *root_path
+          paths:
+            - repo
+
+  store-jar-job:
+    executor:
+      name: build-deploy-executor
+    working_directory: *pepper_apis_path
+    steps:
+      - attach_workspace:
+          at: *root_path
+      - setup-shared-env
+      - build-jar:
+          pom_file: pom.xml
+      - store-jar:
+          jar_base_name: DataDonationPlatform
+      - build-jar:
+          pom_file: housekeeping-pom.xml
+      - store-jar:
+          jar_base_name: Housekeeping
+
+  deploy-jar-from-workspace-job:
+    executor:
+      name: build-deploy-executor
+    working_directory: *pepper_apis_path
+    steps:
+      - attach_workspace:
+          at: *root_path
+      - setup-shared-env
+      - build-jar:
+          pom_file: pom.xml
+      - deploy-jar:
+          jar_base_name: DataDonationPlatform
+      - build-jar:
+          pom_file: housekeeping-pom.xml
+      - deploy-jar:
+          jar_base_name: Housekeeping
+      - update-dispatch-rules
+
+  deploy-stored-jar-job:
+    executor:
+      name: build-deploy-executor
+    working_directory: *pepper_apis_path
+    steps:
+      - checkout:
+          path: *repo_path
+      - setup-shared-env
+      - retrieve-jar:
+          jar_base_name: DataDonationPlatform
+      - deploy-jar:
+          jar_base_name: DataDonationPlatform
+      - retrieve-jar:
+          jar_base_name: Housekeeping
+      - deploy-jar:
+          jar_base_name: Housekeeping
+      - update-dispatch-rules
+
+  deploy-docs-job:
+    executor:
+      name: build-deploy-executor
+    working_directory: *api-spec-path
+    steps:
+      - checkout:
+          path: *repo_path
+      - run:
+          name: Build docs
+          command: ./build.sh documentation
+      - setup-shared-env
+      - set-deployment-env
+      - auth-gcp-service-account
+      - run:
+          name: Deploy docs website
+          command: |
+            set -u
+            gcloud app deploy --version="${SHORT_GIT_SHA}" --stop-previous-version --project "broad-ddp-${ENVIRONMENT}" deploy/app.yaml
+      - delete-old-service-versions:
+            deploy_dir: deploy
+
+parameters:
+  on_demand:
+    type: boolean
+    default: false
+
+workflows:
+  version: 2
+
+  parallel-compile-and-test-workflow:
+    unless: << pipeline.parameters.on_demand >>
+    jobs:
+      - compile-and-run-test-suite-job: &compile_and_test_filters
+          filters:
+            branches:
+              only:
+                - develop
+                - scaling_experiment
+                - &rc /^rc.*/
+                - &hotfix /^hotfix.*/
+      - parallel-compile-and-test-job:
+          parallelism: *test_parallelism
+          <<: *compile_and_test_filters
+      - build-api-docs-job:
+          <<: *compile_and_test_filters
+      - deploy-jar-from-workspace-job:
+          filters:
+            branches:
+              only:
+                - develop
+                - scaling_experiment
+          requires:
+            - parallel-compile-and-test-job
+            - compile-and-run-test-suite-job
+      - store-jar-job:
+          filters:
+            branches:
+              only:
+                - *rc
+                - *hotfix
+          requires:
+            - compile-and-run-test-suite-job
+            - parallel-compile-and-test-job
+
+  run-tests-on-demand-workflow:
+    when: << pipeline.parameters.on_demand >>
+    jobs:
+      - compile-and-run-test-suite-job
+      - parallel-compile-and-test-job:
+          parallelism: *test_parallelism
+      - build-api-docs-job
+
+  deploy-workflow:
+    jobs:
+      - deploy-stored-jar-job:
+          filters:
+            branches:
+              only:
+                - test
+                - staging
+                - production
+
+  deploy-api-docs-workflow:
+    jobs:
+      - deploy-docs-job:
+          filters:
+            branches:
+              only:
+                - develop
+

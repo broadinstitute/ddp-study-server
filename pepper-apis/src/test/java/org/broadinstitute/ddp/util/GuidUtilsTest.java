@@ -43,6 +43,14 @@ public class GuidUtilsTest {
                 10, CANDIDATE_STRING_B, 20);
     }
 
+    @Test
+    public void testRandomWithPrefix() {
+        String actual = GuidUtils.randomWithPrefix("DDP", GuidUtils.ALPHA_NUMERIC, 10);
+        assertNotNull(actual);
+        assertEquals(10, actual.length());
+        assertTrue(actual.startsWith("DDP"));
+    }
+
     /**
      * Helper to make sure generated guid strings are unique in terms of what we have already
      * generated and is of expected length/character set.

@@ -13,7 +13,6 @@ import java.util.Optional;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.content.ContentStyle;
-import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.content.I18nTemplateConstants;
 import org.broadinstitute.ddp.db.FormInstanceDao;
 import org.broadinstitute.ddp.db.SectionBlockDao;
@@ -46,7 +45,7 @@ public class ActivityInstanceServiceTest extends TxnAwareBaseTest {
     @BeforeClass
     public static void setup() {
         PexInterpreter interpreter = new TreeWalkInterpreter();
-        SectionBlockDao sectBlockDao = new SectionBlockDao(new I18nContentRenderer());
+        SectionBlockDao sectBlockDao = new SectionBlockDao();
 
         org.broadinstitute.ddp.db.ActivityInstanceDao actInstDao =
                 new org.broadinstitute.ddp.db.ActivityInstanceDao(FormInstanceDao.fromDaoAndConfig(sectBlockDao, sqlConfig));

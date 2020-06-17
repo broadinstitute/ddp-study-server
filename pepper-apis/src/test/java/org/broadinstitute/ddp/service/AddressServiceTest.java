@@ -9,19 +9,28 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.db.dao.KitConfigurationDao;
 import org.broadinstitute.ddp.exception.AddressVerificationException;
+import org.broadinstitute.ddp.model.address.AddressWarning;
 import org.broadinstitute.ddp.model.address.MailAddress;
+import org.broadinstitute.ddp.model.dsm.KitType;
+import org.broadinstitute.ddp.model.kit.KitConfiguration;
+import org.broadinstitute.ddp.model.kit.KitZipCodeRule;
 import org.broadinstitute.ddp.util.JsonValidationError;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
+import org.jdbi.v3.core.Handle;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -217,6 +226,28 @@ public class AddressServiceTest extends TxnAwareBaseTest {
             assertNotNull(e.getError().getErrors());
             assertFalse(e.getError().getErrors().isEmpty());
         }
+    }
+
+    @Test
+    public void testCheckStudyAddress() {
+        MailAddress addr = buildTestAddress();
+        var kitConfig = new KitConfiguration(1L, 1, new KitType(1L, "SALIVA"), testData.getStudyGuid(), List.of(
+                new KitZipCodeRule(1L, Set.of("12345", "02115"))));
+
+        var mockHandle = mock(Handle.class);
+        var mockKitDao = mock(KitConfigurationDao.class);
+        doReturn(mockKitDao).when(mockHandle).attach(KitConfigurationDao.class);
+        doReturn(List.of(kitConfig)).when(mockKitDao).findStudyKitConfigurations(anyLong());
+
+        addr.setZip("02115");
+        List<AddressWarning> actual = service.checkStudyAddress(mockHandle, testData.getStudyId(), "en", addr);
+        assertNotNull(actual);
+        assertTrue(actual.isEmpty());
+
+        addr.setZip("02161");
+        actual = service.checkStudyAddress(mockHandle, testData.getStudyId(), "en", addr);
+        assertEquals(1, actual.size());
+        assertEquals(AddressWarning.Warn.ZIP_UNSUPPORTED.getCode(), actual.get(0).getCode());
     }
 
     private MailAddress buildTestAddress() {

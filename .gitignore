@@ -95,3 +95,7 @@ node_modules/
 # maven test results
 surefire-reports/
 checkstyle-result.xml
+
+# tcell config
+tcell/*.config
+tcell/logs/

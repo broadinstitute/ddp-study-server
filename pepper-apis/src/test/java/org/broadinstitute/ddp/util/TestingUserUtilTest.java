@@ -78,7 +78,7 @@ public class TestingUserUtilTest extends TxnAwareBaseTest {
             long auth0TenantId = handle.attach(JdbiAuth0Tenant.class).findByDomain(domain).getId();
             if (!clientDao.getClientIdByAuth0ClientAndDomain(auth0TestClientId, domain).isPresent()) {
                 handle.attach(ClientDao.class)
-                        .registerClient(testClientName, auth0TestClientId, testClientSecret, new ArrayList<>(),
+                        .registerClient(auth0TestClientId, testClientSecret, new ArrayList<>(),
                                 encryptionSecret, auth0TenantId);
             }
             return testingUserUtil.createAndLoginNewTestUser(handle, domain, testClientName, auth0TestClientId,
