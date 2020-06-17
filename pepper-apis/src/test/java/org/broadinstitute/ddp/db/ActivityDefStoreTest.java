@@ -94,7 +94,7 @@ public class ActivityDefStoreTest extends TxnAwareBaseTest {
     }
 
     private FormActivityDef createDummyForm() {
-        var agreement = new AgreementQuestionDef("AGREE1", false, Template.text("1"), null, null,
+        var agreement = new AgreementQuestionDef("AGREE1", false, Template.text("1"), null, null, null,
                 List.of(new RequiredRuleDef(Template.text("hint"))), false);
 
         var conditional = new ConditionalBlockDef(BoolQuestionDef

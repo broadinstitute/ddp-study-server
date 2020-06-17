@@ -19,7 +19,7 @@ public class PicklistOptionTest {
     public void testEnsureDetailTemplateIsProvided() {
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("detail label must be provided");
-        new PicklistOption("sid", 1L, null, true, false);
+        new PicklistOption("sid", 1L, null, null, true, false);
     }
 
     @Test
@@ -28,7 +28,7 @@ public class PicklistOptionTest {
         rendered.put(1L, "this is <em>option</em> label");
         rendered.put(2L, "this is <em>detail</em> label");
 
-        PicklistOption option = new PicklistOption("sid", 1L, 2L, true, false);
+        PicklistOption option = new PicklistOption("sid", 1L, null, 2L, true, false);
         option.applyRenderedTemplates(rendered::get, ContentStyle.STANDARD);
 
         assertEquals(rendered.get(1L), option.getOptionLabel());
@@ -41,7 +41,7 @@ public class PicklistOptionTest {
         rendered.put(1L, "this is <em>option</em> label");
         rendered.put(2L, "this is <em>detail</em> label");
 
-        PicklistOption option = new PicklistOption("sid", 1L, 2L, true, false);
+        PicklistOption option = new PicklistOption("sid", 1L, null, 2L, true, false);
         option.applyRenderedTemplates(rendered::get, ContentStyle.BASIC);
 
         assertEquals("this is option label", option.getOptionLabel());

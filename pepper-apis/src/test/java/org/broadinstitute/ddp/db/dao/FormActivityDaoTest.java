@@ -592,6 +592,7 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
             AgreementQuestionDef agreementDef = new AgreementQuestionDef("AGREEMENT",
                                                                         true,
                                                                         Template.text("agreement prompt"),
+                                                                        null,
                                                                         Template.text("info header"),
                                                                         Template.text("info footer"),
                                                                         singletonList(new RequiredRuleDef(null)),

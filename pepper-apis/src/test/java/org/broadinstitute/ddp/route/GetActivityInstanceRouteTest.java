@@ -157,7 +157,9 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
                 .build();
         Template txt3Tmpl = Template.html("$foo $ddp.participantFirstName()'s favorite color?");
         txt3Tmpl.addVariable(TemplateVariable.single("foo", "en", "What is"));
-        TextQuestionDef txt3 = TextQuestionDef.builder(TextInputType.TEXT, "TEXT_WITH_SPECIAL_VARS", txt3Tmpl).build();
+        TextQuestionDef txt3 = TextQuestionDef.builder(TextInputType.TEXT, "TEXT_WITH_SPECIAL_VARS", txt3Tmpl)
+                .setTooltip(Template.text("some helper text"))
+                .build();
         FormSectionDef textSection = new FormSectionDef(null, TestUtil.wrapQuestions(txt1, txt2, txt3));
 
         PicklistQuestionDef p1 = PicklistQuestionDef
@@ -171,7 +173,8 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
         PicklistQuestionDef p3 = PicklistQuestionDef
                 .buildMultiSelect(PicklistRenderMode.LIST, "PL_GROUPS", newTemplate())
                 .addGroup(new PicklistGroupDef("G1", newTemplate(), Arrays.asList(
-                        new PicklistOptionDef("G1_OPT1", newTemplate()))))
+                        new PicklistOptionDef(null, "G1_OPT1", newTemplate(),
+                                Template.text("option tooltip"), null, false))))
                 .addGroup(new PicklistGroupDef("G2", newTemplate(), Arrays.asList(
                         new PicklistOptionDef("G2_OPT1", newTemplate()),
                         new PicklistOptionDef("G2_OPT2", newTemplate()))))
@@ -190,6 +193,7 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
         AgreementQuestionDef a1 = new AgreementQuestionDef("AGREEMENT_Q",
                 false,
                 newTemplate("I agree with the preceding text"),
+                null,
                 newTemplate("info header"),
                 newTemplate("info footer"),
                 Arrays.asList(new RequiredRuleDef(newTemplate())),
@@ -716,6 +720,17 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
         String expectedBody = String.format("<p>%s<br/>%s<br/>%s</p>", profile.getFirstName(), profile.getLastName(),
                 DateTimeFormatter.ofPattern("MM-dd-uuuu").format(LocalDate.now()));
         resp.then().assertThat().body("sections[5].blocks[1].body", equalTo(expectedBody));
+    }
+
+    @Test
+    public void testTooltip() {
+        testFor200AndExtractResponse()
+                .then().assertThat()
+                .root("sections[1].blocks[2].question")
+                .body("tooltip", equalTo("some helper text"))
+                .root("sections[2].blocks[2].question")
+                .body("picklistOptions[1].stableId", equalTo("G1_OPT1"))
+                .body("picklistOptions[1].tooltip", equalTo("option tooltip"));
     }
 
     private Response testFor200AndExtractResponse() {
