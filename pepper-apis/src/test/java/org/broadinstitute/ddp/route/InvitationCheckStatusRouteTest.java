@@ -8,6 +8,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -33,6 +34,8 @@ import org.broadinstitute.ddp.db.dao.JdbiRevision;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.KitConfigurationDao;
 import org.broadinstitute.ddp.db.dao.KitTypeDao;
+import org.broadinstitute.ddp.db.dao.StudyDao;
+import org.broadinstitute.ddp.db.dao.TemplateDao;
 import org.broadinstitute.ddp.db.dto.InvitationDto;
 import org.broadinstitute.ddp.json.invitation.InvitationCheckStatusPayload;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
@@ -77,6 +80,7 @@ public class InvitationCheckStatusRouteTest extends IntegrationTestSuite.TestCas
         doReturn(mockInviteDao).when(mockHandle).attach(InvitationDao.class);
         route = spy(InvitationCheckStatusRoute.class);
         doReturn(true).when(route).isUserRecaptchaTokenValid(anyString(), anyString(), anyString());
+        doReturn("invite error").when(route).getInviteErrorMessage(any(), anyLong(), anyString());
 
         testServer = new TestServer(
                 service -> service.post(RouteConstants.API.INVITATION_CHECK, route, new NullableJsonTransformer())
@@ -123,25 +127,40 @@ public class InvitationCheckStatusRouteTest extends IntegrationTestSuite.TestCas
 
     @Test
     public void testCheckStatus_badInvitation() {
-        doReturn(testData.getTestingStudy()).when(mockJdbiStudy).findByStudyGuid(any());
-        doReturn(List.of(testData.getStudyGuid())).when(mockClientStudy)
-                .findPermittedStudyGuidsByAuth0ClientIdAndAuth0Domain(any(), any());
-        var payload = new InvitationCheckStatusPayload("foo", "invite", "mockTokenValue");
+        TransactionWrapper.useTxn(handle -> {
+            Template inviteError = Template.text("$foobar");
+            inviteError.addVariable(TemplateVariable.single("foobar", "en", "study invite error"));
+            long revisionId = handle.attach(JdbiRevision.class)
+                    .insertStart(Instant.now().toEpochMilli(), testData.getUserId(), "test");
+            handle.attach(StudyDao.class).addSettings(testData.getStudyId(), inviteError, revisionId);
 
-        doReturn(Optional.empty()).when(mockInviteDao).findByInvitationGuid(anyLong(), any());
-        var actual = route.checkStatus(mockHandle, "study", "", "en", payload);
-        assertEquals(ErrorCodes.INVALID_INVITATION, actual.getCode());
+            doReturn(handle.attach(StudyDao.class)).when(mockHandle).attach(StudyDao.class);
+            doReturn(handle.attach(TemplateDao.class)).when(mockHandle).attach(TemplateDao.class);
+            doCallRealMethod().when(route).getInviteErrorMessage(any(), anyLong(), anyString());
 
-        var now = Instant.now();
-        var voided = fakeInvitation(now, now, null, null);
-        doReturn(Optional.of(voided)).when(mockInviteDao).findByInvitationGuid(anyLong(), any());
-        actual = route.checkStatus(mockHandle, "study", "", "en", payload);
-        assertEquals(ErrorCodes.INVALID_INVITATION, actual.getCode());
+            doReturn(testData.getTestingStudy()).when(mockJdbiStudy).findByStudyGuid(any());
+            doReturn(List.of(testData.getStudyGuid())).when(mockClientStudy)
+                    .findPermittedStudyGuidsByAuth0ClientIdAndAuth0Domain(any(), any());
+            var payload = new InvitationCheckStatusPayload("foo", "invite", "mockTokenValue");
 
-        var accepted = fakeInvitation(now, null, null, now);
-        doReturn(Optional.of(accepted)).when(mockInviteDao).findByInvitationGuid(anyLong(), any());
-        actual = route.checkStatus(mockHandle, "study", "", "en", payload);
-        assertEquals(ErrorCodes.INVALID_INVITATION, actual.getCode());
+            doReturn(Optional.empty()).when(mockInviteDao).findByInvitationGuid(anyLong(), any());
+            var actual = route.checkStatus(mockHandle, testData.getStudyGuid(), "", "en", payload);
+            assertEquals(ErrorCodes.INVALID_INVITATION, actual.getCode());
+            assertEquals("study invite error", actual.getMessage());
+
+            var now = Instant.now();
+            var voided = fakeInvitation(now, now, null, null);
+            doReturn(Optional.of(voided)).when(mockInviteDao).findByInvitationGuid(anyLong(), any());
+            actual = route.checkStatus(mockHandle, "study", "", "en", payload);
+            assertEquals(ErrorCodes.INVALID_INVITATION, actual.getCode());
+
+            var accepted = fakeInvitation(now, null, null, now);
+            doReturn(Optional.of(accepted)).when(mockInviteDao).findByInvitationGuid(anyLong(), any());
+            actual = route.checkStatus(mockHandle, "study", "", "en", payload);
+            assertEquals(ErrorCodes.INVALID_INVITATION, actual.getCode());
+
+            handle.rollback();
+        });
     }
 
     @Test
