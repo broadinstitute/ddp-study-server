@@ -42,6 +42,9 @@ public abstract class Question<T extends Answer> implements Renderable {
     @SerializedName("textPrompt")
     protected String textPrompt;
 
+    @SerializedName("tooltip")
+    protected String tooltip;
+
     @Nullable
     @SerializedName("additionalInfoHeader")
     protected String additionalInfoHeader;
@@ -68,17 +71,19 @@ public abstract class Question<T extends Answer> implements Renderable {
     protected transient boolean isRestricted;
     protected transient boolean isDeprecated;
     protected transient long promptTemplateId;
+    protected transient Long tooltipTemplateId;
     protected transient Long additionalInfoHeaderTemplateId;
     protected transient Long additionalInfoFooterTemplateId;
     private transient boolean shouldHideQuestionNumber;
 
     public Question(QuestionType questionType, String stableId, long promptTemplateId,
-                    boolean isRestricted, boolean isDeprecated,
+                    boolean isRestricted, boolean isDeprecated, Long tooltipTemplateId,
                     Long additionalInfoHeaderTemplateId, Long additionalInfoFooterTemplateId,
                     List<T> answers, List<Rule<T>> validations) {
         this(questionType, stableId, promptTemplateId, answers, validations);
         this.isRestricted = isRestricted;
         this.isDeprecated = isDeprecated;
+        this.tooltipTemplateId = tooltipTemplateId;
         this.additionalInfoHeaderTemplateId = additionalInfoHeaderTemplateId;
         this.additionalInfoFooterTemplateId = additionalInfoFooterTemplateId;
     }
@@ -106,6 +111,10 @@ public abstract class Question<T extends Answer> implements Renderable {
 
     public String getTextPrompt() {
         return textPrompt;
+    }
+
+    public String getTooltip() {
+        return tooltip;
     }
 
     public String getAdditionalInfoHeader() {
@@ -162,6 +171,10 @@ public abstract class Question<T extends Answer> implements Renderable {
 
     public long getPromptTemplateId() {
         return promptTemplateId;
+    }
+
+    public Long getTooltipTemplateId() {
+        return tooltipTemplateId;
     }
 
     public void setActivityValidationFailures(List<ActivityValidationFailure> activityValidationFailures) {
@@ -232,12 +245,16 @@ public abstract class Question<T extends Answer> implements Renderable {
     public void registerTemplateIds(Consumer<Long> registry) {
         registry.accept(promptTemplateId);
 
+        if (tooltipTemplateId != null) {
+            registry.accept(tooltipTemplateId);
+        }
+
         if (additionalInfoHeaderTemplateId != null) {
-            registry.accept(additionalInfoHeaderTemplateId.longValue());
+            registry.accept(additionalInfoHeaderTemplateId);
         }
 
         if (additionalInfoFooterTemplateId != null) {
-            registry.accept(additionalInfoFooterTemplateId.longValue());
+            registry.accept(additionalInfoFooterTemplateId);
         }
     }
 
@@ -253,12 +270,19 @@ public abstract class Question<T extends Answer> implements Renderable {
             prompt = HtmlConverter.getSimpleText(prompt);
         }
 
+        if (tooltipTemplateId != null) {
+            tooltip = HtmlConverter.getPlainText(rendered.get(tooltipTemplateId));
+            if (tooltip == null) {
+                throw new NoSuchElementException("No rendered template found for tooltip with id " + tooltipTemplateId);
+            }
+        }
+
         if (additionalInfoHeaderTemplateId != null) {
-            this.additionalInfoHeader = rendered.get(additionalInfoHeaderTemplateId.longValue());
+            additionalInfoHeader = rendered.get(additionalInfoHeaderTemplateId);
         }
 
         if (additionalInfoFooterTemplateId != null) {
-            this.additionalInfoFooter = rendered.get(additionalInfoFooterTemplateId.longValue());
+            additionalInfoFooter = rendered.get(additionalInfoFooterTemplateId);
         }
     }
 

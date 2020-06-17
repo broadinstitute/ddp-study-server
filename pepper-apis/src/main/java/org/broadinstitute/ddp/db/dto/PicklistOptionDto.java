@@ -8,6 +8,7 @@ public class PicklistOptionDto {
     private long id;
     private String stableId;
     private long optionLabelTemplateId;
+    private Long tooltipTemplateId;
     private Long detailLabelTemplateId;
     private boolean allowDetails;
     private boolean isExclusive;
@@ -18,6 +19,7 @@ public class PicklistOptionDto {
     public PicklistOptionDto(@ColumnName("picklist_option_id") long id,
                              @ColumnName("picklist_option_stable_id") String stableId,
                              @ColumnName("option_label_template_id") long optionLabelTemplateId,
+                             @ColumnName("tooltip_template_id") Long tooltipTemplateId,
                              @ColumnName("detail_label_template_id") Long detailLabelTemplateId,
                              @ColumnName("allow_details") boolean allowDetails,
                              @ColumnName("is_exclusive") boolean isExclusive,
@@ -26,6 +28,7 @@ public class PicklistOptionDto {
         this.id = id;
         this.stableId = stableId;
         this.optionLabelTemplateId = optionLabelTemplateId;
+        this.tooltipTemplateId = tooltipTemplateId;
         this.detailLabelTemplateId = detailLabelTemplateId;
         this.allowDetails = allowDetails;
         this.isExclusive = isExclusive;
@@ -43,6 +46,10 @@ public class PicklistOptionDto {
 
     public long getOptionLabelTemplateId() {
         return optionLabelTemplateId;
+    }
+
+    public Long getTooltipTemplateId() {
+        return tooltipTemplateId;
     }
 
     public Long getDetailLabelTemplateId() {
