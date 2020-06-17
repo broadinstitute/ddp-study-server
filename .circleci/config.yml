@@ -121,7 +121,7 @@ commands:
             develop)
               DEPLOY_ENV=dev
             ;;
-            GAE_Backend_Deployment_Config)
+            add_redis_caching)
               DEPLOY_ENV=dev
             ;;
             test)
@@ -761,8 +761,7 @@ workflows:
             branches:
               only:
                 - develop
-                - scaling_experiment
-                - GAE_Backend_Deployment_Config
+                - add_redis_caching
           requires:
             - parallel-compile-and-test-job
             - compile-and-run-test-suite-job
