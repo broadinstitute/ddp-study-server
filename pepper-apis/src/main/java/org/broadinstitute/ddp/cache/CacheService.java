@@ -117,6 +117,10 @@ public class CacheService {
         cacheManager.destroyCache(name);
     }
 
+    public void resetAllCaches() {
+        cacheManager.getCacheNames().forEach(cacheName -> cacheManager.getCache(cacheName).removeAll());
+    }
+
     private void updateChangeTypeToCacheName(ModelChangeType evictionModelChangeType, String cacheName) {
         Collection<String> existingCacheNames = modelChangeTypeToCacheName.get(evictionModelChangeType);
         List<String> newListOfCacheNames;

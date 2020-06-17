@@ -38,6 +38,7 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Options;
 import org.apache.commons.io.IOUtils;
+import org.broadinstitute.ddp.cache.CacheService;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.SqlConstants;
@@ -308,6 +309,7 @@ public class TestDataSetupUtil {
     }
 
     public static GeneratedTestData generateBasicUserTestData(Handle handle, boolean forceUserCreation) {
+        CacheService.getInstance().resetAllCaches();
         String sendgridApiKey = cfg.getString(ConfigFile.SENDGRID_API_KEY);
         String backendTestAuth0ClientId = auth0Config.getString(ConfigFile.BACKEND_AUTH0_TEST_CLIENT_ID);
         String backendTestSecret = auth0Config.getString(ConfigFile.BACKEND_AUTH0_TEST_SECRET);
