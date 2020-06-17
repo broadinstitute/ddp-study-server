@@ -45,7 +45,11 @@ public class CacheService {
 
     private CacheService() {
         String configFileName = ConfigManager.getInstance().getConfig().getString(ConfigFile.JCACHE_CONFIGURATION_FILE);
-        cacheManager = buildCacheManager(configFileName);
+        if (true) {
+            cacheManager = new NullCacheManager();
+        } else {
+            cacheManager = buildCacheManager(configFileName);
+        }
     }
 
     private CacheManager buildCacheManager(String configFileName) {
@@ -113,12 +117,8 @@ public class CacheService {
         return (Cache<K, V>) cache;
     }
 
-    public void destroyCache(String name) {
-        cacheManager.destroyCache(name);
-    }
-
     public void resetAllCaches() {
-        cacheManager.getCacheNames().forEach(cacheName -> cacheManager.getCache(cacheName).removeAll());
+        cacheManager.getCacheNames().forEach(cacheName -> cacheManager.getCache(cacheName).clear());
     }
 
     private void updateChangeTypeToCacheName(ModelChangeType evictionModelChangeType, String cacheName) {
