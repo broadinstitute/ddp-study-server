@@ -217,12 +217,13 @@ public class StudyDataLoader {
                 olcService, addressService);
 
         String ddpCreated = getStringValueFromElement(datstatData, "datstat_created");
+        LocalDateTime ddpCreatedLocalDateTime = LocalDateTime.parse(ddpCreated, DateTimeFormatter.ofPattern(DATSTAT_DATE_FORMAT));
         Long ddpCreatedAt = null;
         boolean couldNotParse = false;
 
         try {
             if (ddpCreated != null) {
-                Instant instant = Instant.parse(ddpCreated);
+                Instant instant = ddpCreatedLocalDateTime.toInstant(ZoneOffset.UTC);
                 if (instant != null) {
                     ddpCreatedAt = instant.toEpochMilli();
                 }
