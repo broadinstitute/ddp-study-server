@@ -5,6 +5,7 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import javax.cache.Cache;
@@ -26,8 +27,10 @@ import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.AuthDao;
 import org.broadinstitute.ddp.db.dao.ClientDao;
+import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.exception.DDPTokenException;
+import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.model.user.UserProfile;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
@@ -116,7 +119,7 @@ public class JWTConverter {
 
     private String getPreferredLanguageCodeForUser(UserProfile userProfile, String userGuid) {
         String preferredIsoLanguageCode = DEFAULT_ISO_LANGUAGE_CODE;
-        if (userProfile == null) {
+        if (userProfile != null) {
             if (userProfile.getPreferredLangCode() != null) {
                 preferredIsoLanguageCode = userProfile.getPreferredLangCode();
                 LOG.info("The preferred language code for the user with GUID {} is '{}'",
@@ -156,12 +159,20 @@ public class JWTConverter {
                         jwkProviderMap.put(auth0ClientId, jwkProvider);
                     }
                     UserProfile userProfile;
+                    Long userId;
                     try {
                         DecodedJWT validToken = verifyDDPToken(jwt, jwkProvider);
                         String ddpUserGuid = validToken.getClaim(Auth0Constants.DDP_USER_ID_CLAIM).asString();
                         UserPermissions userPermissions = handle.attach(AuthDao.class)
                                 .findUserPermissions(ddpUserGuid, auth0ClientId, auth0Domain);
                         userProfile = findUserProfile(handle, ddpUserGuid);
+
+                        if (userProfile == null) {
+                            Optional<User> user = handle.attach(UserDao.class).findUserByGuid(ddpUserGuid);
+                            userId = user.isPresent() ? user.get().getId() : null;
+                        } else {
+                            userId = userProfile.getUserId();
+                        }
                         String preferredLanguage = getPreferredLanguageCodeForUser(userProfile, ddpUserGuid);
                         txnDdpAuth = new DDPAuth(auth0ClientId, ddpUserGuid, jwt, userPermissions, preferredLanguage);
                     } catch (Exception e) {
@@ -171,13 +182,13 @@ public class JWTConverter {
                                 + auth0ClientId);
                         throw e;
                     }
-                    Set<String> existingJwts = userIdToJwtCache.get(userProfile.getUserId());
+                    Set<String> existingJwts = userIdToJwtCache.get(userId);
                     if (existingJwts == null) {
-                        userIdToJwtCache.put(userProfile.getUserId(), Set.of(jwt));
+                        userIdToJwtCache.put(userId, Set.of(jwt));
                     } else {
                         Set<String> newSet = new HashSet(existingJwts);
                         newSet.add(jwt);
-                        userIdToJwtCache.put(userProfile.getUserId(), newSet);
+                        userIdToJwtCache.put(userId, newSet);
                     }
                     jwtToDDPAuthCache.put(jwt, txnDdpAuth);
                     return txnDdpAuth;
