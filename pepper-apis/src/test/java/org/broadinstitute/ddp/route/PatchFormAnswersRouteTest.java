@@ -263,6 +263,7 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
         AgreementQuestionDef a1 = new AgreementQuestionDef(agreementSid,
                 false,
                 newTemplate(),
+                null,
                 newTemplate(),
                 newTemplate(),
                 Arrays.asList(new RequiredRuleDef(newTemplate())),
