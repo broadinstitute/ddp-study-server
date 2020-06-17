@@ -25,6 +25,7 @@ import org.apache.http.conn.HttpHostConnectException;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.broadinstitute.ddp.DataDonationPlatform;
+import org.broadinstitute.ddp.cache.CacheService;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.TestConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -50,6 +51,7 @@ import org.broadinstitute.ddp.util.LogbackConfigurationPrinter;
 import org.broadinstitute.ddp.util.MySqlTestContainerUtil;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
@@ -357,6 +359,11 @@ public class IntegrationTestSuite {
         @BeforeClass
         public static void doSuiteSetup() {
             IntegrationTestSuite.setup();
+        }
+
+        @Before
+        public void resetCache() {
+            CacheService.getInstance().resetAllCaches();
         }
 
         @AfterClass
