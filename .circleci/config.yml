@@ -748,7 +748,7 @@ workflows:
             branches:
               only:
                 - develop
-                - GAE_Backend_Deployment_Config
+                - add_redis_caching
                 - &rc /^rc.*/
                 - &hotfix /^hotfix.*/
       - parallel-compile-and-test-job:
