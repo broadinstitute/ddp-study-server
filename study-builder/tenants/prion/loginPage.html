@@ -20,6 +20,9 @@
     <!-- Latest compiled and minified JavaScript -->
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
 
+    <!--Material icons-->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
 </head>
 <body>
 
@@ -697,6 +700,56 @@
         }
     }
 
+    .SimpleButton {
+        line-height: 3.2rem !important;
+        background: none;
+        border: none;
+        padding: 0;
+        outline: none;
+        font-size: 1rem;
+        transition: color 0.3s ease;
+        cursor: pointer;
+        font-weight: 500;
+        text-decoration: none;
+        color: #ffffff !important;
+        margin-top: 5px;
+    }
+
+    .SimpleButton:hover {
+        color: #a88838 !important;
+        text-decoration: none;
+    }
+
+    .SimpleButton:active {
+        text-decoration: none;
+        font-weight: 700;
+        color: #a88838 !important;
+    }
+
+    .SimpleButton .ddp-globe {
+        stroke: #ffffff;
+        fill: transparent;
+        vertical-align: middle;
+    }
+
+    .SimpleButton:hover .ddp-globe {
+        stroke: #a88838;
+        fill: transparent;
+    }
+
+    .SimpleButton:active .ddp-globe {
+        stroke: #a88838;
+        fill: transparent;
+    }
+
+    .ddp-current-language {
+        vertical-align: middle;
+    }
+
+    i.ddp-dropdown-arrow {
+        vertical-align: middle;
+    }
+
 </style>
 
 <script>
@@ -704,6 +757,7 @@
     var config = JSON.parse(decodeURIComponent(escape(window.atob('@@config@@'))));
     config.extraParams = config.extraParams || {};
     var mode = config.extraParams.mode;
+    var languageCode = config.extraParams.language;
     var headerLogo = 'https://storage.googleapis.com/dev-prion-assets/images/prion-logo.svg';
     var studyColor = '#DDDDDD';
 
@@ -726,12 +780,12 @@
     var language;
     var showPasswordRecentText = false;
     var doNotShowRegLink = false;
-
-    languageDictionary = {
+    var dictionaries = {};
+    dictionaries['en'] = {
         title: ' ',
-        blankErrorHint: "Please fill out this field.",
-        emailInputPlaceholder: "   ",
-        passwordInputPlaceholder: "    ",
+        blankErrorHint: 'Please fill out this field.',
+        emailInputPlaceholder: '   ',
+        passwordInputPlaceholder: '    ',
         lastLoginInstructions: 'Last time you signed in with',
         signUpTitle: ' ',
         loginAtLabel: 'Sign in at %s',
@@ -743,7 +797,7 @@
         loginSubmitLabel: 'Sign In',
         loginWithLabel: 'Sign in with %s',
         forgotPasswordTitle: ' ',
-        forgotPasswordAction: "Forgot your password?",
+        forgotPasswordAction: 'Forgot your password?',
         forgotPasswordInstructions: '<h2 class="Auth0Title">Forgot your password?</h2> <h5>Please enter your email address and we will send you password reset instructions.</h5>',
         forgotPasswordSubmitLabel: 'Submit',
         firstNameHint: 'Please fill out this field.',
@@ -758,19 +812,153 @@
         registerMessageText: 'Don\'t have an account? Join us here',
         passwordResetSuccessMessage: 'Already registered? Sign In here',
         logoAlt: 'Prion Registry Logo',
-        learnMore: "Learn More",
-        signIn: "Sign In",
-        joinUs: "Join Us",
-        home: "Home",
-        backToTop: "Back to top",
-        contactUs: "Contact us: "
+        learnMore: 'Learn More',
+        signIn: 'Sign In',
+        joinUs: 'Join Us',
+        home: 'Home',
+        backToTop: 'Back to top',
+        contactUs: 'Contact us: ',
+        successForgotPassword: 'If you have previously registered, please check your email to reset your password.',
+        languageSelection: 'language selection'
     };
+
+    dictionaries['es'] = {
+        title: ' ',
+        blankErrorHint: 'Por favor rellene este campo.',
+        emailInputPlaceholder: '   ',
+        passwordInputPlaceholder: '    ',
+        lastLoginInstructions: 'La última vez que iniciaste sesión con',
+        signUpTitle: ' ',
+        loginAtLabel: 'Inicia sesión en %s',
+        signUpLabel: 'Únete a nosotros',
+        signUpSubmitLabel: 'Únete a nosotros',
+        databaseSignUpInstructions: '<h2 class="Auth0Title">Únete a nosotros</h2> <h5>¿Usted o un pariente suyo tiene enfermedad priónica? Cuéntanos y únete a nosotros para marcar la diferencia ...</h5> <h5>Por favor complete el siguiente formulario para registrarse. Utilizaremos esta cuenta para comunicarnos con usted con respecto al Registro de Priones.</h5>',
+        loginTitle: ' ',
+        loginLabel: 'Registrarse',
+        loginSubmitLabel: 'Registrarse',
+        loginWithLabel: 'Inicia sesión con %s',
+        forgotPasswordTitle: ' ',
+        forgotPasswordAction: '¿Olvidaste tu contraseña?',
+        forgotPasswordInstructions: '<h2 class="Auth0Title">¿Olvidaste tu contraseña?</h2> <h5>Ingrese su dirección de correo electrónico y le enviaremos las instrucciones para restablecer la contraseña.</h5>',
+        forgotPasswordSubmitLabel: 'Enviar',
+        firstNameHint: 'Por favor rellene este campo.',
+        lastNameHint: 'Por favor rellene este campo.',
+        alreadyRegisteredText: '¿Ya registrado? Firme aquí',
+        passwordTooltipText: 'La contraseña debe tener al menos 8 caracteres y contener al menos un número, una letra mayúscula y una letra minúscula.',
+        loginDescriptionText: 'Puede iniciar sesión en el Registro de Prion utilizando su cuenta de correo electrónico.',
+        emailPrompt: 'Dirección de correo electrónico*',
+        passwordPrompt: 'Contraseña*',
+        firstNamePrompt: 'Nombre de pila*',
+        lastNamePrompt: 'Apellido*',
+        registerMessageText: '¿No tienes una cuenta? Únete a nosotros aquí',
+        passwordResetSuccessMessage: '¿Ya registrado? Firme aquí',
+        logoAlt: 'Logotipo del registro de priones',
+        learnMore: 'Aprende más',
+        signIn: 'Registrarse',
+        joinUs: 'Únete a nosotros',
+        home: 'Casa',
+        backToTop: 'Volver arriba',
+        contactUs: 'Contacta con nosotros:',
+        successForgotPassword: 'Si se ha registrado previamente, revise su correo electrónico para restablecer su contraseña.',
+        languageSelection: 'Selección de idioma'
+    };
+    dictionaries['he'] = {
+        title: ' ',
+        blankErrorHint: 'אנא מלא את השדה הזה.',
+        emailInputPlaceholder: '   ',
+        passwordInputPlaceholder: '    ',
+        lastLoginInstructions: 'בפעם האחרונה שנכנסת אליו',
+        signUpTitle: ' ',
+        loginAtLabel: 'היכנס ב %s',
+        signUpLabel: 'הצטרף אלינו',
+        signUpSubmitLabel: 'הצטרף אלינו',
+        databaseSignUpInstructions: '<h2 class="Auth0Title">הצטרף אלינו</h2> <h5>האם אתה או קרוב משפחה שלך חולים במחלת פריון? ספר לנו על זה והצטרף אלינו עם שינוי ...</h5> <h5>מלא את הטופס למטה כדי להירשם. אנו נשתמש בחשבון זה כדי לתקשר איתך בנוגע לרישום ה- Prion.</h5>',
+        loginTitle: ' ',
+        loginLabel: 'להתחבר',
+        loginSubmitLabel: 'להתחבר',
+        loginWithLabel: 'להתחבר עם %s',
+        forgotPasswordTitle: ' ',
+        forgotPasswordAction: 'שכחת ססמה?',
+        forgotPasswordInstructions: '<h2 class="Auth0Title">שכחת ססמה?</h2> <h5>אנא הכנס את כתובת הדוא"ל שלך ואנו נשלח לך הוראות לאיפוס סיסמה.</h5>',
+        forgotPasswordSubmitLabel: 'שלח',
+        firstNameHint: 'אנא מלא את השדה הזה.',
+        lastNameHint: 'אנא מלא את השדה הזה.',
+        alreadyRegisteredText: 'כבר רשום? היכנס כאן',
+        passwordTooltipText: 'הסיסמא חייבת להיות באורך של 8 תווים לפחות ולהכיל מספר אחד לפחות, אותיות גדולות ואותיות קטנות.',
+        loginDescriptionText: 'אתה יכול להיכנס לרישום Prion באמצעות חשבון הדוא"ל שלך.',
+        emailPrompt: 'כתובת דוא"ל*',
+        passwordPrompt: 'סיסמה*',
+        firstNamePrompt: 'שם פרטי*',
+        lastNamePrompt: 'שם משפחה*',
+        registerMessageText: 'אין לך חשבון? הצטרפו אלינו לכאן',
+        passwordResetSuccessMessage: 'כבר רשום? היכנס כאן',
+        logoAlt: 'לוגו הרישום של פריון',
+        learnMore: 'למד עוד',
+        signIn: 'להתחבר',
+        joinUs: 'הצטרף אלינו',
+        home: 'בית',
+        backToTop: 'חזרה למעלה',
+        contactUs: 'צור קשר:',
+        successForgotPassword: 'אם נרשמת בעבר, אנא בדוק את הדוא"ל שלך כדי לאפס את הסיסמה שלך.',
+        languageSelection: 'בחירת שפה'
+    };
+    dictionaries['zh'] = {
+        title: ' ',
+        blankErrorHint: '請填寫此字段。',
+        emailInputPlaceholder: '   ',
+        passwordInputPlaceholder: '    ',
+        lastLoginInstructions: '您上次登錄的時間',
+        signUpTitle: ' ',
+        loginAtLabel: '在登錄 %s',
+        signUpLabel: '加入我們',
+        signUpSubmitLabel: '加入我們',
+        databaseSignUpInstructions: '<h2 class="Auth0Title">加入我們</h2> <h5>您或您的親戚有病毒病嗎？ 告訴我們並加入我們吧！</h5> <h5>請填寫下面的表格進行註冊。 我們將使用此帳戶與您就Prion註冊中心進行溝通。</h5>',
+        loginTitle: ' ',
+        loginLabel: '登入',
+        loginSubmitLabel: '登入',
+        loginWithLabel: '登陸使用 %s',
+        forgotPasswordTitle: ' ',
+        forgotPasswordAction: '忘記密碼了嗎？',
+        forgotPasswordInstructions: '<h2 class="Auth0Title">忘記密碼了嗎？</h2> <h5>請輸入您的電子郵件地址，我們將向您發送密碼重置說明。</h5>',
+        forgotPasswordSubmitLabel: '提交',
+        firstNameHint: '請填寫此字段。',
+        lastNameHint: '請填寫此字段。',
+        alreadyRegisteredText: '註冊過了？ 在這裡登入',
+        passwordTooltipText: '密碼必須至少8個字符長，並且至少包含一個數字，一個大寫字母和一個小寫字母。',
+        loginDescriptionText: '您可以使用您的電子郵件帳戶登錄Prion Registry。',
+        emailPrompt: '電子郵件地址*',
+        passwordPrompt: '密碼*',
+        firstNamePrompt: '名字*',
+        lastNamePrompt: '姓*',
+        registerMessageText: '還沒有帳號？ 在這裡加入我們',
+        passwordResetSuccessMessage: 'כבר רשום? היכנס כאן',
+        logoAlt: 'Prion Registry徽標',
+        learnMore: '學到更多',
+        signIn: '登入',
+        joinUs: '加入我們',
+        home: '家',
+        backToTop: '回到頂部',
+        contactUs: '聯繫我們：',
+        successForgotPassword: '如果您以前註冊過，請檢查您的電子郵件以重置密碼。',
+        languageSelection: '語言選擇'
+    };
+
+    languageDictionary = dictionaries[languageCode];
     languageDictionary.error = languageDictionary.error || {};
     languageDictionary.error.signUp = languageDictionary.error.signUp || {};
     languageDictionary.error.signUp.user_exists = languageDictionary.alreadyRegisteredText;
     languageDictionary.success = {
-        forgotPassword: "If you have previously registered, please check your email to reset your password."
+        forgotPassword: languageDictionary.successForgotPassword
     };
+    languageDictionary.displayNames = {
+        en: 'English',
+        es: 'Español',
+        he: 'עברית',
+        zh: '中文'
+    };
+
+    var otherLanguages = Object.keys(languageDictionary.displayNames).filter(x => x !== languageCode);
+
     var loginHint = config.extraParams.login_hint;
     var realOptions = {
         additionalSignUpFields: [
@@ -807,6 +995,7 @@
         allowedConnections: connection ? [connection] : null,
         rememberLastLogin: false,
         language: language,
+        languageCode: languageCode,
         languageDictionary: languageDictionary,
         theme: {
             logo:            headerLogo,
@@ -846,6 +1035,15 @@
         showPasswordRecentText = true;
     }
     var lock = new Auth0Lock(config.clientID, config.auth0Domain, realOptions);
+
+    function switchLanguage(lang) {
+        /* TODO: Implement and call */
+    }
+
+    function showDropDown() {
+        document.getElementById("langDropdown").classList.toggle("show");
+    }
+
     function addHelp() {
         // we use setInterval because auth0's on() methods for display
         // do not account for all the display modes and they appear to fire
@@ -961,6 +1159,26 @@
                     signInClass = 'Nav-itemLink Nav-itemLink--active';
                 }
 
+                var globeSVG = '<svg class="ddp-globe" width="24px" height="24px" viewBox="0 0 24 24" aria-live="title" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">' +
+                    '  <title>' + languageDictionary.languageSelection + '</title>' +
+                    '    <g id="Language-Selector-3" transform="translate(-1243.000000, -20.000000)">' +
+                    '      <g id="nav-bar" transform="translate(1.000000, 0.000000)">' +
+                    '        <g id="Globe" transform="translate(1243.000000, 21.000000)">' +
+                    '          <g id="earth-3">' +
+                    '            <g stroke-width="1.5">' +
+                    '              <circle id="Oval" cx="11" cy="11" r="10.3125"></circle>' +
+                    '              <path d="M8.51491667,21.0109167 C7.11975,18.9649167 6.1875,15.2469167 6.1875,11 C6.1875,6.75308333 7.11975,3.03508333 8.51491667,0.989083333" id="Shape"></path>' +
+                    '              <path d="M0.6875,11 L21.3125,11" id="Shape"></path>' +
+                    '              <path d="M2.27516667,16.5 L19.7248333,16.5" id="Shape"></path>' +
+                    '              <path d="M2.27516667,5.5 L19.7248333,5.5" id="Shape"></path>' +
+                    '              <path d="M13.4850833,0.989083333 C14.88025,3.03508333 15.8125,6.75308333 15.8125,11 C15.8125,15.2469167 14.88025,18.9649167 13.4850833,21.0109167" id="Shape"></path>' +
+                    '            </g>' +
+                    '          </g>' +
+                    '        </g>' +
+                    '      </g>' +
+                    '    </g>' +
+                    '</svg>';
+
                 var header = document.createElement('div');
                 header.innerHTML='<header class="Header" id="ddp-header"><a id="top"/><nav class="navbar navbar-default Header-background">' +
                     '<div class="navbar-header">' +
@@ -976,6 +1194,17 @@
                     '</div>' +
                     '<div class="collapse navbar-collapse Header-collapse" id="menu">' +
                     '<ul class="nav navbar-nav navbar-right NoMargin">' +
+                    '<li class="Nav-item"><div [hidden]="!loaded" class="Nav-itemLink"><button class="SimpleButton" onclick="showDropDown()">' + globeSVG +
+                    '<span class="ddp-current-language">' + languageDictionary.displayNames[languageCode] + '</span>' +
+                    '<i class="material-icons ddp-dropdown-arrow">arrow_drop_down</i>' +
+                    '</button>' +
+                    '<div id="langDropdown">' +
+                    '<a>' + languageDictionary.displayNames[otherLanguages[0]] + '</a>' +
+                    '<a>' + languageDictionary.displayNames[otherLanguages[1]] + '</a>' +
+                    '<a>' + languageDictionary.displayNames[otherLanguages[2]] + '</a>' +
+                    '' + /* TODO: Use otherLanguages values as keys to get display names to show */
+                    '</div>' +
+                    '</div></li>' +
                     '<li class="Nav-item"><a href="' + mainUrl + '/learn-more" class="Nav-itemLink">' +
                     languageDictionary.learnMore + '</a></li>' +
                     '<li class="Nav-item"><a href="' + mainUrl + '/login-landing/login" class="' + signInClass + '" id="SignIn">' +
