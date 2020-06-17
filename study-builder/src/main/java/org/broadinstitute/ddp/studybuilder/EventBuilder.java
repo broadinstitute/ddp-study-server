@@ -139,8 +139,8 @@ public class EventBuilder {
                     String emailTemplate = tmplCfg.getString("emailTemplate");
                     String language = tmplCfg.getString("language");
                     boolean isDynamicTemplate = false;
-                    if (tmplCfg.hasPath("is_dynamic")) {
-                        isDynamicTemplate = tmplCfg.getBoolean("is_dynamic");
+                    if (tmplCfg.hasPath("isDynamic")) {
+                        isDynamicTemplate = tmplCfg.getBoolean("isDynamic");
                     }
                     if (actionDto == null) {
                         actionDto = new SendgridEmailEventActionDto(emailTemplate, language, isDynamicTemplate);
@@ -276,7 +276,18 @@ public class EventBuilder {
     private String actionAsStr(Config actionCfg) {
         String type = actionCfg.getString("type");
         if (ACTION_SENDGRID_EMAIL.equals(type) || ACTION_STUDY_EMAIL.equals(type) || ACTION_INVITATION_EMAIL.equals(type)) {
-            String tmpl = actionCfg.getString("emailTemplate");
+            String tmpl;
+            if (actionCfg.hasPath("emailTemplate")) {
+                tmpl = actionCfg.getString("emailTemplate");
+            } else {
+                // Handle new format.
+                List<String> templateIds = new ArrayList<>();
+                for (Config tmplCfg : actionCfg.getConfigList("templates")) {
+                    templateIds.add(tmplCfg.getString("emailTemplate"));
+                }
+                tmpl = templateIds.toString();
+            }
+
             List<String> pdfNames = new ArrayList<>();
             for (Config pdfAttachment : actionCfg.getConfigList("pdfAttachments")) {
                 pdfNames.add(pdfAttachment.getString("pdfName"));
