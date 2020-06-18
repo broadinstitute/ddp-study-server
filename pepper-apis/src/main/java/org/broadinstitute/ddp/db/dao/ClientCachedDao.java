@@ -2,10 +2,8 @@ package org.broadinstitute.ddp.db.dao;
 
 import static java.util.concurrent.TimeUnit.MINUTES;
 
-import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
-
 import javax.cache.Cache;
 import javax.cache.expiry.Duration;
 
@@ -16,42 +14,7 @@ import org.jdbi.v3.core.Handle;
 
 public class ClientCachedDao extends SQLObjectWrapper<ClientDao> implements ClientDao {
     private static final String CACHE_NAME = "StudyClientConfigCache.byStudyClientConfigCacheKey";
-
-    private class StudyClientConfigCacheKey implements Serializable {
-        String auth0ClientId;
-        String auth0Domain;
-
-        StudyClientConfigCacheKey(String auth0ClientId, String auth0Domain) {
-            this.auth0ClientId = auth0ClientId;
-            this.auth0Domain = auth0Domain;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) {
-                return true;
-            }
-            if (o == null || getClass() != o.getClass()) {
-                return false;
-            }
-
-            StudyClientConfigCacheKey that = (StudyClientConfigCacheKey) o;
-
-            if (auth0ClientId != null ? !auth0ClientId.equals(that.auth0ClientId) : that.auth0ClientId != null) {
-                return false;
-            }
-            return auth0Domain != null ? auth0Domain.equals(that.auth0Domain) : that.auth0Domain == null;
-        }
-
-        @Override
-        public int hashCode() {
-            int result = auth0ClientId != null ? auth0ClientId.hashCode() : 0;
-            result = 31 * result + (auth0Domain != null ? auth0Domain.hashCode() : 0);
-            return result;
-        }
-    }
-
-    private static Cache<StudyClientConfigCacheKey, StudyClientConfiguration> CLIENT_STUDY_CONFIG_CACHE;
+    private static Cache<String, StudyClientConfiguration> CLIENT_STUDY_CONFIG_CACHE;
 
     private static void initCache() {
         if (CLIENT_STUDY_CONFIG_CACHE == null || CLIENT_STUDY_CONFIG_CACHE.isClosed()) {
@@ -93,13 +56,17 @@ public class ClientCachedDao extends SQLObjectWrapper<ClientDao> implements Clie
 
     @Override
     public StudyClientConfiguration getConfiguration(String auth0ClientId, String auth0Domain) {
-        var key = new StudyClientConfigCacheKey(auth0ClientId, auth0Domain);
+        String key = buildStudyClientConfigCacheKey(auth0ClientId, auth0Domain);
         var config = CLIENT_STUDY_CONFIG_CACHE.get(key);
         if (config == null) {
             config = delegate.getConfiguration(auth0ClientId, auth0Domain);
             CLIENT_STUDY_CONFIG_CACHE.put(key, config);
         }
         return config;
+    }
+
+    private String buildStudyClientConfigCacheKey(String auth0ClientId, String auth0Domain) {
+        return auth0ClientId + ":" + auth0Domain;
     }
 
     @Override
