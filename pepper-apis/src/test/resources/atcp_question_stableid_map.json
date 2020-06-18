@@ -1737,7 +1737,48 @@
               }
             ]
           }
+        ],
+        "legacy_fields": [
+          "portal_user_id", "datstat.submissionid", "datstat.sessionid", "datstat.submissionstatus"
         ]
+      }
+    ],
+    "datstatparticipantdata": [
+      {
+        "data": [
+          {
+            "name": "datstat_altpid",
+            "type": "string",
+            "stable_id": null
+          },
+          {
+            "name": "datstat_firstname",
+            "type": "string",
+            "stable_id": null
+          },
+          {
+            "name": "datstat_lastname",
+            "type": "string",
+            "stable_id": null
+          },
+          {
+            "name": "datstat_email",
+            "type": "string",
+            "stable_id": null
+          },
+          {
+            "name": "datstat_created",
+            "type": "Date",
+            "format": "yyyy-MM-dd'T'HH:mm:ss.SSS",
+            "stable_id": null
+          }
+        ]
+      },
+      {
+        "legacy_fields": []
+      },
+      {
+        "default_kit_creation_date": ""
       }
     ]
   }

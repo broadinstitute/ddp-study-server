@@ -255,7 +255,8 @@ public class StudyDataLoader {
         Long studyActivityId = jdbiActivity.findIdByStudyIdAndCode(studyId, "PREQUAL").get();
         Instant instant;
         try {
-            instant = Instant.parse(ddpCreated);
+            LocalDateTime ddpCreatedLocalDateTime = LocalDateTime.parse(ddpCreated, DateTimeFormatter.ofPattern(DATSTAT_DATE_FORMAT));
+            instant = ddpCreatedLocalDateTime.toInstant(ZoneOffset.UTC);
         } catch (DateTimeParseException e) {
             throw new Exception("Could not parse required createdAt value for prequal, value is " + ddpCreated);
         }
@@ -1078,7 +1079,6 @@ public class StudyDataLoader {
         if (legacyFieldsJsonEl == null || legacyFieldsJsonEl.isJsonNull()) {
             return;
         }
-
         JsonArray legacyFields = legacyFieldsJsonEl.getAsJsonArray();
         for (JsonElement field : legacyFields) {
             populateUserStudyLegacyData(handle, sourceData, field.getAsString(), studyId, participantId, instanceId);
