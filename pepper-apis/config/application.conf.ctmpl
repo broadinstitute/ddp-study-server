@@ -87,7 +87,7 @@
         "sendMetrics": true,
     {{end}}
     "googleGeocodingApiKey": "{{$conf.Data.geocodingKey}}",
-    "jcacheConfigurationFile": "/redisson-jcache.yaml",
+    "jcacheConfigurationFile": "redisson-jcache.yaml",
     "elasticsearch": {
         # Whether to enable data sync to ES
         "syncEnabled": {{$conf.Data.elasticsearch.syncEnabled}},
