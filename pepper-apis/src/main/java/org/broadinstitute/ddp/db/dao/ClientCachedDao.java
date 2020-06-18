@@ -67,28 +67,28 @@ public class ClientCachedDao extends SQLObjectWrapper<ClientDao> implements Clie
 
     @Override
     public JdbiClient getClientDao() {
-        return target.getClientDao();
+        return delegate.getClientDao();
     }
 
     @Override
     public JdbiUmbrellaStudy getUmbrellaStudyDao() {
-        return target.getUmbrellaStudyDao();
+        return delegate.getUmbrellaStudyDao();
     }
 
     @Override
     public JdbiClientUmbrellaStudy getClientUmbrellaStudyDao() {
-        return target.getClientUmbrellaStudyDao();
+        return delegate.getClientUmbrellaStudyDao();
     }
 
     @Override
     public List<ClientDto> findAllPermittedClientsForStudy(long studyId) {
-        return target.findAllPermittedClientsForStudy(studyId);
+        return delegate.findAllPermittedClientsForStudy(studyId);
     }
 
     @Override
     public long registerClient(String auth0ClientId, String auth0ClientSecret, Collection<String> studyGuidsToAccess,
                                String encryptionKey, Long auth0TenantId) {
-        return target.registerClient(auth0ClientId, auth0ClientSecret, studyGuidsToAccess, encryptionKey, auth0TenantId);
+        return delegate.registerClient(auth0ClientId, auth0ClientSecret, studyGuidsToAccess, encryptionKey, auth0TenantId);
     }
 
     @Override
@@ -96,7 +96,7 @@ public class ClientCachedDao extends SQLObjectWrapper<ClientDao> implements Clie
         var key = new StudyClientConfigCacheKey(auth0ClientId, auth0Domain);
         var config = CLIENT_STUDY_CONFIG_CACHE.get(key);
         if (config == null) {
-            config = target.getConfiguration(auth0ClientId, auth0Domain);
+            config = delegate.getConfiguration(auth0ClientId, auth0Domain);
             CLIENT_STUDY_CONFIG_CACHE.put(key, config);
         }
         return config;
@@ -104,16 +104,16 @@ public class ClientCachedDao extends SQLObjectWrapper<ClientDao> implements Clie
 
     @Override
     public Long getClientIdByAuth0ClientAndDomain(String auth0ClientId, String auth0Domain) {
-        return target.getClientIdByAuth0ClientAndDomain(auth0ClientId, auth0Domain);
+        return delegate.getClientIdByAuth0ClientAndDomain(auth0ClientId, auth0Domain);
     }
 
     @Override
     public int deleteByAuth0ClientIdAndAuth0TenantId(String auth0ClientId, long auth0TenantId) {
-        return target.deleteByAuth0ClientIdAndAuth0TenantId(auth0ClientId, auth0TenantId);
+        return delegate.deleteByAuth0ClientIdAndAuth0TenantId(auth0ClientId, auth0TenantId);
     }
 
     @Override
     public boolean isAuth0ClientActive(String auth0ClientId, String auth0Domain) {
-        return target.isAuth0ClientActive(auth0ClientId, auth0Domain);
+        return delegate.isAuth0ClientActive(auth0ClientId, auth0Domain);
     }
 }

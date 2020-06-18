@@ -35,25 +35,25 @@ public class UserProfileCachedDao extends SQLObjectWrapper<UserProfileDao> imple
 
     @Override
     public void createProfile(UserProfile profile) {
-        this.target.createProfile(profile);
+        this.delegate.createProfile(profile);
         notifyModelUpdated(ModelChangeType.USER, profile.getUserId());
     }
 
     @Override
     public UserProfile updateProfile(UserProfile profile) {
-        UserProfile updatedProfile = this.target.updateProfile(profile);
+        UserProfile updatedProfile = this.delegate.updateProfile(profile);
         notifyModelUpdated(ModelChangeType.USER, profile.getUserId());
         return updatedProfile;
     }
 
     @Override
     public Optional<UserProfile> findProfileByUserId(long userId) {
-        return target.findProfileByUserId(userId);
+        return delegate.findProfileByUserId(userId);
     }
 
     @Override
     public Optional<UserProfile> findProfileByUserGuid(String userGuid) {
-        return target.findProfileByUserGuid(userGuid);
+        return delegate.findProfileByUserGuid(userGuid);
         //        var profile =  userProfileCache.get(userGuid);
         //        if (profile == null) {
         //            var optionalProfile = getHandle().attach(UserProfileDao.class).findProfileByUserGuid(userGuid);

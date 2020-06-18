@@ -15,25 +15,25 @@ public class UserGovernanceCachedDao extends SQLObjectWrapper<UserGovernanceDao>
     }
 
     public Governance createGovernedUser(long clientId, long proxyUserId, String alias) {
-        var result = target.createGovernedUser(clientId, proxyUserId, alias);
+        var result = delegate.createGovernedUser(clientId, proxyUserId, alias);
         notifyModelUpdated(ModelChangeType.USER, proxyUserId);
         return result;
     }
 
     public Governance createGovernedUserWithGuidAlias(long clientId, long proxyUserId) {
-        var result = target.createGovernedUserWithGuidAlias(clientId, proxyUserId);
+        var result = delegate.createGovernedUserWithGuidAlias(clientId, proxyUserId);
         notifyModelUpdated(ModelChangeType.USER, proxyUserId);
         return result;
     }
 
     @Override
     public UserDao getUserDao() {
-        return target.getUserDao();
+        return delegate.getUserDao();
     }
 
     @Override
     public UserGovernanceSql getUserGovernanceSql() {
-        return target.getUserGovernanceSql();
+        return delegate.getUserGovernanceSql();
     }
 
     @Override
@@ -41,7 +41,7 @@ public class UserGovernanceCachedDao extends SQLObjectWrapper<UserGovernanceDao>
         List<Long> proxyIds = findGovernancesByParticipantAndStudyIds(participantId, studyId)
                 .map(governance -> governance.getProxyUserId())
                 .collect(Collectors.toList());
-        var result = target.disableActiveProxies(participantId, studyId);
+        var result = delegate.disableActiveProxies(participantId, studyId);
         proxyIds.forEach(proxyId -> notifyModelUpdated(ModelChangeType.USER, proxyId));
         notifyModelUpdated(ModelChangeType.USER, participantId);
         return result;
@@ -49,31 +49,31 @@ public class UserGovernanceCachedDao extends SQLObjectWrapper<UserGovernanceDao>
 
     @Override
     public Optional<Governance> findGovernanceById(long governanceId) {
-        return target.findGovernanceById(governanceId);
+        return delegate.findGovernanceById(governanceId);
     }
 
     @Override
     public Stream<Governance> findGovernancesByProxyGuid(String proxyUserGuid) {
-        return target.findGovernancesByProxyGuid(proxyUserGuid);
+        return delegate.findGovernancesByProxyGuid(proxyUserGuid);
     }
 
     @Override
     public Stream<Governance> findGovernancesByProxyAndStudyGuids(String proxyUserGuid, String studyGuid) {
-        return target.findGovernancesByProxyAndStudyGuids(proxyUserGuid, studyGuid);
+        return delegate.findGovernancesByProxyAndStudyGuids(proxyUserGuid, studyGuid);
     }
 
     @Override
     public Stream<Governance> findGovernancesByParticipantAndStudyGuids(String participantGuid, String studyGuid) {
-        return target.findGovernancesByParticipantAndStudyGuids(participantGuid, studyGuid);
+        return delegate.findGovernancesByParticipantAndStudyGuids(participantGuid, studyGuid);
     }
 
     @Override
     public Stream<Governance> findGovernancesByParticipantAndStudyIds(long participantId, long studyId) {
-        return target.findGovernancesByParticipantAndStudyIds(participantId, studyId);
+        return delegate.findGovernancesByParticipantAndStudyIds(participantId, studyId);
     }
 
     @Override
     public Stream<Governance> findGovernancesByStudyGuid(String studyGuid) {
-        return target.findGovernancesByStudyGuid(studyGuid);
+        return delegate.findGovernancesByStudyGuid(studyGuid);
     }
 }

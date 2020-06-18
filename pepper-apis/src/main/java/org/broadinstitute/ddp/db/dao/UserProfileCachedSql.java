@@ -17,14 +17,14 @@ public class UserProfileCachedSql extends SQLObjectWrapper<UserProfileSql> imple
     @Override
     public long insert(long userId, String firstName, String lastName, UserProfile.SexType sexType, LocalDate birthDate,
                        Long preferredLangId, Boolean doNotContact, Boolean isDeceased) {
-        var id = target.insert(userId, firstName, lastName, sexType, birthDate, preferredLangId, doNotContact, isDeceased);
+        var id = delegate.insert(userId, firstName, lastName, sexType, birthDate, preferredLangId, doNotContact, isDeceased);
         notifyModelUpdated(ModelChangeType.USER, userId);
         return id;
     }
 
     @Override
     public boolean upsertFirstName(long userId, String firstName) {
-        var val = target.upsertFirstName(userId, firstName);
+        var val = delegate.upsertFirstName(userId, firstName);
         notifyModelUpdated(ModelChangeType.USER, userId);
         return val;
 
@@ -32,14 +32,14 @@ public class UserProfileCachedSql extends SQLObjectWrapper<UserProfileSql> imple
 
     @Override
     public boolean upsertLastName(long userId, String lastName) {
-        var val = target.upsertLastName(userId, lastName);
+        var val = delegate.upsertLastName(userId, lastName);
         notifyModelUpdated(ModelChangeType.USER, userId);
         return val;
     }
 
     @Override
     public boolean upsertBirthDate(long userId, LocalDate birthDate) {
-        var val = target.upsertBirthDate(userId, birthDate);
+        var val = delegate.upsertBirthDate(userId, birthDate);
         notifyModelUpdated(ModelChangeType.USER, userId);
         return val;
     }
@@ -47,42 +47,42 @@ public class UserProfileCachedSql extends SQLObjectWrapper<UserProfileSql> imple
     @Override
     public int update(long userId, String firstName, String lastName, UserProfile.SexType sexType, LocalDate birthDate,
                       Long preferredLangId, Boolean doNotContact, Boolean isDeceased) {
-        var val = target.update(userId, firstName, lastName, sexType, birthDate, preferredLangId, doNotContact, isDeceased);
+        var val = delegate.update(userId, firstName, lastName, sexType, birthDate, preferredLangId, doNotContact, isDeceased);
         notifyModelUpdated(ModelChangeType.USER, userId);
         return val;
     }
 
     @Override
     public int updateFirstName(long userId, String firstName) {
-        var val = target.updateFirstName(userId, firstName);
+        var val = delegate.updateFirstName(userId, firstName);
         notifyModelUpdated(ModelChangeType.USER, userId);
         return val;
     }
 
     @Override
     public int updateLastName(long userId, String lastName) {
-        var val = target.updateLastName(userId, lastName);
+        var val = delegate.updateLastName(userId, lastName);
         notifyModelUpdated(ModelChangeType.USER, userId);
         return val;
     }
 
     @Override
     public int updateDoNotContact(long userId, Boolean doNotContact) {
-        var val = target.updateDoNotContact(userId, doNotContact);
+        var val = delegate.updateDoNotContact(userId, doNotContact);
         notifyModelUpdated(ModelChangeType.USER, userId);
         return val;
     }
 
     @Override
     public int updatePreferredLangId(long userId, long preferredLangId) {
-        var val = target.updatePreferredLangId(userId, preferredLangId);
+        var val = delegate.updatePreferredLangId(userId, preferredLangId);
         notifyModelUpdated(ModelChangeType.USER, userId);
         return val;
     }
 
     @Override
     public int deleteByUserId(long userId) {
-        var val = target.deleteByUserId(userId);
+        var val = delegate.deleteByUserId(userId);
         notifyModelUpdated(ModelChangeType.USER, userId);
         return val;
     }
@@ -90,7 +90,7 @@ public class UserProfileCachedSql extends SQLObjectWrapper<UserProfileSql> imple
     @Override
     public int deleteByUserGuid(String userGuid) {
         Optional<User> userOpt = getHandle().attach(UserDao.class).findUserByGuid(userGuid);
-        var val = target.deleteByUserGuid(userGuid);
+        var val = delegate.deleteByUserGuid(userGuid);
         userOpt.ifPresent(user -> notifyModelUpdated(ModelChangeType.USER, user.getId()));
         return val;
     }
