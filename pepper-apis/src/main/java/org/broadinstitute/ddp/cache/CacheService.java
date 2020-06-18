@@ -1,8 +1,7 @@
 package org.broadinstitute.ddp.cache;
 
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -58,18 +57,7 @@ public class CacheService {
     }
 
     private CacheManager buildCacheManager(String configFileName) {
-        URL resourceUrl = CacheService.class.getResource(configFileName);
-        if (resourceUrl == null) {
-            throw new DDPException("Could not find JCache config file with name:" + configFileName);
-        }
-
-        URI redissonConfigUri;
-        try {
-            redissonConfigUri = resourceUrl.toURI();
-        } catch (URISyntaxException e) {
-            throw new DDPException(e);
-        }
-
+        URI redissonConfigUri = Paths.get(configFileName).toUri();
         return Caching.getCachingProvider().getCacheManager(redissonConfigUri, null);
     }
 
