@@ -58,7 +58,7 @@
     },
     "googleGeocodingApiKey": "{{$testingConf.Data.geocodingKey}}",
     // commenting out on purpose. disables feature
-    // "jcacheConfigurationFile": "/redisson-test-jcache.yaml",
+    // "jcacheConfigurationFile": "src/test/resources/redisson-test-jcache.yaml",
     "elasticsearch": {
         "syncEnabled": false,
         "syncIntervalSecs": 10
