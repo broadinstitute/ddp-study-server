@@ -62,7 +62,8 @@ public class I18nContentRenderer {
             }
         }
 
-        // Override with saved snapshot substitutions.
+        // If there are saved snapshot substitution values, override with those so final rendered
+        // content will be consistent with what user last saw when snapshot was taken.
         builder.withSnapshot(snapshot);
 
         return builder.build();
