@@ -519,6 +519,7 @@ public class StudyDataLoaderMain {
         LOG.info("completed processing google bucket files");
     }
 
+    @SuppressWarnings("checkstyle:WhitespaceAfter")
     private void processParticipant(String studyGuid, Map<String, JsonElement> sourceData,
                                     Map<String, JsonElement> mappingData, StudyDataLoader dataLoader,
                                     MailAddress address, AddressService addressService, OLCService olcService) {
@@ -584,7 +585,6 @@ public class StudyDataLoaderMain {
                     hasFollowup = (sourceData.get("followupsurvey") != null && !sourceData.get("followupsurvey").isJsonNull());
 
                     var answerDao = handle.attach(AnswerDao.class);
-
                     //create prequal
                     dataLoader.createPrequal(handle,
                             userGuid, studyId,

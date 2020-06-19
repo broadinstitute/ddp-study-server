@@ -25,6 +25,17 @@ public interface AnswerSql extends SqlObject {
 
     //
     // inserts
+    @GetGeneratedKeys
+    @UseStringTemplateSqlLocator
+    @SqlUpdate("insertAnswerByQuestionStableId")
+    long insertAnswerByQuestionStableId(
+            @Bind("guid") String answerGuid,
+            @Bind("operatorId") long operatorId,
+            @Bind("instanceId") long instanceId,
+            @Bind("questionStableId") String questionStableId,
+            @Bind("createdAt") long createdAtMillis,
+            @Bind("updatedAt") long updatedAtMillis);
+
     //
 
     @GetGeneratedKeys
@@ -36,17 +47,6 @@ public interface AnswerSql extends SqlObject {
                       @Bind("questionId") long questionId,
                       @Bind("createdAt") long createdAtMillis,
                       @Bind("updatedAt") long updatedAtMillis);
-
-    @GetGeneratedKeys
-    @UseStringTemplateSqlLocator
-    @SqlUpdate("insertAnswerByQuestionStableId")
-    long insertAnswerByQuestionStableId(
-            @Bind("guid") String answerGuid,
-            @Bind("operatorId") long operatorId,
-            @Bind("instanceId") long instanceId,
-            @Bind("questionStableId") String questionStableId,
-            @Bind("createdAt") long createdAtMillis,
-            @Bind("updatedAt") long updatedAtMillis);
 
     @SqlUpdate("insert into agreement_answer (answer_id, answer) values (:answerId, :value)")
     int insertAgreementValue(@Bind("answerId") long answerId, @Bind("value") boolean value);

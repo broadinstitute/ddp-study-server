@@ -267,16 +267,17 @@ public class StudyDataLoader {
                         ddpCreatedAt,
                         null, null, null);
 
+
         //populate PREQUAL answers
         UserProfileDao profileDao = handle.attach(UserProfileDao.class);
         UserProfile profile = profileDao.findProfileByUserGuid(participantGuid)
                 .orElseThrow(() -> new DDPException("Could not find profile for use with guid " + participantGuid));
+
         answerTextQuestion("PREQUAL_FIRST_NAME", participantGuid, dto.getGuid(),
                 profile.getFirstName(), answerDao);
 
         answerTextQuestion("PREQUAL_LAST_NAME", participantGuid, dto.getGuid(),
                 profile.getLastName(), answerDao);
-
         List<SelectedPicklistOption> options = new ArrayList<SelectedPicklistOption>();
         options.add(new SelectedPicklistOption("DIAGNOSED"));
         answerPickListQuestion("PREQUAL_SELF_DESCRIBE", participantGuid, dto.getGuid(),
@@ -800,6 +801,7 @@ public class StudyDataLoader {
 
         LOG.info("User created: Auth0UserId = " + auth0UserId + ", GUID = " + userGuid + ", HRUID = " + userHruid + ", ALTPID = "
                 + altpid);
+
         return newUser;
     }
 
