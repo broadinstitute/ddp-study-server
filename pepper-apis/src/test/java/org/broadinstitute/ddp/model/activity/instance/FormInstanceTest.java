@@ -19,6 +19,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -33,6 +34,7 @@ import org.broadinstitute.ddp.content.ContentStyle;
 import org.broadinstitute.ddp.content.HtmlConverter;
 import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.content.I18nTemplateConstants;
+import org.broadinstitute.ddp.content.RenderValueProvider;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
@@ -214,10 +216,13 @@ public class FormInstanceTest extends TxnAwareBaseTest {
             form.renderContent(mockHandle, mockRenderer, 1L, ContentStyle.BASIC);
 
             verify(mockRenderer, times(1)).bulkRender(any(), anySet(), anyLong(), argThat(context -> {
-                assertFalse(context.isEmpty());
-                assertNotNull(context.get(I18nTemplateConstants.DASHED_DATE));
-                assertEquals("foo", context.get(I18nTemplateConstants.PARTICIPANT_FIRST_NAME));
-                assertEquals("bar", context.get(I18nTemplateConstants.PARTICIPANT_LAST_NAME));
+                assertNotNull(context);
+                assertNotNull(context.get(I18nTemplateConstants.DDP));
+                RenderValueProvider provider = (RenderValueProvider) context.get(I18nTemplateConstants.DDP);
+                var snaphost = provider.getSnapshot();
+                assertEquals(LocalDate.now().toString(), snaphost.get(I18nTemplateConstants.Snapshot.DATE));
+                assertEquals("foo", snaphost.get(I18nTemplateConstants.Snapshot.PARTICIPANT_FIRST_NAME));
+                assertEquals("bar", snaphost.get(I18nTemplateConstants.Snapshot.PARTICIPANT_LAST_NAME));
                 return true;
             }));
 
