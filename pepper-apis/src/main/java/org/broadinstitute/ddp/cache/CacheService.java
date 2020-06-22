@@ -31,6 +31,7 @@ public class CacheService {
     private Map<ModelChangeType, Collection<String>> modelChangeTypeToCacheName = new ConcurrentHashMap<>();
     private Map<String, IdToCacheKeyMapper<?>> cacheNameToCacheKeyMapper = new ConcurrentHashMap<>();
     private Map<String, IdToCacheKeyCollectionMapper<?>> cacheNameToCacheKeyCollectionMapper = new ConcurrentHashMap<>();
+    private Set<String> clearAllOnChangeCacheNames = ConcurrentHashMap.newKeySet();
 
     public static CacheService getInstance() {
         if (INSTANCE != null) {
@@ -67,8 +68,13 @@ public class CacheService {
     }
 
     public <K, V> Cache<K, V> getOrCreateCache(String cacheName, Duration entryDuration, IdToCacheKeyCollectionMapper<K> mapper,
-                                               ModelChangeType evictionModelChangeType, Object cacheParentObject) {
+                                                ModelChangeType evictionModelChangeType, Object cacheParentObject) {
         return _getOrCreateCache(cacheName, entryDuration, mapper, evictionModelChangeType, cacheParentObject);
+    }
+
+    public <K, V> Cache<K, V> getOrCreateCache(String cacheName, Duration entryDuration, ModelChangeType evictionModelChangeType,
+                                               Object cacheParentObject) {
+        return _getOrCreateCache(cacheName, entryDuration, null, evictionModelChangeType, cacheParentObject);
     }
 
     public <K, V> Cache<K, V> getOrCreateCache(String cacheName, Duration entryDuration, Object cacheParentObject) {
@@ -88,6 +94,8 @@ public class CacheService {
                     cacheNameToCacheKeyCollectionMapper.put(cacheName, (IdToCacheKeyCollectionMapper) mapper);
                 } else if (mapper instanceof IdToCacheKeyMapper) {
                     cacheNameToCacheKeyMapper.put(cacheName, (IdToCacheKeyMapper) mapper);
+                } else if (mapper == null) {
+                    clearAllOnChangeCacheNames.add(cacheName);
                 } else {
                     throw new DDPException("Unrecognized mapper type");
                 }
@@ -130,6 +138,9 @@ public class CacheService {
         findCacheNameByEventType(changeType).forEach(cacheName -> {
             Cache cache = cacheManager.getCache(cacheName);
             if (cache != null) {
+                if (clearAllOnChangeCacheNames.contains(cacheName)) {
+                    cache.removeAll();
+                }
                 IdToCacheKeyMapper<?> mapper = cacheNameToCacheKeyMapper.get(cacheName);
                 if (mapper != null) {
                     Object cacheKey = cacheNameToCacheKeyMapper.get(cacheName).mapToKey(id, handle);
@@ -138,7 +149,6 @@ public class CacheService {
                     }
                 } else {
                     IdToCacheKeyCollectionMapper<?> keyCollectionMapper = cacheNameToCacheKeyCollectionMapper.get(cacheName);
-
                     if (keyCollectionMapper != null) {
                         Set<?> keys = keyCollectionMapper.mapToKeys(id, handle);
                         if (keys != null) {
@@ -152,5 +162,12 @@ public class CacheService {
 
     private Collection<String> findCacheNameByEventType(ModelChangeType changeType) {
         return modelChangeTypeToCacheName.getOrDefault(changeType, Collections.emptyList());
+    }
+
+    public static void main(String[] args) {
+        if (args.length > 0 && args[0].startsWith("--clearcache")) {
+            LOG.warn("Clearing all caches");
+        }
+        CacheService.getInstance().resetAllCaches();
     }
 }

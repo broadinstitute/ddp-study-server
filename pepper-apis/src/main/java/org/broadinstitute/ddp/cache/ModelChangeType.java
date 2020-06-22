@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.cache;
 
 public enum ModelChangeType {
-    USER
+    USER,
+    UMBRELLA;
 }
