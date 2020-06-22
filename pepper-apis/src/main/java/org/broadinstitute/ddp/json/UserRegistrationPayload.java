@@ -56,6 +56,9 @@ public class UserRegistrationPayload {
     @SerializedName("lastName")
     private String lastName;
 
+    @SerializedName("timeZone")
+    private String timeZone;
+
     public UserRegistrationPayload(String auth0UserId, String auth0ClientId,
                                    String studyGuid, String auth0Domain, String tempUserGuid, String mode) {
         this(auth0UserId, auth0ClientId, studyGuid, auth0Domain, tempUserGuid, mode, null);
@@ -147,6 +150,15 @@ public class UserRegistrationPayload {
 
     public UserRegistrationPayload setLastName(String lastName) {
         this.lastName = lastName;
+        return this;
+    }
+
+    public String getTimeZone() {
+        return timeZone;
+    }
+
+    public UserRegistrationPayload setTimeZone(String timeZone) {
+        this.timeZone = timeZone;
         return this;
     }
 }

@@ -2,6 +2,8 @@ package org.broadinstitute.ddp.content;
 
 import java.io.StringWriter;
 import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Collection;
@@ -48,7 +50,6 @@ public class I18nContentRenderer {
 
     public static RenderValueProvider newValueProvider(Handle handle, long participantUserId, Map<String, String> snapshot) {
         var builder = new RenderValueProvider.Builder();
-        builder.setDate(LocalDate.now());
 
         UserProfile profile = handle.attach(UserProfileDao.class)
                 .findProfileByUserId(participantUserId)
@@ -61,6 +62,11 @@ public class I18nContentRenderer {
                 builder.setParticipantLastName(profile.getLastName());
             }
         }
+
+        ZoneId zone = Optional.ofNullable(profile)
+                .map(UserProfile::getTimeZone)
+                .orElse(ZoneOffset.UTC);
+        builder.setDate(LocalDate.now(zone));
 
         // If there are saved snapshot substitution values, override with those so final rendered
         // content will be consistent with what user last saw when snapshot was taken.
