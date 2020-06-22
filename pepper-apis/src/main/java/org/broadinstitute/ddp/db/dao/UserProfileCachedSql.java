@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.db.dao;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Optional;
 
 import org.broadinstitute.ddp.cache.ModelChangeType;
@@ -16,8 +17,8 @@ public class UserProfileCachedSql extends SQLObjectWrapper<UserProfileSql> imple
 
     @Override
     public long insert(long userId, String firstName, String lastName, UserProfile.SexType sexType, LocalDate birthDate,
-                       Long preferredLangId, Boolean doNotContact, Boolean isDeceased) {
-        var id = delegate.insert(userId, firstName, lastName, sexType, birthDate, preferredLangId, doNotContact, isDeceased);
+                       Long preferredLangId, ZoneId timeZone, Boolean doNotContact, Boolean isDeceased) {
+        var id = delegate.insert(userId, firstName, lastName, sexType, birthDate, preferredLangId, timeZone, doNotContact, isDeceased);
         notifyModelUpdated(ModelChangeType.USER, userId);
         return id;
     }
@@ -46,8 +47,8 @@ public class UserProfileCachedSql extends SQLObjectWrapper<UserProfileSql> imple
 
     @Override
     public int update(long userId, String firstName, String lastName, UserProfile.SexType sexType, LocalDate birthDate,
-                      Long preferredLangId, Boolean doNotContact, Boolean isDeceased) {
-        var val = delegate.update(userId, firstName, lastName, sexType, birthDate, preferredLangId, doNotContact, isDeceased);
+                      Long preferredLangId, ZoneId timeZone,Boolean doNotContact, Boolean isDeceased) {
+        var val = delegate.update(userId, firstName, lastName, sexType, birthDate, preferredLangId, timeZone, doNotContact, isDeceased);
         notifyModelUpdated(ModelChangeType.USER, userId);
         return val;
     }
