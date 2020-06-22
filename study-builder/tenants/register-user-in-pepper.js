@@ -27,7 +27,6 @@ function (user, context, callback) {
 
     var mockRegistration = context.clientMetadata.mockRegistration;
     var doLocalRegistration = context.clientMetadata.doLocalRegistration;
-    var forceClearTempUserGuid = false;
 
     if (mockRegistration) {
         var overrideUserGuid;
@@ -78,7 +77,6 @@ function (user, context, callback) {
             pepper_params.tempUserGuid = context.request.body.temp_user_guid;
             console.log('Temp user guid passed in (via body) = ' + pepper_params.tempUserGuid);
         } else if (user.user_metadata && user.user_metadata.temp_user_guid) {
-            forceClearTempUserGuid = true;
             pepper_params.tempUserGuid = user.user_metadata.temp_user_guid;
             console.log('Temp user guid passed in (via user_metadata) = ' + pepper_params.tempUserGuid);
         } else {
@@ -175,10 +173,8 @@ function (user, context, callback) {
                     var ddpUserGuid = body.ddpUserGuid;
                     user.app_metadata.user_guid = ddpUserGuid;
                     const promises = [auth0.users.updateAppMetadata(user.user_id, user.app_metadata)];
-                    if (forceClearTempUserGuid) {
                         user.user_metadata.temp_user_guid = null;
                         promises.push(auth0.users.updateUserMetadata(user.user_id, user.user_metadata));
-                    }
                     q.all(promises)
                       .then(function(){
                           context.idToken[pepperUserGuidClaim] = ddpUserGuid;
