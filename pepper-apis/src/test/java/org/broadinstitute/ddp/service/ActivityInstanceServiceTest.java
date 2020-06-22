@@ -129,7 +129,7 @@ public class ActivityInstanceServiceTest extends TxnAwareBaseTest {
         String code = "ACT" + Instant.now().toEpochMilli();
 
         Template lastUpdatedTextTemplate = new Template(TemplateType.HTML, null, "$LUNAR_MESSAGE $"
-                + I18nTemplateConstants.LAST_UPDATED_DATE_TEMPLATE_VAR_NAME);
+                + I18nTemplateConstants.LAST_UPDATED);
 
         lastUpdatedTextTemplate.addVariable(new TemplateVariable("LUNAR_MESSAGE", Arrays.asList(
                 new Translation("en", "The Eagle landed on "))));

@@ -16,6 +16,7 @@ import java.net.URL;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -85,7 +86,6 @@ import org.broadinstitute.ddp.model.activity.types.TemplateType;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.model.user.UserProfile;
-import org.broadinstitute.ddp.transformers.DateTimeFormatUtils;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.broadinstitute.ddp.util.TestUtil;
 import org.jdbi.v3.core.Handle;
@@ -155,7 +155,7 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
         txt2 = TextQuestionDef.builder(TextInputType.TEXT, "TEXT_DRUG", newTemplate())
                 .setSuggestionType(SuggestionType.DRUG)
                 .build();
-        Template txt3Tmpl = Template.html("$foo $DDP_PARTICIPANT_FIRST_NAME's favorite color?");
+        Template txt3Tmpl = Template.html("$foo $ddp.participantFirstName()'s favorite color?");
         txt3Tmpl.addVariable(TemplateVariable.single("foo", "en", "What is"));
         TextQuestionDef txt3 = TextQuestionDef.builder(TextInputType.TEXT, "TEXT_WITH_SPECIAL_VARS", txt3Tmpl)
                 .setTooltip(Template.text("some helper text"))
@@ -204,7 +204,7 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
         Template contentBody = new Template(TemplateType.HTML, null, "<p>hello body</p>");
         ContentBlockDef contentDef = new ContentBlockDef(contentTitle, contentBody);
         ContentBlockDef content2 = new ContentBlockDef(null, Template.html(
-                "<p>$DDP_PARTICIPANT_FIRST_NAME<br/>$DDP_PARTICIPANT_LAST_NAME<br/>$DDP_DASHED_DATE</p>"));
+                "<p>$ddp.participantFirstName()<br/>$ddp.participantLastName()<br/>$ddp.date(\"MM-dd-uuuu\")</p>"));
         FormSectionDef contentSection = new FormSectionDef(null, List.of(contentDef, content2));
 
         Template nameTmpl = Template.text("icon section");
@@ -718,7 +718,7 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
         resp.then().assertThat().body("sections[1].blocks[2].question.prompt", equalTo(expectedPrompt));
 
         String expectedBody = String.format("<p>%s<br/>%s<br/>%s</p>", profile.getFirstName(), profile.getLastName(),
-                DateTimeFormatUtils.MONTH_FIRST_DASHED_DATE_FORMATTER.format(LocalDate.now()));
+                DateTimeFormatter.ofPattern("MM-dd-uuuu").format(LocalDate.now()));
         resp.then().assertThat().body("sections[5].blocks[1].body", equalTo(expectedBody));
     }
 
