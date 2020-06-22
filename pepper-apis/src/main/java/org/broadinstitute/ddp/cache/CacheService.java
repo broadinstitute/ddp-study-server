@@ -1,6 +1,6 @@
 package org.broadinstitute.ddp.cache;
 
-import java.net.URI;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -58,8 +58,11 @@ public class CacheService {
     }
 
     private CacheManager buildCacheManager(String configFileName) {
-        URI redissonConfigUri = Paths.get(configFileName).toUri();
-        return Caching.getCachingProvider().getCacheManager(redissonConfigUri, null);
+        Path redissonConfigPath = Paths.get(configFileName);
+        if (!redissonConfigPath.toFile().exists()) {
+            throw new DDPException("Path for configuration file: " + redissonConfigPath + " could not be found");
+        }
+        return Caching.getCachingProvider().getCacheManager(redissonConfigPath.toUri(), null);
     }
 
     public <K, V> Cache<K, V> getOrCreateCache(String cacheName, Duration entryDuration, IdToCacheKeyMapper<K> mapper,

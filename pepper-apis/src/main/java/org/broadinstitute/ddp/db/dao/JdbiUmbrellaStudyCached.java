@@ -24,6 +24,7 @@ public class JdbiUmbrellaStudyCached extends SQLObjectWrapper<JdbiUmbrellaStudy>
 
     public JdbiUmbrellaStudyCached(Handle handle) {
         super(handle, JdbiUmbrellaStudy.class);
+        initializeCache();
     }
 
     private void initializeCache() {
@@ -44,6 +45,10 @@ public class JdbiUmbrellaStudyCached extends SQLObjectWrapper<JdbiUmbrellaStudy>
         return delegate.getJdbiOLCPrecision();
     }
 
+    public boolean isUsingNullCache() {
+        return isNullCache(idToStudyCache);
+    }
+
     @Override
     public String findUmbrellaGuidForStudyId(long studyId) {
         StudyDto study = findById(studyId);
@@ -56,7 +61,11 @@ public class JdbiUmbrellaStudyCached extends SQLObjectWrapper<JdbiUmbrellaStudy>
 
     @Override
     public List<StudyDto> findAll() {
-        return streamAll().collect(toList());
+        if (isUsingNullCache()) {
+            return delegate.findAll();
+        } else {
+            return streamAll().collect(toList());
+        }
     }
 
     private Stream<StudyDto> streamAll() {
@@ -67,29 +76,41 @@ public class JdbiUmbrellaStudyCached extends SQLObjectWrapper<JdbiUmbrellaStudy>
 
     @Override
     public StudyDto findByStudyGuid(String studyGuid) {
-        cacheAllIfNecessary();
-        Long id = guidToIdCache.get(studyGuid);
-        if (id != null) {
-            return idToStudyCache.get(id);
+        if (isUsingNullCache()) {
+            return delegate.findByStudyGuid(studyGuid);
         } else {
-            return null;
+            cacheAllIfNecessary();
+            Long id = guidToIdCache.get(studyGuid);
+            if (id != null) {
+                return idToStudyCache.get(id);
+            } else {
+                return null;
+            }
         }
     }
 
     @Override
     public StudyDto findById(long studyId) {
-        cacheAllIfNecessary();
-        return idToStudyCache.get(studyId);
+        if (isUsingNullCache()) {
+            return delegate.findById(studyId);
+        } else {
+            cacheAllIfNecessary();
+            return idToStudyCache.get(studyId);
+        }
     }
 
     @Override
     public List<StudyDto> findByUmbrellaGuid(String umbrellaGuid) {
-        JdbiUmbrella umbrellaDao = new JdbiUmbrellaCached(getHandle());
-        Optional<UmbrellaDto> umbrella = umbrellaDao.findByGuid(umbrellaGuid);
-        if (umbrella.isPresent()) {
-            return streamAll().filter(study -> study.getUmbrellaId() == umbrella.get().getId()).collect(toList());
+        if (isUsingNullCache()) {
+            return delegate.findByUmbrellaGuid(umbrellaGuid);
         } else {
-            return Collections.emptyList();
+            JdbiUmbrella umbrellaDao = new JdbiUmbrellaCached(getHandle());
+            Optional<UmbrellaDto> umbrella = umbrellaDao.findByGuid(umbrellaGuid);
+            if (umbrella.isPresent()) {
+                return streamAll().filter(study -> study.getUmbrellaId() == umbrella.get().getId()).collect(toList());
+            } else {
+                return Collections.emptyList();
+            }
         }
 
     }
@@ -106,23 +127,31 @@ public class JdbiUmbrellaStudyCached extends SQLObjectWrapper<JdbiUmbrellaStudy>
 
     @Override
     public String findGuidByStudyId(long id) {
-        var study = findById(id);
-        if (study == null) {
-            return null;
+        if (isUsingNullCache()) {
+            return delegate.findGuidByStudyId(id);
         } else {
-            return study.getGuid();
+            var study = findById(id);
+            if (study == null) {
+                return null;
+            } else {
+                return study.getGuid();
+            }
         }
     }
 
     @Override
     public String getUmbrellaGuidForStudyGuid(String studyGuid) {
-        StudyDto study = findByStudyGuid(studyGuid);
-        if (study != null) {
-            return new JdbiUmbrellaCached(getHandle())
-                    .findByGuid(study.getGuid())
-                    .map(umbrella -> umbrella.getGuid()).orElse(null);
+        if (isUsingNullCache()) {
+            return delegate.getUmbrellaGuidForStudyGuid(studyGuid);
         } else {
-            return null;
+            StudyDto study = findByStudyGuid(studyGuid);
+            if (study != null) {
+                return new JdbiUmbrellaCached(getHandle())
+                        .findByGuid(study.getGuid())
+                        .map(umbrella -> umbrella.getGuid()).orElse(null);
+            } else {
+                return null;
+            }
         }
     }
 
@@ -146,11 +175,15 @@ public class JdbiUmbrellaStudyCached extends SQLObjectWrapper<JdbiUmbrellaStudy>
 
     @Override
     public String getIrbPasswordUsingStudyGuid(String studyGuid) {
-        var study = findByStudyGuid(studyGuid);
-        if (study != null) {
-            return study.getIrbPassword();
+        if (isUsingNullCache()) {
+            return delegate.getIrbPasswordUsingStudyGuid(studyGuid);
         } else {
-            return null;
+            var study = findByStudyGuid(studyGuid);
+            if (study != null) {
+                return study.getIrbPassword();
+            } else {
+                return null;
+            }
         }
     }
 

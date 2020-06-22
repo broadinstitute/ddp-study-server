@@ -31,8 +31,12 @@ public class JdbiUmbrellaCached extends SQLObjectWrapper<JdbiUmbrella> implement
         }
     }
 
+    private boolean isUsingNullCache() {
+        return isNullCache(idToUmbrellaCache);
+    }
+
     private void cacheAllIfNeeded() {
-        if (!idToUmbrellaCache.iterator().hasNext()) {
+        if (!idToUmbrellaCache.iterator().hasNext() && !isUsingNullCache()) {
             delegate.findAll().stream().forEach(umbrella -> idToUmbrellaCache.put(umbrella.getId(), umbrella));
         }
     }
@@ -44,23 +48,39 @@ public class JdbiUmbrellaCached extends SQLObjectWrapper<JdbiUmbrella> implement
     }
 
     public List<UmbrellaDto> findAll() {
-        return streamAll().collect(Collectors.toList());
+        if (isUsingNullCache()) {
+            return delegate.findAll();
+        } else {
+            return streamAll().collect(Collectors.toList());
+        }
     }
 
     @Override
     public Optional<Long> findIdByName(String umbrellaName) {
-        return streamAll().filter(umbrella -> umbrella.getName().equals(umbrellaName)).findAny().map(dto -> dto.getId());
+        if (isUsingNullCache()) {
+            return delegate.findIdByName(umbrellaName);
+        } else {
+            return streamAll().filter(umbrella -> umbrella.getName().equals(umbrellaName)).findAny().map(dto -> dto.getId());
+        }
     }
 
     @Override
     public Optional<UmbrellaDto> findByGuid(String umbrellaGuid) {
-        return streamAll().filter(umbrella -> umbrella.getGuid().equals(umbrellaGuid)).findAny();
+        if (isUsingNullCache()) {
+            return delegate.findByGuid(umbrellaGuid);
+        } else {
+            return streamAll().filter(umbrella -> umbrella.getGuid().equals(umbrellaGuid)).findAny();
+        }
     }
 
     @Override
     public Optional<UmbrellaDto> findById(long umbrellaId) {
-        cacheAllIfNeeded();
-        return Optional.ofNullable(idToUmbrellaCache.get(umbrellaId));
+        if (isUsingNullCache()) {
+            return delegate.findById(umbrellaId);
+        } else {
+            cacheAllIfNeeded();
+            return Optional.ofNullable(idToUmbrellaCache.get(umbrellaId));
+        }
     }
 
     @Override

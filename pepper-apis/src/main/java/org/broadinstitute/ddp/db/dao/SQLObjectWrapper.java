@@ -1,7 +1,10 @@
 package org.broadinstitute.ddp.db.dao;
 
+import javax.cache.Cache;
+
 import org.broadinstitute.ddp.cache.CacheService;
 import org.broadinstitute.ddp.cache.ModelChangeType;
+import org.broadinstitute.ddp.cache.NullCache;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.HandleCallback;
 import org.jdbi.v3.core.HandleConsumer;
@@ -28,5 +31,9 @@ public class SQLObjectWrapper<T extends SqlObject> {
 
     protected void notifyModelUpdated(ModelChangeType changeType, long id) {
         CacheService.getInstance().modelUpdated(changeType, getHandle(), id);
+    }
+
+    protected boolean isNullCache(Cache cache) {
+        return cache instanceof NullCache;
     }
 }
