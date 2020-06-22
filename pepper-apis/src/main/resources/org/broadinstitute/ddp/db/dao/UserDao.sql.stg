@@ -57,6 +57,7 @@ select u.user_id              as u_user_id,
        up.birth_date            as p_birth_date,
        up.do_not_contact        as p_do_not_contact,
        up.is_deceased           as p_is_deceased,
+       up.time_zone             as p_time_zone,
        up.preferred_language_id as p_preferred_language_id,
        (select iso_language_code from language_code where language_code_id = up.preferred_language_id) as p_iso_language_code
   from user as u

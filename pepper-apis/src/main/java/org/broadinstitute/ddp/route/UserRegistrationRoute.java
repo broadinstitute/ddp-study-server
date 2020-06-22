@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.route;
 import static spark.Spark.halt;
 
 import java.time.Instant;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -87,7 +88,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
 
     @Override
     public Object handle(Request request, Response response, UserRegistrationPayload payload) throws Exception {
-        checkRequiredPayloadProperties(response, payload);
+        checkRequestPayload(response, payload);
 
         var doLocalRegistration = payload.isLocalRegistration();
         String auth0ClientId = payload.getAuth0ClientId();
@@ -273,7 +274,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
         return new UserPair(operatorUser, participantUser);
     }
 
-    private void checkRequiredPayloadProperties(Response response, UserRegistrationPayload payload) {
+    private void checkRequestPayload(Response response, UserRegistrationPayload payload) {
         StringBuilder sb = new StringBuilder();
 
         if (!payload.isLocalRegistration()) {
@@ -290,6 +291,15 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
             ApiError err = new ApiError(ErrorCodes.BAD_PAYLOAD, msg);
             LOG.warn("Missing properties in payload: {}", err.getMessage());
             throw ResponseUtil.haltError(response, HttpStatus.SC_BAD_REQUEST, err);
+        }
+
+        if (payload.getTimeZone() != null) {
+            if (!ZoneId.getAvailableZoneIds().contains(payload.getTimeZone())) {
+                ApiError err = new ApiError(ErrorCodes.BAD_PAYLOAD, String.format(
+                        "Provided timezone '%s' is not a recognized region id", payload.getTimeZone()));
+                LOG.warn(err.getMessage());
+                throw ResponseUtil.haltError(response, HttpStatus.SC_BAD_REQUEST, err);
+            }
         }
     }
 
@@ -522,6 +532,19 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
         }
     }
 
+    private ZoneId parseUserTimeZone(String givenTimeZone) {
+        if (givenTimeZone != null) {
+            try {
+                return ZoneId.of(givenTimeZone);
+            } catch (Exception e) {
+                throw new DDPException("Provided timezone '" + givenTimeZone + "' is invalid", e);
+            }
+        } else {
+            LOG.info("No user timezone is provided");
+            return null;
+        }
+    }
+
     private void initializeProfile(Handle handle, User user, UserRegistrationPayload payload) {
         var profileDao = new UserProfileCachedDao(handle);
         UserProfile profile = profileDao.findProfileByUserId(user.getId()).orElse(null);
@@ -532,12 +555,14 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
         String lastName = payload.getLastName();
         lastName = StringUtils.isNotBlank(lastName) ? lastName.trim() : null;
         long languageId = determineUserLanguage(handle, payload).getId();
+        ZoneId timeZone = parseUserTimeZone(payload.getTimeZone());
 
         if (profile == null) {
             profile = new UserProfile.Builder(user.getId())
                     .setFirstName(firstName)
                     .setLastName(lastName)
                     .setPreferredLangId(languageId)
+                    .setTimeZone(timeZone)
                     .build();
             profileDao.createProfile(profile);
             LOG.info("Initialized user profile for user with guid {}", user.getGuid());
@@ -555,6 +580,10 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
             }
             if (profile.getPreferredLangId() == null) {
                 updated.setPreferredLangId(languageId);
+                shouldUpdate = true;
+            }
+            if (profile.getTimeZone() == null) {
+                updated.setTimeZone(timeZone);
                 shouldUpdate = true;
             }
 

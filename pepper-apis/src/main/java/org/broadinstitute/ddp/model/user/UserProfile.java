@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.model.user;
 
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.time.ZoneId;
 
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
@@ -15,6 +16,7 @@ public class  UserProfile implements Serializable {
     private LocalDate birthDate;
     private Long preferredLangId;
     private String preferredLangCode;
+    private ZoneId timeZone;
     private Boolean doNotContact;
     private Boolean isDeceased;
 
@@ -26,6 +28,7 @@ public class  UserProfile implements Serializable {
                        @ColumnName("birth_date") LocalDate birthDate,
                        @ColumnName("preferred_language_id") Long preferredLangId,
                        @ColumnName("iso_language_code") String preferredLangCode,
+                       @ColumnName("time_zone") ZoneId timeZone,
                        @ColumnName("do_not_contact") Boolean doNotContact,
                        @ColumnName("is_deceased") Boolean isDeceased) {
         this.userId = userId;
@@ -35,6 +38,7 @@ public class  UserProfile implements Serializable {
         this.birthDate = birthDate;
         this.preferredLangId = preferredLangId;
         this.preferredLangCode = preferredLangCode;
+        this.timeZone = timeZone;
         this.doNotContact = doNotContact;
         this.isDeceased = isDeceased;
     }
@@ -67,6 +71,10 @@ public class  UserProfile implements Serializable {
         return preferredLangCode;
     }
 
+    public ZoneId getTimeZone() {
+        return timeZone;
+    }
+
     public Boolean getDoNotContact() {
         return doNotContact;
     }
@@ -83,7 +91,7 @@ public class  UserProfile implements Serializable {
         private UserProfile profile;
 
         public Builder(long userId) {
-            profile = new UserProfile(userId, null, null, null, null, null, null, null, null);
+            profile = new UserProfile(userId, null, null, null, null, null, null, null, null, null);
         }
 
         public Builder(UserProfile other) {
@@ -95,6 +103,7 @@ public class  UserProfile implements Serializable {
                     other.getBirthDate(),
                     other.getPreferredLangId(),
                     other.getPreferredLangCode(),
+                    other.getTimeZone(),
                     other.getDoNotContact(),
                     other.getIsDeceased());
         }
@@ -127,6 +136,11 @@ public class  UserProfile implements Serializable {
             return this;
         }
 
+        public Builder setTimeZone(ZoneId timeZone) {
+            profile.timeZone = timeZone;
+            return this;
+        }
+
         public Builder setDoNotContact(Boolean doNotContact) {
             profile.doNotContact = doNotContact;
             return this;
@@ -146,6 +160,7 @@ public class  UserProfile implements Serializable {
                     profile.birthDate,
                     profile.preferredLangId,
                     profile.preferredLangCode,
+                    profile.timeZone,
                     profile.doNotContact,
                     profile.isDeceased);
         }
