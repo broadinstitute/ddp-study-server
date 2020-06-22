@@ -22,7 +22,7 @@ public class JdbiUmbrellaStudyCached extends SQLObjectWrapper<JdbiUmbrellaStudy>
     private Cache<Long, StudyDto> idToStudyCache;
     private Cache<String, Long> guidToIdCache;
 
-    JdbiUmbrellaStudyCached(Handle handle) {
+    public JdbiUmbrellaStudyCached(Handle handle) {
         super(handle, JdbiUmbrellaStudy.class);
     }
 

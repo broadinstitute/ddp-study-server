@@ -15,6 +15,7 @@ import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
+import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudyCached;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudyI18n;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dao.StudyLanguageDao;
@@ -60,7 +61,7 @@ public class GetStudiesRoute implements Route {
         DDPAuth authInfo = RouteUtil.getDDPAuth(request);
 
         return TransactionWrapper.withTxn(handle -> {
-            JdbiUmbrellaStudy studyDao = handle.attach(JdbiUmbrellaStudy.class);
+            JdbiUmbrellaStudy studyDao = new JdbiUmbrellaStudyCached(handle);
             JdbiUserStudyEnrollment enrollmentDao = handle.attach(JdbiUserStudyEnrollment.class);
 
             List<StudyDto> studiesDto = studyDao.findByUmbrellaGuid(umbrellaGuid);

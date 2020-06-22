@@ -35,7 +35,7 @@ public class ClientCachedDao extends SQLObjectWrapper<ClientDao> implements Clie
 
     @Override
     public JdbiUmbrellaStudy getUmbrellaStudyDao() {
-        return delegate.getUmbrellaStudyDao();
+        return new JdbiUmbrellaStudyCached(getHandle());
     }
 
     @Override
