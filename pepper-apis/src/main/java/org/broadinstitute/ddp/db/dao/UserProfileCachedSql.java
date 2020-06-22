@@ -47,7 +47,7 @@ public class UserProfileCachedSql extends SQLObjectWrapper<UserProfileSql> imple
 
     @Override
     public int update(long userId, String firstName, String lastName, UserProfile.SexType sexType, LocalDate birthDate,
-                      Long preferredLangId, ZoneId timeZone,Boolean doNotContact, Boolean isDeceased) {
+                      Long preferredLangId, ZoneId timeZone, Boolean doNotContact, Boolean isDeceased) {
         var val = delegate.update(userId, firstName, lastName, sexType, birthDate, preferredLangId, timeZone, doNotContact, isDeceased);
         notifyModelUpdated(ModelChangeType.USER, userId);
         return val;
