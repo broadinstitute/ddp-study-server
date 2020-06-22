@@ -1,10 +1,12 @@
 package org.broadinstitute.ddp.db.dto;
 
+import java.io.Serializable;
+
 import org.broadinstitute.ddp.model.address.OLCPrecision;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
-public class StudyDto {
+public class StudyDto implements Serializable {
 
     private long id;
     private String guid;
