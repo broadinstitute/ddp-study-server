@@ -73,7 +73,7 @@ RegisterRequestBody:
             description: user's last name, if available
           languageCode:
             type: string
-            description: user's preferred language, as an ISO code
+            description: user's preferred language, as an ISO 639-1 code
             example: en
           timeZone:
             type: string

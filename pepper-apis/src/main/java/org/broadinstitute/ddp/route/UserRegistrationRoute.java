@@ -87,7 +87,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
 
     @Override
     public Object handle(Request request, Response response, UserRegistrationPayload payload) throws Exception {
-        checkRequiredPayloadProperties(response, payload);
+        checkRequestPayload(response, payload);
 
         var doLocalRegistration = payload.isLocalRegistration();
         String auth0ClientId = payload.getAuth0ClientId();
@@ -273,7 +273,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
         return new UserPair(operatorUser, participantUser);
     }
 
-    private void checkRequiredPayloadProperties(Response response, UserRegistrationPayload payload) {
+    private void checkRequestPayload(Response response, UserRegistrationPayload payload) {
         StringBuilder sb = new StringBuilder();
 
         if (!payload.isLocalRegistration()) {
@@ -290,6 +290,15 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
             ApiError err = new ApiError(ErrorCodes.BAD_PAYLOAD, msg);
             LOG.warn("Missing properties in payload: {}", err.getMessage());
             throw ResponseUtil.haltError(response, HttpStatus.SC_BAD_REQUEST, err);
+        }
+
+        if (payload.getTimeZone() != null) {
+            if (!ZoneId.getAvailableZoneIds().contains(payload.getTimeZone())) {
+                ApiError err = new ApiError(ErrorCodes.BAD_PAYLOAD, String.format(
+                        "Provided timezone '%s' is not a recognized region id", payload.getTimeZone()));
+                LOG.warn(err.getMessage());
+                throw ResponseUtil.haltError(response, HttpStatus.SC_BAD_REQUEST, err);
+            }
         }
     }
 
@@ -524,19 +533,15 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
 
     private ZoneId parseUserTimeZone(String givenTimeZone) {
         if (givenTimeZone != null) {
-            if (ZoneId.getAvailableZoneIds().contains(givenTimeZone)) {
-                try {
-                    return ZoneId.of(givenTimeZone);
-                } catch (Exception e) {
-                    LOG.warn("Provided timezone '{}' is invalid", givenTimeZone, e);
-                }
-            } else {
-                LOG.warn("Provided timezone '{}' is not a recognized region id", givenTimeZone);
+            try {
+                return ZoneId.of(givenTimeZone);
+            } catch (Exception e) {
+                throw new DDPException("Provided timezone '" + givenTimeZone + "' is invalid", e);
             }
         } else {
             LOG.info("No user timezone is provided");
+            return null;
         }
-        return null;
     }
 
     private void initializeProfile(Handle handle, User user, UserRegistrationPayload payload) {
