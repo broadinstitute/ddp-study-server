@@ -609,6 +609,10 @@ public class StudyDataLoaderMain {
                                 jdbiActivity,
                                 activityInstanceDao,
                                 activityInstanceStatusDao);
+                        dataLoader.loadMedicalHistorySurveyData(handle, sourceData.get("medicalhistorysurvey"),
+                                mappingData.get("atcp_registry_questionnaire"),
+                                studyDto, userDto, instanceDto,
+                                answerDao);
                     }
 
                     if (hasAboutYou) {

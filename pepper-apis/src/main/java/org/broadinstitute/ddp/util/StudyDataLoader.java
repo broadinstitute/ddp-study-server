@@ -419,13 +419,32 @@ public class StudyDataLoader {
         return dto;
     }
 
-    public void loadAboutYouSurveyData(Handle handle,
+
+    public void loadMedicalHistorySurveyData(Handle handle,
                                        JsonElement surveyData,
                                        JsonElement mappingData,
                                        StudyDto studyDto,
                                        UserDto userDto,
                                        ActivityInstanceDto instanceDto,
                                        AnswerDao answerDao) throws Exception {
+
+        LOG.info("Populating MedicalHistory Survey...");
+        if (surveyData == null || surveyData.isJsonNull()) {
+            LOG.warn("NO MedicalHistory Survey !");
+            return;
+        }
+
+        processSurveyData(handle, "medicalhistorysurvey", surveyData, mappingData,
+                studyDto, userDto, instanceDto, answerDao);
+    }
+
+    public void loadAboutYouSurveyData(Handle handle,
+                                             JsonElement surveyData,
+                                             JsonElement mappingData,
+                                             StudyDto studyDto,
+                                             UserDto userDto,
+                                             ActivityInstanceDto instanceDto,
+                                             AnswerDao answerDao) throws Exception {
 
         LOG.info("Populating AboutYou Survey...");
         if (surveyData == null || surveyData.isJsonNull()) {
