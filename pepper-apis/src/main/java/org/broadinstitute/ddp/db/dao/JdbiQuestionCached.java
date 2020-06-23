@@ -64,10 +64,6 @@ public class JdbiQuestionCached extends SQLObjectWrapper<JdbiQuestion> implement
         return activityId + ":" + questionStableId;
     }
 
-    public List<QuestionDto> findDtosByInstanceGuid(String instanceGuid) {
-        return delegate.findDtosByInstanceGuid(instanceGuid);
-    }
-
     public void cacheQuestionDtosForStudyActivity(Long activityId) {
         delegate.findDtosByActvityId(activityId).forEach(dto ->
                 questionKeyToQuestionDtoCache.put(buildQuestionKey(activityId, dto.getStableId()), dto));
