@@ -349,7 +349,9 @@ public class StudyDataLoader {
         if (ddpCompleted != null) {
             Instant instant;
             try {
-                instant = Instant.parse(ddpCompleted);
+                LocalDateTime ddpCompletedTime = LocalDateTime
+                        .parse(ddpLastUpdated, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"));
+                instant = ddpCompletedTime.toInstant(ZoneOffset.UTC);
             } catch (DateTimeParseException e) {
                 throw new Exception("Could not parse required completedAt value for " + activityCode
                         + " survey, value is " + ddpCompleted);
@@ -958,7 +960,7 @@ public class StudyDataLoader {
         }
         String datstatSessionId = getStringValueFromElement(surveyData, "datstat.sessionid");
         String ddpCreated = getStringValueFromElement(surveyData, "ddp_created");
-        String ddpFirstCompleted = getStringValueFromElement(surveyData, "ddp_firstcompleted");
+        String ddpFirstCompleted = getStringValueFromElement(surveyData, "datstat.enddatetime");
         String ddpLastSubmitted = getStringValueFromElement(surveyData, "ddp_lastsubmitted");
         String ddpLastUpdated = getStringValueFromElement(surveyData, "datstat.enddatetime");
         String surveyVersion = getStringValueFromElement(surveyData, "surveyversion");
