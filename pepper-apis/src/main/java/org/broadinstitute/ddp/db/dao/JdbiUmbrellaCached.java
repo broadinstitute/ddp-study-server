@@ -27,7 +27,7 @@ public class JdbiUmbrellaCached extends SQLObjectWrapper<JdbiUmbrella> implement
             idToUmbrellaCache = CacheService.getInstance().getOrCreateCache("idToUmbrellaCache",
                     new Duration(),
                     ModelChangeType.UMBRELLA,
-                    this);
+                    this.getClass());
         }
     }
 
