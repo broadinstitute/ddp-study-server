@@ -18,10 +18,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
-
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -30,8 +28,8 @@ import org.broadinstitute.ddp.db.dao.DataExportDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiCompositeQuestion;
 import org.broadinstitute.ddp.db.dao.JdbiNumericQuestion;
-import org.broadinstitute.ddp.db.dao.JdbiQuestion;
-import org.broadinstitute.ddp.db.dao.QuestionDao;
+import org.broadinstitute.ddp.db.dao.JdbiQuestionCached;
+import org.broadinstitute.ddp.db.dao.QuestionCachedDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.AnswerDto;
@@ -82,12 +80,9 @@ import org.broadinstitute.ddp.util.JsonValidationError;
 import org.broadinstitute.ddp.util.MiscUtil;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
-
 import org.jdbi.v3.core.Handle;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import spark.Request;
 import spark.Response;
 import spark.Route;
@@ -158,7 +153,7 @@ public class PatchFormAnswersRoute implements Route {
                 throw ResponseUtil.haltError(response, 422, new ApiError(ErrorCodes.ACTIVITY_INSTANCE_IS_READONLY, msg));
             }
 
-            var jdbiQuestion = handle.attach(JdbiQuestion.class);
+            var jdbiQuestion = new JdbiQuestionCached(handle);
             var answerDao = handle.attach(AnswerDao.class);
 
             LanguageDto preferredUserLanguage = RouteUtil.getUserLanguage(request);
@@ -170,9 +165,9 @@ public class PatchFormAnswersRoute implements Route {
                 for (AnswerSubmission submission : submissions) {
                     String questionStableId = extractQuestionStableId(submission, response);
 
-                    Optional<QuestionDto> optDto = jdbiQuestion.findDtoByStableIdAndInstanceGuid(questionStableId, instanceGuid);
+                    Optional<QuestionDto> optDto = jdbiQuestion.findDtoByStableIdAndInstance(questionStableId, instanceDto);
                     QuestionDto questionDto = extractQuestionDto(response, questionStableId, optDto);
-                    Question question = handle.attach(QuestionDao.class).getQuestionByActivityInstanceAndDto(questionDto,
+                    Question question = new QuestionCachedDao(handle).getQuestionByActivityInstanceAndDto(questionDto,
                             instanceGuid, false, languageCodeId);
 
                     //validation to check if question is a composite child
