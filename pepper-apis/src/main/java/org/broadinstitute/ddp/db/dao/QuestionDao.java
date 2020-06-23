@@ -303,7 +303,7 @@ public interface QuestionDao extends SqlObject {
                     .findAnswerIdsByInstanceGuidAndQuestionId(activityInstanceGuid, dto.getId()));
         }
 
-        List<Rule> untypedRules = getValidationDao().getValidationRules(dto.getId(), langCodeId);
+        List<Rule> untypedRules = getValidationDao().getValidationRules(dto, langCodeId);
 
         Question question;
 
