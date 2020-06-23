@@ -38,6 +38,7 @@
           },
           {
             "name": "diagnosis_criteria",
+            "stable_id": "DETERMINED",
             "type": "Picklist",
             "source_type": "string",
             "options": [
@@ -94,8 +95,7 @@
                 "text": "text",
                 "type": "string"
               }
-            ],
-            "stable_id": "DETERMINED"
+            ]
           },
           {
             "name": "mutation_determination",

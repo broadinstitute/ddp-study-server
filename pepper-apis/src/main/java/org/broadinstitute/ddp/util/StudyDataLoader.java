@@ -349,7 +349,9 @@ public class StudyDataLoader {
         if (ddpCompleted != null) {
             Instant instant;
             try {
-                instant = Instant.parse(ddpCompleted);
+                LocalDateTime ddpCompletedTime = LocalDateTime
+                        .parse(ddpLastUpdated, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"));
+                instant = ddpCompletedTime.toInstant(ZoneOffset.UTC);
             } catch (DateTimeParseException e) {
                 throw new Exception("Could not parse required completedAt value for " + activityCode
                         + " survey, value is " + ddpCompleted);
@@ -417,13 +419,32 @@ public class StudyDataLoader {
         return dto;
     }
 
-    public void loadAboutYouSurveyData(Handle handle,
+
+    public void loadMedicalHistorySurveyData(Handle handle,
                                        JsonElement surveyData,
                                        JsonElement mappingData,
                                        StudyDto studyDto,
                                        UserDto userDto,
                                        ActivityInstanceDto instanceDto,
                                        AnswerDao answerDao) throws Exception {
+
+        LOG.info("Populating MedicalHistory Survey...");
+        if (surveyData == null || surveyData.isJsonNull()) {
+            LOG.warn("NO MedicalHistory Survey !");
+            return;
+        }
+
+        processSurveyData(handle, "medicalhistorysurvey", surveyData, mappingData,
+                studyDto, userDto, instanceDto, answerDao);
+    }
+
+    public void loadAboutYouSurveyData(Handle handle,
+                                             JsonElement surveyData,
+                                             JsonElement mappingData,
+                                             StudyDto studyDto,
+                                             UserDto userDto,
+                                             ActivityInstanceDto instanceDto,
+                                             AnswerDao answerDao) throws Exception {
 
         LOG.info("Populating AboutYou Survey...");
         if (surveyData == null || surveyData.isJsonNull()) {
@@ -958,7 +979,7 @@ public class StudyDataLoader {
         }
         String datstatSessionId = getStringValueFromElement(surveyData, "datstat.sessionid");
         String ddpCreated = getStringValueFromElement(surveyData, "ddp_created");
-        String ddpFirstCompleted = getStringValueFromElement(surveyData, "ddp_firstcompleted");
+        String ddpFirstCompleted = getStringValueFromElement(surveyData, "datstat.enddatetime");
         String ddpLastSubmitted = getStringValueFromElement(surveyData, "ddp_lastsubmitted");
         String ddpLastUpdated = getStringValueFromElement(surveyData, "datstat.enddatetime");
         String surveyVersion = getStringValueFromElement(surveyData, "surveyversion");
