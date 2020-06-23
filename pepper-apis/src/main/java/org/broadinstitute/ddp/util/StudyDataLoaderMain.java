@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import com.google.api.client.json.Json;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
@@ -304,6 +305,7 @@ public class StudyDataLoaderMain {
         JsonElement datstatParticipantData = user.getAsJsonObject().get("datstatparticipantdata");
 
         JsonElement surveyData = user.getAsJsonObject().get("datstatsurveydata");
+        JsonElement medicalHistorySurveyData = surveyData.getAsJsonObject().get("atcp_registry_questionnaire");
         JsonElement releaseSurveyData = surveyData.getAsJsonObject().get("releasesurvey");
         JsonElement bdreleaseSurveyData = surveyData.getAsJsonObject().get("bdreleasesurvey");
         JsonElement aboutyouSurveyData = surveyData.getAsJsonObject().get("aboutyousurvey");
@@ -313,6 +315,7 @@ public class StudyDataLoaderMain {
         JsonElement followupSurveyData = surveyData.getAsJsonObject().get("followupsurvey");
 
         surveyDataMap.put("datstatparticipantdata", datstatParticipantData);
+        surveyDataMap.put("medicalhistorysurvey", medicalHistorySurveyData);
         surveyDataMap.put("releasesurvey", releaseSurveyData);
         surveyDataMap.put("bdreleasesurvey", bdreleaseSurveyData);
         surveyDataMap.put("aboutyousurvey", aboutyouSurveyData);
@@ -543,6 +546,7 @@ public class StudyDataLoaderMain {
             Boolean hasFollowup = false;
             Boolean isSuccess = false;
             Boolean previousRun = false;
+            Boolean hasMedicalHistory = false;
             StudyMigrationRun migrationRun;
 
             boolean auth0Collision = false;
@@ -583,6 +587,8 @@ public class StudyDataLoaderMain {
                     hasRelease = (sourceData.get("releasesurvey") != null && !sourceData.get("releasesurvey").isJsonNull());
                     hasBloodRelease = (sourceData.get("bdreleasesurvey") != null && !sourceData.get("bdreleasesurvey").isJsonNull());
                     hasFollowup = (sourceData.get("followupsurvey") != null && !sourceData.get("followupsurvey").isJsonNull());
+                    hasMedicalHistory = (sourceData.get("medicalhistorysurvey") != null && !sourceData
+                            .get("medicalhistorysurvey").isJsonNull());
 
                     var answerDao = handle.attach(AnswerDao.class);
                     //create prequal
@@ -593,6 +599,17 @@ public class StudyDataLoaderMain {
                             activityInstanceDao,
                             activityInstanceStatusDao,
                             answerDao);
+
+                    if (hasMedicalHistory) {
+                        String activityCode = mappingData.get("atcp_registry_questionnaire").getAsJsonObject()
+                                .get("activity_code").getAsString();
+                        ActivityInstanceDto instanceDto = dataLoader.createActivityInstance(sourceData.get("medicalhistorysurvey"),
+                                userGuid, studyId,
+                                activityCode, createdAt,
+                                jdbiActivity,
+                                activityInstanceDao,
+                                activityInstanceStatusDao);
+                    }
 
                     if (hasAboutYou) {
                         String activityCode = mappingData.get("aboutyousurvey").getAsJsonObject().get("activity_code").getAsString();

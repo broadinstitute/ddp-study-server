@@ -297,7 +297,7 @@ public class StudyDataLoader {
                                                       ActivityInstanceDao activityInstanceDao,
                                                       ActivityInstanceStatusDao activityInstanceStatusDao) throws Exception {
 
-        BaseSurvey baseSurvey = getBaseSurvey(surveyData);
+        BaseSurvey baseSurvey = getBaseSurveyForActivity(surveyData, activityCode);
         if (baseSurvey.getDdpCreated() == null) {
             LOG.warn("No createdAt for survey: {} participant guid: {} . using participant data created_at ",
                     activityCode, participantGuid);
@@ -321,7 +321,8 @@ public class StudyDataLoader {
         if (ddpCreated != null) {
             Instant instant;
             try {
-                instant = Instant.parse(ddpCreated);
+                LocalDateTime ddpCreatedAtTime = LocalDateTime.parse(ddpCreated, DateTimeFormatter.ofPattern(DATSTAT_DATE_FORMAT));
+                instant =  ddpCreatedAtTime.toInstant(ZoneOffset.UTC);
             } catch (DateTimeParseException e) {
                 throw new Exception("Could not parse required createdAt value for " + activityCode + " survey, value is " + ddpCreated);
             }
@@ -333,7 +334,9 @@ public class StudyDataLoader {
         if (ddpLastUpdated != null) {
             Instant instant;
             try {
-                instant = Instant.parse(ddpLastUpdated);
+                LocalDateTime ddpLastUpdatedTime = LocalDateTime
+                        .parse(ddpLastUpdated, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"));
+                instant = ddpLastUpdatedTime.toInstant(ZoneOffset.UTC);
             } catch (DateTimeParseException e) {
                 throw new Exception("Could not parse required lastUpdated value for " + activityCode
                         + " survey, value is " + ddpLastUpdated);
@@ -563,7 +566,7 @@ public class StudyDataLoader {
 
 
     private void updateUserStudyEnrollment(Handle handle, JsonElement surveyData, String userGuid, String studyGuid) throws Exception {
-        BaseSurvey baseSurvey = getBaseSurvey(surveyData);
+        BaseSurvey baseSurvey = getBaseSurvey(surveyData, getStringValueFromElement(surveyData, "datstat.submissionstatus"));
         if (InstanceStatusType.COMPLETE.name().equalsIgnoreCase(baseSurvey.getSurveyStatus())) {
             long updatedAt;
             if (baseSurvey.getDdpFirstCompleted() != null) {
@@ -921,8 +924,32 @@ public class StudyDataLoader {
         return stateCode;
     }
 
+    private BaseSurvey getBaseSurveyForActivity(JsonElement surveyData, String activityCode) {
+        String status;
+        if ("PRIONCONSENT".equals(activityCode)) {
+            // Status field is complete_status.  Blank and 0 are in progress and 1 is complete
+            String completeStatus = getStringValueFromElement(surveyData, "complete_status");
 
-    private BaseSurvey getBaseSurvey(JsonElement surveyData) {
+            status = (completeStatus != null && !completeStatus.isEmpty() && "1".equals(completeStatus))
+                    ? "COMPLETE" : "IN_PROGRESS";
+        } else if ("MEDICAL_HISTORY".equals(activityCode)) {
+            //Status field is survey_status.  0 and blank are not started, 1 is in progress, and 2 is complete
+            String surveyStatus = getStringValueFromElement(surveyData, "datstat.submissionstatus");
+            if (surveyStatus != null && !surveyStatus.isEmpty() && "1".equals(surveyStatus)) {
+                status = "COMPLETE";
+            } else if (surveyStatus != null && !surveyStatus.isEmpty() && "2".equals(surveyStatus)) {
+                status = "IN_PROGRESS";
+            } else {
+                status = "CREATED";
+            }
+        } else {
+            status = getStringValueFromElement(surveyData, "survey_status");
+        }
+        return getBaseSurvey(surveyData, status);
+    }
+
+
+    private BaseSurvey getBaseSurvey(JsonElement surveyData, String surveyStatus) {
 
         Integer datstatSubmissionIdNum = getIntegerValueFromElement(surveyData, "datstat.submissionid");
         Long datstatSubmissionId = null;
@@ -933,10 +960,9 @@ public class StudyDataLoader {
         String ddpCreated = getStringValueFromElement(surveyData, "ddp_created");
         String ddpFirstCompleted = getStringValueFromElement(surveyData, "ddp_firstcompleted");
         String ddpLastSubmitted = getStringValueFromElement(surveyData, "ddp_lastsubmitted");
-        String ddpLastUpdated = getStringValueFromElement(surveyData, "ddp_lastupdated");
+        String ddpLastUpdated = getStringValueFromElement(surveyData, "datstat.enddatetime");
         String surveyVersion = getStringValueFromElement(surveyData, "surveyversion");
         String activityVersion = getStringValueFromElement(surveyData, "consent_version");
-        String surveyStatus = getStringValueFromElement(surveyData, "survey_status");
         Integer datstatSubmissionStatus = getIntegerValueFromElement(surveyData, "datstat.submissionstatus");
 
         if (ddpFirstCompleted == null) {
