@@ -1,9 +1,11 @@
 package org.broadinstitute.ddp.db.dao;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
+import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
@@ -36,6 +38,15 @@ public interface JdbiQuestion extends SqlObject {
     @RegisterConstructorMapper(QuestionDto.class)
     Optional<QuestionDto> findDtoByStableIdAndInstanceGuid(@Bind("stableId") String stableId,
                                                            @Bind("instanceGuid") String instanceGuid);
+
+    default Optional<QuestionDto> findDtoByStableIdAndInstance(String stableId, ActivityInstanceDto instance) {
+        return findDtoByStableIdAndInstanceGuid(stableId, instance.getGuid());
+    }
+
+    @UseStringTemplateSqlLocator
+    @SqlQuery("queryQuestionsDtoByActivityId")
+    @RegisterConstructorMapper(QuestionDto.class)
+    List<QuestionDto> findDtosByActvityId(Long activityId);
 
     @UseStringTemplateSqlLocator
     @SqlQuery("queryQuestionDtoByStudyIdStableIdAndUserGuid")
@@ -74,4 +85,5 @@ public interface JdbiQuestion extends SqlObject {
 
     @SqlUpdate("update question set is_deprecated = :isDeprecated where question_id = :questionId")
     int updateIsDeprecatedById(@Bind("questionId") long questionId, @Bind("isDeprecated") boolean isDeprecated);
+
 }
