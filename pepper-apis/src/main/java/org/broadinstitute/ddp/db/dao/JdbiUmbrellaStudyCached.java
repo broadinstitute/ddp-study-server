@@ -33,10 +33,10 @@ public class JdbiUmbrellaStudyCached extends SQLObjectWrapper<JdbiUmbrellaStudy>
             idToStudyCache = CacheService.getInstance().getOrCreateCache("idToStudyCache",
                     new Duration(),
                     ModelChangeType.UMBRELLA,
-                    this);
+                    this.getClass());
             guidToIdCache = CacheService.getInstance().getOrCreateCache("guidToIdStudyCache", new Duration(),
                     ModelChangeType.UMBRELLA,
-                    this);
+                    this.getClass());
         }
     }
 
