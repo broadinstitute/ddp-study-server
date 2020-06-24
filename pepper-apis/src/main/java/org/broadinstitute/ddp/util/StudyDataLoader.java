@@ -790,6 +790,9 @@ public class StudyDataLoader {
         var jdbiCompositeAnswer = handle.attach(JdbiCompositeAnswer.class);
         if (CollectionUtils.isNotEmpty(nestedGuids)) {
             for (String childGuid : nestedGuids) {
+                if (childGuid == null) {
+                    continue;
+                }
                 childrenAnswerIds.add(answerDao.getAnswerSql().findDtoByGuid(childGuid).get().getId());
             }
             jdbiCompositeAnswer.insertChildAnswerItems(parentAnswer.getAnswerId(), childrenAnswerIds, compositeAnswerOrders);
@@ -1197,6 +1200,7 @@ public class StudyDataLoader {
         JsonElement value = null;
 
         sourceDataSurveyQs.get(surveyName).add(questionName);
+
 
         if (sourceDataElement != null && !sourceDataElement.getAsJsonObject().get(questionName).isJsonNull()) {
             value = sourceDataElement.getAsJsonObject().get(questionName);

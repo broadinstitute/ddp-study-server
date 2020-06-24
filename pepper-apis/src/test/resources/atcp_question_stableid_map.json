@@ -498,15 +498,15 @@
             "options": [
               {
                 "type": "integer",
-                "stable_id": "IMMUNODEFICIENCY_YES"
+                "stable_id": "YES"
               },
               {
                 "type": "integer",
-                "stable_id": "IMMUNODEFICIENCY_NO"
+                "stable_id": "NO"
               },
               {
                 "type": "integer",
-                "stable_id": "IMMUNODEFICIENCY_DONT_KNOW"
+                "stable_id": "DONT_KNOW"
               }
             ]
           },
@@ -552,7 +552,7 @@
           },
           {
             "name": "surgeries",
-            "stable_id": "SURGERIES",
+              "stable_id": "SURGERIES",
             "type": "Picklist",
             "source_type": "string",
             "options": [
