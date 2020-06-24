@@ -65,7 +65,7 @@ public class KitCheckDaoTest extends TxnAwareBaseTest {
             JdbiExpression jdbiExpr = handle.attach(JdbiExpression.class);
 
             long kitTypeId = kitTypeDao.getSalivaKitType().getId();
-            long kitConfigId = kitConfigDao.insertConfiguration(testData.getStudyId(), 10L, kitTypeId);
+            long kitConfigId = kitConfigDao.insertConfiguration(testData.getStudyId(), 10L, kitTypeId, false);
 
             String expr = "true";
             kitConfigExprId = jdbiExpr.insertExpression(expr).getId();

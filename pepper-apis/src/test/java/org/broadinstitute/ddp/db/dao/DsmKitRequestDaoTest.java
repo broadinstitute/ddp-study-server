@@ -71,7 +71,7 @@ public class DsmKitRequestDaoTest extends TxnAwareBaseTest {
 
             Long userId = testData.getUserId();
 
-            long newKitId = dao.createKitRequest(TEST_STUDY_GUID, testAddress, userId, salivaKitType);
+            long newKitId = dao.createKitRequest(TEST_STUDY_GUID, testAddress, userId, salivaKitType, true);
 
             requestKitsIdsToDelete.add(newKitId);
 
@@ -80,6 +80,7 @@ public class DsmKitRequestDaoTest extends TxnAwareBaseTest {
             assertTrue(kitRequestFromDbOptional.isPresent());
             DsmKitRequest kitRequestFromDb = kitRequestFromDbOptional.get();
             validateKitRequest(kitRequestFromDb, salivaKitType);
+            assertTrue(kitRequestFromDb.getNeedsApproval());
             return null;
         });
     }
@@ -306,10 +307,10 @@ public class DsmKitRequestDaoTest extends TxnAwareBaseTest {
             Long userId = testData.getUserId();
             try {
                 long newKitId1 = dao.createKitRequest("DUPLICATEGUID", TEST_STUDY_GUID,
-                        testAddressOptional.get().getId(), salivaKitType.getId(), userId, Instant.now().getEpochSecond());
+                        testAddressOptional.get().getId(), salivaKitType.getId(), userId, Instant.now().getEpochSecond(), false);
                 requestKitsIdsToDelete.add(newKitId1);
                 long duplicate = dao.createKitRequest("DUPLICATEGUID", TEST_STUDY_GUID,
-                        testAddressOptional.get().getId(), salivaKitType.getId(), userId, Instant.now().getEpochSecond());
+                        testAddressOptional.get().getId(), salivaKitType.getId(), userId, Instant.now().getEpochSecond(), false);
             } catch (JdbiException e) {
                 boolean isExceptionCausedByUniqueConstraint = e.getCause().getMessage()
                         .toLowerCase().contains("kit_request_guid_uk");
