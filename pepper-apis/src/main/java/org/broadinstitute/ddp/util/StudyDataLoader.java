@@ -14,6 +14,7 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
@@ -21,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -102,6 +104,7 @@ public class StudyDataLoader {
     Map<String, List<String>> sourceDataSurveyQs;
     Map<String, String> altNames;
     Map<Integer, String> yesNoDkLookup;
+    Map<Integer, String> ambulationLookup;
     Map<Integer, Boolean> booleanValueLookup;
     Auth0Util auth0Util;
     String auth0Domain;
@@ -126,6 +129,9 @@ public class StudyDataLoader {
         yesNoDkLookup.put(0, "NO");
         yesNoDkLookup.put(1, "YES");
         yesNoDkLookup.put(2, "DK");
+
+        ambulationLookup = new HashMap<>();
+        ambulationLookup.put(1, "INDEPENDENTLY");
 
         booleanValueLookup = new HashMap<>();
         booleanValueLookup.put(0, false);
@@ -202,7 +208,6 @@ public class StudyDataLoader {
         JdbiClient clientDao = handle.attach(JdbiClient.class);
 
         UserDto pepperUser = createLegacyPepperUser(userDao, clientDao, datstatData, userGuid, userHruid, clientDto);
-
 
 
         JdbiLanguageCode jdbiLanguageCode = handle.attach(JdbiLanguageCode.class);
@@ -322,7 +327,7 @@ public class StudyDataLoader {
             Instant instant;
             try {
                 LocalDateTime ddpCreatedAtTime = LocalDateTime.parse(ddpCreated, DateTimeFormatter.ofPattern(DATSTAT_DATE_FORMAT));
-                instant =  ddpCreatedAtTime.toInstant(ZoneOffset.UTC);
+                instant = ddpCreatedAtTime.toInstant(ZoneOffset.UTC);
             } catch (DateTimeParseException e) {
                 throw new Exception("Could not parse required createdAt value for " + activityCode + " survey, value is " + ddpCreated);
             }
@@ -421,12 +426,12 @@ public class StudyDataLoader {
 
 
     public void loadMedicalHistorySurveyData(Handle handle,
-                                       JsonElement surveyData,
-                                       JsonElement mappingData,
-                                       StudyDto studyDto,
-                                       UserDto userDto,
-                                       ActivityInstanceDto instanceDto,
-                                       AnswerDao answerDao) throws Exception {
+                                             JsonElement surveyData,
+                                             JsonElement mappingData,
+                                             StudyDto studyDto,
+                                             UserDto userDto,
+                                             ActivityInstanceDto instanceDto,
+                                             AnswerDao answerDao) throws Exception {
 
         LOG.info("Populating MedicalHistory Survey...");
         if (surveyData == null || surveyData.isJsonNull()) {
@@ -439,12 +444,12 @@ public class StudyDataLoader {
     }
 
     public void loadAboutYouSurveyData(Handle handle,
-                                             JsonElement surveyData,
-                                             JsonElement mappingData,
-                                             StudyDto studyDto,
-                                             UserDto userDto,
-                                             ActivityInstanceDto instanceDto,
-                                             AnswerDao answerDao) throws Exception {
+                                       JsonElement surveyData,
+                                       JsonElement mappingData,
+                                       StudyDto studyDto,
+                                       UserDto userDto,
+                                       ActivityInstanceDto instanceDto,
+                                       AnswerDao answerDao) throws Exception {
 
         LOG.info("Populating AboutYou Survey...");
         if (surveyData == null || surveyData.isJsonNull()) {
@@ -1173,6 +1178,7 @@ public class StudyDataLoader {
                 case "integer":
                     //"currently_medicated": 1 //0/1/2 for N/Y/Dk
                     selectedPicklistOptions = getPicklistOptionsForSourceNumbers(mapElement, sourceDataElement, questionName, surveyName);
+                    selectedPicklistOptions.stream().forEach(s -> System.out.println("3333333333333333333" + s.getStableId()));
                     break;
                 default:
                     LOG.warn("source type: {} not supported", sourceType, questionName);
@@ -1201,7 +1207,9 @@ public class StudyDataLoader {
             return selectedPicklistOptions;
         }
 
-        if (yesNoDkLookup.get(value.getAsInt()) != null) {
+        if (questionName.equals("ambulation")) {
+            selectedPicklistOptions.add(new SelectedPicklistOption(ambulationLookup.get(value.getAsInt())));
+        } else if (yesNoDkLookup.get(value.getAsInt()) != null) {
             selectedPicklistOptions.add(new SelectedPicklistOption(yesNoDkLookup.get(value.getAsInt())));
         }
         return selectedPicklistOptions;
@@ -1223,7 +1231,6 @@ public class StudyDataLoader {
         if (value == null || value.isJsonNull()) {
             return selectedPicklistOptions;
         }
-
         //RACE has multiple values selected.
         //ex:- "American Indian or Native American, Japanese, Other, something else not on the list"
         //"something else not on the list" is other text / other details.
