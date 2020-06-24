@@ -118,7 +118,7 @@ public class KitCheckDao {
                     for (int i = 0; i < numKits; i++) {
                         LOG.info("Creating kit request for {}", userGuid);
                         long kitRequestId = kitRequestDao.createKitRequest(studyGuid, candidate.getUserId(),
-                                candidate.getAddressId(), kitTypeId);
+                                candidate.getAddressId(), kitTypeId, kitConfiguration.needsApproval());
                         LOG.info("Created kit request id {} for {}. Completed {} out of {} kits",
                                 kitRequestId, userGuid, i + 1, numKits);
                     }

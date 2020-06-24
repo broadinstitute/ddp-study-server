@@ -24,7 +24,6 @@ import org.jdbi.v3.stringtemplate4.UseStringTemplateSqlLocator;
 /**
  * Dao to fulfill all requests needed by DSM integration.
  */
-
 public interface DsmKitRequestDao extends SqlObject {
     String KIT_REQUEST_TABLE = "kit_request";
     String KIT_REQUEST_GUID_COLUMN = "kit_request_guid";
@@ -41,13 +40,19 @@ public interface DsmKitRequestDao extends SqlObject {
      * @param studyGuid          the GUID for the study this request corresponds to.
      * @param participantAddress the mailing address to associate with kit request. Should already be saved and
      *                           should have an id
+     * @param userId             the user this kit is for
      * @param kitType            the kit type to create
+     * @param needsApproval      whether the kit needs manual approval
      * @return the database id of newly created request
      */
-    default long createKitRequest(String studyGuid, MailAddress participantAddress, Long userId, KitType kitType) {
+    default long createKitRequest(String studyGuid, MailAddress participantAddress, Long userId, KitType kitType, boolean needsApproval) {
         String guid = DBUtils.uniqueStandardGuid(getHandle(), KIT_REQUEST_TABLE, KIT_REQUEST_GUID_COLUMN);
         return createKitRequest(guid, studyGuid, participantAddress.getId(),
-                kitType.getId(), userId, Instant.now().getEpochSecond());
+                kitType.getId(), userId, Instant.now().getEpochSecond(), needsApproval);
+    }
+
+    default long createKitRequest(String studyGuid, MailAddress participantAddress, Long userId, KitType kitType) {
+        return createKitRequest(studyGuid, participantAddress, userId, kitType, false);
     }
 
     /**
@@ -57,29 +62,38 @@ public interface DsmKitRequestDao extends SqlObject {
      * @param studyGuid       the study GUID
      * @param participantGuid the participant GUID
      * @param kitType         the type of kit request to create
+     * @param needsApproval   whether the kit needs manual approval
      * @return the database id of the kit request
      * @throws RuntimeException if there is no default address can be found
      */
-    default long createKitRequest(String studyGuid, String participantGuid, KitType kitType) {
+    default long createKitRequest(String studyGuid, String participantGuid, KitType kitType, boolean needsApproval) {
         JdbiUser jdbiUser = buildUserDao();
         Long userId = jdbiUser.getUserIdByGuid(participantGuid);
 
         JdbiMailAddress mailAddressDao = buildMailAddressDao();
         Optional<MailAddress> defaultAddress = mailAddressDao.findDefaultAddressForParticipant(participantGuid);
         if (defaultAddress.isPresent()) {
-            return createKitRequest(studyGuid, defaultAddress.get(), userId, kitType);
+            return createKitRequest(studyGuid, defaultAddress.get(), userId, kitType, needsApproval);
         } else {
             throw new RuntimeException("User with GUID:" + participantGuid
                     + " could not be found or does not have a default address");
         }
     }
 
+    default long createKitRequest(String studyGuid, String participantGuid, KitType kitType) {
+        return createKitRequest(studyGuid, participantGuid, kitType, false);
+    }
+
     /**
      * Convenience method to insert a new kit request when database ids are known.
      */
-    default long createKitRequest(String studyGuid, long participantId, long addressId, long kitTypeId) {
+    default long createKitRequest(String studyGuid, long participantId, long addressId, long kitTypeId, boolean needsApproval) {
         String guid = DBUtils.uniqueStandardGuid(getHandle(), KIT_REQUEST_TABLE, KIT_REQUEST_GUID_COLUMN);
-        return createKitRequest(guid, studyGuid, addressId, kitTypeId, participantId, Instant.now().getEpochSecond());
+        return createKitRequest(guid, studyGuid, addressId, kitTypeId, participantId, Instant.now().getEpochSecond(), needsApproval);
+    }
+
+    default long createKitRequest(String studyGuid, long participantId, long addressId, long kitTypeId) {
+        return createKitRequest(studyGuid, participantId, addressId, kitTypeId, false);
     }
 
     @SqlUpdate("insertKitRequest")
@@ -87,7 +101,8 @@ public interface DsmKitRequestDao extends SqlObject {
     @GetGeneratedKeys
     long createKitRequest(@Bind("guid") String requestGuid, @Bind("studyGuid") String studyGuid,
                           @Bind("addressId") long addressId, @Bind("kitTypeId") long kitTypeId,
-                          @Bind("participantUserId") Long participantUserId, @Bind("creationTime") long creationTime);
+                          @Bind("participantUserId") Long participantUserId, @Bind("creationTime") long creationTime,
+                          @Bind("needsApproval") boolean needsApproval);
 
     /**
      * Get all the kit requests in system for specified study.

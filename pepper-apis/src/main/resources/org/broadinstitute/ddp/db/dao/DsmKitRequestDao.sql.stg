@@ -5,14 +5,16 @@ insertKitRequest() ::= <<
         mailing_address_id,
         kit_type_id,
         participant_user_id,
-        created_at)
+        created_at,
+        needs_approval)
     VALUES
         (:guid,
             (select umbrella_study_id from umbrella_study where guid=:studyGuid),
         :addressId,
         :kitTypeId,
         :participantUserId,
-        :creationTime)
+        :creationTime,
+        :needsApproval)
 >>
 selectKitRequestbyId() ::= <<
     SELECT
@@ -21,7 +23,8 @@ selectKitRequestbyId() ::= <<
          study_id,
          mailing_address_id,
          coalesce(u.legacy_altpid, u.guid) as participantId,
-         kt.name kitType
+         kt.name kitType,
+         kr.needs_approval needsApproval
      FROM
          kit_request kr
          JOIN kit_type kt on kr.kit_type_id=kt.kit_type_id
@@ -37,7 +40,8 @@ selectAllKitRequestsForStudy() ::= <<
           study_id,
           mailing_address_id,
           coalesce(u.legacy_altpid, u.guid) as participantId,
-          kt.name kitType
+          kt.name kitType,
+          kr.needs_approval needsApproval
       FROM
           kit_request kr
           JOIN kit_type kt on kr.kit_type_id=kt.kit_type_id
@@ -56,7 +60,8 @@ selectAllKitRequestsForStudyWithStatus(statusCodes) ::= <<
           study_id,
           mailing_address_id,
           coalesce(u.legacy_altpid, u.guid) as participantId,
-          kt.name kitType
+          kt.name kitType,
+          kr.needs_approval needsApproval
       FROM
           kit_request kr
           JOIN kit_type kt on kr.kit_type_id=kt.kit_type_id
@@ -78,7 +83,8 @@ selectAllKitRequestsAfterGuid() ::= <<
       study_id,
       mailing_address_id,
       coalesce(u.legacy_altpid, u.guid) as participantId,
-      kt.name kitType
+      kt.name kitType,
+      kr.needs_approval needsApproval
     FROM
       kit_request kr
       JOIN kit_type kt on kr.kit_type_id=kt.kit_type_id
@@ -99,7 +105,8 @@ selectAllKitRequestsAfterGuidWithStatus(statusCodes) ::= <<
       study_id,
       mailing_address_id,
       coalesce(u.legacy_altpid, u.guid) as participantId,
-      kt.name kitType
+      kt.name kitType,
+      kr.needs_approval needsApproval
     FROM
       kit_request kr
       JOIN kit_type kt on kr.kit_type_id=kt.kit_type_id

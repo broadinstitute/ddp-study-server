@@ -231,7 +231,7 @@ public class InvitationCheckStatusRouteTest extends IntegrationTestSuite.TestCas
         InvitationDto invitation = TransactionWrapper.withTxn(handle -> {
             var kitDao = handle.attach(KitConfigurationDao.class);
             long configId = kitDao.insertConfiguration(testData.getStudyId(), 1,
-                    handle.attach(KitTypeDao.class).getSalivaKitType().getId());
+                    handle.attach(KitTypeDao.class).getSalivaKitType().getId(), false);
 
             Template errorMsg = Template.html("$foobar");
             errorMsg.addVariable(TemplateVariable.single("foobar", "en", "zip code error"));
