@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 
 public class GoogleAnalyticsMetricsTracker {
     private static final Logger LOG = LoggerFactory.getLogger(GoogleAnalyticsMetricsTracker.class);
-    private static final Integer DEFAULT_BATCH_SIZE = 10;
+    private static final Integer DEFAULT_BATCH_SIZE = 5;
     public static Map<String, GoogleAnalytics> studyAnalyticsTrackers = new HashMap<>();
     private static Set<String> noAnalyticsTokenStudies = new HashSet<>(); //studyGuid with NO analytics token
 
