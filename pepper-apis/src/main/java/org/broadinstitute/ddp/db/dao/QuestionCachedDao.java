@@ -29,12 +29,12 @@ public class QuestionCachedDao extends SQLObjectWrapper<QuestionDao> implements 
 
     @Override
     public JdbiBooleanQuestion getJdbiBooleanQuestion() {
-        return delegate.getJdbiBooleanQuestion();
+        return new JdbiBooleanQuestionCached(getHandle());
     }
 
     @Override
     public JdbiTextQuestion getJdbiTextQuestion() {
-        return delegate.getJdbiTextQuestion();
+        return new JdbiTextQuestionCached(getHandle());
     }
 
     @Override

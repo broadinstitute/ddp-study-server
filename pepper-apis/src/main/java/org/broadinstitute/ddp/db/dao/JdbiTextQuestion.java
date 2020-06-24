@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.db.dao;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -55,6 +56,12 @@ public interface JdbiTextQuestion extends SqlObject {
     @UseRowReducer(RowReducer.class)
     Optional<TextQuestionDto> findDtoByQuestionId(@Bind("questionId") long questionId);
 
+    @UseStringTemplateSqlLocator
+    @SqlQuery("queryDtoAndSuggestionsByActivityId")
+    @RegisterConstructorMapper(value = TextQuestionDto.class, prefix = "p")
+    @UseRowReducer(RowReducer.class)
+    List<TextQuestionDto> findDtoByActivityId(@Bind("activityId") long activityId);
+
     class RowReducer implements LinkedHashMapRowReducer<Long, TextQuestionDto> {
         @Override
         public void accumulate(Map<Long, TextQuestionDto> map, RowView rowView) {
@@ -65,5 +72,4 @@ public interface JdbiTextQuestion extends SqlObject {
             }
         }
     }
-
 }

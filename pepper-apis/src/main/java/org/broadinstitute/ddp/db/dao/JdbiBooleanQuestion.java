@@ -1,8 +1,10 @@
 package org.broadinstitute.ddp.db.dao;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.broadinstitute.ddp.db.dto.BooleanQuestionDto;
+import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
@@ -21,4 +23,13 @@ public interface JdbiBooleanQuestion extends SqlObject {
     @SqlQuery("queryDtoByQuestionId")
     @RegisterConstructorMapper(BooleanQuestionDto.class)
     Optional<BooleanQuestionDto> findDtoByQuestionId(@Bind("questionId") long questionId);
+
+    default Optional<BooleanQuestionDto> findDtoByQuestionId(QuestionDto questionDto) {
+        return findDtoByQuestionId(questionDto.getId());
+    }
+
+    @UseStringTemplateSqlLocator
+    @SqlQuery("queryDtoByActivityId")
+    @RegisterConstructorMapper(BooleanQuestionDto.class)
+    List<BooleanQuestionDto> findDtoByActivityId(@Bind("activityId") long activityId);
 }
