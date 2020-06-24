@@ -1012,7 +1012,7 @@ public class StudyDataLoader {
         }
         long kitTypeId = kitTypeDao.getSalivaKitType().getId();
         long kitId = dsmKitRequestDao.createKitRequest(kitRequestId, studyGuid, addressid, kitTypeId,
-                pepperUserId, defaultKitCreationEpoch);
+                pepperUserId, defaultKitCreationEpoch, false);
         LOG.info("Created kit ID: " + kitId);
         return kitId;
     }
