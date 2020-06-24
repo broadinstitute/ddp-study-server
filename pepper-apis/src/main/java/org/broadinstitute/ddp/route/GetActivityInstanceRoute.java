@@ -115,7 +115,7 @@ public class GetActivityInstanceRoute implements Route {
 
         StudySettings studySettings = GoogleAnalyticsMetricsTracker.getStudySettingByStudyGuid(studyGuid);
         if (studySettings != null && studySettings.isAnalyticsEnabled()) {
-            String gaEventLabel = studyGuid.join(":", GoogleAnalyticsMetrics.EVENT_LABEL_ACTIVITY_INSTANCE);
+            String gaEventLabel = String.join(":", GoogleAnalyticsMetrics.EVENT_LABEL_ACTIVITY_INSTANCE, studyGuid);
             EventHit eventHit = new EventHit(GoogleAnalyticsMetrics.EVENT_CATEGORY_ACTIVITY_INSTANCE,
                     GoogleAnalyticsMetrics.EVENT_ACTION_ACTIVITY_INSTANCE, gaEventLabel, 1);
             GoogleAnalyticsMetricsTracker.sendEventMetrics(studyGuid, eventHit);

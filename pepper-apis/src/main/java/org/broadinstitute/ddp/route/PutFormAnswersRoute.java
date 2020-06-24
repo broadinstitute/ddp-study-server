@@ -143,7 +143,8 @@ public class PutFormAnswersRoute implements Route {
                     if (studySettings != null && studySettings.isAnalyticsEnabled()) {
                         String studyActivityCode = handle.attach(JdbiActivity.class).queryActivityById(
                                 instanceDto.getActivityId()).getActivityCode();
-                        String gaEventLabel = studyGuid.join(":", studyActivityCode, GoogleAnalyticsMetrics.EVENT_LABEL_PUT_ANSWERS);
+                        String gaEventLabel = String.join(":", GoogleAnalyticsMetrics.EVENT_LABEL_PUT_ANSWERS,
+                                studyGuid, studyActivityCode);
                         EventHit eventHit = new EventHit(GoogleAnalyticsMetrics.EVENT_CATEGORY_PUT_ANSWERS,
                                 GoogleAnalyticsMetrics.EVENT_ACTION_PUT_ANSWERS, gaEventLabel, 1);
                         GoogleAnalyticsMetricsTracker.sendEventMetrics(studyGuid, eventHit);

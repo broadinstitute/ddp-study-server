@@ -487,14 +487,8 @@ public class StudyBuilder {
                     Instant.now().toEpochMilli(), userId, "Insert study settings");
         }
 
-        boolean analyticsEnabled = false;
-        if (settingsCfg.hasPath("analyticsEnabled")) {
-            analyticsEnabled = settingsCfg.getBoolean("analyticsEnabled");
-        }
-        String analyticsToken = null;
-        if (settingsCfg.hasPath("analyticsToken")) {
-            analyticsToken = settingsCfg.getString("analyticsToken");
-        }
+        boolean analyticsEnabled = settingsCfg.hasPath("analyticsEnabled") && settingsCfg.getBoolean("analyticsEnabled");
+        String analyticsToken = ConfigUtil.getStrIfPresent(settingsCfg, "analyticsToken");
 
         handle.attach(StudyDao.class).addSettings(studyDto.getId(), inviteError, revisionId, analyticsEnabled, analyticsToken);
         LOG.info("Created settings for study={}, inviteErrorTmplId={}",

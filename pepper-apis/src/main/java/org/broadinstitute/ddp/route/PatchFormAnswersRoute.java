@@ -301,7 +301,7 @@ public class PatchFormAnswersRoute implements Route {
             if (studySettings != null && studySettings.isAnalyticsEnabled()) {
                 String studyActivityCode = handle.attach(JdbiActivity.class).queryActivityById(
                         instanceDto.getActivityId()).getActivityCode();
-                String gaEventLabel = studyGuid.join(":", studyActivityCode, GoogleAnalyticsMetrics.EVENT_LABEL_PATCH_ANSWERS);
+                String gaEventLabel = String.join(":", GoogleAnalyticsMetrics.EVENT_LABEL_PATCH_ANSWERS, studyGuid, studyActivityCode);
                 EventHit eventHit = new EventHit(GoogleAnalyticsMetrics.EVENT_CATEGORY_PATCH_ANSWERS,
                         GoogleAnalyticsMetrics.EVENT_ACTION_PATCH_ANSWERS, gaEventLabel, 1);
                 GoogleAnalyticsMetricsTracker.sendEventMetrics(studyGuid, eventHit);

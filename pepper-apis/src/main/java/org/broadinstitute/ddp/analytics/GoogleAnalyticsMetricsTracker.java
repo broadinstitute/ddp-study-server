@@ -35,7 +35,7 @@ public class GoogleAnalyticsMetricsTracker {
     private static synchronized void initStudyMetricTracker(String studyGuid) {
         if (!studyAnalyticsTrackers.containsKey(studyGuid)) {
             StudySettings studySettings = getStudySettingByStudyGuid(studyGuid);
-            String studyTrackingId = studySettings.getAnalyticsToken();
+            String studyTrackingId = studySettings == null ? null : studySettings.getAnalyticsToken();
             if (StringUtils.isEmpty(studyTrackingId)) {
                 LOG.error("NO analytics token found for study : {} . skipping sending analytics. ", studyGuid);
                 noAnalyticsTokenStudies.add(studyGuid);
@@ -69,14 +69,15 @@ public class GoogleAnalyticsMetricsTracker {
 
     public static StudySettings getStudySettingByStudyGuid(String studyGuid) {
         //todo: revisit after Redis caching to use cached Study, StudySettings and get rid of StudySettingsStore
-        return StudySettingsStore.getInstance().getStudySettings(studyGuid);
+        Optional<StudySettings> settingsOpt = StudySettingsStore.getInstance().getStudySettings(studyGuid);
+        return settingsOpt == null ? null : settingsOpt.isPresent() ? settingsOpt.get() : null;
     }
 
 
     private static class StudySettingsStore {
         private static StudySettingsStore instance;
         private static Object lockVar1 = "lock";
-        private static Map<String, StudySettings> studySettings = new HashMap<>();
+        private static Map<String, Optional<StudySettings>> studySettings = new HashMap<>();
 
         private static StudySettingsStore getInstance() {
             if (instance == null) {
@@ -92,28 +93,23 @@ public class GoogleAnalyticsMetricsTracker {
 
         private static synchronized void loadAllStudySettings() {
             studySettings = TransactionWrapper.withTxn(handle -> {
-                int studiesWithSettings = 0;
                 JdbiUmbrellaStudy jdbiUmbrellaStudy = handle.attach(JdbiUmbrellaStudy.class);
                 StudyDao studyDao = handle.attach(StudyDao.class);
                 List<StudyDto> studyDtos = jdbiUmbrellaStudy.findAll();
-                Map<String, StudySettings> settingsMap = new HashMap<>();
+                Map<String, Optional<StudySettings>> settingsMap = new HashMap<>();
                 for (StudyDto studyDto : studyDtos) {
                     //load StudySettings
                     Optional<StudySettings> studySettings = studyDao.findSettings(studyDto.getId());
                     if (studySettings.isPresent()) {
-                        settingsMap.put(studyDto.getGuid(), studySettings.get());
-                        studiesWithSettings++;
-                    } else {
-                        //no StudySettings for this study.. create dummy one to avoid unnecessary future DB calls
-                        settingsMap.put(studyDto.getGuid(), new StudySettings(0, null, false, null));
+                        settingsMap.put(studyDto.getGuid(), studySettings);
                     }
                 }
-                LOG.info("Loaded StudySettings for {} studies.", studiesWithSettings);
+                LOG.info("Loaded StudySettings for {} studies.", settingsMap.size());
                 return settingsMap;
             });
         }
 
-        private StudySettings getStudySettings(String studyGuid) {
+        private Optional<StudySettings> getStudySettings(String studyGuid) {
             return studySettings.get(studyGuid);
         }
     }
