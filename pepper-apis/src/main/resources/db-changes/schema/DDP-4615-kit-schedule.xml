@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="20200622-kit-schedule-table">
+        <createTable tableName="kit_schedule">
+            <column name="kit_configuration_id" type="bigint">
+                <constraints primaryKey="true"
+                             primaryKeyName="kit_schedule_kit_configuration_pk"
+                             references="kit_configuration(kit_configuration_id)"
+                             foreignKeyName="kit_schedule_kit_configuration_fk"
+                             deleteCascade="true"/>
+            </column>
+            <column name="num_occurrences_per_user" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="next_time_amount" type="varchar(50)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="next_prep_time_amount" type="varchar(50)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="opt_out_expression" type="varchar(10000)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="individual_opt_out_expression" type="varchar(10000)">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20200622-kit-schedule-record-table">
+        <createTable tableName="kit_schedule_record">
+            <column name="kit_schedule_record_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="kit_schedule_record_pk"/>
+            </column>
+            <column name="participant_user_id" type="bigint">
+                <constraints nullable="false"
+                             references="user(user_id)"
+                             foreignKeyName="kit_schedule_record_user_fk"
+                             deleteCascade="true"/>
+            </column>
+            <column name="kit_configuration_id" type="bigint">
+                <constraints nullable="false"
+                             references="kit_configuration(kit_configuration_id)"
+                             foreignKeyName="kit_schedule_record_kit_configuration_fk"
+                             deleteCascade="true"/>
+            </column>
+            <column name="opted_out" type="boolean">
+                <constraints nullable="false"/>
+            </column>
+            <column name="num_occurrences" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_occurrence_time" type="datetime(6)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="last_kit_request_id" type="bigint">
+                <constraints nullable="true"
+                             references="kit_request(kit_request_id)"
+                             foreignKeyName="kit_schedule_record_kit_request_fk"/>
+            </column>
+            <column name="last_kit_sent_time" type="datetime(6)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="current_occurrence_prep_time" type="datetime(6)">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+        <addUniqueConstraint tableName="kit_schedule_record"
+                             columnNames="participant_user_id, kit_configuration_id"
+                             constraintName="kit_schedule_record_user_kit_uk"/>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20200622-kit-prep-event-trigger-type">
+        <insert tableName="event_trigger_type">
+            <column name="event_trigger_type_code" value="KIT_PREP"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

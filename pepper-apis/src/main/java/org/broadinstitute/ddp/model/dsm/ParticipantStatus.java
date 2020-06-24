@@ -61,6 +61,8 @@ public class ParticipantStatus {
     }
 
     public static class Sample {
+        @SerializedName("kitRequestId")
+        private String kitRequestId;
         @SerializedName("kitType")
         private String kitType;
         @SerializedName("sent")
@@ -75,6 +77,7 @@ public class ParticipantStatus {
         private String carrier;
 
         public Sample(Sample sourceSample) {
+            this.kitRequestId = sourceSample.kitRequestId;
             this.kitType = sourceSample.kitType;
             this.sent = sourceSample.sent;
             this.delivered = sourceSample.delivered;
@@ -83,13 +86,18 @@ public class ParticipantStatus {
             this.carrier = sourceSample.carrier;
         }
 
-        public Sample(String kitType, long sent, Long delivered, Long received, String trackingId, String carrier) {
+        public Sample(String kitRequestId, String kitType, long sent, Long delivered, Long received, String trackingId, String carrier) {
+            this.kitRequestId = kitRequestId;
             this.kitType = kitType;
             this.sent = sent;
             this.delivered = delivered;
             this.received = received;
             this.trackingId = trackingId;
             this.carrier = carrier;
+        }
+
+        public String getKitRequestId() {
+            return kitRequestId;
         }
 
         public String getKitType() {

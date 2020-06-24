@@ -62,6 +62,7 @@ import org.broadinstitute.ddp.housekeeping.message.HousekeepingMessage;
 import org.broadinstitute.ddp.housekeeping.message.NotificationMessage;
 import org.broadinstitute.ddp.housekeeping.message.PdfGenerationMessage;
 import org.broadinstitute.ddp.housekeeping.schedule.CheckAgeUpJob;
+import org.broadinstitute.ddp.housekeeping.schedule.CheckKitsJob;
 import org.broadinstitute.ddp.housekeeping.schedule.DataSyncJob;
 import org.broadinstitute.ddp.housekeeping.schedule.DatabaseBackupCheckJob;
 import org.broadinstitute.ddp.housekeeping.schedule.DatabaseBackupJob;
@@ -216,6 +217,7 @@ public class Housekeeping {
             LOG.info("Booting job scheduler...");
             scheduler = JobScheduler.initializeWith(cfg,
                     CheckAgeUpJob::register,
+                    CheckKitsJob::register,
                     DataSyncJob::register,
                     DatabaseBackupJob::register,
                     DatabaseBackupCheckJob::register,

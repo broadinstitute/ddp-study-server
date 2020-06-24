@@ -159,6 +159,10 @@ public class DsmClient {
      * @return result with status info
      */
     public ApiResult<ParticipantStatus, Void> getParticipantStatus(String studyGuid, String userGuid, String token) {
+        if (token == null) {
+            // If there's no participant token, use generated token instead.
+            token = generateToken();
+        }
         String path = PATH_PARTICIPANT_STATUS
                 .replace(PathParam.STUDY_GUID, studyGuid)
                 .replace(PathParam.USER_GUID, userGuid);
