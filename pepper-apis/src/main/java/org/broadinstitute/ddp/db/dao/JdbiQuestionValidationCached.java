@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.db.dao;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -50,7 +51,7 @@ public class JdbiQuestionValidationCached extends SQLObjectWrapper<JdbiQuestionV
                 cacheActivityValidations(questionDto.getActivityId());
                 validations = questionIdToValidationsCache.get(questionDto.getId());
             }
-            return validations;
+            return validations == null ? new ArrayList<>() : validations;
         }
     }
 
