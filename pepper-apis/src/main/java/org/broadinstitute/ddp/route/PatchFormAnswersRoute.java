@@ -298,7 +298,7 @@ public class PatchFormAnswersRoute implements Route {
             handle.attach(DataExportDao.class).queueDataSync(participantGuid, studyGuid);
 
             StudySettings studySettings = GoogleAnalyticsMetricsTracker.getStudySettingByStudyGuid(studyGuid);
-            if (studySettings.isAnalyticsEnabled()) {
+            if (studySettings != null && studySettings.isAnalyticsEnabled()) {
                 String studyActivityCode = handle.attach(JdbiActivity.class).queryActivityById(
                         instanceDto.getActivityId()).getActivityCode();
                 String gaEventLabel = studyGuid.join(":", studyActivityCode, GoogleAnalyticsMetrics.EVENT_LABEL_PATCH_ANSWERS);

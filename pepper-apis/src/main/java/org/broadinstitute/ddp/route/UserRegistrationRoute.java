@@ -351,7 +351,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
         } else {
             LOG.info("Existing user {} is in study {} with status {}", user.getGuid(), study.getGuid(), status);
             StudySettings studySettings = GoogleAnalyticsMetricsTracker.getStudySettingByStudyGuid(study.getGuid());
-            if (studySettings.isAnalyticsEnabled()) {
+            if (studySettings != null && studySettings.isAnalyticsEnabled()) {
                 String loginEventLabel = study.getGuid().join(":", GoogleAnalyticsMetrics.EVENT_LABEL_USER_LOGIN);
                 EventHit loginEventHit = new EventHit(GoogleAnalyticsMetrics.EVENT_CATEGORY_USER_LOGIN,
                         GoogleAnalyticsMetrics.EVENT_ACTION_USER_LOGIN, loginEventLabel, 1);
@@ -431,7 +431,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
 
             //send GA events
             StudySettings studySettings = GoogleAnalyticsMetricsTracker.getStudySettingByStudyGuid(study.getGuid());
-            if (studySettings.isAnalyticsEnabled()) {
+            if (studySettings != null && studySettings.isAnalyticsEnabled()) {
                 String gaEventLabel = study.getGuid().join(":", GoogleAnalyticsMetrics.EVENT_LABEL_USER_REGISTRATION);
                 EventHit eventHit = new EventHit(GoogleAnalyticsMetrics.EVENT_CATEGORY_USER_REGISTRATION,
                         GoogleAnalyticsMetrics.EVENT_ACTION_USER_REGISTRATION, gaEventLabel, 1);
