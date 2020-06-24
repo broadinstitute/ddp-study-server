@@ -21,8 +21,8 @@ public interface StudySql extends SqlObject {
     int insertSettings(
             @Bind("studyId") long studyId,
             @Bind("inviteErrorTmplId") Long inviteErrorTemplateId,
-            @Bind("analytics_enabled") boolean analyticsEnabled,
-            @Bind("analytics_token") String analyticsToken);
+            @Bind("analyticsEnabled") boolean analyticsEnabled,
+            @Bind("analyticsToken") String analyticsToken);
 
     @SqlUpdate("delete from study_settings where umbrella_study_id = :studyId")
     int deleteSettings(@Bind("studyId") long studyId);
