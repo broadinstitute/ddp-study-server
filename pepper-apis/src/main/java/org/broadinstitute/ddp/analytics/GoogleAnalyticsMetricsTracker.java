@@ -10,21 +10,18 @@ import java.util.Set;
 import com.brsanthu.googleanalytics.GoogleAnalytics;
 import com.brsanthu.googleanalytics.GoogleAnalyticsConfig;
 import com.brsanthu.googleanalytics.request.EventHit;
-import com.typesafe.config.Config;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.StudyDao;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.model.study.StudySettings;
-import org.broadinstitute.ddp.util.ConfigManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class GoogleAnalyticsMetricsTracker {
     private static final Logger LOG = LoggerFactory.getLogger(GoogleAnalyticsMetricsTracker.class);
     private static final Integer DEFAULT_BATCH_SIZE = 2;
-    private static final String PLATFORM_GA_TOKEN = "platformGAToken";
     public static Map<String, GoogleAnalytics> studyAnalyticsTrackers = new HashMap<>();
     private static Set<String> noAnalyticsTokenStudies = new HashSet<>(); //studyGuid with NO analytics token
 
@@ -38,14 +35,7 @@ public class GoogleAnalyticsMetricsTracker {
     private static synchronized void initStudyMetricTracker(String studyGuid) {
         if (!studyAnalyticsTrackers.containsKey(studyGuid)) {
             StudySettings studySettings = getStudySettingByStudyGuid(studyGuid);
-
-            Config config = ConfigManager.getInstance().getConfig();
             String studyTrackingId = studySettings.getAnalyticsToken();
-            if (StringUtils.isEmpty(studyTrackingId) && config.hasPath(PLATFORM_GA_TOKEN)) {
-                studyTrackingId = config.getString(PLATFORM_GA_TOKEN);
-                LOG.warn("NO analytics token found for study : {} . Using platform GA Token", studyGuid);
-            }
-
             if (StringUtils.isEmpty(studyTrackingId)) {
                 LOG.error("NO analytics token found for study : {} . skipping sending analytics. ", studyGuid);
                 noAnalyticsTokenStudies.add(studyGuid);

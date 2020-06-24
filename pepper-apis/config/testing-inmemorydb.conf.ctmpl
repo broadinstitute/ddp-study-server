@@ -56,7 +56,6 @@
         "backendTestClientName": "{{$testingAuth.backendTestClientName}}",
         "backendTestClientName2": "{{$testingAuth.backendTestClientName2}}"
     },
-    "platformGAToken": "{{$testingConf.Data.platformGAToken}}",
     "googleGeocodingApiKey": "{{$testingConf.Data.geocodingKey}}",
     "elasticsearch": {
         "syncEnabled": false,
