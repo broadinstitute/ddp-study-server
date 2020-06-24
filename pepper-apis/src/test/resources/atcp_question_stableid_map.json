@@ -286,10 +286,6 @@
                 "type": "integer"
               },
               {
-                "name": "irr_period",
-                "type": "integer"
-              },
-              {
                 "name": "nausea",
                 "type": "integer"
               },
@@ -329,11 +325,15 @@
                 "name": "other",
                 "text": "text3",
                 "type": "string"
-              },
-              {
-                "name": "telangiectasia_eyes",
-                "type": "integer"
-              },
+              }
+            ]
+          },
+          {
+            "name": "at_symptoms",
+            "type": "Picklist",
+            "stable_id": "TELANGIECTASIA",
+            "source_type": "string",
+            "options": [
               {
                 "name": "telangiectasia_eyes",
                 "text": "eye_symp_appear",
@@ -341,13 +341,17 @@
               },
               {
                 "name": "telangiectasia_skin",
-                "type": "string"
-              },
-              {
-                "name": "telangiectasia_skin",
                 "text": "skin_symp_appear",
-                "type": "string"
-              },
+                "type": "integer"
+              }
+            ]
+          },
+          {
+            "name": "at_symptoms",
+            "type": "Picklist",
+            "stable_id": "FREQUENT_INFECTIONS",
+            "source_type": "string",
+            "options": [
               {
                 "name": "infection_lung",
                 "type": "integer"
@@ -359,8 +363,16 @@
               {
                 "name": "infection_other",
                 "text": "text",
-                "type": "string"
-              },
+                "type": "integer"
+              }
+            ]
+          },
+          {
+            "name": "at_symptoms",
+            "type": "Picklist",
+            "stable_id": "SKIN_CONDITIONS",
+            "source_type": "string",
+            "options": [
               {
                 "name": "vitiligo",
                 "type": "integer"
@@ -376,7 +388,7 @@
               {
                 "name": "skin_cond_other",
                 "text": "text2",
-                "type": "string"
+                "type": "integer"
               }
             ]
           },
@@ -389,7 +401,7 @@
               {
                 "name": "allergies",
                 "text": "allergies_desc",
-                "type": "string"
+                "type": "integer"
               },
               {
                 "name": "arthritis",
@@ -406,7 +418,7 @@
               {
                 "name": "high_cholesterol",
                 "text": "chol_level",
-                "type": "string"
+                "type": "integer"
               },
               {
                 "name": "high_pulse",
@@ -423,7 +435,7 @@
               {
                 "name": "liver_issues",
                 "text": "liver_issues_desc",
-                "type": "string"
+                "type": "integer"
               },
               {
                 "name": "osteoporosis",
@@ -432,17 +444,17 @@
               {
                 "name": "renal_issues",
                 "text": "renal_issues_desc",
-                "type": "string"
+                "type": "integer"
               },
               {
                 "name": "thyroid_issues",
                 "text": "thyroid_issues_desc",
-                "type": "string"
+                "type": "integer"
               },
               {
                 "name": "other",
                 "text": "text",
-                "type": "string"
+                "type": "integer"
               }
             ]
           },
@@ -470,6 +482,10 @@
               },
               {
                 "name": "warts",
+                "type": "integer"
+              },
+              {
+                "name": "m_contagiosum",
                 "type": "integer"
               }
             ]

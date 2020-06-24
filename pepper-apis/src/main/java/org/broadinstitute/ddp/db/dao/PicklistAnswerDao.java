@@ -55,6 +55,7 @@ public interface PicklistAnswerDao extends SqlObject {
                 .map(SelectedPicklistOption::getStableId)
                 .collect(Collectors.toList());
 
+
         Map<String, PicklistOptionDto> dtoMap = new HashMap<>();
         getJdbiPicklistOption()
                 .findOptions(selectedStableIds, answerDto.getQuestionId(), instanceGuid)

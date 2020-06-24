@@ -1121,7 +1121,6 @@ public class StudyDataLoader {
                     LOG.warn(" Default .. Q name: {} .. type: {} ", questionName, questionType);
             }
         }
-
         processLegacyFields(handle, sourceData, mappingData, studyDto.getId(), userDto.getUserId(), instanceDto.getId());
 
     }
@@ -1178,7 +1177,6 @@ public class StudyDataLoader {
                 case "integer":
                     //"currently_medicated": 1 //0/1/2 for N/Y/Dk
                     selectedPicklistOptions = getPicklistOptionsForSourceNumbers(mapElement, sourceDataElement, questionName, surveyName);
-                    selectedPicklistOptions.stream().forEach(s -> System.out.println("3333333333333333333" + s.getStableId()));
                     break;
                 default:
                     LOG.warn("source type: {} not supported", sourceType, questionName);
@@ -1206,7 +1204,6 @@ public class StudyDataLoader {
         if (value == null || value.isJsonNull()) {
             return selectedPicklistOptions;
         }
-
         if (questionName.equals("ambulation")) {
             selectedPicklistOptions.add(new SelectedPicklistOption(ambulationLookup.get(value.getAsInt())));
         } else if (yesNoDkLookup.get(value.getAsInt()) != null) {
@@ -1223,7 +1220,6 @@ public class StudyDataLoader {
         JsonElement value = null;
 
         sourceDataSurveyQs.get(surveyName).add(questionName);
-
         //check if source data doesnot have options. try for a match
         if (sourceDataElement != null && !sourceDataElement.getAsJsonObject().get(questionName).isJsonNull()) {
             value = sourceDataElement.getAsJsonObject().get(questionName);
