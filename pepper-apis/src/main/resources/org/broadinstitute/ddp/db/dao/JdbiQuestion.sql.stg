@@ -14,6 +14,7 @@ select qt.question_type_code,
 
 queryQuestionsDtoByActivityId() ::= <<
 <all_questions_select()>
+   join activity_instance as ai on ai.study_activity_id = q.study_activity_id
  where
    q.study_activity_id = :activityId
    and rev.start_date \<= ai.created_at
