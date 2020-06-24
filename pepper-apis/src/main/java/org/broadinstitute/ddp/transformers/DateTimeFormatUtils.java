@@ -19,7 +19,6 @@ public class DateTimeFormatUtils {
     public static final DateTimeFormatter DEFAULT_DATE_FORMATTER = DateTimeFormatter.ofPattern(DEFAULT_DATE_PATTERN);
     public static final DateTimeFormatter DEFAULT_MONTH_YEAR_FORMATTER = DateTimeFormatter.ofPattern("MM/yyyy");
     public static final DateTimeFormatter DEFAULT_MONTH_DAY_FORMATTER = DateTimeFormatter.ofPattern("MM/dd");
-    public static final DateTimeFormatter MONTH_FIRST_DASHED_DATE_FORMATTER = DateTimeFormatter.ofPattern("MM-dd-uuuu");
 
     public static ZonedDateTime convertUtcMillisToUtcZonedDateTime(long timeInMillis) {
         return ZonedDateTime.ofInstant(Instant.ofEpochMilli(timeInMillis), ZoneId.of("UTC"));

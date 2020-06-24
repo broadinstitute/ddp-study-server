@@ -8,6 +8,7 @@ select p.user_id,
        p.birth_date,
        p.do_not_contact,
        p.is_deceased,
+       p.time_zone,
        p.preferred_language_id,
        (select iso_language_code from language_code where language_code_id = p.preferred_language_id) as iso_language_code
   from user_profile as p

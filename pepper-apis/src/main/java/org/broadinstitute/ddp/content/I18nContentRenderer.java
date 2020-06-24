@@ -2,6 +2,8 @@ package org.broadinstitute.ddp.content;
 
 import java.io.StringWriter;
 import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Collection;
@@ -18,6 +20,8 @@ import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.db.dao.TemplateDao;
+import org.broadinstitute.ddp.db.dao.UserProfileDao;
+import org.broadinstitute.ddp.model.user.UserProfile;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,6 +42,37 @@ public class I18nContentRenderer {
             defaultLangId = LanguageStore.getOrComputeDefault(handle).getId();
             return defaultLangId;
         }
+    }
+
+    public static RenderValueProvider newValueProvider(Handle handle, long participantUserId) {
+        return newValueProvider(handle, participantUserId, new HashMap<>());
+    }
+
+    public static RenderValueProvider newValueProvider(Handle handle, long participantUserId, Map<String, String> snapshot) {
+        var builder = new RenderValueProvider.Builder();
+
+        UserProfile profile = handle.attach(UserProfileDao.class)
+                .findProfileByUserId(participantUserId)
+                .orElse(null);
+        if (profile != null) {
+            if (profile.getFirstName() != null) {
+                builder.setParticipantFirstName(profile.getFirstName());
+            }
+            if (profile.getLastName() != null) {
+                builder.setParticipantLastName(profile.getLastName());
+            }
+        }
+
+        ZoneId zone = Optional.ofNullable(profile)
+                .map(UserProfile::getTimeZone)
+                .orElse(ZoneOffset.UTC);
+        builder.setDate(LocalDate.now(zone));
+
+        // If there are saved snapshot substitution values, override with those so final rendered
+        // content will be consistent with what user last saw when snapshot was taken.
+        builder.withSnapshot(snapshot);
+
+        return builder.build();
     }
 
     public I18nContentRenderer() {
@@ -156,7 +191,7 @@ public class I18nContentRenderer {
                     + " is not completely translated, some variables won't be substituted!");
         }
 
-        Map<String, String> allVariables = new HashMap<>(varNameToValueMap);
+        Map<String, Object> allVariables = new HashMap<>(varNameToValueMap);
         if (translatedTemplateVariables != null) {
             allVariables.putAll(translatedTemplateVariables);
         }
@@ -174,7 +209,7 @@ public class I18nContentRenderer {
      * @return mapping of template id to its rendered template string
      * @throws NoSuchElementException when any one of the templates is not found
      */
-    public Map<Long, String> bulkRender(Handle handle, Set<Long> templateIds, long langCodeId, Map<String, String> context) {
+    public Map<Long, String> bulkRender(Handle handle, Set<Long> templateIds, long langCodeId, Map<String, Object> context) {
         if (templateIds == null || templateIds.isEmpty()) {
             return new HashMap<>();
         }
@@ -190,7 +225,7 @@ public class I18nContentRenderer {
                 throw new NoSuchElementException("Could not find template text with id " + templateId);
             }
 
-            Map<String, String> vars = variables.getOrDefault(templateId, new HashMap<>());
+            Map<String, Object> vars = new HashMap<>(variables.getOrDefault(templateId, new HashMap<>()));
             if (vars.size() != data.getVarCount()) {
                 LOG.warn("Not all variables will be translated for template id {} (found {}/{})",
                         templateId, vars.size(), data.getVarCount());
@@ -234,7 +269,7 @@ public class I18nContentRenderer {
         }
     }
 
-    public String renderToString(String template, Map<String, String> context) {
+    public String renderToString(String template, Map<String, Object> context) {
         VelocityContext ctx = new VelocityContext(context);
         StringWriter writer = new StringWriter();
         engine.evaluate(ctx, writer, TEMPLATE_NAME, template);

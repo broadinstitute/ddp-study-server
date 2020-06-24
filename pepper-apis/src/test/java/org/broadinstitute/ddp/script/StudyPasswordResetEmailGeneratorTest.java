@@ -36,10 +36,10 @@ public class StudyPasswordResetEmailGeneratorTest extends TxnAwareBaseTest {
         generator = mock(StudyPasswordResetEmailGenerator.class);
         var male = UserProfile.SexType.MALE;
         //This is the one that we expect will get an email
-        UserProfile profile1 = new UserProfile(1L, "Hulk", "Hogan", male, LocalDate.of(1953, 8, 11), 1L, "en", false, null);
+        UserProfile profile1 = new UserProfile(1L, "Hulk", "Hogan", male, LocalDate.of(1953, 8, 11), 1L, "en", null, false, null);
 
         //This one should be filtered out. says do not contact
-        UserProfile profile2 = new UserProfile(1L, "Jerome", "Salinger", male, LocalDate.of(1919, 1, 1), 1L, "en", true, null);
+        UserProfile profile2 = new UserProfile(1L, "Jerome", "Salinger", male, LocalDate.of(1919, 1, 1), 1L, "en", null, true, null);
         ProfileWithEmail profileWithEmail1 = new ProfileWithEmail(profile1, "hulk.hogan@hulkomania.org");
         ProfileWithEmail profileWithEmail2 = new ProfileWithEmail(profile2, "jd@nyc.gov");
 

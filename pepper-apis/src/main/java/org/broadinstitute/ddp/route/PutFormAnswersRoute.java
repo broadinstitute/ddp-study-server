@@ -8,6 +8,7 @@ import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetrics;
 import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetricsTracker;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
+import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.db.FormInstanceDao;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
@@ -118,8 +119,9 @@ public class PutFormAnswersRoute implements Route {
                             .orElse(false);
                     if (instanceDto.getFirstCompletedAt() == null && shouldSnapshotSubstitutions) {
                         // This is the first submit for the activity instance, so save a snapshot of substitutions.
-                        handle.attach(ActivityInstanceDao.class)
-                                .saveSubstitutions(form.getInstanceId(), form.buildRenderContext(handle));
+                        handle.attach(ActivityInstanceDao.class).saveSubstitutions(
+                                form.getInstanceId(),
+                                I18nContentRenderer.newValueProvider(handle, form.getParticipantUserId()).getSnapshot());
                     }
 
                     FormActivityStatusUtil.updateFormActivityStatus(
