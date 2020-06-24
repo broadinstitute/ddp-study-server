@@ -13,6 +13,7 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.brsanthu.googleanalytics.request.EventHit;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -22,11 +23,14 @@ import com.google.gson.reflect.TypeToken;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 
+import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetrics;
+import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetricsTracker;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
+import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiCompositeQuestion;
 import org.broadinstitute.ddp.db.dao.JdbiNumericQuestion;
@@ -70,6 +74,7 @@ import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.activity.types.NumericType;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
+import org.broadinstitute.ddp.model.study.StudySettings;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.security.DDPAuth;
@@ -291,6 +296,17 @@ public class PatchFormAnswersRoute implements Route {
                     operatorGuid
             );
             handle.attach(DataExportDao.class).queueDataSync(participantGuid, studyGuid);
+
+            StudySettings studySettings = GoogleAnalyticsMetricsTracker.getStudySettingByStudyGuid(studyGuid);
+            if (studySettings.isAnalyticsEnabled()) {
+                String studyActivityCode = handle.attach(JdbiActivity.class).queryActivityById(
+                        instanceDto.getActivityId()).getActivityCode();
+                String gaEventLabel = studyGuid.join(":", studyActivityCode, GoogleAnalyticsMetrics.EVENT_LABEL_PATCH_ANSWERS);
+                EventHit eventHit = new EventHit(GoogleAnalyticsMetrics.EVENT_CATEGORY_PATCH_ANSWERS,
+                        GoogleAnalyticsMetrics.EVENT_ACTION_PATCH_ANSWERS, gaEventLabel, 1);
+                GoogleAnalyticsMetricsTracker.sendEventMetrics(studyGuid, eventHit);
+            }
+
             return res;
         });
 

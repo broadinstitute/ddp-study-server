@@ -87,6 +87,7 @@
         "sendMetrics": true,
     {{end}}
     "googleGeocodingApiKey": "{{$conf.Data.geocodingKey}}",
+    "platformGAToken": "{{$conf.Data.platformGAToken}}",
     "elasticsearch": {
         # Whether to enable data sync to ES
         "syncEnabled": {{$conf.Data.elasticsearch.syncEnabled}},

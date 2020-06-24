@@ -212,4 +212,5 @@
     <include file="db-changes/schema/date-question-picklist-allow-future-years.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/study-settings.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-4737-tooltip.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-2565-modify-study-settings.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

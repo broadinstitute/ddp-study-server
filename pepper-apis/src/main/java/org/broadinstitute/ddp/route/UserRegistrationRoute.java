@@ -7,8 +7,11 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.auth0.exception.Auth0Exception;
+import com.brsanthu.googleanalytics.request.EventHit;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
+import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetrics;
+import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetricsTracker;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.constants.ErrorCodes;
@@ -43,6 +46,7 @@ import org.broadinstitute.ddp.model.governance.Governance;
 import org.broadinstitute.ddp.model.governance.GovernancePolicy;
 import org.broadinstitute.ddp.model.invitation.InvitationType;
 import org.broadinstitute.ddp.model.study.StudyLanguage;
+import org.broadinstitute.ddp.model.study.StudySettings;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.model.user.UserProfile;
@@ -336,6 +340,13 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
             }
         } else {
             LOG.info("Existing user {} is in study {} with status {}", user.getGuid(), study.getGuid(), status);
+            StudySettings studySettings = GoogleAnalyticsMetricsTracker.getStudySettingByStudyGuid(study.getGuid());
+            if (studySettings.isAnalyticsEnabled()) {
+                String loginEventLabel = study.getGuid().join(":", GoogleAnalyticsMetrics.EVENT_LABEL_USER_LOGIN);
+                EventHit loginEventHit = new EventHit(GoogleAnalyticsMetrics.EVENT_CATEGORY_USER_LOGIN,
+                        GoogleAnalyticsMetrics.EVENT_ACTION_USER_LOGIN, loginEventLabel, 1);
+                GoogleAnalyticsMetricsTracker.sendEventMetrics(study.getGuid(), loginEventHit);
+            }
             return user.getGuid();
         }
     }
@@ -407,6 +418,22 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
             EnrollmentStatusType initialStatus = EnrollmentStatusType.REGISTERED;
             jdbiEnrollment.changeUserStudyEnrollmentStatus(user.getGuid(), study.getGuid(), initialStatus);
             LOG.info("Registered user {} with status {} in study {}", user.getGuid(), initialStatus, study.getGuid());
+
+            //send GA events
+            StudySettings studySettings = GoogleAnalyticsMetricsTracker.getStudySettingByStudyGuid(study.getGuid());
+            if (studySettings.isAnalyticsEnabled()) {
+                String gaEventLabel = study.getGuid().join(":", GoogleAnalyticsMetrics.EVENT_LABEL_USER_REGISTRATION);
+                EventHit eventHit = new EventHit(GoogleAnalyticsMetrics.EVENT_CATEGORY_USER_REGISTRATION,
+                        GoogleAnalyticsMetrics.EVENT_ACTION_USER_REGISTRATION, gaEventLabel, 1);
+                GoogleAnalyticsMetricsTracker.sendEventMetrics(study.getGuid(), eventHit);
+
+                //new registration meant a user-login too
+                String loginEventLabel = study.getGuid().join(":", GoogleAnalyticsMetrics.EVENT_LABEL_USER_LOGIN);
+                EventHit loginEventHit = new EventHit(GoogleAnalyticsMetrics.EVENT_CATEGORY_USER_LOGIN,
+                        GoogleAnalyticsMetrics.EVENT_ACTION_USER_LOGIN, loginEventLabel, 1);
+                GoogleAnalyticsMetricsTracker.sendEventMetrics(study.getGuid(), loginEventHit);
+            }
+
         } else {
             LOG.warn("User {} is already registered in study {} with status {}", user.getGuid(), study.getGuid(), status);
         }
