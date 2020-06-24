@@ -17,6 +17,7 @@ public class HtmlConverterTest {
     @Test
     public void testGetPlainText_emptyInput() {
         assertEquals("", HtmlConverter.getPlainText(""));
+        assertEquals("", HtmlConverter.getPlainText("    \t\r\n"));
     }
 
     @Test

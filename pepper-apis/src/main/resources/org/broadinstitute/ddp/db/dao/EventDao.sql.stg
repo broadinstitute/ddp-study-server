@@ -112,6 +112,7 @@ select
 getNotificationTemplatesForEvent() ::= <<
 select nt.notification_template_id,
        nt.template_key,
+       nt.is_dynamic,
        lc.language_code_id,
        lc.iso_language_code
   from event_configuration as cfg

@@ -334,19 +334,17 @@ public class ActivityInstanceDao {
                         long versionId = rs.getLong(SqlConstants.ActivityVersionTable.REVISION_ID);
                         long revisionStart = rs.getLong(SqlConstants.RevisionTable.START_DATE);
                         ActivityDefStore activityDefStore = ActivityDefStore.getInstance();
-                        FormActivityDef formActivityDef =
-                                activityDefStore.getActivityDef(studyGuid, activityCode, versionTag);
+                        FormActivityDef formActivityDef = activityDefStore.getActivityDef(studyGuid, activityCode, versionTag);
                         if (formActivityDef == null) {
-                            Optional<ActivityDto> activityDto = handle.attach(JdbiActivity.class).findActivityByStudyGuidAndCode(studyGuid,
-                                    activityCode);
-                            formActivityDef = handle.attach(FormActivityDao.class).findDefByDtoAndVersion(activityDto.get(),
-                                    versionTag, versionId, revisionStart);
+                            Optional<ActivityDto> activityDto = handle.attach(JdbiActivity.class)
+                                    .findActivityByStudyGuidAndCode(studyGuid, activityCode);
+                            formActivityDef = handle.attach(FormActivityDao.class).findDefByDtoAndVersion(
+                                    activityDto.get(), versionTag, versionId, revisionStart);
                             activityDefStore.setActivityDef(studyGuid, activityCode, versionTag, formActivityDef);
                         }
 
-                        Pair<Integer, Integer> questionAndAnswerCounts = activityDefStore.countQuestionsAndAnswersForActivity(handle,
-                                studyGuid, activityCode, versionTag, userGuid, activityInstanceGuid, isoLanguageCode);
-
+                        Pair<Integer, Integer> questionAndAnswerCounts = activityDefStore.countQuestionsAndAnswers(
+                                handle, userGuid, formActivityDef, activityInstanceGuid);
 
                         activityInstanceSummary.setNumQuestions(questionAndAnswerCounts.getLeft());
                         activityInstanceSummary.setNumQuestionsAnswered(questionAndAnswerCounts.getRight());

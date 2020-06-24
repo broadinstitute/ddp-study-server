@@ -105,6 +105,14 @@ function (user, context, callback) {
             console.log('User language passed in (via body) = ' + pepper_params.languageCode);
         }
 
+        if (context.request.query.time_zone) {
+            pepper_params.timeZone = context.request.query.time_zone;
+            console.log('User timezone passed in (via query) = ' + pepper_params.timeZone);
+        } else if (context.request.body.time_zone) {
+            pepper_params.timeZone = context.request.body.time_zone;
+            console.log('User timezone passed in (via body) = ' + pepper_params.timeZone);
+        }
+
         console.log(context);
 
         // This is the token renewal case. Let's avoid going through pepper registration

@@ -23,7 +23,7 @@ public class IntRangeRuleTest {
 
     @BeforeClass
     public static void setup() {
-        unused = new NumericQuestion("sid", 1L, 2L, false, false, null, null, List.of(), List.of(), NumericType.INTEGER);
+        unused = new NumericQuestion("sid", 1L, 2L, false, false, null, null, null, List.of(), List.of(), NumericType.INTEGER);
     }
 
     @Test

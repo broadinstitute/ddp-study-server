@@ -120,7 +120,7 @@ commands:
             develop)
               DEPLOY_ENV=dev
             ;;
-            scaling_experiment)
+            GAE_Backend_Deployment_Config)
               DEPLOY_ENV=dev
             ;;
             test)
@@ -261,6 +261,9 @@ commands:
       tcell_dir:
         type: string
         default: *tcell_dir
+      deploy_config_file_dir:
+        type: string
+        default: '../src/appengine'
     steps:
       - set-deployment-env
       - render-configs
@@ -270,13 +273,14 @@ commands:
           command: |
             DEPLOY_DIR='<<parameters.deploy_dir>>'
             TCELL_DIR='<<parameters.tcell_dir>>'
+            DEPLOY_CONFIG_FILE_DIR='<<parameters.deploy_config_file_dir>>'
             rm -rf $DEPLOY_DIR
             mkdir -p $DEPLOY_DIR
             cd $DEPLOY_DIR
             cp -r ../$TCELL_DIR .
             cp ../output-config/tcell_agent.config $TCELL_DIR
             cp ../target/<<parameters.jar_base_name>>.jar .
-            cp ../src/appengine/<<parameters.jar_base_name>>.yaml .
+            cp "$DEPLOY_CONFIG_FILE_DIR/<<parameters.jar_base_name>>.yaml" .
             cp ../output-config/application.conf .
       - auth-gcp-service-account
       - run:
@@ -679,6 +683,7 @@ jobs:
           pom_file: pom.xml
       - deploy-jar:
           jar_base_name: DataDonationPlatform
+          deploy_config_file_dir: ../output-config
       - build-jar:
           pom_file: housekeeping-pom.xml
       - deploy-jar:
@@ -697,6 +702,7 @@ jobs:
           jar_base_name: DataDonationPlatform
       - deploy-jar:
           jar_base_name: DataDonationPlatform
+          deploy_config_file_dir: ../output-config
       - retrieve-jar:
           jar_base_name: Housekeeping
       - deploy-jar:
@@ -740,7 +746,7 @@ workflows:
             branches:
               only:
                 - develop
-                - scaling_experiment
+                - GAE_Backend_Deployment_Config
                 - &rc /^rc.*/
                 - &hotfix /^hotfix.*/
       - parallel-compile-and-test-job:
@@ -754,6 +760,7 @@ workflows:
               only:
                 - develop
                 - scaling_experiment
+                - GAE_Backend_Deployment_Config
           requires:
             - parallel-compile-and-test-job
             - compile-and-run-test-suite-job

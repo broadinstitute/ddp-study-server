@@ -16,6 +16,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -50,6 +51,7 @@ import org.broadinstitute.ddp.db.dao.InvitationFactory;
 import org.broadinstitute.ddp.db.dao.InvitationSql;
 import org.broadinstitute.ddp.db.dao.JdbiAuth0Tenant;
 import org.broadinstitute.ddp.db.dao.JdbiEventConfiguration;
+import org.broadinstitute.ddp.db.dao.JdbiEventConfigurationOccurrenceCounter;
 import org.broadinstitute.ddp.db.dao.JdbiMailingList;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
@@ -409,6 +411,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
         UserRegistrationPayload payload = new UserRegistrationPayload(
                 testAuth0UserId, auth0ClientId, study1.getGuid(), auth0Domain)
                 .setLanguageCode(EN_LANG_CODE)
+                .setTimeZone("America/Los_Angeles") // Pacific time, -8 or -7.
                 .setFirstName("foo")
                 .setLastName("bar");
 
@@ -430,6 +433,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
 
             Long enLanguageCodeId = LanguageStore.getOrComputeDefault(handle).getId();
             assertEquals(enLanguageCodeId, profile.getPreferredLangId());
+            assertEquals(ZoneId.of("America/Los_Angeles"), profile.getTimeZone());
             assertEquals("foo", profile.getFirstName());
             assertEquals("bar", profile.getLastName());
 
@@ -697,7 +701,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
             long triggerId = handle.attach(EventTriggerDao.class)
                     .insertUserRegisteredTrigger();
             long actionId = handle.attach(EventActionDao.class)
-                    .insertNotificationAction(new SendgridEmailEventActionDto("abc", "en"));
+                    .insertNotificationAction(new SendgridEmailEventActionDto("abc", "en", false));
             return handle.attach(JdbiEventConfiguration.class)
                     .insert(triggerId, actionId, testStudy.getId(), Instant.now().toEpochMilli(), null, null, null, null, true, 1);
         });
@@ -725,6 +729,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
         } finally {
             TransactionWrapper.useTxn(handle -> {
                 handle.attach(QueuedEventDao.class).deleteQueuedEventsByEventConfigurationId(eventConfigId);
+                handle.attach(JdbiEventConfigurationOccurrenceCounter.class).deleteById(eventConfigId, tempUser.getId());
                 JdbiUserStudyEnrollment jdbiEnrollment = handle.attach(JdbiUserStudyEnrollment.class);
                 for (EnrollmentStatusDto enrollment : jdbiEnrollment.findByStudyGuid(testStudy.getGuid())) {
                     jdbiEnrollment.deleteById(enrollment.getUserStudyEnrollmentId());
@@ -767,6 +772,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
             UserProfile profile = handle.attach(UserProfileDao.class).findProfileByUserId(actualUser.getUserId()).get();
             Long enLanguageCodeId = LanguageStore.getOrComputeDefault(handle).getId();
             assertEquals(profile.getPreferredLangId(), enLanguageCodeId);
+            assertNull("should not have timezone since none were provided", profile.getTimeZone());
 
             JdbiUserStudyEnrollment jdbiEnrollment = handle.attach(JdbiUserStudyEnrollment.class);
             Optional<EnrollmentStatusType> enrollment = jdbiEnrollment

@@ -15,6 +15,11 @@ public class RouteConstants {
         public static final String BEARER = "Bearer ";
     }
 
+    public static final class GAE {
+        public static final String START_ENDPOINT = "/_ah/start";
+        public static final String STOP_ENDPOINT = "/_ah/stop";
+    }
+
     public static final class API {
         public static final String VERSION = "v1";
         public static final String BASE = "/pepper/" + VERSION;

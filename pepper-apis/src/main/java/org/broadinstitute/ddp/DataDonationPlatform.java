@@ -26,6 +26,7 @@ import org.apache.http.entity.ContentType;
 import org.broadinstitute.ddp.client.DsmClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.ErrorCodes;
+import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.constants.RouteConstants.API;
 import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.db.ActivityInstanceDao;
@@ -172,7 +173,6 @@ public class DataDonationPlatform {
     public static final int DEFAULT_RATE_LIMIT_MAX_QUERIES_PER_SECOND = 10;
     public static final int DEFAULT_RATE_LIMIT_BURST = 15;
     private static final Logger LOG = LoggerFactory.getLogger(DataDonationPlatform.class);
-    private static final String GAE_START_HOOK_ENDPOINT = "/_ah/start";
     private static final String[] CORS_HTTP_METHODS = new String[] {"GET", "PUT", "POST", "OPTIONS", "PATCH"};
     private static final String[] CORS_HTTP_HEADERS = new String[] {"Content-Type", "Authorization", "X-Requested-With",
             "Content-Length", "Accept", "Origin", ""};
@@ -278,12 +278,6 @@ public class DataDonationPlatform {
         } else {
             LOG.warn("No rate limit values given.  Rate limiting is disabled.");
         }
-
-        // Respond to GAE lifecycle call.
-        get(GAE_START_HOOK_ENDPOINT, (request, response) -> {
-            response.status(200);
-            return "";
-        });
 
         before("*", new HttpHeaderMDCFilter(X_FORWARDED_FOR));
         before("*", new MDCLogBreadCrumbFilter());
@@ -504,6 +498,18 @@ public class DataDonationPlatform {
                 X_FORWARDED_FOR,
                 MDCLogBreadCrumbFilter.LOG_BREADCRUMB));
 
+        // Respond to GAE lifecycle calls.
+        get(RouteConstants.GAE.START_ENDPOINT, (request, response) -> {
+            LOG.info("Received GAE start request [{}]", RouteConstants.GAE.START_ENDPOINT);
+            response.status(200);
+            return "";
+        });
+        get(RouteConstants.GAE.STOP_ENDPOINT, (request, response) -> {
+            LOG.info("Received GAE stop request [{}]", RouteConstants.GAE.STOP_ENDPOINT);
+            response.status(200);
+            return "";
+        });
+
         awaitInitialization();
         LOG.info("ddp startup complete");
     }
@@ -591,6 +597,9 @@ public class DataDonationPlatform {
             String accessControlRequestMethod = request.headers("Access-Control-Request-Method");
             if (accessControlRequestMethod != null) {
                 response.header("Access-Control-Allow-Methods", accessControlRequestMethod);
+            }
+            if (accessControlRequestMethod != null || accessControlRequestHeaders != null) {
+                response.header("Access-Control-Max-Age", "172800");
             }
 
             return "OK";

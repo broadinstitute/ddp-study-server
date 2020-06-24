@@ -303,6 +303,7 @@ public class SqlConstants {
         public static final String YEARS_BACK = "years_back";
         public static final String YEAR_ANCHOR = "year_anchor";
         public static final String FIRST_SELECTED_YEAR = "first_selected_year";
+        public static final String ALLOW_FUTURE_YEARS = "allow_future_years";
     }
 
     public static final class EventConfigurationTable {

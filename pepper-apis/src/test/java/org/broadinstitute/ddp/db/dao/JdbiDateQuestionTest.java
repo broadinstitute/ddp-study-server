@@ -148,7 +148,7 @@ public class JdbiDateQuestionTest extends TxnAwareBaseTest {
         DateQuestionDef d3 = DateQuestionDef.builder().setStableId(SID_DATE_PICKLIST)
                 .setPrompt(new Template(TemplateType.TEXT, null, "d3"))
                 .setRenderMode(DateRenderMode.PICKLIST).addFields(DateFieldType.MONTH, DateFieldType.YEAR)
-                .setPicklistDef(new DatePicklistDef(true, 3, 80, null, 1988))
+                .setPicklistDef(new DatePicklistDef(true, 3, 80, null, 1988, true))
                 .setDisplayCalendar(true)
                 .build();
         FormActivityDef form = FormActivityDef.generalFormBuilder("act", "v1", testData.getStudyGuid())

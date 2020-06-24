@@ -36,13 +36,17 @@ public class DatePicklistDef {
     @SerializedName("firstSelectedYear")
     private Integer firstSelectedYear;
 
+    @SerializedName("allowFutureYears")
+    private boolean allowFutureYears;
+
     public DatePicklistDef(Boolean useMonthNames, Integer yearsForward, Integer yearsBack, Integer yearAnchor,
-                           Integer firstSelectedYear) {
+                           Integer firstSelectedYear, boolean allowFutureYears) {
         this.useMonthNames = useMonthNames;
         this.yearsForward = checkInt(yearsForward, (n -> n >= 0), "yearsForward should be positive or zero");
         this.yearsBack = checkInt(yearsBack, (n -> n >= 0), "yearsBack should be positive or zero");
         this.yearAnchor = checkInt(yearAnchor, (n -> n > 0), "yearAnchor should be positive");
         this.firstSelectedYear = checkInt(firstSelectedYear, (n -> n > 0), "firstSelectedYear should be positive");
+        this.allowFutureYears = allowFutureYears;
     }
 
     public Boolean getUseMonthNames() {
@@ -65,6 +69,10 @@ public class DatePicklistDef {
         return firstSelectedYear;
     }
 
+    public boolean shouldAllowFutureYears() {
+        return allowFutureYears;
+    }
+
     /**
      * Get start year (years back from year anchor).
      */
@@ -75,12 +83,18 @@ public class DatePicklistDef {
     }
 
     /**
-     * Get end year (years forward from year anchor).
+     * Get end year (years forward from year anchor), truncated to current year if future years are not allowed.
      */
     public int getEndYear() {
-        Year anchor = (yearAnchor == null ? Year.now() : Year.of(yearAnchor));
+        Year now = Year.now();
+        Year anchor = (yearAnchor == null ? now : Year.of(yearAnchor));
         int forward = (yearsForward == null ? DEFAULT_YEARS_FORWARD : yearsForward);
-        return anchor.plusYears(forward).getValue();
+        Year endYear = anchor.plusYears(forward);
+        if (!allowFutureYears && endYear.isAfter(now)) {
+            return now.getValue();
+        } else {
+            return endYear.getValue();
+        }
     }
 
     /**

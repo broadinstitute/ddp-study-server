@@ -105,7 +105,7 @@ public class Template {
     }
 
     public String render(String languageCode) {
-        Map<String, String> variablesTxt = new HashMap<>();
+        Map<String, Object> variablesTxt = new HashMap<>();
         for (TemplateVariable variable : getVariables()) {
             Optional<Translation> translation = variable.getTranslation(languageCode);
             variablesTxt.put(variable.getName(), translation.isPresent() ? translation.get().getText() : null);

@@ -213,7 +213,7 @@ public class SendEmailRouteTest extends IntegrationTestSuite.TestCase {
         long trueExpressionId = expressionDao.insertExpression("true").getId();
         long falseExpressionId = expressionDao.insertExpression("false").getId();
 
-        SendgridEmailEventActionDto eventAction = new SendgridEmailEventActionDto(key, "en");
+        SendgridEmailEventActionDto eventAction = new SendgridEmailEventActionDto(key, "en", false);
         long emailActionId = handle.attach(EventActionDao.class).insertNotificationAction(eventAction);
 
         EventTriggerDao eventTriggerDao = handle.attach(EventTriggerDao.class);
