@@ -27,6 +27,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.constants.TestConstants;
@@ -41,7 +43,9 @@ import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dao.UserProfileSql;
 import org.broadinstitute.ddp.exception.DDPException;
+import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.instance.question.BoolQuestion;
 import org.broadinstitute.ddp.model.activity.instance.question.Question;
 import org.broadinstitute.ddp.model.activity.instance.question.TextQuestion;
@@ -471,6 +475,34 @@ public class FormInstanceTest extends TxnAwareBaseTest {
             form.updateBlockStatuses(handle, mockInterpreter, userGuid, userGuid, form.getGuid());
             fail("expected exception was not thrown");
         });
+    }
+
+    @Test
+    public void testCollectHiddenAnswers() {
+        var q1 = new QuestionBlock(new BoolQuestion("b1", 1L,
+                List.of(new BoolAnswer(1L, "b1", "1", true)), List.of(), 2L, 3L));
+        q1.setShown(true);
+        var q2 = new QuestionBlock(new BoolQuestion("b2", 1L,
+                List.of(new BoolAnswer(2L, "b2", "2", false)), List.of(), 2L, 3L));
+        q2.setShown(false);
+        var cond1 = new ConditionalBlock(new TextQuestion("t1", 1L, null,
+                List.of(new TextAnswer(3L, "t1", "3", "cond1")), List.of(), TextInputType.TEXT));
+        var nest1 = new QuestionBlock(new TextQuestion("t2", 1L, null,
+                List.of(new TextAnswer(4L, "t2", "4", "nest1")), List.of(), TextInputType.TEXT));
+        cond1.getNested().add(nest1);
+        cond1.setShown(false);
+        nest1.setShown(false);
+
+        var section = new FormSection(List.of(q1, q2, cond1));
+        var form = buildEmptyTestInstance();
+        form.addBodySections(List.of(section));
+
+        var hidden = form.collectHiddenAnswers();
+        assertNotNull(hidden);
+        assertEquals(3, hidden.size());
+
+        var answerIds = hidden.stream().map(Answer::getAnswerId).collect(Collectors.toSet());
+        assertTrue(answerIds.containsAll(Set.of(2L, 3L, 4L)));
     }
 
     private FormInstance buildEmptyTestInstance() {

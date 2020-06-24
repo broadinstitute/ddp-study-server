@@ -151,7 +151,7 @@ public class PutFormAnswersRoute implements Route {
                             .filter(Objects::nonNull)
                             .collect(Collectors.toSet());
                     handle.attach(AnswerDao.class).deleteAnswers(answerIdsToDelete);
-                    LOG.info("Deleted {} answers for user {} and activity instance {}",
+                    LOG.info("Deleted {} hidden answers for user {} and activity instance {}",
                             answerIdsToDelete.size(), userGuid, instanceGuid);
 
                     WorkflowState fromState = new ActivityState(form.getActivityId());
