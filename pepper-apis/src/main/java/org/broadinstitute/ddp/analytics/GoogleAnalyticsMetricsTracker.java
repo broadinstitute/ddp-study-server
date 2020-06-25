@@ -24,19 +24,45 @@ public class GoogleAnalyticsMetricsTracker {
     private static final Integer DEFAULT_BATCH_SIZE = 10;
     private static Map<String, GoogleAnalytics> studyAnalyticsTrackers = new HashMap<>();
     private static Set<String> noAnalyticsTokenStudies = new HashSet<>(); //studyGuid with NO analytics token
+    private static volatile GoogleAnalyticsMetricsTracker instance;
+    private static Object lockGA = new Object();
 
-    private static GoogleAnalytics getMetricTracker(String studyGuid) {
+    private GoogleAnalyticsMetricsTracker() {
+        Map<String, Optional<StudySettings>> studySettings = StudySettingsStore.getInstance().getAllStudySettings();
+        for (String studyGuid : studySettings.keySet()) {
+            Optional<StudySettings> opt = studySettings.get(studyGuid);
+            if (opt.isPresent()) {
+                StudySettings settings = opt.get();
+                initStudyMetricTracker(studyGuid, settings);
+            }
+        }
+    }
+
+    public static GoogleAnalyticsMetricsTracker getInstance() {
+        if (instance == null) {
+            synchronized (lockGA) {
+                if (instance == null) {
+                    instance = new GoogleAnalyticsMetricsTracker();
+                }
+            }
+        }
+        return instance;
+    }
+
+    private GoogleAnalytics getMetricTracker(String studyGuid) {
         if (!studyAnalyticsTrackers.containsKey(studyGuid) && !noAnalyticsTokenStudies.contains(studyGuid)) {
-            initStudyMetricTracker(studyGuid);
+            StudySettings studySettings = getStudySettingByStudyGuid(studyGuid);
+            initStudyMetricTracker(studyGuid, studySettings);
         }
         return studyAnalyticsTrackers.get(studyGuid);
     }
 
-    private static synchronized void initStudyMetricTracker(String studyGuid) {
+    private synchronized void initStudyMetricTracker(String studyGuid, StudySettings studySettings) {
         if (!studyAnalyticsTrackers.containsKey(studyGuid)) {
-            StudySettings studySettings = getStudySettingByStudyGuid(studyGuid);
-            String studyTrackingId = studySettings == null ? null : studySettings.getAnalyticsToken();
-            if (StringUtils.isEmpty(studyTrackingId)) {
+            if (studySettings == null || !studySettings.isAnalyticsEnabled()) {
+                noAnalyticsTokenStudies.add(studyGuid);
+                return;
+            } else if (StringUtils.isEmpty(studySettings.getAnalyticsToken())) {
                 LOG.error("NO analytics token found for study : {} . skipping sending analytics. ", studyGuid);
                 noAnalyticsTokenStudies.add(studyGuid);
                 return;
@@ -44,14 +70,14 @@ public class GoogleAnalyticsMetricsTracker {
 
             GoogleAnalytics metricTracker = GoogleAnalytics.builder()
                     .withConfig(new GoogleAnalyticsConfig().setBatchingEnabled(true).setBatchSize(DEFAULT_BATCH_SIZE))
-                    .withTrackingId(studyTrackingId)
+                    .withTrackingId(studySettings.getAnalyticsToken())
                     .build();
             studyAnalyticsTrackers.put(studyGuid, metricTracker);
             LOG.info("Initialized GA Metrics Tracker for study GUID: {} ", studyGuid);
         }
     }
 
-    private static void sendEventMetrics(String studyGuid, EventHit eventHit) {
+    private void sendEventMetrics(String studyGuid, EventHit eventHit) {
         if (noAnalyticsTokenStudies.contains(studyGuid)) {
             return;
         }
@@ -66,14 +92,14 @@ public class GoogleAnalyticsMetricsTracker {
         }
     }
 
-    private static StudySettings getStudySettingByStudyGuid(String studyGuid) {
+    private StudySettings getStudySettingByStudyGuid(String studyGuid) {
         //todo: revisit after Redis caching to use cached Study, StudySettings and get rid of StudySettingsStore
         Optional<StudySettings> settingsOpt = StudySettingsStore.getInstance().getStudySettings(studyGuid);
         return settingsOpt == null ? null : settingsOpt.isPresent() ? settingsOpt.get() : null;
     }
 
-    public static void sendAnalyticsMetrics(
-            String studyGuid, String category, String action, String label, String labelContent, int value) {
+    public void sendAnalyticsMetrics(String studyGuid, String category, String action, String label,
+                                     String labelContent, int value) {
         StudySettings studySettings = getStudySettingByStudyGuid(studyGuid);
         if (studySettings != null && studySettings.isAnalyticsEnabled()) {
             String gaEventLabel = String.join(":", label,
@@ -86,7 +112,7 @@ public class GoogleAnalyticsMetricsTracker {
         }
     }
 
-    public static void flushOutMetrics() {
+    public void flushOutMetrics() {
         //lookup all Metrics Trackers and flush out any pending events
         LOG.info("Flushing out all pending GA events");
         for (GoogleAnalytics tracker : studyAnalyticsTrackers.values()) {
@@ -96,7 +122,7 @@ public class GoogleAnalyticsMetricsTracker {
 
     private static class StudySettingsStore {
         private static StudySettingsStore instance;
-        private static Object lockVar1 = "lock";
+        private static Object lockVar1 = new Object();
         private static Map<String, Optional<StudySettings>> studySettings = new HashMap<>();
 
         private static StudySettingsStore getInstance() {
@@ -132,6 +158,11 @@ public class GoogleAnalyticsMetricsTracker {
         private Optional<StudySettings> getStudySettings(String studyGuid) {
             return studySettings.get(studyGuid);
         }
+
+        private Map<String, Optional<StudySettings>> getAllStudySettings() {
+            return studySettings;
+        }
+
     }
 
 }

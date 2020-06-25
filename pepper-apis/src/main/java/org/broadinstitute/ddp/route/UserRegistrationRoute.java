@@ -348,7 +348,8 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
             }
         } else {
             LOG.info("Existing user {} is in study {} with status {}", user.getGuid(), study.getGuid(), status);
-            GoogleAnalyticsMetricsTracker.sendAnalyticsMetrics(study.getGuid(), GoogleAnalyticsMetrics.EVENT_CATEGORY_USER_LOGIN,
+            GoogleAnalyticsMetricsTracker.getInstance().sendAnalyticsMetrics(
+                    study.getGuid(), GoogleAnalyticsMetrics.EVENT_CATEGORY_USER_LOGIN,
                     GoogleAnalyticsMetrics.EVENT_ACTION_USER_LOGIN, GoogleAnalyticsMetrics.EVENT_LABEL_USER_LOGIN,
                     null, 1);
             return user.getGuid();
@@ -424,11 +425,13 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
             LOG.info("Registered user {} with status {} in study {}", user.getGuid(), initialStatus, study.getGuid());
 
             //send GA events
-            GoogleAnalyticsMetricsTracker.sendAnalyticsMetrics(study.getGuid(), GoogleAnalyticsMetrics.EVENT_CATEGORY_USER_REGISTRATION,
+            GoogleAnalyticsMetricsTracker.getInstance().sendAnalyticsMetrics(
+                    study.getGuid(), GoogleAnalyticsMetrics.EVENT_CATEGORY_USER_REGISTRATION,
                     GoogleAnalyticsMetrics.EVENT_ACTION_USER_REGISTRATION, GoogleAnalyticsMetrics.EVENT_LABEL_USER_REGISTRATION,
                     null, 1);
 
-            GoogleAnalyticsMetricsTracker.sendAnalyticsMetrics(study.getGuid(), GoogleAnalyticsMetrics.EVENT_CATEGORY_USER_LOGIN,
+            GoogleAnalyticsMetricsTracker.getInstance().sendAnalyticsMetrics(
+                    study.getGuid(), GoogleAnalyticsMetrics.EVENT_CATEGORY_USER_LOGIN,
                     GoogleAnalyticsMetrics.EVENT_ACTION_USER_LOGIN, GoogleAnalyticsMetrics.EVENT_LABEL_USER_LOGIN,
                     null, 1);
         } else {

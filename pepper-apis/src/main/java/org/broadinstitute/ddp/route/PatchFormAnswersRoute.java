@@ -297,7 +297,7 @@ public class PatchFormAnswersRoute implements Route {
 
             String studyActivityCode = handle.attach(JdbiActivity.class).queryActivityById(
                     instanceDto.getActivityId()).getActivityCode();
-            GoogleAnalyticsMetricsTracker.sendAnalyticsMetrics(studyGuid, GoogleAnalyticsMetrics.EVENT_CATEGORY_PATCH_ANSWERS,
+            GoogleAnalyticsMetricsTracker.getInstance().sendAnalyticsMetrics(studyGuid, GoogleAnalyticsMetrics.EVENT_CATEGORY_PATCH_ANSWERS,
                     GoogleAnalyticsMetrics.EVENT_ACTION_PATCH_ANSWERS, GoogleAnalyticsMetrics.EVENT_LABEL_PATCH_ANSWERS,
                     studyActivityCode, 1);
 

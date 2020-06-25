@@ -280,7 +280,7 @@ public class DataDonationPlatform {
         get(RouteConstants.GAE.STOP_ENDPOINT, (request, response) -> {
             LOG.info("Received GAE stop request [{}]", RouteConstants.GAE.STOP_ENDPOINT);
             //flush out any pending GA events
-            GoogleAnalyticsMetricsTracker.flushOutMetrics();
+            GoogleAnalyticsMetricsTracker.getInstance().flushOutMetrics();
 
             response.status(200);
             return "";

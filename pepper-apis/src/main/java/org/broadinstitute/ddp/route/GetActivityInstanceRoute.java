@@ -111,7 +111,7 @@ public class GetActivityInstanceRoute implements Route {
             return validateActivityInstance(handle, activityInstance, userGuid, languageCodeId);
         });
 
-        GoogleAnalyticsMetricsTracker.sendAnalyticsMetrics(studyGuid, GoogleAnalyticsMetrics.EVENT_CATEGORY_ACTIVITY_INSTANCE,
+        GoogleAnalyticsMetricsTracker.getInstance().sendAnalyticsMetrics(studyGuid, GoogleAnalyticsMetrics.EVENT_CATEGORY_ACTIVITY_INSTANCE,
                 GoogleAnalyticsMetrics.EVENT_ACTION_ACTIVITY_INSTANCE, GoogleAnalyticsMetrics.EVENT_LABEL_ACTIVITY_INSTANCE,
                 null, 1);
 
