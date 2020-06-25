@@ -45,6 +45,7 @@ public class LiquibaseUtil implements  AutoCloseable {
     private LiquibaseUtil(String dbUrl)  {
         HikariConfig config = new HikariConfig();
         config.setJdbcUrl(dbUrl);
+        config.setMaximumPoolSize(2);
         dataSource = new HikariDataSource(config);
     }
 

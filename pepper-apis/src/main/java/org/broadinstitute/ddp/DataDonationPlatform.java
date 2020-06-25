@@ -151,7 +151,6 @@ import org.broadinstitute.ddp.service.WorkflowService;
 import org.broadinstitute.ddp.transformers.NullableJsonTransformer;
 import org.broadinstitute.ddp.transformers.SimpleJsonTransformer;
 import org.broadinstitute.ddp.util.ConfigManager;
-import org.broadinstitute.ddp.util.LiquibaseUtil;
 import org.broadinstitute.ddp.util.LogbackConfigurationPrinter;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
@@ -224,7 +223,6 @@ public class DataDonationPlatform {
     private static void start() {
         LogbackConfigurationPrinter.printLoggingConfiguration();
         Config cfg = ConfigManager.getInstance().getConfig();
-        boolean doLiquibase = cfg.getBoolean(ConfigFile.DO_LIQUIBASE);
         int maxConnections = cfg.getInt(ConfigFile.NUM_POOLED_CONNECTIONS);
 
         int requestThreadTimeout = cfg.getInt(ConfigFile.THREAD_TIMEOUT);
@@ -240,28 +238,22 @@ public class DataDonationPlatform {
         if (cfg.hasPath(ConfigFile.PREFERRED_SOURCE_IP_HEADER)) {
             preferredSourceIPHeader = cfg.getString(ConfigFile.PREFERRED_SOURCE_IP_HEADER);
         }
-        JettyConfig.setupJetty(preferredSourceIPHeader);
-
-        if (appEnginePort != null) {
-            port(Integer.parseInt(appEnginePort));
-        } else {
-            port(configFilePort);
-        }
 
         String dbUrl = cfg.getString(ConfigFile.DB_URL);
         LOG.info("Using db {}", dbUrl);
 
         TransactionWrapper.init(
                 new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, maxConnections, dbUrl));
-
-        threadPool(-1, -1, requestThreadTimeout);
         Config sqlConfig = ConfigFactory.load(ConfigFile.SQL_CONFIG_FILE);
         initSqlCommands(sqlConfig);
 
-        if (doLiquibase) {
-            LOG.info("Running liquibase migrations against " + dbUrl);
-            LiquibaseUtil.runLiquibase(dbUrl, TransactionWrapper.DB.APIS);
+        JettyConfig.setupJetty(preferredSourceIPHeader);
+        if (appEnginePort != null) {
+            port(Integer.parseInt(appEnginePort));
+        } else {
+            port(configFilePort);
         }
+        threadPool(-1, -1, requestThreadTimeout);
 
         // The first route mapping call will also initialize the Spark server. Make that first call
         // the GAE lifecycle hooks so we capture the GAE call as soon as possible, and respond
