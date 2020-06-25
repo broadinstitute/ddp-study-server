@@ -1337,7 +1337,7 @@
                 "name": "sibling_1_dob",
                 "stable_id": "DATE_OF_BIRTH_1",
                 "type": "Date",
-                "format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+                "format": "yyyy-MM-dd'T'HH:mm:ss"
               },
               {
                 "name": "sibling_1_age_death",
@@ -1418,7 +1418,7 @@
                 "name": "sibling_2_dob",
                 "stable_id": "DATE_OF_BIRTH_2",
                 "type": "Date",
-                "format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+                "format": "yyyy-MM-dd'T'HH:mm:ss"
               },
               {
                 "name": "sibling_2_age_death",
@@ -1499,7 +1499,7 @@
                 "name": "sibling_3_dob",
                 "stable_id": "DATE_OF_BIRTH_3",
                 "type": "Date",
-                "format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+                "format": "yyyy-MM-dd'T'HH:mm:ss"
               },
               {
                 "name": "sibling_3_age_death",
@@ -1580,7 +1580,7 @@
                 "name": "sibling_5_dob",
                 "stable_id": "DATE_OF_BIRTH_5",
                 "type": "Date",
-                "format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+                "format": "yyyy-MM-dd'T'HH:mm:ss"
               },
               {
                 "name": "sibling_5_age_death",
@@ -1661,7 +1661,7 @@
                 "name": "sibling_5_dob",
                 "stable_id": "DATE_OF_BIRTH_5",
                 "type": "Date",
-                "format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+                "format": "yyyy-MM-dd'T'HH:mm:ss"
               },
               {
                 "name": "sibling_5_age_death",

@@ -14,7 +14,6 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
-import java.util.Collection;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
@@ -22,13 +21,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import com.auth0.json.mgmt.users.User;
-import com.google.api.client.json.Json;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -133,6 +130,11 @@ public class StudyDataLoader {
 
         ambulationLookup = new HashMap<>();
         ambulationLookup.put(1, "INDEPENDENTLY");
+        ambulationLookup.put(2, "MOST_OF_THE_TIME");
+        ambulationLookup.put(3, "WITH_ASSISTANCE");
+        ambulationLookup.put(4, "USES_WALKER");
+        ambulationLookup.put(5, "WHEELCHAIR_WITHOUT_ASSISTANCE");
+        ambulationLookup.put(6, "WHEELCHAIR_WITH_ASSISTANCE");
 
         booleanValueLookup = new HashMap<>();
         booleanValueLookup.put(0, false);
@@ -1292,7 +1294,6 @@ public class StudyDataLoader {
                 value = sourceDataElement.getAsJsonObject().get(key);
                 sourceDataSurveyQs.get(surveyName).add(key);
             }
-            System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!" + questionName);
             if (key.contains("medication") || key.contains("sibling") && value != null) {
                 selectedPicklistOptions
                         .add(new SelectedPicklistOption(options.get(value.getAsInt()).getAsJsonObject().get("stable_id").getAsString()));

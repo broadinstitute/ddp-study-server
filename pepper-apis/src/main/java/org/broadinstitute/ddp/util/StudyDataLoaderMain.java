@@ -845,7 +845,7 @@ public class StudyDataLoaderMain {
                 .withNullString("")
                 .withHeader("AltPid", "Pepper User GUID", "Has About You", "Has Consent", "Has Blood Consent", "Has Tissue Consent",
                         "Has Release", "Has Blood Release",
-                        "Has Followup", "Email", "Previous Run", "Success/Failure", "Auth0 Collision"));
+                        "Has Followup", "Has Medical History", "Email", "Previous Run", "Success/Failure", "Auth0 Collision"));
 
         for (StudyMigrationRun run : migrationRunReport) {
             addRunValues(run, csvPrinter);
