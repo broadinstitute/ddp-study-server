@@ -21,8 +21,8 @@ import org.slf4j.LoggerFactory;
 
 public class GoogleAnalyticsMetricsTracker {
     private static final Logger LOG = LoggerFactory.getLogger(GoogleAnalyticsMetricsTracker.class);
-    private static final Integer DEFAULT_BATCH_SIZE = 5;
-    public static Map<String, GoogleAnalytics> studyAnalyticsTrackers = new HashMap<>();
+    private static final Integer DEFAULT_BATCH_SIZE = 10;
+    private static Map<String, GoogleAnalytics> studyAnalyticsTrackers = new HashMap<>();
     private static Set<String> noAnalyticsTokenStudies = new HashSet<>(); //studyGuid with NO analytics token
 
     private static GoogleAnalytics getMetricTracker(String studyGuid) {
@@ -73,6 +73,13 @@ public class GoogleAnalyticsMetricsTracker {
         return settingsOpt == null ? null : settingsOpt.isPresent() ? settingsOpt.get() : null;
     }
 
+    public static void flushOutMetrics() {
+        //lookup all Metrics Trackers and flush out any pending events
+        LOG.info("Flushing out all pending GA events");
+        for (GoogleAnalytics tracker: studyAnalyticsTrackers.values()) {
+            tracker.flush();
+        }
+    }
 
     private static class StudySettingsStore {
         private static StudySettingsStore instance;
