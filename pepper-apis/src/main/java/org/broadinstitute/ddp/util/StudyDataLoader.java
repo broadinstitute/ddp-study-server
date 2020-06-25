@@ -28,6 +28,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import com.auth0.json.mgmt.users.User;
+import com.google.api.client.json.Json;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -1291,7 +1292,12 @@ public class StudyDataLoader {
                 value = sourceDataElement.getAsJsonObject().get(key);
                 sourceDataSurveyQs.get(surveyName).add(key);
             }
-            if (value != null && value.getAsInt() == 1) { //option checked
+            System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!" + questionName);
+            if (key.contains("medication") || key.contains("sibling") && value != null) {
+                selectedPicklistOptions
+                        .add(new SelectedPicklistOption(options.get(value.getAsInt()).getAsJsonObject().get("stable_id").getAsString()));
+                break;
+            } else if (value != null && value.getAsInt() == 1) { //option checked
                 if (option.getAsJsonObject().get("text") != null) {
                     //other text details
                     String otherTextKey = key.concat(".").concat(option.getAsJsonObject().get("text").getAsString());
