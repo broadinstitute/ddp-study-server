@@ -13,7 +13,6 @@ import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.brsanthu.googleanalytics.request.EventHit;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -74,7 +73,6 @@ import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.activity.types.NumericType;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
-import org.broadinstitute.ddp.model.study.StudySettings;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.security.DDPAuth;
@@ -297,15 +295,11 @@ public class PatchFormAnswersRoute implements Route {
             );
             handle.attach(DataExportDao.class).queueDataSync(participantGuid, studyGuid);
 
-            StudySettings studySettings = GoogleAnalyticsMetricsTracker.getStudySettingByStudyGuid(studyGuid);
-            if (studySettings != null && studySettings.isAnalyticsEnabled()) {
-                String studyActivityCode = handle.attach(JdbiActivity.class).queryActivityById(
-                        instanceDto.getActivityId()).getActivityCode();
-                String gaEventLabel = String.join(":", GoogleAnalyticsMetrics.EVENT_LABEL_PATCH_ANSWERS, studyGuid, studyActivityCode);
-                EventHit eventHit = new EventHit(GoogleAnalyticsMetrics.EVENT_CATEGORY_PATCH_ANSWERS,
-                        GoogleAnalyticsMetrics.EVENT_ACTION_PATCH_ANSWERS, gaEventLabel, 1);
-                GoogleAnalyticsMetricsTracker.sendEventMetrics(studyGuid, eventHit);
-            }
+            String studyActivityCode = handle.attach(JdbiActivity.class).queryActivityById(
+                    instanceDto.getActivityId()).getActivityCode();
+            GoogleAnalyticsMetricsTracker.sendAnalyticsMetrics(studyGuid, GoogleAnalyticsMetrics.EVENT_CATEGORY_PATCH_ANSWERS,
+                    GoogleAnalyticsMetrics.EVENT_ACTION_PATCH_ANSWERS, GoogleAnalyticsMetrics.EVENT_LABEL_PATCH_ANSWERS,
+                    studyActivityCode, 1);
 
             return res;
         });

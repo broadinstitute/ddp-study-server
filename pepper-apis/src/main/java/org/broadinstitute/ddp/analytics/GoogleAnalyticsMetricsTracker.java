@@ -51,8 +51,7 @@ public class GoogleAnalyticsMetricsTracker {
         }
     }
 
-    public static void sendEventMetrics(String studyGuid, EventHit eventHit) {
-        //if (noAnalyticsTokenStudies.contains(studyGuid) || getStudySettingByStudyGuid(studyGuid).isAnalyticsEnabled()) {
+    private static void sendEventMetrics(String studyGuid, EventHit eventHit) {
         if (noAnalyticsTokenStudies.contains(studyGuid)) {
             return;
         }
@@ -67,16 +66,30 @@ public class GoogleAnalyticsMetricsTracker {
         }
     }
 
-    public static StudySettings getStudySettingByStudyGuid(String studyGuid) {
+    private static StudySettings getStudySettingByStudyGuid(String studyGuid) {
         //todo: revisit after Redis caching to use cached Study, StudySettings and get rid of StudySettingsStore
         Optional<StudySettings> settingsOpt = StudySettingsStore.getInstance().getStudySettings(studyGuid);
         return settingsOpt == null ? null : settingsOpt.isPresent() ? settingsOpt.get() : null;
     }
 
+    public static void sendAnalyticsMetrics(
+            String studyGuid, String category, String action, String label, String labelContent, int value) {
+        StudySettings studySettings = getStudySettingByStudyGuid(studyGuid);
+        if (studySettings != null && studySettings.isAnalyticsEnabled()) {
+            String gaEventLabel = String.join(":", label,
+                    studyGuid);
+            if (labelContent != null) {
+                gaEventLabel = String.join(":", gaEventLabel, labelContent);
+            }
+            EventHit eventHit = new EventHit(category, action, gaEventLabel, value);
+            sendEventMetrics(studyGuid, eventHit);
+        }
+    }
+
     public static void flushOutMetrics() {
         //lookup all Metrics Trackers and flush out any pending events
         LOG.info("Flushing out all pending GA events");
-        for (GoogleAnalytics tracker: studyAnalyticsTrackers.values()) {
+        for (GoogleAnalytics tracker : studyAnalyticsTrackers.values()) {
             tracker.flush();
         }
     }

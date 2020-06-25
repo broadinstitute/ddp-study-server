@@ -3,7 +3,6 @@ package org.broadinstitute.ddp.route;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.brsanthu.googleanalytics.request.EventHit;
 import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetrics;
 import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetricsTracker;
 import org.broadinstitute.ddp.constants.ErrorCodes;
@@ -23,7 +22,6 @@ import org.broadinstitute.ddp.json.workflow.WorkflowResponse;
 import org.broadinstitute.ddp.model.activity.instance.FormInstance;
 import org.broadinstitute.ddp.model.activity.instance.validation.ActivityValidationFailure;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
-import org.broadinstitute.ddp.model.study.StudySettings;
 import org.broadinstitute.ddp.model.workflow.ActivityState;
 import org.broadinstitute.ddp.model.workflow.WorkflowState;
 import org.broadinstitute.ddp.pex.PexInterpreter;
@@ -139,16 +137,12 @@ public class PutFormAnswersRoute implements Route {
 
                     handle.attach(DataExportDao.class).queueDataSync(userGuid, studyGuid);
 
-                    StudySettings studySettings = GoogleAnalyticsMetricsTracker.getStudySettingByStudyGuid(studyGuid);
-                    if (studySettings != null && studySettings.isAnalyticsEnabled()) {
-                        String studyActivityCode = handle.attach(JdbiActivity.class).queryActivityById(
-                                instanceDto.getActivityId()).getActivityCode();
-                        String gaEventLabel = String.join(":", GoogleAnalyticsMetrics.EVENT_LABEL_PUT_ANSWERS,
-                                studyGuid, studyActivityCode);
-                        EventHit eventHit = new EventHit(GoogleAnalyticsMetrics.EVENT_CATEGORY_PUT_ANSWERS,
-                                GoogleAnalyticsMetrics.EVENT_ACTION_PUT_ANSWERS, gaEventLabel, 1);
-                        GoogleAnalyticsMetricsTracker.sendEventMetrics(studyGuid, eventHit);
-                    }
+                    String studyActivityCode = handle.attach(JdbiActivity.class).queryActivityById(
+                            instanceDto.getActivityId()).getActivityCode();
+
+                    GoogleAnalyticsMetricsTracker.sendAnalyticsMetrics(studyGuid, GoogleAnalyticsMetrics.EVENT_CATEGORY_PUT_ANSWERS,
+                            GoogleAnalyticsMetrics.EVENT_ACTION_PUT_ANSWERS, GoogleAnalyticsMetrics.EVENT_LABEL_PUT_ANSWERS,
+                            studyActivityCode, 1);
 
                     return new PutAnswersResponse(workflowResp);
                 }

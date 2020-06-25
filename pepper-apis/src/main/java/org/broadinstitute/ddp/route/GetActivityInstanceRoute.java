@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import com.brsanthu.googleanalytics.request.EventHit;
 import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetrics;
 import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetricsTracker;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
@@ -27,7 +26,6 @@ import org.broadinstitute.ddp.model.activity.instance.QuestionBlock;
 import org.broadinstitute.ddp.model.activity.instance.question.Question;
 import org.broadinstitute.ddp.model.activity.instance.validation.ActivityValidationFailure;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
-import org.broadinstitute.ddp.model.study.StudySettings;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.security.DDPAuth;
@@ -113,13 +111,9 @@ public class GetActivityInstanceRoute implements Route {
             return validateActivityInstance(handle, activityInstance, userGuid, languageCodeId);
         });
 
-        StudySettings studySettings = GoogleAnalyticsMetricsTracker.getStudySettingByStudyGuid(studyGuid);
-        if (studySettings != null && studySettings.isAnalyticsEnabled()) {
-            String gaEventLabel = String.join(":", GoogleAnalyticsMetrics.EVENT_LABEL_ACTIVITY_INSTANCE, studyGuid);
-            EventHit eventHit = new EventHit(GoogleAnalyticsMetrics.EVENT_CATEGORY_ACTIVITY_INSTANCE,
-                    GoogleAnalyticsMetrics.EVENT_ACTION_ACTIVITY_INSTANCE, gaEventLabel, 1);
-            GoogleAnalyticsMetricsTracker.sendEventMetrics(studyGuid, eventHit);
-        }
+        GoogleAnalyticsMetricsTracker.sendAnalyticsMetrics(studyGuid, GoogleAnalyticsMetrics.EVENT_CATEGORY_ACTIVITY_INSTANCE,
+                GoogleAnalyticsMetrics.EVENT_ACTION_ACTIVITY_INSTANCE, GoogleAnalyticsMetrics.EVENT_LABEL_ACTIVITY_INSTANCE,
+                null, 1);
 
         return result;
     }
