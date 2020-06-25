@@ -12,6 +12,7 @@ public class StudyMigrationRun {
     private Boolean hasBloodRelease;
     private Boolean hasLovedOne;
     private Boolean hasFollowup;
+    private Boolean hasMedicalHistory;
     private Boolean isSuccess;
     private Boolean previousRun;
     private String emailAddress;
@@ -24,9 +25,11 @@ public class StudyMigrationRun {
         this.emailAddress = emailAddress;
     }
 
+
+
     public StudyMigrationRun(String altPid, String pepperUserGuid, Boolean hasAboutYou, Boolean hasConsent, Boolean hasBloodConsent,
                              Boolean hasTissueConsent, Boolean hasRelease, Boolean hasBloodRelease, Boolean hasLovedOne,
-                             Boolean hasFollowup, Boolean isSuccess, Boolean previousRun, String emailAddress, Boolean auth0Collision) {
+                             Boolean hasFollowup, Boolean hasMedicalHistory, Boolean isSuccess, Boolean previousRun, String emailAddress, Boolean auth0Collision) {
         this.altPid = altPid;
         this.pepperUserGuid = pepperUserGuid;
         this.hasAboutYou = hasAboutYou;
@@ -37,6 +40,7 @@ public class StudyMigrationRun {
         this.hasBloodRelease = hasBloodRelease;
         this.hasLovedOne = hasLovedOne;
         this.hasFollowup = hasFollowup;
+        this.hasMedicalHistory = hasMedicalHistory;
         this.isSuccess = isSuccess;
         this.previousRun = previousRun;
         this.emailAddress = emailAddress;
@@ -97,5 +101,9 @@ public class StudyMigrationRun {
 
     public Boolean getHasBloodRelease() {
         return hasBloodRelease;
+    }
+
+    public Boolean getHasMedicalHistory() {
+        return hasMedicalHistory;
     }
 }

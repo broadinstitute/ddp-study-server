@@ -73,6 +73,7 @@ import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.NumericIntegerAnswer;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.activity.types.InstitutionType;
 import org.broadinstitute.ddp.model.address.MailAddress;
@@ -752,6 +753,18 @@ public class StudyDataLoader {
         return guid;
     }
 
+    public String answerNumericQuestion(String pepperQuestionStableId,
+                                     String participantGuid,
+                                     String instanceGuid,
+                                     Long value, AnswerDao answerDao) {
+        String guid = null;
+        if (value != null) {
+            Answer answer = new NumericIntegerAnswer(null, pepperQuestionStableId, null, value);
+            guid = answerDao.createAnswer(participantGuid, instanceGuid, answer).getAnswerGuid();
+        }
+        return guid;
+    }
+
     public String answerBooleanQuestion(String pepperQuestionStableId,
                                         String participantGuid,
                                         String instanceGuid,
@@ -1100,6 +1113,9 @@ public class StudyDataLoader {
                 case "string":
                     processTextQuestion(thisMap, sourceData, surveyName, participantGuid, instanceGuid, answerDao);
                     break;
+                case "Numeric":
+                    processNumericQuestion(thisMap, sourceData, surveyName, participantGuid, instanceGuid, answerDao);
+                    break;
                 case "Picklist":
                     processPicklistQuestion(thisMap, sourceData, surveyName, participantGuid, instanceGuid, answerDao);
                     break;
@@ -1402,6 +1418,27 @@ public class StudyDataLoader {
         return answerGuid;
     }
 
+    private String processNumericQuestion(JsonElement mapElement, JsonElement sourceDataElement, String surveyName,
+                                       String participantGuid, String instanceGuid, AnswerDao answerDao) throws Exception {
+
+        String answerGuid = null;
+        JsonElement valueEl;
+        String questionName = mapElement.getAsJsonObject().get("name").getAsString();
+
+        valueEl = sourceDataElement.getAsJsonObject().get(questionName);
+        String stableId = null;
+        JsonElement stableIdElement = mapElement.getAsJsonObject().get("stable_id");
+        if (!stableIdElement.isJsonNull()) {
+            stableId = stableIdElement.getAsString();
+        }
+
+        if (valueEl != null && !valueEl.isJsonNull()) {
+            answerGuid = answerNumericQuestion(stableId, participantGuid, instanceGuid, valueEl.getAsLong(), answerDao);
+        }
+        sourceDataSurveyQs.get(surveyName).add(questionName);
+        return answerGuid;
+    }
+
 
     private String processAgreementQuestion(JsonElement mapElement, JsonElement sourceDataElement, String surveyName,
                                             String participantGuid, String instanceGuid, AnswerDao answerDao) throws Exception {
@@ -1456,6 +1493,11 @@ public class StudyDataLoader {
                         break;
                     case "string":
                         childGuid = processTextQuestion(childEl, sourceDataElement, surveyName,
+                                participantGuid, instanceGuid, answerDao);
+                        nestedQAGuids.add(childGuid);
+                        break;
+                    case "Numeric":
+                        childGuid = processNumericQuestion(childEl, sourceDataElement, surveyName,
                                 participantGuid, instanceGuid, answerDao);
                         nestedQAGuids.add(childGuid);
                         break;

@@ -1330,7 +1330,7 @@
               },
               {
                 "name": "sibling_1_age",
-                "type": "integer",
+                "type": "Numeric",
                 "stable_id": "AGE_1"
               },
               {
@@ -1411,7 +1411,7 @@
               },
               {
                 "name": "sibling_2_age",
-                "type": "integer",
+                "type": "Numeric",
                 "stable_id": "AGE_2"
               },
               {
@@ -1492,7 +1492,7 @@
               },
               {
                 "name": "sibling_3_age",
-                "type": "integer",
+                "type": "Numeric",
                 "stable_id": "AGE_3"
               },
               {
@@ -1548,81 +1548,81 @@
             ]
           },
           {
-            "name": "sibling_5",
-            "stable_id": "SIBLING_5",
+            "name": "sibling_4",
+            "stable_id": "SIBLING_4",
             "type": "Composite",
             "children": [
               {
-                "name": "sibling_5_sex",
+                "name": "sibling_4_sex",
                 "type": "Picklist",
-                "stable_id": "SEX_PICKLIST_5",
+                "stable_id": "SEX_PICKLIST_4",
                 "options": [
                   {
                     "type": "integer",
-                    "stable_id": "DROPDOWN_MALE_5"
+                    "stable_id": "DROPDOWN_MALE_4"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "DROPDOWN_FEMALE_5"
+                    "stable_id": "DROPDOWN_FEMALE_4"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "DROPDOWN_OTHER_5"
+                    "stable_id": "DROPDOWN_OTHER_4"
                   }
                 ]
               },
               {
-                "name": "sibling_5_age",
-                "type": "integer",
-                "stable_id": "AGE_5"
+                "name": "sibling_4_age",
+                "type": "Numeric",
+                "stable_id": "AGE_4"
               },
               {
-                "name": "sibling_5_dob",
-                "stable_id": "DATE_OF_BIRTH_5",
+                "name": "sibling_4_dob",
+                "stable_id": "DATE_OF_BIRTH_4",
                 "type": "Date",
                 "format": "yyyy-MM-dd'T'HH:mm:ss"
               },
               {
-                "name": "sibling_5_age_death",
-                "stable_id": "AGE_AT_DEATH_5",
+                "name": "sibling_4_age_death",
+                "stable_id": "AGE_AT_DEATH_4",
                 "type": "Numeric",
                 "source_type": "integer"
               },
               {
-                "name": "sibling_5_at_diagnosis",
+                "name": "sibling_4_at_diagnosis",
                 "type": "Picklist",
-                "stable_id": "DIAGNOSIS_PICKLIST_5",
+                "stable_id": "DIAGNOSIS_PICKLIST_4",
                 "options": [
                   {
                     "type": "integer",
-                    "stable_id": "DIAGNOSIS_DROPDOWN_YES_5"
+                    "stable_id": "DIAGNOSIS_DROPDOWN_YES_4"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "DIAGNOSIS_DROPDOWN_NO_5"
+                    "stable_id": "DIAGNOSIS_DROPDOWN_NO_4"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "DIAGNOSIS_DROPDOWN_UNKNOWN_5"
+                    "stable_id": "DIAGNOSIS_DROPDOWN_UNKNOWN_4"
                   }
                 ]
               },
               {
-                "name": "sibling_5_at_carrier",
+                "name": "sibling_4_at_carrier",
                 "type": "Picklist",
-                "stable_id": "CARRIER_PICKLIST_5",
+                "stable_id": "CARRIER_PICKLIST_4",
                 "options": [
                   {
                     "type": "integer",
-                    "stable_id": "CARRIER_DROPDOWN_YES_5"
+                    "stable_id": "CARRIER_DROPDOWN_YES_4"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "CARRIER_DROPDOWN_NO_5"
+                    "stable_id": "CARRIER_DROPDOWN_NO_4"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "CARRIER_DROPDOWN_UNKNOWN_5"
+                    "stable_id": "CARRIER_DROPDOWN_UNKNOWN_4"
                   }
                 ]
               }
@@ -1654,7 +1654,7 @@
               },
               {
                 "name": "sibling_5_age",
-                "type": "integer",
+                "type": "Numeric",
                 "stable_id": "AGE_5"
               },
               {

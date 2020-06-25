@@ -741,7 +741,7 @@ public class StudyDataLoaderMain {
                 migrationRun = new StudyMigrationRun(altpid, userGuid, previousRun, emailAddress);
             } else {
                 migrationRun = new StudyMigrationRun(altpid, userGuid, hasAboutYou, hasConsent, hasBloodConsent, hasTissueConsent,
-                        hasRelease, hasBloodRelease, false, hasFollowup, isSuccess, previousRun, emailAddress, auth0Collision);
+                        hasRelease, hasBloodRelease, false, hasFollowup, hasMedicalHistory, isSuccess, previousRun, emailAddress, auth0Collision);
             }
 
             migrationRunReport.add(migrationRun);
@@ -866,6 +866,7 @@ public class StudyDataLoaderMain {
                 run.getHasRelease(),
                 run.getHasBloodRelease(),
                 run.getHasFollowup(),
+                run.getHasMedicalHistory(),
                 run.getEmailAddress(),
                 run.getPreviousRun(),
                 run.getSuccess(),
