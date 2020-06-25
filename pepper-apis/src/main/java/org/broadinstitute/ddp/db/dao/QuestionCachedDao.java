@@ -74,7 +74,7 @@ public class QuestionCachedDao extends SQLObjectWrapper<QuestionDao> implements 
 
     @Override
     public JdbiPicklistQuestion getJdbiPicklistQuestion() {
-        return delegate.getJdbiPicklistQuestion();
+        return new JdbiPicklistQuestionCached(getHandle());
     }
 
     @Override
@@ -114,7 +114,7 @@ public class QuestionCachedDao extends SQLObjectWrapper<QuestionDao> implements 
 
     @Override
     public PicklistQuestionDao getPicklistQuestionDao() {
-        return delegate.getPicklistQuestionDao();
+        return new PickListQuestionCachedDao(getHandle());
     }
 
     @Override

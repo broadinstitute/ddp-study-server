@@ -407,7 +407,7 @@ public interface QuestionDao extends SqlObject {
                         activityInstanceGuid, dto.getId(), dto.getStableId())));
 
         PicklistQuestionDao.GroupAndOptionDtos container = getPicklistQuestionDao()
-                .findOrderedGroupAndOptionDtos(dto.getId(), timestamp);
+                .findOrderedGroupAndOptionDtos(dto, timestamp);
 
         List<PicklistGroup> groups = new ArrayList<>();
         List<PicklistOption> allOptions = new ArrayList<>();
@@ -1423,7 +1423,7 @@ public interface QuestionDao extends SqlObject {
                         "Could not find picklist question definition for id %d and timestamp %d", questionDto.getId(), timestamp)));
 
         PicklistQuestionDao.GroupAndOptionDtos container = getPicklistQuestionDao()
-                .findOrderedGroupAndOptionDtos(questionDto.getId(), timestamp);
+                .findOrderedGroupAndOptionDtos(questionDto, timestamp);
 
         TemplateDao templateDao = getTemplateDao();
         List<PicklistGroupDef> groups = new ArrayList<>();

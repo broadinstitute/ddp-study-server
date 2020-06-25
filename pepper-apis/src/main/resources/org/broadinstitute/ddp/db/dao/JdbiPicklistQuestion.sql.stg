@@ -14,8 +14,7 @@ values (:questionId,
        (select picklist_render_mode_id from picklist_render_mode where picklist_render_mode_code = :renderMode),
        :picklistLabelTemplateId)
 >>
-
-queryDtoByQuestionId() ::= <<
+pickListQuestionSelect() :: <<
 select psm.picklist_select_mode_code,
        prm.picklist_render_mode_code,
        pq.picklist_label_template_id,
@@ -31,5 +30,13 @@ select psm.picklist_select_mode_code,
   join question_type as qt on qt.question_type_id = q.question_type_id
   join question_stable_code as qsc on qsc.question_stable_code_id = q.question_stable_code_id
   join revision as rev on rev.revision_id = q.revision_id
+>>
+queryDtoByQuestionId() ::= <<
+<pickListQuestionSelect()>
  where pq.question_id = :questionId
+>>
+
+queryDtoByActivityId ::= <<
+<pickListQuestionSelect()>
+ where q.study_activity_id = :activityId
 >>
