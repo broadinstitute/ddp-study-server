@@ -59,9 +59,8 @@ public class PickListQuestionCachedDao extends SQLObjectWrapper<PicklistQuestion
     }
 
     private void cacheGroupAndOptionDtosForActivity(long activityId) {
-        questionIdToGroupAndOptionsCache.putAll(findAllOrderedGroupAndOptionDtosForActivity(activityId));
+        questionIdToGroupAndOptionsCache.putAll(findAllOrderedGroupAndOptionDtosByQuestion(activityId));
     }
-
 
     public GroupAndOptionDtos findOrderedGroupAndOptionDtos(QuestionDto questionDto, long timestamp) {
         if (isNullCache(questionIdToGroupAndOptionsCache)) {

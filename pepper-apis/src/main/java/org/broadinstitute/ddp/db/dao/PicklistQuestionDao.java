@@ -349,10 +349,6 @@ public interface PicklistQuestionDao extends SqlObject {
         }
     }
 
-    default Map<Long, GroupAndOptionDtos> findAllOrderedGroupAndOptionDtosForActivity(long activityId) {
-        return null;
-    }
-
     default GroupAndOptionDtos findAllOrderedGroupAndOptionDtos(long questionId) {
         String queryString = StringTemplateSqlLocator
                 .findStringTemplate(PicklistQuestionDao.class, "queryAllOrderedGroupsAndOptionsByQuestionId")
