@@ -28,14 +28,8 @@ public class GoogleAnalyticsMetricsTracker {
     private static Object lockGA = new Object();
 
     private GoogleAnalyticsMetricsTracker() {
-        Map<String, Optional<StudySettings>> studySettings = StudySettingsStore.getInstance().getAllStudySettings();
-        for (String studyGuid : studySettings.keySet()) {
-            Optional<StudySettings> opt = studySettings.get(studyGuid);
-            if (opt.isPresent()) {
-                StudySettings settings = opt.get();
-                initStudyMetricTracker(studyGuid, settings);
-            }
-        }
+        Map<String, StudySettings> allStudySettings = StudySettingsStore.getInstance().getAllStudySettings();
+        allStudySettings.forEach((studyGuid, studySettings) -> initStudyMetricTracker(studyGuid, studySettings));
     }
 
     public static GoogleAnalyticsMetricsTracker getInstance() {
@@ -94,8 +88,7 @@ public class GoogleAnalyticsMetricsTracker {
 
     private StudySettings getStudySettingByStudyGuid(String studyGuid) {
         //todo: revisit after Redis caching to use cached Study, StudySettings and get rid of StudySettingsStore
-        Optional<StudySettings> settingsOpt = StudySettingsStore.getInstance().getStudySettings(studyGuid);
-        return settingsOpt == null ? null : settingsOpt.isPresent() ? settingsOpt.get() : null;
+        return StudySettingsStore.getInstance().getStudySettings(studyGuid);
     }
 
     public void sendAnalyticsMetrics(String studyGuid, String category, String action, String label,
@@ -123,7 +116,7 @@ public class GoogleAnalyticsMetricsTracker {
     private static class StudySettingsStore {
         private static StudySettingsStore instance;
         private static Object lockVar1 = new Object();
-        private static Map<String, Optional<StudySettings>> studySettings = new HashMap<>();
+        private static Map<String, StudySettings> studySettings = new HashMap<>();
 
         private static StudySettingsStore getInstance() {
             if (instance == null) {
@@ -142,12 +135,12 @@ public class GoogleAnalyticsMetricsTracker {
                 JdbiUmbrellaStudy jdbiUmbrellaStudy = handle.attach(JdbiUmbrellaStudy.class);
                 StudyDao studyDao = handle.attach(StudyDao.class);
                 List<StudyDto> studyDtos = jdbiUmbrellaStudy.findAll();
-                Map<String, Optional<StudySettings>> settingsMap = new HashMap<>();
+                Map<String, StudySettings> settingsMap = new HashMap<>();
                 for (StudyDto studyDto : studyDtos) {
                     //load StudySettings
                     Optional<StudySettings> studySettings = studyDao.findSettings(studyDto.getId());
                     if (studySettings.isPresent()) {
-                        settingsMap.put(studyDto.getGuid(), studySettings);
+                        settingsMap.put(studyDto.getGuid(), studySettings.get());
                     }
                 }
                 LOG.info("Loaded StudySettings for {} studies.", settingsMap.size());
@@ -155,11 +148,11 @@ public class GoogleAnalyticsMetricsTracker {
             });
         }
 
-        private Optional<StudySettings> getStudySettings(String studyGuid) {
+        private StudySettings getStudySettings(String studyGuid) {
             return studySettings.get(studyGuid);
         }
 
-        private Map<String, Optional<StudySettings>> getAllStudySettings() {
+        private Map<String, StudySettings> getAllStudySettings() {
             return studySettings;
         }
 

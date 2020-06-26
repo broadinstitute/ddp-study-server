@@ -20,6 +20,6 @@ public class GoogleAnalyticsMetrics {
 
     public static final String EVENT_CATEGORY_PUT_ANSWERS = "form-answers";
     public static final String EVENT_ACTION_PUT_ANSWERS = "submit-form-answers";
-    public static final String EVENT_LABEL_PUT_ANSWERS = "submit-answers"; //studyGuid & activityCode appended
+    public static final String EVENT_LABEL_PUT_ANSWERS = "submit-form"; //studyGuid & activityCode appended
 
 }
