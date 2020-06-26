@@ -47,8 +47,13 @@ public interface KitConfigurationDao extends SqlObject {
     Logger LOG = LoggerFactory.getLogger(KitConfigurationDao.class);
 
     @GetGeneratedKeys
-    @SqlUpdate("insert into kit_configuration (study_id, number_of_kits, kit_type_id) values (:studyId, :numKits, :typeId)")
-    long insertConfiguration(@Bind("studyId") long studyId, @Bind("numKits") long numberOfKits, @Bind("typeId") long kitTypeId);
+    @SqlUpdate("insert into kit_configuration (study_id, number_of_kits, kit_type_id, needs_approval)"
+            + " values (:studyId, :numKits, :typeId, :needsApproval)")
+    long insertConfiguration(
+            @Bind("studyId") long studyId,
+            @Bind("numKits") long numberOfKits,
+            @Bind("typeId") long kitTypeId,
+            @Bind("needsApproval") boolean needsApproval);
 
     @SqlUpdate("delete from kit_configuration where kit_configuration_id = :id")
     int deleteConfiguration(@Bind("id") long id);
@@ -99,20 +104,20 @@ public interface KitConfigurationDao extends SqlObject {
         return ruleId;
     }
 
-    @SqlQuery("select kc.kit_configuration_id, kc.number_of_kits, kc.kit_type_id, kc.study_id,"
+    @SqlQuery("select kc.kit_configuration_id, kc.number_of_kits, kc.kit_type_id, kc.study_id, kc.needs_approval,"
             + "       (select guid from umbrella_study where umbrella_study_id = kc.study_id) as study_guid"
             + "  from kit_configuration as kc")
     @RegisterConstructorMapper(KitConfigurationDto.class)
     List<KitConfigurationDto> getKitConfigurationDtos();
 
-    @SqlQuery("select kc.kit_configuration_id, kc.number_of_kits, kc.kit_type_id, kc.study_id,"
+    @SqlQuery("select kc.kit_configuration_id, kc.number_of_kits, kc.kit_type_id, kc.study_id, kc.needs_approval,"
             + "       (select guid from umbrella_study where umbrella_study_id = kc.study_id) as study_guid"
             + "  from kit_configuration as kc"
             + " where kc.study_id = :studyId")
     @RegisterConstructorMapper(KitConfigurationDto.class)
     List<KitConfigurationDto> getKitConfigurationDtosByStudyId(@Bind("studyId") long studyId);
 
-    @SqlQuery("select kc.kit_configuration_id, kc.number_of_kits, kc.kit_type_id, kc.study_id,"
+    @SqlQuery("select kc.kit_configuration_id, kc.number_of_kits, kc.kit_type_id, kc.study_id, kc.needs_approval,"
             + "       (select guid from umbrella_study where umbrella_study_id = kc.study_id) as study_guid"
             + "  from kit_configuration as kc"
             + " where kc.kit_configuration_id = :id")
@@ -144,7 +149,7 @@ public interface KitConfigurationDao extends SqlObject {
         int numKits = (int) kitConfigurationDto.getNumberOfKits();
         String guid = kitConfigurationDto.getStudyGuid();
 
-        return new KitConfiguration(kitConfigurationDto.getId(), numKits, kitType, guid, kitRules);
+        return new KitConfiguration(kitConfigurationDto.getId(), numKits, kitType, guid, kitConfigurationDto.needsApproval(), kitRules);
     }
 
     @SqlQuery("select kckr.kit_configuration_id,"

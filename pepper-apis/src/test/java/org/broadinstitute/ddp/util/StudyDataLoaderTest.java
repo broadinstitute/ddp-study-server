@@ -6,6 +6,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -511,7 +512,8 @@ public class StudyDataLoaderTest {
         when(mockKitTypeDao.getSalivaKitType()).thenReturn(pretendSalivaKitTypeId);
 
         DsmKitRequestDao mockDsmKitRequestDao = mock(DsmKitRequestDao.class);
-        when(mockDsmKitRequestDao.createKitRequest(anyString(), anyString(), anyLong(), anyLong(), anyLong(), anyLong())).thenReturn(0L);
+        when(mockDsmKitRequestDao.createKitRequest(anyString(), anyString(), anyLong(), anyLong(),
+                anyLong(), anyLong(), anyBoolean())).thenReturn(0L);
 
         when(mockDataLoader.addKitDetails(any(DsmKitRequestDao.class),
                 any(KitTypeDao.class),
@@ -542,7 +544,8 @@ public class StudyDataLoaderTest {
                 addressIdCaptor.capture(),
                 kitIdCaptor.capture(),
                 pepperUserIdCaptor.capture(),
-                secondsSinceEpochCaptor.capture());
+                secondsSinceEpochCaptor.capture(),
+                anyBoolean());
 
         assertEquals("V6YUYSY07RP8CQAAHBRA_8148_24", kitGuidCaptor.getValue());
         assertEquals(pretendStudyGuid, studyGuidCaptor.getValue());
