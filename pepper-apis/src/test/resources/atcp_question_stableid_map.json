@@ -697,578 +697,522 @@
             ]
           },
           {
-            "name": "medication_category_1",
-            "stable_id": "MEDICATION_CATEGORY1",
+            "name": "medication_category",
+            "stable_id": "MEDICATION_CATEGORY",
             "type": "Composite",
             "children": [
               {
                 "name": "medication_1_category",
                 "type": "Picklist",
-                "stable_id": "MEDICATION_CATEGORY_PICK_LIST1",
+                "stable_id": "MEDICATION_CATEGORY_PICK_LIST",
                 "options": [
                   {
                     "type": "integer",
-                    "stable_id": "PROPHYLACTIC_ANTIBIOTICS1"
+                    "stable_id": "PROPHYLACTIC_ANTIBIOTICS"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "ANTI_TREMOR1"
+                    "stable_id": "ANTI_TREMOR"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "ANTI_SEIZURE1"
+                    "stable_id": "ANTI_SEIZURE"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "ANTI_DROOLING1"
+                    "stable_id": "ANTI_DROOLING"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "DIABETES1"
+                    "stable_id": "DIABETES"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "ANTI_DEPRESSANT1"
+                    "stable_id": "ANTI_DEPRESSANT"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "STEROID1"
+                    "stable_id": "STEROID"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "CHEMOTHERAPY1"
+                    "stable_id": "CHEMOTHERAPY"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "BIRTH_CONTROL1"
+                    "stable_id": "BIRTH_CONTROL"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "OTHER1"
+                    "stable_id": "OTHER"
                   }
                 ]
               },
               {
                 "name": "medication_1_name",
                 "type": "string",
-                "stable_id": "MEDICATION_NAME1"
+                "stable_id": "MEDICATION_NAME"
               },
               {
                 "name": "medication_1_age",
                 "type": "string",
-                "stable_id": "BEGAN_TAKING_AT_AGE1"
-              }
-            ]
-          },
-          {
-            "name": "medication_category_2",
-            "stable_id": "MEDICATION_CATEGORY2",
-            "type": "Composite",
-            "children": [
+                "stable_id": "BEGAN_TAKING_AT_AGE"
+              },
               {
                 "name": "medication_2_category",
                 "type": "Picklist",
-                "stable_id": "MEDICATION_CATEGORY_PICK_LIST2",
+                "stable_id": "MEDICATION_CATEGORY_PICK_LIST",
                 "options": [
                   {
                     "type": "integer",
-                    "stable_id": "PROPHYLACTIC_ANTIBIOTICS2"
+                    "stable_id": "PROPHYLACTIC_ANTIBIOTICS"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "ANTI_TREMOR2"
+                    "stable_id": "ANTI_TREMOR"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "ANTI_SEIZURE2"
+                    "stable_id": "ANTI_SEIZURE"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "ANTI_DROOLING2"
+                    "stable_id": "ANTI_DROOLING"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "DIABETES2"
+                    "stable_id": "DIABETES"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "ANTI_DEPRESSANT2"
+                    "stable_id": "ANTI_DEPRESSANT"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "STEROID2"
+                    "stable_id": "STEROID"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "CHEMOTHERAPY2"
+                    "stable_id": "CHEMOTHERAPY"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "BIRTH_CONTROL2"
+                    "stable_id": "BIRTH_CONTROL"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "OTHER2"
+                    "stable_id": "OTHER"
                   }
                 ]
               },
               {
                 "name": "medication_2_name",
                 "type": "string",
-                "stable_id": "MEDICATION_NAME2"
+                "stable_id": "MEDICATION_NAME"
               },
               {
                 "name": "medication_2_age",
                 "type": "string",
-                "stable_id": "BEGAN_TAKING_AT_AGE2"
-              }
-            ]
-          },
-          {
-            "name": "medication_category_3",
-            "stable_id": "MEDICATION_CATEGORY3",
-            "type": "Composite",
-            "children": [
+                "stable_id": "BEGAN_TAKING_AT_AGE"
+              },
               {
                 "name": "medication_3_category",
                 "type": "Picklist",
-                "stable_id": "MEDICATION_CATEGORY_PICK_LIST3",
+                "stable_id": "MEDICATION_CATEGORY_PICK_LIST",
                 "options": [
                   {
                     "type": "integer",
-                    "stable_id": "PROPHYLACTIC_ANTIBIOTICS3"
+                    "stable_id": "PROPHYLACTIC_ANTIBIOTICS"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "ANTI_TREMOR3"
+                    "stable_id": "ANTI_TREMOR"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "ANTI_SEIZURE3"
+                    "stable_id": "ANTI_SEIZURE"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "ANTI_DROOLING3"
+                    "stable_id": "ANTI_DROOLING"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "DIABETES3"
+                    "stable_id": "DIABETES"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "ANTI_DEPRESSANT3"
+                    "stable_id": "ANTI_DEPRESSANT"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "STEROID3"
+                    "stable_id": "STEROID"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "CHEMOTHERAPY3"
+                    "stable_id": "CHEMOTHERAPY"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "BIRTH_CONTROL3"
+                    "stable_id": "BIRTH_CONTROL"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "OTHER3"
+                    "stable_id": "OTHER"
                   }
                 ]
               },
               {
                 "name": "medication_3_name",
                 "type": "string",
-                "stable_id": "MEDICATION_NAME3"
+                "stable_id": "MEDICATION_NAME"
               },
               {
                 "name": "medication_3_age",
                 "type": "string",
-                "stable_id": "BEGAN_TAKING_AT_AGE3"
-              }
-            ]
-          },
-          {
-            "name": "medication_category_4",
-            "stable_id": "MEDICATION_CATEGORY4",
-            "type": "Composite",
-            "children": [
+                "stable_id": "BEGAN_TAKING_AT_AGE"
+              },
               {
                 "name": "medication_4_category",
                 "type": "Picklist",
-                "stable_id": "MEDICATION_CATEGORY_PICK_LIST4",
+                "stable_id": "MEDICATION_CATEGORY_PICK_LIST",
                 "options": [
                   {
                     "type": "integer",
-                    "stable_id": "PROPHYLACTIC_ANTIBIOTICS4"
+                    "stable_id": "PROPHYLACTIC_ANTIBIOTICS"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "ANTI_TREMOR4"
+                    "stable_id": "ANTI_TREMOR"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "ANTI_SEIZURE4"
+                    "stable_id": "ANTI_SEIZURE"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "ANTI_DROOLING4"
+                    "stable_id": "ANTI_DROOLING"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "DIABETES4"
+                    "stable_id": "DIABETES"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "ANTI_DEPRESSANT4"
+                    "stable_id": "ANTI_DEPRESSANT"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "STEROID4"
+                    "stable_id": "STEROID"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "CHEMOTHERAPY4"
+                    "stable_id": "CHEMOTHERAPY"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "BIRTH_CONTROL4"
+                    "stable_id": "BIRTH_CONTROL"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "OTHER4"
+                    "stable_id": "OTHER"
                   }
                 ]
               },
               {
                 "name": "medication_4_name",
                 "type": "string",
-                "stable_id": "MEDICATION_NAME4"
+                "stable_id": "MEDICATION_NAME"
               },
               {
                 "name": "medication_4_age",
                 "type": "string",
-                "stable_id": "BEGAN_TAKING_AT_AGE4"
-              }
-            ]
-          },
-          {
-            "name": "medication_category_5",
-            "stable_id": "MEDICATION_CATEGORY5",
-            "type": "Composite",
-            "children": [
+                "stable_id": "BEGAN_TAKING_AT_AGE"
+              },
               {
                 "name": "medication_5_category",
                 "type": "Picklist",
-                "stable_id": "MEDICATION_CATEGORY_PICK_LIST5",
+                "stable_id": "MEDICATION_CATEGORY_PICK_LIST",
                 "options": [
                   {
                     "type": "integer",
-                    "stable_id": "PROPHYLACTIC_ANTIBIOTICS5"
+                    "stable_id": "PROPHYLACTIC_ANTIBIOTICS"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "ANTI_TREMOR5"
+                    "stable_id": "ANTI_TREMOR"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "ANTI_SEIZURE5"
+                    "stable_id": "ANTI_SEIZURE"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "ANTI_DROOLING5"
+                    "stable_id": "ANTI_DROOLING"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "DIABETES5"
+                    "stable_id": "DIABETES"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "ANTI_DEPRESSANT5"
+                    "stable_id": "ANTI_DEPRESSANT"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "STEROID5"
+                    "stable_id": "STEROID"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "CHEMOTHERAPY5"
+                    "stable_id": "CHEMOTHERAPY"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "BIRTH_CONTROL5"
+                    "stable_id": "BIRTH_CONTROL"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "OTHER5"
+                    "stable_id": "OTHER"
                   }
                 ]
               },
               {
                 "name": "medication_5_name",
                 "type": "string",
-                "stable_id": "MEDICATION_NAME5"
+                "stable_id": "MEDICATION_NAME"
               },
               {
                 "name": "medication_5_age",
                 "type": "string",
-                "stable_id": "BEGAN_TAKING_AT_AGE5"
-              }
-            ]
-          },
-          {
-            "name": "medication_category_6",
-            "stable_id": "MEDICATION_CATEGORY6",
-            "type": "Composite",
-            "children": [
+                "stable_id": "BEGAN_TAKING_AT_AGE"
+              },
               {
                 "name": "medication_6_category",
                 "type": "Picklist",
-                "stable_id": "MEDICATION_CATEGORY_PICK_LIST6",
+                "stable_id": "MEDICATION_CATEGORY_PICK_LIST",
                 "options": [
                   {
                     "type": "integer",
-                    "stable_id": "PROPHYLACTIC_ANTIBIOTICS6"
+                    "stable_id": "PROPHYLACTIC_ANTIBIOTICS"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "ANTI_TREMOR6"
+                    "stable_id": "ANTI_TREMOR"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "ANTI_SEIZURE6"
+                    "stable_id": "ANTI_SEIZURE"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "ANTI_DROOLING6"
+                    "stable_id": "ANTI_DROOLING"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "DIABETES6"
+                    "stable_id": "DIABETES"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "ANTI_DEPRESSANT6"
+                    "stable_id": "ANTI_DEPRESSANT"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "STEROID6"
+                    "stable_id": "STEROID"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "CHEMOTHERAPY6"
+                    "stable_id": "CHEMOTHERAPY"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "BIRTH_CONTROL6"
+                    "stable_id": "BIRTH_CONTROL"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "OTHER6"
+                    "stable_id": "OTHER"
                   }
                 ]
               },
               {
                 "name": "medication_6_name",
                 "type": "string",
-                "stable_id": "MEDICATION_NAME6"
+                "stable_id": "MEDICATION_NAME"
               },
               {
                 "name": "medication_6_age",
                 "type": "string",
-                "stable_id": "BEGAN_TAKING_AT_AGE6"
-              }
-            ]
-          },
-          {
-            "name": "medication_category_7",
-            "stable_id": "MEDICATION_CATEGORY7",
-            "type": "Composite",
-            "children": [
+                "stable_id": "BEGAN_TAKING_AT_AGE"
+              },
               {
                 "name": "medication_7_category",
                 "type": "Picklist",
-                "stable_id": "MEDICATION_CATEGORY_PICK_LIST7",
+                "stable_id": "MEDICATION_CATEGORY_PICK_LIST",
                 "options": [
                   {
                     "type": "integer",
-                    "stable_id": "PROPHYLACTIC_ANTIBIOTICS7"
+                    "stable_id": "PROPHYLACTIC_ANTIBIOTICS"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "ANTI_TREMOR7"
+                    "stable_id": "ANTI_TREMOR"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "ANTI_SEIZURE7"
+                    "stable_id": "ANTI_SEIZURE"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "ANTI_DROOLING7"
+                    "stable_id": "ANTI_DROOLING"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "DIABETES7"
+                    "stable_id": "DIABETES"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "ANTI_DEPRESSANT7"
+                    "stable_id": "ANTI_DEPRESSANT"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "STEROID7"
+                    "stable_id": "STEROID"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "CHEMOTHERAPY7"
+                    "stable_id": "CHEMOTHERAPY"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "BIRTH_CONTROL7"
+                    "stable_id": "BIRTH_CONTROL"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "OTHER7"
+                    "stable_id": "OTHER"
                   }
                 ]
               },
               {
                 "name": "medication_7_name",
                 "type": "string",
-                "stable_id": "MEDICATION_NAME7"
+                "stable_id": "MEDICATION_NAME"
               },
               {
                 "name": "medication_7_age",
                 "type": "string",
-                "stable_id": "BEGAN_TAKING_AT_AGE7"
-              }
-            ]
-          },
-          {
-            "name": "medication_category_8",
-            "stable_id": "MEDICATION_CATEGORY8",
-            "type": "Composite",
-            "children": [
+                "stable_id": "BEGAN_TAKING_AT_AGE"
+              },
               {
                 "name": "medication_8_category",
                 "type": "Picklist",
-                "stable_id": "MEDICATION_CATEGORY_PICK_LIST8",
+                "stable_id": "MEDICATION_CATEGORY_PICK_LIST",
                 "options": [
                   {
                     "type": "integer",
-                    "stable_id": "PROPHYLACTIC_ANTIBIOTICS8"
+                    "stable_id": "PROPHYLACTIC_ANTIBIOTICS"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "ANTI_TREMOR8"
+                    "stable_id": "ANTI_TREMOR"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "ANTI_SEIZURE8"
+                    "stable_id": "ANTI_SEIZURE"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "ANTI_DROOLING8"
+                    "stable_id": "ANTI_DROOLING"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "DIABETES8"
+                    "stable_id": "DIABETES"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "ANTI_DEPRESSANT8"
+                    "stable_id": "ANTI_DEPRESSANT"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "STEROID8"
+                    "stable_id": "STEROID"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "CHEMOTHERAPY8"
+                    "stable_id": "CHEMOTHERAPY"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "BIRTH_CONTROL8"
+                    "stable_id": "BIRTH_CONTROL"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "OTHER8"
+                    "stable_id": "OTHER"
                   }
                 ]
               },
               {
                 "name": "medication_8_name",
                 "type": "string",
-                "stable_id": "MEDICATION_NAME8"
+                "stable_id": "MEDICATION_NAME"
               },
               {
                 "name": "medication_8_age",
                 "type": "string",
-                "stable_id": "BEGAN_TAKING_AT_AGE8"
-              }
-            ]
-          },
-          {
-            "name": "medication_category_9",
-            "stable_id": "MEDICATION_CATEGORY9",
-            "type": "Composite",
-            "children": [
+                "stable_id": "BEGAN_TAKING_AT_AGE"
+              },
               {
                 "name": "medication_9_category",
                 "type": "Picklist",
-                "stable_id": "MEDICATION_CATEGORY_PICK_LIST9",
+                "stable_id": "MEDICATION_CATEGORY_PICK_LIST",
                 "options": [
                   {
                     "type": "integer",
-                    "stable_id": "PROPHYLACTIC_ANTIBIOTICS9"
+                    "stable_id": "PROPHYLACTIC_ANTIBIOTICS"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "ANTI_TREMOR9"
+                    "stable_id": "ANTI_TREMOR"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "ANTI_SEIZURE9"
+                    "stable_id": "ANTI_SEIZURE"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "ANTI_DROOLING9"
+                    "stable_id": "ANTI_DROOLING"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "DIABETES9"
+                    "stable_id": "DIABETES"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "ANTI_DEPRESSANT9"
+                    "stable_id": "ANTI_DEPRESSANT"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "STEROID9"
+                    "stable_id": "STEROID"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "CHEMOTHERAPY9"
+                    "stable_id": "CHEMOTHERAPY"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "BIRTH_CONTROL9"
+                    "stable_id": "BIRTH_CONTROL"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "OTHER9"
+                    "stable_id": "OTHER"
                   }
                 ]
               },
               {
                 "name": "medication_9_name",
                 "type": "string",
-                "stable_id": "MEDICATION_NAME9"
+                "stable_id": "MEDICATION_NAME"
               },
               {
                 "name": "medication_9_age",
                 "type": "string",
-                "stable_id": "BEGAN_TAKING_AT_AGE9"
+                "stable_id": "BEGAN_TAKING_AT_AGE"
               }
             ]
           },
@@ -1305,405 +1249,377 @@
             ]
           },
           {
-            "name": "sibling_1",
-            "stable_id": "SIBLING_1",
+            "name": "sibling",
+            "stable_id": "SIBLING",
             "type": "Composite",
             "children": [
               {
                 "name": "sibling_1_sex",
                 "type": "Picklist",
-                "stable_id": "SEX_PICKLIST_1",
+                "stable_id": "SEX_PICKLIST",
                 "options": [
                   {
                     "type": "integer",
-                    "stable_id": "DROPDOWN_MALE_1"
+                    "stable_id": "DROPDOWN_MALE"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "DROPDOWN_FEMALE_1"
+                    "stable_id": "DROPDOWN_FEMALE"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "DROPDOWN_OTHER_1"
+                    "stable_id": "DROPDOWN_OTHER"
                   }
                 ]
               },
               {
                 "name": "sibling_1_age",
                 "type": "Numeric",
-                "stable_id": "AGE_1"
+                "stable_id": "AGE"
               },
               {
                 "name": "sibling_1_dob",
-                "stable_id": "DATE_OF_BIRTH_1",
+                "stable_id": "DATE_OF_BIRTH",
                 "type": "Date",
                 "format": "yyyy-MM-dd'T'HH:mm:ss"
               },
               {
                 "name": "sibling_1_age_death",
-                "stable_id": "AGE_AT_DEATH_1",
+                "stable_id": "AGE_AT_DEATH",
                 "type": "Numeric",
                 "source_type": "integer"
               },
               {
                 "name": "sibling_1_at_diagnosis",
                 "type": "Picklist",
-                "stable_id": "DIAGNOSIS_PICKLIST_1",
+                "stable_id": "DIAGNOSIS_PICKLIST",
                 "options": [
                   {
                     "type": "integer",
-                    "stable_id": "DIAGNOSIS_DROPDOWN_YES_1"
+                    "stable_id": "DIAGNOSIS_DROPDOWN_YES"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "DIAGNOSIS_DROPDOWN_NO_1"
+                    "stable_id": "DIAGNOSIS_DROPDOWN_NO"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "DIAGNOSIS_DROPDOWN_UNKNOWN_1"
+                    "stable_id": "DIAGNOSIS_DROPDOWN_UNKNOWN"
                   }
                 ]
               },
               {
                 "name": "sibling_1_at_carrier",
                 "type": "Picklist",
-                "stable_id": "CARRIER_PICKLIST_1",
+                "stable_id": "CARRIER_PICKLIST",
                 "options": [
                   {
                     "type": "integer",
-                    "stable_id": "CARRIER_DROPDOWN_YES_1"
+                    "stable_id": "CARRIER_DROPDOWN_YES"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "CARRIER_DROPDOWN_NO_1"
+                    "stable_id": "CARRIER_DROPDOWN_NO"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "CARRIER_DROPDOWN_UNKNOWN_2"
+                    "stable_id": "CARRIER_DROPDOWN_UNKNOWN"
                   }
                 ]
-              }
-            ]
-          },
-          {
-            "name": "sibling_2",
-            "stable_id": "SIBLING_2",
-            "type": "Composite",
-            "children": [
+              },
               {
                 "name": "sibling_2_sex",
                 "type": "Picklist",
-                "stable_id": "SEX_PICKLIST_2",
+                "stable_id": "SEX_PICKLIST",
                 "options": [
                   {
                     "type": "integer",
-                    "stable_id": "DROPDOWN_MALE_2"
+                    "stable_id": "DROPDOWN_MALE"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "DROPDOWN_FEMALE_2"
+                    "stable_id": "DROPDOWN_FEMALE"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "DROPDOWN_OTHER_2"
+                    "stable_id": "DROPDOWN_OTHER"
                   }
                 ]
               },
               {
                 "name": "sibling_2_age",
                 "type": "Numeric",
-                "stable_id": "AGE_2"
+                "stable_id": "AGE"
               },
               {
                 "name": "sibling_2_dob",
-                "stable_id": "DATE_OF_BIRTH_2",
+                "stable_id": "DATE_OF_BIRTH",
                 "type": "Date",
                 "format": "yyyy-MM-dd'T'HH:mm:ss"
               },
               {
                 "name": "sibling_2_age_death",
-                "stable_id": "AGE_AT_DEATH_2",
+                "stable_id": "AGE_AT_DEATH",
                 "type": "Numeric",
                 "source_type": "integer"
               },
               {
                 "name": "sibling_2_at_diagnosis",
                 "type": "Picklist",
-                "stable_id": "DIAGNOSIS_PICKLIST_2",
+                "stable_id": "DIAGNOSIS_PICKLIST",
                 "options": [
                   {
                     "type": "integer",
-                    "stable_id": "DIAGNOSIS_DROPDOWN_YES_2"
+                    "stable_id": "DIAGNOSIS_DROPDOWN_YES"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "DIAGNOSIS_DROPDOWN_NO_2"
+                    "stable_id": "DIAGNOSIS_DROPDOWN_NO"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "DIAGNOSIS_DROPDOWN_UNKNOWN_2"
+                    "stable_id": "DIAGNOSIS_DROPDOWN_UNKNOWN"
                   }
                 ]
               },
               {
                 "name": "sibling_2_at_carrier",
                 "type": "Picklist",
-                "stable_id": "CARRIER_PICKLIST_2",
+                "stable_id": "CARRIER_PICKLIST",
                 "options": [
                   {
                     "type": "integer",
-                    "stable_id": "CARRIER_DROPDOWN_YES_2"
+                    "stable_id": "CARRIER_DROPDOWN_YES"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "CARRIER_DROPDOWN_NO_2"
+                    "stable_id": "CARRIER_DROPDOWN_NO"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "CARRIER_DROPDOWN_UNKNOWN_2"
+                    "stable_id": "CARRIER_DROPDOWN_UNKNOWN"
                   }
                 ]
-              }
-            ]
-          },
-          {
-            "name": "sibling_3",
-            "stable_id": "SIBLING_3",
-            "type": "Composite",
-            "children": [
+              },
               {
                 "name": "sibling_3_sex",
                 "type": "Picklist",
-                "stable_id": "SEX_PICKLIST_3",
+                "stable_id": "SEX_PICKLIST",
                 "options": [
                   {
                     "type": "integer",
-                    "stable_id": "DROPDOWN_MALE_3"
+                    "stable_id": "DROPDOWN_MALE"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "DROPDOWN_FEMALE_3"
+                    "stable_id": "DROPDOWN_FEMALE"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "DROPDOWN_OTHER_3"
+                    "stable_id": "DROPDOWN_OTHER"
                   }
                 ]
               },
               {
                 "name": "sibling_3_age",
                 "type": "Numeric",
-                "stable_id": "AGE_3"
+                "stable_id": "AGE"
               },
               {
                 "name": "sibling_3_dob",
-                "stable_id": "DATE_OF_BIRTH_3",
+                "stable_id": "DATE_OF_BIRTH",
                 "type": "Date",
                 "format": "yyyy-MM-dd'T'HH:mm:ss"
               },
               {
                 "name": "sibling_3_age_death",
-                "stable_id": "AGE_AT_DEATH_3",
+                "stable_id": "AGE_AT_DEATH",
                 "type": "Numeric",
                 "source_type": "integer"
               },
               {
                 "name": "sibling_3_at_diagnosis",
                 "type": "Picklist",
-                "stable_id": "DIAGNOSIS_PICKLIST_3",
+                "stable_id": "DIAGNOSIS_PICKLIST",
                 "options": [
                   {
                     "type": "integer",
-                    "stable_id": "DIAGNOSIS_DROPDOWN_YES_3"
+                    "stable_id": "DIAGNOSIS_DROPDOWN_YES"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "DIAGNOSIS_DROPDOWN_NO_3"
+                    "stable_id": "DIAGNOSIS_DROPDOWN_NO"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "DIAGNOSIS_DROPDOWN_UNKNOWN_3"
+                    "stable_id": "DIAGNOSIS_DROPDOWN_UNKNOWN"
                   }
                 ]
               },
               {
                 "name": "sibling_3_at_carrier",
                 "type": "Picklist",
-                "stable_id": "CARRIER_PICKLIST_3",
+                "stable_id": "CARRIER_PICKLIST",
                 "options": [
                   {
                     "type": "integer",
-                    "stable_id": "CARRIER_DROPDOWN_YES_3"
+                    "stable_id": "CARRIER_DROPDOWN_YES"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "CARRIER_DROPDOWN_NO_3"
+                    "stable_id": "CARRIER_DROPDOWN_NO"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "CARRIER_DROPDOWN_UNKNOWN_3"
+                    "stable_id": "CARRIER_DROPDOWN_UNKNOWN"
                   }
                 ]
-              }
-            ]
-          },
-          {
-            "name": "sibling_4",
-            "stable_id": "SIBLING_4",
-            "type": "Composite",
-            "children": [
+              },
               {
                 "name": "sibling_4_sex",
                 "type": "Picklist",
-                "stable_id": "SEX_PICKLIST_4",
+                "stable_id": "SEX_PICKLIST",
                 "options": [
                   {
                     "type": "integer",
-                    "stable_id": "DROPDOWN_MALE_4"
+                    "stable_id": "DROPDOWN_MALE"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "DROPDOWN_FEMALE_4"
+                    "stable_id": "DROPDOWN_FEMALE"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "DROPDOWN_OTHER_4"
+                    "stable_id": "DROPDOWN_OTHER"
                   }
                 ]
               },
               {
                 "name": "sibling_4_age",
                 "type": "Numeric",
-                "stable_id": "AGE_4"
+                "stable_id": "AGE"
               },
               {
                 "name": "sibling_4_dob",
-                "stable_id": "DATE_OF_BIRTH_4",
+                "stable_id": "DATE_OF_BIRTH",
                 "type": "Date",
                 "format": "yyyy-MM-dd'T'HH:mm:ss"
               },
               {
                 "name": "sibling_4_age_death",
-                "stable_id": "AGE_AT_DEATH_4",
+                "stable_id": "AGE_AT_DEATH",
                 "type": "Numeric",
                 "source_type": "integer"
               },
               {
                 "name": "sibling_4_at_diagnosis",
                 "type": "Picklist",
-                "stable_id": "DIAGNOSIS_PICKLIST_4",
+                "stable_id": "DIAGNOSIS_PICKLIST",
                 "options": [
                   {
                     "type": "integer",
-                    "stable_id": "DIAGNOSIS_DROPDOWN_YES_4"
+                    "stable_id": "DIAGNOSIS_DROPDOWN_YES"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "DIAGNOSIS_DROPDOWN_NO_4"
+                    "stable_id": "DIAGNOSIS_DROPDOWN_NO"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "DIAGNOSIS_DROPDOWN_UNKNOWN_4"
+                    "stable_id": "DIAGNOSIS_DROPDOWN_UNKNOWN"
                   }
                 ]
               },
               {
                 "name": "sibling_4_at_carrier",
                 "type": "Picklist",
-                "stable_id": "CARRIER_PICKLIST_4",
+                "stable_id": "CARRIER_PICKLIST",
                 "options": [
                   {
                     "type": "integer",
-                    "stable_id": "CARRIER_DROPDOWN_YES_4"
+                    "stable_id": "CARRIER_DROPDOWN_YES"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "CARRIER_DROPDOWN_NO_4"
+                    "stable_id": "CARRIER_DROPDOWN_NO"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "CARRIER_DROPDOWN_UNKNOWN_4"
+                    "stable_id": "CARRIER_DROPDOWN_UNKNOWN"
                   }
                 ]
-              }
-            ]
-          },
-          {
-            "name": "sibling_5",
-            "stable_id": "SIBLING_5",
-            "type": "Composite",
-            "children": [
+              },
               {
                 "name": "sibling_5_sex",
                 "type": "Picklist",
-                "stable_id": "SEX_PICKLIST_5",
+                "stable_id": "SEX_PICKLIST",
                 "options": [
                   {
                     "type": "integer",
-                    "stable_id": "DROPDOWN_MALE_5"
+                    "stable_id": "DROPDOWN_MALE"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "DROPDOWN_FEMALE_5"
+                    "stable_id": "DROPDOWN_FEMALE"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "DROPDOWN_OTHER_5"
+                    "stable_id": "DROPDOWN_OTHER"
                   }
                 ]
               },
               {
                 "name": "sibling_5_age",
                 "type": "Numeric",
-                "stable_id": "AGE_5"
+                "stable_id": "AGE"
               },
               {
                 "name": "sibling_5_dob",
-                "stable_id": "DATE_OF_BIRTH_5",
+                "stable_id": "DATE_OF_BIRTH",
                 "type": "Date",
                 "format": "yyyy-MM-dd'T'HH:mm:ss"
               },
               {
                 "name": "sibling_5_age_death",
-                "stable_id": "AGE_AT_DEATH_5",
+                "stable_id": "AGE_AT_DEATH",
                 "type": "Numeric",
                 "source_type": "integer"
               },
               {
                 "name": "sibling_5_at_diagnosis",
                 "type": "Picklist",
-                "stable_id": "DIAGNOSIS_PICKLIST_5",
+                "stable_id": "DIAGNOSIS_PICKLIST",
                 "options": [
                   {
                     "type": "integer",
-                    "stable_id": "DIAGNOSIS_DROPDOWN_YES_5"
+                    "stable_id": "DIAGNOSIS_DROPDOWN_YES"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "DIAGNOSIS_DROPDOWN_NO_5"
+                    "stable_id": "DIAGNOSIS_DROPDOWN_NO"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "DIAGNOSIS_DROPDOWN_UNKNOWN_5"
+                    "stable_id": "DIAGNOSIS_DROPDOWN_UNKNOWN"
                   }
                 ]
               },
               {
                 "name": "sibling_5_at_carrier",
                 "type": "Picklist",
-                "stable_id": "CARRIER_PICKLIST_5",
+                "stable_id": "CARRIER_PICKLIST",
                 "options": [
                   {
                     "type": "integer",
-                    "stable_id": "CARRIER_DROPDOWN_YES_5"
+                    "stable_id": "CARRIER_DROPDOWN_YES"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "CARRIER_DROPDOWN_NO_5"
+                    "stable_id": "CARRIER_DROPDOWN_NO"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "CARRIER_DROPDOWN_UNKNOWN_5"
+                    "stable_id": "CARRIER_DROPDOWN_UNKNOWN"
                   }
                 ]
               }
