@@ -25,6 +25,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.apache.http.entity.ContentType;
+import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetricsTracker;
 import org.broadinstitute.ddp.client.DsmClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.ErrorCodes;
@@ -278,6 +279,9 @@ public class DataDonationPlatform {
         });
         get(RouteConstants.GAE.STOP_ENDPOINT, (request, response) -> {
             LOG.info("Received GAE stop request [{}]", RouteConstants.GAE.STOP_ENDPOINT);
+            //flush out any pending GA events
+            GoogleAnalyticsMetricsTracker.getInstance().flushOutMetrics();
+
             response.status(200);
             return "";
         });

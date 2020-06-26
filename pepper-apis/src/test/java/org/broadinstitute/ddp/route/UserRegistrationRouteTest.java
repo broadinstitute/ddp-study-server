@@ -490,6 +490,8 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
 
     @Test
     public void testRegister_newUser_governancePolicy_createGovernedUser() {
+
+
         StudyDto testStudy = TransactionWrapper.withTxn(handle -> {
             StudyDto study = TestDataSetupUtil.generateTestStudy(handle, RouteTestUtil.getConfig());
             GovernancePolicy policy = new GovernancePolicy(study.getId(), new Expression("true"));

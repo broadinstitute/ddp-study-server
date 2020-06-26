@@ -20,6 +20,7 @@
     "sendgridFromName": "{{$conf.sendgridFromName}}",
     "sendgridFromEmail": "{{$conf.sendgridFromEmail}}",
     "sendgridDefaultSalutation" : "{{$conf.sendgridDefaultSalutation}}",
+    "analyticsToken": "{{$conf.analyticsToken}}",
 
 {{if not $conf.irbPassword}}
     "irbPassword": null,
