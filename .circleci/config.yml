@@ -435,6 +435,8 @@ commands:
               circleci tests split --split-by=timings --timings-type=classname > $THIS_NODE_TESTS_PATH
 
             echo "Number of test classes circleci wants to execute on this node: $(wc -l < $THIS_NODE_TESTS_PATH)"
+            echo "The included test classes are:"
+            cat $THIS_NODE_TESTS_PATH
 
             IGNORE_CLASS_LIST_PATH="${TEST_DATA_PATH}/surefire_classnames_ignore_list"
 
