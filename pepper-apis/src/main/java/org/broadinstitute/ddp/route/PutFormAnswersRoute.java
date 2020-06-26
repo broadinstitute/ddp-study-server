@@ -3,6 +3,8 @@ package org.broadinstitute.ddp.route;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetrics;
+import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetricsTracker;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.content.I18nContentRenderer;
@@ -10,6 +12,7 @@ import org.broadinstitute.ddp.db.FormInstanceDao;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
+import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiFormActivitySetting;
 import org.broadinstitute.ddp.db.dto.FormActivitySettingDto;
 import org.broadinstitute.ddp.db.dto.LanguageDto;
@@ -133,6 +136,15 @@ public class PutFormAnswersRoute implements Route {
                             .orElse(WorkflowResponse.unknown());
 
                     handle.attach(DataExportDao.class).queueDataSync(userGuid, studyGuid);
+
+                    String studyActivityCode = handle.attach(JdbiActivity.class).queryActivityById(
+                            instanceDto.getActivityId()).getActivityCode();
+
+                    GoogleAnalyticsMetricsTracker.getInstance().sendAnalyticsMetrics(
+                            studyGuid, GoogleAnalyticsMetrics.EVENT_CATEGORY_PUT_ANSWERS,
+                            GoogleAnalyticsMetrics.EVENT_ACTION_PUT_ANSWERS, GoogleAnalyticsMetrics.EVENT_LABEL_PUT_ANSWERS,
+                            studyActivityCode, 1);
+
                     return new PutAnswersResponse(workflowResp);
                 }
         );

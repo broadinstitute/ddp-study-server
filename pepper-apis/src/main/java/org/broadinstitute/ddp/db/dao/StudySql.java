@@ -10,11 +10,13 @@ public interface StudySql extends SqlObject {
     // Study settings
     //
 
-    @SqlUpdate("insert into study_settings (umbrella_study_id, invite_error_template_id)"
-            + " values (:studyId, :inviteErrorTmplId)")
+    @SqlUpdate("insert into study_settings (umbrella_study_id, invite_error_template_id, analytics_enabled, analytics_token)"
+            + " values (:studyId, :inviteErrorTmplId, :analyticsEnabled, :analyticsToken)")
     int insertSettings(
             @Bind("studyId") long studyId,
-            @Bind("inviteErrorTmplId") Long inviteErrorTemplateId);
+            @Bind("inviteErrorTmplId") Long inviteErrorTemplateId,
+            @Bind("analyticsEnabled") boolean analyticsEnabled,
+            @Bind("analyticsToken") String analyticsToken);
 
     @SqlUpdate("delete from study_settings where umbrella_study_id = :studyId")
     int deleteSettings(@Bind("studyId") long studyId);
