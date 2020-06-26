@@ -21,7 +21,6 @@ public class InvitationCheckStatusPayload {
     @SerializedName("qualificationDetails")
     private Map<String, Object> qualificationDetails = new HashMap<>();
 
-    @NotEmpty
     @SerializedName("recaptchaToken")
     private String recaptchaToken;
 
