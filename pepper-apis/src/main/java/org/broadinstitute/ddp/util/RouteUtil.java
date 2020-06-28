@@ -12,7 +12,7 @@ import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.content.ContentStyle;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
-import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
+import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudyCached;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.LanguageDto;
@@ -142,7 +142,7 @@ public class RouteUtil {
      */
     public static ActivityInstanceDto findAccessibleInstanceOrHalt(Response response, Handle handle,
                                                                    String participantGuid, String studyGuid, String instanceGuid) {
-        StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
+        StudyDto studyDto = handle.attach(JdbiUmbrellaStudyCached.class).findByStudyGuid(studyGuid);
         if (studyDto == null) {
             String msg = "Could not find study with guid " + participantGuid;
             throw ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.STUDY_NOT_FOUND, msg));
