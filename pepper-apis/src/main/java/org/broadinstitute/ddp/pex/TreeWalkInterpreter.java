@@ -22,6 +22,7 @@ import org.broadinstitute.ddp.db.dao.InvitationDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
+import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudyCached;
 import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
@@ -316,7 +317,7 @@ public class TreeWalkInterpreter implements PexInterpreter {
 
     private Object applyAnswerPredicate(InterpreterContext ictx, String studyGuid, String activityCode, String stableId,
                                         String instanceType, PredicateContext predicateCtx) {
-        long studyId = ictx.getHandle().attach(JdbiUmbrellaStudy.class)
+        long studyId = new JdbiUmbrellaStudyCached(ictx.getHandle())
                 .getIdByGuid(studyGuid)
                 .orElseThrow(() -> {
                     String msg = String.format("Study guid '%s' does not refer to a valid study", studyGuid);
