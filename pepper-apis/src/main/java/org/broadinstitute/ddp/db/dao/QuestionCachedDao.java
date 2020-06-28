@@ -79,7 +79,7 @@ public class QuestionCachedDao extends SQLObjectWrapper<QuestionDao> implements 
 
     @Override
     public JdbiCompositeQuestion getJdbiCompositeQuestion() {
-        return delegate.getJdbiCompositeQuestion();
+        return new JdbiCompositeQuestionCached(getHandle());
     }
 
     @Override

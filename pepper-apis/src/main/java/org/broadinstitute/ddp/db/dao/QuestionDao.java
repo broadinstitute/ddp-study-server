@@ -621,7 +621,7 @@ public interface QuestionDao extends SqlObject {
                                                    List<Rule> untypedRules,
                                                    long langCodeId) {
         CompositeQuestionDto compositeQuestionDto = getJdbiCompositeQuestion()
-                .findDtoByQuestionId(dto.getId())
+                .findDtoByQuestion(dto)
                 .orElseThrow(() -> new DaoException("Could not find composite question using question id " + dto.getId()));
 
         boolean retrieveChildAnswers = true;
@@ -1484,7 +1484,7 @@ public interface QuestionDao extends SqlObject {
 
     default CompositeQuestionDef findCompositeQuestionDefByDtoAndTimestamp(QuestionDto questionDto, long timestamp) {
         CompositeQuestionDto compositeDto = getJdbiCompositeQuestion()
-                .findDtoByQuestionId(questionDto.getId())
+                .findDtoByQuestion(questionDto)
                 .orElseThrow(() -> new DaoException(String.format(
                         "Could not find composite question definition for id %d and timestamp %d", questionDto.getId(), timestamp)));
 
