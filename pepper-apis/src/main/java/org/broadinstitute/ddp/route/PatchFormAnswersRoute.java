@@ -27,6 +27,7 @@ import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiCompositeQuestion;
+import org.broadinstitute.ddp.db.dao.JdbiCompositeQuestionCached;
 import org.broadinstitute.ddp.db.dao.JdbiNumericQuestion;
 import org.broadinstitute.ddp.db.dao.JdbiQuestionCached;
 import org.broadinstitute.ddp.db.dao.QuestionCachedDao;
@@ -171,8 +172,8 @@ public class PatchFormAnswersRoute implements Route {
                             instanceGuid, false, languageCodeId);
 
                     //validation to check if question is a composite child
-                    Optional<Long> parentQuestionId = handle.attach(JdbiCompositeQuestion.class)
-                            .findParentQuestionIdByChildQuestionId(question.getQuestionId());
+                    Optional<Long> parentQuestionId = new JdbiCompositeQuestionCached(handle)
+                            .findParentQuestionIdByChildQuestion(questionDto);
                     if (parentQuestionId.isPresent()) {
                         LOG.warn("Passed question stable ID : " + questionStableId + " is a Composite child question. "
                                 + "Only entire Composite question answer can be updated ");
@@ -474,7 +475,7 @@ public class PatchFormAnswersRoute implements Route {
         };
         if (value != null && value.isJsonArray()) {
             CompositeAnswer compAnswer = new CompositeAnswer(null, parentStableId, answerGuid);
-            JdbiCompositeQuestion compositeQuestionDao = handle.attach(JdbiCompositeQuestion.class);
+            JdbiCompositeQuestion compositeQuestionDao = new JdbiCompositeQuestionCached(handle);
             Optional<CompositeQuestionDto> compositeQuestionOpt = compositeQuestionDao
                     .findDtoByInstanceGuidAndStableId(instanceGuid, parentStableId);
             if (!compositeQuestionOpt.isPresent()) {
