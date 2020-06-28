@@ -28,6 +28,7 @@ import org.broadinstitute.ddp.model.kit.KitRule;
 import org.broadinstitute.ddp.model.kit.KitRuleType;
 import org.broadinstitute.ddp.model.kit.KitZipCodeRule;
 import org.broadinstitute.ddp.model.study.StudySettings;
+import org.broadinstitute.ddp.security.DDPAuth;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
@@ -57,11 +58,12 @@ public class InvitationCheckStatusRoute extends ValidatedJsonInputRoute<Invitati
     public Object handle(Request request, Response response, InvitationCheckStatusPayload payload) throws Exception {
         String studyGuid = request.params(RouteConstants.PathParam.STUDY_GUID);
         String invitationGuid = payload.getInvitationGuid();
+        DDPAuth ddpAuth = RouteUtil.getDDPAuth(request);
         LOG.info("Attempting to check invitation {} in study {}", invitationGuid, studyGuid);
 
         ApiError error = TransactionWrapper.withTxn(handle -> {
             String langCode = RouteUtil.resolveLanguage(request, handle, studyGuid, null);
-            return checkStatus(handle, studyGuid, request.ip(), langCode, payload);
+            return checkStatus(handle, ddpAuth, studyGuid, request.ip(), langCode, payload);
         });
 
         if (error != null) {
@@ -72,19 +74,25 @@ public class InvitationCheckStatusRoute extends ValidatedJsonInputRoute<Invitati
         }
     }
 
-    ApiError checkStatus(Handle handle, String studyGuid, String ipAddress, String langCode, InvitationCheckStatusPayload payload) {
+    ApiError checkStatus(Handle handle, DDPAuth ddpAuth, String studyGuid, String ipAddress, String langCode,
+                         InvitationCheckStatusPayload payload) {
         StudyDto studyDto = findStudy(handle, studyGuid);
         if (studyDto == null) {
             LOG.error("Invitation check called for non-existent study with guid {}", studyGuid);
             return new ApiError(ErrorCodes.INVALID_INVITATION, DEFAULT_INVITE_ERROR_MSG);
         }
 
-        if (studyDto.getRecaptchaSiteKey() == null) {
-            LOG.error("ReCaptcha has not been enabled for study with guid: {}", studyGuid);
-            throw new DDPException("Server configuration problem");
-        }
-        if (!isUserRecaptchaTokenValid(payload.getRecaptchaToken(), studyDto.getRecaptchaSiteKey(), ipAddress)) {
-            return new ApiError(ErrorCodes.BAD_PAYLOAD, "Request was invalid");
+        if (ddpAuth.hasAdminAccessToStudy(studyGuid) && payload.getRecaptchaToken() == null) {
+            LOG.info("Operator {} is admin for study {} and no reCaptcha token provided, skipping reCaptcha check",
+                    ddpAuth.getOperator(), studyGuid);
+        } else {
+            if (studyDto.getRecaptchaSiteKey() == null) {
+                LOG.error("ReCaptcha has not been enabled for study with guid: {}", studyGuid);
+                throw new DDPException("Server configuration problem");
+            }
+            if (!isUserRecaptchaTokenValid(payload.getRecaptchaToken(), studyDto.getRecaptchaSiteKey(), ipAddress)) {
+                return new ApiError(ErrorCodes.BAD_PAYLOAD, "Request was invalid");
+            }
         }
 
         String invitationGuid = payload.getInvitationGuid();

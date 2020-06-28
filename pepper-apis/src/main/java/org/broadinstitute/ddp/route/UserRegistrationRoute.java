@@ -10,6 +10,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import com.auth0.exception.Auth0Exception;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
+import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetrics;
+import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetricsTracker;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.constants.ErrorCodes;
@@ -347,6 +349,10 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
             }
         } else {
             LOG.info("Existing user {} is in study {} with status {}", user.getGuid(), study.getGuid(), status);
+            GoogleAnalyticsMetricsTracker.getInstance().sendAnalyticsMetrics(
+                    study.getGuid(), GoogleAnalyticsMetrics.EVENT_CATEGORY_USER_LOGIN,
+                    GoogleAnalyticsMetrics.EVENT_ACTION_USER_LOGIN, GoogleAnalyticsMetrics.EVENT_LABEL_USER_LOGIN,
+                    null, 1);
             return user.getGuid();
         }
     }
@@ -418,6 +424,17 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
             EnrollmentStatusType initialStatus = EnrollmentStatusType.REGISTERED;
             jdbiEnrollment.changeUserStudyEnrollmentStatus(user.getGuid(), study.getGuid(), initialStatus);
             LOG.info("Registered user {} with status {} in study {}", user.getGuid(), initialStatus, study.getGuid());
+
+            //send GA events
+            GoogleAnalyticsMetricsTracker.getInstance().sendAnalyticsMetrics(
+                    study.getGuid(), GoogleAnalyticsMetrics.EVENT_CATEGORY_USER_REGISTRATION,
+                    GoogleAnalyticsMetrics.EVENT_ACTION_USER_REGISTRATION, GoogleAnalyticsMetrics.EVENT_LABEL_USER_REGISTRATION,
+                    null, 1);
+
+            GoogleAnalyticsMetricsTracker.getInstance().sendAnalyticsMetrics(
+                    study.getGuid(), GoogleAnalyticsMetrics.EVENT_CATEGORY_USER_LOGIN,
+                    GoogleAnalyticsMetrics.EVENT_ACTION_USER_LOGIN, GoogleAnalyticsMetrics.EVENT_LABEL_USER_LOGIN,
+                    null, 1);
         } else {
             LOG.warn("User {} is already registered in study {} with status {}", user.getGuid(), study.getGuid(), status);
         }

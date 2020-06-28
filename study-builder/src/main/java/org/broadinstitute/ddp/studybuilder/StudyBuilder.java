@@ -487,7 +487,10 @@ public class StudyBuilder {
                     Instant.now().toEpochMilli(), userId, "Insert study settings");
         }
 
-        handle.attach(StudyDao.class).addSettings(studyDto.getId(), inviteError, revisionId);
+        boolean analyticsEnabled = settingsCfg.hasPath("analyticsEnabled") && settingsCfg.getBoolean("analyticsEnabled");
+        String analyticsToken = ConfigUtil.getStrIfPresent(settingsCfg, "analyticsToken");
+
+        handle.attach(StudyDao.class).addSettings(studyDto.getId(), inviteError, revisionId, analyticsEnabled, analyticsToken);
         LOG.info("Created settings for study={}, inviteErrorTmplId={}",
                 studyDto.getGuid(), inviteError == null ? null : inviteError.getTemplateId());
     }
@@ -510,11 +513,13 @@ public class StudyBuilder {
         for (Config kitCfg : cfg.getConfigList("kits")) {
             String type = kitCfg.getString("type");
             int quantity = kitCfg.getInt("quantity");
+            boolean needsApproval = kitCfg.hasPath("needsApproval") && kitCfg.getBoolean("needsApproval");
 
             KitType kitType = kitTypeDao.getKitTypeByName(type)
                     .orElseThrow(() -> new DDPException("Could not find kit type " + type));
-            long kitId = kitDao.insertConfiguration(studyId, quantity, kitType.getId());
-            LOG.info("Created kit configuration with id={}, type={}, quantity={}", kitId, type, quantity);
+            long kitId = kitDao.insertConfiguration(studyId, quantity, kitType.getId(), needsApproval);
+            LOG.info("Created kit configuration with id={}, type={}, quantity={}, needsApproval={}",
+                    kitId, type, quantity, needsApproval);
 
             for (Config ruleCfg : kitCfg.getConfigList("rules")) {
                 KitRuleType ruleType = KitRuleType.valueOf(ruleCfg.getString("type"));

@@ -3,7 +3,11 @@ post:
   tags:
     - Invitations
   summary: InvitationCheckStatus
-  description: Check the status of an invitation, whether it exits and is valid or not.
+  description: |
+    Check the status of an invitation, whether it exits and is valid or not.
+
+    If request has a study admin auth token, then the reCAPTCHA token is not required.
+    But reCAPTCHA token will still be checked if provided in request.
   parameters:
     - $ref: '../pepper.yml#/components/parameters/studyGuid'
   requestBody:
@@ -25,8 +29,9 @@ post:
               description: the id of the invitation
               type: string
             recaptchaToken:
-              description: the user's reCAPTCHA token
+              description: the user's reCAPTCHA token, nullable if request made by study admin
               type: string
+              nullable: true
             qualificationDetails:
               description: additional user qualifications for checking the invitation
               type: object

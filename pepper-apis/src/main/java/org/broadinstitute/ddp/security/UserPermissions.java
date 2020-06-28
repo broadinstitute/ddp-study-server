@@ -152,28 +152,20 @@ public class UserPermissions implements Serializable {
     }
 
     /**
-     * Returns whether or not this user has admin access
-     * to a study.
+     * Returns whether or not this user has admin access to a study.
      */
     public boolean hasAdminAccessToStudy(String requestedStudyGuid) {
-        if (!isDisabled() && adminStudiesWithAccess.contains(requestedStudyGuid)) {
-            return true;
-        }
-        return false;
+        return !isDisabled() && adminStudiesWithAccess != null && adminStudiesWithAccess.contains(requestedStudyGuid);
     }
 
     /**
      * Returns if user is an admin of any studies.
      */
     public boolean isAdmin() {
-        if (!isDisabled() && adminStudiesWithAccess != null && !adminStudiesWithAccess.isEmpty()) {
-            return true;
-        }
-        return false;
+        return !isDisabled() && adminStudiesWithAccess != null && !adminStudiesWithAccess.isEmpty();
     }
 
     public boolean canUpdateLoginData(String requestedUserGuid) {
         return operatorGuid.equals(requestedUserGuid);
     }
-
 }

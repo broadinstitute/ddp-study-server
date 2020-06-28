@@ -41,13 +41,13 @@ public interface StudyDao extends SqlObject {
     // Study settings
     //
 
-    default void addSettings(long studyId, Template inviteError, Long revisionId) {
+    default void addSettings(long studyId, Template inviteError, Long revisionId, boolean analyticsEnabled, String analyticsToken) {
         if (inviteError != null && revisionId == null) {
             throw new DaoException("Revision is needed to insert templates");
         }
         Long inviteErrorTmplId = inviteError == null ? null
                 : getHandle().attach(TemplateDao.class).insertTemplate(inviteError, revisionId);
-        DBUtils.checkInsert(1, getStudySql().insertSettings(studyId, inviteErrorTmplId));
+        DBUtils.checkInsert(1, getStudySql().insertSettings(studyId, inviteErrorTmplId, analyticsEnabled, analyticsToken));
     }
 
     @SqlQuery("select * from study_settings where umbrella_study_id = :studyId")

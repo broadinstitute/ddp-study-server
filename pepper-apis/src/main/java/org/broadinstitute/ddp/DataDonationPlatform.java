@@ -19,10 +19,13 @@ import static spark.Spark.threadPool;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.apache.http.entity.ContentType;
+import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetricsTracker;
 import org.broadinstitute.ddp.client.DsmClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.ErrorCodes;
@@ -178,6 +181,9 @@ public class DataDonationPlatform {
     private static final Map<String, String> pathToClass = new HashMap<>();
     private static Scheduler scheduler = null;
 
+    private static final AtomicBoolean serverStarted = new AtomicBoolean(false);
+    private static final int SERVER_START_WAIT_SECS = 10;
+
     /**
      * Stop the server using the default wait time.
      */
@@ -256,6 +262,29 @@ public class DataDonationPlatform {
             LOG.info("Running liquibase migrations against " + dbUrl);
             LiquibaseUtil.runLiquibase(dbUrl, TransactionWrapper.DB.APIS);
         }
+
+        // The first route mapping call will also initialize the Spark server. Make that first call
+        // the GAE lifecycle hooks so we capture the GAE call as soon as possible, and respond
+        // only once server has fully booted.
+        get(RouteConstants.GAE.START_ENDPOINT, (request, response) -> {
+            LOG.info("Received GAE start request [{}]", RouteConstants.GAE.START_ENDPOINT);
+            long startedSecs = Instant.now().getEpochSecond();
+            while (!serverStarted.get() && Instant.now().getEpochSecond() - startedSecs < SERVER_START_WAIT_SECS) {
+                TimeUnit.SECONDS.sleep(1);
+            }
+            LOG.info("{}, responding to GAE start request now",
+                    serverStarted.get() ? "Server is started" : "Wait time exceeded");
+            response.status(200);
+            return "";
+        });
+        get(RouteConstants.GAE.STOP_ENDPOINT, (request, response) -> {
+            LOG.info("Received GAE stop request [{}]", RouteConstants.GAE.STOP_ENDPOINT);
+            //flush out any pending GA events
+            GoogleAnalyticsMetricsTracker.getInstance().flushOutMetrics();
+
+            response.status(200);
+            return "";
+        });
 
         SectionBlockDao sectionBlockDao = new SectionBlockDao();
 
@@ -496,20 +525,9 @@ public class DataDonationPlatform {
                 X_FORWARDED_FOR,
                 MDCLogBreadCrumbFilter.LOG_BREADCRUMB));
 
-        // Respond to GAE lifecycle calls.
-        get(RouteConstants.GAE.START_ENDPOINT, (request, response) -> {
-            LOG.info("Received GAE start request [{}]", RouteConstants.GAE.START_ENDPOINT);
-            response.status(200);
-            return "";
-        });
-        get(RouteConstants.GAE.STOP_ENDPOINT, (request, response) -> {
-            LOG.info("Received GAE stop request [{}]", RouteConstants.GAE.STOP_ENDPOINT);
-            response.status(200);
-            return "";
-        });
-
         awaitInitialization();
         LOG.info("ddp startup complete");
+        serverStarted.set(true);
     }
 
     private static void setupApiActivityFilter() {
