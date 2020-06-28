@@ -142,7 +142,7 @@ public class RouteUtil {
      */
     public static ActivityInstanceDto findAccessibleInstanceOrHalt(Response response, Handle handle,
                                                                    String participantGuid, String studyGuid, String instanceGuid) {
-        StudyDto studyDto = handle.attach(JdbiUmbrellaStudyCached.class).findByStudyGuid(studyGuid);
+        StudyDto studyDto = new JdbiUmbrellaStudyCached(handle).findByStudyGuid(studyGuid);
         if (studyDto == null) {
             String msg = "Could not find study with guid " + participantGuid;
             throw ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.STUDY_NOT_FOUND, msg));
