@@ -64,7 +64,7 @@ public class JdbiCompositeQuestionCached extends SQLObjectWrapper<JdbiCompositeQ
                 cacheDtosForActivity(questionDto.getActivityId());
                 parentId = compositeChildQuestionIdToParentIdCache.get(questionDto.getId());
             }
-            return Optional.of(parentId);
+            return Optional.ofNullable(parentId);
         }
     }
 
