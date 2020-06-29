@@ -10,7 +10,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.api.core.ApiFuture;
@@ -47,7 +46,6 @@ import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dto.QueuedEventDto;
 import org.broadinstitute.ddp.db.housekeeping.dao.JdbiEvent;
 import org.broadinstitute.ddp.db.housekeeping.dao.JdbiMessage;
-import org.broadinstitute.ddp.db.housekeeping.dao.KitCheckDao;
 import org.broadinstitute.ddp.event.HousekeepingTaskReceiver;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.exception.MessageBuilderException;
@@ -98,11 +96,6 @@ public class Housekeeping {
     private static final Map<Object, Long> lastLogTimeForException = new HashMap<>();
 
     private static final Logger LOG = LoggerFactory.getLogger(Housekeeping.class);
-
-    /**
-     * Key is study guid, value is the metrics transmitter for the study
-     */
-    private static final Map<String, StackdriverMetricsTracker> kitCounterMonitorByStudy = new HashMap<>();
 
     private static final String DDP_ATTRIBUTE_PREFIX = "ddp.";
     /**
@@ -193,7 +186,6 @@ public class Housekeeping {
 
         Config sqlConfig = ConfigFactory.load(ConfigFile.SQL_CONFIG_FILE);
         DBUtils.loadDaoSqlCommands(sqlConfig);
-        KitCheckDao kitCheckDao = new KitCheckDao();
 
         if (!TransactionWrapper.isInitialized()) {
             TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.HOUSEKEEPING,
@@ -287,15 +279,6 @@ public class Housekeeping {
 
         //loop to pickup pending events on main DB API and create messages to send over to Housekeeping
         while (!stop) {
-            try {
-                TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, handle -> {
-                    KitCheckDao.KitCheckResult kitCheckResult = kitCheckDao.checkForKits(handle);
-                    sendKitMetrics(kitCheckResult);
-                });
-            } catch (Exception e) {
-                LOG.error("Could not setup kits", e);
-            }
-
             try {
                 int numEventsProcessed = TransactionWrapper.withTxn(TransactionWrapper.DB.APIS, apisHandle -> {
                     EventDao eventDao = apisHandle.attach(EventDao.class);
@@ -492,18 +475,6 @@ public class Housekeeping {
             LOG.info("Received ping from GAE, proceeding with Housekeeping startup");
         } else {
             LOG.error("Did not receive ping from GAE but proceeding with Housekeeping startup");
-        }
-    }
-
-    private static void sendKitMetrics(KitCheckDao.KitCheckResult kitCheckResult) {
-        for (Map.Entry<String, AtomicInteger> queuedParticipantsByStudy : kitCheckResult.getQueuedParticipantsByStudy()) {
-            String study = queuedParticipantsByStudy.getKey();
-            int numQueuedParticipants = queuedParticipantsByStudy.getValue().get();
-            if (!kitCounterMonitorByStudy.containsKey(study)) {
-                kitCounterMonitorByStudy.put(study, new StackdriverMetricsTracker(StackdriverCustomMetric.KITS_REQUESTED,
-                        study, PointsReducerFactory.buildSumReducer()));
-            }
-            kitCounterMonitorByStudy.get(study).addPoint(numQueuedParticipants, Instant.now().toEpochMilli());
         }
     }
 

@@ -105,7 +105,7 @@ public class KitCheckDaoTest extends TxnAwareBaseTest {
             Optional<Long> enrollmentId = jdbiEnrollment.findIdByUserAndStudyGuid(userGuid, studyGuid);
             assertFalse("user should not be enrolled in study yet", enrollmentId.isPresent());
 
-            int numRecipients = new KitCheckDao().checkForKits(handle).getTotalNumberOfParticipantsQueuedForKit();
+            int numRecipients = new KitCheckDao().checkForInitialKits(handle).getTotalNumberOfParticipantsQueuedForKit();
             assertEquals("should not have any recipients", 0L, numRecipients);
 
             handle.rollback();
@@ -120,7 +120,7 @@ public class KitCheckDaoTest extends TxnAwareBaseTest {
 
             enrollTestUser(handle);
 
-            int numRecipients = new KitCheckDao().checkForKits(handle).getTotalNumberOfParticipantsQueuedForKit();
+            int numRecipients = new KitCheckDao().checkForInitialKits(handle).getTotalNumberOfParticipantsQueuedForKit();
             assertEquals("should not have any recipients", 0L, numRecipients);
 
             handle.rollback();
@@ -136,7 +136,7 @@ public class KitCheckDaoTest extends TxnAwareBaseTest {
             address.setValidationStatus(DsmAddressValidationStatus.DSM_INVALID_ADDRESS_STATUS);
             updateTestMailAddress(handle, address);
 
-            int numRecipients = new KitCheckDao().checkForKits(handle).getTotalNumberOfParticipantsQueuedForKit();
+            int numRecipients = new KitCheckDao().checkForInitialKits(handle).getTotalNumberOfParticipantsQueuedForKit();
             assertEquals("should not have any recipients", 0L, numRecipients);
 
             handle.rollback();
@@ -152,7 +152,7 @@ public class KitCheckDaoTest extends TxnAwareBaseTest {
             address.setCountry("UK");   // Contrived example to test error case
             updateTestMailAddress(handle, address);
 
-            int numRecipients = new KitCheckDao().checkForKits(handle).getTotalNumberOfParticipantsQueuedForKit();
+            int numRecipients = new KitCheckDao().checkForInitialKits(handle).getTotalNumberOfParticipantsQueuedForKit();
             assertEquals("should not have any recipients", 0L, numRecipients);
 
             handle.rollback();
@@ -168,7 +168,7 @@ public class KitCheckDaoTest extends TxnAwareBaseTest {
             JdbiExpression jdbiExpr = handle.attach(JdbiExpression.class);
             assertEquals(1, jdbiExpr.updateById(kitConfigExprId, "false"));
 
-            int numRecipients = new KitCheckDao().checkForKits(handle).getTotalNumberOfParticipantsQueuedForKit();
+            int numRecipients = new KitCheckDao().checkForInitialKits(handle).getTotalNumberOfParticipantsQueuedForKit();
             assertEquals("should not have any recipients", 0L, numRecipients);
 
             handle.rollback();
@@ -185,7 +185,7 @@ public class KitCheckDaoTest extends TxnAwareBaseTest {
             List<DsmKitRequest> kits = kitRequestDao.findAllKitRequestsForStudy(testData.getStudyGuid());
             assertTrue("should not have any kit requests", kits.isEmpty());
 
-            int numRecipients = new KitCheckDao().checkForKits(handle).getTotalNumberOfParticipantsQueuedForKit();
+            int numRecipients = new KitCheckDao().checkForInitialKits(handle).getTotalNumberOfParticipantsQueuedForKit();
             assertEquals(1L, numRecipients);
 
             kits = kitRequestDao.findAllKitRequestsForStudy(testData.getStudyGuid());
@@ -213,7 +213,7 @@ public class KitCheckDaoTest extends TxnAwareBaseTest {
             List<DsmKitRequest> kits = kitRequestDao.findAllKitRequestsForStudy(testData.getStudyGuid());
             assertTrue("should not have any kit requests", kits.isEmpty());
 
-            int numRecipients = new KitCheckDao().checkForKits(handle).getTotalNumberOfParticipantsQueuedForKit();
+            int numRecipients = new KitCheckDao().checkForInitialKits(handle).getTotalNumberOfParticipantsQueuedForKit();
             assertEquals(1L, numRecipients);
 
             kits = kitRequestDao.findAllKitRequestsForStudy(testData.getStudyGuid());

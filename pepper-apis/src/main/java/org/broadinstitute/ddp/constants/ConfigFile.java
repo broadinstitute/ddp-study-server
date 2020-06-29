@@ -57,7 +57,6 @@ public class ConfigFile {
 
     // the cron schedule for different jobs
     public static final String CHECK_AGE_UP_SCHEDULE = "schedules.checkAgeUp";
-    public static final String CHECK_KITS_SCHEDULE = "schedules.checkKits";
     public static final String DRUG_LOADER_SCHEDULE = "schedules.drugLoader";
     public static final String CANCER_LOADER_SCHEDULE = "schedules.cancerLoader";
     public static final String DB_BACKUP_SCHEDULE = "schedules.dbBackup";

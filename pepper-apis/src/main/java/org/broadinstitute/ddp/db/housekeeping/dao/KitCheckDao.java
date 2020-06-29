@@ -5,9 +5,9 @@ import static org.broadinstitute.ddp.service.DsmAddressValidationStatus.DSM_INVA
 import java.beans.ConstructorProperties;
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -58,7 +58,7 @@ public class KitCheckDao {
      * @return a mapping between each study and the number of participants who had a kit queued in this iteration.  The mapping is
      * <b>not</b> the total number of participants with kits.  It's just the number of newly queued participants.
      */
-    public KitCheckResult checkForKits(Handle apisHandle) {
+    public KitCheckResult checkForInitialKits(Handle apisHandle) {
         KitCheckResult kitCheckResult = new KitCheckResult();
 
         KitScheduleDao kitScheduleDao = apisHandle.attach(KitScheduleDao.class);
@@ -106,7 +106,7 @@ public class KitCheckDao {
                         LOG.info("Added kit schedule record with id={} for tracking reoccurring kits"
                                 + " for participantGuid={} and kitConfigurationId={}", id, userGuid, kitConfiguration.getId());
                     }
-                    kitCheckResult.incrementQueuedParticipantCountForStudy(studyGuid);
+                    kitCheckResult.addQueuedParticipantForStudy(studyGuid, candidate.getUserId());
                 } else {
                     LOG.warn("Participant {} was ineligible for a kit", userGuid);
                 }
@@ -117,12 +117,13 @@ public class KitCheckDao {
     }
 
     /**
-     * Go through all kit configurations and all pending participants and queue up reoccurring kits (e.g. kits after the initial kit).
+     * Go through all kit configurations and all pending participants and queue up reoccurring kits (e.g. kits after the
+     * initial kit).
      *
      * @param apisHandle the database handle
      * @return mapping of study to number of participants queued in this run
      */
-    public KitCheckResult scheduleKits(Handle apisHandle) {
+    public KitCheckResult scheduleNextKits(Handle apisHandle) {
         var configs = apisHandle.attach(KitConfigurationDao.class)
                 .kitConfigurationFactory()
                 .stream()
@@ -141,39 +142,37 @@ public class KitCheckDao {
                     .filter(pending -> !pending.getRecord().hasOptedOut())
                     .collect(Collectors.toList());
             for (var pending : pendingRecords) {
-                scheduleKitsForParticipant(apisHandle, dsmClient, kitCheckResult, config, pending);
+                scheduleNextKitsForParticipant(apisHandle, dsmClient, kitCheckResult, config, pending);
             }
         }
 
         return kitCheckResult;
     }
 
-    private void scheduleKitsForParticipant(Handle apisHandle, DsmClient dsmClient, KitCheckResult kitCheckResult,
-                                            KitConfiguration config, KitScheduleDao.PendingScheduleRecord pending) {
+    private void scheduleNextKitsForParticipant(Handle apisHandle, DsmClient dsmClient, KitCheckResult kitCheckResult,
+                                                KitConfiguration config, KitScheduleDao.PendingScheduleRecord pending) {
         KitSchedule schedule = config.getSchedule();
         KitScheduleRecord record = pending.getRecord();
         String studyGuid = config.getStudyGuid();
         String userGuid = pending.getUserGuid();
 
         Instant lastTime = determineLastTimePoint(apisHandle, dsmClient, studyGuid, userGuid, record);
-        if (lastTime == null) {
-            return;
-        }
+        if (lastTime != null) {
+            Instant nextPrepTime = schedule.getNextPrepTimePoint(lastTime);
+            Instant nextTime = schedule.getNextTimePoint(lastTime);
 
-        Instant nextPrepTime = schedule.getNextPrepTimePoint(lastTime);
-        Instant nextTime = schedule.getNextTimePoint(lastTime);
-
-        if (nextPrepTime != null && nextPrepTime.isBefore(Instant.now()) && record.getCurrentOccurrencePrepTime() == null) {
-            // Schedule has a prep step, and it's time for it, and we haven't done it yet for this occurrence.
-            boolean shouldSkip = handlePrepStep(apisHandle, pending, schedule, record);
-            if (shouldSkip) {
-                return;
+            if (nextPrepTime != null && nextPrepTime.isBefore(Instant.now()) && record.getCurrentOccurrencePrepTime() == null) {
+                // Schedule has a prep step, and it's time for it, and we haven't done it yet for this occurrence.
+                boolean shouldSkip = handlePrepStep(apisHandle, pending, schedule, record);
+                if (shouldSkip) {
+                    return;
+                }
             }
-        }
 
-        if (nextTime.isBefore(Instant.now())) {
-            // Time is up for the next kit!
-            handleNextKit(apisHandle, kitCheckResult, config, pending);
+            if (nextTime.isBefore(Instant.now())) {
+                // Time is up for the next kit!
+                handleNextKit(apisHandle, kitCheckResult, config, pending);
+            }
         }
     }
 
@@ -309,7 +308,7 @@ public class KitCheckDao {
                         kitRequestId, userGuid, i + 1, config.getNumKits());
             }
             kitScheduleDao.incrementRecordNumOccurrenceWithKit(record.getId(), kitRequestId);
-            kitCheckResult.incrementQueuedParticipantCountForStudy(studyGuid);
+            kitCheckResult.addQueuedParticipantForStudy(studyGuid, pending.getUserId());
         } else {
             LOG.warn("Participant {} was ineligible for next kit, kitConfigurationId={}", userGuid, config.getId());
         }
@@ -326,43 +325,6 @@ public class KitCheckDao {
                 .registerColumnMapper(DsmAddressValidationStatus.class, EnumMapper.byOrdinal(DsmAddressValidationStatus.class))
                 .mapTo(PotentialRecipient.class)
                 .stream();
-    }
-
-    /**
-     * Mapping between a study and the number of participants who have been queued for a kit
-     */
-    public static class KitCheckResult {
-
-        private final Map<String, AtomicInteger> participantsQueuedForKitByStudy = new HashMap<>();
-
-        public void incrementQueuedParticipantCountForStudy(String studyGuid) {
-            if (!participantsQueuedForKitByStudy.containsKey(studyGuid)) {
-                participantsQueuedForKitByStudy.put(studyGuid, new AtomicInteger(0));
-            }
-            participantsQueuedForKitByStudy.get(studyGuid).incrementAndGet();
-        }
-
-        public int getNumberOfParticipantsQueuedForKit(String studyGuid) {
-            return participantsQueuedForKitByStudy.get(studyGuid).get();
-        }
-
-        /**
-         * Returns a mapping between the study guid and the number of participants who had a kit queued in the study
-         */
-        public Set<Map.Entry<String, AtomicInteger>> getQueuedParticipantsByStudy() {
-            return participantsQueuedForKitByStudy.entrySet();
-        }
-
-        /**
-         * Returns the total number of participants who had a kit queued, irrespective of study
-         */
-        public int getTotalNumberOfParticipantsQueuedForKit() {
-            int numQueued = 0;
-            for (AtomicInteger numQueuedForStudy : participantsQueuedForKitByStudy.values()) {
-                numQueued += numQueuedForStudy.get();
-            }
-            return numQueued;
-        }
     }
 
     // Note: public so JDBI mapper can access this.
@@ -394,6 +356,52 @@ public class KitCheckDao {
 
         public DsmAddressValidationStatus getAddressValidationStatus() {
             return addressValidationStatus;
+        }
+    }
+
+    /**
+     * Mapping between a study and the number of participants who have been queued for a kit
+     */
+    public static class KitCheckResult {
+
+        private final Map<String, Set<Long>> participantsQueuedForKitByStudy = new HashMap<>();
+
+        public void addQueuedParticipantForStudy(String studyGuid, long participantId) {
+            participantsQueuedForKitByStudy
+                    .computeIfAbsent(studyGuid, key -> new HashSet<>())
+                    .add(participantId);
+        }
+
+        public int getNumberOfParticipantsQueuedForKit(String studyGuid) {
+            return participantsQueuedForKitByStudy.getOrDefault(studyGuid, new HashSet<>()).size();
+        }
+
+        /**
+         * Returns a mapping between the study guid and the participants who had a kit queued in the study
+         */
+        public Set<Map.Entry<String, Set<Long>>> getQueuedParticipantsByStudy() {
+            return participantsQueuedForKitByStudy.entrySet();
+        }
+
+        /**
+         * Returns the total number of participants who had a kit queued, irrespective of study
+         */
+        public int getTotalNumberOfParticipantsQueuedForKit() {
+            int numQueued = 0;
+            for (var queuedParticipantIds : participantsQueuedForKitByStudy.values()) {
+                numQueued += queuedParticipantIds.size();
+            }
+            return numQueued;
+        }
+
+        public void add(KitCheckResult other) {
+            for (var entry : other.getQueuedParticipantsByStudy()) {
+                String studyGuid = entry.getKey();
+                Set<Long> participants = entry.getValue();
+                participantsQueuedForKitByStudy
+                        .computeIfAbsent(studyGuid, key -> new HashSet<>())
+                        .addAll(participants);
+            }
         }
     }
 }
