@@ -27,7 +27,6 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.apache.http.entity.ContentType;
 import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetricsTracker;
-import org.broadinstitute.ddp.cache.CacheService;
 import org.broadinstitute.ddp.client.DsmClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.ErrorCodes;
@@ -264,8 +263,6 @@ public class DataDonationPlatform {
             LOG.info("Running liquibase migrations against " + dbUrl);
             LiquibaseUtil.runLiquibase(dbUrl, TransactionWrapper.DB.APIS);
         }
-        //@TODO figure out how to do this only at deployment time.
-        CacheService.getInstance().resetAllCaches();
 
         get("/ping", (request, response) -> {
             return "PONG";
