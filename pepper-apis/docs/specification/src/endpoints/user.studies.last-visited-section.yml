@@ -15,5 +15,20 @@ patch:
         application/json:
           schema:
             $ref: '../pepper.yml#/components/schemas/Error.BadPayload'
+    404:
+      description: unable to find activity to update last visited section
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '../pepper.yml#/components/schemas/Error'
+              - type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - STUDY_NOT_FOUND
+                      - USER_NOT_FOUND
+                      - ACTIVITY_NOT_FOUND
     default:
       $ref: '../pepper.yml#/components/responses/ErrorResponse'
