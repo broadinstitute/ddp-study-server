@@ -1543,7 +1543,6 @@ public class StudyDataLoader {
             answerGuid = answerCompositeQuestion(handle, stableId, participantGuid, instanceGuid,
                     nestedQAGuids, nestedAnsOrders, answerDao);
         }
-
         return answerGuid;
     }
 
