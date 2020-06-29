@@ -8,6 +8,7 @@ import java.util.Locale;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 
+import com.google.gson.Gson;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.content.ContentStyle;
@@ -161,6 +162,9 @@ public class RouteUtil {
 
         if (instanceDto.getStudyId() != studyDto.getId() || instanceDto.getParticipantId() != user.getId()) {
             LOG.warn("Activity instance {} does not belong to participant {} in study {}", instanceGuid, participantGuid, studyGuid);
+            LOG.warn("InstanceDTO: " + new Gson().toJson(instanceDto));
+            LOG.warn("User: " + new Gson().toJson(user));
+            LOG.warn("StudyDto: " + new Gson().toJson(studyDto));
             String msg = "Could not find activity instance with guid " + instanceGuid;
             throw ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.ACTIVITY_NOT_FOUND, msg));
         } else if (instanceDto.isHidden()) {
