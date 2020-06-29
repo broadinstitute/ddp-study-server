@@ -32,6 +32,7 @@ public class CacheService {
     private Map<String, IdToCacheKeyMapper<?>> cacheNameToCacheKeyMapper = new ConcurrentHashMap<>();
     private Map<String, IdToCacheKeyCollectionMapper<?>> cacheNameToCacheKeyCollectionMapper = new ConcurrentHashMap<>();
     private Set<String> clearAllOnChangeCacheNames = ConcurrentHashMap.newKeySet();
+    private boolean resetCaches = false;
 
     public static CacheService getInstance() {
         if (INSTANCE != null) {
@@ -117,12 +118,16 @@ public class CacheService {
                     .setExpiryPolicyFactory(CreatedExpiryPolicy.factoryOf(entryDuration))
                     .setStatisticsEnabled(true);
             cache = cacheManager.createCache(cacheName, cacheConfig);
+            if (resetCaches) {
+                cache.clear();
+            }
         }
         return (Cache<K, V>) cache;
     }
 
     public void resetAllCaches() {
         cacheManager.getCacheNames().forEach(cacheName -> cacheManager.getCache(cacheName).clear());
+        resetCaches = true;
     }
 
     private void updateChangeTypeToCacheName(ModelChangeType evictionModelChangeType, String cacheName) {
