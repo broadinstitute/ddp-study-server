@@ -214,5 +214,6 @@
     <include file="db-changes/schema/DDP-4737-tooltip.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-4744-time-zone.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-4609-kits-needs-approval.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-2565-study-settings-analytics.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/add-last-visited-activity-section-column-to-activity-instance.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
