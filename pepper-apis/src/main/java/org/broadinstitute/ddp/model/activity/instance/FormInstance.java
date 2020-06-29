@@ -65,6 +65,7 @@ public final class FormInstance extends ActivityInstance {
     private transient Long closingSectionId;
     private transient Long readonlyHintTemplateId;
     private transient Long lastUpdatedTextTemplateId;
+    private int lastVisitedSection;
 
     public FormInstance(
             long participantUserId,
@@ -85,7 +86,8 @@ public final class FormInstance extends ActivityInstance {
             Long firstCompletedAt,
             Long lastUpdatedTextTemplateId,
             LocalDateTime activityDefinitionLastUpdated,
-            boolean isFollowup
+            boolean isFollowup,
+            int lastVisitedSection
     ) {
         super(participantUserId, instanceId, activityId, ActivityType.FORMS, guid, title, subtitle, statusTypeCode, readonly, activityCode,
                 createdAtMillis, firstCompletedAt, isFollowup);
@@ -98,6 +100,7 @@ public final class FormInstance extends ActivityInstance {
         this.readonlyHintTemplateId = readonlyHintTemplateId;
         this.lastUpdatedTextTemplateId = lastUpdatedTextTemplateId;
         this.activityDefinitionLastUpdated = activityDefinitionLastUpdated;
+        this.lastVisitedSection = lastVisitedSection;
     }
 
     public FormType getFormType() {
@@ -164,6 +167,14 @@ public final class FormInstance extends ActivityInstance {
 
     public LocalDateTime getActivityDefinitionLastUpdated() {
         return activityDefinitionLastUpdated;
+    }
+
+    public int getLastVisitedSection() {
+        return lastVisitedSection;
+    }
+
+    public void setLastVisitedSection(int lastVisitedSection) {
+        this.lastVisitedSection = lastVisitedSection;
     }
 
     /**

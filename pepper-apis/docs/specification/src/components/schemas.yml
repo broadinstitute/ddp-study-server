@@ -116,7 +116,7 @@ Activity:
     - lastUpdatedText
     - lastUpdated
     - isFollowup
-    - lastVisitedActivitySection
+    - lastVisitedSection
   properties:
     activityType:
       $ref: '../pepper.yml#/components/schemas/ActivityType'
@@ -175,8 +175,9 @@ Activity:
     isFollowup:
       type: boolean
       description: whether this activity is considered a "follow-up"
-    lastVisitedActivitySection:
+    lastVisitedSection:
       type: integer
+      minimum: 0
       description: The last visited section of the activity form by the user
 Activity.Summary:
   type: object

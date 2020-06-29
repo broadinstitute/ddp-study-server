@@ -12,11 +12,6 @@
             </column>
         </addColumn>
 
-        <update tableName="activity_instance">
-            <column name="last_visited_section" valueNumeric="0"/>
-            <where>last_visited_section is null</where>
-        </update>
-
     </changeSet>
 
 </databaseChangeLog>

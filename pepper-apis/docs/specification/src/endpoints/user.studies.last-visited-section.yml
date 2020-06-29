@@ -9,9 +9,11 @@ patch:
   responses:
     200:
       description: user's last visited section sucessfully updated
-    401:
-      description: missing credentials or temporary user is invalid
-    404:
-      description: unable to find activity to update last visited section
+    400:
+      description: if last visited section is negative
+      content:
+        application/json:
+          schema:
+            $ref: '../pepper.yml#/components/schemas/Error.BadPayload'
     default:
       $ref: '../pepper.yml#/components/responses/ErrorResponse'

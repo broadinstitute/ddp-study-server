@@ -190,6 +190,10 @@ public interface ActivityInstanceDao extends SqlObject {
         }
     }
 
+    default void updateLastVisitedSectionByInstanceGuid(String instanceGuid, int lastVisitedSection) {
+        getJdbiActivityInstance().updateLastVisitedSection(instanceGuid, lastVisitedSection);
+    }
+
     @SqlUpdate("delete from activity_instance where activity_instance_id in (<instanceIds>)")
     int _deleteAllInstancesByIds(@BindList(value = "instanceIds", onEmpty = BindList.EmptyHandling.NULL) Set<Long> instanceIds);
 

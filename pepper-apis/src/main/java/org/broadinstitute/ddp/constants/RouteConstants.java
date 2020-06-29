@@ -87,6 +87,8 @@ public class RouteConstants {
                 PathParam.USER_GUID, PathParam.STUDY_GUID);
         public static final String USER_ACTIVITIES_INSTANCE = fmt(BASE + "/user/%s/studies/%s/activities/%s",
                 PathParam.USER_GUID, PathParam.STUDY_GUID, PathParam.INSTANCE_GUID);
+        public static final String USER_LAST_VISITED_SECTION = fmt(BASE + "/user/%s/studies/%s/activities/%s/last-visited-section",
+                PathParam.USER_GUID, PathParam.STUDY_GUID, PathParam.INSTANCE_GUID);
         public static final String USER_ACTIVITY_ANSWERS = fmt(BASE + "/user/%s/studies/%s/activities/%s/answers",
                 PathParam.USER_GUID, PathParam.STUDY_GUID, PathParam.INSTANCE_GUID);
         public static final String USER_MEDICAL_PROVIDERS = fmt(
