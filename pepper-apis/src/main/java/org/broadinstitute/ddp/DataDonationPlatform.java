@@ -9,6 +9,7 @@ import static spark.Spark.afterAfter;
 import static spark.Spark.awaitInitialization;
 import static spark.Spark.before;
 import static spark.Spark.delete;
+import static spark.Spark.get;
 import static spark.Spark.internalServerError;
 import static spark.Spark.notFound;
 import static spark.Spark.options;
@@ -265,6 +266,10 @@ public class DataDonationPlatform {
         }
         //@TODO figure out how to do this only at deployment time.
         CacheService.getInstance().resetAllCaches();
+
+        get("/ping", (request, response) -> {
+            return "PONG";
+        });
 
         // The first route mapping call will also initialize the Spark server. Make that first call
         // the GAE lifecycle hooks so we capture the GAE call as soon as possible, and respond
