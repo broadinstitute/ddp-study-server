@@ -430,7 +430,7 @@ public class DataDonationPlatform {
                 new GetActivityInstanceRoute(actInstService, activityValidationService, interpreter),
                 responseSerializer
         );
-        patch(API.USER_LAST_VISITED_SECTION, new PatchLastVisitedSectionRoute(actInstService), responseSerializer);
+        patch(API.USER_LAST_VISITED_SECTION, new PatchLastVisitedSectionRoute(), responseSerializer);
 
         // User activity answers routes
         FormActivityService formService = new FormActivityService(interpreter);
