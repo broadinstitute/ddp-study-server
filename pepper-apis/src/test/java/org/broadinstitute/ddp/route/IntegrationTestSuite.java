@@ -46,7 +46,6 @@ import org.broadinstitute.ddp.security.EncryptionKey;
 import org.broadinstitute.ddp.security.JWTConverterTest;
 import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.ddp.util.JavaProcessSpawner;
-import org.broadinstitute.ddp.util.LiquibaseUtil;
 import org.broadinstitute.ddp.util.LogbackConfigurationPrinter;
 import org.broadinstitute.ddp.util.MySqlTestContainerUtil;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
@@ -181,7 +180,6 @@ public class IntegrationTestSuite {
 
     public static void startupTestServer() {
         bootAppServer();
-        runServerDatabaseMigrations();
         waitForServer(1000);
     }
 
@@ -347,13 +345,6 @@ public class IntegrationTestSuite {
         } catch (InterruptedException e) {
             LOG.info("Wait interrupted", e);
         }
-    }
-
-    private static void runServerDatabaseMigrations() {
-        Config cfg = RouteTestUtil.getConfig();
-        String apisDbUrl = cfg.getString(TransactionWrapper.DB.APIS.getDbUrlConfigKey());
-        LOG.info("Running Pepper liquibase migrations against " + apisDbUrl);
-        LiquibaseUtil.runLiquibase(apisDbUrl, TransactionWrapper.DB.APIS);
     }
 
     /**

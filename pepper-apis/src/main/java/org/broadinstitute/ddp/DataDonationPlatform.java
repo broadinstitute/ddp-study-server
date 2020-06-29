@@ -152,6 +152,7 @@ import org.broadinstitute.ddp.service.WorkflowService;
 import org.broadinstitute.ddp.transformers.NullableJsonTransformer;
 import org.broadinstitute.ddp.transformers.SimpleJsonTransformer;
 import org.broadinstitute.ddp.util.ConfigManager;
+import org.broadinstitute.ddp.util.LiquibaseUtil;
 import org.broadinstitute.ddp.util.LogbackConfigurationPrinter;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
@@ -250,6 +251,11 @@ public class DataDonationPlatform {
                 new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, maxConnections, dbUrl));
         Config sqlConfig = ConfigFactory.load(ConfigFile.SQL_CONFIG_FILE);
         initSqlCommands(sqlConfig);
+
+        if (cfg.hasPath(ConfigFile.DO_LIQUIBASE_IN_STUDY_SERVER) && cfg.getBoolean(ConfigFile.DO_LIQUIBASE_IN_STUDY_SERVER)) {
+            LOG.info("Running liquibase migrations in StudyServer against database url: {}", dbUrl);
+            LiquibaseUtil.runLiquibase(dbUrl, TransactionWrapper.DB.APIS);
+        }
 
         if (appEnginePort != null) {
             port(Integer.parseInt(appEnginePort));
