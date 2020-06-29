@@ -13,10 +13,15 @@ basic_scaling:
   idle_timeout: 20m
 {{end}}
 
+{{if eq $environment "dev"}}
+vpc_access_connector:
+  name: "projects/broad-ddp-dev/locations/us-central1/connectors/appengine-default-connect"
+{{end}}
+
 network:
   instance_tag: study-server # necessary for firewall rules so that DSM will accept https requests from pepper
 {{if and (eq $environment "dev") (eq $gae "true") }}
-entrypoint: java  -Xms1640m -Xmx1640m -jar DataDonationPlatform.jar
+entrypoint: java -javaagent:tcell/tcellagent.jar -agentpath:/opt/cprof/profiler_java_agent.so=-cprof_enable_heap_sampling=true,-cprof_service=pepper-backend,-cprof_cpu_use_per_thread_timers=true -Xms1640m -Xmx1640m -jar DataDonationPlatform.jar
 {{else}}
 entrypoint: java -javaagent:tcell/tcellagent.jar -Xms1640m -Xmx1640m -jar DataDonationPlatform.jar
 {{end}}
