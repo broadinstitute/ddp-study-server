@@ -251,13 +251,13 @@ public class DataDonationPlatform {
         Config sqlConfig = ConfigFactory.load(ConfigFile.SQL_CONFIG_FILE);
         initSqlCommands(sqlConfig);
 
-        JettyConfig.setupJetty(preferredSourceIPHeader);
         if (appEnginePort != null) {
             port(Integer.parseInt(appEnginePort));
         } else {
             port(configFilePort);
         }
         threadPool(-1, -1, requestThreadTimeout);
+        JettyConfig.setupJetty(preferredSourceIPHeader);
 
         // The first route mapping call will also initialize the Spark server. Make that first call
         // the GAE lifecycle hooks so we capture the GAE call as soon as possible, and respond
