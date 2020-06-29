@@ -489,10 +489,15 @@ public class StudyBuilder {
 
         boolean analyticsEnabled = settingsCfg.hasPath("analyticsEnabled") && settingsCfg.getBoolean("analyticsEnabled");
         String analyticsToken = ConfigUtil.getStrIfPresent(settingsCfg, "analyticsToken");
+        boolean shouldDeleteUnsentableEmails = settingsCfg.hasPath("shouldDeleteUnsentableEmails")
+                && settingsCfg.getBoolean("shouldDeleteUnsentableEmails");
 
-        handle.attach(StudyDao.class).addSettings(studyDto.getId(), inviteError, revisionId, analyticsEnabled, analyticsToken);
-        LOG.info("Created settings for study={}, inviteErrorTmplId={}",
-                studyDto.getGuid(), inviteError == null ? null : inviteError.getTemplateId());
+        handle.attach(StudyDao.class).addSettings(studyDto.getId(), inviteError, revisionId, analyticsEnabled, analyticsToken,
+                shouldDeleteUnsentableEmails);
+        LOG.info("Created settings for study={}, inviteErrorTmplId={}, analyticsEnabled={}, analyticsToken={},"
+                        + " shouldDeleteUnsentableEmails={}",
+                studyDto.getGuid(), inviteError == null ? null : inviteError.getTemplateId(), analyticsEnabled, analyticsToken,
+                shouldDeleteUnsentableEmails);
     }
 
     private void insertSendgrid(Handle handle, long studyId) {

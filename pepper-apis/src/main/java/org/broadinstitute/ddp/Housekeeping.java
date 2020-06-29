@@ -367,8 +367,15 @@ public class Housekeeping {
                                         try {
                                             message = messageBuilder.createMessage(ddpMessageId, pendingEvent, apisHandle);
                                         } catch (MessageBuilderException e) {
-                                            LOG.error("Could not create message for queued event "
-                                                    + pendingEvent.getQueuedEventId(), e);
+                                            if (e.shouldDeleteEvent()) {
+                                                LOG.warn("Unable to create message for event with queued_event_id={}, proceeding to delete",
+                                                        pendingEvent.getQueuedEventId(), e);
+                                                queuedEventDao.deleteAllByQueuedEventId(pendingEvent.getQueuedEventId());
+                                                return; // Exit out of transaction wrapper and move on to next event.
+                                            } else {
+                                                LOG.error("Could not create message for queued event "
+                                                        + pendingEvent.getQueuedEventId(), e);
+                                            }
                                         }
 
                                         if (message != null) {
