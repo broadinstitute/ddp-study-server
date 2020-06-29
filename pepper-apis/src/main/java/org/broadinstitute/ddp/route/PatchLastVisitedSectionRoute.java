@@ -5,6 +5,7 @@ import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.json.PatchLastVisitedSectionPayload;
+import org.broadinstitute.ddp.util.RouteUtil;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,6 +30,8 @@ public class PatchLastVisitedSectionRoute extends ValidatedJsonInputRoute<PatchL
                 instanceGuid, userGuid, studyGuid);
 
         TransactionWrapper.useTxn(handle -> {
+            RouteUtil.findAccessibleInstanceOrHalt(response, handle, userGuid, studyGuid, instanceGuid);
+
             int lastVisitedSection = dataObject.getLastVisitedSection();
 
             handle.attach(ActivityInstanceDao.class)
