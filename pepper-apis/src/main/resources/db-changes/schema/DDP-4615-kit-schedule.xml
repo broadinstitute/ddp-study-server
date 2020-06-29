@@ -22,10 +22,10 @@
             <column name="next_prep_time_amount" type="varchar(50)">
                 <constraints nullable="true"/>
             </column>
-            <column name="opt_out_expression" type="varchar(10000)">
+            <column name="opt_out_expression" type="varchar(8000)">
                 <constraints nullable="true"/>
             </column>
-            <column name="individual_opt_out_expression" type="varchar(10000)">
+            <column name="individual_opt_out_expression" type="varchar(8000)">
                 <constraints nullable="true"/>
             </column>
         </createTable>
