@@ -20,7 +20,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-import com.google.api.client.json.Json;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.storage.Blob;
 import com.google.cloud.storage.Bucket;
@@ -741,7 +740,8 @@ public class StudyDataLoaderMain {
                 migrationRun = new StudyMigrationRun(altpid, userGuid, previousRun, emailAddress);
             } else {
                 migrationRun = new StudyMigrationRun(altpid, userGuid, hasAboutYou, hasConsent, hasBloodConsent, hasTissueConsent,
-                        hasRelease, hasBloodRelease, false, hasFollowup, hasMedicalHistory, isSuccess, previousRun, emailAddress, auth0Collision);
+                        hasRelease, hasBloodRelease, false, hasFollowup, hasMedicalHistory,
+                        isSuccess, previousRun, emailAddress, auth0Collision);
             }
 
             migrationRunReport.add(migrationRun);
