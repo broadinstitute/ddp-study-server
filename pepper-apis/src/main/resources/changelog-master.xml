@@ -215,4 +215,5 @@
     <include file="db-changes/schema/DDP-4744-time-zone.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-4609-kits-needs-approval.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-2565-study-settings-analytics.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/should-delete-unsendable-emails.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

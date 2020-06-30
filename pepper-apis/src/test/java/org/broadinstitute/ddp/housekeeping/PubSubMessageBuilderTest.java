@@ -7,6 +7,7 @@ import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.DDP
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doReturn;
@@ -21,11 +22,13 @@ import com.google.pubsub.v1.PubsubMessage;
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.EventDao;
+import org.broadinstitute.ddp.db.dao.StudyDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dto.NotificationDetailsDto;
 import org.broadinstitute.ddp.db.dto.QueuedEventDto;
 import org.broadinstitute.ddp.db.dto.QueuedNotificationDto;
+import org.broadinstitute.ddp.exception.NoSendableEmailAddressException;
 import org.broadinstitute.ddp.housekeeping.message.NotificationMessage;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
@@ -154,6 +157,35 @@ public class PubSubMessageBuilderTest extends TxnAwareBaseTest {
             assertEquals(testData.getProfile().getLastName(), proxyLastName.get());
 
             handle.rollback();
+        });
+    }
+
+    @Test
+    public void testCreateMessage_deleteUnsendableEmail() {
+        TransactionWrapper.useTxn(handle -> {
+            boolean shouldDeleteUnsendableEmails = true;
+            handle.attach(StudyDao.class).addSettings(testData.getStudyId(), null, null, false, null, shouldDeleteUnsendableEmails);
+
+            User user = handle.attach(UserDao.class).createUser(testData.getClientId(), null);
+            QueuedEventDto event = new QueuedNotificationDto(
+                    new QueuedEventDto(1L, user.getId(), user.getGuid(), user.getHruid(),
+                            1L, EventTriggerType.ACTIVITY_STATUS, EventActionType.NOTIFICATION, null, null,
+                            "topic", null, null, testData.getStudyGuid()),
+                    new NotificationDetailsDto(NotificationType.EMAIL, NotificationServiceType.SENDGRID,
+                            null, null, "url", "apiKey", "fromName", "fromEmail",
+                            "salutation", "first", "last"));
+
+            try {
+                PubSubMessageBuilder builder = new PubSubMessageBuilder(cfg);
+                builder.createMessage("test", event, handle);
+            } catch (NoSendableEmailAddressException e) {
+                assertTrue(e.getMessage().contains("participant " + user.getGuid()));
+                assertTrue(e.getMessage().contains("study " + testData.getStudyGuid()));
+                handle.rollback();
+                return;
+            }
+
+            fail("Expected exception not thrown");
         });
     }
 
