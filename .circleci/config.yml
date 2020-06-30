@@ -690,6 +690,7 @@ jobs:
           pom_file: housekeeping-pom.xml
       - deploy-jar:
           jar_base_name: Housekeeping
+          deploy_config_file_dir: ../output-config
       - update-dispatch-rules
 
   deploy-stored-jar-job:
@@ -709,6 +710,7 @@ jobs:
           jar_base_name: Housekeeping
       - deploy-jar:
           jar_base_name: Housekeeping
+          deploy_config_file_dir: ../output-config
       - update-dispatch-rules
 
   deploy-docs-job:
