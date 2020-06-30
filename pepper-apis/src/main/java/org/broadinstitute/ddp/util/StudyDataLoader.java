@@ -1310,7 +1310,7 @@ public class StudyDataLoader {
                 value = sourceDataElement.getAsJsonObject().get(key);
                 sourceDataSurveyQs.get(surveyName).add(key);
             }
-            if (key.contains("medication") || key.contains("sibling") && value != null) {
+            if (value != null && (key.contains("medication") || key.contains("sibling")) ) {
                 selectedPicklistOptions
                         .add(new SelectedPicklistOption(options.get(value.getAsInt()).getAsJsonObject().get("stable_id").getAsString()));
                 break;
