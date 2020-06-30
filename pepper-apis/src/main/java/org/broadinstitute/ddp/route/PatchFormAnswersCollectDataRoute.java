@@ -10,6 +10,7 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -32,7 +33,12 @@ import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiCompositeQuestion;
 import org.broadinstitute.ddp.db.dao.JdbiCompositeQuestionCached;
 import org.broadinstitute.ddp.db.dao.JdbiNumericQuestion;
+import org.broadinstitute.ddp.db.dao.JdbiPicklistQuestion;
+import org.broadinstitute.ddp.db.dao.JdbiPicklistQuestionCached;
+import org.broadinstitute.ddp.db.dao.JdbiQuestion;
 import org.broadinstitute.ddp.db.dao.JdbiQuestionCached;
+import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
+import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudyCached;
 import org.broadinstitute.ddp.db.dao.QuestionCachedDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
@@ -67,7 +73,6 @@ import org.broadinstitute.ddp.model.activity.instance.question.Question;
 import org.broadinstitute.ddp.model.activity.instance.question.TextQuestion;
 import org.broadinstitute.ddp.model.activity.instance.validation.ActivityValidationFailure;
 import org.broadinstitute.ddp.model.activity.instance.validation.Rule;
-import org.broadinstitute.ddp.model.activity.types.ActivityType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.activity.types.NumericType;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
@@ -77,7 +82,6 @@ import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.security.DDPAuth;
 import org.broadinstitute.ddp.service.ActivityValidationService;
 import org.broadinstitute.ddp.service.FormActivityService;
-import org.broadinstitute.ddp.util.ActivityInstanceUtil;
 import org.broadinstitute.ddp.util.FormActivityStatusUtil;
 import org.broadinstitute.ddp.util.GsonPojoValidator;
 import org.broadinstitute.ddp.util.JsonValidationError;
@@ -91,9 +95,9 @@ import spark.Request;
 import spark.Response;
 import spark.Route;
 
-public class PatchFormAnswersRoute implements Route {
+public class PatchFormAnswersCollectDataRoute implements Route {
 
-    private static final Logger LOG = LoggerFactory.getLogger(PatchFormAnswersRoute.class);
+    private static final Logger LOG = LoggerFactory.getLogger(PatchFormAnswersCollectDataRoute.class);
 
     private Gson gson;
     private GsonPojoValidator checker;
@@ -101,7 +105,7 @@ public class PatchFormAnswersRoute implements Route {
     private ActivityValidationService actValidationService;
     private PexInterpreter interpreter;
 
-    public PatchFormAnswersRoute(
+    public PatchFormAnswersCollectDataRoute(
             FormActivityService formService,
             ActivityValidationService actValidationService,
             PexInterpreter interpreter
@@ -111,6 +115,13 @@ public class PatchFormAnswersRoute implements Route {
         this.formService = formService;
         this.actValidationService = actValidationService;
         this.interpreter = interpreter;
+    }
+
+    private <T> T timeCall(Supplier<T> codeToRun, String label) {
+        long startTime = System.currentTimeMillis();
+        T val = codeToRun.get();
+        LOG.info("{} took {} ms", label, System.currentTimeMillis() - startTime);
+        return val;
     }
 
     @Override
@@ -125,18 +136,26 @@ public class PatchFormAnswersRoute implements Route {
 
         LOG.info("Attempting to patch answers for activity instance {}", instanceGuid);
 
+
         PatchAnswerResponse result = TransactionWrapper.withTxn(handle -> {
-            ActivityInstanceDto instanceDto = RouteUtil.findAccessibleInstanceOrHalt(
-                    response, handle, participantGuid, studyGuid, instanceGuid);
+            var studyDto = timeCall(() -> handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid), "JdbiUmbrellaStudy"
+                    + ".findByStudyGuid");
 
-            if (!ActivityType.FORMS.equals(instanceDto.getActivityType())) {
-                String msg = "Activity " + instanceGuid + " is not a form activity that accepts answers";
-                LOG.info(msg);
-                throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.INVALID_REQUEST, msg));
-            }
+            // Do it one time to make sure it cached
+            new JdbiUmbrellaStudyCached(handle).findByStudyGuid(studyGuid);
+            studyDto = timeCall(() -> new JdbiUmbrellaStudyCached(handle).findByStudyGuid(studyGuid), "JdbiUmbrellaStudyCached(handle)"
+                    + ".findByStudyGuid(studyGuid)");
 
-            User operatorUser = handle.attach(UserDao.class).findUserByGuid(operatorGuid)
-                    .orElseThrow(() -> new DDPException("Could not find operator with guid " + operatorGuid));
+            User user = timeCall(() -> handle.attach(UserDao.class).findUserByGuid(participantGuid)
+                    .orElseThrow(() -> {
+                        String msg = "Could not find user with guid " + participantGuid;
+                        return ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.USER_NOT_FOUND, msg));
+                    }), "UserDao.class.findUserByGuid(participantGuid)");
+            ActivityInstanceDto instanceDto = timeCall(() -> handle.attach(JdbiActivityInstance.class)
+                    .getByActivityInstanceGuid(instanceGuid).orElseThrow(() -> {
+                        String msg = "Could not find user with guid " + participantGuid;
+                        return ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.USER_NOT_FOUND, msg));
+                    }), "JdbiActivityInstance.getByActivityInstanceGuid(instanceGuid)");
 
             PatchAnswerPayload payload = parseBodyPayload(request);
             if (payload == null) {
@@ -144,45 +163,70 @@ public class PatchFormAnswersRoute implements Route {
                 throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.BAD_PAYLOAD, msg));
             }
 
-            PatchAnswerResponse res = new PatchAnswerResponse();
             List<AnswerSubmission> submissions = payload.getSubmissions();
             if (submissions == null || submissions.isEmpty()) {
                 LOG.info("No answer submissions to process");
-                return res;
             }
 
-            if (ActivityInstanceUtil.isReadonly(handle, instanceGuid)) {
-                String msg = "Activity instance with GUID " + instanceGuid
-                        + " is read-only, cannot submit answer(s) for it";
-                LOG.info(msg);
-                throw ResponseUtil.haltError(response, 422, new ApiError(ErrorCodes.ACTIVITY_INSTANCE_IS_READONLY, msg));
-            }
-
-            var jdbiQuestion = new JdbiQuestionCached(handle);
+            var jdbiQuestionCached = new JdbiQuestionCached(handle);
             var answerDao = handle.attach(AnswerDao.class);
 
             LanguageDto preferredUserLanguage = RouteUtil.getUserLanguage(request);
             String isoLanguageCode = preferredUserLanguage.getIsoCode();
             Long languageCodeId = preferredUserLanguage.getId();
 
+            PatchAnswerResponse res = new PatchAnswerResponse();
+
             try {
                 Map<String, List<Rule>> failedRulesByQuestion = new HashMap<>();
                 for (AnswerSubmission submission : submissions) {
                     String questionStableId = extractQuestionStableId(submission, response);
 
-                    Optional<QuestionDto> optDto = jdbiQuestion.findDtoByStableIdAndInstance(questionStableId, instanceDto);
+                    Optional<QuestionDto> optDto =
+                            timeCall(() -> handle.attach(JdbiQuestion.class).findDtoByStableIdAndInstance(questionStableId,
+                                    instanceDto), "JdbiQuestion.class.findDtoByStableIdAndInstance(questionStableId,instanceDto)");
+
+                    var doit = new JdbiQuestionCached(handle).findDtoByStableIdAndInstance(questionStableId,
+                            instanceDto);
+
+                    optDto = timeCall(() -> new JdbiQuestionCached(handle).findDtoByStableIdAndInstance(questionStableId,
+                            instanceDto), "JdbiQuestionCached.class.findDtoByStableIdAndInstance(questionStableId,instanceDto)");
+
                     QuestionDto questionDto = extractQuestionDto(response, questionStableId, optDto);
                     Question question = new QuestionCachedDao(handle).getQuestionByActivityInstanceAndDto(questionDto,
                             instanceGuid, false, languageCodeId);
 
-                    //validation to check if question is a composite child
-                    Optional<Long> parentQuestionId = new JdbiCompositeQuestionCached(handle)
+                    Optional<Long> parentQuestionId = timeCall(() -> handle.attach(JdbiCompositeQuestion.class)
+                            .findParentQuestionIdByChildQuestion(questionDto), "JdbiCompositeQuestion."
+                            + ".findParentQuestionIdByChildQuestion(questionDto)");
+
+                    new JdbiCompositeQuestionCached(handle)
                             .findParentQuestionIdByChildQuestion(questionDto);
+
+                    //validation to check if question is a composite child
+                    parentQuestionId = timeCall(() -> new JdbiCompositeQuestionCached(handle)
+                            .findParentQuestionIdByChildQuestion(questionDto), "JdbiCompositeQuestionCached."
+                            + ".findParentQuestionIdByChildQuestion(questionDto)");
                     if (parentQuestionId.isPresent()) {
                         LOG.warn("Passed question stable ID : " + questionStableId + " is a Composite child question. "
                                 + "Only entire Composite question answer can be updated ");
                         throw ResponseUtil.haltError(response, HttpStatus.SC_NOT_FOUND, new ApiError(
                                 ErrorCodes.QUESTION_NOT_FOUND, "Only entire Composite question answer can be updated"));
+                    }
+                    if (questionDto.getType() == QuestionType.COMPOSITE) {
+                        var val = timeCall(() -> handle.attach(JdbiCompositeQuestion.class).findDtoByQuestionId(questionDto.getId()),
+                                "JdbiCompositeQuestion.findDtoByQuestionId(questionDto.getId()");
+                        val = new JdbiCompositeQuestionCached(handle).findDtoByQuestionId(questionDto.getId());
+                        val = timeCall(() -> new JdbiCompositeQuestionCached(handle).findDtoByQuestionId(questionDto.getId()),
+                                "JdbiCompositeQuestionCached.findDtoByQuestionId(questionDto.getId()");
+
+                    } else if (questionDto.getType() == QuestionType.PICKLIST) {
+                        var val = timeCall(() -> handle.attach(JdbiPicklistQuestion.class).findDtoByQuestionId(questionDto.getId()),
+                                "JdbiPicklistQuestion.findDtoByQuestionId(questionDto.getId()");
+                        val = new JdbiPicklistQuestionCached(handle).findDtoByQuestionId(questionDto.getId());
+                        val = timeCall(() -> new JdbiPicklistQuestionCached(handle).findDtoByQuestionId(questionDto.getId()),
+                                "JdbiPicklistQuestionCached.findDtoByQuestionId(questionDto.getId()");
+
                     }
 
                     Answer answer = convertAnswer(handle, response, instanceGuid, questionStableId,
@@ -215,6 +259,7 @@ public class PatchFormAnswersRoute implements Route {
                         }
                         failedRules.addAll(failures);
                     } else {
+
                         // Attempt to figure out the answer to update if one exists.
                         Long answerId = null;
                         if (answer.getAnswerGuid() == null) {
@@ -241,14 +286,16 @@ public class PatchFormAnswersRoute implements Route {
                                 answerId = answerDto.getId();
                             }
                         }
-
-                        String answerGuid;
+                        User operatorUser = handle.attach(UserDao.class).findUserByGuid(operatorGuid)
+                                .orElseThrow(() -> new DDPException("Could not find operator with guid " + operatorGuid));
+                        String answerGuid = "XXX";
                         if (answerId == null) {
                             // Did not provide answer guid and no answer exist yet so create one
-                            answerGuid = answerDao.createAnswer(operatorUser.getId(), instanceDto.getId(), answer).getAnswerGuid();
+                            //        answerGuid = answerDao.createAnswer(operatorUser.getId(), instanceDto.getId(), answer)
+                            //        .getAnswerGuid();
                             LOG.info("Created answer with guid {} for question stable id {}", answerGuid, questionStableId);
                         } else {
-                            answerGuid = answerDao.updateAnswer(operatorUser.getId(), answerId, answer).getAnswerGuid();
+                            //        answerGuid = answerDao.updateAnswer(operatorUser.getId(), answerId, answer).getAnswerGuid();
                             LOG.info("Updated answer with guid {} for question stable id {}", answerGuid, questionStableId);
                         }
 
