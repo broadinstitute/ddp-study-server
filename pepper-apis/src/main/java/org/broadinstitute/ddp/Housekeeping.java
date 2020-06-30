@@ -41,6 +41,7 @@ import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.JdbiMessageDestination;
 import org.broadinstitute.ddp.db.dao.JdbiQueuedEvent;
 import org.broadinstitute.ddp.db.dao.QueuedEventDao;
+import org.broadinstitute.ddp.db.dao.StudyDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dto.QueuedEventDto;
 import org.broadinstitute.ddp.db.housekeeping.dao.JdbiEvent;
@@ -49,6 +50,7 @@ import org.broadinstitute.ddp.db.housekeeping.dao.KitCheckDao;
 import org.broadinstitute.ddp.event.HousekeepingTaskReceiver;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.exception.MessageBuilderException;
+import org.broadinstitute.ddp.exception.NoSendableEmailAddressException;
 import org.broadinstitute.ddp.housekeeping.PubSubConnectionManager;
 import org.broadinstitute.ddp.housekeeping.PubSubMessageBuilder;
 import org.broadinstitute.ddp.housekeeping.handler.EmailNotificationHandler;
@@ -66,6 +68,7 @@ import org.broadinstitute.ddp.housekeeping.schedule.OnDemandExportJob;
 import org.broadinstitute.ddp.housekeeping.schedule.StudyDataExportJob;
 import org.broadinstitute.ddp.housekeeping.schedule.TemporaryUserCleanupJob;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
+import org.broadinstitute.ddp.model.study.StudySettings;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.monitoring.PointsReducerFactory;
 import org.broadinstitute.ddp.monitoring.StackdriverCustomMetric;
@@ -368,6 +371,21 @@ public class Housekeeping {
                                         PubsubMessage message = null;
                                         try {
                                             message = messageBuilder.createMessage(ddpMessageId, pendingEvent, apisHandle);
+                                        } catch (NoSendableEmailAddressException e) {
+                                            boolean shouldDeleteEvent = apisHandle.attach(StudyDao.class)
+                                                    .findSettings(pendingEvent.getStudyGuid())
+                                                    .map(StudySettings::shouldDeleteUnsendableEmails)
+                                                    .orElse(false);
+                                            if (shouldDeleteEvent) {
+                                                LOG.warn("Unable to create message for event with queued_event_id={}, proceeding to delete",
+                                                        pendingEvent.getQueuedEventId(), e);
+                                                queuedEventDao.deleteAllByQueuedEventId(pendingEvent.getQueuedEventId());
+                                                return; // Exit out of transaction wrapper and move on to next event.
+                                            } else {
+                                                LOG.error("Could not create message for event with queued_event_id={}"
+                                                        + " because there is no email address to sent to",
+                                                        pendingEvent.getQueuedEventId(), e);
+                                            }
                                         } catch (MessageBuilderException e) {
                                             LOG.error("Could not create message for queued event "
                                                     + pendingEvent.getQueuedEventId(), e);
