@@ -19,9 +19,6 @@ public class ConfigFile {
     // Name of the default timezone to be used by system. Does not change VM time zone!
     public static final String DEFAULT_TIMEZONE = "defaultTimezone";
 
-    // config file name used for testing the app with a disposable in-memory database
-    public static final String IN_MEMORY_DB_TESTING_CONFIG_FILE = "testing-inmemorydb.conf";
-
     // base url to use when running tests against a live backend
     public static final String TESTING_BASE_URL = "baseTestUrl";
 

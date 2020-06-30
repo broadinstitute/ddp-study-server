@@ -1,0 +1,131 @@
+#!/usr/bin/env bash
+#
+# A central hub for commands and tools to help ease DDP-related development.
+
+set -eu -o pipefail
+
+#
+# Globals
+#
+
+NAME=$(basename "$0")
+PROJECT_ROOT="$(cd "$(dirname "$0")/.."; pwd)"
+
+DDP_FLAGS=(
+  '-Ditext.license=output-config/itextkey.xml'
+)
+DDP_JAR='target/DataDonationPlatform.jar'
+APP_CONF='output-config/application.conf'
+LOCAL_CONF='output-build-config/local.conf'
+CONF_FILE="$LOCAL_CONF"
+
+#
+# Utils
+#
+
+print_help() {
+  cat << EOM
+USAGE:
+    $NAME [FLAGS] <COMMAND> [OPTIONS]...
+
+FLAGS:
+    -h, --help    Prints this help message
+    -c, --config  Config file to use, defaults to local.conf
+
+COMMANDS:
+    aes-util      Run AesUtil, passing in rest of arguments
+    export-util   Run DataExporterCli, passing in rest of arguments
+    pex-repl      Start the PEX REPL
+    serve         Start the StudyServer
+EOM
+}
+
+say() {
+  printf '[ddp] %s\n' "$@"
+}
+
+err() {
+  printf '[err] %s\n' "$@" >&2
+}
+
+ensure_jar_exists() {
+  if [[ ! -f "$DDP_JAR" ]]; then
+    mvn -Dcheckstyle.skip -Dmaven.test.skip package
+  fi
+}
+
+#
+# Commands
+#
+
+ddp_aes_util() {
+  ensure_jar_exists
+  java $DDP_FLAGS -Dconfig.file="$CONF_FILE" -cp $DDP_JAR org.broadinstitute.ddp.security.AesUtil "$@"
+}
+
+ddp_export_util() {
+  ensure_jar_exists
+  java $DDP_FLAGS -Dconfig.file="$CONF_FILE" -cp $DDP_JAR org.broadinstitute.ddp.util.DataExporterCli "$@"
+}
+
+ddp_pex_repl() {
+  ensure_jar_exists
+  java $DDP_FLAGS -Dconfig.file="$CONF_FILE" -cp $DDP_JAR org.broadinstitute.ddp.PexREPL
+}
+
+ddp_serve() {
+  ensure_jar_exists
+  java $DDP_FLAGS -Dconfig.file="$CONF_FILE" -jar $DDP_JAR
+}
+
+#
+# Entry point
+#
+
+main() {
+  if (( $# < 1 )); then
+    echo "usage: $NAME <command> [OPTIONS]..."
+    echo "       $NAME [-h | --help]"
+    exit 1
+  fi
+
+  if [[ "$1" == '-h' ]] || [[ "$1" == '--help' ]]; then
+    print_help
+    exit 0
+  fi
+
+  if [[ "$1" == '-c' ]] || [[ "$1" == '--config' ]]; then
+    CONF_FILE="${2:-}"
+    if [[ -z "$CONF_FILE" ]]; then
+      err "missing config file argument"
+      exit 1
+    fi
+    # Consume the flag and its argument.
+    shift; shift;
+  fi
+
+  # Start in project root directory.
+  cd "$PROJECT_ROOT"
+
+  local cmd="${1:-}"; shift
+  case "$cmd" in
+    aes-util)
+      ddp_aes_util "$@"
+      ;;
+    export-util)
+      ddp_export_util "$@"
+      ;;
+    pex-repl)
+      ddp_pex_repl "$@"
+      ;;
+    serve)
+      ddp_serve "$@"
+      ;;
+    *)
+      err "invalid command: $cmd"
+      ;;
+  esac
+  exit 0
+}
+
+main "$@"

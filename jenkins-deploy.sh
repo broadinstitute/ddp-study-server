@@ -73,8 +73,8 @@ $SSHCMD $SSH_USER@$SSH_HOST "docker images -aq --no-trunc --filter dangling=true
 if [[ $PROJECT = "pepper-apis" ]]; then
     if [[ "$SUBPROJECT" != "housekeeping" ]]; then
         # run the smoketest for pepper-apis deployments to ensure that the app didn't croak after docker-compose up
-        echo "starting smoketest..."
+        #echo "starting smoketest..."
         #docker pull docker.io/broadinstitute/pepper-api-backend:"$VERSION"_"$ENV"
-        $SSHCMD $SSH_USER@$SSH_HOST "docker run --rm -v /app/application.conf:/app/config/application.conf -v /app/post_deploy_smoketest.sh:/app/post_deploy_smoketest.sh broadinstitute/pepper-api-backend:\"$VERSION\"_\"$ENVIRONMENT\" bash /app/post_deploy_smoketest.sh $SSH_HOST 60"
+        #$SSHCMD $SSH_USER@$SSH_HOST "docker run --rm -v /app/application.conf:/app/config/application.conf -v /app/post_deploy_smoketest.sh:/app/post_deploy_smoketest.sh broadinstitute/pepper-api-backend:\"$VERSION\"_\"$ENVIRONMENT\" bash /app/post_deploy_smoketest.sh $SSH_HOST 60"
     fi
 fi

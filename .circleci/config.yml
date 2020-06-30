@@ -21,9 +21,9 @@ references:
   m2_repo_path: &m2_repo_path
       /home/circleci/.m2/repository
   pepper_apis_path: &pepper_apis_path
-            /home/circleci/repo/pepper-apis
+      /home/circleci/repo/pepper-apis
   api-spec-path: &api-spec-path
-            /home/circleci/repo/pepper-apis/docs/specification
+      /home/circleci/repo/pepper-apis/docs/specification
   circleci_path: &circleci_path
       /home/circleci/repo/.circleci
   builds_bucket: &builds_bucket
@@ -31,9 +31,9 @@ references:
   github_dispatch_repo_path: &github_dispatch_repo_path
       /broadinstitute/ddp-angular
   gitub_dispatch_config_path: &github_dispatch_config_path
-    /config/deployment
+      /config/deployment
   github_dispatch_config_branch: &github_dispatch_config_branch
-    develop
+      develop
   jar_build_bucket_dir: &jar_build_bucket_dir
       /ddp-study-server-pepper-apis
   housekeeping_test_db: &housekeeping_test_db
@@ -99,7 +99,7 @@ commands:
       - run:
           name: Run maven package
           command: |
-            mvn package -DskipTests -file << parameters.pom_file >> -Dcheckstyle.skip -Dmaven.repo.local=<< parameters.m2_repo >>
+            mvn package -Dmaven.test.skip -file << parameters.pom_file >> -Dcheckstyle.skip -Dmaven.repo.local=<< parameters.m2_repo >>
   setup-shared-env:
     description: "Setup shared ENV vars used by multiple scripts"
     steps:
@@ -505,7 +505,7 @@ commands:
                     $CHECKSTYLE_OPTION \
                     $SKIPTESTS_OPTION \
                     -Ditext.license=output-config/itextkey.xml \
-                    -Dconfig.file=output-build-config/testing-inmemorydb.conf  \
+                    -Dconfig.file=output-build-config/local.conf  \
                     -Dmaven.repo.local=<< parameters.m2_repo >> <<parameters.additional_options>>
           background: <<parameters.background>>
       - when:

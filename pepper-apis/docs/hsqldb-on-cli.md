@@ -17,7 +17,7 @@ $ java -jar /path/to/hsqldb/lib/sqltool.jar --inlineRc url=jdbc:hsqldb:file:/tmp
 ```
 
 The `inlineRc` flag provides the necessary connection parameters. The `url` value
-should match what's specified in the `testing-inmemorydb.conf` file. The default
+should match what's specified in the `output-build-config/local.conf` file. The default
 user is `sa` with an empty password.
 
 And that's it!

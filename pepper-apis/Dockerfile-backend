@@ -15,7 +15,6 @@ RUN mkdir $M2_REPO
 # so that downloads will be cached unless poms change
 ADD pom.xml /app/
 ADD parent-pom.xml /app/
-ADD smoketest-pom.xml /app/
 ADD housekeeping-pom.xml /app/
 ADD checkstyle.xml /app/
 WORKDIR /app
@@ -32,14 +31,11 @@ ENV PUBSUB_EMULATOR_HOST "localhost:8442"
 RUN ["echo","Frontloading maven dependencies..."]
 RUN mvn $SET_LOCAL_M2_REPO --batch-mode dependency:go-offline install surefire-report:report-only \
   || echo "warning: failed to cache pepper-apis maven dependencies"
-RUN mvn $SET_LOCAL_M2_REPO -f smoketest-pom.xml --batch-mode dependency:go-offline install \
-  || echo "warning: failed to cache smoketest maven dependencies"
 RUN mvn $SET_LOCAL_M2_REPO -f housekeeping-pom.xml --batch-mode dependency:go-offline install \
   || echo "warning: failed to cache housekeeping maven dependencies"
 
 COPY src/ /app/src
 RUN mvn $SET_LOCAL_M2_REPO -o --batch-mode -DskipTests=true clean install package || echo "warning: failed to build pepper-apis"
-RUN mvn $SET_LOCAL_M2_REPO -o --batch-mode -DskipTests=true --file smoketest-pom.xml package || echo "warning: failed to build pepper-apis/smoketest"
 RUN mvn $SET_LOCAL_M2_REPO -o --batch-mode -DskipTests=true --file housekeeping-pom.xml package || echo "warning: failed to build pepper-apis/housekeeping"
 
 # keep track of git hash

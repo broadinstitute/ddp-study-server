@@ -140,7 +140,7 @@ function run_tests() {
         --volume "$PWD/surefire-reports":"/app/target/surefire-reports" \
         --volume "$PWD/checkstyle-result.xml":"/app/target/checkstyle-result.xml" \
         --volume $PWD/surefire-report.html:/app/target/site/surefire-report.html \
-        --volume $PWD/$BUILD_OUTDIR/testing-inmemorydb.conf:/app/config/testing-inmemorydb.conf \
+        --volume $PWD/$BUILD_OUTDIR/local.conf:/app/config/local.conf \
         --volume $PWD/$BUILD_OUTDIR/fc_keys:/app/fc_keys \
         --volume $PWD/$BUILD_OUTDIR/itextkey.xml:/app/itextkey.xml \
         --interactive \
@@ -169,7 +169,7 @@ function run_tests() {
             TESTCONTAINERS_RYUK_DISABLED=true \
             mvn -Ditext.license=/app/itextkey.xml \
                 -Dmaven.repo.local=/app/repo \
-                -Dconfig.file=config/testing-inmemorydb.conf \
+                -Dconfig.file=config/local.conf \
                 -o \
                 --batch-mode \
                 checkstyle:checkstyle test surefire-report:report-only
@@ -178,7 +178,7 @@ function run_tests() {
             # mvn -Ditext.license=/app/itextkey.xml \
             #     -Dmaven.repo.local=/app/repo \
             #     -Dsonar.host.url=$sonar_server \
-            #     -Dconfig.file=config/testing-inmemorydb.conf \
+            #     -Dconfig.file=config/local.conf \
             #     -o \
             #     --batch-mode \
             #     sonar:sonar || echo 'warning: failed to run maven goal sonar:sonar'

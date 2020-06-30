@@ -94,7 +94,7 @@ database, which is the default.
 3. Build the project
     * `mvn -DskipTests clean install`
     * `mvn -DskipTests -f parent-pom.xml install`
-4. Copy the command-line flags from `output-build-config/local-java-props.txt`
+4. Copy the command-line flags from [local-java-props.md](docs/local-java-props.md)
 5. Run the JAR
     * `java [the copied cmd line flags] -jar ./target/DataDonationPlatform.jar`
 6. Make sure the server has started
@@ -119,10 +119,6 @@ $ export NGINX_PROXIED_HOST=192.168.1.100
 ```
 
 ### Running tests and main apps (DataDonationPlatform.java and Housekeeping.java) in intellij and mvn
-After running `api-build.sh` (you ran that already, right?), take a look at the `output-build-config/local-java-props.txt`
-file.  This file contains a bunch of `-D` vars that you'll need to put into either your
-intellij run/debug profiles or your command-line `mvn` command.
-
 Before starting the tests or running the apps, you need to setup the coordinates for the pubsub emulator:
 ```
 $ export PUBSUB_EMULATOR_HOST=localhost:8442
@@ -130,7 +126,7 @@ $ export PUBSUB_EMULATOR_HOST=localhost:8442
 
 The you can run the tests:
 ```sh
-$ mvn test [pile of -D vars copy-pasted from output-build-config/local-java-props.txt]
+$ mvn test [-D flags copy-pasted from local-java-props.md]
 ```
 
 ![intellij all tests configuration](docs/AllTests.png)
@@ -220,7 +216,7 @@ Note that the `RELOAD` priviledge is needed for some unit tests.
     If you don't do that, MySQL won't handle Unicode strings properly (one of the manifestations are '???' symbols in the
     MySQL CLI output of internationalized strings). Since we support multiple languages, this is a must.
 
-7. Update the _rendered_ secrets file `*.conf` (**not** `*.conf.ctmpl`), for example `output-build-config/testing-inmemorydb.conf`.
+7. Update the _rendered_ secrets file `*.conf` (**not** `*.conf.ctmpl`), for example `output-build-config/local.conf`.
     ```
     "dbUrl":"jdbc:mysql://127.0.0.1:3306/pepperlocal?user=[your db user]&password=[your db password]&serverTimezone=[your time zone]"
     ...

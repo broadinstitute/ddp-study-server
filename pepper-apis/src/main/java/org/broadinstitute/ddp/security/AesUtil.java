@@ -9,23 +9,18 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import com.typesafe.config.Config;
-
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.util.ConfigManager;
-
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.ConstructorMapper;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 
 public class AesUtil {
 
@@ -46,8 +41,8 @@ public class AesUtil {
             + "SET auth0_signing_secret = :auth0_signing_secret "
             + "WHERE auth0_client_id = :auth0_client_id "
             + "AND auth0_tenant_id = :auth0_tenant_id";
-    private Logger logger = LoggerFactory.getLogger(AesUtil.class);
 
+    private static final String USAGE = "AesUtil [-h, --help] [OPTIONS]";
 
     public static String encrypt(String strToEncrypt, String key) {
         try {
@@ -141,16 +136,21 @@ public class AesUtil {
         options.addOption("convertall", false,
                 "decrypt all encrypted secrets in database using ECB, and recrypt using CBC");
         options.addOption("s", null, true, "string to encrypt/decrypt");
-
+        options.addOption("h", "help", false, "print this help");
 
         CommandLineParser parser = new DefaultParser();
         CommandLine cmd = parser.parse(options, args);
+
+        if (cmd.hasOption("h")) {
+            var formatter = new HelpFormatter();
+            formatter.printHelp(80, USAGE, "", options, "");
+            return;
+        }
 
         Config cfg = ConfigManager.getInstance().getConfig();
         Config auth0Config = cfg.getConfig(ConfigFile.AUTH0);
 
         String encryptionSecret = auth0Config.getString(ConfigFile.ENCRYPTION_SECRET);
-
 
         if ((cmd.hasOption('d') && cmd.hasOption('e'))
                 || (!cmd.hasOption('d') && !cmd.hasOption('e') && !cmd.hasOption("encall") && !cmd.hasOption("convertall"))) {
@@ -159,10 +159,12 @@ public class AesUtil {
 
         if (cmd.hasOption('d')) {
             System.out.println(AesUtil.decrypt(cmd.getOptionValue('s'), encryptionSecret));
+            return;
         }
 
         if (cmd.hasOption('e')) {
             System.out.println(AesUtil.encrypt(cmd.getOptionValue('s'), encryptionSecret));
+            return;
         }
 
         initializeDb(cfg);
@@ -204,8 +206,7 @@ public class AesUtil {
                 }
                 return null;
             });
-
-
+            return;
         }
 
         if (cmd.hasOption("convertall")) {
@@ -246,8 +247,6 @@ public class AesUtil {
 
                 return null;
             });
-
-
         }
     }
 
