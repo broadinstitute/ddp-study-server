@@ -28,7 +28,7 @@ import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dto.NotificationDetailsDto;
 import org.broadinstitute.ddp.db.dto.QueuedEventDto;
 import org.broadinstitute.ddp.db.dto.QueuedNotificationDto;
-import org.broadinstitute.ddp.exception.NoSendableEmailException;
+import org.broadinstitute.ddp.exception.NoSendableEmailAddressException;
 import org.broadinstitute.ddp.housekeeping.message.NotificationMessage;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
@@ -178,7 +178,7 @@ public class PubSubMessageBuilderTest extends TxnAwareBaseTest {
             try {
                 PubSubMessageBuilder builder = new PubSubMessageBuilder(cfg);
                 builder.createMessage("test", event, handle);
-            } catch (NoSendableEmailException e) {
+            } catch (NoSendableEmailAddressException e) {
                 assertTrue(e.getMessage().contains("participant " + user.getGuid()));
                 assertTrue(e.getMessage().contains("study " + testData.getStudyGuid()));
                 handle.rollback();

@@ -38,7 +38,7 @@ import org.broadinstitute.ddp.db.dto.QueuedNotificationDto;
 import org.broadinstitute.ddp.db.dto.QueuedPdfGenerationDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.exception.MessageBuilderException;
-import org.broadinstitute.ddp.exception.NoSendableEmailException;
+import org.broadinstitute.ddp.exception.NoSendableEmailAddressException;
 import org.broadinstitute.ddp.housekeeping.message.NotificationMessage;
 import org.broadinstitute.ddp.housekeeping.message.PdfGenerationMessage;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
@@ -104,7 +104,7 @@ public class PubSubMessageBuilder {
                                 .findActiveGovernancesByParticipantAndStudyGuids(participantGuid, studyGuid)
                                 .collect(Collectors.toList());
                         if (governances.isEmpty()) {
-                            throw new NoSendableEmailException(String.format(
+                            throw new NoSendableEmailAddressException(String.format(
                                     "Cannot send email to participant %s with no auth0 account and no proxies in study %s",
                                     participantGuid, studyGuid));
                         }

@@ -50,7 +50,7 @@ import org.broadinstitute.ddp.db.housekeeping.dao.KitCheckDao;
 import org.broadinstitute.ddp.event.HousekeepingTaskReceiver;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.exception.MessageBuilderException;
-import org.broadinstitute.ddp.exception.NoSendableEmailException;
+import org.broadinstitute.ddp.exception.NoSendableEmailAddressException;
 import org.broadinstitute.ddp.housekeeping.PubSubConnectionManager;
 import org.broadinstitute.ddp.housekeeping.PubSubMessageBuilder;
 import org.broadinstitute.ddp.housekeeping.handler.EmailNotificationHandler;
@@ -369,7 +369,7 @@ public class Housekeeping {
                                         PubsubMessage message = null;
                                         try {
                                             message = messageBuilder.createMessage(ddpMessageId, pendingEvent, apisHandle);
-                                        } catch (NoSendableEmailException e) {
+                                        } catch (NoSendableEmailAddressException e) {
                                             boolean shouldDeleteEvent = apisHandle.attach(StudyDao.class)
                                                     .findSettings(pendingEvent.getStudyGuid())
                                                     .map(StudySettings::shouldDeleteUnsendableEmails)
@@ -381,7 +381,7 @@ public class Housekeeping {
                                                 return; // Exit out of transaction wrapper and move on to next event.
                                             } else {
                                                 LOG.error("Could not create message for event with queued_event_id={}"
-                                                        + " because there is no email to sent to",
+                                                        + " because there is no email address to sent to",
                                                         pendingEvent.getQueuedEventId(), e);
                                             }
                                         } catch (MessageBuilderException e) {
