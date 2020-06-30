@@ -28,7 +28,7 @@ import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dto.NotificationDetailsDto;
 import org.broadinstitute.ddp.db.dto.QueuedEventDto;
 import org.broadinstitute.ddp.db.dto.QueuedNotificationDto;
-import org.broadinstitute.ddp.exception.MessageBuilderException;
+import org.broadinstitute.ddp.exception.NoSendableEmailException;
 import org.broadinstitute.ddp.housekeeping.message.NotificationMessage;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
@@ -161,10 +161,10 @@ public class PubSubMessageBuilderTest extends TxnAwareBaseTest {
     }
 
     @Test
-    public void testCreateMessage_deleteUnsentableEmail() {
+    public void testCreateMessage_deleteUnsendableEmail() {
         TransactionWrapper.useTxn(handle -> {
-            boolean shouldDeleteUnsentableEmails = true;
-            handle.attach(StudyDao.class).addSettings(testData.getStudyId(), null, null, false, null, shouldDeleteUnsentableEmails);
+            boolean shouldDeleteUnsendableEmails = true;
+            handle.attach(StudyDao.class).addSettings(testData.getStudyId(), null, null, false, null, shouldDeleteUnsendableEmails);
 
             User user = handle.attach(UserDao.class).createUser(testData.getClientId(), null);
             QueuedEventDto event = new QueuedNotificationDto(
@@ -178,11 +178,14 @@ public class PubSubMessageBuilderTest extends TxnAwareBaseTest {
             try {
                 PubSubMessageBuilder builder = new PubSubMessageBuilder(cfg);
                 builder.createMessage("test", event, handle);
-                fail("Expected exception not thrown");
-            } catch (MessageBuilderException e) {
-                assertTrue("Should set to delete event", e.shouldDeleteEvent());
+            } catch (NoSendableEmailException e) {
+                assertTrue(e.getMessage().contains("participant " + user.getGuid()));
+                assertTrue(e.getMessage().contains("study " + testData.getStudyGuid()));
                 handle.rollback();
+                return;
             }
+
+            fail("Expected exception not thrown");
         });
     }
 

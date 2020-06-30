@@ -27,7 +27,6 @@ import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.NotificationTemplateVariables;
 import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
-import org.broadinstitute.ddp.db.dao.StudyDao;
 import org.broadinstitute.ddp.db.dao.StudyLanguageDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
@@ -39,6 +38,7 @@ import org.broadinstitute.ddp.db.dto.QueuedNotificationDto;
 import org.broadinstitute.ddp.db.dto.QueuedPdfGenerationDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.exception.MessageBuilderException;
+import org.broadinstitute.ddp.exception.NoSendableEmailException;
 import org.broadinstitute.ddp.housekeeping.message.NotificationMessage;
 import org.broadinstitute.ddp.housekeeping.message.PdfGenerationMessage;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
@@ -46,7 +46,6 @@ import org.broadinstitute.ddp.model.event.NotificationTemplate;
 import org.broadinstitute.ddp.model.event.NotificationType;
 import org.broadinstitute.ddp.model.governance.Governance;
 import org.broadinstitute.ddp.model.study.StudyLanguage;
-import org.broadinstitute.ddp.model.study.StudySettings;
 import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.util.Auth0Util;
 import org.broadinstitute.ddp.util.GsonUtil;
@@ -105,11 +104,7 @@ public class PubSubMessageBuilder {
                                 .findActiveGovernancesByParticipantAndStudyGuids(participantGuid, studyGuid)
                                 .collect(Collectors.toList());
                         if (governances.isEmpty()) {
-                            boolean shouldDeleteEvent = apisHandle.attach(StudyDao.class)
-                                    .findSettings(studyGuid)
-                                    .map(StudySettings::shouldDeleteUnsentableEmails)
-                                    .orElse(false);
-                            throw new MessageBuilderException(shouldDeleteEvent, String.format(
+                            throw new NoSendableEmailException(String.format(
                                     "Cannot send email to participant %s with no auth0 account and no proxies in study %s",
                                     participantGuid, studyGuid));
                         }

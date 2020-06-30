@@ -9,7 +9,7 @@ public class StudySettings {
     private Long inviteErrorTemplateId;
     private boolean analyticsEnabled;
     private String analyticsToken;
-    private boolean shouldDeleteUnsentableEmails;
+    private boolean shouldDeleteUnsendableEmails;
 
     @JdbiConstructor
     public StudySettings(
@@ -17,12 +17,12 @@ public class StudySettings {
             @ColumnName("invite_error_template_id") Long inviteErrorTemplateId,
             @ColumnName("analytics_enabled") boolean analyticsEnabled,
             @ColumnName("analytics_token") String analyticsToken,
-            @ColumnName("should_delete_unsentable_emails") boolean shouldDeleteUnsentableEmails) {
+            @ColumnName("should_delete_unsendable_emails") boolean shouldDeleteUnsendableEmails) {
         this.studyId = studyId;
         this.inviteErrorTemplateId = inviteErrorTemplateId;
         this.analyticsEnabled = analyticsEnabled;
         this.analyticsToken = analyticsToken;
-        this.shouldDeleteUnsentableEmails = shouldDeleteUnsentableEmails;
+        this.shouldDeleteUnsendableEmails = shouldDeleteUnsendableEmails;
     }
 
     public long getStudyId() {
@@ -41,7 +41,7 @@ public class StudySettings {
         return analyticsToken;
     }
 
-    public boolean shouldDeleteUnsentableEmails() {
-        return shouldDeleteUnsentableEmails;
+    public boolean shouldDeleteUnsendableEmails() {
+        return shouldDeleteUnsendableEmails;
     }
 }
