@@ -39,6 +39,8 @@ import org.broadinstitute.ddp.db.dao.JdbiQuestion;
 import org.broadinstitute.ddp.db.dao.JdbiQuestionCached;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudyCached;
+import org.broadinstitute.ddp.db.dao.PickListQuestionCachedDao;
+import org.broadinstitute.ddp.db.dao.PicklistQuestionDao;
 import org.broadinstitute.ddp.db.dao.QuestionCachedDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
@@ -226,7 +228,16 @@ public class PatchFormAnswersCollectDataRoute implements Route {
                         val = new JdbiPicklistQuestionCached(handle).findDtoByQuestionId(questionDto.getId());
                         val = timeCall(() -> new JdbiPicklistQuestionCached(handle).findDtoByQuestionId(questionDto.getId()),
                                 "JdbiPicklistQuestionCached.findDtoByQuestionId(questionDto.getId()");
+                        var another = timeCall(() -> handle.attach(PicklistQuestionDao.class).findOrderedGroupAndOptionDtos(questionDto,
+                                System.currentTimeMillis()),
+                                "PicklistQuestionDao.class).findOrderedGroupAndOptionDtos(questionDto,time)");
 
+                        another = new PickListQuestionCachedDao(handle).findOrderedGroupAndOptionDtos(questionDto,
+                                System.currentTimeMillis());
+
+                        another = timeCall(() -> new PickListQuestionCachedDao(handle).findOrderedGroupAndOptionDtos(questionDto,
+                                        System.currentTimeMillis()),
+                                "PickListQuestionCachedDao.findOrderedGroupAndOptionDtos(questionDto,blah)");
                     }
 
                     Answer answer = convertAnswer(handle, response, instanceGuid, questionStableId,
