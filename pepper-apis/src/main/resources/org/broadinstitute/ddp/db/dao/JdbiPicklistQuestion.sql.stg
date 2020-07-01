@@ -38,7 +38,7 @@ queryDtoByQuestionId() ::= <<
  where pq.question_id = :questionId
 >>
 
-queryDtoByActivityId ::= <<
+queryDtoByActivityId() ::= <<
 <pickListQuestionSelect()>
  where q.study_activity_id = :activityId
 >>
