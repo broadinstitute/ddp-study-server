@@ -1,5 +1,4 @@
 function (user, context, callback) {
-    var q = require('q');
     // Environment stabilization. This will save us a number of
     // overly complex if statements later
     context.clientMetadata = context.clientMetadata || {};
@@ -109,6 +108,14 @@ function (user, context, callback) {
             console.log('User language passed in (via body) = ' + pepper_params.languageCode);
         }
 
+        if (context.request.query.time_zone) {
+            pepper_params.timeZone = context.request.query.time_zone;
+            console.log('User timezone passed in (via query) = ' + pepper_params.timeZone);
+        } else if (context.request.body.time_zone) {
+            pepper_params.timeZone = context.request.body.time_zone;
+            console.log('User timezone passed in (via body) = ' + pepper_params.timeZone);
+        }
+
         console.log(context);
 
         // This is the token renewal case. Let's avoid going through pepper registration
@@ -172,13 +179,32 @@ function (user, context, callback) {
                     // all is well
                     var ddpUserGuid = body.ddpUserGuid;
                     user.app_metadata.user_guid = ddpUserGuid;
-                    const promises = [auth0.users.updateAppMetadata(user.user_id, user.app_metadata)];
-                        user.user_metadata.temp_user_guid = null;
-                        promises.push(auth0.users.updateUserMetadata(user.user_id, user.user_metadata));
-                    q.all(promises)
+
+                    auth0.users.updateAppMetadata(user.user_id, user.app_metadata)
                       .then(function(){
                           context.idToken[pepperUserGuidClaim] = ddpUserGuid;
                           console.log('Registered pepper user ' + ddpUserGuid + ' for auth0 user ' + user.user_id);
+
+                            // clear temp user guid after registration
+                              if (!!user.user_metadata.temp_user_guid){
+                               console.log('The temp_user_guid will be cleared for user ' + ddpUserGuid);
+                               user.user_metadata.temp_user_guid = null;
+                               auth0.users.updateUserMetadata(user.user_id, user.user_metadata)
+                                 .then(function(){
+                               console.log('Temp_user_guid was cleared for user ' + ddpUserGuid);
+                                  return callback(null, user, context);
+                                 })
+                                 .catch(function(err){
+                                   console.log('Error updating user metadata for auth0 user ' + user.user_id);
+                                                              console.log(err);
+                                                              let error = new Error(JSON.stringify({
+                                                                  code: err.code,
+                                                                  message: err.message,
+                                                                  statusCode: 500
+                                                              }));
+                                                              return callback(error);
+                                 });
+                              }
                           return callback(null, user, context);
                       })
                       .catch(function(err){
