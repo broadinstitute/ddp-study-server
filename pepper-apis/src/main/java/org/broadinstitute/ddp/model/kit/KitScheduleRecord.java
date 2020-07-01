@@ -25,7 +25,7 @@ public class KitScheduleRecord {
             @ColumnName("kit_configuration_id") long configId,
             @ColumnName("opted_out") boolean optedOut,
             @ColumnName("num_occurrences") int numOccurrences,
-            @ColumnName("last_occurrences_time") Instant lastOccurrenceTime,
+            @ColumnName("last_occurrence_time") Instant lastOccurrenceTime,
             @ColumnName("last_kit_request_id") Long lastKitRequestId,
             @ColumnName("last_kit_request_guid") String lastKitRequestGuid,
             @ColumnName("last_kit_sent_time") Instant lastKitSentTime,

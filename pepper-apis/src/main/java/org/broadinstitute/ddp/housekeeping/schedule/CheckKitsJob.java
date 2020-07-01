@@ -66,7 +66,9 @@ public class CheckKitsJob implements Job {
             long start = Instant.now().toEpochMilli();
             TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, handle -> {
                 var kitCheckDao = new KitCheckDao();
+                LOG.info("Checking for initial kits");
                 var result = kitCheckDao.checkForInitialKits(handle);
+                LOG.info("Checking for recurring kits");
                 result.add(kitCheckDao.scheduleNextKits(handle));
                 sendKitMetrics(result);
             });

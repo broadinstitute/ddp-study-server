@@ -8,10 +8,12 @@ import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.model.kit.KitSchedule;
 import org.broadinstitute.ddp.model.kit.KitScheduleRecord;
 import org.broadinstitute.ddp.service.DsmAddressValidationStatus;
+import org.jdbi.v3.core.mapper.EnumByOrdinalMapperFactory;
 import org.jdbi.v3.core.mapper.Nested;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 import org.jdbi.v3.sqlobject.CreateSqlObject;
+import org.jdbi.v3.sqlobject.config.RegisterColumnMapperFactory;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
@@ -75,7 +77,7 @@ public interface KitScheduleDao {
             + "  join kit_schedule_record as rec"
             + "       on rec.participant_user_id = user.user_id"
             + "       and rec.kit_configuration_id = kc.kit_configuration_id"
-            + "  left join default_mailing_address as defaddr = defaddr.participant_user_id = user.user_id"
+            + "  left join default_mailing_address as defaddr on defaddr.participant_user_id = user.user_id"
             + "  left join mailing_address as addr on addr.address_id = defaddr.address_id"
             + "  left join mailing_address_validation_status as vs on vs.mailing_address_validation_status_id = addr.validation_status_id"
             + " where entype.enrollment_status_type_code = 'ENROLLED'"
@@ -83,6 +85,7 @@ public interface KitScheduleDao {
             + "   and rec.kit_configuration_id = :configId"
             + "   and rec.num_occurrences < :maxOccurrences")
     @RegisterConstructorMapper(PendingScheduleRecord.class)
+    @RegisterColumnMapperFactory(EnumByOrdinalMapperFactory.class)
     Stream<PendingScheduleRecord> findPendingScheduleRecords(
             @Bind("configId") long kitConfigurationId,
             @Bind("maxOccurrences") int maxOccurrences);

@@ -141,6 +141,8 @@ public class KitCheckDao {
                     .findPendingScheduleRecords(config.getId(), schedule.getNumOccurrencesPerUser())
                     .filter(pending -> !pending.getRecord().hasOptedOut())
                     .collect(Collectors.toList());
+            LOG.info("Checking recurring kits for {} pending participants, study {}, and kit_configuration_id={}",
+                    pendingRecords.size(), config.getStudyGuid(), config.getId());
             for (var pending : pendingRecords) {
                 scheduleNextKitsForParticipant(apisHandle, dsmClient, kitCheckResult, config, pending);
             }
@@ -220,6 +222,8 @@ public class KitCheckDao {
                 if (shouldOptOut) {
                     // They're opting out, save that and move on.
                     kitScheduleDao.updateRecordOptOut(record.getId(), true);
+                    LOG.info("Participant {} is opting out of recurring kits for kit_configuration_id={}",
+                            pending.getUserGuid(), schedule.getConfigId());
                     return true;
                 }
             } catch (Exception e) {
@@ -238,6 +242,8 @@ public class KitCheckDao {
                 EventTriggerType.KIT_PREP);
         EventService.getInstance().processAllActionsForEventSignal(apisHandle, signal);
         kitScheduleDao.updateRecordCurrentOccurrencePrepTime(record.getId(), Instant.now());
+        LOG.info("Preparation step finished for participant {} and occurrence {} of kit_configuration_id={}",
+                pending.getUserGuid(), record.getNumOccurrences() + 1, schedule.getConfigId());
         return false;
     }
 
@@ -258,6 +264,8 @@ public class KitCheckDao {
                 if (shouldOptOut) {
                     // They're opting out, save that and move on.
                     kitScheduleDao.updateRecordOptOut(record.getId(), true);
+                    LOG.info("Participant {} is opting out of recurring kits for kit_configuration_id={}",
+                            pending.getUserGuid(), schedule.getConfigId());
                     return;
                 }
             } catch (Exception e) {
@@ -275,6 +283,8 @@ public class KitCheckDao {
                 if (shouldOptOut) {
                     // They're opting out, bump up the occurrence and move on.
                     kitScheduleDao.incrementRecordNumOccurrenceWithoutKit(record.getId());
+                    LOG.info("Participant {} is opting out of kit for occurrence {} of kit_configuration_id={}",
+                            pending.getUserGuid(), record.getNumOccurrences() + 1, schedule.getConfigId());
                     return;
                 }
             } catch (Exception e) {
@@ -309,6 +319,8 @@ public class KitCheckDao {
             }
             kitScheduleDao.incrementRecordNumOccurrenceWithKit(record.getId(), kitRequestId);
             kitCheckResult.addQueuedParticipantForStudy(studyGuid, pending.getUserId());
+            LOG.info("Finished occurrence {} for participant {} and kit_configuration_id={}",
+                    record.getNumOccurrences() + 1, pending.getUserGuid(), schedule.getConfigId());
         } else {
             LOG.warn("Participant {} was ineligible for next kit, kitConfigurationId={}", userGuid, config.getId());
         }
