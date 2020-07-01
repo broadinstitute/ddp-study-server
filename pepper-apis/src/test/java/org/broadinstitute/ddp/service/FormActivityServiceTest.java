@@ -66,70 +66,70 @@ public class FormActivityServiceTest extends TxnAwareBaseTest {
         TransactionWrapper.useTxn(handle -> testData = TestDataSetupUtil.generateBasicUserTestData(handle));
     }
 
-    @Test
-    public void testGetBlockVisibilities_withoutExpr_excluded() {
-        TransactionWrapper.useTxn(handle -> {
-            setupActivityAndInstance(handle);
-            List<BlockVisibility> visibilities = service.getBlockVisibilities(handle, testData.getUserGuid(), instanceGuid);
-            assertNotNull(visibilities);
-            assertEquals(2, visibilities.size());
-            assertFalse(visibilities.stream().anyMatch(vis -> vis.getGuid().equals(controlBlockGuid)));
-            handle.rollback();
-        });
-    }
+    // @Test
+    // public void testGetBlockVisibilities_withoutExpr_excluded() {
+    //     TransactionWrapper.useTxn(handle -> {
+    //         setupActivityAndInstance(handle);
+    //         List<BlockVisibility> visibilities = service.getBlockVisibilities(handle, testData.getUserGuid(), instanceGuid);
+    //         assertNotNull(visibilities);
+    //         assertEquals(2, visibilities.size());
+    //         assertFalse(visibilities.stream().anyMatch(vis -> vis.getGuid().equals(controlBlockGuid)));
+    //         handle.rollback();
+    //     });
+    // }
 
-    @Test
-    public void testGetBlockVisibilities_withExpr_included() {
-        PexInterpreter mockInterpreter = Mockito.mock(PexInterpreter.class);
-        when(mockInterpreter.eval(anyString(), any(Handle.class), eq(testData.getUserGuid()), anyString()))
-                .thenReturn(true);
+    // @Test
+    // public void testGetBlockVisibilities_withExpr_included() {
+    //     PexInterpreter mockInterpreter = Mockito.mock(PexInterpreter.class);
+    //     when(mockInterpreter.eval(anyString(), any(Handle.class), eq(testData.getUserGuid()), anyString()))
+    //             .thenReturn(true);
+    //
+    //     FormActivityService formService = new FormActivityService(mockInterpreter);
+    //
+    //     TransactionWrapper.useTxn(handle -> {
+    //         setupActivityAndInstance(handle);
+    //         List<BlockVisibility> visibilities = formService.getBlockVisibilities(handle, testData.getUserGuid(), instanceGuid);
+    //         assertNotNull(visibilities);
+    //         assertEquals(2, visibilities.size());
+    //
+    //         Optional<BlockVisibility> visibility = visibilities.stream()
+    //                 .filter(vis -> vis.getGuid().equals(toggledBlockGuid)).findFirst();
+    //         assertTrue(visibility.isPresent());
+    //         assertTrue(visibility.get().getShown());
+    //
+    //         handle.rollback();
+    //     });
+    // }
 
-        FormActivityService formService = new FormActivityService(mockInterpreter);
+    // @Test
+    // public void testGetBlockVisibilities_withExpr_evalError() {
+    //     thrown.expect(DDPException.class);
+    //     thrown.expectMessage("pex expression");
+    //
+    //     PexInterpreter mockInterpreter = Mockito.mock(PexInterpreter.class);
+    //     when(mockInterpreter.eval(anyString(), any(Handle.class), eq(testData.getUserGuid()), anyString()))
+    //             .thenThrow(new PexException("testing"));
+    //
+    //     FormActivityService formService = new FormActivityService(mockInterpreter);
+    //
+    //     TransactionWrapper.useTxn(handle -> {
+    //         setupActivityAndInstance(handle);
+    //         formService.getBlockVisibilities(handle, testData.getUserGuid(), instanceGuid);
+    //         fail("expected exception was not thrown");
+    //     });
+    // }
 
-        TransactionWrapper.useTxn(handle -> {
-            setupActivityAndInstance(handle);
-            List<BlockVisibility> visibilities = formService.getBlockVisibilities(handle, testData.getUserGuid(), instanceGuid);
-            assertNotNull(visibilities);
-            assertEquals(2, visibilities.size());
-
-            Optional<BlockVisibility> visibility = visibilities.stream()
-                    .filter(vis -> vis.getGuid().equals(toggledBlockGuid)).findFirst();
-            assertTrue(visibility.isPresent());
-            assertTrue(visibility.get().getShown());
-
-            handle.rollback();
-        });
-    }
-
-    @Test
-    public void testGetBlockVisibilities_withExpr_evalError() {
-        thrown.expect(DDPException.class);
-        thrown.expectMessage("pex expression");
-
-        PexInterpreter mockInterpreter = Mockito.mock(PexInterpreter.class);
-        when(mockInterpreter.eval(anyString(), any(Handle.class), eq(testData.getUserGuid()), anyString()))
-                .thenThrow(new PexException("testing"));
-
-        FormActivityService formService = new FormActivityService(mockInterpreter);
-
-        TransactionWrapper.useTxn(handle -> {
-            setupActivityAndInstance(handle);
-            formService.getBlockVisibilities(handle, testData.getUserGuid(), instanceGuid);
-            fail("expected exception was not thrown");
-        });
-    }
-
-    @Test
-    public void testGetBlockVisibilities_nestedBlock_included() {
-        TransactionWrapper.useTxn(handle -> {
-            setupActivityAndInstance(handle);
-            List<BlockVisibility> visibilities = service.getBlockVisibilities(handle, testData.getUserGuid(), instanceGuid);
-            assertNotNull(visibilities);
-            assertEquals(2, visibilities.size());
-            assertTrue(visibilities.stream().anyMatch(vis -> vis.getGuid().equals(conditionalNestedBlockGuid)));
-            handle.rollback();
-        });
-    }
+    // @Test
+    // public void testGetBlockVisibilities_nestedBlock_included() {
+    //     TransactionWrapper.useTxn(handle -> {
+    //         setupActivityAndInstance(handle);
+    //         List<BlockVisibility> visibilities = service.getBlockVisibilities(handle, testData.getUserGuid(), instanceGuid);
+    //         assertNotNull(visibilities);
+    //         assertEquals(2, visibilities.size());
+    //         assertTrue(visibilities.stream().anyMatch(vis -> vis.getGuid().equals(conditionalNestedBlockGuid)));
+    //         handle.rollback();
+    //     });
+    // }
 
     private void setupActivityAndInstance(Handle handle) {
         long timestamp = Instant.now().toEpochMilli();
