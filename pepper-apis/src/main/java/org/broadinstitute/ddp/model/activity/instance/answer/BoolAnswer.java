@@ -10,8 +10,8 @@ public class BoolAnswer extends Answer<Boolean> {
     private Boolean value;
 
     @JdbiConstructor
-    public BoolAnswer(Long answerId, String questionStableId, String answerGuid, Boolean value) {
-        super(QuestionType.BOOLEAN, answerId, questionStableId, answerGuid);
+    public BoolAnswer(Long answerId, String questionStableId, String answerGuid, Boolean value, Long languageCodeId) {
+        super(QuestionType.BOOLEAN, answerId, questionStableId, answerGuid, languageCodeId);
         this.value = value;
     }
 

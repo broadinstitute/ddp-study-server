@@ -189,7 +189,7 @@ public class PatchFormAnswersRoute implements Route {
                     }
 
                     Answer answer = convertAnswer(handle, response, instanceGuid, questionStableId,
-                            submission.getAnswerGuid(), questionDto, submission.getValue());
+                            submission.getAnswerGuid(), questionDto, submission.getValue(), languageCodeId);
                     if (answer == null) {
                         String msg = "Answer value does not have expected format for question stable id " + questionStableId;
                         LOG.info(msg);
@@ -352,30 +352,31 @@ public class PatchFormAnswersRoute implements Route {
     /**
      * Convert given data to an answer object.
      *
-     * @param handle       the jdbi handle
-     * @param instanceGuid the activity instance guid
-     * @param stableId     the question stable id
-     * @param guid         the answer guid, or null
-     * @param value        the answer value
+     * @param handle          the jdbi handle
+     * @param instanceGuid    the activity instance guid
+     * @param stableId        the question stable id
+     * @param guid            the answer guid, or null
+     * @param value           the answer value
+     * @param languageCodeId  the isoLanguage code id
      * @return answer object, or null if no answer value given
      */
     private Answer convertAnswer(Handle handle, Response response, String instanceGuid, String stableId, String guid,
-                                 QuestionDto questionDto, JsonElement value) {
+                                 QuestionDto questionDto, JsonElement value, Long languageCodeId) {
         switch (questionDto.getType()) {
             case BOOLEAN:
-                return convertBoolAnswer(stableId, guid, value);
+                return convertBoolAnswer(stableId, guid, value, languageCodeId);
             case PICKLIST:
-                return convertPicklistAnswer(stableId, guid, value);
+                return convertPicklistAnswer(stableId, guid, value, languageCodeId);
             case TEXT:
-                return convertTextAnswer(stableId, guid, value);
+                return convertTextAnswer(stableId, guid, value, languageCodeId);
             case DATE:
-                return convertDateAnswer(stableId, guid, value);
+                return convertDateAnswer(stableId, guid, value, languageCodeId);
             case NUMERIC:
-                return convertNumericAnswer(handle, questionDto, guid, value);
+                return convertNumericAnswer(handle, questionDto, guid, value, languageCodeId);
             case AGREEMENT:
-                return convertAgreementAnswer(stableId, guid, value);
+                return convertAgreementAnswer(stableId, guid, value, languageCodeId);
             case COMPOSITE:
-                return convertCompositeAnswer(handle, response, instanceGuid, stableId, guid, value);
+                return convertCompositeAnswer(handle, response, instanceGuid, stableId, guid, value, languageCodeId);
             default:
                 throw new RuntimeException("Unhandled question type " + questionDto.getType());
         }
@@ -389,10 +390,10 @@ public class PatchFormAnswersRoute implements Route {
      * @param value    the answer value
      * @return boolean answer object, or null if value is not boolean
      */
-    private BoolAnswer convertBoolAnswer(String stableId, String guid, JsonElement value) {
+    private BoolAnswer convertBoolAnswer(String stableId, String guid, JsonElement value, Long languageCodeId) {
         if (value != null && value.isJsonPrimitive() && value.getAsJsonPrimitive().isBoolean()) {
             boolean boolValue = value.getAsJsonPrimitive().getAsBoolean();
-            return new BoolAnswer(null, stableId, guid, boolValue);
+            return new BoolAnswer(null, stableId, guid, boolValue, languageCodeId);
         } else {
             return null;
         }
@@ -406,7 +407,7 @@ public class PatchFormAnswersRoute implements Route {
      * @param value    the answer value
      * @return picklist answer object, or null if value is not a list of options
      */
-    private PicklistAnswer convertPicklistAnswer(String stableId, String guid, JsonElement value) {
+    private PicklistAnswer convertPicklistAnswer(String stableId, String guid, JsonElement value, Long languageCodeId) {
         if (value == null || !value.isJsonArray()) {
             return null;
         }
@@ -482,7 +483,7 @@ public class PatchFormAnswersRoute implements Route {
     }
 
     private CompositeAnswer convertCompositeAnswer(Handle handle, Response response, String instanceGuid,
-                                                   String parentStableId, String answerGuid, JsonElement value) {
+                                                   String parentStableId, String answerGuid, JsonElement value, Long languageCodeId) {
         final Consumer<String> haltError = (String msg) -> {
             LOG.info(msg);
             throw ResponseUtil.haltError(response, HttpStatus.SC_BAD_REQUEST, new ApiError(ErrorCodes.BAD_PAYLOAD, msg));
@@ -527,7 +528,8 @@ public class PatchFormAnswersRoute implements Route {
                         }
                         QuestionDto childQuestionDto = extractQuestionDto(response, childAnswerStableId, correspondingChildQuestion);
                         childAnswersRow.add(convertAnswer(handle, response, instanceGuid, childAnswerStableId,
-                                childAnswerSubmission.getAnswerGuid(), childQuestionDto, childAnswerSubmission.getValue()));
+                                childAnswerSubmission.getAnswerGuid(), childQuestionDto, childAnswerSubmission.getValue(),
+                                languageCodeId));
                     });
                     compAnswer.addRowOfChildAnswers(childAnswersRow);
                 } else {

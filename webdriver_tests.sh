@@ -9,8 +9,11 @@ render_configs() {
         output_dir=output-config
     fi
     echo "Writing configs to $output_dir"
+    echo "ENV is $ENV"
+    echo "VERSION is $VERSION"
+    echo "DIR is $DIR"
     INPUT_DIR=ddp-automation/config OUTPUT_DIR=$output_dir DIR=$DIR \
-        ENV=$ENV VERSION=$VERSION MANIFEST=ddp-automation/config/manifest.rb \
+        ENVIRONMENT=$ENV VERSION=$VERSION MANIFEST=ddp-automation/config/manifest.rb \
         ruby pepper-apis/configure.rb -y
 }
 

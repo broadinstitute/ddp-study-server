@@ -15,13 +15,14 @@ public final class PicklistAnswer extends Answer<List<SelectedPicklistOption>> {
     @SerializedName("value")
     private List<@Valid SelectedPicklistOption> value;
 
-    public PicklistAnswer(Long answerId, String questionStableId, String answerGuid, List<SelectedPicklistOption> options) {
-        super(QuestionType.PICKLIST, answerId, questionStableId, answerGuid);
+    public PicklistAnswer(Long answerId, String questionStableId, String answerGuid, List<SelectedPicklistOption> options,
+                            Long languageCodeId) {
+        super(QuestionType.PICKLIST, answerId, questionStableId, answerGuid, languageCodeId);
         this.value = MiscUtil.checkNonNull(options, "options");
     }
 
-    public PicklistAnswer(String questionStableId, String answerGuid) {
-        super(QuestionType.PICKLIST, null, questionStableId, answerGuid);
+    public PicklistAnswer(String questionStableId, String answerGuid, Long languageCodeId) {
+        super(QuestionType.PICKLIST, null, questionStableId, answerGuid, languageCodeId);
         this.value = new ArrayList<>();
     }
 

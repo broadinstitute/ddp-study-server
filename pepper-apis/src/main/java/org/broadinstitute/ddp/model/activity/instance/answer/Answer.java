@@ -11,14 +11,18 @@ public abstract class Answer<T> implements Answerable<T> {
     @SerializedName("type")
     protected QuestionType type;
 
+    @SerializedName("languageCodeId")
+    protected Long languageCodeId;
+
     protected transient Long answerId;
     protected transient String questionStableId;
 
-    Answer(QuestionType type, Long answerId, String questionStableId, String answerGuid) {
+    Answer(QuestionType type, Long answerId, String questionStableId, String answerGuid, Long languageCodeId) {
         this.type = type;
         this.answerId = answerId;
         this.questionStableId = questionStableId;
         this.answerGuid = answerGuid;
+        this.languageCodeId = languageCodeId;
     }
 
     public Long getAnswerId() {
@@ -45,4 +49,8 @@ public abstract class Answer<T> implements Answerable<T> {
     public void setAnswerGuid(String answerGuid) {
         this.answerGuid = answerGuid;
     }
+
+    public void setLanguageCodeId(Long languageCodeId) {this.languageCodeId = languageCodeId; };
+
+    public Long getLanguageCodeId() {return languageCodeId; }
 }

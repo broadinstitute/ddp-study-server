@@ -20,7 +20,8 @@ public class JDITestUtils {
      */
     public static String generateNewUserEmail() {
         long currentTime = System.currentTimeMillis();
-        return "jdi-test" + currentTime + "@datadonationplatform.org";
+        //return "jdi-test" + currentTime + "@datadonationplatform.org";
+        return "kwestbro+" + currentTime + "@broadinstitute.org";
     }
 
     /**
@@ -31,11 +32,12 @@ public class JDITestUtils {
      */
     public static String generateNewUserName(String description) {
         if (description.equalsIgnoreCase("first name")) {
-            return "jdi-first-name-test";
+            //return "jdi-first-name-test";
+            return "Kiara Automated Test Run";
 
         } else if (description.equalsIgnoreCase("last name")) {
-            return "jdi-last-name-test";
-
+            //return "jdi-last-name-test";
+            return "Westbrooks Automated Test Run";
         }
 
         return null;
