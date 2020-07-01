@@ -1859,6 +1859,53 @@ AddressFieldError:
       description: the address field, where `address` means the general address instead of a single field
       example: street1
 
+#####
+#
+# Invitations
+#
+#####
+Invitation:
+  type: object
+  required:
+    - invitationType
+    - invitationId
+    - createdAt
+    - voidedAt
+    - verifiedAt
+    - acceptedAt
+    - notes
+  properties:
+    invitationType:
+      description: the type of invitation
+      type: string
+      enum:
+        - AGE_UP
+        - RECRUITMENT
+      example: RECRUITMENT
+    invitationId:
+      description: the id of the invitation
+      type: string
+    createdAt:
+      description: timestamp of when invitation was created, in ISO-8601 UTC format
+      type: string
+      example: 2020-05-13T17:58:33.887Z
+    voidedAt:
+      description: timestamp of when invitation is voided, in ISO-8601 UTC format
+      type: string
+      nullable: true
+    verifiedAt:
+      description: timestamp of when invitation is verified, in ISO-8601 UTC format
+      type: string
+      nullable: true
+    acceptedAt:
+      description: timestamp of when invitation is accepted, in ISO-8601 UTC format
+      type: string
+      nullable: true
+    notes:
+      description: the notes for the invitation
+      type: string
+      nullable: true
+
 MedicalProvider:
   type: object
   required:

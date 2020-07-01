@@ -123,6 +123,7 @@ import org.slf4j.LoggerFactory;
         GetParticipantInfoRouteTest.class,
         ListCancersRouteTest.class,
         ListStudyLanguagesRouteTest.class,
+        ListUserStudyInvitationsRouteTest.class,
         GetStudyPasswordPolicyRouteTest.class,
         UpdateUserPasswordRouteTest.class,
         UpdateUserEmailRouteTest.class,
