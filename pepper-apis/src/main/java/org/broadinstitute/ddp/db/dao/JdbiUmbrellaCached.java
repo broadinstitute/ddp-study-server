@@ -28,6 +28,9 @@ public class JdbiUmbrellaCached extends SQLObjectWrapper<JdbiUmbrella> implement
                     new Duration(),
                     ModelChangeType.UMBRELLA,
                     this.getClass());
+            if (!isUsingNullCache()) {
+                cacheAll();
+            }
         }
     }
 
@@ -35,14 +38,12 @@ public class JdbiUmbrellaCached extends SQLObjectWrapper<JdbiUmbrella> implement
         return isNullCache(idToUmbrellaCache);
     }
 
-    private void cacheAllIfNeeded() {
-        if (!idToUmbrellaCache.iterator().hasNext() && !isUsingNullCache()) {
-            delegate.findAll().stream().forEach(umbrella -> idToUmbrellaCache.put(umbrella.getId(), umbrella));
-        }
+    private void cacheAll() {
+        delegate.findAll().stream().forEach(umbrella -> idToUmbrellaCache.put(umbrella.getId(), umbrella));
+
     }
 
     public Stream<UmbrellaDto> streamAll() {
-        cacheAllIfNeeded();
         return StreamSupport.stream(idToUmbrellaCache.spliterator(), false)
                 .map(entry -> entry.getValue());
     }
@@ -78,7 +79,6 @@ public class JdbiUmbrellaCached extends SQLObjectWrapper<JdbiUmbrella> implement
         if (isUsingNullCache()) {
             return delegate.findById(umbrellaId);
         } else {
-            cacheAllIfNeeded();
             return Optional.ofNullable(idToUmbrellaCache.get(umbrellaId));
         }
     }
