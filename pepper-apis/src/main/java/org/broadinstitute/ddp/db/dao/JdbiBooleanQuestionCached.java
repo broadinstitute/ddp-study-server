@@ -20,10 +20,12 @@ public class JdbiBooleanQuestionCached extends SQLObjectWrapper<JdbiBooleanQuest
     }
 
     private void initializeCache() {
-        questionIdToBooleanQuestionCache = CacheService.getInstance().getOrCreateCache("questionIdToBooleanQuestionCache",
-                new Duration(),
-                ModelChangeType.STUDY,
-                this.getClass());
+        if (questionIdToBooleanQuestionCache == null) {
+            questionIdToBooleanQuestionCache = CacheService.getInstance().getOrCreateCache("questionIdToBooleanQuestionCache",
+                    new Duration(),
+                    ModelChangeType.STUDY,
+                    this.getClass());
+        }
     }
 
     private void cacheQuestions(long activityId) {

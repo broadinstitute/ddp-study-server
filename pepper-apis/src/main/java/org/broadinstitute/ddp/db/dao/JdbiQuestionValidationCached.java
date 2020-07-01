@@ -17,10 +17,12 @@ public class JdbiQuestionValidationCached extends SQLObjectWrapper<JdbiQuestionV
     private static Cache<Long, List<ValidationDto>> questionIdToValidationsCache;
 
     private void initializeCaching() {
-        questionIdToValidationsCache = CacheService.getInstance().getOrCreateCache("questionIdToValidationsCache",
-                new Duration(),
-                ModelChangeType.STUDY,
-                this.getClass());
+        if (questionIdToValidationsCache == null) {
+            questionIdToValidationsCache = CacheService.getInstance().getOrCreateCache("questionIdToValidationsCache",
+                    new Duration(),
+                    ModelChangeType.STUDY,
+                    this.getClass());
+        }
     }
 
     public JdbiQuestionValidationCached(Handle handle) {

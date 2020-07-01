@@ -19,8 +19,8 @@ import org.jdbi.v3.core.Handle;
 
 public class JdbiUmbrellaStudyCached extends SQLObjectWrapper<JdbiUmbrellaStudy> implements JdbiUmbrellaStudy {
 
-    private Cache<Long, StudyDto> idToStudyCache;
-    private Cache<String, Long> guidToIdCache;
+    private static Cache<Long, StudyDto> idToStudyCache;
+    private static Cache<String, Long> guidToIdCache;
 
     public JdbiUmbrellaStudyCached(Handle handle) {
         super(handle, JdbiUmbrellaStudy.class);

@@ -25,10 +25,12 @@ public class JdbiActivityInstanceCached extends SQLObjectWrapper<JdbiActivityIns
     }
 
     private void initializeCache() {
-        idToActivityInstanceDtoCache = CacheService.getInstance().getOrCreateCache("idToActivityInstanceDtoCache",
-                new Duration(MINUTES, 15), ModelChangeType.STUDY);
-        activityInstanceGuidToIdCache = CacheService.getInstance().getOrCreateCache("activityInstanceGuidToIdCache",
-                new Duration(MINUTES, 15), ModelChangeType.STUDY);
+        if (idToActivityInstanceDtoCache == null) {
+            idToActivityInstanceDtoCache = CacheService.getInstance().getOrCreateCache("idToActivityInstanceDtoCache",
+                    new Duration(MINUTES, 15), ModelChangeType.STUDY);
+            activityInstanceGuidToIdCache = CacheService.getInstance().getOrCreateCache("activityInstanceGuidToIdCache",
+                    new Duration(MINUTES, 15), ModelChangeType.STUDY);
+        }
     }
 
     private void addToCache(ActivityInstanceDto dto) {

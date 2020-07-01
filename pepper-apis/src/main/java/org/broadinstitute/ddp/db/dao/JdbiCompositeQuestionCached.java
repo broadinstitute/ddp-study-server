@@ -18,9 +18,9 @@ import org.broadinstitute.ddp.model.activity.types.OrientationType;
 import org.jdbi.v3.core.Handle;
 
 public class JdbiCompositeQuestionCached extends SQLObjectWrapper<JdbiCompositeQuestion> implements JdbiCompositeQuestion {
-    private Cache<Long, CompositeQuestionDto> idToCompositeQuestionDtoCache;
-    private Cache<Long, List<Long>> activityIdToCompositeQuestionIdsCache;
-    private Cache<Long, Long> compositeChildQuestionIdToParentIdCache;
+    private static Cache<Long, CompositeQuestionDto> idToCompositeQuestionDtoCache;
+    private static Cache<Long, List<Long>> activityIdToCompositeQuestionIdsCache;
+    private static Cache<Long, Long> compositeChildQuestionIdToParentIdCache;
 
     public JdbiCompositeQuestionCached(Handle handle) {
         super(handle, JdbiCompositeQuestion.class);
@@ -28,13 +28,15 @@ public class JdbiCompositeQuestionCached extends SQLObjectWrapper<JdbiCompositeQ
     }
 
     private void initializeCache() {
-        idToCompositeQuestionDtoCache = CacheService.getInstance().getOrCreateCache("idToCompositeQuestionDtoCache",
-                new Duration(MINUTES, 15), ModelChangeType.STUDY);
-        activityIdToCompositeQuestionIdsCache = CacheService.getInstance().getOrCreateCache("activityIdToCompositeQuestionIdsCache",
-                new Duration(MINUTES, 15), ModelChangeType.STUDY);
-        compositeChildQuestionIdToParentIdCache = CacheService.getInstance()
-                .getOrCreateCache("compositeChildQuestionIdToParentIdCache", new Duration(MINUTES, 15),
-                        ModelChangeType.STUDY);
+        if (idToCompositeQuestionDtoCache == null) {
+            idToCompositeQuestionDtoCache = CacheService.getInstance().getOrCreateCache("idToCompositeQuestionDtoCache",
+                    new Duration(MINUTES, 15), ModelChangeType.STUDY);
+            activityIdToCompositeQuestionIdsCache = CacheService.getInstance().getOrCreateCache("activityIdToCompositeQuestionIdsCache",
+                    new Duration(MINUTES, 15), ModelChangeType.STUDY);
+            compositeChildQuestionIdToParentIdCache = CacheService.getInstance()
+                    .getOrCreateCache("compositeChildQuestionIdToParentIdCache", new Duration(MINUTES, 15),
+                            ModelChangeType.STUDY);
+        }
     }
 
     @Override

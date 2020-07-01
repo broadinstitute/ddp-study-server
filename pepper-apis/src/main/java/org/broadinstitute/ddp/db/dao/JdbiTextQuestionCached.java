@@ -22,10 +22,12 @@ public class JdbiTextQuestionCached extends SQLObjectWrapper<JdbiTextQuestion> i
     }
 
     private void initializeCache() {
-        questionIdToTextQuestionCache = CacheService.getInstance().getOrCreateCache("questionIdToTextQuestionCache",
-                new Duration(),
-                ModelChangeType.STUDY,
-                this.getClass());
+        if (questionIdToTextQuestionCache == null) {
+            questionIdToTextQuestionCache = CacheService.getInstance().getOrCreateCache("questionIdToTextQuestionCache",
+                    new Duration(),
+                    ModelChangeType.STUDY,
+                    this.getClass());
+        }
     }
 
     private void initializeCacheData(long activityId) {

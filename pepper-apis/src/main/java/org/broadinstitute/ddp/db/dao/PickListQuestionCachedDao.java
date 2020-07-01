@@ -27,10 +27,12 @@ public class PickListQuestionCachedDao extends SQLObjectWrapper<PicklistQuestion
     }
 
     private void initializeCache() {
-        questionIdToGroupAndOptionsCache = CacheService.getInstance().getOrCreateCache("questionIdToGroupAndOptionsCache",
-                new Duration(),
-                ModelChangeType.STUDY,
-                this.getClass());
+        if (questionIdToGroupAndOptionsCache == null) {
+            questionIdToGroupAndOptionsCache = CacheService.getInstance().getOrCreateCache("questionIdToGroupAndOptionsCache",
+                    new Duration(),
+                    ModelChangeType.STUDY,
+                    this.getClass());
+        }
     }
 
     @Override

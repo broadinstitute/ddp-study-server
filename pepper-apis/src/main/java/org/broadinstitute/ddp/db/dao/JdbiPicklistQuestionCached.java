@@ -15,7 +15,7 @@ import org.broadinstitute.ddp.model.activity.types.PicklistSelectMode;
 import org.jdbi.v3.core.Handle;
 
 public class JdbiPicklistQuestionCached extends SQLObjectWrapper<JdbiPicklistQuestion> implements JdbiPicklistQuestion {
-    private Cache<Long, PicklistQuestionDto> questionIdToPicklistQuestionDto;
+    private static Cache<Long, PicklistQuestionDto> questionIdToPicklistQuestionDto;
 
     public JdbiPicklistQuestionCached(Handle handle) {
         super(handle, JdbiPicklistQuestion.class);
@@ -23,10 +23,12 @@ public class JdbiPicklistQuestionCached extends SQLObjectWrapper<JdbiPicklistQue
     }
 
     private void initializeCache() {
-        questionIdToPicklistQuestionDto = CacheService.getInstance().getOrCreateCache("questionIdToTextQuestionCache",
-                new Duration(),
-                ModelChangeType.STUDY,
-                this.getClass());
+        if (questionIdToPicklistQuestionDto == null) {
+            questionIdToPicklistQuestionDto = CacheService.getInstance().getOrCreateCache("questionIdToTextQuestionCache",
+                    new Duration(),
+                    ModelChangeType.STUDY,
+                    this.getClass());
+        }
     }
 
     @Override
