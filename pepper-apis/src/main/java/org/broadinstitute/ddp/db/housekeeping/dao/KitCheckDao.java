@@ -139,7 +139,6 @@ public class KitCheckDao {
             KitSchedule schedule = config.getSchedule();
             var pendingRecords = kitScheduleDao
                     .findPendingScheduleRecords(config.getId(), schedule.getNumOccurrencesPerUser())
-                    .filter(pending -> !pending.getRecord().hasOptedOut())
                     .collect(Collectors.toList());
             LOG.info("Checking recurring kits for {} pending participants, study {}, and kit_configuration_id={}",
                     pendingRecords.size(), config.getStudyGuid(), config.getId());
@@ -313,7 +312,7 @@ public class KitCheckDao {
             for (int i = 0; i < config.getNumKits(); i++) {
                 LOG.info("Creating kit request for {}", userGuid);
                 kitRequestId = kitRequestDao.createKitRequest(studyGuid, pending.getUserId(),
-                        pending.getAddressId(), config.getKitType().getId());
+                        pending.getAddressId(), config.getKitType().getId(), config.needsApproval());
                 LOG.info("Created kit request id {} for {}. Completed {} out of {} kits",
                         kitRequestId, userGuid, i + 1, config.getNumKits());
             }

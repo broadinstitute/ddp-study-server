@@ -83,6 +83,7 @@ public interface KitScheduleDao {
             + " where entype.enrollment_status_type_code = 'ENROLLED'"
             + "   and valid_to is null"
             + "   and rec.kit_configuration_id = :configId"
+            + "   and rec.opted_out = false"
             + "   and rec.num_occurrences < :maxOccurrences")
     @RegisterConstructorMapper(PendingScheduleRecord.class)
     @RegisterColumnMapperFactory(EnumByOrdinalMapperFactory.class)
