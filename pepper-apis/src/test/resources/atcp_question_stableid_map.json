@@ -7,7 +7,7 @@
         "activity_code": "MEDICAL_HISTORY",
         "question_answer_stables": [
           {
-            "name": "diagnoses",
+            "name": "diagnosis",
             "type": "Boolean",
             "source_type": "integer",
             "stable_id": "DIAGNOSED"

@@ -1181,7 +1181,7 @@ public class StudyDataLoader {
         String sourceType = getStringValueFromElement(mapElement, "source_type");
         //handle options
         String stableId = getStringValueFromElement(mapElement, "stable_id");
-
+        System.out.println("-------------" + stableId);
         List<SelectedPicklistOption> selectedPicklistOptions = new ArrayList<>();
         if (mapElement.getAsJsonObject().get("options") == null || mapElement.getAsJsonObject().get("options").isJsonNull()) {
             //this will handle "country" : "US"
