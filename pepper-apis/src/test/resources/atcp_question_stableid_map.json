@@ -93,7 +93,7 @@
               {
                 "name": "other",
                 "text": "text",
-                "type": "string"
+                "type": "integer"
               }
             ]
           },

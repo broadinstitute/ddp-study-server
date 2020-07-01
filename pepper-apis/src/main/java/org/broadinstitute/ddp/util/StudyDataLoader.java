@@ -1271,11 +1271,16 @@ public class StudyDataLoader {
                     || optValuesList.stream().anyMatch(x -> x.equalsIgnoreCase(optName))) {
 
                 //todo.. handle other_text in a better way!
-                if (optionName.equalsIgnoreCase("Other")) {
+                if (optionName.contains("other")) {
                     String otherDetails = null;
-                    if (optValuesList.size() > (selectedPicklistOptions.size() + 1)) {
+                    //if (optValuesList.size() > (selectedPicklistOptions.size() + 1)) {
                         //there is Other text
-                        otherDetails = optValuesList.get(optValuesList.size() - 1);
+                        //otherDetails = optValuesList.get(optValuesList.size() - 1);
+                    //}
+                    if (!sourceDataElement.getAsJsonObject().get(questionName + "." + optionName + "." + option.getAsJsonObject()
+                            .get("text").getAsString()).isJsonNull()) {
+                        otherDetails = sourceDataElement.getAsJsonObject().get(questionName + "." + optionName + "." + option.getAsJsonObject()
+                                .get("text").getAsString()).getAsString();
                     }
                     selectedPicklistOptions.add(new SelectedPicklistOption(optionNameEl.getAsString().toUpperCase(), otherDetails));
                 } else {
