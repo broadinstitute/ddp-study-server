@@ -823,8 +823,8 @@
         mainUrl = config.callbackURL.substring(0,authLoc);
     }
 
-    var loginUrl = mainUrl + '/login-landing/login';
-    var registerUrl = mainUrl + '/redirect-join';
+    var loginUrl = `${mainUrl}/change-language-redirect/login-landing/${languageCode}?destParamValue=login`;
+    var registerUrl = `${mainUrl}/change-language-redirect/redirect-join/${languageCode}`;
     var contactEmail = 'info@prionregistry.org';
 
     var connection = config.connection;
@@ -995,6 +995,10 @@
         successForgotPassword: '如果您以前註冊過，請檢查您的電子郵件以重置密碼。',
         languageSelection: '語言選擇'
     };
+    if ('en' !== languageCode && 'es' !== languageCode && 'he' !== languageCode && 'zh' !== languageCode) {
+        console.log('invalid language code; using default');
+        languageCode = 'en';
+    }
 
     languageDictionary = dictionaries[languageCode];
     languageDictionary.error = languageDictionary.error || {};
@@ -1108,16 +1112,12 @@
 
     function switchLanguage(lang) {
         console.log('switching language to ' + JSON.stringify(lang));
-        //let oldLangCode = languageCode;
-        closeDropdown();
-        languageCode = lang;
-        otherLanguages = Object.keys(languageDictionary.displayNames).filter(x => x !== languageCode);
-        realOptions.languageCode = languageCode;
-        languageDictionary = dictionaries[languageCode];
-
-        //TODO: Figure out how to reload the page with the new language
-
-        /* TODO: Implement and call */
+        if (mode === 'login') {
+            window.location.href = loginUrl.replace(languageCode, lang);
+        }
+        else {
+            window.location.href =  registerUrl.replace(languageCode, lang);
+        }
     }
 
     function showDropDown() {
@@ -1275,30 +1275,30 @@
                     '</li>';
 
                 var header = document.createElement('div');
-                header.innerHTML='<header class="Header" id="ddp-header"><a id="top"/><nav class="navbar navbar-default Header-background">' +
-                    '<div class="navbar-header">' +
-                    '<button type="button" class="navbar-toggle collapsed Header-hamburger" data-toggle="collapse" ' +
-                    'data-target="#menu" aria-expanded="false">' +
-                    '<span class="sr-only"></span>' +
-                    '<span class="icon-bar"></span>' +
-                    '<span class="icon-bar"></span>' +
-                    '<span class="icon-bar"></span>' +
-                    '</button>' +
-                    '<a class="Header-logo" href="' + mainUrl + '">' +
-                    '<img src="' + headerLogo + '" alt="' + languageDictionary.logoAlt + '"></a>' +
-                    '</div>' +
-                    '<div class="collapse navbar-collapse Header-collapse" id="menu">' +
-                    '<ul class="nav navbar-nav navbar-right NoMargin">' + languageSelector +
-                    '<li class="Nav-item"><a href="' + mainUrl + '/learn-more" class="Nav-itemLink">' +
-                    languageDictionary.learnMore + '</a></li>' +
-                    '<li class="Nav-item"><a href="' + mainUrl + '/login-landing/login" class="' + signInClass + '" id="SignIn">' +
-                    languageDictionary.signIn + '</a></li>' +
-                    '<li class="Nav-item Nav-item-JoinUs">' +
-                    '<a class="' + joinUsClass + '" href="' + mainUrl + '/redirect-join" id="JoinUs">' + languageDictionary.joinUs + '</a>' +
-                    '</li>' +
-                    '</ul>' +
-                    '</div>' +
-                    '</nav></header>';
+                header.innerHTML=`<header class="Header" id="ddp-header"><a id="top"/><nav class="navbar navbar-default Header-background">` +
+                    `<div class="navbar-header">` +
+                    `<button type="button" class="navbar-toggle collapsed Header-hamburger" data-toggle="collapse" ` +
+                    `data-target="#menu" aria-expanded="false">` +
+                    `<span class="sr-only"></span>` +
+                    `<span class="icon-bar"></span>` +
+                    `<span class="icon-bar"></span>` +
+                    `<span class="icon-bar"></span>` +
+                    `</button>` +
+                    `<a class="Header-logo" href="${mainUrl}">` +
+                    `<img src="${headerLogo}" alt="${languageDictionary.logoAlt}"></a>` +
+                    `</div>` +
+                    `<div class="collapse navbar-collapse Header-collapse" id="menu">` +
+                    `<ul class="nav navbar-nav navbar-right NoMargin">${languageSelector}` +
+                    `<li class="Nav-item"><a href="${mainUrl}/learn-more" class="Nav-itemLink">` +
+                    `${languageDictionary.learnMore}</a></li>` +
+                    `<li class="Nav-item"><a href="${loginUrl}" class="${signInClass}" id="SignIn">` +
+                    `${languageDictionary.signIn}</a></li>` +
+                    `<li class="Nav-item Nav-item-JoinUs">` +
+                    `<a class="${joinUsClass}" href="${registerUrl}" id="JoinUs">${languageDictionary.joinUs}</a>` +
+                    `</li>` +
+                    `</ul>` +
+                    `</div>` +
+                    `</nav></header>`;
 
                 var auth0LockHeader = document.getElementsByClassName('auth0-lock-header-logo')[0];
                 if (auth0LockHeader) {
@@ -1324,29 +1324,28 @@
                 var footer = document.createElement('div');
                 footer.setAttribute('id', 'ddp-footer');
                 footer.innerHTML =
-                '<footer class="Footer row">' +
-                    '<div class="col-lg-6 col-md-4 col-sm-4 col-xs-12 Footer-left">' +
-                        '<a href="' + mainUrl + '">' +
-                        '<img src="https://storage.googleapis.com/dev-prion-assets/images/project-logo-dark.svg" alt="' + languageDictionary.logoAlt + '"/>' +
-                        '</a>' +
-                        '<p class="Footer-contact">' +
-                            languageDictionary.contactUs +
-                            '<a href="mailto:' + contactEmail + '" class="Footer-link NoPadding">' + contactEmail + '</a>' +
-                        '</p>' +
-                    '</div>' +
-                    '<div class="col-lg-6 col-md-4 col-sm-8 col-xs-12 Footer-links">' +
-                        '<p class="Footer-text Float--right">' +
-                            '<a href="' + mainUrl + '" class="Footer-link">' + languageDictionary.home + ' </a>' +
-                            '<a href="' + mainUrl + '/learn-more" class="Footer-link">' + languageDictionary.learnMore + ' </a>' +
-                            '<a href="' + mainUrl + '/redirect-join" class="Footer-link">' + languageDictionary.joinUs + ' </a>' +
-                            '<a href="' + mainUrl + '/login-landing/login" class="Footer-link">' + languageDictionary.signIn + ' </a>' +
-                            '<a href="#top" class="Footer-link backToTopLink">' +
-                                '<i class="fas fa-arrow-up Footer-arrow"></i>' +
-                                '<span class="backToTopText">' + languageDictionary.backToTop + '</span>' +
-                            '</a>' +
-                        '</p>' +
-                    '</div>' +
-                '</footer>';
+                `<footer class="Footer row">` +
+                    `<div class="col-lg-6 col-md-4 col-sm-4 col-xs-12 Footer-left">` +
+                        `<a href="${mainUrl}">` +
+                        `<img src="https://storage.googleapis.com/dev-prion-assets/images/project-logo-dark.svg" alt="${languageDictionary.logoAlt}"/>` +
+                        `</a>` +
+                        `<p class="Footer-contact">${languageDictionary.contactUs}` +
+                            `<a href="mailto:${contactEmail}" class="Footer-link NoPadding">${contactEmail}</a>` +
+                        `</p>` +
+                    `</div>` +
+                    `<div class="col-lg-6 col-md-4 col-sm-8 col-xs-12 Footer-links">` +
+                        `<p class="Footer-text Float--right">` +
+                            `<a href="${mainUrl}" class="Footer-link">${languageDictionary.home}</a>` +
+                            `<a href="${mainUrl}/learn-more" class="Footer-link">${languageDictionary.learnMore} </a>` +
+                            `<a href="${registerUrl}" class="Footer-link">${languageDictionary.joinUs} </a>` +
+                            `<a href="${loginUrl}?destParamValue=login" class="Footer-link">${languageDictionary.signIn} </a>` +
+                            `<a href="#top" class="Footer-link backToTopLink">` +
+                                `<i class="fas fa-arrow-up Footer-arrow"></i>` +
+                                `<span class="backToTopText">${languageDictionary.backToTop}</span>` +
+                            `</a>` +
+                        `</p>` +
+                    `</div>` +
+                `</footer>`;
 
                 var parBlock = document.getElementById('ddp-middle-container').parentElement;
 
