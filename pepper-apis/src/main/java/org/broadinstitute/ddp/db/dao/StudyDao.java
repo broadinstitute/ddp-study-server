@@ -41,16 +41,23 @@ public interface StudyDao extends SqlObject {
     // Study settings
     //
 
-    default void addSettings(long studyId, Template inviteError, Long revisionId, boolean analyticsEnabled, String analyticsToken) {
+    default void addSettings(long studyId, Template inviteError, Long revisionId, boolean analyticsEnabled, String analyticsToken,
+                             boolean shouldDeleteUnsendableEmails) {
         if (inviteError != null && revisionId == null) {
             throw new DaoException("Revision is needed to insert templates");
         }
         Long inviteErrorTmplId = inviteError == null ? null
                 : getHandle().attach(TemplateDao.class).insertTemplate(inviteError, revisionId);
-        DBUtils.checkInsert(1, getStudySql().insertSettings(studyId, inviteErrorTmplId, analyticsEnabled, analyticsToken));
+        DBUtils.checkInsert(1, getStudySql().insertSettings(studyId, inviteErrorTmplId, analyticsEnabled, analyticsToken,
+                shouldDeleteUnsendableEmails));
     }
 
     @SqlQuery("select * from study_settings where umbrella_study_id = :studyId")
     @RegisterConstructorMapper(StudySettings.class)
     Optional<StudySettings> findSettings(@Bind("studyId") long studyId);
+
+    @SqlQuery("select * from study_settings where umbrella_study_id = ("
+            + "select umbrella_study_id from umbrella_study where guid = :studyGuid)")
+    @RegisterConstructorMapper(StudySettings.class)
+    Optional<StudySettings> findSettings(@Bind("studyGuid") String studyGuid);
 }
