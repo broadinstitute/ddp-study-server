@@ -216,18 +216,18 @@ public class PatchFormAnswersCollectDataRoute implements Route {
                                 ErrorCodes.QUESTION_NOT_FOUND, "Only entire Composite question answer can be updated"));
                     }
                     if (questionDto.getType() == QuestionType.COMPOSITE) {
-                        var val = timeCall(() -> handle.attach(JdbiCompositeQuestion.class).findDtoByQuestionId(questionDto.getId()),
-                                "JdbiCompositeQuestion.findDtoByQuestionId(questionDto.getId()");
+                        var val = timeCall(() -> handle.attach(JdbiCompositeQuestion.class).findDtoByQuestion(questionDto),
+                                "JdbiCompositeQuestion.findDtoByQuestion(questionDto.getId()");
                         val = new JdbiCompositeQuestionCached(handle).findDtoByQuestionId(questionDto.getId());
-                        val = timeCall(() -> new JdbiCompositeQuestionCached(handle).findDtoByQuestionId(questionDto.getId()),
-                                "JdbiCompositeQuestionCached.findDtoByQuestionId(questionDto.getId()");
+                        val = timeCall(() -> new JdbiCompositeQuestionCached(handle).findDtoByQuestion(questionDto),
+                                "JdbiCompositeQuestionCached.findDtoByQuestion(questionDto.getId()");
 
                     } else if (questionDto.getType() == QuestionType.PICKLIST) {
                         var val = timeCall(() -> handle.attach(JdbiPicklistQuestion.class).findDtoByQuestionId(questionDto.getId()),
                                 "JdbiPicklistQuestion.findDtoByQuestionId(questionDto.getId()");
                         val = new JdbiPicklistQuestionCached(handle).findDtoByQuestionId(questionDto.getId());
-                        val = timeCall(() -> new JdbiPicklistQuestionCached(handle).findDtoByQuestionId(questionDto.getId()),
-                                "JdbiPicklistQuestionCached.findDtoByQuestionId(questionDto.getId()");
+                        val = timeCall(() -> new JdbiPicklistQuestionCached(handle).findDtoByQuestion(questionDto),
+                                "JdbiPicklistQuestionCached.findDtoByQuestion(questionDto.getId()");
                         var another = timeCall(() -> handle.attach(PicklistQuestionDao.class).findOrderedGroupAndOptionDtos(questionDto,
                                 System.currentTimeMillis()),
                                 "PicklistQuestionDao.class).findOrderedGroupAndOptionDtos(questionDto,time)");
@@ -236,7 +236,7 @@ public class PatchFormAnswersCollectDataRoute implements Route {
                                 System.currentTimeMillis());
 
                         another = timeCall(() -> new PickListQuestionCachedDao(handle).findOrderedGroupAndOptionDtos(questionDto,
-                                        System.currentTimeMillis()),
+                                        instanceDto.getCreatedAtMillis()),
                                 "PickListQuestionCachedDao.findOrderedGroupAndOptionDtos(questionDto,blah)");
                     }
 
