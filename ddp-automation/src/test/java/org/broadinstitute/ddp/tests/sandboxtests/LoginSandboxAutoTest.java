@@ -2,13 +2,13 @@ package org.broadinstitute.ddp.tests.sandboxtests;
 
 import static com.epam.jdi.uitests.web.settings.WebSettings.getDriver;
 import static org.broadinstitute.ddp.DDPWebSite.CONFIG;
-import static org.broadinstitute.ddp.SandboxAppSite.auth0Page;
-import static org.broadinstitute.ddp.SandboxAppSite.loginPage;
+import static org.broadinstitute.ddp.earlypepper.SandboxAppSite.auth0Page;
+import static org.broadinstitute.ddp.earlypepper.SandboxAppSite.loginPage;
 
 import org.broadinstitute.ddp.ConfigFile;
 import org.broadinstitute.ddp.DDPWebSite;
-import org.broadinstitute.ddp.SandboxAppSite;
-import org.broadinstitute.ddp.SandboxAppWebsite;
+import org.broadinstitute.ddp.earlypepper.SandboxAppSite;
+import org.broadinstitute.ddp.earlypepper.SandboxAppWebsite;
 import org.broadinstitute.ddp.tests.BaseTest;
 import org.broadinstitute.ddp.tests.DatabaseUtility;
 import org.broadinstitute.ddp.tests.SandboxTests;

@@ -5,6 +5,7 @@ import org.broadinstitute.ddp.pages.util.JDIPageUtils;
 import org.junit.Assert;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.FindBy;
+import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,8 +19,9 @@ public class ConsentPage extends DDPPage {
     private static final String CONSENT_INSTRUCTIONS_XPATH = "(//div//ddp-activity-section)[1]";
     //Contained in 1. Key Points & 2. Full Form
     private static final String CONSENT_TEXT_CONTENT_XPATH = "(//div//ddp-activity-section)[2]";
-    private static final String CONSENT_NEXT_BUTTON_XPATH = "//button[contains(@class, 'mat-raised-button')]"
-            + "[normalize-space(text()) = 'NEXT']";
+    private static final String CONSENT_LAST_UPDATED_TEXT_XPATH = "//div[contains(@class, 'LastUpdatedText')]";
+    private static final String CONSENT_NEXT_BUTTON_XPATH = "//div[contains(@class, 'NextButton')]"
+            + "//button[normalize-space(text()) = 'NEXT']";
 
     private static final String PREVIOUS_BUTTON_XPATH = "//button[contains(@class, 'mat-raised-button')]"
             + "[normalize-space(text()) = 'PREV']";
@@ -58,6 +60,9 @@ public class ConsentPage extends DDPPage {
 
     @FindBy(xpath = CONSENT_TEXT_CONTENT_XPATH)
     private WebElement consentProjectExplanationText;
+
+    @FindBy(xpath = CONSENT_LAST_UPDATED_TEXT_XPATH)
+    private WebElement consentDocumentLastUpdatedDate;
 
     @FindBy(xpath = CONSENT_NEXT_BUTTON_XPATH)
     private WebElement nextButton;
@@ -102,20 +107,20 @@ public class ConsentPage extends DDPPage {
     private WebElement submitButton;
 
     public void verifyGeneralConsentContentDisplayed() {
+        shortWait.until(ExpectedConditions.visibilityOf(consentInstructions));
         JDIPageUtils.scrollDownToElement(CONSENT_INSTRUCTIONS_XPATH);
         Assert.assertTrue(consentInstructions.isDisplayed());
-        //JDIPageUtils.scrollDownToElement(CONSENT_TEXT_CONTENT_XPATH);
+        logger.info("Consent intructions are displayed");
     }
 
     public void setAgreeToSampleOfBloodBeingDrawn(String response) {
-        //todo When redirect is fixed, take out scroll to top
-        //JDIPageUtils.scrollIntoViewOfElement(stepperSignConsent);
-
         if (response.equalsIgnoreCase(YES)) {
+            shortWait.until(ExpectedConditions.visibilityOf(drawSampleOfBloodYes));
             JDIPageUtils.scrollDownToElement(AGREE_TO_SAMPLE_OF_BLOOD_BEING_DRAWN_YES_XPATH);
             drawSampleOfBloodYes.click();
 
         } else if (response.equalsIgnoreCase(NO)) {
+            shortWait.until(ExpectedConditions.visibilityOf(drawSampleOfBloodNo));
             JDIPageUtils.scrollDownToElement(AGREE_TO_SAMPLE_OF_BLOOD_BEING_DRAWN_NO_XPATH);
             drawSampleOfBloodNo.click();
 
@@ -162,19 +167,26 @@ public class ConsentPage extends DDPPage {
         JDIPageUtils.inputText(birthYear, year);
     }
 
+    public void verifyDateConsentLastUpdatedDisplayed() {
+        shortWait.until(ExpectedConditions.visibilityOf(consentDocumentLastUpdatedDate));
+        JDIPageUtils.scrollDownToElement(CONSENT_LAST_UPDATED_TEXT_XPATH);
+        Assert.assertTrue(consentDocumentLastUpdatedDate.isDisplayed());
+    }
+
     public void clickNext() {
+        shortWait.until(ExpectedConditions.visibilityOf(nextButton));
         JDIPageUtils.scrollDownToElement(CONSENT_NEXT_BUTTON_XPATH);
         nextButton.click();
     }
 
     public void clickSubmit() {
+        shortWait.until(ExpectedConditions.visibilityOf(submitButton));
         JDIPageUtils.scrollDownToElement(SIGN_CONSENT_SUBMIT_BUTTON_XPATH);
         //Double click since there is not a reliable method to first give the button
         //a focused or hovered over state. First click gives the button focus.
         //todo tech debt - find better solution for fcousing/hovering over webelements
-        submitButton.click();
         if (submitButton.isDisplayed()) {
-            submitButton.click();
+            JDIPageUtils.doubleClickAndWait(submitButton);
         }
     }
 

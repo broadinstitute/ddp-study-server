@@ -50,12 +50,6 @@ public class DataSyncJob implements Job {
     }
 
     public static void register(Scheduler scheduler, Config cfg) throws SchedulerException {
-        boolean enabled = cfg.getBoolean(ConfigFile.Elasticsearch.SYNC_ENABLED);
-        if (!enabled) {
-            LOG.warn("Job {} is disabled, no data will be synced to elasticsearch", getKey());
-            return;
-        }
-
         JobDataMap map = new JobDataMap();
         map.put(DATA_EXPORTER, new DataExporter(cfg));
 
@@ -67,6 +61,12 @@ public class DataSyncJob implements Job {
                 .build();
         scheduler.addJob(job, true);
         LOG.info("Added job {} to scheduler", getKey());
+
+        boolean enabled = cfg.getBoolean(ConfigFile.Elasticsearch.SYNC_ENABLED);
+        if (!enabled) {
+            LOG.warn("Job {} is disabled, syncing to elasticsearch will not be triggered", getKey());
+            return;
+        }
 
         int intervalSecs = cfg.getInt(ConfigFile.Elasticsearch.SYNC_INTERVAL_SECS);
         Trigger trigger = TriggerBuilder.newTrigger()

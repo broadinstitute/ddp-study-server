@@ -1,0 +1,84 @@
+post:
+  operationId: lookupInvitation
+  tags:
+    - Study Admin
+  summary: LookupInvitation
+  description: |
+    Fetch an invitation, along with associated user data.
+
+    Note: requires study admin ID token.
+  parameters:
+    - $ref: '../pepper.yml#/components/parameters/studyGuid'
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - invitationId
+          properties:
+            invitationId:
+              description: the invitation id
+              type: string
+  responses:
+    200:
+      description: invitation details
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - invitationId
+              - createdAt
+              - voidedAt
+              - verifiedAt
+              - acceptedAt
+              - notes
+              - userGuid
+              - userHruid
+              - userLoginEmail
+            properties:
+              invitationId:
+                description: the id of the invitation
+                type: string
+              createdAt:
+                description: timestamp of when invitation was created, in ISO-8601 UTC format
+                type: string
+                example: 2020-05-13T17:58:33.887Z
+              voidedAt:
+                description: timestamp of when invitation is voided, in ISO-8601 UTC format
+                type: string
+                nullable: true
+              verifiedAt:
+                description: timestamp of when invitation is verified, in ISO-8601 UTC format
+                type: string
+                nullable: true
+              acceptedAt:
+                description: timestamp of when invitation is accepted, in ISO-8601 UTC format
+                type: string
+                nullable: true
+              notes:
+                description: the notes for the invitation
+                type: string
+                nullable: true
+              userGuid:
+                description: guid of associated user, if invitation is accepted
+                type: string
+                nullable: true
+              userHruid:
+                description: hruid of associated user, if invitation is accepted
+                type: string
+                nullable: true
+              userLoginEmail:
+                description: login email of associated user, if invitation is accepted and user has a login account
+                type: string
+                nullable: true
+    404:
+      description: invitation not found
+      content:
+        application/json:
+          schema:
+            $ref: '../pepper.yml#/components/schemas/Error.NotFound'
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'

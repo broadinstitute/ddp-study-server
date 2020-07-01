@@ -8,6 +8,7 @@ public enum EventTriggerType {
     GOVERNED_USER_REGISTERED(true),
     INVITATION_CREATED(true),
     JOIN_MAILING_LIST(true),
+    LOGIN_ACCOUNT_CREATED(true),
     MEDICAL_UPDATE(true),
     REACHED_AOM(true),
     REACHED_AOM_PREP(true),

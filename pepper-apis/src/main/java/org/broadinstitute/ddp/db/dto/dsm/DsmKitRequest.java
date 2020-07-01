@@ -11,6 +11,9 @@ public class DsmKitRequest {
     private String kitRequestId;
     private String kitType;
 
+    // Flag to satisfy contract with DSM. Should always be set to `false` for now.
+    private boolean needsApproval = false;
+
     /**
      * The database id for the related database row.
      *

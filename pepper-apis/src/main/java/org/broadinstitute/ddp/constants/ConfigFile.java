@@ -2,6 +2,8 @@ package org.broadinstitute.ddp.constants;
 
 public class ConfigFile {
 
+    public static final String API_BASE_URL = "apiBaseUrl";
+
     // field that specifies the url to the database
     public static final String DB_URL = "dbUrl";
 
@@ -14,6 +16,9 @@ public class ConfigFile {
     // whether or not to run liquibase at app boot
     public static final String DO_LIQUIBASE = "doLiquibase";
 
+    // Name of the default timezone to be used by system. Does not change VM time zone!
+    public static final String DEFAULT_TIMEZONE = "defaultTimezone";
+
     // config file name used for testing the app with a disposable in-memory database
     public static final String IN_MEMORY_DB_TESTING_CONFIG_FILE = "testing-inmemorydb.conf";
 
@@ -25,11 +30,7 @@ public class ConfigFile {
 
     public static final String SQL_CONF = SQL_CONFIG_FILE + ".conf";
 
-    // query used to find all studies for an umbrella
-    public static final String STUDIES_FOR_UMBRELLA_QUERY = "studiesForUmbrella";
-
     // file system location of where to find fc keys
-    public static final String FIRECLOUD_KEYS_DIR_ENV_VAR = "ddp.firecloudKeysDir";
     public static final String ITEXT_FILE_ENV_VAR = "itext.license";
 
     // encryption secret for database saved auth0 secrets
@@ -62,21 +63,11 @@ public class ConfigFile {
     public static final String STUDY_EXPORT_SCHEDULE = "schedules.studyExport";
     public static final String TEMP_USER_CLEANUP_SCHEDULE = "schedules.tempUserCleanup";
 
-    //database instance names
-    public static final String DB_DSM_INSTANCE_ID = "dbDsmInstance";
-    public static final String DB_API_INSTANCE_ID = "dbApiInstance";
-    public static final String DB_HOUSEKEEPING_INSTANCE_ID = "dbHousekeepingInstance";
+    // database instance names
+    public static final String DB_INSTANCE_ID = "dbInstanceId";
 
     // SQL queries
-    public static final String CLIENT_KEY_CONFIGURATION_QUERY = "clientKeyConfigurationQuery";
-    public static final String CLIENT_ID_BY_AUTH0_CLIENT_ID_QUERY = "clientIdByAuth0ClientIdQuery";
-    public static final String CLIENT_UPSERT_STATEMENT = "upsertClientStatement";
-    public static final String CLIENT_DELETE_BY_NAME = "deleteClientByName";
-    public static final String INSERT_USER_STMT = "insertUser";
-    public static final String STUDIES_FOR_CLIENT_QUERY = "studiesForClientQuery";
-    public static final String QUERY_GOVERNED_PARTICIPANTS_BY_OPERATOR = "governedParticipantsForOperatorQuery";
     public static final String HEALTHCHECK_PASSWORD = "healthcheckPassword";
-    public static final String USER_CLIENT_REVOCATION_QUERY = "userClientRevocationQuery";
 
     // milliseconds after which spark will terminate a request thread if it hasn't completed
     public static final String THREAD_TIMEOUT = "threadTimeout";
@@ -97,10 +88,6 @@ public class ConfigFile {
     public static final String EASY_POST_API_KEY = "easyPostApiKey";
     public static final String USE_PUBSUB_EMULATOR = "usePubSubEmulator";
 
-    public static final String BASE_WEBDRIVER_URL = "baseWebDriverUrl";
-    public static final String FIRECLOUD = "firecloud";
-    public static final String TEST_FIRECLOUD_WORKSPACE_NAMESPACE = "testWorkspaceNamespace";
-    public static final String TEST_FIRECLOUD_WORKSPACE_NAME = "testWorkspace";
     public static final String SENDGRID_API_KEY = "sendgridToken";
     public static final String HOUSEKEEPING_DB_URL = "housekeepingDbUrl";
     public static final String HOUSEKEEPING_NUM_POOLED_CONNECTIONS = "housekeepingMaxConnections";
@@ -110,13 +97,16 @@ public class ConfigFile {
     public static final String BACKEND_AUTH0_TEST_CLIENT_ID2 = "backendTestClientId2";
     public static final String BACKEND_AUTH0_TEST_SECRET2 = "backendTestSecret2";
     public static final String BACKEND_AUTH0_TEST_CLIENT_NAME2 = "backendTestClientName2";
-    public static final String PUBSUB_PROJECT = "pubSubProject";
+    public static final String PUBSUB_ENABLE_HKEEP_TASKS = "pubsub.enableHousekeepingTasks";
+    public static final String PUBSUB_HKEEP_TASKS_TOPIC = "pubsub.housekeepingTasksTopic";
     public static final String SLACK_HOOK = "slack.hook";
     public static final String SLACK_CHANNEL = "slack.channel";
     public static final String TEST_USER_AUTH0_ID = "testUserAuth0Id";
 
     public static final String DOMAIN = "domain";
     public static final String SEND_METRICS = "sendMetrics";
+
+    public static final String RESTRICT_REGISTER_ROUTE = "restrictRegisterRoute";
 
     /**
      * Google API key for geocoding
@@ -133,15 +123,19 @@ public class ConfigFile {
     public static final String DSM_JWT_SIGNER = "dsmJwtSigner";
     public static final String USE_DISPOSABLE_TEST_DB = "useDisposableTestDbs";
 
-    public static final class SqlQuery {
-        public static final String ACTIVITY_INSTANCE_GUID_AND_PARTICIPANT_ID_BY_STUDY_GUID =
-                "studyActivity.queryActivityInstanceGuidAndParticipantId";
-        public static final String VALID_STUDY_QUERY = "studyActivity.queryValidStudy";
+    public static final String AUTH0_IP_WHITE_LIST = "auth0IpWhiteList";
+    public static final String PREFERRED_SOURCE_IP_HEADER = "preferredSourceIPHeader";
 
+    public static final class SqlQuery {
         public static final String FORM_ACTIVITY_BY_GUID = "activities.formActivityByGuidQuery";
 
         public static final String MAX_INSTANCES_PER_USER = "max_instances_per_user";
         public static final String NUM_INSTANCES_FOR_USER = "num_instances_for_user";
+    }
+
+    public static final class API_RATE_LIMIT {
+        public static final String MAX_QUERIES_PER_SECOND = "rateLimit.apiLimitRate";
+        public static final String BURST = "rateLimit.apiLimitBurst";
     }
 
     /**

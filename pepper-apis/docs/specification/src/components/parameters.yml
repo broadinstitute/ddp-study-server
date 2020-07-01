@@ -1,0 +1,14 @@
+studyGuid:
+  in: path
+  name: study
+  required: true
+  description: the study guid
+  schema:
+    type: string
+userGuid:
+  in: path
+  name: user
+  required: true
+  description: the user's guid
+  schema:
+    type: string

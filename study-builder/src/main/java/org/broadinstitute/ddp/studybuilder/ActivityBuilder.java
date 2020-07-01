@@ -172,13 +172,15 @@ public class ActivityBuilder {
     public void insertValidations(Handle handle, long activityId, String activityCode, long revisionId, List<Config> validations) {
         JdbiActivity jdbiActivity = handle.attach(JdbiActivity.class);
         for (Config validationCfg : validations) {
-            Template errorMessageTemplate = gson.fromJson(ConfigUtil.toJson(validationCfg.getConfig("messageTemplate")), Template.class);
-            List<JsonValidationError> errors = validator.validateAsJson(errorMessageTemplate);
-            if (!errors.isEmpty()) {
-                String errorMessage = GsonPojoValidator.createValidationErrorMessage(errors, ", ");
+            Template errorMessageTemplate = BuilderUtils.parseTemplate(validationCfg, "messageTemplate");
+            if (errorMessageTemplate == null) {
+                throw new DDPException("Validation error message template is required");
+            }
+            String errors = BuilderUtils.validateTemplate(errorMessageTemplate);
+            if (errors != null) {
                 throw new DDPException(String.format(
                         "Validation error message template for activity %d has the following validation errors: %s",
-                        activityId, errorMessage));
+                        activityId, errors));
             }
 
             String precondition = ConfigUtil.getStrIfPresent(validationCfg, "precondition");

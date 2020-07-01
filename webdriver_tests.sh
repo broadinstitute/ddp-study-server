@@ -67,7 +67,26 @@ run_smoke_tests_pepper_angio() {
         SmokeTestsAngioWindowsChrome
         SmokeTestsAngioWindowsFirefox
         SmokeTestsAngioMacSafari
-        #SmokeTestsAngioWindowsIE
+    )
+
+    for profile in "${profiles[@]}"; do
+        echo "running end to end smoke tests for pepper-angio: $profile"
+        if ! run_test "Smoke Tests" "$profile"; then
+            exit_status=1
+        fi
+    done
+
+    return $exit_status
+}
+
+run_smoke_tests_pepper_brain() {
+    echo "running webdriver smoke tests on broadinstitute/pepper-ui-tests:$TAG on $ENV with configs from $PWD/$output_dir"
+
+    local exit_status=0
+    local profiles=(
+        SmokeTestsBrainWindowsChrome
+        SmokeTestsBrainWindowsFirefox
+        SmokeTestsBrainMacSafari
         #SmokeTestsAngioNexus6
     )
 
@@ -79,6 +98,14 @@ run_smoke_tests_pepper_angio() {
     done
 
     return $exit_status
+}
+
+run_all_smoke_tests() {
+    echo "running Angio smoke tests"
+    run_smoke_tests_pepper_angio
+
+    echo "running Brain smoke tests"
+    run_smoke_tests_pepper_brain
 }
 
 run_feature_tests() {
@@ -130,7 +157,7 @@ VERSION=$1; shift
 ENV=$1; shift
 DIR=$1; shift
 
-NOTIFY_SLACK=true
+NOTIFY_SLACK=false
 BROWSER_STACK_BUILD_NAME="Jenkins ${ENV}"
 
 VAULT_TOKEN=$VAULT_TOKEN
@@ -164,6 +191,16 @@ while [[ "$1" != "" ]]; do
             docker_build
             run_smoke_tests_pepper_angio
             ;;
+        --brain-test)
+            render_configs "local"
+            docker_build
+            run_smoke_tests_pepper_brain
+            ;;
+        --all-smoke-tests)
+            render_configs "local"
+            docker_build
+            run_all_smoke_tests
+            ;;
         --feature-test)
             render_configs "local"
             docker_build
@@ -185,6 +222,18 @@ while [[ "$1" != "" ]]; do
             docker_build
             docker_push
             run_smoke_tests_pepper_angio
+            ;;
+        --brain-test-jenkins)
+            render_configs "local"
+            docker_build
+            docker_push
+            run_smoke_tests_pepper_brain
+            ;;
+        --all-smoke-tests-jenkins)
+            render_configs "local"
+            docker_build
+            docker_push
+            run_all_smoke_tests
             ;;
         --feature-jenkins)
             render_configs

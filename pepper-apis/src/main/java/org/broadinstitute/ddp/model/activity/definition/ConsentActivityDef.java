@@ -125,6 +125,7 @@ public final class ConsentActivityDef extends FormActivityDef {
         protected ListStyleHint listStyleHint;
         private Template lastUpdatedTextTemplate;
         private LocalDateTime lastUpdated;
+        private boolean snapshotSubstitutionsOnSubmit;
 
         private Builder() {
             // Use static factories.
@@ -207,6 +208,7 @@ public final class ConsentActivityDef extends FormActivityDef {
             consent.setConsentConditionId(consentConditionId);
             consent.setConsentedExprId(consentedExprId);
             consent.closing = closing;
+            consent.snapshotSubstitutionsOnSubmit = snapshotSubstitutionsOnSubmit;
             return consent;
         }
 
@@ -232,6 +234,11 @@ public final class ConsentActivityDef extends FormActivityDef {
 
         public Builder setLastUpdated(LocalDateTime lastUpdatedDate) {
             this.lastUpdated = lastUpdatedDate;
+            return this;
+        }
+
+        public Builder setSnapshotSubstitutionsOnSubmit(boolean snapshotSubstitutionsOnSubmit) {
+            this.snapshotSubstitutionsOnSubmit = snapshotSubstitutionsOnSubmit;
             return this;
         }
     }

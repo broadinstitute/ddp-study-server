@@ -14,7 +14,8 @@ public interface JdbiBooleanQuestion extends SqlObject {
 
     @SqlUpdate("insert into boolean_question (question_id,true_template_id,false_template_id)"
             + " values(:questionId,:trueTemplateId,:falseTemplateId)")
-    int insert(long questionId, long trueTemplateId, long falseTemplateId);
+    int insert(@Bind("questionId")long questionId, @Bind("trueTemplateId")long trueTemplateId,
+               @Bind("falseTemplateId") long falseTemplateId);
 
     @UseStringTemplateSqlLocator
     @SqlQuery("queryDtoByQuestionId")

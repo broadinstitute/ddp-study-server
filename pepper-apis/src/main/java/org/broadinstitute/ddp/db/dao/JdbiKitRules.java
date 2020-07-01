@@ -1,11 +1,11 @@
 package org.broadinstitute.ddp.db.dao;
 
 import java.util.Optional;
+import java.util.Set;
 
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dto.kit.KitCountryRuleDto;
 import org.broadinstitute.ddp.db.dto.kit.KitPexRuleDto;
-import org.broadinstitute.ddp.db.dto.kit.KitRuleDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.kit.KitCountryRule;
 import org.broadinstitute.ddp.model.kit.KitPexRule;
@@ -17,19 +17,17 @@ import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
+import org.jdbi.v3.sqlobject.statement.SqlBatch;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
 public interface JdbiKitRules extends SqlObject {
 
-    @SqlQuery("select kit_rule_type_id from kit_rule where kit_rule_id = :id")
-    Long getKitTypeFromKitId(@Bind Long id);
-
-    @SqlQuery("select kit_rule_type_code from kit_rule_type where kit_rule_type_id = :id")
-    String getRuleTypeCodeFromTypeId(@Bind Long id);
-
-    @SqlQuery("select kit_rule_type_id from kit_rule_type where kit_rule_type_code = :code")
-    Long getRuleTypeIdFromCode(KitRuleType code);
+    @SqlQuery("select krt.kit_rule_type_code"
+            + "  from kit_rule as kr"
+            + "  join kit_rule_type as krt on krt.kit_rule_type_id = kr.kit_rule_type_id"
+            + " where kr.kit_rule_id = :id")
+    KitRuleType getKitTypeFromKitId(@Bind("id") long id);
 
     /**
      * Inserts a kit rule in all relevant tables based on the kind of rule it is.
@@ -39,9 +37,7 @@ public interface JdbiKitRules extends SqlObject {
      * @return the base id of the kit rule inserted
      */
     default Long insertKitRuleByType(KitRuleType kitRuleType, Long pexOrCountryId) {
-        Long ruleTypeId = getRuleTypeIdFromCode(kitRuleType);
-        Long ruleId = insertRule(ruleTypeId);
-
+        long ruleId = insertRule(kitRuleType);
         switch (kitRuleType) {
             case COUNTRY:
                 insertCountryRule(ruleId, pexOrCountryId);
@@ -49,6 +45,8 @@ public interface JdbiKitRules extends SqlObject {
             case PEX:
                 insertPexRule(ruleId, pexOrCountryId);
                 break;
+            case ZIP_CODE:
+                throw new DaoException("do not use for kit type " + kitRuleType);
             default:
                 throw new DaoException("Unknown kit type");
         }
@@ -64,19 +62,20 @@ public interface JdbiKitRules extends SqlObject {
      */
     default KitRule getTypedKitRuleById(Long id) {
         Handle handle = getHandle();
-        Long kitTypeId = getKitTypeFromKitId(id);
-        KitRuleType kitRuleType = KitRuleType.valueOf(getRuleTypeCodeFromTypeId(kitTypeId));
+        KitRuleType kitRuleType = getKitTypeFromKitId(id);
 
         switch (kitRuleType) {
             case COUNTRY:
                 JdbiCountry jdbiCountry = handle.attach(JdbiCountry.class);
                 KitCountryRuleDto kitCountryRuleDto = getKitCountryRuleById(id).get();
-                return new KitCountryRule(jdbiCountry.getCountryNameById(kitCountryRuleDto.getCountryId()));
+                return new KitCountryRule(id, jdbiCountry.getCountryCodeById(kitCountryRuleDto.getCountryId()));
             case PEX:
                 JdbiExpression jdbiExpression = handle.attach(JdbiExpression.class);
                 KitPexRuleDto kitPexRuleDto = getKitPexRuleById(id).get();
-                return new KitPexRule(new TreeWalkInterpreter(),
+                return new KitPexRule(id, new TreeWalkInterpreter(),
                         jdbiExpression.getExpressionById(kitPexRuleDto.getExpressionId()));
+            case ZIP_CODE:
+                throw new DaoException("do not use for kit type " + kitRuleType);
             default:
                 throw new DDPException("Unknown kit type");
         }
@@ -90,8 +89,7 @@ public interface JdbiKitRules extends SqlObject {
      * @return the number of rows deleted when removing the rule
      */
     default int deleteKitRuleByType(Long kitConfigId, Long ruleId) {
-        Long kitRuleTypeId = getKitTypeFromKitId(ruleId);
-        KitRuleType kitRuleType = KitRuleType.valueOf(getRuleTypeCodeFromTypeId(kitRuleTypeId));
+        KitRuleType kitRuleType = getKitTypeFromKitId(ruleId);
         int rowsDeleted;
         switch (kitRuleType) {
             case COUNTRY:
@@ -100,6 +98,8 @@ public interface JdbiKitRules extends SqlObject {
             case PEX:
                 rowsDeleted = deletePexRuleById(ruleId);
                 break;
+            case ZIP_CODE:
+                throw new DaoException("do not use for kit type " + kitRuleType);
             default:
                 throw new DaoException("Unknown kit type: " + kitRuleType.name() + " for " + ruleId);
         }
@@ -116,25 +116,17 @@ public interface JdbiKitRules extends SqlObject {
     }
 
 
-    @SqlUpdate("insert into kit_rule"
-            + " (kit_rule_type_id) values(?)")
     @GetGeneratedKeys
-    Long insertRule(Long ruleTypeId);
-
-    @SqlQuery("select kr.kit_rule_id, krt.kit_rule_type_code "
-            + "from kit_rule as kr, "
-            + "kit_rule_type as krt "
-            + "where kr.kit_rule_id = :id "
-            + "and kr.kit_rule_type_id = krt.kit_rule_type_id")
-    @RegisterRowMapper(KitRuleDto.KitRuleDtoMapper.class)
-    Optional<KitRuleDto> getKitRuleById(Long id);
+    @SqlUpdate("insert into kit_rule (kit_rule_type_id)"
+            + " select kit_rule_type_id from kit_rule_type where kit_rule_type_code = :type")
+    long insertRule(@Bind("type") KitRuleType type);
 
     @SqlUpdate("delete from kit_rule where kit_rule_id = :id")
     int deleteRuleById(Long id);
 
 
-    @SqlUpdate("insert into kit_configuration__kit_rule (kit_configuration_id, kit_rule_id) values(?, ?)")
-    int addRuleToConfiguration(Long configurationId, Long kitRuleId);
+    @SqlUpdate("insert into kit_configuration__kit_rule (kit_configuration_id, kit_rule_id) values (:configId, :ruleId)")
+    int addRuleToConfiguration(@Bind("configId") long configurationId, @Bind("ruleId") long kitRuleId);
 
     @SqlUpdate("delete from kit_configuration__kit_rule"
             + " where kit_configuration_id = :kitConfigId and kit_rule_id = :kitRuleId")
@@ -166,4 +158,13 @@ public interface JdbiKitRules extends SqlObject {
     @SqlUpdate("delete from kit_pex_rule where kit_rule_id = :id")
     int deletePexRuleById(Long id);
 
+    @SqlUpdate("insert into kit_zip_code_rule (kit_rule_id, error_message_template_id, warning_message_template_id)"
+            + " values (:ruleId, :errorTmplId, :warningTmplId)")
+    int insertZipCodeRule(
+            @Bind("ruleId") long ruleId,
+            @Bind("errorTmplId") Long errorMessageTemplateId,
+            @Bind("warningTmplId") Long warningMessageTemplateId);
+
+    @SqlBatch("insert into kit_zip_code (kit_rule_id, zip_code) values (:ruleId, :zipCode)")
+    int[] bulkInsertKitZipCodes(@Bind("ruleId") long kitRuleId, @Bind("zipCode") Set<String> zipCodes);
 }

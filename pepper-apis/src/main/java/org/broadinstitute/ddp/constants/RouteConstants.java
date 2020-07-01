@@ -18,7 +18,6 @@ public class RouteConstants {
     public static final class API {
         public static final String VERSION = "v1";
         public static final String BASE = "/pepper/" + VERSION;
-        public static final String INVITATIONS = BASE + "/invitations";
 
         public static final String HEALTH_CHECK = "/" + VERSION + "/healthcheck";
         public static final String DEPLOYED_VERSION = BASE + "/version";
@@ -28,14 +27,28 @@ public class RouteConstants {
         public static final String TEMP_USERS = BASE + "/temporary-users";
         public static final String ACTIVITY_INSTANCE_STATUS_TYPE_LIST = BASE + "/activity-instance-status-types";
 
+        public static final String ADMIN_BASE = BASE + "/admin";
+        public static final String ADMIN_STUDY_PARTICIPANTS =
+                fmt(ADMIN_BASE + "/studies/%s/participants", PathParam.STUDY_GUID);
+        public static final String ADMIN_STUDY_INVITATION_LOOKUP =
+                fmt(ADMIN_BASE + "/studies/%s/invitation-lookup", PathParam.STUDY_GUID);
+        public static final String ADMIN_STUDY_INVITATION_DETAILS =
+                fmt(ADMIN_BASE + "/studies/%s/invitation-details", PathParam.STUDY_GUID);
+        public static final String ADMIN_STUDY_USER_LOGIN_ACCOUNT =
+                fmt(ADMIN_BASE + "/studies/%s/user/%s/login-account", PathParam.STUDY_GUID, PathParam.USER_GUID);
+
         public static final String STUDY_ALL = BASE + "/studies";
         public static final String STUDY_DETAIL = fmt(STUDY_ALL + "/%s", PathParam.STUDY_GUID);
-
         public static final String PARTICIPANTS_INFO_FOR_STUDY =
                 fmt(STUDY_ALL + "/participant-info" + "/%s", PathParam.STUDY_GUID);
+        public static final String STUDY_LANGUAGES = fmt(BASE + "/studies/%s/languages", PathParam.STUDY_GUID);
+        public static final String INVITATION_VERIFY = fmt(BASE + "/studies/%s/invitation-verify", PathParam.STUDY_GUID);
+        public static final String INVITATION_CHECK = fmt(BASE + "/studies/%s/invitation-check", PathParam.STUDY_GUID);
 
         public static final String USER_ALL = fmt(BASE + "/user/%s/*", PathParam.USER_GUID);
         public static final String USER_SPECIFIC = fmt(BASE + "/user/%s", PathParam.USER_GUID);
+        public static final String UPDATE_USER_PASSWORD = USER_SPECIFIC + "/password";
+        public static final String UPDATE_USER_EMAIL = USER_SPECIFIC + "/email";
 
         public static final String USER_PROFILE = fmt(BASE + "/user/%s/profile", PathParam.USER_GUID);
 
@@ -69,6 +82,8 @@ public class RouteConstants {
                 PathParam.USER_GUID, PathParam.STUDY_GUID);
         public static final String USER_ACTIVITIES_INSTANCE = fmt(BASE + "/user/%s/studies/%s/activities/%s",
                 PathParam.USER_GUID, PathParam.STUDY_GUID, PathParam.INSTANCE_GUID);
+        public static final String USER_LAST_VISITED_SECTION = fmt(BASE + "/user/%s/studies/%s/activities/%s/lastVisitedSection",
+                PathParam.USER_GUID, PathParam.STUDY_GUID, PathParam.INSTANCE_GUID);
         public static final String USER_ACTIVITY_ANSWERS = fmt(BASE + "/user/%s/studies/%s/activities/%s/answers",
                 PathParam.USER_GUID, PathParam.STUDY_GUID, PathParam.INSTANCE_GUID);
         public static final String USER_MEDICAL_PROVIDERS = fmt(
@@ -87,11 +102,6 @@ public class RouteConstants {
 
         public static final String USER_STUDY_EXIT = String.format(
                 BASE + "/user/%s/studies/%s/exit", PathParam.USER_GUID, PathParam.STUDY_GUID);
-
-        public static final String ADMIN_BASE = BASE + "/admin";
-        public static final String ADMIN_STUDIES = BASE + "/admin/studies";
-        public static final String ADMIN_WORKSPACES = BASE + "/admin/workspaces";
-        public static final String EXPORT_STUDY = fmt(BASE + "/admin/studies/%s/export", PathParam.STUDY_GUID);
 
         public static final String DSM_BASE = BASE + "/dsm";
         public static final String DSM_STUDY = fmt(DSM_BASE + "/studies/%s/ddp", PathParam.STUDY_GUID);
@@ -126,8 +136,6 @@ public class RouteConstants {
                 PathParam.USER_GUID
         );
 
-        public static final String VERIFY_INVITATION = INVITATIONS + "/verify";
-
         public static final String PARTICIPANT_STATUS = fmt(
                 BASE + "/user/%s/studies/%s/status",
                 PathParam.USER_GUID,
@@ -145,8 +153,6 @@ public class RouteConstants {
         );
 
         public static final String STUDY_PASSWORD_POLICY = STUDY_DETAIL + "/password-policy";
-        public static final String UPDATE_USER_PASSWORD = USER_SPECIFIC + "/password";
-        public static final String UPDATE_USER_EMAIL = USER_SPECIFIC + "/email";
     }
 
     public static final class PathParam {
@@ -161,6 +167,7 @@ public class RouteConstants {
         public static final String ADDRESS_GUID = ":addressGuid";
         public static final String MEDICAL_PROVIDER_GUID = ":medicalProviderGuid";
         public static final String INSTITUTION_TYPE = ":institutionType";
+        public static final String INVITATION_ID = ":invitationId";
     }
 
     public static final class QueryParam {
@@ -171,15 +178,14 @@ public class RouteConstants {
         public static final String INSTANCE_GUID = "instanceGuid";
         public static final String IRB_PASSWORD = "irbPassword";
         public static final String AUTH0_CLIENT_ID  = "clientId";
+        public static final String AUTH0_DOMAIN  = "domain";
         public static final String EMAIL  = "email";
         public static final String SUCCESS  = "success";
         public static final String UMBRELLA = "umbrella";
         public static final String TYPEAHEAD_QUERY = "q";
         public static final String TYPEAHEAD_QUERY_LIMIT = "limit";
         public static final String ERROR_CODE = "errorCode";
+        public static final String LAST_VISITED_ACTIVITY_SECTION = "lastVisitedActivitySection";
     }
 
-    public static final class FireCloud {
-        public static String fireCloudBaseUrl = "https://api.firecloud.org/api/workspaces";
-    }
 }

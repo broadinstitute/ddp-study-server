@@ -47,6 +47,8 @@ public class EventConfiguration {
                 // No sub-tables
             case JOIN_MAILING_LIST:
                 // No sub-tables
+            case LOGIN_ACCOUNT_CREATED:
+                // No sub-tables
             case MEDICAL_UPDATE:
                 // No sub-tables
             case REACHED_AOM:
