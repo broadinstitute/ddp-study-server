@@ -162,6 +162,7 @@ public class DsmClient {
         String path = PATH_PARTICIPANT_STATUS
                 .replace(PathParam.STUDY_GUID, studyGuid)
                 .replace(PathParam.USER_GUID, userGuid);
+        String responseBody = null;
         try {
             String auth = RouteUtil.makeAuthBearerHeader(token);
             var request = HttpRequest.newBuilder()
@@ -172,12 +173,14 @@ public class DsmClient {
             var response = client.send(request, HttpResponse.BodyHandlers.ofString());
             int statusCode = response.statusCode();
             if (statusCode == 200) {
-                ParticipantStatus status = new Gson().fromJson(response.body(), ParticipantStatus.class);
+                responseBody = response.body();
+                ParticipantStatus status = new Gson().fromJson(responseBody, ParticipantStatus.class);
                 return ApiResult.ok(statusCode, status);
             } else {
                 return ApiResult.err(statusCode, null);
             }
         } catch (JWTCreationException | IOException | InterruptedException | JsonSyntaxException e) {
+            LOG.error("Trouble looking up status of {} in study {}.  Response was {}", userGuid, studyGuid, responseBody);
             return ApiResult.thrown(e);
         }
     }

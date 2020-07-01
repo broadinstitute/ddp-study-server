@@ -137,7 +137,7 @@ public class InvitationCheckStatusRouteTest extends IntegrationTestSuite.TestCas
             inviteError.addVariable(TemplateVariable.single("foobar", "en", "study invite error"));
             long revisionId = handle.attach(JdbiRevision.class)
                     .insertStart(Instant.now().toEpochMilli(), testData.getUserId(), "test");
-            handle.attach(StudyDao.class).addSettings(testData.getStudyId(), inviteError, revisionId, false, null);
+            handle.attach(StudyDao.class).addSettings(testData.getStudyId(), inviteError, revisionId, false, null, false);
 
             doReturn(handle.attach(StudyDao.class)).when(mockHandle).attach(StudyDao.class);
             doReturn(handle.attach(TemplateDao.class)).when(mockHandle).attach(TemplateDao.class);
