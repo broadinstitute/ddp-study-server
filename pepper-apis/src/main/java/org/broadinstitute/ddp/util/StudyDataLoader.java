@@ -1324,7 +1324,9 @@ public class StudyDataLoader {
                 if (optionName.contains("other") || optionName.contains("telangiectasia")
                         || optionName.contains("allergies") || optionName.contains("high_cholesterol")
                         || optionName.contains("liver_issues") || optionName.contains("renal_issues")
-                        || optionName.contains("thyroid_issues")) {
+                        || optionName.contains("thyroid_issues") || optionName.contains("g_tube")
+                        || optionName.contains("eye") || optionName.contains("heel_cord")
+                        || optionName.contains("rod_placement")) {
                     String otherDetails = null;
                     //if (optValuesList.size() > (selectedPicklistOptions.size() + 1)) {
                     //there is Other text
