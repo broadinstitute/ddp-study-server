@@ -9,8 +9,8 @@ public abstract class NumericAnswer<T extends Number> extends Answer<T> {
     @SerializedName("numericType")
     protected NumericType numericType;
 
-    NumericAnswer(Long answerId, String questionStableId, String answerGuid, NumericType numericType) {
-        super(QuestionType.NUMERIC, answerId, questionStableId, answerGuid);
+    NumericAnswer(Long answerId, String questionStableId, String answerGuid, NumericType numericType, Long languageCodeId) {
+        super(QuestionType.NUMERIC, answerId, questionStableId, answerGuid, languageCodeId);
         this.numericType = numericType;
     }
 

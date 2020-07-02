@@ -11,8 +11,8 @@ public class NumericIntegerAnswer extends NumericAnswer<Long> {
     @SerializedName("value")
     private Long value;
 
-    public NumericIntegerAnswer(Long answerId, String questionStableId, String answerGuid, Long value) {
-        super(answerId, questionStableId, answerGuid, NumericType.INTEGER);
+    public NumericIntegerAnswer(Long answerId, String questionStableId, String answerGuid, Long value, Long languageCodeId) {
+        super(answerId, questionStableId, answerGuid, NumericType.INTEGER, languageCodeId);
         this.value = value;
     }
 

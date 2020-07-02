@@ -12,8 +12,8 @@ public class TextAnswer extends Answer<String> {
     private String value;
 
     @JdbiConstructor
-    public TextAnswer(Long answerId, String questionStableId, String answerGuid, String value) {
-        super(QuestionType.TEXT, answerId, questionStableId, answerGuid);
+    public TextAnswer(Long answerId, String questionStableId, String answerGuid, String value, Long languageCodeId) {
+        super(QuestionType.TEXT, answerId, questionStableId, answerGuid, languageCodeId);
         this.value = value;
     }
 

@@ -14,14 +14,14 @@ public class DateAnswer extends Answer<DateValue> {
     @SerializedName("value")
     private DateValue value;
 
-    public DateAnswer(Long answerId, String questionStableId, String answerGuid, DateValue value) {
-        super(QuestionType.DATE, answerId, questionStableId, answerGuid);
+    public DateAnswer(Long answerId, String questionStableId, String answerGuid, DateValue value, Long languageCodeId) {
+        super(QuestionType.DATE, answerId, questionStableId, answerGuid, languageCodeId);
         this.value = MiscUtil.checkNonNull(value, "value");
     }
 
     public DateAnswer(Long answerId, String questionStableId, String answerGuid,
-                      Integer year, Integer month, Integer day) {
-        super(QuestionType.DATE, answerId, questionStableId, answerGuid);
+                      Integer year, Integer month, Integer day, Long languageCodeId) {
+        super(QuestionType.DATE, answerId, questionStableId, answerGuid, languageCodeId);
         this.value = new DateValue(year, month, day);
     }
 

@@ -415,7 +415,7 @@ public class PatchFormAnswersRoute implements Route {
             Type selectedOptionListType = new TypeToken<ArrayList<SelectedPicklistOption>>() {
             }.getType();
             List<SelectedPicklistOption> selected = gson.fromJson(value, selectedOptionListType);
-            return new PicklistAnswer(null, stableId, guid, selected);
+            return new PicklistAnswer(null, stableId, guid, selected, languageCodeId);
         } catch (JsonSyntaxException e) {
             LOG.warn("Failed to convert submitted answer to a picklist answer", e);
             return null;
@@ -430,10 +430,10 @@ public class PatchFormAnswersRoute implements Route {
      * @param value    the answer value
      * @return text answer object, or null if value is not a string
      */
-    private TextAnswer convertTextAnswer(String stableId, String guid, JsonElement value) {
+    private TextAnswer convertTextAnswer(String stableId, String guid, JsonElement value, Long languageCodeId) {
         if (value != null && value.isJsonPrimitive() && value.getAsJsonPrimitive().isString()) {
             String textValue = value.getAsJsonPrimitive().getAsString();
-            return new TextAnswer(null, stableId, guid, textValue);
+            return new TextAnswer(null, stableId, guid, textValue, languageCodeId);
         } else {
             return null;
         }
@@ -447,11 +447,11 @@ public class PatchFormAnswersRoute implements Route {
      * @param value    the answer value
      * @return date answer object, or null if value is not as expected
      */
-    private DateAnswer convertDateAnswer(String stableId, String guid, JsonElement value) {
+    private DateAnswer convertDateAnswer(String stableId, String guid, JsonElement value, Long languageCodeId) {
         if (value != null && value.isJsonObject()) {
             try {
                 DateValue dateValue = gson.fromJson(value, DateValue.class);
-                return new DateAnswer(null, stableId, guid, dateValue);
+                return new DateAnswer(null, stableId, guid, dateValue, languageCodeId);
             } catch (JsonSyntaxException e) {
                 LOG.warn("Failed to convert submitted answer to a date answer", e);
                 return null;
@@ -463,7 +463,8 @@ public class PatchFormAnswersRoute implements Route {
         }
     }
 
-    private NumericAnswer convertNumericAnswer(Handle handle, QuestionDto questionDto, String guid, JsonElement value) {
+    private NumericAnswer convertNumericAnswer(Handle handle, QuestionDto questionDto, String guid, JsonElement value,
+                                               Long languageCodeId) {
         if (value == null || value.isJsonNull() || (value.isJsonPrimitive() && value.getAsJsonPrimitive().isNumber())) {
             NumericQuestionDto numericQuestionDto = handle.attach(JdbiNumericQuestion.class)
                     .findDtoByQuestionId(questionDto.getId())
@@ -473,7 +474,7 @@ public class PatchFormAnswersRoute implements Route {
                 if (value != null && !value.isJsonNull()) {
                     intValue = value.getAsLong();
                 }
-                return new NumericIntegerAnswer(null, questionDto.getStableId(), guid, intValue);
+                return new NumericIntegerAnswer(null, questionDto.getStableId(), guid, intValue, languageCodeId);
             } else {
                 throw new DDPException("Unhandled numeric answer type " + numericQuestionDto.getNumericType());
             }
@@ -552,9 +553,9 @@ public class PatchFormAnswersRoute implements Route {
      * @param value    the answer value
      * @return agreement answer object, or null if value is not as expected
      */
-    private AgreementAnswer convertAgreementAnswer(String stableId, String guid, JsonElement value) {
+    private AgreementAnswer convertAgreementAnswer(String stableId, String guid, JsonElement value, Long languageCodeId) {
         if (value != null && value.isJsonPrimitive() && value.getAsJsonPrimitive().isBoolean()) {
-            return new AgreementAnswer(null, stableId, guid, value.getAsJsonPrimitive().getAsBoolean());
+            return new AgreementAnswer(null, stableId, guid, value.getAsJsonPrimitive().getAsBoolean(), languageCodeId);
         }
         return null;
     }
