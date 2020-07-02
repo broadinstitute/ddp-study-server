@@ -91,8 +91,10 @@ import org.broadinstitute.ddp.util.TestUtil;
 import org.jdbi.v3.core.Handle;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
+@Ignore
 public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase {
 
     public static final String TEXT_QUESTION_STABLE_ID = "TEXT_Q";

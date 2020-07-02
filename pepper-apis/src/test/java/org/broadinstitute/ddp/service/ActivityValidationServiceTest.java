@@ -30,8 +30,10 @@ import org.broadinstitute.ddp.util.TestUtil;
 import org.jdbi.v3.core.Handle;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
+@Ignore
 public class ActivityValidationServiceTest extends TxnAwareBaseTest {
 
     private static TestDataSetupUtil.GeneratedTestData testData;

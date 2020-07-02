@@ -72,8 +72,10 @@ import org.jdbi.v3.core.Handle;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
+@Ignore
 public class PutFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
 
     private static ActivityVersionDto activityVersionDto;
