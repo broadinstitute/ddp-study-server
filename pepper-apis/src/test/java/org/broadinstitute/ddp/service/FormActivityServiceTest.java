@@ -1,28 +1,16 @@
 package org.broadinstitute.ddp.service;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.when;
 
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
-import org.broadinstitute.ddp.exception.DDPException;
-import org.broadinstitute.ddp.json.form.BlockVisibility;
 import org.broadinstitute.ddp.model.activity.definition.ConditionalBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.ContentBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
@@ -35,16 +23,13 @@ import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.TemplateType;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
-import org.broadinstitute.ddp.pex.PexException;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.pex.TreeWalkInterpreter;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.jdbi.v3.core.Handle;
 import org.junit.Before;
 import org.junit.Rule;
-import org.junit.Test;
 import org.junit.rules.ExpectedException;
-import org.mockito.Mockito;
 
 public class FormActivityServiceTest extends TxnAwareBaseTest {
 
