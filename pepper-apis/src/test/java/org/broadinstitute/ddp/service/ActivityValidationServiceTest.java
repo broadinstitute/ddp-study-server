@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.cache.LanguageStore;
+import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
@@ -29,6 +30,7 @@ import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.broadinstitute.ddp.util.TestUtil;
 import org.jdbi.v3.core.Handle;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -88,6 +90,11 @@ public class ActivityValidationServiceTest extends TxnAwareBaseTest {
 
     private static Template newTemplate(String templateCode) {
         return new Template(TemplateType.TEXT, templateCode, "Test message");
+    }
+
+    @Before
+    public void clearCache() {
+        ActivityDefStore.getInstance().clearValidationDtos();
     }
 
     @Test

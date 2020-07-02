@@ -28,6 +28,7 @@ import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.API;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.content.I18nTemplateConstants;
+import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
@@ -676,6 +677,7 @@ public class PutFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
                 );
                 return insertNewInstanceAndDeferCleanup(handle, form.getActivityId());
             });
+            ActivityDefStore.getInstance().clearValidationDtos();
             callEndpoint(instanceDto.getGuid())
                     .then()
                     .assertThat()

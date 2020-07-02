@@ -37,6 +37,7 @@ import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.constants.RouteConstants.API;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.content.ContentStyle;
+import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
@@ -682,6 +683,7 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
                         activityVersionDto.getRevId()
                 );
             });
+            ActivityDefStore.getInstance().clearValidationDtos();
             testFor200()
                     .body("sections[1].blocks[0].question.validationFailures", not(is(nullValue())))
                     .body("sections[1].blocks[0].question.validationFailures.size()", equalTo(1));

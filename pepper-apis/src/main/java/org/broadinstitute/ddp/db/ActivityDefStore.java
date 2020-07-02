@@ -63,6 +63,33 @@ public class ActivityDefStore {
     public void clear() {
         synchronized (lockVar) {
             activityDefMap.clear();
+            activityDtoMap.clear();
+            versionDtoListMap.clear();
+            validationDtoListMap.clear();
+        }
+    }
+
+    public void clearDefinitions() {
+        synchronized (lockVar) {
+            activityDefMap.clear();
+        }
+    }
+
+    public void clearActivityDtos() {
+        synchronized (lockVar) {
+            activityDtoMap.clear();
+        }
+    }
+
+    public void clearVersionDtos() {
+        synchronized (lockVar) {
+            versionDtoListMap.clear();
+        }
+    }
+
+    public void clearValidationDtos() {
+        synchronized (lockVar) {
+            validationDtoListMap.clear();
         }
     }
 

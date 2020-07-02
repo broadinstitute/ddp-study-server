@@ -43,6 +43,7 @@ import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.API;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
+import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
@@ -1660,6 +1661,7 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
                 TextAnswer answer = new TextAnswer(null, textStableId, null, "old value");
                 return createAnswerAndDeferCleanup(handle, answer);
             });
+            ActivityDefStore.getInstance().clearValidationDtos();
             PatchAnswerPayload data = new PatchAnswerPayload();
             data.addSubmission(new AnswerSubmission(textStableId, answerGuid, new JsonPrimitive("hi there")));
             givenAnswerPatchRequest(instanceGuid, data)
