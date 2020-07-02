@@ -29,7 +29,8 @@ public class StudyMigrationRun {
 
     public StudyMigrationRun(String altPid, String pepperUserGuid, Boolean hasAboutYou, Boolean hasConsent, Boolean hasBloodConsent,
                              Boolean hasTissueConsent, Boolean hasRelease, Boolean hasBloodRelease, Boolean hasLovedOne,
-                             Boolean hasFollowup, Boolean hasMedicalHistory, Boolean isSuccess, Boolean previousRun, String emailAddress, Boolean auth0Collision) {
+                             Boolean hasFollowup, Boolean hasMedicalHistory, Boolean isSuccess, Boolean previousRun,
+                             String emailAddress, Boolean auth0Collision) {
         this.altPid = altPid;
         this.pepperUserGuid = pepperUserGuid;
         this.hasAboutYou = hasAboutYou;

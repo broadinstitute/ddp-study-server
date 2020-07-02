@@ -30,6 +30,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.typesafe.config.Config;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -70,10 +71,10 @@ import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
+import org.broadinstitute.ddp.model.activity.instance.answer.NumericIntegerAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
-import org.broadinstitute.ddp.model.activity.instance.answer.NumericIntegerAnswer;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.activity.types.InstitutionType;
 import org.broadinstitute.ddp.model.address.MailAddress;
@@ -103,8 +104,8 @@ public class StudyDataLoader {
     Map<String, List<String>> sourceDataSurveyQs;
     Map<String, String> altNames;
     Map<Integer, String> yesNoDkLookup;
-    Map<Integer, String> ambulationLookup;
     Map<Integer, Boolean> booleanValueLookup;
+    Map<String, List<String>> datStatLookup;
     Auth0Util auth0Util;
     String auth0Domain;
     String mgmtToken;
@@ -127,15 +128,29 @@ public class StudyDataLoader {
         yesNoDkLookup = new HashMap<>();
         yesNoDkLookup.put(0, "NO");
         yesNoDkLookup.put(1, "YES");
-        yesNoDkLookup.put(2, "DK");
+        yesNoDkLookup.put(2, "DONT_KNOW");
 
-        ambulationLookup = new HashMap<>();
-        ambulationLookup.put(1, "INDEPENDENTLY");
-        ambulationLookup.put(2, "MOST_OF_THE_TIME");
-        ambulationLookup.put(3, "WITH_ASSISTANCE");
-        ambulationLookup.put(4, "USES_WALKER");
-        ambulationLookup.put(5, "WHEELCHAIR_WITHOUT_ASSISTANCE");
-        ambulationLookup.put(6, "WHEELCHAIR_WITH_ASSISTANCE");
+        datStatLookup = new HashMap<>();
+
+        List<String> optionList = new ArrayList<>(7);
+        optionList.add(0, "Just");
+        optionList.add(1, "INDEPENDENTLY");
+        optionList.add(2, "MOST_OF_THE_TIME");
+        optionList.add(3, "WITH_ASSISTANCE");
+        optionList.add(4, "USES_WALKER");
+        optionList.add(5, "WHEELCHAIR_WITHOUT_ASSISTANCE");
+        optionList.add(6, "WHEELCHAIR_WITH_ASSISTANCE");
+        datStatLookup.put("ambulation", optionList);
+
+
+        optionList = new ArrayList<>(6);
+        optionList.add(0, "Just");
+        optionList.add(1, "REMISSION_AND_NO_LONGER_TREATMENT");
+        optionList.add(2, "REMISSION_AND_TREATMENT");
+        optionList.add(3, "HAS_CANCER_AND_NO_LONGER_TREATMENT");
+        optionList.add(4, "HAS_CANCER_AND_TREATMENT");
+        optionList.add(5, "CANCER_HAS_RECENTLY_RECURRED");
+        datStatLookup.put("cancer_status", optionList);
 
         booleanValueLookup = new HashMap<>();
         booleanValueLookup.put(0, false);
@@ -754,9 +769,9 @@ public class StudyDataLoader {
     }
 
     public String answerNumericQuestion(String pepperQuestionStableId,
-                                     String participantGuid,
-                                     String instanceGuid,
-                                     Long value, AnswerDao answerDao) {
+                                        String participantGuid,
+                                        String instanceGuid,
+                                        Long value, AnswerDao answerDao) {
         String guid = null;
         if (value != null) {
             Answer answer = new NumericIntegerAnswer(null, pepperQuestionStableId, null, value);
@@ -1181,7 +1196,7 @@ public class StudyDataLoader {
         String sourceType = getStringValueFromElement(mapElement, "source_type");
         //handle options
         String stableId = getStringValueFromElement(mapElement, "stable_id");
-
+        System.out.println("-------------" + stableId);
         List<SelectedPicklistOption> selectedPicklistOptions = new ArrayList<>();
         if (mapElement.getAsJsonObject().get("options") == null || mapElement.getAsJsonObject().get("options").isJsonNull()) {
             //this will handle "country" : "US"
@@ -1227,11 +1242,45 @@ public class StudyDataLoader {
         if (value == null || value.isJsonNull()) {
             return selectedPicklistOptions;
         }
-        if (questionName.equals("ambulation")) {
-            selectedPicklistOptions.add(new SelectedPicklistOption(ambulationLookup.get(value.getAsInt())));
+
+        boolean foundValue = false;
+        String val = null;
+        if (datStatLookup.get(questionName) != null && datStatLookup.get(questionName).get(value.getAsInt()) != null) {
+            foundValue = true;
+            val = datStatLookup.get(questionName).get(value.getAsInt());
         } else if (yesNoDkLookup.get(value.getAsInt()) != null) {
-            selectedPicklistOptions.add(new SelectedPicklistOption(yesNoDkLookup.get(value.getAsInt())));
+            foundValue = true;
+            val = yesNoDkLookup.get(value.getAsInt());
         }
+
+        if (foundValue) {
+            boolean foundSpecify = false;
+            JsonArray options = mapElement.getAsJsonObject().getAsJsonArray("options");
+            for (JsonElement option : options) {
+                JsonObject optionObject = option.getAsJsonObject();
+                JsonElement optionNameEl = optionObject.get("stable_id");
+                String optionName = optionNameEl == null ? val : optionNameEl.getAsString();
+
+                if (optionName != null
+                            && !optionName.isEmpty() && val.equals(optionName)) {
+                    JsonElement specifyKeyElement = optionObject.get("text");
+
+                    if (specifyKeyElement != null && !specifyKeyElement.isJsonNull()
+                            && StringUtils.isNotEmpty(specifyKeyElement.getAsString())) {
+                        foundSpecify = true;
+                        String otherText = specifyKeyElement.getAsString();
+                        selectedPicklistOptions
+                                .add(new SelectedPicklistOption(val, getStringValueFromElement(sourceDataElement, questionName + "."
+                                        + otherText)));
+                    }
+                }
+            }
+            if (!foundSpecify) {
+                selectedPicklistOptions.add(new SelectedPicklistOption(val));
+            }
+
+        }
+
         return selectedPicklistOptions;
 
     }
@@ -1261,7 +1310,8 @@ public class StudyDataLoader {
 
         JsonArray options = mapElement.getAsJsonObject().getAsJsonArray("options");
         for (JsonElement option : options) {
-            JsonElement optionNameEl = option.getAsJsonObject().get("name");
+            JsonObject optionObj = option.getAsJsonObject();
+            JsonElement optionNameEl = optionObj.get("name");
             String optionName = optionNameEl.getAsString();
             if (altNames.get(optionName) != null) {
                 optionName = altNames.get(optionName);
@@ -1271,11 +1321,16 @@ public class StudyDataLoader {
                     || optValuesList.stream().anyMatch(x -> x.equalsIgnoreCase(optName))) {
 
                 //todo.. handle other_text in a better way!
-                if (optionName.equalsIgnoreCase("Other")) {
+                if (optionName.contains("other")) {
                     String otherDetails = null;
-                    if (optValuesList.size() > (selectedPicklistOptions.size() + 1)) {
-                        //there is Other text
-                        otherDetails = optValuesList.get(optValuesList.size() - 1);
+                    //if (optValuesList.size() > (selectedPicklistOptions.size() + 1)) {
+                    //there is Other text
+                    //otherDetails = optValuesList.get(optValuesList.size() - 1);
+                    //}
+                    if (optionObj.has("text") && !sourceDataElement.getAsJsonObject()
+                            .get(questionName + "." + optionName + "." + optionObj.get("text").getAsString()).isJsonNull()) {
+                        otherDetails = sourceDataElement.getAsJsonObject().get(questionName + "." + optionName + "." + optionObj
+                                .get("text").getAsString()).getAsString();
                     }
                     selectedPicklistOptions.add(new SelectedPicklistOption(optionNameEl.getAsString().toUpperCase(), otherDetails));
                 } else {
@@ -1310,7 +1365,7 @@ public class StudyDataLoader {
                 value = sourceDataElement.getAsJsonObject().get(key);
                 sourceDataSurveyQs.get(surveyName).add(key);
             }
-            if (key.contains("medication") || key.contains("sibling") && value != null) {
+            if (value != null && (key.contains("medication") || key.contains("sibling"))) {
                 selectedPicklistOptions
                         .add(new SelectedPicklistOption(options.get(value.getAsInt()).getAsJsonObject().get("stable_id").getAsString()));
                 break;
@@ -1419,7 +1474,7 @@ public class StudyDataLoader {
     }
 
     private String processNumericQuestion(JsonElement mapElement, JsonElement sourceDataElement, String surveyName,
-                                       String participantGuid, String instanceGuid, AnswerDao answerDao) throws Exception {
+                                          String participantGuid, String instanceGuid, AnswerDao answerDao) throws Exception {
 
         String answerGuid = null;
         JsonElement valueEl;

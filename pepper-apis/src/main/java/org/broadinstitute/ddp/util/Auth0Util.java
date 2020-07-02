@@ -500,7 +500,7 @@ public class Auth0Util {
         user.setPassword(pwd);
         user.setConnection(USERNAME_PASSWORD_AUTH0_CONN_NAME);
         User createdUser = auth0Mgmt.users().create(user).execute();
-        LOG.info("Created Passowrd : {}", pwd);
+        LOG.info("Created password: {}", pwd);
         return createdUser;
     }
 

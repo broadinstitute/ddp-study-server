@@ -93,7 +93,7 @@
               {
                 "name": "other",
                 "text": "text",
-                "type": "string"
+                "type": "integer"
               }
             ]
           },
@@ -259,12 +259,12 @@
           },
           {
             "name": "wheelchair_age_start",
-            "type": "string",
+            "type": "Numeric",
             "stable_id": "BEGIN_WHEELCHAIR_AGE"
           },
           {
             "name": "wheelchair_age_depend",
-            "type": "string",
+            "type": "Numeric",
             "stable_id": "COMPLETELY_WHEELCHAIR_AGE"
           },
           {
@@ -540,19 +540,20 @@
           },
           {
             "name": "vaccine_infection",
-            "stable_id": "IMMUNODEFICIENCY_TYPE",
+            "stable_id": "IMMUNIZATION",
             "type": "Picklist",
-            "source_type": "string",
+            "source_type": "integer",
             "options": [
               {
                 "name": "text",
+                "text": "text",
                 "type": "string"
               }
             ]
           },
           {
             "name": "surgeries",
-              "stable_id": "SURGERIES",
+            "stable_id": "SURGERIES",
             "type": "Picklist",
             "source_type": "string",
             "options": [
