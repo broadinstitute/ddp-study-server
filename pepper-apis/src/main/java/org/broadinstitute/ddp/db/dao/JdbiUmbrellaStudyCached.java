@@ -20,7 +20,7 @@ import org.jdbi.v3.core.Handle;
 public class JdbiUmbrellaStudyCached extends SQLObjectWrapper<JdbiUmbrellaStudy> implements JdbiUmbrellaStudy {
 
     private static Cache<Long, StudyDto> idToStudyCache;
-    private static Cache<String, Long> guidToIdCache;
+    private static Cache<String, StudyDto> guidToStudyCache;
 
     public JdbiUmbrellaStudyCached(Handle handle) {
         super(handle, JdbiUmbrellaStudy.class);
@@ -34,7 +34,7 @@ public class JdbiUmbrellaStudyCached extends SQLObjectWrapper<JdbiUmbrellaStudy>
                     new Duration(),
                     ModelChangeType.UMBRELLA,
                     this.getClass());
-            guidToIdCache = CacheService.getInstance().getOrCreateCache("guidToIdStudyCache", new Duration(),
+            guidToStudyCache = CacheService.getInstance().getOrCreateCache("guidToStudyCache", new Duration(),
                     ModelChangeType.UMBRELLA,
                     this.getClass());
             if (!isUsingNullCache()) {
@@ -81,12 +81,7 @@ public class JdbiUmbrellaStudyCached extends SQLObjectWrapper<JdbiUmbrellaStudy>
         if (isUsingNullCache()) {
             return delegate.findByStudyGuid(studyGuid);
         } else {
-            Long id = guidToIdCache.get(studyGuid);
-            if (id != null) {
-                return idToStudyCache.get(id);
-            } else {
-                return null;
-            }
+            return guidToStudyCache.get(studyGuid);
         }
     }
 
@@ -227,8 +222,7 @@ public class JdbiUmbrellaStudyCached extends SQLObjectWrapper<JdbiUmbrellaStudy>
         List<StudyDto> allDtos = delegate.findAll();
         allDtos.forEach(studyDto -> {
             idToStudyCache.put(studyDto.getId(), studyDto);
-            guidToIdCache.put(studyDto.getGuid(), studyDto.getId());
-
+            guidToStudyCache.put(studyDto.getGuid(), studyDto);
         });
     }
 }
