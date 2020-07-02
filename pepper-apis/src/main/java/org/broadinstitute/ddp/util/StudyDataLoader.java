@@ -1366,8 +1366,10 @@ public class StudyDataLoader {
                 sourceDataSurveyQs.get(surveyName).add(key);
             }
             if (value != null && (key.contains("medication") || key.contains("sibling"))) {
+                int intValue = value.getAsInt();
+                if (intValue == -1) intValue = 2;
                 selectedPicklistOptions
-                        .add(new SelectedPicklistOption(options.get(value.getAsInt()).getAsJsonObject().get("stable_id").getAsString()));
+                        .add(new SelectedPicklistOption(options.get(intValue).getAsJsonObject().get("stable_id").getAsString()));
                 break;
             } else if (value != null && value.getAsInt() == 1) { //option checked
                 if (option.getAsJsonObject().get("text") != null) {
