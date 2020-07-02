@@ -1873,7 +1873,6 @@ Invitation:
     - voidedAt
     - verifiedAt
     - acceptedAt
-    - notes
   properties:
     invitationType:
       description: the type of invitation
@@ -1890,21 +1889,20 @@ Invitation:
       type: string
       example: 2020-05-13T17:58:33.887Z
     voidedAt:
-      description: timestamp of when invitation is voided, in ISO-8601 UTC format
+      description: timestamp of when invitation was voided, making the invitation invalid, in ISO-8601 UTC format
       type: string
       nullable: true
+      example: null
     verifiedAt:
-      description: timestamp of when invitation is verified, in ISO-8601 UTC format
+      description: timestamp of when invitation was verified, indicating user has acknowledged receiving the invitation, in ISO-8601 UTC format
       type: string
       nullable: true
+      example: 2020-05-13T18:58:33.887Z
     acceptedAt:
-      description: timestamp of when invitation is accepted, in ISO-8601 UTC format
+      description: timestamp of when invitation was accepted, in ISO-8601 UTC format
       type: string
       nullable: true
-    notes:
-      description: the notes for the invitation
-      type: string
-      nullable: true
+      example: 2020-05-13T19:58:33.887Z
 
 MedicalProvider:
   type: object

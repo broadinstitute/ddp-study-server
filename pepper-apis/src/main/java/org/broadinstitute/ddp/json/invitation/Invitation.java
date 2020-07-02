@@ -1,29 +1,37 @@
 package org.broadinstitute.ddp.json.invitation;
 
 import java.time.Instant;
-
 import javax.annotation.Nullable;
 
+import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
 import org.broadinstitute.ddp.db.dto.InvitationDto;
 import org.broadinstitute.ddp.model.invitation.InvitationType;
+import org.broadinstitute.ddp.transformers.InstantStringAdapter;
 
 public class Invitation {
 
     @SerializedName("invitationType")
     private InvitationType invitationType;
+
     @SerializedName("invitationId")
     private String invitationGuid;
+
     @SerializedName("createdAt")
-    private String createdAt;
+    @JsonAdapter(InstantStringAdapter.class)
+    private Instant createdAt;
+
     @SerializedName("voidedAt")
-    private String voidedAt;
+    @JsonAdapter(InstantStringAdapter.class)
+    private Instant voidedAt;
+
     @SerializedName("verifiedAt")
-    private String verifiedAt;
+    @JsonAdapter(InstantStringAdapter.class)
+    private Instant verifiedAt;
+
     @SerializedName("acceptedAt")
-    private String acceptedAt;
-    @SerializedName("notes")
-    private String notes;
+    @JsonAdapter(InstantStringAdapter.class)
+    private Instant acceptedAt;
 
     public Invitation(InvitationDto invite) {
         this(invite.getInvitationType(),
@@ -31,20 +39,17 @@ public class Invitation {
                 invite.getCreatedAt(),
                 invite.getVoidedAt(),
                 invite.getVerifiedAt(),
-                invite.getAcceptedAt(),
-                invite.getNotes());
+                invite.getAcceptedAt());
     }
 
     public Invitation(InvitationType invitationType, String invitationGuid, Instant createdAt,
-                      @Nullable Instant voidedAt, @Nullable Instant verifiedAt, @Nullable Instant acceptedAt,
-                      @Nullable String notes) {
+                      @Nullable Instant voidedAt, @Nullable Instant verifiedAt, @Nullable Instant acceptedAt) {
         this.invitationType = invitationType;
         this.invitationGuid = invitationGuid;
-        this.createdAt = createdAt.toString();
-        this.voidedAt = voidedAt != null ? voidedAt.toString() : null;
-        this.verifiedAt = verifiedAt != null ? verifiedAt.toString() : null;
-        this.acceptedAt = acceptedAt != null ? acceptedAt.toString() : null;
-        this.notes = notes;
+        this.createdAt = createdAt;
+        this.voidedAt = voidedAt;
+        this.verifiedAt = verifiedAt;
+        this.acceptedAt = acceptedAt;
     }
 
     public InvitationType getInvitationType() {
@@ -55,23 +60,19 @@ public class Invitation {
         return invitationGuid;
     }
 
-    public String getCreatedAt() {
+    public Instant getCreatedAt() {
         return createdAt;
     }
 
-    public String getVoidedAt() {
+    public Instant getVoidedAt() {
         return voidedAt;
     }
 
-    public String getVerifiedAt() {
+    public Instant getVerifiedAt() {
         return verifiedAt;
     }
 
-    public String getAcceptedAt() {
+    public Instant getAcceptedAt() {
         return acceptedAt;
-    }
-
-    public String getNotes() {
-        return notes;
     }
 }

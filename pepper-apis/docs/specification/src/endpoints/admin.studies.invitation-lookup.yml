@@ -34,6 +34,7 @@ post:
                   - userGuid
                   - userHruid
                   - userLoginEmail
+                  - notes
                 properties:
                   userGuid:
                     description: guid of associated user, if invitation is accepted
@@ -45,6 +46,10 @@ post:
                     nullable: true
                   userLoginEmail:
                     description: login email of associated user, if invitation is accepted and user has a login account
+                    type: string
+                    nullable: true
+                  notes:
+                    description: the notes for the invitation, as set by study staff
                     type: string
                     nullable: true
     404:
