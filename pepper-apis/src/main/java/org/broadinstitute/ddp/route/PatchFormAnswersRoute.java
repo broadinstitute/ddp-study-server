@@ -24,18 +24,19 @@ import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetrics;
 import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetricsTracker;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
+import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
-import org.broadinstitute.ddp.db.dao.JdbiActivity;
-import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiCompositeQuestion;
 import org.broadinstitute.ddp.db.dao.JdbiCompositeQuestionCached;
 import org.broadinstitute.ddp.db.dao.JdbiNumericQuestion;
 import org.broadinstitute.ddp.db.dao.JdbiQuestionCached;
 import org.broadinstitute.ddp.db.dao.QuestionCachedDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
+import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
+import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.AnswerDto;
 import org.broadinstitute.ddp.db.dto.CompositeQuestionDto;
 import org.broadinstitute.ddp.db.dto.LanguageDto;
@@ -51,6 +52,7 @@ import org.broadinstitute.ddp.json.PatchAnswerPayload;
 import org.broadinstitute.ddp.json.PatchAnswerResponse;
 import org.broadinstitute.ddp.json.errors.AnswerValidationError;
 import org.broadinstitute.ddp.json.errors.ApiError;
+import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.instance.answer.AgreementAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
@@ -274,10 +276,18 @@ public class PatchFormAnswersRoute implements Route {
                 throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.REQUIRED_PARAMETER_MISSING, e.getMessage()));
             }
 
-            res.setBlockVisibilities(formService.getBlockVisibilities(handle, participantGuid, instanceGuid));
+            ActivityDefStore activityStore = ActivityDefStore.getInstance();
+            ActivityDto activityDto = activityStore.findActivityDto(handle, instanceDto.getActivityId())
+                    .orElseThrow(() -> new DDPException("Could not find activity dto for instance " + instanceGuid));
+            ActivityVersionDto versionDto = activityStore
+                    .findVersionDto(handle, instanceDto.getActivityId(), instanceDto.getCreatedAtMillis())
+                    .orElseThrow(() -> new DDPException("Could not find activity version for instance " + instanceGuid));
+            FormActivityDef def = activityStore.findActivityDef(handle, studyGuid, activityDto, versionDto)
+                    .orElseThrow(() -> new DDPException("Could not find activity definition for instance " + instanceGuid));
+            res.setBlockVisibilities(formService.getBlockVisibilities(handle, def, participantGuid, instanceGuid));
 
             List<ActivityValidationFailure> failures = getActivityValidationFailures(
-                    handle, participantGuid, instanceGuid, languageCodeId
+                    handle, participantGuid, instanceDto, languageCodeId
             );
             if (!failures.isEmpty()) {
                 LOG.info("Activity validation failed, reasons: {}", createValidationFailureSummaries(failures));
@@ -292,11 +302,9 @@ public class PatchFormAnswersRoute implements Route {
             );
             handle.attach(DataExportDao.class).queueDataSync(participantGuid, studyGuid);
 
-            String studyActivityCode = handle.attach(JdbiActivity.class).queryActivityById(
-                    instanceDto.getActivityId()).getActivityCode();
             GoogleAnalyticsMetricsTracker.getInstance().sendAnalyticsMetrics(studyGuid, GoogleAnalyticsMetrics.EVENT_CATEGORY_PATCH_ANSWERS,
                     GoogleAnalyticsMetrics.EVENT_ACTION_PATCH_ANSWERS, GoogleAnalyticsMetrics.EVENT_LABEL_PATCH_ANSWERS,
-                    studyActivityCode, 1);
+                    activityDto.getActivityCode(), 1);
 
             return res;
         });
@@ -644,11 +652,10 @@ public class PatchFormAnswersRoute implements Route {
     }
 
     private List<ActivityValidationFailure> getActivityValidationFailures(
-            Handle handle, String participantGuid, String activityInstanceGuid, long languageCodeId
+            Handle handle, String participantGuid, ActivityInstanceDto instanceDto, long languageCodeId
     ) {
-        long activityId = handle.attach(JdbiActivityInstance.class).getActivityIdByGuid(activityInstanceGuid);
         return actValidationService.validate(
-                handle, interpreter, participantGuid, activityInstanceGuid, activityId, languageCodeId
+                handle, interpreter, participantGuid, instanceDto.getGuid(), instanceDto.getActivityId(), languageCodeId
         );
     }
 }

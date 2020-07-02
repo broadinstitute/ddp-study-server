@@ -13,6 +13,7 @@ import org.broadinstitute.ddp.model.activity.definition.i18n.SummaryTranslation;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
+import org.broadinstitute.ddp.model.activity.types.BlockType;
 import org.broadinstitute.ddp.model.activity.types.FormType;
 import org.broadinstitute.ddp.model.activity.types.ListStyleHint;
 import org.broadinstitute.ddp.transformers.LocalDateTimeAdapter;
@@ -50,6 +51,8 @@ public class FormActivityDef extends ActivityDef {
 
     @SerializedName("snapshotSubstitutionsOnSubmit")
     protected boolean snapshotSubstitutionsOnSubmit;
+
+    private transient List<FormBlockDef> cachedToggleableBlocks;
 
     public static FormBuilder formBuilder() {
         return new FormBuilder();
@@ -158,6 +161,30 @@ public class FormActivityDef extends ActivityDef {
             allSections.add(closing);
         }
         return allSections;
+    }
+
+    public List<FormBlockDef> getAllToggleableBlocks() {
+        if (cachedToggleableBlocks == null) {
+            List<FormBlockDef> blocks = new ArrayList<>();
+            for (var section : getAllSections()) {
+                for (var block : section.getBlocks()) {
+                    if (block.getShownExpr() != null) {
+                        blocks.add(block);
+                    }
+                    List<FormBlockDef> nested = null;
+                    if (block.getBlockType() == BlockType.CONDITIONAL) {
+                        nested = ((ConditionalBlockDef) block).getNested();
+                    } else if (block.getBlockType() == BlockType.GROUP) {
+                        nested = ((GroupBlockDef) block).getNested();
+                    }
+                    if (nested != null) {
+                        nested.stream().filter(b -> b.getShownExpr() != null).forEach(blocks::add);
+                    }
+                }
+            }
+            cachedToggleableBlocks = List.copyOf(blocks);   // Make immutable.
+        }
+        return cachedToggleableBlocks;
     }
 
     // Note: this builder is named a bit differently so we don't clash with builders in subclasses.
