@@ -29,7 +29,7 @@ import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.broadinstitute.ddp.util.TestUtil;
 import org.jdbi.v3.core.Handle;
 import org.junit.Assert;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
 
 public class ActivityValidationServiceTest extends TxnAwareBaseTest {
@@ -47,8 +47,8 @@ public class ActivityValidationServiceTest extends TxnAwareBaseTest {
     private static TextQuestionDef txt1;
     private static TextQuestionDef txt2;
 
-    @BeforeClass
-    public static void setup() throws Exception {
+    @Before
+    public void setup() throws Exception {
         TransactionWrapper.useTxn(handle -> {
             testData = TestDataSetupUtil.generateBasicUserTestData(handle);
             userGuid = testData.getUserGuid();
