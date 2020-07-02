@@ -1321,7 +1321,7 @@ public class StudyDataLoader {
                     || optValuesList.stream().anyMatch(x -> x.equalsIgnoreCase(optName))) {
 
                 //todo.. handle other_text in a better way!
-                if (optionName.contains("other")) {
+                if (optionName.contains("other") || optionName.contains("telangiectasia")) {
                     String otherDetails = null;
                     //if (optValuesList.size() > (selectedPicklistOptions.size() + 1)) {
                     //there is Other text
