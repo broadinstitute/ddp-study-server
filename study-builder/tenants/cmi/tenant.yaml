@@ -23,6 +23,7 @@ emailTemplates:
       {% elsif client.client_metadata.study == "cmi-brain" %} Brain Cancer Project
       {% elsif client.client_metadata.study == "cmi-mbc" %} Metastatic Breast Cancer Project
       {% elsif client.client_metadata.study == "CMI-OSTEO" %} Osteosarcoma Project
+      {% elsif client.client_metadata.study == "cmi-mpc" %} Metastatic Prostate Cancer Project
       {% endif %} Password Reset
     urlLifetimeInSeconds: 432000
     syntax: liquid
@@ -93,3 +94,18 @@ clients:
       ##LOCALHOST_ORIGINS##
     client_metadata:
       study: CMI-OSTEO
+
+  - name: mpc-angular-client
+    app_type: spa
+    callbacks:
+      - '##MPC_BASE_URL##/login-landing'
+      ##LOCALHOST_CALLBACKS##
+    allowed_logout_urls:
+      - '##MPC_BASE_URL##'
+      - '##MPC_BASE_URL##/session-expired'
+      ##LOCALHOST_LOGOUTS##
+    web_origins:
+      - '##MPC_BASE_URL##'
+      ##LOCALHOST_ORIGINS##
+    client_metadata:
+      study: cmi-mpc
