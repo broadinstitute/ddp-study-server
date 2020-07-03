@@ -1349,7 +1349,7 @@
               },
               {
                 "name": "sibling_2_age",
-                "type": "Numeric",
+                "type": "string",
                 "stable_id": "AGE"
               },
               {
@@ -1361,7 +1361,7 @@
               {
                 "name": "sibling_2_age_death",
                 "stable_id": "AGE_AT_DEATH",
-                "type": "Numeric",
+                "type": "string",
                 "source_type": "integer"
               },
               {
@@ -1423,7 +1423,7 @@
               },
               {
                 "name": "sibling_3_age",
-                "type": "Numeric",
+                "type": "string",
                 "stable_id": "AGE"
               },
               {
@@ -1435,7 +1435,7 @@
               {
                 "name": "sibling_3_age_death",
                 "stable_id": "AGE_AT_DEATH",
-                "type": "Numeric",
+                "type": "string",
                 "source_type": "integer"
               },
               {
@@ -1497,7 +1497,7 @@
               },
               {
                 "name": "sibling_4_age",
-                "type": "Numeric",
+                "type": "string",
                 "stable_id": "AGE"
               },
               {
@@ -1509,7 +1509,7 @@
               {
                 "name": "sibling_4_age_death",
                 "stable_id": "AGE_AT_DEATH",
-                "type": "Numeric",
+                "type": "string",
                 "source_type": "integer"
               },
               {
@@ -1571,7 +1571,7 @@
               },
               {
                 "name": "sibling_5_age",
-                "type": "Numeric",
+                "type": "string",
                 "stable_id": "AGE"
               },
               {
@@ -1583,7 +1583,7 @@
               {
                 "name": "sibling_5_age_death",
                 "stable_id": "AGE_AT_DEATH",
-                "type": "Numeric",
+                "type": "string",
                 "source_type": "integer"
               },
               {
