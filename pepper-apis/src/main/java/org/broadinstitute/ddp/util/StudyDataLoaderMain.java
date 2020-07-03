@@ -306,6 +306,7 @@ public class StudyDataLoaderMain {
 
         JsonElement surveyData = user.getAsJsonObject().get("datstatsurveydata");
         JsonElement medicalHistorySurveyData = surveyData.getAsJsonObject().get("atcp_registry_questionnaire");
+        JsonElement atConsentSurveyData = surveyData.getAsJsonObject().get("atcp_research_consent_form");
         JsonElement releaseSurveyData = surveyData.getAsJsonObject().get("releasesurvey");
         JsonElement bdreleaseSurveyData = surveyData.getAsJsonObject().get("bdreleasesurvey");
         JsonElement aboutyouSurveyData = surveyData.getAsJsonObject().get("aboutyousurvey");
@@ -316,6 +317,7 @@ public class StudyDataLoaderMain {
 
         surveyDataMap.put("datstatparticipantdata", datstatParticipantData);
         surveyDataMap.put("medicalhistorysurvey", medicalHistorySurveyData);
+        surveyDataMap.put("atconsentsurvey", atConsentSurveyData);
         surveyDataMap.put("releasesurvey", releaseSurveyData);
         surveyDataMap.put("bdreleasesurvey", bdreleaseSurveyData);
         surveyDataMap.put("aboutyousurvey", aboutyouSurveyData);
@@ -547,6 +549,7 @@ public class StudyDataLoaderMain {
             Boolean isSuccess = false;
             Boolean previousRun = false;
             Boolean hasMedicalHistory = false;
+            Boolean hasATConsent = false;
             StudyMigrationRun migrationRun;
 
             boolean auth0Collision = false;
@@ -590,6 +593,8 @@ public class StudyDataLoaderMain {
                     hasFollowup = (sourceData.get("followupsurvey") != null && !sourceData.get("followupsurvey").isJsonNull());
                     hasMedicalHistory = (sourceData.get("medicalhistorysurvey") != null && !sourceData
                             .get("medicalhistorysurvey").isJsonNull());
+                    hasATConsent = (sourceData.get("atconsentsurvey")) != null && !sourceData
+                            .get("atconsentsurvey").isJsonNull();
 
                     var answerDao = handle.attach(AnswerDao.class);
                     //create prequal
@@ -615,6 +620,24 @@ public class StudyDataLoaderMain {
                                 activityInstanceStatusDao);
                         dataLoader.loadMedicalHistorySurveyData(handle, sourceData.get("medicalhistorysurvey"),
                                 mappingData.get("atcp_registry_questionnaire"),
+                                studyDto, userDto, instanceDto,
+                                answerDao);
+                    }
+
+                    if (hasATConsent) {
+                        String activityCode = mappingData.get("atcp_research_consent_form").getAsJsonObject()
+                                .get("activity_code").getAsString();
+                        List<ActivityInstanceDto> activityInstanceDtoList = jdbiActivityInstance
+                                .findAllByUserGuidAndActivityCode(userGuid, activityCode, studyId);
+                        activityInstanceDao.deleteByInstanceGuid(activityInstanceDtoList.get(0).getGuid());
+                        ActivityInstanceDto instanceDto = dataLoader.createActivityInstance(sourceData.get("atconsentsurvey"),
+                                userGuid, studyId,
+                                activityCode, createdAt,
+                                jdbiActivity,
+                                activityInstanceDao,
+                                activityInstanceStatusDao);
+                        dataLoader.loadATConsentSurveyData(handle, sourceData.get("atconsentsurvey"),
+                                mappingData.get("atcp_research_consent_form"),
                                 studyDto, userDto, instanceDto,
                                 answerDao);
                     }

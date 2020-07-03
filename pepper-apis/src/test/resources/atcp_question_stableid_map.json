@@ -1674,7 +1674,57 @@
           }
         ],
         "legacy_fields": [
-          "portal_user_id", "datstat.submissionid", "datstat.sessionid", "datstat.submissionstatus"
+          "datstat.submissionid", "datstat.sessionid", "datstat.submissionstatus"
+        ]
+      },
+      {
+        "name": "atcp_research_consent_form",
+        "activity_code": "CONSENT",
+        "question_answer_stables": [
+          {
+            "name": "recontact_participant_followup",
+            "stable_id": "RE_CONTACT_FOLLOW_UP",
+            "type": "Boolean",
+            "source_type": "integer"
+          },
+          {
+            "name": "genseq_study",
+            "stable_id": "PERFORM_DNA",
+            "type": "Boolean",
+            "source_type": "integer"
+          },
+          {
+            "name": "medical_record_retrieval",
+            "stable_id": "MEDICAL_RECORDS",
+            "type": "Boolean",
+            "source_type": "integer"
+          },
+          {
+            "name": "recontact_research_results",
+            "stable_id": "RE_CONTACT_RETURN_RESULTS",
+            "type": "Boolean",
+            "source_type": "integer"
+          },
+          {
+            "name": "recontact_physician_diagnosis",
+            "stable_id": "CONTACT_MY_PHYSICIAN",
+            "type": "Boolean",
+            "source_type": "integer"
+          },
+          {
+            "name": "signature",
+            "stable_id": "CONSENT_SIGNATURE",
+            "type": "string"
+          },
+          {
+            "name": "dob",
+            "stable_id": "CONSENT_DOB",
+            "type": "Date",
+            "format": "yyyy-MM-dd'T'HH:mm:ss"
+          }
+        ],
+        "legacy_fields": [
+          "datstat.submissionid", "datstat.sessionid", "datstat.submissionstatus"
         ]
       }
     ],
@@ -1707,6 +1757,9 @@
             "format": "yyyy-MM-dd'T'HH:mm:ss.SSS",
             "stable_id": null
           }
+        ],
+        "legacy_fields": [
+          "portal_user_id"
         ]
       },
       {
