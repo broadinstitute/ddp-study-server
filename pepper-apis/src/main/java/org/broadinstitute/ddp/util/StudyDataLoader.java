@@ -19,6 +19,7 @@ import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -129,6 +130,7 @@ public class StudyDataLoader {
         yesNoDkLookup.put(0, "NO");
         yesNoDkLookup.put(1, "YES");
         yesNoDkLookup.put(2, "DONT_KNOW");
+        yesNoDkLookup.put(-1, "DONT_KNOW");
 
         datStatLookup = new HashMap<>();
 
@@ -410,6 +412,7 @@ public class StudyDataLoader {
         boolean itIsCompletedConsent = (activityCode == "CONSENT" || activityCode == "TISSUECONSENT" || activityCode == "BLOODCONSENT")
                 && instanceCurrentStatus == InstanceStatusType.COMPLETE;
         Boolean isReadonly = itIsCompletedConsent ? true : null;
+
         ActivityInstanceDto dto = activityInstanceDao
                 .insertInstance(studyActivityId, participantGuid, participantGuid, InstanceStatusType.CREATED,
                         isReadonly,

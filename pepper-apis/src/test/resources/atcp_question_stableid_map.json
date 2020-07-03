@@ -1225,6 +1225,7 @@
             "options": [
               {
                 "name": "text",
+                "text": "text",
                 "type": "string"
               }
             ]
@@ -1275,7 +1276,7 @@
               },
               {
                 "name": "sibling_1_age",
-                "type": "Numeric",
+                "type": "string",
                 "stable_id": "AGE"
               },
               {
@@ -1287,8 +1288,7 @@
               {
                 "name": "sibling_1_age_death",
                 "stable_id": "AGE_AT_DEATH",
-                "type": "Numeric",
-                "source_type": "integer"
+                "type": "string"
               },
               {
                 "name": "sibling_1_at_diagnosis",
@@ -1634,6 +1634,7 @@
             "options": [
               {
                 "name": "text",
+                "text": "text",
                 "type": "string"
               }
             ]
@@ -1646,6 +1647,7 @@
             "options": [
               {
                 "name": "text",
+                "text": "text",
                 "type": "string"
               }
             ]

@@ -49,6 +49,7 @@ import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceStatusDao;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
+import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiClient;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
@@ -558,6 +559,7 @@ public class StudyDataLoaderMain {
                     ActivityInstanceDao activityInstanceDao = handle.attach(ActivityInstanceDao.class);
                     ActivityInstanceStatusDao activityInstanceStatusDao = handle.attach(ActivityInstanceStatusDao.class);
                     JdbiUmbrellaStudy jdbiUmbrellaStudy = handle.attach(JdbiUmbrellaStudy.class);
+                    JdbiActivityInstance jdbiActivityInstance = handle.attach(JdbiActivityInstance.class);
 
                     String phoneNumber = null;
                     JsonElement releaseSurvey = sourceData.get("releasesurvey");
@@ -602,6 +604,9 @@ public class StudyDataLoaderMain {
                     if (hasMedicalHistory) {
                         String activityCode = mappingData.get("atcp_registry_questionnaire").getAsJsonObject()
                                 .get("activity_code").getAsString();
+                        List<ActivityInstanceDto> activityInstanceDtoList = jdbiActivityInstance
+                                .findAllByUserGuidAndActivityCode(userGuid, activityCode, studyId);
+                        activityInstanceDao.deleteByInstanceGuid(activityInstanceDtoList.get(0).getGuid());
                         ActivityInstanceDto instanceDto = dataLoader.createActivityInstance(sourceData.get("medicalhistorysurvey"),
                                 userGuid, studyId,
                                 activityCode, createdAt,
