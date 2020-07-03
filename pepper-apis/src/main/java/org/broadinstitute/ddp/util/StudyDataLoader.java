@@ -19,7 +19,6 @@ import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -99,6 +98,7 @@ public class StudyDataLoader {
     private static final Logger LOG = LoggerFactory.getLogger(StudyDataLoader.class);
     private static final String DEFAULT_PREFERRED_LANGUAGE_CODE = "en";
     private static final String DATSTAT_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSS";
+    private static final String DATSTAT_DATE_OF_BIRTH_FORMAT = "yyyy-MM-dd'T'HH:mm:ss";
     private static final int DSM_DEFAULT_ON_DEMAND_TRIGGER_ID = -2;
     private Long defaultKitCreationEpoch = null;
 
@@ -888,12 +888,37 @@ public class StudyDataLoader {
                                JdbiLanguageCode jdbiLanguageCode,
                                UserProfileDao profileDao) {
 
+        JsonObject userJsonObject = data.getAsJsonObject();
         Boolean isDoNotContact = getBooleanValueFromElement(data, "ddp_do_not_contact");
         Long languageCodeId = jdbiLanguageCode.getLanguageCodeId(DEFAULT_PREFERRED_LANGUAGE_CODE);
+        UserProfile.SexType sexType = null;
+        LocalDate userDateOfBirth = null;
+
+
+        if (!userJsonObject.get("datstat_gender").isJsonNull() && userJsonObject.get("datstat_gender") != null) {
+            String genderCode = StringUtils.trim(data.getAsJsonObject().get("datstat_gender").getAsString());
+            switch (genderCode) {
+                case "F":
+                    sexType = UserProfile.SexType.FEMALE;
+                    break;
+                case "M":
+                    sexType = UserProfile.SexType.FEMALE;
+                    break;
+                default:
+                    break;
+            }
+        }
+        if (!userJsonObject.get("datstat_dateofbirth").isJsonNull() && userJsonObject.get("datstat_dateofbirth") != null) {
+            String dateOfBirth = StringUtils.trim(data.getAsJsonObject().get("datstat_dateofbirth").getAsString());
+            userDateOfBirth = LocalDate.parse(dateOfBirth, DateTimeFormatter.ofPattern(DATSTAT_DATE_OF_BIRTH_FORMAT));
+        }
+
 
         UserProfile profile = new UserProfile.Builder(user.getUserId())
                 .setFirstName(StringUtils.trim(data.getAsJsonObject().get("datstat_firstname").getAsString()))
                 .setLastName(StringUtils.trim(data.getAsJsonObject().get("datstat_lastname").getAsString()))
+                .setSexType(sexType)
+                .setBirthDate(userDateOfBirth)
                 .setPreferredLangId(languageCodeId)
                 .setDoNotContact(isDoNotContact)
                 .build();
@@ -1265,7 +1290,7 @@ public class StudyDataLoader {
                 String optionName = optionNameEl == null ? val : optionNameEl.getAsString();
 
                 if (optionName != null
-                            && !optionName.isEmpty() && val.equals(optionName)) {
+                        && !optionName.isEmpty() && val.equals(optionName)) {
                     JsonElement specifyKeyElement = optionObject.get("text");
 
                     if (specifyKeyElement != null && !specifyKeyElement.isJsonNull()
@@ -1375,7 +1400,9 @@ public class StudyDataLoader {
             }
             if (value != null && (key.contains("medication") || key.contains("sibling"))) {
                 int intValue = value.getAsInt();
-                if (intValue == -1) intValue = 2;
+                if (intValue == -1) {
+                    intValue = 2;
+                }
                 selectedPicklistOptions
                         .add(new SelectedPicklistOption(options.get(intValue).getAsJsonObject().get("stable_id").getAsString()));
                 break;
