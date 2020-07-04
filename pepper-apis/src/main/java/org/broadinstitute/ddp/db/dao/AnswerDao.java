@@ -139,6 +139,7 @@ public interface AnswerDao extends SqlObject {
         long now = Instant.now().toEpochMilli();
         DBUtils.checkUpdate(1, getAnswerSql().updateAnswerById(answerId, operatorId, now));
         updateAnswerValue(operatorId, answerId, newAnswer);
+        newAnswer.setAnswerId(answerId);
         return newAnswer;
     }
 
