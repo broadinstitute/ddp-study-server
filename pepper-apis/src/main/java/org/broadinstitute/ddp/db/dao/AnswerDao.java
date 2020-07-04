@@ -75,6 +75,7 @@ public interface AnswerDao extends SqlObject {
         long id = getAnswerSql().insertAnswerByQuestionStableId(guid, operatorId, instanceId, answer.getQuestionStableId(), now, now);
         createAnswerValue(operatorId, instanceId, id, answer);
         answer.setAnswerId(id);
+        answer.setAnswerGuid(guid);
         return answer;
     }
 
