@@ -1,5 +1,7 @@
 package org.broadinstitute.ddp.route;
 
+import static java.util.stream.Collectors.toList;
+
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -53,6 +55,8 @@ import org.broadinstitute.ddp.json.PatchAnswerResponse;
 import org.broadinstitute.ddp.json.errors.AnswerValidationError;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
+import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
+import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.instance.answer.AgreementAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
@@ -70,6 +74,7 @@ import org.broadinstitute.ddp.model.activity.instance.question.TextQuestion;
 import org.broadinstitute.ddp.model.activity.instance.validation.ActivityValidationFailure;
 import org.broadinstitute.ddp.model.activity.instance.validation.Rule;
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
+import org.broadinstitute.ddp.model.activity.types.BlockType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.activity.types.NumericType;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
@@ -167,17 +172,36 @@ public class PatchFormAnswersRoute implements Route {
             String isoLanguageCode = preferredUserLanguage.getIsoCode();
             Long languageCodeId = preferredUserLanguage.getId();
 
+            ActivityDefStore activityStore = ActivityDefStore.getInstance();
+            ActivityDto activityDto = activityStore.findActivityDto(handle, instanceDto.getActivityId())
+                    .orElseThrow(() -> new DDPException("Could not find activity dto for instance " + instanceGuid));
+            ActivityVersionDto versionDto = activityStore
+                    .findVersionDto(handle, instanceDto.getActivityId(), instanceDto.getCreatedAtMillis())
+                    .orElseThrow(() -> new DDPException("Could not find activity version for instance " + instanceGuid));
+            FormActivityDef def = activityStore.findActivityDef(handle, studyGuid, activityDto, versionDto)
+                    .orElseThrow(() -> new DDPException("Could not find activity definition for instance " + instanceGuid));
+
             try {
                 Map<String, List<Rule>> failedRulesByQuestion = new HashMap<>();
                 for (AnswerSubmission submission : submissions) {
                     String questionStableId = extractQuestionStableId(submission, response);
+                    Optional<QuestionDef> questionDef = def.getSections().stream()
+                            .flatMap(section -> section.getBlocks().stream())
+                            .filter(block -> block.getBlockType() == BlockType.QUESTION)
+                            .map(questionBlock -> ((QuestionBlockDef) questionBlock).getQuestion())
+                            .filter(qDef -> qDef.getStableId().equals(questionStableId))
+                            .findFirst();
+                    if (questionDef.isEmpty()) {
+                        LOG.warn("Could not find questiondef with id: " + questionStableId);
+                    }
+
 
                     Optional<QuestionDto> optDto = jdbiQuestion.findDtoByStableIdAndInstance(questionStableId, instanceDto);
                     QuestionDto questionDto = extractQuestionDto(response, questionStableId, optDto);
                     Question question = new QuestionCachedDao(handle).getQuestionByActivityInstanceAndDto(questionDto,
                             instanceGuid, false, languageCodeId);
 
-                    //validation to check if question is a composite child
+                    // validation to check if question is a composite child
                     Optional<Long> parentQuestionId = new JdbiCompositeQuestionCached(handle)
                             .findParentQuestionIdByChildQuestion(questionDto);
                     if (parentQuestionId.isPresent()) {
@@ -194,7 +218,7 @@ public class PatchFormAnswersRoute implements Route {
                         LOG.info(msg);
                         throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.BAD_PAYLOAD, msg));
                     }
-
+                    // does this very-specific check need to be here?
                     if (question.getQuestionType() == QuestionType.TEXT
                             && ((TextQuestion) question).getInputType() == TextInputType.EMAIL
                             && answer.getValue() != null
@@ -276,14 +300,7 @@ public class PatchFormAnswersRoute implements Route {
                 throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.REQUIRED_PARAMETER_MISSING, e.getMessage()));
             }
 
-            ActivityDefStore activityStore = ActivityDefStore.getInstance();
-            ActivityDto activityDto = activityStore.findActivityDto(handle, instanceDto.getActivityId())
-                    .orElseThrow(() -> new DDPException("Could not find activity dto for instance " + instanceGuid));
-            ActivityVersionDto versionDto = activityStore
-                    .findVersionDto(handle, instanceDto.getActivityId(), instanceDto.getCreatedAtMillis())
-                    .orElseThrow(() -> new DDPException("Could not find activity version for instance " + instanceGuid));
-            FormActivityDef def = activityStore.findActivityDef(handle, studyGuid, activityDto, versionDto)
-                    .orElseThrow(() -> new DDPException("Could not find activity definition for instance " + instanceGuid));
+
             res.setBlockVisibilities(formService.getBlockVisibilities(handle, def, participantGuid, instanceGuid));
 
             List<ActivityValidationFailure> failures = getActivityValidationFailures(
@@ -635,7 +652,7 @@ public class PatchFormAnswersRoute implements Route {
                     questionRules
                             .filter(rule -> !rule.getAllowSave())
                             .filter(rule -> !rule.validate(currentQuestion, currentAnswer))
-                            .collect(Collectors.toList())
+                            .collect(toList())
             );
         }
 
@@ -648,7 +665,7 @@ public class PatchFormAnswersRoute implements Route {
     }
 
     private List<String> createValidationFailureSummaries(List<ActivityValidationFailure> failures) {
-        return failures.stream().map(failure -> failure.getErrorMessage()).collect(Collectors.toList());
+        return failures.stream().map(failure -> failure.getErrorMessage()).collect(toList());
     }
 
     private List<ActivityValidationFailure> getActivityValidationFailures(
