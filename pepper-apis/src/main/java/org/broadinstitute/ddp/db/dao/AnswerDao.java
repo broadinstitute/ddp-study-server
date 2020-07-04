@@ -141,6 +141,11 @@ public interface AnswerDao extends SqlObject {
         DBUtils.checkUpdate(1, getAnswerSql().updateAnswerById(answerId, operatorId, now));
         updateAnswerValue(operatorId, answerId, newAnswer);
         newAnswer.setAnswerId(answerId);
+        if (newAnswer.getAnswerGuid() == null) {
+            Optional<Answer> answerInDbOpt = findAnswerById(answerId);
+            answerInDbOpt.ifPresentOrElse(answerIDb -> newAnswer.setAnswerGuid(answerIDb.getAnswerGuid()), () -> new DaoException("Could "
+                    + "not find answer with id " + answerId));
+        }
         return newAnswer;
     }
 
