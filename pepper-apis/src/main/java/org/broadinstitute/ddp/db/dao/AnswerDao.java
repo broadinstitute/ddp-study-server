@@ -68,11 +68,14 @@ public interface AnswerDao extends SqlObject {
     }
 
     default Answer createAnswer(long operatorId, long instanceId, Answer answer) {
+        //@todo switch this to optimistic key generation. Generate key without checking and generate new
+        // one if the first one fails.
         String guid = DBUtils.uniqueStandardGuid(getHandle(), TABLE_NAME, GUID_COLUMN);
         long now = Instant.now().toEpochMilli();
         long id = getAnswerSql().insertAnswerByQuestionStableId(guid, operatorId, instanceId, answer.getQuestionStableId(), now, now);
         createAnswerValue(operatorId, instanceId, id, answer);
-        return findAnswerById(id).orElseThrow(() -> new DaoException("Could not find answer with id " + id));
+        answer.setAnswerId(id);
+        return answer;
     }
 
     default Answer createAnswer(long operatorId, long instanceId, long questionId, Answer answer) {
@@ -136,7 +139,7 @@ public interface AnswerDao extends SqlObject {
         long now = Instant.now().toEpochMilli();
         DBUtils.checkUpdate(1, getAnswerSql().updateAnswerById(answerId, operatorId, now));
         updateAnswerValue(operatorId, answerId, newAnswer);
-        return findAnswerById(answerId).orElseThrow(() -> new DaoException("Could not find answer with id " + answerId));
+        return newAnswer;
     }
 
     private void updateAnswerValue(long operatorId, long answerId, Answer newAnswer) {
