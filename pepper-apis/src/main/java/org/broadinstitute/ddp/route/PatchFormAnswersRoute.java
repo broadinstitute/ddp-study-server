@@ -22,11 +22,14 @@ import com.google.gson.reflect.TypeToken;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 
+import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetrics;
+import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetricsTracker;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
+import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiCompositeQuestion;
 import org.broadinstitute.ddp.db.dao.JdbiNumericQuestion;
@@ -291,6 +294,13 @@ public class PatchFormAnswersRoute implements Route {
                     operatorGuid
             );
             handle.attach(DataExportDao.class).queueDataSync(participantGuid, studyGuid);
+
+            String studyActivityCode = handle.attach(JdbiActivity.class).queryActivityById(
+                    instanceDto.getActivityId()).getActivityCode();
+            GoogleAnalyticsMetricsTracker.getInstance().sendAnalyticsMetrics(studyGuid, GoogleAnalyticsMetrics.EVENT_CATEGORY_PATCH_ANSWERS,
+                    GoogleAnalyticsMetrics.EVENT_ACTION_PATCH_ANSWERS, GoogleAnalyticsMetrics.EVENT_LABEL_PATCH_ANSWERS,
+                    studyActivityCode, 1);
+
             return res;
         });
 

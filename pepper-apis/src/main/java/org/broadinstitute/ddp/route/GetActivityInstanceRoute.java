@@ -7,6 +7,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetrics;
+import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetricsTracker;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.content.ContentStyle;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -68,7 +70,7 @@ public class GetActivityInstanceRoute implements Route {
 
         LOG.info("Attempting to retrieve activity instance {} for participant {} in study {}", instanceGuid, userGuid, studyGuid);
 
-        return TransactionWrapper.withTxn(handle -> {
+        ActivityInstance result = TransactionWrapper.withTxn(handle -> {
             ActivityInstanceDto instanceDto = RouteUtil.findAccessibleInstanceOrHalt(
                     response, handle, userGuid, studyGuid, instanceGuid);
 
@@ -108,6 +110,12 @@ public class GetActivityInstanceRoute implements Route {
             Long languageCodeId = preferredUserLanguage.getId();
             return validateActivityInstance(handle, activityInstance, userGuid, languageCodeId);
         });
+
+        GoogleAnalyticsMetricsTracker.getInstance().sendAnalyticsMetrics(studyGuid, GoogleAnalyticsMetrics.EVENT_CATEGORY_ACTIVITY_INSTANCE,
+                GoogleAnalyticsMetrics.EVENT_ACTION_ACTIVITY_INSTANCE, GoogleAnalyticsMetrics.EVENT_LABEL_ACTIVITY_INSTANCE,
+                null, 1);
+
+        return result;
     }
 
     private ActivityInstance validateActivityInstance(
