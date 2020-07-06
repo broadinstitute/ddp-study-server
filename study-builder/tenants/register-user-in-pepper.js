@@ -75,6 +75,9 @@ function (user, context, callback) {
         } else if (context.request.body.temp_user_guid) {
             pepper_params.tempUserGuid = context.request.body.temp_user_guid;
             console.log('Temp user guid passed in (via body) = ' + pepper_params.tempUserGuid);
+        } else if (user.user_metadata && user.user_metadata.temp_user_guid) {
+            pepper_params.tempUserGuid = user.user_metadata.temp_user_guid;
+            console.log('Temp user guid passed in (via user_metadata) = ' + pepper_params.tempUserGuid);
         } else {
             console.log('No temp user guid passed in request');
         }
@@ -103,6 +106,14 @@ function (user, context, callback) {
         } else if (context.request.body.language) {
             pepper_params.languageCode = context.request.body.language;
             console.log('User language passed in (via body) = ' + pepper_params.languageCode);
+        }
+
+        if (context.request.query.time_zone) {
+            pepper_params.timeZone = context.request.query.time_zone;
+            console.log('User timezone passed in (via query) = ' + pepper_params.timeZone);
+        } else if (context.request.body.time_zone) {
+            pepper_params.timeZone = context.request.body.time_zone;
+            console.log('User timezone passed in (via body) = ' + pepper_params.timeZone);
         }
 
         console.log(context);
@@ -170,21 +181,42 @@ function (user, context, callback) {
                     user.app_metadata.user_guid = ddpUserGuid;
 
                     auth0.users.updateAppMetadata(user.user_id, user.app_metadata)
-                        .then(function(){
-                            context.idToken[pepperUserGuidClaim] = ddpUserGuid;
-                            console.log('Registered pepper user ' + ddpUserGuid + ' for auth0 user ' + user.user_id);
-                            return callback(null, user, context);
-                        })
-                        .catch(function(err){
-                            console.log('Error updating metadata for auth0 user ' + user.user_id);
-                            console.log(err);
-                            let error = new Error(JSON.stringify({
-                                code: err.code,
-                                message: err.message,
-                                statusCode: 500
-                            }));
-                            return callback(error);
-                        });
+                      .then(function(){
+                          context.idToken[pepperUserGuidClaim] = ddpUserGuid;
+                          console.log('Registered pepper user ' + ddpUserGuid + ' for auth0 user ' + user.user_id);
+
+                            // clear temp user guid after registration
+                              if (!!user.user_metadata.temp_user_guid){
+                               console.log('The temp_user_guid will be cleared for user ' + ddpUserGuid);
+                               user.user_metadata.temp_user_guid = null;
+                               auth0.users.updateUserMetadata(user.user_id, user.user_metadata)
+                                 .then(function(){
+                               console.log('Temp_user_guid was cleared for user ' + ddpUserGuid);
+                                  return callback(null, user, context);
+                                 })
+                                 .catch(function(err){
+                                   console.log('Error updating user metadata for auth0 user ' + user.user_id);
+                                                              console.log(err);
+                                                              let error = new Error(JSON.stringify({
+                                                                  code: err.code,
+                                                                  message: err.message,
+                                                                  statusCode: 500
+                                                              }));
+                                                              return callback(error);
+                                 });
+                              }
+                          return callback(null, user, context);
+                      })
+                      .catch(function(err){
+                          console.log('Error updating metadata for auth0 user ' + user.user_id);
+                          console.log(err);
+                          let error = new Error(JSON.stringify({
+                              code: err.code,
+                              message: err.message,
+                              statusCode: 500
+                          }));
+                          return callback(error);
+                      });
                 }
             });
         }
