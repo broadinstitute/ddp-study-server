@@ -195,7 +195,6 @@ public class PatchFormAnswersRoute implements Route {
                         LOG.warn("Could not find questiondef with id: " + questionStableId);
                     }
 
-
                     Optional<QuestionDto> optDto = jdbiQuestion.findDtoByStableIdAndInstance(questionStableId, instanceDto);
                     QuestionDto questionDto = extractQuestionDto(response, questionStableId, optDto);
                     Question question = new QuestionCachedDao(handle).getQuestionByActivityInstanceAndDto(questionDto,
@@ -243,19 +242,22 @@ public class PatchFormAnswersRoute implements Route {
                     } else {
                         // Attempt to figure out the answer to update if one exists.
                         Long answerId = null;
-                        if (answer.getAnswerGuid() == null) {
-                            Set<Long> answerIds = answerDao.getAnswerSql()
-                                    .findAnswerIdsByInstanceGuidAndQuestionId(instanceGuid, questionDto.getId());
-                            if (answerIds.size() > 1) {
+                        String answerGuid = answer.getAnswerGuid();
+                        if (answerGuid == null) {
+                            List<AnswerDto> answerDtos = answerDao.getAnswerSql().findDtosByInstanceGuidAndQuestionId(instanceGuid,
+                                    questionDto.getId());
+                            if (answerDtos.size() > 1) {
                                 String errMsg = String.format(
                                         "Question %s is expected to have 1 answer but found %d answers instead",
                                         questionStableId,
-                                        answerIds.size()
+                                        answerDtos.size()
                                 );
                                 LOG.error(errMsg);
                                 throw ResponseUtil.haltError(response, 500, new ApiError(ErrorCodes.SERVER_ERROR, errMsg));
-                            } else if (answerIds.size() == 1) {
-                                answerId = answerIds.iterator().next();
+                            } else if (answerDtos.size() == 1) {
+                                AnswerDto answerDto = answerDtos.get(0);
+                                answerId = answerDto.getId();
+                                answerGuid = answerDto.getGuid();
                             }
                         } else {
                             AnswerDto answerDto = answerDao.getAnswerSql().findDtoByGuid(answer.getAnswerGuid()).orElse(null);
@@ -265,16 +267,16 @@ public class PatchFormAnswersRoute implements Route {
                                 throw ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.ANSWER_NOT_FOUND, msg));
                             } else {
                                 answerId = answerDto.getId();
+                                answerGuid = answerDto.getGuid();
                             }
                         }
 
-                        String answerGuid;
                         if (answerId == null) {
                             // Did not provide answer guid and no answer exist yet so create one
                             answerGuid = answerDao.createAnswer(operatorUser.getId(), instanceDto.getId(), answer).getAnswerGuid();
                             LOG.info("Created answer with guid {} for question stable id {}", answerGuid, questionStableId);
                         } else {
-                            answerGuid = answerDao.updateAnswer(operatorUser.getId(), answerId, answer).getAnswerGuid();
+                            answerDao.updateAnswer(operatorUser.getId(), answerId, answer);
                             LOG.info("Updated answer with guid {} for question stable id {}", answerGuid, questionStableId);
                         }
 
