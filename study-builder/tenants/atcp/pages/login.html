@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <title data-translate="title">Global A-T Family Data Platform | Activate Account Notification</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+    <link id="app-favicon" rel="icon" type="image/x-icon"
+          href="https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/favicon.ico">
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <link href="https://fonts.googleapis.com/css?family=Lato:400,700,700italic,400italic,300,300italic" rel="stylesheet"
+          type="text/css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/assets/auth0-styles/main.css">
+</head>
+<body class="main">
+<header class="Header">
+    <a href="/" class="prepare-link-host">
+        <img alt="A-T Portal Logo" class="logo"
+             src="https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/assets/images/atcp/original-logo-white.svg">
+    </a>
+    <nav>
+        <ul>
+            <li class="dropdown">
+                <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                    <i class="fa fa-globe language-dropdown"></i>
+                    <span data-translate="header.language">Language</span>
+                    <i class="caret"></i>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-right languages"></ul>
+            </li>
+            <li class="dropdown">
+                <a class="Link dropdown-toggle"
+                   data-toggle="dropdown"
+                   data-translate="header.researchers"
+                   href="#">
+                    For Researchers
+                    <span class="caret"></span>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-right">
+                    <li>
+                        <a class="prepare-link-host"
+                           data-translate="header.dataAccessRequest"
+                           href="/data_access">
+                            Data Access Request
+                        </a>
+                    </li>
+                </ul>
+            </li>
+            <li class="dropdown">
+                <a aria-expanded="false"
+                   aria-haspopup="true"
+                   class="dropdown-toggle"
+                   data-toggle="dropdown"
+                   data-translate="header.learnMore"
+                   href="#"
+                   role="button">
+                    Learn More<span class="caret"></span>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-right dropdown">
+                    <li>
+                        <a id="about_us"
+                           class="prepare-link-host"
+                           data-translate="header.aboutUs"
+                           href="/about-us">
+                            About Us
+                        </a>
+                    </li>
+                    <li class="divider"></li>
+                    <li>
+                        <a id="about_initiative"
+                           class="prepare-link-host"
+                           data-translate="header.aboutThisInitiative"
+                           href="/about_initiative">About this Initiative</a>
+                    </li>
+                </ul>
+            </li>
+            <li class="dropdown">
+                <a class="BtnBordered white prepare-link-host"
+                   id="join-us-nav"
+                   data-translate="header.joinUs"
+                   href="/join-us">Join Us</a>
+            </li>
+            <li>
+                <a href="#"
+                   data-translate="header.signIn"
+                   class="SimpleButton onActivateSignIn">Sign In</a>
+            </li>
+        </ul>
+    </nav>
+</header>
+
+<div class="main-offset activate-account path">
+    <div class="col-lg-5 col-md-5 col-sm-6 col-xs-10 NoPadding">
+        <h1 class="Title BlueColor" data-translate="activateAccount.title">Account Activation</h1>
+        <h2 class="Subtitle Subtitle--light">
+            <span data-translate="activateAccount.checkEmail">
+                You are almost done! Please check your email:
+            </span>
+            <span class="Normal"
+                  id="enteredEmail"></span>.
+            <span data-translate="activateAccount.activateAccount">
+                An email has been sent there with the guidelines to activate your account.
+            </span>
+        </h2>
+
+        <hr class="Line--noBottom">
+        <div class="SignHelp Italic AlignedLeft">
+            <a data-toggle="tooltip"
+               data-placement="bottom"
+               title=""
+               href="#"
+               data-original-title="Wait a little longer. Sometimes delivery of email can be delayed by processes outside our control. You can also check the junk folder of your email account. The email sometimes ends up there.">
+                <span data-translate="activateAccount.stillWaiting">
+                    Still waiting for your email?
+                </span>
+            </a><br>
+            <a href="#"
+               class="onActivateResendInstructions"
+               data-translate="common.resendInstructions">
+                Resend confirmation instructions
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="main-offset path forgot-password">
+    <div class="row margin-0">
+        <div class="col-lg-5 col-md-5 col-sm-6 col-xs-10 NoPadding">
+            <h1 class="Title BlueColor"
+                data-translate="forgotPassword.title">
+                Forgot your password?
+            </h1>
+            <h2 class="Subtitle Subtitle--light"
+                data-translate="forgotPassword.enterEmail">
+                Please enter your email address and we will send you password reset instructions.
+            </h2>
+        </div>
+    </div>
+    <div class="Content col-lg-5 col-md-5 col-sm-6 col-xs-10 NoPadding">
+        <form class="form" id="forgot-password">
+            <div class="form-group">
+                <label class="FormItem-label"
+                       data-translate="common.email.label"
+                       for="email">Email</label><br>
+                <input autofocus="autofocus"
+                       class="form-control FormItem-input"
+                       type="email"
+                       value=""
+                       name="email"
+                       id="email">
+                <div class="message"
+                     data-translate="common.email.error">
+                    Email not found
+                </div>
+            </div>
+            <hr class="Line--noBottom">
+            <br>
+            <div class="AlignedCenter">
+                <button class="BtnFilled BtnFilled--blue"
+                        data-translate="forgotPassword.submit">
+                    Send me reset password instructions
+                </button>
+            </div>
+        </form>
+        <div class="SignHelp Italic">
+            <a href="#"
+               class="onActivateSignIn"
+               data-translate="common.signin">Sign In</a><br>
+            <a href="#"
+               class="onActivateResendInstructions"
+               data-translate="common.resendInstructions">Resend confirmation instructions</a><br>
+        </div>
+    </div>
+</div>
+
+<div class="main-offset path resend-instructions">
+    <div class="row margin-0">
+        <div class="col-lg-5 col-md-5 col-sm-6 col-xs-10 NoPadding">
+            <h1 class="Title BlueColor"
+                data-translate="resendInstructions.title">Resend confirmation instructions</h1>
+            <h2 class="Subtitle Subtitle--light"
+                data-translate="resendInstructions.subTitle">
+                If you did not receive your confirmation instructions, you can enter your email address to generate
+                another confirmation email.
+            </h2>
+        </div>
+    </div>
+    <div class="Content col-lg-5 col-md-5 col-sm-6 col-xs-10 NoPadding">
+        <form id="resend-instructions">
+            <div class="form-group">
+                <label class="FormItem-label"
+                       data-translate="common.email.label"
+                       for="email">Email</label>
+                <input autofocus="autofocus"
+                       value=""
+                       class="form-control FormItem-input"
+                       type="email"
+                       name="email"
+                       id="email">
+            </div>
+
+            <hr class="Line--noBottom">
+            <br>
+            <div class="AlignedCenter">
+                <button class="BtnFilled BtnFilled--blue"
+                        data-translate="resendInstructions.submit"
+                        id="confirm">
+                    Resend confirmation instructions
+                </button>
+            </div>
+        </form>
+        <div class="SignHelp Italic">
+            <a href="#"
+               class="onActivateSignIn"
+               data-translate="common.signin">
+                Sign In
+            </a>
+            <br>
+            <a href="#"
+               class="onActivateForgotPassword"
+               data-translate="common.forgotPassword">
+                Forgot your password?
+            </a>
+            <br>
+        </div>
+    </div>
+</div>
+
+<div class="main-offset login path">
+    <div class="row">
+        <div class="col-lg-5 col-md-6 col-sm-8 col-xs-10">
+            <h1 class="Title BlueColor" data-translate="common.signin">Sign In</h1>
+            <h2 class="Subtitle Subtitle--light"
+                data-translate="login.title">
+                You can log into the Global A-T Family Data Platform using your email address or with your Google
+                account.
+            </h2>
+            <h2 class="Subtitle Normal" data-translate="login.useEmail">
+                Use your email address:
+            </h2>
+            <form id="login">
+                <div class="form-group">
+                    <label class="FormItem-label"
+                           for="email"
+                           data-translate="common.email.label">Email address</label>
+                    <input class="form-control FormItem-input" type="text" name="email" id="email">
+                </div>
+                <div class="form-group">
+                    <label class="FormItem-label"
+                           for="password"
+                           data-translate="common.password.label">Password</label>
+                    <input class="form-control FormItem-input" type="password" name="password" id="password">
+                </div>
+                <div class="AlignedCenter">
+                    <button class="BtnFilled BtnFilled--blue" data-translate="common.signin">Sign In</button>
+                </div>
+            </form>
+            <div class="OverLine">
+                <hr class="Line--dark OverLine-line">
+                <div class="OverLine-comment"
+                     data-translate="login.or">OR</div>
+            </div>
+            <div class="AlignedCenter">
+                <a class="BtnFilled BtnFilled--red"
+                   id="google-sign"
+                   href="/users/auth/google_oauth2?locale=en"
+                   data-translate="common.signinWithGoogle">
+                    Sign In with Google
+                </a>
+            </div>
+            <hr class="Line--noBottom">
+            <div class="SignHelp Italic">
+                <a href="#"
+                   class="onActivateForgotPassword"
+                   data-translate="common.forgotPassword">
+                    Forgot your password?
+                </a><br>
+                <a href="#"
+                   class="onActivateResendInstructions"
+                   data-translate="common.resendInstructions">
+                    Resend confirmation instructions
+                </a>
+                <br>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="main-offset sign-up path">
+    <div class="row">
+        <div class="col-lg-5 col-md-6 col-sm-8 col-xs-10">
+            <h1 class="Title BlueColor" data-translate="signUp.title">Create an Account</h1>
+            <h2 class="Subtitle Subtitle--light"
+                data-translate="signUp.subTitle">
+                You can log into the Platform with your email address by creating a password, or with your Google account. We will use this email address to communicate with you regarding the Global A-T Family Data Platform.
+            </h2>
+            <h2 class="Subtitle Normal">Use your email address</h2>
+            <form id="sign-up">
+                <div class="form-group">
+                    <label class="FormItem-label  FormItem-label-email"
+                           data-translate="common.email.label"
+                           for="email">
+                        Email address
+                        <a class="FormItem-help"
+                           data-toggle="tooltip"
+                           data-placement="right"
+                           title=""
+                           href="javascript:;"
+                           data-original-title="If you are a parent/legal guardian of a child(ren) with A-T, please use your own email address.  We will use this address to correspond with you regarding anyone you register in The Global A-T Family Data Platform.">
+                            <span data-translate="common.email.whoseEmail">
+                                Whose email should I input?
+                            </span>
+                        </a>
+                        <div class="tooltip fade right" role="tooltip">
+                            <div class="tooltip-arrow"></div>
+                            <div class="tooltip-inner">
+                                If you are a parent/legal guardian of a child(ren) with A-T, please use your own email address.
+                                We will use this address to correspond with you regarding anyone you register in The Global A-T Family Data Platform.
+                            </div>
+                        </div>
+                    </label>
+                    <input class="form-control FormItem-input" type="text" name="email" id="email">
+                </div>
+                <div class="form-group">
+                    <label class="FormItem-label"
+                           for="password"
+                           data-translate="common.password.label">
+                        Password
+                        <span class="Italic">(8 characters minimum)</span>
+                    </label>
+                    <input class="form-control FormItem-input" type="password" name="password" id="password">
+                    <div class="message" data-translate="common.password.error">
+                        at least 8 characters including: a lower-case letter, an upper-case letter, a number, a special
+                        character (such as !@#$%^&*).
+                    </div>
+                </div>
+                <div class="form-group NoMargin">
+                    <label class="FormItem-label"
+                           for="password_confirm"
+                           data-translate="common.reenter.label">Re-enter password</label>
+                    <input class="form-control FormItem-input local-field" type="password" name="password_confirm"
+                           id="password_confirm">
+                    <div class="message"
+                         data-translate="common.reenter.error">
+                        Password confirmation doesn't match Password
+                    </div>
+                </div>
+                <div class="row NoMargin AlignedCenter">
+                    <button class="BtnFilled BtnFilled--blue"
+                            id="join-us"
+                            data-translate="common.joinUs">
+                        Create Account
+                    </button>
+                </div>
+            </form>
+            <div class="OverLine">
+                <hr class="Line--dark OverLine-line">
+                <div class="OverLine-comment">OR</div>
+            </div>
+            <h2 class="Subtitle Normal">Use your Google account</h2>
+            <form class="form" id="google-form" action="" accept-charset="UTF-8" method="post">
+                <div class="form-group">
+                    <div class="PositionRelative">
+                        <label class="FormItem-label FormItem-label-email" for="user_email">
+                            Google email address
+                            <a class="FormItem-help" data-toggle="tooltip" data-placement="right" title="" href="javascript:;"
+                               data-original-title="If you are a parent/legal guardian of a child(ren) with A-T, please use your own email address.  We will use this address to correspond with you regarding anyone you register in The Global A-T Family Data Platform.">
+                                <span data-translate="common.email.whoseEmail">
+                                    Whose email should I input?
+                                </span>
+                            </a>
+                            <div class="tooltip fade right" role="tooltip">
+                                <div class="tooltip-arrow"></div>
+                                <div class="tooltip-inner">
+                                    If you are a parent/legal guardian of a child(ren) with A-T, please use your own email address.
+                                    We will use this address to correspond with you regarding anyone you register in The Global A-T Family Data Platform.
+                                </div>
+                            </div>
+                        </label>
+                    </div>
+                    <input class="form-control FormItem-input google-field" type="text" value="" name="user[email]" id="user_email">
+                </div>
+                <div class="AlignedCenter">
+                    <a class="BtnFilled BtnFilled--red" id="google" href="#">Create Account with Google</a>
+                </div>
+            </form>
+            <hr class="Line--noBottom">
+            <div class="SignHelp Italic">
+                <a href="#" class="onActivateSignIn"
+                   data-translate="common.alreadyRegistered">
+                    Already registered? Sign In here
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+<footer class="footer">
+    <div>
+        <div>
+            <i class="fa fa-fw fa-envelope-square"></i>
+            <a class="footer-link"
+               href="mailto:support@atfamilies.org">support@atfamilies.org</a>
+        </div>
+        <div class="contacts__entry">
+            <i class="fa fa-fw fa-phone-square"></i>
+            +1 954-481-6611
+        </div>
+    </div>
+    <a href="/" class="prepare-link-host">
+        <img src="https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/assets/images/atcp/original-logo-color.svg">
+    </a>
+</footer>
+<div class="NoPadding NoticesModal modal" id="message_modal" tabindex="-1" role="dialog"
+     aria-labelledby="message_modalLabel" aria-hidden="true">
+    <div class="modal-dialog NoPadding">
+        <div class="modal-content NoPadding">
+            <div class="modal-body NoticesModal-body NoPadding">
+                <button class="close hideModal" data-dismiss="modal">×</button>
+                <div class="NoticesModal--success">
+                    <div class="NoticesModal-text" id="modal-text">
+                        Your password has
+                        been changed successfully.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!--[if IE 8]>
+<script src="//cdnjs.cloudflare.com/ajax/libs/ie8/0.2.5/ie8.js"></script>
+<![endif]-->
+<script src="https://cdn.auth0.com/js/auth0/9.11/auth0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/validate-js/2.0.1/validate.min.js"></script>
+
+<script>
+  const config = JSON.parse(decodeURIComponent(escape(window.atob('@@config@@'))));
+</script>
+<script src="https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/assets/auth0-scripts/bundles/ddp-atcp-auth.umd.js"></script>
+</body>
+</html>
