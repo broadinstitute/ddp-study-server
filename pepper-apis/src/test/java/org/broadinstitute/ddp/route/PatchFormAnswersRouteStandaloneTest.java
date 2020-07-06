@@ -113,7 +113,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
+public class PatchFormAnswersRouteStandaloneTest extends IntegrationTestSuite.TestCase {
 
     private static Gson gson;
 
