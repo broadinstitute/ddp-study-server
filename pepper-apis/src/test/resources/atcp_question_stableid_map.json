@@ -1764,11 +1764,11 @@
             "source_type": "string",
             "options": [
               {
-                "name": "FEMALE",
+                "name": "F",
                 "type": "string"
               },
               {
-                "name": "MALE",
+                "name": "M",
                 "type": "string"
               }
             ]
@@ -1782,7 +1782,7 @@
           {
             "name": "DATSTAT_HOMEPHONE",
             "stable_id": "REGISTRATION_PHONE",
-            "type": "Numeric"
+            "type": "string"
           },
           {
             "name": "DATSTAT_PHYSICALADDRESS",
@@ -1797,35 +1797,21 @@
           {
             "name": "DATSTAT_PHYSICALZIP",
             "stable_id": "REGISTRATION_POSTAL_CODE",
-            "type": "Numeric"
+            "type": "string"
           },
           {
             "name": "DATSTAT_PHYSICALCOUNTRY",
             "stable_id": "REGISTRATION_COUNTRY",
             "type": "Picklist",
             "source_type": "string",
-            "options": [
-              {
-                "name": "US",
-                "type": "string"
-              },
-              {
-                "name": "CA",
-                "type": "string"
-              },
-              {
-                "name": "AS",
-                "type": "string"
-              },
-              {
-                "name": "GU",
-                "type": "string"
-              },
-              {
-                "name": "MP",
-                "type": "string"
-              }
-            ]
+            "options": null
+          },
+          {
+            "name": "DATSTAT_PHYSICALSTATE",
+            "stable_id": "REGISTRATION_STATE",
+            "type": "Picklist",
+            "source_type": "string",
+            "options": null
           }
         ]
       }

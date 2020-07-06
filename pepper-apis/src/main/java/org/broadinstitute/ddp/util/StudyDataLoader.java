@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -344,6 +345,14 @@ public class StudyDataLoader {
         Long ddpCreatedAt;
         Long ddpCompletedAt = null;
 
+        DateTimeFormatter formatter = new DateTimeFormatterBuilder()
+                .parseCaseInsensitive()
+                .append(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                .optionalStart()
+                .appendPattern(".SSS")
+                .optionalEnd()
+                .toFormatter();
+
         if (ddpCreated != null) {
             Instant instant;
             try {
@@ -361,7 +370,7 @@ public class StudyDataLoader {
             Instant instant;
             try {
                 LocalDateTime ddpLastUpdatedTime = LocalDateTime
-                        .parse(ddpLastUpdated, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"));
+                        .parse(ddpLastUpdated, formatter);
                 instant = ddpLastUpdatedTime.toInstant(ZoneOffset.UTC);
             } catch (DateTimeParseException e) {
                 throw new Exception("Could not parse required lastUpdated value for " + activityCode
@@ -376,7 +385,7 @@ public class StudyDataLoader {
             Instant instant;
             try {
                 LocalDateTime ddpCompletedTime = LocalDateTime
-                        .parse(ddpLastUpdated, DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss"));
+                        .parse(ddpLastUpdated, formatter);
                 instant = ddpCompletedTime.toInstant(ZoneOffset.UTC);
             } catch (DateTimeParseException e) {
                 throw new Exception("Could not parse required completedAt value for " + activityCode
@@ -481,6 +490,24 @@ public class StudyDataLoader {
         }
 
         processSurveyData(handle, "atconsentsurvey", surveyData, mappingData,
+                studyDto, userDto, instanceDto, answerDao);
+    }
+
+    public void loadATRegistrationSurveyData(Handle handle,
+                                        JsonElement surveyData,
+                                        JsonElement mappingData,
+                                        StudyDto studyDto,
+                                        UserDto userDto,
+                                        ActivityInstanceDto instanceDto,
+                                        AnswerDao answerDao) throws Exception {
+
+        LOG.info("Populating ATRegistration Survey...");
+        if (surveyData == null || surveyData.isJsonNull()) {
+            LOG.warn("NO ATRegistration Survey !");
+            return;
+        }
+
+        processSurveyData(handle, "atregistrationsurvey", surveyData, mappingData,
                 studyDto, userDto, instanceDto, answerDao);
     }
 
@@ -1065,9 +1092,13 @@ public class StudyDataLoader {
         }
         String datstatSessionId = getStringValueFromElement(surveyData, "datstat.sessionid");
         String ddpCreated = getStringValueFromElement(surveyData, "ddp_created");
-        String ddpFirstCompleted = getStringValueFromElement(surveyData, "datstat.enddatetime");
+        String ddpFirstCompleted = getStringValueFromElement(surveyData, "datstat.enddatetime") == null
+                ? getStringValueFromElement(surveyData, "DATSTAT_LASTMODIFIED")
+                : getStringValueFromElement(surveyData, "datstat.enddatetime");
         String ddpLastSubmitted = getStringValueFromElement(surveyData, "ddp_lastsubmitted");
-        String ddpLastUpdated = getStringValueFromElement(surveyData, "datstat.enddatetime");
+        String ddpLastUpdated = getStringValueFromElement(surveyData, "datstat.enddatetime") == null
+                ? getStringValueFromElement(surveyData, "DATSTAT_LASTMODIFIED")
+                : getStringValueFromElement(surveyData, "datstat.enddatetime");
         String surveyVersion = getStringValueFromElement(surveyData, "surveyversion");
         String activityVersion = getStringValueFromElement(surveyData, "consent_version");
         Integer datstatSubmissionStatus = getIntegerValueFromElement(surveyData, "datstat.submissionstatus");
@@ -1354,6 +1385,11 @@ public class StudyDataLoader {
         List<String> optValuesList = new ArrayList<>();
         optValuesList.addAll(Arrays.asList(optValues));
         optValuesList.replaceAll(String::trim);
+
+        if (questionName.equals("DATSTAT_PHYSICALCOUNTRY") || questionName.equals("DATSTAT_PHYSICALSTATE")) {
+            selectedPicklistOptions.add(new SelectedPicklistOption(value.getAsString().toUpperCase()));
+            return selectedPicklistOptions;
+        }
 
         JsonArray options = mapElement.getAsJsonObject().getAsJsonArray("options");
         for (JsonElement option : options) {
