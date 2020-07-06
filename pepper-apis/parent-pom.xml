@@ -36,7 +36,7 @@
             <id>CircleciParallelBuild</id>
             <properties>
                 <include.test.pattern>**/*Test.java</include.test.pattern>
-                <exclude.test.pattern>*ListCancersRouteTest, *GetCancerSuggestionsRouteTest, *GetDsmDrugSuggestionsRouteTest</exclude.test.pattern>
+                <exclude.test.pattern>*ListCancersRouteTest, *GetCancerSuggestionsRouteTest, *GetDsmDrugSuggestionsRouteTest, *PatchFormAnswersRouteTest</exclude.test.pattern>
             </properties>
         </profile>
     </profiles>
