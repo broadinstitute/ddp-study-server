@@ -43,6 +43,7 @@ import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.API;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
+import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
@@ -113,7 +114,6 @@ import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
-@Ignore
 public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
 
     private static Gson gson;
@@ -1600,6 +1600,38 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
     }
 
     @Test
+    public void given_oneTrueExpr_whenRouteIsCalled_thenItReturnsOkAndRespContainsOneErrorPlusOneAnswer() {
+        try {
+            String answerGuid = TransactionWrapper.withTxn(handle -> {
+                handle.attach(JdbiActivity.class).insertValidation(
+                        RouteTestUtil.createActivityValidationDto(
+                                activity, "true", "Should always fail", List.of(textStableId)
+                        ),
+                        testData.getUserId(),
+                        testData.getStudyId(),
+                        activityVersionDto.getRevId()
+                );
+                TextAnswer answer = new TextAnswer(null, textStableId, null, "old value");
+                return createAnswerAndDeferCleanup(handle, answer);
+            });
+            // clear, otherwise our new validation will not ben read
+            ActivityDefStore.getInstance().clear();
+            PatchAnswerPayload data = new PatchAnswerPayload();
+            data.addSubmission(new AnswerSubmission(textStableId, answerGuid, new JsonPrimitive("hi there")));
+            givenAnswerPatchRequest(instanceGuid, data)
+                    .then().assertThat()
+                    .statusCode(200).contentType(ContentType.JSON)
+                    .body("validationFailures", is(notNullValue()))
+                    .body("validationFailures.size()", equalTo(1))
+                    .body("answers.size()", equalTo(1));
+        } finally {
+            TransactionWrapper.useTxn(handle -> {
+                handle.attach(JdbiActivity.class).deleteValidationsByCode(activity.getActivityId());
+            });
+        }
+    }
+
+    @Test
     public void test4xxStatusReturnedForReadonlyActivityInstance() throws Exception {
         PatchAnswerPayload data = createPicklistPayload(plistMultiSelectSid, null,
                 new SelectedPicklistOption(plistMulti_option1_sid));
@@ -1647,35 +1679,6 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
         }
     }
 
-    @Test
-    public void given_oneTrueExpr_whenRouteIsCalled_thenItReturnsOkAndRespContainsOneErrorPlusOneAnswer() {
-        try {
-            String answerGuid = TransactionWrapper.withTxn(handle -> {
-                handle.attach(JdbiActivity.class).insertValidation(
-                        RouteTestUtil.createActivityValidationDto(
-                                activity, "true", "Should always fail", List.of(textStableId)
-                        ),
-                        testData.getUserId(),
-                        testData.getStudyId(),
-                        activityVersionDto.getRevId()
-                );
-                TextAnswer answer = new TextAnswer(null, textStableId, null, "old value");
-                return createAnswerAndDeferCleanup(handle, answer);
-            });
-            PatchAnswerPayload data = new PatchAnswerPayload();
-            data.addSubmission(new AnswerSubmission(textStableId, answerGuid, new JsonPrimitive("hi there")));
-            givenAnswerPatchRequest(instanceGuid, data)
-                    .then().assertThat()
-                    .statusCode(200).contentType(ContentType.JSON)
-                    .body("validationFailures", is(notNullValue()))
-                    .body("validationFailures.size()", equalTo(1))
-                    .body("answers.size()", equalTo(1));
-        } finally {
-            TransactionWrapper.useTxn(handle -> {
-                handle.attach(JdbiActivity.class).deleteValidationsByCode(activity.getActivityId());
-            });
-        }
-    }
 
     private String extractAnswerGuid(HttpResponse response) throws IOException {
         String json = EntityUtils.toString(response.getEntity());

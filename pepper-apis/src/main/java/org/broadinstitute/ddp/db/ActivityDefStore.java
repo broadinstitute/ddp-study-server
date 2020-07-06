@@ -63,6 +63,9 @@ public class ActivityDefStore {
     public void clear() {
         synchronized (lockVar) {
             activityDefMap.clear();
+            activityDtoMap.clear();
+            versionDtoListMap.clear();
+            validationDtoListMap.clear();
         }
     }
 
