@@ -94,7 +94,6 @@ import org.slf4j.LoggerFactory;
         HealthCheckRouteTest.class,
         JWTConverterTest.class,
         MailAddressRouteTest.class,
-        PatchFormAnswersRouteTest.class,
         PatchMedicalProviderRouteTest.class,
         PostMedicalProviderRouteTest.class,
         ProfileRouteTest.class,
