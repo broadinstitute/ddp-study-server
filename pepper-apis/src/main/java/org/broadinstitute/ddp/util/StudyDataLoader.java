@@ -511,6 +511,24 @@ public class StudyDataLoader {
                 studyDto, userDto, instanceDto, answerDao);
     }
 
+    public void loadATContactingPhysicianSurveyData(Handle handle,
+                                             JsonElement surveyData,
+                                             JsonElement mappingData,
+                                             StudyDto studyDto,
+                                             UserDto userDto,
+                                             ActivityInstanceDto instanceDto,
+                                             AnswerDao answerDao) throws Exception {
+
+        LOG.info("Populating ATContactingPhysician Survey...");
+        if (surveyData == null || surveyData.isJsonNull()) {
+            LOG.warn("NO ATContactingPhysician Survey !");
+            return;
+        }
+
+        processSurveyData(handle, "atcontactingphysiciansurvey", surveyData, mappingData,
+                studyDto, userDto, instanceDto, answerDao);
+    }
+
     public void loadAboutYouSurveyData(Handle handle,
                                        JsonElement surveyData,
                                        JsonElement mappingData,

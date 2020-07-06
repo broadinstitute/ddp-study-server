@@ -1814,6 +1814,72 @@
             "options": null
           }
         ]
+      },
+      {
+        "name": "ContactingPhysicianSurvey",
+        "activity_code": "CONTACTING_PHYSICIAN",
+        "question_answer_stables": [
+          {
+            "name": "PHYSICIAN_FIRST_NAME",
+            "type": "Composite",
+            "stable_id": "CONTACTING_PHYSICIAN",
+            "children": [
+              {
+                "name": "PHYSICIAN_FIRST_NAME",
+                "type": "string",
+                "stable_id": "PHYSICIAN_FIRSTNAME"
+              },
+              {
+                "name": "PHYSICIAN_LAST_NAME",
+                "type": "string",
+                "stable_id": "PHYSICIAN_LASTNAME"
+              },
+              {
+                "name": "PHYSICIAN_ADDRESS",
+                "type": "string",
+                "stable_id": "PHYSICIAN_MAIL"
+              },
+              {
+                "name": "PHYSICIAN_PHONE",
+                "type": "string",
+                "stable_id": "PHYSICIAN_PHONE"
+              },
+              {
+                "name": "PHYSICIAN_EMAIL",
+                "type": "string",
+                "stable_id": "PHYSICIAN_EMAIL"
+              }
+            ]
+          },
+          {
+            "name": "RECEIVED_CARES",
+            "stable_id": "EVALUATION",
+            "type": "Picklist",
+            "source_type": "string",
+            "options": [
+              {
+                "name": "BRISBANE_RECEIVED_CARE",
+                "type": "string"
+              },
+              {
+                "name": "JWG_RECEIVED_CARE",
+                "type": "string"
+              },
+              {
+                "name": "SHEBA_RECEIVED_CARE",
+                "type": "string"
+              },
+              {
+                "name": "NOTTINGHAM_RECEIVED_CARE",
+                "type": "string"
+              },
+              {
+                "name": "JOHNS_HOPKINS_RECEIVED_CARE",
+                "type": "string"
+              }
+            ]
+          }
+        ]
       }
     ],
     "datstatparticipantdata": [
