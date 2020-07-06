@@ -1726,6 +1726,108 @@
         "legacy_fields": [
           "datstat.submissionid", "datstat.sessionid", "datstat.submissionstatus"
         ]
+      },
+      {
+        "name": "RegistrationSurvey",
+        "activity_code": "REGISTRATION",
+        "question_answer_stables": [
+          {
+            "name": "",
+            "stable_id": "REGISTRATION_AGREEMENT",
+            "type": "Agreement",
+            "source_type": ""
+          },
+          {
+            "name": "DATSTAT_FIRSTNAME",
+            "stable_id": "REGISTRATION_FIRST_NAME",
+            "type": "string"
+          },
+          {
+            "name": "DATSTAT_LASTNAME",
+            "stable_id": "REGISTRATION_LAST_NAME",
+            "type": "string"
+          },
+          {
+            "name": "DATSTAT_MIDDLENAME",
+            "stable_id": "REGISTRATION_MIDDLE_NAME",
+            "type": "string"
+          },
+          {
+            "name": "",
+            "stable_id": "REGISTRATION_PREFIX",
+            "type": "string"
+          },
+          {
+            "name": "DATSTAT_GENDER",
+            "stable_id": "REGISTRATION_GENDER",
+            "type": "Picklist",
+            "source_type": "string",
+            "options": [
+              {
+                "name": "FEMALE",
+                "type": "string"
+              },
+              {
+                "name": "MALE",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "DATSTAT_DATEOFBIRTH",
+            "stable_id": "REGISTRATION_DOB",
+            "type": "Date",
+            "format": "yyyy-MM-dd'T'HH:mm:ss"
+          },
+          {
+            "name": "DATSTAT_HOMEPHONE",
+            "stable_id": "REGISTRATION_PHONE",
+            "type": "Numeric"
+          },
+          {
+            "name": "DATSTAT_PHYSICALADDRESS",
+            "stable_id": "REGISTRATION_STREET_ADDRESS",
+            "type": "string"
+          },
+          {
+            "name": "DATSTAT_PHYSICALCITY",
+            "stable_id": "REGISTRATION_CITY",
+            "type": "string"
+          },
+          {
+            "name": "DATSTAT_PHYSICALZIP",
+            "stable_id": "REGISTRATION_POSTAL_CODE",
+            "type": "Numeric"
+          },
+          {
+            "name": "DATSTAT_PHYSICALCOUNTRY",
+            "stable_id": "REGISTRATION_COUNTRY",
+            "type": "Picklist",
+            "source_type": "string",
+            "options": [
+              {
+                "name": "US",
+                "type": "string"
+              },
+              {
+                "name": "CA",
+                "type": "string"
+              },
+              {
+                "name": "AS",
+                "type": "string"
+              },
+              {
+                "name": "GU",
+                "type": "string"
+              },
+              {
+                "name": "MP",
+                "type": "string"
+              }
+            ]
+          }
+        ]
       }
     ],
     "datstatparticipantdata": [
