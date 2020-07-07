@@ -117,6 +117,7 @@ import org.broadinstitute.ddp.route.InvitationVerifyRoute;
 import org.broadinstitute.ddp.route.JoinMailingListRoute;
 import org.broadinstitute.ddp.route.ListCancersRoute;
 import org.broadinstitute.ddp.route.ListStudyLanguagesRoute;
+import org.broadinstitute.ddp.route.ListUserStudyInvitationsRoute;
 import org.broadinstitute.ddp.route.PatchFormAnswersRoute;
 import org.broadinstitute.ddp.route.PatchMedicalProviderRoute;
 import org.broadinstitute.ddp.route.PatchProfileRoute;
@@ -428,6 +429,9 @@ public class DataDonationPlatform {
                 new PutFormAnswersRoute(workflowService, activityValidationService, formInstanceDao, interpreter),
                 responseSerializer
         );
+
+        // User study invitations
+        get(API.USER_STUDY_INVITES, new ListUserStudyInvitationsRoute(), jsonSerializer);
 
         // Study exit request
         post(API.USER_STUDY_EXIT, new SendExitNotificationRoute());
