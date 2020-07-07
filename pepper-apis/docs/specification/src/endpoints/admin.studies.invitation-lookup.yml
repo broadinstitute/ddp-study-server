@@ -32,16 +32,11 @@ post:
               - type: object
                 required:
                   - userGuid
-                  - userHruid
                   - userLoginEmail
                   - notes
                 properties:
                   userGuid:
                     description: guid of associated user, if invitation is accepted
-                    type: string
-                    nullable: true
-                  userHruid:
-                    description: hruid of associated user, if invitation is accepted
                     type: string
                     nullable: true
                   userLoginEmail:
