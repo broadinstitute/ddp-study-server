@@ -15,6 +15,7 @@ public class ConfigFile {
 
     // whether or not to run liquibase at app boot
     public static final String DO_LIQUIBASE = "doLiquibase";
+    public static final String DO_LIQUIBASE_IN_STUDY_SERVER = "doLiquibaseInStudyServer";
 
     // Name of the default timezone to be used by system. Does not change VM time zone!
     public static final String DEFAULT_TIMEZONE = "defaultTimezone";
