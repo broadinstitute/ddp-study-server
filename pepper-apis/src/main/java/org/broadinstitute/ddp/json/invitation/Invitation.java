@@ -7,7 +7,7 @@ import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
 import org.broadinstitute.ddp.db.dto.InvitationDto;
 import org.broadinstitute.ddp.model.invitation.InvitationType;
-import org.broadinstitute.ddp.transformers.InstantToIsoInstantUtcStrAdapter;
+import org.broadinstitute.ddp.transformers.InstantToIsoDateTimeUtcStrAdapter;
 
 public class Invitation {
 
@@ -18,19 +18,19 @@ public class Invitation {
     private String invitationGuid;
 
     @SerializedName("createdAt")
-    @JsonAdapter(InstantToIsoInstantUtcStrAdapter.class)
+    @JsonAdapter(InstantToIsoDateTimeUtcStrAdapter.class)
     private Instant createdAt;
 
     @SerializedName("voidedAt")
-    @JsonAdapter(InstantToIsoInstantUtcStrAdapter.class)
+    @JsonAdapter(InstantToIsoDateTimeUtcStrAdapter.class)
     private Instant voidedAt;
 
     @SerializedName("verifiedAt")
-    @JsonAdapter(InstantToIsoInstantUtcStrAdapter.class)
+    @JsonAdapter(InstantToIsoDateTimeUtcStrAdapter.class)
     private Instant verifiedAt;
 
     @SerializedName("acceptedAt")
-    @JsonAdapter(InstantToIsoInstantUtcStrAdapter.class)
+    @JsonAdapter(InstantToIsoDateTimeUtcStrAdapter.class)
     private Instant acceptedAt;
 
     public Invitation(InvitationDto invite) {

@@ -11,7 +11,7 @@ import com.google.gson.stream.JsonWriter;
 /**
  * Adapter to convert an instant to/from a string. This is null-safe so no need to call `nullSafe()` wrapper.
  */
-public class InstantToIsoInstantUtcStrAdapter extends TypeAdapter<Instant> {
+public class InstantToIsoDateTimeUtcStrAdapter extends TypeAdapter<Instant> {
 
     @Override
     public Instant read(JsonReader jsonReader) throws IOException {
