@@ -41,3 +41,37 @@ get:
       $ref: '../pepper.yml#/components/responses/ActivityDetailNotFoundResponse'
     default:
       $ref: '../pepper.yml#/components/responses/ErrorResponse'
+patch:
+  operationId: patchLastVisitedSectionId
+  tags:
+    - LastVisitedSection
+  summary: Updates last visited section
+  description: with given user Guid, study's unique identifier and instance Guid Updates user's last visited section
+  requestBody:
+    $ref: '../pepper.yml#/components/requestBodies/UpdateUserLastVisitedSectionRequestBody'
+  responses:
+    200:
+      description: user's last visited section sucessfully updated
+    400:
+      description: if last visited section is negative
+      content:
+        application/json:
+          schema:
+            $ref: '../pepper.yml#/components/schemas/Error.BadPayload'
+    404:
+      description: unable to find activity to update last visited section
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '../pepper.yml#/components/schemas/Error'
+              - type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - STUDY_NOT_FOUND
+                      - USER_NOT_FOUND
+                      - ACTIVITY_NOT_FOUND
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'
