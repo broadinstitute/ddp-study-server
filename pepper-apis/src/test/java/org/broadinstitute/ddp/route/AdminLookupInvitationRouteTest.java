@@ -123,7 +123,6 @@ public class AdminLookupInvitationRouteTest extends IntegrationTestSuite.TestCas
                     .body("createdAt", not(empty()))
                     .body("acceptedAt", not(empty()))
                     .body("userGuid", equalTo(testData.getUserGuid()))
-                    .body("userHruid", equalTo(testData.getUserHruid()))
                     .body("userLoginEmail", equalTo(testData.getTestingUser().getEmail()));
         } finally {
             if (invitation != null) {
