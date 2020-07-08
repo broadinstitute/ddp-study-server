@@ -46,8 +46,7 @@ public class PatchActivityInstanceRoute extends ValidatedJsonInputRoute<PatchSec
                 throw ResponseUtil.haltError(response, HttpStatus.SC_BAD_REQUEST, new ApiError(ErrorCodes.INVALID_REQUEST, msg));
             }
 
-            handle.attach(ActivityInstanceDao.class)
-                    .updateLastVisitedSectionByInstanceGuid(instanceGuid, index);
+            handle.attach(ActivityInstanceDao.class).updateSectionIndexByInstanceGuid(instanceGuid, index);
         });
         response.status(HttpStatus.SC_OK);
         return "";
