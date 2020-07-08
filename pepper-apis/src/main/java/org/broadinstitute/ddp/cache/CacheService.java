@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.cache;
 
+import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -20,6 +21,10 @@ import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.util.ConfigManager;
 import org.jdbi.v3.core.Handle;
+import org.redisson.Redisson;
+import org.redisson.api.LocalCachedMapOptions;
+import org.redisson.api.RLocalCachedMap;
+import org.redisson.api.RedissonClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,11 +32,13 @@ import org.slf4j.LoggerFactory;
 public class CacheService {
     private static final Logger LOG = LoggerFactory.getLogger(CacheService.class);
     private static volatile CacheService INSTANCE;
+    RedissonClient redissonClient;
     private CacheManager cacheManager;
     private Map<ModelChangeType, Collection<String>> modelChangeTypeToCacheName = new ConcurrentHashMap<>();
     private Map<String, IdToCacheKeyMapper<?>> cacheNameToCacheKeyMapper = new ConcurrentHashMap<>();
     private Map<String, IdToCacheKeyCollectionMapper<?>> cacheNameToCacheKeyCollectionMapper = new ConcurrentHashMap<>();
     private Set<String> clearAllOnChangeCacheNames = ConcurrentHashMap.newKeySet();
+    private Set<RLocalCachedMap> localCaches = ConcurrentHashMap.newKeySet();
     private boolean resetCaches = false;
 
     public static CacheService getInstance() {
@@ -51,19 +58,23 @@ public class CacheService {
         boolean configFileSet = ConfigManager.getInstance().getConfig().hasPath(ConfigFile.JCACHE_CONFIGURATION_FILE);
         if (configFileSet) {
             String configFileName = ConfigManager.getInstance().getConfig().getString(ConfigFile.JCACHE_CONFIGURATION_FILE);
-            cacheManager = buildCacheManager(configFileName);
+            Path redissonConfigPath = Paths.get(configFileName);
+            if (!redissonConfigPath.toFile().exists()) {
+                throw new DDPException("Path for configuration file: " + redissonConfigPath + " could not be found");
+            }
+            URI redissonConfigPathUri = redissonConfigPath.toUri();
+            cacheManager = buildCacheManager(redissonConfigPathUri);
+
+            redissonClient = Redisson.create();
         } else {
             LOG.warn("Configuration file not set: " + ConfigFile.JCACHE_CONFIGURATION_FILE + "JCache is not enabled");
             cacheManager = new NullCacheManager();
         }
     }
 
-    private CacheManager buildCacheManager(String configFileName) {
-        Path redissonConfigPath = Paths.get(configFileName);
-        if (!redissonConfigPath.toFile().exists()) {
-            throw new DDPException("Path for configuration file: " + redissonConfigPath + " could not be found");
-        }
-        return Caching.getCachingProvider().getCacheManager(redissonConfigPath.toUri(), null);
+    private CacheManager buildCacheManager(URI redissonConfigUri) {
+
+        return Caching.getCachingProvider().getCacheManager(redissonConfigUri, null);
     }
 
     public <K, V> Cache<K, V> getOrCreateCache(String cacheName, Duration entryDuration, IdToCacheKeyMapper<K> mapper,
@@ -72,7 +83,7 @@ public class CacheService {
     }
 
     public <K, V> Cache<K, V> getOrCreateCache(String cacheName, Duration entryDuration, IdToCacheKeyCollectionMapper<K> mapper,
-                                                ModelChangeType evictionModelChangeType, Object cacheParentObject) {
+                                               ModelChangeType evictionModelChangeType, Object cacheParentObject) {
         return _getOrCreateCache(cacheName, entryDuration, mapper, evictionModelChangeType, cacheParentObject);
     }
 
@@ -125,8 +136,20 @@ public class CacheService {
         return (Cache<K, V>) cache;
     }
 
+    // @TODO implement resetting of cache based on notifications
+    public <K, V> RLocalCachedMap<K, V> getOrCreateLocalCache(String name) {
+        if (cacheManager instanceof NullCacheManager) {
+            return null;
+        } else {
+            RLocalCachedMap<K, V> cache = redissonClient.getLocalCachedMap(name, LocalCachedMapOptions.defaults());
+            localCaches.add(cache);
+            return cache;
+        }
+    }
+
     public void resetAllCaches() {
         cacheManager.getCacheNames().forEach(cacheName -> cacheManager.getCache(cacheName).clear());
+        localCaches.forEach(cache -> cache.clear());
         resetCaches = true;
     }
 

@@ -2,13 +2,10 @@ package org.broadinstitute.ddp.db.dao;
 
 import static java.util.stream.Collectors.toList;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
-import javax.cache.Cache;
-import javax.cache.expiry.Duration;
 
 import org.broadinstitute.ddp.cache.CacheService;
 import org.broadinstitute.ddp.cache.ModelChangeType;
@@ -16,11 +13,12 @@ import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.UmbrellaDto;
 import org.broadinstitute.ddp.model.address.OLCPrecision;
 import org.jdbi.v3.core.Handle;
+import org.redisson.api.RLocalCachedMap;
 
 public class JdbiUmbrellaStudyCached extends SQLObjectWrapper<JdbiUmbrellaStudy> implements JdbiUmbrellaStudy {
 
-    private static Cache<Long, StudyDto> idToStudyCache;
-    private static Cache<String, StudyDto> guidToStudyCache;
+    private static RLocalCachedMap<Long, StudyDto> idToStudyCache;
+    private static RLocalCachedMap<String, Long> studyGuidToIdCache;
 
     public JdbiUmbrellaStudyCached(Handle handle) {
         super(handle, JdbiUmbrellaStudy.class);
@@ -30,13 +28,8 @@ public class JdbiUmbrellaStudyCached extends SQLObjectWrapper<JdbiUmbrellaStudy>
     private void initializeCache() {
         if (idToStudyCache == null) {
             // eternal!
-            idToStudyCache = CacheService.getInstance().getOrCreateCache("idToStudyCache",
-                    new Duration(),
-                    ModelChangeType.UMBRELLA,
-                    this.getClass());
-            guidToStudyCache = CacheService.getInstance().getOrCreateCache("guidToStudyCache", new Duration(),
-                    ModelChangeType.UMBRELLA,
-                    this.getClass());
+            idToStudyCache = CacheService.getInstance().getOrCreateLocalCache("idToStudyCache");
+            studyGuidToIdCache = CacheService.getInstance().getOrCreateLocalCache("studyGuidToIdCache");
             if (!isUsingNullCache()) {
                 cacheAll();
             }
@@ -67,21 +60,17 @@ public class JdbiUmbrellaStudyCached extends SQLObjectWrapper<JdbiUmbrellaStudy>
         if (isUsingNullCache()) {
             return delegate.findAll();
         } else {
-            return streamAll().collect(toList());
+            return new ArrayList(idToStudyCache.values());
         }
     }
 
-    private Stream<StudyDto> streamAll() {
-        return StreamSupport.stream(idToStudyCache.spliterator(), false)
-                .map(entry -> entry.getValue());
-    }
 
     @Override
     public StudyDto findByStudyGuid(String studyGuid) {
         if (isUsingNullCache()) {
             return delegate.findByStudyGuid(studyGuid);
         } else {
-            return guidToStudyCache.get(studyGuid);
+            return idToStudyCache.get(studyGuidToIdCache.get(studyGuid));
         }
     }
 
@@ -102,7 +91,7 @@ public class JdbiUmbrellaStudyCached extends SQLObjectWrapper<JdbiUmbrellaStudy>
             JdbiUmbrella umbrellaDao = new JdbiUmbrellaCached(getHandle());
             Optional<UmbrellaDto> umbrella = umbrellaDao.findByGuid(umbrellaGuid);
             if (umbrella.isPresent()) {
-                return streamAll().filter(study -> study.getUmbrellaId() == umbrella.get().getId()).collect(toList());
+                return idToStudyCache.values().stream().filter(study -> study.getUmbrellaId() == umbrella.get().getId()).collect(toList());
             } else {
                 return Collections.emptyList();
             }
@@ -222,7 +211,7 @@ public class JdbiUmbrellaStudyCached extends SQLObjectWrapper<JdbiUmbrellaStudy>
         List<StudyDto> allDtos = delegate.findAll();
         allDtos.forEach(studyDto -> {
             idToStudyCache.put(studyDto.getId(), studyDto);
-            guidToStudyCache.put(studyDto.getGuid(), studyDto);
+            studyGuidToIdCache.put(studyDto.getGuid(), studyDto.getId());
         });
     }
 }
