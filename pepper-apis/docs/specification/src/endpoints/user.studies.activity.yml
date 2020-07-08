@@ -42,24 +42,24 @@ get:
     default:
       $ref: '../pepper.yml#/components/responses/ErrorResponse'
 patch:
-  operationId: patchLastVisitedSectionId
+  operationId: patchActivity
   tags:
-    - LastVisitedSection
-  summary: Updates last visited section
-  description: with given user Guid, study's unique identifier and instance Guid Updates user's last visited section
+    - Activities
+  summary: updates section index
+  description: with given user Guid, study's unique identifier and instance Guid Updates user's section index
   requestBody:
-    $ref: '../pepper.yml#/components/requestBodies/UpdateUserLastVisitedSectionRequestBody'
+    $ref: '../pepper.yml#/components/requestBodies/UpdateUserSectionIndexRequestBody'
   responses:
     200:
-      description: user's last visited section sucessfully updated
+      description: user's section index sucessfully updated
     400:
-      description: if last visited section is negative
+      description: if section index is negative
       content:
         application/json:
           schema:
             $ref: '../pepper.yml#/components/schemas/Error.BadPayload'
     404:
-      description: unable to find activity to update last visited section
+      description: unable to find activity to update section index
       content:
         application/json:
           schema:
