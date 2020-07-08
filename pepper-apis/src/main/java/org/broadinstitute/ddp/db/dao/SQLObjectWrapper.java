@@ -9,6 +9,7 @@ import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.HandleCallback;
 import org.jdbi.v3.core.HandleConsumer;
 import org.jdbi.v3.sqlobject.SqlObject;
+import org.redisson.api.RLocalCachedMap;
 
 public class SQLObjectWrapper<T extends SqlObject> {
     protected final T delegate;
@@ -35,5 +36,9 @@ public class SQLObjectWrapper<T extends SqlObject> {
 
     protected boolean isNullCache(Cache cache) {
         return cache instanceof NullCache;
+    }
+
+    protected boolean isNullCache(RLocalCachedMap cache) {
+        return cache == null;
     }
 }
