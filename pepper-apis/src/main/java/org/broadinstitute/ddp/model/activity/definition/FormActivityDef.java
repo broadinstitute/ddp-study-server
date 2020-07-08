@@ -1,9 +1,12 @@
 package org.broadinstitute.ddp.model.activity.definition;
 
+import static java.util.stream.Collectors.toMap;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
@@ -11,6 +14,7 @@ import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
 import org.broadinstitute.ddp.model.activity.definition.i18n.SummaryTranslation;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
+import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
@@ -20,7 +24,6 @@ import org.broadinstitute.ddp.transformers.LocalDateTimeAdapter;
 import org.broadinstitute.ddp.util.MiscUtil;
 
 public class FormActivityDef extends ActivityDef {
-
     @NotNull
     @SerializedName("formType")
     protected FormType formType;
@@ -53,6 +56,8 @@ public class FormActivityDef extends ActivityDef {
     protected boolean snapshotSubstitutionsOnSubmit;
 
     private transient List<FormBlockDef> cachedToggleableBlocks;
+
+    private transient Map<String, QuestionDef> stableIdToQuestion;
 
     public static FormBuilder formBuilder() {
         return new FormBuilder();
@@ -117,6 +122,7 @@ public class FormActivityDef extends ActivityDef {
         this.listStyleHint = listStyleHint;
         this.lastUpdatedTextTemplate = lastUpdatedTextTemplate;
         this.lastUpdated = lastUpdated;
+        this.stableIdToQuestion = buildStableIdToQuestionMap();
     }
 
     public FormType getFormType() {
@@ -161,6 +167,18 @@ public class FormActivityDef extends ActivityDef {
             allSections.add(closing);
         }
         return allSections;
+    }
+
+    public QuestionDef getQuestionByStableId(String stableId) {
+        return stableIdToQuestion.get(stableId);
+    }
+
+    private Map<String, QuestionDef> buildStableIdToQuestionMap() {
+        Map<String, QuestionDef> stableIdToQuestionMap = getSections().stream()
+                .flatMap(section -> section.getBlocks().stream())
+                .flatMap(block -> block.getQuestions())
+                .collect(toMap(s -> s.getStableId(), s -> s));
+        return stableIdToQuestionMap;
     }
 
     public List<FormBlockDef> getAllToggleableBlocks() {
