@@ -155,8 +155,10 @@ public class CacheService {
 
     public void resetAllCaches() {
         cacheManager.getCacheNames().forEach(cacheName -> cacheManager.getCache(cacheName).clear());
-        redissonClient.getKeys().getKeysByPattern(LOCAL_CACHE_PREFIX + "*").forEach(cacheKey ->
-                redissonClient.getLocalCachedMap(cacheKey, LocalCachedMapOptions.defaults()).clear());
+        if (!(cacheManager instanceof NullCacheManager)) {
+            redissonClient.getKeys().getKeysByPattern(LOCAL_CACHE_PREFIX + "*").forEach(cacheKey ->
+                    redissonClient.getLocalCachedMap(cacheKey, LocalCachedMapOptions.defaults()).clear());
+        }
         resetCaches = true;
     }
 
