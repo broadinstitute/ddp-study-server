@@ -51,6 +51,7 @@ import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceStatusDao;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
+import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiClient;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
@@ -338,6 +339,10 @@ public class StudyDataLoaderMain {
         JsonElement datstatParticipantData = user.getAsJsonObject().get("datstatparticipantdata");
 
         JsonElement surveyData = user.getAsJsonObject().get("datstatsurveydata");
+        JsonElement medicalHistorySurveyData = surveyData.getAsJsonObject().get("atcp_registry_questionnaire");
+        JsonElement atConsentSurveyData = surveyData.getAsJsonObject().get("atcp_research_consent_form");
+        JsonElement atRegistrationSurveyData = surveyData.getAsJsonObject().get("RegistrationSurvey");
+        JsonElement atContactingPhysicianSurveyData = surveyData.getAsJsonObject().get("ContactingPhysicianSurvey");
         JsonElement releaseSurveyData = surveyData.getAsJsonObject().get("releasesurvey");
         JsonElement bdreleaseSurveyData = surveyData.getAsJsonObject().get("bdreleasesurvey");
         JsonElement aboutyouSurveyData = surveyData.getAsJsonObject().get("aboutyousurvey");
@@ -347,6 +352,10 @@ public class StudyDataLoaderMain {
         JsonElement followupSurveyData = surveyData.getAsJsonObject().get("followupsurvey");
 
         surveyDataMap.put("datstatparticipantdata", datstatParticipantData);
+        surveyDataMap.put("medicalhistorysurvey", medicalHistorySurveyData);
+        surveyDataMap.put("atconsentsurvey", atConsentSurveyData);
+        surveyDataMap.put("atregistrationsurvey", atRegistrationSurveyData);
+        surveyDataMap.put("atcontactingphysiciansurvey", atContactingPhysicianSurveyData);
         surveyDataMap.put("releasesurvey", releaseSurveyData);
         surveyDataMap.put("bdreleasesurvey", bdreleaseSurveyData);
         surveyDataMap.put("aboutyousurvey", aboutyouSurveyData);
@@ -578,6 +587,7 @@ public class StudyDataLoaderMain {
         }
     }
 
+    @SuppressWarnings("checkstyle:WhitespaceAfter")
     private void processParticipant(String studyGuid, Map<String, JsonElement> sourceData,
                                     Map<String, JsonElement> mappingData, StudyDataLoader dataLoader,
                                     MailAddress address, AddressService addressService, OLCService olcService) {
@@ -587,7 +597,7 @@ public class StudyDataLoaderMain {
 
         String altpid = datstatParticipantData.getAsJsonObject().get("datstat_altpid").getAsString();
         String emailAddress = datstatParticipantData.getAsJsonObject().get("datstat_email").getAsString().toLowerCase();
-        String createdAt = datstatParticipantData.getAsJsonObject().get("ddp_created").getAsString();
+        String createdAt = datstatParticipantData.getAsJsonObject().get("datstat_created").getAsString();
         LOG.info("loading participant: {} email: {} ", altpid, emailAddress);
 
         TransactionWrapper.useTxn(handle -> {
@@ -601,11 +611,14 @@ public class StudyDataLoaderMain {
             Boolean hasFollowup = false;
             Boolean isSuccess = false;
             Boolean previousRun = false;
+            Boolean hasMedicalHistory = false;
+            Boolean hasATConsent = false;
+            Boolean hasATRegistration = false;
+            Boolean hasATContactingPhysician = false;
             StudyMigrationRun migrationRun;
 
             boolean auth0Collision = false;
             try {
-
                 //verify if participant is already loaded..
                 JdbiUser jdbiUser = handle.attach(JdbiUser.class);
                 userGuid = jdbiUser.getUserGuidByAltpid(altpid);
@@ -614,6 +627,7 @@ public class StudyDataLoaderMain {
                     ActivityInstanceDao activityInstanceDao = handle.attach(ActivityInstanceDao.class);
                     ActivityInstanceStatusDao activityInstanceStatusDao = handle.attach(ActivityInstanceStatusDao.class);
                     JdbiUmbrellaStudy jdbiUmbrellaStudy = handle.attach(JdbiUmbrellaStudy.class);
+                    JdbiActivityInstance jdbiActivityInstance = handle.attach(JdbiActivityInstance.class);
 
                     String phoneNumber = null;
                     JsonElement releaseSurvey = sourceData.get("releasesurvey");
@@ -645,9 +659,16 @@ public class StudyDataLoaderMain {
                     hasRelease = (sourceData.get("releasesurvey") != null && !sourceData.get("releasesurvey").isJsonNull());
                     hasBloodRelease = (sourceData.get("bdreleasesurvey") != null && !sourceData.get("bdreleasesurvey").isJsonNull());
                     hasFollowup = (sourceData.get("followupsurvey") != null && !sourceData.get("followupsurvey").isJsonNull());
+                    hasMedicalHistory = (sourceData.get("medicalhistorysurvey") != null && !sourceData
+                            .get("medicalhistorysurvey").isJsonNull());
+                    hasATConsent = (sourceData.get("atconsentsurvey")) != null && !sourceData
+                            .get("atconsentsurvey").isJsonNull();
+                    hasATRegistration = (sourceData.get("atregistrationsurvey")) != null && !sourceData
+                            .get("atregistrationsurvey").isJsonNull();
+                    hasATContactingPhysician = (sourceData.get("atregistrationsurvey")) != null && !sourceData
+                            .get("atregistrationsurvey").isJsonNull();
 
                     var answerDao = handle.attach(AnswerDao.class);
-
                     //create prequal
                     dataLoader.createPrequal(handle,
                             userGuid, studyId,
@@ -656,6 +677,78 @@ public class StudyDataLoaderMain {
                             activityInstanceDao,
                             activityInstanceStatusDao,
                             answerDao);
+
+                    if (hasMedicalHistory) {
+                        String activityCode = mappingData.get("atcp_registry_questionnaire").getAsJsonObject()
+                                .get("activity_code").getAsString();
+                        List<ActivityInstanceDto> activityInstanceDtoList = jdbiActivityInstance
+                                .findAllByUserGuidAndActivityCode(userGuid, activityCode, studyId);
+                        activityInstanceDao.deleteByInstanceGuid(activityInstanceDtoList.get(0).getGuid());
+                        ActivityInstanceDto instanceDto = dataLoader.createActivityInstance(sourceData.get("medicalhistorysurvey"),
+                                userGuid, studyId,
+                                activityCode, createdAt,
+                                jdbiActivity,
+                                activityInstanceDao,
+                                activityInstanceStatusDao);
+                        dataLoader.loadMedicalHistorySurveyData(handle, sourceData.get("medicalhistorysurvey"),
+                                mappingData.get("atcp_registry_questionnaire"),
+                                studyDto, userDto, instanceDto,
+                                answerDao);
+                    }
+
+                    if (hasATConsent) {
+                        String activityCode = mappingData.get("atcp_research_consent_form").getAsJsonObject()
+                                .get("activity_code").getAsString();
+                        List<ActivityInstanceDto> activityInstanceDtoList = jdbiActivityInstance
+                                .findAllByUserGuidAndActivityCode(userGuid, activityCode, studyId);
+                        activityInstanceDao.deleteByInstanceGuid(activityInstanceDtoList.get(0).getGuid());
+                        ActivityInstanceDto instanceDto = dataLoader.createActivityInstance(sourceData.get("atconsentsurvey"),
+                                userGuid, studyId,
+                                activityCode, createdAt,
+                                jdbiActivity,
+                                activityInstanceDao,
+                                activityInstanceStatusDao);
+                        dataLoader.loadATConsentSurveyData(handle, sourceData.get("atconsentsurvey"),
+                                mappingData.get("atcp_research_consent_form"),
+                                studyDto, userDto, instanceDto,
+                                answerDao);
+                    }
+
+                    if (hasATRegistration) {
+                        String activityCode = mappingData.get("RegistrationSurvey").getAsJsonObject()
+                                .get("activity_code").getAsString();
+                        List<ActivityInstanceDto> activityInstanceDtoList = jdbiActivityInstance
+                                .findAllByUserGuidAndActivityCode(userGuid, activityCode, studyId);
+                        activityInstanceDao.deleteByInstanceGuid(activityInstanceDtoList.get(0).getGuid());
+                        ActivityInstanceDto instanceDto = dataLoader.createActivityInstance(sourceData.get("atregistrationsurvey"),
+                                userGuid, studyId,
+                                activityCode, createdAt,
+                                jdbiActivity,
+                                activityInstanceDao,
+                                activityInstanceStatusDao);
+                        dataLoader.loadATRegistrationSurveyData(handle, sourceData.get("atregistrationsurvey"),
+                                mappingData.get("RegistrationSurvey"),
+                                studyDto, userDto, instanceDto,
+                                answerDao);
+                    }
+
+                    if (hasATContactingPhysician) {
+                        String activityCode = mappingData.get("ContactingPhysicianSurvey").getAsJsonObject()
+                                .get("activity_code").getAsString();
+                        List<ActivityInstanceDto> activityInstanceDtoList = jdbiActivityInstance
+                                .findAllByUserGuidAndActivityCode(userGuid, activityCode, studyId);
+                        activityInstanceDao.deleteByInstanceGuid(activityInstanceDtoList.get(0).getGuid());
+                        ActivityInstanceDto instanceDto = dataLoader.createActivityInstance(sourceData.get("atcontactingphysiciansurvey"),
+                                userGuid, studyId,
+                                activityCode, createdAt,
+                                jdbiActivity,
+                                activityInstanceDao,
+                                activityInstanceStatusDao);
+                        dataLoader.loadATContactingPhysicianSurveyData(handle, sourceData.get("atcontactingphysiciansurvey"),
+                                mappingData.get("ContactingPhysicianSurvey"),
+                                studyDto, userDto, instanceDto,
+                                answerDao);
+                    }
 
                     if (hasAboutYou) {
                         String activityCode = mappingData.get("aboutyousurvey").getAsJsonObject().get("activity_code").getAsString();
@@ -754,7 +847,6 @@ public class StudyDataLoaderMain {
                                 mappingData.get("followupsurvey"),
                                 studyDto, userDto, instanceDto, activityInstanceDao.getJdbiActivityInstance(), answerDao);
                     }
-
                     JsonElement ddpExitedDt = datstatParticipantData.getAsJsonObject().get("ddp_exited_dt");
                     if (ddpExitedDt != null && !ddpExitedDt.isJsonNull()) {
                         dataLoader.addUserStudyExit(handle, ddpExitedDt.getAsString(), userGuid, studyGuid);
@@ -787,7 +879,8 @@ public class StudyDataLoaderMain {
                 migrationRun = new StudyMigrationRun(altpid, userGuid, previousRun, emailAddress);
             } else {
                 migrationRun = new StudyMigrationRun(altpid, userGuid, hasAboutYou, hasConsent, hasBloodConsent, hasTissueConsent,
-                        hasRelease, hasBloodRelease, false, hasFollowup, isSuccess, previousRun, emailAddress, auth0Collision);
+                        hasRelease, hasBloodRelease, false, hasFollowup, hasMedicalHistory,
+                        isSuccess, previousRun, emailAddress, auth0Collision);
             }
 
             migrationRunReport.add(migrationRun);
@@ -892,7 +985,7 @@ public class StudyDataLoaderMain {
                 .withNullString("")
                 .withHeader("AltPid", "Pepper User GUID", "Has About You", "Has Consent", "Has Blood Consent", "Has Tissue Consent",
                         "Has Release", "Has Blood Release",
-                        "Has Followup", "Email", "Previous Run", "Success/Failure", "Auth0 Collision"));
+                        "Has Followup", "Has Medical History", "Email", "Previous Run", "Success/Failure", "Auth0 Collision"));
 
         for (StudyMigrationRun run : migrationRunReport) {
             addRunValues(run, csvPrinter);
@@ -913,6 +1006,7 @@ public class StudyDataLoaderMain {
                 run.getHasRelease(),
                 run.getHasBloodRelease(),
                 run.getHasFollowup(),
+                run.getHasMedicalHistory(),
                 run.getEmailAddress(),
                 run.getPreviousRun(),
                 run.getSuccess(),

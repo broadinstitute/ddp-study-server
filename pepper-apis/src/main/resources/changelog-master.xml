@@ -208,4 +208,5 @@
     <include file="db-changes/schema/DDP-4703-activity-instance-substitutions.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/seed/DDP-4674-login-account-created-event-type.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/add-last-visited-activity-section-column-to-activity-instance.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/user_legacy_altpid_change_limit_size.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
