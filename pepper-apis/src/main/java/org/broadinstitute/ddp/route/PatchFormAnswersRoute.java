@@ -55,7 +55,6 @@ import org.broadinstitute.ddp.json.PatchAnswerResponse;
 import org.broadinstitute.ddp.json.errors.AnswerValidationError;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
-import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.instance.answer.AgreementAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
@@ -74,7 +73,6 @@ import org.broadinstitute.ddp.model.activity.instance.question.TextQuestion;
 import org.broadinstitute.ddp.model.activity.instance.validation.ActivityValidationFailure;
 import org.broadinstitute.ddp.model.activity.instance.validation.Rule;
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
-import org.broadinstitute.ddp.model.activity.types.BlockType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.activity.types.NumericType;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
@@ -185,13 +183,9 @@ public class PatchFormAnswersRoute implements Route {
                 Map<String, List<Rule>> failedRulesByQuestion = new HashMap<>();
                 for (AnswerSubmission submission : submissions) {
                     String questionStableId = extractQuestionStableId(submission, response);
-                    Optional<QuestionDef> questionDef = def.getSections().stream()
-                            .flatMap(section -> section.getBlocks().stream())
-                            .filter(block -> block.getBlockType() == BlockType.QUESTION)
-                            .map(questionBlock -> ((QuestionBlockDef) questionBlock).getQuestion())
-                            .filter(qDef -> qDef.getStableId().equals(questionStableId))
-                            .findFirst();
-                    if (questionDef.isEmpty()) {
+                    QuestionDef questionDef = def.getQuestionByStableId(questionStableId);
+
+                    if (questionDef == null) {
                         LOG.warn("Could not find questiondef with id: " + questionStableId);
                     }
 
@@ -218,7 +212,7 @@ public class PatchFormAnswersRoute implements Route {
                         throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.BAD_PAYLOAD, msg));
                     }
                     // does this very-specific check need to be here?
-                    if (question.getQuestionType() == QuestionType.TEXT
+                    if (questionDef.getQuestionType() == QuestionType.TEXT
                             && ((TextQuestion) question).getInputType() == TextInputType.EMAIL
                             && answer.getValue() != null
                     ) {

@@ -35,7 +35,7 @@ public class FormActivityService {
     public List<BlockVisibility> getBlockVisibilities(Handle handle, FormActivityDef def, String userGuid, String instanceGuid) {
         List<BlockVisibility> visibilities = new ArrayList<>();
         for (var block : def.getAllToggleableBlocks()) {
-            BlockVisibility vis = evaluateVisibility(handle, block, userGuid, instanceGuid);
+            BlockVisibility vis = evaluateVisibility(handle, block, def, userGuid, instanceGuid);
             if (vis != null) {
                 visibilities.add(vis);
             }
@@ -43,12 +43,13 @@ public class FormActivityService {
         return visibilities;
     }
 
-    private BlockVisibility evaluateVisibility(Handle handle, FormBlockDef block, String userGuid, String instanceGuid) {
+    private BlockVisibility evaluateVisibility(Handle handle, FormBlockDef block, FormActivityDef formActivityDef, String userGuid,
+                                               String instanceGuid) {
         BlockVisibility vis = null;
         String expr = block.getShownExpr();
         if (expr != null) {
             try {
-                boolean shown = interpreter.eval(expr, handle, userGuid, instanceGuid);
+                boolean shown = interpreter.eval(expr, handle, userGuid, instanceGuid, formActivityDef);
                 vis = new BlockVisibility(block.getBlockGuid(), shown);
             } catch (PexException e) {
                 String msg = String.format("Error evaluating pex expression for form activity instance %s and block %s: `%s`",

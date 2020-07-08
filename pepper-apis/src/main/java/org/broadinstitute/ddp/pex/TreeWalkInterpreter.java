@@ -25,6 +25,8 @@ import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudyCached;
 import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
+import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
+import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
@@ -80,8 +82,12 @@ public class TreeWalkInterpreter implements PexInterpreter {
     private static final Logger LOG = LoggerFactory.getLogger(TreeWalkInterpreter.class);
     private static final PexFetcher fetcher = new PexFetcher();
 
-    @Override
     public boolean eval(String expression, Handle handle, String userGuid, String activityInstanceGuid) {
+        return eval(expression, handle, userGuid, activityInstanceGuid, null);
+    }
+
+    @Override
+    public boolean eval(String expression, Handle handle, String userGuid, String activityInstanceGuid, FormActivityDef formActivityDef) {
         CharStream chars = CharStreams.fromString(expression);
         FailFastLexer lexer = new FailFastLexer(chars);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
@@ -97,7 +103,7 @@ public class TreeWalkInterpreter implements PexInterpreter {
         }
 
         InterpreterContext ictx = new InterpreterContext(handle, userGuid, activityInstanceGuid);
-        PexValueVisitor visitor = new PexValueVisitor(this, ictx);
+        PexValueVisitor visitor = new PexValueVisitor(this, ictx, formActivityDef);
 
         Object result = visitor.visit(tree);
         if (!(result instanceof Boolean)) {
@@ -299,23 +305,23 @@ public class TreeWalkInterpreter implements PexInterpreter {
         }
     }
 
-    private Object evalDefaultLatestAnswerQuery(InterpreterContext ictx, DefaultLatestAnswerQueryContext ctx) {
+    private Object evalDefaultLatestAnswerQuery(InterpreterContext ictx, DefaultLatestAnswerQueryContext ctx, FormActivityDef formDef) {
         String studyGuid = extractString(ctx.study().STR());
         String activityCode = extractString(ctx.form().STR());
         String stableId = extractString(ctx.question().STR());
-        return applyAnswerPredicate(ictx, studyGuid, activityCode, stableId, LATEST, ctx.predicate());
+        return applyAnswerPredicate(ictx, studyGuid, activityCode, stableId, LATEST, ctx.predicate(), formDef);
     }
 
-    private Object evalAnswerQuery(InterpreterContext ictx, AnswerQueryContext ctx) {
+    private Object evalAnswerQuery(InterpreterContext ictx, AnswerQueryContext ctx, FormActivityDef formDef) {
         String studyGuid = extractString(ctx.study().STR());
         String activityCode = extractString(ctx.form().STR());
         String type = ctx.instance().INSTANCE_TYPE().getText();
         String stableId = extractString(ctx.question().STR());
-        return applyAnswerPredicate(ictx, studyGuid, activityCode, stableId, type, ctx.predicate());
+        return applyAnswerPredicate(ictx, studyGuid, activityCode, stableId, type, ctx.predicate(), formDef);
     }
 
     private Object applyAnswerPredicate(InterpreterContext ictx, String studyGuid, String activityCode, String stableId,
-                                        String instanceType, PredicateContext predicateCtx) {
+                                        String instanceType, PredicateContext predicateCtx, FormActivityDef formDef) {
         long studyId = new JdbiUmbrellaStudyCached(ictx.getHandle())
                 .getIdByGuid(studyGuid)
                 .orElseThrow(() -> {
@@ -323,12 +329,25 @@ public class TreeWalkInterpreter implements PexInterpreter {
                     return new PexFetchException(new NoSuchElementException(msg));
                 });
 
-        QuestionType questionType = fetcher.findQuestionType(ictx, studyGuid, activityCode, stableId).orElseThrow(() -> {
-            String msg = String.format(
-                    "Cannot find question %s in form %s for user %s and study %s",
-                    stableId, activityCode, ictx.getUserGuid(), studyGuid);
-            return new PexFetchException(new NoSuchElementException(msg));
-        });
+        QuestionType questionType;
+        if (formDef != null) {
+            QuestionDef questionDef = formDef.getQuestionByStableId(stableId);
+            if (questionDef == null) {
+                String msg = String.format(
+                        "Cannot find question %s in form activity def with id %s and activity code %s for user %s in study %s",
+                        stableId, formDef.getActivityId(), formDef.getActivityCode(), ictx.getUserGuid(), studyGuid);
+                return new PexFetchException(new NoSuchElementException(msg));
+            } else {
+                questionType = questionDef.getQuestionType();
+            }
+        } else {
+            questionType = fetcher.findQuestionType(ictx, studyGuid, activityCode, stableId).orElseThrow(() -> {
+                String msg = String.format(
+                        "Cannot find question %s in form %s for user %s and study %s",
+                        stableId, activityCode, ictx.getUserGuid(), studyGuid);
+                return new PexFetchException(new NoSuchElementException(msg));
+            });
+        }
 
         String instanceGuid = instanceType.equals(LATEST) ? null : ictx.getActivityInstanceGuid();
 
@@ -536,12 +555,14 @@ public class TreeWalkInterpreter implements PexInterpreter {
      */
     class PexValueVisitor extends PexBaseVisitor<Object> {
 
+        private final FormActivityDef formDef;
         private TreeWalkInterpreter interpreter;
         private InterpreterContext ictx;
 
-        PexValueVisitor(TreeWalkInterpreter interpreter, InterpreterContext ictx) {
+        PexValueVisitor(TreeWalkInterpreter interpreter, InterpreterContext ictx, FormActivityDef formDef) {
             this.interpreter = interpreter;
             this.ictx = ictx;
+            this.formDef = formDef;
         }
 
         @Override
@@ -615,12 +636,12 @@ public class TreeWalkInterpreter implements PexInterpreter {
 
         @Override
         public Object visitAnswerQuery(PexParser.AnswerQueryContext ctx) {
-            return interpreter.evalAnswerQuery(ictx, ctx);
+            return interpreter.evalAnswerQuery(ictx, ctx, formDef);
         }
 
         @Override
         public Object visitDefaultLatestAnswerQuery(PexParser.DefaultLatestAnswerQueryContext ctx) {
-            return interpreter.evalDefaultLatestAnswerQuery(ictx, ctx);
+            return interpreter.evalDefaultLatestAnswerQuery(ictx, ctx, formDef);
         }
 
         @Override
