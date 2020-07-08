@@ -157,6 +157,19 @@ public class StudyDataLoader {
         optionList.add(5, "CANCER_HAS_RECENTLY_RECURRED");
         datStatLookup.put("cancer_status", optionList);
 
+        optionList = new ArrayList<>(10);
+        optionList.add(0, "empty");
+        optionList.add(1, "AFRICAN_AFRICAN_AMERICAN");
+        optionList.add(2, "LATINO");
+        optionList.add(3, "EAST_ASIAN");
+        optionList.add(4, "FINNISH");
+        optionList.add(5, "NON-FINNISH_EUROPEAN");
+        optionList.add(6, "CAUCASIAN");
+        optionList.add(7, "SOUTH_ASIAN");
+        optionList.add(8, "OTHER");
+        optionList.add(9, "PREFER NOT TO ANSWER");
+        datStatLookup.put("ETHNICITY", optionList);
+
         booleanValueLookup = new HashMap<>();
         booleanValueLookup.put(0, false);
         booleanValueLookup.put(1, true);
@@ -193,7 +206,7 @@ public class StudyDataLoader {
         for (JsonElement thisEl : dataArray) {
             dateCreatedEl = thisEl.getAsJsonObject().get("datecreated");
             if (dateCreatedEl != null && !dateCreatedEl.isJsonNull()) {
-                dateCreatedMillis = dateCreatedEl.getAsNumber().longValue();
+                dateCreatedMillis = dateCreatedEl.getAsNumber().longValue() * MILLIS_PER_SECOND;
             }
             firstName = getStringValueFromElement(thisEl, "firstname");
             lastName = getStringValueFromElement(thisEl, "lastname");
@@ -530,6 +543,24 @@ public class StudyDataLoader {
         }
 
         processSurveyData(handle, "atcontactingphysiciansurvey", surveyData, mappingData,
+                studyDto, userDto, instanceDto, answerDao);
+    }
+
+    public void loadATGenomeStudySurveyData(Handle handle,
+                                                    JsonElement surveyData,
+                                                    JsonElement mappingData,
+                                                    StudyDto studyDto,
+                                                    UserDto userDto,
+                                                    ActivityInstanceDto instanceDto,
+                                                    AnswerDao answerDao) throws Exception {
+
+        LOG.info("Populating ATGenomeStudy Survey...");
+        if (surveyData == null || surveyData.isJsonNull()) {
+            LOG.warn("NO ATGenomeStudy Survey !");
+            return;
+        }
+
+        processSurveyData(handle, "atgenomestudysurvey", surveyData, mappingData,
                 studyDto, userDto, instanceDto, answerDao);
     }
 
@@ -896,7 +927,7 @@ public class StudyDataLoader {
         Answer parentAnswer = answerDao.createAnswer(participantGuid, instanceGuid,
                 new CompositeAnswer(null, pepperQuestionStableId, null));
         List<Long> childrenAnswerIds = new ArrayList<>();
-
+        List<Integer> filteredCompositeAnswerOrders = compositeAnswerOrders.stream().filter(x -> x != null).collect(Collectors.toList());
         var jdbiCompositeAnswer = handle.attach(JdbiCompositeAnswer.class);
         if (CollectionUtils.isNotEmpty(nestedGuids)) {
             for (String childGuid : nestedGuids) {
@@ -905,7 +936,7 @@ public class StudyDataLoader {
                 }
                 childrenAnswerIds.add(answerDao.getAnswerSql().findDtoByGuid(childGuid).get().getId());
             }
-            jdbiCompositeAnswer.insertChildAnswerItems(parentAnswer.getAnswerId(), childrenAnswerIds, compositeAnswerOrders);
+            jdbiCompositeAnswer.insertChildAnswerItems(parentAnswer.getAnswerId(), childrenAnswerIds, filteredCompositeAnswerOrders);
         }
         return parentAnswer.getAnswerGuid();
     }
@@ -1262,6 +1293,11 @@ public class StudyDataLoader {
                     processMedListCompositeQuestion(handle, thisMap, sourceData, surveyName,
                             participantGuid, instanceGuid, answerDao);
                     break;
+
+                case "CompositeMedical":
+                    processMedicalCompositeQuestion(handle, thisMap, sourceData, surveyName,
+                            participantGuid, instanceGuid, answerDao);
+                    break;
                 default:
                     LOG.warn(" Default .. Q name: {} .. type: {} ", questionName, questionType);
             }
@@ -1437,16 +1473,26 @@ public class StudyDataLoader {
             if (optionName.equalsIgnoreCase(value.getAsString())
                     || optValuesList.stream().anyMatch(x -> x.equalsIgnoreCase(optName))) {
 
-                if (!optionName.equalsIgnoreCase("Other")) {
-                    selectedPicklistOptions.add(new SelectedPicklistOption(optionNameEl.getAsString().toUpperCase()));
+                //todo.. handle other_text in a better way!
+                if (optionName.contains("other") || optionName.contains("telangiectasia")
+                        || optionName.contains("allergies") || optionName.contains("high_cholesterol")
+                        || optionName.contains("liver_issues") || optionName.contains("renal_issues")
+                        || optionName.contains("thyroid_issues") || optionName.contains("g_tube")
+                        || optionName.contains("eye") || optionName.contains("heel_cord")
+                        || optionName.contains("rod_placement")) {
+                    String otherDetails = null;
+                    //if (optValuesList.size() > (selectedPicklistOptions.size() + 1)) {
+                    //there is Other text
+                    //otherDetails = optValuesList.get(optValuesList.size() - 1);
+                    //}
+                    if (optionObj.has("text") && !sourceDataElement.getAsJsonObject()
+                            .get(questionName + "." + optionName + "." + optionObj.get("text").getAsString()).isJsonNull()) {
+                        otherDetails = sourceDataElement.getAsJsonObject().get(questionName + "." + optionName + "." + optionObj
+                                .get("text").getAsString()).getAsString();
+                    }
+                    selectedPicklistOptions.add(new SelectedPicklistOption(optionNameEl.getAsString().toUpperCase(), otherDetails));
                 } else {
-                    //currently only RACE has Other however Gen2 MBC has other details without user selecting "Other"
-                    //hence MBC Other is taken care below as special case..
-                    //after MBC below code should help
-                    //just select everything after Other (substr)
-                    /*String sourceValue = value.getAsString();
-                    String detailText = sourceValue.substring(sourceValue.lastIndexOf("Other") + 6);
-                    selectedPicklistOptions.add(new SelectedPicklistOption(optionNameEl.getAsString().toUpperCase(), detailText));*/
+                    selectedPicklistOptions.add(new SelectedPicklistOption(optionNameEl.getAsString().toUpperCase()));
                 }
             }
         }
@@ -1677,15 +1723,17 @@ public class StudyDataLoader {
         JsonArray children = mapElement.getAsJsonObject().getAsJsonArray("children");
         List<String> nestedQAGuids = new ArrayList<>();
         List<Integer> nestedAnsOrders = new ArrayList<>();
+        String childGuid;
         //todo.. This composite type does not handle array/list of answers. make it handle array for future study proof
         for (JsonElement childEl : children) {
-            String childGuid = null;
+            nestedAnsOrders.add(0);
             if (childEl != null && !childEl.isJsonNull()) {
                 String nestedQuestionType = getStringValueFromElement(childEl, "type");
                 switch (nestedQuestionType) {
                     case "Date":
                         childGuid = processDateQuestion(childEl, sourceDataElement, surveyName, participantGuid,
                                 instanceGuid, answerDao);
+                        nestedQAGuids.add(childGuid);
                         break;
                     case "string":
                         childGuid = processTextQuestion(childEl, sourceDataElement, surveyName,
@@ -1695,18 +1743,22 @@ public class StudyDataLoader {
                     case "Numeric":
                         childGuid = processNumericQuestion(childEl, sourceDataElement, surveyName,
                                 participantGuid, instanceGuid, answerDao);
+                        nestedQAGuids.add(childGuid);
                         break;
                     case "Picklist":
                         childGuid = processPicklistQuestion(childEl, sourceDataElement, surveyName,
                                 participantGuid, instanceGuid, answerDao);
+                        nestedQAGuids.add(childGuid);
                         break;
                     case "Boolean":
                         childGuid = processBooleanQuestion(childEl, sourceDataElement, surveyName,
                                 participantGuid, instanceGuid, answerDao);
+                        nestedQAGuids.add(childGuid);
                         break;
                     case "Agreement":
                         childGuid = processAgreementQuestion(childEl, sourceDataElement, surveyName,
                                 participantGuid, instanceGuid, answerDao);
+                        nestedQAGuids.add(childGuid);
                         break;
                     case "ClinicalTrialPicklist":
                         //todo .. revisit and make it generic
@@ -1714,11 +1766,13 @@ public class StudyDataLoader {
                         JsonElement thisDataArrayEl = sourceDataElement.getAsJsonObject().get(questionName);
                         if (thisDataArrayEl != null && !thisDataArrayEl.isJsonNull()) {
                             Boolean isClinicalTrial = getBooleanValueFromElement(thisDataArrayEl, "clinicaltrial");
+                            //thisDataArrayEl.getAsJsonObject().get("clinicaltrial").getAsBoolean();
                             if (isClinicalTrial) {
                                 List<SelectedPicklistOption> selectedPicklistOptions = new ArrayList<>();
                                 selectedPicklistOptions.add(new SelectedPicklistOption("IS_CLINICAL_TRIAL"));
                                 childGuid = answerPickListQuestion(childStableId, participantGuid,
                                         instanceGuid, selectedPicklistOptions, answerDao);
+                                nestedQAGuids.add(childGuid);
                             }
                         }
                         break;
@@ -1726,12 +1780,102 @@ public class StudyDataLoader {
                         LOG.warn(" Default ..Composite nested Q name: {} .. type: {} not supported", questionName,
                                 nestedQuestionType);
                 }
-                if (StringUtils.isNotBlank(childGuid)) {
-                    nestedQAGuids.add(childGuid);
-                    nestedAnsOrders.add(0);
-                }
             }
         }
+        nestedQAGuids.remove(null);
+        if (CollectionUtils.isNotEmpty(nestedQAGuids)) {
+            answerGuid = answerCompositeQuestion(handle, stableId, participantGuid, instanceGuid,
+                    nestedQAGuids, nestedAnsOrders, answerDao);
+        }
+        return answerGuid;
+    }
+
+
+    private String processMedicalCompositeQuestion(Handle handle, JsonElement mapElement, JsonElement sourceDataElement, String surveyName,
+                                            String participantGuid, String instanceGuid, AnswerDao answerDao) throws Exception {
+
+        String answerGuid = null;
+        String questionName = mapElement.getAsJsonObject().get("name").getAsString();
+        sourceDataSurveyQs.get(surveyName).add(questionName);
+        //handle composite options (nested answers)
+        String stableId = null;
+        JsonElement stableIdElement = mapElement.getAsJsonObject().get("stable_id");
+        if (!stableIdElement.isJsonNull()) {
+            stableId = stableIdElement.getAsString();
+        }
+        //handle children/nestedQA
+        JsonArray children = mapElement.getAsJsonObject().getAsJsonArray("children");
+        List<String> nestedQAGuids = new ArrayList<>();
+        List<Integer> nestedAnsOrders = new ArrayList<>();
+        String childGuid;
+        //todo.. This composite type does not handle array/list of answers. make it handle array for future study proof
+        for (JsonElement childEl : children) {
+            if (childEl != null && !childEl.isJsonNull()) {
+                Integer childOrder = null;
+
+                String nestedQuestionType = getStringValueFromElement(childEl, "type");
+                switch (nestedQuestionType) {
+                    case "Date":
+                        childGuid = processDateQuestion(childEl, sourceDataElement, surveyName, participantGuid,
+                                instanceGuid, answerDao);
+                        nestedQAGuids.add(childGuid);
+                        if (childGuid != null) childOrder = childEl.getAsJsonObject().get("response_order").getAsInt();
+                        break;
+                    case "string":
+                        childGuid = processTextQuestion(childEl, sourceDataElement, surveyName,
+                                participantGuid, instanceGuid, answerDao);
+                        nestedQAGuids.add(childGuid);
+                        if (childGuid != null) childOrder = childEl.getAsJsonObject().get("response_order").getAsInt();
+                        break;
+                    case "Numeric":
+                        childGuid = processNumericQuestion(childEl, sourceDataElement, surveyName,
+                                participantGuid, instanceGuid, answerDao);
+                        nestedQAGuids.add(childGuid);
+                        if (childGuid != null) childOrder = childEl.getAsJsonObject().get("response_order").getAsInt();
+                        break;
+                    case "Picklist":
+                        childGuid = processPicklistQuestion(childEl, sourceDataElement, surveyName,
+                                participantGuid, instanceGuid, answerDao);
+                        nestedQAGuids.add(childGuid);
+                        if (childGuid != null) childOrder = childEl.getAsJsonObject().get("response_order").getAsInt();
+                        break;
+                    case "Boolean":
+                        childGuid = processBooleanQuestion(childEl, sourceDataElement, surveyName,
+                                participantGuid, instanceGuid, answerDao);
+                        nestedQAGuids.add(childGuid);
+                        if (childGuid != null) childOrder = childEl.getAsJsonObject().get("response_order").getAsInt();
+                        break;
+                    case "Agreement":
+                        childGuid = processAgreementQuestion(childEl, sourceDataElement, surveyName,
+                                participantGuid, instanceGuid, answerDao);
+                        nestedQAGuids.add(childGuid);
+                        if (childGuid != null) childOrder = childEl.getAsJsonObject().get("response_order").getAsInt();
+                        break;
+                    case "ClinicalTrialPicklist":
+                        //todo .. revisit and make it generic
+                        String childStableId = childEl.getAsJsonObject().get("stable_id").getAsString();
+                        JsonElement thisDataArrayEl = sourceDataElement.getAsJsonObject().get(questionName);
+                        if (thisDataArrayEl != null && !thisDataArrayEl.isJsonNull()) {
+                            Boolean isClinicalTrial = getBooleanValueFromElement(thisDataArrayEl, "clinicaltrial");
+                            //thisDataArrayEl.getAsJsonObject().get("clinicaltrial").getAsBoolean();
+                            if (isClinicalTrial) {
+                                List<SelectedPicklistOption> selectedPicklistOptions = new ArrayList<>();
+                                selectedPicklistOptions.add(new SelectedPicklistOption("IS_CLINICAL_TRIAL"));
+                                childGuid = answerPickListQuestion(childStableId, participantGuid,
+                                        instanceGuid, selectedPicklistOptions, answerDao);
+                                nestedQAGuids.add(childGuid);
+                            }
+                        }
+                        break;
+                    default:
+                        LOG.warn(" Default ..Composite nested Q name: {} .. type: {} not supported", questionName,
+                                nestedQuestionType);
+                }
+                nestedAnsOrders.add(childOrder);
+            }
+        }
+        nestedQAGuids.remove(null);
+        nestedAnsOrders.remove(null);
         if (CollectionUtils.isNotEmpty(nestedQAGuids)) {
             answerGuid = answerCompositeQuestion(handle, stableId, participantGuid, instanceGuid,
                     nestedQAGuids, nestedAnsOrders, answerDao);
@@ -1763,8 +1907,8 @@ public class StudyDataLoader {
                 compositeAnswerOrder++;
                 //handle children/nestedQA
                 JsonArray children = mapElement.getAsJsonObject().getAsJsonArray("children");
+                String childGuid;
                 for (JsonElement childEl : children) {
-                    String childGuid = null;
                     if (childEl != null && !childEl.isJsonNull()) {
                         String nestedQuestionType = getStringValueFromElement(childEl, "type");
 
@@ -1772,22 +1916,32 @@ public class StudyDataLoader {
                             case "Date":
                                 childGuid = processDateQuestion(childEl, thisDataEl, surveyName, participantGuid,
                                         instanceGuid, answerDao);
+                                nestedQAGuids.add(childGuid);
+                                nestedAnsOrders.add(compositeAnswerOrder);
                                 break;
                             case "string":
                                 childGuid = processTextQuestion(childEl, thisDataEl, surveyName,
                                         participantGuid, instanceGuid, answerDao);
+                                nestedQAGuids.add(childGuid);
+                                nestedAnsOrders.add(compositeAnswerOrder);
                                 break;
                             case "Picklist":
                                 childGuid = processPicklistQuestion(childEl, thisDataEl, surveyName,
                                         participantGuid, instanceGuid, answerDao);
+                                nestedQAGuids.add(childGuid);
+                                nestedAnsOrders.add(compositeAnswerOrder);
                                 break;
                             case "Boolean":
                                 childGuid = processBooleanQuestion(childEl, thisDataEl, surveyName,
                                         participantGuid, instanceGuid, answerDao);
+                                nestedQAGuids.add(childGuid);
+                                nestedAnsOrders.add(compositeAnswerOrder);
                                 break;
                             case "Agreement":
                                 childGuid = processAgreementQuestion(childEl, thisDataEl, surveyName,
                                         participantGuid, instanceGuid, answerDao);
+                                nestedQAGuids.add(childGuid);
+                                nestedAnsOrders.add(compositeAnswerOrder);
                                 break;
                             case "ClinicalTrialPicklist":
                                 //todo .. revisit and make it generic
@@ -1798,20 +1952,19 @@ public class StudyDataLoader {
                                     selectedPicklistOptions.add(new SelectedPicklistOption("IS_CLINICAL_TRIAL"));
                                     childGuid = answerPickListQuestion(childStableId, participantGuid,
                                             instanceGuid, selectedPicklistOptions, answerDao);
+                                    nestedQAGuids.add(childGuid);
+                                    nestedAnsOrders.add(compositeAnswerOrder);
                                 }
                                 break;
                             default:
                                 LOG.warn(" Default ..Composite nested Q name: {} .. type: {} ", questionName,
                                         nestedQuestionType);
                         }
-                        if (StringUtils.isNotBlank(childGuid)) {
-                            nestedQAGuids.add(childGuid);
-                            nestedAnsOrders.add(compositeAnswerOrder);
-                        }
                     }
                 }
             }
 
+            nestedQAGuids.remove(null);
             if (CollectionUtils.isNotEmpty(nestedQAGuids)) {
                 answerGuid = answerCompositeQuestion(handle, stableId, participantGuid, instanceGuid, nestedQAGuids,
                         nestedAnsOrders, answerDao);

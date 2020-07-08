@@ -700,12 +700,13 @@
           {
             "name": "medication_category",
             "stable_id": "MEDICATION_CATEGORY",
-            "type": "Composite",
+            "type": "CompositeMedical",
             "children": [
               {
                 "name": "medication_1_category",
                 "type": "Picklist",
                 "stable_id": "MEDICATION_CATEGORY_PICK_LIST",
+                "response_order": 0,
                 "options": [
                   {
                     "type": "integer",
@@ -752,17 +753,20 @@
               {
                 "name": "medication_1_name",
                 "type": "string",
-                "stable_id": "MEDICATION_NAME"
+                "stable_id": "MEDICATION_NAME",
+                "response_order": 0
               },
               {
                 "name": "medication_1_age",
                 "type": "string",
-                "stable_id": "BEGAN_TAKING_AT_AGE"
+                "stable_id": "BEGAN_TAKING_AT_AGE",
+                "response_order": 0
               },
               {
                 "name": "medication_2_category",
                 "type": "Picklist",
                 "stable_id": "MEDICATION_CATEGORY_PICK_LIST",
+                "response_order": 1,
                 "options": [
                   {
                     "type": "integer",
@@ -809,17 +813,20 @@
               {
                 "name": "medication_2_name",
                 "type": "string",
-                "stable_id": "MEDICATION_NAME"
+                "stable_id": "MEDICATION_NAME",
+                "response_order": 1
               },
               {
                 "name": "medication_2_age",
                 "type": "string",
-                "stable_id": "BEGAN_TAKING_AT_AGE"
+                "stable_id": "BEGAN_TAKING_AT_AGE",
+                "response_order": 1
               },
               {
                 "name": "medication_3_category",
                 "type": "Picklist",
                 "stable_id": "MEDICATION_CATEGORY_PICK_LIST",
+                "response_order": 2,
                 "options": [
                   {
                     "type": "integer",
@@ -866,17 +873,20 @@
               {
                 "name": "medication_3_name",
                 "type": "string",
-                "stable_id": "MEDICATION_NAME"
+                "stable_id": "MEDICATION_NAME",
+                "response_order": 2
               },
               {
                 "name": "medication_3_age",
                 "type": "string",
-                "stable_id": "BEGAN_TAKING_AT_AGE"
+                "stable_id": "BEGAN_TAKING_AT_AGE",
+                "response_order": 2
               },
               {
                 "name": "medication_4_category",
                 "type": "Picklist",
                 "stable_id": "MEDICATION_CATEGORY_PICK_LIST",
+                "response_order": 3,
                 "options": [
                   {
                     "type": "integer",
@@ -923,17 +933,20 @@
               {
                 "name": "medication_4_name",
                 "type": "string",
-                "stable_id": "MEDICATION_NAME"
+                "stable_id": "MEDICATION_NAME",
+                "response_order": 3
               },
               {
                 "name": "medication_4_age",
                 "type": "string",
-                "stable_id": "BEGAN_TAKING_AT_AGE"
+                "stable_id": "BEGAN_TAKING_AT_AGE",
+                "response_order": 3
               },
               {
                 "name": "medication_5_category",
                 "type": "Picklist",
                 "stable_id": "MEDICATION_CATEGORY_PICK_LIST",
+                "response_order": 4,
                 "options": [
                   {
                     "type": "integer",
@@ -980,17 +993,20 @@
               {
                 "name": "medication_5_name",
                 "type": "string",
-                "stable_id": "MEDICATION_NAME"
+                "stable_id": "MEDICATION_NAME",
+                "response_order": 4
               },
               {
                 "name": "medication_5_age",
                 "type": "string",
-                "stable_id": "BEGAN_TAKING_AT_AGE"
+                "stable_id": "BEGAN_TAKING_AT_AGE",
+                "response_order": 4
               },
               {
                 "name": "medication_6_category",
                 "type": "Picklist",
                 "stable_id": "MEDICATION_CATEGORY_PICK_LIST",
+                "response_order": 5,
                 "options": [
                   {
                     "type": "integer",
@@ -1037,17 +1053,20 @@
               {
                 "name": "medication_6_name",
                 "type": "string",
-                "stable_id": "MEDICATION_NAME"
+                "stable_id": "MEDICATION_NAME",
+                "response_order": 5
               },
               {
                 "name": "medication_6_age",
                 "type": "string",
-                "stable_id": "BEGAN_TAKING_AT_AGE"
+                "stable_id": "BEGAN_TAKING_AT_AGE",
+                "response_order": 5
               },
               {
                 "name": "medication_7_category",
                 "type": "Picklist",
                 "stable_id": "MEDICATION_CATEGORY_PICK_LIST",
+                "response_order": 6,
                 "options": [
                   {
                     "type": "integer",
@@ -1094,17 +1113,20 @@
               {
                 "name": "medication_7_name",
                 "type": "string",
-                "stable_id": "MEDICATION_NAME"
+                "stable_id": "MEDICATION_NAME",
+                "response_order": 6
               },
               {
                 "name": "medication_7_age",
                 "type": "string",
-                "stable_id": "BEGAN_TAKING_AT_AGE"
+                "stable_id": "BEGAN_TAKING_AT_AGE",
+                "response_order": 6
               },
               {
                 "name": "medication_8_category",
                 "type": "Picklist",
                 "stable_id": "MEDICATION_CATEGORY_PICK_LIST",
+                "response_order": 7,
                 "options": [
                   {
                     "type": "integer",
@@ -1151,17 +1173,20 @@
               {
                 "name": "medication_8_name",
                 "type": "string",
-                "stable_id": "MEDICATION_NAME"
+                "stable_id": "MEDICATION_NAME",
+                "response_order": 7
               },
               {
                 "name": "medication_8_age",
                 "type": "string",
-                "stable_id": "BEGAN_TAKING_AT_AGE"
+                "stable_id": "BEGAN_TAKING_AT_AGE",
+                "response_order": 7
               },
               {
                 "name": "medication_9_category",
                 "type": "Picklist",
                 "stable_id": "MEDICATION_CATEGORY_PICK_LIST",
+                "response_order": 8,
                 "options": [
                   {
                     "type": "integer",
@@ -1208,12 +1233,14 @@
               {
                 "name": "medication_9_name",
                 "type": "string",
-                "stable_id": "MEDICATION_NAME"
+                "stable_id": "MEDICATION_NAME",
+                "response_order": 8
               },
               {
                 "name": "medication_9_age",
                 "type": "string",
-                "stable_id": "BEGAN_TAKING_AT_AGE"
+                "stable_id": "BEGAN_TAKING_AT_AGE",
+                "response_order": 8
               }
             ]
           },
@@ -1253,12 +1280,13 @@
           {
             "name": "sibling",
             "stable_id": "SIBLING",
-            "type": "Composite",
+            "type": "CompositeMedical",
             "children": [
               {
                 "name": "sibling_1_sex",
                 "type": "Picklist",
                 "stable_id": "SEX_PICKLIST",
+                "response_order": 0,
                 "options": [
                   {
                     "type": "integer",
@@ -1277,31 +1305,35 @@
               {
                 "name": "sibling_1_age",
                 "type": "string",
-                "stable_id": "AGE"
+                "stable_id": "AGE",
+                "response_order": 0
               },
               {
                 "name": "sibling_1_dob",
                 "stable_id": "DATE_OF_BIRTH",
                 "type": "Date",
-                "format": "yyyy-MM-dd'T'HH:mm:ss"
+                "format": "yyyy-MM-dd'T'HH:mm:ss",
+                "response_order": 0
               },
               {
                 "name": "sibling_1_age_death",
                 "stable_id": "AGE_AT_DEATH",
-                "type": "string"
+                "type": "string",
+                "response_order": 0
               },
               {
                 "name": "sibling_1_at_diagnosis",
                 "type": "Picklist",
                 "stable_id": "DIAGNOSIS_PICKLIST",
+                "response_order": 0,
                 "options": [
                   {
                     "type": "integer",
-                    "stable_id": "DIAGNOSIS_DROPDOWN_YES"
+                    "stable_id": "DIAGNOSIS_DROPDOWN_NO"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "DIAGNOSIS_DROPDOWN_NO"
+                    "stable_id": "DIAGNOSIS_DROPDOWN_YES"
                   },
                   {
                     "type": "integer",
@@ -1313,14 +1345,15 @@
                 "name": "sibling_1_at_carrier",
                 "type": "Picklist",
                 "stable_id": "CARRIER_PICKLIST",
+                "response_order": 0,
                 "options": [
                   {
                     "type": "integer",
-                    "stable_id": "CARRIER_DROPDOWN_YES"
+                    "stable_id": "CARRIER_DROPDOWN_NO"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "CARRIER_DROPDOWN_NO"
+                    "stable_id": "CARRIER_DROPDOWN_YES"
                   },
                   {
                     "type": "integer",
@@ -1332,6 +1365,7 @@
                 "name": "sibling_2_sex",
                 "type": "Picklist",
                 "stable_id": "SEX_PICKLIST",
+                "response_order": 1,
                 "options": [
                   {
                     "type": "integer",
@@ -1350,32 +1384,36 @@
               {
                 "name": "sibling_2_age",
                 "type": "string",
-                "stable_id": "AGE"
+                "stable_id": "AGE",
+                "response_order": 1
               },
               {
                 "name": "sibling_2_dob",
                 "stable_id": "DATE_OF_BIRTH",
                 "type": "Date",
-                "format": "yyyy-MM-dd'T'HH:mm:ss"
+                "format": "yyyy-MM-dd'T'HH:mm:ss",
+                "response_order": 1
               },
               {
                 "name": "sibling_2_age_death",
                 "stable_id": "AGE_AT_DEATH",
                 "type": "string",
-                "source_type": "integer"
+                "source_type": "integer",
+                "response_order": 1
               },
               {
                 "name": "sibling_2_at_diagnosis",
                 "type": "Picklist",
                 "stable_id": "DIAGNOSIS_PICKLIST",
+                "response_order": 1,
                 "options": [
                   {
                     "type": "integer",
-                    "stable_id": "DIAGNOSIS_DROPDOWN_YES"
+                    "stable_id": "DIAGNOSIS_DROPDOWN_NO"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "DIAGNOSIS_DROPDOWN_NO"
+                    "stable_id": "DIAGNOSIS_DROPDOWN_YES"
                   },
                   {
                     "type": "integer",
@@ -1387,14 +1425,15 @@
                 "name": "sibling_2_at_carrier",
                 "type": "Picklist",
                 "stable_id": "CARRIER_PICKLIST",
+                "response_order": 1,
                 "options": [
                   {
                     "type": "integer",
-                    "stable_id": "CARRIER_DROPDOWN_YES"
+                    "stable_id": "CARRIER_DROPDOWN_NO"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "CARRIER_DROPDOWN_NO"
+                    "stable_id": "CARRIER_DROPDOWN_YES"
                   },
                   {
                     "type": "integer",
@@ -1406,6 +1445,7 @@
                 "name": "sibling_3_sex",
                 "type": "Picklist",
                 "stable_id": "SEX_PICKLIST",
+                "response_order": 2,
                 "options": [
                   {
                     "type": "integer",
@@ -1424,32 +1464,36 @@
               {
                 "name": "sibling_3_age",
                 "type": "string",
-                "stable_id": "AGE"
+                "stable_id": "AGE",
+                "response_order": 2
               },
               {
                 "name": "sibling_3_dob",
                 "stable_id": "DATE_OF_BIRTH",
                 "type": "Date",
-                "format": "yyyy-MM-dd'T'HH:mm:ss"
+                "format": "yyyy-MM-dd'T'HH:mm:ss",
+                "response_order": 2
               },
               {
                 "name": "sibling_3_age_death",
                 "stable_id": "AGE_AT_DEATH",
                 "type": "string",
-                "source_type": "integer"
+                "source_type": "integer",
+                "response_order": 2
               },
               {
                 "name": "sibling_3_at_diagnosis",
                 "type": "Picklist",
                 "stable_id": "DIAGNOSIS_PICKLIST",
+                "response_order": 2,
                 "options": [
                   {
                     "type": "integer",
-                    "stable_id": "DIAGNOSIS_DROPDOWN_YES"
+                    "stable_id": "DIAGNOSIS_DROPDOWN_NO"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "DIAGNOSIS_DROPDOWN_NO"
+                    "stable_id": "DIAGNOSIS_DROPDOWN_YES"
                   },
                   {
                     "type": "integer",
@@ -1461,14 +1505,15 @@
                 "name": "sibling_3_at_carrier",
                 "type": "Picklist",
                 "stable_id": "CARRIER_PICKLIST",
+                "response_order": 2,
                 "options": [
                   {
                     "type": "integer",
-                    "stable_id": "CARRIER_DROPDOWN_YES"
+                    "stable_id": "CARRIER_DROPDOWN_NO"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "CARRIER_DROPDOWN_NO"
+                    "stable_id": "CARRIER_DROPDOWN_YES"
                   },
                   {
                     "type": "integer",
@@ -1480,6 +1525,7 @@
                 "name": "sibling_4_sex",
                 "type": "Picklist",
                 "stable_id": "SEX_PICKLIST",
+                "response_order": 3,
                 "options": [
                   {
                     "type": "integer",
@@ -1498,32 +1544,36 @@
               {
                 "name": "sibling_4_age",
                 "type": "string",
-                "stable_id": "AGE"
+                "stable_id": "AGE",
+                "response_order": 3
               },
               {
                 "name": "sibling_4_dob",
                 "stable_id": "DATE_OF_BIRTH",
                 "type": "Date",
-                "format": "yyyy-MM-dd'T'HH:mm:ss"
+                "format": "yyyy-MM-dd'T'HH:mm:ss",
+                "response_order": 3
               },
               {
                 "name": "sibling_4_age_death",
                 "stable_id": "AGE_AT_DEATH",
                 "type": "string",
-                "source_type": "integer"
+                "source_type": "integer",
+                "response_order": 3
               },
               {
                 "name": "sibling_4_at_diagnosis",
                 "type": "Picklist",
                 "stable_id": "DIAGNOSIS_PICKLIST",
+                "response_order": 3,
                 "options": [
                   {
                     "type": "integer",
-                    "stable_id": "DIAGNOSIS_DROPDOWN_YES"
+                    "stable_id": "DIAGNOSIS_DROPDOWN_NO"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "DIAGNOSIS_DROPDOWN_NO"
+                    "stable_id": "DIAGNOSIS_DROPDOWN_YES"
                   },
                   {
                     "type": "integer",
@@ -1535,14 +1585,15 @@
                 "name": "sibling_4_at_carrier",
                 "type": "Picklist",
                 "stable_id": "CARRIER_PICKLIST",
+                "response_order": 3,
                 "options": [
                   {
                     "type": "integer",
-                    "stable_id": "CARRIER_DROPDOWN_YES"
+                    "stable_id": "CARRIER_DROPDOWN_NO"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "CARRIER_DROPDOWN_NO"
+                    "stable_id": "CARRIER_DROPDOWN_YES"
                   },
                   {
                     "type": "integer",
@@ -1554,6 +1605,7 @@
                 "name": "sibling_5_sex",
                 "type": "Picklist",
                 "stable_id": "SEX_PICKLIST",
+                "response_order": 4,
                 "options": [
                   {
                     "type": "integer",
@@ -1572,32 +1624,36 @@
               {
                 "name": "sibling_5_age",
                 "type": "string",
-                "stable_id": "AGE"
+                "stable_id": "AGE",
+                "response_order": 4
               },
               {
                 "name": "sibling_5_dob",
                 "stable_id": "DATE_OF_BIRTH",
                 "type": "Date",
-                "format": "yyyy-MM-dd'T'HH:mm:ss"
+                "format": "yyyy-MM-dd'T'HH:mm:ss",
+                "response_order": 4
               },
               {
                 "name": "sibling_5_age_death",
                 "stable_id": "AGE_AT_DEATH",
                 "type": "string",
-                "source_type": "integer"
+                "source_type": "integer",
+                "response_order": 4
               },
               {
                 "name": "sibling_5_at_diagnosis",
                 "type": "Picklist",
                 "stable_id": "DIAGNOSIS_PICKLIST",
+                "response_order": 4,
                 "options": [
                   {
                     "type": "integer",
-                    "stable_id": "DIAGNOSIS_DROPDOWN_YES"
+                    "stable_id": "DIAGNOSIS_DROPDOWN_NO"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "DIAGNOSIS_DROPDOWN_NO"
+                    "stable_id": "DIAGNOSIS_DROPDOWN_YES"
                   },
                   {
                     "type": "integer",
@@ -1609,14 +1665,15 @@
                 "name": "sibling_5_at_carrier",
                 "type": "Picklist",
                 "stable_id": "CARRIER_PICKLIST",
+                "response_order": 4,
                 "options": [
                   {
                     "type": "integer",
-                    "stable_id": "CARRIER_DROPDOWN_YES"
+                    "stable_id": "CARRIER_DROPDOWN_NO"
                   },
                   {
                     "type": "integer",
-                    "stable_id": "CARRIER_DROPDOWN_NO"
+                    "stable_id": "CARRIER_DROPDOWN_YES"
                   },
                   {
                     "type": "integer",
@@ -1821,35 +1878,28 @@
         "question_answer_stables": [
           {
             "name": "PHYSICIAN_FIRST_NAME",
-            "type": "Composite",
-            "stable_id": "CONTACTING_PHYSICIAN",
-            "children": [
-              {
-                "name": "PHYSICIAN_FIRST_NAME",
-                "type": "string",
-                "stable_id": "PHYSICIAN_FIRSTNAME"
-              },
-              {
-                "name": "PHYSICIAN_LAST_NAME",
-                "type": "string",
-                "stable_id": "PHYSICIAN_LASTNAME"
-              },
-              {
-                "name": "PHYSICIAN_ADDRESS",
-                "type": "string",
-                "stable_id": "PHYSICIAN_MAIL"
-              },
-              {
-                "name": "PHYSICIAN_PHONE",
-                "type": "string",
-                "stable_id": "PHYSICIAN_PHONE"
-              },
-              {
-                "name": "PHYSICIAN_EMAIL",
-                "type": "string",
-                "stable_id": "PHYSICIAN_EMAIL"
-              }
-            ]
+            "type": "string",
+            "stable_id": "PHYSICIAN_FIRSTNAME"
+          },
+          {
+            "name": "PHYSICIAN_LAST_NAME",
+            "type": "string",
+            "stable_id": "PHYSICIAN_LASTNAME"
+          },
+          {
+            "name": "PHYSICIAN_ADDRESS",
+            "type": "string",
+            "stable_id": "PHYSICIAN_MAIL"
+          },
+          {
+            "name": "PHYSICIAN_PHONE",
+            "type": "string",
+            "stable_id": "PHYSICIAN_PHONE"
+          },
+          {
+            "name": "PHYSICIAN_EMAIL",
+            "type": "string",
+            "stable_id": "PHYSICIAN_EMAIL"
           },
           {
             "name": "RECEIVED_CARES",
@@ -1876,6 +1926,68 @@
               {
                 "name": "JOHNS_HOPKINS_RECEIVED_CARE",
                 "type": "string"
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "GenomeStudySurvey",
+        "activity_code": "GENOME_STUDY",
+        "question_answer_stables": [
+          {
+            "name": "GENOME_STUDY_SHIPPING_ADDRESS",
+            "stable_id": "SHIPPING_ADDRESS",
+            "type": "string"
+          },
+          {
+            "name": "DATSTAT_GENDER",
+            "stable_id": "PARTICIPANT_GENDER",
+            "type": "Picklist",
+            "source_type": "string",
+            "options": [
+              {
+                "name": "F",
+                "type": "string"
+              },
+              {
+                "name": "M",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "name": "ETHNICITY",
+            "stable_id": "PARTICIPANT_ETHNICITY",
+            "type": "Picklist",
+            "source_type": "integer",
+            "options": [
+              {
+                "stable_id": "AFRICAN_AFRICAN_AMERICAN"
+              },
+              {
+                "stable_id": "LATINO"
+              },
+              {
+                "stable_id": "EAST_ASIAN"
+              },
+              {
+                "stable_id": "FINNISH"
+              },
+              {
+                "stable_id": "NON-FINNISH_EUROPEAN"
+              },
+              {
+                "stable_id": "CAUCASIAN"
+              },
+              {
+                "stable_id": "SOUTH_ASIAN"
+              },
+              {
+                "stable_id": "OTHER"
+              },
+              {
+                "stable_id": "PREFER NOT TO ANSWER"
               }
             ]
           }
