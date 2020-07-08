@@ -45,6 +45,16 @@ public class AdminLookupInvitationRouteTest extends IntegrationTestSuite.TestCas
     }
 
     @Test
+    public void testOptionsRequest_noAuthTokenRequired() {
+        var payload = new LookupInvitationPayload("foobar");
+        given().pathParam("study", testData.getStudyGuid())
+                .body(payload, ObjectMapperType.GSON)
+                .when().options(urlTemplate)
+                .then().assertThat()
+                .statusCode(200);
+    }
+
+    @Test
     public void testNotStudyAdmin() {
         TransactionWrapper.useTxn(handle -> {
             handle.attach(AuthDao.class).removeAdminFromAllStudies(testData.getUserId());
@@ -113,7 +123,6 @@ public class AdminLookupInvitationRouteTest extends IntegrationTestSuite.TestCas
                     .body("createdAt", not(empty()))
                     .body("acceptedAt", not(empty()))
                     .body("userGuid", equalTo(testData.getUserGuid()))
-                    .body("userHruid", equalTo(testData.getUserHruid()))
                     .body("userLoginEmail", equalTo(testData.getTestingUser().getEmail()));
         } finally {
             if (invitation != null) {

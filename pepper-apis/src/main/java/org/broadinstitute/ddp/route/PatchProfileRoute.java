@@ -9,12 +9,13 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import org.apache.http.HttpStatus;
+import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
-import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
+import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.json.Profile;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.user.UserProfile;
@@ -153,9 +154,9 @@ public class PatchProfileRoute implements Route {
         if (language == null) {
             return null;
         }
-        Long languageId = handle.attach(JdbiLanguageCode.class).getLanguageCodeId(language);
-        if (languageId != null) {
-            return languageId;
+        LanguageDto languageDto  = LanguageStore.getOrCompute(handle, language);
+        if (languageDto != null) {
+            return languageDto.getId();
         } else {
             throw ResponseUtil.haltError(HttpStatus.SC_BAD_REQUEST,
                     new ApiError(ErrorCodes.INVALID_LANGUAGE_PREFERENCE, "Invalid preferred language"));

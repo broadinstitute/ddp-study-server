@@ -17,6 +17,7 @@ import org.broadinstitute.ddp.db.dto.RevisionDto;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistGroupDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
+import org.broadinstitute.ddp.model.activity.types.TemplateType;
 import org.jdbi.v3.core.mapper.reflect.ConstructorMapper;
 import org.jdbi.v3.sqlobject.CreateSqlObject;
 import org.jdbi.v3.sqlobject.SqlObject;
@@ -128,13 +129,21 @@ public interface PicklistQuestionDao extends SqlObject {
         templateDao.insertTemplate(option.getOptionLabelTemplate(), revisionId);
         long optionLabelTmplId = option.getOptionLabelTemplate().getTemplateId();
 
+        Long tooltipTmplId = null;
+        if (option.getTooltipTemplate() != null) {
+            if (option.getTooltipTemplate().getTemplateType() != TemplateType.TEXT) {
+                throw new DaoException("Only TEXT template type is supported for tooltips");
+            }
+            tooltipTmplId = templateDao.insertTemplate(option.getTooltipTemplate(), revisionId);
+        }
+
         Long detailLabelTmplId = null;
         if (option.isDetailsAllowed()) {
             templateDao.insertTemplate(option.getDetailLabelTemplate(), revisionId);
             detailLabelTmplId = option.getDetailLabelTemplate().getTemplateId();
         }
 
-        long optionId = jdbiOption.insert(questionId, option.getStableId(), optionLabelTmplId,
+        long optionId = jdbiOption.insert(questionId, option.getStableId(), optionLabelTmplId, tooltipTmplId,
                 detailLabelTmplId, option.isDetailsAllowed(), option.isExclusive(), displayOrder, revisionId);
         option.setOptionId(optionId);
 
@@ -291,6 +300,9 @@ public interface PicklistQuestionDao extends SqlObject {
             if (option.getDetailLabelTemplateId() != null) {
                 tmplDao.disableTemplate(option.getDetailLabelTemplateId(), meta);
             }
+            if (option.getTooltipTemplateId() != null) {
+                tmplDao.disableTemplate(option.getTooltipTemplateId(), meta);
+            }
         }
 
         LOG.info("Terminated {} picklist options for picklist question id {}", options.size(), questionId);
@@ -323,6 +335,10 @@ public interface PicklistQuestionDao extends SqlObject {
         tmplDao.disableTemplate(optionDto.getOptionLabelTemplateId(), meta);
         if (optionDto.getDetailLabelTemplateId() != null) {
             tmplDao.disableTemplate(optionDto.getDetailLabelTemplateId(), meta);
+        }
+
+        if (optionDto.getTooltipTemplateId() != null) {
+            tmplDao.disableTemplate(optionDto.getTooltipTemplateId(), meta);
         }
 
         if (jdbiRev.tryDeleteOrphanedRevision(oldRevId)) {

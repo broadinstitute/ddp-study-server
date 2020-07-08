@@ -81,8 +81,8 @@ public final class NumericQuestionDef extends QuestionDef {
                     placeholderTemplate,
                     isRestricted,
                     hideNumber,
-                    getAdditonalInfoHeader(),
-                    getAdditonalInfoFooter(),
+                    getAdditionalInfoHeader(),
+                    getAdditionalInfoFooter(),
                     validations,
                     numericType);
             configure(question);

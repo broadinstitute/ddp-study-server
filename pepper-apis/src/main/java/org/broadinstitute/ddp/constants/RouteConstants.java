@@ -15,6 +15,11 @@ public class RouteConstants {
         public static final String BEARER = "Bearer ";
     }
 
+    public static final class GAE {
+        public static final String START_ENDPOINT = "/_ah/start";
+        public static final String STOP_ENDPOINT = "/_ah/stop";
+    }
+
     public static final class API {
         public static final String VERSION = "v1";
         public static final String BASE = "/pepper/" + VERSION;
@@ -99,6 +104,9 @@ public class RouteConstants {
                 PathParam.INSTITUTION_TYPE,
                 PathParam.MEDICAL_PROVIDER_GUID
         );
+
+        public static final String USER_STUDY_INVITES = String.format(
+                BASE + "/user/%s/studies/%s/invitations", PathParam.USER_GUID, PathParam.STUDY_GUID);
 
         public static final String USER_STUDY_EXIT = String.format(
                 BASE + "/user/%s/studies/%s/exit", PathParam.USER_GUID, PathParam.STUDY_GUID);

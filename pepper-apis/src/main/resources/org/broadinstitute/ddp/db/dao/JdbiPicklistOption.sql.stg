@@ -1,16 +1,17 @@
 group JdbiPicklistOption;
 
 insertOption() ::= <<
-insert into picklist_option (picklist_question_id, picklist_option_stable_id,
+insert into picklist_option (picklist_question_id, picklist_option_stable_id, tooltip_template_id,
        option_label_template_id, detail_label_template_id, allow_details, is_exclusive, display_order, revision_id)
-values (:picklistQuestionId, :stableId,
+values (:picklistQuestionId, :stableId, :tooltipTemplateId,
        :optionLabelTemplateId, :detailLabelTemplateId, :allowDetails, :isExclusive, :displayOrder, :revisionId)
 >>
 
 insertOptionByDto() ::= <<
-insert into picklist_option (picklist_question_id, picklist_option_stable_id,
+insert into picklist_option (picklist_question_id, picklist_option_stable_id, tooltip_template_id,
        option_label_template_id, detail_label_template_id, allow_details, is_exclusive, display_order, revision_id)
-values (:picklistQuestionId, :dto.getStableId, :dto.getOptionLabelTemplateId, :dto.getDetailLabelTemplateId,
+values (:picklistQuestionId, :dto.getStableId, :dto.getTooltipTemplateId,
+       :dto.getOptionLabelTemplateId, :dto.getDetailLabelTemplateId,
        :dto.getAllowDetails, :dto.isExclusive, :dto.getDisplayOrder, :revisionId)
 >>
 
@@ -19,6 +20,7 @@ select
     po.picklist_option_id,
     po.picklist_option_stable_id,
     po.option_label_template_id,
+    po.tooltip_template_id,
     po.detail_label_template_id,
     po.allow_details,
     po.is_exclusive,
@@ -42,6 +44,7 @@ select
     po.picklist_option_id,
     po.picklist_option_stable_id,
     po.option_label_template_id,
+    po.tooltip_template_id,
     po.detail_label_template_id,
     po.allow_details,
     po.is_exclusive,
@@ -65,6 +68,7 @@ queryOptionsByStableIdsQuestionIdAndRevision(stableIds) ::= <<
 select po.picklist_option_id,
        po.picklist_option_stable_id,
        po.option_label_template_id,
+       po.tooltip_template_id,
        po.detail_label_template_id,
        po.allow_details,
        po.is_exclusive,
@@ -84,6 +88,7 @@ select
     po.picklist_option_id,
     po.picklist_option_stable_id,
     po.option_label_template_id,
+    po.tooltip_template_id,
     po.detail_label_template_id,
     po.allow_details,
     po.is_exclusive,
@@ -102,6 +107,7 @@ queryAllActiveOrderedOptionsByQuestionId() ::= <<
 select po.picklist_option_id,
        po.picklist_option_stable_id,
        po.option_label_template_id,
+       po.tooltip_template_id,
        po.detail_label_template_id,
        po.allow_details,
        po.is_exclusive,

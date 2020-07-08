@@ -1,59 +1,27 @@
 package org.broadinstitute.ddp.json.admin;
 
+import javax.annotation.Nullable;
+
 import com.google.gson.annotations.SerializedName;
 import org.broadinstitute.ddp.db.dto.InvitationDto;
+import org.broadinstitute.ddp.json.invitation.Invitation;
 
-public class LookupInvitationResponse {
+public final class LookupInvitationResponse extends Invitation {
 
-    @SerializedName("invitationId")
-    private String invitationGuid;
-    @SerializedName("createdAt")
-    private String createdAt;
-    @SerializedName("voidedAt")
-    private String voidedAt;
-    @SerializedName("verifiedAt")
-    private String verifiedAt;
-    @SerializedName("acceptedAt")
-    private String acceptedAt;
-    @SerializedName("notes")
-    private String notes;
     @SerializedName("userGuid")
     private String userGuid;
-    @SerializedName("userHruid")
-    private String userHruid;
     @SerializedName("userLoginEmail")
     private String userLoginEmail;
+    @SerializedName("notes")
+    private String notes;
 
-    public LookupInvitationResponse(InvitationDto invitationDto, String userGuid, String userHruid, String userLoginEmail) {
-        this.invitationGuid = invitationDto.getInvitationGuid();
-        this.createdAt = invitationDto.getCreatedAt().toString();
-        this.voidedAt = invitationDto.isVoid() ? invitationDto.getVoidedAt().toString() : null;
-        this.verifiedAt = invitationDto.isVerified() ? invitationDto.getVerifiedAt().toString() : null;
-        this.acceptedAt = invitationDto.isAccepted() ? invitationDto.getAcceptedAt().toString() : null;
+    public LookupInvitationResponse(InvitationDto invitationDto,
+                                    @Nullable String userGuid,
+                                    @Nullable String userLoginEmail) {
+        super(invitationDto);
         this.notes = invitationDto.getNotes();
         this.userGuid = userGuid;
-        this.userHruid = userHruid;
         this.userLoginEmail = userLoginEmail;
-    }
-
-    public String getInvitationGuid() {
-        return invitationGuid;
-    }
-
-    public String getCreatedAt() {
-        return createdAt;
-    }
-
-    public String getVoidedAt() {
-        return voidedAt;
-    }
-
-    public String getVerifiedAt() {
-        return verifiedAt;
-    }
-
-    public String getAcceptedAt() {
-        return acceptedAt;
     }
 
     public String getNotes() {
@@ -62,10 +30,6 @@ public class LookupInvitationResponse {
 
     public String getUserGuid() {
         return userGuid;
-    }
-
-    public String getUserHruid() {
-        return userHruid;
     }
 
     public String getUserLoginEmail() {

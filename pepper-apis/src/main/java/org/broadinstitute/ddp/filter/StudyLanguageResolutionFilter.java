@@ -1,33 +1,19 @@
 package org.broadinstitute.ddp.filter;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Locale;
-import java.util.Locale.LanguageRange;
-import java.util.Map;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
-import org.apache.commons.lang.StringUtils;
-
+import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
-import org.broadinstitute.ddp.db.dao.StudyDao;
 import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.util.I18nUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
-
 import org.jdbi.v3.core.Handle;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import spark.Filter;
-
 import spark.Request;
 import spark.Response;
 
@@ -39,9 +25,8 @@ import spark.Response;
  */
 public class StudyLanguageResolutionFilter implements Filter {
 
-    private static Map<Locale, LanguageDto> localeToLanguage = new HashMap<>();
-
     public static final String USER_LANGUAGE = "USER_LANGUAGE";
+
     private static final Logger LOG = LoggerFactory.getLogger(StudyLanguageResolutionFilter.class);
     private static final String STUDY_GUID_REGEX = "/studies/(\\w+)";
     private static final int STUDY_GUID_INDEX = 1;
@@ -68,10 +53,10 @@ public class StudyLanguageResolutionFilter implements Filter {
             Locale ddpAuthPreferredLocale = RouteUtil.getDDPAuth(request).getPreferredLocale();
             TransactionWrapper.useTxn(
                     handle -> {
-                        Locale preferredLocale = StudyLanguageResolutionFilter.getPreferredLocale(
+                        Locale preferredLocale = getPreferredLocale(
                                 handle, acceptLanguageHeader, ddpAuthPreferredLocale, studyGuid
                         );
-                        LanguageDto preferredLanguage = StudyLanguageResolutionFilter.convertLocaleToLanguageDto(
+                        LanguageDto preferredLanguage = convertLocaleToLanguageDto(
                                 handle, preferredLocale
                         );
                         request.attribute(USER_LANGUAGE, preferredLanguage);
@@ -84,30 +69,17 @@ public class StudyLanguageResolutionFilter implements Filter {
     }
 
     static LanguageDto getPreferredLanguage(Handle handle, String acceptLanguageHeader, Locale ddpAuthPreferredLocale, String studyGuid) {
-        Locale preferredLocale = StudyLanguageResolutionFilter.getPreferredLocale(
+        Locale preferredLocale = getPreferredLocale(
                 handle, acceptLanguageHeader, ddpAuthPreferredLocale, studyGuid
         );
-        return StudyLanguageResolutionFilter.convertLocaleToLanguageDto(handle, preferredLocale);
+        return convertLocaleToLanguageDto(handle, preferredLocale);
     }
 
     private static Locale getPreferredLocale(Handle handle, String acceptLanguageHeader, Locale ddpAuthPreferredLocale, String studyGuid) {
-        List<LanguageRange> acceptLanguages = StringUtils.isNotEmpty(acceptLanguageHeader)
-                ? LanguageRange.parse(acceptLanguageHeader) : Collections.emptyList();
-        Set<LanguageDto> languagesSupportedByStudy = handle.attach(StudyDao.class).findSupportedLanguagesByGuid(studyGuid);
-        Map<Locale, LanguageDto> supportedStudyLocaleToLang = languagesSupportedByStudy.stream()
-                .collect(Collectors.toMap(LanguageDto::toLocale, lang -> lang));
-        localeToLanguage.putAll(supportedStudyLocaleToLang);
-        Locale preferredLocale = I18nUtil.resolvePreferredLanguage(
-                ddpAuthPreferredLocale, acceptLanguages, supportedStudyLocaleToLang.keySet()
-        );
-        return preferredLocale;
+        return I18nUtil.resolveLocale(handle, studyGuid, ddpAuthPreferredLocale, acceptLanguageHeader);
     }
 
     private static LanguageDto convertLocaleToLanguageDto(Handle handle, Locale preferredLocale) {
-        LanguageDto preferredLanguage = localeToLanguage.computeIfAbsent(
-                preferredLocale,
-                locale -> handle.attach(JdbiLanguageCode.class).findLanguageDtoByCode(locale.getLanguage())
-        );
-        return preferredLanguage;
+        return LanguageStore.getOrCompute(handle, preferredLocale.getLanguage());
     }
 }

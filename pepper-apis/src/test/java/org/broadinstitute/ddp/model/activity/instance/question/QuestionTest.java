@@ -24,7 +24,7 @@ public class QuestionTest {
                                 Long additionalInfoHeaderTemplateId, Long additionalInfoFooterTemplateId,
                                 List<TextAnswer> answers, List<Rule<TextAnswer>> validations) {
             super(QuestionType.TEXT, stableId, promptTemplateId,
-                    false, false,
+                    false, false, null,
                     additionalInfoHeaderTemplateId, additionalInfoFooterTemplateId,
                     answers, validations);
         }

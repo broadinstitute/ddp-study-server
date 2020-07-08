@@ -1,0 +1,24 @@
+get:
+  operationId: getInvitations
+  tags:
+    - Invitations
+  summary: GetInvitations
+  description: |
+    Returns a list of invitation objects for the participant in the study.
+    Participant may have multiple invitations of the same type. For example,
+    the `RECRUITMENT` type only allows participant to have one of these,
+    but another type but allow multiples.
+  parameters:
+    - $ref: '../pepper.yml#/components/parameters/userGuid'
+    - $ref: '../pepper.yml#/components/parameters/studyGuid'
+  responses:
+    200:
+      description: list of invitations
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../pepper.yml#/components/schemas/Invitation'
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'

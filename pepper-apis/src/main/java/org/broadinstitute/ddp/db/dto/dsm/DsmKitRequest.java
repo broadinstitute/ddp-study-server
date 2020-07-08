@@ -10,9 +10,7 @@ public class DsmKitRequest {
     private String participantId;
     private String kitRequestId;
     private String kitType;
-
-    // Flag to satisfy contract with DSM. Should always be set to `false` for now.
-    private boolean needsApproval = false;
+    private boolean needsApproval;
 
     /**
      * The database id for the related database row.
@@ -63,5 +61,19 @@ public class DsmKitRequest {
 
     public void setKitType(String kitType) {
         this.kitType = kitType;
+    }
+
+    /**
+     * Does the kit need manual approval?
+     *
+     * @return true if need approval, false otherwise
+     */
+    public boolean getNeedsApproval() {
+        // Note: This class is used in bean mapper, so use get/set naming convention.
+        return needsApproval;
+    }
+
+    public void setNeedsApproval(boolean needsApproval) {
+        this.needsApproval = needsApproval;
     }
 }

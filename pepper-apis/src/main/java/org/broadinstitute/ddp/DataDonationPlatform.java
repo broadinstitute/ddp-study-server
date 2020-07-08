@@ -19,13 +19,18 @@ import static spark.Spark.threadPool;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import org.apache.http.HttpStatus;
 import org.apache.http.entity.ContentType;
+import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetricsTracker;
 import org.broadinstitute.ddp.client.DsmClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.ErrorCodes;
+import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.constants.RouteConstants.API;
 import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.db.ActivityInstanceDao;
@@ -112,6 +117,7 @@ import org.broadinstitute.ddp.route.InvitationVerifyRoute;
 import org.broadinstitute.ddp.route.JoinMailingListRoute;
 import org.broadinstitute.ddp.route.ListCancersRoute;
 import org.broadinstitute.ddp.route.ListStudyLanguagesRoute;
+import org.broadinstitute.ddp.route.ListUserStudyInvitationsRoute;
 import org.broadinstitute.ddp.route.PatchFormAnswersRoute;
 import org.broadinstitute.ddp.route.PatchLastVisitedActivitySectionRoute;
 import org.broadinstitute.ddp.route.PatchMedicalProviderRoute;
@@ -172,12 +178,14 @@ public class DataDonationPlatform {
     public static final int DEFAULT_RATE_LIMIT_MAX_QUERIES_PER_SECOND = 10;
     public static final int DEFAULT_RATE_LIMIT_BURST = 15;
     private static final Logger LOG = LoggerFactory.getLogger(DataDonationPlatform.class);
-    private static final String GAE_START_HOOK_ENDPOINT = "/_ah/start";
     private static final String[] CORS_HTTP_METHODS = new String[] {"GET", "PUT", "POST", "OPTIONS", "PATCH"};
     private static final String[] CORS_HTTP_HEADERS = new String[] {"Content-Type", "Authorization", "X-Requested-With",
             "Content-Length", "Accept", "Origin", ""};
     private static final Map<String, String> pathToClass = new HashMap<>();
     private static Scheduler scheduler = null;
+
+    private static final AtomicBoolean isReady = new AtomicBoolean(false);
+    private static final int DEFAULT_BOOT_WAIT_SECS = 30;
 
     /**
      * Stop the server using the default wait time.
@@ -209,7 +217,10 @@ public class DataDonationPlatform {
 
     public static void main(String[] args) {
         try {
-            start();
+            synchronized (isReady) {
+                start();
+                isReady.set(true);
+            }
         } catch (Exception e) {
             LOG.error("Could not start ddp", e);
             shutdown();
@@ -219,7 +230,6 @@ public class DataDonationPlatform {
     private static void start() {
         LogbackConfigurationPrinter.printLoggingConfiguration();
         Config cfg = ConfigManager.getInstance().getConfig();
-        boolean doLiquibase = cfg.getBoolean(ConfigFile.DO_LIQUIBASE);
         int maxConnections = cfg.getInt(ConfigFile.NUM_POOLED_CONNECTIONS);
 
         int requestThreadTimeout = cfg.getInt(ConfigFile.THREAD_TIMEOUT);
@@ -235,28 +245,32 @@ public class DataDonationPlatform {
         if (cfg.hasPath(ConfigFile.PREFERRED_SOURCE_IP_HEADER)) {
             preferredSourceIPHeader = cfg.getString(ConfigFile.PREFERRED_SOURCE_IP_HEADER);
         }
-        JettyConfig.setupJetty(preferredSourceIPHeader);
-
-        if (appEnginePort != null) {
-            port(Integer.parseInt(appEnginePort));
-        } else {
-            port(configFilePort);
-        }
 
         String dbUrl = cfg.getString(ConfigFile.DB_URL);
         LOG.info("Using db {}", dbUrl);
 
         TransactionWrapper.init(
                 new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, maxConnections, dbUrl));
-
-        threadPool(-1, -1, requestThreadTimeout);
         Config sqlConfig = ConfigFactory.load(ConfigFile.SQL_CONFIG_FILE);
         initSqlCommands(sqlConfig);
 
-        if (doLiquibase) {
-            LOG.info("Running liquibase migrations against " + dbUrl);
+        if (cfg.hasPath(ConfigFile.DO_LIQUIBASE_IN_STUDY_SERVER) && cfg.getBoolean(ConfigFile.DO_LIQUIBASE_IN_STUDY_SERVER)) {
+            LOG.info("Running liquibase migrations in StudyServer against database url: {}", dbUrl);
             LiquibaseUtil.runLiquibase(dbUrl, TransactionWrapper.DB.APIS);
         }
+
+        if (appEnginePort != null) {
+            port(Integer.parseInt(appEnginePort));
+        } else {
+            port(configFilePort);
+        }
+        threadPool(-1, -1, requestThreadTimeout);
+        JettyConfig.setupJetty(preferredSourceIPHeader);
+
+        // The first route mapping call will also initialize the Spark server. Make that first call
+        // the GAE lifecycle hooks so we capture the GAE call as soon as possible, and respond
+        // only once server has fully booted.
+        registerAppEngineCallbacks(DEFAULT_BOOT_WAIT_SECS);
 
         SectionBlockDao sectionBlockDao = new SectionBlockDao();
 
@@ -278,12 +292,6 @@ public class DataDonationPlatform {
         } else {
             LOG.warn("No rate limit values given.  Rate limiting is disabled.");
         }
-
-        // Respond to GAE lifecycle call.
-        get(GAE_START_HOOK_ENDPOINT, (request, response) -> {
-            response.status(200);
-            return "";
-        });
 
         before("*", new HttpHeaderMDCFilter(X_FORWARDED_FOR));
         before("*", new MDCLogBreadCrumbFilter());
@@ -424,6 +432,9 @@ public class DataDonationPlatform {
                 responseSerializer
         );
 
+        // User study invitations
+        get(API.USER_STUDY_INVITES, new ListUserStudyInvitationsRoute(), jsonSerializer);
+
         // Study exit request
         post(API.USER_STUDY_EXIT, new SendExitNotificationRoute());
 
@@ -506,6 +517,38 @@ public class DataDonationPlatform {
 
         awaitInitialization();
         LOG.info("ddp startup complete");
+    }
+
+    private static void registerAppEngineCallbacks(long bootWaitSecs) {
+        get(RouteConstants.GAE.START_ENDPOINT, (request, response) -> {
+            LOG.info("Received GAE start request [{}]", RouteConstants.GAE.START_ENDPOINT);
+            long startedMillis = Instant.now().toEpochMilli();
+
+            var status = new AtomicInteger(HttpStatus.SC_SERVICE_UNAVAILABLE);
+            var waitForBoot = new Thread(() -> {
+                synchronized (isReady) {
+                    if (isReady.get()) {
+                        status.set(HttpStatus.SC_OK);
+                    }
+                }
+            });
+            waitForBoot.start();
+            waitForBoot.join(bootWaitSecs * 1000);
+
+            long elapsed = Instant.now().toEpochMilli() - startedMillis;
+            LOG.info("Responding to GAE start request with status {} after delay of {}ms", status, elapsed);
+            response.status(status.get());
+            return "";
+        });
+
+        get(RouteConstants.GAE.STOP_ENDPOINT, (request, response) -> {
+            LOG.info("Received GAE stop request [{}]", RouteConstants.GAE.STOP_ENDPOINT);
+            //flush out any pending GA events
+            GoogleAnalyticsMetricsTracker.getInstance().flushOutMetrics();
+
+            response.status(HttpStatus.SC_OK);
+            return "";
+        });
     }
 
     private static void setupApiActivityFilter() {
@@ -591,6 +634,9 @@ public class DataDonationPlatform {
             String accessControlRequestMethod = request.headers("Access-Control-Request-Method");
             if (accessControlRequestMethod != null) {
                 response.header("Access-Control-Allow-Methods", accessControlRequestMethod);
+            }
+            if (accessControlRequestMethod != null || accessControlRequestHeaders != null) {
+                response.header("Access-Control-Max-Age", "172800");
             }
 
             return "OK";

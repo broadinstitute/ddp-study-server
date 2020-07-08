@@ -25,6 +25,7 @@ public interface UserProfileDao extends SqlObject {
                 profile.getSexType(),
                 profile.getBirthDate(),
                 profile.getPreferredLangId(),
+                profile.getTimeZone(),
                 profile.getDoNotContact(),
                 profile.getIsDeceased());
     }
@@ -37,6 +38,7 @@ public interface UserProfileDao extends SqlObject {
                 profile.getSexType(),
                 profile.getBirthDate(),
                 profile.getPreferredLangId(),
+                profile.getTimeZone(),
                 profile.getDoNotContact(),
                 profile.getIsDeceased());
         DBUtils.checkUpdate(1, numUpdated);

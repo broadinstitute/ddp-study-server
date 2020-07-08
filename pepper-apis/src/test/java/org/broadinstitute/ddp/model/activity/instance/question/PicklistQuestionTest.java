@@ -45,7 +45,7 @@ public class PicklistQuestionTest {
         rendered.put(1L, "<p>prompt</p>");
         rendered.put(2L, "this is <em>option</em> label");
 
-        PicklistOption option = new PicklistOption("opt", 2, null, false, false);
+        PicklistOption option = new PicklistOption("opt", 2, null, null, false, false);
         PicklistQuestion question = new PicklistQuestion("sid", 1, emptyList(), emptyList(),
                 PicklistSelectMode.SINGLE, PicklistRenderMode.LIST, null, singletonList(option));
         question.applyRenderedTemplates(rendered::get, ContentStyle.STANDARD);
@@ -61,7 +61,7 @@ public class PicklistQuestionTest {
         rendered.put(1L, "<p>prompt</p>");
         rendered.put(2L, "this is <em>option</em> label");
 
-        PicklistOption option = new PicklistOption("opt", 2, null, false, false);
+        PicklistOption option = new PicklistOption("opt", 2, null, null, false, false);
         PicklistQuestion question = new PicklistQuestion("sid", 1, emptyList(), emptyList(),
                 PicklistSelectMode.SINGLE, PicklistRenderMode.LIST, null, singletonList(option));
         question.applyRenderedTemplates(rendered::get, ContentStyle.BASIC);
@@ -77,7 +77,7 @@ public class PicklistQuestionTest {
         rendered.put(2L, "this is <em>picklist</em> label");
         rendered.put(3L, "this is <em>option</em> label");
 
-        PicklistOption option = new PicklistOption("opt", 3, null, false, false);
+        PicklistOption option = new PicklistOption("opt", 3, null, null, false, false);
         PicklistQuestion question = new PicklistQuestion("sid", 1, emptyList(), emptyList(),
                 PicklistSelectMode.SINGLE, PicklistRenderMode.DROPDOWN, 2L, singletonList(option));
         question.applyRenderedTemplates(rendered::get, ContentStyle.STANDARD);
