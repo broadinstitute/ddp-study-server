@@ -201,7 +201,9 @@ public class Housekeeping {
         }
 
         if (doLiquibase) {
-            // we only migrate the housekeeping db when starting
+            LOG.info("Running Pepper liquibase migrations against " + apisDbUrl);
+            LiquibaseUtil.runLiquibase(apisDbUrl, TransactionWrapper.DB.APIS);
+            LOG.info("Running Housekeeping liquibase migrations against " + housekeepingDbUrl);
             LiquibaseUtil.runLiquibase(housekeepingDbUrl, TransactionWrapper.DB.HOUSEKEEPING);
         }
 

@@ -103,6 +103,9 @@ public class RouteConstants {
                 PathParam.MEDICAL_PROVIDER_GUID
         );
 
+        public static final String USER_STUDY_INVITES = String.format(
+                BASE + "/user/%s/studies/%s/invitations", PathParam.USER_GUID, PathParam.STUDY_GUID);
+
         public static final String USER_STUDY_EXIT = String.format(
                 BASE + "/user/%s/studies/%s/exit", PathParam.USER_GUID, PathParam.STUDY_GUID);
 

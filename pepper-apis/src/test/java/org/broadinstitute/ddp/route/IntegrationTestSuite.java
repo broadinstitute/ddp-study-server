@@ -121,6 +121,7 @@ import org.slf4j.LoggerFactory;
         GetParticipantInfoRouteTest.class,
         ListCancersRouteTest.class,
         ListStudyLanguagesRouteTest.class,
+        ListUserStudyInvitationsRouteTest.class,
         GetStudyPasswordPolicyRouteTest.class,
         UpdateUserPasswordRouteTest.class,
         UpdateUserEmailRouteTest.class,
@@ -165,13 +166,11 @@ public class IntegrationTestSuite {
         LogbackConfigurationPrinter.printLoggingConfiguration();
 
         initializeDatabase();
-
         if (!isTestServerRunning()) {
             startupTestServer();
-            insertTestData();
-        } else {
-            RouteTestUtil.setupDatabasePool();
         }
+        insertTestData();
+
         callCounter += 1;
     }
 

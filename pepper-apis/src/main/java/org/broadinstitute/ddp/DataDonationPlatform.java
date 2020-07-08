@@ -20,11 +20,12 @@ import static spark.Spark.threadPool;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import org.apache.http.HttpStatus;
 import org.apache.http.entity.ContentType;
 import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetricsTracker;
 import org.broadinstitute.ddp.cache.CacheService;
@@ -118,6 +119,7 @@ import org.broadinstitute.ddp.route.InvitationVerifyRoute;
 import org.broadinstitute.ddp.route.JoinMailingListRoute;
 import org.broadinstitute.ddp.route.ListCancersRoute;
 import org.broadinstitute.ddp.route.ListStudyLanguagesRoute;
+import org.broadinstitute.ddp.route.ListUserStudyInvitationsRoute;
 import org.broadinstitute.ddp.route.PatchFormAnswersCollectDataRoute;
 import org.broadinstitute.ddp.route.PatchFormAnswersRoute;
 import org.broadinstitute.ddp.route.PatchMedicalProviderRoute;
@@ -184,8 +186,8 @@ public class DataDonationPlatform {
     private static final Map<String, String> pathToClass = new HashMap<>();
     private static Scheduler scheduler = null;
 
-    private static final AtomicBoolean serverStarted = new AtomicBoolean(false);
-    private static final int SERVER_START_WAIT_SECS = 10;
+    private static final AtomicBoolean isReady = new AtomicBoolean(false);
+    private static final int DEFAULT_BOOT_WAIT_SECS = 30;
 
     /**
      * Stop the server using the default wait time.
@@ -217,7 +219,10 @@ public class DataDonationPlatform {
 
     public static void main(String[] args) {
         try {
-            start();
+            synchronized (isReady) {
+                start();
+                isReady.set(true);
+            }
         } catch (Exception e) {
             LOG.error("Could not start ddp", e);
             shutdown();
@@ -227,7 +232,6 @@ public class DataDonationPlatform {
     private static void start() {
         LogbackConfigurationPrinter.printLoggingConfiguration();
         Config cfg = ConfigManager.getInstance().getConfig();
-        boolean doLiquibase = cfg.getBoolean(ConfigFile.DO_LIQUIBASE);
         int maxConnections = cfg.getInt(ConfigFile.NUM_POOLED_CONNECTIONS);
 
         int requestThreadTimeout = cfg.getInt(ConfigFile.THREAD_TIMEOUT);
@@ -243,53 +247,34 @@ public class DataDonationPlatform {
         if (cfg.hasPath(ConfigFile.PREFERRED_SOURCE_IP_HEADER)) {
             preferredSourceIPHeader = cfg.getString(ConfigFile.PREFERRED_SOURCE_IP_HEADER);
         }
-        JettyConfig.setupJetty(preferredSourceIPHeader);
-
-        if (appEnginePort != null) {
-            port(Integer.parseInt(appEnginePort));
-        } else {
-            port(configFilePort);
-        }
 
         String dbUrl = cfg.getString(ConfigFile.DB_URL);
         LOG.info("Using db {}", dbUrl);
 
         TransactionWrapper.init(
                 new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, maxConnections, dbUrl));
-
-        threadPool(-1, -1, requestThreadTimeout);
         Config sqlConfig = ConfigFactory.load(ConfigFile.SQL_CONFIG_FILE);
         initSqlCommands(sqlConfig);
 
-        if (doLiquibase) {
-            LOG.info("Running liquibase migrations against " + dbUrl);
+        if (cfg.hasPath(ConfigFile.DO_LIQUIBASE_IN_STUDY_SERVER) && cfg.getBoolean(ConfigFile.DO_LIQUIBASE_IN_STUDY_SERVER)) {
+            LOG.info("Running liquibase migrations in StudyServer against database url: {}", dbUrl);
             LiquibaseUtil.runLiquibase(dbUrl, TransactionWrapper.DB.APIS);
         }
         //@TODO figure out how to do this only at deployment time.
         CacheService.getInstance().resetAllCaches();
 
+        if (appEnginePort != null) {
+            port(Integer.parseInt(appEnginePort));
+        } else {
+            port(configFilePort);
+        }
+        threadPool(-1, -1, requestThreadTimeout);
+        JettyConfig.setupJetty(preferredSourceIPHeader);
+
         // The first route mapping call will also initialize the Spark server. Make that first call
         // the GAE lifecycle hooks so we capture the GAE call as soon as possible, and respond
         // only once server has fully booted.
-        get(RouteConstants.GAE.START_ENDPOINT, (request, response) -> {
-            LOG.info("Received GAE start request [{}]", RouteConstants.GAE.START_ENDPOINT);
-            long startedSecs = Instant.now().getEpochSecond();
-            while (!serverStarted.get() && Instant.now().getEpochSecond() - startedSecs < SERVER_START_WAIT_SECS) {
-                TimeUnit.SECONDS.sleep(1);
-            }
-            LOG.info("{}, responding to GAE start request now",
-                    serverStarted.get() ? "Server is started" : "Wait time exceeded");
-            response.status(200);
-            return "";
-        });
-        get(RouteConstants.GAE.STOP_ENDPOINT, (request, response) -> {
-            LOG.info("Received GAE stop request [{}]", RouteConstants.GAE.STOP_ENDPOINT);
-            //flush out any pending GA events
-            GoogleAnalyticsMetricsTracker.getInstance().flushOutMetrics();
-
-            response.status(200);
-            return "";
-        });
+        registerAppEngineCallbacks(DEFAULT_BOOT_WAIT_SECS);
 
         SectionBlockDao sectionBlockDao = new SectionBlockDao();
 
@@ -441,6 +426,7 @@ public class DataDonationPlatform {
 
         // User activity answers routes
         FormActivityService formService = new FormActivityService(interpreter);
+        // @TODO remove when done with development
         patch(API.USER_ACTIVITY_ANSWERS_DATACOLLECTION,
                 new PatchFormAnswersCollectDataRoute(formService, activityValidationService, interpreter),
                 responseSerializer);
@@ -452,6 +438,9 @@ public class DataDonationPlatform {
                 new PutFormAnswersRoute(workflowService, activityValidationService, formInstanceDao, interpreter),
                 responseSerializer
         );
+
+        // User study invitations
+        get(API.USER_STUDY_INVITES, new ListUserStudyInvitationsRoute(), jsonSerializer);
 
         // Study exit request
         post(API.USER_STUDY_EXIT, new SendExitNotificationRoute());
@@ -535,7 +524,38 @@ public class DataDonationPlatform {
 
         awaitInitialization();
         LOG.info("ddp startup complete");
-        serverStarted.set(true);
+    }
+
+    private static void registerAppEngineCallbacks(long bootWaitSecs) {
+        get(RouteConstants.GAE.START_ENDPOINT, (request, response) -> {
+            LOG.info("Received GAE start request [{}]", RouteConstants.GAE.START_ENDPOINT);
+            long startedMillis = Instant.now().toEpochMilli();
+
+            var status = new AtomicInteger(HttpStatus.SC_SERVICE_UNAVAILABLE);
+            var waitForBoot = new Thread(() -> {
+                synchronized (isReady) {
+                    if (isReady.get()) {
+                        status.set(HttpStatus.SC_OK);
+                    }
+                }
+            });
+            waitForBoot.start();
+            waitForBoot.join(bootWaitSecs * 1000);
+
+            long elapsed = Instant.now().toEpochMilli() - startedMillis;
+            LOG.info("Responding to GAE start request with status {} after delay of {}ms", status, elapsed);
+            response.status(status.get());
+            return "";
+        });
+
+        get(RouteConstants.GAE.STOP_ENDPOINT, (request, response) -> {
+            LOG.info("Received GAE stop request [{}]", RouteConstants.GAE.STOP_ENDPOINT);
+            //flush out any pending GA events
+            GoogleAnalyticsMetricsTracker.getInstance().flushOutMetrics();
+
+            response.status(HttpStatus.SC_OK);
+            return "";
+        });
     }
 
     private static void setupApiActivityFilter() {

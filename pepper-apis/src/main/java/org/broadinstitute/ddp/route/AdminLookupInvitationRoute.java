@@ -57,7 +57,7 @@ public class AdminLookupInvitationRoute extends ValidatedJsonInputRoute<LookupIn
             }
 
             if (invitation.getUserId() == null) {
-                return new LookupInvitationResponse(invitation, null, null, null);
+                return new LookupInvitationResponse(invitation, null, null);
             } else {
                 User user = handle.attach(UserDao.class).findUserById(invitation.getUserId()).orElse(null);
                 if (user == null) {
@@ -73,7 +73,7 @@ public class AdminLookupInvitationRoute extends ValidatedJsonInputRoute<LookupIn
                     loginEmail = emailResults.get(user.getAuth0UserId());
                 }
 
-                return new LookupInvitationResponse(invitation, user.getGuid(), user.getHruid(), loginEmail);
+                return new LookupInvitationResponse(invitation, user.getGuid(), loginEmail);
             }
         });
 
