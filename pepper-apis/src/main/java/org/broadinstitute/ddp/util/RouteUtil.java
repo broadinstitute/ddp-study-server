@@ -197,7 +197,7 @@ public class RouteUtil {
      * @return user and study
      */
     public static UserAndStudy findUserAndStudyOrHalt(Handle handle, String userGuid, String studyGuid) {
-        StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
+        StudyDto studyDto = new JdbiUmbrellaStudyCached(handle).findByStudyGuid(studyGuid);
         if (studyDto == null) {
             String msg = "Could not find study with guid " + studyGuid;
             throw ResponseUtil.haltError(HttpStatus.SC_NOT_FOUND, new ApiError(ErrorCodes.STUDY_NOT_FOUND, msg));
