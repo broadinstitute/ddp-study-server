@@ -128,6 +128,7 @@ public class ConfigFile {
     public static final String PREFERRED_SOURCE_IP_HEADER = "preferredSourceIPHeader";
 
     public static final String JCACHE_CONFIGURATION_FILE = "jcacheConfigurationFile";
+    public static final String REDIS_SERVER_ADDRESS = "redisServerAddress";
 
     public static final class SqlQuery {
         public static final String FORM_ACTIVITY_BY_GUID = "activities.formActivityByGuidQuery";

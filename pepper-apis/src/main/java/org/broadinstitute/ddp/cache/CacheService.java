@@ -25,6 +25,7 @@ import org.redisson.Redisson;
 import org.redisson.api.LocalCachedMapOptions;
 import org.redisson.api.RLocalCachedMap;
 import org.redisson.api.RedissonClient;
+import org.redisson.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -64,8 +65,12 @@ public class CacheService {
             }
             URI redissonConfigPathUri = redissonConfigPath.toUri();
             cacheManager = buildCacheManager(redissonConfigPathUri);
-
-            redissonClient = Redisson.create();
+            String redisAddress = ConfigManager.getInstance().getConfig().getString(ConfigFile.REDIS_SERVER_ADDRESS);
+            Config redissonConfig = new Config();
+            redissonConfig.useSingleServer()
+                    .setTimeout(1000000)
+                    .setAddress(redisAddress);
+            redissonClient = Redisson.create(redissonConfig);
         } else {
             LOG.warn("Configuration file not set: " + ConfigFile.JCACHE_CONFIGURATION_FILE + "JCache is not enabled");
             cacheManager = new NullCacheManager();

@@ -88,6 +88,7 @@
     {{end}}
     "googleGeocodingApiKey": "{{$conf.Data.geocodingKey}}",
     "jcacheConfigurationFile": "redisson-jcache.yaml",
+    "redisServerAddress": "redis://{{$conf.Data.redis.host}}:{{$conf.Data.redis.port}}",
     "elasticsearch": {
         # Whether to enable data sync to ES
         "syncEnabled": {{$conf.Data.elasticsearch.syncEnabled}},
