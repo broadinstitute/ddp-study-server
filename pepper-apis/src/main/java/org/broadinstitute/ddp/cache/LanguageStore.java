@@ -25,8 +25,12 @@ public class LanguageStore {
     }
 
     public static LanguageDto getOrCompute(Handle handle, String isoCode) {
-        return languages.computeIfAbsent(isoCode, key ->
-                handle.attach(JdbiLanguageCode.class).findLanguageDtoByCode(isoCode));
+        if (isoCode == null) {
+            return null;
+        } else {
+            return languages.computeIfAbsent(isoCode, key ->
+                    handle.attach(JdbiLanguageCode.class).findLanguageDtoByCode(isoCode));
+        }
     }
 
     public static LanguageDto getOrComputeDefault(Handle handle) {
