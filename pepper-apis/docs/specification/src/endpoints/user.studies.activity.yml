@@ -41,3 +41,59 @@ get:
       $ref: '../pepper.yml#/components/responses/ActivityDetailNotFoundResponse'
     default:
       $ref: '../pepper.yml#/components/responses/ErrorResponse'
+patch:
+  operationId: patchActivity
+  tags:
+    - Activities
+  summary: updates activity instance properties
+  description: |
+    With given user Guid, study's unique identifier and instance Guid updates properties of `activity` instance.
+
+    _Note: Currently, this API supports only updating of the section index._
+  parameters:
+    - in: path
+      name: user
+      required: true
+      description: the participant's guid
+      schema:
+        type: string
+    - in: path
+      name: study
+      required: true
+      description: the study's unique identifier
+      schema:
+        type: string
+    - in: path
+      name: instance
+      required: true
+      description: the activity instance guid
+      schema:
+        type: string
+  requestBody:
+    $ref: '../pepper.yml#/components/requestBodies/UpdateActivityPropertiesRequestBody'
+  responses:
+    200:
+      description: user's section index sucessfully updated
+    400:
+      description: if section index is negative
+      content:
+        application/json:
+          schema:
+            $ref: '../pepper.yml#/components/schemas/Error.BadPayload'
+    404:
+      description: unable to find activity to update section index
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '../pepper.yml#/components/schemas/Error'
+              - type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - STUDY_NOT_FOUND
+                      - USER_NOT_FOUND
+                      - ACTIVITY_NOT_FOUND
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'

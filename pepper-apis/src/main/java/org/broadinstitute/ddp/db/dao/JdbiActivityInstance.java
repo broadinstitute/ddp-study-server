@@ -188,6 +188,11 @@ public interface JdbiActivityInstance extends SqlObject {
     int updateOndemandTriggerId(@Bind("userId") long userId, @Bind("activityInstanceId") long activityInstanceId,
                                         @Bind("triggerId") long triggerId);
 
+    @SqlUpdate("update activity_instance set section_index = :sectionIndex "
+            + " where activity_instance_guid = :instanceGuid")
+    void updateSectionIndex(@Bind("instanceGuid") String instanceGuid,
+                            @Bind("sectionIndex") int sectionIndex);
+
     @SqlQuery("queryLatestGuidByUserGuidAndCodesOfActivities")
     @UseStringTemplateSqlLocator
     Optional<String> findLatestInstanceGuidByUserGuidAndCodesOfActivities(

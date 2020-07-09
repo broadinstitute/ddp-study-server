@@ -116,6 +116,7 @@ Activity:
     - lastUpdatedText
     - lastUpdated
     - isFollowup
+    - sectionIndex
   properties:
     activityType:
       $ref: '../pepper.yml#/components/schemas/ActivityType'
@@ -174,6 +175,10 @@ Activity:
     isFollowup:
       type: boolean
       description: whether this activity is considered a "follow-up"
+    sectionIndex:
+      type: integer
+      minimum: 0
+      description: The section index of the activity form by the user
 Activity.Summary:
   type: object
   title: Activity Summary
