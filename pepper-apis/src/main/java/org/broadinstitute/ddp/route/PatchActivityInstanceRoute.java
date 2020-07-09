@@ -40,7 +40,7 @@ public class PatchActivityInstanceRoute extends ValidatedJsonInputRoute<PatchSec
             int sectionsSize = activityInstanceDao.getActivityInstanceSectionsSize(handle, userGuid, studyGuid, instanceGuid);
             int index = payload.getIndex();
 
-            if (index == 0 && sectionsSize <= index) {
+            if (index != 0 && sectionsSize <= index) {
                 String msg = String.format("Activity %s has sections size %s less than index %s", instanceGuid, sectionsSize, index);
                 LOG.error(msg);
                 throw ResponseUtil.haltError(response, HttpStatus.SC_BAD_REQUEST, new ApiError(ErrorCodes.BAD_PAYLOAD, msg));
