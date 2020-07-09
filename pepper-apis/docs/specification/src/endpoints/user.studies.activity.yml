@@ -51,7 +51,7 @@ patch:
 
     _Note: Currently, this API supports only updating of the section index._
   requestBody:
-    $ref: '../pepper.yml#/components/requestBodies/UpdateUserSectionIndexRequestBody'
+    $ref: '../pepper.yml#/components/requestBodies/UpdateActivityPropertiesRequestBody'
   responses:
     200:
       description: user's section index sucessfully updated
