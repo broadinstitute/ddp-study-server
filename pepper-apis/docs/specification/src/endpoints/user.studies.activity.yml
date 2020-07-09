@@ -50,6 +50,25 @@ patch:
     With given user Guid, study's unique identifier and instance Guid updates properties of `activity` instance.
 
     _Note: Currently, this API supports only updating of the section index._
+  parameters:
+    - in: path
+      name: user
+      required: true
+      description: the participant's guid
+      schema:
+        type: string
+    - in: path
+      name: study
+      required: true
+      description: the study's unique identifier
+      schema:
+        type: string
+    - in: path
+      name: instance
+      required: true
+      description: the activity instance guid
+      schema:
+        type: string
   requestBody:
     $ref: '../pepper.yml#/components/requestBodies/UpdateActivityPropertiesRequestBody'
   responses:
