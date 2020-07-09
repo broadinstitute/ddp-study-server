@@ -327,7 +327,7 @@ public interface QuestionDao extends SqlObject {
                 question = getAgreementQuestion(dto, answerIds, untypedRules);
                 break;
             case COMPOSITE:
-                question = getCompositeQuestion(dto, activityInstanceGuid, answerIds, untypedRules, langCodeId);
+                question = getCompositeQuestion(dto, activityInstanceGuid, answerIds, untypedRules, retrieveAnswers, langCodeId);
                 break;
             default:
                 throw new DaoException("Unknown question type: " + dto.getType());
@@ -619,15 +619,15 @@ public interface QuestionDao extends SqlObject {
                                                    String activityInstanceGuid,
                                                    List<Long> answerIds,
                                                    List<Rule> untypedRules,
+                                                   boolean retrieveAnswers,
                                                    long langCodeId) {
         CompositeQuestionDto compositeQuestionDto = getJdbiCompositeQuestion()
                 .findDtoByQuestion(dto)
                 .orElseThrow(() -> new DaoException("Could not find composite question using question id " + dto.getId()));
 
-        boolean retrieveChildAnswers = true;
         List<Question> childQuestions = compositeQuestionDto.getChildQuestions().stream()
                 .map(childQuestionDto ->
-                        getQuestionByActivityInstanceAndDto(childQuestionDto, activityInstanceGuid, retrieveChildAnswers, langCodeId))
+                        getQuestionByActivityInstanceAndDto(childQuestionDto, activityInstanceGuid, retrieveAnswers, langCodeId))
                 .collect(toList());
 
         AnswerDao answerDao = getAnswerDao();
