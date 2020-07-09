@@ -55,6 +55,7 @@ public class ActivityInstanceDao {
     private static String INSTANCE_ID_BY_GUID_QUERY;
     private static String INSTANCE_SUMMARIES_FOR_USER;
     private static String INSTANCE_CREATION_VALIDATION_QUERY;
+    private static String SECTIONS_SIZE_FOR_ACTIVITY_INSTANCE;
 
     private final FormInstanceDao formInstanceDao;
 
@@ -76,6 +77,7 @@ public class ActivityInstanceDao {
         INSTANCE_SUMMARIES_FOR_USER = sqlConfig.getString(ActivityInstanceSql.INSTANCE_SUMMARIES_FOR_USER_QUERY);
         INSTANCE_CREATION_VALIDATION_QUERY =
                 sqlConfig.getString(ActivityInstanceSql.INSTANCE_CREATION_VALIDATION_QUERY);
+        SECTIONS_SIZE_FOR_ACTIVITY_INSTANCE = sqlConfig.getString(ActivityInstanceSql.SECTIONS_SIZE_FOR_ACTIVITY_INSTANCE);
     }
 
     /**
@@ -297,7 +299,7 @@ public class ActivityInstanceDao {
 
                     Long editTimeoutSec = (Long) rs.getObject(SqlConstants.StudyActivityTable.EDIT_TIMEOUT_SEC);
                     long createdAtMillis = rs.getLong(SqlConstants.ActivityInstanceTable.CREATED_AT);
-                    Boolean isActivityInstanceReadonly = (Boolean)rs.getObject(SqlConstants.ActivityInstanceTable.IS_READONLY);
+                    Boolean isActivityInstanceReadonly = (Boolean) rs.getObject(SqlConstants.ActivityInstanceTable.IS_READONLY);
                     String languageCode = rs.getString(SqlConstants.LanguageCodeTable.CODE);
                     String activityTypeName = rs.getString(SqlConstants.ActivityInstanceTable.TYPE_NAME);
 
@@ -362,6 +364,49 @@ public class ActivityInstanceDao {
         return I18nUtil.getActivityInstanceTranslation(
                 activitySummaries, isoLanguageCode
         );
+    }
+
+    /**
+     * Given a user, return a collection of activity instance summaries.
+     *
+     * @param handle          JDBC handle
+     * @param userGuid        GUID of the user
+     * @param studyGuid       GUID of the study
+     * @param instanceGuid    GUID of the activity instance
+     * @return A size of sections for activity instance
+     */
+    public int getActivityInstanceSectionsSize(Handle handle,
+                                               String userGuid,
+                                               String studyGuid,
+                                               String instanceGuid) {
+        int result = 0;
+        try {
+            try (PreparedStatement stmt = handle.getConnection().prepareStatement(SECTIONS_SIZE_FOR_ACTIVITY_INSTANCE)) {
+                stmt.setString(1, studyGuid);
+                stmt.setString(2, userGuid);
+                stmt.setString(3, instanceGuid);
+                ResultSet rs = stmt.executeQuery();
+                while (rs.next()) {
+                    String activityCode = rs.getString(SqlConstants.StudyActivityTable.CODE);
+                    String versionTag = rs.getString(SqlConstants.ActivityVersionTable.TAG);
+                    ActivityDefStore activityDefStore = ActivityDefStore.getInstance();
+                    FormActivityDef formActivityDef = activityDefStore.getActivityDef(studyGuid, activityCode, versionTag);
+                    if (formActivityDef == null) {
+                        long versionId = rs.getLong(SqlConstants.ActivityVersionTable.REVISION_ID);
+                        long revisionStart = rs.getLong(SqlConstants.RevisionTable.START_DATE);
+                        Optional<ActivityDto> activityDto = handle.attach(JdbiActivity.class)
+                                .findActivityByStudyGuidAndCode(studyGuid, activityCode);
+                        formActivityDef = handle.attach(FormActivityDao.class).findDefByDtoAndVersion(
+                                activityDto.get(), versionTag, versionId, revisionStart);
+                        activityDefStore.setActivityDef(studyGuid, activityCode, versionTag, formActivityDef);
+                    }
+                    result = formActivityDef.getAllSections().size();
+                }
+            }
+        } catch (SQLException e) {
+            throw new DaoException("Could not lookup activity instances for user " + userGuid, e);
+        }
+        return result;
     }
 
 }
