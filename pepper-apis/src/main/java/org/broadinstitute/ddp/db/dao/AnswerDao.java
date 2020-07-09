@@ -1,6 +1,5 @@
 package org.broadinstitute.ddp.db.dao;
 
-import java.sql.SQLIntegrityConstraintViolationException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -13,11 +12,11 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dto.AnswerDto;
 import org.broadinstitute.ddp.db.dto.CompositeAnswerSummaryDto;
-import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.instance.answer.AgreementAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.AnswerRow;
@@ -32,10 +31,8 @@ import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOpt
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.types.NumericType;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
-import org.broadinstitute.ddp.util.GuidUtils;
 import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
 import org.jdbi.v3.core.result.RowView;
-import org.jdbi.v3.core.statement.StatementException;
 import org.jdbi.v3.sqlobject.CreateSqlObject;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.customizer.Bind;
@@ -73,29 +70,12 @@ public interface AnswerDao extends SqlObject {
 
     default Answer createAnswer(long operatorId, long instanceId, Answer answer) {
         long now = Instant.now().toEpochMilli();
-        long id = -1;
-        int retriesLeft = 10;
-        String guid;
-        do {
-            guid = GuidUtils.randomStandardGuid();
-            try {
-                id = getAnswerSql().insertAnswerByQuestionStableId(guid, operatorId, instanceId, answer.getQuestionStableId(), now, now);
-            } catch (StatementException e) {
-                if (e.getCause() instanceof SQLIntegrityConstraintViolationException && e.getMessage().contains(guid)) {
-                    if (--retriesLeft > 0) {
-                        LOG.warn("Duplicate guid found on insert. Retrying with new guid");
-                    } else {
-                        throw new DDPException("Ran out of retries", e);
-                    }
-                } else {
-                    throw new DDPException(e);
-                }
-
-            }
-        } while (id < 0);
-        createAnswerValue(operatorId, instanceId, id, answer);
-        answer.setAnswerId(id);
-        answer.setAnswerGuid(guid);
+        Pair<String, Long> guidAndId = DBUtils.executeSqlInsertWithGeneratedGuid((guid) ->
+                getAnswerSql().insertAnswerByQuestionStableId(guid, operatorId, instanceId, answer.getQuestionStableId(), now, now)
+        );
+        createAnswerValue(operatorId, instanceId, guidAndId.getRight(), answer);
+        answer.setAnswerId(guidAndId.getRight());
+        answer.setAnswerGuid(guidAndId.getLeft());
         return answer;
     }
 

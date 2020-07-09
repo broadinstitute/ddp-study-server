@@ -3,20 +3,29 @@ package org.broadinstitute.ddp.db;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.SQLIntegrityConstraintViolationException;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import com.typesafe.config.Config;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.ddp.constants.SqlConstants.UserTable;
+import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.util.GuidUtils;
 import org.jdbi.v3.core.Handle;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public final class DBUtils {
+    private static Logger LOG = LoggerFactory.getLogger(DBUtils.class);
 
     /**
      * Client-provided stable codes must adhere to this pattern with one or more of the following characters: lowercase alpha, uppercase
      * alpha, numeric digit, underscore, and dash. Coincidentally, this is also what FireCloud allows as the column names.
      */
     public static final String STABLE_CODE_PATTERN = "[a-zA-Z0-9_\\-]+";
+
 
     private static final String IS_GUID_UNIQUE_QUERY_TEMPLATE = "select 1 from %s where %s = ?";
 
@@ -93,6 +102,30 @@ public final class DBUtils {
      */
     public static String uniqueStandardGuid(Handle handle, String table, String guidColumn) {
         return uniqueGuid(GuidUtils::randomStandardGuid, handle, table, guidColumn);
+    }
+
+    public static Pair<String, Long> executeSqlInsertWithGeneratedGuid(Function<String, Long> sqlUpdateStmt) {
+        int retriesLeft = 10;
+        String guid;
+        long id = -1;
+        do {
+            guid = GuidUtils.randomStandardGuid();
+            try {
+                id = sqlUpdateStmt.apply(guid);
+            } catch (RuntimeException e) {
+                if (e.getCause() instanceof SQLIntegrityConstraintViolationException && e.getMessage().contains(guid)) {
+                    if (--retriesLeft > 0) {
+                        LOG.warn("Duplicate guid found on insert. Retrying with new guid");
+                    } else {
+                        throw new DDPException("Ran out of retries", e);
+                    }
+                } else {
+                    throw new DDPException(e);
+                }
+
+            }
+        } while (id < 0);
+        return new ImmutablePair<>(guid, id);
     }
 
     /**
