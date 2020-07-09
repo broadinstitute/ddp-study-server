@@ -1651,6 +1651,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
                     activityInstanceDto.getGuid(),
                     List.of(ans.getAnswerId()),
                     Collections.emptyList(),
+                    true,
                     langCodeId);
             assertEquals(QuestionType.COMPOSITE, question.getQuestionType());
             assertEquals(prompt.getTemplateId(), (Long) question.getPromptTemplateId());
@@ -1766,6 +1767,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
                     activityInstanceDto.getGuid(),
                     List.of(ans.getAnswerId()),
                     Collections.emptyList(),
+                    true,
                     langCodeId);
 
             handle.rollback();
