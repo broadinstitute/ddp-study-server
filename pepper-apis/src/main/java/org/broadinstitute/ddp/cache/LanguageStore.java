@@ -1,7 +1,7 @@
 package org.broadinstitute.ddp.cache;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
 import org.broadinstitute.ddp.db.dto.LanguageDto;
@@ -14,7 +14,7 @@ public class LanguageStore {
 
     public static final String DEFAULT_LANG_CODE = "en";
 
-    private static final Map<String, LanguageDto> languages = new HashMap<>();
+    private static final Map<String, LanguageDto> languages = new ConcurrentHashMap<>();
 
     public static LanguageDto get(String isoCode) {
         return languages.get(isoCode);
