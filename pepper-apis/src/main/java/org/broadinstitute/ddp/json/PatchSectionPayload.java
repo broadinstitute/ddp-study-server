@@ -7,7 +7,7 @@ public class PatchSectionPayload {
     @PositiveOrZero
     private int index;
 
-    public PatchSectionPayload(@PositiveOrZero int index) {
+    public PatchSectionPayload(int index) {
         this.index = index;
     }
 

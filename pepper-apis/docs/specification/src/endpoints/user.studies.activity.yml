@@ -45,8 +45,11 @@ patch:
   operationId: patchActivity
   tags:
     - Activities
-  summary: updates section index
-  description: with given user Guid, study's unique identifier and instance Guid Updates user's section index
+  summary: updates activity instance properties
+  description: |
+    With given user Guid, study's unique identifier and instance Guid updates properties of `activity` instance.
+
+    _Note: Currently, this API supports only updating of the section index._
   requestBody:
     $ref: '../pepper.yml#/components/requestBodies/UpdateUserSectionIndexRequestBody'
   responses:
