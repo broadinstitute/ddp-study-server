@@ -56,12 +56,12 @@ public class ListStudyLanguagesRouteTest extends IntegrationTestSuite.TestCase {
     private static void insertTestData() {
         TransactionWrapper.useTxn(
                 handle -> {
-                        StudyLanguageDao dao = handle.attach(StudyLanguageDao.class);
-                        englishLangCodeId = LanguageStore.getOrComputeDefault(handle).getId();
-                        idsToDelete[0] = dao.insert(testData.getStudyId(), englishLangCodeId, "English");
-                        frenchLangCodeId = LanguageStore.getOrCompute(handle, "fr").getId();
-                        idsToDelete[1] = dao.insert(testData.getStudyId(), frenchLangCodeId, "French");
-                        dao.setAsDefaultLanguage(testData.getStudyId(), englishLangCodeId);
+                    StudyLanguageDao dao = handle.attach(StudyLanguageDao.class);
+                    englishLangCodeId = LanguageStore.getOrComputeDefault(handle).getId();
+                    idsToDelete[0] = dao.insert(testData.getStudyId(), englishLangCodeId, "English");
+                    frenchLangCodeId = LanguageStore.getOrCompute(handle, "fr").getId();
+                    idsToDelete[1] = dao.insert(testData.getStudyId(), frenchLangCodeId, "French");
+                    dao.setAsDefaultLanguage(testData.getStudyId(), englishLangCodeId);
                 }
         );
     }
@@ -82,7 +82,8 @@ public class ListStudyLanguagesRouteTest extends IntegrationTestSuite.TestCase {
         HttpResponse httpResponse = Request.Get(url).execute().returnResponse();
         assertEquals(200, httpResponse.getStatusLine().getStatusCode());
         String json = EntityUtils.toString(httpResponse.getEntity());
-        Type listType = new TypeToken<List<StudyLanguage>>(){}.getType();
+        Type listType = new TypeToken<List<StudyLanguage>>() {
+        }.getType();
         List<StudyLanguage> languageList = gson.fromJson(json, listType);
         assertEquals(0, languageList.size());
 
@@ -95,6 +96,8 @@ public class ListStudyLanguagesRouteTest extends IntegrationTestSuite.TestCase {
 
         StudyLanguage lang = languageList.get(0);
         assertEquals("English", lang.getDisplayName());
+        assertEquals(0, lang.getStudyId());
+        assertEquals(0, lang.getLanguageId());
         assertTrue(lang.isDefault());
         assertEquals("en", lang.getLanguageCode());
         lang = languageList.get(1);

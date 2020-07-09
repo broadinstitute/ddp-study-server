@@ -9,7 +9,6 @@ import static spark.Spark.afterAfter;
 import static spark.Spark.awaitInitialization;
 import static spark.Spark.before;
 import static spark.Spark.delete;
-import static spark.Spark.get;
 import static spark.Spark.internalServerError;
 import static spark.Spark.notFound;
 import static spark.Spark.options;
@@ -120,9 +119,9 @@ import org.broadinstitute.ddp.route.JoinMailingListRoute;
 import org.broadinstitute.ddp.route.ListCancersRoute;
 import org.broadinstitute.ddp.route.ListStudyLanguagesRoute;
 import org.broadinstitute.ddp.route.ListUserStudyInvitationsRoute;
+import org.broadinstitute.ddp.route.PatchActivityInstanceRoute;
 import org.broadinstitute.ddp.route.PatchFormAnswersCollectDataRoute;
 import org.broadinstitute.ddp.route.PatchFormAnswersRoute;
-import org.broadinstitute.ddp.route.PatchActivityInstanceRoute;
 import org.broadinstitute.ddp.route.PatchMedicalProviderRoute;
 import org.broadinstitute.ddp.route.PatchProfileRoute;
 import org.broadinstitute.ddp.route.PostMedicalProviderRoute;
@@ -157,6 +156,7 @@ import org.broadinstitute.ddp.service.WorkflowService;
 import org.broadinstitute.ddp.transformers.NullableJsonTransformer;
 import org.broadinstitute.ddp.transformers.SimpleJsonTransformer;
 import org.broadinstitute.ddp.util.ConfigManager;
+import org.broadinstitute.ddp.util.GsonUtil;
 import org.broadinstitute.ddp.util.LiquibaseUtil;
 import org.broadinstitute.ddp.util.LogbackConfigurationPrinter;
 import org.broadinstitute.ddp.util.ResponseUtil;
@@ -346,7 +346,11 @@ public class DataDonationPlatform {
         get(API.STUDY_ALL, new GetStudiesRoute(), responseSerializer);
         get(API.STUDY_DETAIL, new GetStudyDetailRoute(), responseSerializer);
         get(API.STUDY_PASSWORD_POLICY, new GetStudyPasswordPolicyRoute(), responseSerializer);
-        get(API.STUDY_LANGUAGES, new ListStudyLanguagesRoute(), responseSerializer);
+
+        // Need special serializer
+        get(API.STUDY_LANGUAGES, new ListStudyLanguagesRoute(),
+                (model) -> GsonUtil.serializeFieldsWithExposeAnnotation().create().toJson(model));
+
         post(API.INVITATION_VERIFY, new InvitationVerifyRoute(), jsonSerializer);
         post(API.INVITATION_CHECK, new InvitationCheckStatusRoute(), jsonSerializer);
 

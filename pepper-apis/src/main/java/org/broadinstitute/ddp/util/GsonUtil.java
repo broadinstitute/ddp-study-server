@@ -114,4 +114,8 @@ public class GsonUtil {
             return false;
         }
     }
+
+    static public GsonBuilder serializeFieldsWithExposeAnnotation() {
+        return standardBuilder().excludeFieldsWithoutExposeAnnotation();
+    }
 }
