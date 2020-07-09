@@ -80,18 +80,25 @@ public class StudyLanguageResolutionFilter implements Filter {
     }
 
     private static LanguageDto convertLocaleToLanguageDto(Handle handle, Locale preferredLocale) {
-        String preferredLocaleLanguage = preferredLocale.getLanguage();
+        String lang = preferredLocale.getLanguage();
+        LanguageDto languageDto = LanguageStore.getOrCompute(handle, lang);
 
-        // Java converts some language codes to older versions.  If the language is one of these older codes, convert
-        // it back first
-        if ("iw".equals(preferredLocaleLanguage)) {
-            preferredLocaleLanguage = "he";
-        } else if ("ji".equals(preferredLocaleLanguage)) {
-            preferredLocaleLanguage = "yi";
-        } else if ("in".equals(preferredLocaleLanguage)) {
-            preferredLocaleLanguage = "id";
+        if (languageDto == null) {
+            languageDto = LanguageStore.getOrCompute(handle, getNewerLanguageCode(lang));
         }
+        return languageDto;
+    }
 
-        return LanguageStore.getOrCompute(handle, preferredLocaleLanguage);
+    private static String getNewerLanguageCode(String oldCode) {
+        // Java converts some language codes to older versions.  If the language is one of these older codes, try
+        // converting it to the newer version
+        if ("iw".equals(oldCode)) {
+            return "he";
+        } else if ("ji".equals(oldCode)) {
+            return "yi";
+        } else if ("in".equals(oldCode)) {
+            return "id";
+        }
+        return oldCode;
     }
 }
