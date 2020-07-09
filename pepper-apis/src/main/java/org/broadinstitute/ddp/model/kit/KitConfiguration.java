@@ -18,13 +18,15 @@ public class KitConfiguration {
     private int numKits;
     private KitType kitType;
     private String studyGuid;
+    private boolean needsApproval;
     private Collection<KitRule> rules;
 
-    public KitConfiguration(long id, int numKits, KitType kitType, String studyGuid, Collection<KitRule> rules) {
+    public KitConfiguration(long id, int numKits, KitType kitType, String studyGuid, boolean needsApproval, Collection<KitRule> rules) {
         this.id = id;
         this.numKits = numKits;
         this.kitType = kitType;
         this.studyGuid = studyGuid;
+        this.needsApproval = needsApproval;
         this.rules = rules;
     }
 
@@ -42,6 +44,10 @@ public class KitConfiguration {
 
     public String getStudyGuid() {
         return studyGuid;
+    }
+
+    public boolean needsApproval() {
+        return needsApproval;
     }
 
     public Collection<KitRule> getRules() {

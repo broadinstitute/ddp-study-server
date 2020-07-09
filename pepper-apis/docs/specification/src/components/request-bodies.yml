@@ -65,6 +65,20 @@ RegisterRequestBody:
           invitationId:
             type: string
             description: if present, server will associate the presumably account-less user with the auth0UserId after verifying the invitation
+          firstName:
+            type: string
+            description: user's first name, if available
+          lastName:
+            type: string
+            description: user's last name, if available
+          languageCode:
+            type: string
+            description: user's preferred language, as an ISO 639-1 code
+            example: en
+          timeZone:
+            type: string
+            description: user's time zone, as an IANA time zone region identifier
+            example: America/New_York
 CreateTempUserRequestBody:
   description: client data from Auth0
   required: true
@@ -156,24 +170,15 @@ JoinMailingListPayload:
     application/json:
       schema:
         $ref: '../pepper.yml#/components/schemas/JoinMailingListPayload'
-UpdateUserLastVisitedSectionRequestBody:
-  description: to update user's last visited section
+UpdateUserSectionIndexRequestBody:
+  description: to update user's section index
   required: true
   content:
     application/json:
       schema:
         type: object
         required:
-          - userGuid
-          - studyGuid
-          - instanceGuid
-          - lastVisitedSection
+          - index
         properties:
-          userGuid:
-            type: string
-          studyGuid:
-            type: string
-          instanceGuid:
-            type: string
-          lastVisitedSection:
+          index:
             type: integer

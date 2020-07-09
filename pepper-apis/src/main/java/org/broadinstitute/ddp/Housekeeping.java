@@ -33,6 +33,7 @@ import com.typesafe.config.ConfigFactory;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.client.SendGridClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
+import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -40,6 +41,7 @@ import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.JdbiMessageDestination;
 import org.broadinstitute.ddp.db.dao.JdbiQueuedEvent;
 import org.broadinstitute.ddp.db.dao.QueuedEventDao;
+import org.broadinstitute.ddp.db.dao.StudyDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dto.QueuedEventDto;
 import org.broadinstitute.ddp.db.housekeeping.dao.JdbiEvent;
@@ -48,6 +50,7 @@ import org.broadinstitute.ddp.db.housekeeping.dao.KitCheckDao;
 import org.broadinstitute.ddp.event.HousekeepingTaskReceiver;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.exception.MessageBuilderException;
+import org.broadinstitute.ddp.exception.NoSendableEmailAddressException;
 import org.broadinstitute.ddp.housekeeping.PubSubConnectionManager;
 import org.broadinstitute.ddp.housekeeping.PubSubMessageBuilder;
 import org.broadinstitute.ddp.housekeeping.handler.EmailNotificationHandler;
@@ -65,6 +68,7 @@ import org.broadinstitute.ddp.housekeeping.schedule.OnDemandExportJob;
 import org.broadinstitute.ddp.housekeeping.schedule.StudyDataExportJob;
 import org.broadinstitute.ddp.housekeeping.schedule.TemporaryUserCleanupJob;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
+import org.broadinstitute.ddp.model.study.StudySettings;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.monitoring.PointsReducerFactory;
 import org.broadinstitute.ddp.monitoring.StackdriverCustomMetric;
@@ -141,7 +145,6 @@ public class Housekeeping {
     public static final String IGNORE_EVENT_LOG_MESSAGE = "Ignoring and removing occurrence of event ";
 
     private static final String ENV_PORT = "PORT";
-    private static final String GAE_START_HOOK_ENDPOINT = "/_ah/start";
 
     /**
      * How many milliseconds to wait between writing error log entry
@@ -198,7 +201,9 @@ public class Housekeeping {
         }
 
         if (doLiquibase) {
-            // we only migrate the housekeeping db when starting
+            LOG.info("Running Pepper liquibase migrations against " + apisDbUrl);
+            LiquibaseUtil.runLiquibase(apisDbUrl, TransactionWrapper.DB.APIS);
+            LOG.info("Running Housekeeping liquibase migrations against " + housekeepingDbUrl);
             LiquibaseUtil.runLiquibase(housekeepingDbUrl, TransactionWrapper.DB.HOUSEKEEPING);
         }
 
@@ -366,6 +371,21 @@ public class Housekeeping {
                                         PubsubMessage message = null;
                                         try {
                                             message = messageBuilder.createMessage(ddpMessageId, pendingEvent, apisHandle);
+                                        } catch (NoSendableEmailAddressException e) {
+                                            boolean shouldDeleteEvent = apisHandle.attach(StudyDao.class)
+                                                    .findSettings(pendingEvent.getStudyGuid())
+                                                    .map(StudySettings::shouldDeleteUnsendableEmails)
+                                                    .orElse(false);
+                                            if (shouldDeleteEvent) {
+                                                LOG.warn("Unable to create message for event with queued_event_id={}, proceeding to delete",
+                                                        pendingEvent.getQueuedEventId(), e);
+                                                queuedEventDao.deleteAllByQueuedEventId(pendingEvent.getQueuedEventId());
+                                                return; // Exit out of transaction wrapper and move on to next event.
+                                            } else {
+                                                LOG.error("Could not create message for event with queued_event_id={}"
+                                                        + " because there is no email address to sent to",
+                                                        pendingEvent.getQueuedEventId(), e);
+                                            }
                                         } catch (MessageBuilderException e) {
                                             LOG.error("Could not create message for queued event "
                                                     + pendingEvent.getQueuedEventId(), e);
@@ -442,7 +462,7 @@ public class Housekeeping {
         var receivedPing = new AtomicBoolean(false);
 
         Spark.port(Integer.parseInt(envPort));
-        Spark.get(GAE_START_HOOK_ENDPOINT, (request, response) -> {
+        Spark.get(RouteConstants.GAE.START_ENDPOINT, (request, response) -> {
             receivedPing.set(true);
             response.status(200);
             return "";

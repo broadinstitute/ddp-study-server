@@ -4,6 +4,7 @@ queryAllOrderedGroupsAndOptionsByQuestionIdAndTimestamp() ::= <<
 select po.picklist_option_id        as po_picklist_option_id,
        po.picklist_option_stable_id as po_picklist_option_stable_id,
        po.option_label_template_id  as po_option_label_template_id,
+       po.tooltip_template_id       as po_tooltip_template_id,
        po.detail_label_template_id  as po_detail_label_template_id,
        po.allow_details             as po_allow_details,
        po.is_exclusive              as po_is_exclusive,

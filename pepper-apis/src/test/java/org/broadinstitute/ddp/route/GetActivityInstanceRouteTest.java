@@ -16,6 +16,7 @@ import java.net.URL;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -85,7 +86,6 @@ import org.broadinstitute.ddp.model.activity.types.TemplateType;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.model.user.UserProfile;
-import org.broadinstitute.ddp.transformers.DateTimeFormatUtils;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.broadinstitute.ddp.util.TestUtil;
 import org.jdbi.v3.core.Handle;
@@ -155,9 +155,11 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
         txt2 = TextQuestionDef.builder(TextInputType.TEXT, "TEXT_DRUG", newTemplate())
                 .setSuggestionType(SuggestionType.DRUG)
                 .build();
-        Template txt3Tmpl = Template.html("$foo $DDP_PARTICIPANT_FIRST_NAME's favorite color?");
+        Template txt3Tmpl = Template.html("$foo $ddp.participantFirstName()'s favorite color?");
         txt3Tmpl.addVariable(TemplateVariable.single("foo", "en", "What is"));
-        TextQuestionDef txt3 = TextQuestionDef.builder(TextInputType.TEXT, "TEXT_WITH_SPECIAL_VARS", txt3Tmpl).build();
+        TextQuestionDef txt3 = TextQuestionDef.builder(TextInputType.TEXT, "TEXT_WITH_SPECIAL_VARS", txt3Tmpl)
+                .setTooltip(Template.text("some helper text"))
+                .build();
         FormSectionDef textSection = new FormSectionDef(null, TestUtil.wrapQuestions(txt1, txt2, txt3));
 
         PicklistQuestionDef p1 = PicklistQuestionDef
@@ -171,7 +173,8 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
         PicklistQuestionDef p3 = PicklistQuestionDef
                 .buildMultiSelect(PicklistRenderMode.LIST, "PL_GROUPS", newTemplate())
                 .addGroup(new PicklistGroupDef("G1", newTemplate(), Arrays.asList(
-                        new PicklistOptionDef("G1_OPT1", newTemplate()))))
+                        new PicklistOptionDef(null, "G1_OPT1", newTemplate(),
+                                Template.text("option tooltip"), null, false))))
                 .addGroup(new PicklistGroupDef("G2", newTemplate(), Arrays.asList(
                         new PicklistOptionDef("G2_OPT1", newTemplate()),
                         new PicklistOptionDef("G2_OPT2", newTemplate()))))
@@ -190,6 +193,7 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
         AgreementQuestionDef a1 = new AgreementQuestionDef("AGREEMENT_Q",
                 false,
                 newTemplate("I agree with the preceding text"),
+                null,
                 newTemplate("info header"),
                 newTemplate("info footer"),
                 Arrays.asList(new RequiredRuleDef(newTemplate())),
@@ -200,7 +204,7 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
         Template contentBody = new Template(TemplateType.HTML, null, "<p>hello body</p>");
         ContentBlockDef contentDef = new ContentBlockDef(contentTitle, contentBody);
         ContentBlockDef content2 = new ContentBlockDef(null, Template.html(
-                "<p>$DDP_PARTICIPANT_FIRST_NAME<br/>$DDP_PARTICIPANT_LAST_NAME<br/>$DDP_DASHED_DATE</p>"));
+                "<p>$ddp.participantFirstName()<br/>$ddp.participantLastName()<br/>$ddp.date(\"MM-dd-uuuu\")</p>"));
         FormSectionDef contentSection = new FormSectionDef(null, List.of(contentDef, content2));
 
         Template nameTmpl = Template.text("icon section");
@@ -714,8 +718,19 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
         resp.then().assertThat().body("sections[1].blocks[2].question.prompt", equalTo(expectedPrompt));
 
         String expectedBody = String.format("<p>%s<br/>%s<br/>%s</p>", profile.getFirstName(), profile.getLastName(),
-                DateTimeFormatUtils.MONTH_FIRST_DASHED_DATE_FORMATTER.format(LocalDate.now()));
+                DateTimeFormatter.ofPattern("MM-dd-uuuu").format(LocalDate.now()));
         resp.then().assertThat().body("sections[5].blocks[1].body", equalTo(expectedBody));
+    }
+
+    @Test
+    public void testTooltip() {
+        testFor200AndExtractResponse()
+                .then().assertThat()
+                .root("sections[1].blocks[2].question")
+                .body("tooltip", equalTo("some helper text"))
+                .root("sections[2].blocks[2].question")
+                .body("picklistOptions[1].stableId", equalTo("G1_OPT1"))
+                .body("picklistOptions[1].tooltip", equalTo("option tooltip"));
     }
 
     private Response testFor200AndExtractResponse() {

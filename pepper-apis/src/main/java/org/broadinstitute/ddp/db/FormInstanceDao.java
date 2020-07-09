@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.typesafe.config.Config;
+import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.constants.ConfigFile.SqlQuery;
 import org.broadinstitute.ddp.constants.SqlConstants.ActivityInstanceStatusTypeTable;
 import org.broadinstitute.ddp.constants.SqlConstants.ActivityInstanceTable;
@@ -18,7 +19,6 @@ import org.broadinstitute.ddp.constants.SqlConstants.StudyActivityTable;
 import org.broadinstitute.ddp.content.ContentStyle;
 import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.db.dao.JdbiFormActivityFormSection;
-import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
 import org.broadinstitute.ddp.model.activity.instance.FormBlock;
 import org.broadinstitute.ddp.model.activity.instance.FormInstance;
 import org.broadinstitute.ddp.model.activity.instance.FormSection;
@@ -65,7 +65,7 @@ public class FormInstanceDao {
                                                 boolean includeDeprecated) {
         FormInstance form = getBaseFormByGuid(handle, instanceGuid, isoLangCode);
         if (form != null) {
-            long langCodeId = handle.attach(JdbiLanguageCode.class).getLanguageCodeId(isoLangCode);
+            long langCodeId = LanguageStore.getOrCompute(handle, isoLangCode).getId();
             loadAllSectionsForForm(handle, form, langCodeId, includeDeprecated);
             form.renderContent(handle, new I18nContentRenderer(), langCodeId, style);
             form.setDisplayNumbers();
@@ -114,7 +114,7 @@ public class FormInstanceDao {
                 Long lastUpdatedTemplateId = (Long)rs.getObject(FormActivitySettingTable.LAST_UPDATED_TEXT_TEMPLATE_ID);
                 LocalDateTime lastUpdated = rs.getObject(FormActivitySettingTable.LAST_UPDATED, LocalDateTime.class);
                 boolean isFollowup = rs.getBoolean(StudyActivityTable.IS_FOLLOWUP);
-                int lastVisitedActivitySection = rs.getInt("last_visited_section");
+                int sectionIndex = rs.getInt(ActivityInstanceTable.SECTION_INDEX);
 
                 form = new FormInstance(
                         participantUserId,
@@ -136,7 +136,7 @@ public class FormInstanceDao {
                         lastUpdatedTemplateId,
                         lastUpdated,
                         isFollowup,
-                        lastVisitedActivitySection
+                        sectionIndex
                 );
 
                 if (rs.next()) {

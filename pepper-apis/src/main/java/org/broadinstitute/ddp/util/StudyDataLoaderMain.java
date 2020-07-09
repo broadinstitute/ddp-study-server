@@ -344,6 +344,7 @@ public class StudyDataLoaderMain {
         JsonElement atRegistrationSurveyData = surveyData.getAsJsonObject().get("RegistrationSurvey");
         JsonElement atContactingPhysicianSurveyData = surveyData.getAsJsonObject().get("ContactingPhysicianSurvey");
         JsonElement atGenomeStudySurveyData = surveyData.getAsJsonObject().get("GenomeStudySurvey");
+        JsonElement atAssentSurveyData = surveyData.getAsJsonObject().get("AssentSurvey");
         JsonElement releaseSurveyData = surveyData.getAsJsonObject().get("releasesurvey");
         JsonElement bdreleaseSurveyData = surveyData.getAsJsonObject().get("bdreleasesurvey");
         JsonElement aboutyouSurveyData = surveyData.getAsJsonObject().get("aboutyousurvey");
@@ -358,6 +359,7 @@ public class StudyDataLoaderMain {
         surveyDataMap.put("atregistrationsurvey", atRegistrationSurveyData);
         surveyDataMap.put("atcontactingphysiciansurvey", atContactingPhysicianSurveyData);
         surveyDataMap.put("atgenomestudysurvey", atGenomeStudySurveyData);
+        surveyDataMap.put("atassentsurvey", atAssentSurveyData);
         surveyDataMap.put("releasesurvey", releaseSurveyData);
         surveyDataMap.put("bdreleasesurvey", bdreleaseSurveyData);
         surveyDataMap.put("aboutyousurvey", aboutyouSurveyData);
@@ -618,6 +620,7 @@ public class StudyDataLoaderMain {
             Boolean hasATRegistration = false;
             Boolean hasATContactingPhysician = false;
             Boolean hasATGenomeStudy = false;
+            Boolean hasATAssent = false;
             StudyMigrationRun migrationRun;
 
             boolean auth0Collision = false;
@@ -672,6 +675,8 @@ public class StudyDataLoaderMain {
                             .get("atcontactingphysiciansurvey").isJsonNull();
                     hasATGenomeStudy = (sourceData.get("atgenomestudysurvey")) != null && !sourceData
                             .get("atgenomestudysurvey").isJsonNull();
+                    hasATAssent = (sourceData.get("atassentsurvey")) != null && !sourceData
+                            .get("atassentsurvey").isJsonNull();
 
                     var answerDao = handle.attach(AnswerDao.class);
                     //create prequal
@@ -758,9 +763,6 @@ public class StudyDataLoaderMain {
                     if (hasATGenomeStudy) {
                         String activityCode = mappingData.get("GenomeStudySurvey").getAsJsonObject()
                                 .get("activity_code").getAsString();
-                        //List<ActivityInstanceDto> activityInstanceDtoList = jdbiActivityInstance
-                                //.findAllByUserGuidAndActivityCode(userGuid, activityCode, studyId);
-                        //activityInstanceDao.deleteByInstanceGuid(activityInstanceDtoList.get(0).getGuid());
                         ActivityInstanceDto instanceDto = dataLoader.createActivityInstance(sourceData.get("atgenomestudysurvey"),
                                 userGuid, studyId,
                                 activityCode, createdAt,
@@ -769,6 +771,21 @@ public class StudyDataLoaderMain {
                                 activityInstanceStatusDao);
                         dataLoader.loadATGenomeStudySurveyData(handle, sourceData.get("atgenomestudysurvey"),
                                 mappingData.get("GenomeStudySurvey"),
+                                studyDto, userDto, instanceDto,
+                                answerDao);
+                    }
+
+                    if (hasATAssent) {
+                        String activityCode = mappingData.get("AssentSurvey").getAsJsonObject()
+                                .get("activity_code").getAsString();
+                        ActivityInstanceDto instanceDto = dataLoader.createActivityInstance(sourceData.get("atassentsurvey"),
+                                userGuid, studyId,
+                                activityCode, createdAt,
+                                jdbiActivity,
+                                activityInstanceDao,
+                                activityInstanceStatusDao);
+                        dataLoader.loadATAssentSurveyData(handle, sourceData.get("atassentsurvey"),
+                                mappingData.get("AssentSurvey"),
                                 studyDto, userDto, instanceDto,
                                 answerDao);
                     }

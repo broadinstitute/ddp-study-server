@@ -493,12 +493,12 @@ public class StudyDataLoader {
 
 
     public void loadATConsentSurveyData(Handle handle,
-                                             JsonElement surveyData,
-                                             JsonElement mappingData,
-                                             StudyDto studyDto,
-                                             UserDto userDto,
-                                             ActivityInstanceDto instanceDto,
-                                             AnswerDao answerDao) throws Exception {
+                                        JsonElement surveyData,
+                                        JsonElement mappingData,
+                                        StudyDto studyDto,
+                                        UserDto userDto,
+                                        ActivityInstanceDto instanceDto,
+                                        AnswerDao answerDao) throws Exception {
 
         LOG.info("Populating ATConsent Survey...");
         if (surveyData == null || surveyData.isJsonNull()) {
@@ -511,12 +511,12 @@ public class StudyDataLoader {
     }
 
     public void loadATRegistrationSurveyData(Handle handle,
-                                        JsonElement surveyData,
-                                        JsonElement mappingData,
-                                        StudyDto studyDto,
-                                        UserDto userDto,
-                                        ActivityInstanceDto instanceDto,
-                                        AnswerDao answerDao) throws Exception {
+                                             JsonElement surveyData,
+                                             JsonElement mappingData,
+                                             StudyDto studyDto,
+                                             UserDto userDto,
+                                             ActivityInstanceDto instanceDto,
+                                             AnswerDao answerDao) throws Exception {
 
         LOG.info("Populating ATRegistration Survey...");
         if (surveyData == null || surveyData.isJsonNull()) {
@@ -529,12 +529,12 @@ public class StudyDataLoader {
     }
 
     public void loadATContactingPhysicianSurveyData(Handle handle,
-                                             JsonElement surveyData,
-                                             JsonElement mappingData,
-                                             StudyDto studyDto,
-                                             UserDto userDto,
-                                             ActivityInstanceDto instanceDto,
-                                             AnswerDao answerDao) throws Exception {
+                                                    JsonElement surveyData,
+                                                    JsonElement mappingData,
+                                                    StudyDto studyDto,
+                                                    UserDto userDto,
+                                                    ActivityInstanceDto instanceDto,
+                                                    AnswerDao answerDao) throws Exception {
 
         LOG.info("Populating ATContactingPhysician Survey...");
         if (surveyData == null || surveyData.isJsonNull()) {
@@ -547,12 +547,12 @@ public class StudyDataLoader {
     }
 
     public void loadATGenomeStudySurveyData(Handle handle,
-                                                    JsonElement surveyData,
-                                                    JsonElement mappingData,
-                                                    StudyDto studyDto,
-                                                    UserDto userDto,
-                                                    ActivityInstanceDto instanceDto,
-                                                    AnswerDao answerDao) throws Exception {
+                                            JsonElement surveyData,
+                                            JsonElement mappingData,
+                                            StudyDto studyDto,
+                                            UserDto userDto,
+                                            ActivityInstanceDto instanceDto,
+                                            AnswerDao answerDao) throws Exception {
 
         LOG.info("Populating ATGenomeStudy Survey...");
         if (surveyData == null || surveyData.isJsonNull()) {
@@ -561,6 +561,24 @@ public class StudyDataLoader {
         }
 
         processSurveyData(handle, "atgenomestudysurvey", surveyData, mappingData,
+                studyDto, userDto, instanceDto, answerDao);
+    }
+
+    public void loadATAssentSurveyData(Handle handle,
+                                            JsonElement surveyData,
+                                            JsonElement mappingData,
+                                            StudyDto studyDto,
+                                            UserDto userDto,
+                                            ActivityInstanceDto instanceDto,
+                                            AnswerDao answerDao) throws Exception {
+
+        LOG.info("Populating ATAssent Survey...");
+        if (surveyData == null || surveyData.isJsonNull()) {
+            LOG.warn("NO ATAssent Survey !");
+            return;
+        }
+
+        processSurveyData(handle, "atassentsurvey", surveyData, mappingData,
                 studyDto, userDto, instanceDto, answerDao);
     }
 
@@ -1215,7 +1233,7 @@ public class StudyDataLoader {
         }
         long kitTypeId = kitTypeDao.getSalivaKitType().getId();
         long kitId = dsmKitRequestDao.createKitRequest(kitRequestId, studyGuid, addressid, kitTypeId,
-                pepperUserId, defaultKitCreationEpoch);
+                pepperUserId, defaultKitCreationEpoch, false);
         LOG.info("Created kit ID: " + kitId);
         return kitId;
     }
@@ -1792,7 +1810,7 @@ public class StudyDataLoader {
 
 
     private String processMedicalCompositeQuestion(Handle handle, JsonElement mapElement, JsonElement sourceDataElement, String surveyName,
-                                            String participantGuid, String instanceGuid, AnswerDao answerDao) throws Exception {
+                                                   String participantGuid, String instanceGuid, AnswerDao answerDao) throws Exception {
 
         String answerGuid = null;
         String questionName = mapElement.getAsJsonObject().get("name").getAsString();
@@ -1819,37 +1837,49 @@ public class StudyDataLoader {
                         childGuid = processDateQuestion(childEl, sourceDataElement, surveyName, participantGuid,
                                 instanceGuid, answerDao);
                         nestedQAGuids.add(childGuid);
-                        if (childGuid != null) childOrder = childEl.getAsJsonObject().get("response_order").getAsInt();
+                        if (childGuid != null) {
+                            childOrder = childEl.getAsJsonObject().get("response_order").getAsInt();
+                        }
                         break;
                     case "string":
                         childGuid = processTextQuestion(childEl, sourceDataElement, surveyName,
                                 participantGuid, instanceGuid, answerDao);
                         nestedQAGuids.add(childGuid);
-                        if (childGuid != null) childOrder = childEl.getAsJsonObject().get("response_order").getAsInt();
+                        if (childGuid != null) {
+                            childOrder = childEl.getAsJsonObject().get("response_order").getAsInt();
+                        }
                         break;
                     case "Numeric":
                         childGuid = processNumericQuestion(childEl, sourceDataElement, surveyName,
                                 participantGuid, instanceGuid, answerDao);
                         nestedQAGuids.add(childGuid);
-                        if (childGuid != null) childOrder = childEl.getAsJsonObject().get("response_order").getAsInt();
+                        if (childGuid != null) {
+                            childOrder = childEl.getAsJsonObject().get("response_order").getAsInt();
+                        }
                         break;
                     case "Picklist":
                         childGuid = processPicklistQuestion(childEl, sourceDataElement, surveyName,
                                 participantGuid, instanceGuid, answerDao);
                         nestedQAGuids.add(childGuid);
-                        if (childGuid != null) childOrder = childEl.getAsJsonObject().get("response_order").getAsInt();
+                        if (childGuid != null) {
+                            childOrder = childEl.getAsJsonObject().get("response_order").getAsInt();
+                        }
                         break;
                     case "Boolean":
                         childGuid = processBooleanQuestion(childEl, sourceDataElement, surveyName,
                                 participantGuid, instanceGuid, answerDao);
                         nestedQAGuids.add(childGuid);
-                        if (childGuid != null) childOrder = childEl.getAsJsonObject().get("response_order").getAsInt();
+                        if (childGuid != null) {
+                            childOrder = childEl.getAsJsonObject().get("response_order").getAsInt();
+                        }
                         break;
                     case "Agreement":
                         childGuid = processAgreementQuestion(childEl, sourceDataElement, surveyName,
                                 participantGuid, instanceGuid, answerDao);
                         nestedQAGuids.add(childGuid);
-                        if (childGuid != null) childOrder = childEl.getAsJsonObject().get("response_order").getAsInt();
+                        if (childGuid != null) {
+                            childOrder = childEl.getAsJsonObject().get("response_order").getAsInt();
+                        }
                         break;
                     case "ClinicalTrialPicklist":
                         //todo .. revisit and make it generic

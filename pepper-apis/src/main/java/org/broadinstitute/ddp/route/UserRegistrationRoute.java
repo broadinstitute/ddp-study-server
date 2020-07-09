@@ -3,14 +3,16 @@ package org.broadinstitute.ddp.route;
 import static spark.Spark.halt;
 
 import java.time.Instant;
-import java.util.Collections;
+import java.time.ZoneId;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.auth0.exception.Auth0Exception;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
+import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetrics;
+import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetricsTracker;
+import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -18,21 +20,18 @@ import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.AuthDao;
 import org.broadinstitute.ddp.db.dao.ClientDao;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
-import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.InvitationDao;
 import org.broadinstitute.ddp.db.dao.JdbiAuth0Tenant;
-import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
 import org.broadinstitute.ddp.db.dao.JdbiMailingList;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dao.QueuedEventDao;
-import org.broadinstitute.ddp.db.dao.StudyDao;
 import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
+import org.broadinstitute.ddp.db.dao.StudyLanguageDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.Auth0TenantDto;
-import org.broadinstitute.ddp.db.dto.EventConfigurationDto;
 import org.broadinstitute.ddp.db.dto.InvitationDto;
 import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
@@ -41,12 +40,12 @@ import org.broadinstitute.ddp.json.LocalRegistrationResponse;
 import org.broadinstitute.ddp.json.UserRegistrationPayload;
 import org.broadinstitute.ddp.json.UserRegistrationResponse;
 import org.broadinstitute.ddp.json.errors.ApiError;
-import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.event.EventSignal;
 import org.broadinstitute.ddp.model.governance.Governance;
 import org.broadinstitute.ddp.model.governance.GovernancePolicy;
 import org.broadinstitute.ddp.model.invitation.InvitationType;
+import org.broadinstitute.ddp.model.study.StudyLanguage;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.model.user.UserProfile;
@@ -73,7 +72,6 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
 
     private static final Logger LOG = LoggerFactory.getLogger(UserRegistrationRoute.class);
 
-    private static final String EN_LANGUAGE_CODE = "en";
     private static final String MODE_LOGIN = "login";
     private static final String METADATA_FIRST_NAME = "first_name";
     private static final String METADATA_LAST_NAME = "last_name";
@@ -91,7 +89,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
 
     @Override
     public Object handle(Request request, Response response, UserRegistrationPayload payload) throws Exception {
-        checkRequiredPayloadProperties(response, payload);
+        checkRequestPayload(response, payload);
 
         var doLocalRegistration = payload.isLocalRegistration();
         String auth0ClientId = payload.getAuth0ClientId();
@@ -175,8 +173,10 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                         payload, clientConfig, auth0Util, mgmtClient);
                 ddpUserGuid.set(operatorUser.getGuid());
             } else if (operatorUser == null) {
-                operatorUser = signUpNewOperator(response, handle, study, auth0UserId.get(),
+                var pair = signUpNewOperator(response, handle, study, auth0UserId.get(),
                         payload, clientConfig, auth0Util, mgmtClient);
+                operatorUser = pair.getOperatorUser();
+                triggerUserRegisteredEvents(handle, study, operatorUser, pair.getParticipantUser());
                 ddpUserGuid.set(operatorUser.getGuid());
             } else {
                 LOG.info("Attempting to register existing user {} with client {} and study {}", auth0UserId, auth0ClientId, studyGuid);
@@ -238,19 +238,20 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
 
             return user;
         } else if (invitation.getInvitationType() == InvitationType.RECRUITMENT) {
-            var user = signUpNewOperator(response, handle, study, auth0UserId, payload, clientConfig, auth0Util, mgmtClient);
-            invitationDao.assignAcceptingUser(invitation.getInvitationId(), user.getId(), Instant.now());
-            LOG.info("Assigned invitation {} of type {} to user {}", invitation.getInvitationGuid(),
-                    invitation.getInvitationType(), user.getGuid());
-            return user;
+            var pair = signUpNewOperator(response, handle, study, auth0UserId, payload, clientConfig, auth0Util, mgmtClient);
+            invitationDao.assignAcceptingUser(invitation.getInvitationId(), pair.getParticipantUser().getId(), Instant.now());
+            LOG.info("Assigned invitation {} of type {} to participant user {}", invitation.getInvitationGuid(),
+                    invitation.getInvitationType(), pair.getParticipantUser().getGuid());
+            triggerUserRegisteredEvents(handle, study, pair.getOperatorUser(), pair.getParticipantUser());
+            return pair.getOperatorUser();
         } else {
             throw new DDPException("Unhandled invitation type " + invitation.getInvitationType());
         }
     }
 
-    private User signUpNewOperator(Response response, Handle handle, StudyDto study, String auth0UserId,
-                                   UserRegistrationPayload payload, StudyClientConfiguration clientConfig,
-                                   Auth0Util auth0Util, Auth0ManagementClient mgmtClient) {
+    private UserPair signUpNewOperator(Response response, Handle handle, StudyDto study, String auth0UserId,
+                                       UserRegistrationPayload payload, StudyClientConfiguration clientConfig,
+                                       Auth0Util auth0Util, Auth0ManagementClient mgmtClient) {
         String studyGuid = study.getGuid();
         LOG.info("Attempting to register new user {} with client {} and study {}",
                 auth0UserId, clientConfig.getAuth0ClientId(), studyGuid);
@@ -259,23 +260,22 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                 clientConfig.getAuth0Domain(), clientConfig.getAuth0ClientId(), auth0UserId);
 
         GovernancePolicy policy = handle.attach(StudyGovernanceDao.class).findPolicyByStudyGuid(studyGuid).orElse(null);
-        User studyUser;
+        User participantUser;
         if (policy == null) {
             LOG.info("No study governance policy found, continuing with operator user as the study user");
-            studyUser = operatorUser;
+            participantUser = operatorUser;
         } else {
-            studyUser = handleGovernancePolicy(response, payload, handle, policy, operatorUser, clientConfig);
+            participantUser = handleGovernancePolicy(response, payload, handle, policy, operatorUser, clientConfig);
         }
 
-        registerUserWithStudy(handle, study, studyUser);
-        queueUserRegisteredEvents(handle, study, operatorUser, studyUser);
-        handle.attach(DataExportDao.class).queueDataSync(studyUser.getId());
+        registerUserWithStudy(handle, study, participantUser);
+        handle.attach(DataExportDao.class).queueDataSync(participantUser.getId());
 
         unregisterEmailFromStudyMailingList(handle, study, operatorUser, auth0Util, mgmtClient);
-        return operatorUser;
+        return new UserPair(operatorUser, participantUser);
     }
 
-    private void checkRequiredPayloadProperties(Response response, UserRegistrationPayload payload) {
+    private void checkRequestPayload(Response response, UserRegistrationPayload payload) {
         StringBuilder sb = new StringBuilder();
 
         if (!payload.isLocalRegistration()) {
@@ -292,6 +292,15 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
             ApiError err = new ApiError(ErrorCodes.BAD_PAYLOAD, msg);
             LOG.warn("Missing properties in payload: {}", err.getMessage());
             throw ResponseUtil.haltError(response, HttpStatus.SC_BAD_REQUEST, err);
+        }
+
+        if (payload.getTimeZone() != null) {
+            if (!ZoneId.getAvailableZoneIds().contains(payload.getTimeZone())) {
+                ApiError err = new ApiError(ErrorCodes.BAD_PAYLOAD, String.format(
+                        "Provided timezone '%s' is not a recognized region id", payload.getTimeZone()));
+                LOG.warn(err.getMessage());
+                throw ResponseUtil.haltError(response, HttpStatus.SC_BAD_REQUEST, err);
+            }
         }
     }
 
@@ -332,13 +341,17 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                 throw ResponseUtil.haltError(response, HttpStatus.SC_UNPROCESSABLE_ENTITY, new ApiError(ErrorCodes.SIGNUP_REQUIRED, msg));
             } else {
                 registerUserWithStudy(handle, study, user);
-                queueUserRegisteredEvents(handle, study, user, user);
+                triggerUserRegisteredEvents(handle, study, user, user);
                 handle.attach(DataExportDao.class).queueDataSync(user.getId());
                 unregisterEmailFromStudyMailingList(handle, study, user, auth0Util, mgmtClient);
                 return user.getGuid();
             }
         } else {
             LOG.info("Existing user {} is in study {} with status {}", user.getGuid(), study.getGuid(), status);
+            GoogleAnalyticsMetricsTracker.getInstance().sendAnalyticsMetrics(
+                    study.getGuid(), GoogleAnalyticsMetrics.EVENT_CATEGORY_USER_LOGIN,
+                    GoogleAnalyticsMetrics.EVENT_ACTION_USER_LOGIN, GoogleAnalyticsMetrics.EVENT_LABEL_USER_LOGIN,
+                    null, 1);
             return user.getGuid();
         }
     }
@@ -410,6 +423,17 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
             EnrollmentStatusType initialStatus = EnrollmentStatusType.REGISTERED;
             jdbiEnrollment.changeUserStudyEnrollmentStatus(user.getGuid(), study.getGuid(), initialStatus);
             LOG.info("Registered user {} with status {} in study {}", user.getGuid(), initialStatus, study.getGuid());
+
+            //send GA events
+            GoogleAnalyticsMetricsTracker.getInstance().sendAnalyticsMetrics(
+                    study.getGuid(), GoogleAnalyticsMetrics.EVENT_CATEGORY_USER_REGISTRATION,
+                    GoogleAnalyticsMetrics.EVENT_ACTION_USER_REGISTRATION, GoogleAnalyticsMetrics.EVENT_LABEL_USER_REGISTRATION,
+                    null, 1);
+
+            GoogleAnalyticsMetricsTracker.getInstance().sendAnalyticsMetrics(
+                    study.getGuid(), GoogleAnalyticsMetrics.EVENT_CATEGORY_USER_LOGIN,
+                    GoogleAnalyticsMetrics.EVENT_ACTION_USER_LOGIN, GoogleAnalyticsMetrics.EVENT_LABEL_USER_LOGIN,
+                    null, 1);
         } else {
             LOG.warn("User {} is already registered in study {} with status {}", user.getGuid(), study.getGuid(), status);
         }
@@ -491,26 +515,50 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
     }
 
     private LanguageDto determineUserLanguage(Handle handle, UserRegistrationPayload payload) {
-        LanguageDto userLanguage = null;
-        Set<LanguageDto> supportedLanguages = handle.attach(StudyDao.class)
-                .findSupportedLanguagesByGuid(payload.getStudyGuid());
-        for (var language : supportedLanguages) {
-            if (language.getIsoCode().equalsIgnoreCase(payload.getLanguageCode())) {
+        String studyGuid = payload.getStudyGuid();
+        StudyLanguage userLanguage = null;
+        List<StudyLanguage> studyLanguages = handle.attach(StudyLanguageDao.class).findLanguages(studyGuid);
+        for (var language : studyLanguages) {
+            if (language.getLanguageCode().equalsIgnoreCase(payload.getLanguageCode())) {
                 userLanguage = language;
                 break;
             }
         }
 
         // If no language provided or language is not one of study's supported ones,
-        // then use study's default language. If all else fails, fallback to English.
+        // then use study's default language. If all else fails, fallback to first study language.
         if (userLanguage == null) {
-            userLanguage = supportedLanguages.stream()
-                    // .filter(lang -> lang.isDefault())     TODO: use the filter when ready
+            userLanguage = studyLanguages.stream()
+                    .filter(StudyLanguage::isDefault)
                     .findFirst()
-                    .orElseGet(() -> handle.attach(JdbiLanguageCode.class).findLanguageDtoByCode(EN_LANGUAGE_CODE));
+                    .orElse(null);
+            if (userLanguage == null && !studyLanguages.isEmpty()) {
+                userLanguage = studyLanguages.get(0);
+                LOG.warn("Study {} does not have a default language, falling back to {}",
+                        studyGuid, userLanguage.getLanguageCode());
+            }
         }
 
-        return userLanguage;
+        if (userLanguage != null) {
+            return userLanguage.toLanguageDto();
+        } else {
+            LOG.warn("Study {} does not have any languages configured, falling back to {}",
+                    studyGuid, LanguageStore.DEFAULT_LANG_CODE);
+            return LanguageStore.getOrComputeDefault(handle);
+        }
+    }
+
+    private ZoneId parseUserTimeZone(String givenTimeZone) {
+        if (givenTimeZone != null) {
+            try {
+                return ZoneId.of(givenTimeZone);
+            } catch (Exception e) {
+                throw new DDPException("Provided timezone '" + givenTimeZone + "' is invalid", e);
+            }
+        } else {
+            LOG.info("No user timezone is provided");
+            return null;
+        }
     }
 
     private void initializeProfile(Handle handle, User user, UserRegistrationPayload payload) {
@@ -523,12 +571,14 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
         String lastName = payload.getLastName();
         lastName = StringUtils.isNotBlank(lastName) ? lastName.trim() : null;
         long languageId = determineUserLanguage(handle, payload).getId();
+        ZoneId timeZone = parseUserTimeZone(payload.getTimeZone());
 
         if (profile == null) {
             profile = new UserProfile.Builder(user.getId())
                     .setFirstName(firstName)
                     .setLastName(lastName)
                     .setPreferredLangId(languageId)
+                    .setTimeZone(timeZone)
                     .build();
             profileDao.createProfile(profile);
             LOG.info("Initialized user profile for user with guid {}", user.getGuid());
@@ -548,6 +598,10 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                 updated.setPreferredLangId(languageId);
                 shouldUpdate = true;
             }
+            if (profile.getTimeZone() == null) {
+                updated.setTimeZone(timeZone);
+                shouldUpdate = true;
+            }
 
             if (shouldUpdate) {
                 profileDao.updateProfile(updated.build());
@@ -556,33 +610,31 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
         }
     }
 
-    private void queueUserRegisteredEvents(Handle handle, StudyDto studyDto, User operator, User participant) {
-        QueuedEventDao queuedEventDao = handle.attach(QueuedEventDao.class);
-        List<EventConfigurationDto> configs = handle.attach(EventDao.class)
-                .getActiveDispatchConfigsByStudyIdAndTrigger(studyDto.getId(), EventTriggerType.USER_REGISTERED);
+    private void triggerUserRegisteredEvents(Handle handle, StudyDto studyDto, User operator, User participant) {
+        var signal = new EventSignal(
+                operator.getId(),
+                participant.getId(),
+                participant.getGuid(),
+                studyDto.getId(),
+                EventTriggerType.USER_REGISTERED);
+        EventService.getInstance().processAllActionsForEventSignal(handle, signal);
+    }
 
-        for (EventConfigurationDto config : configs) {
-            if (config.getEventActionType() != EventActionType.NOTIFICATION) {
-                LOG.error("Event action type {} (in eventConfigurationId={}) is currently not supported for trigger type {}, skipping",
-                        config.getEventActionType(), config.getEventConfigurationId(), EventTriggerType.USER_REGISTERED);
-                continue;
-            }
+    private static class UserPair {
+        private User operatorUser;
+        private User participantUser;
 
-            Integer delayBeforePosting = config.getPostDelaySeconds();
-            if (delayBeforePosting == null) {
-                delayBeforePosting = 0;
-            }
-            long postAfter = Instant.now().getEpochSecond() + delayBeforePosting;
+        public UserPair(User operatorUser, User participantUser) {
+            this.operatorUser = operatorUser;
+            this.participantUser = participantUser;
+        }
 
-            long queuedEventId = queuedEventDao.insertNotification(
-                    config.getEventConfigurationId(),
-                    postAfter,
-                    participant.getId(),
-                    operator.getId(),
-                    Collections.emptyMap());
+        public User getOperatorUser() {
+            return operatorUser;
+        }
 
-            LOG.info("Queued notification event with id={} for eventConfigurationId={} postAfter={} participantGuid={} operatorGuid={}",
-                    queuedEventId, config.getEventConfigurationId(), postAfter, participant.getGuid(), operator.getGuid());
+        public User getParticipantUser() {
+            return participantUser;
         }
     }
 }

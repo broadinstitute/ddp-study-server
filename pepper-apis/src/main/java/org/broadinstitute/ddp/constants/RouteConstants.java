@@ -15,6 +15,11 @@ public class RouteConstants {
         public static final String BEARER = "Bearer ";
     }
 
+    public static final class GAE {
+        public static final String START_ENDPOINT = "/_ah/start";
+        public static final String STOP_ENDPOINT = "/_ah/stop";
+    }
+
     public static final class API {
         public static final String VERSION = "v1";
         public static final String BASE = "/pepper/" + VERSION;
@@ -82,8 +87,6 @@ public class RouteConstants {
                 PathParam.USER_GUID, PathParam.STUDY_GUID);
         public static final String USER_ACTIVITIES_INSTANCE = fmt(BASE + "/user/%s/studies/%s/activities/%s",
                 PathParam.USER_GUID, PathParam.STUDY_GUID, PathParam.INSTANCE_GUID);
-        public static final String USER_LAST_VISITED_SECTION = fmt(BASE + "/user/%s/studies/%s/activities/%s/lastVisitedSection",
-                PathParam.USER_GUID, PathParam.STUDY_GUID, PathParam.INSTANCE_GUID);
         public static final String USER_ACTIVITY_ANSWERS = fmt(BASE + "/user/%s/studies/%s/activities/%s/answers",
                 PathParam.USER_GUID, PathParam.STUDY_GUID, PathParam.INSTANCE_GUID);
         public static final String USER_MEDICAL_PROVIDERS = fmt(
@@ -99,6 +102,9 @@ public class RouteConstants {
                 PathParam.INSTITUTION_TYPE,
                 PathParam.MEDICAL_PROVIDER_GUID
         );
+
+        public static final String USER_STUDY_INVITES = String.format(
+                BASE + "/user/%s/studies/%s/invitations", PathParam.USER_GUID, PathParam.STUDY_GUID);
 
         public static final String USER_STUDY_EXIT = String.format(
                 BASE + "/user/%s/studies/%s/exit", PathParam.USER_GUID, PathParam.STUDY_GUID);
@@ -185,7 +191,6 @@ public class RouteConstants {
         public static final String TYPEAHEAD_QUERY = "q";
         public static final String TYPEAHEAD_QUERY_LIMIT = "limit";
         public static final String ERROR_CODE = "errorCode";
-        public static final String LAST_VISITED_ACTIVITY_SECTION = "lastVisitedActivitySection";
     }
 
 }

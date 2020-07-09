@@ -17,6 +17,7 @@ import org.broadinstitute.ddp.db.dao.InvitationDao;
 import org.broadinstitute.ddp.db.dao.JdbiClientUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.KitConfigurationDao;
+import org.broadinstitute.ddp.db.dao.StudyDao;
 import org.broadinstitute.ddp.db.dao.TemplateDao;
 import org.broadinstitute.ddp.db.dto.InvitationDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
@@ -26,6 +27,8 @@ import org.broadinstitute.ddp.json.invitation.InvitationCheckStatusPayload;
 import org.broadinstitute.ddp.model.kit.KitRule;
 import org.broadinstitute.ddp.model.kit.KitRuleType;
 import org.broadinstitute.ddp.model.kit.KitZipCodeRule;
+import org.broadinstitute.ddp.model.study.StudySettings;
+import org.broadinstitute.ddp.security.DDPAuth;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
@@ -43,6 +46,7 @@ import spark.Response;
 public class InvitationCheckStatusRoute extends ValidatedJsonInputRoute<InvitationCheckStatusPayload> {
 
     private static final Logger LOG = LoggerFactory.getLogger(InvitationCheckStatusRoute.class);
+    private static final String DEFAULT_INVITE_ERROR_MSG = "Invalid invitation";
     private static final String DEFAULT_ZIP_CODE_ERROR_MSG = "Invalid zip code invitation qualification";
 
     @Override
@@ -54,11 +58,12 @@ public class InvitationCheckStatusRoute extends ValidatedJsonInputRoute<Invitati
     public Object handle(Request request, Response response, InvitationCheckStatusPayload payload) throws Exception {
         String studyGuid = request.params(RouteConstants.PathParam.STUDY_GUID);
         String invitationGuid = payload.getInvitationGuid();
+        DDPAuth ddpAuth = RouteUtil.getDDPAuth(request);
         LOG.info("Attempting to check invitation {} in study {}", invitationGuid, studyGuid);
 
         ApiError error = TransactionWrapper.withTxn(handle -> {
             String langCode = RouteUtil.resolveLanguage(request, handle, studyGuid, null);
-            return checkStatus(handle, studyGuid, request.ip(), langCode, payload);
+            return checkStatus(handle, ddpAuth, studyGuid, request.ip(), langCode, payload);
         });
 
         if (error != null) {
@@ -69,19 +74,25 @@ public class InvitationCheckStatusRoute extends ValidatedJsonInputRoute<Invitati
         }
     }
 
-    ApiError checkStatus(Handle handle, String studyGuid, String ipAddress, String langCode, InvitationCheckStatusPayload payload) {
+    ApiError checkStatus(Handle handle, DDPAuth ddpAuth, String studyGuid, String ipAddress, String langCode,
+                         InvitationCheckStatusPayload payload) {
         StudyDto studyDto = findStudy(handle, studyGuid);
         if (studyDto == null) {
             LOG.error("Invitation check called for non-existent study with guid {}", studyGuid);
-            return new ApiError(ErrorCodes.INVALID_INVITATION, "Invalid invitation");
+            return new ApiError(ErrorCodes.INVALID_INVITATION, DEFAULT_INVITE_ERROR_MSG);
         }
 
-        if (studyDto.getRecaptchaSiteKey() == null) {
-            LOG.error("ReCaptcha has not been enabled for study with guid: {}", studyGuid);
-            throw new DDPException("Server configuration problem");
-        }
-        if (!isUserRecaptchaTokenValid(payload.getRecaptchaToken(), studyDto.getRecaptchaSiteKey(), ipAddress)) {
-            return new ApiError(ErrorCodes.BAD_PAYLOAD, "Request was invalid");
+        if (ddpAuth.hasAdminAccessToStudy(studyGuid) && payload.getRecaptchaToken() == null) {
+            LOG.info("Operator {} is admin for study {} and no reCaptcha token provided, skipping reCaptcha check",
+                    ddpAuth.getOperator(), studyGuid);
+        } else {
+            if (studyDto.getRecaptchaSiteKey() == null) {
+                LOG.error("ReCaptcha has not been enabled for study with guid: {}", studyGuid);
+                throw new DDPException("Server configuration problem");
+            }
+            if (!isUserRecaptchaTokenValid(payload.getRecaptchaToken(), studyDto.getRecaptchaSiteKey(), ipAddress)) {
+                return new ApiError(ErrorCodes.BAD_PAYLOAD, "Request was invalid");
+            }
         }
 
         String invitationGuid = payload.getInvitationGuid();
@@ -94,7 +105,7 @@ public class InvitationCheckStatusRoute extends ValidatedJsonInputRoute<Invitati
         } else {
             LOG.error("Invitation check by client which does not have access to study: clientId={}, study={}",
                     payload.getAuth0ClientId(), studyGuid);
-            return new ApiError(ErrorCodes.INVALID_INVITATION, "Invalid invitation");
+            return new ApiError(ErrorCodes.INVALID_INVITATION, getInviteErrorMessage(handle, studyDto.getId(), langCode));
         }
 
         InvitationDao invitationDao = handle.attach(InvitationDao.class);
@@ -102,13 +113,13 @@ public class InvitationCheckStatusRoute extends ValidatedJsonInputRoute<Invitati
         if (invitation == null) {
             // It might just be a typo, so do a warn instead of error log.
             LOG.warn("Invitation {} does not exist", invitationGuid);
-            return new ApiError(ErrorCodes.INVALID_INVITATION, "Invalid invitation");
+            return new ApiError(ErrorCodes.INVALID_INVITATION, getInviteErrorMessage(handle, studyDto.getId(), langCode));
         } else if (invitation.isVoid()) {
             LOG.error("Invitation {} is voided", invitationGuid);
-            return new ApiError(ErrorCodes.INVALID_INVITATION, "Invalid invitation");
+            return new ApiError(ErrorCodes.INVALID_INVITATION, getInviteErrorMessage(handle, studyDto.getId(), langCode));
         } else if (invitation.isAccepted()) {
             LOG.error("Invitation {} has already been accepted", invitationGuid);
-            return new ApiError(ErrorCodes.INVALID_INVITATION, "Invalid invitation");
+            return new ApiError(ErrorCodes.INVALID_INVITATION, getInviteErrorMessage(handle, studyDto.getId(), langCode));
         } else {
             LOG.info("Invitation {} is valid", invitationGuid);
         }
@@ -162,6 +173,20 @@ public class InvitationCheckStatusRoute extends ValidatedJsonInputRoute<Invitati
             LOG.error("Recaptcha validation was unsuccessful: {}", new Gson().toJson(recaptchaResponse));
         }
         return recaptchaResponse.isSuccess();
+    }
+
+    String getInviteErrorMessage(Handle handle, long studyId, String langCode) {
+        Long inviteErrorTmplId = handle.attach(StudyDao.class)
+                .findSettings(studyId)
+                .map(StudySettings::getInviteErrorTemplateId)
+                .orElse(null);
+        if (inviteErrorTmplId != null) {
+            return handle.attach(TemplateDao.class)
+                    .loadTemplateById(inviteErrorTmplId)
+                    .render(langCode);
+        } else {
+            return DEFAULT_INVITE_ERROR_MSG;
+        }
     }
 
     @Override

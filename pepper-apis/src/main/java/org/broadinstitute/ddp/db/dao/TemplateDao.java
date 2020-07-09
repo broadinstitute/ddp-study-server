@@ -17,6 +17,8 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.cache.LanguageStore;
+import org.broadinstitute.ddp.content.I18nTemplateConstants;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
@@ -49,9 +51,6 @@ public interface TemplateDao extends SqlObject {
     @CreateSqlObject
     JdbiVariableSubstitution getJdbiVariableSubstitution();
 
-    @CreateSqlObject()
-    JdbiLanguageCode getJdbiLanguageCode();
-
     @CreateSqlObject
     JdbiRevision getJdbiRevision();
 
@@ -70,7 +69,6 @@ public interface TemplateDao extends SqlObject {
         JdbiTemplate jdbiTemplate = getJdbiTemplate();
         JdbiTemplateVariable jdbiTemplateVariable = getJdbiTemplateVariable();
         JdbiVariableSubstitution jdbiVariableSubstitution = getJdbiVariableSubstitution();
-        JdbiLanguageCode jdbiLanguageCode = getJdbiLanguageCode();
 
         TemplateType templateType = template.getTemplateType();
         String templateText = template.getTemplateText();
@@ -91,13 +89,18 @@ public interface TemplateDao extends SqlObject {
             String variableName = variable.getName();
             Collection<Translation> translations = variable.getTranslations();
 
+            if (I18nTemplateConstants.DDP.equals(variableName) || I18nTemplateConstants.LAST_UPDATED.equals(variableName)) {
+                throw new DaoException("Variable name '" + variableName + "' is not allowed");
+            }
+
             // insert into template variable
             long templateVariableId = jdbiTemplateVariable.insertVariable(templateId, variableName);
 
             for (Translation translation : translations) {
                 String languageCode = translation.getLanguageCode();
                 String translatedText = translation.getText();
-                jdbiVariableSubstitution.insert(jdbiLanguageCode.getLanguageCodeId(languageCode),
+                jdbiVariableSubstitution.insert(
+                        LanguageStore.getOrCompute(getHandle(), languageCode).getId(),
                         translatedText, revisionId, templateVariableId);
             }
         }

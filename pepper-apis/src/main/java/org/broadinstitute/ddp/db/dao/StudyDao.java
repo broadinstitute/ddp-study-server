@@ -1,11 +1,13 @@
 package org.broadinstitute.ddp.db.dao;
 
 import java.util.Optional;
-import java.util.Set;
 
-import org.broadinstitute.ddp.db.dto.LanguageDto;
+import org.broadinstitute.ddp.db.DBUtils;
+import org.broadinstitute.ddp.db.DaoException;
+import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.study.StudyExitRequest;
-
+import org.broadinstitute.ddp.model.study.StudySettings;
+import org.jdbi.v3.sqlobject.CreateSqlObject;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
@@ -15,6 +17,13 @@ import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
 public interface StudyDao extends SqlObject {
+
+    @CreateSqlObject
+    StudySql getStudySql();
+
+    //
+    // Exit requests
+    //
 
     @GetGeneratedKeys
     @SqlUpdate("insert into study_exit_request (study_id, user_id, notes, created_at)"
@@ -28,19 +37,27 @@ public interface StudyDao extends SqlObject {
     @RegisterConstructorMapper(StudyExitRequest.class)
     Optional<StudyExitRequest> findExitRequestForUser(@Bind("userId") long userId);
 
-    @SqlQuery(
-            "select lc.language_code_id, lc.iso_language_code from study_language sl"
-            + " inner join language_code lc on sl.language_code_id = lc.language_code_id"
-            + " inner join umbrella_study us on sl.umbrella_study_id = us.umbrella_study_id where us.guid = :studyGuid"
-    )
-    @RegisterConstructorMapper(LanguageDto.class)
-    Set<LanguageDto> findSupportedLanguagesByGuid(@Bind("studyGuid") String studyGuid);
+    //
+    // Study settings
+    //
 
-    @GetGeneratedKeys
-    @SqlUpdate(
-            "insert into study_language(umbrella_study_id, language_code_id) values ("
-            + " (select umbrella_study_id from umbrella_study where guid = :studyGuid),"
-            + " (select language_code_id from language_code where iso_language_code = :isoCode))"
-    )
-    long addSupportedLanguage(@Bind("studyGuid") String umbrellaStudyGuid, @Bind("isoCode") String isoLanguageCode);
+    default void addSettings(long studyId, Template inviteError, Long revisionId, boolean analyticsEnabled, String analyticsToken,
+                             boolean shouldDeleteUnsendableEmails) {
+        if (inviteError != null && revisionId == null) {
+            throw new DaoException("Revision is needed to insert templates");
+        }
+        Long inviteErrorTmplId = inviteError == null ? null
+                : getHandle().attach(TemplateDao.class).insertTemplate(inviteError, revisionId);
+        DBUtils.checkInsert(1, getStudySql().insertSettings(studyId, inviteErrorTmplId, analyticsEnabled, analyticsToken,
+                shouldDeleteUnsendableEmails));
+    }
+
+    @SqlQuery("select * from study_settings where umbrella_study_id = :studyId")
+    @RegisterConstructorMapper(StudySettings.class)
+    Optional<StudySettings> findSettings(@Bind("studyId") long studyId);
+
+    @SqlQuery("select * from study_settings where umbrella_study_id = ("
+            + "select umbrella_study_id from umbrella_study where guid = :studyGuid)")
+    @RegisterConstructorMapper(StudySettings.class)
+    Optional<StudySettings> findSettings(@Bind("studyGuid") String studyGuid);
 }

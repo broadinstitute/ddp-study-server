@@ -1417,7 +1417,8 @@ public class DataLoader {
         ZoneId zoneId = ZoneId.of("UTC");
         long epoch = DEFAULT_MIGRATION_KIT_CREATE_DATE.atStartOfDay(zoneId).toEpochSecond();
         long kitTypeId = kitTypeDao.getSalivaKitType().getId();
-        long kitId = dsmKitRequestDao.createKitRequest(data.getDdpSpitKitRequestId(), studyGuid, addressid, kitTypeId, pepperUserId, epoch);
+        long kitId = dsmKitRequestDao.createKitRequest(data.getDdpSpitKitRequestId(), studyGuid,
+                addressid, kitTypeId, pepperUserId, epoch, false);
         LOG.info("Created kit ID: " + kitId);
         return kitId;
     }

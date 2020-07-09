@@ -3,21 +3,17 @@ package org.broadinstitute.ddp.util;
 import static org.broadinstitute.ddp.constants.RouteConstants.Header.BEARER;
 
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.content.ContentStyle;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
-import org.broadinstitute.ddp.db.dao.StudyDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.LanguageDto;
@@ -147,16 +143,9 @@ public class RouteUtil {
      */
     public static ActivityInstanceDto findAccessibleInstanceOrHalt(Response response, Handle handle,
                                                                    String participantGuid, String studyGuid, String instanceGuid) {
-        StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
-        if (studyDto == null) {
-            String msg = "Could not find study with guid " + participantGuid;
-            throw ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.STUDY_NOT_FOUND, msg));
-        }
-        User user = handle.attach(UserDao.class).findUserByGuid(participantGuid)
-                .orElseThrow(() -> {
-                    String msg = "Could not find user with guid " + participantGuid;
-                    return ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.USER_NOT_FOUND, msg));
-                });
+        var found = findUserAndStudyOrHalt(handle, participantGuid, studyGuid);
+        var studyDto = found.getStudyDto();
+        var user = found.getUser();
         ActivityInstanceDto instanceDto = handle.attach(JdbiActivityInstance.class)
                 .getByActivityInstanceGuid(instanceGuid)
                 .orElseThrow(() -> {
@@ -190,19 +179,48 @@ public class RouteUtil {
      */
     public static String resolveLanguage(Request request, Handle handle, String studyGuid, Locale userPreferredLocale) {
         String acceptLanguageHeader = request.headers(RouteConstants.Header.ACCEPT_LANGUAGE);
-        List<Locale.LanguageRange> acceptLanguages = StringUtils.isNotEmpty(acceptLanguageHeader)
-                ? Locale.LanguageRange.parse(acceptLanguageHeader) : Collections.emptyList();
+        Locale locale = I18nUtil.resolveLocale(handle, studyGuid, userPreferredLocale, acceptLanguageHeader);
+        return locale.getLanguage();
+    }
 
-        Set<Locale> studyLanguages = new HashSet<>();
-        if (studyGuid != null) {
-            studyLanguages = handle.attach(StudyDao.class)
-                    .findSupportedLanguagesByGuid(studyGuid)
-                    .stream()
-                    .map(LanguageDto::toLocale)
-                    .collect(Collectors.toSet());
+    /**
+     * Find the user and study, halting request if either is not found. If not already set, caller should set the
+     * `application/json` header on the response manually to ensure response is interpreted properly.
+     *
+     * @param handle    the database handle
+     * @param userGuid  the user guid
+     * @param studyGuid the study guid
+     * @return user and study
+     */
+    public static UserAndStudy findUserAndStudyOrHalt(Handle handle, String userGuid, String studyGuid) {
+        StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
+        if (studyDto == null) {
+            String msg = "Could not find study with guid " + studyGuid;
+            throw ResponseUtil.haltError(HttpStatus.SC_NOT_FOUND, new ApiError(ErrorCodes.STUDY_NOT_FOUND, msg));
+        }
+        User user = handle.attach(UserDao.class).findUserByGuid(userGuid)
+                .orElseThrow(() -> {
+                    String msg = "Could not find user with guid " + userGuid;
+                    return ResponseUtil.haltError(HttpStatus.SC_NOT_FOUND, new ApiError(ErrorCodes.USER_NOT_FOUND, msg));
+                });
+        return new UserAndStudy(user, studyDto);
+    }
+
+    public static final class UserAndStudy {
+        private final User user;
+        private final StudyDto studyDto;
+
+        public UserAndStudy(User user, StudyDto studyDto) {
+            this.user = user;
+            this.studyDto = studyDto;
         }
 
-        Locale resolved = I18nUtil.resolvePreferredLanguage(userPreferredLocale, acceptLanguages, studyLanguages);
-        return resolved.getLanguage();
+        public User getUser() {
+            return user;
+        }
+
+        public StudyDto getStudyDto() {
+            return studyDto;
+        }
     }
 }

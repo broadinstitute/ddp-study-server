@@ -34,4 +34,9 @@ public final class PicklistAnswer extends Answer<List<SelectedPicklistOption>> {
     public void setValue(List<SelectedPicklistOption> value) {
         this.value = value;
     }
+
+    @Override
+    public boolean isEmpty() {
+        return value == null || value.isEmpty();
+    }
 }

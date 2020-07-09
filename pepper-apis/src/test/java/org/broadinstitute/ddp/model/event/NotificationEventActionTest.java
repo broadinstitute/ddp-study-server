@@ -52,7 +52,7 @@ public class NotificationEventActionTest extends TxnAwareBaseTest {
             var signal = new EventSignal(testData.getUserId(), testData.getUserId(), testData.getUserGuid(),
                     testData.getStudyId(), EventTriggerType.REACHED_AOM);
             var dto = createEventConfigurationDto(handle, EventTriggerType.REACHED_AOM,
-                    NotificationType.INVITATION_EMAIL, NotificationServiceType.SENDGRID, 1L, null);
+                    NotificationType.INVITATION_EMAIL, NotificationServiceType.SENDGRID, null);
             var action = new NotificationEventAction(new EventConfiguration(dto), dto);
             action.doAction(null, handle, signal);
             fail("expected exception should have been thrown");
@@ -69,7 +69,7 @@ public class NotificationEventActionTest extends TxnAwareBaseTest {
             var signal = new EventSignal(testData.getUserId(), testData.getUserId(), testData.getUserGuid(),
                     testData.getStudyId(), EventTriggerType.REACHED_AOM);
             var dto = createEventConfigurationDto(handle, EventTriggerType.REACHED_AOM,
-                    NotificationType.INVITATION_EMAIL, NotificationServiceType.SENDGRID, 1L, null);
+                    NotificationType.INVITATION_EMAIL, NotificationServiceType.SENDGRID, null);
             var action = new NotificationEventAction(new EventConfiguration(dto), dto);
             long queuedEventId = action.run(handle, signal);
 
@@ -91,7 +91,7 @@ public class NotificationEventActionTest extends TxnAwareBaseTest {
             var signal = new EventSignal(testData.getUserId(), testData.getUserId(), testData.getUserGuid(),
                     testData.getStudyId(), EventTriggerType.REACHED_AOM);
             var dto = createEventConfigurationDto(handle, EventTriggerType.REACHED_AOM,
-                    NotificationType.INVITATION_EMAIL, NotificationServiceType.SENDGRID, 1L, null);
+                    NotificationType.INVITATION_EMAIL, NotificationServiceType.SENDGRID, null);
             var action = new NotificationEventAction(new EventConfiguration(dto), dto);
             long queuedEventId = action.run(handle, signal);
 
@@ -127,7 +127,7 @@ public class NotificationEventActionTest extends TxnAwareBaseTest {
             var signal = new EventSignal(testData.getUserId(), testData.getUserId(), testData.getUserGuid(),
                     testData.getStudyId(), EventTriggerType.REACHED_AOM);
             var dto = createEventConfigurationDto(handle, EventTriggerType.REACHED_AOM,
-                    NotificationType.INVITATION_EMAIL, NotificationServiceType.SENDGRID, 1L, null);
+                    NotificationType.INVITATION_EMAIL, NotificationServiceType.SENDGRID, null);
             var action = new NotificationEventAction(new EventConfiguration(dto), dto);
             long queuedEventId = action.run(handle, signal);
 
@@ -151,7 +151,7 @@ public class NotificationEventActionTest extends TxnAwareBaseTest {
             var signal = new InvitationCreatedSignal(testData.getUserId(), testData.getUserId(), testData.getUserGuid(),
                     testData.getStudyId(), invitation1);
             var dto = createEventConfigurationDto(handle, EventTriggerType.INVITATION_CREATED,
-                    NotificationType.INVITATION_EMAIL, NotificationServiceType.SENDGRID, 1L, null);
+                    NotificationType.INVITATION_EMAIL, NotificationServiceType.SENDGRID, null);
             var action = new NotificationEventAction(new EventConfiguration(dto), dto);
             long queuedEventId = action.run(handle, signal);
 
@@ -173,19 +173,19 @@ public class NotificationEventActionTest extends TxnAwareBaseTest {
 
     private EventConfigurationDto createEventConfigurationDto(Handle handle, EventTriggerType triggerType,
                                                               NotificationType notificationType, NotificationServiceType serviceType,
-                                                              long templateId, Long linkedActivityId) {
+                                                              Long linkedActivityId) {
         long eventConfigurationId = insertInvitationEmailEventConfiguration(handle, triggerType);
         return new EventConfigurationDto(eventConfigurationId, triggerType, EventActionType.NOTIFICATION, 0, true,
                 null, null, null, MessageDestination.PARTICIPANT_NOTIFICATION.name(),
                 null, null, null, null, null, null, null, null,
-                notificationType, serviceType, templateId, linkedActivityId,
+                notificationType, serviceType, linkedActivityId,
                 null, null, null, null, null, null);
     }
 
     private long insertInvitationEmailEventConfiguration(Handle handle, EventTriggerType staticTriggerType) {
         long triggerId = handle.attach(EventTriggerDao.class).insertStaticTrigger(staticTriggerType);
         long actionId = handle.attach(EventActionDao.class).insertInvitationEmailNotificationAction(
-                new SendgridEmailEventActionDto("dummy-template-key", "en"));
+                new SendgridEmailEventActionDto("dummy-template-key", "en", false));
         return handle.attach(JdbiEventConfiguration.class).insert(triggerId, actionId, testData.getStudyId(),
                 Instant.now().toEpochMilli(), null, 0, null, null, true, 1);
     }

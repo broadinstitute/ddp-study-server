@@ -73,7 +73,7 @@ public class KitConfigurationTest extends TxnAwareBaseTest {
             long studyId = data.getStudyId();
             Long numberOfKits = 1L;
             Long kitTypeId = kitTypeDao.getSalivaKitType().getId();
-            configurationId = kitConfigurationDao.insertConfiguration(studyId, numberOfKits, kitTypeId);
+            configurationId = kitConfigurationDao.insertConfiguration(studyId, numberOfKits, kitTypeId, false);
 
             String expr = String.format(
                     "user.studies[\"%s\"].forms[\"%s\"].isStatus(\"IN_PROGRESS\")",
@@ -224,6 +224,7 @@ public class KitConfigurationTest extends TxnAwareBaseTest {
                                 kc.getNumKits(),
                                 kc.getKitType(),
                                 kc.getStudyGuid(),
+                                kc.needsApproval(),
                                 List.of(theRule));
                     })
                     .findFirst()

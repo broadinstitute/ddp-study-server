@@ -67,9 +67,10 @@ public class EventConfigurationDto {
     private Boolean createAnnouncementForProxies;
 
     /* NOTIFICATION */
+    // Currently, notification templates are not needed yet in event configuration
+    // but is used in queued notification instead.
     private NotificationType notificationType;
     private NotificationServiceType notificationServiceType;
-    private Long notificationTemplateId;
     private Long linkedActivityId;
     private List<PdfAttachment> notificationPdfAttachments = new ArrayList<>();
 
@@ -116,7 +117,6 @@ public class EventConfigurationDto {
                                  Boolean announcementCreateForProxies,
                                  NotificationType notificationType,
                                  NotificationServiceType notificationServiceType,
-                                 Long notificationTemplateId,
                                  Long linkedActivityId,
                                  Long pdfGenerationDocumentConfigurationId,
                                  Long activityInstanceCreationStudyActivityId,
@@ -143,7 +143,6 @@ public class EventConfigurationDto {
         this.createAnnouncementForProxies = announcementCreateForProxies;
         this.notificationType = notificationType;
         this.notificationServiceType = notificationServiceType;
-        this.notificationTemplateId = notificationTemplateId;
         this.linkedActivityId = linkedActivityId;
         this.pdfGenerationDocumentConfigurationId = pdfGenerationDocumentConfigurationId;
         this.activityInstanceCreationStudyActivityId = activityInstanceCreationStudyActivityId;
@@ -227,10 +226,6 @@ public class EventConfigurationDto {
 
     public NotificationServiceType getNotificationServiceType() {
         return notificationServiceType;
-    }
-
-    public Long getNotificationTemplateId() {
-        return notificationTemplateId;
     }
 
     public Long getLinkedActivityId() {

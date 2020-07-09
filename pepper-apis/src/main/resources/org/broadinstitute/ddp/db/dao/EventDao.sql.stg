@@ -28,11 +28,10 @@ SELECT
      ann_act.create_for_proxies as announcement_create_for_proxies,
      nt.notification_type_code as notification_type,
      ns.service_code as notification_service_type,
-     unea.notification_template_id,
      unea.linked_activity_id,
-     pea.pdf_document_configuration_id as pdf_generation_document_configuration_id,
      unpdf.pdf_document_configuration_id as user_notification_document_configuration_id,
      unpdf.generate_if_missing,
+     pea.pdf_document_configuration_id as pdf_generation_document_configuration_id,
      aica.study_activity_id as activity_instance_creation_study_activity_id,
      cp_answer.copy_configuration_id as copy_action_copy_configuration_id,
      ciea.contact_email_question_stable_code_id as contact_email_question_stable_code_id,
@@ -56,10 +55,10 @@ LEFT JOIN dsm_notification_trigger dnt ON dnt.dsm_notification_trigger_id = et.e
 LEFT JOIN dsm_notification_event_type dnet ON dnet.dsm_notification_event_type_id = dnt.dsm_notification_event_type_id
 LEFT JOIN user_announcement_event_action as ann_act on ann_act.event_action_id = ea.event_action_id
 LEFT JOIN user_notification_event_action unea on unea.user_notification_event_action_id = ea.event_action_id
+LEFT JOIN user_notification_pdf unpdf on unpdf.user_notification_event_action_id = ea.event_action_id
 LEFT JOIN notification_type nt on nt.notification_type_id = unea.notification_type_id
 LEFT JOIN notification_service ns on ns.notification_service_id = unea.notification_service_id
 LEFT JOIN pdf_generation_event_action as pea on pea.event_action_id = ea.event_action_id
-LEFT JOIN user_notification_pdf unpdf on unpdf.user_notification_event_action_id = ea.event_action_id
 LEFT JOIN activity_instance_creation_action aica ON aica.activity_instance_creation_action_id = ea.event_action_id
 LEFT JOIN copy_answer_event_action as cp_answer on cp_answer.event_action_id=ea.event_action_id
 LEFT JOIN create_invitation_event_action as ciea on ciea.event_action_id = ea.event_action_id
@@ -109,6 +108,22 @@ select
     evt_config.event_configuration_id = :eventConfigId
 >>
 
+// Use inner-joins since notification event should have at least one template.
+getNotificationTemplatesForEvent() ::= <<
+select nt.notification_template_id,
+       nt.template_key,
+       nt.is_dynamic,
+       lc.language_code_id,
+       lc.iso_language_code
+  from event_configuration as cfg
+  join event_action act on act.event_action_id = cfg.event_action_id
+  join user_notification_event_action as unea on unea.user_notification_event_action_id = act.event_action_id
+  join user_notification_template as unt on unt.user_notification_event_action_id = unea.user_notification_event_action_id
+  join notification_template as nt on nt.notification_template_id = unt.notification_template_id
+  join language_code as lc on lc.language_code_id = nt.language_code_id
+ where cfg.event_configuration_id = :eventConfigId
+>>
+
 /**
  * Returns notification events related to workflow states
 */
@@ -155,17 +170,16 @@ select q.queued_event_id,
        (select gcp_topic from message_destination where message_destination_id = ea.message_destination_id) as gcp_topic,
        (select e.expression_text from expression e where e.expression_id = cfg.precondition_expression_id)  as precondition,
        (select e.expression_text from expression e where e.expression_id = cfg.cancel_expression_id)        as cancel_condition,
-       study.guid         as study_guid,
-       study.web_base_url as study_web_base_url,
+       study.guid            as study_guid,
+       study.web_base_url    as study_web_base_url,
        sg.api_key            as sendgrid_api_key,
        sg.from_name          as sendgrid_from_name,
        sg.from_email         as sendgrid_from_email,
        sg.default_salutation as sendgrid_default_salutation,
        (select notification_type_code from notification_type where notification_type_id = n.notification_type_id)   as notification_type,
        (select service_code from notification_service where notification_service_id = n.notification_service_id)    as service_type,
-       (select template_key from notification_template where notification_template_id = n.notification_template_id) as template_key,
        n.linked_activity_id,
-       qn.email_address as to_email_address,
+       qn.email_address  as to_email_address,
        sub.variable_name as substitution_variable_name,
        sub.value         as substitution_value,
        (select pdf_document_configuration_id

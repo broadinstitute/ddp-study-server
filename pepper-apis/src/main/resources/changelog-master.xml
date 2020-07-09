@@ -207,6 +207,15 @@
     <include file="db-changes/schema/zip-code-messages.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-4703-activity-instance-substitutions.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/seed/DDP-4674-login-account-created-event-type.xml" relativeToChangelogFile="true"/>
-    <include file="db-changes/schema/add-last-visited-activity-section-column-to-activity-instance.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-1855-user-notification-templates.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-4706-modify-notification.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/date-question-picklist-allow-future-years.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/study-settings.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-4737-tooltip.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-4744-time-zone.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-4609-kits-needs-approval.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-2565-study-settings-analytics.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/should-delete-unsendable-emails.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/add-section-index-column-to-activity-instance.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/user_legacy_altpid_change_limit_size.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

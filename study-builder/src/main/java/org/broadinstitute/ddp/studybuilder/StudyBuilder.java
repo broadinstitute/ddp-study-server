@@ -23,6 +23,7 @@ import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.KitConfigurationDao;
 import org.broadinstitute.ddp.db.dao.KitTypeDao;
 import org.broadinstitute.ddp.db.dao.QueuedEventDao;
+import org.broadinstitute.ddp.db.dao.StudyDao;
 import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
 import org.broadinstitute.ddp.db.dao.StudyLanguageDao;
 import org.broadinstitute.ddp.db.dto.Auth0TenantDto;
@@ -94,6 +95,7 @@ public class StudyBuilder {
         insertStudyGovernance(handle, studyDto);
         insertStudyDetails(handle, studyDto.getId());
         insertStudyLanguages(handle, studyDto.getId());
+        insertSettings(handle, studyDto, adminDto.getUserId());
         insertSendgrid(handle, studyDto.getId());
         insertKits(handle, studyDto.getId(), adminDto.getUserId());
 
@@ -463,6 +465,41 @@ public class StudyBuilder {
         }
     }
 
+    private void insertSettings(Handle handle, StudyDto studyDto, long userId) {
+        if (!cfg.hasPath("settings")) {
+            LOG.info("No additional settings configured for study {}", studyDto.getGuid());
+            return;
+        }
+
+        Config settingsCfg = cfg.getConfig("settings");
+
+        Template inviteError = BuilderUtils.parseTemplate(settingsCfg, "inviteErrorTemplate");
+        if (inviteError != null) {
+            String errors = BuilderUtils.validateTemplate(inviteError);
+            if (errors != null) {
+                throw new DDPException("Invite error template has validation errors: " + errors);
+            }
+        }
+
+        Long revisionId = null;
+        if (inviteError != null) {
+            revisionId = handle.attach(JdbiRevision.class).insertStart(
+                    Instant.now().toEpochMilli(), userId, "Insert study settings");
+        }
+
+        boolean analyticsEnabled = settingsCfg.hasPath("analyticsEnabled") && settingsCfg.getBoolean("analyticsEnabled");
+        String analyticsToken = ConfigUtil.getStrIfPresent(settingsCfg, "analyticsToken");
+        boolean shouldDeleteUnsendableEmails = settingsCfg.hasPath("shouldDeleteUnsendableEmails")
+                && settingsCfg.getBoolean("shouldDeleteUnsendableEmails");
+
+        handle.attach(StudyDao.class).addSettings(studyDto.getId(), inviteError, revisionId, analyticsEnabled, analyticsToken,
+                shouldDeleteUnsendableEmails);
+        LOG.info("Created settings for study={}, inviteErrorTmplId={}, analyticsEnabled={}, analyticsToken={},"
+                        + " shouldDeleteUnsendableEmails={}",
+                studyDto.getGuid(), inviteError == null ? null : inviteError.getTemplateId(), analyticsEnabled, analyticsToken,
+                shouldDeleteUnsendableEmails);
+    }
+
     private void insertSendgrid(Handle handle, long studyId) {
         Config sendgridCfg = cfg.getConfig("sendgrid");
         String apiKey = sendgridCfg.getString("apiKey");
@@ -481,11 +518,13 @@ public class StudyBuilder {
         for (Config kitCfg : cfg.getConfigList("kits")) {
             String type = kitCfg.getString("type");
             int quantity = kitCfg.getInt("quantity");
+            boolean needsApproval = kitCfg.hasPath("needsApproval") && kitCfg.getBoolean("needsApproval");
 
             KitType kitType = kitTypeDao.getKitTypeByName(type)
                     .orElseThrow(() -> new DDPException("Could not find kit type " + type));
-            long kitId = kitDao.insertConfiguration(studyId, quantity, kitType.getId());
-            LOG.info("Created kit configuration with id={}, type={}, quantity={}", kitId, type, quantity);
+            long kitId = kitDao.insertConfiguration(studyId, quantity, kitType.getId(), needsApproval);
+            LOG.info("Created kit configuration with id={}, type={}, quantity={}, needsApproval={}",
+                    kitId, type, quantity, needsApproval);
 
             for (Config ruleCfg : kitCfg.getConfigList("rules")) {
                 KitRuleType ruleType = KitRuleType.valueOf(ruleCfg.getString("type"));

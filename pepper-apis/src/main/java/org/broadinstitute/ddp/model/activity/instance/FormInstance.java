@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import javax.validation.constraints.NotNull;
@@ -18,18 +17,16 @@ import org.broadinstitute.ddp.content.ContentStyle;
 import org.broadinstitute.ddp.content.HtmlConverter;
 import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.content.I18nTemplateConstants;
+import org.broadinstitute.ddp.content.RenderValueProvider;
 import org.broadinstitute.ddp.content.Renderable;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
-import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
 import org.broadinstitute.ddp.model.activity.types.FormType;
 import org.broadinstitute.ddp.model.activity.types.ListStyleHint;
-import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.pex.PexException;
 import org.broadinstitute.ddp.pex.PexInterpreter;
-import org.broadinstitute.ddp.transformers.DateTimeFormatUtils;
 import org.broadinstitute.ddp.transformers.LocalDateTimeAdapter;
 import org.broadinstitute.ddp.util.MiscUtil;
 import org.jdbi.v3.core.Handle;
@@ -68,7 +65,7 @@ public final class FormInstance extends ActivityInstance {
     private transient Long closingSectionId;
     private transient Long readonlyHintTemplateId;
     private transient Long lastUpdatedTextTemplateId;
-    private int lastVisitedActivitySection;
+    private int sectionIndex;
 
     public FormInstance(
             long participantUserId,
@@ -90,7 +87,7 @@ public final class FormInstance extends ActivityInstance {
             Long lastUpdatedTextTemplateId,
             LocalDateTime activityDefinitionLastUpdated,
             boolean isFollowup,
-            int lastVisitedActivitySection
+            int sectionIndex
     ) {
         super(participantUserId, instanceId, activityId, ActivityType.FORMS, guid, title, subtitle, statusTypeCode, readonly, activityCode,
                 createdAtMillis, firstCompletedAt, isFollowup);
@@ -103,7 +100,7 @@ public final class FormInstance extends ActivityInstance {
         this.readonlyHintTemplateId = readonlyHintTemplateId;
         this.lastUpdatedTextTemplateId = lastUpdatedTextTemplateId;
         this.activityDefinitionLastUpdated = activityDefinitionLastUpdated;
-        this.lastVisitedActivitySection = lastVisitedActivitySection;
+        this.sectionIndex = sectionIndex;
     }
 
     public FormType getFormType() {
@@ -172,12 +169,12 @@ public final class FormInstance extends ActivityInstance {
         return activityDefinitionLastUpdated;
     }
 
-    public int getLastVisitedActivitySection() {
-        return lastVisitedActivitySection;
+    public int getSectionIndex() {
+        return sectionIndex;
     }
 
-    public void setLastVisitedActivitySection(int lastVisitedActivitySection) {
-        this.lastVisitedActivitySection = lastVisitedActivitySection;
+    public void setSectionIndex(int sectionIndex) {
+        this.sectionIndex = sectionIndex;
     }
 
     /**
@@ -199,9 +196,11 @@ public final class FormInstance extends ActivityInstance {
             section.registerTemplateIds(consumer);
         }
 
-        Map<String, String> context = buildRenderContext(handle);
-        context.putAll(handle.attach(ActivityInstanceDao.class).findSubstitutions(getInstanceId()));
+        Map<String, String> snapshot = handle.attach(ActivityInstanceDao.class).findSubstitutions(getInstanceId());
+        RenderValueProvider valueProvider = I18nContentRenderer.newValueProvider(handle, getParticipantUserId(), snapshot);
 
+        Map<String, Object> context = new HashMap<>();
+        context.put(I18nTemplateConstants.DDP, valueProvider);
         Map<Long, String> rendered = renderer.bulkRender(handle, templateIds, langCodeId, context);
         Renderable.Provider<String> provider = rendered::get;
 
@@ -217,44 +216,22 @@ public final class FormInstance extends ActivityInstance {
             }
         }
 
-        // Strip down HTML tags from subtitle if requested
-        String subtitle = getSubtitle();
-        subtitle = Optional.ofNullable(subtitle).map(
-            sub -> style != ContentStyle.BASIC ? sub : HtmlConverter.getPlainText(sub)
-        ).orElse(null);
-        setSubtitle(subtitle);
+        if (style == ContentStyle.BASIC) {
+            title = HtmlConverter.getPlainText(title);
+            subtitle = HtmlConverter.getPlainText(subtitle);
+        }
 
         if (lastUpdatedTextTemplateId != null) {
             Map<String, Object> varNameToValueMap = new HashMap<>();
             // Intentionally converting to a date here for display purposes
             LocalDate lastUpdatedDate = activityDefinitionLastUpdated == null ? null : activityDefinitionLastUpdated.toLocalDate();
-            varNameToValueMap.put(I18nTemplateConstants.LAST_UPDATED_DATE_TEMPLATE_VAR_NAME, lastUpdatedDate);
+            varNameToValueMap.put(I18nTemplateConstants.LAST_UPDATED, lastUpdatedDate);
             activityDefinitionLastUpdatedText = renderer.renderContent(handle, lastUpdatedTextTemplateId, langCodeId, varNameToValueMap);
 
             if (style == ContentStyle.BASIC) {
                 activityDefinitionLastUpdatedText = HtmlConverter.getPlainText(activityDefinitionLastUpdatedText);
             }
         }
-    }
-
-    public Map<String, String> buildRenderContext(Handle handle) {
-        var context = new HashMap<String, String>();
-        context.put(I18nTemplateConstants.DASHED_DATE,
-                DateTimeFormatUtils.MONTH_FIRST_DASHED_DATE_FORMATTER.format(LocalDate.now()));
-
-        UserProfile profile = handle.attach(UserProfileDao.class)
-                .findProfileByUserId(getParticipantUserId())
-                .orElse(null);
-        if (profile != null) {
-            if (profile.getFirstName() != null) {
-                context.put(I18nTemplateConstants.PARTICIPANT_FIRST_NAME, profile.getFirstName());
-            }
-            if (profile.getLastName() != null) {
-                context.put(I18nTemplateConstants.PARTICIPANT_LAST_NAME, profile.getLastName());
-            }
-        }
-
-        return context;
     }
 
     /**

@@ -120,9 +120,6 @@ commands:
             develop)
               DEPLOY_ENV=dev
             ;;
-            scaling_experiment)
-              DEPLOY_ENV=dev
-            ;;
             test)
               DEPLOY_ENV=test
             ;;
@@ -261,6 +258,9 @@ commands:
       tcell_dir:
         type: string
         default: *tcell_dir
+      deploy_config_file_dir:
+        type: string
+        default: '../src/appengine'
     steps:
       - set-deployment-env
       - render-configs
@@ -270,13 +270,14 @@ commands:
           command: |
             DEPLOY_DIR='<<parameters.deploy_dir>>'
             TCELL_DIR='<<parameters.tcell_dir>>'
+            DEPLOY_CONFIG_FILE_DIR='<<parameters.deploy_config_file_dir>>'
             rm -rf $DEPLOY_DIR
             mkdir -p $DEPLOY_DIR
             cd $DEPLOY_DIR
             cp -r ../$TCELL_DIR .
             cp ../output-config/tcell_agent.config $TCELL_DIR
             cp ../target/<<parameters.jar_base_name>>.jar .
-            cp ../src/appengine/<<parameters.jar_base_name>>.yaml .
+            cp "$DEPLOY_CONFIG_FILE_DIR/<<parameters.jar_base_name>>.yaml" .
             cp ../output-config/application.conf .
       - auth-gcp-service-account
       - run:
@@ -431,6 +432,8 @@ commands:
               circleci tests split --split-by=timings --timings-type=classname > $THIS_NODE_TESTS_PATH
 
             echo "Number of test classes circleci wants to execute on this node: $(wc -l < $THIS_NODE_TESTS_PATH)"
+            echo "The included test classes are:"
+            cat $THIS_NODE_TESTS_PATH
 
             IGNORE_CLASS_LIST_PATH="${TEST_DATA_PATH}/surefire_classnames_ignore_list"
 
@@ -675,14 +678,17 @@ jobs:
       - attach_workspace:
           at: *root_path
       - setup-shared-env
-      - build-jar:
-          pom_file: pom.xml
-      - deploy-jar:
-          jar_base_name: DataDonationPlatform
+      # Deploy Housekeeping first so hopefully liquibase migrations
+      # are ran before DDP boots up.
       - build-jar:
           pom_file: housekeeping-pom.xml
       - deploy-jar:
           jar_base_name: Housekeeping
+      - build-jar:
+          pom_file: pom.xml
+      - deploy-jar:
+          jar_base_name: DataDonationPlatform
+          deploy_config_file_dir: ../output-config
       - update-dispatch-rules
 
   deploy-stored-jar-job:
@@ -693,14 +699,17 @@ jobs:
       - checkout:
           path: *repo_path
       - setup-shared-env
-      - retrieve-jar:
-          jar_base_name: DataDonationPlatform
-      - deploy-jar:
-          jar_base_name: DataDonationPlatform
+      # Deploy Housekeeping first so hopefully liquibase migrations
+      # are ran before DDP boots up.
       - retrieve-jar:
           jar_base_name: Housekeeping
       - deploy-jar:
           jar_base_name: Housekeeping
+      - retrieve-jar:
+          jar_base_name: DataDonationPlatform
+      - deploy-jar:
+          jar_base_name: DataDonationPlatform
+          deploy_config_file_dir: ../output-config
       - update-dispatch-rules
 
   deploy-docs-job:
@@ -740,7 +749,6 @@ workflows:
             branches:
               only:
                 - develop
-                - scaling_experiment
                 - &rc /^rc.*/
                 - &hotfix /^hotfix.*/
       - parallel-compile-and-test-job:

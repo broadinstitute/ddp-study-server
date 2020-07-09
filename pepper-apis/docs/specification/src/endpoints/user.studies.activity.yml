@@ -41,3 +41,37 @@ get:
       $ref: '../pepper.yml#/components/responses/ActivityDetailNotFoundResponse'
     default:
       $ref: '../pepper.yml#/components/responses/ErrorResponse'
+patch:
+  operationId: patchActivity
+  tags:
+    - Activities
+  summary: updates section index
+  description: with given user Guid, study's unique identifier and instance Guid Updates user's section index
+  requestBody:
+    $ref: '../pepper.yml#/components/requestBodies/UpdateUserSectionIndexRequestBody'
+  responses:
+    200:
+      description: user's section index sucessfully updated
+    400:
+      description: if section index is negative
+      content:
+        application/json:
+          schema:
+            $ref: '../pepper.yml#/components/schemas/Error.BadPayload'
+    404:
+      description: unable to find activity to update section index
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '../pepper.yml#/components/schemas/Error'
+              - type: object
+                properties:
+                  code:
+                    type: string
+                    enum:
+                      - STUDY_NOT_FOUND
+                      - USER_NOT_FOUND
+                      - ACTIVITY_NOT_FOUND
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'

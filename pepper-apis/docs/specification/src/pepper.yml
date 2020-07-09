@@ -96,12 +96,12 @@ paths:
     $ref: 'endpoints/user.studies.activity.yml'
   /user/{user}/studies/{study}/activities/{instance}/answers:
     $ref: 'endpoints/user.studies.activity.answers.yml'
-  /user/{user}/studies/{study}/activities/{instance}/lastVisitedSection:
-    $ref: 'endpoints/user.studies.last-visited-section.yml'
   /user/{user}/studies/{study}/consents:
     $ref: 'endpoints/user.studies.consents.yml'
   /user/{user}/studies/{study}/consents/{instance}:
     $ref: 'endpoints/user.studies.consent.yml'
+  /user/{user}/studies/{study}/invitations:
+    $ref: 'endpoints/user.studies.invitations.yml'
   /user/{user}/studies/{study}/medical-providers/{institutionType}:
     $ref: 'endpoints/user.studies.medical-providers.yml'
   /user/{user}/studies/{study}/medical-providers/{institutionType}/{provider}:

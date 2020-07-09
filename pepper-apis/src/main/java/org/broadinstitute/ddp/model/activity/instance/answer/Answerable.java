@@ -3,8 +3,7 @@ package org.broadinstitute.ddp.model.activity.instance.answer;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 
 /**
- * Represents something that knows of questions and answers, and can interact with answer values of
- * a certain type.
+ * Represents something that knows of questions and answers, and can interact with answer values of a certain type.
  *
  * @param <T> the type of answer value
  */
@@ -29,4 +28,10 @@ public interface Answerable<T> {
      */
     void setValue(T value);
 
+    /**
+     * Is this answer empty (e.g. no answer value yet, no options are selected, no text, etc)?
+     *
+     * @return true if empty
+     */
+    boolean isEmpty();
 }

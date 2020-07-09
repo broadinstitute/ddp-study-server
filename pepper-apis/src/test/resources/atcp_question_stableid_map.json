@@ -1992,6 +1992,64 @@
             ]
           }
         ]
+      },
+      {
+        "name": "AssentSurvey",
+        "activity_code": "ASSENT",
+        "question_answer_stables": [
+          {
+            "name": "PLATFORM_ASSENT_RECONTACT_PARTICIPANT_FOLLOWUP",
+            "stable_id": "CAN_CONTACT_LATER",
+            "type": "Boolean",
+            "source_type": "integer"
+          },
+          {
+            "name": "PLATFORM_ASSENT_GENSEQ_STUDY",
+            "stable_id": "ASSENT_CAN_DO_TESTS",
+            "type": "Boolean",
+            "source_type": "integer"
+          },
+          {
+            "name": "PLATFORM_ASSENT_MEDICAL_RECORD_RETRIEVAL",
+            "stable_id": "MAY_ASK_MY_DOCTOR",
+            "type": "Boolean",
+            "source_type": "integer"
+          },
+          {
+            "name": "PLATFORM_ASSENT_RECONTACT_RESEARCH_RESULTS",
+            "stable_id": "GET_THE_RESULT",
+            "type": "Boolean",
+            "source_type": "integer"
+          },
+          {
+            "name": "PLATFORM_ASSENT_RECONTACT_PHYSICIAN_DIAGNOSIS_RESULTS",
+            "stable_id": "RESEARCHERS_LEARN_SOMETHING",
+            "type": "Boolean",
+            "source_type": "integer"
+          },
+          {
+            "name": "PLATFORM_ASSENT_SIGNATURE",
+            "stable_id": "ASSENT_CHILD_SIGNATURE",
+            "type": "string"
+          },
+          {
+            "name": "PLATFORM_ASSENT_DOB",
+            "stable_id": "ASSENT_DOB",
+            "type": "Date",
+            "format": "yyyy-MM-dd'T'HH:mm:ss"
+          },
+          {
+            "name": "PLATFORM_ASSENT_GUARDIAN_SIGNATURE",
+            "stable_id": "ASSENT_SIGNATURE_OF_PERSON_EXPLAINING",
+            "type": "string"
+          },
+          {
+            "name": "PLATFORM_ASSENT_SIGNED_ON",
+            "stable_id": "ASSENT_DATE",
+            "type": "Date",
+            "format": "yyyy-MM-dd'T'HH:mm:ss"
+          }
+        ]
       }
     ],
     "datstatparticipantdata": [

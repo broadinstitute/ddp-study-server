@@ -5,12 +5,16 @@ import static org.broadinstitute.ddp.json.invitation.InvitationCheckStatusPayloa
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 
 import java.time.Instant;
 import java.util.Collections;
@@ -33,11 +37,14 @@ import org.broadinstitute.ddp.db.dao.JdbiRevision;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.KitConfigurationDao;
 import org.broadinstitute.ddp.db.dao.KitTypeDao;
+import org.broadinstitute.ddp.db.dao.StudyDao;
+import org.broadinstitute.ddp.db.dao.TemplateDao;
 import org.broadinstitute.ddp.db.dto.InvitationDto;
 import org.broadinstitute.ddp.json.invitation.InvitationCheckStatusPayload;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.definition.template.TemplateVariable;
 import org.broadinstitute.ddp.model.invitation.InvitationType;
+import org.broadinstitute.ddp.security.DDPAuth;
 import org.broadinstitute.ddp.transformers.NullableJsonTransformer;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.broadinstitute.ddp.util.TestServer;
@@ -77,7 +84,9 @@ public class InvitationCheckStatusRouteTest extends IntegrationTestSuite.TestCas
         doReturn(mockInviteDao).when(mockHandle).attach(InvitationDao.class);
         route = spy(InvitationCheckStatusRoute.class);
         doReturn(true).when(route).isUserRecaptchaTokenValid(anyString(), anyString(), anyString());
+        doReturn("invite error").when(route).getInviteErrorMessage(any(), anyLong(), anyString());
 
+        // Since we are mocking stuff, we need to run our own server
         testServer = new TestServer(
                 service -> service.post(RouteConstants.API.INVITATION_CHECK, route, new NullableJsonTransformer())
         ).startServer();
@@ -92,7 +101,7 @@ public class InvitationCheckStatusRouteTest extends IntegrationTestSuite.TestCas
     public void testCheckStatus_studyNotFound() {
         doReturn(null).when(mockJdbiStudy).findByStudyGuid(any());
         var payload = new InvitationCheckStatusPayload("foo", "invite", "mockTokenValue");
-        var actual = route.checkStatus(mockHandle, "study", "", "en", payload);
+        var actual = route.checkStatus(mockHandle, new DDPAuth(), "study", "", "en", payload);
         assertNotNull(actual);
         assertEquals(ErrorCodes.INVALID_INVITATION, actual.getCode());
     }
@@ -104,7 +113,7 @@ public class InvitationCheckStatusRouteTest extends IntegrationTestSuite.TestCas
                 .findPermittedStudyGuidsByAuth0ClientIdAndAuth0Domain(any(), any());
 
         var payload = new InvitationCheckStatusPayload("foo", "invite", "mockTokenValue");
-        var actual = route.checkStatus(mockHandle, "study", "", "en", payload);
+        var actual = route.checkStatus(mockHandle, new DDPAuth(), "study", "", "en", payload);
         assertNotNull(actual);
         assertEquals(ErrorCodes.INVALID_INVITATION, actual.getCode());
     }
@@ -116,32 +125,47 @@ public class InvitationCheckStatusRouteTest extends IntegrationTestSuite.TestCas
                 .findPermittedStudyGuidsByAuth0ClientIdAndAuth0Domain(any(), any());
 
         var payload = new InvitationCheckStatusPayload("foo", "invite", "mockTokenValue");
-        var actual = route.checkStatus(mockHandle, "study", "", "en", payload);
+        var actual = route.checkStatus(mockHandle, new DDPAuth(), "study", "", "en", payload);
         assertNotNull(actual);
         assertEquals(ErrorCodes.INVALID_INVITATION, actual.getCode());
     }
 
     @Test
     public void testCheckStatus_badInvitation() {
-        doReturn(testData.getTestingStudy()).when(mockJdbiStudy).findByStudyGuid(any());
-        doReturn(List.of(testData.getStudyGuid())).when(mockClientStudy)
-                .findPermittedStudyGuidsByAuth0ClientIdAndAuth0Domain(any(), any());
-        var payload = new InvitationCheckStatusPayload("foo", "invite", "mockTokenValue");
+        TransactionWrapper.useTxn(handle -> {
+            Template inviteError = Template.text("$foobar");
+            inviteError.addVariable(TemplateVariable.single("foobar", "en", "study invite error"));
+            long revisionId = handle.attach(JdbiRevision.class)
+                    .insertStart(Instant.now().toEpochMilli(), testData.getUserId(), "test");
+            handle.attach(StudyDao.class).addSettings(testData.getStudyId(), inviteError, revisionId, false, null, false);
 
-        doReturn(Optional.empty()).when(mockInviteDao).findByInvitationGuid(anyLong(), any());
-        var actual = route.checkStatus(mockHandle, "study", "", "en", payload);
-        assertEquals(ErrorCodes.INVALID_INVITATION, actual.getCode());
+            doReturn(handle.attach(StudyDao.class)).when(mockHandle).attach(StudyDao.class);
+            doReturn(handle.attach(TemplateDao.class)).when(mockHandle).attach(TemplateDao.class);
+            doCallRealMethod().when(route).getInviteErrorMessage(any(), anyLong(), anyString());
 
-        var now = Instant.now();
-        var voided = fakeInvitation(now, now, null, null);
-        doReturn(Optional.of(voided)).when(mockInviteDao).findByInvitationGuid(anyLong(), any());
-        actual = route.checkStatus(mockHandle, "study", "", "en", payload);
-        assertEquals(ErrorCodes.INVALID_INVITATION, actual.getCode());
+            doReturn(testData.getTestingStudy()).when(mockJdbiStudy).findByStudyGuid(any());
+            doReturn(List.of(testData.getStudyGuid())).when(mockClientStudy)
+                    .findPermittedStudyGuidsByAuth0ClientIdAndAuth0Domain(any(), any());
+            var payload = new InvitationCheckStatusPayload("foo", "invite", "mockTokenValue");
 
-        var accepted = fakeInvitation(now, null, null, now);
-        doReturn(Optional.of(accepted)).when(mockInviteDao).findByInvitationGuid(anyLong(), any());
-        actual = route.checkStatus(mockHandle, "study", "", "en", payload);
-        assertEquals(ErrorCodes.INVALID_INVITATION, actual.getCode());
+            doReturn(Optional.empty()).when(mockInviteDao).findByInvitationGuid(anyLong(), any());
+            var actual = route.checkStatus(mockHandle, new DDPAuth(), testData.getStudyGuid(), "", "en", payload);
+            assertEquals(ErrorCodes.INVALID_INVITATION, actual.getCode());
+            assertEquals("study invite error", actual.getMessage());
+
+            var now = Instant.now();
+            var voided = fakeInvitation(now, now, null, null);
+            doReturn(Optional.of(voided)).when(mockInviteDao).findByInvitationGuid(anyLong(), any());
+            actual = route.checkStatus(mockHandle, new DDPAuth(), "study", "", "en", payload);
+            assertEquals(ErrorCodes.INVALID_INVITATION, actual.getCode());
+
+            var accepted = fakeInvitation(now, null, null, now);
+            doReturn(Optional.of(accepted)).when(mockInviteDao).findByInvitationGuid(anyLong(), any());
+            actual = route.checkStatus(mockHandle, new DDPAuth(), "study", "", "en", payload);
+            assertEquals(ErrorCodes.INVALID_INVITATION, actual.getCode());
+
+            handle.rollback();
+        });
     }
 
     @Test
@@ -205,6 +229,27 @@ public class InvitationCheckStatusRouteTest extends IntegrationTestSuite.TestCas
     }
 
     @Test
+    public void testRecaptchaTokens_notRequiredForStudyAdmin() {
+        TransactionWrapper.useTxn(handle -> {
+            InvitationDto invite = handle.attach(InvitationFactory.class)
+                    .createRecruitmentInvitation(testData.getStudyId(), "invite" + System.currentTimeMillis());
+            doReturn(testData.getTestingStudy()).when(route).findStudy(any(Handle.class), anyString());
+
+            var mockAuth = mock(DDPAuth.class);
+            doReturn(true).when(mockAuth).hasAdminAccessToStudy(anyString());
+            doReturn(false).when(route).isUserRecaptchaTokenValid(anyString(), anyString(), anyString());
+
+            var payload = new InvitationCheckStatusPayload(testData.getAuth0ClientId(), invite.getInvitationGuid(), null);
+            var actual = route.checkStatus(handle, mockAuth, testData.getStudyGuid(), "", "en", payload);
+
+            verify(route, never()).isUserRecaptchaTokenValid(anyString(), anyString(), anyString());
+            assertNull("should not have any errors", actual);
+
+            handle.rollback();
+        });
+    }
+
+    @Test
     public void testZipCodeCheck() {
         doReturn(testData.getTestingStudy()).when(route).findStudy(any(Handle.class), anyString());
         var kitConfigId = new AtomicReference<Long>();
@@ -212,7 +257,7 @@ public class InvitationCheckStatusRouteTest extends IntegrationTestSuite.TestCas
         InvitationDto invitation = TransactionWrapper.withTxn(handle -> {
             var kitDao = handle.attach(KitConfigurationDao.class);
             long configId = kitDao.insertConfiguration(testData.getStudyId(), 1,
-                    handle.attach(KitTypeDao.class).getSalivaKitType().getId());
+                    handle.attach(KitTypeDao.class).getSalivaKitType().getId(), false);
 
             Template errorMsg = Template.html("$foobar");
             errorMsg.addVariable(TemplateVariable.single("foobar", "en", "zip code error"));
@@ -226,7 +271,6 @@ public class InvitationCheckStatusRouteTest extends IntegrationTestSuite.TestCas
                     .createRecruitmentInvitation(testData.getStudyId(), "invite" + System.currentTimeMillis());
         });
 
-        // Since we are mocking stuff, we need to run our own server
         String url = testServer.baseUrl() + RouteConstants.API.INVITATION_CHECK;
         url = url.replace(RouteConstants.PathParam.STUDY_GUID, testData.getStudyGuid());
         var payload = new InvitationCheckStatusPayload(
