@@ -2036,7 +2036,7 @@
             "name": "PLATFORM_ASSENT_DOB",
             "stable_id": "ASSENT_DOB",
             "type": "Date",
-            "format": "yyyy-MM-dd'T'HH:mm:ss"
+            "format": "yyyy-MM-dd"
           },
           {
             "name": "PLATFORM_ASSENT_GUARDIAN_SIGNATURE",
@@ -2047,7 +2047,7 @@
             "name": "PLATFORM_ASSENT_SIGNED_ON",
             "stable_id": "ASSENT_DATE",
             "type": "Date",
-            "format": "yyyy-MM-dd'T'HH:mm:ss"
+            "format": "yyyy-MM-dd"
           }
         ]
       }
