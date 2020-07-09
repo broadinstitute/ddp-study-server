@@ -184,7 +184,7 @@
                         <table border="0" cellpadding="0" cellspacing="0" width="100%">
                             <tr>
                                 <td align="center" bgcolor="#ffffff" width="100">
-                                    <a href="-ddp.baseWebUrl-" target="blank">
+                                    <a href="{{baseWebUrl}}" target="blank">
                                         <img alt="Logo"
                                              border="0" height="69" src="https://storage.googleapis.com/${assetsBucketName}/mpc/project-logo.png" style="display: block; font-family: Helvetica, Arial, sans-serif; color: #666666; font-size: 16px;"
                                              width="150"/></a>
@@ -215,14 +215,14 @@
                             <tr>
                                 <td align="left" class="padding-copy"
                                     style="padding: 20px 0 0 0; font-size: 16px; line-height: 25px; font-family: Helvetica, Arial, sans-serif; color: #666666;">
-                                    User -ddp.participant.hruid- in Study -ddp.study.guid- would like to withdraw from
+                                    User {{participantHruid}} in Study {{studyGuid}} would like to withdraw from
                                     the study:
                                 </td>
                             </tr>
                             <tr>
                                 <td align="left" class="padding-copy"
                                     style="padding: 20px 0 0 0; font-size: 16px; line-height: 25px; font-family: Helvetica, Arial, sans-serif; color: #666666;">
-                                    -ddp.participant.exitNotes-
+                                    {{participantExitNotes}}
                                 </td>
                             </tr>
                             <tr>
