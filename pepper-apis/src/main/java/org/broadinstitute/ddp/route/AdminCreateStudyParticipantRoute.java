@@ -11,7 +11,7 @@ import org.broadinstitute.ddp.db.dao.InvitationDao;
 import org.broadinstitute.ddp.db.dao.JdbiAuth0Tenant;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
-import org.broadinstitute.ddp.db.dao.StudyLanguageDao;
+import org.broadinstitute.ddp.db.dao.StudyLanguageCachedDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserProfileCachedDao;
 import org.broadinstitute.ddp.db.dto.Auth0TenantDto;
@@ -86,7 +86,7 @@ public class AdminCreateStudyParticipantRoute extends ValidatedJsonInputRoute<Cr
             User user = handle.attach(UserDao.class).createUser(tenantDto.getDomain(), ddpAuth.getClient(), null);
             LOG.info("Created user with guid {}", user.getGuid());
 
-            long defaultLangId = handle.attach(StudyLanguageDao.class)
+            long defaultLangId = new StudyLanguageCachedDao(handle)
                     .findLanguages(studyDto.getId())
                     .stream()
                     .filter(StudyLanguage::isDefault)

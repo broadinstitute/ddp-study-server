@@ -27,7 +27,7 @@ import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dao.QueuedEventDao;
 import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
-import org.broadinstitute.ddp.db.dao.StudyLanguageDao;
+import org.broadinstitute.ddp.db.dao.StudyLanguageCachedDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserGovernanceCachedDao;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
@@ -477,7 +477,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
         Auth0Util auth0Util = new Auth0Util(mgmtClient.getDomain());
 
         auth0Util.setDDPUserGuidForAuth0User(ddpUserGuid, auth0UserId, auth0ClientId,
-                                             mgmtClient.getToken());
+                mgmtClient.getToken());
 
         return new LocalRegistrationResponse(auth0Util.refreshToken(auth0ClientId, auth0ClientSecret, refreshToken));
     }
@@ -518,7 +518,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
     private LanguageDto determineUserLanguage(Handle handle, UserRegistrationPayload payload) {
         String studyGuid = payload.getStudyGuid();
         StudyLanguage userLanguage = null;
-        List<StudyLanguage> studyLanguages = handle.attach(StudyLanguageDao.class).findLanguages(studyGuid);
+        List<StudyLanguage> studyLanguages = new StudyLanguageCachedDao(handle).findLanguages(studyGuid);
         for (var language : studyLanguages) {
             if (language.getLanguageCode().equalsIgnoreCase(payload.getLanguageCode())) {
                 userLanguage = language;
