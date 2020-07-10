@@ -4,13 +4,9 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                    http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
 
-    <changeSet author="charlotte" id="20200519-cd-additional-languages">
-        <validCheckSum>8:69d28dd71ef66a33251b2a9389494efe</validCheckSum>
+    <changeSet author="charlotte" id="20200519-cd-3-additional-languages">
         <insert tableName="language_code">
             <column name="iso_language_code" value="es"/>
-        </insert>
-        <insert tableName="language_code">
-            <column name="iso_language_code" value="he"/>
         </insert>
         <insert tableName="language_code">
             <column name="iso_language_code" value="zh"/>
