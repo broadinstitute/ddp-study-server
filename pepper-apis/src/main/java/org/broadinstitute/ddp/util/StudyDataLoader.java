@@ -1147,18 +1147,41 @@ public class StudyDataLoader {
                     ? "COMPLETE" : "IN_PROGRESS";
         } else if ("MEDICAL_HISTORY".equals(activityCode)) {
             //Status field is survey_status.  0 and blank are not started, 1 is in progress, and 2 is complete
-            String surveyStatus = getStringValueFromElement(surveyData, "datstat.submissionstatus");
-            if (surveyStatus != null && !surveyStatus.isEmpty() && "1".equals(surveyStatus)) {
-                status = "COMPLETE";
-            } else if (surveyStatus != null && !surveyStatus.isEmpty() && "2".equals(surveyStatus)) {
-                status = "IN_PROGRESS";
-            } else {
-                status = "CREATED";
-            }
+            status = determineSurveyStatus(surveyData, "datstat.submissionstatus");
+        } else if ("CONSENT".equals(activityCode)) {
+            //Status field is survey_status.  0 and blank are not started, 1 is in progress, and 2 is complete
+            status = determineSurveyStatus(surveyData, "platform_consent");
+        } else if ("GENOME_STUDY".equals(activityCode)) {
+            //Status field is survey_status.  0 and blank are not started, 1 is in progress, and 2 is complete
+            status = determineSurveyStatus(surveyData, "genome_study_status");
+        } else if ("REGISTRATION".equals(activityCode)) {
+            //Status field is survey_status.  0 and blank are not started, 1 is in progress, and 2 is complete
+            int regStatus = Integer.parseInt(getStringValueFromElement(surveyData, "registration_status"));
+            status = regStatus >= 2 ? "COMPLETED" : "CREATED";
+        } else if ("ASSENT".equals(activityCode)) {
+            //Status field is survey_status.  0 and blank are not started, 1 is in progress, and 2 is complete
+            status = determineSurveyStatus(surveyData, "platform_assent");
+        } else if ("CONTACTING_PHYSICIAN".equals(activityCode)) {
+            //Status field is survey_status.  0 and blank are not started, 1 is in progress, and 2 is complete
+            int regStatus = Integer.parseInt(getStringValueFromElement(surveyData, "registration_status"));
+            status = regStatus >= 4 ? "COMPLETED" : "CREATED";
         } else {
             status = getStringValueFromElement(surveyData, "survey_status");
         }
         return getBaseSurvey(surveyData, status);
+    }
+
+    private String determineSurveyStatus(JsonElement surveyData, String statusKey) {
+        String status;
+        String surveyStatus = getStringValueFromElement(surveyData, statusKey);
+        if (surveyStatus != null && !surveyStatus.isEmpty() && "1".equals(surveyStatus)) {
+            status = "COMPLETE";
+        } else if (surveyStatus != null && !surveyStatus.isEmpty() && "2".equals(surveyStatus)) {
+            status = "IN_PROGRESS";
+        } else {
+            status = "CREATED";
+        }
+        return status;
     }
 
 
@@ -1171,10 +1194,8 @@ public class StudyDataLoader {
         }
         String datstatSessionId = getStringValueFromElement(surveyData, "datstat.sessionid");
         String ddpCreated = getStringValueFromElement(surveyData, "ddp_created");
-        String ddpFirstCompleted = getStringValueFromElement(surveyData, "datstat.enddatetime") == null
-                ? getStringValueFromElement(surveyData, "DATSTAT_LASTMODIFIED")
-                : getStringValueFromElement(surveyData, "datstat.enddatetime");
-        String ddpLastSubmitted = getStringValueFromElement(surveyData, "ddp_lastsubmitted");
+        String ddpFirstCompleted = getStringValueFromElement(surveyData, "ddp_firstcompleted");
+        String ddpLastSubmitted = getStringValueFromElement(surveyData, "datstat_lastmodified");
         String ddpLastUpdated = getStringValueFromElement(surveyData, "datstat.enddatetime") == null
                 ? getStringValueFromElement(surveyData, "DATSTAT_LASTMODIFIED")
                 : getStringValueFromElement(surveyData, "datstat.enddatetime");
