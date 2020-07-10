@@ -107,7 +107,7 @@ public class SqlConstants {
         public static final String IS_HIDDEN = "is_hidden";
         public static final String ONDEMAND_TRIGGER_ID = "ondemand_trigger_id";
         public static final String FIRST_COMPLETED_AT = "first_completed_at";
-        public static final String LAST_VISITED_ACTIVITY_SECTION = "lastVisitedActivitySection";
+        public static final String SECTION_INDEX = "section_index";
     }
 
     public static final class ActivityInstanceStatusTable {

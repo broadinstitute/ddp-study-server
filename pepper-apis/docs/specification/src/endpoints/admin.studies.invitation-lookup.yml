@@ -27,53 +27,26 @@ post:
       content:
         application/json:
           schema:
-            type: object
-            required:
-              - invitationId
-              - createdAt
-              - voidedAt
-              - verifiedAt
-              - acceptedAt
-              - notes
-              - userGuid
-              - userHruid
-              - userLoginEmail
-            properties:
-              invitationId:
-                description: the id of the invitation
-                type: string
-              createdAt:
-                description: timestamp of when invitation was created, in ISO-8601 UTC format
-                type: string
-                example: 2020-05-13T17:58:33.887Z
-              voidedAt:
-                description: timestamp of when invitation is voided, in ISO-8601 UTC format
-                type: string
-                nullable: true
-              verifiedAt:
-                description: timestamp of when invitation is verified, in ISO-8601 UTC format
-                type: string
-                nullable: true
-              acceptedAt:
-                description: timestamp of when invitation is accepted, in ISO-8601 UTC format
-                type: string
-                nullable: true
-              notes:
-                description: the notes for the invitation
-                type: string
-                nullable: true
-              userGuid:
-                description: guid of associated user, if invitation is accepted
-                type: string
-                nullable: true
-              userHruid:
-                description: hruid of associated user, if invitation is accepted
-                type: string
-                nullable: true
-              userLoginEmail:
-                description: login email of associated user, if invitation is accepted and user has a login account
-                type: string
-                nullable: true
+            allOf:
+              - $ref: '../pepper.yml#/components/schemas/Invitation'
+              - type: object
+                required:
+                  - userGuid
+                  - userLoginEmail
+                  - notes
+                properties:
+                  userGuid:
+                    description: guid of associated user, if invitation is accepted
+                    type: string
+                    nullable: true
+                  userLoginEmail:
+                    description: login email of associated user, if invitation is accepted and user has a login account
+                    type: string
+                    nullable: true
+                  notes:
+                    description: the notes for the invitation, as set by study staff
+                    type: string
+                    nullable: true
     404:
       description: invitation not found
       content:
