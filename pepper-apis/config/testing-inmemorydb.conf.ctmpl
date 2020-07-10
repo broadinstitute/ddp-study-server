@@ -10,18 +10,20 @@
 {{with $elasticsearchConf := vault (printf "secret/pepper/%s/%s/elasticsearch" $environment $version)}}
 
 {
-    # If set to true, tests will use MySQL from Docker container and dbUrl and housekeepingDbUrl will be ignored
     {{if eq $gae "true"}}
         "useDisposableTestDbs": false,
         "dbUrl": "jdbc:mysql://localhost:3306/studyservicedb?user=root&password=rootpw&characterEncoding=UTF-8&useLegacyDatetimeCode=false&serverTimezone=UTC&useSSL=false&sessionVariables=innodb_strict_mode=on,tx_isolation='READ-COMMITTED',sql_mode='TRADITIONAL'",
         "housekeepingDbUrl": "jdbc:mysql://localhost:3306/housekeepingdb?user=root&password=rootpw&characterEncoding=UTF-8&useLegacyDatetimeCode=false&serverTimezone=UTC&useSSL=false&sessionVariables=innodb_strict_mode=on,tx_isolation='READ-COMMITTED',sql_mode='TRADITIONAL'",
     {{else}}
+        # If set to true, tests will use MySQL from Docker container and dbUrl and housekeepingDbUrl will be ignored
         "useDisposableTestDbs": true,
     {{end}}
     "maxConnections": 50,
     "defaultTimezone": "{{$testingConf.Data.defaultTimezone}}",
     "port": 5556,
     "doLiquibase": true,
+    # If set to true, will run liquibase migrations in DataDonationPlatform startup.
+    "doLiquibaseInStudyServer": true,
     "threadTimeout": 30000,
     "dsmBaseUrl": "http://localhost:9555",
     "dsmJwtSecret": "Dsm test secret!",

@@ -13,6 +13,7 @@ select ai.activity_instance_id,
        act.study_id,
        act.allow_unauthenticated,
        act_type.activity_type_code as activity_type,
+       ai.section_index,
        (select aist.activity_instance_status_type_code
           from activity_instance_status as ais
           join activity_instance_status_type as aist on ais.activity_instance_status_type_id = aist.activity_instance_status_type_id

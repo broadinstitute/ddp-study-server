@@ -8,6 +8,7 @@ import java.util.Locale;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 
+import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.content.ContentStyle;
@@ -142,16 +143,9 @@ public class RouteUtil {
      */
     public static ActivityInstanceDto findAccessibleInstanceOrHalt(Response response, Handle handle,
                                                                    String participantGuid, String studyGuid, String instanceGuid) {
-        StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
-        if (studyDto == null) {
-            String msg = "Could not find study with guid " + participantGuid;
-            throw ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.STUDY_NOT_FOUND, msg));
-        }
-        User user = handle.attach(UserDao.class).findUserByGuid(participantGuid)
-                .orElseThrow(() -> {
-                    String msg = "Could not find user with guid " + participantGuid;
-                    return ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.USER_NOT_FOUND, msg));
-                });
+        var found = findUserAndStudyOrHalt(handle, participantGuid, studyGuid);
+        var studyDto = found.getStudyDto();
+        var user = found.getUser();
         ActivityInstanceDto instanceDto = handle.attach(JdbiActivityInstance.class)
                 .getByActivityInstanceGuid(instanceGuid)
                 .orElseThrow(() -> {
@@ -187,5 +181,46 @@ public class RouteUtil {
         String acceptLanguageHeader = request.headers(RouteConstants.Header.ACCEPT_LANGUAGE);
         Locale locale = I18nUtil.resolveLocale(handle, studyGuid, userPreferredLocale, acceptLanguageHeader);
         return locale.getLanguage();
+    }
+
+    /**
+     * Find the user and study, halting request if either is not found. If not already set, caller should set the
+     * `application/json` header on the response manually to ensure response is interpreted properly.
+     *
+     * @param handle    the database handle
+     * @param userGuid  the user guid
+     * @param studyGuid the study guid
+     * @return user and study
+     */
+    public static UserAndStudy findUserAndStudyOrHalt(Handle handle, String userGuid, String studyGuid) {
+        StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
+        if (studyDto == null) {
+            String msg = "Could not find study with guid " + studyGuid;
+            throw ResponseUtil.haltError(HttpStatus.SC_NOT_FOUND, new ApiError(ErrorCodes.STUDY_NOT_FOUND, msg));
+        }
+        User user = handle.attach(UserDao.class).findUserByGuid(userGuid)
+                .orElseThrow(() -> {
+                    String msg = "Could not find user with guid " + userGuid;
+                    return ResponseUtil.haltError(HttpStatus.SC_NOT_FOUND, new ApiError(ErrorCodes.USER_NOT_FOUND, msg));
+                });
+        return new UserAndStudy(user, studyDto);
+    }
+
+    public static final class UserAndStudy {
+        private final User user;
+        private final StudyDto studyDto;
+
+        public UserAndStudy(User user, StudyDto studyDto) {
+            this.user = user;
+            this.studyDto = studyDto;
+        }
+
+        public User getUser() {
+            return user;
+        }
+
+        public StudyDto getStudyDto() {
+            return studyDto;
+        }
     }
 }
