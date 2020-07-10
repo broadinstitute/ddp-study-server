@@ -1777,7 +1777,7 @@
             "name": "platform_consent_dob",
             "stable_id": "CONSENT_DOB",
             "type": "Date",
-            "format": "yyyy-MM-dd'T'HH:mm:ss"
+            "format": "yyyy-MM-dd"
           }
         ],
         "legacy_fields": [
@@ -1795,27 +1795,27 @@
             "source_type": ""
           },
           {
-            "name": "DATSTAT_FIRSTNAME",
+            "name": "datstat_firstname",
             "stable_id": "REGISTRATION_FIRST_NAME",
             "type": "string"
           },
           {
-            "name": "DATSTAT_LASTNAME",
+            "name": "datstat_lastname",
             "stable_id": "REGISTRATION_LAST_NAME",
             "type": "string"
           },
           {
-            "name": "DATSTAT_MIDDLENAME",
+            "name": "datstat_middlename",
             "stable_id": "REGISTRATION_MIDDLE_NAME",
             "type": "string"
           },
           {
-            "name": "",
+            "name": "datstat_suffix",
             "stable_id": "REGISTRATION_PREFIX",
             "type": "string"
           },
           {
-            "name": "DATSTAT_GENDER",
+            "name": "datstat_gender",
             "stable_id": "REGISTRATION_GENDER",
             "type": "Picklist",
             "source_type": "string",
@@ -1831,40 +1831,40 @@
             ]
           },
           {
-            "name": "DATSTAT_DATEOFBIRTH",
+            "name": "datstat_dateofbirth",
             "stable_id": "REGISTRATION_DOB",
             "type": "Date",
             "format": "yyyy-MM-dd'T'HH:mm:ss"
           },
           {
-            "name": "DATSTAT_HOMEPHONE",
+            "name": "datstat_homephone",
             "stable_id": "REGISTRATION_PHONE",
             "type": "string"
           },
           {
-            "name": "DATSTAT_PHYSICALADDRESS",
+            "name": "datstat_physicaladdress",
             "stable_id": "REGISTRATION_STREET_ADDRESS",
             "type": "string"
           },
           {
-            "name": "DATSTAT_PHYSICALCITY",
+            "name": "datstat_physicalcity",
             "stable_id": "REGISTRATION_CITY",
             "type": "string"
           },
           {
-            "name": "DATSTAT_PHYSICALZIP",
+            "name": "datstat_physicalzip",
             "stable_id": "REGISTRATION_POSTAL_CODE",
             "type": "string"
           },
           {
-            "name": "DATSTAT_PHYSICALCOUNTRY",
+            "name": "datstat_physicalcountry",
             "stable_id": "REGISTRATION_COUNTRY",
             "type": "Picklist",
             "source_type": "string",
             "options": null
           },
           {
-            "name": "DATSTAT_PHYSICALSTATE",
+            "name": "datstat_physicalstate",
             "stable_id": "REGISTRATION_STATE",
             "type": "Picklist",
             "source_type": "string",
@@ -1877,54 +1877,54 @@
         "activity_code": "CONTACTING_PHYSICIAN",
         "question_answer_stables": [
           {
-            "name": "PHYSICIAN_FIRST_NAME",
+            "name": "physician_first_name",
             "type": "string",
             "stable_id": "PHYSICIAN_FIRSTNAME"
           },
           {
-            "name": "PHYSICIAN_LAST_NAME",
+            "name": "physician_last_name",
             "type": "string",
             "stable_id": "PHYSICIAN_LASTNAME"
           },
           {
-            "name": "PHYSICIAN_ADDRESS",
+            "name": "physician_address",
             "type": "string",
             "stable_id": "PHYSICIAN_MAIL"
           },
           {
-            "name": "PHYSICIAN_PHONE",
+            "name": "physician_phone",
             "type": "string",
             "stable_id": "PHYSICIAN_PHONE"
           },
           {
-            "name": "PHYSICIAN_EMAIL",
+            "name": "physician_email",
             "type": "string",
             "stable_id": "PHYSICIAN_EMAIL"
           },
           {
-            "name": "RECEIVED_CARES",
+            "name": "received_cares",
             "stable_id": "EVALUATION",
             "type": "Picklist",
             "source_type": "string",
             "options": [
               {
-                "name": "BRISBANE_RECEIVED_CARE",
+                "name": "brisbane_received_care",
                 "type": "string"
               },
               {
-                "name": "JWG_RECEIVED_CARE",
+                "name": "jwg_received_care",
                 "type": "string"
               },
               {
-                "name": "SHEBA_RECEIVED_CARE",
+                "name": "sheba_received_care",
                 "type": "string"
               },
               {
-                "name": "NOTTINGHAM_RECEIVED_CARE",
+                "name": "nottingham_received_care",
                 "type": "string"
               },
               {
-                "name": "JOHNS_HOPKINS_RECEIVED_CARE",
+                "name": "johns_hopkins_received_care",
                 "type": "string"
               }
             ]
@@ -1936,12 +1936,12 @@
         "activity_code": "GENOME_STUDY",
         "question_answer_stables": [
           {
-            "name": "GENOME_STUDY_SHIPPING_ADDRESS",
+            "name": "genome_study_shipping_address",
             "stable_id": "SHIPPING_ADDRESS",
             "type": "string"
           },
           {
-            "name": "DATSTAT_GENDER",
+            "name": "datstat_gender",
             "stable_id": "PARTICIPANT_GENDER",
             "type": "Picklist",
             "source_type": "string",
@@ -1957,7 +1957,7 @@
             ]
           },
           {
-            "name": "ETHNICITY",
+            "name": "ethnicity",
             "stable_id": "PARTICIPANT_ETHNICITY",
             "type": "Picklist",
             "source_type": "integer",
@@ -1998,53 +1998,53 @@
         "activity_code": "ASSENT",
         "question_answer_stables": [
           {
-            "name": "PLATFORM_ASSENT_RECONTACT_PARTICIPANT_FOLLOWUP",
+            "name": "platform_assent_recontact_participant_followup",
             "stable_id": "CAN_CONTACT_LATER",
             "type": "Boolean",
             "source_type": "integer"
           },
           {
-            "name": "PLATFORM_ASSENT_GENSEQ_STUDY",
+            "name": "platform_assent_genseq_study",
             "stable_id": "ASSENT_CAN_DO_TESTS",
             "type": "Boolean",
             "source_type": "integer"
           },
           {
-            "name": "PLATFORM_ASSENT_MEDICAL_RECORD_RETRIEVAL",
+            "name": "platform_assent_medical_record_retrieval",
             "stable_id": "MAY_ASK_MY_DOCTOR",
             "type": "Boolean",
             "source_type": "integer"
           },
           {
-            "name": "PLATFORM_ASSENT_RECONTACT_RESEARCH_RESULTS",
+            "name": "platform_assent_recontact_research_results",
             "stable_id": "GET_THE_RESULT",
             "type": "Boolean",
             "source_type": "integer"
           },
           {
-            "name": "PLATFORM_ASSENT_RECONTACT_PHYSICIAN_DIAGNOSIS_RESULTS",
+            "name": "platform_assent_recontact_physician_diagnosis_results",
             "stable_id": "RESEARCHERS_LEARN_SOMETHING",
             "type": "Boolean",
             "source_type": "integer"
           },
           {
-            "name": "PLATFORM_ASSENT_SIGNATURE",
+            "name": "platform_assent_signature",
             "stable_id": "ASSENT_CHILD_SIGNATURE",
             "type": "string"
           },
           {
-            "name": "PLATFORM_ASSENT_DOB",
+            "name": "platform_assent_dob",
             "stable_id": "ASSENT_DOB",
             "type": "Date",
             "format": "yyyy-MM-dd"
           },
           {
-            "name": "PLATFORM_ASSENT_GUARDIAN_SIGNATURE",
+            "name": "platform_assent_guardian_signature",
             "stable_id": "ASSENT_SIGNATURE_OF_PERSON_EXPLAINING",
             "type": "string"
           },
           {
-            "name": "PLATFORM_ASSENT_SIGNED_ON",
+            "name": "platform_assent_signed_on",
             "stable_id": "ASSENT_DATE",
             "type": "Date",
             "format": "yyyy-MM-dd"

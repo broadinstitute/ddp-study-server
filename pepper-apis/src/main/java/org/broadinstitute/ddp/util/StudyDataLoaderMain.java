@@ -340,7 +340,7 @@ public class StudyDataLoaderMain {
 
         JsonElement surveyData = user.getAsJsonObject().get("datstatsurveydata");
         JsonElement medicalHistorySurveyData = surveyData.getAsJsonObject().get("atcp_registry_questionnaire");
-        JsonElement atConsentSurveyData = surveyData.getAsJsonObject().get("atcp_research_consent_form");
+        JsonElement atConsentSurveyData = surveyData.getAsJsonObject().get("ConsentSurvey");
         JsonElement atRegistrationSurveyData = surveyData.getAsJsonObject().get("RegistrationSurvey");
         JsonElement atContactingPhysicianSurveyData = surveyData.getAsJsonObject().get("ContactingPhysicianSurvey");
         JsonElement atGenomeStudySurveyData = surveyData.getAsJsonObject().get("GenomeStudySurvey");
@@ -707,7 +707,7 @@ public class StudyDataLoaderMain {
                     }
 
                     if (hasATConsent) {
-                        String activityCode = mappingData.get("atcp_research_consent_form").getAsJsonObject()
+                        String activityCode = mappingData.get("ConsentSurvey").getAsJsonObject()
                                 .get("activity_code").getAsString();
                         List<ActivityInstanceDto> activityInstanceDtoList = jdbiActivityInstance
                                 .findAllByUserGuidAndActivityCode(userGuid, activityCode, studyId);
@@ -719,7 +719,7 @@ public class StudyDataLoaderMain {
                                 activityInstanceDao,
                                 activityInstanceStatusDao);
                         dataLoader.loadATConsentSurveyData(handle, sourceData.get("atconsentsurvey"),
-                                mappingData.get("atcp_research_consent_form"),
+                                mappingData.get("ConsentSurvey"),
                                 studyDto, userDto, instanceDto,
                                 answerDao);
                     }

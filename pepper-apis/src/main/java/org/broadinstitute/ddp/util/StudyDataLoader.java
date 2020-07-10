@@ -104,6 +104,14 @@ public class StudyDataLoader {
     private static final int DSM_DEFAULT_ON_DEMAND_TRIGGER_ID = -2;
     private Long defaultKitCreationEpoch = null;
 
+    private DateTimeFormatter formatter = new DateTimeFormatterBuilder()
+            .parseCaseInsensitive()
+            .append(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+            .optionalStart()
+            .appendPattern(".SSS")
+            .optionalEnd()
+            .toFormatter();
+
     Map<String, List<String>> sourceDataSurveyQs;
     Map<String, String> altNames;
     Map<String, String> dkAltNames;
@@ -168,7 +176,7 @@ public class StudyDataLoader {
         optionList.add(7, "SOUTH_ASIAN");
         optionList.add(8, "OTHER");
         optionList.add(9, "PREFER NOT TO ANSWER");
-        datStatLookup.put("ETHNICITY", optionList);
+        datStatLookup.put("ethnicity", optionList);
 
         booleanValueLookup = new HashMap<>();
         booleanValueLookup.put(0, false);
@@ -261,7 +269,7 @@ public class StudyDataLoader {
                 olcService, addressService);
 
         String ddpCreated = getStringValueFromElement(datstatData, "datstat_created");
-        LocalDateTime ddpCreatedLocalDateTime = LocalDateTime.parse(ddpCreated, DateTimeFormatter.ofPattern(DATSTAT_DATE_FORMAT));
+        LocalDateTime ddpCreatedLocalDateTime = LocalDateTime.parse(ddpCreated, formatter);
         Long ddpCreatedAt = null;
         boolean couldNotParse = false;
 
@@ -299,7 +307,7 @@ public class StudyDataLoader {
         Long studyActivityId = jdbiActivity.findIdByStudyIdAndCode(studyId, "PREQUAL").get();
         Instant instant;
         try {
-            LocalDateTime ddpCreatedLocalDateTime = LocalDateTime.parse(ddpCreated, DateTimeFormatter.ofPattern(DATSTAT_DATE_FORMAT));
+            LocalDateTime ddpCreatedLocalDateTime = LocalDateTime.parse(ddpCreated, formatter);
             instant = ddpCreatedLocalDateTime.toInstant(ZoneOffset.UTC);
         } catch (DateTimeParseException e) {
             throw new Exception("Could not parse required createdAt value for prequal, value is " + ddpCreated);
@@ -362,18 +370,10 @@ public class StudyDataLoader {
         Long ddpCreatedAt;
         Long ddpCompletedAt = null;
 
-        DateTimeFormatter formatter = new DateTimeFormatterBuilder()
-                .parseCaseInsensitive()
-                .append(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-                .optionalStart()
-                .appendPattern(".SSS")
-                .optionalEnd()
-                .toFormatter();
-
         if (ddpCreated != null) {
             Instant instant;
             try {
-                LocalDateTime ddpCreatedAtTime = LocalDateTime.parse(ddpCreated, DateTimeFormatter.ofPattern(DATSTAT_DATE_FORMAT));
+                LocalDateTime ddpCreatedAtTime = LocalDateTime.parse(ddpCreated, formatter);
                 instant = ddpCreatedAtTime.toInstant(ZoneOffset.UTC);
             } catch (DateTimeParseException e) {
                 throw new Exception("Could not parse required createdAt value for " + activityCode + " survey, value is " + ddpCreated);
@@ -971,7 +971,8 @@ public class StudyDataLoader {
         String auth0UserId = newAuth0User.getId();
 
         String userCreatedAt = getStringValueFromElement(data, "datstat_created");
-        LocalDateTime createdAtDate = LocalDateTime.parse(userCreatedAt, DateTimeFormatter.ofPattern(DATSTAT_DATE_FORMAT));
+
+        LocalDateTime createdAtDate = LocalDateTime.parse(userCreatedAt, formatter);
 
         String lastModifiedStr = getStringValueFromElement(data, "datstat_lastmodified");
         LocalDateTime lastModifiedDate = createdAtDate;
@@ -1157,14 +1158,14 @@ public class StudyDataLoader {
         } else if ("REGISTRATION".equals(activityCode)) {
             //Status field is survey_status.  0 and blank are not started, 1 is in progress, and 2 is complete
             int regStatus = Integer.parseInt(getStringValueFromElement(surveyData, "registration_status"));
-            status = regStatus >= 2 ? "COMPLETED" : "CREATED";
+            status = regStatus >= 2 ? "COMPLETE" : "CREATED";
         } else if ("ASSENT".equals(activityCode)) {
             //Status field is survey_status.  0 and blank are not started, 1 is in progress, and 2 is complete
             status = determineSurveyStatus(surveyData, "platform_assent");
         } else if ("CONTACTING_PHYSICIAN".equals(activityCode)) {
             //Status field is survey_status.  0 and blank are not started, 1 is in progress, and 2 is complete
             int regStatus = Integer.parseInt(getStringValueFromElement(surveyData, "registration_status"));
-            status = regStatus >= 4 ? "COMPLETED" : "CREATED";
+            status = regStatus >= 4 ? "COMPLETE" : "CREATED";
         } else {
             status = getStringValueFromElement(surveyData, "survey_status");
         }
@@ -1195,9 +1196,11 @@ public class StudyDataLoader {
         String datstatSessionId = getStringValueFromElement(surveyData, "datstat.sessionid");
         String ddpCreated = getStringValueFromElement(surveyData, "ddp_created");
         String ddpFirstCompleted = getStringValueFromElement(surveyData, "ddp_firstcompleted");
-        String ddpLastSubmitted = getStringValueFromElement(surveyData, "datstat_lastmodified");
+        String ddpLastSubmitted = getStringValueFromElement(surveyData, "datstat_lastmodified") == null ?
+                getStringValueFromElement(surveyData, "datstat.enddatetime") :
+                getStringValueFromElement(surveyData, "datstat_lastmodified");
         String ddpLastUpdated = getStringValueFromElement(surveyData, "datstat.enddatetime") == null
-                ? getStringValueFromElement(surveyData, "DATSTAT_LASTMODIFIED")
+                ? getStringValueFromElement(surveyData, "datstat_lastmodified")
                 : getStringValueFromElement(surveyData, "datstat.enddatetime");
         String surveyVersion = getStringValueFromElement(surveyData, "surveyversion");
         String activityVersion = getStringValueFromElement(surveyData, "consent_version");
@@ -1264,7 +1267,7 @@ public class StudyDataLoader {
                           String studyGuid) {
         LocalDateTime exitAt;
         if (ddpExited != null && !ddpExited.isEmpty()) {
-            exitAt = LocalDateTime.parse(ddpExited, DateTimeFormatter.ofPattern(DATSTAT_DATE_FORMAT));
+            exitAt = LocalDateTime.parse(ddpExited, formatter);
 
             handle.attach(JdbiUserStudyEnrollment.class).terminateStudyEnrollment(participantGuid, studyGuid,
                     exitAt.toEpochSecond(ZoneOffset.UTC) * MILLIS_PER_SECOND);
