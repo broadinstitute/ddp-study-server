@@ -20,7 +20,7 @@ public class PatchActivityInstanceRoute extends ValidatedJsonInputRoute<PatchSec
 
     private static final Logger LOG = LoggerFactory.getLogger(PatchActivityInstanceRoute.class);
 
-    private org.broadinstitute.ddp.db.ActivityInstanceDao activityInstanceDao;
+    private final org.broadinstitute.ddp.db.ActivityInstanceDao activityInstanceDao;
 
     public PatchActivityInstanceRoute(org.broadinstitute.ddp.db.ActivityInstanceDao activityInstanceDao) {
         this.activityInstanceDao = activityInstanceDao;
@@ -40,13 +40,14 @@ public class PatchActivityInstanceRoute extends ValidatedJsonInputRoute<PatchSec
             int sectionsSize = activityInstanceDao.getActivityInstanceSectionsSize(handle, userGuid, studyGuid, instanceGuid);
             int index = payload.getIndex();
 
-            if (sectionsSize < index) {
+            if (index != 0 && sectionsSize <= index) {
                 String msg = String.format("Activity %s has sections size %s less than index %s", instanceGuid, sectionsSize, index);
                 LOG.error(msg);
-                throw ResponseUtil.haltError(response, HttpStatus.SC_BAD_REQUEST, new ApiError(ErrorCodes.INVALID_REQUEST, msg));
+                throw ResponseUtil.haltError(response, HttpStatus.SC_BAD_REQUEST, new ApiError(ErrorCodes.BAD_PAYLOAD, msg));
             }
 
             handle.attach(ActivityInstanceDao.class).updateSectionIndexByInstanceGuid(instanceGuid, index);
+            LOG.info("Updated section index on instance {} for participant {} in study {}", instanceGuid, userGuid, studyGuid);
         });
         response.status(HttpStatus.SC_OK);
         return "";
