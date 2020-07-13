@@ -391,10 +391,10 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
                 .body("sections[1].blocks[0].question.answers[0].value", equalTo("valid answer"));
         resp.then().assertThat()
                 .body("sections[1].blocks[0].question.answers[0].type", equalTo("TEXT"));
-//        resp.then().assertThat()
-//                .body("sections[1].blocks[0].question.answers[0]", hasKey("type"));
-//        resp.then().assertThat()
-//                .body("sections[1].blocks[0].question.answers[0]", not(hasKey("questionStableId")));
+        //        resp.then().assertThat()
+        //                .body("sections[1].blocks[0].question.answers[0]", hasKey("type"));
+        //        resp.then().assertThat()
+        //                .body("sections[1].blocks[0].question.answers[0]", not(hasKey("questionStableId")));
     }
 
     @Test
