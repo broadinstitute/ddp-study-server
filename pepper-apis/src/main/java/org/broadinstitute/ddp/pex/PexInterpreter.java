@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.pex;
 
+import org.broadinstitute.ddp.db.dto.UserActivityInstanceSummary;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.jdbi.v3.core.Handle;
 
@@ -23,6 +24,7 @@ public interface PexInterpreter {
      */
     boolean eval(String expression, Handle handle, String userGuid, String activityInstanceGuid);
 
-    boolean eval(String expression, Handle handle, String userGuid, String activityInstanceGui, FormActivityDef formActivityDef);
+    boolean eval(String expression, Handle handle, String userGuid, String activityInstanceGui, FormActivityDef formActivityDef,
+                 UserActivityInstanceSummary activityInstanceSummary);
 
 }
