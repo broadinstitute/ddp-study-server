@@ -12,7 +12,7 @@
             <column name="iso_language_code" value="zh"/>
         </insert>
     </changeSet>
-    <changeSet author="charlotte" id="20200611-cd-additional-trans-activity-instance-status-type">
+    <changeSet author="charlotte" id="20200611-cd-additional-translation-activity-instance-status-type">
         <!--Will need official translation to finalize these changes-->
         <insert tableName="i18n_activity_instance_status_type_name_trans">
             <column name="activity_instance_status_type_id"
@@ -72,8 +72,7 @@
         </insert>
     </changeSet>
 
-    <changeSet author="charlotte" id="20200611-cd-additional-trans-question-validation-rule-type">
-
+    <changeSet author="charlotte" id="20200611-cd-additional-translation-question-validation-rule-type">
         <insert tableName="i18n_validation_msg_trans">
             <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'DAY_REQUIRED')"/>
             <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'es')"/>
@@ -250,8 +249,7 @@
             <column name="translation_text" value="不滿足最小或最大數量要求。"/>
         </insert>
     </changeSet>
-
-    <changeSet author="charlotte" id="20200611-cd-additional-trans-form-activity-type">
+    <changeSet author="charlotte" id="20200611-cd-additional-translation-form-activity-type">
         <insert tableName="i18n_activity_type_name_trans">
             <column name="activity_type_id" valueComputed="(select activity_type_id from activity_type where activity_type_code = 'FORMS')"/>
             <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'es')"/>
@@ -268,8 +266,4 @@
             <column name="translation_text" value="形式"/>
         </insert>
     </changeSet>
-
-
-
-
 </databaseChangeLog>
