@@ -1197,7 +1197,7 @@ public class StudyDataLoader {
         String ddpFirstCompleted = getStringValueFromElement(surveyData, "ddp_firstcompleted");
         String ddpLastSubmitted = getStringValueFromElement(surveyData, "datstat_lastmodified");
         String ddpLastUpdated = getStringValueFromElement(surveyData, "datstat.enddatetime") == null
-                ? getStringValueFromElement(surveyData, "DATSTAT_LASTMODIFIED")
+                ? getStringValueFromElement(surveyData, "datstat_lastmodified")
                 : getStringValueFromElement(surveyData, "datstat.enddatetime");
         String surveyVersion = getStringValueFromElement(surveyData, "surveyversion");
         String activityVersion = getStringValueFromElement(surveyData, "consent_version");
