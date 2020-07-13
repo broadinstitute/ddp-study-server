@@ -21,7 +21,7 @@ public class StudyLanguageCachedDao extends SQLObjectWrapper<StudyLanguageDao> i
         if (studyIdToLanguageCache == null) {
             synchronized (this.getClass()) {
                 if (studyIdToLanguageCache == null) {
-                    studyIdToLanguageCache = CacheService.getInstance().getOrCreateLocalCache("studyIdToLanguageCache");
+                    studyIdToLanguageCache = CacheService.getInstance().getOrCreateLocalCache("studyIdToLanguageCache", 100);
                 }
             }
         }
