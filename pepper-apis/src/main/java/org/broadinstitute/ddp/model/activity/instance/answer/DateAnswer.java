@@ -1,6 +1,5 @@
 package org.broadinstitute.ddp.model.activity.instance.answer;
 
-import java.io.Serializable;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
