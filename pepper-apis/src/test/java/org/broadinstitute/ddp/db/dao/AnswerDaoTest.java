@@ -9,10 +9,12 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
+import org.broadinstitute.ddp.cache.DaoBuilder;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.exception.OperationNotAllowedException;
@@ -43,10 +45,27 @@ import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
+@RunWith(Parameterized.class)
 public class AnswerDaoTest extends TxnAwareBaseTest {
 
     private static TestDataSetupUtil.GeneratedTestData testData;
+    private final DaoBuilder<AnswerDao> daoBuilder;
+    private boolean isCachedDao;
+
+    public AnswerDaoTest(DaoBuilder daoBuilder, boolean isCachedDao) {
+        this.daoBuilder = daoBuilder;
+        this.isCachedDao = isCachedDao;
+    }
+
+    @Parameterized.Parameters
+    public static Collection<Object[]> data() {
+        Object[] uncached = {(DaoBuilder<AnswerDao>) (handle) -> handle.attach(AnswerDao.class), false};
+        Object[] cached = {(DaoBuilder<AnswerDao>) (handle) -> new AnswerCachedDao(handle), true};
+        return List.of(uncached, cached);
+    }
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
@@ -64,7 +83,7 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
                     .build(handle, testData.getUserId(), testData.getStudyGuid());
             long instanceId = createInstance(handle, act.getDef().getActivityId()).getId();
 
-            var answerDao = handle.attach(AnswerDao.class);
+            var answerDao = daoBuilder.buildDao(handle);
             var created = answerDao.createAnswer(testData.getUserId(), instanceId,
                     new AgreementAnswer(null, act.getAgreementQuestion().getStableId(), null, true));
             assertTrue(created.getAnswerId() > 0);
@@ -98,7 +117,7 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
                     .build(handle, testData.getUserId(), testData.getStudyGuid());
             long instanceId = createInstance(handle, act.getDef().getActivityId()).getId();
 
-            var answerDao = handle.attach(AnswerDao.class);
+            var answerDao = daoBuilder.buildDao(handle);
             var created = answerDao.createAnswer(testData.getUserId(), instanceId,
                     new BoolAnswer(null, act.getBoolQuestion().getStableId(), null, true));
 
@@ -131,7 +150,7 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
                     .build(handle, testData.getUserId(), testData.getStudyGuid());
             long instanceId = createInstance(handle, act.getDef().getActivityId()).getId();
 
-            AnswerDao answerDao = handle.attach(AnswerDao.class);
+            AnswerDao answerDao = daoBuilder.buildDao(handle);
             TextAnswer textAnswer1 = new TextAnswer(null, act.getTextQuestion().getStableId(), null, "old");
             answerDao.createAnswer(testData.getUserId(), instanceId, textAnswer1);
 
@@ -166,7 +185,7 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
                     .build(handle, testData.getUserId(), testData.getStudyGuid());
             long instanceId = createInstance(handle, act.getDef().getActivityId()).getId();
 
-            AnswerDao answerDao = handle.attach(AnswerDao.class);
+            AnswerDao answerDao = daoBuilder.buildDao(handle);
             DateAnswer createdAnswer = new DateAnswer(null, act.getDateFullQuestion().getStableId(), null, 2018, 10, 24);
             var created = answerDao.createAnswer(testData.getUserId(), instanceId, createdAnswer);
 
@@ -202,7 +221,7 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
                     .build(handle, testData.getUserId(), testData.getStudyGuid());
             long instanceId = createInstance(handle, act.getDef().getActivityId()).getId();
 
-            AnswerDao answerDao = handle.attach(AnswerDao.class);
+            AnswerDao answerDao = daoBuilder.buildDao(handle);
 
             NumericIntegerAnswer created = new NumericIntegerAnswer(null, act.getNumericIntQuestion().getStableId(), null, 25L);
             answerDao.createAnswer(testData.getUserId(), instanceId, created);
@@ -239,7 +258,7 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
                     .build(handle, testData.getUserId(), testData.getStudyGuid());
             long instanceId = createInstance(handle, act.getDef().getActivityId()).getId();
 
-            AnswerDao answerDao = handle.attach(AnswerDao.class);
+            AnswerDao answerDao = daoBuilder.buildDao(handle);
             var created = answerDao.createAnswer(testData.getUserId(), instanceId,
                     new PicklistAnswer(null, act.getPicklistSingleListQuestion().getStableId(), null, List.of(
                             new SelectedPicklistOption("PO1"))));
@@ -301,7 +320,7 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
                     new DateAnswer(null, childDate.getStableId(), null, new DateValue(2020, 3, 14)),
                     new TextAnswer(null, childText.getStableId(), null, "row 2 col 2"));
 
-            AnswerDao answerDao = handle.attach(AnswerDao.class);
+            AnswerDao answerDao = daoBuilder.buildDao(handle);
             var created = answerDao.createAnswer(testData.getUserId(), instanceId, answer);
 
             assertTrue(created.getAnswerId() > 0);
@@ -390,7 +409,7 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
             long instanceId = createInstance(handle, act.getDef().getActivityId()).getId();
 
             var answer = new BoolAnswer(null, act.getBoolQuestion().getStableId(), null, true);
-            Answer actual = handle.attach(AnswerDao.class)
+            Answer actual = daoBuilder.buildDao(handle)
                     .createAnswer(testData.getUserId(), instanceId, act.getBoolQuestion().getQuestionId(), answer);
 
             assertTrue(actual.getAnswerId() > 0);
@@ -415,7 +434,7 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
 
             PicklistAnswer answer = new PicklistAnswer(null, act.getPicklistSingleListQuestion().getStableId(), null,
                     List.of(new SelectedPicklistOption("PO1", "some details")));
-            handle.attach(AnswerDao.class).createAnswer(testData.getUserId(), instanceId, answer);
+            daoBuilder.buildDao(handle).createAnswer(testData.getUserId(), instanceId, answer);
 
             fail("expected exception not thrown");
         });
@@ -424,7 +443,7 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
     @Test
     public void testFindAnswerById_notFound() {
         TransactionWrapper.useTxn(handle -> {
-            Optional<Answer> result = handle.attach(AnswerDao.class).findAnswerById(123456L);
+            Optional<Answer> result = daoBuilder.buildDao(handle).findAnswerById(123456L);
             assertTrue(result.isEmpty());
             handle.rollback();
         });
@@ -433,7 +452,7 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
     @Test
     public void testFindAnswerByGuid_notFound() {
         TransactionWrapper.useTxn(handle -> {
-            Optional<Answer> result = handle.attach(AnswerDao.class).findAnswerByGuid("abcxyz");
+            Optional<Answer> result = daoBuilder.buildDao(handle).findAnswerByGuid("abcxyz");
             assertTrue(result.isEmpty());
             handle.rollback();
         });
@@ -448,7 +467,7 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
             long instanceId = createInstance(handle, act.getDef().getActivityId()).getId();
 
             var answer = new BoolAnswer(null, act.getBoolQuestion().getStableId(), null, true);
-            var answerDao = handle.attach(AnswerDao.class);
+            var answerDao = daoBuilder.buildDao(handle);
             String guid = answerDao.createAnswer(testData.getUserId(), instanceId, answer).getAnswerGuid();
             Answer actual = answerDao.findAnswerByGuid(guid).orElse(null);
 
@@ -468,7 +487,7 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
                     .build(handle, testData.getUserId(), testData.getStudyGuid());
             long instanceId = createInstance(handle, act.getDef().getActivityId()).getId();
 
-            AnswerDao answerDao = handle.attach(AnswerDao.class);
+            AnswerDao answerDao = daoBuilder.buildDao(handle);
             Optional<Answer> result = answerDao.findAnswerByInstanceIdAndQuestionStableId(123456L, "abcxyz");
             assertTrue(result.isEmpty());
 
@@ -491,7 +510,7 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
             long instanceId = createInstance(handle, act.getDef().getActivityId()).getId();
 
             var answer = new BoolAnswer(null, act.getBoolQuestion().getStableId(), null, true);
-            var answerDao = handle.attach(AnswerDao.class);
+            var answerDao = daoBuilder.buildDao(handle);
             answerDao.createAnswer(testData.getUserId(), instanceId, answer);
             Answer actual = answerDao
                     .findAnswerByInstanceIdAndQuestionStableId(instanceId, act.getBoolQuestion().getStableId())
@@ -528,7 +547,7 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
                     new DateAnswer(null, childDate.getStableId(), null, new DateValue(2020, 3, 14)),
                     new TextAnswer(null, childText.getStableId(), null, "row 2 col 2"));
 
-            var answerDao = handle.attach(AnswerDao.class);
+            var answerDao = daoBuilder.buildDao(handle);
             answerDao.createAnswer(testData.getUserId(), instanceId, answer);
             Answer actual = answerDao
                     .findAnswerByInstanceIdAndQuestionStableId(instanceId, act.getCompositeQuestion().getStableId())
@@ -559,7 +578,7 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
     @Test
     public void testFindAnswerByLatestInstanceAndQuestionStableId_notFound() {
         TransactionWrapper.useTxn(handle -> {
-            Optional<Answer> result = handle.attach(AnswerDao.class)
+            Optional<Answer> result = daoBuilder.buildDao(handle)
                     .findAnswerByLatestInstanceAndQuestionStableId(1L, 2L, "abcxyz");
             assertTrue(result.isEmpty());
         });
@@ -574,7 +593,7 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
 
             // Create old instance
             long instance1 = createInstance(handle, act.getDef().getActivityId()).getId();
-            var answerDao = handle.attach(AnswerDao.class);
+            var answerDao = daoBuilder.buildDao(handle);
             answerDao.createAnswer(testData.getUserId(), instance1,
                     new BoolAnswer(null, act.getBoolQuestion().getStableId(), null, false));
 
