@@ -28,8 +28,8 @@ public class JdbiUmbrellaStudyCached extends SQLObjectWrapper<JdbiUmbrellaStudy>
     private void initializeCache() {
         if (idToStudyCache == null) {
             // eternal!
-            idToStudyCache = CacheService.getInstance().getOrCreateLocalCache("idToStudyCache");
-            studyGuidToIdCache = CacheService.getInstance().getOrCreateLocalCache("studyGuidToIdCache");
+            idToStudyCache = CacheService.getInstance().getOrCreateLocalCache("idToStudyCache", 100);
+            studyGuidToIdCache = CacheService.getInstance().getOrCreateLocalCache("studyGuidToIdCache", 100);
             if (!isUsingNullCache()) {
                 cacheAll();
             }
