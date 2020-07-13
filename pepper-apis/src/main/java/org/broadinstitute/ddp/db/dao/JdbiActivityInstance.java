@@ -10,6 +10,7 @@ import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceStatusChangeDto;
+import org.broadinstitute.ddp.db.dto.UserActivityInstanceSummary;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
@@ -123,6 +124,11 @@ public interface JdbiActivityInstance extends SqlObject {
     @SqlQuery("select count(*) from activity_instance")
     int getCount();
 
+    default Optional<UserActivityInstanceSummary> getActivityInstanceSummary(long participantUserId, long studyId) {
+        List<ActivityInstanceDto> dtos = findAllByUserIdAndStudyId(participantUserId, studyId);
+        return dtos.isEmpty() ? Optional.empty() : Optional.of(new UserActivityInstanceSummary(dtos));
+    }
+
     @UseStringTemplateSqlLocator
     @SqlQuery("queryAllByUserGuidAndActivityCode")
     @RegisterConstructorMapper(ActivityInstanceDto.class)
@@ -133,7 +139,7 @@ public interface JdbiActivityInstance extends SqlObject {
     @UseStringTemplateSqlLocator
     @SqlQuery("queryAllByUserIdAndStudyId")
     @RegisterConstructorMapper(ActivityInstanceDto.class)
-    List<ActivityInstanceDto> findAllByUserIdAndStudyId(@Bind("userId") long userId, @Bind("studyId") long studyId);
+    List<ActivityInstanceDto> findAllByUserIdAndStudyId(@Bind("userId") long participantUserId, @Bind("studyId") long studyId);
 
     @SqlQuery("select ai.activity_instance_guid "
             + " from activity_instance as ai "
