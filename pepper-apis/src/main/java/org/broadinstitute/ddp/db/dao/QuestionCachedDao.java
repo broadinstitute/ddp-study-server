@@ -124,6 +124,6 @@ public class QuestionCachedDao extends SQLObjectWrapper<QuestionDao> implements 
 
     @Override
     public AnswerDao getAnswerDao() {
-        return delegate.getAnswerDao();
+        return new AnswerCachedDao(getHandle());
     }
 }
