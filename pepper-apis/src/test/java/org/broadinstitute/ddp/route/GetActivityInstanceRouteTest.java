@@ -25,6 +25,8 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import com.google.gson.Gson;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import io.restassured.http.ContentType;
 import io.restassured.http.Header;
 import io.restassured.response.Response;
@@ -32,11 +34,16 @@ import io.restassured.response.ValidatableResponse;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.util.EntityUtils;
+import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.constants.RouteConstants.API;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.content.ContentStyle;
+import org.broadinstitute.ddp.db.ActivityDefStore;
+import org.broadinstitute.ddp.db.DBUtils;
+import org.broadinstitute.ddp.db.FormInstanceDao;
+import org.broadinstitute.ddp.db.SectionBlockDao;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
@@ -86,7 +93,14 @@ import org.broadinstitute.ddp.model.activity.types.TemplateType;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.model.user.UserProfile;
+import org.broadinstitute.ddp.pex.PexInterpreter;
+import org.broadinstitute.ddp.pex.TreeWalkInterpreter;
+import org.broadinstitute.ddp.service.ActivityInstanceService;
+import org.broadinstitute.ddp.service.ActivityValidationService;
+import org.broadinstitute.ddp.transformers.SimpleJsonTransformer;
+import org.broadinstitute.ddp.util.GsonUtil;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
+import org.broadinstitute.ddp.util.TestServer;
 import org.broadinstitute.ddp.util.TestUtil;
 import org.jdbi.v3.core.Handle;
 import org.junit.AfterClass;
@@ -94,7 +108,6 @@ import org.junit.BeforeClass;
 import org.junit.Ignore;
 import org.junit.Test;
 
-@Ignore
 public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase {
 
     public static final String TEXT_QUESTION_STABLE_ID = "TEXT_Q";
@@ -392,6 +405,10 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
                 .body("sections[1].blocks[0].question.answers[0].value", equalTo("valid answer"));
         resp.then().assertThat()
                 .body("sections[1].blocks[0].question.answers[0].type", equalTo("TEXT"));
+//        resp.then().assertThat()
+//                .body("sections[1].blocks[0].question.answers[0]", hasKey("type"));
+//        resp.then().assertThat()
+//                .body("sections[1].blocks[0].question.answers[0]", not(hasKey("questionStableId")));
     }
 
     @Test
@@ -672,6 +689,7 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
 
     @Test
     public void given_oneTrueExpr_whenRouteIsCalled_thenItReturnsOkAndResponseContainsFailedValidations() {
+        ActivityDefStore.getInstance().clear();
         try {
             TransactionWrapper.useTxn(handle -> {
                 handle.attach(JdbiActivity.class).insertValidation(
