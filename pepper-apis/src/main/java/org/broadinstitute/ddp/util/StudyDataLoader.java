@@ -104,7 +104,7 @@ public class StudyDataLoader {
     private static final int DSM_DEFAULT_ON_DEMAND_TRIGGER_ID = -2;
     private Long defaultKitCreationEpoch = null;
 
-    private DateTimeFormatter formatter = new DateTimeFormatterBuilder()
+    public DateTimeFormatter formatter = new DateTimeFormatterBuilder()
             .parseCaseInsensitive()
             .append(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
             .optionalStart()
@@ -145,37 +145,37 @@ public class StudyDataLoader {
 
         datStatLookup = new HashMap<>();
 
-        List<String> optionList = new ArrayList<>(7);
-        optionList.add(0, "Just");
-        optionList.add(1, "INDEPENDENTLY");
-        optionList.add(2, "MOST_OF_THE_TIME");
-        optionList.add(3, "WITH_ASSISTANCE");
-        optionList.add(4, "USES_WALKER");
-        optionList.add(5, "WHEELCHAIR_WITHOUT_ASSISTANCE");
-        optionList.add(6, "WHEELCHAIR_WITH_ASSISTANCE");
+        List<String> optionList = new ArrayList<>(List.of(
+                "",
+                "INDEPENDENTLY",
+                "MOST_OF_THE_TIME",
+                "WITH_ASSISTANCE",
+                "USES_WALKER",
+                "WHEELCHAIR_WITHOUT_ASSISTANCE",
+                "WHEELCHAIR_WITH_ASSISTANCE"));
         datStatLookup.put("ambulation", optionList);
 
 
-        optionList = new ArrayList<>(6);
-        optionList.add(0, "Just");
-        optionList.add(1, "REMISSION_AND_NO_LONGER_TREATMENT");
-        optionList.add(2, "REMISSION_AND_TREATMENT");
-        optionList.add(3, "HAS_CANCER_AND_NO_LONGER_TREATMENT");
-        optionList.add(4, "HAS_CANCER_AND_TREATMENT");
-        optionList.add(5, "CANCER_HAS_RECENTLY_RECURRED");
+        optionList = new ArrayList<>(List.of(
+                "",
+                "HAS_CANCER_AND_NO_LONGER_TREATMENT",
+                "HAS_CANCER_AND_TREATMENT",
+                "REMISSION_AND_TREATMENT",
+                "CANCER_HAS_RECENTLY_RECURRED",
+                "REMISSION_AND_NO_LONGER_TREATMENT"));
         datStatLookup.put("cancer_status", optionList);
 
-        optionList = new ArrayList<>(10);
-        optionList.add(0, "empty");
-        optionList.add(1, "AFRICAN_AFRICAN_AMERICAN");
-        optionList.add(2, "LATINO");
-        optionList.add(3, "EAST_ASIAN");
-        optionList.add(4, "FINNISH");
-        optionList.add(5, "NON-FINNISH_EUROPEAN");
-        optionList.add(6, "CAUCASIAN");
-        optionList.add(7, "SOUTH_ASIAN");
-        optionList.add(8, "OTHER");
-        optionList.add(9, "PREFER NOT TO ANSWER");
+        optionList = new ArrayList<>(List.of(
+                "",
+                "AFRICAN_AFRICAN_AMERICAN",
+                "LATINO",
+                "EAST_ASIAN",
+                "FINNISH",
+                "NON-FINNISH_EUROPEAN",
+                "CAUCASIAN",
+                "SOUTH_ASIAN",
+                "OTHER",
+                "PREFER NOT TO ANSWER"));
         datStatLookup.put("ethnicity", optionList);
 
         booleanValueLookup = new HashMap<>();
@@ -426,10 +426,10 @@ public class StudyDataLoader {
         InstanceStatusType instanceCurrentStatus = null;
         if (StringUtils.isNotEmpty(surveyStatus)) {
             instanceCurrentStatus = InstanceStatusType.valueOf(surveyStatus);
-            if ("CREATED".equalsIgnoreCase(instanceCurrentStatus.name()) && ddpCreatedAt.compareTo(ddpLastUpdatedAt) != 0) {
-                throw new Exception("Passed survey status as CREATED but lastUpdated date: " + ddpLastUpdated
-                        + " is not same as created date: " + createdAt);
-            }
+            //if ("CREATED".equalsIgnoreCase(instanceCurrentStatus.name()) && ddpCreatedAt.compareTo(ddpLastUpdatedAt) != 0) {
+            //throw new Exception("Passed survey status as CREATED but lastUpdated date: " + ddpLastUpdated
+            //+ " is not same as created date: " + createdAt);
+            //}
         } else {
             instanceCurrentStatus = getActivityInstanceStatus(submissionStatus, ddpCreatedAt, ddpLastUpdatedAt, ddpCompletedAt);
         }
@@ -565,12 +565,12 @@ public class StudyDataLoader {
     }
 
     public void loadATAssentSurveyData(Handle handle,
-                                            JsonElement surveyData,
-                                            JsonElement mappingData,
-                                            StudyDto studyDto,
-                                            UserDto userDto,
-                                            ActivityInstanceDto instanceDto,
-                                            AnswerDao answerDao) throws Exception {
+                                       JsonElement surveyData,
+                                       JsonElement mappingData,
+                                       StudyDto studyDto,
+                                       UserDto userDto,
+                                       ActivityInstanceDto instanceDto,
+                                       AnswerDao answerDao) throws Exception {
 
         LOG.info("Populating ATAssent Survey...");
         if (surveyData == null || surveyData.isJsonNull()) {
@@ -1158,7 +1158,7 @@ public class StudyDataLoader {
         } else if ("REGISTRATION".equals(activityCode)) {
             //Status field is survey_status.  0 and blank are not started, 1 is in progress, and 2 is complete
             int regStatus = Integer.parseInt(getStringValueFromElement(surveyData, "registration_status"));
-            status = regStatus >= 2 ? "COMPLETE" : "CREATED";
+            status = regStatus >= 1 ? "COMPLETE" : "CREATED";
         } else if ("ASSENT".equals(activityCode)) {
             //Status field is survey_status.  0 and blank are not started, 1 is in progress, and 2 is complete
             status = determineSurveyStatus(surveyData, "platform_assent");

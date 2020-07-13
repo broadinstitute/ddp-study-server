@@ -11,6 +11,7 @@ import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -59,6 +60,7 @@ import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.ClientDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.UserDto;
+import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.address.MailAddress;
 import org.broadinstitute.ddp.model.migration.StudyMigrationRun;
 import org.broadinstitute.ddp.service.AddressService;
@@ -688,20 +690,21 @@ public class StudyDataLoaderMain {
                             activityInstanceStatusDao,
                             answerDao);
 
-                    if (hasMedicalHistory) {
-                        String activityCode = mappingData.get("atcp_registry_questionnaire").getAsJsonObject()
+
+                    if (hasATRegistration) {
+                        String activityCode = mappingData.get("RegistrationSurvey").getAsJsonObject()
                                 .get("activity_code").getAsString();
                         List<ActivityInstanceDto> activityInstanceDtoList = jdbiActivityInstance
                                 .findAllByUserGuidAndActivityCode(userGuid, activityCode, studyId);
                         activityInstanceDao.deleteByInstanceGuid(activityInstanceDtoList.get(0).getGuid());
-                        ActivityInstanceDto instanceDto = dataLoader.createActivityInstance(sourceData.get("medicalhistorysurvey"),
+                        ActivityInstanceDto instanceDto = dataLoader.createActivityInstance(sourceData.get("atregistrationsurvey"),
                                 userGuid, studyId,
                                 activityCode, createdAt,
                                 jdbiActivity,
                                 activityInstanceDao,
                                 activityInstanceStatusDao);
-                        dataLoader.loadMedicalHistorySurveyData(handle, sourceData.get("medicalhistorysurvey"),
-                                mappingData.get("atcp_registry_questionnaire"),
+                        dataLoader.loadATRegistrationSurveyData(handle, sourceData.get("atregistrationsurvey"),
+                                mappingData.get("RegistrationSurvey"),
                                 studyDto, userDto, instanceDto,
                                 answerDao);
                     }
@@ -724,20 +727,17 @@ public class StudyDataLoaderMain {
                                 answerDao);
                     }
 
-                    if (hasATRegistration) {
-                        String activityCode = mappingData.get("RegistrationSurvey").getAsJsonObject()
+                    if (hasATAssent) {
+                        String activityCode = mappingData.get("AssentSurvey").getAsJsonObject()
                                 .get("activity_code").getAsString();
-                        List<ActivityInstanceDto> activityInstanceDtoList = jdbiActivityInstance
-                                .findAllByUserGuidAndActivityCode(userGuid, activityCode, studyId);
-                        activityInstanceDao.deleteByInstanceGuid(activityInstanceDtoList.get(0).getGuid());
-                        ActivityInstanceDto instanceDto = dataLoader.createActivityInstance(sourceData.get("atregistrationsurvey"),
+                        ActivityInstanceDto instanceDto = dataLoader.createActivityInstance(sourceData.get("atassentsurvey"),
                                 userGuid, studyId,
                                 activityCode, createdAt,
                                 jdbiActivity,
                                 activityInstanceDao,
                                 activityInstanceStatusDao);
-                        dataLoader.loadATRegistrationSurveyData(handle, sourceData.get("atregistrationsurvey"),
-                                mappingData.get("RegistrationSurvey"),
+                        dataLoader.loadATAssentSurveyData(handle, sourceData.get("atassentsurvey"),
+                                mappingData.get("AssentSurvey"),
                                 studyDto, userDto, instanceDto,
                                 answerDao);
                     }
@@ -760,6 +760,24 @@ public class StudyDataLoaderMain {
                                 answerDao);
                     }
 
+                    if (hasMedicalHistory) {
+                        String activityCode = mappingData.get("atcp_registry_questionnaire").getAsJsonObject()
+                                .get("activity_code").getAsString();
+                        List<ActivityInstanceDto> activityInstanceDtoList = jdbiActivityInstance
+                                .findAllByUserGuidAndActivityCode(userGuid, activityCode, studyId);
+                        activityInstanceDao.deleteByInstanceGuid(activityInstanceDtoList.get(0).getGuid());
+                        ActivityInstanceDto instanceDto = dataLoader.createActivityInstance(sourceData.get("medicalhistorysurvey"),
+                                userGuid, studyId,
+                                activityCode, createdAt,
+                                jdbiActivity,
+                                activityInstanceDao,
+                                activityInstanceStatusDao);
+                        dataLoader.loadMedicalHistorySurveyData(handle, sourceData.get("medicalhistorysurvey"),
+                                mappingData.get("atcp_registry_questionnaire"),
+                                studyDto, userDto, instanceDto,
+                                answerDao);
+                    }
+
                     if (hasATGenomeStudy) {
                         String activityCode = mappingData.get("GenomeStudySurvey").getAsJsonObject()
                                 .get("activity_code").getAsString();
@@ -775,20 +793,21 @@ public class StudyDataLoaderMain {
                                 answerDao);
                     }
 
-                    if (hasATAssent) {
-                        String activityCode = mappingData.get("AssentSurvey").getAsJsonObject()
-                                .get("activity_code").getAsString();
-                        ActivityInstanceDto instanceDto = dataLoader.createActivityInstance(sourceData.get("atassentsurvey"),
-                                userGuid, studyId,
-                                activityCode, createdAt,
-                                jdbiActivity,
-                                activityInstanceDao,
-                                activityInstanceStatusDao);
-                        dataLoader.loadATAssentSurveyData(handle, sourceData.get("atassentsurvey"),
-                                mappingData.get("AssentSurvey"),
-                                studyDto, userDto, instanceDto,
-                                answerDao);
+                    int registrationStatus = datstatParticipantData.getAsJsonObject().get("registration_status").getAsInt();
+                    LocalDateTime lastSubmitedDateTime = LocalDateTime.parse(datstatParticipantData.getAsJsonObject()
+                            .get("datstat_lastmodified").getAsString(), dataLoader.formatter);
+                    Instant lastSubmitedInstant = lastSubmitedDateTime.toInstant(ZoneOffset.UTC);
+                    long lastSubmitedToMillis = lastSubmitedInstant.toEpochMilli();
+
+                    //if registration status is equal or more than 7 we submit review and submission activity
+                    if (registrationStatus >= 7) {
+                        List<ActivityInstanceDto> activityInstanceDtoList = jdbiActivityInstance
+                                .findAllByUserGuidAndActivityCode(userGuid, "REVIEW_AND_SUBMISSION", studyId);
+                        activityInstanceStatusDao.deleteAllByInstanceGuid(activityInstanceDtoList.get(0).getGuid());
+                        activityInstanceStatusDao.insertStatus(activityInstanceDtoList.get(0).getId(), InstanceStatusType.COMPLETE,
+                                lastSubmitedToMillis, userGuid);
                     }
+
 
                     if (hasAboutYou) {
                         String activityCode = mappingData.get("aboutyousurvey").getAsJsonObject().get("activity_code").getAsString();
