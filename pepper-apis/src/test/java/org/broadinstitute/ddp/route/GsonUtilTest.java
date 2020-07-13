@@ -4,7 +4,6 @@ import static org.junit.Assert.assertEquals;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.transformers.Exclude;
 import org.broadinstitute.ddp.util.GsonUtil;
 import org.json.JSONException;
@@ -25,6 +24,7 @@ public class GsonUtilTest {
         }
 
     }
+
     @Test
     public void testUseWithoutExclusionStrategy() throws JSONException {
         DummyTestClass dummyObject = new DummyTestClass("Ulysses", "Grant", "S");

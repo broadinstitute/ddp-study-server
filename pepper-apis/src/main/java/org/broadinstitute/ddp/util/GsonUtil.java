@@ -42,6 +42,7 @@ public class GsonUtil {
 
     /**
      * Object properties to be serialized need the @Expose annotation
+     *
      * @return
      */
     public static GsonBuilder serializeFieldsWithExposeAnnotation() {
@@ -118,6 +119,7 @@ public class GsonUtil {
 
     /**
      * When applied to GsonBuilder it will exclude fields marked with the @Exclude annotation
+     *
      * @see Exclude
      */
     public static class ExcludeAnnotationStrategy implements ExclusionStrategy {
@@ -130,6 +132,8 @@ public class GsonUtil {
         public boolean shouldSkipField(FieldAttributes field) {
             return field.getAnnotation(Exclude.class) != null;
         }
-    };
+    }
+
+    ;
 
 }
