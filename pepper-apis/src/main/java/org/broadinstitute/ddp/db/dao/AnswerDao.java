@@ -347,29 +347,34 @@ public interface AnswerDao extends SqlObject {
             var questionStableId = view.getColumn("question_stable_id", String.class);
             var type = QuestionType.valueOf(view.getColumn("question_type", String.class));
             boolean isChildAnswer = view.getColumn("is_child_answer", Boolean.class);
+            String actInstanceGuid = view.getColumn("activity_instance_guid", String.class);
 
             Answer answer;
             switch (type) {
                 case AGREEMENT:
-                    answer = new AgreementAnswer(answerId, questionStableId, answerGuid, view.getColumn("aa_value", Boolean.class));
+                    answer = new AgreementAnswer(answerId, questionStableId, answerGuid, view.getColumn("aa_value", Boolean.class),
+                            actInstanceGuid);
                     break;
                 case BOOLEAN:
-                    answer = new BoolAnswer(answerId, questionStableId, answerGuid, view.getColumn("ba_value", Boolean.class));
+                    answer = new BoolAnswer(answerId, questionStableId, answerGuid, view.getColumn("ba_value", Boolean.class),
+                            actInstanceGuid);
                     break;
                 case TEXT:
-                    answer = new TextAnswer(answerId, questionStableId, answerGuid, view.getColumn("ta_value", String.class));
+                    answer = new TextAnswer(answerId, questionStableId, answerGuid, view.getColumn("ta_value", String.class),
+                            actInstanceGuid);
                     break;
                 case DATE:
                     answer = new DateAnswer(answerId, questionStableId, answerGuid,
                             view.getColumn("da_year", Integer.class),
                             view.getColumn("da_month", Integer.class),
-                            view.getColumn("da_day", Integer.class));
+                            view.getColumn("da_day", Integer.class),
+                            actInstanceGuid);
                     break;
                 case NUMERIC:
                     var numericType = NumericType.valueOf(view.getColumn("na_numeric_type", String.class));
                     if (numericType == NumericType.INTEGER) {
                         answer = new NumericIntegerAnswer(answerId, questionStableId, answerGuid,
-                                view.getColumn("na_int_value", Long.class));
+                                view.getColumn("na_int_value", Long.class), actInstanceGuid);
                     } else {
                         throw new DaoException("Unhandled numeric answer type " + numericType);
                     }
@@ -377,7 +382,7 @@ public interface AnswerDao extends SqlObject {
                 case PICKLIST:
                     var map = isChildAnswer ? childAnswers : container;
                     answer = map.computeIfAbsent(answerId, id ->
-                            new PicklistAnswer(answerId, questionStableId, answerGuid, new ArrayList<>()));
+                            new PicklistAnswer(answerId, questionStableId, answerGuid, new ArrayList<>(), actInstanceGuid));
                     var optionStableId = view.getColumn("pa_option_stable_id", String.class);
                     if (optionStableId != null) {
                         var option = new SelectedPicklistOption(optionStableId, view.getColumn("pa_detail_text", String.class));
@@ -386,7 +391,7 @@ public interface AnswerDao extends SqlObject {
                     break;
                 case COMPOSITE:
                     answer = container.computeIfAbsent(answerId, id -> {
-                        var ans = new CompositeAnswer(answerId, questionStableId, answerGuid);
+                        var ans = new CompositeAnswer(answerId, questionStableId, answerGuid, actInstanceGuid);
                         ans.setAllowMultiple(view.getColumn("ca_allow_multiple", Boolean.class));
                         ans.setUnwrapOnExport(view.getColumn("ca_unwrap_on_export", Boolean.class));
                         return ans;
