@@ -12,7 +12,8 @@ import org.junit.runners.Suite;
         GetParticipantInfoRouteTest.class,
         ListCancersRouteTest.class,
         GetDsmDrugSuggestionsRouteTest.class,
-        PatchFormAnswersRouteStandaloneTest.class
+        PatchFormAnswersRouteStandaloneTest.class,
+        GetActivityInstanceRouteStandaloneTest.class
 })
 public class ServerInSameProcessIntegrationTestSuite extends IntegrationTestSuite {
 }
