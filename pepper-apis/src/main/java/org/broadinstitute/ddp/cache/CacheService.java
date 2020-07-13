@@ -144,12 +144,15 @@ public class CacheService {
     }
 
     // @TODO implement resetting of cache based on notifications
-    public <K, V> RLocalCachedMap<K, V> getOrCreateLocalCache(String name) {
+    public <K, V> RLocalCachedMap<K, V> getOrCreateLocalCache(String name, int size) {
         if (cacheManager instanceof NullCacheManager) {
             return null;
         } else {
-            return redissonClient.getLocalCachedMap(LOCAL_CACHE_PREFIX + name, new FstCodec(),
-                    LocalCachedMapOptions.defaults());
+            LocalCachedMapOptions cacheOptions = LocalCachedMapOptions.defaults()
+                    .evictionPolicy(LocalCachedMapOptions.EvictionPolicy.LRU)
+                    .syncStrategy(LocalCachedMapOptions.SyncStrategy.UPDATE)
+                    .cacheSize(size);
+            return redissonClient.getLocalCachedMap(LOCAL_CACHE_PREFIX + name, new FstCodec(), cacheOptions);
         }
     }
 
