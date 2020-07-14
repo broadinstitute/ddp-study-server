@@ -350,7 +350,7 @@ public interface QuestionDao extends SqlObject {
                                             List<Long> answerIds,
                                             List<Rule> untypedRules) {
         BooleanQuestionDto booleanQuestionDto = getJdbiBooleanQuestion()
-                .findDtoByQuestionId(dto.getId())
+                .findDtoByQuestion(dto)
                 .orElseThrow(() -> new DaoException("Could not find boolean question for id " + dto.getId()));
 
         AnswerDao answerDao = getAnswerDao();
@@ -385,7 +385,7 @@ public interface QuestionDao extends SqlObject {
                                                  List<Long> answerIds,
                                                  List<Rule> untypedRules) {
         PicklistQuestionDto picklistQuestionDto = getJdbiPicklistQuestion()
-                .findDtoByQuestionId(dto.getId())
+                .findDtoByQuestion(dto)
                 .orElseThrow(() -> new DaoException("Could not find picklist question for id " + dto.getId()));
 
         AnswerDao answerDao = getAnswerDao();
@@ -454,7 +454,7 @@ public interface QuestionDao extends SqlObject {
                                          List<Long> answerIds,
                                          List<Rule> untypedRules) {
         TextQuestionDto textQuestionDto = getJdbiTextQuestion()
-                .findDtoByQuestionId(dto.getId())
+                .findDtoByQuestion(dto)
                 .orElseThrow(() -> new DaoException("Could not find text question for id " + dto.getId()));
 
         AnswerDao answerDao = getAnswerDao();
@@ -1085,7 +1085,7 @@ public interface QuestionDao extends SqlObject {
     default void disableBoolQuestion(long questionId, RevisionMetadata meta) {
         TemplateDao tmplDao = getTemplateDao();
 
-        BooleanQuestionDto booleanQuestion = getJdbiBooleanQuestion().findDtoByQuestionId(questionId).orElse(null);
+        BooleanQuestionDto booleanQuestion = getJdbiBooleanQuestion().findDtoByQuestion(questionId).orElse(null);
         if (booleanQuestion == null || booleanQuestion.getRevisionEnd() != null) {
             throw new NoSuchElementException("Cannot find active boolean question with id " + questionId);
         }
