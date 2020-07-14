@@ -49,8 +49,8 @@ clients:
       ##LOCALHOST_ADMIN_CALLBACKS##
     allowed_logout_urls:
       - '##BASE_URL##'
-      - '##BASE_URL##/session-expired'
-      ##LOCALHOST_LOGOUTS##
+      - '##BASE_URL##/admin-session-expired'
+      ##LOCALHOST_ADMIN_LOGOUTS##
     web_origins:
       - '##BASE_URL##'
       ##LOCALHOST_ORIGINS##

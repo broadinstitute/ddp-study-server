@@ -170,8 +170,8 @@ JoinMailingListPayload:
     application/json:
       schema:
         $ref: '../pepper.yml#/components/schemas/JoinMailingListPayload'
-UpdateUserSectionIndexRequestBody:
-  description: to update user's section index
+UpdateActivityPropertiesRequestBody:
+  description: to update activity instance properties
   required: true
   content:
     application/json:
