@@ -70,7 +70,11 @@ public class JdbiUmbrellaStudyCached extends SQLObjectWrapper<JdbiUmbrellaStudy>
         if (isUsingNullCache()) {
             return delegate.findByStudyGuid(studyGuid);
         } else {
-            return idToStudyCache.get(studyGuidToIdCache.get(studyGuid));
+            if (studyGuid != null) {
+                return idToStudyCache.get(studyGuidToIdCache.get(studyGuid));
+            } else {
+                return null;
+            }
         }
     }
 
