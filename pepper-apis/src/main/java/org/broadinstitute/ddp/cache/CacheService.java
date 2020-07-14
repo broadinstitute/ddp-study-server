@@ -27,6 +27,7 @@ import org.redisson.api.RLocalCachedMap;
 import org.redisson.api.RedissonClient;
 import org.redisson.codec.FstCodec;
 import org.redisson.config.Config;
+import org.redisson.jcache.JCacheManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,7 +42,6 @@ public class CacheService {
     private Map<String, IdToCacheKeyMapper<?>> cacheNameToCacheKeyMapper = new ConcurrentHashMap<>();
     private Map<String, IdToCacheKeyCollectionMapper<?>> cacheNameToCacheKeyCollectionMapper = new ConcurrentHashMap<>();
     private Set<String> clearAllOnChangeCacheNames = ConcurrentHashMap.newKeySet();
-    private Set<RLocalCachedMap> localCaches = ConcurrentHashMap.newKeySet();
     private boolean resetCaches = false;
 
     public static CacheService getInstance() {
@@ -157,10 +157,12 @@ public class CacheService {
     }
 
     public void resetAllCaches() {
-        cacheManager.getCacheNames().forEach(cacheName -> cacheManager.getCache(cacheName).clear());
+        if (cacheManager instanceof JCacheManager) {
+            cacheManager.getCacheNames().forEach(cacheName -> cacheManager.getCache(cacheName).clear());
+        }
         if (!(cacheManager instanceof NullCacheManager)) {
             redissonClient.getKeys().getKeysByPattern(LOCAL_CACHE_PREFIX + "*").forEach(cacheKey ->
-                    redissonClient.getLocalCachedMap(cacheKey, LocalCachedMapOptions.defaults()).clear());
+                    redissonClient.getLocalCachedMap(cacheKey, new FstCodec(), LocalCachedMapOptions.defaults()).delete());
         }
         resetCaches = true;
     }
