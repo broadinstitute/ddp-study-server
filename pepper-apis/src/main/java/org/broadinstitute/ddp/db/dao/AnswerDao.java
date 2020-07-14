@@ -85,6 +85,14 @@ public interface AnswerDao extends SqlObject {
         return answer;
     }
 
+    default Answer createAnswer(long operatorId, long instanceId, long questionId, Answer answer) {
+        String guid = DBUtils.uniqueStandardGuid(getHandle(), TABLE_NAME, GUID_COLUMN);
+        long now = Instant.now().toEpochMilli();
+        long id = getAnswerSql().insertAnswer(guid, operatorId, instanceId, questionId, now, now);
+        createAnswerValue(operatorId, instanceId, id, answer, null);
+        return findAnswerById(id).orElseThrow(() -> new DaoException("Could not find answer with id " + id));
+    }
+
     private void createAnswerValue(long operatorId, long instanceId, long answerId, Answer answer, QuestionDef questionDef) {
         var answerSql = getAnswerSql();
         var type = answer.getQuestionType();
@@ -118,14 +126,6 @@ public interface AnswerDao extends SqlObject {
         } else {
             throw new DaoException("Unhandled answer type " + type);
         }
-    }
-
-    default Answer createAnswer(long operatorId, long instanceId, long questionId, Answer answer) {
-        String guid = DBUtils.uniqueStandardGuid(getHandle(), TABLE_NAME, GUID_COLUMN);
-        long now = Instant.now().toEpochMilli();
-        long id = getAnswerSql().insertAnswer(guid, operatorId, instanceId, questionId, now, now);
-        createAnswerValue(operatorId, instanceId, id, answer, null);
-        return findAnswerById(id).orElseThrow(() -> new DaoException("Could not find answer with id " + id));
     }
 
     private void createAnswerCompositeValue(long operatorId, long instanceId, long answerId, CompositeAnswer answer) {

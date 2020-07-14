@@ -25,13 +25,12 @@ public class JdbiQuestionCached extends SQLObjectWrapper<JdbiQuestion> implement
 
     private void initializeCaching() {
         if (questionKeyToQuestionDtosCache == null) {
-            questionKeyToQuestionDtosCache = CacheService.getInstance().getOrCreateLocalCache("questionKeyToQuestionDtoCache",
-                    10000);
-
-//            questionKeyToQuestionDtoCache = CacheService.getInstance().getOrCreateCache("questionKeyToQuestionDtoCache",
-//                    new Duration(TimeUnit.MINUTES, 15),
-//                    ModelChangeType.UMBRELLA,
-//                    this.getClass());
+            synchronized (getClass()) {
+                if (questionKeyToQuestionDtosCache == null) {
+                    questionKeyToQuestionDtosCache = CacheService.getInstance().getOrCreateLocalCache("questionKeyToQuestionDtoCache",
+                            10000);
+                }
+            }
         }
     }
 

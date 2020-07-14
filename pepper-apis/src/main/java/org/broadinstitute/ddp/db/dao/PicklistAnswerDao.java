@@ -18,7 +18,6 @@ import org.broadinstitute.ddp.db.dto.PicklistQuestionDto;
 import org.broadinstitute.ddp.exception.OperationNotAllowedException;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
-import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
 import org.broadinstitute.ddp.model.activity.types.PicklistSelectMode;
 import org.jdbi.v3.sqlobject.CreateSqlObject;
@@ -38,8 +37,6 @@ public interface PicklistAnswerDao extends SqlObject {
 
     @CreateSqlObject
     AnswerSql getAnswerSql();
-
-
 
 
     default void assignOptionsToAnswerId(long answerId, List<SelectedPicklistOption> selected, String instanceGuid) {
@@ -94,6 +91,7 @@ public interface PicklistAnswerDao extends SqlObject {
             throw new DaoException("Not all selected picklist options were assigned to answer " + answerId);
         }
     }
+
     default void assignOptionsToAnswerId(long answerId, List<SelectedPicklistOption> selected, PicklistQuestionDef picklistQuestionDef) {
         if (selected == null || selected.isEmpty()) {
             LOG.info("List of selected options is empty; no options will be assigned to answer id {}", answerId);
