@@ -158,7 +158,7 @@ public class PatchFormAnswersRoute implements Route {
             ActivityVersionDto versionDto = activityStore
                     .findVersionDto(handle, instanceDto.getActivityId(), instanceDto.getCreatedAtMillis())
                     .orElseThrow(() -> new DDPException("Could not find activity version for instance " + instanceGuid));
-            FormActivityDef def = activityStore.findActivityDef(handle, studyGuid, activityDto, versionDto)
+            FormActivityDef formActivityDef = activityStore.findActivityDef(handle, studyGuid, activityDto, versionDto)
                     .orElseThrow(() -> new DDPException("Could not find activity definition for instance " + instanceGuid));
 
             PatchAnswerResponse res = new PatchAnswerResponse();
@@ -168,8 +168,8 @@ public class PatchFormAnswersRoute implements Route {
                 return res;
             }
 
-            if (ActivityInstanceUtil.isReadonly(def.getEditTimeoutSec(), instanceDto.getCreatedAtMillis(),
-                    instanceDto.getStatusType().name(), def.isWriteOnce(), instanceDto.isReadonly())) {
+            if (ActivityInstanceUtil.isReadonly(formActivityDef.getEditTimeoutSec(), instanceDto.getCreatedAtMillis(),
+                    instanceDto.getStatusType().name(), formActivityDef.isWriteOnce(), instanceDto.isReadonly())) {
                 String msg = "Activity instance with GUID " + instanceGuid
                         + " is read-only, cannot submit answer(s) for it";
                 LOG.info(msg);
@@ -187,7 +187,7 @@ public class PatchFormAnswersRoute implements Route {
                 Map<String, List<Rule>> failedRulesByQuestion = new HashMap<>();
                 for (AnswerSubmission submission : submissions) {
                     String questionStableId = extractQuestionStableId(submission, response);
-                    QuestionDef questionDef = def.getQuestionByStableId(questionStableId);
+                    QuestionDef questionDef = formActivityDef.getQuestionByStableId(questionStableId);
 
                     if (questionDef == null) {
                         LOG.warn("Could not find questiondef with id: " + questionStableId);
@@ -271,10 +271,11 @@ public class PatchFormAnswersRoute implements Route {
 
                         if (answerId == null) {
                             // Did not provide answer guid and no answer exist yet so create one
-                            answerGuid = answerDao.createAnswer(operatorUser.getId(), instanceDto.getId(), answer).getAnswerGuid();
+                            answerGuid = answerDao.createAnswer(operatorUser.getId(), instanceDto.getId(), answer, questionDef)
+                                    .getAnswerGuid();
                             LOG.info("Created answer with guid {} for question stable id {}", answerGuid, questionStableId);
                         } else {
-                            answerDao.updateAnswer(operatorUser.getId(), answerId, answer);
+                            answerDao.updateAnswer(operatorUser.getId(), answerId, answer, questionDef);
                             LOG.info("Updated answer with guid {} for question stable id {}", answerGuid, questionStableId);
                         }
 
@@ -301,7 +302,8 @@ public class PatchFormAnswersRoute implements Route {
             }
 
 
-            res.setBlockVisibilities(formService.getBlockVisibilities(handle, instanceSummary, def, participantGuid,  instanceGuid));
+            res.setBlockVisibilities(formService.getBlockVisibilities(handle, instanceSummary, formActivityDef, participantGuid,
+                    instanceGuid));
 
             List<ActivityValidationFailure> failures = getActivityValidationFailures(
                     handle, participantGuid, instanceDto, languageCodeId
