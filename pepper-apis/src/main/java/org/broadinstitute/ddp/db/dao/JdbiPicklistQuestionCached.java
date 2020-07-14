@@ -2,7 +2,6 @@ package org.broadinstitute.ddp.db.dao;
 
 import java.util.List;
 import java.util.Optional;
-
 import javax.cache.Cache;
 import javax.cache.expiry.Duration;
 
@@ -43,7 +42,19 @@ public class JdbiPicklistQuestionCached extends SQLObjectWrapper<JdbiPicklistQue
 
     @Override
     public Optional<PicklistQuestionDto> findDtoByQuestionId(long questionId) {
-        return delegate.findDtoByQuestionId(questionId);
+        if (isNullCache(questionIdToPicklistQuestionDto)) {
+            return delegate.findDtoByQuestionId(questionId);
+        } else {
+            PicklistQuestionDto pickDto = questionIdToPicklistQuestionDto.get(questionId);
+            if (pickDto == null) {
+                Optional<PicklistQuestionDto> dtoOpt = delegate.findDtoByQuestionId(questionId);
+                dtoOpt.ifPresent(dto -> questionIdToPicklistQuestionDto.put(questionId, dto));
+                return dtoOpt;
+            } else {
+                return Optional.of(pickDto);
+            }
+
+        }
     }
 
     @Override
