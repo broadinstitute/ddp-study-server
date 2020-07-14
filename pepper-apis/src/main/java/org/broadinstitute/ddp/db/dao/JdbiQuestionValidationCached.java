@@ -4,24 +4,24 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import javax.cache.Cache;
-import javax.cache.expiry.Duration;
 
 import org.broadinstitute.ddp.cache.CacheService;
-import org.broadinstitute.ddp.cache.ModelChangeType;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.db.dto.validation.ValidationDto;
 import org.jdbi.v3.core.Handle;
+import org.redisson.api.RLocalCachedMap;
 
 public class JdbiQuestionValidationCached extends SQLObjectWrapper<JdbiQuestionValidation> implements JdbiQuestionValidation {
-    private static Cache<Long, List<ValidationDto>> questionIdToValidationsCache;
+    private static RLocalCachedMap<Long, List<ValidationDto>> questionIdToValidationsCache;
 
     private void initializeCaching() {
         if (questionIdToValidationsCache == null) {
-            questionIdToValidationsCache = CacheService.getInstance().getOrCreateCache("questionIdToValidationsCache",
-                    new Duration(),
-                    ModelChangeType.STUDY,
-                    this.getClass());
+            synchronized (this.getClass()) {
+                if (questionIdToValidationsCache == null) {
+                    questionIdToValidationsCache = CacheService.getInstance()
+                            .getOrCreateLocalCache("questionIdToValidationsCache", 10000);
+                }
+            }
         }
     }
 
@@ -50,15 +50,17 @@ public class JdbiQuestionValidationCached extends SQLObjectWrapper<JdbiQuestionV
         } else {
             List<ValidationDto> validations = questionIdToValidationsCache.get(questionDto.getId());
             if (validations == null) {
-                cacheActivityValidations(questionDto.getActivityId());
-                validations = questionIdToValidationsCache.get(questionDto.getId());
+                Map<Long, List<ValidationDto>> data = cacheActivityValidations(questionDto.getActivityId());
+                validations = data.get(questionDto.getId());
             }
             return validations == null ? new ArrayList<>() : validations;
         }
     }
 
-    private void cacheActivityValidations(Long activityId) {
-        questionIdToValidationsCache.putAll(delegate.getAllActiveValidationsForActivity(activityId));
+    private Map<Long, List<ValidationDto>> cacheActivityValidations(Long activityId) {
+        Map<Long, List<ValidationDto>> dataToCache = delegate.getAllActiveValidationsForActivity(activityId);
+        questionIdToValidationsCache.putAllAsync(dataToCache);
+        return dataToCache;
     }
 
 
