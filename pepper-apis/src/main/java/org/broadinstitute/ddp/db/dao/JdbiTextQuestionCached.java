@@ -46,7 +46,7 @@ public class JdbiTextQuestionCached extends SQLObjectWrapper<JdbiTextQuestion> i
         return delegate.update(questionId, inputType, suggestionType, placeholderTemplateId);
     }
 
-    public Optional<TextQuestionDto> findDtoByQuestionId(QuestionDto questionDto) {
+    public Optional<TextQuestionDto> findDtoByQuestion(QuestionDto questionDto) {
         if (isNullCache(questionIdToTextQuestionCache)) {
             return delegate.findDtoByQuestionId(questionDto.getId());
         } else {
