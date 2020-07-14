@@ -4,6 +4,7 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.broadinstitute.ddp.cache.CacheService;
+import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.jdbi.v3.core.Handle;
 import org.redisson.api.RLocalCachedMap;
@@ -49,9 +50,10 @@ public class AnswerCachedDao extends SQLObjectWrapper<AnswerDao> implements Answ
         return delegate.createAnswer(operatorGuid, instanceGuid, answer);
     }
 
+
     @Override
-    public Answer createAnswer(long operatorId, long instanceId, Answer answer) {
-        return delegate.createAnswer(operatorId, instanceId, answer);
+    public Answer createAnswer(long operatorId, long instanceId, Answer answer, QuestionDef questionDef) {
+        return delegate.createAnswer(operatorId, instanceId, answer, questionDef);
     }
 
     @Override
@@ -62,6 +64,12 @@ public class AnswerCachedDao extends SQLObjectWrapper<AnswerDao> implements Answ
     @Override
     public void updateAnswer(long operatorId, long answerId, Answer newAnswer) {
         delegate.updateAnswer(operatorId, answerId, newAnswer);
+        removeFromCache(answerId);
+    }
+
+    @Override
+    public void updateAnswer(long operatorId, long answerId, Answer newAnswer, QuestionDef questionDef) {
+        delegate.updateAnswer(operatorId, answerId, newAnswer, questionDef);
         removeFromCache(answerId);
     }
 
