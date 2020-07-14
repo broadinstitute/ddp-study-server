@@ -17,6 +17,8 @@ import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dto.AnswerDto;
 import org.broadinstitute.ddp.db.dto.CompositeAnswerSummaryDto;
+import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.instance.answer.AgreementAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.AnswerRow;
@@ -65,29 +67,25 @@ public interface AnswerDao extends SqlObject {
     default Answer createAnswer(String operatorGuid, String instanceGuid, Answer answer) {
         long operatorId = getHandle().attach(JdbiUser.class).getUserIdByGuid(operatorGuid);
         long instanceId = getHandle().attach(JdbiActivityInstance.class).getActivityInstanceId(instanceGuid);
-        return createAnswer(operatorId, instanceId, answer);
+        return createAnswer(operatorId, instanceId, answer, null);
     }
 
     default Answer createAnswer(long operatorId, long instanceId, Answer answer) {
+        return createAnswer(operatorId, instanceId, answer, null);
+    }
+
+    default Answer createAnswer(long operatorId, long instanceId, Answer answer, QuestionDef questionDef) {
         long now = Instant.now().toEpochMilli();
         Pair<String, Long> guidAndId = DBUtils.executeSqlInsertWithGeneratedGuid((guid) ->
                 getAnswerSql().insertAnswerByQuestionStableId(guid, operatorId, instanceId, answer.getQuestionStableId(), now, now)
         );
-        createAnswerValue(operatorId, instanceId, guidAndId.getRight(), answer);
+        createAnswerValue(operatorId, instanceId, guidAndId.getRight(), answer, questionDef);
         answer.setAnswerId(guidAndId.getRight());
         answer.setAnswerGuid(guidAndId.getLeft());
         return answer;
     }
 
-    default Answer createAnswer(long operatorId, long instanceId, long questionId, Answer answer) {
-        String guid = DBUtils.uniqueStandardGuid(getHandle(), TABLE_NAME, GUID_COLUMN);
-        long now = Instant.now().toEpochMilli();
-        long id = getAnswerSql().insertAnswer(guid, operatorId, instanceId, questionId, now, now);
-        createAnswerValue(operatorId, instanceId, id, answer);
-        return findAnswerById(id).orElseThrow(() -> new DaoException("Could not find answer with id " + id));
-    }
-
-    private void createAnswerValue(long operatorId, long instanceId, long answerId, Answer answer) {
+    private void createAnswerValue(long operatorId, long instanceId, long answerId, Answer answer, QuestionDef questionDef) {
         var answerSql = getAnswerSql();
         var type = answer.getQuestionType();
         if (type == QuestionType.AGREEMENT) {
@@ -109,7 +107,11 @@ public interface AnswerDao extends SqlObject {
             Long value = ((NumericIntegerAnswer) ans).getValue();
             DBUtils.checkInsert(1, answerSql.insertNumericIntValue(answerId, value));
         } else if (type == QuestionType.PICKLIST) {
-            createAnswerPicklistValue(instanceId, answerId, (PicklistAnswer) answer);
+            if (questionDef == null) {
+                createAnswerPicklistValue(instanceId, answerId, (PicklistAnswer) answer);
+            } else {
+                createAnswerPicklistValue(answerId, (PicklistAnswer) answer, (PicklistQuestionDef) questionDef);
+            }
         } else if (type == QuestionType.TEXT) {
             String value = ((TextAnswer) answer).getValue();
             DBUtils.checkInsert(1, answerSql.insertTextValue(answerId, value));
@@ -118,10 +120,18 @@ public interface AnswerDao extends SqlObject {
         }
     }
 
+    default Answer createAnswer(long operatorId, long instanceId, long questionId, Answer answer) {
+        String guid = DBUtils.uniqueStandardGuid(getHandle(), TABLE_NAME, GUID_COLUMN);
+        long now = Instant.now().toEpochMilli();
+        long id = getAnswerSql().insertAnswer(guid, operatorId, instanceId, questionId, now, now);
+        createAnswerValue(operatorId, instanceId, id, answer, null);
+        return findAnswerById(id).orElseThrow(() -> new DaoException("Could not find answer with id " + id));
+    }
+
     private void createAnswerCompositeValue(long operatorId, long instanceId, long answerId, CompositeAnswer answer) {
         List<List<Long>> childAnswerIds = answer.getValue().stream()
                 .map(row -> row.getValues().stream()
-                        .map(child -> child == null ? null : createAnswer(operatorId, instanceId, child).getAnswerId())
+                        .map(child -> child == null ? null : createAnswer(operatorId, instanceId, child, null).getAnswerId())
                         .collect(Collectors.toList()))
                 .collect(Collectors.toList());
         getJdbiCompositeAnswer().insertChildAnswerItems(answerId, childAnswerIds);
@@ -132,18 +142,25 @@ public interface AnswerDao extends SqlObject {
         getPicklistAnswerDao().assignOptionsToAnswerId(answerId, answer.getValue(), instanceGuid);
     }
 
+    private void createAnswerPicklistValue(long answerId, PicklistAnswer answer, PicklistQuestionDef questionDef) {
+        getPicklistAnswerDao().assignOptionsToAnswerId(answerId, answer.getValue(), questionDef);
+    }
     //
     // updates
     //
 
     default void updateAnswer(long operatorId, long answerId, Answer newAnswer) {
+        updateAnswer(operatorId, answerId, newAnswer, null);
+    }
+
+    default void updateAnswer(long operatorId, long answerId, Answer newAnswer, QuestionDef questionDef) {
         long now = Instant.now().toEpochMilli();
         DBUtils.checkUpdate(1, getAnswerSql().updateAnswerById(answerId, operatorId, now));
-        updateAnswerValue(operatorId, answerId, newAnswer);
+        updateAnswerValue(operatorId, answerId, newAnswer, questionDef);
         newAnswer.setAnswerId(answerId);
     }
 
-    private void updateAnswerValue(long operatorId, long answerId, Answer newAnswer) {
+    private void updateAnswerValue(long operatorId, long answerId, Answer newAnswer, QuestionDef questionDef) {
         var answerSql = getAnswerSql();
         var type = newAnswer.getQuestionType();
         if (type == QuestionType.AGREEMENT) {
@@ -165,7 +182,11 @@ public interface AnswerDao extends SqlObject {
             Long value = ((NumericIntegerAnswer) ans).getValue();
             DBUtils.checkInsert(1, answerSql.updateNumericIntValueById(answerId, value));
         } else if (type == QuestionType.PICKLIST) {
-            updateAnswerPicklistValue(answerId, (PicklistAnswer) newAnswer);
+            if (questionDef == null) {
+                updateAnswerPicklistValue(answerId, (PicklistAnswer) newAnswer);
+            } else {
+                updateAnswerPicklistValue(answerId, (PicklistAnswer) newAnswer, (PicklistQuestionDef) questionDef);
+            }
         } else if (type == QuestionType.TEXT) {
             String value = ((TextAnswer) newAnswer).getValue();
             DBUtils.checkInsert(1, answerSql.updateTextValueById(answerId, value));
@@ -207,7 +228,7 @@ public interface AnswerDao extends SqlObject {
                     updateAnswer(operatorId, matchingOldChildId, newChild);
                     return matchingOldChildId;
                 } else {
-                    return createAnswer(operatorId, oldAnswerDto.getActivityInstanceId(), newChild).getAnswerId();
+                    return createAnswer(operatorId, oldAnswerDto.getActivityInstanceId(), newChild, null).getAnswerId();
                 }
             }).collect(Collectors.toList());
 
@@ -233,6 +254,11 @@ public interface AnswerDao extends SqlObject {
                 .orElseThrow(() -> new DaoException("Could not find activity instance guid for answer id " + answerId));
         answerSql.deletePicklistSelectedByAnswerId(answerId);
         picklistAnswerDao.assignOptionsToAnswerId(answerId, newAnswer.getValue(), instanceGuid);
+    }
+
+    private void updateAnswerPicklistValue(long answerId, PicklistAnswer newAnswer, PicklistQuestionDef questionDef) {
+        getAnswerSql().deletePicklistSelectedByAnswerId(answerId);
+        getPicklistAnswerDao().assignOptionsToAnswerId(answerId, newAnswer.getValue(), questionDef);
     }
 
     //
