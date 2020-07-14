@@ -1,21 +1,22 @@
 package org.broadinstitute.ddp.db.dao;
 
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.toList;
+
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
-import javax.cache.Cache;
-import javax.cache.expiry.Duration;
 
 import org.broadinstitute.ddp.cache.CacheService;
-import org.broadinstitute.ddp.cache.ModelChangeType;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.jdbi.v3.core.Handle;
+import org.redisson.api.RLocalCachedMap;
 
 public class JdbiQuestionCached extends SQLObjectWrapper<JdbiQuestion> implements JdbiQuestion {
-    private static Cache<String, QuestionDto> questionKeyToQuestionDtoCache;
+    private static RLocalCachedMap<String, List<QuestionDto>> questionKeyToQuestionDtosCache;
 
     public JdbiQuestionCached(Handle handle) {
         super(handle, JdbiQuestion.class);
@@ -23,11 +24,14 @@ public class JdbiQuestionCached extends SQLObjectWrapper<JdbiQuestion> implement
     }
 
     private void initializeCaching() {
-        if (questionKeyToQuestionDtoCache == null) {
-            questionKeyToQuestionDtoCache = CacheService.getInstance().getOrCreateCache("questionKeyToQuestionDtoCache",
-                    new Duration(TimeUnit.MINUTES, 15),
-                    ModelChangeType.UMBRELLA,
-                    this.getClass());
+        if (questionKeyToQuestionDtosCache == null) {
+            questionKeyToQuestionDtosCache = CacheService.getInstance().getOrCreateLocalCache("questionKeyToQuestionDtoCache",
+                    10000);
+
+//            questionKeyToQuestionDtoCache = CacheService.getInstance().getOrCreateCache("questionKeyToQuestionDtoCache",
+//                    new Duration(TimeUnit.MINUTES, 15),
+//                    ModelChangeType.UMBRELLA,
+//                    this.getClass());
         }
     }
 
@@ -45,30 +49,38 @@ public class JdbiQuestionCached extends SQLObjectWrapper<JdbiQuestion> implement
 
     @Override
     public Optional<QuestionDto> findDtoByStableIdAndInstance(String stableId, ActivityInstanceDto activityInstance) {
-        if (isNullCache(questionKeyToQuestionDtoCache)) {
+        if (isNullCache(questionKeyToQuestionDtosCache)) {
             return delegate.findDtoByStableIdAndInstance(stableId, activityInstance);
         } else {
-            QuestionDto cachedQuestionDto = questionKeyToQuestionDtoCache.get(buildQuestionKey(activityInstance.getActivityId(), stableId));
-            if (cachedQuestionDto == null) {
-                cacheQuestionDtosForStudyActivity(activityInstance.getActivityId());
-                cachedQuestionDto = questionKeyToQuestionDtoCache.get(buildQuestionKey(activityInstance.getActivityId(), stableId));
+            List<QuestionDto> cachedQuestionDtos = questionKeyToQuestionDtosCache.get(buildQuestionKey(activityInstance.getActivityId(),
+                    stableId));
+            if (cachedQuestionDtos == null) {
+                Map<String, List<QuestionDto>> mapOfDtos = cacheQuestionDtosForStudyActivity(activityInstance.getActivityId());
+                cachedQuestionDtos = mapOfDtos.get(buildQuestionKey(activityInstance.getActivityId(), stableId));
             }
-            return Optional.ofNullable(cachedQuestionDto);
+            List<QuestionDto> filteredDtos = cachedQuestionDtos.stream()
+                    .filter(dto -> (dto.getRevisionStart() <= activityInstance.getCreatedAtMillis())
+                            && (dto.getRevisionEnd() == null || activityInstance.getCreatedAtMillis() < dto.getRevisionEnd()))
+                    .collect(toList());
+            return filteredDtos.stream().findFirst();
         }
     }
 
     @Override
-    public List<QuestionDto> findDtosByActvityId(Long activityId) {
-        return delegate.findDtosByActvityId(activityId);
+    public List<QuestionDto> findDtosByActivityId(Long activityId) {
+        return delegate.findDtosByActivityId(activityId);
     }
 
     private String buildQuestionKey(Long activityId, String questionStableId) {
         return activityId + ":" + questionStableId;
     }
 
-    public void cacheQuestionDtosForStudyActivity(Long activityId) {
-        delegate.findDtosByActvityId(activityId).forEach(dto ->
-                questionKeyToQuestionDtoCache.put(buildQuestionKey(activityId, dto.getStableId()), dto));
+    public Map<String, List<QuestionDto>> cacheQuestionDtosForStudyActivity(Long activityId) {
+        List<QuestionDto> dtos = delegate.findDtosByActivityId(activityId);
+        Map<String, List<QuestionDto>> dtoMap = dtos.stream().collect(
+                groupingBy(dto -> buildQuestionKey(activityId, dto.getStableId())));
+        questionKeyToQuestionDtosCache.putAllAsync(dtoMap);
+        return dtoMap;
     }
 
     @Override

@@ -46,7 +46,7 @@ public interface JdbiQuestion extends SqlObject {
     @UseStringTemplateSqlLocator
     @SqlQuery("queryQuestionsDtoByActivityId")
     @RegisterConstructorMapper(QuestionDto.class)
-    List<QuestionDto> findDtosByActvityId(Long activityId);
+    List<QuestionDto> findDtosByActivityId(Long activityId);
 
     @UseStringTemplateSqlLocator
     @SqlQuery("queryQuestionDtoByStudyIdStableIdAndUserGuid")
