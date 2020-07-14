@@ -1,17 +1,21 @@
-package org.broadinstitute.ddp.db.housekeeping.dao;
+package org.broadinstitute.ddp.service;
 
 import static org.broadinstitute.ddp.service.DsmAddressValidationStatus.DSM_INVALID_ADDRESS_STATUS;
 
 import java.beans.ConstructorProperties;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.broadinstitute.ddp.client.DsmClient;
+import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.DsmKitRequestDao;
 import org.broadinstitute.ddp.db.dao.KitConfigurationDao;
 import org.broadinstitute.ddp.db.dao.KitScheduleDao;
@@ -22,9 +26,6 @@ import org.broadinstitute.ddp.model.kit.KitSchedule;
 import org.broadinstitute.ddp.model.kit.KitScheduleRecord;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.pex.TreeWalkInterpreter;
-import org.broadinstitute.ddp.service.DsmAddressValidationStatus;
-import org.broadinstitute.ddp.service.EventService;
-import org.broadinstitute.ddp.util.ConfigManager;
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.mapper.EnumMapper;
 import org.jdbi.v3.core.mapper.reflect.ConstructorMapper;
@@ -32,13 +33,13 @@ import org.jdbi.v3.stringtemplate4.StringTemplateSqlLocator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class KitCheckDao {
+public class KitCheckService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(KitCheckDao.class);
+    private static final Logger LOG = LoggerFactory.getLogger(KitCheckService.class);
 
     private final PexInterpreter interpreter;
 
-    public KitCheckDao() {
+    public KitCheckService() {
         interpreter = new TreeWalkInterpreter();
     }
 
@@ -117,6 +118,53 @@ public class KitCheckDao {
     }
 
     /**
+     * Look through participants that are meant to receive reoccurring kits and find the status of the last sent kit.
+     *
+     * @param apisHandle the database handle
+     * @param dsmClient  the dsm client
+     */
+    public void checkPendingKitSentStatuses(Handle apisHandle, DsmClient dsmClient) {
+        var kitScheduleDao = apisHandle.attach(KitScheduleDao.class);
+        List<KitScheduleRecord> records = kitScheduleDao
+                .findAllEligibleRecordsWaitingForKitStatus()
+                .collect(Collectors.toList());
+        Collections.shuffle(records);
+        LOG.info("Checking kit status for {} records", records.size());
+
+        List<String> userGuids = records.stream().map(KitScheduleRecord::getUserGuid).collect(Collectors.toList());
+        Map<String, Instant> sentTimes = new HashMap<>();
+        dsmClient.paginateParticipantKitStatuses(userGuids, (batch, result) -> {
+            if (result.getStatusCode() == 200) {
+                for (var status : result.getBody()) {
+                    if (status.getSamples() != null) {
+                        for (var kit : status.getSamples()) {
+                            sentTimes.put(kit.getKitRequestId(), Instant.ofEpochSecond(kit.getSentEpochTimeSec()));
+                        }
+                    }
+                }
+            } else if (result.hasThrown()) {
+                LOG.error("Error looking up kit statuses for {} participants, continuing pagination", batch.size(), result.getThrown());
+            } else {
+                LOG.warn("Response has status code {}, continuing pagination", result.getStatusCode());
+            }
+            return true;
+        });
+
+        List<Long> recordIds = new ArrayList<>();
+        List<Instant> recordKitSentTimes = new ArrayList<>();
+        for (var record : records) {
+            Instant sentTime = sentTimes.get(record.getLastKitRequestGuid());
+            if (sentTime != null) {
+                recordIds.add(record.getId());
+                recordKitSentTimes.add(sentTime);
+            }
+        }
+
+        kitScheduleDao.updateRecordLastKitSentTimes(recordIds, recordKitSentTimes);
+        LOG.info("Updated kit sent times for {} records", recordIds.size());
+    }
+
+    /**
      * Go through all kit configurations and all pending participants and queue up reoccurring kits (e.g. kits after the
      * initial kit).
      *
@@ -131,33 +179,36 @@ public class KitCheckDao {
                 .filter(config -> config.getNumKits() >= 0)
                 .collect(Collectors.toList());
 
-        var dsmClient = new DsmClient(ConfigManager.getInstance().getConfig());
         var kitScheduleDao = apisHandle.attach(KitScheduleDao.class);
-
         var kitCheckResult = new KitCheckResult();
         for (var config : configs) {
-            KitSchedule schedule = config.getSchedule();
             var pendingRecords = kitScheduleDao
-                    .findPendingScheduleRecords(config.getId(), schedule.getNumOccurrencesPerUser())
+                    .findPendingScheduleRecords(config.getId())
                     .collect(Collectors.toList());
             LOG.info("Checking recurring kits for {} pending participants, study {}, and kit_configuration_id={}",
                     pendingRecords.size(), config.getStudyGuid(), config.getId());
             for (var pending : pendingRecords) {
-                scheduleNextKitsForParticipant(apisHandle, dsmClient, kitCheckResult, config, pending);
+                // If there is an issue with a single participant, don't let that affect others.
+                // So wrap the execution in a savepoint and a try/catch block.
+                try {
+                    TransactionWrapper.useSavepoint("sp_" + pending.getUserGuid(), apisHandle, h -> {
+                        scheduleNextKitsForParticipant(h, kitCheckResult, config, pending);
+                    });
+                } catch (Exception e) {
+                    LOG.error("Error while checking next kits for participant {}, continuing", pending.getUserGuid(), e);
+                }
             }
         }
 
         return kitCheckResult;
     }
 
-    private void scheduleNextKitsForParticipant(Handle apisHandle, DsmClient dsmClient, KitCheckResult kitCheckResult,
-                                                KitConfiguration config, KitScheduleDao.PendingScheduleRecord pending) {
+    private void scheduleNextKitsForParticipant(Handle apisHandle, KitCheckResult kitCheckResult, KitConfiguration config,
+                                                KitScheduleDao.PendingScheduleRecord pending) {
         KitSchedule schedule = config.getSchedule();
         KitScheduleRecord record = pending.getRecord();
-        String studyGuid = config.getStudyGuid();
-        String userGuid = pending.getUserGuid();
 
-        Instant lastTime = determineLastTimePoint(apisHandle, dsmClient, studyGuid, userGuid, record);
+        Instant lastTime = determineLastTimePoint(record);
         if (lastTime != null) {
             Instant nextPrepTime = schedule.getNextPrepTimePoint(lastTime);
             Instant nextTime = schedule.getNextTimePoint(lastTime);
@@ -177,8 +228,7 @@ public class KitCheckDao {
         }
     }
 
-    private Instant determineLastTimePoint(Handle apisHandle, DsmClient dsmClient, String studyGuid,
-                                           String userGuid, KitScheduleRecord record) {
+    private Instant determineLastTimePoint(KitScheduleRecord record) {
         if (record.getLastKitRequestId() == null) {
             // Either this is first time or user opted-out of the last kit request, so use the occurrence time.
             return record.getLastOccurrenceTime();
@@ -186,28 +236,8 @@ public class KitCheckDao {
             // User got a kit last time and we already know when it was shipped, so use it.
             return record.getLastKitSentTime();
         } else {
-            // User got a kit but we haven't found out when it was sent. Let's try asking DSM about it.
-            var result = dsmClient.getParticipantStatus(studyGuid, userGuid, null);
-            if (result.hasThrown() || result.getStatusCode() != 200) {
-                // Something wrong, so skip this participant and move on.
-                LOG.error("Error while getting participant kit status from DSM, statusCode={}, participantGuid={}",
-                        result.getStatusCode(), userGuid, result.getThrown());
-                return null;
-            }
-            // Our kit request guid is their kit id.
-            Instant sent = result.getBody().getSamples().stream()
-                    .filter(kit -> record.getLastKitRequestGuid().equals(kit.getKitRequestId()))
-                    .findFirst()
-                    .map(kit -> Instant.ofEpochSecond(kit.getSentEpochTimeSec()))
-                    .orElse(null);
-            if (sent != null) {
-                // Save the sent time so we can cache it and not have to call DSM again.
-                apisHandle.attach(KitScheduleDao.class).updateRecordLastKitSentTime(record.getId(), sent);
-                return sent;
-            } else {
-                // Last kit was not sent out yet, no point in doing anything more for this participant.
-                return null;
-            }
+            // Last kit was not sent out yet, no point in doing anything more for this participant.
+            return null;
         }
     }
 
@@ -327,7 +357,7 @@ public class KitCheckDao {
 
     private Stream<PotentialRecipient> findPotentialKitRecipients(Handle apisHandle, String studyGuid, long kitTypeId) {
         String query = StringTemplateSqlLocator
-                .findStringTemplate(KitCheckDao.class, "queryAddressInfoForEnrolledUsersWithoutKits")
+                .findStringTemplate(KitCheckService.class, "queryAddressInfoForEnrolledUsersWithoutKits")
                 .render();
         return apisHandle.createQuery(query)
                 .bind("studyGuid", studyGuid)

@@ -87,6 +87,14 @@
         "sendMetrics": true,
     {{end}}
     "googleGeocodingApiKey": "{{$conf.Data.geocodingKey}}",
+    "kits": {
+        # Whether to enable kits check
+        "checkEnabled": {{$conf.Data.kits.checkEnabled}},
+        # How many seconds to wait before doing next check
+        "intervalSecs": {{$conf.Data.kits.intervalSecs}},
+        # How many seconds to wait before calling DSM for kit statuses
+        "statusCheckSecs": {{$conf.Data.kits.statusCheckSecs}}
+    },
     "elasticsearch": {
         # Whether to enable data sync to ES
         "syncEnabled": {{$conf.Data.elasticsearch.syncEnabled}},

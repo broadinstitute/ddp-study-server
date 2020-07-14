@@ -19,6 +19,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 import com.typesafe.config.Config;
+import org.apache.commons.collections4.ListUtils;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
@@ -38,7 +39,9 @@ public class DsmClient {
     public static final String PATH_DRUGS = "/app/drugs";
     public static final String PATH_PARTICIPANT_STATUS = String.format(
             "/info/participantstatus/%s/%s", PathParam.STUDY_GUID, PathParam.USER_GUID);
+    public static final String PATH_PARTICIPANT_KIT_STATUSES = "TBD";
     public static final int DEFAULT_TIMEOUT_SECS = 10;
+    public static final int PAGE_SIZE = 100;
 
     private static final Logger LOG = LoggerFactory.getLogger(DsmClient.class);
     private static final Gson gson = new Gson();
@@ -139,7 +142,7 @@ public class DsmClient {
             int statusCode = response.statusCode();
             if (statusCode == 200) {
                 Type type = new TypeToken<List<String>>() {}.getType();
-                List<String> names = new Gson().fromJson(response.body(), type);
+                List<String> names = gson.fromJson(response.body(), type);
                 return ApiResult.ok(statusCode, names);
             } else {
                 return ApiResult.err(statusCode, null);
@@ -147,6 +150,73 @@ public class DsmClient {
         } catch (JWTCreationException | IOException | InterruptedException | JsonSyntaxException e) {
             return ApiResult.thrown(e);
         }
+    }
+
+    /**
+     * Fetches kit statuses for a list of participants.
+     *
+     * @param userGuids list of participant guids
+     * @return result with kit statuses
+     */
+    public ApiResult<List<ParticipantStatus>, Void> listParticipantKitStatuses(List<String> userGuids) {
+        String path = PATH_PARTICIPANT_KIT_STATUSES; // todo
+        try {
+            String auth = RouteUtil.makeAuthBearerHeader(generateToken());
+            String payload = gson.toJson(userGuids, String[].class);
+            var request = HttpRequest.newBuilder()
+                    .uri(baseUrl.resolve(path))
+                    .header(RouteConstants.Header.AUTHORIZATION, auth)
+                    .timeout(Duration.ofSeconds(DEFAULT_TIMEOUT_SECS))
+                    .POST(HttpRequest.BodyPublishers.ofString(payload))
+                    .build();
+            var response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            int statusCode = response.statusCode();
+            if (statusCode == 200) {
+                Type type = new TypeToken<List<ParticipantStatus>>() {}.getType();
+                List<ParticipantStatus> statuses = gson.fromJson(response.body(), type);
+                return ApiResult.ok(statusCode, statuses);
+            } else {
+                return ApiResult.err(statusCode, null);
+            }
+        } catch (JWTCreationException | IOException | InterruptedException | JsonSyntaxException e) {
+            return ApiResult.thrown(e);
+        }
+    }
+
+    /**
+     * Partition list of guids into batches and fetch each batch. Pagination may be stopped early by the callback.
+     *
+     * @param userGuids the list of participant guids
+     * @param callback  handler for processing each batch results
+     * @return total number processed
+     */
+    public int paginateParticipantKitStatuses(List<String> userGuids,
+                                              PageCallback<String, List<ParticipantStatus>, Void> callback) {
+        return paginateParticipantKitStatuses(PAGE_SIZE, userGuids, callback);
+    }
+
+    /**
+     * Partition list of guids into batches and fetch each batch. Pagination may be stopped early by the callback.
+     *
+     * @param pageSize  size of each batch
+     * @param userGuids the list of participant guids
+     * @param callback  handler for processing each batch results
+     * @return total number processed
+     */
+    public int paginateParticipantKitStatuses(int pageSize, List<String> userGuids,
+                                              PageCallback<String, List<ParticipantStatus>, Void> callback) {
+        List<List<String>> partitions = ListUtils.partition(userGuids, pageSize);
+        int numProcessed = 0;
+        for (var batch : partitions) {
+            var result = listParticipantKitStatuses(batch);
+            boolean shouldContinue = callback.handlePage(batch, result);
+            if (shouldContinue) {
+                numProcessed += batch.size();
+            } else {
+                break;
+            }
+        }
+        return numProcessed;
     }
 
     /**
@@ -159,10 +229,6 @@ public class DsmClient {
      * @return result with status info
      */
     public ApiResult<ParticipantStatus, Void> getParticipantStatus(String studyGuid, String userGuid, String token) {
-        if (token == null) {
-            // If there's no participant token, use generated token instead.
-            token = generateToken();
-        }
         String path = PATH_PARTICIPANT_STATUS
                 .replace(PathParam.STUDY_GUID, studyGuid)
                 .replace(PathParam.USER_GUID, userGuid);
@@ -178,14 +244,33 @@ public class DsmClient {
             int statusCode = response.statusCode();
             if (statusCode == 200) {
                 responseBody = response.body();
-                ParticipantStatus status = new Gson().fromJson(responseBody, ParticipantStatus.class);
+                ParticipantStatus status = gson.fromJson(responseBody, ParticipantStatus.class);
                 return ApiResult.ok(statusCode, status);
             } else {
                 return ApiResult.err(statusCode, null);
             }
         } catch (JWTCreationException | IOException | InterruptedException | JsonSyntaxException e) {
-            LOG.error("Trouble looking up status of {} in study {}.  Response was {}", userGuid, studyGuid, responseBody);
+            LOG.error("Trouble looking up status for participant {} in study {}. Response was {}", userGuid, studyGuid, responseBody);
             return ApiResult.thrown(e);
         }
+    }
+
+    /**
+     * A callback used during pagination.
+     *
+     * @param <B> the batch type
+     * @param <R> the result type
+     * @param <E> the error type
+     */
+    @FunctionalInterface
+    public interface PageCallback<B, R, E> {
+        /**
+         * Consume the page and respond whether to continue pagination or not.
+         *
+         * @param batch the batch that resulted in the page
+         * @param page  a page of results
+         * @return true to continue pagination, false to stop
+         */
+        boolean handlePage(List<B> batch, ApiResult<R, E> page);
     }
 }

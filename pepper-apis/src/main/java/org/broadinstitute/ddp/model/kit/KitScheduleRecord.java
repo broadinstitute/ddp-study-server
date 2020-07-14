@@ -9,6 +9,7 @@ public class KitScheduleRecord {
 
     private long id;
     private long userId;
+    private String userGuid;
     private long configId;
     private boolean optedOut;
     private int numOccurrences;
@@ -22,6 +23,7 @@ public class KitScheduleRecord {
     public KitScheduleRecord(
             @ColumnName("kit_schedule_record_id") long id,
             @ColumnName("participant_user_id") long userId,
+            @ColumnName("participant_user_guid") String userGuid,
             @ColumnName("kit_configuration_id") long configId,
             @ColumnName("opted_out") boolean optedOut,
             @ColumnName("num_occurrences") int numOccurrences,
@@ -32,6 +34,7 @@ public class KitScheduleRecord {
             @ColumnName("current_occurrence_prep_time") Instant currentOccurrencePrepTime) {
         this.id = id;
         this.userId = userId;
+        this.userGuid = userGuid;
         this.configId = configId;
         this.optedOut = optedOut;
         this.numOccurrences = numOccurrences;
@@ -48,6 +51,10 @@ public class KitScheduleRecord {
 
     public long getUserId() {
         return userId;
+    }
+
+    public String getUserGuid() {
+        return userGuid;
     }
 
     public long getConfigId() {

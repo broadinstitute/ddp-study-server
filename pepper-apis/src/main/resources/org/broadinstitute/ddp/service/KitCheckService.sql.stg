@@ -1,4 +1,4 @@
-group KitCheckDao;
+group KitCheckService;
 
 /**
  * Get user and address info of all participants enrolled in given study and has not received a kit of given type yet.

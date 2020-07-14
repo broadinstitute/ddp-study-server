@@ -1,10 +1,12 @@
 package org.broadinstitute.ddp.db.dao;
 
 import java.time.Instant;
+import java.util.List;
 
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
+import org.jdbi.v3.sqlobject.statement.SqlBatch;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
 
 public interface KitScheduleSql extends SqlObject {
@@ -68,6 +70,9 @@ public interface KitScheduleSql extends SqlObject {
 
     @SqlUpdate("update kit_schedule_record set last_kit_set_time = :time where kit_schedule_record_id = :id")
     int updateRecordLastKitSentTime(@Bind("id") long recordId, @Bind("time") Instant sentTime);
+
+    @SqlBatch("update kit_schedule_record set last_kit_set_time = :time where kit_schedule_record_id = :id")
+    int[] bulkUpdateRecordLastKitSentTime(@Bind("id") List<Long> ids, @Bind("time") List<Instant> sentTimes);
 
     @SqlUpdate("update kit_schedule_record set current_occurrence_prep_time = :time where kit_schedule_record_id = :id")
     int updateRecordCurrentOccurrencePrepTime(@Bind("id") long recordId, @Bind("time") Instant currentOccurrencePrepTime);
