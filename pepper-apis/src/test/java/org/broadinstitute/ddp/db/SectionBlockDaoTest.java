@@ -59,7 +59,7 @@ public class SectionBlockDaoTest extends TxnAwareBaseTest {
             data = TestDataSetupUtil.generateBasicUserTestData(handle);
             userGuid = data.getTestingUser().getUserGuid();
             studyGuid = data.getStudyGuid();
-            langCodeId = LanguageStore.getOrComputeDefault(handle).getId();
+            langCodeId = LanguageStore.getDefault().getId();
         });
     }
 
