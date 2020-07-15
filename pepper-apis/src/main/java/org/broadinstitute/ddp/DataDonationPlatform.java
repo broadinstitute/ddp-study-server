@@ -155,7 +155,6 @@ import org.broadinstitute.ddp.service.WorkflowService;
 import org.broadinstitute.ddp.transformers.NullableJsonTransformer;
 import org.broadinstitute.ddp.transformers.SimpleJsonTransformer;
 import org.broadinstitute.ddp.util.ConfigManager;
-import org.broadinstitute.ddp.util.GsonUtil;
 import org.broadinstitute.ddp.util.LiquibaseUtil;
 import org.broadinstitute.ddp.util.LogbackConfigurationPrinter;
 import org.broadinstitute.ddp.util.ResponseUtil;
@@ -345,11 +344,7 @@ public class DataDonationPlatform {
         get(API.STUDY_ALL, new GetStudiesRoute(), responseSerializer);
         get(API.STUDY_DETAIL, new GetStudyDetailRoute(), responseSerializer);
         get(API.STUDY_PASSWORD_POLICY, new GetStudyPasswordPolicyRoute(), responseSerializer);
-
-        // Need special serializer
-        get(API.STUDY_LANGUAGES, new ListStudyLanguagesRoute(),
-                (model) -> GsonUtil.serializeFieldsWithExposeAnnotation().create().toJson(model));
-
+        get(API.STUDY_LANGUAGES, new ListStudyLanguagesRoute(), responseSerializer);
         post(API.INVITATION_VERIFY, new InvitationVerifyRoute(), jsonSerializer);
         post(API.INVITATION_CHECK, new InvitationCheckStatusRoute(), jsonSerializer);
 

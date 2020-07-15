@@ -41,15 +41,6 @@ public class GsonUtil {
     }
 
     /**
-     * Object properties to be serialized need the @Expose annotation
-     *
-     * @return
-     */
-    public static GsonBuilder serializeFieldsWithExposeAnnotation() {
-        return standardBuilder().excludeFieldsWithoutExposeAnnotation();
-    }
-
-    /**
      * An exclusion that uses the declaring class and
      * a collection of the string values of {@link SerializedName} for
      * that class that should be ignored.  Used this if you want to selectively

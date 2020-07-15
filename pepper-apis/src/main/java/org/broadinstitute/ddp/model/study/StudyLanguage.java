@@ -3,32 +3,27 @@ package org.broadinstitute.ddp.model.study;
 import java.io.Serializable;
 import java.util.Locale;
 
-import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 import org.broadinstitute.ddp.db.dto.LanguageDto;
+import org.broadinstitute.ddp.transformers.Exclude;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
 public class StudyLanguage implements Serializable {
 
-    // Explicitly use Expose annotation to tell GSON to serialize
-    // Note need to use specially configured GSON serializer to use annotation
-    @Expose()
     @SerializedName("languageCode")
     private String languageCode;
 
-    @Expose()
     @SerializedName("displayName")
     private String displayName;
 
-    @Expose()
     @SerializedName("isDefault")
     private boolean isDefault;
 
-    // These fields should not be serialized by GSON but should be serialized
-    // by Java serializer
+    @Exclude
     private long studyId;
 
+    @Exclude
     private long languageId;
 
     @JdbiConstructor
