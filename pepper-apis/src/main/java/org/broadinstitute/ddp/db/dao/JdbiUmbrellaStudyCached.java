@@ -1,16 +1,11 @@
 package org.broadinstitute.ddp.db.dao;
 
-import static java.util.stream.Collectors.toList;
-
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import org.broadinstitute.ddp.cache.CacheService;
 import org.broadinstitute.ddp.cache.ModelChangeType;
 import org.broadinstitute.ddp.db.dto.StudyDto;
-import org.broadinstitute.ddp.db.dto.UmbrellaDto;
 import org.broadinstitute.ddp.model.address.OLCPrecision;
 import org.jdbi.v3.core.Handle;
 import org.redisson.api.RLocalCachedMap;
@@ -27,11 +22,11 @@ public class JdbiUmbrellaStudyCached extends SQLObjectWrapper<JdbiUmbrellaStudy>
 
     private void initializeCache() {
         if (idToStudyCache == null) {
-            // eternal!
-            idToStudyCache = CacheService.getInstance().getOrCreateLocalCache("idToStudyCache", 100);
-            studyGuidToIdCache = CacheService.getInstance().getOrCreateLocalCache("studyGuidToIdCache", 100);
-            if (!isUsingNullCache()) {
-                cacheAll();
+            synchronized (this.getClass()) {
+                if (idToStudyCache == null) {
+                    idToStudyCache = CacheService.getInstance().getOrCreateLocalCache("idToStudyCache", 1000);
+                    studyGuidToIdCache = CacheService.getInstance().getOrCreateLocalCache("studyGuidToIdCache", 1000);
+                }
             }
         }
     }
@@ -47,35 +42,28 @@ public class JdbiUmbrellaStudyCached extends SQLObjectWrapper<JdbiUmbrellaStudy>
 
     @Override
     public String findUmbrellaGuidForStudyId(long studyId) {
-        StudyDto study = findById(studyId);
-        if (study == null) {
-            return null;
-        } else {
-            return study.getGuid();
-        }
+        return delegate.findUmbrellaGuidForStudyId(studyId);
     }
 
     @Override
     public List<StudyDto> findAll() {
-        if (isUsingNullCache()) {
-            return delegate.findAll();
-        } else {
-            return new ArrayList(idToStudyCache.values());
-        }
+        return delegate.findAll();
     }
-
 
     @Override
     public StudyDto findByStudyGuid(String studyGuid) {
         if (isUsingNullCache()) {
             return delegate.findByStudyGuid(studyGuid);
         } else {
+            StudyDto dto;
             Long id = studyGuidToIdCache.get(studyGuid);
             if (id == null) {
-                return delegate.findByStudyGuid(studyGuid);
+                dto = delegate.findByStudyGuid(studyGuid);
+                addToCacheAsync(dto);
             } else {
-                return findById(id);
+                dto = findById(id);
             }
+            return dto;
         }
     }
 
@@ -84,24 +72,18 @@ public class JdbiUmbrellaStudyCached extends SQLObjectWrapper<JdbiUmbrellaStudy>
         if (isUsingNullCache()) {
             return delegate.findById(studyId);
         } else {
-            return idToStudyCache.get(studyId);
+            StudyDto dto = idToStudyCache.get(studyId);
+            if (dto == null) {
+                dto = delegate.findById(studyId);
+                addToCacheAsync(dto);
+            }
+            return dto;
         }
     }
 
     @Override
     public List<StudyDto> findByUmbrellaGuid(String umbrellaGuid) {
-        if (isUsingNullCache()) {
-            return delegate.findByUmbrellaGuid(umbrellaGuid);
-        } else {
-            JdbiUmbrella umbrellaDao = new JdbiUmbrellaCached(getHandle());
-            Optional<UmbrellaDto> umbrella = umbrellaDao.findByGuid(umbrellaGuid);
-            if (umbrella.isPresent()) {
-                return idToStudyCache.values().stream().filter(study -> study.getUmbrellaId() == umbrella.get().getId()).collect(toList());
-            } else {
-                return Collections.emptyList();
-            }
-        }
-
+        return delegate.findByUmbrellaGuid(umbrellaGuid);
     }
 
     @Override
@@ -130,34 +112,38 @@ public class JdbiUmbrellaStudyCached extends SQLObjectWrapper<JdbiUmbrellaStudy>
 
     @Override
     public String getUmbrellaGuidForStudyGuid(String studyGuid) {
-        if (isUsingNullCache()) {
-            return delegate.getUmbrellaGuidForStudyGuid(studyGuid);
-        } else {
-            StudyDto study = findByStudyGuid(studyGuid);
-            if (study != null) {
-                return new JdbiUmbrellaCached(getHandle())
-                        .findByGuid(study.getGuid())
-                        .map(umbrella -> umbrella.getGuid()).orElse(null);
-            } else {
-                return null;
-            }
-        }
+        return delegate.getUmbrellaGuidForStudyGuid(studyGuid);
     }
 
     @Override
     public int updateShareLocationForStudy(boolean shareLocation, String guid) {
         int val = delegate.updateShareLocationForStudy(shareLocation, guid);
         if (val > 0) {
-            notifyModelUpdated(ModelChangeType.UMBRELLA, findByStudyGuid(guid).getId());
+            StudyDto dto = findByStudyGuid(guid);
+            if (dto != null) {
+                notifyModelUpdated(ModelChangeType.UMBRELLA, dto.getId());
+                removeFromCache(dto);
+            }
         }
         return val;
+    }
+
+    private void removeFromCache(StudyDto dto) {
+        if (dto != null) {
+            idToStudyCache.removeAsync(dto.getId());
+            studyGuidToIdCache.removeAsync(dto.getGuid());
+        }
     }
 
     @Override
     public int updateOlcPrecisionForStudy(OLCPrecision precision, String guid) {
         int val = delegate.updateOlcPrecisionForStudy(precision, guid);
         if (val > 0) {
-            notifyModelUpdated(ModelChangeType.UMBRELLA, findByStudyGuid(guid).getUmbrellaId());
+            StudyDto dto = findByStudyGuid(guid);
+            if (dto != null) {
+                notifyModelUpdated(ModelChangeType.UMBRELLA, dto.getUmbrellaId());
+                removeFromCache(dto);
+            }
         }
         return val;
     }
@@ -212,11 +198,10 @@ public class JdbiUmbrellaStudyCached extends SQLObjectWrapper<JdbiUmbrellaStudy>
         return modified;
     }
 
-    private void cacheAll() {
-        List<StudyDto> allDtos = delegate.findAll();
-        allDtos.forEach(studyDto -> {
-            idToStudyCache.put(studyDto.getId(), studyDto);
-            studyGuidToIdCache.put(studyDto.getGuid(), studyDto.getId());
-        });
+    private void addToCacheAsync(StudyDto dto) {
+        if (dto != null) {
+            idToStudyCache.putAsync(dto.getId(), dto);
+            studyGuidToIdCache.putAsync(dto.getGuid(), dto.getId());
+        }
     }
 }
