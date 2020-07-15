@@ -56,12 +56,12 @@ public class ListStudyLanguagesRouteTest extends IntegrationTestSuite.TestCase {
     private static void insertTestData() {
         TransactionWrapper.useTxn(
                 handle -> {
-                    StudyLanguageDao dao = handle.attach(StudyLanguageDao.class);
-                    englishLangCodeId = LanguageStore.getOrComputeDefault(handle).getId();
-                    idsToDelete[0] = dao.insert(testData.getStudyId(), englishLangCodeId, "English");
-                    frenchLangCodeId = LanguageStore.getOrCompute(handle, "fr").getId();
-                    idsToDelete[1] = dao.insert(testData.getStudyId(), frenchLangCodeId, "French");
-                    dao.setAsDefaultLanguage(testData.getStudyId(), englishLangCodeId);
+                        StudyLanguageDao dao = handle.attach(StudyLanguageDao.class);
+                        englishLangCodeId = LanguageStore.getDefault().getId();
+                        idsToDelete[0] = dao.insert(testData.getStudyId(), englishLangCodeId, "English");
+                        frenchLangCodeId = LanguageStore.get("fr").getId();
+                        idsToDelete[1] = dao.insert(testData.getStudyId(), frenchLangCodeId, "French");
+                        dao.setAsDefaultLanguage(testData.getStudyId(), englishLangCodeId);
                 }
         );
     }

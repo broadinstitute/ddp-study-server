@@ -92,7 +92,7 @@ public class AdminCreateStudyParticipantRoute extends ValidatedJsonInputRoute<Cr
                     .filter(StudyLanguage::isDefault)
                     .findFirst()
                     .map(StudyLanguage::toLanguageDto)
-                    .orElseGet(() -> LanguageStore.getOrComputeDefault(handle))
+                    .orElseGet(LanguageStore::getDefault)
                     .getId();
 
             UserProfile profile = new UserProfile.Builder(user.getId())

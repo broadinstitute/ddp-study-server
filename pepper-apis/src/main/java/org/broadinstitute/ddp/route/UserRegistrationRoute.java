@@ -545,7 +545,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
         } else {
             LOG.warn("Study {} does not have any languages configured, falling back to {}",
                     studyGuid, LanguageStore.DEFAULT_LANG_CODE);
-            return LanguageStore.getOrComputeDefault(handle);
+            return LanguageStore.getDefault();
         }
     }
 

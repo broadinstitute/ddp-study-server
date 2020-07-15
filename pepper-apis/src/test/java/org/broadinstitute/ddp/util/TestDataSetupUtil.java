@@ -700,7 +700,7 @@ public class TestDataSetupUtil {
                         random ? rand.ints(1, 28).findFirst().getAsInt()
                                 : TestConstants.TEST_USER_PROFILE_BIRTH_DAY))
                 .setPreferredLangId(LanguageStore
-                        .getOrCompute(handle, TestConstants.TEST_USER_PROFILE_PREFERRED_LANGUAGE)
+                        .get(TestConstants.TEST_USER_PROFILE_PREFERRED_LANGUAGE)
                         .getId())
                 .build();
         handle.attach(UserProfileDao.class).createProfile(profile);

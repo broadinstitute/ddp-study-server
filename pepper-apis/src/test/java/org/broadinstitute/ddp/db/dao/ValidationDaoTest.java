@@ -61,7 +61,7 @@ public class ValidationDaoTest extends TxnAwareBaseTest {
             testData = TestDataSetupUtil.generateBasicUserTestData(handle);
             userGuid = testData.getTestingUser().getUserGuid();
             studyGuid = testData.getStudyGuid();
-            enLangId = LanguageStore.getOrComputeDefault(handle).getId();
+            enLangId = LanguageStore.getDefault().getId();
         });
     }
 

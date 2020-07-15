@@ -218,4 +218,5 @@
     <include file="db-changes/schema/should-delete-unsendable-emails.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/add-section-index-column-to-activity-instance.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/seed/DDP-4792-add-hebrew.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/seed/DDP-4803-hebrew-spanish-chinese.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

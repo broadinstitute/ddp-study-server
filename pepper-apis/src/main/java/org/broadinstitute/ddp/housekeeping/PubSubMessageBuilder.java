@@ -298,7 +298,7 @@ public class PubSubMessageBuilder {
                 languageDto = studyLanguages.get(0).toLanguageDto();
                 LOG.warn("Study {} does not have a default language, will fallback to {}", studyGuid, languageDto.getIsoCode());
             } else if (languageDto == null) {
-                languageDto = LanguageStore.getOrComputeDefault(handle);
+                languageDto = LanguageStore.getDefault();
                 LOG.warn("Study {} does not have any languages, will fallback to {}", studyGuid, languageDto.getIsoCode());
             }
 

@@ -27,6 +27,7 @@ import com.typesafe.config.ConfigFactory;
 import org.apache.http.HttpStatus;
 import org.apache.http.entity.ContentType;
 import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetricsTracker;
+import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.cache.CacheService;
 import org.broadinstitute.ddp.client.DsmClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
@@ -261,6 +262,7 @@ public class DataDonationPlatform {
         }
         //@TODO figure out how to do this only at deployment time.
         CacheService.getInstance().resetAllCaches();
+        TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, LanguageStore::init);
 
         if (appEnginePort != null) {
             port(Integer.parseInt(appEnginePort));

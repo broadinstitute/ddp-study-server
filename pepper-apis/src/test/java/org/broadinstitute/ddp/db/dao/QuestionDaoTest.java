@@ -1522,7 +1522,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
 
             Question actual = handle.attach(QuestionDao.class)
                     .getQuestionByActivityInstanceAndDto(questionDto, instanceDto.getGuid(),
-                            LanguageStore.getOrComputeDefault(handle).getId());
+                            LanguageStore.getDefault().getId());
             assertEquals(QuestionType.NUMERIC, actual.getQuestionType());
             assertEquals(sid, actual.getStableId());
             assertEquals(prompt.getTemplateId(), (Long) actual.getPromptTemplateId());

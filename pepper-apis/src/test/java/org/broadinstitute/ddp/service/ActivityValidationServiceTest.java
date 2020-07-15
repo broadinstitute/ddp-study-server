@@ -85,7 +85,7 @@ public class ActivityValidationServiceTest extends TxnAwareBaseTest {
                 new TextAnswer(null, txt1.getStableId(), null, "answer to question 1"));
         answerDao.createAnswer(testData.getUserId(), instanceDto.getId(),
                 new TextAnswer(null, txt2.getStableId(), null, "answer to question 2"));
-        langCodeId = LanguageStore.getOrComputeDefault(handle).getId();
+        langCodeId = LanguageStore.getDefault().getId();
     }
 
     private static Template newTemplate(String templateCode) {

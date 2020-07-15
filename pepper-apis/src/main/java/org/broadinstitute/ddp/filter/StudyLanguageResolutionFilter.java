@@ -87,10 +87,10 @@ public class StudyLanguageResolutionFilter implements Filter {
 
     private static LanguageDto convertLocaleToLanguageDto(Handle handle, Locale preferredLocale) {
         String lang = preferredLocale.getLanguage();
-        LanguageDto languageDto = LanguageStore.getOrCompute(handle, lang);
+        LanguageDto languageDto = LanguageStore.get(lang);
 
         if (languageDto == null) {
-            languageDto = LanguageStore.getOrCompute(handle, getNewerLanguageCode(lang));
+            languageDto = LanguageStore.get(getNewerLanguageCode(lang));
         }
         return languageDto;
     }
