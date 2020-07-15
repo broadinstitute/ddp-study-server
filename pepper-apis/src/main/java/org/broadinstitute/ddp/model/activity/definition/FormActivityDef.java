@@ -174,7 +174,7 @@ public class FormActivityDef extends ActivityDef {
     }
 
     private Map<String, QuestionDef> buildStableIdToQuestionMap() {
-        Map<String, QuestionDef> stableIdToQuestionMap = getSections().stream()
+        Map<String, QuestionDef> stableIdToQuestionMap = getAllSections().stream()
                 .flatMap(section -> section.getBlocks().stream())
                 .flatMap(block -> block.getQuestions())
                 .collect(toMap(s -> s.getStableId(), s -> s));
