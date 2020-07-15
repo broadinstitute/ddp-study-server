@@ -18,7 +18,7 @@ import javax.annotation.Nullable;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.broadinstitute.ddp.constants.LanguageConstants;
-import org.broadinstitute.ddp.db.dao.StudyLanguageCachedDao;
+import org.broadinstitute.ddp.db.dao.StudyLanguageDao;
 import org.broadinstitute.ddp.json.activity.TranslatedSummary;
 import org.broadinstitute.ddp.model.study.StudyLanguage;
 import org.jdbi.v3.core.Handle;
@@ -119,7 +119,9 @@ public class I18nUtil {
         Locale studyDefault = null;
         Set<Locale> studyLocales = new HashSet<>();
         if (studyGuid != null) {
-            List<StudyLanguage> studyLanguages = new StudyLanguageCachedDao(handle).findLanguages(studyGuid);
+            List<StudyLanguage> studyLanguages = handle.attach(StudyLanguageDao.class).findLanguages(studyGuid);
+            //@todo fix back when done
+            // List<StudyLanguage> studyLanguages = new StudyLanguageCachedDao(handle).findLanguages(studyGuid);
             for (StudyLanguage language : studyLanguages) {
                 Locale locale = language.toLocale();
                 studyLocales.add(locale);
