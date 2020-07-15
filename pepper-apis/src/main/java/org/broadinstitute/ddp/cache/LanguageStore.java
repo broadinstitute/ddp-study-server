@@ -4,6 +4,8 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.annotation.Nullable;
+
 import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
 import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.jdbi.v3.core.Handle;
@@ -25,8 +27,12 @@ public class LanguageStore {
         languages = Map.copyOf(map);
     }
 
-    public static LanguageDto get(String isoCode) {
-        return languages.get(isoCode);
+    public static LanguageDto get(@Nullable String isoCode) {
+        if (isoCode == null) {
+            return null;
+        } else {
+            return languages.get(isoCode);
+        }
     }
 
     public static LanguageDto getDefault() {
