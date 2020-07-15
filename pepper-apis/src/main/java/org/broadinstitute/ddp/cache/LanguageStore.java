@@ -24,7 +24,7 @@ public class LanguageStore {
         return languages.get(DEFAULT_LANG_CODE);
     }
 
-    public static LanguageDto getOrCompute(Handle handle, String isoCode) {
+    public static synchronized LanguageDto getOrCompute(Handle handle, String isoCode) {
         return languages.computeIfAbsent(isoCode, key ->
                 handle.attach(JdbiLanguageCode.class).findLanguageDtoByCode(isoCode));
     }
@@ -33,11 +33,11 @@ public class LanguageStore {
         return getOrCompute(handle, DEFAULT_LANG_CODE);
     }
 
-    public static void set(LanguageDto languageDto) {
+    public static synchronized void set(LanguageDto languageDto) {
         languages.put(languageDto.getIsoCode(), languageDto);
     }
 
-    public static void clear() {
+    public static synchronized void clear() {
         languages.clear();
     }
 
