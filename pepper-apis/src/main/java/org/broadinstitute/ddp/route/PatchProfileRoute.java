@@ -154,7 +154,7 @@ public class PatchProfileRoute implements Route {
         if (language == null) {
             return null;
         }
-        LanguageDto languageDto  = LanguageStore.getOrCompute(handle, language);
+        LanguageDto languageDto  = LanguageStore.get(language);
         if (languageDto != null) {
             return languageDto.getId();
         } else {
