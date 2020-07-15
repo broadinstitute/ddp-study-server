@@ -78,12 +78,7 @@ public class GetActivityInstanceRoute implements Route {
                     .getEnrollmentStatusByUserAndStudyGuids(userGuid, studyGuid);
 
             LanguageDto preferredUserLanguage = RouteUtil.getUserLanguage(request);
-            String isoLangCode;
-            if (preferredUserLanguage != null) {
-                isoLangCode = preferredUserLanguage.getIsoCode();
-            } else {
-                isoLangCode = DEFAULT_ISO_LANGUAGE_CODE;
-            }
+            String isoLangCode = preferredUserLanguage.getIsoCode();
 
 
             LOG.info("Attempting to find a translation for the following language: {}", isoLangCode);
