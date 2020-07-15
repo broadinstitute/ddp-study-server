@@ -31,6 +31,7 @@ import com.google.pubsub.v1.Subscription;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.client.SendGridClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.RouteConstants;
@@ -206,6 +207,7 @@ public class Housekeeping {
             LOG.info("Running Housekeeping liquibase migrations against " + housekeepingDbUrl);
             LiquibaseUtil.runLiquibase(housekeepingDbUrl, TransactionWrapper.DB.HOUSEKEEPING);
         }
+        TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, LanguageStore::init);
 
         final PubSubConnectionManager pubsubConnectionManager = new PubSubConnectionManager(usePubSubEmulator);
 

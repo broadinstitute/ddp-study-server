@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.cache;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,7 +15,15 @@ public class LanguageStore {
 
     public static final String DEFAULT_LANG_CODE = "en";
 
-    private static final Map<String, LanguageDto> languages = new HashMap<>();
+    private static Map<String, LanguageDto> languages = Collections.emptyMap();
+
+    public static synchronized void init(Handle handle) {
+        Map<String, LanguageDto> map = new HashMap<>();
+        handle.attach(JdbiLanguageCode.class)
+                .findAll()
+                .forEach(lang -> map.put(lang.getIsoCode(), lang));
+        languages = Map.copyOf(map);
+    }
 
     public static LanguageDto get(String isoCode) {
         return languages.get(isoCode);
@@ -22,23 +31,6 @@ public class LanguageStore {
 
     public static LanguageDto getDefault() {
         return languages.get(DEFAULT_LANG_CODE);
-    }
-
-    public static synchronized LanguageDto getOrCompute(Handle handle, String isoCode) {
-        return languages.computeIfAbsent(isoCode, key ->
-                handle.attach(JdbiLanguageCode.class).findLanguageDtoByCode(isoCode));
-    }
-
-    public static LanguageDto getOrComputeDefault(Handle handle) {
-        return getOrCompute(handle, DEFAULT_LANG_CODE);
-    }
-
-    public static synchronized void set(LanguageDto languageDto) {
-        languages.put(languageDto.getIsoCode(), languageDto);
-    }
-
-    public static synchronized void clear() {
-        languages.clear();
     }
 
     private LanguageStore() {

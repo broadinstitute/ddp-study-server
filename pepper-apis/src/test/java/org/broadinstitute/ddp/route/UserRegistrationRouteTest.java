@@ -431,7 +431,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
 
             UserProfile profile = handle.attach(UserProfileDao.class).findProfileByUserId(userDto.getUserId()).get();
 
-            Long enLanguageCodeId = LanguageStore.getOrComputeDefault(handle).getId();
+            Long enLanguageCodeId = LanguageStore.getDefault().getId();
             assertEquals(enLanguageCodeId, profile.getPreferredLangId());
             assertEquals(ZoneId.of("America/Los_Angeles"), profile.getTimeZone());
             assertEquals("foo", profile.getFirstName());
@@ -772,7 +772,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
             assertEquals(fakeAuth0Id, actualUser.getAuth0UserId());
 
             UserProfile profile = handle.attach(UserProfileDao.class).findProfileByUserId(actualUser.getUserId()).get();
-            Long enLanguageCodeId = LanguageStore.getOrComputeDefault(handle).getId();
+            Long enLanguageCodeId = LanguageStore.getDefault().getId();
             assertEquals(profile.getPreferredLangId(), enLanguageCodeId);
             assertNull("should not have timezone since none were provided", profile.getTimeZone());
 
