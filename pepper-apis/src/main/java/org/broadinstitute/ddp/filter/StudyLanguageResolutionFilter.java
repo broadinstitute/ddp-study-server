@@ -34,7 +34,7 @@ public class StudyLanguageResolutionFilter implements Filter {
     private static final String INDONESIAN_NEW = "id";
 
     private static final Logger LOG = LoggerFactory.getLogger(StudyLanguageResolutionFilter.class);
-    private static final String STUDY_GUID_REGEX = "/studies/(.*)?/";
+    private static final String STUDY_GUID_REGEX = "/studies/(.*)?/?";
     private static final int STUDY_GUID_INDEX = 1;
 
     @Override
@@ -49,8 +49,8 @@ public class StudyLanguageResolutionFilter implements Filter {
             if (!supportedLanguagesCanBeDetected) {
                 LOG.warn(
                         "Supported languages can't be detected because the filter is invoked"
-                        + " before the route that is outside of the study context. Please"
-                        + " remount the filter under '*/studies/*' instead. Current path = {}",
+                                + " before the route that is outside of the study context. Please"
+                                + " remount the filter under '*/studies/*' instead. Current path = {}",
                         request.url()
                 );
                 return;
