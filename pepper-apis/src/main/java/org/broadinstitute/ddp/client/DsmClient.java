@@ -23,6 +23,7 @@ import org.apache.commons.collections4.ListUtils;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
+import org.broadinstitute.ddp.model.dsm.ParticipantKitStatus;
 import org.broadinstitute.ddp.model.dsm.ParticipantStatus;
 import org.broadinstitute.ddp.util.Auth0Util;
 import org.broadinstitute.ddp.util.RouteUtil;
@@ -39,9 +40,10 @@ public class DsmClient {
     public static final String PATH_DRUGS = "/app/drugs";
     public static final String PATH_PARTICIPANT_STATUS = String.format(
             "/info/participantstatus/%s/%s", PathParam.STUDY_GUID, PathParam.USER_GUID);
-    public static final String PATH_PARTICIPANT_KIT_STATUSES = "TBD";
+    public static final String PATH_BATCH_KITS_STATUS = String.format(
+            "/app/batchKitsStatus/%s", PathParam.STUDY_GUID);
     public static final int DEFAULT_TIMEOUT_SECS = 10;
-    public static final int PAGE_SIZE = 100;
+    public static final int DEFAULT_PAGE_SIZE = 100;
 
     private static final Logger LOG = LoggerFactory.getLogger(DsmClient.class);
     private static final Gson gson = new Gson();
@@ -155,14 +157,15 @@ public class DsmClient {
     /**
      * Fetches kit statuses for a list of participants.
      *
+     * @param studyGuid the study guid
      * @param userGuids list of participant guids
      * @return result with kit statuses
      */
-    public ApiResult<List<ParticipantStatus>, Void> listParticipantKitStatuses(List<String> userGuids) {
-        String path = PATH_PARTICIPANT_KIT_STATUSES; // todo
+    public ApiResult<List<ParticipantKitStatus>, Void> listParticipantKitStatuses(String studyGuid, List<String> userGuids) {
+        String path = PATH_BATCH_KITS_STATUS.replace(PathParam.STUDY_GUID, studyGuid);
         try {
             String auth = RouteUtil.makeAuthBearerHeader(generateToken());
-            String payload = gson.toJson(userGuids, String[].class);
+            String payload = gson.toJson(new ListParticipantKitStatusesPayload(userGuids));
             var request = HttpRequest.newBuilder()
                     .uri(baseUrl.resolve(path))
                     .header(RouteConstants.Header.AUTHORIZATION, auth)
@@ -172,8 +175,8 @@ public class DsmClient {
             var response = client.send(request, HttpResponse.BodyHandlers.ofString());
             int statusCode = response.statusCode();
             if (statusCode == 200) {
-                Type type = new TypeToken<List<ParticipantStatus>>() {}.getType();
-                List<ParticipantStatus> statuses = gson.fromJson(response.body(), type);
+                Type type = new TypeToken<List<ParticipantKitStatus>>() {}.getType();
+                List<ParticipantKitStatus> statuses = gson.fromJson(response.body(), type);
                 return ApiResult.ok(statusCode, statuses);
             } else {
                 return ApiResult.err(statusCode, null);
@@ -186,29 +189,31 @@ public class DsmClient {
     /**
      * Partition list of guids into batches and fetch each batch. Pagination may be stopped early by the callback.
      *
+     * @param studyGuid the study guid
      * @param userGuids the list of participant guids
      * @param callback  handler for processing each batch results
      * @return total number processed
      */
-    public int paginateParticipantKitStatuses(List<String> userGuids,
-                                              PageCallback<String, List<ParticipantStatus>, Void> callback) {
-        return paginateParticipantKitStatuses(PAGE_SIZE, userGuids, callback);
+    public int paginateParticipantKitStatuses(String studyGuid, List<String> userGuids,
+                                              PageCallback<String, List<ParticipantKitStatus>, Void> callback) {
+        return paginateParticipantKitStatuses(DEFAULT_PAGE_SIZE, studyGuid, userGuids, callback);
     }
 
     /**
      * Partition list of guids into batches and fetch each batch. Pagination may be stopped early by the callback.
      *
      * @param pageSize  size of each batch
+     * @param studyGuid the study guid
      * @param userGuids the list of participant guids
      * @param callback  handler for processing each batch results
      * @return total number processed
      */
-    public int paginateParticipantKitStatuses(int pageSize, List<String> userGuids,
-                                              PageCallback<String, List<ParticipantStatus>, Void> callback) {
+    public int paginateParticipantKitStatuses(int pageSize, String studyGuid, List<String> userGuids,
+                                              PageCallback<String, List<ParticipantKitStatus>, Void> callback) {
         List<List<String>> partitions = ListUtils.partition(userGuids, pageSize);
         int numProcessed = 0;
         for (var batch : partitions) {
-            var result = listParticipantKitStatuses(batch);
+            var result = listParticipantKitStatuses(studyGuid, batch);
             boolean shouldContinue = callback.handlePage(batch, result);
             if (shouldContinue) {
                 numProcessed += batch.size();
@@ -272,5 +277,17 @@ public class DsmClient {
          * @return true to continue pagination, false to stop
          */
         boolean handlePage(List<B> batch, ApiResult<R, E> page);
+    }
+
+    public static class ListParticipantKitStatusesPayload {
+        private List<String> participantIds;
+
+        public ListParticipantKitStatusesPayload(List<String> participantIds) {
+            this.participantIds = participantIds;
+        }
+
+        public List<String> getParticipantIds() {
+            return participantIds;
+        }
     }
 }

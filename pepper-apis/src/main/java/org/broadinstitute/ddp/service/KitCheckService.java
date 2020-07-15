@@ -125,38 +125,46 @@ public class KitCheckService {
      */
     public void checkPendingKitSentStatuses(Handle apisHandle, DsmClient dsmClient) {
         var kitScheduleDao = apisHandle.attach(KitScheduleDao.class);
-        List<KitScheduleRecord> records = kitScheduleDao
-                .findAllEligibleRecordsWaitingForKitStatus()
-                .collect(Collectors.toList());
-        Collections.shuffle(records);
-        LOG.info("Checking kit status for {} records", records.size());
+        Map<Long, List<KitScheduleRecord>> pendingRecords = new HashMap<>();
+        kitScheduleDao.findAllEligibleRecordsWaitingForKitStatus().forEach(rec -> {
+            pendingRecords.computeIfAbsent(rec.getConfigId(), id -> new ArrayList<>()).add(rec);
+        });
 
-        List<String> userGuids = records.stream().map(KitScheduleRecord::getUserGuid).collect(Collectors.toList());
         Map<String, Instant> sentTimes = new HashMap<>();
-        dsmClient.paginateParticipantKitStatuses(userGuids, (batch, result) -> {
-            if (result.getStatusCode() == 200) {
-                for (var status : result.getBody()) {
-                    if (status.getSamples() != null) {
+        var kitConfigurationDao = apisHandle.attach(KitConfigurationDao.class);
+        for (var entry : pendingRecords.entrySet()) {
+            List<KitScheduleRecord> records = entry.getValue();
+            var configDto = kitConfigurationDao.getKitConfigurationDto(entry.getKey());
+            LOG.info("Checking kit status for {} records in study {}", records.size(), configDto.getStudyGuid());
+
+            List<String> userGuids = records.stream().map(KitScheduleRecord::getUserGuid).collect(Collectors.toList());
+            Collections.shuffle(userGuids);
+
+            dsmClient.paginateParticipantKitStatuses(configDto.getStudyGuid(), userGuids, (batch, result) -> {
+                if (result.getStatusCode() == 200) {
+                    for (var status : result.getBody()) {
                         for (var kit : status.getSamples()) {
                             sentTimes.put(kit.getKitRequestId(), Instant.ofEpochSecond(kit.getSentEpochTimeSec()));
                         }
                     }
+                } else if (result.hasThrown()) {
+                    LOG.error("Error looking up kit statuses for {} participants, continuing pagination", batch.size(), result.getThrown());
+                } else {
+                    LOG.warn("Response has status code {}, continuing pagination", result.getStatusCode());
                 }
-            } else if (result.hasThrown()) {
-                LOG.error("Error looking up kit statuses for {} participants, continuing pagination", batch.size(), result.getThrown());
-            } else {
-                LOG.warn("Response has status code {}, continuing pagination", result.getStatusCode());
-            }
-            return true;
-        });
+                return true;
+            });
+        }
 
         List<Long> recordIds = new ArrayList<>();
         List<Instant> recordKitSentTimes = new ArrayList<>();
-        for (var record : records) {
-            Instant sentTime = sentTimes.get(record.getLastKitRequestGuid());
-            if (sentTime != null) {
-                recordIds.add(record.getId());
-                recordKitSentTimes.add(sentTime);
+        for (var entry : pendingRecords.entrySet()) {
+            for (var record : entry.getValue()) {
+                Instant sentTime = sentTimes.get(record.getLastKitRequestGuid());
+                if (sentTime != null) {
+                    recordIds.add(record.getId());
+                    recordKitSentTimes.add(sentTime);
+                }
             }
         }
 
