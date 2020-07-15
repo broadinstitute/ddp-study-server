@@ -34,7 +34,7 @@ public class StudyLanguageResolutionFilter implements Filter {
     private static final String INDONESIAN_NEW = "id";
 
     private static final Logger LOG = LoggerFactory.getLogger(StudyLanguageResolutionFilter.class);
-    private static final String STUDY_GUID_REGEX = "/studies/(.*)?/?";
+    private static final String STUDY_GUID_REGEX = "/studies/([0-9a-zA-Z-]+)";
     private static final int STUDY_GUID_INDEX = 1;
 
     @Override
