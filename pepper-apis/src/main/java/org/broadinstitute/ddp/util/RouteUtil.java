@@ -139,7 +139,7 @@ public class RouteUtil {
                                                                                     String instanceGuid) {
         var found = findUserAndStudyOrHalt(handle, participantGuid, studyGuid);
         var studyDto = found.getStudyDto();
-        var user = found.getUser();
+        User user = found.getUser();
 
         Supplier<HaltException> handleMissing = () -> {
             String msg = "Could not find activity instance with guid " + instanceGuid;
@@ -148,10 +148,10 @@ public class RouteUtil {
 
 
         UserActivityInstanceSummary activityInstanceSummary = handle.attach(JdbiActivityInstance.class)
-                .getActivityInstanceSummary(user.getId(), studyDto.getId())
+                .getActivityInstanceSummary(user, studyDto.getId())
                 .orElseThrow(handleMissing);
 
-        ActivityInstanceDto instanceDto = activityInstanceSummary.getActvityInstanceByGuid(instanceGuid).orElseThrow(handleMissing);
+        ActivityInstanceDto instanceDto = activityInstanceSummary.getActivityInstanceByGuid(instanceGuid).orElseThrow(handleMissing);
 
         haltIfError(user, participantGuid, studyGuid, instanceGuid, studyDto, instanceDto, response);
 
