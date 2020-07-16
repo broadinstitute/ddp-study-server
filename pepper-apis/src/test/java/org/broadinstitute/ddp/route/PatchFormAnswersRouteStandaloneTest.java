@@ -1576,13 +1576,13 @@ public class PatchFormAnswersRouteStandaloneTest extends IntegrationTestSuite.Te
         response = request.execute().returnResponse();
         assertEquals(200, response.getStatusLine().getStatusCode());
 
-        assertEquals(prevStatus, queryStatus(instanceGuid).getType());
+        assertEquals(prevStatus.getType(), queryStatus(instanceGuid).getType());
     }
 
     @Test
     public void testSuccessfulStatusUpdateAfterPatch() throws Exception {
         ActivityInstanceStatusDto prevStatus = queryStatus(instanceGuid);
-        assertEquals(prevStatus, InstanceStatusType.CREATED);
+        assertEquals(prevStatus.getType(), InstanceStatusType.CREATED);
 
         PatchAnswerPayload data = new PatchAnswerPayload();
         data.addSubmission(new AnswerSubmission(boolStableId, null, new JsonPrimitive(true)));
@@ -1595,7 +1595,7 @@ public class PatchFormAnswersRouteStandaloneTest extends IntegrationTestSuite.Te
         ActivityInstanceStatusDto newStatus = queryStatus(instanceGuid);
 
         assertNotEquals(prevStatus, newStatus);
-        assertEquals(InstanceStatusType.IN_PROGRESS, newStatus);
+        assertEquals(InstanceStatusType.IN_PROGRESS, newStatus.getType());
     }
 
     @Test
