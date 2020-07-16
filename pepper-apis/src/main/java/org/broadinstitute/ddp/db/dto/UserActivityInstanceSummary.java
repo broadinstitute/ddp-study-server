@@ -4,14 +4,22 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import org.broadinstitute.ddp.model.user.User;
+
 public class UserActivityInstanceSummary {
+    private User participantUser;
     private List<ActivityInstanceDto> activityInstanceDtos;
 
-    public UserActivityInstanceSummary(List<ActivityInstanceDto> activityInstanceDtos) {
-        this.activityInstanceDtos = new ArrayList<>(activityInstanceDtos);
+    public UserActivityInstanceSummary(User participantUser, List<ActivityInstanceDto> dtos) {
+        this.participantUser = participantUser;
+        this.activityInstanceDtos = new ArrayList<>(dtos);
     }
 
-    public Optional<ActivityInstanceDto> getActvityInstanceByGuid(String guid) {
+    public User getParticipantUser() {
+        return participantUser;
+    }
+
+    public Optional<ActivityInstanceDto> getActivityInstanceByGuid(String guid) {
         return activityInstanceDtos.stream().filter(ai -> ai.getGuid().equals(guid)).findFirst();
     }
 
