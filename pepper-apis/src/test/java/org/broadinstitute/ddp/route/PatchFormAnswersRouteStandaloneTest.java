@@ -1567,7 +1567,7 @@ public class PatchFormAnswersRouteStandaloneTest extends IntegrationTestSuite.Te
         answerGuidsToDelete.get(QuestionType.BOOLEAN).add(answerGuid);
 
         ActivityInstanceStatusDto prevStatus = queryStatus(instanceGuid);
-        assertEquals(getActivityStatusTypeId(InstanceStatusType.IN_PROGRESS), prevStatus.getTypeId());
+        assertEquals((InstanceStatusType.IN_PROGRESS), prevStatus.getType());
 
         data = new PatchAnswerPayload();
         data.addSubmission(new AnswerSubmission(boolStableId, answerGuid, new JsonPrimitive(true)));
@@ -1576,13 +1576,13 @@ public class PatchFormAnswersRouteStandaloneTest extends IntegrationTestSuite.Te
         response = request.execute().returnResponse();
         assertEquals(200, response.getStatusLine().getStatusCode());
 
-        assertEquals(prevStatus.getTypeId(), queryStatus(instanceGuid).getTypeId());
+        assertEquals(prevStatus, queryStatus(instanceGuid).getType());
     }
 
     @Test
     public void testSuccessfulStatusUpdateAfterPatch() throws Exception {
         ActivityInstanceStatusDto prevStatus = queryStatus(instanceGuid);
-        assertEquals(prevStatus.getTypeId(), getActivityStatusTypeId(InstanceStatusType.CREATED));
+        assertEquals(prevStatus, InstanceStatusType.CREATED);
 
         PatchAnswerPayload data = new PatchAnswerPayload();
         data.addSubmission(new AnswerSubmission(boolStableId, null, new JsonPrimitive(true)));
@@ -1594,8 +1594,8 @@ public class PatchFormAnswersRouteStandaloneTest extends IntegrationTestSuite.Te
 
         ActivityInstanceStatusDto newStatus = queryStatus(instanceGuid);
 
-        assertNotEquals(prevStatus.getTypeId(), newStatus.getTypeId());
-        assertEquals(getActivityStatusTypeId(InstanceStatusType.IN_PROGRESS), newStatus.getTypeId());
+        assertNotEquals(prevStatus, newStatus);
+        assertEquals(InstanceStatusType.IN_PROGRESS, newStatus);
     }
 
     @Test
