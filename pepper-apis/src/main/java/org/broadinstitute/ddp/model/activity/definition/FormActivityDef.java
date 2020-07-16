@@ -122,7 +122,6 @@ public class FormActivityDef extends ActivityDef {
         this.listStyleHint = listStyleHint;
         this.lastUpdatedTextTemplate = lastUpdatedTextTemplate;
         this.lastUpdated = lastUpdated;
-        this.stableIdToQuestion = buildStableIdToQuestionMap();
     }
 
     public FormType getFormType() {
@@ -170,6 +169,9 @@ public class FormActivityDef extends ActivityDef {
     }
 
     public QuestionDef getQuestionByStableId(String stableId) {
+        if (stableIdToQuestion == null) {
+            stableIdToQuestion = buildStableIdToQuestionMap();
+        }
         return stableIdToQuestion.get(stableId);
     }
 
