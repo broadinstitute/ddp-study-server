@@ -1,10 +1,7 @@
 package org.broadinstitute.ddp.cache;
 
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
 import javax.annotation.Nullable;
 
 import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
@@ -21,11 +18,10 @@ public class LanguageStore {
     private static final Map<String, LanguageDto> languages = new ConcurrentHashMap<>();
 
     public static synchronized void init(Handle handle) {
-        Map<String, LanguageDto> map = new HashMap<>();
+        languages.clear();
         handle.attach(JdbiLanguageCode.class)
                 .findAll()
-                .forEach(lang -> map.put(lang.getIsoCode(), lang));
-        languages = Map.copyOf(map);
+                .forEach(lang -> languages.put(lang.getIsoCode(), lang));
     }
 
     public static LanguageDto get(@Nullable String isoCode) {
