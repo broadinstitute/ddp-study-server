@@ -493,7 +493,7 @@ public class TreeWalkInterpreter implements PexInterpreter {
                             .map(instanceDto -> fetcher.findPicklistAnswer(ictx, instanceDto, stableId))
                             .orElse(null);
                 } else {
-                    value = instanceSummary.getActvityInstanceByGuid(instanceGuid)
+                    value = instanceSummary.getActivityInstanceByGuid(instanceGuid)
                             .map(instanceDto -> fetcher.findPicklistAnswer(ictx, instanceDto, stableId))
                             .orElse(null);
                 }
