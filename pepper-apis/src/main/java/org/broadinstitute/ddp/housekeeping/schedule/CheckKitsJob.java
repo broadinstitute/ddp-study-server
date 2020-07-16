@@ -84,7 +84,7 @@ public class CheckKitsJob implements Job {
             // We don't want to bombard DSM with kit status calls, so only call if time is up.
             if (Instant.now().getEpochSecond() - lastStatusCheckEpochSecs > statusCheckSecs) {
                 TransactionWrapper.useTxn(TransactionWrapper.DB.APIS,
-                        handle -> kitCheckService.checkPendingKitSentStatuses(handle, dsmClient));
+                        handle -> kitCheckService.checkPendingKitStatuses(handle, dsmClient));
                 lastStatusCheckEpochSecs = Instant.now().getEpochSecond();
             }
 
