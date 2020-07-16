@@ -459,6 +459,22 @@
             ]
           },
           {
+            "name": "incontinence_type",
+            "stable_id": "INCONTINENCE",
+            "type": "Picklist",
+            "source_type": "integer",
+            "options": [
+              {
+                "type": "integer",
+                "stable_id": "INCONTINENCE_OCCASIONAL"
+              },
+              {
+                "type": "integer",
+                "stable_id": "INCONTINENCE_FREQUENT"
+              }
+            ]
+          },
+          {
             "name": "infectious_diseases",
             "stable_id": "INFECTIOUS_DISEASES",
             "type": "Picklist",
@@ -1726,6 +1742,229 @@
               {
                 "type": "integer",
                 "stable_id": "DONT_KNOW"
+              }
+            ]
+          },
+          {
+            "name": "sample",
+            "stable_id": "SAMPLE",
+            "type": "CompositeMedical",
+            "children": [
+              {
+                "name": "sample_a_type",
+                "type": "Picklist",
+                "stable_id": "SAMPLE_TYPE",
+                "response_order": 0,
+                "options": [
+                  {
+                    "type": "integer",
+                    "stable_id": "BLOOD"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "URINE"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "SALIVA"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "OTHER_BODILY_FLUID"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "SKIN_PUNCH_BIOPSY"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "TISSUE"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "OTHER"
+                  }
+                ]
+              },
+              {
+                "name": "sample_a_location",
+                "stable_id": "SAMPLE_LOCATION",
+                "response_order": 0,
+                "type": "string"
+              },
+              {
+                "name": "sample_b_type",
+                "type": "Picklist",
+                "stable_id": "SAMPLE_TYPE",
+                "response_order": 1,
+                "options": [
+                  {
+                    "type": "integer",
+                    "stable_id": "BLOOD"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "URINE"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "SALIVA"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "OTHER_BODILY_FLUID"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "SKIN_PUNCH_BIOPSY"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "TISSUE"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "OTHER"
+                  }
+                ]
+              },
+              {
+                "name": "sample_b_location",
+                "stable_id": "SAMPLE_LOCATION",
+                "response_order": 1,
+                "type": "string"
+              },
+              {
+                "name": "sample_c_type",
+                "type": "Picklist",
+                "stable_id": "SAMPLE_TYPE",
+                "response_order": 2,
+                "options": [
+                  {
+                    "type": "integer",
+                    "stable_id": "BLOOD"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "URINE"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "SALIVA"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "OTHER_BODILY_FLUID"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "SKIN_PUNCH_BIOPSY"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "TISSUE"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "OTHER"
+                  }
+                ]
+              },
+              {
+                "name": "sample_c_location",
+                "stable_id": "SAMPLE_LOCATION",
+                "response_order": 2,
+                "type": "string"
+              },
+              {
+                "name": "sample_d_type",
+                "type": "Picklist",
+                "stable_id": "SAMPLE_TYPE",
+                "response_order": 3,
+                "options": [
+                  {
+                    "type": "integer",
+                    "stable_id": "BLOOD"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "URINE"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "SALIVA"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "OTHER_BODILY_FLUID"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "SKIN_PUNCH_BIOPSY"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "TISSUE"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "OTHER"
+                  }
+                ]
+              },
+              {
+                "name": "sample_d_location",
+                "stable_id": "SAMPLE_LOCATION",
+                "response_order": 3,
+                "type": "string"
+              },
+              {
+                "name": "sample_e_type",
+                "type": "Picklist",
+                "stable_id": "SAMPLE_TYPE",
+                "response_order": 4,
+                "options": [
+                  {
+                    "type": "integer",
+                    "stable_id": "BLOOD"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "URINE"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "SALIVA"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "OTHER_BODILY_FLUID"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "SKIN_PUNCH_BIOPSY"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "TISSUE"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "OTHER"
+                  }
+                ]
+              },
+              {
+                "name": "sample_e_location",
+                "stable_id": "SAMPLE_LOCATION",
+                "response_order": 4,
+                "type": "string"
+              },
+              {
+                "name": "sample_e_location",
+                "stable_id": "SAMPLE_LOCATION",
+                "response_order": 5,
+                "type": "string"
               }
             ]
           }
