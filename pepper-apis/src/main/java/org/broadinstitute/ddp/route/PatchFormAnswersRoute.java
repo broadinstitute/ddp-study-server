@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.route;
 import static java.util.stream.Collectors.toList;
 
 import java.lang.reflect.Type;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -28,6 +29,7 @@ import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.db.dao.ActivityInstanceStatusDao;
 import org.broadinstitute.ddp.db.dao.AnswerCachedDao;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
 import org.broadinstitute.ddp.db.dao.JdbiCompositeQuestion;
@@ -84,7 +86,6 @@ import org.broadinstitute.ddp.security.DDPAuth;
 import org.broadinstitute.ddp.service.ActivityValidationService;
 import org.broadinstitute.ddp.service.FormActivityService;
 import org.broadinstitute.ddp.util.ActivityInstanceUtil;
-import org.broadinstitute.ddp.util.FormActivityStatusUtil;
 import org.broadinstitute.ddp.util.GsonPojoValidator;
 import org.broadinstitute.ddp.util.JsonValidationError;
 import org.broadinstitute.ddp.util.MiscUtil;
@@ -135,7 +136,7 @@ public class PatchFormAnswersRoute implements Route {
             UserActivityInstanceSummary instanceSummary = RouteUtil.findUserActivityInstanceSummaryOrHalt(
                     response, handle, participantGuid, studyGuid, instanceGuid);
 
-            ActivityInstanceDto instanceDto = instanceSummary.getActvityInstanceByGuid(instanceGuid).get();
+            ActivityInstanceDto instanceDto = instanceSummary.getActivityInstanceByGuid(instanceGuid).get();
 
             if (!ActivityType.FORMS.equals(instanceDto.getActivityType())) {
                 String msg = "Activity " + instanceGuid + " is not a form activity that accepts answers";
@@ -312,13 +313,9 @@ public class PatchFormAnswersRoute implements Route {
                 LOG.info("Activity validation failed, reasons: {}", createValidationFailureSummaries(failures));
                 return enrichPayloadWithValidationFailures(res, failures);
             }
+            handle.attach(ActivityInstanceStatusDao.class).updateOrInsertStatus(instanceDto, InstanceStatusType.IN_PROGRESS,
+                    Instant.now().toEpochMilli(), operatorUser.getId(), instanceSummary.getParticipantUser());
 
-            FormActivityStatusUtil.updateFormActivityStatus(
-                    handle,
-                    InstanceStatusType.IN_PROGRESS,
-                    instanceGuid,
-                    operatorGuid
-            );
             handle.attach(DataExportDao.class).queueDataSync(participantGuid, studyGuid);
 
             GoogleAnalyticsMetricsTracker.getInstance().sendAnalyticsMetrics(studyGuid, GoogleAnalyticsMetrics.EVENT_CATEGORY_PATCH_ANSWERS,
