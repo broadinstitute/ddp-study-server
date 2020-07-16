@@ -34,10 +34,6 @@ public class ActivityInstanceStatusDto {
         return id;
     }
 
-    public long getTypeId() {
-        return typeId;
-    }
-
     public long getInstanceId() {
         return instanceId;
     }

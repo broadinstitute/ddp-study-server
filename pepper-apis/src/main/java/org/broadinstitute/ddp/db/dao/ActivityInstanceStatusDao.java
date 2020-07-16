@@ -10,6 +10,7 @@ import org.broadinstitute.ddp.db.dto.ActivityInstanceStatusDto;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.event.ActivityInstanceStatusChangeSignal;
 import org.broadinstitute.ddp.model.event.EventSignal;
+import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.service.EventService;
 import org.jdbi.v3.sqlobject.CreateSqlObject;
 import org.jdbi.v3.sqlobject.SqlObject;
@@ -100,20 +101,6 @@ public interface ActivityInstanceStatusDao extends SqlObject {
                                                         @Bind("statusType") InstanceStatusType statusType);
 
     /**
-     * Finds the current status id of an activity instance and compares it to proposed status type id. Returns
-     * whether they match.
-     *
-     * @param newStatusTypeId id for proposed status code
-     * @param instanceId      id of activity instance
-     * @return boolean indicating if current status matches proposed status
-     */
-    default boolean doesCurrentStatusMatchNew(long newStatusTypeId, long instanceId) {
-        return getCurrentStatus(instanceId)
-                .map(status -> status.getTypeId() == newStatusTypeId)
-                .orElse(false);
-    }
-
-    /**
      * Convenience method to insert status based on activity instance guid.
      */
     default ActivityInstanceStatusDto insertStatus(String instanceGuid, InstanceStatusType statusType,
@@ -134,66 +121,66 @@ public interface ActivityInstanceStatusDao extends SqlObject {
      * @param operatorGuid      guid of operator
      * @return the most recent status
      */
-    default ActivityInstanceStatusDto insertStatus(
-            long instanceId,
-            InstanceStatusType newStatus,
-            long epochMilliseconds,
-            String operatorGuid
-    ) {
-        JdbiActivityInstance jdbiInstance = getJdbiActivityInstance();
-        JdbiActivityInstanceStatusType jdbiStatusType = getJdbiActivityStatusType();
-        JdbiUser jdbiUser = getJdbiUser();
+    default ActivityInstanceStatusDto insertStatus(long instanceId, InstanceStatusType newStatus, long epochMilliseconds,
+                                                   String operatorGuid) {
+        long operatorId = getJdbiUser().getUserIdByGuid(operatorGuid);
 
-        long operatorId = jdbiUser.getUserIdByGuid(operatorGuid);
-
-        Optional<ActivityInstanceStatusDto> currentStatus = getCurrentStatus(instanceId);
-        long newStatusTypeId = jdbiStatusType.getStatusTypeId(newStatus);
-        long completeStatusTypeId = jdbiStatusType.getStatusTypeId(InstanceStatusType.COMPLETE);
-
-        // If current status is COMPLETE, no transitions are allowed
-        if (currentStatus.isPresent() && currentStatus.get().getTypeId() == completeStatusTypeId) {
-            if (newStatusTypeId == completeStatusTypeId) {
-                return updateStatusTimestamp(currentStatus.get(), epochMilliseconds);
-            } else {
-                return currentStatus.get();
-            }
-        }
-
-        if (doesCurrentStatusMatchNew(newStatusTypeId, instanceId)) {
-            return updateStatusTimestamp(currentStatus.get(), epochMilliseconds);
-        }
-
-        long activityInstanceStatusId = getJdbiActivityStatus().insert(instanceId, newStatus, epochMilliseconds, operatorId);
-        if (newStatusTypeId == completeStatusTypeId) {
-            int rowsUpdated = getJdbiActivityInstance().updateFirstCompletedAtIfNotSet(instanceId, epochMilliseconds);
-            if (rowsUpdated > 1) {
-                throw new DaoException("Multiple entries updated when updating firstCompletedAt timestamp for"
-                        + " activity instance with id " + instanceId);
-            }
-        }
-
-        ActivityInstanceDto instanceDto = jdbiInstance.getByActivityInstanceId(instanceId)
+        ActivityInstanceDto instanceDto = getJdbiActivityInstance().getByActivityInstanceId(instanceId)
                 .orElseThrow(() -> new DaoException("Could not find activity instance with id " + instanceId));
 
-        long studyActivityId = instanceDto.getActivityId();
-        Long studyId = getJdbiActivity().getStudyIdByActivityId(studyActivityId)
-                .orElseThrow(() -> new DaoException("Umbrella study for the study activity " + studyActivityId + " not found"));
+        User participantUser = getHandle().attach(UserDao.class).findUserById(instanceDto.getParticipantId())
+                .orElseThrow(() -> new DaoException("Cound not find User participant with id:" + instanceDto.getParticipantId()));
+        updateOrInsertStatus(instanceDto, newStatus, epochMilliseconds, operatorId, participantUser);
+        return getCurrentStatus(instanceDto.getId()).orElse(null);
+    }
+
+    /**
+     * Inserts status based on given parameters, returns id of status. If the most recent status for this activity
+     * is the same status code, it will not update (adding a new row to the db) and will return the most
+     * recent status id. Also checks if there are any housekeeping events that should be queued in response to this
+     * status change and queues them up for housekeeping.
+     *
+     * @return the most recent status
+     */
+    default void updateOrInsertStatus(ActivityInstanceDto instanceDto, InstanceStatusType newStatusType, long epochMilliseconds,
+                                      long operatorId, User participantUser) {
+
+        Optional<ActivityInstanceStatusDto> instanceStatusOptional = getCurrentStatus(instanceDto.getId());
+
+        if (instanceStatusOptional.isPresent()) {
+            ActivityInstanceStatusDto instanceStatus = instanceStatusOptional.get();
+            if (instanceStatus.getType() == newStatusType) {
+                updateStatusTimestamp(instanceStatusOptional.get(), epochMilliseconds);
+                return;
+            }
+            if (instanceStatus.getType() == InstanceStatusType.COMPLETE) {
+                return;
+            }
+        }
+
+
+        getJdbiActivityStatus().insert(instanceDto.getId(), newStatusType, epochMilliseconds, operatorId);
+        if (newStatusType == InstanceStatusType.COMPLETE) {
+            int rowsUpdated = getJdbiActivityInstance().updateFirstCompletedAtIfNotSet(instanceDto.getId(), epochMilliseconds);
+            if (rowsUpdated > 1) {
+                throw new DaoException("Multiple entries updated when updating firstCompletedAt timestamp for"
+                        + " activity instance with id " + instanceDto.getId());
+            }
+        }
 
         EventSignal eventSignal = new ActivityInstanceStatusChangeSignal(
                 operatorId,
-                instanceDto.getParticipantId(),
-                jdbiUser.findByUserId(instanceDto.getParticipantId()).getUserGuid(),
-                instanceId,
+                participantUser.getId(),
+                participantUser.getGuid(),
+                instanceDto.getId(),
                 instanceDto.getActivityId(),
-                studyId,
-                newStatus);
+                instanceDto.getStudyId(),
+                newStatusType);
 
         EventService.getInstance().processAllActionsForEventSignal(
                 getHandle(),
                 eventSignal);
 
-        return new ActivityInstanceStatusDto(activityInstanceStatusId, newStatusTypeId,
-                instanceDto.getId(), operatorId, epochMilliseconds, newStatus);
     }
 
     default ActivityInstanceStatusDto updateStatusTimestamp(ActivityInstanceStatusDto statusDto, long newTimestampMillis) {
@@ -201,7 +188,7 @@ public interface ActivityInstanceStatusDao extends SqlObject {
         if (rowsUpdated != 1) {
             throw new DaoException("Could not update timestamp for activity instance status with id " + statusDto.getId());
         }
-        return new ActivityInstanceStatusDto(statusDto.getId(), statusDto.getTypeId(), statusDto.getInstanceId(),
+        return new ActivityInstanceStatusDto(statusDto.getId(), 0, statusDto.getInstanceId(),
                 statusDto.getOperatorId(), newTimestampMillis, statusDto.getType());
     }
 
