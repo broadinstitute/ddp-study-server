@@ -12,6 +12,7 @@ import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceStatusChangeDto;
 import org.broadinstitute.ddp.db.dto.UserActivityInstanceSummary;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
+import org.broadinstitute.ddp.model.user.User;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
@@ -42,7 +43,7 @@ public interface JdbiActivityInstance extends SqlObject {
     List<ActivityInstanceStatusChangeDto> getActivityInstanceStatusChanges(
             @Bind("activityId") long activityId,
             @Bind("participantId") long participantId,
-            @BindList("activityStatusTypeCodes") InstanceStatusType...statusType);
+            @BindList("activityStatusTypeCodes") InstanceStatusType... statusType);
 
     @SqlQuery("select activity_instance_id from activity_instance where "
             + "activity_instance_guid = :activityInstanceGuid")
@@ -104,7 +105,7 @@ public interface JdbiActivityInstance extends SqlObject {
 
     @SqlQuery(
             "SELECT ai.study_activity_id FROM activity_instance AS ai"
-            + " WHERE ai.activity_instance_guid = :guid"
+                    + " WHERE ai.activity_instance_guid = :guid"
     )
     long getActivityIdByGuid(@Bind("guid") String guid);
 
@@ -124,9 +125,9 @@ public interface JdbiActivityInstance extends SqlObject {
     @SqlQuery("select count(*) from activity_instance")
     int getCount();
 
-    default Optional<UserActivityInstanceSummary> getActivityInstanceSummary(long participantUserId, long studyId) {
-        List<ActivityInstanceDto> dtos = findAllByUserIdAndStudyId(participantUserId, studyId);
-        return dtos.isEmpty() ? Optional.empty() : Optional.of(new UserActivityInstanceSummary(dtos));
+    default Optional<UserActivityInstanceSummary> getActivityInstanceSummary(User participantUser, long studyId) {
+        List<ActivityInstanceDto> dtos = findAllByUserIdAndStudyId(participantUser.getId(), studyId);
+        return dtos.isEmpty() ? Optional.empty() : Optional.of(new UserActivityInstanceSummary(participantUser, dtos));
     }
 
     @UseStringTemplateSqlLocator
@@ -192,7 +193,7 @@ public interface JdbiActivityInstance extends SqlObject {
     @SqlUpdate("update activity_instance set ondemand_trigger_id = :triggerId "
             + " where participant_id = :userId and activity_instance_id = :activityInstanceId")
     int updateOndemandTriggerId(@Bind("userId") long userId, @Bind("activityInstanceId") long activityInstanceId,
-                                        @Bind("triggerId") long triggerId);
+                                @Bind("triggerId") long triggerId);
 
     @SqlUpdate("update activity_instance set section_index = :sectionIndex "
             + " where activity_instance_guid = :instanceGuid")
