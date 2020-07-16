@@ -254,7 +254,7 @@ public class OLCServiceTest extends TxnAwareBaseTest {
     }
 
     //Uncomment to run this!
-    @Test
+    //@Test
     public void computePluscode() {
         String address = "415 Main Street, Cambridge, MA 90032";
         Config cfg = ConfigManager.getInstance().getConfig();
