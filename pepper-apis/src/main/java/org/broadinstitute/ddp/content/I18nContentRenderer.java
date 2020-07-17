@@ -39,7 +39,7 @@ public class I18nContentRenderer {
         if (defaultLangId != null) {
             return defaultLangId;
         } else {
-            defaultLangId = LanguageStore.getOrComputeDefault(handle).getId();
+            defaultLangId = LanguageStore.getDefault().getId();
             return defaultLangId;
         }
     }

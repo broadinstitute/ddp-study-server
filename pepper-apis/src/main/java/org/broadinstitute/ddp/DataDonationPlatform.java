@@ -27,6 +27,7 @@ import com.typesafe.config.ConfigFactory;
 import org.apache.http.HttpStatus;
 import org.apache.http.entity.ContentType;
 import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetricsTracker;
+import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.client.DsmClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.ErrorCodes;
@@ -258,6 +259,7 @@ public class DataDonationPlatform {
             LOG.info("Running liquibase migrations in StudyServer against database url: {}", dbUrl);
             LiquibaseUtil.runLiquibase(dbUrl, TransactionWrapper.DB.APIS);
         }
+        TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, LanguageStore::init);
 
         if (appEnginePort != null) {
             port(Integer.parseInt(appEnginePort));

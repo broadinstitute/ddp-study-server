@@ -97,7 +97,7 @@ public class UserDaoTest extends TxnAwareBaseTest {
     }
 
     private void populateData(Handle handle, User tempUser) {
-        long langId = LanguageStore.getOrComputeDefault(handle).getId();
+        long langId = LanguageStore.getDefault().getId();
 
         handle.attach(UserProfileDao.class).createProfile(
                 new UserProfile.Builder(tempUser.getId())

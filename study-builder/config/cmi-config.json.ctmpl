@@ -31,6 +31,9 @@
   {{with $resp := vault (printf "secret/pepper/%s/%s/osteo/conf" $environment $version)}}
     "OSTEO_BASE_URL": "{{$resp.Data.baseWebUrl}}",
   {{end}}
+  {{with $resp := vault (printf "secret/pepper/%s/%s/mpc/conf" $environment $version)}}
+    "MPC_BASE_URL": "{{$resp.Data.baseWebUrl}}",
+  {{end}}
     "ASSETS_BUCKET_URL": "{{$conf.assetsBucketUrl}}",
     "LOGIN_DOMAIN": "{{$conf.auth0.loginDomain}}",
     "SERVER_BASE_URL": "{{$conf.serverBaseUrl}}"

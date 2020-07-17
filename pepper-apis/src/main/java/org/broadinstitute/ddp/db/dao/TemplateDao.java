@@ -100,7 +100,7 @@ public interface TemplateDao extends SqlObject {
                 String languageCode = translation.getLanguageCode();
                 String translatedText = translation.getText();
                 jdbiVariableSubstitution.insert(
-                        LanguageStore.getOrCompute(getHandle(), languageCode).getId(),
+                        LanguageStore.get(languageCode).getId(),
                         translatedText, revisionId, templateVariableId);
             }
         }

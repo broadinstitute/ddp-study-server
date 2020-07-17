@@ -50,12 +50,12 @@ public class I18nContentRendererTest extends TxnAwareBaseTest {
             tmplDao.insertTemplate(tmpl, revId);
             assertNotNull(tmpl.getTemplateId());
 
-            long langId = LanguageStore.getOrComputeDefault(handle).getId();
+            long langId = LanguageStore.getDefault().getId();
             String expected = "<em>How old are you?</em>";
             String actual = renderer.renderContent(handle, tmpl.getTemplateId(), langId);
             assertEquals(expected, actual);
 
-            langId = LanguageStore.getOrCompute(handle, "ru").getId();
+            langId = LanguageStore.get("ru").getId();
             expected = "<em>Сколько вам лет?</em>";
             actual = renderer.renderContent(handle, tmpl.getTemplateId(), langId);
             assertEquals(expected, actual);
