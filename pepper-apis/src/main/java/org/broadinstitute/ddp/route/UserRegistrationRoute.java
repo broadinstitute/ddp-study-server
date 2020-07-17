@@ -29,7 +29,6 @@ import org.broadinstitute.ddp.db.dao.QueuedEventDao;
 import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
 import org.broadinstitute.ddp.db.dao.StudyLanguageCachedDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
-import org.broadinstitute.ddp.db.dao.UserGovernanceCachedDao;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.Auth0TenantDto;
@@ -387,7 +386,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
             return operatorUser;
         }
 
-        UserGovernanceDao userGovernanceDao = new UserGovernanceCachedDao(handle);
+        UserGovernanceDao userGovernanceDao = handle.attach(UserGovernanceDao.class);
         Governance gov = userGovernanceDao.createGovernedUserWithGuidAlias(clientConfig.getClientId(), operatorUser.getId());
         userGovernanceDao.grantGovernedStudy(gov.getId(), policy.getStudyId());
         LOG.info("Created governed user with guid {} and granted access to study {} for proxy {}",

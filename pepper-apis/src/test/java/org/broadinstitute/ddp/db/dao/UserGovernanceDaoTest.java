@@ -6,38 +6,17 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import java.util.Collection;
-import java.util.List;
-
 import org.broadinstitute.ddp.TxnAwareBaseTest;
-import org.broadinstitute.ddp.cache.DaoBuilder;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.model.governance.Governance;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
 
-@RunWith(Parameterized.class)
 public class UserGovernanceDaoTest extends TxnAwareBaseTest {
-    private DaoBuilder<UserGovernanceDao> daoBuilder;
-    private boolean isCachedDao;
 
     private static TestDataSetupUtil.GeneratedTestData testData;
-
-    @Parameterized.Parameters
-    public static Collection<Object[]> data() {
-        Object[] uncached = {(DaoBuilder<UserGovernanceDao>)(handle) -> handle.attach(UserGovernanceDao.class), false};
-        Object[] cached = {(DaoBuilder<UserGovernanceDao>)(handle) -> new UserGovernanceCachedDao(handle), true};
-        return List.of(uncached, cached);
-    }
-
-    public UserGovernanceDaoTest(DaoBuilder daoBuilder, boolean isCachedDao) {
-        this.daoBuilder = daoBuilder;
-        this.isCachedDao = isCachedDao;
-    }
 
     @BeforeClass
     public static void setup() {
@@ -47,7 +26,7 @@ public class UserGovernanceDaoTest extends TxnAwareBaseTest {
     @Test
     public void testCreateGovernedUser() {
         TransactionWrapper.useTxn(handle -> {
-            Governance gov = daoBuilder.buildDao(handle)
+            Governance gov = handle.attach(UserGovernanceDao.class)
                     .createGovernedUser(testData.getClientId(), testData.getUserId(), "test-alias");
             assertNotNull(gov.getGovernedUserGuid());
             assertEquals("test-alias", gov.getAlias());
@@ -66,7 +45,7 @@ public class UserGovernanceDaoTest extends TxnAwareBaseTest {
     @Test
     public void testCreateGovernedUserWithGuidAlias() {
         TransactionWrapper.useTxn(handle -> {
-            Governance gov = daoBuilder.buildDao(handle)
+            Governance gov = handle.attach(UserGovernanceDao.class)
                     .createGovernedUserWithGuidAlias(testData.getClientId(), testData.getUserId());
             assertNotNull(gov.getGovernedUserGuid());
             assertEquals(gov.getGovernedUserGuid(), gov.getAlias());
@@ -85,7 +64,7 @@ public class UserGovernanceDaoTest extends TxnAwareBaseTest {
     @Test
     public void testAssignProxy() {
         TransactionWrapper.useTxn(handle -> {
-            UserGovernanceDao userGovernanceDao = daoBuilder.buildDao(handle);
+            UserGovernanceDao userGovernanceDao = handle.attach(UserGovernanceDao.class);
             Governance gov = userGovernanceDao.createGovernedUser(testData.getClientId(), testData.getUserId(), "test-alias");
             assertTrue(handle.attach(UserDao.class).findUserById(gov.getGovernedUserId()).isPresent());
             assertTrue(userGovernanceDao.findGovernanceById(gov.getId()).isPresent());
@@ -106,7 +85,7 @@ public class UserGovernanceDaoTest extends TxnAwareBaseTest {
     @Test
     public void testGrantGovernedStudy() {
         TransactionWrapper.useTxn(handle -> {
-            UserGovernanceDao userGovernanceDao = daoBuilder.buildDao(handle);
+            UserGovernanceDao userGovernanceDao = handle.attach(UserGovernanceDao.class);
             Governance gov = userGovernanceDao.createGovernedUser(testData.getClientId(), testData.getUserId(), "test-alias");
             assertTrue(gov.getGrantedStudies().isEmpty());
 
@@ -137,7 +116,7 @@ public class UserGovernanceDaoTest extends TxnAwareBaseTest {
     @Test
     public void testFindActiveGovernancesByProxyGuid() {
         TransactionWrapper.useTxn(handle -> {
-            UserGovernanceDao userGovernanceDao = daoBuilder.buildDao(handle);
+            UserGovernanceDao userGovernanceDao = handle.attach(UserGovernanceDao.class);
 
             assertEquals(0, userGovernanceDao.findActiveGovernancesByProxyGuid("not-guid").count());
 
@@ -155,7 +134,7 @@ public class UserGovernanceDaoTest extends TxnAwareBaseTest {
     @Test
     public void testFindActiveGovernancesByProxyAndStudyGuids() {
         TransactionWrapper.useTxn(handle -> {
-            UserGovernanceDao userGovernanceDao = daoBuilder.buildDao(handle);
+            UserGovernanceDao userGovernanceDao = handle.attach(UserGovernanceDao.class);
 
             assertEquals(0, userGovernanceDao.findActiveGovernancesByProxyAndStudyGuids("not-guid", "not-study").count());
 
