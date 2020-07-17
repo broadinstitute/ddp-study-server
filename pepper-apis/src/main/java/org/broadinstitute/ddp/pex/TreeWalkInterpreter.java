@@ -342,7 +342,7 @@ public class TreeWalkInterpreter implements PexInterpreter {
                 String msg = String.format(
                         "Cannot find question %s in form activity def with id %s and activity code %s for user %s in study %s",
                         stableId, formDef.getActivityId(), formDef.getActivityCode(), ictx.getUserGuid(), studyGuid);
-                return new PexFetchException(new NoSuchElementException(msg));
+                throw new PexFetchException(new NoSuchElementException(msg));
             } else {
                 questionType = questionDef.getQuestionType();
             }
