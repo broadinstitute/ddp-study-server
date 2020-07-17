@@ -72,17 +72,22 @@ public class MPCConsentVersion2 implements CustomTask {
         StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(cfg.getString("study.guid"));
         PdfBuilder builder = new PdfBuilder(cfgPath.getParent(), cfg, studyDto, adminUser.getId());
 
-        String activityCode = dataCfg.getString("activityCode");
+        String activityCode = dataCfg.getString("activityCode.consent");
         LOG.info("Changing version of {} to {} with timestamp={}", activityCode, versionTag, timestamp);
-        revisionConsent(handle, adminUser.getId(), studyDto, activityCode, versionTag, timestamp.toEpochMilli());
+        revisionConsent("consent", handle, adminUser.getId(), studyDto, activityCode, versionTag, timestamp.toEpochMilli());
 
         LOG.info("Adding new pdf version for consent");
         builder.insertPdfConfig(handle, dataCfg.getConfig("consentPdfV2"));
         addNewConsentDataSourceToReleasePdf(handle, studyDto.getId(), dataCfg.getString("releasePdfName"), activityCode, versionTag);
 
+        activityCode = dataCfg.getString("activityCode.followupconsent");
+        LOG.info("Changing version of {} to {} with timestamp={}", activityCode, versionTag, timestamp);
+        revisionConsent("followupconsent", handle, adminUser.getId(), studyDto, activityCode, versionTag, timestamp.toEpochMilli());
+
+        //pdf for followup ?? check back ??
     }
 
-    private void revisionConsent(Handle handle, long adminUserId, StudyDto studyDto,
+    private void revisionConsent(String key, Handle handle, long adminUserId, StudyDto studyDto,
                                  String activityCode, String versionTag, long timestamp) {
         String reason = String.format(
                 "Update activity with studyGuid=%s activityCode=%s to versionTag=%s",
@@ -92,20 +97,20 @@ public class MPCConsentVersion2 implements CustomTask {
         long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
         ActivityVersionDto version2 = handle.attach(ActivityDao.class).changeVersion(activityId, versionTag, meta);
 
-        revisionContentBlock(handle, meta, version2, "s1_participation_detail");
-        revisionContentBlock(handle, meta, version2, "s2_intro_detail");
-        revisionContentBlock(handle, meta, version2, "s2_involvement_detail");
-        revisionContentBlock(handle, meta, version2, "s2_timing_detail");
-        revisionContentBlock(handle, meta, version2, "s2_confidentiality_detail");
-        revisionContentBlock(handle, meta, version2, "s2_authorization_detail");
-        revisionContentBlock(handle, meta, version2, "s3_additional_agree_item");
+        revisionContentBlock(handle, meta, version2, key, "s1_participation_detail");
+        revisionContentBlock(handle, meta, version2, key, "s2_intro_detail");
+        revisionContentBlock(handle, meta, version2, key, "s2_involvement_detail");
+        revisionContentBlock(handle, meta, version2, key, "s2_timing_detail");
+        revisionContentBlock(handle, meta, version2, key, "s2_confidentiality_detail");
+        revisionContentBlock(handle, meta, version2, key, "s2_authorization_detail");
+        revisionContentBlock(handle, meta, version2, key, "s3_additional_agree_item");
     }
 
     private void revisionContentBlock(Handle handle, RevisionMetadata meta, ActivityVersionDto versionDto,
-                                      String part) {
+                                      String key, String part) {
         LanguageStore.init(handle);
-        String oldName = String.format("mpc_consent_%s", part);
-        String newName = String.format("mpc_consent_v2_%s", part);
+        String oldName = String.format("mpc_%s_%s", key, part);
+        String newName = String.format("mpc_%s_v2_%s", key, part);
         String bodyTemplateText = "$" + oldName;
 
         Template newTemplate = Template.html("$" + newName);
