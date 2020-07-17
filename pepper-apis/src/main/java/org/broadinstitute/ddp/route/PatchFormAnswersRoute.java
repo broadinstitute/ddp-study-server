@@ -196,6 +196,8 @@ public class PatchFormAnswersRoute implements Route {
 
                     Optional<QuestionDto> optDto = jdbiQuestion.findDtoByStableIdAndInstance(questionStableId, instanceDto);
                     QuestionDto questionDto = extractQuestionDto(response, questionStableId, optDto);
+                    // @TODO might be able to get rid of this query and a bunch of *CachedDao classes
+                    // if can figure out how to create Rule objects from RuleDef
                     Question question = new QuestionCachedDao(handle).getQuestionByActivityInstanceAndDto(questionDto,
                             instanceGuid, false, languageCodeId);
 

@@ -6,7 +6,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.broadinstitute.ddp.db.dao.JdbiCompositeQuestion;
-import org.broadinstitute.ddp.db.dao.UserProfileCachedDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.CompositeQuestionDto;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
@@ -35,7 +34,7 @@ public class AnswerToProfileCopier {
         this.handle = handle;
         this.operatorId = operatorId;
         this.jdbiCompositeQuestion = handle.attach(JdbiCompositeQuestion.class);
-        this.profileDao = new UserProfileCachedDao(handle);
+        this.profileDao = handle.attach(UserProfileDao.class);
     }
 
     public void copy(FormResponse sourceInstance, QuestionDto sourceQuestion, CopyLocationType target) {

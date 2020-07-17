@@ -31,7 +31,7 @@ import org.broadinstitute.ddp.db.dao.StudyLanguageCachedDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserGovernanceCachedDao;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
-import org.broadinstitute.ddp.db.dao.UserProfileCachedDao;
+import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.Auth0TenantDto;
 import org.broadinstitute.ddp.db.dto.InvitationDto;
 import org.broadinstitute.ddp.db.dto.LanguageDto;
@@ -563,7 +563,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
     }
 
     private void initializeProfile(Handle handle, User user, UserRegistrationPayload payload) {
-        var profileDao = new UserProfileCachedDao(handle);
+        var profileDao = handle.attach(UserProfileDao.class);
         UserProfile profile = profileDao.findProfileByUserId(user.getId()).orElse(null);
 
         // If any name part is blank, then don't use it.

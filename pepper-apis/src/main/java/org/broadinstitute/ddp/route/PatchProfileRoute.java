@@ -14,7 +14,7 @@ import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
-import org.broadinstitute.ddp.db.dao.UserProfileCachedDao;
+import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.json.Profile;
 import org.broadinstitute.ddp.json.errors.ApiError;
@@ -71,7 +71,7 @@ public class PatchProfileRoute implements Route {
             boolean providedLanguage = json.has(Profile.PREFERRED_LANGUAGE);
             Long languageId = providedLanguage ? parseLanguage(response, handle, payload) : null;
 
-            var profileDao = new UserProfileCachedDao(handle);
+            var profileDao = handle.attach(UserProfileDao.class);
             UserProfile profile = profileDao.findProfileByUserGuid(userGuid).orElse(null);
             if (profile == null) {
                 String errorMsg = "Profile not found for user with guid: " + userGuid;

@@ -13,7 +13,7 @@ import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dao.StudyLanguageCachedDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
-import org.broadinstitute.ddp.db.dao.UserProfileCachedDao;
+import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.Auth0TenantDto;
 import org.broadinstitute.ddp.db.dto.InvitationDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
@@ -98,7 +98,7 @@ public class AdminCreateStudyParticipantRoute extends ValidatedJsonInputRoute<Cr
             UserProfile profile = new UserProfile.Builder(user.getId())
                     .setPreferredLangId(defaultLangId)
                     .build();
-            new UserProfileCachedDao(handle).createProfile(profile);
+            handle.attach(UserProfileDao.class).createProfile(profile);
             LOG.info("Created profile for user {}", user.getGuid());
 
             handle.attach(JdbiUserStudyEnrollment.class)

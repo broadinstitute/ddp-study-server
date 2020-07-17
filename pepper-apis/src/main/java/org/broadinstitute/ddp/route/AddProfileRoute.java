@@ -11,7 +11,6 @@ import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
-import org.broadinstitute.ddp.db.dao.UserProfileCachedDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.exception.DDPException;
@@ -57,7 +56,7 @@ public class AddProfileRoute extends ValidatedJsonInputRoute<Profile> {
                         new ApiError(ErrorCodes.INVALID_LANGUAGE_PREFERENCE, "Invalid preferred language"));
             }
 
-            UserProfileDao profileDao = new UserProfileCachedDao(handle);
+            UserProfileDao profileDao = handle.attach(UserProfileDao.class);
             boolean exists = profileDao.findProfileByUserGuid(userGuid).isPresent();
             if (!exists) {
                 long userId = handle.attach(UserDao.class)
