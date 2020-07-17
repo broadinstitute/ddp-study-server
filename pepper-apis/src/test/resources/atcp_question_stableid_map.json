@@ -459,6 +459,22 @@
             ]
           },
           {
+            "name": "incontinence_type",
+            "stable_id": "INCONTINENCE",
+            "type": "Picklist",
+            "source_type": "integer",
+            "options": [
+              {
+                "type": "integer",
+                "stable_id": "INCONTINENCE_OCCASIONAL"
+              },
+              {
+                "type": "integer",
+                "stable_id": "INCONTINENCE_FREQUENT"
+              }
+            ]
+          },
+          {
             "name": "infectious_diseases",
             "stable_id": "INFECTIOUS_DISEASES",
             "type": "Picklist",
@@ -588,112 +604,99 @@
             ]
           },
           {
-            "name": "surgery_1",
-            "stable_id": "SURGERY_1",
-            "type": "Composite",
+            "name": "other_surgeries",
+            "stable_id": "SURGERY",
+            "type": "CompositeMedical",
             "children": [
               {
                 "name": "other_surgeries_1_type",
                 "type": "string",
-                "stable_id": "SURGERY_1_TYPE_OF_SURGERY"
+                "stable_id": "TYPE_OF_SURGERY",
+                "response_order": 0
               },
               {
                 "name": "other_surgeries_1_age",
                 "type": "string",
-                "stable_id": "SURGERY_1_AGE_OF_SURGERY"
+                "stable_id": "AGE_OF_SURGERY",
+                "response_order": 0
               },
               {
                 "name": "other_surgeries_1_desc",
                 "type": "string",
-                "stable_id": "SURGERY_1_DESCRIPTION_OF_SURGERY"
-              }
-            ]
-          },
-          {
-            "name": "surgery_2",
-            "stable_id": "SURGERY_2",
-            "type": "Composite",
-            "children": [
+                "stable_id": "DESCRIPTION_OF_SURGERY",
+                "response_order": 0
+              },
               {
                 "name": "other_surgeries_2_type",
                 "type": "string",
-                "stable_id": "SURGERY_2_TYPE_OF_SURGERY"
+                "stable_id": "TYPE_OF_SURGERY",
+                "response_order": 1
               },
               {
                 "name": "other_surgeries_2_age",
                 "type": "string",
-                "stable_id": "SURGERY_2_AGE_OF_SURGERY"
+                "stable_id": "AGE_OF_SURGERY",
+                "response_order": 1
               },
               {
                 "name": "other_surgeries_2_desc",
                 "type": "string",
-                "stable_id": "SURGERY_2_DESCRIPTION_OF_SURGERY"
-              }
-            ]
-          },
-          {
-            "name": "surgery_3",
-            "stable_id": "SURGERY_3",
-            "type": "Composite",
-            "children": [
+                "stable_id": "DESCRIPTION_OF_SURGERY",
+                "response_order": 1
+              },
               {
                 "name": "other_surgeries_3_type",
                 "type": "string",
-                "stable_id": "SURGERY_3_TYPE_OF_SURGERY"
+                "stable_id": "TYPE_OF_SURGERY",
+                "response_order": 2
               },
               {
                 "name": "other_surgeries_3_age",
                 "type": "string",
-                "stable_id": "SURGERY_3_AGE_OF_SURGERY"
+                "stable_id": "AGE_OF_SURGERY",
+                "response_order": 2
               },
               {
                 "name": "other_surgeries_3_desc",
                 "type": "string",
-                "stable_id": "SURGERY_3_DESCRIPTION_OF_SURGERY"
-              }
-            ]
-          },
-          {
-            "name": "surgery_4",
-            "stable_id": "SURGERY_4",
-            "type": "Composite",
-            "children": [
+                "stable_id": "DESCRIPTION_OF_SURGERY",
+                "response_order": 2
+              },
               {
                 "name": "other_surgeries_4_type",
                 "type": "string",
-                "stable_id": "SURGERY_4_TYPE_OF_SURGERY"
+                "stable_id": "TYPE_OF_SURGERY",
+                "response_order": 3
               },
               {
                 "name": "other_surgeries_4_age",
                 "type": "string",
-                "stable_id": "SURGERY_4_AGE_OF_SURGERY"
+                "stable_id": "AGE_OF_SURGERY",
+                "response_order": 3
               },
               {
                 "name": "other_surgeries_4_desc",
                 "type": "string",
-                "stable_id": "SURGERY_4_DESCRIPTION_OF_SURGERY"
-              }
-            ]
-          },
-          {
-            "name": "surgery_5",
-            "stable_id": "SURGERY_5",
-            "type": "Composite",
-            "children": [
+                "stable_id": "DESCRIPTION_OF_SURGERY",
+                "response_order": 3
+              },
               {
                 "name": "other_surgeries_5_type",
                 "type": "string",
-                "stable_id": "SURGERY_5_TYPE_OF_SURGERY"
+                "stable_id": "TYPE_OF_SURGERY",
+                "response_order": 4
               },
               {
                 "name": "other_surgeries_5_age",
                 "type": "string",
-                "stable_id": "SURGERY_5_AGE_OF_SURGERY"
+                "stable_id": "AGE_OF_SURGERY",
+                "response_order": 4
               },
               {
                 "name": "other_surgeries_5_desc",
                 "type": "string",
-                "stable_id": "SURGERY_5_DESCRIPTION_OF_SURGERY"
+                "stable_id": "DESCRIPTION_OF_SURGERY",
+                "response_order": 4
               }
             ]
           },
@@ -708,14 +711,6 @@
                 "stable_id": "MEDICATION_CATEGORY_PICK_LIST",
                 "response_order": 0,
                 "options": [
-                  {
-                    "type": "integer",
-                    "stable_id": "PROPHYLACTIC_ANTIBIOTICS"
-                  },
-                  {
-                    "type": "integer",
-                    "stable_id": "ANTI_TREMOR"
-                  },
                   {
                     "type": "integer",
                     "stable_id": "ANTI_SEIZURE"
@@ -738,15 +733,23 @@
                   },
                   {
                     "type": "integer",
-                    "stable_id": "CHEMOTHERAPY"
-                  },
-                  {
-                    "type": "integer",
                     "stable_id": "BIRTH_CONTROL"
                   },
                   {
                     "type": "integer",
                     "stable_id": "OTHER"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "PROPHYLACTIC_ANTIBIOTICS"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "ANTI_TREMOR"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "CHEMOTHERAPY"
                   }
                 ]
               },
@@ -770,14 +773,6 @@
                 "options": [
                   {
                     "type": "integer",
-                    "stable_id": "PROPHYLACTIC_ANTIBIOTICS"
-                  },
-                  {
-                    "type": "integer",
-                    "stable_id": "ANTI_TREMOR"
-                  },
-                  {
-                    "type": "integer",
                     "stable_id": "ANTI_SEIZURE"
                   },
                   {
@@ -798,15 +793,23 @@
                   },
                   {
                     "type": "integer",
-                    "stable_id": "CHEMOTHERAPY"
-                  },
-                  {
-                    "type": "integer",
                     "stable_id": "BIRTH_CONTROL"
                   },
                   {
                     "type": "integer",
                     "stable_id": "OTHER"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "PROPHYLACTIC_ANTIBIOTICS"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "ANTI_TREMOR"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "CHEMOTHERAPY"
                   }
                 ]
               },
@@ -830,14 +833,6 @@
                 "options": [
                   {
                     "type": "integer",
-                    "stable_id": "PROPHYLACTIC_ANTIBIOTICS"
-                  },
-                  {
-                    "type": "integer",
-                    "stable_id": "ANTI_TREMOR"
-                  },
-                  {
-                    "type": "integer",
                     "stable_id": "ANTI_SEIZURE"
                   },
                   {
@@ -858,15 +853,23 @@
                   },
                   {
                     "type": "integer",
-                    "stable_id": "CHEMOTHERAPY"
-                  },
-                  {
-                    "type": "integer",
                     "stable_id": "BIRTH_CONTROL"
                   },
                   {
                     "type": "integer",
                     "stable_id": "OTHER"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "PROPHYLACTIC_ANTIBIOTICS"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "ANTI_TREMOR"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "CHEMOTHERAPY"
                   }
                 ]
               },
@@ -890,14 +893,6 @@
                 "options": [
                   {
                     "type": "integer",
-                    "stable_id": "PROPHYLACTIC_ANTIBIOTICS"
-                  },
-                  {
-                    "type": "integer",
-                    "stable_id": "ANTI_TREMOR"
-                  },
-                  {
-                    "type": "integer",
                     "stable_id": "ANTI_SEIZURE"
                   },
                   {
@@ -918,15 +913,23 @@
                   },
                   {
                     "type": "integer",
-                    "stable_id": "CHEMOTHERAPY"
-                  },
-                  {
-                    "type": "integer",
                     "stable_id": "BIRTH_CONTROL"
                   },
                   {
                     "type": "integer",
                     "stable_id": "OTHER"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "PROPHYLACTIC_ANTIBIOTICS"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "ANTI_TREMOR"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "CHEMOTHERAPY"
                   }
                 ]
               },
@@ -950,14 +953,6 @@
                 "options": [
                   {
                     "type": "integer",
-                    "stable_id": "PROPHYLACTIC_ANTIBIOTICS"
-                  },
-                  {
-                    "type": "integer",
-                    "stable_id": "ANTI_TREMOR"
-                  },
-                  {
-                    "type": "integer",
                     "stable_id": "ANTI_SEIZURE"
                   },
                   {
@@ -978,17 +973,24 @@
                   },
                   {
                     "type": "integer",
-                    "stable_id": "CHEMOTHERAPY"
-                  },
-                  {
-                    "type": "integer",
                     "stable_id": "BIRTH_CONTROL"
                   },
                   {
                     "type": "integer",
                     "stable_id": "OTHER"
-                  }
-                ]
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "PROPHYLACTIC_ANTIBIOTICS"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "ANTI_TREMOR"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "CHEMOTHERAPY"
+                  }                ]
               },
               {
                 "name": "medication_5_name",
@@ -1010,14 +1012,6 @@
                 "options": [
                   {
                     "type": "integer",
-                    "stable_id": "PROPHYLACTIC_ANTIBIOTICS"
-                  },
-                  {
-                    "type": "integer",
-                    "stable_id": "ANTI_TREMOR"
-                  },
-                  {
-                    "type": "integer",
                     "stable_id": "ANTI_SEIZURE"
                   },
                   {
@@ -1038,15 +1032,23 @@
                   },
                   {
                     "type": "integer",
-                    "stable_id": "CHEMOTHERAPY"
-                  },
-                  {
-                    "type": "integer",
                     "stable_id": "BIRTH_CONTROL"
                   },
                   {
                     "type": "integer",
                     "stable_id": "OTHER"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "PROPHYLACTIC_ANTIBIOTICS"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "ANTI_TREMOR"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "CHEMOTHERAPY"
                   }
                 ]
               },
@@ -1070,14 +1072,6 @@
                 "options": [
                   {
                     "type": "integer",
-                    "stable_id": "PROPHYLACTIC_ANTIBIOTICS"
-                  },
-                  {
-                    "type": "integer",
-                    "stable_id": "ANTI_TREMOR"
-                  },
-                  {
-                    "type": "integer",
                     "stable_id": "ANTI_SEIZURE"
                   },
                   {
@@ -1098,15 +1092,23 @@
                   },
                   {
                     "type": "integer",
-                    "stable_id": "CHEMOTHERAPY"
-                  },
-                  {
-                    "type": "integer",
                     "stable_id": "BIRTH_CONTROL"
                   },
                   {
                     "type": "integer",
                     "stable_id": "OTHER"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "PROPHYLACTIC_ANTIBIOTICS"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "ANTI_TREMOR"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "CHEMOTHERAPY"
                   }
                 ]
               },
@@ -1130,14 +1132,6 @@
                 "options": [
                   {
                     "type": "integer",
-                    "stable_id": "PROPHYLACTIC_ANTIBIOTICS"
-                  },
-                  {
-                    "type": "integer",
-                    "stable_id": "ANTI_TREMOR"
-                  },
-                  {
-                    "type": "integer",
                     "stable_id": "ANTI_SEIZURE"
                   },
                   {
@@ -1158,15 +1152,23 @@
                   },
                   {
                     "type": "integer",
-                    "stable_id": "CHEMOTHERAPY"
-                  },
-                  {
-                    "type": "integer",
                     "stable_id": "BIRTH_CONTROL"
                   },
                   {
                     "type": "integer",
                     "stable_id": "OTHER"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "PROPHYLACTIC_ANTIBIOTICS"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "ANTI_TREMOR"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "CHEMOTHERAPY"
                   }
                 ]
               },
@@ -1190,14 +1192,6 @@
                 "options": [
                   {
                     "type": "integer",
-                    "stable_id": "PROPHYLACTIC_ANTIBIOTICS"
-                  },
-                  {
-                    "type": "integer",
-                    "stable_id": "ANTI_TREMOR"
-                  },
-                  {
-                    "type": "integer",
                     "stable_id": "ANTI_SEIZURE"
                   },
                   {
@@ -1218,15 +1212,23 @@
                   },
                   {
                     "type": "integer",
-                    "stable_id": "CHEMOTHERAPY"
-                  },
-                  {
-                    "type": "integer",
                     "stable_id": "BIRTH_CONTROL"
                   },
                   {
                     "type": "integer",
                     "stable_id": "OTHER"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "PROPHYLACTIC_ANTIBIOTICS"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "ANTI_TREMOR"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "CHEMOTHERAPY"
                   }
                 ]
               },
@@ -1726,6 +1728,229 @@
               {
                 "type": "integer",
                 "stable_id": "DONT_KNOW"
+              }
+            ]
+          },
+          {
+            "name": "sample",
+            "stable_id": "SAMPLE",
+            "type": "CompositeMedical",
+            "children": [
+              {
+                "name": "sample_a_type",
+                "type": "Picklist",
+                "stable_id": "SAMPLE_TYPE",
+                "response_order": 0,
+                "options": [
+                  {
+                    "type": "integer",
+                    "stable_id": "BLOOD"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "URINE"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "SALIVA"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "OTHER_BODILY_FLUID"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "SKIN_PUNCH_BIOPSY"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "TISSUE"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "OTHER"
+                  }
+                ]
+              },
+              {
+                "name": "sample_a_location",
+                "stable_id": "SAMPLE_LOCATION",
+                "response_order": 0,
+                "type": "string"
+              },
+              {
+                "name": "sample_b_type",
+                "type": "Picklist",
+                "stable_id": "SAMPLE_TYPE",
+                "response_order": 1,
+                "options": [
+                  {
+                    "type": "integer",
+                    "stable_id": "BLOOD"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "URINE"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "SALIVA"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "OTHER_BODILY_FLUID"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "SKIN_PUNCH_BIOPSY"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "TISSUE"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "OTHER"
+                  }
+                ]
+              },
+              {
+                "name": "sample_b_location",
+                "stable_id": "SAMPLE_LOCATION",
+                "response_order": 1,
+                "type": "string"
+              },
+              {
+                "name": "sample_c_type",
+                "type": "Picklist",
+                "stable_id": "SAMPLE_TYPE",
+                "response_order": 2,
+                "options": [
+                  {
+                    "type": "integer",
+                    "stable_id": "BLOOD"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "URINE"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "SALIVA"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "OTHER_BODILY_FLUID"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "SKIN_PUNCH_BIOPSY"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "TISSUE"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "OTHER"
+                  }
+                ]
+              },
+              {
+                "name": "sample_c_location",
+                "stable_id": "SAMPLE_LOCATION",
+                "response_order": 2,
+                "type": "string"
+              },
+              {
+                "name": "sample_d_type",
+                "type": "Picklist",
+                "stable_id": "SAMPLE_TYPE",
+                "response_order": 3,
+                "options": [
+                  {
+                    "type": "integer",
+                    "stable_id": "BLOOD"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "URINE"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "SALIVA"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "OTHER_BODILY_FLUID"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "SKIN_PUNCH_BIOPSY"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "TISSUE"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "OTHER"
+                  }
+                ]
+              },
+              {
+                "name": "sample_d_location",
+                "stable_id": "SAMPLE_LOCATION",
+                "response_order": 3,
+                "type": "string"
+              },
+              {
+                "name": "sample_e_type",
+                "type": "Picklist",
+                "stable_id": "SAMPLE_TYPE",
+                "response_order": 4,
+                "options": [
+                  {
+                    "type": "integer",
+                    "stable_id": "BLOOD"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "URINE"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "SALIVA"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "OTHER_BODILY_FLUID"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "SKIN_PUNCH_BIOPSY"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "TISSUE"
+                  },
+                  {
+                    "type": "integer",
+                    "stable_id": "OTHER"
+                  }
+                ]
+              },
+              {
+                "name": "sample_e_location",
+                "stable_id": "SAMPLE_LOCATION",
+                "response_order": 4,
+                "type": "string"
+              },
+              {
+                "name": "sample_e_location",
+                "stable_id": "SAMPLE_LOCATION",
+                "response_order": 5,
+                "type": "string"
               }
             ]
           }

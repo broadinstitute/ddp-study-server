@@ -178,6 +178,12 @@ public class StudyDataLoader {
                 "PREFER NOT TO ANSWER"));
         datStatLookup.put("ethnicity", optionList);
 
+        optionList = new ArrayList<>(List.of(
+                "",
+                "INCONTINENCE_OCCASIONAL",
+                "INCONTINENCE_FREQUENT"));
+        datStatLookup.put("incontinence_type", optionList);
+
         booleanValueLookup = new HashMap<>();
         booleanValueLookup.put(0, false);
         booleanValueLookup.put(1, true);
@@ -192,6 +198,8 @@ public class StudyDataLoader {
         altNames.put("BLACK", "Black or African American");
         altNames.put("NATIVE_HAWAIIAN", "Native Hawaiian or other Pacific Islander");
         altNames.put("PREFER_NOT_ANSWER", "I prefer not to answer");
+
+
 
         altNames.put("AXILLARY_LYMPH_NODES", "aux_lymph_node");
         altNames.put("OTHER_LYMPH_NODES", "other_lymph_node");
@@ -1196,8 +1204,8 @@ public class StudyDataLoader {
         String datstatSessionId = getStringValueFromElement(surveyData, "datstat.sessionid");
         String ddpCreated = getStringValueFromElement(surveyData, "ddp_created");
         String ddpFirstCompleted = getStringValueFromElement(surveyData, "ddp_firstcompleted");
-        String ddpLastSubmitted = getStringValueFromElement(surveyData, "datstat_lastmodified") == null ?
-                getStringValueFromElement(surveyData, "datstat.enddatetime") :
+        String ddpLastSubmitted = getStringValueFromElement(surveyData, "datstat_lastmodified") == null
+                ? getStringValueFromElement(surveyData, "datstat.enddatetime") :
                 getStringValueFromElement(surveyData, "datstat_lastmodified");
         String ddpLastUpdated = getStringValueFromElement(surveyData, "datstat.enddatetime") == null
                 ? getStringValueFromElement(surveyData, "datstat_lastmodified")
@@ -1382,7 +1390,6 @@ public class StudyDataLoader {
         String sourceType = getStringValueFromElement(mapElement, "source_type");
         //handle options
         String stableId = getStringValueFromElement(mapElement, "stable_id");
-        System.out.println("-------------" + stableId);
         List<SelectedPicklistOption> selectedPicklistOptions = new ArrayList<>();
         if (mapElement.getAsJsonObject().get("options") == null || mapElement.getAsJsonObject().get("options").isJsonNull()) {
             //this will handle "country" : "US"
@@ -1584,6 +1591,11 @@ public class StudyDataLoader {
                 if (intValue == -1) {
                     intValue = 2;
                 }
+                selectedPicklistOptions
+                        .add(new SelectedPicklistOption(options.get(intValue).getAsJsonObject().get("stable_id").getAsString()));
+                break;
+            } else if (value != null && key.contains("sample_") && key.contains("_type")) {
+                int intValue = value.getAsInt() - 1;
                 selectedPicklistOptions
                         .add(new SelectedPicklistOption(options.get(intValue).getAsJsonObject().get("stable_id").getAsString()));
                 break;
@@ -1850,7 +1862,6 @@ public class StudyDataLoader {
         List<String> nestedQAGuids = new ArrayList<>();
         List<Integer> nestedAnsOrders = new ArrayList<>();
         String childGuid;
-        //todo.. This composite type does not handle array/list of answers. make it handle array for future study proof
         for (JsonElement childEl : children) {
             if (childEl != null && !childEl.isJsonNull()) {
                 Integer childOrder = null;

@@ -94,8 +94,8 @@
     </nav>
 </header>
 
-<div class="main-offset activate-account path">
-    <div class="col-lg-5 col-md-5 col-sm-6 col-xs-10 NoPadding">
+<div class="activate-account path">
+    <div class="col-lg-5 col-md-5 col-sm-6 col-xs-12 NoPadding">
         <h1 class="Title BlueColor" data-translate="activateAccount.title">Account Activation</h1>
         <h2 class="Subtitle Subtitle--light">
             <span data-translate="activateAccount.checkEmail">
@@ -128,9 +128,9 @@
     </div>
 </div>
 
-<div class="main-offset path forgot-password">
+<div class="path forgot-password">
     <div class="row margin-0">
-        <div class="col-lg-5 col-md-5 col-sm-6 col-xs-10 NoPadding">
+        <div class="col-lg-5 col-md-5 col-sm-6 col-xs-12 NoPadding">
             <h1 class="Title BlueColor"
                 data-translate="forgotPassword.title">
                 Forgot your password?
@@ -141,7 +141,7 @@
             </h2>
         </div>
     </div>
-    <div class="Content col-lg-5 col-md-5 col-sm-6 col-xs-10 NoPadding">
+    <div class="Content col-lg-5 col-md-5 col-sm-6 col-xs-12 NoPadding">
         <form class="form" id="forgot-password">
             <div class="form-group">
                 <label class="FormItem-label"
@@ -178,9 +178,9 @@
     </div>
 </div>
 
-<div class="main-offset path resend-instructions">
+<div class="path resend-instructions">
     <div class="row margin-0">
-        <div class="col-lg-5 col-md-5 col-sm-6 col-xs-10 NoPadding">
+        <div class="col-lg-5 col-md-5 col-sm-6 col-xs-12 NoPadding">
             <h1 class="Title BlueColor"
                 data-translate="resendInstructions.title">Resend confirmation instructions</h1>
             <h2 class="Subtitle Subtitle--light"
@@ -190,7 +190,7 @@
             </h2>
         </div>
     </div>
-    <div class="Content col-lg-5 col-md-5 col-sm-6 col-xs-10 NoPadding">
+    <div class="Content col-lg-5 col-md-5 col-sm-6 col-xs-12 NoPadding">
         <form id="resend-instructions">
             <div class="form-group">
                 <label class="FormItem-label"
@@ -231,9 +231,9 @@
     </div>
 </div>
 
-<div class="main-offset login path">
+<div class="login path">
     <div class="row">
-        <div class="col-lg-5 col-md-6 col-sm-8 col-xs-10">
+        <div class="col-lg-5 col-md-6 col-sm-8 col-xs-12">
             <h1 class="Title BlueColor" data-translate="common.signin">Sign In</h1>
             <h2 class="Subtitle Subtitle--light"
                 data-translate="login.title">
@@ -291,19 +291,20 @@
     </div>
 </div>
 
-<div class="main-offset sign-up path">
+<div class="sign-up path">
     <div class="row">
-        <div class="col-lg-5 col-md-6 col-sm-8 col-xs-10">
+        <div class="col-lg-5 col-md-6 col-sm-8 col-xs-12">
             <h1 class="Title BlueColor" data-translate="signUp.title">Create an Account</h1>
             <h2 class="Subtitle Subtitle--light"
                 data-translate="signUp.subTitle">
                 You can log into the Platform with your email address by creating a password, or with your Google account. We will use this email address to communicate with you regarding the Global A-T Family Data Platform.
             </h2>
-            <h2 class="Subtitle Normal">Use your email address</h2>
+            <h2 class="Subtitle Normal" data-translate="signUp.subtitleWithEmail">Use your email address
+            </h2>
             <form id="sign-up">
                 <div class="form-group">
                     <label class="FormItem-label  FormItem-label-email"
-                           data-translate="common.email.label"
+                           data-translate="signUp.emailLabel"
                            for="email">
                         Email address
                         <a class="FormItem-help"
@@ -318,7 +319,7 @@
                         </a>
                         <div class="tooltip fade right" role="tooltip">
                             <div class="tooltip-arrow"></div>
-                            <div class="tooltip-inner">
+                            <div class="tooltip-inner" data-translate="common.email.whoseEmailTooltip">
                                 If you are a parent/legal guardian of a child(ren) with A-T, please use your own email address.
                                 We will use this address to correspond with you regarding anyone you register in The Global A-T Family Data Platform.
                             </div>
@@ -334,7 +335,9 @@
                            for="password"
                            data-translate="common.password.label">
                         Password
-                        <span class="Italic">(8 characters minimum)</span>
+                        <span class="Italic" data-translate="signUp.passwordHint">
+                            (8 characters minimum)
+                        </span>
                     </label>
                     <input class="form-control FormItem-input" type="password" name="password" id="password">
                     <div class="message" data-translate="common.password.error">
@@ -345,7 +348,9 @@
                 <div class="form-group NoMargin">
                     <label class="FormItem-label"
                            for="password_confirm"
-                           data-translate="common.reenter.label">Re-enter password</label>
+                           data-translate="common.reenter.label">
+                        Re-enter password
+                    </label>
                     <input class="form-control FormItem-input local-field" type="password" name="password_confirm"
                            id="password_confirm">
                     <div class="message"
@@ -356,7 +361,7 @@
                 <div class="row NoMargin AlignedCenter">
                     <button class="BtnFilled BtnFilled--blue"
                             id="join-us"
-                            data-translate="common.joinUs">
+                            data-translate="signUp.createAccountBtn">
                         Create Account
                     </button>
                 </div>
@@ -402,6 +407,7 @@
         </div>
     </div>
 </div>
+<div class="footer-container">
 <footer class="footer">
     <div>
         <div>
@@ -418,6 +424,7 @@
         <img src="https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/assets/images/atcp/original-logo-color.svg">
     </a>
 </footer>
+</div>
 <div class="NoPadding NoticesModal modal" id="message_modal" tabindex="-1" role="dialog"
      aria-labelledby="message_modalLabel" aria-hidden="true">
     <div class="modal-dialog NoPadding">
