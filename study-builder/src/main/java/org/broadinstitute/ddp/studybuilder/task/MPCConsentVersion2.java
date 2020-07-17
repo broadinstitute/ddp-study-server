@@ -68,6 +68,9 @@ public class MPCConsentVersion2 implements CustomTask {
 
     @Override
     public void run(Handle handle) {
+        //creates version: 2 for CONSENT and FOLLOWUPCONSENT activities.
+
+        LanguageStore.init(handle);
         User adminUser = handle.attach(UserDao.class).findUserByGuid(cfg.getString("adminUser.guid")).get();
         StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(cfg.getString("study.guid"));
         PdfBuilder builder = new PdfBuilder(cfgPath.getParent(), cfg, studyDto, adminUser.getId());
@@ -84,7 +87,7 @@ public class MPCConsentVersion2 implements CustomTask {
         LOG.info("Changing version of {} to {} with timestamp={}", activityCode, versionTag, timestamp);
         revisionConsent("followupconsent", handle, adminUser.getId(), studyDto, activityCode, versionTag, timestamp.toEpochMilli());
 
-        //pdf for followup ?? check back ??
+        //pdf for followup ?? check back !!
     }
 
     private void revisionConsent(String key, Handle handle, long adminUserId, StudyDto studyDto,
@@ -108,7 +111,6 @@ public class MPCConsentVersion2 implements CustomTask {
 
     private void revisionContentBlock(Handle handle, RevisionMetadata meta, ActivityVersionDto versionDto,
                                       String key, String part) {
-        LanguageStore.init(handle);
         String oldName = String.format("mpc_%s_%s", key, part);
         String newName = String.format("mpc_%s_v2_%s", key, part);
         String bodyTemplateText = "$" + oldName;
