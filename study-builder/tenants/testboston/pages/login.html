@@ -20,6 +20,7 @@
 <![endif]-->
 
 <script src="https://cdn.auth0.com/js/lock/11.5.2/lock.min.js"></script>
+<script src="##BASE_URL##/assets/auth0-login-ht.js"></script>
 
 <style type="text/css">
     body {
@@ -84,13 +85,13 @@
     var headerText = "";
     var studyColor = '#2760b2';   // button primary color
     var studyHelpEmail = '##STUDY_EMAIL##';
-    var loginUrl = config.callbackURL + '/login';
     var registerUrl = '##BASE_URL##';
     var connection = config.connection;
     var prompt = !prompt;
     var showPasswordRecentText = false;
     var doNotShowRegLink = false;
     var language = config.extraParams.language || 'en';
+    var loginUrl = '##BASE_URL##/language-redirect?language=' + language + '&destination=' + encodeURIComponent('login-landing/login');
 
     var i18n = {};
     i18n['en'] = {
@@ -225,10 +226,6 @@
         // uncomment if you want small buttons for social providers
         // socialButtonStyle: 'small'
     };
-    if (language === 'ht') {
-        // Override where Auth0 loads the default language dictionary so it picks up Creole (ht).
-        realOptions.languageBaseUrl = 'https://storage.googleapis.com/testboston-dev';
-    }
 
     var options = {allowForgotPassword:true};
     if (mode === 'signup') {
