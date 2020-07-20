@@ -1,25 +1,23 @@
 {
-  "activity_type": {
-    "forms": "Forms"
-  },
-  "activity_status": {
+  "i18n_activity_instance_status_type_name_trans": {
     "complete": "Complete",
-    "created": "New",
+    "created": "Created",
     "in_progress": "In Progress"
   },
-  "validation": {
-    "age_range": "The age must be within specified values.",
-    "complete": "This question needs to be completely filled in.",
-    "date_after": "The selected date can't be in the past.",
-    "date_before": "The selected date can't be in the future.",
-    "date_range": "The selected date must be within date range.",
+  "i18n_validation_msg_trans": {
     "day_required": "The day field is required.",
-    "int_range": "Minimum or maximum number requirement is not met.",
     "length": "The answer length requirement is not met.",
     "month_required": "The month field is required.",
     "num_options_selected": "Minimum or maximum selections requirement is not met.",
     "regex": "The answer regex requirement is not met.",
     "required": "This question requires an answer.",
-    "year_required": "The year field is required."
+    "year_required": "The year field is required.",
+    "date_range": "The selected date must be within date range.",
+    "complete": "This question needs to be completely filled in.",
+    "age_range": "The age must be within specified values.",
+    "int_range": "Minimum or maximum number requirement is not met."
+  },
+  "i18n_activity_type_name_trans": {
+    "forms": "Forms"
   }
 }
