@@ -872,7 +872,22 @@
         backToTop: 'Back to top',
         contactUs: 'Contact us: ',
         successForgotPassword: 'If you have previously registered, please check your email to reset your password.',
-        languageSelection: 'language selection'
+        languageSelection: 'language selection',
+        invalidErrorHint: 'Invalid',
+        unrecoverableError: 'Something went wrong. Please contact technical support.',
+        error: {
+            forgotPassword: {
+                too_many_requests: 'We\'re sorry. There are too many requests right now. Please reload the page and try again. If this persists, please try again later.',
+                'lock.fallback': 'We\'re sorry, something went wrong when requesting the password change.'
+            }
+        },
+        login: {
+            password_leaked: 'We have detected a potential security issue with this account. To protect your account, we have blocked this login. An email was sent with instruction on how to unblock your account.',
+            too_many_attempts: 'Your account has been blocked after multiple consecutive login attempts.',
+            'lock.fallback': 'We\'re sorry, something went wrong when attempting to log in.',
+            'lock.invalid_email_password': 'Wrong email or password.',
+            'lock.network': 'We could not reach the server. Please check your connection and try again.'
+        }
     };
 
     dictionaries['es'] = {
@@ -913,7 +928,22 @@
         backToTop: 'Volver arriba',
         contactUs: 'Contacta con nosotros:',
         successForgotPassword: 'Si se ha registrado previamente, revise su correo electrónico para restablecer su contraseña.',
-        languageSelection: 'Selección de idioma'
+        languageSelection: 'Selección de idioma',
+        invalidErrorHint: 'Invalid',
+        unrecoverableError: 'Something went wrong. Please contact technical support.',
+        error: {
+            forgotPassword: {
+                too_many_requests: '(es) We\'re sorry. There are too many requests right now. Please reload the page and try again. If this persists, please try again later.',
+                'lock.fallback': '(es) We\'re sorry, something went wrong when requesting the password change.'
+            }
+        },
+        login: {
+            password_leaked: '(es) We have detected a potential security issue with this account. To protect your account, we have blocked this login. An email was sent with instruction on how to unblock your account.',
+            too_many_attempts: '(es) Your account has been blocked after multiple consecutive login attempts.',
+            'lock.fallback': '(es) We\'re sorry, something went wrong when attempting to log in.',
+            'lock.invalid_email_password': '(es) Wrong email or password.',
+            'lock.network': '(es) We could not reach the server. Please check your connection and try again.'
+        }
     };
     dictionaries['he'] = {
         title: ' ',
@@ -953,7 +983,22 @@
         backToTop: 'חזרה למעלה',
         contactUs: 'צור קשר:',
         successForgotPassword: 'אם נרשמת בעבר, אנא בדוק את הדוא"ל שלך כדי לאפס את הסיסמה שלך.',
-        languageSelection: 'בחירת שפה'
+        languageSelection: 'בחירת שפה',
+        invalidErrorHint: '(he) Invalid',
+        unrecoverableError: '(he) Something went wrong. Please contact technical support.',
+        error: {
+            forgotPassword: {
+                too_many_requests: '(he) We\'re sorry. There are too many requests right now. Please reload the page and try again. If this persists, please try again later.',
+                'lock.fallback': '(he) We\'re sorry, something went wrong when requesting the password change.'
+            }
+        },
+        login: {
+            password_leaked: '(he) We have detected a potential security issue with this account. To protect your account, we have blocked this login. An email was sent with instruction on how to unblock your account.',
+            too_many_attempts: '(he) Your account has been blocked after multiple consecutive login attempts.',
+            'lock.fallback': '(he) We\'re sorry, something went wrong when attempting to log in.',
+            'lock.invalid_email_password': '(he) Wrong email or password.',
+            'lock.network': '(he) We could not reach the server. Please check your connection and try again.'
+        }
     };
     dictionaries['zh'] = {
         title: ' ',
@@ -993,7 +1038,22 @@
         backToTop: '回到頂部',
         contactUs: '聯繫我們：',
         successForgotPassword: '如果您以前註冊過，請檢查您的電子郵件以重置密碼。',
-        languageSelection: '語言選擇'
+        languageSelection: '語言選擇',
+        invalidErrorHint: '(zh) Invalid',
+        unrecoverableError: '(zh) Something went wrong. Please contact technical support.',
+        error: {
+            forgotPassword: {
+                too_many_requests: '(zh) We\'re sorry. There are too many requests right now. Please reload the page and try again. If this persists, please try again later.',
+                'lock.fallback': '(zh) We\'re sorry, something went wrong when requesting the password change.'
+            }
+        },
+        login: {
+            password_leaked: '(zh) We have detected a potential security issue with this account. To protect your account, we have blocked this login. An email was sent with instruction on how to unblock your account.',
+            too_many_attempts: '(zh) Your account has been blocked after multiple consecutive login attempts.',
+            'lock.fallback': '(zh) We\'re sorry, something went wrong when attempting to log in.',
+            'lock.invalid_email_password': '(zh) Wrong email or password.',
+            'lock.network': '(zh) We could not reach the server. Please check your connection and try again.'
+        }
     };
     if ('en' !== languageCode && 'es' !== languageCode && 'he' !== languageCode && 'zh' !== languageCode) {
         console.log('invalid language code; using default');
