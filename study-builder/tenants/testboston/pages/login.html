@@ -120,6 +120,60 @@
       titleLogin: 'Please Sign In',
       titleSignUp: 'Create your account'
     };
+    i18n['es'] = {
+      error: {
+        signUp: {
+          userExists: "Si ya se registró, inicie sesión aquí."
+        }
+      },
+      fields: {
+        firstNamePlaceholder: "Su nombre",
+        lastNamePlaceholder: "Su apellido",
+        nonBlankHint: "No puede quedar en blanco."
+      },
+      lastLoginInstructions: "La última vez inició sesión con",
+      message: {
+        alreadyRegisteredText: "Si ya se registró, inicie sesión aquí.",
+        helpHtml: "Si necesita ayuda, envíe un mensaje a " + studyHelpEmail + ".",
+        loginLinkText: "Iniciar sesión con la cuenta actual",
+        registerMessageHtml: "Si aún no se ha registrado, <a class='auth0-lock-alternative-link' href='" + registerUrl + "'>hágalo aquí</a>.",
+        resetPasswordText: "La contraseña se restableció correctamente. Inicie sesión con su nueva contraseña.",
+        switchToLoginText: "¿Ya se registró? "
+      },
+      success: {
+        forgotPassword: "Si ya se registró, revise su correo electrónico para restablecer la contraseña."
+      },
+      title: "¡Le damos la bienvenida!",
+      titleLogin: "Inicie sesión",
+      titleSignUp: "Cree su cuenta"
+    };
+    i18n['ht'] = {
+      error: {
+        signUp: {
+          userExists: "Si w enskri deja, konekte la a."
+        }
+      },
+      fields: {
+        firstNamePlaceholder: "Premye non w",
+        lastNamePlaceholder: "Dezyèm non w",
+        nonBlankHint: "Se pou w mete yon repons"
+      },
+      lastLoginInstructions: "Dènye fwa ou te konekte avèk",
+      message: {
+        alreadyRegisteredText: "Si w enskri deja, konekte la a.",
+        helpHtml: "Pou jwenn èd, tanpri, kontakte " + studyHelpEmail + ".",
+        loginLinkText: "Konekte avèk kont ki egziste deja a.",
+        registerMessageHtml: "Si w potko enskri, tanpri <a class='auth0-lock-alternative-link' href='" + registerUrl + "'>fè sa la a</a>.",
+        resetPasswordText: "Modpas a byen repwograme. Tanpri, konekte avèk nouvo modpas ou a.",
+        switchToLoginText: "Èske w enskri deja? "
+      },
+      success: {
+        forgotPassword: "Si ou te enskri deja, tanpri tcheke imèl ou a pou w repwograme modpas ou a."
+      },
+      title: "Byenveni!",
+      titleLogin: "Tanpri, konekte",
+      titleSignUp: "Kreye kont ou a"
+    };
 
     var title = i18n[language].title;
     if (mode === 'login') {
@@ -171,6 +225,11 @@
         // uncomment if you want small buttons for social providers
         // socialButtonStyle: 'small'
     };
+    if (language === 'ht') {
+        // Override where Auth0 loads the default language dictionary so it picks up Creole (ht).
+        realOptions.languageBaseUrl = 'https://storage.googleapis.com/testboston-dev';
+    }
+
     var options = {allowForgotPassword:true};
     if (mode === 'signup') {
         options.allowSignUp = true;

@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="20200716-add-creole-language-code">
+        <insert tableName="language_code">
+            <column name="iso_language_code" value="ht"/>
+        </insert>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20200716-spanish-creole-activity-type">
+        <update tableName="i18n_activity_type_name_trans">
+            <column name="translation_text" value="Formularios"/>
+            <where>
+                activity_type_id = (select activity_type_id from activity_type where activity_type_code = 'FORMS')
+                and language_code_id = (select language_code_id from language_code where iso_language_code = 'es')
+            </where>
+        </update>
+
+        <insert tableName="i18n_activity_type_name_trans">
+            <column name="activity_type_id" valueComputed="(select activity_type_id from activity_type where activity_type_code = 'FORMS')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'ht')"/>
+            <column name="translation_text" value="Fòmilè"/>
+        </insert>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20200716-spanish-creole-instance-status-type">
+        <update tableName="i18n_activity_instance_status_type_name_trans">
+            <column name="translation_text" value="Completar"/>
+            <where>
+                activity_instance_status_type_id = (select activity_instance_status_type_id from activity_instance_status_type where activity_instance_status_type_code = 'COMPLETE')
+                and language_code_id = (select language_code_id from language_code where iso_language_code = 'es')
+            </where>
+        </update>
+        <update tableName="i18n_activity_instance_status_type_name_trans">
+            <column name="translation_text" value="Nuevo"/>
+            <where>
+                activity_instance_status_type_id = (select activity_instance_status_type_id from activity_instance_status_type where activity_instance_status_type_code = 'CREATED')
+                and language_code_id = (select language_code_id from language_code where iso_language_code = 'es')
+            </where>
+        </update>
+        <update tableName="i18n_activity_instance_status_type_name_trans">
+            <column name="translation_text" value="En curso"/>
+            <where>
+                activity_instance_status_type_id = (select activity_instance_status_type_id from activity_instance_status_type where activity_instance_status_type_code = 'IN_PROGRESS')
+                and language_code_id = (select language_code_id from language_code where iso_language_code = 'es')
+            </where>
+        </update>
+
+        <insert tableName="i18n_activity_instance_status_type_name_trans">
+            <column name="activity_instance_status_type_id"
+                    valueComputed="(select activity_instance_status_type_id from activity_instance_status_type where activity_instance_status_type_code = 'COMPLETE')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'ht')"/>
+            <column name="translation_text" value="Ranpli"/>
+        </insert>
+        <insert tableName="i18n_activity_instance_status_type_name_trans">
+            <column name="activity_instance_status_type_id"
+                    valueComputed="(select activity_instance_status_type_id from activity_instance_status_type where activity_instance_status_type_code = 'CREATED')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'ht')"/>
+            <column name="translation_text" value="Nouvo"/>
+        </insert>
+        <insert tableName="i18n_activity_instance_status_type_name_trans">
+            <column name="activity_instance_status_type_id"
+                    valueComputed="(select activity_instance_status_type_id from activity_instance_status_type where activity_instance_status_type_code = 'IN_PROGRESS')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'ht')"/>
+            <column name="translation_text" value="Ap fèt"/>
+        </insert>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20200716-spanish-creole-validation-msg-trans">
+        <update tableName="i18n_validation_msg_trans">
+            <column name="translation_text" value="La edad debe estar entre los valores indicados."/>
+            <where>
+                validation_type_id = (select validation_type_id from validation_type where validation_type_code = 'AGE_RANGE')
+                and language_code_id = (select language_code_id from language_code where iso_language_code = 'es')
+            </where>
+        </update>
+        <update tableName="i18n_validation_msg_trans">
+            <column name="translation_text" value="Esta pregunta se debe responder de forma completa."/>
+            <where>
+                validation_type_id = (select validation_type_id from validation_type where validation_type_code = 'COMPLETE')
+                and language_code_id = (select language_code_id from language_code where iso_language_code = 'es')
+            </where>
+        </update>
+        <update tableName="i18n_validation_msg_trans">
+            <column name="translation_text" value="La fecha seleccionada debe estar dentro del intervalo indicado."/>
+            <where>
+                validation_type_id = (select validation_type_id from validation_type where validation_type_code = 'DATE_RANGE')
+                and language_code_id = (select language_code_id from language_code where iso_language_code = 'es')
+            </where>
+        </update>
+        <update tableName="i18n_validation_msg_trans">
+            <column name="translation_text" value="El campo del día es obligatorio."/>
+            <where>
+                validation_type_id = (select validation_type_id from validation_type where validation_type_code = 'DAY_REQUIRED')
+                and language_code_id = (select language_code_id from language_code where iso_language_code = 'es')
+            </where>
+        </update>
+        <update tableName="i18n_validation_msg_trans">
+            <column name="translation_text" value="El número mínimo o máximo no es el indicado."/>
+            <where>
+                validation_type_id = (select validation_type_id from validation_type where validation_type_code = 'INT_RANGE')
+                and language_code_id = (select language_code_id from language_code where iso_language_code = 'es')
+            </where>
+        </update>
+        <update tableName="i18n_validation_msg_trans">
+            <column name="translation_text" value="La respuesta no tiene la longitud indicada."/>
+            <where>
+                validation_type_id = (select validation_type_id from validation_type where validation_type_code = 'LENGTH')
+                and language_code_id = (select language_code_id from language_code where iso_language_code = 'es')
+            </where>
+        </update>
+        <update tableName="i18n_validation_msg_trans">
+            <column name="translation_text" value="El campo del mes es obligatorio."/>
+            <where>
+                validation_type_id = (select validation_type_id from validation_type where validation_type_code = 'MONTH_REQUIRED')
+                and language_code_id = (select language_code_id from language_code where iso_language_code = 'es')
+            </where>
+        </update>
+        <update tableName="i18n_validation_msg_trans">
+            <column name="translation_text" value="No se seleccionó la cantidad mínima de elementos o se superó la cantidad."/>
+            <where>
+                validation_type_id = (select validation_type_id from validation_type where validation_type_code = 'NUM_OPTIONS_SELECTED')
+                and language_code_id = (select language_code_id from language_code where iso_language_code = 'es')
+            </where>
+        </update>
+        <update tableName="i18n_validation_msg_trans">
+            <column name="translation_text" value="No se cumplió con el requisito de regex de la respuesta."/>
+            <where>
+                validation_type_id = (select validation_type_id from validation_type where validation_type_code = 'REGEX')
+                and language_code_id = (select language_code_id from language_code where iso_language_code = 'es')
+            </where>
+        </update>
+        <update tableName="i18n_validation_msg_trans">
+            <column name="translation_text" value="Es necesario responder esta pregunta."/>
+            <where>
+                validation_type_id = (select validation_type_id from validation_type where validation_type_code = 'REQUIRED')
+                and language_code_id = (select language_code_id from language_code where iso_language_code = 'es')
+            </where>
+        </update>
+        <update tableName="i18n_validation_msg_trans">
+            <column name="translation_text" value="El campo del año es obligatorio."/>
+            <where>
+                validation_type_id = (select validation_type_id from validation_type where validation_type_code = 'YEAR_REQUIRED')
+                and language_code_id = (select language_code_id from language_code where iso_language_code = 'es')
+            </where>
+        </update>
+
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'AGE_RANGE')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'ht')"/>
+            <column name="translation_text" value="Laj la dwe nan valè ki presize yo."/>
+        </insert>
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'COMPLETE')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'ht')"/>
+            <column name="translation_text" value="Se pou ranpli repons kesyon a antyèman."/>
+        </insert>
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'DATE_RANGE')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'ht')"/>
+            <column name="translation_text" value="Dat ou chwazi a dwe nan seri dat yo."/>
+        </insert>
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'DAY_REQUIRED')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'ht')"/>
+            <column name="translation_text" value="Chan jou a obligatwa."/>
+        </insert>
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'INT_RANGE')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'ht')"/>
+            <column name="translation_text" value="Egzijans kantite minimòm oswa maksimòm lan pa respekte."/>
+        </insert>
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'LENGTH')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'ht')"/>
+            <column name="translation_text" value="Egzijans longè repons lan pa respekte."/>
+        </insert>
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'MONTH_REQUIRED')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'ht')"/>
+            <column name="translation_text" value="Chan mwa a obligatwa."/>
+        </insert>
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'NUM_OPTIONS_SELECTED')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'ht')"/>
+            <column name="translation_text" value="Egzijans seleksyon minimòm oswa maksimòm yo pa respekte."/>
+        </insert>
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'REGEX')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'ht')"/>
+            <column name="translation_text" value="Egzijans ekspresyon regilye repons lan pa respekte."/>
+        </insert>
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'REQUIRED')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'ht')"/>
+            <column name="translation_text" value="Li obligatwa pou w mete yon repons pou kesyon sa a."/>
+        </insert>
+        <insert tableName="i18n_validation_msg_trans">
+            <column name="validation_type_id" valueComputed="(select validation_type_id from validation_type where validation_type_code = 'YEAR_REQUIRED')"/>
+            <column name="language_code_id" valueComputed="(select language_code_id from language_code where iso_language_code = 'ht')"/>
+            <column name="translation_text" value="Li obligatwa pou w ranpli chan ane a."/>
+        </insert>
+    </changeSet>
+</databaseChangeLog>
