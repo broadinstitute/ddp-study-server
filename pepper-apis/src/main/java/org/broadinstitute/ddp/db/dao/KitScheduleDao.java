@@ -37,24 +37,24 @@ public interface KitScheduleDao {
     Optional<KitSchedule> findSchedule(@Bind("configId") long kitConfigurationId);
 
 
-    default long createInitialScheduleRecord(long userId, long kitConfigurationId, Long lastKitRequestId) {
+    default long createScheduleRecord(long userId, long kitConfigurationId, long initialKitRequestId) {
         return getKitScheduleSql().insertRecord(
-                userId, kitConfigurationId, false, 0, Instant.now(), lastKitRequestId, null, null);
+                userId, kitConfigurationId, false, 0, initialKitRequestId, null, null, null);
     }
 
     default void updateRecordOptOut(long recordId, boolean optedOut) {
         DBUtils.checkUpdate(1, getKitScheduleSql().updateRecordOptOut(recordId, optedOut));
     }
 
-    default void updateRecordLastKitSentTime(long recordId, Instant sentTime) {
-        DBUtils.checkUpdate(1, getKitScheduleSql().updateRecordLastKitSentTime(recordId, sentTime));
+    default void updateRecordInitialKitSentTime(long recordId, Instant sentTime) {
+        DBUtils.checkUpdate(1, getKitScheduleSql().updateRecordInitialKitSentTime(recordId, sentTime));
     }
 
-    default void updateRecordLastKitSentTimes(List<Long> recordIds, List<Instant> sentTimes) {
+    default void updateRecordInitialKitSentTimes(List<Long> recordIds, List<Instant> sentTimes) {
         if (recordIds.size() != sentTimes.size()) {
             throw new DaoException("List size for record ids and sent times must match");
         }
-        int[] updated = getKitScheduleSql().bulkUpdateRecordLastKitSentTime(recordIds, sentTimes);
+        int[] updated = getKitScheduleSql().bulkUpdateRecordInitialKitSentTime(recordIds, sentTimes);
         DBUtils.checkUpdate(recordIds.size(), Arrays.stream(updated).sum());
     }
 
@@ -62,12 +62,8 @@ public interface KitScheduleDao {
         DBUtils.checkUpdate(1, getKitScheduleSql().updateRecordCurrentOccurrencePrepTime(recordId, currentOccurrencePrepTime));
     }
 
-    default void incrementRecordNumOccurrenceWithoutKit(long recordId) {
-        DBUtils.checkUpdate(1, getKitScheduleSql().incrementRecordNumOccurrences(recordId, Instant.now(), null));
-    }
-
-    default void incrementRecordNumOccurrenceWithKit(long recordId, long kitRequestId) {
-        DBUtils.checkUpdate(1, getKitScheduleSql().incrementRecordNumOccurrences(recordId, Instant.now(), kitRequestId));
+    default void incrementRecordNumOccurrence(long recordId) {
+        DBUtils.checkUpdate(1, getKitScheduleSql().incrementRecordNumOccurrences(recordId, Instant.now()));
     }
 
     @SqlQuery("select usen.study_id,"
@@ -76,7 +72,8 @@ public interface KitScheduleDao {
             + "       addr.address_id,"
             + "       vs.code as address_validation_status,"
             + "       rec.*,"
-            + "       (select kit_request_guid from kit_request where kit_request_id = rec.last_kit_request_id) as last_kit_request_guid"
+            + "       (select kit_request_guid from kit_request"
+            + "         where kit_request_id = rec.initial_kit_request_id) as initial_kit_request_guid"
             + "  from kit_schedule_record as rec"
             + "  join user_study_enrollment as usen on usen.user_id = rec.participant_user_id"
             + "  join enrollment_status_type as entype on entype.enrollment_status_type_id = usen.enrollment_status_type_id"
@@ -89,7 +86,7 @@ public interface KitScheduleDao {
             + "   and usen.valid_to is null"
             + "   and rec.opted_out = false"
             + "   and rec.num_occurrences < ks.num_occurrences_per_user"
-            + "   and rec.last_kit_request_id is not null"
+            + "   and rec.initial_kit_sent_time is null"
             + " order by usen.study_id")
     @RegisterConstructorMapper(PendingScheduleRecord.class)
     @RegisterColumnMapperFactory(EnumByOrdinalMapperFactory.class)
@@ -101,7 +98,8 @@ public interface KitScheduleDao {
             + "       addr.address_id,"
             + "       vs.code as address_validation_status,"
             + "       rec.*,"
-            + "       (select kit_request_guid from kit_request where kit_request_id = rec.last_kit_request_id) as last_kit_request_guid"
+            + "       (select kit_request_guid from kit_request"
+            + "         where kit_request_id = rec.initial_kit_request_id) as initial_kit_request_guid"
             + "  from kit_schedule_record as rec"
             + "  join user_study_enrollment as usen on usen.user_id = rec.participant_user_id"
             + "  join enrollment_status_type as entype on entype.enrollment_status_type_id = usen.enrollment_status_type_id"

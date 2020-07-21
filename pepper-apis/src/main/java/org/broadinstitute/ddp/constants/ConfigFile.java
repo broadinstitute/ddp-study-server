@@ -172,6 +172,7 @@ public class ConfigFile {
         public static final String CHECK_ENABLED = "kits.checkEnabled";
         public static final String INTERVAL_SECS = "kits.intervalSecs";
         public static final String STATUS_CHECK_SECS = "kits.statusCheckSecs";
+        public static final String BATCH_SIZE = "kits.batchSize";
     }
 
     public static class Sendgrid {

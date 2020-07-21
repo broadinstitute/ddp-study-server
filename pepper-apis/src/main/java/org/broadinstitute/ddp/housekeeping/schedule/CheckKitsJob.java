@@ -69,7 +69,7 @@ public class CheckKitsJob implements Job {
         scheduler.scheduleJob(trigger);
         LOG.info("Added trigger {} for job {} with delay of {} seconds", trigger.getKey(), getKey(), intervalSecs);
 
-        kitCheckService = new KitCheckService();
+        kitCheckService = new KitCheckService(cfg.getInt(ConfigFile.Kits.BATCH_SIZE));
         dsmClient = new DsmClient(cfg);
         statusCheckSecs = cfg.getLong(ConfigFile.Kits.STATUS_CHECK_SECS);
         LOG.info("Job {} status check seconds is set to {}", getKey(), statusCheckSecs);
@@ -92,12 +92,11 @@ public class CheckKitsJob implements Job {
                 LOG.info("Checking for initial kits");
                 return kitCheckService.checkForInitialKits(handle);
             });
-
             TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, handle -> {
                 LOG.info("Checking for recurring kits");
                 result.add(kitCheckService.scheduleNextKits(handle));
-                sendKitMetrics(result);
             });
+            sendKitMetrics(result);
 
             long elapsed = Instant.now().toEpochMilli() - start;
             LOG.info("Job {} completed in {}s", getKey(), elapsed / 1000);

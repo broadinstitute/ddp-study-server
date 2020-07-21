@@ -8,14 +8,14 @@ import com.google.gson.annotations.SerializedName;
 /**
  * Representation of participant's list of kit statuses. Used in batch response from DSM.
  */
-public class ParticipantKitStatus {
+public class ParticipantKits {
 
     @SerializedName("participantId")
     private String participantGuid;
     @SerializedName("samples")
     private List<ParticipantStatus.Sample> samples;
 
-    public ParticipantKitStatus(String participantGuid, List<ParticipantStatus.Sample> samples) {
+    public ParticipantKits(String participantGuid, List<ParticipantStatus.Sample> samples) {
         this.participantGuid = participantGuid;
         this.samples = new ArrayList<>(samples);
     }

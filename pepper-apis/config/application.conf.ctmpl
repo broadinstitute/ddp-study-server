@@ -93,7 +93,9 @@
         # How many seconds to wait before doing next check
         "intervalSecs": {{$conf.Data.kits.intervalSecs}},
         # How many seconds to wait before calling DSM for kit statuses
-        "statusCheckSecs": {{$conf.Data.kits.statusCheckSecs}}
+        "statusCheckSecs": {{$conf.Data.kits.statusCheckSecs}},
+        # Batch size to use for checking status and scheduling
+        "batchSize": {{$conf.Data.kits.batchSize}}
     },
     "elasticsearch": {
         # Whether to enable data sync to ES
