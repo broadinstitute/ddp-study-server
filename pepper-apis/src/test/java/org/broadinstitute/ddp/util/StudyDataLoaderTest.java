@@ -180,7 +180,8 @@ public class StudyDataLoaderTest {
         when(mockDataLoader.createActivityInstance(any(JsonElement.class),
                 anyString(), anyLong(), anyString(), anyString(), any(JdbiActivity.class),
                 any(ActivityInstanceDao.class),
-                any(ActivityInstanceStatusDao.class))).thenReturn(mockInstanceDto);
+                any(ActivityInstanceStatusDao.class),
+                any(JdbiActivityInstance.class))).thenReturn(mockInstanceDto);
 
         JdbiActivityInstance mockActivityDao = mock(JdbiActivityInstance.class);
         JdbiUserStudyLegacyData mockLegacyDataDao = mock(JdbiUserStudyLegacyData.class);
