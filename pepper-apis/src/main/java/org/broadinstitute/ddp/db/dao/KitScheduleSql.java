@@ -68,10 +68,10 @@ public interface KitScheduleSql extends SqlObject {
     @SqlUpdate("update kit_schedule_record set opted_out = :optedOut where kit_schedule_record_id = :id")
     int updateRecordOptOut(@Bind("id") long recordId, @Bind("optedOut") boolean optedOut);
 
-    @SqlUpdate("update kit_schedule_record set initial_kit_set_time = :time where kit_schedule_record_id = :id")
+    @SqlUpdate("update kit_schedule_record set initial_kit_sent_time = :time where kit_schedule_record_id = :id")
     int updateRecordInitialKitSentTime(@Bind("id") long recordId, @Bind("time") Instant sentTime);
 
-    @SqlBatch("update kit_schedule_record set initial_kit_set_time = :time where kit_schedule_record_id = :id")
+    @SqlBatch("update kit_schedule_record set initial_kit_sent_time = :time where kit_schedule_record_id = :id")
     int[] bulkUpdateRecordInitialKitSentTime(@Bind("id") List<Long> ids, @Bind("time") List<Instant> sentTimes);
 
     @SqlUpdate("update kit_schedule_record set current_occurrence_prep_time = :time where kit_schedule_record_id = :id")

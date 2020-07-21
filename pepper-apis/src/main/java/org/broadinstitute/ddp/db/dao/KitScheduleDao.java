@@ -9,6 +9,7 @@ import java.util.stream.Stream;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.model.kit.KitSchedule;
+import org.broadinstitute.ddp.model.kit.KitScheduleRecord;
 import org.broadinstitute.ddp.model.kit.PendingScheduleRecord;
 import org.jdbi.v3.core.mapper.EnumByOrdinalMapperFactory;
 import org.jdbi.v3.sqlobject.CreateSqlObject;
@@ -65,6 +66,14 @@ public interface KitScheduleDao {
     default void incrementRecordNumOccurrence(long recordId) {
         DBUtils.checkUpdate(1, getKitScheduleSql().incrementRecordNumOccurrences(recordId, Instant.now()));
     }
+
+    @SqlQuery("select rec.*,"
+            + "       (select kit_request_guid from kit_request"
+            + "         where kit_request_id = rec.initial_kit_request_id) as initial_kit_request_guid"
+            + "  from kit_schedule_record as rec"
+            + " where rec.kit_schedule_record_id = :id")
+    @RegisterConstructorMapper(KitScheduleRecord.class)
+    Optional<KitScheduleRecord> findRecord(@Bind("id") long recordId);
 
     @SqlQuery("select usen.study_id,"
             + "       (select guid from umbrella_study where umbrella_study_id = usen.study_id) as study_guid,"
