@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-    <title data-translate="title">Global A-T Family Data Platform | Activate Account Notification</title>
+    <title data-translate="title"></title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
     <link id="app-favicon" rel="icon" type="image/x-icon"
           href="https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/favicon.ico">
@@ -28,7 +28,7 @@
             <li class="dropdown">
                 <a class="dropdown-toggle" data-toggle="dropdown" href="#">
                     <i class="fa fa-globe language-dropdown"></i>
-                    <span data-translate="header.language">Language</span>
+                    <span data-translate="header.language"></span>
                     <i class="caret"></i>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-right languages"></ul>
@@ -36,9 +36,8 @@
             <li class="dropdown">
                 <a class="Link dropdown-toggle"
                    data-toggle="dropdown"
-                   data-translate="header.researchers"
                    href="#">
-                    For Researchers
+                    <span data-translate="header.researchers"></span>
                     <span class="caret"></span>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-right">
@@ -46,7 +45,6 @@
                         <a class="prepare-link-host"
                            data-translate="header.dataAccessRequest"
                            href="/data_access">
-                            Data Access Request
                         </a>
                     </li>
                 </ul>
@@ -56,10 +54,10 @@
                    aria-haspopup="true"
                    class="dropdown-toggle"
                    data-toggle="dropdown"
-                   data-translate="header.learnMore"
                    href="#"
                    role="button">
-                    Learn More<span class="caret"></span>
+                    <span data-translate="header.learnMore"></span>
+                    <span class="caret"></span>
                 </a>
                 <ul class="dropdown-menu dropdown-menu-right dropdown">
                     <li>
@@ -67,7 +65,6 @@
                            class="prepare-link-host"
                            data-translate="header.aboutUs"
                            href="/about-us">
-                            About Us
                         </a>
                     </li>
                     <li class="divider"></li>
@@ -75,7 +72,7 @@
                         <a id="about_initiative"
                            class="prepare-link-host"
                            data-translate="header.aboutThisInitiative"
-                           href="/about_initiative">About this Initiative</a>
+                           href="/about_initiative"></a>
                     </li>
                 </ul>
             </li>
@@ -83,12 +80,12 @@
                 <a class="BtnBordered white prepare-link-host"
                    id="join-us-nav"
                    data-translate="header.joinUs"
-                   href="/join-us">Join Us</a>
+                   href="/join-us"></a>
             </li>
             <li>
                 <a href="#"
                    data-translate="header.signIn"
-                   class="SimpleButton onActivateSignIn">Sign In</a>
+                   class="SimpleButton onActivateSignIn"></a>
             </li>
         </ul>
     </nav>
@@ -96,15 +93,13 @@
 
 <div class="activate-account path">
     <div class="col-lg-5 col-md-5 col-sm-6 col-xs-12 NoPadding">
-        <h1 class="Title BlueColor" data-translate="activateAccount.title">Account Activation</h1>
+        <h1 class="Title BlueColor" data-translate="activateAccount.title"></h1>
         <h2 class="Subtitle Subtitle--light">
             <span data-translate="activateAccount.checkEmail">
-                You are almost done! Please check your email:
             </span>
             <span class="Normal"
                   id="enteredEmail"></span>.
             <span data-translate="activateAccount.activateAccount">
-                An email has been sent there with the guidelines to activate your account.
             </span>
         </h2>
 
@@ -116,13 +111,11 @@
                href="#"
                data-original-title="Wait a little longer. Sometimes delivery of email can be delayed by processes outside our control. You can also check the junk folder of your email account. The email sometimes ends up there.">
                 <span data-translate="activateAccount.stillWaiting">
-                    Still waiting for your email?
                 </span>
             </a><br>
             <a href="#"
                class="onActivateResendInstructions"
                data-translate="common.resendInstructions">
-                Resend confirmation instructions
             </a>
         </div>
     </div>
@@ -133,11 +126,9 @@
         <div class="col-lg-5 col-md-5 col-sm-6 col-xs-12 NoPadding">
             <h1 class="Title BlueColor"
                 data-translate="forgotPassword.title">
-                Forgot your password?
             </h1>
             <h2 class="Subtitle Subtitle--light"
                 data-translate="forgotPassword.enterEmail">
-                Please enter your email address and we will send you password reset instructions.
             </h2>
         </div>
     </div>
@@ -145,17 +136,19 @@
         <form class="form" id="forgot-password">
             <div class="form-group">
                 <label class="FormItem-label"
-                       data-translate="common.email.label"
-                       for="email">Email</label><br>
+                       for="email">
+                    <span data-translate="common.email.label"></span>
+                </label>
+                <br>
                 <input autofocus="autofocus"
                        class="form-control FormItem-input"
                        type="email"
                        value=""
                        name="email"
                        id="email">
-                <div class="message"
-                     data-translate="common.email.error">
-                    Email not found
+                <div class="message">
+                    <span data-translate="common.email.error">
+                    </span>
                 </div>
             </div>
             <hr class="Line--noBottom">
@@ -163,17 +156,17 @@
             <div class="AlignedCenter">
                 <button class="BtnFilled BtnFilled--blue"
                         data-translate="forgotPassword.submit">
-                    Send me reset password instructions
                 </button>
             </div>
         </form>
         <div class="SignHelp Italic">
             <a href="#"
                class="onActivateSignIn"
-               data-translate="common.signin">Sign In</a><br>
+               data-translate="common.signin"></a>
+            <br>
             <a href="#"
                class="onActivateResendInstructions"
-               data-translate="common.resendInstructions">Resend confirmation instructions</a><br>
+               data-translate="common.resendInstructions"></a><br>
         </div>
     </div>
 </div>
@@ -182,11 +175,9 @@
     <div class="row margin-0">
         <div class="col-lg-5 col-md-5 col-sm-6 col-xs-12 NoPadding">
             <h1 class="Title BlueColor"
-                data-translate="resendInstructions.title">Resend confirmation instructions</h1>
+                data-translate="resendInstructions.title"></h1>
             <h2 class="Subtitle Subtitle--light"
                 data-translate="resendInstructions.subTitle">
-                If you did not receive your confirmation instructions, you can enter your email address to generate
-                another confirmation email.
             </h2>
         </div>
     </div>
@@ -194,8 +185,9 @@
         <form id="resend-instructions">
             <div class="form-group">
                 <label class="FormItem-label"
-                       data-translate="common.email.label"
-                       for="email">Email</label>
+                       for="email">
+                    <span data-translate="common.email.label"></span>
+                </label>
                 <input autofocus="autofocus"
                        value=""
                        class="form-control FormItem-input"
@@ -210,7 +202,6 @@
                 <button class="BtnFilled BtnFilled--blue"
                         data-translate="resendInstructions.submit"
                         id="confirm">
-                    Resend confirmation instructions
                 </button>
             </div>
         </form>
@@ -218,13 +209,11 @@
             <a href="#"
                class="onActivateSignIn"
                data-translate="common.signin">
-                Sign In
             </a>
             <br>
             <a href="#"
                class="onActivateForgotPassword"
                data-translate="common.forgotPassword">
-                Forgot your password?
             </a>
             <br>
         </div>
@@ -234,43 +223,42 @@
 <div class="login path">
     <div class="row">
         <div class="col-lg-5 col-md-6 col-sm-8 col-xs-12">
-            <h1 class="Title BlueColor" data-translate="common.signin">Sign In</h1>
+            <h1 class="Title BlueColor" data-translate="common.signin"></h1>
             <h2 class="Subtitle Subtitle--light"
                 data-translate="login.title">
-                You can log into the Global A-T Family Data Platform using your email address or with your Google
-                account.
             </h2>
             <h2 class="Subtitle Normal" data-translate="login.useEmail">
-                Use your email address:
             </h2>
             <form id="login">
                 <div class="form-group">
                     <label class="FormItem-label"
-                           for="email"
-                           data-translate="common.email.label">Email address</label>
+                           for="email">
+                        <span data-translate="common.email.label"></span>
+                    </label>
                     <input class="form-control FormItem-input" type="text" name="email" id="email">
                 </div>
                 <div class="form-group">
                     <label class="FormItem-label"
-                           for="password"
-                           data-translate="common.password.label">Password</label>
+                           for="password">
+                        <span  data-translate="common.password.label"></span>
+                    </label>
                     <input class="form-control FormItem-input" type="password" name="password" id="password">
                 </div>
                 <div class="AlignedCenter">
-                    <button class="BtnFilled BtnFilled--blue" data-translate="common.signin">Sign In</button>
+                    <button class="BtnFilled BtnFilled--blue" data-translate="common.signin"></button>
                 </div>
             </form>
             <div class="OverLine">
                 <hr class="Line--dark OverLine-line">
-                <div class="OverLine-comment"
-                     data-translate="login.or">OR</div>
+                <div class="OverLine-comment">
+                    <span data-translate="common.or"></span>
+                </div>
             </div>
             <div class="AlignedCenter">
                 <a class="BtnFilled BtnFilled--red"
                    id="google-sign"
                    href="/users/auth/google_oauth2?locale=en"
                    data-translate="common.signinWithGoogle">
-                    Sign In with Google
                 </a>
             </div>
             <hr class="Line--noBottom">
@@ -278,12 +266,10 @@
                 <a href="#"
                    class="onActivateForgotPassword"
                    data-translate="common.forgotPassword">
-                    Forgot your password?
                 </a><br>
                 <a href="#"
                    class="onActivateResendInstructions"
                    data-translate="common.resendInstructions">
-                    Resend confirmation instructions
                 </a>
                 <br>
             </div>
@@ -294,19 +280,18 @@
 <div class="sign-up path">
     <div class="row">
         <div class="col-lg-5 col-md-6 col-sm-8 col-xs-12">
-            <h1 class="Title BlueColor" data-translate="signUp.title">Create an Account</h1>
+            <h1 class="Title BlueColor" data-translate="signUp.title"></h1>
             <h2 class="Subtitle Subtitle--light"
                 data-translate="signUp.subTitle">
-                You can log into the Platform with your email address by creating a password, or with your Google account. We will use this email address to communicate with you regarding the Global A-T Family Data Platform.
-            </h2>
-            <h2 class="Subtitle Normal" data-translate="signUp.subtitleWithEmail">Use your email address
+           </h2>
+            <h2 class="Subtitle Normal" data-translate="signUp.subtitleWithEmail">
             </h2>
             <form id="sign-up">
                 <div class="form-group">
                     <label class="FormItem-label  FormItem-label-email"
-                           data-translate="signUp.emailLabel"
                            for="email">
-                        Email address
+                        <span data-translate="signUp.emailLabel">
+                        </span>
                         <a class="FormItem-help"
                            data-toggle="tooltip"
                            data-placement="right"
@@ -314,94 +299,86 @@
                            href="javascript:;"
                            data-original-title="If you are a parent/legal guardian of a child(ren) with A-T, please use your own email address.  We will use this address to correspond with you regarding anyone you register in The Global A-T Family Data Platform.">
                             <span data-translate="common.email.whoseEmail">
-                                Whose email should I input?
                             </span>
                         </a>
                         <div class="tooltip fade right" role="tooltip">
                             <div class="tooltip-arrow"></div>
                             <div class="tooltip-inner" data-translate="common.email.whoseEmailTooltip">
-                                If you are a parent/legal guardian of a child(ren) with A-T, please use your own email address.
-                                We will use this address to correspond with you regarding anyone you register in The Global A-T Family Data Platform.
                             </div>
                         </div>
                     </label>
                     <input class="form-control FormItem-input" type="text" name="email" id="email">
-                    <div class="message"
-                         data-translate="common.email.error">
+                    <div class="message">
+                        <span data-translate="common.email.error"></span>
                     </div>
                 </div>
                 <div class="form-group">
                     <label class="FormItem-label"
-                           for="password"
-                           data-translate="common.password.label">
-                        Password
+                           for="password">
+                        <span data-translate="common.password.label"></span>
                         <span class="Italic" data-translate="signUp.passwordHint">
-                            (8 characters minimum)
                         </span>
                     </label>
                     <input class="form-control FormItem-input" type="password" name="password" id="password">
-                    <div class="message" data-translate="common.password.error">
-                        at least 8 characters including: a lower-case letter, an upper-case letter, a number, a special
-                        character (such as !@#$%^&*).
+                    <div class="message" >
+                        <span data-translate="common.password.error">
+                        </span>
                     </div>
                 </div>
                 <div class="form-group NoMargin">
                     <label class="FormItem-label"
-                           for="password_confirm"
-                           data-translate="common.reenter.label">
-                        Re-enter password
+                           for="password_confirm">
+                        <span data-translate="common.reenter.label"></span>
                     </label>
                     <input class="form-control FormItem-input local-field" type="password" name="password_confirm"
                            id="password_confirm">
-                    <div class="message"
-                         data-translate="common.reenter.error">
-                        Password confirmation doesn't match Password
+                    <div class="message">
+                        <span data-translate="common.reenter.error"></span>
                     </div>
                 </div>
                 <div class="row NoMargin AlignedCenter">
                     <button class="BtnFilled BtnFilled--blue"
                             id="join-us"
                             data-translate="signUp.createAccountBtn">
-                        Create Account
                     </button>
                 </div>
             </form>
             <div class="OverLine">
                 <hr class="Line--dark OverLine-line">
-                <div class="OverLine-comment">OR</div>
+                <div class="OverLine-comment">
+                    <span data-translate="common.or"></span>
+                </div>
             </div>
-            <h2 class="Subtitle Normal">Use your Google account</h2>
+            <h2 class="Subtitle Normal" data-translate="signUp.useGoogle"></h2>
             <form class="form" id="google-form" action="" accept-charset="UTF-8" method="post">
                 <div class="form-group">
                     <div class="PositionRelative">
                         <label class="FormItem-label FormItem-label-email" for="user_email">
-                            Google email address
+                            <span data-translate="signUp.googleEmail"></span>
                             <a class="FormItem-help" data-toggle="tooltip" data-placement="right" title="" href="javascript:;"
                                data-original-title="If you are a parent/legal guardian of a child(ren) with A-T, please use your own email address.  We will use this address to correspond with you regarding anyone you register in The Global A-T Family Data Platform.">
                                 <span data-translate="common.email.whoseEmail">
-                                    Whose email should I input?
                                 </span>
                             </a>
                             <div class="tooltip fade right" role="tooltip">
                                 <div class="tooltip-arrow"></div>
                                 <div class="tooltip-inner">
-                                    If you are a parent/legal guardian of a child(ren) with A-T, please use your own email address.
-                                    We will use this address to correspond with you regarding anyone you register in The Global A-T Family Data Platform.
-                                </div>
+                                    <span data-translate="common.email.whoseEmailTooltip">
+                                    </span>
+                              </div>
                             </div>
                         </label>
                     </div>
                     <input class="form-control FormItem-input google-field" type="text" value="" name="user[email]" id="user_email">
                 </div>
                 <div class="AlignedCenter">
-                    <a class="BtnFilled BtnFilled--red" id="google" href="#">Create Account with Google</a>
+                    <a class="BtnFilled BtnFilled--red" id="google" href="#" data-translate="signUp.createAccountWithGoogleBtn"></a>
                 </div>
             </form>
             <hr class="Line--noBottom">
             <div class="SignHelp Italic">
                 <a href="#" class="onActivateSignIn"
                    data-translate="common.alreadyRegistered">
-                    Already registered? Sign In here
                 </a>
             </div>
         </div>
@@ -433,8 +410,7 @@
                 <button class="close hideModal" data-dismiss="modal">×</button>
                 <div class="NoticesModal--success">
                     <div class="NoticesModal-text" id="modal-text">
-                        Your password has
-                        been changed successfully.
+                       <span data-translate="modal.SuccessChangedPassword"></span>
                     </div>
                 </div>
             </div>
