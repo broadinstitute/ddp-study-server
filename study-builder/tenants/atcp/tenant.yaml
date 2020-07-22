@@ -1,0 +1,383 @@
+rules:
+  - name: Register User in Pepper
+    script: ./rules/Register User in Pepper.js
+    stage: login_success
+    enabled: true
+    order: 1
+rulesConfigs: []
+hooks: []
+pages:
+  - name: guardian_multifactor
+    enabled: false
+    html: ./pages/guardian_multifactor.html
+  - name: login
+    enabled: true
+    html: ./pages/login.html
+  - name: password_reset
+    enabled: true
+    html: ./pages/password_reset.html
+resourceServers: []
+clients:
+  - name: AT-Dev
+    allowed_clients: []
+    allowed_logout_urls:
+      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com'
+      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/auth'
+      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/prequalifier'
+      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/silentRenew'
+      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/'
+      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/login-landing'
+      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/session-expired'
+    app_type: spa
+    callbacks:
+      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com'
+      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/auth'
+      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/prequalifier'
+      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/silentRenew'
+      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/'
+      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/login-landing'
+    client_aliases: []
+    cross_origin_auth: false
+    custom_login_page_on: true
+    grant_types:
+      - authorization_code
+      - implicit
+      - refresh_token
+    is_first_party: true
+    is_token_endpoint_ip_header_trusted: false
+    jwt_configuration:
+      alg: RS256
+      lifetime_in_seconds: 36000
+      secret_encoded: false
+    native_social_login:
+      apple:
+        enabled: false
+      facebook:
+        enabled: false
+    oidc_conformant: true
+    refresh_token:
+      rotation_type: non-rotating
+      expiration_type: non-expiring
+    sso_disabled: false
+    token_endpoint_auth_method: none
+    web_origins:
+      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com'
+      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/sign-in'
+      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/auth'
+      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/silentRenew'
+      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/login-landing'
+      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/login-landing/login'
+      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/dashboard'
+  - name: AT-Local
+    allowed_clients: []
+    allowed_logout_urls:
+      - 'http://localhost:4200'
+      - 'http://localhost:4200/auth'
+      - 'http://localhost:4200/prequalifier'
+      - 'http://localhost:4200/silentRenew'
+      - 'http://localhost:4200/'
+      - 'http://localhost:4200/login-landing'
+      - 'http://localhost:4200/session-expired'
+    allowed_origins: []
+    app_type: spa
+    callbacks:
+      - 'http://localhost:4200'
+      - 'http://localhost:4200/auth'
+      - 'http://localhost:4200/prequalifier'
+      - 'http://localhost:4200/silentRenew'
+      - 'http://localhost:4200/'
+      - 'http://localhost:4200/login-landing'
+    client_aliases: []
+    client_metadata:
+      doLocalRegistration: 'true'
+    cross_origin_auth: false
+    custom_login_page_on: true
+    grant_types:
+      - authorization_code
+      - implicit
+      - refresh_token
+    is_first_party: true
+    is_token_endpoint_ip_header_trusted: false
+    jwt_configuration:
+      alg: RS256
+      lifetime_in_seconds: 36000
+      secret_encoded: false
+    native_social_login:
+      apple:
+        enabled: false
+      facebook:
+        enabled: false
+    oidc_conformant: true
+    refresh_token:
+      rotation_type: non-rotating
+      expiration_type: non-expiring
+    sso_disabled: false
+    token_endpoint_auth_method: none
+    web_origins:
+      - 'http://localhost:4200'
+      - 'https://localhost/auth'
+      - 'http://localhost:4200/sign-in'
+      - 'http://localhost:4200/auth'
+      - 'http://localhost:4200/silentRenew'
+      - 'http://localhost:4200/login-landing'
+      - 'http://localhost:4200/login-landing/login'
+      - 'http://localhost:4200/dashboard'
+      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com'
+      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/sign-in'
+      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/auth'
+      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/silentRenew'
+      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/login-landing'
+      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/login-landing/login'
+      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/dashboard'
+  - name: AT-experimental
+    allowed_clients: []
+    allowed_logout_urls:
+      - 'http://localhost:4200'
+      - 'http://localhost:4200/auth'
+      - 'http://localhost:4200/prequalifier'
+      - 'http://localhost:4200/silentRenew'
+      - 'http://localhost:4200/'
+      - 'http://localhost:4200/login-landing'
+      - 'http://localhost:4200/session-expired'
+    app_type: spa
+    callbacks:
+      - 'http://localhost:4200'
+      - 'http://localhost:4200/auth'
+      - 'http://localhost:4200/prequalifier'
+      - 'http://localhost:4200/silentRenew'
+      - 'http://localhost:4200/'
+      - 'http://localhost:4200/login-landing'
+    client_aliases: []
+    client_metadata:
+      doLocalRegistration: 'true'
+    cross_origin_auth: false
+    custom_login_page_on: true
+    grant_types:
+      - authorization_code
+      - implicit
+      - refresh_token
+    is_first_party: true
+    is_token_endpoint_ip_header_trusted: false
+    jwt_configuration:
+      alg: RS256
+      lifetime_in_seconds: 36000
+      secret_encoded: false
+    native_social_login:
+      apple:
+        enabled: false
+      facebook:
+        enabled: false
+    oidc_conformant: true
+    refresh_token:
+      rotation_type: non-rotating
+      expiration_type: non-expiring
+    sso_disabled: false
+    token_endpoint_auth_method: none
+    web_origins:
+      - 'http://localhost:4200'
+      - 'https://localhost/auth'
+      - 'http://localhost:4200/sign-in'
+      - 'http://localhost:4200/auth'
+      - 'http://localhost:4200/silentRenew'
+      - 'http://localhost:4200/login-landing'
+      - 'http://localhost:4200/login-landing/login'
+      - 'http://localhost:4200/dashboard'
+      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com'
+      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/sign-in'
+      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/auth'
+      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/silentRenew'
+      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/login-landing'
+      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/login-landing/login'
+      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/dashboard'
+  - name: DDP-Backend
+    app_type: non_interactive
+    cross_origin_auth: false
+    custom_login_page_on: true
+    grant_types:
+      - client_credentials
+    is_first_party: true
+    is_token_endpoint_ip_header_trusted: false
+    jwt_configuration:
+      alg: RS256
+      lifetime_in_seconds: 36000
+      secret_encoded: false
+    oidc_conformant: true
+    refresh_token:
+      rotation_type: non-rotating
+      expiration_type: non-expiring
+    sso_disabled: false
+  - name: Default App
+    callbacks: []
+    cross_origin_auth: false
+    custom_login_page_on: true
+    grant_types:
+      - authorization_code
+      - implicit
+      - refresh_token
+      - client_credentials
+    is_first_party: true
+    is_token_endpoint_ip_header_trusted: false
+    jwt_configuration:
+      alg: RS256
+      lifetime_in_seconds: 36000
+      secret_encoded: false
+    oidc_conformant: true
+    refresh_token:
+      rotation_type: non-rotating
+      expiration_type: non-expiring
+    sso_disabled: false
+  - name: auth0-deploy-cli-extension
+    cross_origin_auth: false
+    custom_login_page_on: true
+    grant_types:
+      - authorization_code
+      - implicit
+      - refresh_token
+      - client_credentials
+    is_first_party: true
+    is_token_endpoint_ip_header_trusted: false
+    jwt_configuration:
+      alg: RS256
+      lifetime_in_seconds: 36000
+      secret_encoded: false
+    oidc_conformant: true
+    refresh_token:
+      rotation_type: non-rotating
+      expiration_type: non-expiring
+    sso_disabled: false
+databases:
+  - name: Username-Password-Authentication
+    strategy: auth0
+    enabled_clients:
+      - auth0-deploy-cli-extension
+      - AT-experimental
+      - AT-Dev
+      - DDP-Backend
+      - AT-Local
+      - Default App
+    is_domain_connection: false
+    options:
+      mfa:
+        active: true
+        return_enroll_settings: true
+      passwordPolicy: good
+      strategy_version: 2
+      brute_force_protection: true
+    realms:
+      - Username-Password-Authentication
+connections:
+  - name: google-oauth2
+    strategy: google-oauth2
+    enabled_clients:
+      - auth0-deploy-cli-extension
+      - AT-experimental
+      - AT-Dev
+      - DDP-Backend
+      - AT-Local
+      - Default App
+    is_domain_connection: false
+    options:
+      email: true
+      gmail: false
+      orkut: false
+      scope:
+        - email
+        - profile
+      sites: false
+      tasks: false
+      blogger: false
+      profile: true
+      youtube: false
+      calendar: false
+      contacts: false
+      analytics: false
+      client_id: 542678289221-oalusifdf5lrmt0vfhhgp9m40dva9a71.apps.googleusercontent.com
+      moderator: false
+      coordinate: false
+      picasa_web: false
+      google_plus: false
+      google_books: false
+      google_drive: false
+      spreadsheets: false
+      client_secret: PNIEfMG8er2SaLbxXSBqki_o
+      document_list: false
+      latitude_best: false
+      latitude_city: false
+      url_shortener: false
+      webmaster_tools: false
+      chrome_web_store: false
+      allowed_audiences: ''
+      adsense_management: false
+      google_drive_files: false
+      coordinate_readonly: false
+      google_cloud_storage: false
+      content_api_for_shopping: false
+      google_affiliate_network: false
+tenant:
+  enabled_locales:
+    - en
+  flags:
+    enable_dynamic_client_registration: false
+    enable_public_signup_user_exists_error: false
+    new_universal_login_experience_enabled: false
+    universal_login: false
+    disable_clickjack_protection_headers: false
+    include_email_in_reset_pwd_redirect: true
+    include_email_in_verify_email_redirect: true
+  friendly_name: >-
+    at-dev.auth0.com,7HzrckGgnPAO7UqDbcuUb9QoTc3V2eHa,https://at-dev.auth0.com/userinfo,https://atcp-dot-broad-ddp-dev.uc.r.appspot.com
+  idle_session_lifetime: 0.08333333333333333
+  session_lifetime: 168
+  support_email: ''
+  support_url: ''
+  universal_login:
+    colors:
+      page_background: '#000000'
+      primary: '#ea5323'
+emailProvider: {}
+emailTemplates:
+  - template: verify_email
+    body: ./emailTemplates/verify_email.html
+    enabled: false
+    from: ''
+    resultUrl: 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/sign-in'
+    subject: ''
+    syntax: liquid
+    urlLifetimeInSeconds: 432000
+clientGrants:
+  - client_id: DDP-Backend
+    audience: 'https://at-dev.auth0.com/api/v2/'
+    scope:
+      - 'read:users'
+      - 'update:users'
+      - 'delete:users'
+      - 'create:users'
+      - 'read:users_app_metadata'
+      - 'update:users_app_metadata'
+      - 'create:user_tickets'
+guardianFactors:
+  - name: duo
+    enabled: false
+  - name: email
+    enabled: false
+  - name: otp
+    enabled: false
+  - name: push-notification
+    enabled: false
+  - name: sms
+    enabled: false
+guardianFactorProviders: []
+guardianFactorTemplates: []
+guardianPolicies:
+  policies: []
+guardianPhoneFactorSelectedProvider:
+  provider: auth0
+guardianPhoneFactorMessageTypes:
+  message_types: []
+roles: []
+branding:
+  colors:
+    page_background: '#000000'
+    primary: '#ea5323'
+prompts: {}
+migrations: {}
