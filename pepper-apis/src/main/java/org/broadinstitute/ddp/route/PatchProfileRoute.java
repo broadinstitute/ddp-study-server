@@ -3,21 +3,27 @@ package org.broadinstitute.ddp.route;
 import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.cache.LanguageStore;
+import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
+import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.json.Profile;
 import org.broadinstitute.ddp.json.errors.ApiError;
+import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.jdbi.v3.core.Handle;
@@ -69,7 +75,7 @@ public class PatchProfileRoute implements Route {
 
         Profile modifiedProfile = TransactionWrapper.withTxn((Handle handle) -> {
             boolean providedLanguage = json.has(Profile.PREFERRED_LANGUAGE);
-            Long languageId = providedLanguage ? parseLanguage(response, handle, payload) : null;
+            LanguageDto languageDto = providedLanguage ? parseLanguage(payload) : null;
 
             var profileDao = handle.attach(UserProfileDao.class);
             UserProfile profile = profileDao.findProfileByUserGuid(userGuid).orElse(null);
@@ -102,11 +108,31 @@ public class PatchProfileRoute implements Route {
             }
 
             if (providedLanguage) {
-                builder.setPreferredLangId(languageId);
+                builder.setPreferredLangId(languageDto == null ? null : languageDto.getId());
             }
 
             profile = profileDao.updateProfile(builder.build());
             handle.attach(DataExportDao.class).queueDataSync(userGuid);
+
+            if (providedLanguage) {
+                String auth0UserId = handle.attach(UserDao.class)
+                        .findUserByGuid(userGuid)
+                        .map(User::getAuth0UserId)
+                        .orElse(null);
+                if (StringUtils.isNotBlank(auth0UserId)) {
+                    LOG.info("User {} has auth0 account, proceeding to sync user_metadata", userGuid);
+                    Map<String, Object> metadata = new HashMap<>();
+                    metadata.put(User.METADATA_LANGUAGE, languageDto == null ? null : languageDto.getIsoCode());
+                    var result = Auth0ManagementClient.forUser(handle, userGuid).updateUserMetadata(auth0UserId, metadata);
+                    if (result.hasThrown() || result.hasError()) {
+                        var e = result.hasThrown() ? result.getThrown() : result.getError();
+                        LOG.error("Error while updating user_metadata for user {}, user's language may be out-of-sync", userGuid, e);
+                    } else {
+                        LOG.info("Updated user_metadata for user {}", userGuid);
+                    }
+                }
+            }
+
             return new Profile(profile);    // Convert to json view.
         });
 
@@ -128,7 +154,6 @@ public class PatchProfileRoute implements Route {
         }
     }
 
-
     private LocalDate parseBirthDate(Profile payload) {
         Integer year = payload.getBirthYear();
         Integer month = payload.getBirthMonth();
@@ -149,14 +174,14 @@ public class PatchProfileRoute implements Route {
         }
     }
 
-    private Long parseLanguage(Response response, Handle handle, Profile payload) {
+    private LanguageDto parseLanguage(Profile payload) {
         String language = payload.getPreferredLanguage();
         if (language == null) {
             return null;
         }
         LanguageDto languageDto  = LanguageStore.get(language);
         if (languageDto != null) {
-            return languageDto.getId();
+            return languageDto;
         } else {
             throw ResponseUtil.haltError(HttpStatus.SC_BAD_REQUEST,
                     new ApiError(ErrorCodes.INVALID_LANGUAGE_PREFERENCE, "Invalid preferred language"));

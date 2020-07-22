@@ -21,7 +21,11 @@ emailTemplates:
     body: ./emails/change_password.html
     from: TestBoston <##STUDY_EMAIL##>
     resultUrl: '##SERVER_BASE_URL##/pepper/v1/post-password-reset?clientId={{ application.clientID }}'
-    subject: TestBoston password reset
+    subject: >
+      {% if user.user_metadata.language == 'es' %}Restablecimiento de la contraseña de TestBoston
+      {% elsif user.user_metadata.language == 'ht' %}Repwograme modpas la pou TestBoston
+      {% else %}TestBoston password reset
+      {% endif %}
     urlLifetimeInSeconds: 432000
     syntax: liquid
     enabled: true
