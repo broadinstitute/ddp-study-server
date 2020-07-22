@@ -4,9 +4,9 @@
 {{with $conf := $response.Data}}
 
 {
-  "AUTH0_DOMAIN": "{{$conf.auth0.domain}}",
-  "AUTH0_CLIENT_ID": "{{$conf.auth0.clientId}}",
-  "AUTH0_CLIENT_SECRET": "{{$conf.auth0.clientSecret}}",
+  "AUTH0_DOMAIN": "{{$conf.auth0.deployDomain}}",
+  "AUTH0_CLIENT_ID": "{{$conf.auth0.deployClientId}}",
+  "AUTH0_CLIENT_SECRET": "{{$conf.auth0.deployClientSecret}}",
   "AUTH0_KEYWORD_REPLACE_MAPPINGS": {
   {{if eq $environment "dev"}}
     "LOCALHOST_CALLBACKS": "- http://localhost:4200/auth,http://localhost:4200/login-landing",
