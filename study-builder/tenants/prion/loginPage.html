@@ -823,8 +823,8 @@
         mainUrl = config.callbackURL.substring(0,authLoc);
     }
 
-    var loginUrl = `${mainUrl}/change-language-redirect/login-landing/${languageCode}?destParamValue=login`;
-    var registerUrl = `${mainUrl}/change-language-redirect/redirect-join/${languageCode}`;
+    var loginUrl = `${mainUrl}/change-language-redirect?language=${languageCode}&destination=login-landing/login`;
+    var registerUrl = `${mainUrl}/change-language-redirect?language=${languageCode}&destination=redirect-join`;
     var contactEmail = 'info@prionregistry.org';
 
     var connection = config.connection;
