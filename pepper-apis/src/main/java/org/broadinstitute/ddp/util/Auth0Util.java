@@ -201,14 +201,6 @@ public class Auth0Util {
         return isValid;
     }
 
-    public static Auth0ManagementClient getManagementClientForUser(Handle handle, String userGuid) {
-        Auth0TenantDto auth0TenantDto = handle.attach(JdbiAuth0Tenant.class).findByUserGuid(userGuid);
-        return new Auth0ManagementClient(
-                auth0TenantDto.getDomain(),
-                auth0TenantDto.getManagementClientId(),
-                auth0TenantDto.getManagementClientSecret());
-    }
-
     /**
      * Updates the user's data in Auth0
      *
@@ -353,7 +345,7 @@ public class Auth0Util {
      * @return A ManagementAPI instance able to change the user's data in Auth0
      */
     public static ManagementAPI getManagementApiInstanceForUser(String userGuid, Handle handle) {
-        var mgmtClient = Auth0Util.getManagementClientForUser(handle, userGuid);
+        var mgmtClient = Auth0ManagementClient.forUser(handle, userGuid);
         String mgmtToken = mgmtClient.getToken();
         String auth0Domain = mgmtClient.getDomain();
         return new ManagementAPI(auth0Domain, mgmtToken);
