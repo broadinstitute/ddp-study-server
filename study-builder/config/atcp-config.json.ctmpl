@@ -1,0 +1,34 @@
+{{$environment := env "ENVIRONMENT"}}
+{{$version := env "VERSION"}}
+{{with $response := vault (printf "secret/pepper/%s/%s/atcp/conf" $environment $version)}}
+{{with $conf := $response.Data}}
+
+{
+  "AUTH0_DOMAIN": "{{$conf.auth0.deployDomain}}",
+  "AUTH0_CLIENT_ID": "{{$conf.auth0.deployClientId}}",
+  "AUTH0_CLIENT_SECRET": "{{$conf.auth0.deployClientSecret}}",
+  "AUTH0_KEYWORD_REPLACE_MAPPINGS": {
+     {{if eq $environment "dev"}}
+     "LOCALHOST_URL": "http://localhost:4200",
+    {{else}}
+     "LOCALHOST_URL": ""
+    {{end}}
+    "BASE_URL": "{{$conf.baseWebUrl}}",
+    "ASSETS_BUCKET_URL": "{{$conf.assetsBucketUrl}}",
+    "LOGIN_DOMAIN": "{{$conf.auth0.loginDomain}}",
+    "SERVER_BASE_URL": "{{$conf.serverBaseUrl}}",
+    "GOOGLE_OUATH_CLIENT_ID": "{{$conf.auth0.googleOAuthClientId}}",
+    "GOOGLE_OUATH_CLIENT_SECRET": "{{$conf.auth0.googleOAuthClientSecret}}"
+  },
+  "AUTH0_ALLOW_DELETE": false,
+  "INCLUDED_PROPS": {
+  },
+  "EXCLUDED_PROPS": {
+  },
+  "AUTH0_EXCLUDED_RULES": [],
+  "AUTH0_EXCLUDED_CLIENTS": [],
+  "AUTH0_EXCLUDED_RESOURCE_SERVERS": []
+}
+
+{{end}}
+{{end}}
