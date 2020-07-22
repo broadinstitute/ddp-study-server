@@ -17,6 +17,7 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
+import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -162,7 +163,7 @@ public class PdfBootstrapperCli {
         TransactionWrapper.reset();
         TransactionWrapper.init(new TransactionWrapper
                 .DbConfiguration(TransactionWrapper.DB.APIS, maxConnections, dbUrl));
-
+        TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, LanguageStore::init);
         DBUtils.loadDaoSqlCommands(sqlConfig);
     }
 

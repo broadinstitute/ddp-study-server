@@ -25,6 +25,7 @@ import org.apache.http.conn.HttpHostConnectException;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.broadinstitute.ddp.DataDonationPlatform;
+import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.TestConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -169,6 +170,7 @@ public class IntegrationTestSuite {
             startupTestServer();
         }
         insertTestData();
+        TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, LanguageStore::init);
 
         callCounter += 1;
     }
@@ -388,6 +390,7 @@ public class IntegrationTestSuite {
         initializeDatabase();
         startupTestServer();
         insertTestData();
+        TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, LanguageStore::init);
     }
 
 }

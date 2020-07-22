@@ -39,7 +39,7 @@ public class I18nContentRenderer {
         if (defaultLangId != null) {
             return defaultLangId;
         } else {
-            defaultLangId = LanguageStore.getOrComputeDefault(handle).getId();
+            defaultLangId = LanguageStore.getDefault().getId();
             return defaultLangId;
         }
     }
@@ -108,21 +108,21 @@ public class I18nContentRenderer {
      * Render look up template from from givent template Id and render it applying variable map values given followed up
      * by the language specific variables associated with the template.
      *
-     * @param handle                JDBC connection
-     * @param templateId            Id of the template to render
-     * @param defaultLanguageCodeId The fallback language if no translations are found for the languageCodeId
-     * @param varNameToValueMap     Map of variable names to values to be applied to template
+     * @param handle            JDBC connection
+     * @param templateId        Id of the template to render
+     * @param languageCodeId    The language to look for
+     * @param varNameToValueMap Map of variable names to values to be applied to template
      * @return the rendered template
      * @throws IllegalArgumentException Thrown when one of the method arguments is null
      * @throws NoSuchElementException   Thrown when a db search returns no element
      */
-    public String renderContent(Handle handle, Long templateId, Long defaultLanguageCodeId,
+    public String renderContent(Handle handle, Long templateId, Long languageCodeId,
                                 Map<String, ?> varNameToValueMap) {
         Map<String, String> varNameToString = new HashMap<>();
         for (Map.Entry<String, ?> entry : varNameToValueMap.entrySet()) {
             varNameToString.put(entry.getKey(), convertToString(entry.getValue()));
         }
-        return render(handle, templateId, getDefaultLanguageId(handle), defaultLanguageCodeId, varNameToString);
+        return render(handle, templateId, languageCodeId, getDefaultLanguageId(handle), varNameToString);
     }
 
     /**

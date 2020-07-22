@@ -31,7 +31,7 @@ public class StudyLanguageDaoTest extends TxnAwareBaseTest {
             List<StudyLanguage> studyLanguageList = dao.findLanguages(testData.getStudyId());
             Assert.assertEquals(0, studyLanguageList.size());
 
-            Long englishLangCodeId = LanguageStore.getOrComputeDefault(handle).getId();
+            Long englishLangCodeId = LanguageStore.getDefault().getId();
             dao.insert(testData.getStudyId(), englishLangCodeId, "english");
 
             StudyLanguageSql studyLanguageSql = handle.attach(StudyLanguageSql.class);
@@ -39,7 +39,7 @@ public class StudyLanguageDaoTest extends TxnAwareBaseTest {
             assertNotNull(defaultLangs);
             Assert.assertTrue(defaultLangs.isEmpty());
 
-            Long frenchLangCodeId = LanguageStore.getOrCompute(handle, "fr").getId();
+            Long frenchLangCodeId = LanguageStore.get("fr").getId();
             dao.insert(testData.getStudyId(), frenchLangCodeId, "french");
 
             //now set as default

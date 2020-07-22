@@ -20,6 +20,7 @@
 <![endif]-->
 
 <script src="https://cdn.auth0.com/js/lock/11.5.2/lock.min.js"></script>
+<script src="##BASE_URL##/assets/auth0-login-ht.js"></script>
 
 <style type="text/css">
     body {
@@ -84,36 +85,119 @@
     var headerText = "";
     var studyColor = '#2760b2';   // button primary color
     var studyHelpEmail = '##STUDY_EMAIL##';
-
-    var title = 'Welcome!';
-    if (mode === 'login') {
-        title = 'Please Sign In';
-    }
-    else if (mode === 'signup') {
-        title = 'Create your account';
-    }
-
-    var loginUrl = config.callbackURL + '/login';
     var registerUrl = '##BASE_URL##';
-
     var connection = config.connection;
     var prompt = !prompt;
-    var languageDictionary;
-    var language;
     var showPasswordRecentText = false;
     var doNotShowRegLink = false;
+    var language = config.extraParams.language || 'en';
+    var loginUrl = '##BASE_URL##/language-redirect?language=' + language + '&destination=' + encodeURIComponent('login-landing/login');
 
-    languageDictionary = { title: title,signupTitle: title};
-
-    languageDictionary.error = languageDictionary.error || {};
-    languageDictionary.error.signUp = languageDictionary.error.signUp || {};
-    languageDictionary.error.signUp.user_exists = 'If you have already registered, sign in here.';
-    languageDictionary.success = {
-        forgotPassword: "If you have previously registered, please check your email to reset your password.",
+    var i18n = {};
+    i18n['en'] = {
+      error: {
+        signUp: {
+          userExists: 'If you have already registered, sign in here.'
+        }
+      },
+      fields: {
+        firstNamePlaceholder: "Your first name",
+        lastNamePlaceholder: "Your last name",
+        nonBlankHint: "Can't be blank"
+      },
+      lastLoginInstructions: 'Last time you signed in with',
+      message: {
+        alreadyRegisteredText: 'If you have already registered, sign in here.',
+        helpHtml: 'For help, please contact ' + studyHelpEmail + '.',
+        loginLinkText: 'Sign in with existing account.',
+        registerMessageHtml: "If you haven't registered yet, please <a class='auth0-lock-alternative-link' href='" + registerUrl + "'>do so here</a>.",
+        resetPasswordText: "Password reset successfully.  Please sign in with your new password.",
+        switchToLoginText: 'Already registered? '
+      },
+      success: {
+        forgotPassword: "If you have previously registered, please check your email to reset your password."
+      },
+      title: 'Welcome!',
+      titleLogin: 'Please Sign In',
+      titleSignUp: 'Create your account'
     };
-    languageDictionary.lastLoginInstructions = 'Last time you signed in with';
-    var loginHint = config.extraParams.login_hint;
+    i18n['es'] = {
+      error: {
+        signUp: {
+          userExists: "Si ya se registró, inicie sesión aquí."
+        }
+      },
+      fields: {
+        firstNamePlaceholder: "Su nombre",
+        lastNamePlaceholder: "Su apellido",
+        nonBlankHint: "No puede quedar en blanco."
+      },
+      lastLoginInstructions: "La última vez inició sesión con",
+      message: {
+        alreadyRegisteredText: "Si ya se registró, inicie sesión aquí.",
+        helpHtml: "Si necesita ayuda, envíe un mensaje a " + studyHelpEmail + ".",
+        loginLinkText: "Iniciar sesión con la cuenta actual",
+        registerMessageHtml: "Si aún no se ha registrado, <a class='auth0-lock-alternative-link' href='" + registerUrl + "'>hágalo aquí</a>.",
+        resetPasswordText: "La contraseña se restableció correctamente. Inicie sesión con su nueva contraseña.",
+        switchToLoginText: "¿Ya se registró? "
+      },
+      success: {
+        forgotPassword: "Si ya se registró, revise su correo electrónico para restablecer la contraseña."
+      },
+      title: "¡Le damos la bienvenida!",
+      titleLogin: "Inicie sesión",
+      titleSignUp: "Cree su cuenta"
+    };
+    i18n['ht'] = {
+      error: {
+        signUp: {
+          userExists: "Si w enskri deja, konekte la a."
+        }
+      },
+      fields: {
+        firstNamePlaceholder: "Premye non w",
+        lastNamePlaceholder: "Dezyèm non w",
+        nonBlankHint: "Se pou w mete yon repons"
+      },
+      lastLoginInstructions: "Dènye fwa ou te konekte avèk",
+      message: {
+        alreadyRegisteredText: "Si w enskri deja, konekte la a.",
+        helpHtml: "Pou jwenn èd, tanpri, kontakte " + studyHelpEmail + ".",
+        loginLinkText: "Konekte avèk kont ki egziste deja a.",
+        registerMessageHtml: "Si w potko enskri, tanpri <a class='auth0-lock-alternative-link' href='" + registerUrl + "'>fè sa la a</a>.",
+        resetPasswordText: "Modpas a byen repwograme. Tanpri, konekte avèk nouvo modpas ou a.",
+        switchToLoginText: "Èske w enskri deja? "
+      },
+      success: {
+        forgotPassword: "Si ou te enskri deja, tanpri tcheke imèl ou a pou w repwograme modpas ou a."
+      },
+      title: "Byenveni!",
+      titleLogin: "Tanpri, konekte",
+      titleSignUp: "Kreye kont ou a"
+    };
 
+    var title = i18n[language].title;
+    if (mode === 'login') {
+        title = i18n[language].titleLogin;
+    } else if (mode === 'signup') {
+        title = i18n[language].titleSignUp;
+    }
+
+    // See: https://auth0.com/docs/libraries/lock/v11/i18n
+    var dictionaryOverrides = {
+      error: {
+        signUp: {
+          user_exists: i18n[language].error.signUp.userExists
+        }
+      },
+      lastLoginInstructions: i18n[language].lastLoginInstructions,
+      signupTitle: title,
+      success: {
+        forgotPassword: i18n[language].success.forgotPassword
+      },
+      title: title
+    };
+    var loginHint = config.extraParams.login_hint;
 
     var realOptions = {
         avatar: null,
@@ -127,7 +211,7 @@
         allowedConnections: connection ? [connection] : null,
         rememberLastLogin: false,
         language: language,
-        languageDictionary: languageDictionary,
+        languageDictionary: dictionaryOverrides,
         theme: {
             logo:            headerLogo,
             primaryColor:    studyColor
@@ -142,6 +226,7 @@
         // uncomment if you want small buttons for social providers
         // socialButtonStyle: 'small'
     };
+
     var options = {allowForgotPassword:true};
     if (mode === 'signup') {
         options.allowSignUp = true;
@@ -176,21 +261,21 @@
         realOptions.additionalSignUpFields = [
             {
                 name: "first_name",
-                placeholder: "Your first name",
+                placeholder: i18n[language].fields.firstNamePlaceholder,
                 validator: function(input) {
                   return {
                      valid: input != null && input.trim().length > 0,
-                     hint: "Can't be blank"
+                     hint: i18n[language].fields.nonBlankHint
                   };
                 }
             },
             {
                 name: "last_name",
-                placeholder: "Your last name",
+                placeholder: i18n[language].fields.lastNamePlaceholder,
                 validator: function(input) {
                     return {
                         valid: input != null && input.trim().length > 0,
-                        hint: "Can't be blank"
+                        hint: i18n[language].fields.nonBlankHint
                     }
                 }
             }
@@ -205,7 +290,7 @@
         // before animations complete, not after
         setInterval(function() {
             if (document.getElementsByClassName('auth0-global-message').length > 0) {
-                if (languageDictionary.error.signUp.user_exists.toUpperCase() === document.getElementsByClassName('auth0-global-message')[0].children[0].children[0].innerText.toUpperCase()) {
+                if (dictionaryOverrides.error.signUp.user_exists.toUpperCase() === document.getElementsByClassName('auth0-global-message')[0].children[0].children[0].innerText.toUpperCase()) {
                      if (!document.getElementById('ddp-already-registered')) {
                         var auth0GlobalMessage = document.getElementsByClassName('auth0-global-message')[0].children[0].children[0];
 
@@ -216,7 +301,7 @@
                         alreadyRegistered.setAttribute('href', loginUrl);
                         alreadyRegistered.setAttribute('style','color:black');
                         alreadyRegistered.setAttribute('id','ddp-already-registered');
-                        alreadyRegistered.innerText = 'If you have already registered, sign in here.';
+                        alreadyRegistered.innerText = i18n[language].message.alreadyRegisteredText;
                         document.getElementsByClassName('auth0-global-message')[0].children[0].appendChild(alreadyRegistered);
 
                     }
@@ -254,7 +339,7 @@
                     if (showSignUpHelp) {
                         var registerMessage = document.createElement('p');
                         registerMessage.setAttribute('style','margin-bottom:0;');
-                        registerMessage.innerHTML =  "If you haven't registered yet, please <a class='auth0-lock-alternative-link' href='" + registerUrl + "'>do so here</a>.";
+                        registerMessage.innerHTML = i18n[language].message.registerMessageHtml;
                         registerMessageWrapper.appendChild(registerMessage);
 
                         if (lockForm) {
@@ -266,7 +351,7 @@
                 var helpWrapper = document.createElement('div');
                 helpWrapper.setAttribute('id','ddp-help');
                 helpWrapper.setAttribute('style','display:flex;flex-direction:row;align-items:center;margin-top:5px;flex-wrap:none;');
-                var help = '<p style="text-align:left;margin-bottom:0;">For help, please contact ' + studyHelpEmail + '.</p>';
+                var help = '<p style="text-align:left;margin-bottom:0;">' + i18n[language].message.helpHtml + '</p>';
                 helpWrapper.innerHTML = help;
                 if (lockForm) {
                     lockForm[0].appendChild(helpWrapper);
@@ -277,11 +362,11 @@
                     var loginLink = document.createElement('a');
                     loginLink.setAttribute('class', 'auth0-lock-alternative-link');
                     loginLink.setAttribute('href', loginUrl);
-                    loginLink.innerText = 'Sign in with existing account.';
+                    loginLink.innerText = i18n[language].message.loginLinkText;
                     var switchToLogin = document.createElement('p');
                     switchToLogin.setAttribute('class','auth0-lock-alternative');
                     switchToLogin.setAttribute('style','text-align:left;margin-top:5px;');
-                    switchToLogin.innerText = 'Already registered? ';
+                    switchToLogin.innerText = i18n[language].message.switchToLoginText;
                     switchToLogin.appendChild(loginLink);
                     helpWrapper.parentElement.appendChild(switchToLogin);
                 }
@@ -294,7 +379,7 @@
                         resetPasswordWrapper.setAttribute('style','margin-top:0px;');
 
                         var resetPasswordText = document.createElement("div");
-                        resetPasswordText.innerText = "Password reset successfully.  Please sign in with your new password.";
+                        resetPasswordText.innerText = i18n[language].message.resetPasswordText;
 
                         resetPasswordWrapper.appendChild(resetPasswordText);
                         document.getElementsByClassName('auth0-lock-content')[0].prepend(resetPasswordWrapper);
