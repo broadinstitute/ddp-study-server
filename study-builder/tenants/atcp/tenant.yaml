@@ -1,6 +1,6 @@
 rules:
   - name: Register User in Pepper
-    script: ./rules/Register User in Pepper.js
+    script: ../register-user-in-pepper.js
     stage: login_success
     enabled: true
     order: 1
