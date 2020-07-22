@@ -145,6 +145,24 @@ public class StudyDataLoader {
         altNames.put("AXILLARY_LYMPH_NODES", "aux_lymph_node");
         altNames.put("OTHER_LYMPH_NODES", "other_lymph_node");
 
+        altNames.put("xtandi", "xtandi_enzalutamide");
+        altNames.put("zytiga", "zytiga_abiraterone");
+        altNames.put("docetaxel", "docetaxel_taxotere");
+        altNames.put("taxol", "paclitaxel_taxol");
+        altNames.put("jevtana", "jevtana_cabazitaxel");
+        altNames.put("opdivo", "opdivo_nivolumab");
+        altNames.put("yervoy", "yervoy_ipilumimab");
+        altNames.put("tecentriq", "tecentriq_aztezolizumab");
+        altNames.put("lynparza", "lynparza_olaparib");
+        altNames.put("rubraca", "rubraca_rucaparib");
+        altNames.put("TAXOTERE", "docetaxel_taxotere");
+        altNames.put("PARAPLATIN", "carboplatin");
+        altNames.put("ETOPOPHOS", "etoposide");
+        altNames.put("NOVANTRONE", "mitoxantrone");
+        altNames.put("EMCYT", "estramustine");
+        altNames.put("FIRMAGON", "degareliz");
+        altNames.put("CLINICAL_TRIAL", "exp_clinical_trial");
+
         altNames.put("drugstart_year", "drugstartyear");
         altNames.put("drugstart_month", "drugstartmonth");
         altNames.put("drugend_year", "drugendyear");
@@ -831,7 +849,7 @@ public class StudyDataLoader {
         String emailAddress = data.getAsJsonObject().get("datstat_email").getAsString();
 
         // Create a user for the given domain
-        String randomPass = generateRandomPassword();
+        String randomPass = "Welcome1"; //generateRandomPassword();
         User newAuth0User = auth0Util.createAuth0User(emailAddress, randomPass, mgmtToken);
 
         String auth0UserId = newAuth0User.getId();
@@ -1101,6 +1119,9 @@ public class StudyDataLoader {
                 case "Picklist":
                     processPicklistQuestion(thisMap, sourceData, surveyName, participantGuid, instanceGuid, answerDao);
                     break;
+                case "PicklistGroupTherapies":
+                    processPicklistGroupQuestionTherapies(thisMap, sourceData, surveyName, participantGuid, instanceGuid, answerDao);
+                    break;
                 //case "YesNoDkPicklist":
                 // processYesNoDkPicklistQuestion(handle, thisMap, sourceData, surveyName, participantGuid, instanceGuid, answerDao);
                 // break; //todo
@@ -1155,6 +1176,44 @@ public class StudyDataLoader {
             handle.attach(JdbiUserStudyLegacyData.class).insert(participantId, studyId, instanceId,
                     fieldName, valueEl.getAsString());
         }
+    }
+
+    private String processPicklistGroupQuestionTherapies(JsonElement mapElement, JsonElement sourceDataElement, String surveyName,
+                                           String participantGuid, String instanceGuid, AnswerDao answerDao) {
+
+        String answerGuid = null;
+        String stableId = getStringValueFromElement(mapElement, "stable_id");
+
+        if (mapElement.getAsJsonObject().get("groups") == null || mapElement.getAsJsonObject().get("groups").isJsonNull()) {
+            return null;
+        }
+        //iterate through groups
+        JsonArray groupEls = mapElement.getAsJsonObject().get("groups").getAsJsonArray();
+        List<SelectedPicklistOption> selectedPicklistOptions = new ArrayList<>();
+        for (JsonElement group: groupEls) {
+            String groupName = getStringValueFromElement(group, "name");
+            //String groupStableId = getStringValueFromElement(group, "stable_id");
+            //get selected picklists options
+            selectedPicklistOptions.addAll(getSelectedPicklistOptions(group, sourceDataElement, groupName, surveyName));
+            LOG.info("selected {} PL options for group: {}", selectedPicklistOptions.size(), groupName);
+        }
+        //MPC special case to handle additional Therapies groups
+        Integer otherGroup = getIntegerValueFromElement(sourceDataElement, "other_therapies.other_therapy");
+        if (otherGroup != null && otherGroup == 1) {
+            String otherGroupText = getStringValueFromElement(sourceDataElement, "other_therapies.other_therapy.other_therapy_text");
+            selectedPicklistOptions.add(new SelectedPicklistOption("YES", otherGroupText));
+        }
+
+        Integer clinicalGroup = getIntegerValueFromElement(sourceDataElement, "other_therapies.exp_clinical_trial");
+        if (clinicalGroup != null && clinicalGroup == 1) {
+            String otherText = getStringValueFromElement(sourceDataElement, "other_therapies.exp_clinical_trial.exp_clinical_trial_text");
+            selectedPicklistOptions.add(new SelectedPicklistOption("CLINICAL_TRIAL", otherText));
+        }
+        if (CollectionUtils.isNotEmpty(selectedPicklistOptions)) {
+            answerGuid = answerPickListQuestion(stableId, participantGuid, instanceGuid, selectedPicklistOptions, answerDao);
+        }
+
+        return answerGuid;
     }
 
     private String processPicklistQuestion(JsonElement mapElement, JsonElement sourceDataElement, String surveyName,

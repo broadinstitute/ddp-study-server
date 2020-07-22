@@ -225,6 +225,154 @@
             "stable_id": "RACE"
           },
           {
+            "name": "therapy",
+            "type": "PicklistGroupTherapies",
+            "stable_id": "THERAPIES",
+            "groups": [
+              {
+                "name": "therapy_hormones",
+                "type": "string",
+                "stable_id": "HARMONES",
+                "options": [
+                  {
+                    "name": "lupron",
+                    "type": "integer"
+                  },
+                  {
+                    "name": "zoladex",
+                    "type": "integer"
+                  },
+                  {
+                    "name": "casodex",
+                    "type": "integer"
+                  },
+                  {
+                    "name": "drogenil",
+                    "type": "integer"
+                  },
+                  {
+                    "name": "nilandron",
+                    "type": "integer"
+                  },
+                  {
+                    "name": "xtandi",
+                    "type": "integer"
+                  },
+                  {
+                    "name": "zytiga",
+                    "type": "integer"
+                  },
+                  {
+                    "name": "prostap",
+                    "type": "integer"
+                  },
+                  {
+                    "name": "FIRMAGON",
+                    "type": "integer"
+                  },
+                  {
+                    "name": "suprefact",
+                    "type": "integer"
+                  },
+                  {
+                    "name": "decapeptyl",
+                    "type": "integer"
+                  }
+                ]
+              },
+              {
+                "name": "chemotherapy",
+                "type": "string",
+                "stable_id": "CHEMOTHERAPY",
+                "options": [
+                  {
+                    "name": "TAXOTERE",
+                    "type": "integer"
+                  },
+                  {
+                    "name": "taxol",
+                    "type": "integer"
+                  },
+                  {
+                    "name": "PARAPLATIN",
+                    "type": "integer"
+                  },
+                  {
+                    "name": "ETOPOPHOS",
+                    "type": "integer"
+                  },
+                  {
+                    "name": "NOVANTRONE",
+                    "type": "integer"
+                  },
+                  {
+                    "name": "EMCYT",
+                    "type": "integer"
+                  },
+                  {
+                    "name": "jevtana",
+                    "type": "integer"
+                  }
+                ]
+              },
+              {
+                "name": "other_therapies",
+                "type": "string",
+                "stable_id": "OTHER_THERAPIES",
+                "options": [
+                  {
+                    "name": "provenge",
+                    "type": "integer"
+                  },
+                  {
+                    "name": "opdivo",
+                    "type": "integer"
+                  },
+                  {
+                    "name": "keytruda",
+                    "type": "integer"
+                  },
+                  {
+                    "name": "yervoy",
+                    "type": "integer"
+                  },
+                  {
+                    "name": "tecentriq",
+                    "type": "integer"
+                  },
+                  {
+                    "name": "lynparza",
+                    "type": "integer"
+                  },
+                  {
+                    "name": "rubraca",
+                    "type": "integer"
+                  },
+                  {
+                    "name": "xofigo",
+                    "type": "integer"
+                  },
+                  {
+                    "name": "zometa",
+                    "type": "integer"
+                  },
+                  {
+                    "name": "xgeva",
+                    "type": "integer"
+                  },
+                  {
+                    "name": "quadramet",
+                    "type": "integer"
+                  },
+                  {
+                    "name": "metastron",
+                    "type": "integer"
+                  }
+                ]
+              }
+            ]
+          },
+          {
             "name": "alt_med_lifestyle",
             "type": "string",
             "stable_id": "ADDITIONAL_MEDICATIONS"
