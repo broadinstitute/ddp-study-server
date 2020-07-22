@@ -226,7 +226,7 @@
           },
           {
             "name": "therapy",
-            "type": "PicklistGroupTherapies",
+            "type": "PicklistGroup",
             "stable_id": "THERAPIES",
             "groups": [
               {
@@ -366,6 +366,16 @@
                   },
                   {
                     "name": "metastron",
+                    "type": "integer"
+                  },
+                  {
+                    "name": "CLINICAL_TRIAL",
+                    "text": "exp_clinical_trial_text",
+                    "type": "integer"
+                  },
+                  {
+                    "name": "YES",
+                    "text": "other_therapy_text",
                     "type": "integer"
                   }
                 ]

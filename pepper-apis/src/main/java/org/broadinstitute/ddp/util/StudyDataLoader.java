@@ -145,6 +145,7 @@ public class StudyDataLoader {
         altNames.put("AXILLARY_LYMPH_NODES", "aux_lymph_node");
         altNames.put("OTHER_LYMPH_NODES", "other_lymph_node");
 
+        //MPC THERAPIES options entries
         altNames.put("xtandi", "xtandi_enzalutamide");
         altNames.put("zytiga", "zytiga_abiraterone");
         altNames.put("docetaxel", "docetaxel_taxotere");
@@ -161,6 +162,7 @@ public class StudyDataLoader {
         altNames.put("NOVANTRONE", "mitoxantrone");
         altNames.put("EMCYT", "estramustine");
         altNames.put("FIRMAGON", "degareliz");
+        altNames.put("YES", "other_therapy");
         altNames.put("CLINICAL_TRIAL", "exp_clinical_trial");
 
         altNames.put("drugstart_year", "drugstartyear");
@@ -1119,8 +1121,8 @@ public class StudyDataLoader {
                 case "Picklist":
                     processPicklistQuestion(thisMap, sourceData, surveyName, participantGuid, instanceGuid, answerDao);
                     break;
-                case "PicklistGroupTherapies":
-                    processPicklistGroupQuestionTherapies(thisMap, sourceData, surveyName, participantGuid, instanceGuid, answerDao);
+                case "PicklistGroup":
+                    processPicklistGroupQuestion(thisMap, sourceData, surveyName, participantGuid, instanceGuid, answerDao);
                     break;
                 //case "YesNoDkPicklist":
                 // processYesNoDkPicklistQuestion(handle, thisMap, sourceData, surveyName, participantGuid, instanceGuid, answerDao);
@@ -1178,7 +1180,7 @@ public class StudyDataLoader {
         }
     }
 
-    private String processPicklistGroupQuestionTherapies(JsonElement mapElement, JsonElement sourceDataElement, String surveyName,
+    private String processPicklistGroupQuestion(JsonElement mapElement, JsonElement sourceDataElement, String surveyName,
                                            String participantGuid, String instanceGuid, AnswerDao answerDao) {
 
         String answerGuid = null;
@@ -1195,19 +1197,6 @@ public class StudyDataLoader {
             //String groupStableId = getStringValueFromElement(group, "stable_id");
             //get selected picklists options
             selectedPicklistOptions.addAll(getSelectedPicklistOptions(group, sourceDataElement, groupName, surveyName));
-            LOG.info("selected {} PL options for group: {}", selectedPicklistOptions.size(), groupName);
-        }
-        //MPC special case to handle additional Therapies groups
-        Integer otherGroup = getIntegerValueFromElement(sourceDataElement, "other_therapies.other_therapy");
-        if (otherGroup != null && otherGroup == 1) {
-            String otherGroupText = getStringValueFromElement(sourceDataElement, "other_therapies.other_therapy.other_therapy_text");
-            selectedPicklistOptions.add(new SelectedPicklistOption("YES", otherGroupText));
-        }
-
-        Integer clinicalGroup = getIntegerValueFromElement(sourceDataElement, "other_therapies.exp_clinical_trial");
-        if (clinicalGroup != null && clinicalGroup == 1) {
-            String otherText = getStringValueFromElement(sourceDataElement, "other_therapies.exp_clinical_trial.exp_clinical_trial_text");
-            selectedPicklistOptions.add(new SelectedPicklistOption("CLINICAL_TRIAL", otherText));
         }
         if (CollectionUtils.isNotEmpty(selectedPicklistOptions)) {
             answerGuid = answerPickListQuestion(stableId, participantGuid, instanceGuid, selectedPicklistOptions, answerDao);
