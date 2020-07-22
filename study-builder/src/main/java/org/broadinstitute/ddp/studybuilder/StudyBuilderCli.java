@@ -15,6 +15,7 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
+import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.studybuilder.task.CustomTask;
@@ -208,6 +209,7 @@ public class StudyBuilderCli {
 
     private void execute(Consumer<Handle> task, boolean isDryRun) {
         TransactionWrapper.useTxn(handle -> {
+            LanguageStore.init(handle);
             task.accept(handle);
             if (isDryRun) {
                 log("rolling back execution...");

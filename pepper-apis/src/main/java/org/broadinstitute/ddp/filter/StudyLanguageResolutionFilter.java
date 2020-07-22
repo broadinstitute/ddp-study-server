@@ -26,6 +26,12 @@ import spark.Response;
 public class StudyLanguageResolutionFilter implements Filter {
 
     public static final String USER_LANGUAGE = "USER_LANGUAGE";
+    private static final String HEBREW_OLD = "iw";
+    private static final String HEBREW_NEW = "he";
+    private static final String YIDDISH_OLD = "ji";
+    private static final String YIDDISH_NEW = "yi";
+    private static final String INDONESIAN_OLD = "in";
+    private static final String INDONESIAN_NEW = "id";
 
     private static final Logger LOG = LoggerFactory.getLogger(StudyLanguageResolutionFilter.class);
     private static final String STUDY_GUID_REGEX = "/studies/(\\w+)";
@@ -80,6 +86,25 @@ public class StudyLanguageResolutionFilter implements Filter {
     }
 
     private static LanguageDto convertLocaleToLanguageDto(Handle handle, Locale preferredLocale) {
-        return LanguageStore.getOrCompute(handle, preferredLocale.getLanguage());
+        String lang = preferredLocale.getLanguage();
+        LanguageDto languageDto = LanguageStore.get(lang);
+
+        if (languageDto == null) {
+            languageDto = LanguageStore.get(getNewerLanguageCode(lang));
+        }
+        return languageDto;
+    }
+
+    private static String getNewerLanguageCode(String oldCode) {
+        // Java converts some language codes to older versions.  If the language is one of these older codes, try
+        // converting it to the newer version
+        if (HEBREW_OLD.equals(oldCode)) {
+            return HEBREW_NEW;
+        } else if (YIDDISH_OLD.equals(oldCode)) {
+            return YIDDISH_NEW;
+        } else if (INDONESIAN_OLD.equals(oldCode)) {
+            return INDONESIAN_NEW;
+        }
+        return oldCode;
     }
 }

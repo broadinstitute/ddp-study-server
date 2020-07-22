@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp;
 
+import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -28,11 +29,11 @@ public abstract class TxnAwareBaseTest extends ConfigAwareBaseTest {
         String dbUrl = cfg.getString(TransactionWrapper.DB.APIS.getDbUrlConfigKey());
         LOG.info("Initializing db pool for " + dbUrl);
         TransactionWrapper.reset();
-        TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, maxConnections,
-                                                                       dbUrl));
-        LiquibaseUtil.runLiquibase(dbUrl, TransactionWrapper.DB.APIS);
+        TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, maxConnections, dbUrl));
 
+        LiquibaseUtil.runLiquibase(dbUrl, TransactionWrapper.DB.APIS);
         DBUtils.loadDaoSqlCommands(sqlConfig);
+        TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, LanguageStore::init);
     }
 
     @AfterClass

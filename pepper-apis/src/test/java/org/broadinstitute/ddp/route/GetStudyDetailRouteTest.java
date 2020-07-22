@@ -38,7 +38,7 @@ public class GetStudyDetailRouteTest extends IntegrationTestSuite.TestCase {
     @Test
     public void test_givenStudyExists_andIsTranslated_whenRouteIsCalled_thenItReturns200_andTranslatedDetails() {
         long translationId = TransactionWrapper.withTxn(handle -> {
-            long languageCodeId = LanguageStore.getOrComputeDefault(handle).getId();
+            long languageCodeId = LanguageStore.getDefault().getId();
             return handle.attach(JdbiUmbrellaStudyI18n.class).insert(
                     testData.getStudyId(),
                     languageCodeId,

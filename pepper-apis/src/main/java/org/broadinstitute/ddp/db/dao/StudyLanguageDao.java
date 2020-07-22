@@ -34,7 +34,7 @@ public interface StudyLanguageDao extends SqlObject {
             throw new DDPException("Study not found for guid : " + studyGuid);
         }
 
-        LanguageDto languageDto = LanguageStore.getOrCompute(getHandle(), languageCode);
+        LanguageDto languageDto = LanguageStore.get(languageCode);
         Long languageCodeId = languageDto != null ? languageDto.getId() : null;
         if (languageCodeId == null) {
             throw new DDPException("Language code : " + languageCode + " not found ");
@@ -68,7 +68,7 @@ public interface StudyLanguageDao extends SqlObject {
     }
 
     default int setAsDefaultLanguage(long umbrellaStudyId, String languageCode) {
-        long languageCodeId = LanguageStore.getOrCompute(getHandle(), languageCode).getId();
+        long languageCodeId = LanguageStore.get(languageCode).getId();
         return setAsDefaultLanguage(umbrellaStudyId, languageCodeId);
     }
 

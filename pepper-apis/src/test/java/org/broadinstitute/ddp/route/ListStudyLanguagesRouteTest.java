@@ -57,9 +57,9 @@ public class ListStudyLanguagesRouteTest extends IntegrationTestSuite.TestCase {
         TransactionWrapper.useTxn(
                 handle -> {
                         StudyLanguageDao dao = handle.attach(StudyLanguageDao.class);
-                        englishLangCodeId = LanguageStore.getOrComputeDefault(handle).getId();
+                        englishLangCodeId = LanguageStore.getDefault().getId();
                         idsToDelete[0] = dao.insert(testData.getStudyId(), englishLangCodeId, "English");
-                        frenchLangCodeId = LanguageStore.getOrCompute(handle, "fr").getId();
+                        frenchLangCodeId = LanguageStore.get("fr").getId();
                         idsToDelete[1] = dao.insert(testData.getStudyId(), frenchLangCodeId, "French");
                         dao.setAsDefaultLanguage(testData.getStudyId(), englishLangCodeId);
                 }

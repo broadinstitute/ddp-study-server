@@ -65,7 +65,7 @@ public class FormInstanceDao {
                                                 boolean includeDeprecated) {
         FormInstance form = getBaseFormByGuid(handle, instanceGuid, isoLangCode);
         if (form != null) {
-            long langCodeId = LanguageStore.getOrCompute(handle, isoLangCode).getId();
+            long langCodeId = LanguageStore.get(isoLangCode).getId();
             loadAllSectionsForForm(handle, form, langCodeId, includeDeprecated);
             form.renderContent(handle, new I18nContentRenderer(), langCodeId, style);
             form.setDisplayNumbers();
