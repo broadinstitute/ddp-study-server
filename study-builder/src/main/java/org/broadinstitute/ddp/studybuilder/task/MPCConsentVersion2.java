@@ -123,7 +123,6 @@ public class MPCConsentVersion2 implements CustomTask {
         BlockContentDto contentBlock = handle.attach(SqlHelper.class)
                 .findContentBlockByBodyText(versionDto.getActivityId(), bodyTemplateText);
 
-        LOG.info("---content blk: {} ", contentBlock.getRevisionId());
         JdbiRevision jdbiRevision = handle.attach(JdbiRevision.class);
         long newRevId = jdbiRevision.copyAndTerminate(contentBlock.getRevisionId(), meta);
         int numUpdated = jdbiBlockContent.updateRevisionById(contentBlock.getId(), newRevId);
