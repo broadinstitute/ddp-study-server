@@ -291,7 +291,7 @@ connections:
       calendar: false
       contacts: false
       analytics: false
-      client_id: 542678289221-oalusifdf5lrmt0vfhhgp9m40dva9a71.apps.googleusercontent.com
+      client_id: '##GOOGLE_OUATH_CLIENT_ID##'
       moderator: false
       coordinate: false
       picasa_web: false
@@ -299,7 +299,7 @@ connections:
       google_books: false
       google_drive: false
       spreadsheets: false
-      client_secret: PNIEfMG8er2SaLbxXSBqki_o
+      client_secret: '##GOOGLE_OUATH_CLIENT_SECRET##'
       document_list: false
       latitude_best: false
       latitude_city: false

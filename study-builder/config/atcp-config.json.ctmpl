@@ -20,7 +20,9 @@
     "BASE_URL": "{{$conf.baseWebUrl}}",
     "ASSETS_BUCKET_URL": "{{$conf.assetsBucketUrl}}",
     "LOGIN_DOMAIN": "{{$conf.auth0.loginDomain}}",
-    "SERVER_BASE_URL": "{{$conf.serverBaseUrl}}"
+    "SERVER_BASE_URL": "{{$conf.serverBaseUrl}}",
+    "GOOGLE_OUATH_CLIENT_ID": "{{$conf.auth0.googleOAuthClientId}}",
+    "GOOGLE_OUATH_CLIENT_SECRET": "{{$conf.auth0.googleOAuthClientSecret}}"
   },
   "AUTH0_ALLOW_DELETE": false,
   "INCLUDED_PROPS": {
