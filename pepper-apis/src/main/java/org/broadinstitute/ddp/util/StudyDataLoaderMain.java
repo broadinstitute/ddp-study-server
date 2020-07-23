@@ -340,21 +340,21 @@ public class StudyDataLoaderMain {
 
         JsonElement surveyData = user.getAsJsonObject().get("datstatsurveydata");
         JsonElement releaseSurveyData = surveyData.getAsJsonObject().get("releasesurvey");
-        //JsonElement bdreleaseSurveyData = surveyData.getAsJsonObject().get("bdreleasesurvey");
+        JsonElement bdreleaseSurveyData = surveyData.getAsJsonObject().get("bdreleasesurvey");
         JsonElement aboutyouSurveyData = surveyData.getAsJsonObject().get("aboutyousurvey");
         JsonElement consentSurveyData = surveyData.getAsJsonObject().get("consentsurvey");
-        //JsonElement bdconsentSurveyData = surveyData.getAsJsonObject().get("bdconsentsurvey");
-        //JsonElement combinedConsentSurveyData = surveyData.getAsJsonObject().get("combinedconsentsurvey");
+        JsonElement bdconsentSurveyData = surveyData.getAsJsonObject().get("bdconsentsurvey");
+        JsonElement combinedConsentSurveyData = surveyData.getAsJsonObject().get("combinedconsentsurvey");
         JsonElement followupSurveyData = surveyData.getAsJsonObject().get("followupsurvey");
         JsonElement followupConsentSurveyData = surveyData.getAsJsonObject().get("followupconsentsurvey");
 
         surveyDataMap.put("datstatparticipantdata", datstatParticipantData);
         surveyDataMap.put("releasesurvey", releaseSurveyData);
-        //surveyDataMap.put("bdreleasesurvey", bdreleaseSurveyData);
+        surveyDataMap.put("bdreleasesurvey", bdreleaseSurveyData);
         surveyDataMap.put("aboutyousurvey", aboutyouSurveyData);
         surveyDataMap.put("consentsurvey", consentSurveyData);
-        //surveyDataMap.put("bdconsentsurvey", bdconsentSurveyData);
-        //surveyDataMap.put("combinedconsentsurvey", combinedConsentSurveyData);
+        surveyDataMap.put("bdconsentsurvey", bdconsentSurveyData);
+        surveyDataMap.put("combinedconsentsurvey", combinedConsentSurveyData);
         surveyDataMap.put("followupsurvey", followupSurveyData);
         surveyDataMap.put("followupconsentsurvey", followupConsentSurveyData);
         return surveyDataMap;
@@ -645,10 +645,10 @@ public class StudyDataLoaderMain {
 
                     hasAboutYou = (sourceData.get("aboutyousurvey") != null && !sourceData.get("aboutyousurvey").isJsonNull());
                     hasConsent = (sourceData.get("consentsurvey") != null && !sourceData.get("consentsurvey").isJsonNull());
-                    //hasBloodConsent = (sourceData.get("bdconsentsurvey") != null && !sourceData.get("bdconsentsurvey").isJsonNull());
-                    //hasConsent = (sourceData.get("consentsurvey") != null && !sourceData.get("combinedconsentsurvey").isJsonNull());
+                    hasBloodConsent = (sourceData.get("bdconsentsurvey") != null && !sourceData.get("bdconsentsurvey").isJsonNull());
+                    hasTissueConsent = (sourceData.get("tissueconsentsurvey") != null && !sourceData.get("tissueconsentsurvey").isJsonNull());
                     hasRelease = (sourceData.get("releasesurvey") != null && !sourceData.get("releasesurvey").isJsonNull());
-                    //hasBloodRelease = (sourceData.get("bdreleasesurvey") != null && !sourceData.get("bdreleasesurvey").isJsonNull());
+                    hasBloodRelease = (sourceData.get("bdreleasesurvey") != null && !sourceData.get("bdreleasesurvey").isJsonNull());
                     hasFollowup = (sourceData.get("followupsurvey") != null && !sourceData.get("followupsurvey").isJsonNull());
                     hasFollowupConsents = (sourceData.get("followupconsentsurvey") != null
                             && sourceData.get("followupconsentsurvey").getAsJsonArray().size() > 0);

@@ -548,18 +548,8 @@ public class StudyDataLoader {
             return;
         }
 
-        //addLegacySurveyAddress(handle, studyDto, userDto, instanceDto, surveyData, "tissuerelease");
-
         processSurveyData(handle, "releasesurvey", surveyData, mappingData,
                 studyDto, userDto, instanceDto, answerDao);
-
-        /*String surveyStatus = instanceDto.getStatusType().name();
-        if (surveyStatus.equalsIgnoreCase("COMPLETE")) {
-            int agreedVal = surveyData.getAsJsonObject().get("agreement.agree").getAsInt();
-            boolean agreed = (agreedVal == 1) ? true : false;
-            answerAgreementQuestion("RELEASE_AGREEMENT", userDto.getUserGuid(),
-                    instanceDto.getGuid(), agreed, answerDao);
-        }*/
 
         //add physicians
         processInstitutions(handle, surveyData, userDto, studyDto,
@@ -735,7 +725,7 @@ public class StudyDataLoader {
             return;
         }
 
-        String status = instanceDto.getStatusType().name();
+        String status = getStringValueFromElement(surveyData, "survey_status");
         if (status.equalsIgnoreCase("CREATED")) {
             LOG.warn("Created followup survey instance but no data ");
             return;
@@ -851,7 +841,7 @@ public class StudyDataLoader {
         String emailAddress = data.getAsJsonObject().get("datstat_email").getAsString();
 
         // Create a user for the given domain
-        String randomPass = "Welcome1"; //generateRandomPassword();
+        String randomPass = generateRandomPassword();
         User newAuth0User = auth0Util.createAuth0User(emailAddress, randomPass, mgmtToken);
 
         String auth0UserId = newAuth0User.getId();
@@ -1194,7 +1184,6 @@ public class StudyDataLoader {
         List<SelectedPicklistOption> selectedPicklistOptions = new ArrayList<>();
         for (JsonElement group: groupEls) {
             String groupName = getStringValueFromElement(group, "name");
-            //String groupStableId = getStringValueFromElement(group, "stable_id");
             //get selected picklists options
             selectedPicklistOptions.addAll(getSelectedPicklistOptions(group, sourceDataElement, groupName, surveyName));
         }
@@ -1504,7 +1493,6 @@ public class StudyDataLoader {
 
         sourceDataSurveyQs.get(surveyName).add(questionName);
 
-
         answerGuid = answerAgreementQuestion(stableId, participantGuid, instanceGuid, agreed, answerDao);
         return answerGuid;
     }
@@ -1812,7 +1800,6 @@ public class StudyDataLoader {
                     guid, userDto.getUserId(), studyDto.getId(),
                     InstitutionType.INITIAL_BIOPSY, instName, null, instCity, instState,
                     null, null, null, null));
-
         }
     }
 
