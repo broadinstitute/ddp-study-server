@@ -181,6 +181,10 @@ public abstract class Question<T extends Answer> implements Renderable {
         return tooltipTemplateId;
     }
 
+    public boolean isReadonly() {
+        return Optional.ofNullable(readonly).orElse(false);
+    }
+
     public Boolean getReadonly() {
         return readonly;
     }

@@ -10,13 +10,18 @@ import org.jdbi.v3.core.Handle;
 public class QuestionUtil {
 
     public static boolean isReadonly(Handle handle, QuestionDto dto, String activityInstanceGuid) {
+        boolean isWriteOnce = dto.isWriteOnce();
+        if (!isWriteOnce) {
+            return false;
+        }
+
         InstanceStatusType statusType = handle.attach(JdbiActivityInstance.class)
                 .getByActivityInstanceGuid(activityInstanceGuid)
                 .map(ActivityInstanceDto::getStatusType)
                 .orElseThrow(() -> new DaoException(String.format(
-                        "Could not find activity instance with guid=%s while getting text question with id=%d and stableId=%s",
+                        "Could not find activity instance with guid=%s while getting question with id=%d and stableId=%s",
                         activityInstanceGuid, dto.getId(), dto.getStableId())));
 
-        return dto.isWriteOnce() && InstanceStatusType.COMPLETE.equals(statusType);
+        return InstanceStatusType.COMPLETE.equals(statusType);
     }
 }
