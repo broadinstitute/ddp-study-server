@@ -21,21 +21,11 @@ clients:
   - name: AT-Dev
     allowed_clients: []
     allowed_logout_urls:
-      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com'
-      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/auth'
-      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/prequalifier'
-      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/silentRenew'
-      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/'
-      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/login-landing'
-      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/session-expired'
+      - '##BASE_URL##'
+      - '##BASE_URL##/session-expired'
     app_type: spa
     callbacks:
-      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com'
-      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/auth'
-      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/prequalifier'
-      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/silentRenew'
-      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/'
-      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/login-landing'
+      - '##BASE_URL##/login-landing'
     client_aliases: []
     cross_origin_auth: false
     custom_login_page_on: true
@@ -61,34 +51,20 @@ clients:
     sso_disabled: false
     token_endpoint_auth_method: none
     web_origins:
-      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com'
-      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/sign-in'
-      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/auth'
-      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/silentRenew'
-      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/login-landing'
-      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/login-landing/login'
-      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/dashboard'
+      - '##BASE_URL##'
+    client_metadata:
+      study: atcp
   - name: AT-Local
     allowed_clients: []
     allowed_logout_urls:
-      - 'http://localhost:4200'
-      - 'http://localhost:4200/auth'
-      - 'http://localhost:4200/prequalifier'
-      - 'http://localhost:4200/silentRenew'
-      - 'http://localhost:4200/'
-      - 'http://localhost:4200/login-landing'
-      - 'http://localhost:4200/session-expired'
+      - ##LOCALHOST_LOGOUTS##
     allowed_origins: []
     app_type: spa
     callbacks:
-      - 'http://localhost:4200'
-      - 'http://localhost:4200/auth'
-      - 'http://localhost:4200/prequalifier'
-      - 'http://localhost:4200/silentRenew'
-      - 'http://localhost:4200/'
-      - 'http://localhost:4200/login-landing'
+      - ##LOCALHOST_CALLBACKS##
     client_aliases: []
     client_metadata:
+      study: atcp
       doLocalRegistration: 'true'
     cross_origin_auth: false
     custom_login_page_on: true
@@ -114,41 +90,17 @@ clients:
     sso_disabled: false
     token_endpoint_auth_method: none
     web_origins:
-      - 'http://localhost:4200'
-      - 'https://localhost/auth'
-      - 'http://localhost:4200/sign-in'
-      - 'http://localhost:4200/auth'
-      - 'http://localhost:4200/silentRenew'
-      - 'http://localhost:4200/login-landing'
-      - 'http://localhost:4200/login-landing/login'
-      - 'http://localhost:4200/dashboard'
-      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com'
-      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/sign-in'
-      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/auth'
-      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/silentRenew'
-      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/login-landing'
-      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/login-landing/login'
-      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/dashboard'
+      - ##LOCALHOST_ORIGINS##
   - name: AT-experimental
     allowed_clients: []
     allowed_logout_urls:
-      - 'http://localhost:4200'
-      - 'http://localhost:4200/auth'
-      - 'http://localhost:4200/prequalifier'
-      - 'http://localhost:4200/silentRenew'
-      - 'http://localhost:4200/'
-      - 'http://localhost:4200/login-landing'
-      - 'http://localhost:4200/session-expired'
+      - ##LOCALHOST_LOGOUTS##
     app_type: spa
     callbacks:
-      - 'http://localhost:4200'
-      - 'http://localhost:4200/auth'
-      - 'http://localhost:4200/prequalifier'
-      - 'http://localhost:4200/silentRenew'
-      - 'http://localhost:4200/'
-      - 'http://localhost:4200/login-landing'
+      - ##LOCALHOST_CALLBACKS##
     client_aliases: []
     client_metadata:
+      study: atcp
       doLocalRegistration: 'true'
     cross_origin_auth: false
     custom_login_page_on: true
@@ -174,21 +126,7 @@ clients:
     sso_disabled: false
     token_endpoint_auth_method: none
     web_origins:
-      - 'http://localhost:4200'
-      - 'https://localhost/auth'
-      - 'http://localhost:4200/sign-in'
-      - 'http://localhost:4200/auth'
-      - 'http://localhost:4200/silentRenew'
-      - 'http://localhost:4200/login-landing'
-      - 'http://localhost:4200/login-landing/login'
-      - 'http://localhost:4200/dashboard'
-      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com'
-      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/sign-in'
-      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/auth'
-      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/silentRenew'
-      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/login-landing'
-      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/login-landing/login'
-      - 'https://atcp-dot-broad-ddp-dev.uc.r.appspot.com/dashboard'
+     - ##LOCALHOST_ORIGINS##
   - name: DDP-Backend
     app_type: non_interactive
     cross_origin_auth: false
