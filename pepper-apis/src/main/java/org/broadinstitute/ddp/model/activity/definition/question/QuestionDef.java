@@ -62,12 +62,15 @@ public abstract class QuestionDef {
     @SerializedName("hideNumber")
     private boolean hideNumber;
 
+    @SerializedName("writeOnce")
+    protected boolean writeOnce;
+
     protected transient Long questionId;
 
     protected QuestionDef(QuestionType questionType, String stableId, boolean isRestricted,
                           Template promptTemplate, Template additionalInfoHeaderTemplate,
                           Template additionalInfoFooterTemplate, List<RuleDef> validations,
-                          boolean hideNumber) {
+                          boolean hideNumber, boolean writeOnce) {
         this.questionType = MiscUtil.checkNonNull(questionType, "questionType");
         this.stableId = MiscUtil.checkNotBlank(stableId, "stableId");
         this.promptTemplate = MiscUtil.checkNonNull(promptTemplate, "promptTemplate");
@@ -76,6 +79,7 @@ public abstract class QuestionDef {
         this.isRestricted = isRestricted;
         this.validations = MiscUtil.checkNonNull(validations, "validations");
         this.hideNumber = hideNumber;
+        this.writeOnce = writeOnce;
     }
 
     public QuestionType getQuestionType() {
@@ -128,6 +132,14 @@ public abstract class QuestionDef {
         return hideNumber;
     }
 
+    public boolean isWriteOnce() {
+        return writeOnce;
+    }
+
+    public void setWriteOnce(boolean writeOnce) {
+        this.writeOnce = writeOnce;
+    }
+
     /**
      * Builder that helps construct common elements of a question block.
      *
@@ -141,6 +153,7 @@ public abstract class QuestionDef {
         private Template additionalInfoHeader;
         private Template additionalInfoFooter;
         protected boolean hideNumber;
+        protected boolean writeOnce;
 
         protected Long questionId = null;
         protected boolean isRestricted = false;
@@ -170,6 +183,11 @@ public abstract class QuestionDef {
 
         public T setHideNumber(boolean hideNumber) {
             this.hideNumber = hideNumber;
+            return self();
+        }
+
+        public T setWriteOnce(boolean writeOnce) {
+            this.writeOnce = writeOnce;
             return self();
         }
 

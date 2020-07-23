@@ -19,6 +19,7 @@ public class QuestionDto {
     private boolean isRestricted;
     private boolean isDeprecated;
     private boolean hideNumber;
+    private boolean writeOnce;
     private long revisionId;
     private long revisionStart;
     private Long revisionEnd;
@@ -35,6 +36,7 @@ public class QuestionDto {
                        @ColumnName("is_restricted") boolean isRestricted,
                        @ColumnName("is_deprecated") Boolean isDeprecated,
                        @ColumnName("hide_number") Boolean hideNumber,
+                       @ColumnName("is_write_once") Boolean writeOnce,
                        @ColumnName("revision_id") long revisionId,
                        @ColumnName("revision_start") long revisionStart,
                        @ColumnName("revision_end") Long revisionEnd) {
@@ -49,6 +51,7 @@ public class QuestionDto {
         this.isRestricted = isRestricted;
         this.isDeprecated = isDeprecated == null ? false : isDeprecated;
         this.hideNumber = hideNumber == null ? false : hideNumber;
+        this.writeOnce = writeOnce == null ? false : writeOnce;
         this.revisionId = revisionId;
         this.revisionStart = revisionStart;
         this.revisionEnd = revisionEnd;
@@ -64,12 +67,13 @@ public class QuestionDto {
                        boolean isRestricted,
                        Boolean isDeprecated,
                        Boolean hideNumber,
+                       Boolean writeOnce,
                        long revisionId,
                        long revisionStart,
                        Long revisionEnd) {
         this(type, id, stableId, promptTemplateId, null,
                 additionalInfoHeaderTemplateId, additionalInfoFooterTemplateId,
-                activityId, isRestricted, isDeprecated, hideNumber,
+                activityId, isRestricted, isDeprecated, hideNumber, writeOnce,
                 revisionId, revisionStart, revisionEnd);
     }
 
@@ -85,6 +89,7 @@ public class QuestionDto {
         this.isRestricted = other.isRestricted;
         this.isDeprecated = other.isDeprecated;
         this.hideNumber = other.hideNumber;
+        this.writeOnce = other.writeOnce;
         this.revisionId = other.revisionId;
         this.revisionStart = other.revisionStart;
         this.revisionEnd = other.revisionEnd;
@@ -134,6 +139,10 @@ public class QuestionDto {
 
     public boolean shouldHideNumber() {
         return hideNumber;
+    }
+
+    public boolean isWriteOnce() {
+        return writeOnce;
     }
 
     public long getRevisionId() {

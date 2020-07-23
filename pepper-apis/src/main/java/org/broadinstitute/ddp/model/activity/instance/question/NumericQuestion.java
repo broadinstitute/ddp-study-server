@@ -26,11 +26,11 @@ public final class NumericQuestion extends Question<NumericAnswer> {
     private transient Long placeholderTemplateId;
 
     public NumericQuestion(String stableId, long promptTemplateId, Long placeholderTemplateId,
-                           boolean isRestricted, boolean isDeprecated, Long tooltipTemplateId,
+                           boolean isRestricted, boolean isDeprecated, Boolean readonly, Long tooltipTemplateId,
                            Long additionalInfoHeaderTemplateId, Long additionalInfoFooterTemplateId,
                            List<NumericAnswer> answers, List<Rule<NumericAnswer>> validations,
                            NumericType numericType) {
-        super(QuestionType.NUMERIC, stableId, promptTemplateId, isRestricted, isDeprecated, tooltipTemplateId,
+        super(QuestionType.NUMERIC, stableId, promptTemplateId, isRestricted, isDeprecated, readonly, tooltipTemplateId,
                 additionalInfoHeaderTemplateId, additionalInfoFooterTemplateId, answers, validations);
         this.numericType = MiscUtil.checkNonNull(numericType, "numericType");
         this.placeholderTemplateId = placeholderTemplateId;

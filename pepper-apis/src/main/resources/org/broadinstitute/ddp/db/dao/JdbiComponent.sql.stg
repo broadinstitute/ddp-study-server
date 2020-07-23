@@ -9,6 +9,7 @@ select
 comp.component_id,
 ct.component_type_code as component_type,
 comp.hide_number,
+comp.is_write_once,
 comp.revision_id
 from
 component comp,

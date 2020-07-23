@@ -53,7 +53,7 @@ public class TextQuestion extends Question<TextAnswer> {
     private transient Long mismatchMessageTemplateId;
 
     public TextQuestion(String stableId, long promptTemplateId, Long placeholderTemplateId,
-                        boolean isRestricted, boolean isDeprecated, Long tooltipTemplateId,
+                        boolean isRestricted, boolean isDeprecated, Boolean readonly, Long tooltipTemplateId,
                         Long additionalInfoHeaderTemplateId, Long additionalInfoFooterTemplateId, List<TextAnswer> answers,
                         List<Rule<TextAnswer>> validations, TextInputType inputType, SuggestionType suggestionType,
                         List<String> suggestions, boolean confirmEntry,
@@ -63,6 +63,7 @@ public class TextQuestion extends Question<TextAnswer> {
                 promptTemplateId,
                 isRestricted,
                 isDeprecated,
+                readonly,
                 tooltipTemplateId,
                 additionalInfoHeaderTemplateId,
                 additionalInfoFooterTemplateId,
@@ -90,6 +91,7 @@ public class TextQuestion extends Question<TextAnswer> {
                 placeholderTemplateId,
                 false,
                 false,
+                false,
                 null,
                 null,
                 null,
@@ -108,6 +110,7 @@ public class TextQuestion extends Question<TextAnswer> {
         this(stableId,
                 promptTemplateId,
                 placeholderTemplateId,
+                false,
                 false,
                 false,
                 null,
