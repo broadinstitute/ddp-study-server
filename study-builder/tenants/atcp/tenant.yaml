@@ -57,11 +57,11 @@ clients:
   - name: AT-Local
     allowed_clients: []
     allowed_logout_urls:
-      - ##LOCALHOST_LOGOUTS##
+       ##LOCALHOST_LOGOUTS##
     allowed_origins: []
     app_type: spa
     callbacks:
-      - ##LOCALHOST_CALLBACKS##
+       ##LOCALHOST_CALLBACKS##
     client_aliases: []
     client_metadata:
       study: atcp
@@ -90,14 +90,14 @@ clients:
     sso_disabled: false
     token_endpoint_auth_method: none
     web_origins:
-      - ##LOCALHOST_ORIGINS##
+       ##LOCALHOST_ORIGINS##
   - name: AT-experimental
     allowed_clients: []
     allowed_logout_urls:
-      - ##LOCALHOST_LOGOUTS##
+       ##LOCALHOST_LOGOUTS##
     app_type: spa
     callbacks:
-      - ##LOCALHOST_CALLBACKS##
+       ##LOCALHOST_CALLBACKS##
     client_aliases: []
     client_metadata:
       study: atcp
@@ -126,7 +126,7 @@ clients:
     sso_disabled: false
     token_endpoint_auth_method: none
     web_origins:
-     - ##LOCALHOST_ORIGINS##
+      ##LOCALHOST_ORIGINS##
   - name: DDP-Backend
     app_type: non_interactive
     cross_origin_auth: false
