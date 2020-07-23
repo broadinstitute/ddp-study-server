@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.broadinstitute.ddp.model.activity.types.DsmNotificationEventType;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
@@ -44,7 +45,7 @@ public class EventConfigurationDto {
     // No sub-table
 
     /* DSM_NOTIFICATION */
-    private String dsmNotificationEventType; // FIXME Turn into real enum
+    private DsmNotificationEventType dsmNotificationEventType;
 
     /* MEDICAL_UPDATE */
     // No sub-table
@@ -111,7 +112,7 @@ public class EventConfigurationDto {
                                  Long activityStatusTriggerStudyActivityId,
                                  Long workflowStateId,
                                  Boolean triggerAutomatically,
-                                 String dsmNotificationEventType,
+                                 DsmNotificationEventType dsmNotificationEventType,
                                  Long announcementMsgTemplateId,
                                  Boolean announcementIsPermanent,
                                  Boolean announcementCreateForProxies,
@@ -204,7 +205,7 @@ public class EventConfigurationDto {
         return triggerAutomatically;
     }
 
-    public String getDsmNotificationEventType() {
+    public DsmNotificationEventType getDsmNotificationEventType() {
         return dsmNotificationEventType;
     }
 

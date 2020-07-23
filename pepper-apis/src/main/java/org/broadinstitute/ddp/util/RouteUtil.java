@@ -195,14 +195,38 @@ public class RouteUtil {
     public static UserAndStudy findUserAndStudyOrHalt(Handle handle, String userGuid, String studyGuid) {
         StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
         if (studyDto == null) {
-            String msg = "Could not find study with guid " + studyGuid;
-            throw ResponseUtil.haltError(HttpStatus.SC_NOT_FOUND, new ApiError(ErrorCodes.STUDY_NOT_FOUND, msg));
+            var err = new ApiError(ErrorCodes.STUDY_NOT_FOUND, "Could not find study with guid " + studyGuid);
+            LOG.warn(err.getMessage());
+            throw ResponseUtil.haltError(HttpStatus.SC_NOT_FOUND, err);
         }
-        User user = handle.attach(UserDao.class).findUserByGuid(userGuid)
-                .orElseThrow(() -> {
-                    String msg = "Could not find user with guid " + userGuid;
-                    return ResponseUtil.haltError(HttpStatus.SC_NOT_FOUND, new ApiError(ErrorCodes.USER_NOT_FOUND, msg));
-                });
+        User user = handle.attach(UserDao.class).findUserByGuid(userGuid).orElseThrow(() -> {
+            var err = new ApiError(ErrorCodes.USER_NOT_FOUND, "Could not find user with guid " + userGuid);
+            LOG.warn(err.getMessage());
+            return ResponseUtil.haltError(HttpStatus.SC_NOT_FOUND, err);
+        });
+        return new UserAndStudy(user, studyDto);
+    }
+
+    /**
+     * Find user and study. User may be a legacy user.
+     *
+     * @param handle           the database handle
+     * @param userGuidOrAltPid the user guid or altpid
+     * @param studyGuid        the study guid
+     * @return user and study
+     */
+    public static UserAndStudy findPotentiallyLegacyUserAndStudyOrHalt(Handle handle, String userGuidOrAltPid, String studyGuid) {
+        StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
+        if (studyDto == null) {
+            var err = new ApiError(ErrorCodes.STUDY_NOT_FOUND, "Could not find study with guid " + studyGuid);
+            LOG.warn(err.getMessage());
+            throw ResponseUtil.haltError(HttpStatus.SC_NOT_FOUND, err);
+        }
+        User user = handle.attach(UserDao.class).findUserByGuidOrAltPid(userGuidOrAltPid).orElseThrow(() -> {
+            var err = new ApiError(ErrorCodes.USER_NOT_FOUND, "Could not find user with guid/legacy_altpid " + userGuidOrAltPid);
+            LOG.warn(err.getMessage());
+            return ResponseUtil.haltError(HttpStatus.SC_NOT_FOUND, err);
+        });
         return new UserAndStudy(user, studyDto);
     }
 

@@ -97,6 +97,11 @@ public interface UserDao extends SqlObject {
     @RegisterConstructorMapper(User.class)
     Optional<User> findUserByAuth0UserId(@Bind("auth0UserId") String auth0UserId, @Bind("auth0TenantId") long auth0TenantId);
 
+    @UseStringTemplateSqlLocator
+    @SqlQuery("queryUserByGuidOrAltPid")
+    @RegisterConstructorMapper(User.class)
+    Optional<User> findUserByGuidOrAltPid(@Bind("guidOrAltPid") String userGuidOrAltPid);
+
     @SqlQuery("select user_id from user where expires_at is not null and expires_at <= :now")
     Set<Long> findExpiredTemporaryUserIds(@Bind("now") long nowMillis);
 

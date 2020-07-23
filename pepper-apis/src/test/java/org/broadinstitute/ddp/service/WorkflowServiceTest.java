@@ -32,7 +32,7 @@ import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiActivityStatusTrigger;
 import org.broadinstitute.ddp.db.dao.JdbiEventConfiguration;
-import org.broadinstitute.ddp.db.dao.JdbiEventTrigger;
+import org.broadinstitute.ddp.db.dao.EventTriggerSql;
 import org.broadinstitute.ddp.db.dao.JdbiWorkflowTransition;
 import org.broadinstitute.ddp.db.dao.WorkflowDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
@@ -457,7 +457,7 @@ public class WorkflowServiceTest extends TxnAwareBaseTest {
             // Setting up an event that will make EventService create a new activity instance
             FormActivityDef triggeredFormActivity = insertNewActivity(handle);
             // activityTransitionedFrom --> activityTransitionedTo transition with a precondition expr that is always true
-            long triggerId = handle.attach(JdbiEventTrigger.class).insert(EventTriggerType.ACTIVITY_STATUS);
+            long triggerId = handle.attach(EventTriggerSql.class).insertBaseTrigger(EventTriggerType.ACTIVITY_STATUS);
             handle.attach(JdbiActivityStatusTrigger.class).insert(
                     triggerId, actParticipatingInTransition.get("activityTransitionedToId"), InstanceStatusType.CREATED
             );

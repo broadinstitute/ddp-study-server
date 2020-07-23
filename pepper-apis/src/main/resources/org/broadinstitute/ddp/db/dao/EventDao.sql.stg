@@ -51,7 +51,7 @@ LEFT JOIN message_destination md on ea.message_destination_id = md.message_desti
 LEFT JOIN activity_status_trigger ast ON ast.activity_status_trigger_id = ec.event_trigger_id
 LEFT JOIN activity_instance_status_type aist ON ast.activity_instance_status_type_id = aist.activity_instance_status_type_id
 LEFT JOIN workflow_state_trigger wst on wst.event_trigger_id = et.event_trigger_id
-LEFT JOIN dsm_notification_trigger dnt ON dnt.dsm_notification_trigger_id = et.event_trigger_type_id
+LEFT JOIN dsm_notification_trigger dnt ON dnt.dsm_notification_trigger_id = et.event_trigger_id
 LEFT JOIN dsm_notification_event_type dnet ON dnet.dsm_notification_event_type_id = dnt.dsm_notification_event_type_id
 LEFT JOIN user_announcement_event_action as ann_act on ann_act.event_action_id = ea.event_action_id
 LEFT JOIN user_notification_event_action unea on unea.user_notification_event_action_id = ea.event_action_id
@@ -218,39 +218,4 @@ findAllQueuedEvents() ::= <<
 findQueuedEventById() ::= <<
 <select_all_queued_events()>
 where q.queued_event_id = :id
->>
-
-/**
- * Given a study guid and notification event type code, returns event configurations' ids
- * for the study id / DSM notification type. These ids are queued for Housekeeping later
- */
-getDsmNotificationConfigurationIds() ::= <<
-    select
-        ec.event_configuration_id
-    from
-        event_configuration ec,
-        event_trigger et,
-        event_action ea,
-        event_action_type eat,
-        dsm_notification_trigger dnt,
-        dsm_notification_event_type dnet,
-        umbrella_study us,
-        user_study_enrollment usen,
-        enrollment_status_type est
-    where
-        ec.event_trigger_id = et.event_trigger_id
-        and ec.event_action_id = ea.event_action_id
-        and ea.event_action_type_id = eat.event_action_type_id
-        and dnt.dsm_notification_trigger_id = et.event_trigger_id
-        and dnt.dsm_notification_event_type_id = dnet.dsm_notification_event_type_id
-        and ec.umbrella_study_id = us.umbrella_study_id
-        and us.guid = :umbrellaStudyGuid
-        and dnet.dsm_notification_event_type_code = :notificationEventTypeCode
-        and eat.event_action_type_code = 'NOTIFICATION'
-        and usen.user_id = (select user_id from user where guid = :userGuid)
-        and usen.study_id = ec.umbrella_study_id
-        and usen.enrollment_status_type_id = est.enrollment_status_type_id
-        and est.enrollment_status_type_code = 'ENROLLED'
-        and ec.is_active = 1
-        and usen.valid_to is null
 >>
