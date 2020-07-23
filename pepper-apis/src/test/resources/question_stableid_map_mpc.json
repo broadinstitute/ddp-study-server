@@ -22,21 +22,6 @@
             "stable_id": "DIAGNOSIS_DATE"
           },
           {
-            "name": "initial_adv_metastatic_diag",
-            "type": "Date",
-            "subelements": [
-              {
-                "name": "year",
-                "type": "integer"
-              },
-              {
-                "name": "month",
-                "type": "integer"
-              }
-            ],
-            "stable_id": "ADVANCED_DIAGNOSIS_DATE"
-          },
-          {
             "name": "cancer_location",
             "type": "Picklist",
             "options": [
@@ -75,6 +60,26 @@
               }
             ],
             "stable_id": "CURRENT_CANCER_LOC"
+          },
+          {
+            "name": "initial_adv_metastatic_diag",
+            "type": "Picklist",
+            "source_type": "integer",
+            "options": [
+              {
+                "name": "yes",
+                "type": "integer"
+              },
+              {
+                "name": "no",
+                "type": "integer"
+              },
+              {
+                "name": "dk",
+                "type": "integer"
+              }
+            ],
+            "stable_id": "DIAGNOSED_ADVANCED_METASTATIC"
           },
           {
             "name": "local_treat_first_diagnosed",
