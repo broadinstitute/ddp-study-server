@@ -543,8 +543,9 @@ public class StudyDataLoader {
         }
 
         // Read only is always undefined for things that aren't consent- we rely on the user being terminated to show read only activities
-        boolean itIsCompletedConsent = (activityCode == "CONSENT" || activityCode == "TISSUECONSENT" || activityCode == "BLOODCONSENT"
-                || activityCode == "FOLLOWUPCONSENT" || activityCode.equals("PRIONCONSENT")) && instanceCurrentStatus == InstanceStatusType.COMPLETE;
+        boolean itIsCompletedConsent = (activityCode == "CONSENT" || activityCode == "TISSUECONSENT"
+                || activityCode == "BLOODCONSENT" || activityCode == "FOLLOWUPCONSENT"
+                || activityCode.equals("PRIONCONSENT")) && instanceCurrentStatus == InstanceStatusType.COMPLETE;
         Boolean isReadonly = itIsCompletedConsent ? true : null;
         ActivityInstanceDto dto = activityInstanceDao
                 .insertInstance(studyActivityId, participantGuid, participantGuid, InstanceStatusType.CREATED,
