@@ -17,6 +17,7 @@ housekeeping:
     - {{$dir}}/application.conf:/app/config/application.conf
     - {{$dir}}/housekeeping_startup.sh:/app/housekeeping_startup.sh
     - {{$dir}}/housekeeping-service-account.json:/app/housekeeping-service-account.json
+  restart: always
   environment:
     - GOOGLE_APPLICATION_CREDENTIALS=/app/housekeeping-service-account.json
   links:
