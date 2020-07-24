@@ -49,7 +49,7 @@ public class AddProfileRoute extends ValidatedJsonInputRoute<Profile> {
 
         TransactionWrapper.useTxn((Handle handle) -> {
             String langCode = profile.getPreferredLanguage();
-            LanguageDto languageDto = LanguageStore.getOrCompute(handle, langCode);
+            LanguageDto languageDto = LanguageStore.get(langCode);
             Long langId = languageDto != null ? languageDto.getId() : null;
             if (StringUtils.isNotBlank(langCode) && langId == null) {
                 throw ResponseUtil.haltError(HttpStatus.SC_BAD_REQUEST,

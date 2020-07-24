@@ -105,6 +105,11 @@
             title = 'Create your account';
         }
         applyOsteoStyles();
+    } else if (study_guid === 'cmi-mpc') {
+        registerUrl = '##MPC_BASE_URL##/count-me-in';
+        headerText = '';
+        headerLogo = '##ASSETS_BUCKET_URL##/mpc/project-logo.png';
+        studyColor = '#2bb673';
     } else {
         console.log('No configuration for ' + study_guid + ', will use defaults');
     }

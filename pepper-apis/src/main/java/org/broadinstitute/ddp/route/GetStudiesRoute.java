@@ -78,7 +78,7 @@ public class GetStudiesRoute implements Route {
                         .map(StudyLanguage::toLocale)
                         .collect(Collectors.toSet());
                 Locale userLocale = I18nUtil.resolvePreferredLanguage(authInfo.getPreferredLocale(), acceptLanguages, supportedLocales);
-                long langCodeId = LanguageStore.getOrCompute(handle, userLocale.toLanguageTag()).getId();
+                long langCodeId = LanguageStore.get(userLocale.toLanguageTag()).getId();
                 Optional<StudyI18nDto> preferredTranslation = translationDao.findTranslationByStudyIdAndLanguageCodeId(
                         study.getId(),
                         langCodeId

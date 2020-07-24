@@ -18,8 +18,10 @@ public class StudyLanguageResolutionFilterTest extends TxnAwareBaseTest {
     private static final String LANG_EN = "en";
     private static final String LANG_RU = "ru";
     private static final String LANG_FR = "fr";
+    private static final String LANG_HE = "he";
     private static final String LANG_HEADER_RU = "Accept-Language: ru-RU, ru";
     private static final String LANG_HEADER_FR = "Accept-Language: fr-FR, fr";
+    private static final String LANG_HEADER_HE = "Accept-Language: he-HE, he";
 
     @BeforeClass
     public static void setupClass() {
@@ -96,6 +98,20 @@ public class StudyLanguageResolutionFilterTest extends TxnAwareBaseTest {
                     );
                     Assert.assertEquals(LANG_FR, languageDto.getIsoCode());
                     handle.rollback();
+                }
+        );
+    }
+
+    @Test
+    public void test_whenStudyUsesNewerLanguageCodeThanJavaLocale_thenTryNewerLanguageCode() {
+        TransactionWrapper.useTxn(
+                handle -> {
+                    enableLanguageSupportForStudy(handle, testData.getStudyGuid(), LANG_HE);
+                    String acceptLanguageHeader = LANG_HEADER_HE;
+                    LanguageDto languageDto = StudyLanguageResolutionFilter.getPreferredLanguage(
+                            handle, acceptLanguageHeader, Locale.forLanguageTag(LANG_HE), testData.getStudyGuid()
+                    );
+                    Assert.assertEquals(LANG_HE, languageDto.getIsoCode());
                 }
         );
     }

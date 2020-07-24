@@ -729,7 +729,7 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
             assertTrue(optCompQuestion.isPresent());
             Question compositeQuestionWithAnswers = handle.attach(QuestionDao.class)
                     .getQuestionByIdAndActivityInstanceGuid(optCompQuestion.get().getId(), instanceGuid,
-                            LanguageStore.getOrComputeDefault(handle).getId());
+                            LanguageStore.getDefault().getId());
             assertTrue(compositeQuestionWithAnswers instanceof CompositeQuestion);
             List<CompositeAnswer> savedCompositeAnswers = ((CompositeQuestion) compositeQuestionWithAnswers).getAnswers();
             assertEquals(1, savedCompositeAnswers.size());
