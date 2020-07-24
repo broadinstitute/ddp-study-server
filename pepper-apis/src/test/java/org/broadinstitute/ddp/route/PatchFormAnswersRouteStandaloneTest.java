@@ -1613,45 +1613,6 @@ public class PatchFormAnswersRouteStandaloneTest extends IntegrationTestSuite.Te
     }
 
     @Test
-    public void given_oneTrueExpr_whenRouteIsCalled_thenItReturnsOkAndRespContainsOneErrorPlusOneAnswer() {
-        try {
-            String answerGuid = TransactionWrapper.withTxn(handle -> {
-                handle.attach(JdbiActivity.class).insertValidation(
-                        RouteTestUtil.createActivityValidationDto(
-                                activity, "true", "Should always fail", List.of(textStableId)
-                        ),
-                        testData.getUserId(),
-                        testData.getStudyId(),
-                        activityVersionDto.getRevId()
-                );
-                TextAnswer answer = new TextAnswer(null, textStableId, null, "old value");
-                return createAnswerAndDeferCleanup(handle, answer);
-            });
-            // clear, otherwise our new validation will not ben read
-            ActivityDefStore.getInstance().clear();
-            Runnable executePatch = () -> {
-                PatchAnswerPayload data = new PatchAnswerPayload();
-
-                data.addSubmission(new AnswerSubmission(textStableId, answerGuid, new JsonPrimitive("hi there")));
-                givenAnswerPatchRequest(instanceGuid, data)
-                        .then().assertThat()
-                        .statusCode(200).contentType(ContentType.JSON)
-                        .body("validationFailures", is(notNullValue()))
-                        .body("validationFailures.size()", equalTo(1))
-                        .body("answers.size()", equalTo(1));
-            };
-            executePatch.run();
-            //second time to pick up cached version
-            executePatch.run();
-        } finally {
-            TransactionWrapper.useTxn(handle -> {
-                handle.attach(JdbiActivity.class).deleteValidationsByCode(activity.getActivityId());
-                ActivityDefStore.getInstance().clearCachedActivityValidationDtos(activity.getActivityId());
-            });
-        }
-    }
-
-    @Test
     public void test4xxStatusReturnedForReadonlyActivityInstance() throws Exception {
         PatchAnswerPayload data = createPicklistPayload(plistMultiSelectSid, null,
                 new SelectedPicklistOption(plistMulti_option1_sid));
@@ -1666,7 +1627,6 @@ public class PatchFormAnswersRouteStandaloneTest extends IntegrationTestSuite.Te
 
         response = request.execute().returnResponse();
         assertEquals(422, response.getStatusLine().getStatusCode());
-
         String json = EntityUtils.toString(response.getEntity());
         ApiError resp = gson.fromJson(json, ApiError.class);
         assertEquals(ErrorCodes.ACTIVITY_INSTANCE_IS_READONLY, resp.getCode());
@@ -1695,6 +1655,47 @@ public class PatchFormAnswersRouteStandaloneTest extends IntegrationTestSuite.Te
         } finally {
             TransactionWrapper.useTxn(handle -> {
                 handle.attach(JdbiActivity.class).deleteValidationsByCode(activity.getActivityId());
+            });
+        }
+    }
+
+    @Test
+    public void given_oneTrueExpr_whenRouteIsCalled_thenItReturnsOkAndRespContainsOneErrorPlusOneAnswer() {
+        try {
+            String answerGuid = TransactionWrapper.withTxn(handle -> {
+                handle.attach(JdbiActivity.class).insertValidation(
+                        RouteTestUtil.createActivityValidationDto(
+                                activity, "true", "Should always fail", List.of(textStableId)
+                        ),
+                        testData.getUserId(),
+                        testData.getStudyId(),
+                        activityVersionDto.getRevId()
+                );
+
+                ActivityDefStore.getInstance().clearCachedActivityValidationDtos(activity.getActivityId());
+
+                TextAnswer answer = new TextAnswer(null, textStableId, null, "old value");
+                return createAnswerAndDeferCleanup(handle, answer);
+            });
+
+            Runnable executePatch = () -> {
+                PatchAnswerPayload data = new PatchAnswerPayload();
+
+                data.addSubmission(new AnswerSubmission(textStableId, answerGuid, new JsonPrimitive("hi there")));
+                givenAnswerPatchRequest(instanceGuid, data)
+                        .then().assertThat()
+                        .statusCode(200).contentType(ContentType.JSON)
+                        .body("validationFailures", is(notNullValue()))
+                        .body("validationFailures.size()", equalTo(1))
+                        .body("answers.size()", equalTo(1));
+            };
+            executePatch.run();
+            //second time to pick up cached version
+            executePatch.run();
+        } finally {
+            TransactionWrapper.useTxn(handle -> {
+                handle.attach(JdbiActivity.class).deleteValidationsByCode(activity.getActivityId());
+                ActivityDefStore.getInstance().clearCachedActivityValidationDtos(activity.getActivityId());
             });
         }
     }
