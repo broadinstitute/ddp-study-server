@@ -472,7 +472,8 @@ public class StudyDataLoaderMain {
                 continue;
             }
 
-            String email = datstatData.getAsJsonObject().get("datstat_email").getAsString();
+            String email = !datstatData.getAsJsonObject().get("datstat_email").isJsonNull()
+                    ? datstatData.getAsJsonObject().get("datstat_email").getAsString() : "";
             userEmailMap.put(altpid, email.toLowerCase());
 
             String phoneNumber = null;
