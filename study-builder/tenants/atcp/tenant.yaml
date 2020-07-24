@@ -266,8 +266,8 @@ tenant:
     disable_clickjack_protection_headers: false
     include_email_in_reset_pwd_redirect: true
     include_email_in_verify_email_redirect: true
-  friendly_name: >-
-    at-dev.auth0.com,7HzrckGgnPAO7UqDbcuUb9QoTc3V2eHa,https://at-dev.auth0.com/userinfo,https://atcp-dot-broad-ddp-dev.uc.r.appspot.com
+  friendly_name:
+    '##AUTH0_DOMAIN##,##APP_CLIENT_ID##,https://##AUTH0_DOMAIN##/userinfo,##BASE_URL##'
   idle_session_lifetime: 0.08333333333333333
   session_lifetime: 168
   support_email: ''
