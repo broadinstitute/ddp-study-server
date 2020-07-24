@@ -44,6 +44,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -51,6 +52,7 @@ import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceStatusDao;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
+import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiClient;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
@@ -169,7 +171,7 @@ public class StudyDataLoaderMain {
         }
 
         if (!hasMappingFile) {
-            throw new Exception("Please pass mapping file argument. ex: mf  src/test/resources/question_stableid_map.json");
+            throw new Exception("Please pass mapping file argument. ex: mf src/test/resources/question_stableid_map.json");
         }
 
         if (hasFile == hasGoogleBucket) {
@@ -317,9 +319,8 @@ public class StudyDataLoaderMain {
         LOG.info("Initializing db pool for " + dbUrl);
         int maxConnections = cfg.getInt(ConfigFile.NUM_POOLED_CONNECTIONS);
         TransactionWrapper.reset();
-        TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, maxConnections,
-                dbUrl));
-
+        TransactionWrapper.init(new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, maxConnections, dbUrl));
+        TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, LanguageStore::init);
         DBUtils.loadDaoSqlCommands(sqlConfig);
     }
 
@@ -345,6 +346,7 @@ public class StudyDataLoaderMain {
         JsonElement bdconsentSurveyData = surveyData.getAsJsonObject().get("bdconsentsurvey");
         JsonElement combinedConsentSurveyData = surveyData.getAsJsonObject().get("combinedconsentsurvey");
         JsonElement followupSurveyData = surveyData.getAsJsonObject().get("followupsurvey");
+        JsonElement followupConsentSurveyData = surveyData.getAsJsonObject().get("followupconsentsurvey");
 
         surveyDataMap.put("datstatparticipantdata", datstatParticipantData);
         surveyDataMap.put("releasesurvey", releaseSurveyData);
@@ -354,6 +356,7 @@ public class StudyDataLoaderMain {
         surveyDataMap.put("bdconsentsurvey", bdconsentSurveyData);
         surveyDataMap.put("combinedconsentsurvey", combinedConsentSurveyData);
         surveyDataMap.put("followupsurvey", followupSurveyData);
+        surveyDataMap.put("followupconsentsurvey", followupConsentSurveyData);
         return surveyDataMap;
     }
 
@@ -599,6 +602,7 @@ public class StudyDataLoaderMain {
             Boolean hasRelease = false;
             Boolean hasBloodRelease = false;
             Boolean hasFollowup = false;
+            Boolean hasFollowupConsents = false;
             Boolean isSuccess = false;
             Boolean previousRun = false;
             StudyMigrationRun migrationRun;
@@ -611,6 +615,7 @@ public class StudyDataLoaderMain {
                 userGuid = jdbiUser.getUserGuidByAltpid(altpid);
                 if (userGuid == null) {
                     JdbiActivity jdbiActivity = handle.attach(JdbiActivity.class);
+                    JdbiActivityInstance jdbiActivityInstance = handle.attach(JdbiActivityInstance.class);
                     ActivityInstanceDao activityInstanceDao = handle.attach(ActivityInstanceDao.class);
                     ActivityInstanceStatusDao activityInstanceStatusDao = handle.attach(ActivityInstanceStatusDao.class);
                     JdbiUmbrellaStudy jdbiUmbrellaStudy = handle.attach(JdbiUmbrellaStudy.class);
@@ -639,12 +644,15 @@ public class StudyDataLoaderMain {
                     UserDto userDto = jdbiUser.findByUserGuid(userGuid);
 
                     hasAboutYou = (sourceData.get("aboutyousurvey") != null && !sourceData.get("aboutyousurvey").isJsonNull());
-                    hasTissueConsent = (sourceData.get("consentsurvey") != null && !sourceData.get("consentsurvey").isJsonNull());
+                    hasConsent = (sourceData.get("consentsurvey") != null && !sourceData.get("consentsurvey").isJsonNull());
                     hasBloodConsent = (sourceData.get("bdconsentsurvey") != null && !sourceData.get("bdconsentsurvey").isJsonNull());
-                    hasConsent = (sourceData.get("combinedconsentsurvey") != null && !sourceData.get("combinedconsentsurvey").isJsonNull());
+                    hasTissueConsent = (sourceData.get("tissueconsentsurvey") != null
+                            && !sourceData.get("tissueconsentsurvey").isJsonNull());
                     hasRelease = (sourceData.get("releasesurvey") != null && !sourceData.get("releasesurvey").isJsonNull());
                     hasBloodRelease = (sourceData.get("bdreleasesurvey") != null && !sourceData.get("bdreleasesurvey").isJsonNull());
                     hasFollowup = (sourceData.get("followupsurvey") != null && !sourceData.get("followupsurvey").isJsonNull());
+                    hasFollowupConsents = (sourceData.get("followupconsentsurvey") != null
+                            && sourceData.get("followupconsentsurvey").getAsJsonArray().size() > 0);
 
                     var answerDao = handle.attach(AnswerDao.class);
 
@@ -664,7 +672,8 @@ public class StudyDataLoaderMain {
                                 activityCode, createdAt,
                                 jdbiActivity,
                                 activityInstanceDao,
-                                activityInstanceStatusDao);
+                                activityInstanceStatusDao,
+                                jdbiActivityInstance);
                         dataLoader.loadAboutYouSurveyData(handle, sourceData.get("aboutyousurvey"),
                                 mappingData.get("aboutyousurvey"),
                                 studyDto, userDto, instanceDto,
@@ -672,21 +681,19 @@ public class StudyDataLoaderMain {
                     }
 
                     if (hasConsent) {
-                        //For MBC just create activity
-                        //String activityCode = mappingData.get("consentsurvey").getAsJsonObject().get("activity_code").getAsString();
-                        String activityCode = "CONSENT";
+                        String activityCode = mappingData.get("consentsurvey").getAsJsonObject().get("activity_code").getAsString();
 
-                        ActivityInstanceDto instanceDto = dataLoader.createActivityInstance(sourceData.get("combinedconsentsurvey"),
+                        ActivityInstanceDto instanceDto = dataLoader.createActivityInstance(sourceData.get("consentsurvey"),
                                 userGuid, studyId,
                                 activityCode, createdAt,
                                 jdbiActivity,
                                 activityInstanceDao,
-                                activityInstanceStatusDao);
+                                activityInstanceStatusDao, jdbiActivityInstance);
 
-                        /*dataLoader.loadConsentSurveyData(handle, sourceData.get("combinedconsentsurvey"),
+                        dataLoader.loadConsentSurveyData(handle, sourceData.get("consentsurvey"),
                                 mappingData.get("consentsurvey"),
                                 studyDto, userDto, instanceDto,
-                                answerDao);*/
+                                answerDao);
                     }
 
                     if (hasTissueConsent) {
@@ -696,7 +703,7 @@ public class StudyDataLoaderMain {
                                 activityCode, createdAt,
                                 jdbiActivity,
                                 activityInstanceDao,
-                                activityInstanceStatusDao);
+                                activityInstanceStatusDao, jdbiActivityInstance);
                         dataLoader.loadTissueConsentSurveyData(handle, sourceData.get("consentsurvey"),
                                 mappingData.get("tissueconsentsurvey"),
                                 studyDto, userDto, instanceDto,
@@ -710,7 +717,7 @@ public class StudyDataLoaderMain {
                                 activityCode, createdAt,
                                 jdbiActivity,
                                 activityInstanceDao,
-                                activityInstanceStatusDao);
+                                activityInstanceStatusDao, jdbiActivityInstance);
                         dataLoader.loadBloodConsentSurveyData(handle, sourceData.get("bdconsentsurvey"),
                                 mappingData.get("bdconsentsurvey"),
                                 studyDto, userDto, instanceDto, answerDao);
@@ -723,8 +730,9 @@ public class StudyDataLoaderMain {
                                 activityCode, createdAt,
                                 jdbiActivity,
                                 activityInstanceDao,
-                                activityInstanceStatusDao);
-                        dataLoader.loadReleaseSurveyData(handle, //sourceData.get("datstatparticipantdata"),
+                                activityInstanceStatusDao, jdbiActivityInstance);
+
+                        dataLoader.loadReleaseSurveyData(handle,
                                 sourceData.get("releasesurvey"), mappingData.get("releasesurvey"),
                                 studyDto, userDto, instanceDto, answerDao);
                     }
@@ -736,7 +744,7 @@ public class StudyDataLoaderMain {
                                 activityCode, createdAt,
                                 jdbiActivity,
                                 activityInstanceDao,
-                                activityInstanceStatusDao);
+                                activityInstanceStatusDao, jdbiActivityInstance);
                         dataLoader.loadBloodReleaseSurveyData(handle,
                                 sourceData.get("bdreleasesurvey"), mappingData.get("bdreleasesurvey"),
                                 studyDto, userDto, instanceDto, answerDao);
@@ -749,10 +757,29 @@ public class StudyDataLoaderMain {
                                 activityCode, createdAt,
                                 jdbiActivity,
                                 activityInstanceDao,
-                                activityInstanceStatusDao);
+                                activityInstanceStatusDao, jdbiActivityInstance);
                         dataLoader.loadFollowupSurveyData(handle, sourceData.get("followupsurvey"),
                                 mappingData.get("followupsurvey"),
                                 studyDto, userDto, instanceDto, activityInstanceDao.getJdbiActivityInstance(), answerDao);
+                    }
+
+                    if (hasFollowupConsents) {
+                        String activityCode = mappingData.get("followupconsentsurvey").getAsJsonObject().get("activity_code").getAsString();
+                        //can have multiple followupconsent instances
+                        JsonArray followupConsents = sourceData.get("followupconsentsurvey").getAsJsonArray();
+                        for (JsonElement followupConsent : followupConsents) {
+                            if (followupConsent != null && !followupConsent.isJsonNull()) {
+                                ActivityInstanceDto instanceDto = dataLoader.createActivityInstance(followupConsent,
+                                        userGuid, studyId,
+                                        activityCode, createdAt,
+                                        jdbiActivity,
+                                        activityInstanceDao,
+                                        activityInstanceStatusDao, jdbiActivityInstance);
+                                dataLoader.loadFollowupConsentSurveyData(handle, followupConsent,
+                                        mappingData.get("followupconsentsurvey"),
+                                        studyDto, userDto, instanceDto, activityInstanceDao.getJdbiActivityInstance(), answerDao);
+                            }
+                        }
                     }
 
                     JsonElement ddpExitedDt = datstatParticipantData.getAsJsonObject().get("ddp_exited_dt");

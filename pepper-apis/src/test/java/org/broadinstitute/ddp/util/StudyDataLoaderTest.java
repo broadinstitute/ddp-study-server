@@ -180,7 +180,8 @@ public class StudyDataLoaderTest {
         when(mockDataLoader.createActivityInstance(any(JsonElement.class),
                 anyString(), anyLong(), anyString(), anyString(), any(JdbiActivity.class),
                 any(ActivityInstanceDao.class),
-                any(ActivityInstanceStatusDao.class))).thenReturn(mockInstanceDto);
+                any(ActivityInstanceStatusDao.class),
+                any(JdbiActivityInstance.class))).thenReturn(mockInstanceDto);
 
         JdbiActivityInstance mockActivityDao = mock(JdbiActivityInstance.class);
         JdbiUserStudyLegacyData mockLegacyDataDao = mock(JdbiUserStudyLegacyData.class);
@@ -262,9 +263,6 @@ public class StudyDataLoaderTest {
                 mockAnswerDao);
 
         ArgumentCaptor<String> legacyDataCaptor = ArgumentCaptor.forClass(String.class);
-        verify(mockJdbiUserStudyLegacyData, times(1)).insert(anyLong(), anyLong(), anyLong(),
-                anyString(), legacyDataCaptor.capture()
-        );
 
         //release address and physician.streetaddress are saved into legacy_data
         String expectedAddress = "{\"fullName\":null,\"street1\":\"415 Main Street\",\"street2\":null,\"city\":\"Cambridge\","
@@ -294,7 +292,7 @@ public class StudyDataLoaderTest {
                         assertEquals("MA", dto.getState());
                         assertEquals("Boston", dto.getCity());
                         assertEquals("GUID_110", dto.getLegacyGuid());
-                        assertEquals(InstitutionType.INITIAL_BIOPSY, dto.getInstitutionType());
+                        assertEquals(InstitutionType.INSTITUTION, dto.getInstitutionType());
                     } else if (dto.getInstitutionName().equals("BW")) {
                         assertEquals("MA", dto.getState());
                         assertEquals("Boston", dto.getCity());

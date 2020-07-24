@@ -4,7 +4,9 @@ import static spark.Spark.halt;
 
 import java.time.Instant;
 import java.time.ZoneId;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 import com.auth0.exception.Auth0Exception;
@@ -73,8 +75,6 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
     private static final Logger LOG = LoggerFactory.getLogger(UserRegistrationRoute.class);
 
     private static final String MODE_LOGIN = "login";
-    private static final String METADATA_FIRST_NAME = "first_name";
-    private static final String METADATA_LAST_NAME = "last_name";
 
     private final PexInterpreter interpreter;
 
@@ -144,11 +144,11 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                 var auth0User = auth0Util.getAuth0User(auth0UserId.get(), mgmtClient.getToken());
                 if (auth0User.getUserMetadata() != null) {
                     if (payload.getFirstName() == null) {
-                        Object value = auth0User.getUserMetadata().get(METADATA_FIRST_NAME);
+                        Object value = auth0User.getUserMetadata().get(User.METADATA_FIRST_NAME);
                         payload.setFirstName(value == null ? null : (String) value);
                     }
                     if (payload.getLastName() == null) {
-                        Object value = auth0User.getUserMetadata().get(METADATA_LAST_NAME);
+                        Object value = auth0User.getUserMetadata().get(User.METADATA_LAST_NAME);
                         payload.setLastName(value == null ? null : (String) value);
                     }
                 }
@@ -570,7 +570,8 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
         firstName = StringUtils.isNotBlank(firstName) ? firstName.trim() : null;
         String lastName = payload.getLastName();
         lastName = StringUtils.isNotBlank(lastName) ? lastName.trim() : null;
-        long languageId = determineUserLanguage(handle, payload).getId();
+        LanguageDto languageDto = determineUserLanguage(handle, payload);
+        long languageId = languageDto.getId();
         ZoneId timeZone = parseUserTimeZone(payload.getTimeZone());
 
         if (profile == null) {
@@ -606,6 +607,20 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
             if (shouldUpdate) {
                 profileDao.updateProfile(updated.build());
                 LOG.info("Updated user profile for user with guid {}", user.getGuid());
+            }
+        }
+
+        String auth0UserId = user.getAuth0UserId();
+        if (StringUtils.isNotBlank(auth0UserId)) {
+            LOG.info("User {} has auth0 account, proceeding to sync user_metadata", user.getGuid());
+            Map<String, Object> metadata = new HashMap<>();
+            metadata.put(User.METADATA_LANGUAGE, languageDto.getIsoCode());
+            var result = Auth0ManagementClient.forUser(handle, user.getGuid()).updateUserMetadata(auth0UserId, metadata);
+            if (result.hasThrown() || result.hasError()) {
+                var e = result.hasThrown() ? result.getThrown() : result.getError();
+                LOG.error("Error while updating user_metadata for user {}, user's language may be out-of-sync", user.getGuid(), e);
+            } else {
+                LOG.info("Updated user_metadata for user {}", user.getGuid());
             }
         }
     }

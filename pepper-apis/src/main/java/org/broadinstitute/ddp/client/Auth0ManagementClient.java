@@ -28,7 +28,10 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.annotations.SerializedName;
 import org.apache.http.HttpHeaders;
 import org.apache.http.entity.ContentType;
+import org.broadinstitute.ddp.db.dao.JdbiAuth0Tenant;
+import org.broadinstitute.ddp.db.dto.Auth0TenantDto;
 import org.broadinstitute.ddp.exception.DDPException;
+import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,9 +59,25 @@ public class Auth0ManagementClient {
     private final URI baseUrl;
     private final String clientId;
     private final String clientSecret;
-    private final String tokenLookupKey;    // A unique key for the client we're working with for looking up the cached token.
+    // A unique key for the client we're working with for looking up the cached token.
+    private final String tokenLookupKey;
     private final ManagementAPI mgmtApi;
     private final HttpClient httpClient;
+
+    /**
+     * Find the auth0 tenant for the user and create Auth0 Management client for it.
+     *
+     * @param handle   the database handle
+     * @param userGuid the user guid
+     * @return the management client
+     */
+    public static Auth0ManagementClient forUser(Handle handle, String userGuid) {
+        Auth0TenantDto auth0TenantDto = handle.attach(JdbiAuth0Tenant.class).findByUserGuid(userGuid);
+        return new Auth0ManagementClient(
+                auth0TenantDto.getDomain(),
+                auth0TenantDto.getManagementClientId(),
+                auth0TenantDto.getManagementClientSecret());
+    }
 
     public Auth0ManagementClient(String auth0Domain, String mgmtClientId, String mgmtClientSecret) {
         // Use empty token to initialize. The token should be set before every API request since they can expire.
@@ -228,6 +247,28 @@ public class Auth0ManagementClient {
             ticket.setResultUrl(redirectUrl);
             PasswordChangeTicket createdTicket = mgmtApi.tickets().requestPasswordChange(ticket).execute();
             return ApiResult.ok(200, createdTicket.getTicket());
+        } catch (APIException e) {
+            return ApiResult.err(e.getStatusCode(), e);
+        } catch (Exception e) {
+            return ApiResult.thrown(e);
+        }
+    }
+
+    /**
+     * Update user metadata. Note that Auth0 only allows merging top-level properties in user_metadata. Any nested
+     * object properties will be replaced instead of merged.
+     *
+     * @param auth0UserId the auth0 user id
+     * @param metadata    the metadata
+     * @return result with response user, or error response
+     */
+    public ApiResult<User, APIException> updateUserMetadata(String auth0UserId, Map<String, Object> metadata) {
+        try {
+            mgmtApi.setApiToken(getToken());
+            var payload = new User();
+            payload.setUserMetadata(metadata);
+            var resp = mgmtApi.users().update(auth0UserId, payload).execute();
+            return ApiResult.ok(200, resp);
         } catch (APIException e) {
             return ApiResult.err(e.getStatusCode(), e);
         } catch (Exception e) {

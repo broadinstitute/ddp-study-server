@@ -19,20 +19,25 @@ import com.google.maps.model.Geometry;
 import com.google.maps.model.LatLng;
 import com.google.maps.model.PlusCode;
 import com.google.openlocationcode.OpenLocationCode;
+import com.typesafe.config.Config;
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.client.ApiResult;
 import org.broadinstitute.ddp.client.GoogleMapsClient;
+import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.address.MailAddress;
 import org.broadinstitute.ddp.model.address.OLCPrecision;
+import org.broadinstitute.ddp.util.ConfigManager;
 import org.jdbi.v3.core.Handle;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.testcontainers.shaded.org.apache.commons.lang.StringUtils;
 
 public class OLCServiceTest extends TxnAwareBaseTest {
@@ -45,6 +50,7 @@ public class OLCServiceTest extends TxnAwareBaseTest {
     private static final String PLUSCODE_LEAST = "87000000+";
     private static final double LAT = 42.362937;
     private static final double LNG = -71.088687;
+    private static final Logger LOG = LoggerFactory.getLogger(OLCServiceTest.class);
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
@@ -245,5 +251,16 @@ public class OLCServiceTest extends TxnAwareBaseTest {
                 null, null, null, null, false);
 
         assertEquals(PLUSCODE_FULL, service.calculateFullPlusCode(address));
+    }
+
+    //Uncomment to run this!
+    //@Test
+    public void computePluscode() {
+        String address = "415 Main Street, Cambridge, MA 90032";
+        Config cfg = ConfigManager.getInstance().getConfig();
+        String geocodingKey = cfg.getString(ConfigFile.GEOCODING_API_KEY);
+        OLCService location = new OLCService(geocodingKey);
+        String result = location.calculatePlusCodeWithPrecision(address, location.DEFAULT_OLC_PRECISION);
+        LOG.info("Result: {}", result);
     }
 }

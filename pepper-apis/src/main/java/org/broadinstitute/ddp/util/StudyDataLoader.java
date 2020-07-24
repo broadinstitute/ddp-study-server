@@ -98,8 +98,6 @@ public class StudyDataLoader {
     private static final String DEFAULT_PREFERRED_LANGUAGE_CODE = "en";
     private static final String DATSTAT_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss'Z'";
     private static final int DSM_DEFAULT_ON_DEMAND_TRIGGER_ID = -2;
-    private Long defaultKitCreationEpoch = null;
-
     Map<String, List<String>> sourceDataSurveyQs;
     Map<String, String> altNames;
     Map<String, String> dkAltNames;
@@ -108,6 +106,7 @@ public class StudyDataLoader {
     Auth0Util auth0Util;
     String auth0Domain;
     String mgmtToken;
+    private Long defaultKitCreationEpoch = null;
 
     public StudyDataLoader(Config cfg) {
 
@@ -140,17 +139,37 @@ public class StudyDataLoader {
         altNames.put("AMERICAN_INDIAN", "American Indian or Native American");
         altNames.put("OTHER_EAST_ASIAN", "Other East Asian");
         altNames.put("SOUTH_EAST_ASIAN", "South East Asian or Indian");
-        altNames.put("BLACK", "Black or African American");
-        altNames.put("NATIVE_HAWAIIAN", "Native Hawaiian or other Pacific Islander");
-        altNames.put("PREFER_NOT_ANSWER", "I prefer not to answer");
-
+        altNames.put("BLACK", "black_african_american");
+        altNames.put("NATIVE_HAWAIIAN", "hawaiian");
+        altNames.put("PREFER_NOT_ANSWER", "prefer_no_answer");
         altNames.put("AXILLARY_LYMPH_NODES", "aux_lymph_node");
         altNames.put("OTHER_LYMPH_NODES", "other_lymph_node");
+
+        //MPC THERAPIES options entries
+        altNames.put("xtandi", "xtandi_enzalutamide");
+        altNames.put("zytiga", "zytiga_abiraterone");
+        altNames.put("docetaxel", "docetaxel_taxotere");
+        altNames.put("taxol", "paclitaxel_taxol");
+        altNames.put("jevtana", "jevtana_cabazitaxel");
+        altNames.put("opdivo", "opdivo_nivolumab");
+        altNames.put("yervoy", "yervoy_ipilumimab");
+        altNames.put("tecentriq", "tecentriq_aztezolizumab");
+        altNames.put("lynparza", "lynparza_olaparib");
+        altNames.put("rubraca", "rubraca_rucaparib");
+        altNames.put("TAXOTERE", "docetaxel_taxotere");
+        altNames.put("PARAPLATIN", "carboplatin");
+        altNames.put("ETOPOPHOS", "etoposide");
+        altNames.put("NOVANTRONE", "mitoxantrone");
+        altNames.put("EMCYT", "estramustine");
+        altNames.put("FIRMAGON", "degareliz");
+        altNames.put("YES", "other_therapy");
+        altNames.put("CLINICAL_TRIAL", "exp_clinical_trial");
 
         altNames.put("drugstart_year", "drugstartyear");
         altNames.put("drugstart_month", "drugstartmonth");
         altNames.put("drugend_year", "drugendyear");
         altNames.put("drugend_month", "drugendmonth");
+
     }
 
     void loadMailingListData(Handle handle, JsonElement data, String studyCode) {
@@ -195,7 +214,7 @@ public class StudyDataLoader {
         String altpid = datstatData.getAsJsonObject().get("datstat_altpid").getAsString();
         String userGuid = jdbiUser.getUserGuidByAltpid(altpid);
         if (userGuid != null) {
-            LOG.warn("Looks like  Participant data already loaded: " + userGuid);
+            LOG.warn("Looks like Participant data already loaded: " + userGuid);
             return userGuid;
             //watch out.. early return
         }
@@ -310,7 +329,8 @@ public class StudyDataLoader {
                                                       long studyId, String activityCode, String createdAt,
                                                       JdbiActivity jdbiActivity,
                                                       ActivityInstanceDao activityInstanceDao,
-                                                      ActivityInstanceStatusDao activityInstanceStatusDao) throws Exception {
+                                                      ActivityInstanceStatusDao activityInstanceStatusDao,
+                                                      JdbiActivityInstance jdbiActivityInstance) throws Exception {
 
         BaseSurvey baseSurvey = getBaseSurvey(surveyData);
         if (baseSurvey.getDdpCreated() == null) {
@@ -393,7 +413,8 @@ public class StudyDataLoader {
         }
 
         // Read only is always undefined for things that aren't consent- we rely on the user being terminated to show read only activities
-        boolean itIsCompletedConsent = (activityCode == "CONSENT" || activityCode == "TISSUECONSENT" || activityCode == "BLOODCONSENT")
+        boolean itIsCompletedConsent = (activityCode == "CONSENT" || activityCode == "TISSUECONSENT" || activityCode == "BLOODCONSENT"
+                || activityCode == "FOLLOWUPCONSENT")
                 && instanceCurrentStatus == InstanceStatusType.COMPLETE;
         Boolean isReadonly = itIsCompletedConsent ? true : null;
         ActivityInstanceDto dto = activityInstanceDao
@@ -410,6 +431,8 @@ public class StudyDataLoader {
         if (InstanceStatusType.IN_PROGRESS == instanceCurrentStatus) {
             activityInstanceStatusDao
                     .insertStatus(activityInstanceId, InstanceStatusType.IN_PROGRESS, ddpLastUpdatedAt, participantGuid);
+            //reload activityInstance to get updated status
+            dto = jdbiActivityInstance.getByActivityInstanceId(dto.getId()).get();
         } else if (InstanceStatusType.COMPLETE == instanceCurrentStatus) {
             if (ddpCompletedAt == null) {
                 //ddpCompletedAt = ddpLastUpdatedAt;
@@ -421,6 +444,7 @@ public class StudyDataLoader {
                 activityInstanceStatusDao
                         .insertStatus(activityInstanceId, InstanceStatusType.COMPLETE, ddpLastUpdatedAt, participantGuid);
             }
+            dto = jdbiActivityInstance.getByActivityInstanceId(dto.getId()).get();
         } else {
             //CREATED
             activityInstanceStatusDao.insertStatus(activityInstanceId, InstanceStatusType.CREATED, ddpCreatedAt, participantGuid);
@@ -524,22 +548,19 @@ public class StudyDataLoader {
             return;
         }
 
-        addLegacySurveyAddress(handle, studyDto, userDto, instanceDto, surveyData, "tissuerelease");
-
         processSurveyData(handle, "releasesurvey", surveyData, mappingData,
                 studyDto, userDto, instanceDto, answerDao);
 
-        //handle agreement
-        String surveyStatus = surveyData.getAsJsonObject().get("survey_status").getAsString();
-        if (surveyStatus.equalsIgnoreCase("COMPLETE")) {
-            answerAgreementQuestion("TISSUERELEASE_AGREEMENT", userDto.getUserGuid(),
-                    instanceDto.getGuid(), Boolean.TRUE, answerDao);
-        }
+        //add physicians
+        processInstitutions(handle, surveyData, userDto, studyDto,
+                "physician_list", InstitutionType.PHYSICIAN, "releasesurvey");
 
+        //load initialbiopsy instiution
+        addBiopsyInstitutions(handle, surveyData, userDto, studyDto);
+
+        //add institutions
         processInstitutions(handle, surveyData, userDto, studyDto,
-                "physician_list", InstitutionType.PHYSICIAN, "releasesurvey", instanceDto);
-        processInstitutions(handle, surveyData, userDto, studyDto,
-                "institution_list", InstitutionType.INITIAL_BIOPSY, "releasesurvey", instanceDto);
+                "institution_list", InstitutionType.INSTITUTION, "releasesurvey");
 
         updateUserStudyEnrollment(handle, surveyData, userDto.getUserGuid(), studyDto.getGuid());
 
@@ -711,6 +732,29 @@ public class StudyDataLoader {
         }
 
         processSurveyData(handle, "followupsurvey", surveyData, mappingData,
+                studyDto, userDto, instanceDto, answerDao);
+
+        Integer dsmTriggerId = getIntegerValueFromElement(surveyData, "ddp_dsmtriggerid");
+        activityInstanceDao.updateOndemandTriggerId(userDto.getUserId(), instanceDto.getId(),
+                dsmTriggerId == null ? DSM_DEFAULT_ON_DEMAND_TRIGGER_ID : dsmTriggerId.intValue());
+    }
+
+    public void loadFollowupConsentSurveyData(Handle handle,
+                                              JsonElement surveyData,
+                                              JsonElement mappingData,
+                                              StudyDto studyDto,
+                                              UserDto userDto,
+                                              ActivityInstanceDto instanceDto,
+                                              JdbiActivityInstance activityInstanceDao,
+                                              AnswerDao answerDao) throws Exception {
+
+        LOG.info("Populating FollowupConsent Survey...");
+        if (surveyData == null || surveyData.isJsonNull()) {
+            LOG.warn("NO Followup Survey !");
+            return;
+        }
+
+        processSurveyData(handle, "followupconsentsurvey", surveyData, mappingData,
                 studyDto, userDto, instanceDto, answerDao);
 
         Integer dsmTriggerId = getIntegerValueFromElement(surveyData, "ddp_dsmtriggerid");
@@ -1067,9 +1111,12 @@ public class StudyDataLoader {
                 case "Picklist":
                     processPicklistQuestion(thisMap, sourceData, surveyName, participantGuid, instanceGuid, answerDao);
                     break;
+                case "PicklistGroup":
+                    processPicklistGroupQuestion(thisMap, sourceData, surveyName, participantGuid, instanceGuid, answerDao);
+                    break;
                 //case "YesNoDkPicklist":
-                //    processYesNoDkPicklistQuestion(handle, thisMap, sourceData, surveyName, participantGuid, instanceGuid, answerDao);
-                //    break; //todo
+                // processYesNoDkPicklistQuestion(handle, thisMap, sourceData, surveyName, participantGuid, instanceGuid, answerDao);
+                // break; //todo
                 case "Boolean":
                     processBooleanQuestion(thisMap, sourceData, surveyName, participantGuid, instanceGuid, answerDao);
                     break;
@@ -1115,12 +1162,36 @@ public class StudyDataLoader {
 
         JsonElement valueEl = sourceData.getAsJsonObject().get(fieldName);
         if (valueEl != null && !valueEl.isJsonNull() && StringUtils.isNotEmpty(valueEl.getAsString())) {
-            LOG.debug(" study: {} .. userguid: {}  actinstanceguid: {} fieldName: {} fieldValue: {} ",
+            LOG.debug(" study: {} .. userguid: {} actinstanceguid: {} fieldName: {} fieldValue: {} ",
                     studyId, participantId, instanceId, fieldName, valueEl.getAsString());
 
             handle.attach(JdbiUserStudyLegacyData.class).insert(participantId, studyId, instanceId,
                     fieldName, valueEl.getAsString());
         }
+    }
+
+    private String processPicklistGroupQuestion(JsonElement mapElement, JsonElement sourceDataElement, String surveyName,
+                                           String participantGuid, String instanceGuid, AnswerDao answerDao) {
+
+        String answerGuid = null;
+        String stableId = getStringValueFromElement(mapElement, "stable_id");
+
+        if (mapElement.getAsJsonObject().get("groups") == null || mapElement.getAsJsonObject().get("groups").isJsonNull()) {
+            return null;
+        }
+        //iterate through groups
+        JsonArray groupEls = mapElement.getAsJsonObject().get("groups").getAsJsonArray();
+        List<SelectedPicklistOption> selectedPicklistOptions = new ArrayList<>();
+        for (JsonElement group: groupEls) {
+            String groupName = getStringValueFromElement(group, "name");
+            //get selected picklists options
+            selectedPicklistOptions.addAll(getSelectedPicklistOptions(group, sourceDataElement, groupName, surveyName));
+        }
+        if (CollectionUtils.isNotEmpty(selectedPicklistOptions)) {
+            answerGuid = answerPickListQuestion(stableId, participantGuid, instanceGuid, selectedPicklistOptions, answerDao);
+        }
+
+        return answerGuid;
     }
 
     private String processPicklistQuestion(JsonElement mapElement, JsonElement sourceDataElement, String surveyName,
@@ -1413,9 +1484,16 @@ public class StudyDataLoader {
         if (stableId == null) {
             return null;
         }
+
+        boolean agreed = valueEl.getAsBoolean();
+        String sourceType = getStringValueFromElement(mapElement, "source_type");
+        if (StringUtils.isNotBlank(sourceType) && sourceType.equalsIgnoreCase("integer")) {
+            agreed = (valueEl.getAsInt() == 1);
+        }
+
         sourceDataSurveyQs.get(surveyName).add(questionName);
 
-        answerGuid = answerAgreementQuestion(stableId, participantGuid, instanceGuid, valueEl.getAsBoolean(), answerDao);
+        answerGuid = answerAgreementQuestion(stableId, participantGuid, instanceGuid, agreed, answerDao);
         return answerGuid;
     }
 
@@ -1706,9 +1784,27 @@ public class StudyDataLoader {
     }
 
 
+    private void addBiopsyInstitutions(Handle handle, JsonElement sourceDataElement, UserDto userDto, StudyDto studyDto) {
+
+        MedicalProviderDao medicalProviderDao = handle.attach(MedicalProviderDao.class);
+        //sourceDataSurveyQs.get("releasesurvey").add("initialbiopsy");
+
+        String instName = getStringValueFromElement(sourceDataElement, "initial_biopsy_institution");
+        String instCity = getStringValueFromElement(sourceDataElement, "initial_biopsy_city");
+        String instState = getStringValueFromElement(sourceDataElement, "initial_biopsy_state");
+
+        if (StringUtils.isNotBlank(instName)) {
+            String guid = getMedicalProviderGuid(handle);
+            medicalProviderDao.insert(new MedicalProviderDto(
+                    null,
+                    guid, userDto.getUserId(), studyDto.getId(),
+                    InstitutionType.INITIAL_BIOPSY, instName, null, instCity, instState,
+                    null, null, null, null));
+        }
+    }
+
     private void processInstitutions(Handle handle, JsonElement sourceDataElement, UserDto userDto, StudyDto studyDto,
-                                     String elementName, InstitutionType type, String surveyName,
-                                     ActivityInstanceDto instanceDto) {
+                                     String elementName, InstitutionType type, String surveyName) {
 
         MedicalProviderDao medicalProviderDao = handle.attach(MedicalProviderDao.class);
         sourceDataSurveyQs.get(surveyName).add(elementName);
@@ -1717,8 +1813,6 @@ public class StudyDataLoader {
             return;
         }
 
-        boolean isFirst = true;
-        InstitutionType thisType = type;
         JsonArray medicalProviderDataArray = medicalProviderDataEl.getAsJsonArray();
         for (JsonElement physicianEl : medicalProviderDataArray) {
             String physicianId = getStringValueFromElement(physicianEl, "physicianid");
@@ -1737,12 +1831,6 @@ public class StudyDataLoader {
                 legacyGuid = physicianId;
             } else {
                 legacyGuid = institutionId;
-                if (isFirst) { //hack for MBC to load first one as Initial Biopsy and rest as Institutions
-                    thisType = InstitutionType.INITIAL_BIOPSY;
-                    isFirst = false;
-                } else {
-                    thisType = InstitutionType.INSTITUTION;
-                }
             }
 
             medicalProviderDao.insert(new MedicalProviderDto(
@@ -1750,7 +1838,7 @@ public class StudyDataLoader {
                     guid,
                     userDto.getUserId(),
                     studyDto.getId(),
-                    thisType,
+                    type,
                     institution,
                     name,
                     city,
@@ -1760,12 +1848,6 @@ public class StudyDataLoader {
                     legacyGuid,
                     streetAddress
             ));
-        }
-    }
-
-    class UserExistsException extends Exception {
-        UserExistsException(String msg) {
-            super(msg);
         }
     }
 
@@ -1779,7 +1861,7 @@ public class StudyDataLoader {
         }
         int actualQsCount = sourceDataEl.getAsJsonObject().entrySet().size();
         Set<Map.Entry<String, JsonElement>> actualQs = sourceDataEl.getAsJsonObject().entrySet();
-        LOG.info("survey Name: {}  .. Qs looked at count: {} ... Actual source Qs: {} ", surveyName,
+        LOG.info("survey Name: {} .. Qs looked at count: {} ... Actual source Qs: {} ", surveyName,
                 mappingQuestions.size(), actualQsCount);
         for (String question : mappingQuestions) {
             LOG.debug(" Mapping Question: {} ", question);
@@ -1808,6 +1890,12 @@ public class StudyDataLoader {
         return new DateValue(gregorianCalendar.get(Calendar.YEAR),
                 gregorianCalendar.get(Calendar.MONTH) + 1, // GregorianCalendar months are 0 indexed
                 gregorianCalendar.get(Calendar.DAY_OF_MONTH));
+    }
+
+    class UserExistsException extends Exception {
+        UserExistsException(String msg) {
+            super(msg);
+        }
     }
 
 }
