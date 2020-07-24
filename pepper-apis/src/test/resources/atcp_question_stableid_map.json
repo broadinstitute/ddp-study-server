@@ -2090,7 +2090,7 @@
           },
           {
             "name": "datstat_physicalstate",
-            "stable_id": "REGISTRATION_STATE",
+            "stable_id": "REGISTRATION_STATE_PROVINCE",
             "type": "Picklist",
             "source_type": "string",
             "options": null

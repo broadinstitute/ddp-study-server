@@ -1396,6 +1396,9 @@ public class StudyDataLoader {
             String value = getStringValueFromElement(sourceDataElement, questionName);
             if (StringUtils.isNotEmpty(value)) {
                 selectedPicklistOptions.add(new SelectedPicklistOption(value));
+                if (questionName.equals("datstat_physicalstate")) {
+                    stableId = value.substring(0,2) + "_" + stableId;
+                }
             }
             sourceDataSurveyQs.get(surveyName).add(questionName);
         } else if (StringUtils.isNotEmpty(sourceType)) {
