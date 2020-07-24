@@ -12,6 +12,7 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import com.auth0.client.mgmt.ManagementAPI;
@@ -73,6 +74,21 @@ public class Auth0ManagementClient {
      */
     public static Auth0ManagementClient forUser(Handle handle, String userGuid) {
         Auth0TenantDto auth0TenantDto = handle.attach(JdbiAuth0Tenant.class).findByUserGuid(userGuid);
+        return new Auth0ManagementClient(
+                auth0TenantDto.getDomain(),
+                auth0TenantDto.getManagementClientId(),
+                auth0TenantDto.getManagementClientSecret());
+    }
+
+    /**
+     * Find the auth0 tenant for the study and create Auth0 Management client for it.
+     *
+     * @param handle    the database handle
+     * @param studyGuid the study guid
+     * @return the management client
+     */
+    public static Auth0ManagementClient forStudy(Handle handle, String studyGuid) {
+        Auth0TenantDto auth0TenantDto = handle.attach(JdbiAuth0Tenant.class).findByStudyGuid(studyGuid);
         return new Auth0ManagementClient(
                 auth0TenantDto.getDomain(),
                 auth0TenantDto.getManagementClientId(),
@@ -252,6 +268,40 @@ public class Auth0ManagementClient {
         } catch (Exception e) {
             return ApiResult.thrown(e);
         }
+    }
+
+    /**
+     * Fetch the auth0 user. Will retry a few times if hit rate limit.
+     *
+     * @param auth0UserId the auth0 user id
+     * @return result with the user, or error response
+     */
+    public ApiResult<User, APIException> getAuth0User(String auth0UserId) {
+        int numTries = 3;
+        ApiResult<User, APIException> res = null;
+        while (numTries > 0) {
+            try {
+                mgmtApi.setApiToken(getToken());
+                var user = mgmtApi.users().get(auth0UserId, null).execute();
+                res = ApiResult.ok(200, user);
+            } catch (APIException e) {
+                res = ApiResult.err(e.getStatusCode(), e);
+            } catch (Exception e) {
+                res = ApiResult.thrown(e);
+            }
+            if (res.getStatusCode() == 429) {
+                LOG.error("Hit rate limit while fetching auth0 user {}, retrying", auth0UserId, res.getError());
+                try {
+                    TimeUnit.MILLISECONDS.sleep(100L);
+                } catch (InterruptedException e) {
+                    LOG.warn("Interrupted while waiting after rate limit", e);
+                }
+            } else {
+                break;
+            }
+            numTries--;
+        }
+        return res;
     }
 
     /**
