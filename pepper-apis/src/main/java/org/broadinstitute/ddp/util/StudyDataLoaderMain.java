@@ -711,7 +711,8 @@ public class StudyDataLoaderMain {
                                 activityCode, createdAt,
                                 jdbiActivity,
                                 activityInstanceDao,
-                                activityInstanceStatusDao);
+                                activityInstanceStatusDao,
+                                jdbiActivityInstance);
                         dataLoader.loadMedicalSurveyData(handle, sourceData.get("MedicalSurvey"),
                                 mappingData.get("MedicalSurvey"),
                                 studyDto, userDto, instanceDto, answerDao);
@@ -726,7 +727,8 @@ public class StudyDataLoaderMain {
                                 activityCode, createdAt,
                                 jdbiActivity,
                                 activityInstanceDao,
-                                activityInstanceStatusDao);
+                                activityInstanceStatusDao,
+                                jdbiActivityInstance);
                         dataLoader.loadPrionConsentSurveyData(handle, sourceData.get("ConsentSurvey"),
                                 mappingData.get("ConsentSurvey"),
                                 studyDto, userDto, instanceDto, answerDao);
