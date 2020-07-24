@@ -16,6 +16,7 @@ public abstract class ConfigAwareBaseTest {
 
     @BeforeClass
     public static void initializeConfig() {
+        System.setProperty("cachingDisabled", "true");
         cfg = ConfigManager.getInstance().getConfig();
         sqlConfig = ConfigFactory.parseResources(ConfigFile.SQL_CONF);
     }

@@ -58,8 +58,9 @@ public class CacheService {
     }
 
     private CacheService() {
+        boolean cachingDisabled = System.getProperty("cachingDisabled", "false").toLowerCase().equals("true");
         boolean configFileSet = ConfigManager.getInstance().getConfig().hasPath(ConfigFile.JCACHE_CONFIGURATION_FILE);
-        if (configFileSet) {
+        if (configFileSet && !cachingDisabled) {
             String configFileName = ConfigManager.getInstance().getConfig().getString(ConfigFile.JCACHE_CONFIGURATION_FILE);
             Path redissonConfigPath = Paths.get(configFileName);
             if (!redissonConfigPath.toFile().exists()) {
@@ -70,7 +71,7 @@ public class CacheService {
             String redisAddress = ConfigManager.getInstance().getConfig().getString(ConfigFile.REDIS_SERVER_ADDRESS);
             Config redissonConfig = new Config();
             redissonConfig.useSingleServer()
-                    .setTimeout(1000000)
+                    .setTimeout(30000)
                     .setAddress(redisAddress);
             redissonClient = Redisson.create(redissonConfig);
         } else {

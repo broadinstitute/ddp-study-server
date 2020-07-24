@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.db.dao;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -55,7 +56,8 @@ public class JdbiQuestionCached extends SQLObjectWrapper<JdbiQuestion> implement
                     stableId));
             if (cachedQuestionDtos == null) {
                 Map<String, List<QuestionDto>> mapOfDtos = cacheQuestionDtosForStudyActivity(activityInstance.getActivityId());
-                cachedQuestionDtos = mapOfDtos.get(buildQuestionKey(activityInstance.getActivityId(), stableId));
+                cachedQuestionDtos = mapOfDtos.getOrDefault(buildQuestionKey(activityInstance.getActivityId(), stableId),
+                        Collections.emptyList());
             }
             List<QuestionDto> filteredDtos = cachedQuestionDtos.stream()
                     .filter(dto -> (dto.getRevisionStart() <= activityInstance.getCreatedAtMillis())

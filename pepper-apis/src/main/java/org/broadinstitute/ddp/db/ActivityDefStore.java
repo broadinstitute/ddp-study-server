@@ -76,6 +76,10 @@ public class ActivityDefStore {
         }
     }
 
+    public boolean clearCachedActivityValidationDtos(long activityId) {
+        return validationDtoListMap.remove(activityId) != null;
+    }
+
     public Optional<ActivityDto> findActivityDto(Handle handle, long activityId) {
         synchronized (lockVar) {
             return Optional.ofNullable(activityDtoMap.computeIfAbsent(activityId, id ->

@@ -138,6 +138,10 @@ public class IntegrationTestSuite {
 
     @BeforeClass
     public static void setup() {
+        setup(true);
+    }
+
+    public static void setup(boolean isCachingDisabled) {
         if (callCounter > 0) {
             // Test suite has been setup already, increment and exit.
             callCounter += 1;
@@ -167,7 +171,7 @@ public class IntegrationTestSuite {
 
         initializeDatabase();
         if (!isTestServerRunning()) {
-            startupTestServer();
+            startupTestServer(isCachingDisabled);
         }
         insertTestData();
         TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, LanguageStore::init);
@@ -181,8 +185,8 @@ public class IntegrationTestSuite {
         MySqlTestContainerUtil.initializeTestDbs();
     }
 
-    public static void startupTestServer() {
-        bootAppServer();
+    public static void startupTestServer(boolean isCacheDisabled) {
+        bootAppServer(isCacheDisabled);
         waitForServer(1000);
     }
 
@@ -285,13 +289,14 @@ public class IntegrationTestSuite {
         TransactionWrapper.reset();
     }
 
-    private static void bootAppServer() {
+    private static void bootAppServer(boolean isCacheDisabled) {
         Config cfg = RouteTestUtil.getConfig();
         int port = cfg.getInt(ConfigFile.PORT);
         boolean spawnProcess = cfg.getBoolean(ConfigFile.BOOT_TEST_APP_IN_SEPARATE_PROCESS);
 
         Map<String, String> serverArgs = new HashMap<>();
         serverArgs.put("config.file", RouteTestUtil.getConfigFilePath());
+        serverArgs.put("cachingDisabled", isCacheDisabled + "");
 
         int bootTimeoutSeconds = 30;
         LOG.info("Starting app on port {}", port);
@@ -357,12 +362,33 @@ public class IntegrationTestSuite {
     public abstract static class TestCase {
         @BeforeClass
         public static void doSuiteSetup() {
-            IntegrationTestSuite.setup();
+            IntegrationTestSuite.setup(true);
         }
 
         @AfterClass
         public static void doSuiteTearDown() {
             IntegrationTestSuite.tearDown();
+        }
+
+    }
+
+    /**
+     * Base class that provides the hooks back into the test suite in order to allow a single test
+     * class or test method to run within an initialized environment for route testing.
+     */
+    public abstract static class TestCaseWithCacheEnabled {
+        @BeforeClass
+        public static void doSuiteSetup() {
+            IntegrationTestSuite.setup(false);
+        }
+
+        @AfterClass
+        public static void doSuiteTearDown() {
+            IntegrationTestSuite.tearDown();
+        }
+
+        protected static boolean isCacheDisabled() {
+            return true;
         }
     }
 
@@ -388,7 +414,7 @@ public class IntegrationTestSuite {
 
     public static void main(String[] args) {
         initializeDatabase();
-        startupTestServer();
+        startupTestServer(true);
         insertTestData();
         TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, LanguageStore::init);
     }
