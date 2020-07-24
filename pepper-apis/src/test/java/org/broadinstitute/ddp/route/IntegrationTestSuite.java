@@ -315,7 +315,7 @@ public class IntegrationTestSuite {
                 LOG.error("App starter failed.", e);
             }
         } else {
-            runDdpServer();
+            runDdpServer(isCacheDisabled);
         }
 
     }
@@ -337,10 +337,10 @@ public class IntegrationTestSuite {
         return isDebugOn;
     }
 
-    private static void runDdpServer() {
+    private static void runDdpServer(boolean isCachingDisabled) {
         long startTime = System.currentTimeMillis();
         LOG.info("Booting ddp...");
-
+        System.setProperty("cachingDisabled", isCachingDisabled + "");
         DataDonationPlatform.main(new String[] {});
 
         LOG.info("It took {}ms to start ddp", (System.currentTimeMillis() - startTime));
