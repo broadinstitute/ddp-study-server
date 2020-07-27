@@ -610,7 +610,7 @@ commands:
             - ddp-cache-{{ checksum "/home/circleci/.ddp-cache-md5.txt" }}
             - ddp-cache-
 
-  store-ddp-cache:
+  save-ddp-cache:
     description: Save ddp cache
     steps:
       - run:
@@ -663,7 +663,7 @@ jobs:
           skip_checkstyle: true
           additional_options: '-Dtest=ServerInSameProcessIntegrationTestSuite'
           restore_m2_cache: false
-      - store-ddp-cache
+      - save-ddp-cache
 
   parallel-compile-and-test-job:
     executor:
@@ -692,7 +692,7 @@ jobs:
           skip_tests: false
           additional_options: '-PCircleciParallelBuild -Dsurefire.excludesFile=$IGNORE_CLASS_LIST_PATH'
           save_m2_cache: true
-      - store-ddp-cache
+      - save-ddp-cache
       - run:
           name: 'Check node index to save workspace only once'
           command: |
