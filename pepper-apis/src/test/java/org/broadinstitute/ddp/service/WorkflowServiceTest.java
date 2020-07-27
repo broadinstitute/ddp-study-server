@@ -17,7 +17,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
-import org.broadinstitute.ddp.constants.TestConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
