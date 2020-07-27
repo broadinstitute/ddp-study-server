@@ -589,6 +589,49 @@ commands:
             cd << parameters.repo_path >>/study-builder
             mvn test-compile --batch-mode -DskipTests -Dmaven.repo.local=<< parameters.m2_repo >>
 
+  restore-ddp-cache:
+    description: Restore ddp cache
+    steps:
+      - run:
+          name: Download ddp-cache-md5 artifact
+          command: |
+            ddp_cache_md5='/home/circleci/.ddp-cache-md5.txt'
+            latest_artifact_url="https://circleci.com/api/v1.1/project/github/broadinstitute/ddp-study-server/latest/artifacts?circle-token=$CIRCLE_TOKEN"
+            md5_artifact_url=$(curl -sL "$latest_artifact_url" | jq -r '.[] | select(.node_index == 0) | select(.path == "ddp-cache-md5.txt") | .url')
+            if [[ -n "$md5_artifact_url" ]]; then
+              echo "Downloading artifact file [$md5_artifact_url] to file [$ddp_cache_md5]"
+              curl -sL "$md5_artifact_url?circle-token=$CIRCLE_TOKEN" -o "$ddp_cache_md5"
+            else
+              echo "No artifact file found, creating empty file [$ddp_cache_md5]"
+              touch "$ddp_cache_md5"
+            fi
+      - restore_cache:
+          keys:
+            - ddp-cache-{{ checksum "/home/circleci/.ddp-cache-md5.txt" }}
+            - ddp-cache-
+
+  store-ddp-cache:
+    description: Save ddp cache
+    steps:
+      - run:
+          name: Compute ddp-cache-md5
+          command: |
+            ddp_cache_dir='/home/circleci/.ddp-cache'
+            ddp_cache_md5='/home/circleci/.ddp-cache-md5.txt'
+            echo -n "" > "$ddp_cache_md5"
+            for cached_file in $(ls "$ddp_cache_dir" | sort); do
+              md5sum "$ddp_cache_dir/$cached_file" >> "$ddp_cache_md5"
+            done
+            echo "Contents of [$ddp_cache_md5]:"
+            cat "$ddp_cache_md5"
+      - save_cache:
+          key: ddp-cache-{{ checksum "/home/circleci/.ddp-cache-md5.txt" }}
+          paths:
+            - /home/circleci/.ddp-cache
+      - store_artifacts:
+          path: /home/circleci/.ddp-cache-md5.txt
+          destination: ddp-cache-md5.txt
+
 jobs:
   build-api-docs-job:
     executor:
@@ -613,12 +656,14 @@ jobs:
           restore_m2_cache: true
       - render-configs
       - create-test-dbs
+      - restore-ddp-cache
       - run-maven-with-pepper-options:
           phase: test
           skip_tests: false
           skip_checkstyle: true
           additional_options: '-Dtest=ServerInSameProcessIntegrationTestSuite'
           restore_m2_cache: false
+      - store-ddp-cache
 
   parallel-compile-and-test-job:
     executor:
@@ -641,46 +686,13 @@ jobs:
       - create-test-dbs
       - start-ddp-test-server # starts DDP server. And execute Liquibase DB population
       - compute-parallel-test-split
-      - run:
-          name: Download ddp-cache-md5 artifact
-          command: |
-            ddp_cache_md5='/home/circleci/.ddp-cache-md5.txt'
-            latest_artifact_url="https://circleci.com/api/v1.1/project/github/broadinstitute/ddp-study-server/latest/artifacts?circle-token=$CIRCLE_TOKEN"
-            md5_artifact_url=$(curl -sL "$latest_artifact_url" | jq -r '.[] | select(.node_index == 0) | select(.path == "ddp-cache-md5.txt") | .url')
-            if [[ -n "$md5_artifact_url" ]]; then
-              echo "Downloading artifact file [$md5_artifact_url] to file [$ddp_cache_md5]"
-              curl -sL "$md5_artifact_url?circle-token=$CIRCLE_TOKEN" -o "$ddp_cache_md5"
-            else
-              echo "No artifact file found, creating empty file [$ddp_cache_md5]"
-              touch "$ddp_cache_md5"
-            fi
-      - restore_cache:
-          keys:
-            - ddp-cache-{{ checksum "/home/circleci/.ddp-cache-md5.txt" }}
-            - ddp-cache-
+      - restore-ddp-cache
       - run-maven-with-pepper-options:
           phase: test
           skip_tests: false
           additional_options: '-PCircleciParallelBuild -Dsurefire.excludesFile=$IGNORE_CLASS_LIST_PATH'
           save_m2_cache: true
-      - run:
-          name: Compute ddp-cache-md5
-          command: |
-            ddp_cache_dir='/home/circleci/.ddp-cache'
-            ddp_cache_md5='/home/circleci/.ddp-cache-md5.txt'
-            echo -n "" > "$ddp_cache_md5"
-            for cached_file in $(ls "$ddp_cache_dir" | sort); do
-              md5sum "$ddp_cache_dir/$cached_file" >> "$ddp_cache_md5"
-            done
-            echo "Contents of [$ddp_cache_md5]:"
-            cat "$ddp_cache_md5"
-      - save_cache:
-          key: ddp-cache-{{ checksum "/home/circleci/.ddp-cache-md5.txt" }}
-          paths:
-            - /home/circleci/.ddp-cache
-      - store_artifacts:
-          path: /home/circleci/.ddp-cache-md5.txt
-          destination: ddp-cache-md5.txt
+      - store-ddp-cache
       - run:
           name: 'Check node index to save workspace only once'
           command: |
