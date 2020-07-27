@@ -59,6 +59,12 @@
         "backendTestClientName2": "{{$testingAuth.backendTestClientName2}}"
     },
     "googleGeocodingApiKey": "{{$testingConf.Data.geocodingKey}}",
+    "kits": {
+        "checkEnabled": true,
+        "intervalSecs": 30,
+        "statusCheckSecs": 300,  # 5 minutes
+        "batchSize": 300
+    },
     "elasticsearch": {
         "syncEnabled": false,
         "syncIntervalSecs": 10
