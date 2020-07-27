@@ -7,7 +7,8 @@
     "dbUrl": "jdbc:hsqldb:file:/tmp/ddp-testingdb;hsqldb.lock_file=false;sql.syntax_mys=true",
     "auth0": {
         "encryptionSecret": "{{$conf.auth0.encryptionSecret}}"
-    }
+    },
+    "defaultTimezone": "UTC"
 }
 
 {{end}}
