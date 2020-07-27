@@ -1,6 +1,5 @@
 package org.broadinstitute.ddp.service;
 
-import static org.broadinstitute.ddp.constants.ConfigFile.Auth0Testing.AUTH0_MGMT_API_CLIENT_SECRET;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -17,12 +16,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-import com.auth0.exception.Auth0Exception;
-import com.typesafe.config.Config;
-
 import org.broadinstitute.ddp.TxnAwareBaseTest;
-import org.broadinstitute.ddp.constants.ConfigFile;
-import org.broadinstitute.ddp.constants.ConfigFile.Auth0Testing;
 import org.broadinstitute.ddp.constants.TestConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
@@ -49,10 +43,8 @@ import org.broadinstitute.ddp.model.workflow.StaticState;
 import org.broadinstitute.ddp.model.workflow.WorkflowState;
 import org.broadinstitute.ddp.model.workflow.WorkflowTransition;
 import org.broadinstitute.ddp.pex.TreeWalkInterpreter;
-import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.jdbi.v3.core.Handle;
-import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
@@ -61,7 +53,7 @@ import org.junit.rules.ExpectedException;
 
 public class WorkflowServiceTest extends TxnAwareBaseTest {
 
-    private static TestDataSetupUtil.GeneratedTestData data;
+    private static TestDataSetupUtil.GeneratedTestData testData;
     private static String operatorGuid;
     private static String userGuid;
     private static String studyGuid;
@@ -74,32 +66,12 @@ public class WorkflowServiceTest extends TxnAwareBaseTest {
 
     @BeforeClass
     public static void setup() {
-        Config cfg = ConfigManager.getInstance().getConfig();
-        Config auth0Config = cfg.getConfig(ConfigFile.AUTH0);
-
-        String sendgridApiKey = cfg.getString(ConfigFile.SENDGRID_API_KEY);
-        String backendTestAuth0ClientId = auth0Config.getString(ConfigFile.BACKEND_AUTH0_TEST_CLIENT_ID);
-        String backendTestSecret = auth0Config.getString(ConfigFile.BACKEND_AUTH0_TEST_SECRET);
-        String backendTestClientName = auth0Config.getString(ConfigFile.BACKEND_AUTH0_TEST_CLIENT_NAME);
-        String auth0domain = auth0Config.getString(ConfigFile.DOMAIN);
-        String mgmtClientId = auth0Config.getString(Auth0Testing.AUTH0_MGMT_API_CLIENT_ID);
-        String mgmtSecret = auth0Config.getString(AUTH0_MGMT_API_CLIENT_SECRET);
-        String encryptionSecret = auth0Config.getString(ConfigFile.ENCRYPTION_SECRET);
-
         TransactionWrapper.useTxn(handle -> {
-
-            data = TestDataSetupUtil.generateBasicUserTestData(handle, true, auth0domain,
-                    backendTestClientName,
-                    backendTestAuth0ClientId,
-                    backendTestSecret,
-                    encryptionSecret,
-                    mgmtClientId,
-                    mgmtSecret,
-                    sendgridApiKey);
-            userGuid = data.getUserGuid();
-            operatorGuid = data.getUserGuid();
-            studyGuid = data.getStudyGuid();
-            studyId = data.getStudyId();
+            testData = TestDataSetupUtil.generateBasicUserTestData(handle);
+            userGuid = testData.getUserGuid();
+            operatorGuid = testData.getUserGuid();
+            studyGuid = testData.getStudyGuid();
+            studyId = testData.getStudyId();
         });
     }
 
@@ -108,17 +80,13 @@ public class WorkflowServiceTest extends TxnAwareBaseTest {
         service = new WorkflowService(new TreeWalkInterpreter());
     }
 
-    @AfterClass
-    public static void removeUser() throws Auth0Exception {
-        TestDataSetupUtil.deleteGeneratedTestData();
-    }
-
     @Test
     public void testSuggestNextState_noTransitions() {
         TransactionWrapper.useTxn(handle -> {
             Optional<WorkflowState> actual = service.suggestNextState(handle, operatorGuid, userGuid, studyGuid, StaticState.start());
             assertNotNull(actual);
             assertFalse(actual.isPresent());
+            handle.rollback();
         });
     }
 
@@ -300,7 +268,7 @@ public class WorkflowServiceTest extends TxnAwareBaseTest {
             FormActivityDef form = insertNewActivity(handle);
             insertNewInstance(handle, form.getActivityId());
 
-            String otherUserGuid = TestConstants.TEST_USER_GUID;
+            String otherUserGuid = "foobar";
             WorkflowState actState = new ActivityState(form.getActivityId());
             WorkflowResponse resp = service.buildStateResponse(handle, otherUserGuid, actState);
 
@@ -465,7 +433,7 @@ public class WorkflowServiceTest extends TxnAwareBaseTest {
             long actionId = eventActionDao.insertInstanceCreationAction(triggeredFormActivity.getActivityId());
             JdbiEventConfiguration jdbiEventConfig = handle.attach(JdbiEventConfiguration.class);
             long eventConfigurationId = jdbiEventConfig.insert(
-                    triggerId, actionId, data.getStudyId(), Instant.now().toEpochMilli(), 1, 0, null, null, false, 1
+                    triggerId, actionId, testData.getStudyId(), Instant.now().toEpochMilli(), 1, 0, null, null, false, 1
             );
 
             service.suggestNextState(
@@ -508,13 +476,13 @@ public class WorkflowServiceTest extends TxnAwareBaseTest {
 
     private FormActivityDef insertNewActivity(Handle handle, Consumer<FormActivityDef.FormBuilder> customizer) {
         String code = "WORKFLOW_ACT_" + Instant.now().toEpochMilli();
-        FormActivityDef.FormBuilder builder = FormActivityDef.generalFormBuilder(code, "v1", data.getStudyGuid())
+        FormActivityDef.FormBuilder builder = FormActivityDef.generalFormBuilder(code, "v1", testData.getStudyGuid())
                 .addName(new Translation("en", "dummy activity " + code));
         if (customizer != null) {
             customizer.accept(builder);
         }
         FormActivityDef form = builder.build();
-        handle.attach(ActivityDao.class).insertActivity(form, RevisionMetadata.now(data.getUserId(), "add " + code));
+        handle.attach(ActivityDao.class).insertActivity(form, RevisionMetadata.now(testData.getUserId(), "add " + code));
         assertNotNull(form.getActivityId());
         return form;
     }
