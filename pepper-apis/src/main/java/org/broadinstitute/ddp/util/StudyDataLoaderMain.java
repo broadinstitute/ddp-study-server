@@ -553,6 +553,7 @@ public class StudyDataLoaderMain {
             Map<String, JsonElement> surveyDataMap = altpidBucketDataMap.get(altpid);
 
             JsonElement datstatData = surveyDataMap.get("datstatparticipantdata");
+            if (datstatData.getAsJsonObject().get("datstat_email").isJsonNull()) continue;
             String email = datstatData.getAsJsonObject().get("datstat_email").getAsString().toLowerCase();
             setRunEmail(dryRun, datstatData);
 
