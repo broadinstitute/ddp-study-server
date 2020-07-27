@@ -386,10 +386,6 @@ public class IntegrationTestSuite {
         public static void doSuiteTearDown() {
             IntegrationTestSuite.tearDown();
         }
-
-        protected static boolean isCacheDisabled() {
-            return true;
-        }
     }
 
     private static boolean isTestServerRunning() {

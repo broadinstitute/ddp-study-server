@@ -110,6 +110,7 @@ import org.broadinstitute.ddp.util.TestUtil;
 import org.eclipse.jetty.http.HttpStatus;
 import org.jdbi.v3.core.Handle;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -117,7 +118,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 @RunWith(Parameterized.class)
-public class PatchFormAnswersRouteStandaloneTest extends IntegrationTestSuite.TestCaseWithCacheEnabled {
+public class PatchFormAnswersRouteStandaloneTest {
 
     private static Gson gson;
 
@@ -168,8 +169,14 @@ public class PatchFormAnswersRouteStandaloneTest extends IntegrationTestSuite.Te
         return List.of(first, second);
     }
 
+    @AfterClass
+    public static void doSuiteTearDown() {
+        IntegrationTestSuite.tearDown();
+    }
+
     @BeforeClass
     public static void setup() {
+        IntegrationTestSuite.setup(false);
         gson = new Gson();
 
         TransactionWrapper.useTxn(handle -> {
