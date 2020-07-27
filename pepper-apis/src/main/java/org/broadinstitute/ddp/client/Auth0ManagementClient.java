@@ -292,7 +292,7 @@ public class Auth0ManagementClient {
             if (res.getStatusCode() == 429) {
                 LOG.error("Hit rate limit while fetching auth0 user {}, retrying", auth0UserId, res.getError());
                 try {
-                    TimeUnit.MILLISECONDS.sleep(100L);
+                    TimeUnit.MILLISECONDS.sleep(500L);
                 } catch (InterruptedException e) {
                     LOG.warn("Interrupted while waiting after rate limit", e);
                 }
