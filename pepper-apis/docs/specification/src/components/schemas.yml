@@ -896,6 +896,7 @@ Error.ActivityAnswersPatchInvalid:
           type: string
           enum:
             - ACTIVITY_INSTANCE_IS_READONLY
+            - QUESTION_IS_READONLY
             - ANSWER_VALIDATION
             - MALFORMED_EMAIL
             - OPERATION_NOT_ALLOWED

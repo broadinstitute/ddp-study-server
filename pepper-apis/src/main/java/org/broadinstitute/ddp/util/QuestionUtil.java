@@ -9,6 +9,14 @@ import org.jdbi.v3.core.Handle;
 
 public class QuestionUtil {
 
+    /**
+     * Checks if a question is read-only
+     *
+     * @param handle               JDBI handle
+     * @param dto                  QuestionDto
+     * @param activityInstanceGuid GUID of the activity instance to check
+     * @return The result of the check
+     s*/
     public static boolean isReadonly(Handle handle, QuestionDto dto, String activityInstanceGuid) {
         boolean isWriteOnce = dto.isWriteOnce();
         if (!isWriteOnce) {
