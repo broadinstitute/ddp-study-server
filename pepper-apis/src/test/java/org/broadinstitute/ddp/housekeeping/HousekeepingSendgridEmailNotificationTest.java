@@ -5,8 +5,15 @@ import static org.broadinstitute.ddp.model.activity.types.InstanceStatusType.CRE
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import java.time.Instant;
 import java.util.concurrent.Semaphore;
@@ -17,6 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.typesafe.config.Config;
 import org.broadinstitute.ddp.Housekeeping;
 import org.broadinstitute.ddp.HousekeepingTest;
+import org.broadinstitute.ddp.client.ApiResult;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
@@ -154,6 +162,9 @@ public class HousekeepingSendgridEmailNotificationTest extends HousekeepingTest 
         };
         Housekeeping.setAfterHandler(afterHandler);
 
+        doReturn(ApiResult.ok(200, templateVersion)).when(mockSendGridClient).getTemplateActiveVersionId(anyString());
+        doReturn(ApiResult.ok(200, null)).when(mockSendGridClient).sendMail(any());
+
         String emailSentLogEntry = String.format("Sent template %s version %s to %s", template,
                 templateVersion, testingUser.getEmail());
         moveStatusToInProgressAndThenToComplete();
@@ -168,6 +179,13 @@ public class HousekeepingSendgridEmailNotificationTest extends HousekeepingTest 
         assertTrue("No evidence that email was sent", wasLogEntryFound);
         assertEquals("Handled " + numEventsHandled + " events", 1, numEventsHandled.get());
         assertFalse(wasEventIgnored.get());
+
+        verify(mockSendGridClient, times(1)).getTemplateActiveVersionId(template);
+        verify(mockSendGridClient, times(1)).sendMail(argThat(mail -> {
+            assertNotNull(mail);
+            assertEquals(template, mail.getTemplateId());
+            return true;
+        }));
     }
 
     /**
