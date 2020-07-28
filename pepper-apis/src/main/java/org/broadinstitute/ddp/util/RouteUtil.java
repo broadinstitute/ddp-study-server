@@ -254,7 +254,7 @@ public class RouteUtil {
      * @return user and study
      */
     public static UserAndStudy findPotentiallyLegacyUserAndStudyOrHalt(Handle handle, String userGuidOrAltPid, String studyGuid) {
-        StudyDto studyDto = handle.attach(JdbiUmbrellaStudyCached.class).findByStudyGuid(studyGuid);
+        StudyDto studyDto = new JdbiUmbrellaStudyCached(handle).findByStudyGuid(studyGuid);
         if (studyDto == null) {
             var err = new ApiError(ErrorCodes.STUDY_NOT_FOUND, "Could not find study with guid " + studyGuid);
             LOG.warn(err.getMessage());
