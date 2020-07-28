@@ -29,6 +29,7 @@ import com.itextpdf.kernel.pdf.PdfWriter;
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.ParticipantDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
@@ -225,7 +226,7 @@ public class PdfGenerationService {
         }
 
         if (hasEmailSource) {
-            var mgmtClient = Auth0Util.getManagementClientForStudy(handle, config.getStudyGuid());
+            var mgmtClient = Auth0ManagementClient.forStudy(handle, config.getStudyGuid());
             String auth0UserId = participant.getUser().getAuth0UserId();
             Map<String, String> emailResults = new Auth0Util(mgmtClient.getDomain())
                     .getUserPassConnEmailsByAuth0UserIds(Sets.newHashSet(auth0UserId), mgmtClient.getToken());

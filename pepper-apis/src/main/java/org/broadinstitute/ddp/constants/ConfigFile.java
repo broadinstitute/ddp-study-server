@@ -171,6 +171,13 @@ public class ConfigFile {
         public static final String SYNC_INTERVAL_SECS = "elasticsearch.syncIntervalSecs";
     }
 
+    public static class Kits {
+        public static final String CHECK_ENABLED = "kits.checkEnabled";
+        public static final String INTERVAL_SECS = "kits.intervalSecs";
+        public static final String STATUS_CHECK_SECS = "kits.statusCheckSecs";
+        public static final String BATCH_SIZE = "kits.batchSize";
+    }
+
     public static class Sendgrid {
         public static final String TEMPLATES = "sendgridTemplates";
         public static final String TEMPLATE = "template";

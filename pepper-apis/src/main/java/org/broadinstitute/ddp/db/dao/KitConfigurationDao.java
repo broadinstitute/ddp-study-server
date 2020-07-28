@@ -44,6 +44,9 @@ public interface KitConfigurationDao extends SqlObject {
     @CreateSqlObject
     JdbiCountry getJdbiCountry();
 
+    @CreateSqlObject
+    KitScheduleDao getKitScheduleDao();
+
     Logger LOG = LoggerFactory.getLogger(KitConfigurationDao.class);
 
     @GetGeneratedKeys
@@ -148,8 +151,10 @@ public interface KitConfigurationDao extends SqlObject {
         Collection<KitRule> kitRules = findRulesByConfigId(kitConfigurationDto.getId());
         int numKits = (int) kitConfigurationDto.getNumberOfKits();
         String guid = kitConfigurationDto.getStudyGuid();
+        var schedule = getKitScheduleDao().findSchedule(kitConfigurationDto.getId()).orElse(null);
 
-        return new KitConfiguration(kitConfigurationDto.getId(), numKits, kitType, guid, kitConfigurationDto.needsApproval(), kitRules);
+        return new KitConfiguration(kitConfigurationDto.getId(), numKits, kitType, guid,
+                kitConfigurationDto.needsApproval(), kitRules, schedule);
     }
 
     @SqlQuery("select kckr.kit_configuration_id,"

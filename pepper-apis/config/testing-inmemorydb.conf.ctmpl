@@ -61,6 +61,12 @@
     "googleGeocodingApiKey": "{{$testingConf.Data.geocodingKey}}",
     "jcacheConfigurationFile": "src/test/resources/redisson-test-jcache.yaml",
     "redisServerAddress":"redis://127.0.0.1:6379",
+    "kits": {
+        "checkEnabled": true,
+        "intervalSecs": 30,
+        "statusCheckSecs": 300,  # 5 minutes
+        "batchSize": 300
+    },
     "elasticsearch": {
         "syncEnabled": false,
         "syncIntervalSecs": 10

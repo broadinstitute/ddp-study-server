@@ -21,9 +21,9 @@ references:
   m2_repo_path: &m2_repo_path
       /home/circleci/.m2/repository
   pepper_apis_path: &pepper_apis_path
-            /home/circleci/repo/pepper-apis
+      /home/circleci/repo/pepper-apis
   api-spec-path: &api-spec-path
-            /home/circleci/repo/pepper-apis/docs/specification
+      /home/circleci/repo/pepper-apis/docs/specification
   circleci_path: &circleci_path
       /home/circleci/repo/.circleci
   builds_bucket: &builds_bucket
@@ -31,9 +31,9 @@ references:
   github_dispatch_repo_path: &github_dispatch_repo_path
       /broadinstitute/ddp-angular
   gitub_dispatch_config_path: &github_dispatch_config_path
-    /config/deployment
+      /config/deployment
   github_dispatch_config_branch: &github_dispatch_config_branch
-    develop
+      develop
   jar_build_bucket_dir: &jar_build_bucket_dir
       /ddp-study-server-pepper-apis
   housekeeping_test_db: &housekeeping_test_db
@@ -42,7 +42,10 @@ references:
       studyservicedb
   test_parallellism: &test_parallelism 15
   ddp_server_port: &ddp_server_port 5556
-
+  ddp_cache_dir: &ddp_cache_dir
+      /home/circleci/.ddp-cache
+  ddp_cache_md5_file: &ddp_cache_md5_file
+      /home/circleci/.ddp-cache-md5.txt
 
 executors:
   test-executor:
@@ -386,7 +389,7 @@ commands:
       - run:
           name: Call authenticate with GCP with in deployment environment
           command: |
-            PARAM_ENV='<< parameters.env >>'
+            PARAM_ENV='<<parameters.env>>'
             TARGET_ENV="${PARAM_ENV:-${ENVIRONMENT}}"
             if [[ -z $TARGET_ENV ]]; then
               echo "Target environment was not set"
@@ -458,7 +461,7 @@ commands:
             source $BASH_ENV
             echo "Total number of test classes that will be skipped in this node: $(wc -l $IGNORE_CLASS_LIST_PATH)"
       - store_artifacts:
-          path: << parameters.circleci_path>>/tests/
+          path: <<parameters.circleci_path>>/tests/
 
   run-maven-with-pepper-options:
     parameters:
@@ -491,6 +494,9 @@ commands:
       root_path:
         type: string
         default: *root_path
+      ddp_cache_dir:
+        type: string
+        default: *ddp_cache_dir
     steps:
       - when:
           condition: << parameters.restore_m2_cache >>
@@ -500,14 +506,19 @@ commands:
           name: 'Run maven <<parameters.phase>> with options: <<parameters.additional_options>>'
           command: |
             CHECKSTYLE_OPTION=''
-            if [[ << parameters.skip_checkstyle >> = true ]]; then
+            if [[ <<parameters.skip_checkstyle>> = true ]]; then
               CHECKSTYLE_OPTION='-Dcheckstyle.skip'
             fi
-            SKIPTESTS_OPTION='-DskipTests=<< parameters.skip_tests >>'
+            SKIPTESTS_OPTION='-DskipTests=<<parameters.skip_tests>>'
+            ddp_cache_dir='<<parameters.ddp_cache_dir>>'
+            if [[ ! -d "$ddp_cache_dir" ]]; then
+              mkdir -p "$ddp_cache_dir"
+            fi
             mvn <<parameters.phase>> --batch-mode \
                     -f <<parameters.pom_file>> \
                     $CHECKSTYLE_OPTION \
                     $SKIPTESTS_OPTION \
+                    -Dddp.cacheDir="$ddp_cache_dir" \
                     -Ditext.license=output-config/itextkey.xml \
                     -Dconfig.file=output-build-config/testing-inmemorydb.conf  \
                     -Dmaven.repo.local=<< parameters.m2_repo >> <<parameters.additional_options>>
@@ -589,6 +600,60 @@ commands:
             cd << parameters.repo_path >>/study-builder
             mvn test-compile --batch-mode -DskipTests -Dmaven.repo.local=<< parameters.m2_repo >>
 
+  restore-ddp-cache:
+    description: Restore ddp cache
+    parameters:
+      ddp_cache_md5_file:
+        type: string
+        default: *ddp_cache_md5_file
+    steps:
+      - run:
+          name: Download ddp-cache-md5 artifact
+          command: |
+            ddp_cache_md5='<<parameters.ddp_cache_md5_file>>'
+            latest_artifact_url="https://circleci.com/api/v1.1/project/github/broadinstitute/ddp-study-server/latest/artifacts?circle-token=$CIRCLE_TOKEN"
+            md5_artifact_url=$(curl -sL "$latest_artifact_url" | jq -r '.[] | select(.node_index == 0) | select(.path == "ddp-cache-md5.txt") | .url')
+            if [[ -n "$md5_artifact_url" ]]; then
+              echo "Downloading artifact file [$md5_artifact_url] to file [$ddp_cache_md5]"
+              curl -sL "$md5_artifact_url?circle-token=$CIRCLE_TOKEN" -o "$ddp_cache_md5"
+            else
+              echo "No artifact file found, creating empty file [$ddp_cache_md5]"
+              touch "$ddp_cache_md5"
+            fi
+      - restore_cache:
+          keys:
+            - ddp-cache-{{ checksum "<<parameters.ddp_cache_md5_file>>" }}
+            - ddp-cache-
+
+  save-ddp-cache:
+    description: Save ddp cache
+    parameters:
+      ddp_cache_dir:
+        type: string
+        default: *ddp_cache_dir
+      ddp_cache_md5_file:
+        type: string
+        default: *ddp_cache_md5_file
+    steps:
+      - run:
+          name: Compute ddp-cache-md5
+          command: |
+            ddp_cache_dir='<<parameters.ddp_cache_dir>>'
+            ddp_cache_md5='<<parameters.ddp_cache_md5_file>>'
+            echo -n "" > "$ddp_cache_md5"
+            for cached_file in $(ls "$ddp_cache_dir" | sort); do
+              md5sum "$ddp_cache_dir/$cached_file" >> "$ddp_cache_md5"
+            done
+            echo "Contents of [$ddp_cache_md5]:"
+            cat "$ddp_cache_md5"
+      - save_cache:
+          key: ddp-cache-{{ checksum "<<parameters.ddp_cache_md5_file>>" }}
+          paths:
+            - <<parameters.ddp_cache_dir>>
+      - store_artifacts:
+          path: <<parameters.ddp_cache_md5_file>>
+          destination: ddp-cache-md5.txt
+
 jobs:
   build-api-docs-job:
     executor:
@@ -613,12 +678,14 @@ jobs:
           restore_m2_cache: true
       - render-configs
       - create-test-dbs
+      - restore-ddp-cache
       - run-maven-with-pepper-options:
           phase: test
           skip_tests: false
           skip_checkstyle: true
           additional_options: '-Dtest=ServerInSameProcessIntegrationTestSuite'
           restore_m2_cache: false
+      - save-ddp-cache
 
   parallel-compile-and-test-job:
     executor:
@@ -641,11 +708,13 @@ jobs:
       - create-test-dbs
       - start-ddp-test-server # starts DDP server. And execute Liquibase DB population
       - compute-parallel-test-split
+      - restore-ddp-cache
       - run-maven-with-pepper-options:
           phase: test
           skip_tests: false
           additional_options: '-PCircleciParallelBuild -Dsurefire.excludesFile=$IGNORE_CLASS_LIST_PATH'
           save_m2_cache: true
+      - save-ddp-cache
       - run:
           name: 'Check node index to save workspace only once'
           command: |

@@ -19,6 +19,7 @@ import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.JdbiClient;
@@ -78,7 +79,7 @@ public class UserAdminCLI {
                 new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, 1, dbUrl));
         try {
             TransactionWrapper.useTxn(handle -> {
-                var mgmtClient = Auth0Util.getManagementClientForStudy(handle, studyGuid);
+                var mgmtClient = Auth0ManagementClient.forStudy(handle, studyGuid);
 
                 ClientDto clientDto = handle.attach(JdbiClient.class)
                         .findByAuth0ClientIdAndAuth0TenantId(auth0ClientId, auth0TenantId).get();

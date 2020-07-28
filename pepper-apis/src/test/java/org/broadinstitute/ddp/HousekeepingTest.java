@@ -1,7 +1,10 @@
 package org.broadinstitute.ddp;
 
+import static org.mockito.Mockito.mock;
+
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
+import org.broadinstitute.ddp.client.SendGridClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -37,12 +40,14 @@ public abstract class HousekeepingTest extends ConfigAwareBaseTest {
             .qos.logback.classic.Logger.ROOT_LOGGER_NAME);
 
     protected static final Object logMonitor = new Object();
+    protected static SendGridClient mockSendGridClient;
 
     private static void startHousekeepingMain() {
         // shorten sleep cycle so test doesn't stall and fail
         Housekeeping.SLEEP_MILLIS = 5 * 1000L;
+        mockSendGridClient = mock(SendGridClient.class);
         housekeepingThread = new Thread(() -> {
-            Housekeeping.main(new String[] {});
+            Housekeeping.start(new String[] {}, apiKey -> mockSendGridClient);
         });
         housekeepingThread.setName("Housekeeping");
         housekeepingThread.start();

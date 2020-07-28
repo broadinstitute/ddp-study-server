@@ -57,7 +57,7 @@ public class TestingUserUtil {
                                                                   String auth0Secret,
                                                                   String studyGuid) throws Auth0Exception {
 
-        var mgmtClient = Auth0Util.getManagementClientForStudy(handle, studyGuid);
+        var mgmtClient = Auth0ManagementClient.forStudy(handle, studyGuid);
         Auth0Util auth0Util = new Auth0Util(mgmtClient.getDomain());
         String mgmtToken = mgmtClient.getToken();
         final Auth0Util.TestingUser testUser = auth0Util.createTestingUser(mgmtToken);
@@ -148,7 +148,7 @@ public class TestingUserUtil {
                                                                  String studyGuid)
             throws Auth0Exception {
 
-        var mgmtClient = Auth0Util.getManagementClientForStudy(handle, studyGuid);
+        var mgmtClient = Auth0ManagementClient.forStudy(handle, studyGuid);
         UserDto user = handle.attach(JdbiUser.class).findByUserGuid(userGUID);
         CachedUser cachedUser = tryCachedUser(userGUID, auth0ClientId, mgmtClient.getDomain());
         if (cachedUser != null) {
@@ -160,9 +160,11 @@ public class TestingUserUtil {
             }
         }
 
-        Auth0Util auth0Util = new Auth0Util(mgmtClient.getDomain());
-        String mgmtToken = mgmtClient.getToken();
-        User testUser = auth0Util.getAuth0User(user.getAuth0UserId(), mgmtToken);
+        var getResult = mgmtClient.getAuth0User(user.getAuth0UserId());
+        if (getResult.hasFailure()) {
+            throw new DDPException(getResult.hasThrown() ? getResult.getThrown() : getResult.getError());
+        }
+        User testUser = getResult.getBody();
 
         AuthAPI auth = new AuthAPI(mgmtClient.getDomain(), auth0ClientId, auth0Secret);
         AuthRequest authRequest = auth.login(username, password).setRealm(auth0ClientName);
@@ -233,7 +235,10 @@ public class TestingUserUtil {
         private String token;
 
         static Path defaultCachedFilePath(String userGuid, String auth0ClientId) {
-            String tmpdir = System.getProperty("java.io.tmpdir");
+            String tmpdir = System.getProperty("ddp.cacheDir");
+            if (tmpdir == null) {
+                tmpdir = System.getProperty("java.io.tmpdir");
+            }
             String filename = String.format("ddp-testing-cache_%s_%s.json", userGuid, auth0ClientId);
             return Paths.get(tmpdir, filename);
         }
