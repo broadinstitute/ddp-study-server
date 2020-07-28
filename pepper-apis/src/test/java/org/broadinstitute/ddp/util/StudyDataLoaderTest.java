@@ -223,6 +223,7 @@ public class StudyDataLoaderTest {
         mockDataLoader.auth0Util = mockAuth0Util;
         mockDataLoader.auth0Domain = pretendDomain;
         mockDataLoader.mgmtToken = pretendMgmtToken;
+        mockDataLoader.mgmtClient = mockMgmtClient;
     }
 
     @Test
@@ -716,8 +717,7 @@ public class StudyDataLoaderTest {
         assertEquals(1496934180000L, (long) createdAtDateCaptor.getValue());
         assertEquals(1496934180000L, (long) lastModifiedDateCaptor.getValue());
 
-        verify(mockAuth0Util, times(1)).setDDPUserGuidForAuth0User(
-                anyString(),
+        verify(mockMgmtClient, times(1)).setUserGuidForAuth0User(
                 anyString(),
                 anyString(),
                 anyString());

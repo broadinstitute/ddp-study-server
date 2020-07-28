@@ -80,7 +80,7 @@ public class TestingUserUtil {
         testUser.setUserGuid(userGuid);
         testUser.setUserHruid(userHruid);
 
-        auth0Util.setDDPUserGuidForAuth0User(testUser.getUserGuid(), auth0UserId, auth0ClientId, mgmtToken);
+        mgmtClient.setUserGuidForAuth0User(auth0UserId, auth0ClientId, testUser.getUserGuid());
 
         AuthRequest authRequest = auth.login(testUser.getEmail(), testUser.getPassword()).setRealm(auth0ClientName);
         TokenHolder tokenHolder = authRequest.execute();

@@ -105,7 +105,7 @@ public class UserAdminCLI {
                     String auth0UserId = "auth0|" + newUser.getUserId(); // this is safe as long as we use Username-Password connection
                     jdbiUser.insert(auth0UserId, userGuid, clientDto.getId(), hruid);
 
-                    auth0Util.setDDPUserGuidForAuth0User(userGuid, auth0UserId, auth0ClientId, mgmtToken);
+                    mgmtClient.setUserGuidForAuth0User(auth0UserId, auth0ClientId, userGuid);
                     LOG.info("Created new pepper user {} with guid {} and hruid {}", newUser.getEmail(), userGuid, hruid);
                 } else {
                     // user exists, so pull out some details about them
