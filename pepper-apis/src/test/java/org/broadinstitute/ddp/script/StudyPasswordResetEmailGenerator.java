@@ -103,17 +103,16 @@ public class StudyPasswordResetEmailGenerator {
      * @param emailSubject the subject line
      * @param redirectUrlAfterPasswordReset URL to redirect User after succesful password reset
      * @param sendgridTemplateId the SendGrid template id for the message
-     * @param auth0Domain the Auth0 domain that holds the accounts
-     * @param mgmtAuth0Token Auth0 token for client with necessary mgmt level grants
+     * @param mgmtClient the Auth0 management client
      * @return
      */
     public boolean sendPasswordResetEmails(String studyGuid, List<ProfileWithEmail> addresseeProfiles, String fromEmailName,
                                            String fromEmailAddress, String emailSubject, String redirectUrlAfterPasswordReset,
-                                           String sendgridTemplateId, String auth0Domain, String mgmtAuth0Token) {
-        final Auth0Util auth0Util = buildAuth0Util(auth0Domain);
+                                           String sendgridTemplateId, Auth0ManagementClient mgmtClient) {
+        final Auth0Util auth0Util = buildAuth0Util(mgmtClient.getDomain());
         String auth0UserNamePasswordConnectionId;
         try {
-            auth0UserNamePasswordConnectionId = auth0Util.getAuth0UserNamePasswordConnectionId(mgmtAuth0Token);
+            auth0UserNamePasswordConnectionId = auth0Util.getAuth0UserNamePasswordConnectionId(mgmtClient.getToken());
         } catch (Auth0Exception e) {
             LOG.error("Could not obtain connection id", e);
             return false;
@@ -137,7 +136,7 @@ public class StudyPasswordResetEmailGenerator {
                 String originalAuth0ResetLink;
                 try {
                     originalAuth0ResetLink = auth0Util.generatePasswordResetLink(userEmail, auth0UserNamePasswordConnectionId,
-                            mgmtAuth0Token, redirectUrlAfterPasswordReset);
+                            mgmtClient.getToken(), redirectUrlAfterPasswordReset);
                 } catch (Auth0Exception e) {
                     LOG.error("Could not generate password reset link for email: " + userEmail + " and user id: " + profile.getUserId());
                     continue;
@@ -168,19 +167,17 @@ public class StudyPasswordResetEmailGenerator {
      * @param emailSubject the subject line
      * @param redirectUrlAfterPasswordReset URL to redirect User after succesful password reset
      * @param sendgridTemplateId the SendGrid template id for the message
-     * @param auth0Domain the Auth0 domain that holds the accounts
-     * @param mgmtAuth0Token Auth0 token for client with necessary mgmt level grants
+     * @param mgmtClient the Auth0 management client
      * @return true if got to end, false otherwise
      */
     public boolean sendPasswordResetEmails(String studyGuid, Set<String> userEmailBlackList, String fromEmailName, String fromEmailAddress,
                                            String emailSubject, String redirectUrlAfterPasswordReset, String sendgridTemplateId,
-                                           String auth0Domain, String mgmtAuth0Token) {
-        final Auth0Util auth0Util = buildAuth0Util(auth0Domain);
+                                           Auth0ManagementClient mgmtClient) {
         List<ProfileWithEmail> profilesAndEmailsMinusBlackList = TransactionWrapper.withTxn(handle ->
-                getProfilesWithEmailsExcludingBlacklisted(studyGuid, userEmailBlackList, mgmtAuth0Token, auth0Util, handle));
+                getProfilesWithEmailsExcludingBlacklisted(studyGuid, userEmailBlackList, mgmtClient, handle));
 
         return sendPasswordResetEmails(studyGuid, profilesAndEmailsMinusBlackList, fromEmailName, fromEmailAddress, emailSubject,
-                redirectUrlAfterPasswordReset, sendgridTemplateId, auth0Domain, mgmtAuth0Token
+                redirectUrlAfterPasswordReset, sendgridTemplateId, mgmtClient
         );
     }
 
@@ -191,9 +188,9 @@ public class StudyPasswordResetEmailGenerator {
     }
 
     private List<ProfileWithEmail> getProfilesWithEmailsExcludingBlacklisted(String studyGuid, Set<String> userEmailBlackList,
-                                                                             String mgmtAuth0Token, Auth0Util auth0Util, Handle handle) {
-        List<ProfileWithEmail> profilesAndEmailFromDb = findUserProfilesForParticipantsNotExitedThatCanBeContacted(studyGuid, auth0Util,
-                mgmtAuth0Token,
+                                                                             Auth0ManagementClient mgmtClient, Handle handle) {
+        List<ProfileWithEmail> profilesAndEmailFromDb = findUserProfilesForParticipantsNotExitedThatCanBeContacted(studyGuid,
+                mgmtClient,
                 handle);
 
         return profilesAndEmailFromDb.stream()
@@ -207,8 +204,7 @@ public class StudyPasswordResetEmailGenerator {
     }
 
     List<ProfileWithEmail> findUserProfilesForParticipantsNotExitedThatCanBeContacted(String studyGuid,
-                                                                                              Auth0Util auth0Util,
-                                                                                              String auth0MgmtToken,
+                                                                                              Auth0ManagementClient mgmtClient,
                                                                                               Handle handle) {
         List<EnrollmentStatusDto> allStudyEnrollments = handle.attach(JdbiUserStudyEnrollment.class).findByStudyGuid(studyGuid);
 
@@ -219,17 +215,20 @@ public class StudyPasswordResetEmailGenerator {
                 .map(userEnrollment -> {
                     UserProfile profile = profileDao.findProfileByUserId(userEnrollment.getUserId()).orElse(null);
                     UserDto userDto = userDao.findByUserId(userEnrollment.getUserId());
-                    String userEmail = userDto != null ? getUserEmail(userDto.getAuth0UserId(), auth0Util, auth0MgmtToken) : null;
+                    String userEmail = userDto != null ? getUserEmail(userDto.getAuth0UserId(), mgmtClient) : null;
                     return new ProfileWithEmail(profile, userEmail);
                 })
                 .filter(profileWithEmail -> !profileWithEmail.getProfile().getDoNotContact())
                 .collect(toList());
     }
 
-    String getUserEmail(String auth0UserId, Auth0Util auth0Util, String mgmtAuth0Token) {
-
-        try {
-            User auth0User = auth0Util.getAuth0User(auth0UserId, mgmtAuth0Token);
+    String getUserEmail(String auth0UserId, Auth0ManagementClient mgmtClient) {
+        var getResult = mgmtClient.getAuth0User(auth0UserId);
+        if (getResult.hasFailure()) {
+            var e = getResult.hasThrown() ? getResult.getThrown() : getResult.getError();
+            throw new DDPException("Auth0 user lookup failed", e);
+        } else {
+            User auth0User = getResult.getBody();
             if (auth0User == null) {
                 LOG.error("Could not retrieve the Auth0User info for auth0UserId=" + auth0UserId);
                 return null;
@@ -241,8 +240,6 @@ public class StudyPasswordResetEmailGenerator {
                     return auth0User.getEmail();
                 }
             }
-        } catch (Auth0Exception e) {
-            throw new DDPException("Auth0 user lookup failed", e);
         }
     }
 
