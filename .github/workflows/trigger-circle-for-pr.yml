@@ -1,0 +1,31 @@
+# Action to automatically trigger build/tests for a PR on every push.
+#
+# This is done by directly calling CircleCI's API to trigger an on-demand
+# build. API request requires a token, and right now only a personal API token
+# seems to work. In CircleCI's dashboard, navigate to `User Settings > Personal
+# API Tokens` to create a new token. Then store this in the GitHub repository's
+# `Settings > Secrets`.
+
+name: Trigger CircleCI Build for PR
+
+on:
+  pull_request:
+    branches:
+      - develop
+
+jobs:
+  execute:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger CircleCI workflow
+        env:
+          CIRCLE_TOKEN: ${{ secrets.CIRCLE_TOKEN }}
+          BRANCH: ${{ github.head_ref }}
+        run: |
+          pipeline_url='https://circleci.com/api/v2/project/gh/broadinstitute/ddp-study-server/pipeline'
+          json_payload="{\"branch\":\"${BRANCH}\",\"parameters\":{\"on_demand\":true}}"
+          echo "Triggering CircleCI for branch: ${BRANCH}"
+          curl -s -X POST "${pipeline_url}" \
+              -H "Circle-Token: ${CIRCLE_TOKEN}" \
+              -H 'Content-Type: application/json' \
+              -d "${json_payload}"
