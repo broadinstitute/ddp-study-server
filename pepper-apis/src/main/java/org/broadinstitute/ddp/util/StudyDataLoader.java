@@ -103,6 +103,7 @@ public class StudyDataLoader {
     Map<String, String> dkAltNames;
     Map<Integer, String> yesNoDkLookup;
     Map<Integer, Boolean> booleanValueLookup;
+    Auth0ManagementClient mgmtClient;
     Auth0Util auth0Util;
     String auth0Domain;
     String mgmtToken;
@@ -114,7 +115,7 @@ public class StudyDataLoader {
         auth0Domain = auth0Config.getString(ConfigFile.DOMAIN);
 
         auth0Util = new Auth0Util(auth0Domain);
-        var mgmtClient = new Auth0ManagementClient(
+        mgmtClient = new Auth0ManagementClient(
                 auth0Domain,
                 auth0Config.getString("managementApiClientId"),
                 auth0Config.getString("managementApiSecret"));
@@ -864,7 +865,7 @@ public class StudyDataLoader {
                 altpid, shortId, createdAtMillis, updatedAtMillis);
         UserDto newUser = new UserDto(userId, auth0UserId, userGuid, userHruid, altpid,
                 shortId, createdAtMillis, updatedAtMillis);
-        auth0Util.setDDPUserGuidForAuth0User(newUser.getUserGuid(), auth0UserId, clientDto.getAuth0ClientId(), mgmtToken);
+        mgmtClient.setUserGuidForAuth0User(auth0UserId, clientDto.getAuth0ClientId(), newUser.getUserGuid());
 
         LOG.info("User created: Auth0UserId = " + auth0UserId + ", GUID = " + userGuid + ", HRUID = " + userHruid + ", ALTPID = "
                 + altpid);
