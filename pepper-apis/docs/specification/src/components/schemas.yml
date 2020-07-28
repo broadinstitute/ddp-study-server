@@ -1153,6 +1153,10 @@ Question:
     tooltip:
       type: string
       description: tooltip for the question, in plain text
+    readonly:
+      type: boolean
+      description: false if the question can be modified
+      example: false
     additionalInfoHeader:
       type: string
       description: a plain text string for additional information to be presented before the user responds to a question
