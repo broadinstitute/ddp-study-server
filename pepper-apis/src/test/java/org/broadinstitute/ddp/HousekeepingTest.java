@@ -1,7 +1,6 @@
 package org.broadinstitute.ddp;
 
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
 
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.AppenderBase;
