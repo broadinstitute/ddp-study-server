@@ -6,6 +6,7 @@ import java.util.Set;
 import org.broadinstitute.ddp.cache.CacheService;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
+import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
 import org.jdbi.v3.core.Handle;
 import org.redisson.api.RLocalCachedMap;
 
@@ -165,6 +166,10 @@ public class AnswerCachedDao extends SQLObjectWrapper<AnswerDao> implements Answ
             String cacheKey = buildKey(answerFromCache);
             if (cacheKey != null) {
                 activityInstanceGuidAndQuestionKeyToAnswerIdCache.remove(cacheKey);
+            }
+            if (answerFromCache instanceof CompositeAnswer) {
+                ((CompositeAnswer)answerFromCache).getValue().forEach(
+                        row -> row.getValues().forEach(val -> removeFromCache(val.getAnswerId())));
             }
         }
     }
