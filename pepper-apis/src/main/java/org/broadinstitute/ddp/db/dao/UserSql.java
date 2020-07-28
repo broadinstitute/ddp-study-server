@@ -29,4 +29,7 @@ public interface UserSql extends SqlObject {
 
     @SqlUpdate("update user set auth0_user_id = :auth0UserId, expires_at = null where user_id = :id")
     int updateAuth0UserIdAndClearExpiresAtById(@Bind("id") long userId, @Bind("auth0UserId") String auth0UserId);
+
+    @SqlUpdate("update user set legacy_altpid = :altpid where user_id = :id")
+    int updateLegacyAltPidById(@Bind("id") long userId, @Bind("altpid") String legacyAltPid);
 }

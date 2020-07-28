@@ -13,13 +13,13 @@ import org.broadinstitute.ddp.db.dao.DataExportDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
-import org.broadinstitute.ddp.db.dao.JdbiUser;
+import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
-import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.json.dsm.TriggerActivityPayload;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
+import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
 import org.slf4j.Logger;
@@ -65,18 +65,18 @@ public class DsmTriggerOnDemandActivityRoute extends ValidatedJsonInputRoute<Tri
                         return null;    // Not reached
                     });
 
-            UserDto userDto = handle.attach(JdbiUser.class).findByLegacyAltPidIfNotFoundByUserGuid(participantGuidOrLegacyAltPid);
-            if (userDto == null) {
+            User user = handle.attach(UserDao.class).findUserByGuidOrAltPid(participantGuidOrLegacyAltPid).orElse(null);
+            if (user == null) {
                 ApiError err = new ApiError(ErrorCodes.USER_NOT_FOUND, String.format(
                         "Could not find participant with guid %s", participantGuidOrLegacyAltPid));
                 LOG.warn(err.getMessage());
                 ResponseUtil.haltError(response, HttpStatus.SC_NOT_FOUND, err);
                 return;
             }
-            String participantGuid = userDto.getUserGuid();
+            String participantGuid = user.getGuid();
 
             int instanceCount = handle.attach(JdbiActivityInstance.class)
-                    .getNumActivitiesForParticipant(activityDto.getActivityId(), userDto.getUserId());
+                    .getNumActivitiesForParticipant(activityDto.getActivityId(), user.getId());
 
             if (activityDto.getMaxInstancesPerUser() != null && instanceCount >= activityDto.getMaxInstancesPerUser()) {
                 ApiError err = new ApiError(ErrorCodes.TOO_MANY_INSTANCES, String.format(
@@ -96,7 +96,7 @@ public class DsmTriggerOnDemandActivityRoute extends ValidatedJsonInputRoute<Tri
                 LOG.error(err.getMessage());
                 ResponseUtil.haltError(response, HttpStatus.SC_INTERNAL_SERVER_ERROR, err);
             } else {
-                handle.attach(DataExportDao.class).queueDataSync(userDto.getUserId(), studyId);
+                handle.attach(DataExportDao.class).queueDataSync(user.getId(), studyId);
                 LOG.info("Created on-demand activity instance {} for study guid {}, activity code {}, participant guid {}",
                         instanceDto.getGuid(), studyGuid, activityCode, participantGuid);
             }

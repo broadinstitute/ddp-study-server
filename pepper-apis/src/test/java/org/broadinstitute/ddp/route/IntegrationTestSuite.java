@@ -105,7 +105,7 @@ import org.slf4j.LoggerFactory;
         DsmAuthFilterTest.class,
         GetDsmMailingListRouteTest.class,
         CheckIrbPasswordRouteTest.class,
-        SendDsmNotificationRouteTest.class,
+        ReceiveDsmNotificationRouteTest.class,
         GetDsmInstitutionRequestsRouteTest.class,
         DsmExitUserRouteTest.class,
         SendEmailRouteTest.class,

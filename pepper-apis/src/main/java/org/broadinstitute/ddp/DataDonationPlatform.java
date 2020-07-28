@@ -128,7 +128,7 @@ import org.broadinstitute.ddp.route.PostMedicalProviderRoute;
 import org.broadinstitute.ddp.route.PostPasswordResetRoute;
 import org.broadinstitute.ddp.route.PutFormAnswersRoute;
 import org.broadinstitute.ddp.route.PutTempMailingAddressRoute;
-import org.broadinstitute.ddp.route.SendDsmNotificationRoute;
+import org.broadinstitute.ddp.route.ReceiveDsmNotificationRoute;
 import org.broadinstitute.ddp.route.SendEmailRoute;
 import org.broadinstitute.ddp.route.SendExitNotificationRoute;
 import org.broadinstitute.ddp.route.SetParticipantDefaultMailAddressRoute;
@@ -455,7 +455,7 @@ public class DataDonationPlatform {
         get(API.DSM_PARTICIPANT_MEDICAL_INFO, new GetDsmMedicalRecordRoute(medicalRecordService), responseSerializer);
         get(API.DSM_PARTICIPANT_INSTITUTIONS, new GetDsmParticipantInstitutionsRoute(), responseSerializer);
 
-        post(API.DSM_NOTIFICATION, new SendDsmNotificationRoute(), responseSerializer);
+        post(API.DSM_NOTIFICATION, new ReceiveDsmNotificationRoute(), jsonSerializer);
         post(API.DSM_TERMINATE_USER, new DsmExitUserRoute(), responseSerializer);
 
         PdfService pdfService = new PdfService();

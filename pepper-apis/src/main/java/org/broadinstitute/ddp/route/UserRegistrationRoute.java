@@ -476,12 +476,8 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
         // different deployments can maintain different generated guids
         LOG.info("Setting auth0 user's metadata so that auth0 user {} has ddp user guid {} for client {}",
                 auth0UserId, ddpUserGuid, auth0ClientId);
-
+        mgmtClient.setUserGuidForAuth0User(auth0UserId, auth0ClientId, ddpUserGuid);
         Auth0Util auth0Util = new Auth0Util(mgmtClient.getDomain());
-
-        auth0Util.setDDPUserGuidForAuth0User(ddpUserGuid, auth0UserId, auth0ClientId,
-                mgmtClient.getToken());
-
         return new LocalRegistrationResponse(auth0Util.refreshToken(auth0ClientId, auth0ClientSecret, refreshToken));
     }
 

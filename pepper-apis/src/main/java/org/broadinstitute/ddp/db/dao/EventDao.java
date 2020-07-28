@@ -147,14 +147,6 @@ public interface EventDao extends SqlObject {
     @RegisterConstructorMapper(NotificationTemplate.class)
     List<NotificationTemplate> getNotificationTemplatesForEvent(@Bind("eventConfigId") long eventConfigurationId);
 
-    @SqlQuery("getDsmNotificationConfigurationIds")
-    @UseStringTemplateSqlLocator
-    List<Long> getDsmNotificationConfigurationIds(
-            @Bind("umbrellaStudyGuid") String umbrellaStudyGuid,
-            @Bind("userGuid") String userGuid,
-            @Bind("notificationEventTypeCode") String eventTypeCode
-    );
-
     /**
      * Gets the configurations associated with notifications that should be sent when someone joins a study's mailing list
      *
