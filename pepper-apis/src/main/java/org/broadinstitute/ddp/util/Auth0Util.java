@@ -131,19 +131,6 @@ public class Auth0Util {
         return verifiedJWT.getSubject();
     }
 
-
-    /**
-     * Queries the study for its management api creds
-     * and returns a new management api client.
-     */
-    public static Auth0ManagementClient getManagementClientForStudy(Handle handle, String studyGuid) {
-        Auth0TenantDto auth0TenantDto = handle.attach(JdbiAuth0Tenant.class).findByStudyGuid(studyGuid);
-        return new Auth0ManagementClient(
-                auth0TenantDto.getDomain(),
-                auth0TenantDto.getManagementClientId(),
-                auth0TenantDto.getManagementClientSecret());
-    }
-
     /**
      * Get management api client using credentials for the given domain.
      */
@@ -331,11 +318,6 @@ public class Auth0Util {
         } catch (IOException e) {
             throw new RuntimeException("Could not refresh token", e);
         }
-    }
-
-    public User getAuth0User(String auth0UserId, String mgmtApiToken) throws Auth0Exception {
-        ManagementAPI auth0Mgmt = new ManagementAPI(baseUrl, mgmtApiToken);
-        return auth0Mgmt.users().get(auth0UserId, null).execute();
     }
 
     /**
