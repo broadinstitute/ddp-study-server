@@ -33,7 +33,7 @@ import org.broadinstitute.ddp.db.dao.EventActionDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstanceStatusType;
 import org.broadinstitute.ddp.db.dao.JdbiActivityStatusTrigger;
 import org.broadinstitute.ddp.db.dao.JdbiEventConfiguration;
-import org.broadinstitute.ddp.db.dao.JdbiEventTrigger;
+import org.broadinstitute.ddp.db.dao.EventTriggerSql;
 import org.broadinstitute.ddp.db.dao.JdbiExpression;
 import org.broadinstitute.ddp.db.dao.QueuedEventDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
@@ -73,7 +73,7 @@ public class HousekeepingSendgridEmailNotificationTest extends HousekeepingTest 
         TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, apisHandle -> {
             EventActionDao eventActionDao = apisHandle.attach(EventActionDao.class);
             JdbiExpression expressionDao = apisHandle.attach(JdbiExpression.class);
-            JdbiEventTrigger eventTriggerDao = apisHandle.attach(JdbiEventTrigger.class);
+            EventTriggerSql eventTriggerDao = apisHandle.attach(EventTriggerSql.class);
             JdbiActivityStatusTrigger activityStatusTriggerDao = apisHandle.attach(JdbiActivityStatusTrigger.class);
             ActivityInstanceDao activityInstanceDao = apisHandle.attach(ActivityInstanceDao.class);
             JdbiActivityInstanceStatusType statusTypeDao = apisHandle.attach(JdbiActivityInstanceStatusType.class);
@@ -106,7 +106,7 @@ public class HousekeepingSendgridEmailNotificationTest extends HousekeepingTest 
             long falseExpressionId = expressionDao.insertExpression("false").getId();
 
             // setup a status change event trigger so that when status changes, an event is queued
-            long eventTriggerId = eventTriggerDao.insert(EventTriggerType.ACTIVITY_STATUS);
+            long eventTriggerId = eventTriggerDao.insertBaseTrigger(EventTriggerType.ACTIVITY_STATUS);
             activityStatusTriggerDao.insert(eventTriggerId, testActivity.getActivityId(), COMPLETE);
 
             insertedEventConfigId = eventConfigDao.insert(eventTriggerId, testEmailActionId, generatedTestData

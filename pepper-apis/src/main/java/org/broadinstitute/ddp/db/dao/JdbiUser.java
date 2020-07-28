@@ -61,10 +61,6 @@ public interface JdbiUser extends SqlObject {
     @RegisterConstructorMapper(UserDto.class)
     UserDto findByUserGuid(@Bind("guid") String userGuid);
 
-    @SqlQuery("select * from user where legacy_altpid = :legacyAltPid")
-    @RegisterConstructorMapper(UserDto.class)
-    UserDto findByLegacyAltPid(@Bind("legacyAltPid") String legacyAltPid);
-
     @SqlQuery("select * from user where user_id in (<userIds>)")
     @RegisterConstructorMapper(UserDto.class)
     List<UserDto> findByUserIds(@BindList(value = "userIds", onEmpty = BindList.EmptyHandling.NULL) List<Long> userIds);
@@ -91,14 +87,6 @@ public interface JdbiUser extends SqlObject {
 
     @SqlUpdate("update user set expires_at = :expiresAt where user_id = :userId")
     int updateExpiresAtById(@Bind("userId") long userId, @Bind("expiresAt") Long expiresAt);
-
-    default UserDto findByLegacyAltPidIfNotFoundByUserGuid(String userGuidOrLegacyAltPid) {
-        UserDto userDto = findByUserGuid(userGuidOrLegacyAltPid);
-        if (userDto == null) {
-            userDto = findByLegacyAltPid(userGuidOrLegacyAltPid);
-        }
-        return userDto;
-    }
 
     @SqlUpdate("delete from user where user_id in (<ids>)")
     int deleteAllByIds(@BindList(value = "ids", onEmpty = BindList.EmptyHandling.NULL) Set<Long> ids);
