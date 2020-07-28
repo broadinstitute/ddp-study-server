@@ -92,8 +92,10 @@ public class KitConfiguration {
         }
         if (success && zipCodeSuccess.size() > 0) {
             success = zipCodeSuccess.contains(true);
-            LOG.warn("Study has kit configuration with zip code rule but user's zip code does not"
-                    + " match any accepted zip codes, studyGuid={} userGuid={}", studyGuid, userGuid);
+            if (!success) {
+                LOG.warn("Study has kit configuration with zip code rule but user's zip code does not"
+                        + " match any accepted zip codes, studyGuid={} userGuid={}", studyGuid, userGuid);
+            }
         }
         if (success && pexRuleSuccess.size() > 0) {
             return pexRuleSuccess.contains(true);
