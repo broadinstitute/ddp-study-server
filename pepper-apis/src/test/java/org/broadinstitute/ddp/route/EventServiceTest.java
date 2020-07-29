@@ -27,7 +27,7 @@ import org.broadinstitute.ddp.db.dao.JdbiActivityStatusTrigger;
 import org.broadinstitute.ddp.db.dao.JdbiEventAction;
 import org.broadinstitute.ddp.db.dao.JdbiEventConfiguration;
 import org.broadinstitute.ddp.db.dao.JdbiEventConfigurationOccurrenceCounter;
-import org.broadinstitute.ddp.db.dao.JdbiEventTrigger;
+import org.broadinstitute.ddp.db.dao.EventTriggerSql;
 import org.broadinstitute.ddp.db.dao.JdbiExpression;
 import org.broadinstitute.ddp.db.dao.JdbiRevision;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
@@ -231,7 +231,7 @@ public class EventServiceTest extends IntegrationTestSuite.TestCase {
                     handle.attach(JdbiEventConfiguration.class).deleteById(updateDSMInclusionConfigurationId);
                     handle.attach(JdbiEventConfiguration.class).deleteById(announcementConfigId);
                     handle.attach(JdbiActivityStatusTrigger.class).deleteById(eventTriggerId);
-                    handle.attach(JdbiEventTrigger.class).deleteById(eventTriggerId);
+                    handle.attach(EventTriggerSql.class).deleteBaseTriggerById(eventTriggerId);
                     handle.attach(EventActionSql.class).deleteActivityInstanceCreationAction(activityInstanceCreationEventActionId);
                     handle.attach(JdbiEventAction.class).deleteById(activityInstanceCreationEventActionId);
                     handle.attach(JdbiEventAction.class).deleteById(dsmInclusionEventActionId);

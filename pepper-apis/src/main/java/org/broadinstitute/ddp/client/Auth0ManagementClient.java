@@ -12,6 +12,8 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import com.auth0.client.mgmt.ManagementAPI;
@@ -49,9 +51,13 @@ public class Auth0ManagementClient {
     public static final String KEY_PASSWORD_COMPLEXITY_OPTIONS = "password_complexity_options";
     public static final String KEY_MIN_LENGTH = "min_length";
 
+    public static final String APP_METADATA_PEPPER_USER_GUIDS = "pepper_user_guids";
+
     private static final Logger LOG = LoggerFactory.getLogger(Auth0ManagementClient.class);
     private static final String AUDIENCE_SUFFIX = "api/v2/";
     private static final int DEFAULT_TIMEOUT_SECS = 10;
+    private static final int DEFAULT_MAX_TRIES = 3;
+    private static final long DEFAULT_BACKOFF_MILLIS = 500L;
     private static final int TOKEN_LEEWAY_SECONDS = 30;
     private static final Map<String, DecodedJWT> TOKEN_CACHE = new HashMap<>();
     private static final Gson gson = new Gson();
@@ -73,6 +79,21 @@ public class Auth0ManagementClient {
      */
     public static Auth0ManagementClient forUser(Handle handle, String userGuid) {
         Auth0TenantDto auth0TenantDto = handle.attach(JdbiAuth0Tenant.class).findByUserGuid(userGuid);
+        return new Auth0ManagementClient(
+                auth0TenantDto.getDomain(),
+                auth0TenantDto.getManagementClientId(),
+                auth0TenantDto.getManagementClientSecret());
+    }
+
+    /**
+     * Find the auth0 tenant for the study and create Auth0 Management client for it.
+     *
+     * @param handle    the database handle
+     * @param studyGuid the study guid
+     * @return the management client
+     */
+    public static Auth0ManagementClient forStudy(Handle handle, String studyGuid) {
+        Auth0TenantDto auth0TenantDto = handle.attach(JdbiAuth0Tenant.class).findByStudyGuid(studyGuid);
         return new Auth0ManagementClient(
                 auth0TenantDto.getDomain(),
                 auth0TenantDto.getManagementClientId(),
@@ -255,6 +276,27 @@ public class Auth0ManagementClient {
     }
 
     /**
+     * Fetch the auth0 user. Will retry a few times if hit rate limit.
+     *
+     * @param auth0UserId the auth0 user id
+     * @return result with the user, or error response
+     */
+    public ApiResult<User, APIException> getAuth0User(String auth0UserId) {
+        String errorMsg = "Hit rate limit while fetching auth0 user " + auth0UserId;
+        return withRetries(errorMsg, DEFAULT_MAX_TRIES, DEFAULT_BACKOFF_MILLIS, () -> {
+            try {
+                mgmtApi.setApiToken(getToken());
+                var user = mgmtApi.users().get(auth0UserId, null).execute();
+                return ApiResult.ok(200, user);
+            } catch (APIException e) {
+                return ApiResult.err(e.getStatusCode(), e);
+            } catch (Exception e) {
+                return ApiResult.thrown(e);
+            }
+        });
+    }
+
+    /**
      * Update user metadata. Note that Auth0 only allows merging top-level properties in user_metadata. Any nested
      * object properties will be replaced instead of merged.
      *
@@ -274,6 +316,118 @@ public class Auth0ManagementClient {
         } catch (Exception e) {
             return ApiResult.thrown(e);
         }
+    }
+
+    /**
+     * Update user's app metadata. Note that Auth0 only allows merging top-level properties in app_metadata. Any nested
+     * object properties will be replaced instead of merged.
+     *
+     * @param auth0UserId the auth0 user id
+     * @param appMetadata the app metadata
+     * @return result with response user, or error response
+     */
+    public ApiResult<User, APIException> updateUserAppMetadata(String auth0UserId, Map<String, Object> appMetadata) {
+        try {
+            mgmtApi.setApiToken(getToken());
+            var payload = new User();
+            payload.setAppMetadata(appMetadata);
+            var resp = mgmtApi.users().update(auth0UserId, payload).execute();
+            return ApiResult.ok(200, resp);
+        } catch (APIException e) {
+            return ApiResult.err(e.getStatusCode(), e);
+        } catch (Exception e) {
+            return ApiResult.thrown(e);
+        }
+    }
+
+    /**
+     * Store user's guid for the given client in their app metadata. The app_metadata contains a mapping between each
+     * client and the user guid so that different dev clients can operate with the same user without trampling on the
+     * user guid.
+     *
+     * @param auth0UserId   the auth0 user id
+     * @param auth0ClientId the auth0 client id
+     * @param userGuid      the user's guid
+     * @return the updated auth0 user
+     */
+    public User setUserGuidForAuth0User(String auth0UserId, String auth0ClientId, String userGuid) {
+        LOG.info("About to update auth0 user {} with user guid {} for client {}", auth0UserId, userGuid, auth0ClientId);
+        var result = getAuth0User(auth0UserId);
+        if (result.hasFailure()) {
+            var e = result.hasThrown() ? result.getThrown() : result.getError();
+            throw new DDPException("Failed to get auth0 user " + auth0UserId, e);
+        }
+
+        User auth0User = result.getBody();
+        Map<String, Object> appMetadata = auth0User.getAppMetadata();
+        if (appMetadata == null) {
+            appMetadata = new HashMap<>();
+        }
+        Map<String, String> guidByClientId = (Map<String, String>) appMetadata
+                .computeIfAbsent(APP_METADATA_PEPPER_USER_GUIDS, key -> new HashMap<>());
+        guidByClientId.put(auth0ClientId, userGuid);
+
+        result = updateUserAppMetadata(auth0UserId, appMetadata);
+        if (result.hasFailure()) {
+            var e = result.hasThrown() ? result.getThrown() : result.getError();
+            throw new DDPException("Failed to update app metadata for auth0 user " + auth0UserId, e);
+        }
+
+        LOG.info("Updated auth0 user {} with user guid {} for client {}", auth0UserId, userGuid, auth0ClientId);
+        return result.getBody();
+    }
+
+    /**
+     * Remove user's guid for the given client in their app metadata.
+     *
+     * @param auth0UserId   the auth0 user id
+     * @param auth0ClientId the auth0 client id
+     * @return the updated auth0 user
+     */
+    public User removeUserGuidForAuth0User(String auth0UserId, String auth0ClientId) {
+        LOG.info("About to remove user guid for auth0 user {} and client {}", auth0UserId, auth0ClientId);
+        var result = getAuth0User(auth0UserId);
+        if (result.hasFailure()) {
+            var e = result.hasThrown() ? result.getThrown() : result.getError();
+            throw new DDPException("Failed to get auth0 user " + auth0UserId, e);
+        }
+
+        User auth0User = result.getBody();
+        Map<String, Object> appMetadata = auth0User.getAppMetadata();
+        if (appMetadata == null) {
+            appMetadata = new HashMap<>();
+        }
+        Map<String, String> guidByClientId = (Map<String, String>) appMetadata
+                .computeIfAbsent(APP_METADATA_PEPPER_USER_GUIDS, key -> new HashMap<>());
+        guidByClientId.remove(auth0ClientId);
+
+        result = updateUserAppMetadata(auth0UserId, appMetadata);
+        if (result.hasFailure()) {
+            var e = result.hasThrown() ? result.getThrown() : result.getError();
+            throw new DDPException("Failed to update app metadata for auth0 user " + auth0UserId, e);
+        }
+
+        LOG.info("Removed auth0 user {} with user guid {} for client {}", auth0UserId, auth0ClientId);
+        return result.getBody();
+    }
+
+    private <B, E> ApiResult<B, E> withRetries(String errorMsg, int numTries, long backoffMillis, Supplier<ApiResult<B, E>> callback) {
+        ApiResult<B, E> res = null;
+        while (numTries > 0) {
+            res = callback.get();
+            if (res.getStatusCode() == 429) {
+                LOG.error(errorMsg, res.getError());
+                try {
+                    TimeUnit.MILLISECONDS.sleep(backoffMillis);
+                } catch (InterruptedException e) {
+                    LOG.warn("Interrupted while waiting after rate limit", e);
+                }
+            } else {
+                break;
+            }
+            numTries--;
+        }
+        return res;
     }
 
     private static class ClientCredsPayload {

@@ -174,6 +174,10 @@ public class Housekeeping {
     }
 
     public static void main(String[] args) {
+        start(args, null);
+    }
+
+    public static void start(String[] args, SendGridSupplier sendGridSupplier) {
         LogbackConfigurationPrinter.printLoggingConfiguration();
         Config cfg = ConfigManager.getInstance().getConfig();
         boolean doLiquibase = cfg.getBoolean(ConfigFile.DO_LIQUIBASE);
@@ -256,7 +260,7 @@ public class Housekeeping {
                 Subscription subscription = pubsubConnectionManager
                         .createSubscriptionIfNotExists(projectSubscriptionName, projectTopicName);
                 // in the real world, listen differently
-                setupMessageReceiver(pubsubConnectionManager, projectSubscriptionName, cfg);
+                setupMessageReceiver(pubsubConnectionManager, projectSubscriptionName, cfg, sendGridSupplier);
             }
         });
 
@@ -549,12 +553,16 @@ public class Housekeeping {
     }
 
     private static void setupMessageReceiver(PubSubConnectionManager pubsubConnectionManager, ProjectSubscriptionName
-            projectSubscriptionName, Config cfg) {
+            projectSubscriptionName, Config cfg, SendGridSupplier sendGridSupplier) {
         PdfService pdfService = new PdfService();
         PdfBucketService pdfBucketService = new PdfBucketService(cfg);
         PdfGenerationService pdfGenerationService = new PdfGenerationService();
         PdfGenerationHandler pdfGenerationHandler = new PdfGenerationHandler(pdfService, pdfBucketService, pdfGenerationService);
         Gson gson = new Gson();
+        if (sendGridSupplier == null) {
+            sendGridSupplier = SendGridClient::new;
+        }
+        final SendGridSupplier sendGridProvider = sendGridSupplier;
         try {
             MessageReceiver receiver =
                     new MessageReceiver() {
@@ -596,7 +604,7 @@ public class Housekeeping {
                                                         + " is not in the pepper database");
                                             }
 
-                                            new EmailNotificationHandler(new SendGridClient(notificationMessage.getApiKey()),
+                                            new EmailNotificationHandler(sendGridProvider.get(notificationMessage.getApiKey()),
                                                     pdfService, pdfBucketService, pdfGenerationService)
                                                     .handleMessage(notificationMessage);
 
@@ -681,5 +689,13 @@ public class Housekeeping {
          * @param eventConfigurationId id of the event configuration
          */
         void eventIgnored(String eventConfigurationId);
+    }
+
+    /**
+     * Supplier of SendGrid service.
+     */
+    @FunctionalInterface
+    public interface SendGridSupplier {
+        SendGridClient get(String apiKey);
     }
 }
