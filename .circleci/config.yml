@@ -712,7 +712,7 @@ jobs:
       - run-maven-with-pepper-options:
           phase: test
           skip_tests: false
-          additional_options: '-PCircleciParallelBuild -Dsurefire.excludesFile=$IGNORE_CLASS_LIST_PATH'
+          additional_options: '-PCircleciParallelBuild -Dsurefire.excludesFile=$IGNORE_CLASS_LIST_PATH -DcachingDisabled=true'
           save_m2_cache: true
       - save-ddp-cache
       - run:
