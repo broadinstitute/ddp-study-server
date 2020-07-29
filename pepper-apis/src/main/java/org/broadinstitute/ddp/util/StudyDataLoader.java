@@ -3,6 +3,10 @@ package org.broadinstitute.ddp.util;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang.time.DateUtils.MILLIS_PER_SECOND;
 
+import java.io.FileWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
@@ -28,7 +32,6 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import com.auth0.json.mgmt.users.User;
-import com.google.api.client.json.Json;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -68,6 +71,7 @@ import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.exception.AddressVerificationException;
 import org.broadinstitute.ddp.exception.DDPException;
+import org.broadinstitute.ddp.json.LegacyUser;
 import org.broadinstitute.ddp.model.activity.instance.answer.AgreementAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
@@ -976,46 +980,20 @@ public class StudyDataLoader {
         String auth0UserId = null;
         // Create a user for the given domain
         if (hasPassword) {
+            List<String> userList = new ArrayList<>();
             String altPid = data.getAsJsonObject().get("datstat_altpid").getAsString();
             String firstName = data.getAsJsonObject().get("datstat_firstname").getAsString();
             String lastName = data.getAsJsonObject().get("datstat_lastname").getAsString();
-
-            JsonObject auth0UserJson = new JsonObject();
-            JsonObject auth0UserProperties = new JsonObject();
-            JsonObject userEmail = new JsonObject();
-            JsonObject emailVerified = new JsonObject();
-            JsonObject userId = new JsonObject();
-            JsonObject userName = new JsonObject();
-            JsonObject givenName = new JsonObject();
-            JsonObject familyName = new JsonObject();
-            JsonObject fullName = new JsonObject();
-
-            auth0UserJson.addProperty("type","object");
-
-            userEmail.addProperty("type", "string");
-            userEmail.addProperty("description", emailAddress);
-            userEmail.addProperty("format","email");
-
-            emailVerified.addProperty("type", "boolean");
-            emailVerified.addProperty("default", false);
-            emailVerified.addProperty("description", true);
-
-            userId.addProperty("type","string");
-            userId.addProperty("description", altPid);
-
-            givenName.addProperty("type","string");
-            givenName.addProperty("description", firstName);
-
-            familyName.addProperty("type","string");
-            familyName.addProperty("description", lastName);
-
-
-            auth0UserJson.add("email", userEmail);
-            auth0UserJson.add("email_verified", emailVerified);
-            auth0UserJson.add("user_id", userId);
-            auth0UserJson.add("given_name", givenName);
-            auth0UserJson.add("family_name", familyName);
-
+            String passwordHash = data.getAsJsonObject().get("password").getAsString();
+            Map<String, Object> appMetadata = new HashMap<>();
+            appMetadata.put("user_guid", userGuid);
+            LegacyUser legacyUser = new LegacyUser(emailAddress, altPid, firstName, lastName,
+                    passwordHash, appMetadata);
+            Gson gson = new Gson();
+            String userJson = gson.toJson(legacyUser);
+            userList.add(userJson);
+            Path path = Paths.get("pepper-apis/src/main/resources/" + "users.json");
+            Files.write(path, userList);
         }
         else {
             String randomPass = generateRandomPassword();
