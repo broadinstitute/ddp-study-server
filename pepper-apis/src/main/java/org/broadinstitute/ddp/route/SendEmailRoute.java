@@ -8,6 +8,7 @@ import java.util.Optional;
 import com.auth0.exception.Auth0Exception;
 import com.auth0.json.mgmt.users.User;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.constants.NotificationTemplateVariables;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.DaoException;
@@ -54,7 +55,7 @@ public class SendEmailRoute extends ValidatedJsonInputRoute<SendEmailPayload> {
         TransactionWrapper.useTxn(handle -> {
             LOG.info("Handling email resend for {} in study {}", email, studyGuid);
             StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
-            var mgmtClient = Auth0Util.getManagementClientForStudy(handle, studyGuid);
+            var mgmtClient = Auth0ManagementClient.forStudy(handle, studyGuid);
             List<User> auth0Users;
 
             Auth0Util auth0Util = new Auth0Util(mgmtClient.getDomain());

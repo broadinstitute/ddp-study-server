@@ -1305,7 +1305,7 @@ public class DataLoader {
                 data.getDatstatAltpid(), data.getDdpParticipantShortid(), createdAtMillis, updatedAtMillis);
         UserDto newUser = new UserDto(userId, auth0UserId, newUserGuid, newUserHruid, data.getDatstatAltpid(),
                 data.getDdpParticipantShortid(), createdAtMillis, updatedAtMillis);
-        auth0Util.setDDPUserGuidForAuth0User(newUser.getUserGuid(), auth0UserId, auth0ClientId, mgmtToken);
+        mgmtClient.setUserGuidForAuth0User(auth0UserId, auth0ClientId, newUser.getUserGuid());
 
         LOG.error("User created: Auth0UserId = " + auth0UserId + ", GUID = " + newUserGuid + ", HRUID = " + newUserHruid + ", ALTPID = "
                 + data.getDatstatAltpid());

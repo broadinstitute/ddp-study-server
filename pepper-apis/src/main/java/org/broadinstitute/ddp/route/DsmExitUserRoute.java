@@ -9,11 +9,11 @@ import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
-import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
+import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dto.StudyDto;
-import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.json.errors.ApiError;
+import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,15 +58,15 @@ public class DsmExitUserRoute implements Route {
                         throw ResponseUtil.haltError(response, HttpStatus.SC_NOT_FOUND, new ApiError(ErrorCodes.NOT_FOUND, errMsg));
                     }
 
-                    UserDto userDto = handle.attach(JdbiUser.class).findByLegacyAltPidIfNotFoundByUserGuid(participantGuidOrLegacyAltPid);
-                    if (userDto == null) {
+                    User user = handle.attach(UserDao.class).findUserByGuidOrAltPid(participantGuidOrLegacyAltPid).orElse(null);
+                    if (user == null) {
                         ApiError err = new ApiError(ErrorCodes.USER_NOT_FOUND, "Could not find participant "
                                 + "with GUID or Legacy AltPid " + participantGuidOrLegacyAltPid);
                         LOG.warn(err.getMessage());
                         throw ResponseUtil.haltError(response, HttpStatus.SC_NOT_FOUND, err);
                     }
 
-                    String userGuid = userDto.getUserGuid();
+                    String userGuid = user.getGuid();
                     LOG.info("Terminating the enrollment of the user {} in the study {}", userGuid, studyGuid);
                     try {
                         handle.attach(JdbiUserStudyEnrollment.class).terminateStudyEnrollment(userGuid, studyGuid);
@@ -88,7 +88,7 @@ public class DsmExitUserRoute implements Route {
                     } else {
                         LOG.info("User {} doesn't have any activity instances, so nothing to mark as read-only", numUpdated);
                     }
-                    handle.attach(DataExportDao.class).queueDataSync(userDto.getUserId(), studyDto.getId());
+                    handle.attach(DataExportDao.class).queueDataSync(user.getId(), studyDto.getId());
                     response.status(HttpStatus.SC_OK);
                 }
         );

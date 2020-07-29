@@ -75,6 +75,10 @@ public class ApiResult<B, E> {
         return thrown != null;
     }
 
+    public boolean hasFailure() {
+        return error != null || thrown != null;
+    }
+
     /**
      * Create from this result a new result with given exception attached.
      *
