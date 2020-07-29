@@ -136,14 +136,10 @@ public class StudyDataLoader {
         dkAltNames.put("dk", "Don't know");
 
         altNames = new HashMap<>();
-        altNames.put("AMERICAN_INDIAN", "American Indian or Native American");
-        altNames.put("OTHER_EAST_ASIAN", "Other East Asian");
-        altNames.put("SOUTH_EAST_ASIAN", "South East Asian or Indian");
+        altNames.put("SOUTH_EAST_ASIAN", "southeast_asian_indian");
         altNames.put("BLACK", "black_african_american");
-        altNames.put("NATIVE_HAWAIIAN", "hawaiian");
         altNames.put("PREFER_NOT_ANSWER", "prefer_no_answer");
-        altNames.put("AXILLARY_LYMPH_NODES", "aux_lymph_node");
-        altNames.put("OTHER_LYMPH_NODES", "other_lymph_node");
+        altNames.put("NATIVE_HAWAIIAN", "hawaiian");
 
         //MPC THERAPIES options entries
         altNames.put("xtandi", "xtandi_enzalutamide");
@@ -164,12 +160,6 @@ public class StudyDataLoader {
         altNames.put("FIRMAGON", "degareliz");
         altNames.put("YES", "other_therapy");
         altNames.put("CLINICAL_TRIAL", "exp_clinical_trial");
-
-        altNames.put("drugstart_year", "drugstartyear");
-        altNames.put("drugstart_month", "drugstartmonth");
-        altNames.put("drugend_year", "drugendyear");
-        altNames.put("drugend_month", "drugendmonth");
-
     }
 
     void loadMailingListData(Handle handle, JsonElement data, String studyCode) {
