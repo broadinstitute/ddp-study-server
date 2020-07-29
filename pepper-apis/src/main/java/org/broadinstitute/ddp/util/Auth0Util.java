@@ -504,6 +504,10 @@ public class Auth0Util {
         return createdUser;
     }
 
+    public void bulkUserWithHashedPassword() throws Auth0Exception{
+
+    }
+
     /**
      * Will generate a URL that will direct to Auth0 and allow them to change password
      *

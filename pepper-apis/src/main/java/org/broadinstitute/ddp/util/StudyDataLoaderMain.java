@@ -114,6 +114,7 @@ public class StudyDataLoaderMain {
         options.addOption("p", false, "preprocess");
         options.addOption("pf", true, "preprocess file name");
         options.addOption("t", true, "Auth0 tenant id");
+        options.addOption("psw", true, "User Hashed Passwords File");
 
         /**
          Command line options
@@ -159,6 +160,7 @@ public class StudyDataLoaderMain {
         boolean hasServiceAccount = cmd.hasOption("gsa");
         boolean hasMappingFile = cmd.hasOption("mf");
         boolean hasBucketName = cmd.hasOption("gb");
+        boolean hasHashedPasswordFile = cmd.hasOption("psw");
 
         if (cmd.hasOption("help")) {
             HelpFormatter formatter = new HelpFormatter();
@@ -300,7 +302,12 @@ public class StudyDataLoaderMain {
                 if (doMailingAddress) {
                     dataLoaderMain.processGoogleBucketMailingListFiles(cfg, positional[0]);
                 }
-                dataLoaderMain.processGoogleBucketParticipantFiles(cfg, positional[0], isDryRun);
+                if (hasHashedPasswordFile){
+                    dataLoaderMain.processGoogleBucketParticipantFiles(cfg, positional[0], isDryRun, cmd.getOptionValue("psw"));
+                }
+                else {
+                    dataLoaderMain.processGoogleBucketParticipantFiles(cfg, positional[0], isDryRun);
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -553,6 +560,101 @@ public class StudyDataLoaderMain {
             Map<String, JsonElement> surveyDataMap = altpidBucketDataMap.get(altpid);
 
             JsonElement datstatData = surveyDataMap.get("datstatparticipantdata");
+            if (datstatData.getAsJsonObject().get("datstat_email").isJsonNull()) continue;
+            String email = datstatData.getAsJsonObject().get("datstat_email").getAsString().toLowerCase();
+            setRunEmail(dryRun, datstatData);
+
+            if (!dryRun && preProcessedData.getAuth0ExistingEmails().contains(email)) {
+                LOG.error("Skipped altpid: {} . Email : {} already exists in Auth0. ", altpid, email);
+                skippedList.add(altpid);
+                continue;
+            }
+            if (altPidUserList == null || altPidUserList.isEmpty() || altPidUserList.contains(altpid)) {
+                processParticipant(studyGuid, surveyDataMap, mappingData, dataLoader,
+                        preProcessedData.getUserAddressData().get(altpid), addressService, olcService);
+            }
+        }
+        try {
+            createReport(migrationRunReport);
+        } catch (Exception e) {
+            LOG.error("Failed to create migration run report. ", e);
+        }
+
+        if (isDeleteAuth0Email) {
+            deleteAuth0Emails(cfg, migrationRunReport);
+        }
+        LOG.info("completed processing google bucket files");
+        Instant nowDone = Instant.now();
+        duration = Duration.between(now, nowDone);
+        secs = duration.getSeconds();
+        mins = duration.toMinutes();
+        LOG.info("Completed processing & loading GB files {}", preProcessedData.getAltpidBucketDataMap().size(), new Date());
+        LOG.info("Bucket participant file load took : {} secs .. minutes : {} ", secs, mins);
+        if (!failedList.isEmpty()) {
+            LOG.error("Failed to load {} altpids: {} ", failedList.size(), Arrays.toString(failedList.toArray()));
+        } else {
+            LOG.info("NO failed load of Altpids...");
+        }
+        if (!skippedList.isEmpty()) {
+            LOG.warn("Skipped {} altpids: {} ", skippedList.size(), Arrays.toString(skippedList.toArray()));
+        } else {
+            LOG.info("NO skipped Altpids...");
+        }
+    }
+
+    public void processGoogleBucketParticipantFiles(Config cfg, String studyGuid, boolean dryRun, String pswPath) throws Exception {
+
+        LOG.info("Processing google bucket files. {} ", new Date());
+        Instant now = Instant.now();
+        //Download files from Google storage
+        //iterate through All buckets
+        StudyDataLoader dataLoader = new StudyDataLoader(cfg);
+        migrationRunReport = new ArrayList<>();
+        skippedList = new ArrayList<>();
+        failedList = new ArrayList<>();
+
+        PreProcessedData preProcessedData;
+        if (StringUtils.isNotEmpty(preProcessFileName)) {
+            //load pre-processed data from File
+            preProcessedData = new Gson().fromJson(new FileReader(preProcessFileName), PreProcessedData.class);
+            LOG.info("using pre-processed data from {}", preProcessFileName);
+        } else {
+            //load it now
+            preProcessedData = preProcessAddressAndEmailVerification(cfg, dataLoader);
+            LOG.info("loaded pre-processed data. {} ", new Date());
+        }
+        Instant nowPreprocessDone = Instant.now();
+        Duration duration = Duration.between(now, nowPreprocessDone);
+        long secs = duration.getSeconds();
+        long mins = duration.toMinutes();
+        LOG.info("Completed preprocess for GB files: {} .. {}", preProcessedData.getAltpidBucketDataMap().size(), new Date());
+        LOG.info("Bucket preprocess load took : {} secs .. minutes : {} ", secs, mins);
+
+        //load mapping data
+        Map<String, JsonElement> mappingData = loadDataMapping(mappingFileName);
+        final OLCService olcService = new OLCService(cfg.getString(ConfigFile.GEOCODING_API_KEY));
+        final AddressService addressService = new AddressService(cfg.getString(ConfigFile.EASY_POST_API_KEY),
+                cfg.getString(ConfigFile.GEOCODING_API_KEY));
+
+        Map<String, Map> altpidBucketDataMap = preProcessedData.getAltpidBucketDataMap();
+        String hashedPasswordsData = new String(Files.readAllBytes(Paths.get(pswPath)));
+        JsonElement hashedPasswordsJson;
+        try {
+            hashedPasswordsJson = new Gson().fromJson(hashedPasswordsData, new TypeToken<JsonObject>() {
+            }.getType());
+        } catch (Exception e) {
+            LOG.error("Failed to load file data as JSON ", e);
+            return;
+        }
+        JsonObject hashedPasswordsJsonObject = hashedPasswordsJson.getAsJsonObject();
+        for (String altpid : altpidBucketDataMap.keySet()) {
+            Map<String, JsonElement> surveyDataMap = altpidBucketDataMap.get(altpid);
+
+            JsonElement datstatData = surveyDataMap.get("datstatparticipantdata");
+            if (hashedPasswordsJsonObject.has(altpid)) {
+                surveyDataMap.get("datstatparticipantdata").getAsJsonObject()
+                        .add("password", hashedPasswordsJsonObject.get(altpid));
+            }
             if (datstatData.getAsJsonObject().get("datstat_email").isJsonNull()) continue;
             String email = datstatData.getAsJsonObject().get("datstat_email").getAsString().toLowerCase();
             setRunEmail(dryRun, datstatData);

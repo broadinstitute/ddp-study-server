@@ -28,6 +28,7 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import com.auth0.json.mgmt.users.User;
+import com.google.api.client.json.Json;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
@@ -971,12 +972,58 @@ public class StudyDataLoader {
                                           JsonElement data, String userGuid, String userHruid, ClientDto clientDto) throws Exception {
 
         String emailAddress = data.getAsJsonObject().get("datstat_email").getAsString();
-
+        boolean hasPassword = data.getAsJsonObject().has("password");
+        String auth0UserId = null;
         // Create a user for the given domain
-        String randomPass = generateRandomPassword();
-        User newAuth0User = auth0Util.createAuth0User(emailAddress, randomPass, mgmtToken);
+        if (hasPassword) {
+            String altPid = data.getAsJsonObject().get("datstat_altpid").getAsString();
+            String firstName = data.getAsJsonObject().get("datstat_firstname").getAsString();
+            String lastName = data.getAsJsonObject().get("datstat_lastname").getAsString();
 
-        String auth0UserId = newAuth0User.getId();
+            JsonObject auth0UserJson = new JsonObject();
+            JsonObject auth0UserProperties = new JsonObject();
+            JsonObject userEmail = new JsonObject();
+            JsonObject emailVerified = new JsonObject();
+            JsonObject userId = new JsonObject();
+            JsonObject userName = new JsonObject();
+            JsonObject givenName = new JsonObject();
+            JsonObject familyName = new JsonObject();
+            JsonObject fullName = new JsonObject();
+
+            auth0UserJson.addProperty("type","object");
+
+            userEmail.addProperty("type", "string");
+            userEmail.addProperty("description", emailAddress);
+            userEmail.addProperty("format","email");
+
+            emailVerified.addProperty("type", "boolean");
+            emailVerified.addProperty("default", false);
+            emailVerified.addProperty("description", true);
+
+            userId.addProperty("type","string");
+            userId.addProperty("description", altPid);
+
+            givenName.addProperty("type","string");
+            givenName.addProperty("description", firstName);
+
+            familyName.addProperty("type","string");
+            familyName.addProperty("description", lastName);
+
+
+            auth0UserJson.add("email", userEmail);
+            auth0UserJson.add("email_verified", emailVerified);
+            auth0UserJson.add("user_id", userId);
+            auth0UserJson.add("given_name", givenName);
+            auth0UserJson.add("family_name", familyName);
+
+        }
+        else {
+            String randomPass = generateRandomPassword();
+            User newAuth0User = auth0Util.createAuth0User(emailAddress, randomPass, mgmtToken);
+            auth0UserId = newAuth0User.getId();
+        }
+
+
 
         String userCreatedAt = getStringValueFromElement(data, "datstat_created");
 
@@ -997,7 +1044,10 @@ public class StudyDataLoader {
                 altpid, shortId, createdAtMillis, updatedAtMillis);
         UserDto newUser = new UserDto(userId, auth0UserId, userGuid, userHruid, altpid,
                 shortId, createdAtMillis, updatedAtMillis);
-        auth0Util.setDDPUserGuidForAuth0User(newUser.getUserGuid(), auth0UserId, clientDto.getAuth0ClientId(), mgmtToken);
+
+        if (auth0UserId != null) {
+            auth0Util.setDDPUserGuidForAuth0User(newUser.getUserGuid(), auth0UserId, clientDto.getAuth0ClientId(), mgmtToken);
+        }
 
         LOG.info("User created: Auth0UserId = " + auth0UserId + ", GUID = " + userGuid + ", HRUID = " + userHruid + ", ALTPID = "
                 + altpid);
