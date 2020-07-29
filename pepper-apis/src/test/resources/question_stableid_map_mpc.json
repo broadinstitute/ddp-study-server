@@ -202,7 +202,7 @@
                 "type": "integer"
               },
               {
-                "name": "south_east_asian",
+                "name": "SOUTH_EAST_ASIAN",
                 "type": "integer"
               },
               {
@@ -379,7 +379,7 @@
                     "type": "integer"
                   },
                   {
-                    "name": "YES",
+                    "name": "OTHER_YES",
                     "text": "other_therapy_text",
                     "type": "integer"
                   }
