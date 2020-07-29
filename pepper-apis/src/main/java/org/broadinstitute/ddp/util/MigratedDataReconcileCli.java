@@ -19,8 +19,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.cloud.storage.Blob;
@@ -62,6 +60,7 @@ public class MigratedDataReconcileCli {
     Map<String, String> stateCodesMap;
     Map<Integer, String> yesNoDkLookup;
     Map<Integer, Boolean> booleanValueLookup;
+    Map<Integer, String> statusValueLookup;
     Set<String> dkSet;
     private String serviceAccountFile = null;
     private String googleBucketName = null;
@@ -123,26 +122,21 @@ public class MigratedDataReconcileCli {
         booleanValueLookup.put(0, false);
         booleanValueLookup.put(1, true);
 
+        statusValueLookup = new HashMap<>();
+        statusValueLookup.put(1, "COMPLETE");
+        statusValueLookup.put(2, "IN_PROGRESS");
+        statusValueLookup.put(5, "TERMINATED");
+
         dkSet = new HashSet<>();
         dkSet.add("dk");
         dkSet.add("DK");
         dkSet.add("Don't know");
 
         altNames = new HashMap<>();
-        altNames.put("AMERICAN_INDIAN", "American Indian or Native American");
-        altNames.put("OTHER_EAST_ASIAN", "Other East Asian");
-        altNames.put("SOUTH_EAST_ASIAN", "South East Asian or Indian");
-        altNames.put("BLACK", "Black or African American");
-        altNames.put("NATIVE_HAWAIIAN", "Native Hawaiian or other Pacific Islander");
-        altNames.put("PREFER_NOT_ANSWER", "I prefer not to answer");
-
-        altNames.put("AXILLARY_LYMPH_NODES", "aux_lymph_node");
-        altNames.put("OTHER_LYMPH_NODES", "other_lymph_node");
-
-        altNames.put("drugstart_year", "drugstartyear");
-        altNames.put("drugstart_month", "drugstartmonth");
-        altNames.put("drugend_year", "drugendyear");
-        altNames.put("drugend_month", "drugendmonth");
+        altNames.put("SOUTH_EAST_ASIAN", "southeast_asian_indian");
+        altNames.put("BLACK", "black_african_american");
+        altNames.put("PREFER_NOT_ANSWER", "prefer_no_answer");
+        altNames.put("NATIVE_HAWAIIAN", "hawaiian");
 
         initStateCodes();
 
@@ -264,36 +258,13 @@ public class MigratedDataReconcileCli {
             doCompare(csvRecord, userData.get("consentsurvey"), mappingData.get(consentSurveyName));
         }
 
-        //bdconsent has versions
-        JsonElement bdconsentSurveyEl = userData.get("bdconsentsurvey");
-        if (bdconsentSurveyEl != null && !bdconsentSurveyEl.isJsonNull()) {
-            String bdconsentSurveyName = "bdconsentsurvey";
-            JsonElement consentVersionEl = bdconsentSurveyEl.getAsJsonObject().get("consent_version");
-            String bdconsentVersion = "1";
-            if (consentVersionEl != null && !consentVersionEl.isJsonNull()) {
-                bdconsentVersion = consentVersionEl.getAsString();
-            } else {
-                String ddpCreated = userData.get("bdconsentsurvey").getAsJsonObject().get("ddp_created").getAsString();
-                Instant createdDate = Instant.parse(ddpCreated);
-                if (!createdDate.isBefore(CONSENT_V2_DATE)) {
-                    bdconsentVersion = "2";
-                }
-            }
-            bdconsentSurveyName = bdconsentSurveyName.concat("_v").concat(bdconsentVersion);
-            doCompare(csvRecord, userData.get("bdconsentsurvey"), mappingData.get(bdconsentSurveyName));
-            compareBloodConsentAddress(userData.get("bdconsentsurvey"), bdconsentVersion, csvRecord);
-        }
-
-        doCompare(csvRecord, userData.get("releasesurvey"), mappingData.get("tissuereleasesurvey"));
-
-        doCompare(csvRecord, userData.get("bdreleasesurvey"), mappingData.get("bdreleasesurvey"));
+        doCompare(csvRecord, userData.get("releasesurvey"), mappingData.get("releasesurvey"));
 
         doCompare(csvRecord, userData.get("followupsurvey"), mappingData.get("followupsurvey"));
 
-        processInstitutions(userData.get("releasesurvey"), userData.get("bdreleasesurvey"),
-                InstitutionType.PHYSICIAN, csvRecord);
-        processInstitutions(userData.get("releasesurvey"), userData.get("bdreleasesurvey"),
-                InstitutionType.INITIAL_BIOPSY, csvRecord);
+        processInstitutions(userData.get("releasesurvey"), InstitutionType.PHYSICIAN, csvRecord);
+        processInstitutions(userData.get("releasesurvey"), InstitutionType.INITIAL_BIOPSY, csvRecord);
+        processInstitutions(userData.get("releasesurvey"), InstitutionType.INSTITUTION, csvRecord);
     }
 
     private void doCompare(CSVRecord csvRecord, JsonElement sourceDataEl, JsonElement mappingDataEl) throws Exception {
@@ -406,7 +377,59 @@ public class MigratedDataReconcileCli {
                     break;
 
                 case "Boolean":
-                    LOG.error("Boolean type not yet implemented");
+                    sourceFieldValue = getStringValueFromElement(sourceDataEl, sourceFieldName);
+                    if (checkNulls(sourceFieldName, targetFieldName, sourceFieldValue, targetFieldValue, csvRecord)) {
+                        continue;
+                    }
+
+                    if (altNames.containsKey(targetFieldValue)) {
+                        targetFieldValue = altNames.get(targetFieldValue);
+                    }
+                    //convert to boolean and compare values
+                    Boolean targetFieldBoolVal = null;
+                    sourceFieldIntValue = Integer.parseInt(sourceFieldValue);
+                    Boolean sourceFieldBoolVal = booleanValueLookup.get(sourceFieldIntValue);
+                    if (StringUtils.isNotBlank(targetFieldValue)) {
+                        targetFieldBoolVal = Boolean.parseBoolean(targetFieldValue);
+                    }
+
+                    if (sourceFieldBoolVal == targetFieldBoolVal) {
+                        //printRecord(csvRecord.get("legacy_altpid"), csvRecord.get("participant_guid"),
+                        // sourceFieldName, targetFieldName, sourceFieldValue, targetFieldValue, true);
+                        LOG.debug("{} and {} values match. source value: {} target value: {} ",
+                                sourceFieldName, targetFieldName, sourceFieldValue, targetFieldValue);
+                    } else {
+                        printRecord(csvRecord.get("legacy_altpid"), csvRecord.get("participant_guid"),
+                                sourceFieldName, targetFieldName, sourceFieldValue, targetFieldValue, false);
+                    }
+
+                    break;
+
+                case "Status":
+                    sourceFieldValue = getStringValueFromElement(sourceDataEl, sourceFieldName);
+                    if (checkNulls(sourceFieldName, targetFieldName, sourceFieldValue, targetFieldValue, csvRecord)) {
+                        continue;
+                    }
+
+                    if (altNames.containsKey(targetFieldValue)) {
+                        targetFieldValue = altNames.get(targetFieldValue);
+                    }
+                    sourceFieldIntValue = Integer.parseInt(sourceFieldValue);
+                    String sourceFieldStatusVal = statusValueLookup.get(sourceFieldIntValue);
+                    if (StringUtils.isBlank(sourceFieldStatusVal)) {
+                        sourceFieldStatusVal = "CREATED";
+                    }
+
+                    if (sourceFieldStatusVal.equalsIgnoreCase(targetFieldValue)) {
+                        //printRecord(csvRecord.get("legacy_altpid"), csvRecord.get("participant_guid"),
+                        // sourceFieldName, targetFieldName, sourceFieldValue, targetFieldValue, true);
+                        LOG.debug("{} and {} values match. source value: {} target value: {} ",
+                                sourceFieldName, targetFieldName, sourceFieldValue, targetFieldValue);
+                    } else {
+                        printRecord(csvRecord.get("legacy_altpid"), csvRecord.get("participant_guid"),
+                                sourceFieldName, targetFieldName, sourceFieldValue, targetFieldValue, false);
+                    }
+
                     break;
 
                 case "YesNoDk":
@@ -503,29 +526,6 @@ public class MigratedDataReconcileCli {
             selectedOptionsStr = String.join(",", selectedOptions);
         }
 
-        //RACE selected options are passed as String. Special case
-        if (sourceFieldName.equalsIgnoreCase("RACE")) {
-            JsonElement raceEl = dataElement.getAsJsonObject().get("race");
-            if (raceEl != null && !raceEl.isJsonNull()) {
-                selectedOptionsStr = dataElement.getAsJsonObject().get("race").getAsString();
-                selectedOptionsStr = selectedOptionsStr.trim();
-                if (selectedOptionsStr.endsWith(",")) {
-                    selectedOptionsStr = selectedOptionsStr.substring(0, selectedOptionsStr.length() - 1);
-                }
-                //below additional work to trim space after comma in source data so that it matches dataexporter output
-                String[] sourceDataOptionsArray = selectedOptionsStr.split(",");
-                List<String> sourceDataOptions = new ArrayList<>();
-                sourceDataOptions.addAll(Arrays.asList(sourceDataOptionsArray));
-                sourceDataOptions.replaceAll(String::trim); //all this additional work to just trim
-                selectedOptionsStr = String.join(",", sourceDataOptions);
-
-                //add other details if any to target value
-                String raceOtherDetails = csvRecord.get("RACE_OTHER_DETAILS");
-                if (StringUtils.isNotBlank(raceOtherDetails)) {
-                    targetValue = targetValue.concat(",").concat(raceOtherDetails);
-                }
-            }
-        }
         if (selectedOptionsStr == null || selectedOptionsStr.isEmpty()) {
             if (StringUtils.isNotBlank(targetValue)) {
                 printRecord(csvRecord.get("legacy_altpid"), csvRecord.get("participant_guid"),
@@ -539,33 +539,6 @@ public class MigratedDataReconcileCli {
         } else {
             printRecord(csvRecord.get("legacy_altpid"), csvRecord.get("participant_guid"),
                     sourceFieldName, targetFieldName, selectedOptionsStr, targetValue, false);
-        }
-    }
-
-    private void compareBloodConsentAddress(JsonElement sourceDataEl, String consentVersion, CSVRecord csvRecord)
-            throws Exception {
-        String street1 = getStringValueFromElement(sourceDataEl, "street1");
-        String street2 = getStringValueFromElement(sourceDataEl, "street2");
-        String city = getStringValueFromElement(sourceDataEl, "city");
-        String postalCode = getStringValueFromElement(sourceDataEl, "postal_code");
-        String state = getStringValueFromElement(sourceDataEl, "state");
-        String bdConsentAddress =
-                Stream.of(street1, street2, city, state, postalCode)
-                        .filter(s -> s != null && !s.isEmpty())
-                        .collect(Collectors.joining(", "));
-
-        String bdconsentAddressCSVField;
-        if (consentVersion.equals("1")) {
-            bdconsentAddressCSVField = "BLOODCONSENT_ADDRESS";
-        } else {
-            bdconsentAddressCSVField = "BLOODCONSENT_v2_ADDRESS";
-        }
-        String targetDataAddress = csvRecord.get(bdconsentAddressCSVField);
-        boolean isNulls = checkNulls("bdconsentsurvey.address_fields", bdconsentAddressCSVField,
-                bdConsentAddress, targetDataAddress, csvRecord);
-        if (!isNulls && !bdConsentAddress.equalsIgnoreCase(targetDataAddress)) {
-            printRecord(csvRecord.get("legacy_altpid"), csvRecord.get("participant_guid"),
-                    "bdconsentsurvey.address_fields", bdconsentAddressCSVField, bdConsentAddress, targetDataAddress, false);
         }
     }
 
@@ -655,48 +628,30 @@ public class MigratedDataReconcileCli {
         return mappingData;
     }
 
-    private void processInstitutions(JsonElement releaseDataElement, JsonElement bdReleaseDataElement,
+    private void processInstitutions(JsonElement releaseDataElement,
                                      InstitutionType type, CSVRecord csvRecord) throws IOException {
 
-        String institutionsStr = "";
         boolean physicianType = false;
         if (InstitutionType.PHYSICIAN.equals(type)) {
             physicianType = true;
         }
 
-        Set<String> allProviders = new HashSet<>();
-        String releaseProviders = getSourceMedicalProviders(releaseDataElement, physicianType);
-        if (releaseProviders != null) {
-            allProviders.add(releaseProviders);
-        }
-        String bdReleaseProviders = getSourceMedicalProviders(bdReleaseDataElement, physicianType);
-        if (bdReleaseProviders != null) {
-            allProviders.add(bdReleaseProviders);
-        }
-        if (!allProviders.isEmpty()) {
-            institutionsStr = String.join("|", allProviders);
-        }
+        String institutionsStr = getSourceMedicalProviders(releaseDataElement, physicianType);
 
         if (physicianType) {
-            String physicians = csvRecord.get("TISSUERELEASE_PHYSICIAN");
-            if (StringUtils.isEmpty(physicians)) {
-                //try bdrelease
-                physicians = csvRecord.get("BLOODRELEASE_PHYSICIAN");
-            }
+            String physicians = csvRecord.get("PHYSICIAN");
             if (!institutionsStr.equalsIgnoreCase(physicians)) {
                 printRecord(csvRecord.get("legacy_altpid"), csvRecord.get("participant_guid"),
                         "physician_list", "PHYSICIAN", institutionsStr, physicians, false);
             }
-        } else {
-            String biopsyInsts = csvRecord.get("TISSUERELEASE_INITIAL_BIOPSY");
-            String institutions = csvRecord.get("TISSUERELEASE_INSTITUTION");
-            if (StringUtils.isNotBlank(institutions)) {
-                biopsyInsts = StringUtils.join(biopsyInsts, "|", institutions);
-            }
-            if (!institutionsStr.equalsIgnoreCase(biopsyInsts)) {
+        } else if (InstitutionType.INSTITUTION == type) {
+            String institutions = csvRecord.get("INSTITUTION");
+            if (!institutionsStr.equalsIgnoreCase(institutions)) {
                 printRecord(csvRecord.get("legacy_altpid"), csvRecord.get("participant_guid"),
-                        "institution_list", "INITIAL_BIOPSY + INSTITUTION", institutionsStr, biopsyInsts, false);
+                        "institution_list", "INSTITUTION_LIST", institutionsStr, institutions, false);
             }
+        } else {
+            //TODO... compare initial_biopsy
         }
     }
 
@@ -839,27 +794,24 @@ public class MigratedDataReconcileCli {
                 "ABOUTYOU_v1_completed_at",
                 "DIAGNOSIS_DATE_MONTH",
                 "DIAGNOSIS_DATE_YEAR",
-                "ADVANCED_DIAGNOSIS_DATE_MONTH",
-                "ADVANCED_DIAGNOSIS_DATE_YEAR",
-                "HR_POSITIVE",
-                "HER2_POSITIVE",
-                "TRIPLE_NEGATIVE",
-                "INFLAMMATORY",
+                "DIAGNOSED_ADVANCED_METASTATIC",
+                "LOCAL_TREATMENT",
+                "PROSTATECTOMY",
+                "CURRENT_CANCER_LOC",
+                "CURRENT_CANCER_LOC_OTHER_DETAILS",
                 "THERAPIES",
-                "THERAPIES_LIST",
-                "WORKED_THERAPIES",
-                "WORKED_THERAPIES_LIST",
-                "WORKED_THERAPIES_NOTE",
-                "LAST_BIOPSY_MONTH",
-                "LAST_BIOPSY_YEAR",
+                "ADDITIONAL_MEDICATIONS",
+                "OTHER_CANCERS",
+                "OTHER_CANCER_NAMES",
+                "FAMILY_HISTORY",
+                "HEARD_FROM",
+                "HISPANIC",
                 "OTHER_COMMENTS",
                 "BIRTH_YEAR",
                 "COUNTRY",
                 "POSTAL_CODE",
-                "HISPANIC",
                 "RACE",
                 "RACE_OTHER_DETAILS",
-                "HEARD_FROM",
                 "CONSENT_v1",
                 "CONSENT_v1_status",
                 "CONSENT_v1_created_at",
@@ -869,46 +821,15 @@ public class MigratedDataReconcileCli {
                 "CONSENT_TISSUE",
                 "CONSENT_FULLNAME",
                 "CONSENT_DOB",
-                "TISSUECONSENT_v1",
-                "TISSUECONSENT_v1_status",
-                "TISSUECONSENT_v1_created_at",
-                "TISSUECONSENT_v1_updated_at",
-                "TISSUECONSENT_v1_completed_at",
-                "TISSUECONSENT_FULLNAME",
-                "TISSUECONSENT_DOB",
-                "TISSUECONSENT_v2",
-                "TISSUECONSENT_v2_status",
-                "TISSUECONSENT_v2_created_at",
-                "TISSUECONSENT_v2_updated_at",
-                "TISSUECONSENT_v2_completed_at",
-                "TISSUECONSENT_v2_FULLNAME", //added v2
-                "TISSUECONSENT_v2_DOB", //added v2
-                "BLOODCONSENT_v1",
-                "BLOODCONSENT_v1_status",
-                "BLOODCONSENT_v1_created_at",
-                "BLOODCONSENT_v1_updated_at",
-                "BLOODCONSENT_v1_completed_at",
-                "BLOODCONSENT_TREATMENT_NOW",
-                "BLOODCONSENT_TREATMENT_START_MONTH",
-                "BLOODCONSENT_TREATMENT_START_YEAR",
-                "BLOODCONSENT_TREATMENT_PAST",
-                "BLOODCONSENT_ADDRESS",
-                "BLOODCONSENT_PHONE",
-                "BLOODCONSENT_FULLNAME",
-                "BLOODCONSENT_DOB",
-                "BLOODCONSENT_v2",
-                "BLOODCONSENT_v2_status",
-                "BLOODCONSENT_v2_created_at",
-                "BLOODCONSENT_v2_updated_at",
-                "BLOODCONSENT_v2_completed_at",
-                "BLOODCONSENT_v2_TREATMENT_NOW", //added v2 to all fields below until v2_DOB
-                "BLOODCONSENT_v2_TREATMENT_START_MONTH",
-                "BLOODCONSENT_v2_TREATMENT_START_YEAR",
-                "BLOODCONSENT_v2_TREATMENT_PAST",
-                "BLOODCONSENT_v2_ADDRESS",
-                "BLOODCONSENT_v2_PHONE",
-                "BLOODCONSENT_v2_FULLNAME",
-                "BLOODCONSENT_v2_DOB",
+                "CONSENT_v2",
+                "CONSENT_v2_status",
+                "CONSENT_v2_created_at",
+                "CONSENT_v2_updated_at",
+                "CONSENT_v2_completed_at",
+                "CONSENT_v2_BLOOD",
+                "CONSENT_v2_TISSUE",
+                "CONSENT_v2_FULLNAME",
+                "CONSENT_v2_DOB",
                 "RELEASE_v1",
                 "RELEASE_v1_status",
                 "RELEASE_v1_created_at",
@@ -928,53 +849,25 @@ public class MigratedDataReconcileCli {
                 "INITIAL_BIOPSY",
                 "INSTITUTION",
                 "RELEASE_AGREEMENT",
-                "TISSUERELEASE_v1",
-                "TISSUERELEASE_v1_status",
-                "TISSUERELEASE_v1_created_at",
-                "TISSUERELEASE_v1_updated_at",
-                "TISSUERELEASE_v1_completed_at",
-                "TISSUERELEASE_ADDRESS_FULLNAME",  //added TISSUERELEASE to header names
-                "TISSUERELEASE_ADDRESS_STREET1",
-                "TISSUERELEASE_ADDRESS_STREET2",
-                "TISSUERELEASE_ADDRESS_CITY",
-                "TISSUERELEASE_ADDRESS_STATE",
-                "TISSUERELEASE_ADDRESS_ZIP",
-                "TISSUERELEASE_COUNTRY",
-                "TISSUERELEASE_PHONE",
-                "TISSUERELEASE_PLUSCODE",
-                "TISSUERELEASE_STATUS",
-                "TISSUERELEASE_PHYSICIAN",
-                "TISSUERELEASE_INITIAL_BIOPSY",
-                "TISSUERELEASE_INSTITUTION",
-                "TISSUERELEASE_AGREEMENT",
-                "BLOODRELEASE_v1",
-                "BLOODRELEASE_v1_status",
-                "BLOODRELEASE_v1_created_at",
-                "BLOODRELEASE_v1_updated_at",
-                "BLOODRELEASE_v1_completed_at",
-                "BLOODRELEASE_FULLNAME",
-                "BLOODRELEASE_PHYSICIAN",
-                "BLOODRELEASE_AGREEMENT",
-                "FOLLOWUP_v1",
-                "FOLLOWUP_v1_status",
-                "FOLLOWUP_v1_created_at",
-                "FOLLOWUP_v1_updated_at",
-                "FOLLOWUP_v1_completed_at",
-                "CURRENT_CANCER_LOC",
-                "CURRENT_CANCER_LOC_OTHER_DETAILS",
-                "DIAGNOSIS_CANCER_LOC",
-                "DIAGNOSIS_CANCER_LOC_OTHER_DETAILS",
-                "ANYTIME_CANCER_LOC",
-                "ANYTIME_CANCER_LOC_OTHER_DETAILS",
-                "CANCER_IDENTIFICATION",
-                "RARE_SUBTYPES",
-                "RARE_SUBTYPES_OTHER_DETAILS",
-                "CURRENTLY_MEDICATED",
-                "DK_CURRENT_MED_NAMES",
-                "CURRENT_MED_LIST",
-                "PREVIOUSLY_MEDICATED",
-                "DK_PAST_MED_NAMES",
-                "PAST_MED_LIST")
+                "FOLLOWUPCONSENT_v1",
+                "FOLLOWUPCONSENT_v1_status",
+                "FOLLOWUPCONSENT_v1_created_at",
+                "FOLLOWUPCONSENT_v1_updated_at",
+                "FOLLOWUPCONSENT_v1_completed_at",
+                "FOLLOWUPCONSENT_BLOOD",
+                "FOLLOWUPCONSENT_TISSUE",
+                "FOLLOWUPCONSENT_FULLNAME",
+                "FOLLOWUPCONSENT_DOB",
+                "FOLLOWUPCONSENT_v2",
+                "FOLLOWUPCONSENT_v2_status",
+                "FOLLOWUPCONSENT_v2_created_at",
+                "FOLLOWUPCONSENT_v2_updated_at",
+                "FOLLOWUPCONSENT_v2_completed_at",
+                "FOLLOWUPCONSENT_v2_BLOOD",
+                "FOLLOWUPCONSENT_v2_TISSUE",
+                "FOLLOWUPCONSENT_v2_FULLNAME",
+                "FOLLOWUPCONSENT_v2_DOB"
+                )
                 .withDelimiter(',')
                 .withIgnoreHeaderCase()
                 .withSkipHeaderRecord(true)

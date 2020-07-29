@@ -1,0 +1,333 @@
+{
+  "study": {
+    "name": "MPC",
+    "survey": [
+      {
+        "name": "aboutyousurvey",
+        "data": [
+          {
+            "source_field_name": "diagnosis_date_month",
+            "target_field_name": "DIAGNOSIS_DATE_MONTH",
+            "source_field_type": "Integer"
+          },
+          {
+            "source_field_name": "diagnosis_date_year",
+            "target_field_name": "DIAGNOSIS_DATE_YEAR",
+            "source_field_type": "Integer"
+          },
+          {
+            "source_field_name": "initial_adv_metastatic_diag",
+            "target_field_name": "DIAGNOSED_ADVANCED_METASTATIC",
+            "source_field_type": "YesNoDk"
+          },
+          {
+            "source_field_name": "local_treat_first_diagnosed",
+            "target_field_name": "LOCAL_TREATMENT",
+            "source_field_type": "YesNoDk"
+          },
+          {
+            "source_field_name": "prostatectomy",
+            "target_field_name": "PROSTATECTOMY",
+            "source_field_type": "YesNoDk"
+          },
+          {
+            "source_field_name": "cancer_location",
+            "target_field_name": "CURRENT_CANCER_LOC",
+            "source_field_type": "Picklist",
+            "options": [
+              "lymph_node", "bone", "liver", "lung","brain", "ned", "other", "dk"
+            ]
+          },
+          {
+            "source_field_name": "cancer_location.other.other_text",
+            "target_field_name": "CURRENT_CANCER_LOC_OTHER_DETAILS"
+          },
+
+          {
+            "source_field_name": "alt_med_lifestyle",
+            "target_field_name": "ADDITIONAL_MEDICATIONS"
+          },
+          {
+            "source_field_name": "had_other_cancers",
+            "target_field_name": "OTHER_CANCERS",
+            "source_field_type": "YesNoDk"
+          },
+          {
+            "source_field_name": "family_members_with_pc_bc",
+            "target_field_name": "FAMILY_HISTORY",
+            "source_field_type": "YesNoDk"
+          },
+          {
+            "source_field_name": "anything_else",
+            "target_field_name": "OTHER_COMMENTS"
+          },
+          {
+            "source_field_name": "birth_year",
+            "target_field_name": "BIRTH_YEAR",
+            "source_field_type": "Integer"
+          },
+          {
+            "source_field_name": "country",
+            "target_field_name": "COUNTRY"
+          },
+          {
+            "source_field_name": "postal_code",
+            "target_field_name": "POSTAL_CODE"
+          },
+          {
+            "source_field_name": "hispanic_latino_spanish",
+            "target_field_name": "HISPANIC",
+            "source_field_type": "YesNoDk"
+          },
+          {
+            "source_field_name": "race",
+            "target_field_name": "RACE",
+            "source_field_type": "Picklist",
+            "options": [
+              "american_indian", "japanese", "chinese", "other_east_asian","southeast_asian_indian", "black_african_american",
+              "hawaiian", "white", "prefer_no_answer", "other"
+            ]
+          },
+          {
+            "source_field_name": "race.other.text",
+            "target_field_name": "RACE_OTHER_DETAILS"
+          },
+          {
+            "source_field_name": "how_hear",
+            "target_field_name": "HEARD_FROM"
+          },
+          {
+            "source_field_name": "datstat.submissionstatus",
+            "target_field_name": "ABOUTYOU_v1_status",
+            "source_field_type": "Status"
+          },
+          {
+            "source_field_name": "ddp_created",
+            "target_field_name": "ABOUTYOU_v1_created_at",
+            "source_field_type": "Date",
+            "source_field_format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+          },
+          {
+            "source_field_name": "ddp_lastupdated",
+            "target_field_name": "ABOUTYOU_v1_updated_at",
+            "source_field_type": "Date",
+            "source_field_format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+          },
+          {
+            "source_field_name": "ddp_firstcompleted",
+            "target_field_name": "ABOUTYOU_v1_completed_at",
+            "source_field_type": "Date",
+            "source_field_format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+          }
+        ]
+      },
+      {
+        "name": "consentsurvey",
+        "version": "v1",
+        "data": [
+          {
+            "source_field_name": "datstat.submissionstatus",
+            "target_field_name": "CONSENT_v1_status",
+            "source_field_type": "Status"
+          },
+          {
+            "source_field_name": "ddp_created",
+            "target_field_name": "CONSENT_v1_created_at",
+            "source_field_type": "Date",
+            "source_field_format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+          },
+          {
+            "source_field_name": "ddp_lastupdated",
+            "target_field_name": "CONSENT_v1_updated_at",
+            "source_field_type": "Date",
+            "source_field_format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+          },
+          {
+            "source_field_name": "consent_blood",
+            "target_field_name": "CONSENT_BLOOD",
+            "source_field_type": "Boolean"
+          },
+          {
+            "source_field_name": "consent_tissue",
+            "target_field_name": "CONSENT_TISSUE",
+            "source_field_type": "Boolean"
+          },
+          {
+            "source_field_name": "consent_dob",
+            "target_field_name": "CONSENT_DOB",
+            "source_field_type": "Date",
+            "source_field_format": "dd-MMM-yy",
+            "target_field_format": "MM/dd/yy"
+          },
+          {
+            "source_field_name": "fullname",
+            "target_field_name": "CONSENT_FULLNAME"
+          }
+        ]
+      },
+      {
+        "name": "consentsurvey",
+        "version": "v2",
+        "data": [
+          {
+            "source_field_name": "datstat.submissionstatus",
+            "target_field_name": "CONSENT_v2_status",
+            "source_field_type": "Status"
+          },
+          {
+            "source_field_name": "ddp_created",
+            "target_field_name": "CONSENT_v2_created_at",
+            "source_field_type": "Date",
+            "source_field_format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+          },
+          {
+            "source_field_name": "ddp_lastupdated",
+            "target_field_name": "CONSENT_v2_updated_at",
+            "source_field_type": "Date",
+            "source_field_format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+          },
+          {
+            "source_field_name": "consent_blood",
+            "target_field_name": "CONSENT_BLOOD",
+            "source_field_type": "Boolean"
+          },
+          {
+            "source_field_name": "consent_tissue",
+            "target_field_name": "CONSENT_TISSUE",
+            "source_field_type": "Boolean"
+          },
+          {
+            "source_field_name": "consent_dob",
+            "target_field_name": "CONSENT_v2_DOB",
+            "source_field_type": "Date",
+            "source_field_format": "dd-MMM-yy",
+            "target_field_format": "MM/dd/yy"
+          },
+          {
+            "source_field_name": "fullname",
+            "target_field_name": "CONSENT_v2_FULLNAME"
+          }
+        ]
+      },
+      {
+        "name": "releasesurvey",
+        "data": [
+          {
+            "source_field_name": "datstat.submissionstatus",
+            "target_field_name": "RELEASE_v1_status",
+            "source_field_type": "Status"
+          },
+          {
+            "source_field_name": "ddp_created",
+            "target_field_name": "RELEASE_v1_created_at",
+            "source_field_type": "Date",
+            "source_field_format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+          },
+          {
+            "source_field_name": "ddp_lastupdated",
+            "target_field_name": "RELEASE_v1_updated_at",
+            "source_field_type": "Date",
+            "source_field_format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+          },
+          {
+            "source_field_name": "ddp_firstcompleted",
+            "target_field_name": "RELEASE_v1_completed_at",
+            "source_field_type": "Date",
+            "source_field_format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+          }
+        ]
+      },
+      {
+        "name": "followupsurvey",
+        "data": [
+          {
+            "source_field_name": "datstat.submissionstatus",
+            "target_field_name": "FOLLOWUPCONSENT_v1_status",
+            "source_field_type": "Status"
+          },
+          {
+            "source_field_name": "ddp_created",
+            "target_field_name": "FOLLOWUPCONSENT_v1_created_at",
+            "source_field_type": "Date",
+            "source_field_format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+          },
+          {
+            "source_field_name": "ddp_lastupdated",
+            "target_field_name": "FOLLOWUPCONSENT_v1_updated_at",
+            "source_field_type": "Date",
+            "source_field_format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+          },
+          {
+            "source_field_name": "ddp_firstcompleted",
+            "target_field_name": "FOLLOWUPCONSENT_v1_completed_at",
+            "source_field_type": "Date",
+            "source_field_format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+          }
+        ]
+      }
+    ],
+    "datstatparticipantdata": {
+      "data": [
+        {
+          "source_field_name": "ddp_participant_shortid",
+          "target_field_name": "legacy_shortid"
+        },
+        {
+          "source_field_name": "datstat_altpid",
+          "target_field_name": "legacy_altpid"
+        },
+        {
+          "source_field_name": "ddp_do_not_contact",
+          "target_field_name": "do_not_contact",
+          "source_field_type": "Boolean"
+        },
+        {
+          "source_field_name": "datstat_altpid",
+          "target_field_name": "legacy_altpid"
+        },
+        {
+          "source_field_name": "datstat_email",
+          "target_field_name": "email"
+        },
+        {
+          "source_field_name": "ddp_created",
+          "target_field_name": "created_at",
+          "source_field_type": "Date",
+          "source_field_format": "yyyy-MM-dd'T'HH:mm:ss'Z'"
+        },
+        {
+          "source_field_name": "ddp_street1",
+          "target_field_name": "ADDRESS_STREET1"
+        },
+        {
+          "source_field_name": "ddp_street2",
+          "target_field_name": "ADDRESS_STREET2"
+        },
+        {
+          "source_field_name": "ddp_city",
+          "target_field_name": "ADDRESS_CITY"
+        },
+        {
+          "source_field_name": "ddp_state",
+          "target_field_name": "ADDRESS_STATE"
+        },
+        {
+          "source_field_name": "ddp_country",
+          "target_field_name": "COUNTRY"
+        },
+        {
+          "source_field_name": "ddp_postal_code",
+          "target_field_name": "POSTAL_CODE"
+        },
+        {
+          "source_field_name": "datstat_firstname",
+          "target_field_name": "first_name"
+        },
+        {
+          "source_field_name": "datstat_lastname",
+          "target_field_name": "last_name"
+        }
+      ]
+    }
+  }
+}
