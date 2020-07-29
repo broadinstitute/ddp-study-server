@@ -3,7 +3,6 @@ package org.broadinstitute.ddp.util;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang.time.DateUtils.MILLIS_PER_SECOND;
 
-import java.io.FileWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -203,7 +202,6 @@ public class StudyDataLoader {
         altNames.put("BLACK", "Black or African American");
         altNames.put("NATIVE_HAWAIIAN", "Native Hawaiian or other Pacific Islander");
         altNames.put("PREFER_NOT_ANSWER", "I prefer not to answer");
-
 
 
         altNames.put("AXILLARY_LYMPH_NODES", "aux_lymph_node");
@@ -994,13 +992,11 @@ public class StudyDataLoader {
             userList.add(userJson);
             Path path = Paths.get("pepper-apis/src/main/resources/" + "users.json");
             Files.write(path, userList);
-        }
-        else {
+        } else {
             String randomPass = generateRandomPassword();
             User newAuth0User = auth0Util.createAuth0User(emailAddress, randomPass, mgmtToken);
             auth0UserId = newAuth0User.getId();
         }
-
 
 
         String userCreatedAt = getStringValueFromElement(data, "datstat_created");
@@ -1425,7 +1421,7 @@ public class StudyDataLoader {
             if (StringUtils.isNotEmpty(value)) {
                 selectedPicklistOptions.add(new SelectedPicklistOption(value));
                 if (questionName.equals("datstat_physicalstate")) {
-                    stableId = value.substring(0,2) + "_" + stableId;
+                    stableId = value.substring(0, 2) + "_" + stableId;
                 }
             }
             sourceDataSurveyQs.get(surveyName).add(questionName);

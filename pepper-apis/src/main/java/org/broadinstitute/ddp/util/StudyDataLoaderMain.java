@@ -302,10 +302,9 @@ public class StudyDataLoaderMain {
                 if (doMailingAddress) {
                     dataLoaderMain.processGoogleBucketMailingListFiles(cfg, positional[0]);
                 }
-                if (hasHashedPasswordFile){
+                if (hasHashedPasswordFile) {
                     dataLoaderMain.processGoogleBucketParticipantFiles(cfg, positional[0], isDryRun, cmd.getOptionValue("psw"));
-                }
-                else {
+                } else {
                     dataLoaderMain.processGoogleBucketParticipantFiles(cfg, positional[0], isDryRun);
                 }
             } catch (Exception e) {
@@ -560,7 +559,9 @@ public class StudyDataLoaderMain {
             Map<String, JsonElement> surveyDataMap = altpidBucketDataMap.get(altpid);
 
             JsonElement datstatData = surveyDataMap.get("datstatparticipantdata");
-            if (datstatData.getAsJsonObject().get("datstat_email").isJsonNull()) continue;
+            if (datstatData.getAsJsonObject().get("datstat_email").isJsonNull()) {
+                continue;
+            }
             String email = datstatData.getAsJsonObject().get("datstat_email").getAsString().toLowerCase();
             setRunEmail(dryRun, datstatData);
 
@@ -655,7 +656,9 @@ public class StudyDataLoaderMain {
                 surveyDataMap.get("datstatparticipantdata").getAsJsonObject()
                         .add("password", hashedPasswordsJsonObject.get(altpid));
             }
-            if (datstatData.getAsJsonObject().get("datstat_email").isJsonNull()) continue;
+            if (datstatData.getAsJsonObject().get("datstat_email").isJsonNull()) {
+                continue;
+            }
             String email = datstatData.getAsJsonObject().get("datstat_email").getAsString().toLowerCase();
             setRunEmail(dryRun, datstatData);
 
