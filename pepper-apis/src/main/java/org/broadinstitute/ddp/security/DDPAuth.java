@@ -155,6 +155,10 @@ public class DDPAuth implements Serializable {
         return preferredLanguage;
     }
 
+    public void setPreferredLanguage(String languageCode) {
+        preferredLanguage = languageCode;
+    }
+
     @Nullable
     public Locale getPreferredLocale() {
         String preferredLanguage = getPreferredLanguage();

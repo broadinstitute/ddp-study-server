@@ -129,6 +129,19 @@ public class JWTConverter {
         return preferredIsoLanguageCode;
     }
 
+    private String getPreferredLanguageCodeForUser(Handle handle, String userGuid) {
+        UserProfile userProfile = findUserProfile(handle, userGuid);
+        String preferredIsoLanguageCode = DEFAULT_ISO_LANGUAGE_CODE;
+        if (userProfile != null) {
+            if (userProfile.getPreferredLangCode() != null) {
+                preferredIsoLanguageCode = userProfile.getPreferredLangCode();
+                LOG.info("The preferred language code for the user with GUID {} is '{}'",
+                        userGuid, preferredIsoLanguageCode);
+            }
+        }
+        return preferredIsoLanguageCode;
+    }
+
     private UserProfile findUserProfile(Handle handle, String userGuid) {
         return handle.attach(UserProfileDao.class).findProfileByUserGuid(userGuid).orElse(null);
     }
@@ -137,6 +150,11 @@ public class JWTConverter {
         DDPAuth cachedAuth = jwtToDDPAuthCache.get(jwt);
         if (cachedAuth != null) {
             LOG.info("Auth found in cache");
+            TransactionWrapper.useTxn(handle -> {
+                String preferrededLanguage = getPreferredLanguageCodeForUser(handle, cachedAuth.getOperator());
+                cachedAuth.setPreferredLanguage(preferrededLanguage);
+
+            });
             return cachedAuth;
         }
         DDPAuth ddpAuth =
@@ -158,6 +176,7 @@ public class JWTConverter {
                         jwkProvider = new JwkProviderBuilder(configuration.getAuth0Domain()).cached(100, 3L, MINUTES).build();
                         jwkProviderMap.put(auth0ClientId, jwkProvider);
                     }
+
                     UserProfile userProfile;
                     Long userId;
                     try {
@@ -182,15 +201,17 @@ public class JWTConverter {
                                 + auth0ClientId);
                         throw e;
                     }
-                    Set<String> existingJwts = userIdToJwtCache.get(userId);
-                    if (existingJwts == null) {
-                        userIdToJwtCache.put(userId, Set.of(jwt));
-                    } else {
-                        Set<String> newSet = new HashSet(existingJwts);
-                        newSet.add(jwt);
-                        userIdToJwtCache.put(userId, newSet);
+                    if (userId != null) {
+                        Set<String> existingJwts = userIdToJwtCache.get(userId);
+                        if (existingJwts == null) {
+                            userIdToJwtCache.put(userId, Set.of(jwt));
+                        } else {
+                            Set<String> newSet = new HashSet(existingJwts);
+                            newSet.add(jwt);
+                            userIdToJwtCache.put(userId, newSet);
+                        }
+                        jwtToDDPAuthCache.put(jwt, txnDdpAuth);
                     }
-                    jwtToDDPAuthCache.put(jwt, txnDdpAuth);
                     return txnDdpAuth;
                 });
         return ddpAuth;
