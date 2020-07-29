@@ -832,7 +832,7 @@ public class StudyDataLoader {
         String emailAddress = data.getAsJsonObject().get("datstat_email").getAsString();
 
         // Create a user for the given domain
-        String randomPass = "Welcome1"; //generateRandomPassword();
+        String randomPass = generateRandomPassword();
         User newAuth0User = auth0Util.createAuth0User(emailAddress, randomPass, mgmtToken);
 
         String auth0UserId = newAuth0User.getId();
