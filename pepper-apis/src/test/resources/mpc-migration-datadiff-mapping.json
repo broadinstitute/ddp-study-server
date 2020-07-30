@@ -80,6 +80,43 @@
             "source_field_type": "YesNoDk"
           },
           {
+            "source_field_name": "therapy_hormones+chemotherapy+other_therapies",
+            "target_field_name": "THERAPIES",
+            "source_field_type": "PicklistGroup",
+            "groups": [
+              {
+                "source_group_name": "therapy_hormones",
+                "options": [
+                  "lupron", "zoladex", "casodex", "drogenil","nilandron", "xtandi_enzalutamide",
+                  "zytiga_abiraterone", "prostap", "degareliz", "suprefact", "decapeptyl"
+                  ]
+              },
+              {
+                "source_group_name": "chemotherapy",
+                "options": [
+                  "docetaxel_taxotere", "paclitaxel_taxol", "carboplatin", "etoposide","mitoxantrone", "estramustine", "jevtana_cabazitaxel"
+                ]
+              },
+              {
+                "source_group_name": "other_therapies",
+                "options": [
+                  "provenge", "opdivo_nivolumab", "keytruda", "yervoy_ipilumimab","tecentriq_aztezolizumab", "lynparza_olaparib",
+                  "rubraca_rucaparib", "xofigo", "zometa", "xgeva", "quadramet", "metastron", "exp_clinical_trial", "other_therapy"
+                ]
+              }
+            ],
+            "options": null
+          },
+          {
+            "source_field_name": "other_therapies.exp_clinical_trial.exp_clinical_trial_text",
+            "target_field_name": "THERAPIES_CLINICAL_TRIAL_DETAILS"
+          },
+          {
+            "source_field_name": "other_therapies.other_therapy.other_therapy_text",
+            "target_field_name": "THERAPIES_OTHER_YES_DETAILS"
+          },
+
+          {
             "source_field_name": "race",
             "target_field_name": "RACE",
             "source_field_type": "Picklist",

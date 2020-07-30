@@ -159,7 +159,7 @@ public class StudyDataLoader {
         altNames.put("NOVANTRONE", "mitoxantrone");
         altNames.put("EMCYT", "estramustine");
         altNames.put("FIRMAGON", "degareliz");
-        altNames.put("YES", "other_therapy");
+        altNames.put("OTHER_YES", "other_therapy");
         altNames.put("CLINICAL_TRIAL", "exp_clinical_trial");
     }
 

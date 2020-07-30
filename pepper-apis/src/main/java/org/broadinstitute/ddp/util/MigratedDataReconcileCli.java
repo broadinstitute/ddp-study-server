@@ -13,6 +13,7 @@ import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -54,7 +55,6 @@ public class MigratedDataReconcileCli {
     private static final String DEFAULT_DATA_TYPE = "String";
     private static final DateFormat DEFAULT_TARGET_DATE_FMT = new SimpleDateFormat("MM/dd/yy HH:mm:ss");
     private static final Instant CONSENT_V2_DATE = Instant.parse("2019-05-15T00:00:00Z");
-    private List<String> skipFields = new ArrayList<>();
     CSVPrinter csvPrinter = null;
     Map<String, String> altNames;
     Map<String, String> stateCodesMap;
@@ -62,6 +62,7 @@ public class MigratedDataReconcileCli {
     Map<Integer, Boolean> booleanValueLookup;
     Map<Integer, String> statusValueLookup;
     Set<String> dkSet;
+    private List<String> skipFields = new ArrayList<>();
     private String serviceAccountFile = null;
     private String googleBucketName = null;
 
@@ -137,6 +138,25 @@ public class MigratedDataReconcileCli {
         altNames.put("BLACK", "black_african_american");
         altNames.put("PREFER_NOT_ANSWER", "prefer_no_answer");
         altNames.put("NATIVE_HAWAIIAN", "hawaiian");
+
+        //MPC THERAPIES options entries
+        altNames.put("XTANDI", "xtandi_enzalutamide");
+        altNames.put("ZYTIGA", "zytiga_abiraterone");
+        altNames.put("TAXOL", "paclitaxel_taxol");
+        altNames.put("JEVTANA", "jevtana_cabazitaxel");
+        altNames.put("OPDIVO", "opdivo_nivolumab");
+        altNames.put("YERVOY", "yervoy_ipilumimab");
+        altNames.put("TECENTRIQ", "tecentriq_aztezolizumab");
+        altNames.put("LYNPARZA", "lynparza_olaparib");
+        altNames.put("RUBRACA", "rubraca_rucaparib");
+        altNames.put("TAXOTERE", "docetaxel_taxotere");
+        altNames.put("PARAPLATIN", "carboplatin");
+        altNames.put("ETOPOPHOS", "etoposide");
+        altNames.put("NOVANTRONE", "mitoxantrone");
+        altNames.put("EMCYT", "estramustine");
+        altNames.put("FIRMAGON", "degareliz");
+        altNames.put("OTHER_YES", "other_therapy");
+        altNames.put("CLINICAL_TRIAL", "exp_clinical_trial");
 
         initStateCodes();
 
@@ -376,6 +396,10 @@ public class MigratedDataReconcileCli {
                     checkPicklistValues(thisMapData, sourceDataEl, targetFieldValue, csvRecord);
                     break;
 
+                case "PicklistGroup":
+                    checkPicklistGroupValues(thisMapData, sourceDataEl, targetFieldValue, csvRecord);
+                    break;
+
                 case "Boolean":
                     sourceFieldValue = getStringValueFromElement(sourceDataEl, sourceFieldName);
                     if (checkNulls(sourceFieldName, targetFieldName, sourceFieldValue, targetFieldValue, csvRecord)) {
@@ -539,6 +563,75 @@ public class MigratedDataReconcileCli {
         } else {
             printRecord(csvRecord.get("legacy_altpid"), csvRecord.get("participant_guid"),
                     sourceFieldName, targetFieldName, selectedOptionsStr, targetValue, false);
+        }
+    }
+
+    private void checkPicklistGroupValues(JsonElement mappingElement, JsonElement dataElement,
+                                          String targetValue, CSVRecord csvRecord) throws IOException {
+        String sourceFieldName = mappingElement.getAsJsonObject().get("source_field_name").getAsString();
+        String targetFieldName = mappingElement.getAsJsonObject().get("target_field_name").getAsString();
+
+        //check if targetValue need to be updated
+        String[] targetValueOptions = targetValue.split(",");
+        String updatedValue = targetValue;
+        for (String val : targetValueOptions) {
+            if (altNames.containsKey(val)) {
+                updatedValue = updatedValue.replace(val, altNames.get(val).toUpperCase());
+            }
+        }
+        if (!targetValue.equalsIgnoreCase(updatedValue)) {
+            targetValue = updatedValue;
+        }
+        List<String> targetOptions = new ArrayList(Arrays.asList(targetValue.split(",")));
+        Collections.sort(targetOptions);
+        String sortedTargetValue = String.join(",", targetOptions).toLowerCase();
+
+        //iterate through groups
+        JsonArray groupEls = mappingElement.getAsJsonObject().get("groups").getAsJsonArray();
+        String selectedOptionsStr = null;
+        List<String> selectedOptions = new ArrayList<>();
+        for (JsonElement group : groupEls) {
+            String groupName = getStringValueFromElement(group, "source_group_name");
+            //get selected picklists options
+            JsonElement optionsEl = group.getAsJsonObject().get("options");
+
+            JsonArray options;
+            if (optionsEl != null && !optionsEl.isJsonNull()) {
+                options = optionsEl.getAsJsonArray();
+                String optionName;
+                selectedOptionsStr = null;
+                for (JsonElement optionEl : options) {
+                    String option = optionEl.getAsString();
+                    optionName = groupName.concat(".").concat(option);
+                    //is the option selected
+                    JsonElement sourceDataOptionEl = dataElement.getAsJsonObject().get(optionName);
+                    if (sourceDataOptionEl != null && !sourceDataOptionEl.isJsonNull()) {
+                        if (sourceDataOptionEl.getAsString().equals("1")) {
+                            selectedOptions.add(option);
+                        }
+                    }
+                }
+            }
+        }
+
+        if (CollectionUtils.isNotEmpty(selectedOptions)) {
+            Collections.sort(selectedOptions);
+            selectedOptionsStr = String.join(",", selectedOptions);
+        }
+
+        if (selectedOptionsStr == null || selectedOptionsStr.isEmpty()) {
+            if (StringUtils.isNotBlank(sortedTargetValue)) {
+                printRecord(csvRecord.get("legacy_altpid"), csvRecord.get("participant_guid"),
+                        sourceFieldName, targetFieldName, selectedOptionsStr, null, false);
+            }
+            return;
+        }
+        if (selectedOptionsStr.equalsIgnoreCase(sortedTargetValue)) {
+            LOG.debug("Picklist {} and {} values match. Values: {} {} ",
+                    sourceFieldName, targetFieldName, selectedOptionsStr, sortedTargetValue);
+        } else {
+            printRecord(csvRecord.get("legacy_altpid"), csvRecord.get("participant_guid"),
+                    sourceFieldName, targetFieldName, selectedOptionsStr, sortedTargetValue, false);
         }
     }
 
@@ -800,6 +893,8 @@ public class MigratedDataReconcileCli {
                 "CURRENT_CANCER_LOC",
                 "CURRENT_CANCER_LOC_OTHER_DETAILS",
                 "THERAPIES",
+                "THERAPIES_CLINICAL_TRIAL_DETAILS",
+                "THERAPIES_OTHER_YES_DETAILS",
                 "ADDITIONAL_MEDICATIONS",
                 "OTHER_CANCERS",
                 "OTHER_CANCER_NAMES",
