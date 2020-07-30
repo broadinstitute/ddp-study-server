@@ -78,9 +78,7 @@ public class PicklistQuestionFormatStrategy implements ResponseFormatStrategy<Pi
             groupDef.put("options", options);
             groups.add(groupDef);
         }
-        if (!groups.isEmpty()) {
-            props.put("groups", groups);
-        }
+        props.put("groups", groups);
 
         List<Object> options = new ArrayList<>();
         for (PicklistOptionDef optionDef : definition.getPicklistOptions()) {
