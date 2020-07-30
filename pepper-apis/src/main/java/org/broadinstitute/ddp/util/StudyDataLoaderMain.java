@@ -654,7 +654,7 @@ public class StudyDataLoaderMain {
             JsonElement datstatData = surveyDataMap.get("datstatparticipantdata");
             if (hashedPasswordsJsonObject.has(altpid)) {
                 surveyDataMap.get("datstatparticipantdata").getAsJsonObject()
-                        .add("password", hashedPasswordsJsonObject.get(altpid));
+                        .add("password", hashedPasswordsJsonObject.get(altpid).getAsJsonObject().get("hashedPassword"));
             }
             if (datstatData.getAsJsonObject().get("datstat_email").isJsonNull()) {
                 continue;

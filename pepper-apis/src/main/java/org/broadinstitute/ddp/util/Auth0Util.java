@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.util;
 
+import java.io.File;
 import java.io.IOException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -58,6 +59,7 @@ public class Auth0Util {
     private static final String HTTPS_PREFIX = "https://";
     public static final String PEPPER_USER_GUIDS_USER_APP_METADATA_KEY = "pepper_user_guids";
     public static final String REFRESH_ENDPOINT = "oauth/token";
+    public static final String BULK_IMPORTS_ENDPOINT = "api/v2/jobs/users-exports";
     private final String baseUrl;
     // map of cached jwk providers so we don't hammer auth0
     private static final Map<String, JwkProvider> jwkProviderMap = new HashMap<>();
@@ -311,6 +313,31 @@ public class Auth0Util {
         return new Gson().fromJson(responseBody, RefreshTokenResponse.class);
     }
 
+    public BulkUserImportResponse bulkUserWithHashedPassword(String mgmtApiToken, File file) throws Auth0Exception{
+        String connectionId = getAuth0UserNamePasswordConnectionId(mgmtApiToken);
+        Request request = Request.Post(baseUrl + BULK_IMPORTS_ENDPOINT)
+                .addHeader("Content-Type","multipart/form-data")
+                .bodyFile(file, ContentType.APPLICATION_JSON)
+                .bodyString(new Gson().toJson(connectionId), ContentType.APPLICATION_JSON);
+        try {
+            return request.execute().handleResponse(new ResponseHandler<BulkUserImportResponse>() {
+                @Override
+                public BulkUserImportResponse handleResponse(HttpResponse response) throws IOException {
+                    int status = response.getStatusLine().getStatusCode();
+                    if (status == 201) {
+                        return new Gson().fromJson(EntityUtils.toString(response.getEntity()),
+                                BulkUserImportResponse.class);
+                    } else {
+                        throw new RuntimeException("Attempt to create bulk user import job returned " + status + ":"
+                                + EntityUtils.toString(response.getEntity()));
+                    }
+                }
+            });
+        } catch (IOException e) {
+            throw new RuntimeException("Could not create bulk user import job", e);
+        }
+    }
+
     /**
      * Uses the refreshToken to re-issue an access and id token.
      *
@@ -504,9 +531,7 @@ public class Auth0Util {
         return createdUser;
     }
 
-    public void bulkUserWithHashedPassword() throws Auth0Exception{
 
-    }
 
     /**
      * Will generate a URL that will direct to Auth0 and allow them to change password
@@ -793,6 +818,84 @@ public class Auth0Util {
             this.userName = userName;
             this.password = password;
             this.studyGuid = studyGuid;
+        }
+    }
+
+    private static class BulkUserImportResponse {
+
+        @SerializedName("status")
+        private String status;
+
+        @SerializedName("type")
+        private String type;
+
+        @SerializedName("created_at")
+        private String createdAt;
+
+        @SerializedName("id")
+        private String jobId;
+
+        @SerializedName("connection_id")
+        private String connectionId;
+
+        @SerializedName("external_id")
+        private String externalId;
+
+        public BulkUserImportResponse(String status, String type, String createdAt, String jobId, String connectionId, String externalId) {
+            this.status = status;
+            this.type = type;
+            this.createdAt = createdAt;
+            this.jobId = jobId;
+            this.connectionId = connectionId;
+            this.externalId = externalId;
+        }
+
+        public String getStatus() {
+            return status;
+        }
+
+        public void setStatus(String status) {
+            this.status = status;
+        }
+
+        public String getType() {
+            return type;
+        }
+
+        public void setType(String type) {
+            this.type = type;
+        }
+
+        public String getCreatedAt() {
+            return createdAt;
+        }
+
+        public void setCreatedAt(String createdAt) {
+            this.createdAt = createdAt;
+        }
+
+        public String getJobId() {
+            return jobId;
+        }
+
+        public void setJobId(String jobId) {
+            this.jobId = jobId;
+        }
+
+        public String getConnectionId() {
+            return connectionId;
+        }
+
+        public void setConnectionId(String connectionId) {
+            this.connectionId = connectionId;
+        }
+
+        public String getExternalId() {
+            return externalId;
+        }
+
+        public void setExternalId(String externalId) {
+            this.externalId = externalId;
         }
     }
 

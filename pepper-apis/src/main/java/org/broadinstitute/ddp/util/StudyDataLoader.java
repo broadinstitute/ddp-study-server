@@ -3,8 +3,10 @@ package org.broadinstitute.ddp.util;
 import static java.util.stream.Collectors.toList;
 import static org.apache.commons.lang.time.DateUtils.MILLIS_PER_SECOND;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.nio.file.Paths;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -978,20 +980,7 @@ public class StudyDataLoader {
         String auth0UserId = null;
         // Create a user for the given domain
         if (hasPassword) {
-            List<String> userList = new ArrayList<>();
-            String altPid = data.getAsJsonObject().get("datstat_altpid").getAsString();
-            String firstName = data.getAsJsonObject().get("datstat_firstname").getAsString();
-            String lastName = data.getAsJsonObject().get("datstat_lastname").getAsString();
-            String passwordHash = data.getAsJsonObject().get("password").getAsString();
-            Map<String, Object> appMetadata = new HashMap<>();
-            appMetadata.put("user_guid", userGuid);
-            LegacyUser legacyUser = new LegacyUser(emailAddress, altPid, firstName, lastName,
-                    passwordHash, appMetadata);
-            Gson gson = new Gson();
-            String userJson = gson.toJson(legacyUser);
-            userList.add(userJson);
-            Path path = Paths.get("pepper-apis/src/main/resources/" + "users.json");
-            Files.write(path, userList);
+            File userJsonFile = bulkUserCreateJson(data, userGuid, emailAddress);
         } else {
             String randomPass = generateRandomPassword();
             User newAuth0User = auth0Util.createAuth0User(emailAddress, randomPass, mgmtToken);
@@ -1027,6 +1016,29 @@ public class StudyDataLoader {
                 + altpid);
 
         return newUser;
+    }
+
+    private File bulkUserCreateJson(JsonElement data, String userGuid, String emailAddress) throws IOException {
+        List<String> userList = new ArrayList<>();
+        String altPid = data.getAsJsonObject().get("datstat_altpid").getAsString();
+        String firstName = data.getAsJsonObject().get("datstat_firstname").getAsString();
+        String lastName = data.getAsJsonObject().get("datstat_lastname").getAsString();
+        String passwordHash = data.getAsJsonObject().get("password").getAsString();
+        Map<String, Object> appMetadata = new HashMap<>();
+        appMetadata.put("user_guid", userGuid);
+        LegacyUser legacyUser = new LegacyUser(emailAddress, altPid, firstName, lastName,
+                passwordHash, appMetadata);
+        Gson gson = new Gson();
+        String userJson = gson.toJson(legacyUser);
+        userList.add(userJson);
+        String rootPath = Paths.get("").toAbsolutePath().toString();
+        String jsonFileAbsolutePath = rootPath + "/pepper-apis/src/main/resources/" + "users.json";
+        BufferedWriter outputWriter = new BufferedWriter(
+                new FileWriter(jsonFileAbsolutePath));
+        outputWriter.write(userList.toString());
+        outputWriter.close();
+        File bulkUserJsonFile = new File(jsonFileAbsolutePath);
+        return bulkUserJsonFile;
     }
 
     private String generateRandomPassword() {
