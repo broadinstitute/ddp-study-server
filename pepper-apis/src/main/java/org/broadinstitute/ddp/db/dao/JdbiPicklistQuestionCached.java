@@ -23,7 +23,7 @@ public class JdbiPicklistQuestionCached extends SQLObjectWrapper<JdbiPicklistQue
 
     private void initializeCache() {
         if (questionIdToPicklistQuestionDto == null) {
-            questionIdToPicklistQuestionDto = CacheService.getInstance().getOrCreateCache("questionIdToTextQuestionCache",
+            questionIdToPicklistQuestionDto = CacheService.getInstance().getOrCreateCache("questionIdToPicklistQuestionDto",
                     new Duration(),
                     ModelChangeType.STUDY,
                     this.getClass());
