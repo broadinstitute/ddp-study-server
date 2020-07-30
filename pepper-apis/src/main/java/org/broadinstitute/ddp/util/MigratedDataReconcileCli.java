@@ -139,7 +139,7 @@ public class MigratedDataReconcileCli {
         altNames.put("PREFER_NOT_ANSWER", "prefer_no_answer");
         altNames.put("NATIVE_HAWAIIAN", "hawaiian");
 
-        //MPC THERAPIES options entries
+        //MPC THERAPIES group options entries
         altNames.put("XTANDI", "xtandi_enzalutamide");
         altNames.put("ZYTIGA", "zytiga_abiraterone");
         altNames.put("TAXOL", "paclitaxel_taxol");
@@ -418,8 +418,6 @@ public class MigratedDataReconcileCli {
                     }
 
                     if (sourceFieldBoolVal == targetFieldBoolVal) {
-                        //printRecord(csvRecord.get("legacy_altpid"), csvRecord.get("participant_guid"),
-                        // sourceFieldName, targetFieldName, sourceFieldValue, targetFieldValue, true);
                         LOG.debug("{} and {} values match. source value: {} target value: {} ",
                                 sourceFieldName, targetFieldName, sourceFieldValue, targetFieldValue);
                     } else {
@@ -445,8 +443,6 @@ public class MigratedDataReconcileCli {
                     }
 
                     if (sourceFieldStatusVal.equalsIgnoreCase(targetFieldValue)) {
-                        //printRecord(csvRecord.get("legacy_altpid"), csvRecord.get("participant_guid"),
-                        // sourceFieldName, targetFieldName, sourceFieldValue, targetFieldValue, true);
                         LOG.debug("{} and {} values match. source value: {} target value: {} ",
                                 sourceFieldName, targetFieldName, sourceFieldValue, targetFieldValue);
                     } else {
@@ -744,7 +740,17 @@ public class MigratedDataReconcileCli {
                         "institution_list", "INSTITUTION_LIST", institutionsStr, institutions, false);
             }
         } else {
-            //TODO... compare initial_biopsy
+            //initial_biopsy
+            String biopsyTargetValue = csvRecord.get("INITIAL_BIOPSY");
+            String inst = getStringValueFromElement(releaseDataElement, "initial_biopsy_institution");
+            String city = getStringValueFromElement(releaseDataElement, "initial_biopsy_city");
+            String state = getStringValueFromElement(releaseDataElement, "initial_biopsy_state");
+            String biopsySourceValue = String.join(";", inst, city, state);
+            if (!biopsySourceValue.equalsIgnoreCase(biopsyTargetValue)) {
+                printRecord(csvRecord.get("legacy_altpid"), csvRecord.get("participant_guid"),
+                        "initial_biopsy", "INITIAL_BIOPSY", biopsySourceValue, biopsyTargetValue, false);
+            }
+
         }
     }
 
