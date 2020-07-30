@@ -103,7 +103,7 @@ public interface PicklistAnswerDao extends SqlObject {
         }
         Set<String> selectedStableIds = selected.stream().map(sel -> sel.getStableId()).collect(toSet());
         Map<String, PicklistOptionDef> selectedStableIdToOptionDef =
-                picklistQuestionDef.getPicklistOptions().stream()
+                picklistQuestionDef.getAllPicklistOptions().stream()
                         .filter(option -> selectedStableIds.contains(option.getStableId()))
                         .collect(toMap(def -> def.getStableId(), def -> def));
 

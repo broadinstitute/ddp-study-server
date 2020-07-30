@@ -1,8 +1,11 @@
 package org.broadinstitute.ddp.model.activity.definition.question;
 
+import static java.util.stream.Collectors.toList;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Stream;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
@@ -119,6 +122,12 @@ public final class PicklistQuestionDef extends QuestionDef {
 
     public List<PicklistOptionDef> getPicklistOptions() {
         return picklistOptions;
+    }
+
+    public List<PicklistOptionDef> getAllPicklistOptions() {
+        Stream<PicklistOptionDef> groupOptions =
+                getGroups().stream().flatMap(group -> group.getOptions().stream());
+        return Stream.concat(picklistOptions.stream(), groupOptions).collect(toList());
     }
 
     public boolean hasNumOptionsSelectedRule() {
