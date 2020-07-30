@@ -52,6 +52,8 @@ import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static org.broadinstitute.ddp.util.MiscUtil.fmt;
+
 public class Auth0Util {
     private static final Logger LOG = LoggerFactory.getLogger(Auth0Util.class);
 
@@ -60,6 +62,7 @@ public class Auth0Util {
     public static final String PEPPER_USER_GUIDS_USER_APP_METADATA_KEY = "pepper_user_guids";
     public static final String REFRESH_ENDPOINT = "oauth/token";
     public static final String BULK_IMPORTS_ENDPOINT = "api/v2/jobs/users-exports";
+    public static final String AUTH0_JOB_ENDPOINT = "api/v2/jobs/%s";
     private final String baseUrl;
     // map of cached jwk providers so we don't hammer auth0
     private static final Map<String, JwkProvider> jwkProviderMap = new HashMap<>();
@@ -335,6 +338,27 @@ public class Auth0Util {
             });
         } catch (IOException e) {
             throw new RuntimeException("Could not create bulk user import job", e);
+        }
+    }
+
+    public Auth0JobResponse getAuth0Job(String jobId) {
+        Request request = Request.Get(fmt(baseUrl + AUTH0_JOB_ENDPOINT, jobId));
+        try {
+            return request.execute().handleResponse(new ResponseHandler<Auth0JobResponse>() {
+                @Override
+                public Auth0JobResponse handleResponse(HttpResponse response) throws IOException {
+                    int status = response.getStatusLine().getStatusCode();
+                    if (status == 201) {
+                        return new Gson().fromJson(EntityUtils.toString(response.getEntity()),
+                                Auth0JobResponse.class);
+                    } else {
+                        throw new RuntimeException("Attempt to get auth0 job returned " + status + ":"
+                                + EntityUtils.toString(response.getEntity()));
+                    }
+                }
+            });
+        } catch (IOException e) {
+            throw new RuntimeException("Could not get auth0 job", e);
         }
     }
 
@@ -821,7 +845,7 @@ public class Auth0Util {
         }
     }
 
-    private static class BulkUserImportResponse {
+    public static class BulkUserImportResponse {
 
         @SerializedName("status")
         private String status;
@@ -899,4 +923,81 @@ public class Auth0Util {
         }
     }
 
+    public static class Auth0JobResponse {
+        @SerializedName("type")
+        private String type;
+
+        @SerializedName("status")
+        private String status;
+
+        @SerializedName("connection_id")
+        private String connectionId;
+
+        @SerializedName("summary")
+        private Map<String, Integer> summary;
+
+        @SerializedName("connection")
+        private String connection;
+
+        @SerializedName("id")
+        private String jobId;
+
+        public Auth0JobResponse(String type, String status, String connectionId, Map<String, Integer> summary,
+                                String connection, String jobId) {
+            this.type = type;
+            this.status = status;
+            this.connectionId = connectionId;
+            this.summary = summary;
+            this.connection = connection;
+            this.jobId = jobId;
+        }
+
+        public String getType() {
+            return type;
+        }
+
+        public void setType(String type) {
+            this.type = type;
+        }
+
+        public String getStatus() {
+            return status;
+        }
+
+        public void setStatus(String status) {
+            this.status = status;
+        }
+
+        public String getConnectionId() {
+            return connectionId;
+        }
+
+        public void setConnectionId(String connectionId) {
+            this.connectionId = connectionId;
+        }
+
+        public Map<String, Integer> getSummary() {
+            return summary;
+        }
+
+        public void setSummary(Map<String, Integer> summary) {
+            this.summary = summary;
+        }
+
+        public String getConnection() {
+            return connection;
+        }
+
+        public void setConnection(String connection) {
+            this.connection = connection;
+        }
+
+        public String getJobId() {
+            return jobId;
+        }
+
+        public void setJobId(String jobId) {
+            this.jobId = jobId;
+        }
+    }
 }

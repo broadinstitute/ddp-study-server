@@ -981,6 +981,12 @@ public class StudyDataLoader {
         // Create a user for the given domain
         if (hasPassword) {
             File userJsonFile = bulkUserCreateJson(data, userGuid, emailAddress);
+            Auth0Util.BulkUserImportResponse bulkUserImportResponse = auth0Util.bulkUserWithHashedPassword(mgmtToken, userJsonFile);
+            Auth0Util.Auth0JobResponse auth0JobResponse = auth0Util.getAuth0Job(bulkUserImportResponse.getJobId());
+            if (auth0JobResponse.getStatus().equals("completed") && auth0JobResponse.getSummary().get("inserted") == 1) {
+                List<User> auth0UsersByEmail = auth0Util.getAuth0UsersByEmail(emailAddress, mgmtToken);
+                auth0UserId = auth0UsersByEmail.get(0).getId();
+            }
         } else {
             String randomPass = generateRandomPassword();
             User newAuth0User = auth0Util.createAuth0User(emailAddress, randomPass, mgmtToken);
