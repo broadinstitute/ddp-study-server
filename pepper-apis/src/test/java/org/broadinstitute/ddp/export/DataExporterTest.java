@@ -388,7 +388,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
 
             //check Picklist Question
             Assert.assertTrue(esDoc.contains("{\"stableId\":\"TEST_PLQ\",\"questionType\":\"PICKLIST\",\"questionText\":"
-                    + "\"picklist prompt\",\"selectMode\":\"MULTIPLE\",\"options\":[{\"optionStableId\":\"OPTION_YES\","
+                    + "\"picklist prompt\",\"selectMode\":\"MULTIPLE\",\"groups\":[],\"options\":[{\"optionStableId\":\"OPTION_YES\","
                     + "\"optionText\":\"yes\"},{\"optionStableId\":"
                     + "\"OPTION_NO\",\"optionText\":\"no\"},{\"optionStableId\":\"OPTION_NA\",\"optionText\":\"n/a\"}]}"));
 

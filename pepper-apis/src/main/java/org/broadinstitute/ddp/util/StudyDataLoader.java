@@ -1162,7 +1162,7 @@ public class StudyDataLoader {
     }
 
     private String processPicklistGroupQuestion(JsonElement mapElement, JsonElement sourceDataElement, String surveyName,
-                                           String participantGuid, String instanceGuid, AnswerDao answerDao) {
+                                                String participantGuid, String instanceGuid, AnswerDao answerDao) {
 
         String answerGuid = null;
         String stableId = getStringValueFromElement(mapElement, "stable_id");
