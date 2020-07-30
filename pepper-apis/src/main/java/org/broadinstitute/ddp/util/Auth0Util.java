@@ -1,5 +1,7 @@
 package org.broadinstitute.ddp.util;
 
+import static org.broadinstitute.ddp.util.MiscUtil.fmt;
+
 import java.io.File;
 import java.io.IOException;
 import java.time.Instant;
@@ -33,11 +35,13 @@ import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
 import com.typesafe.config.Config;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.fluent.Response;
 import org.apache.http.entity.ContentType;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.util.EntityUtils;
 import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
@@ -51,8 +55,6 @@ import org.broadinstitute.ddp.security.JWTConverter;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import static org.broadinstitute.ddp.util.MiscUtil.fmt;
 
 public class Auth0Util {
     private static final Logger LOG = LoggerFactory.getLogger(Auth0Util.class);
@@ -316,11 +318,12 @@ public class Auth0Util {
         return new Gson().fromJson(responseBody, RefreshTokenResponse.class);
     }
 
-    public BulkUserImportResponse bulkUserWithHashedPassword(String mgmtApiToken, File file) throws Auth0Exception{
+    public BulkUserImportResponse bulkUserWithHashedPassword(String mgmtApiToken, File file) throws Auth0Exception {
         String connectionId = getAuth0UserNamePasswordConnectionId(mgmtApiToken);
+        HttpEntity httpEntity = MultipartEntityBuilder.create().addBinaryBody("users", file).build();
         Request request = Request.Post(baseUrl + BULK_IMPORTS_ENDPOINT)
-                .addHeader("Content-Type","multipart/form-data")
-                .bodyFile(file, ContentType.APPLICATION_JSON)
+                .addHeader("Authorization", "Bearer " + mgmtApiToken)
+                .body(httpEntity)
                 .bodyString(new Gson().toJson(connectionId), ContentType.APPLICATION_JSON);
         try {
             return request.execute().handleResponse(new ResponseHandler<BulkUserImportResponse>() {
@@ -341,8 +344,9 @@ public class Auth0Util {
         }
     }
 
-    public Auth0JobResponse getAuth0Job(String jobId) {
-        Request request = Request.Get(fmt(baseUrl + AUTH0_JOB_ENDPOINT, jobId));
+    public Auth0JobResponse getAuth0Job(String jobId, String mgmtApiToken) {
+        Request request = Request.Get(fmt(baseUrl + AUTH0_JOB_ENDPOINT, jobId))
+                .addHeader("Authorization", "Bearer " + mgmtApiToken);
         try {
             return request.execute().handleResponse(new ResponseHandler<Auth0JobResponse>() {
                 @Override
@@ -554,7 +558,6 @@ public class Auth0Util {
         LOG.info("Created password: {}", pwd);
         return createdUser;
     }
-
 
 
     /**

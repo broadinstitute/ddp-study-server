@@ -982,7 +982,7 @@ public class StudyDataLoader {
         if (hasPassword) {
             File userJsonFile = bulkUserCreateJson(data, userGuid, emailAddress);
             Auth0Util.BulkUserImportResponse bulkUserImportResponse = auth0Util.bulkUserWithHashedPassword(mgmtToken, userJsonFile);
-            Auth0Util.Auth0JobResponse auth0JobResponse = auth0Util.getAuth0Job(bulkUserImportResponse.getJobId());
+            Auth0Util.Auth0JobResponse auth0JobResponse = auth0Util.getAuth0Job(bulkUserImportResponse.getJobId(), mgmtToken);
             if (auth0JobResponse.getStatus().equals("completed") && auth0JobResponse.getSummary().get("inserted") == 1) {
                 List<User> auth0UsersByEmail = auth0Util.getAuth0UsersByEmail(emailAddress, mgmtToken);
                 auth0UserId = auth0UsersByEmail.get(0).getId();
@@ -1038,7 +1038,7 @@ public class StudyDataLoader {
         String userJson = gson.toJson(legacyUser);
         userList.add(userJson);
         String rootPath = Paths.get("").toAbsolutePath().toString();
-        String jsonFileAbsolutePath = rootPath + "/pepper-apis/src/main/resources/" + "users.json";
+        String jsonFileAbsolutePath = rootPath + "/src/main/resources/" + "users.json";
         BufferedWriter outputWriter = new BufferedWriter(
                 new FileWriter(jsonFileAbsolutePath));
         outputWriter.write(userList.toString());
