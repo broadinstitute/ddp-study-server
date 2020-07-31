@@ -28,6 +28,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -972,6 +975,7 @@ public class StudyDataLoader {
         return parentAnswer.getAnswerGuid();
     }
 
+
     public UserDto createLegacyPepperUser(JdbiUser userDao, JdbiClient clientDao,
                                           JsonElement data, String userGuid, String userHruid, ClientDto clientDto) throws Exception {
 
@@ -983,9 +987,16 @@ public class StudyDataLoader {
             File userJsonFile = bulkUserCreateJson(data, userGuid, emailAddress);
             Auth0Util.BulkUserImportResponse bulkUserImportResponse = auth0Util.bulkUserWithHashedPassword(mgmtToken, userJsonFile);
             Auth0Util.Auth0JobResponse auth0JobResponse = auth0Util.getAuth0Job(bulkUserImportResponse.getJobId(), mgmtToken);
-            if (auth0JobResponse.getStatus().equals("completed") && auth0JobResponse.getSummary().get("inserted") == 1) {
-                List<User> auth0UsersByEmail = auth0Util.getAuth0UsersByEmail(emailAddress, mgmtToken);
-                auth0UserId = auth0UsersByEmail.get(0).getId();
+            while(auth0JobResponse.getStatus().equals("pending")){
+                auth0JobResponse = auth0Util.getAuth0Job(bulkUserImportResponse.getJobId(), mgmtToken);
+            }
+            if (auth0JobResponse.getStatus().equals("completed") &&
+                    (auth0JobResponse.getSummary().get("inserted") == 1 || auth0JobResponse.getSummary().get("updated") == 1)) {
+                String expectedAuth0UserId = "auth0|" + data.getAsJsonObject().get("datstat_altpid").getAsString();
+                User auth0User = auth0Util.getAuth0User(expectedAuth0UserId,mgmtToken);
+                if (auth0User.getEmail().equals(emailAddress)) {
+                    auth0UserId = auth0User.getId();
+                }
             }
         } else {
             String randomPass = generateRandomPassword();

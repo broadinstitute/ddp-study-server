@@ -63,7 +63,7 @@ public class Auth0Util {
     private static final String HTTPS_PREFIX = "https://";
     public static final String PEPPER_USER_GUIDS_USER_APP_METADATA_KEY = "pepper_user_guids";
     public static final String REFRESH_ENDPOINT = "oauth/token";
-    public static final String BULK_IMPORTS_ENDPOINT = "api/v2/jobs/users-exports";
+    public static final String BULK_IMPORTS_ENDPOINT = "api/v2/jobs/users-imports";
     public static final String AUTH0_JOB_ENDPOINT = "api/v2/jobs/%s";
     private final String baseUrl;
     // map of cached jwk providers so we don't hammer auth0
@@ -320,17 +320,20 @@ public class Auth0Util {
 
     public BulkUserImportResponse bulkUserWithHashedPassword(String mgmtApiToken, File file) throws Auth0Exception {
         String connectionId = getAuth0UserNamePasswordConnectionId(mgmtApiToken);
-        HttpEntity httpEntity = MultipartEntityBuilder.create().addBinaryBody("users", file).build();
+        HttpEntity httpEntity = MultipartEntityBuilder.create().addBinaryBody("users", file)
+                .addTextBody("connection_id", connectionId)
+                .addTextBody("upsert","true")
+                .addTextBody("send_completion_email", "false")
+                .setContentType(ContentType.MULTIPART_FORM_DATA).build();
         Request request = Request.Post(baseUrl + BULK_IMPORTS_ENDPOINT)
                 .addHeader("Authorization", "Bearer " + mgmtApiToken)
-                .body(httpEntity)
-                .bodyString(new Gson().toJson(connectionId), ContentType.APPLICATION_JSON);
+                .body(httpEntity);
         try {
             return request.execute().handleResponse(new ResponseHandler<BulkUserImportResponse>() {
                 @Override
                 public BulkUserImportResponse handleResponse(HttpResponse response) throws IOException {
                     int status = response.getStatusLine().getStatusCode();
-                    if (status == 201) {
+                    if (status == 202) {
                         return new Gson().fromJson(EntityUtils.toString(response.getEntity()),
                                 BulkUserImportResponse.class);
                     } else {
@@ -352,7 +355,7 @@ public class Auth0Util {
                 @Override
                 public Auth0JobResponse handleResponse(HttpResponse response) throws IOException {
                     int status = response.getStatusLine().getStatusCode();
-                    if (status == 201) {
+                    if (status == 200) {
                         return new Gson().fromJson(EntityUtils.toString(response.getEntity()),
                                 Auth0JobResponse.class);
                     } else {
