@@ -118,7 +118,7 @@ public class InsertInvitationRecruitmentCodesScript extends TxnAwareBaseTest {
 
     @Test
     public void generateTestBostonInvitationCodes() {
-        insertRecruitmentInvitationCodes("testboston", "TB", 100, "/Users/mocana/Documents/DSP/ddp-study-server/pepper-apis/List-of-Dirty"
+        insertRecruitmentInvitationCodes("testboston", "TB", 100, "ddp-study-server/pepper-apis/List-of-Dirty"
                 + "-Naughty-Obscene-and-Otherwise-Bad-Words");
     }
 }
