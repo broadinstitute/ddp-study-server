@@ -43,7 +43,6 @@
   "registration_prefix_placeholder": "Participant's Prefix/Suffix (optional)",
   "registration_province_prompt": "Participant's State/Province*",
   "registration_province_req_hint": "Province cannot be empty.",
-  "registration_choose_state_province": "Choose state/province...",
   "registration_state_prompt": "Participant's State/Province*",
   "registration_state_req_hint": "State cannot be empty.",
   "registration_street_address_req_hint": "Address cannot be empty.",
