@@ -32,6 +32,7 @@ public class AgreementQuestionFormatStrategyTest {
                                                             Template.text("header"),
                                                             Template.text("footer"),
                                                             emptyList(),
+                                                            false,
                                                             false);
         Map<String, Object> actual = fmt.mappings(def);
 
@@ -50,6 +51,7 @@ public class AgreementQuestionFormatStrategyTest {
                                                             Template.text("header"),
                                                             Template.text("footer"),
                                                             emptyList(),
+                                                            false,
                                                             false);
         List<String> actual = fmt.headers(def);
 
@@ -88,6 +90,7 @@ public class AgreementQuestionFormatStrategyTest {
                 Template.text("header"),
                 Template.text("footer"),
                 emptyList(),
+                false,
                 false);
     }
 

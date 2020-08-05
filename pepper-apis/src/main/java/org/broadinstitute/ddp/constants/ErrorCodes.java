@@ -51,6 +51,7 @@ public class ErrorCodes {
     public static final String TOO_MANY_INSTANCES = "TOO_MANY_INSTANCES";
     public static final String UNSATISFIED_PRECONDITION = "UNSATISFIED_PRECONDITION";
     public static final String QUESTION_REQUIREMENTS_NOT_MET = "QUESTION_REQUIREMENTS_NOT_MET";
+    public static final String QUESTION_IS_READONLY = "QUESTION_IS_READONLY";
 
     public static final String USER_NOT_FOUND = "USER_NOT_FOUND";
     public static final String STUDY_NOT_FOUND = "STUDY_NOT_FOUND";

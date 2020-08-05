@@ -63,6 +63,7 @@ import org.broadinstitute.ddp.model.activity.types.DateRenderMode;
 import org.broadinstitute.ddp.model.activity.types.PicklistRenderMode;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.activity.types.TemplateType;
+import org.broadinstitute.ddp.util.QuestionUtil;
 import org.jdbi.v3.sqlobject.CreateSqlObject;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.slf4j.Logger;
@@ -309,7 +310,7 @@ public interface QuestionDao extends SqlObject {
 
         switch (dto.getType()) {
             case BOOLEAN:
-                question = getBooleanQuestion(dto, answerIds, untypedRules);
+                question = getBooleanQuestion(dto, activityInstanceGuid, answerIds, untypedRules);
                 break;
             case PICKLIST:
                 question = getPicklistQuestion(dto, activityInstanceGuid, answerIds, untypedRules);
@@ -318,13 +319,13 @@ public interface QuestionDao extends SqlObject {
                 question = getTextQuestion(dto, activityInstanceGuid, answerIds, untypedRules);
                 break;
             case DATE:
-                question = getDateQuestion(dto, answerIds, untypedRules);
+                question = getDateQuestion(dto, activityInstanceGuid, answerIds, untypedRules);
                 break;
             case NUMERIC:
-                question = getNumericQuestion(dto, answerIds, untypedRules);
+                question = getNumericQuestion(dto, activityInstanceGuid, answerIds, untypedRules);
                 break;
             case AGREEMENT:
-                question = getAgreementQuestion(dto, answerIds, untypedRules);
+                question = getAgreementQuestion(dto, activityInstanceGuid, answerIds, untypedRules);
                 break;
             case COMPOSITE:
                 question = getCompositeQuestion(dto, activityInstanceGuid, answerIds, untypedRules, langCodeId);
@@ -342,11 +343,13 @@ public interface QuestionDao extends SqlObject {
      * Build a boolean question.
      *
      * @param dto          the question dto
+     * @param activityInstanceGuid the activity instance guid
      * @param answerIds    list of base answer ids to question (may be empty)
      * @param untypedRules list of untyped validations for question (may be empty)
      * @return boolean question object
      */
     default BoolQuestion getBooleanQuestion(QuestionDto dto,
+                                            String activityInstanceGuid,
                                             List<Long> answerIds,
                                             List<Rule> untypedRules) {
         BooleanQuestionDto booleanQuestionDto = getJdbiBooleanQuestion()
@@ -364,8 +367,10 @@ public interface QuestionDao extends SqlObject {
                 .map(rule -> (Rule<BoolAnswer>) rule)
                 .collect(toList());
 
+        boolean isReadonly = QuestionUtil.isReadonly(getHandle(), dto, activityInstanceGuid);
+
         return new BoolQuestion(dto.getStableId(), dto.getPromptTemplateId(),
-                dto.isRestricted(), dto.isDeprecated(), dto.getTooltipTemplateId(),
+                dto.isRestricted(), dto.isDeprecated(), isReadonly, dto.getTooltipTemplateId(),
                 dto.getAdditionalInfoHeaderTemplateId(), dto.getAdditionalInfoFooterTemplateId(),
                 boolAnswers, rules, booleanQuestionDto.getTrueTemplateId(),
                 booleanQuestionDto.getFalseTemplateId());
@@ -430,8 +435,10 @@ public interface QuestionDao extends SqlObject {
             }
         }
 
+        boolean isReadonly = QuestionUtil.isReadonly(getHandle(), dto, activityInstanceGuid);
+
         return new PicklistQuestion(dto.getStableId(), dto.getPromptTemplateId(),
-                dto.isRestricted(), dto.isDeprecated(), dto.getTooltipTemplateId(),
+                dto.isRestricted(), dto.isDeprecated(), isReadonly, dto.getTooltipTemplateId(),
                 dto.getAdditionalInfoHeaderTemplateId(), dto.getAdditionalInfoFooterTemplateId(),
                 picklistAnswers, rules,
                 picklistQuestionDto.getSelectMode(),
@@ -468,10 +475,13 @@ public interface QuestionDao extends SqlObject {
                 .map(rule -> (Rule<TextAnswer>) rule)
                 .collect(toList());
 
+        boolean isReadonly = QuestionUtil.isReadonly(getHandle(), dto, activityInstanceGuid);
+
         return new TextQuestion(dto.getStableId(), dto.getPromptTemplateId(),
                 textQuestionDto.getPlaceholderTemplateId(),
                 textQuestionDto.isRestricted(),
                 textQuestionDto.isDeprecated(),
+                isReadonly,
                 textQuestionDto.getTooltipTemplateId(),
                 textQuestionDto.getAdditionalInfoHeaderTemplateId(),
                 textQuestionDto.getAdditionalInfoFooterTemplateId(),
@@ -489,11 +499,13 @@ public interface QuestionDao extends SqlObject {
      * Build a date question.
      *
      * @param dto          the question dto
+     * @param activityInstanceGuid the activity instance guid
      * @param answerIds    list of base answer ids to question (may be empty)
      * @param untypedRules list of untyped validations for question (may be empty)
      * @return date question object
      */
     default DateQuestion getDateQuestion(QuestionDto dto,
+                                         String activityInstanceGuid,
                                          List<Long> answerIds,
                                          List<Rule> untypedRules) {
         DateQuestionDto dateQuestionDto = getJdbiDateQuestion()
@@ -519,17 +531,19 @@ public interface QuestionDao extends SqlObject {
                     + dto.getId());
         }
 
+        boolean isReadonly = QuestionUtil.isReadonly(getHandle(), dto, activityInstanceGuid);
+
         if (dateQuestionDto.getRenderMode().equals(DateRenderMode.PICKLIST)) {
             DatePicklistDef config = getJdbiDateQuestion().getDatePicklistDefByQuestionId(dto.getId()).get();
             return new DatePicklistQuestion(dto.getStableId(), dto.getPromptTemplateId(),
-                    dto.isRestricted(), dto.isDeprecated(), dto.getTooltipTemplateId(),
+                    dto.isRestricted(), dto.isDeprecated(), isReadonly, dto.getTooltipTemplateId(),
                     dto.getAdditionalInfoHeaderTemplateId(), dto.getAdditionalInfoFooterTemplateId(),
                     dateAnswers, rules, dateQuestionDto.getRenderMode(), dateQuestionDto.shouldDisplayCalendar(),
                     fieldTypes, dateQuestionDto.getPlaceholderTemplateId(), config.getUseMonthNames(), config.getStartYear(),
                     config.getEndYear(), config.getFirstSelectedYear());
         } else {
             return new DateQuestion(dto.getStableId(), dto.getPromptTemplateId(),
-                    dto.isRestricted(), dto.isDeprecated(),
+                    dto.isRestricted(), dto.isDeprecated(), isReadonly,
                     dto.getTooltipTemplateId(),
                     dto.getAdditionalInfoHeaderTemplateId(),
                     dto.getAdditionalInfoFooterTemplateId(),
@@ -546,11 +560,12 @@ public interface QuestionDao extends SqlObject {
      * Build a numeric question.
      *
      * @param dto          the question dto
+     * @param activityInstanceGuid the activity instance guid
      * @param answerIds    list of base answer ids to question (may be empty)
      * @param untypedRules list of untyped validations for question (may be empty)
      * @return numeric question object
      */
-    default Question getNumericQuestion(QuestionDto dto, List<Long> answerIds, List<Rule> untypedRules) {
+    default Question getNumericQuestion(QuestionDto dto, String activityInstanceGuid, List<Long> answerIds, List<Rule> untypedRules) {
         NumericQuestionDto numericQuestionDto = getJdbiNumericQuestion().findDtoByQuestionId(dto.getId())
                 .orElseThrow(() -> new DaoException("Could not find numeric question with id " + dto.getId()));
 
@@ -564,12 +579,15 @@ public interface QuestionDao extends SqlObject {
                 .map(rule -> (Rule<NumericAnswer>) rule)
                 .collect(toList());
 
+        boolean isReadonly = QuestionUtil.isReadonly(getHandle(), dto, activityInstanceGuid);
+
         return new NumericQuestion(
                 dto.getStableId(),
                 dto.getPromptTemplateId(),
                 numericQuestionDto.getPlaceholderTemplateId(),
                 dto.isRestricted(),
                 dto.isDeprecated(),
+                isReadonly,
                 dto.getTooltipTemplateId(),
                 dto.getAdditionalInfoHeaderTemplateId(),
                 dto.getAdditionalInfoFooterTemplateId(),
@@ -582,11 +600,13 @@ public interface QuestionDao extends SqlObject {
      * Build a agreement question.
      *
      * @param dto          the question dto
+     * @param activityInstanceGuid the activity instance guid
      * @param answerIds    list of base answer ids to question (may be empty)
      * @param untypedRules list of untyped validations for question (may be empty)
      * @return agreement question object
      */
     default AgreementQuestion getAgreementQuestion(QuestionDto dto,
+                                                   String activityInstanceGuid,
                                                    List<Long> answerIds,
                                                    List<Rule> untypedRules) {
         AnswerDao answerDao = getAnswerDao();
@@ -600,8 +620,10 @@ public interface QuestionDao extends SqlObject {
                 .map(rule -> (Rule<AgreementAnswer>) rule)
                 .collect(toList());
 
+        boolean isReadonly = QuestionUtil.isReadonly(getHandle(), dto, activityInstanceGuid);
+
         return new AgreementQuestion(dto.getStableId(), dto.getPromptTemplateId(),
-                dto.isRestricted(), dto.isDeprecated(), dto.getTooltipTemplateId(),
+                dto.isRestricted(), dto.isDeprecated(), isReadonly, dto.getTooltipTemplateId(),
                 dto.getAdditionalInfoHeaderTemplateId(), dto.getAdditionalInfoFooterTemplateId(),
                 agreementAnswers, rules);
     }
@@ -643,8 +665,10 @@ public interface QuestionDao extends SqlObject {
                 .map(rule -> (Rule<CompositeAnswer>) rule)
                 .collect(toList());
 
+        boolean isReadonly = QuestionUtil.isReadonly(getHandle(), dto, activityInstanceGuid);
+
         return new CompositeQuestion(dto.getStableId(), dto.getPromptTemplateId(),
-                dto.isRestricted(), dto.isDeprecated(), dto.getTooltipTemplateId(),
+                dto.isRestricted(), dto.isDeprecated(), isReadonly, dto.getTooltipTemplateId(),
                 dto.getAdditionalInfoHeaderTemplateId(), dto.getAdditionalInfoFooterTemplateId(),
                 rules, compositeQuestionDto.isAllowMultiple(), compositeQuestionDto.isUnwrapOnExport(),
                 compositeQuestionDto.getAddButtonTemplateId(), compositeQuestionDto.getAdditionalItemTemplateId(),
@@ -1266,7 +1290,8 @@ public interface QuestionDao extends SqlObject {
                 tooltipTemplate,
                 additionalInfoHeader, additionalInfoFooter,
                 validations,
-                questionDto.shouldHideNumber());
+                questionDto.shouldHideNumber(),
+                questionDto.isWriteOnce());
         def.setDeprecated(questionDto.isDeprecated());
         def.setQuestionId(questionDto.getId());
 
@@ -1291,6 +1316,7 @@ public interface QuestionDao extends SqlObject {
                 .setAdditionalInfoFooter(additionalInfoFooter)
                 .setRestricted(questionDto.isRestricted())
                 .setDeprecated(questionDto.isDeprecated())
+                .setWriteOnce(questionDto.isWriteOnce())
                 .setHideNumber(questionDto.shouldHideNumber())
                 .addValidations(validations)
                 .build();
@@ -1332,6 +1358,7 @@ public interface QuestionDao extends SqlObject {
                 .setQuestionId(textDto.getId())
                 .setRestricted(textDto.isRestricted())
                 .setDeprecated(textDto.isDeprecated())
+                .setWriteOnce(questionDto.isWriteOnce())
                 .setHideNumber(textDto.shouldHideNumber())
                 .setConfirmEntry(textDto.isConfirmEntry())
                 .setConfirmPromptTemplate(confirmPromptTemplate)
@@ -1376,6 +1403,7 @@ public interface QuestionDao extends SqlObject {
                 .setAdditionalInfoFooter(additionalInfoFooter)
                 .setRestricted(questionDto.isRestricted())
                 .setDeprecated(questionDto.isDeprecated())
+                .setWriteOnce(questionDto.isWriteOnce())
                 .setHideNumber(questionDto.shouldHideNumber())
                 .addValidations(validations)
                 .addFields(fields)
@@ -1411,6 +1439,7 @@ public interface QuestionDao extends SqlObject {
                 .setQuestionId(questionDto.getId())
                 .setRestricted(questionDto.isRestricted())
                 .setDeprecated(questionDto.isDeprecated())
+                .setWriteOnce(questionDto.isWriteOnce())
                 .setHideNumber(questionDto.shouldHideNumber())
                 .addValidations(validations)
                 .build();
@@ -1475,6 +1504,7 @@ public interface QuestionDao extends SqlObject {
                 .setAdditionalInfoFooter(additionalInfoFooter)
                 .setRestricted(questionDto.isRestricted())
                 .setDeprecated(questionDto.isDeprecated())
+                .setWriteOnce(questionDto.isWriteOnce())
                 .setHideNumber(questionDto.shouldHideNumber())
                 .addValidations(validations)
                 .addGroups(groups)
@@ -1525,6 +1555,7 @@ public interface QuestionDao extends SqlObject {
                 .setQuestionId(questionDto.getId())
                 .setRestricted(questionDto.isRestricted())
                 .setDeprecated(questionDto.isDeprecated())
+                .setWriteOnce(questionDto.isWriteOnce())
                 .setHideNumber(questionDto.shouldHideNumber())
                 .addValidations(validations)
                 .addChildrenQuestions(childrenDefs)
