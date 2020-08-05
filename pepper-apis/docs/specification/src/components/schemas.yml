@@ -896,6 +896,7 @@ Error.ActivityAnswersPatchInvalid:
           type: string
           enum:
             - ACTIVITY_INSTANCE_IS_READONLY
+            - QUESTION_IS_READONLY
             - ANSWER_VALIDATION
             - MALFORMED_EMAIL
             - OPERATION_NOT_ALLOWED
@@ -1152,6 +1153,10 @@ Question:
     tooltip:
       type: string
       description: tooltip for the question, in plain text
+    readonly:
+      type: boolean
+      description: if `true`, the client should not persist any changes to the question's answer. Any requests attempting to update this question's answer will result in an error.
+      default: false
     additionalInfoHeader:
       type: string
       description: a plain text string for additional information to be presented before the user responds to a question

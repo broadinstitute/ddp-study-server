@@ -220,4 +220,7 @@
     <include file="db-changes/seed/DDP-4792-add-hebrew.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/seed/DDP-4803-hebrew-spanish-chinese.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/seed/spanish-and-creole.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/seed/fix-spanish-activity-instance-status-type.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-4615-kit-schedule.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/add-is-write-once-column-to-question.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

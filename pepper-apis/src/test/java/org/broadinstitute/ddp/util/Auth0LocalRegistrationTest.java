@@ -6,7 +6,6 @@ import static org.broadinstitute.ddp.constants.ConfigFile.Auth0Testing.AUTH0_MGM
 import java.sql.SQLException;
 import java.util.Map;
 
-import com.auth0.client.mgmt.ManagementAPI;
 import com.auth0.json.mgmt.users.User;
 import com.typesafe.config.Config;
 import org.apache.commons.lang3.StringUtils;
@@ -29,9 +28,7 @@ public class Auth0LocalRegistrationTest extends TxnAwareBaseTest {
 
     private static String auth0Domain;
 
-    private static String mgmtApiToken;
-
-    private static ManagementAPI auth0Mgmt;
+    private static Auth0ManagementClient mgmtClient;
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static String testUserGuid;
     private String fakeUserGuid = Long.toString(System.currentTimeMillis());
@@ -44,24 +41,17 @@ public class Auth0LocalRegistrationTest extends TxnAwareBaseTest {
         String auth0MgmtSecret = auth0Config.getString(AUTH0_MGMT_API_CLIENT_SECRET);
         String auth0MgmtClientId = auth0Config.getString(AUTH0_MGMT_API_CLIENT_ID);
         auth0Domain = auth0Config.getString(ConfigFile.DOMAIN);
-
-        var mgmtClient = new Auth0ManagementClient(auth0Domain, auth0MgmtClientId, auth0MgmtSecret);
-        mgmtApiToken = mgmtClient.getToken();
-        auth0Mgmt = new ManagementAPI(auth0Domain, mgmtApiToken);
+        mgmtClient = new Auth0ManagementClient(auth0Domain, auth0MgmtClientId, auth0MgmtSecret);
     }
 
     @After
-    public void removeFakeTestClientGuidFromAuth0() throws Exception {
+    public void removeFakeTestClientGuidFromAuth0() {
         if (StringUtils.isNotBlank(testUserAuth0UserId)) {
-            User testUser = auth0Mgmt.users().get(testUserAuth0UserId, null).execute();
+            User testUser = mgmtClient.removeUserGuidForAuth0User(testUserAuth0UserId, fakeClient);
             Map<String, Object> appMetadata = testUser.getAppMetadata();
             if (appMetadata != null) {
-                Map userGuidMap = (Map) appMetadata.get(Auth0Util.PEPPER_USER_GUIDS_USER_APP_METADATA_KEY);
+                Map userGuidMap = (Map) appMetadata.get(Auth0ManagementClient.APP_METADATA_PEPPER_USER_GUIDS);
                 if (userGuidMap != null) {
-                    userGuidMap.remove(fakeClient);
-                    User updatedUser = new User();
-                    updatedUser.setAppMetadata(appMetadata);
-                    auth0Mgmt.users().update(testUserAuth0UserId, updatedUser).execute();
                     LOG.info("Deleted fake client " + fakeClient + " from test user's list of guid.  "
                             + testUserGuid + " has " + userGuidMap.size() + " remaining client/guid mappings.");
                 }
@@ -80,12 +70,9 @@ public class Auth0LocalRegistrationTest extends TxnAwareBaseTest {
     @Test
     public void testSetDDPUserGuidForAuth0User() throws Exception {
         testUserAuth0UserId = getAuth0UserIdForTestUser();
-        Auth0Util auth0Util = new Auth0Util(auth0Domain);
-
-        auth0Util.setDDPUserGuidForAuth0User(fakeUserGuid, testUserAuth0UserId, fakeClient, mgmtApiToken);
-        User auth0User = auth0Mgmt.users().get(testUserAuth0UserId, null).execute();
+        User auth0User = mgmtClient.setUserGuidForAuth0User(testUserAuth0UserId, fakeClient, fakeUserGuid);
         String ddpGuidFromAuth0UserAppMetadata = ((Map) auth0User.getAppMetadata()
-                .get(Auth0Util.PEPPER_USER_GUIDS_USER_APP_METADATA_KEY)).get(fakeClient).toString();
+                .get(Auth0ManagementClient.APP_METADATA_PEPPER_USER_GUIDS)).get(fakeClient).toString();
         Assert.assertEquals(fakeUserGuid, ddpGuidFromAuth0UserAppMetadata);
     }
 }

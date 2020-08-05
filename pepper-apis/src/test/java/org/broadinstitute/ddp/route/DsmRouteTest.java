@@ -204,7 +204,10 @@ public class DsmRouteTest extends IntegrationTestSuite.TestCase {
         private String token;
 
         static Path defaultCachedFilePath(String auth0ClientId) {
-            String tmpdir = System.getProperty("java.io.tmpdir");
+            String tmpdir = System.getProperty("ddp.cacheDir");
+            if (tmpdir == null) {
+                tmpdir = System.getProperty("java.io.tmpdir");
+            }
             String filename = String.format("ddp-testing-cache_dsm_%s.json", auth0ClientId);
             return Paths.get(tmpdir, filename);
         }

@@ -61,7 +61,7 @@ public class GetDsmParticipantStatusRouteTest extends IntegrationTestSuite.TestC
     @Test
     public void testProcess_returnStatusInfo() {
         var expected = new ParticipantStatus(1L, 2L, 3L, 4L, 5L, List.of(
-                new ParticipantStatus.Sample("BLOOD", 6L, 7L, 8L, "tracking9", "carrier10")));
+                new ParticipantStatus.Sample("a", "BLOOD", 6L, 7L, 8L, "tracking9", "carrier10")));
 
         when(mockDsm.getParticipantStatus(testData.getStudyGuid(), testData.getUserGuid(), "token"))
                 .thenReturn(ApiResult.ok(200, expected));

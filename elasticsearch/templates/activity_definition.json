@@ -41,6 +41,26 @@
             "dateFields": {
               "type": "keyword"
             },
+            "groups": {
+              "properties": {
+                "groupStableId": {
+                  "type": "keyword"
+                },
+                "groupText": {
+                  "type": "text"
+                },
+                "options": {
+                  "properties": {
+                    "optionStableId": {
+                      "type": "keyword"
+                    },
+                    "optionText": {
+                      "type": "text"
+                    }
+                  }
+                }
+              }
+            },
             "options": {
               "properties": {
                 "optionStableId": {

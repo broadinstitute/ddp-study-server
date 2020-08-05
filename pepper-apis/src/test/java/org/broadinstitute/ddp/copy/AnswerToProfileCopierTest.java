@@ -49,7 +49,7 @@ public class AnswerToProfileCopierTest extends TxnAwareBaseTest {
                     .get().getFirstName();
 
             var instance = new FormResponse(1L, "a", testData.getUserId(), false, 1L, 1L, 1L, "b", "c", null);
-            var question = new QuestionDto(QuestionType.TEXT, 1L, "q", 1L, 1L, 1L, 1L, false, false, false, 1L, 1L, 1L);
+            var question = new QuestionDto(QuestionType.TEXT, 1L, "q", 1L, 1L, 1L, 1L, false, false, false, false, 1L, 1L, 1L);
             new AnswerToProfileCopier(handle, testData.getUserId())
                     .copy(instance, question, CopyLocationType.PARTICIPANT_PROFILE_FIRST_NAME);
 
@@ -70,8 +70,8 @@ public class AnswerToProfileCopierTest extends TxnAwareBaseTest {
             instance.putAnswer(new TextAnswer(2L, "q2", "b", "op-last"));
             var copier = new AnswerToProfileCopier(handle, testData.getUserId());
 
-            var q1 = new QuestionDto(QuestionType.TEXT, 1L, "q1", 1L, 1L, 1L, 1L, false, false, false, 1L, 1L, 1L);
-            var q2 = new QuestionDto(QuestionType.TEXT, 2L, "q2", 2L, 2L, 2L, 2L, false, false, false, 2L, 2L, 2L);
+            var q1 = new QuestionDto(QuestionType.TEXT, 1L, "q1", 1L, 1L, 1L, 1L, false, false, false, false, 1L, 1L, 1L);
+            var q2 = new QuestionDto(QuestionType.TEXT, 2L, "q2", 2L, 2L, 2L, 2L, false, false, false, false, 2L, 2L, 2L);
             copier.copy(instance, q1, CopyLocationType.OPERATOR_PROFILE_FIRST_NAME);
             copier.copy(instance, q2, CopyLocationType.OPERATOR_PROFILE_LAST_NAME);
 
@@ -92,8 +92,8 @@ public class AnswerToProfileCopierTest extends TxnAwareBaseTest {
             instance.putAnswer(new TextAnswer(2L, "q2", "b", "ptp-last"));
             var copier = new AnswerToProfileCopier(handle, 1L);
 
-            var q1 = new QuestionDto(QuestionType.TEXT, 1L, "q1", 1L, 1L, 1L, 1L, false, false, false, 1L, 1L, 1L);
-            var q2 = new QuestionDto(QuestionType.TEXT, 2L, "q2", 2L, 2L, 2L, 2L, false, false, false, 2L, 2L, 2L);
+            var q1 = new QuestionDto(QuestionType.TEXT, 1L, "q1", 1L, 1L, 1L, 1L, false, false, false, false, 1L, 1L, 1L);
+            var q2 = new QuestionDto(QuestionType.TEXT, 2L, "q2", 2L, 2L, 2L, 2L, false, false, false, false, 2L, 2L, 2L);
             copier.copy(instance, q1, CopyLocationType.PARTICIPANT_PROFILE_FIRST_NAME);
             copier.copy(instance, q2, CopyLocationType.PARTICIPANT_PROFILE_LAST_NAME);
 
@@ -113,7 +113,7 @@ public class AnswerToProfileCopierTest extends TxnAwareBaseTest {
             instance.putAnswer(new DateAnswer(1L, "q1", "a", 1987, 3, 14));
             var copier = new AnswerToProfileCopier(handle, testData.getUserId());
 
-            var q1 = new QuestionDto(QuestionType.DATE, 1L, "q1", 1L, 1L, 1L, 1L, false, false, false, 1L, 1L, 1L);
+            var q1 = new QuestionDto(QuestionType.DATE, 1L, "q1", 1L, 1L, 1L, 1L, false, false, false, false, 1L, 1L, 1L);
             copier.copy(instance, q1, CopyLocationType.PARTICIPANT_PROFILE_BIRTH_DATE);
 
             UserProfile profile = handle.attach(UserProfileDao.class)
@@ -132,7 +132,7 @@ public class AnswerToProfileCopierTest extends TxnAwareBaseTest {
             var instance = new FormResponse(1L, "a", testData.getUserId(), false, 1L, 1L, 1L, "b", "c", null);
             instance.putAnswer(new DateAnswer(1L, "q1", "a", 1987, null, null));
             var copier = new AnswerToProfileCopier(handle, testData.getUserId());
-            var q1 = new QuestionDto(QuestionType.DATE, 1L, "q1", 1L, 1L, 1L, 1L, false, false, false, 1L, 1L, 1L);
+            var q1 = new QuestionDto(QuestionType.DATE, 1L, "q1", 1L, 1L, 1L, 1L, false, false, false, false, 1L, 1L, 1L);
             copier.copy(instance, q1, CopyLocationType.PARTICIPANT_PROFILE_BIRTH_DATE);
             fail("expected exception not thrown");
         });
@@ -146,7 +146,7 @@ public class AnswerToProfileCopierTest extends TxnAwareBaseTest {
             var instance = new FormResponse(1L, "a", testData.getUserId(), false, 1L, 1L, 1L, "b", "c", null);
             instance.putAnswer(new DateAnswer(1L, "q1", "a", 1987, null, null));
             var copier = new AnswerToProfileCopier(handle, testData.getUserId());
-            var q1 = new QuestionDto(QuestionType.DATE, 1L, "q1", 1L, 1L, 1L, 1L, false, false, false, 1L, 1L, 1L);
+            var q1 = new QuestionDto(QuestionType.DATE, 1L, "q1", 1L, 1L, 1L, 1L, false, false, false, false, 1L, 1L, 1L);
             copier.copy(instance, q1, CopyLocationType.PARTICIPANT_PROFILE_FIRST_NAME);
             fail("expected exception not thrown");
         });

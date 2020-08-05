@@ -771,8 +771,7 @@ public class DataLoaderTest {
         assertEquals(1539381231000L, (long) createdAtDateCaptor.getValue());
         assertEquals(1539366840337L, (long) lastModifiedDateCaptor.getValue());
 
-        verify(mockAuth0Util, times(1)).setDDPUserGuidForAuth0User(
-                anyString(),
+        verify(mockMgmtClient, times(1)).setUserGuidForAuth0User(
                 anyString(),
                 anyString(),
                 anyString());

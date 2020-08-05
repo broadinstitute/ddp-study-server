@@ -20,14 +20,17 @@ public class KitConfiguration {
     private String studyGuid;
     private boolean needsApproval;
     private Collection<KitRule> rules;
+    private KitSchedule schedule;
 
-    public KitConfiguration(long id, int numKits, KitType kitType, String studyGuid, boolean needsApproval, Collection<KitRule> rules) {
+    public KitConfiguration(long id, int numKits, KitType kitType, String studyGuid, boolean needsApproval,
+                            Collection<KitRule> rules, KitSchedule schedule) {
         this.id = id;
         this.numKits = numKits;
         this.kitType = kitType;
         this.studyGuid = studyGuid;
         this.needsApproval = needsApproval;
         this.rules = rules;
+        this.schedule = schedule;
     }
 
     public long getId() {
@@ -52,6 +55,10 @@ public class KitConfiguration {
 
     public Collection<KitRule> getRules() {
         return List.copyOf(rules);
+    }
+
+    public KitSchedule getSchedule() {
+        return schedule;
     }
 
     public boolean evaluate(Handle handle, String userGuid) {
@@ -85,8 +92,10 @@ public class KitConfiguration {
         }
         if (success && zipCodeSuccess.size() > 0) {
             success = zipCodeSuccess.contains(true);
-            LOG.warn("Study has kit configuration with zip code rule but user's zip code does not"
-                    + " match any accepted zip codes, studyGuid={} userGuid={}", studyGuid, userGuid);
+            if (!success) {
+                LOG.warn("Study has kit configuration with zip code rule but user's zip code does not"
+                        + " match any accepted zip codes, studyGuid={} userGuid={}", studyGuid, userGuid);
+            }
         }
         if (success && pexRuleSuccess.size() > 0) {
             return pexRuleSuccess.contains(true);
