@@ -11,6 +11,7 @@ import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -52,6 +53,7 @@ import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceStatusDao;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
+import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiClient;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
@@ -59,6 +61,7 @@ import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.ClientDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.UserDto;
+import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.address.MailAddress;
 import org.broadinstitute.ddp.model.migration.StudyMigrationRun;
 import org.broadinstitute.ddp.service.AddressService;
@@ -111,6 +114,7 @@ public class StudyDataLoaderMain {
         options.addOption("p", false, "preprocess");
         options.addOption("pf", true, "preprocess file name");
         options.addOption("t", true, "Auth0 tenant id");
+        options.addOption("psw", true, "User Hashed Passwords File");
 
         /**
          Command line options
@@ -156,6 +160,7 @@ public class StudyDataLoaderMain {
         boolean hasServiceAccount = cmd.hasOption("gsa");
         boolean hasMappingFile = cmd.hasOption("mf");
         boolean hasBucketName = cmd.hasOption("gb");
+        boolean hasHashedPasswordFile = cmd.hasOption("psw");
 
         if (cmd.hasOption("help")) {
             HelpFormatter formatter = new HelpFormatter();
@@ -297,7 +302,11 @@ public class StudyDataLoaderMain {
                 if (doMailingAddress) {
                     dataLoaderMain.processGoogleBucketMailingListFiles(cfg, positional[0]);
                 }
-                dataLoaderMain.processGoogleBucketParticipantFiles(cfg, positional[0], isDryRun);
+                if (hasHashedPasswordFile) {
+                    dataLoaderMain.processGoogleBucketParticipantFiles(cfg, positional[0], isDryRun, cmd.getOptionValue("psw"));
+                } else {
+                    dataLoaderMain.processGoogleBucketParticipantFiles(cfg, positional[0], isDryRun);
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -338,6 +347,12 @@ public class StudyDataLoaderMain {
         JsonElement datstatParticipantData = user.getAsJsonObject().get("datstatparticipantdata");
 
         JsonElement surveyData = user.getAsJsonObject().get("datstatsurveydata");
+        JsonElement medicalHistorySurveyData = surveyData.getAsJsonObject().get("atcp_registry_questionnaire");
+        JsonElement atConsentSurveyData = surveyData.getAsJsonObject().get("ConsentSurvey");
+        JsonElement atRegistrationSurveyData = surveyData.getAsJsonObject().get("RegistrationSurvey");
+        JsonElement atContactingPhysicianSurveyData = surveyData.getAsJsonObject().get("ContactingPhysicianSurvey");
+        JsonElement atGenomeStudySurveyData = surveyData.getAsJsonObject().get("GenomeStudySurvey");
+        JsonElement atAssentSurveyData = surveyData.getAsJsonObject().get("AssentSurvey");
         JsonElement releaseSurveyData = surveyData.getAsJsonObject().get("releasesurvey");
         JsonElement bdreleaseSurveyData = surveyData.getAsJsonObject().get("bdreleasesurvey");
         JsonElement aboutyouSurveyData = surveyData.getAsJsonObject().get("aboutyousurvey");
@@ -347,6 +362,12 @@ public class StudyDataLoaderMain {
         JsonElement followupSurveyData = surveyData.getAsJsonObject().get("followupsurvey");
 
         surveyDataMap.put("datstatparticipantdata", datstatParticipantData);
+        surveyDataMap.put("medicalhistorysurvey", medicalHistorySurveyData);
+        surveyDataMap.put("atconsentsurvey", atConsentSurveyData);
+        surveyDataMap.put("atregistrationsurvey", atRegistrationSurveyData);
+        surveyDataMap.put("atcontactingphysiciansurvey", atContactingPhysicianSurveyData);
+        surveyDataMap.put("atgenomestudysurvey", atGenomeStudySurveyData);
+        surveyDataMap.put("atassentsurvey", atAssentSurveyData);
         surveyDataMap.put("releasesurvey", releaseSurveyData);
         surveyDataMap.put("bdreleasesurvey", bdreleaseSurveyData);
         surveyDataMap.put("aboutyousurvey", aboutyouSurveyData);
@@ -457,7 +478,8 @@ public class StudyDataLoaderMain {
                 continue;
             }
 
-            String email = datstatData.getAsJsonObject().get("datstat_email").getAsString();
+            String email = !datstatData.getAsJsonObject().get("datstat_email").isJsonNull()
+                    ? datstatData.getAsJsonObject().get("datstat_email").getAsString() : "";
             userEmailMap.put(altpid, email.toLowerCase());
 
             String phoneNumber = null;
@@ -537,6 +559,9 @@ public class StudyDataLoaderMain {
             Map<String, JsonElement> surveyDataMap = altpidBucketDataMap.get(altpid);
 
             JsonElement datstatData = surveyDataMap.get("datstatparticipantdata");
+            if (datstatData.getAsJsonObject().get("datstat_email").isJsonNull()) {
+                continue;
+            }
             String email = datstatData.getAsJsonObject().get("datstat_email").getAsString().toLowerCase();
             setRunEmail(dryRun, datstatData);
 
@@ -578,6 +603,104 @@ public class StudyDataLoaderMain {
         }
     }
 
+    public void processGoogleBucketParticipantFiles(Config cfg, String studyGuid, boolean dryRun, String pswPath) throws Exception {
+
+        LOG.info("Processing google bucket files. {} ", new Date());
+        Instant now = Instant.now();
+        //Download files from Google storage
+        //iterate through All buckets
+        StudyDataLoader dataLoader = new StudyDataLoader(cfg);
+        migrationRunReport = new ArrayList<>();
+        skippedList = new ArrayList<>();
+        failedList = new ArrayList<>();
+
+        PreProcessedData preProcessedData;
+        if (StringUtils.isNotEmpty(preProcessFileName)) {
+            //load pre-processed data from File
+            preProcessedData = new Gson().fromJson(new FileReader(preProcessFileName), PreProcessedData.class);
+            LOG.info("using pre-processed data from {}", preProcessFileName);
+        } else {
+            //load it now
+            preProcessedData = preProcessAddressAndEmailVerification(cfg, dataLoader);
+            LOG.info("loaded pre-processed data. {} ", new Date());
+        }
+        Instant nowPreprocessDone = Instant.now();
+        Duration duration = Duration.between(now, nowPreprocessDone);
+        long secs = duration.getSeconds();
+        long mins = duration.toMinutes();
+        LOG.info("Completed preprocess for GB files: {} .. {}", preProcessedData.getAltpidBucketDataMap().size(), new Date());
+        LOG.info("Bucket preprocess load took : {} secs .. minutes : {} ", secs, mins);
+
+        //load mapping data
+        Map<String, JsonElement> mappingData = loadDataMapping(mappingFileName);
+        final OLCService olcService = new OLCService(cfg.getString(ConfigFile.GEOCODING_API_KEY));
+        final AddressService addressService = new AddressService(cfg.getString(ConfigFile.EASY_POST_API_KEY),
+                cfg.getString(ConfigFile.GEOCODING_API_KEY));
+
+        Map<String, Map> altpidBucketDataMap = preProcessedData.getAltpidBucketDataMap();
+        String hashedPasswordsData = new String(Files.readAllBytes(Paths.get(pswPath)));
+        JsonElement hashedPasswordsJson;
+        try {
+            hashedPasswordsJson = new Gson().fromJson(hashedPasswordsData, new TypeToken<JsonObject>() {
+            }.getType());
+        } catch (Exception e) {
+            LOG.error("Failed to load file data as JSON ", e);
+            return;
+        }
+        JsonObject hashedPasswordsJsonObject = hashedPasswordsJson.getAsJsonObject();
+        for (String altpid : altpidBucketDataMap.keySet()) {
+            Map<String, JsonElement> surveyDataMap = altpidBucketDataMap.get(altpid);
+
+            JsonElement datstatData = surveyDataMap.get("datstatparticipantdata");
+            if (hashedPasswordsJsonObject.has(altpid)) {
+                surveyDataMap.get("datstatparticipantdata").getAsJsonObject()
+                        .add("password", hashedPasswordsJsonObject.get(altpid).getAsJsonObject().get("hashedPassword"));
+            }
+            if (datstatData.getAsJsonObject().get("datstat_email").isJsonNull()) {
+                continue;
+            }
+            String email = datstatData.getAsJsonObject().get("datstat_email").getAsString().toLowerCase();
+            setRunEmail(dryRun, datstatData);
+
+            if (!dryRun && preProcessedData.getAuth0ExistingEmails().contains(email)) {
+                LOG.error("Skipped altpid: {} . Email : {} already exists in Auth0. ", altpid, email);
+                skippedList.add(altpid);
+                continue;
+            }
+            if (altPidUserList == null || altPidUserList.isEmpty() || altPidUserList.contains(altpid)) {
+                processParticipant(studyGuid, surveyDataMap, mappingData, dataLoader,
+                        preProcessedData.getUserAddressData().get(altpid), addressService, olcService);
+            }
+        }
+        try {
+            createReport(migrationRunReport);
+        } catch (Exception e) {
+            LOG.error("Failed to create migration run report. ", e);
+        }
+
+        if (isDeleteAuth0Email) {
+            deleteAuth0Emails(cfg, migrationRunReport);
+        }
+        LOG.info("completed processing google bucket files");
+        Instant nowDone = Instant.now();
+        duration = Duration.between(now, nowDone);
+        secs = duration.getSeconds();
+        mins = duration.toMinutes();
+        LOG.info("Completed processing & loading GB files {}", preProcessedData.getAltpidBucketDataMap().size(), new Date());
+        LOG.info("Bucket participant file load took : {} secs .. minutes : {} ", secs, mins);
+        if (!failedList.isEmpty()) {
+            LOG.error("Failed to load {} altpids: {} ", failedList.size(), Arrays.toString(failedList.toArray()));
+        } else {
+            LOG.info("NO failed load of Altpids...");
+        }
+        if (!skippedList.isEmpty()) {
+            LOG.warn("Skipped {} altpids: {} ", skippedList.size(), Arrays.toString(skippedList.toArray()));
+        } else {
+            LOG.info("NO skipped Altpids...");
+        }
+    }
+
+    @SuppressWarnings("checkstyle:WhitespaceAfter")
     private void processParticipant(String studyGuid, Map<String, JsonElement> sourceData,
                                     Map<String, JsonElement> mappingData, StudyDataLoader dataLoader,
                                     MailAddress address, AddressService addressService, OLCService olcService) {
@@ -587,7 +710,7 @@ public class StudyDataLoaderMain {
 
         String altpid = datstatParticipantData.getAsJsonObject().get("datstat_altpid").getAsString();
         String emailAddress = datstatParticipantData.getAsJsonObject().get("datstat_email").getAsString().toLowerCase();
-        String createdAt = datstatParticipantData.getAsJsonObject().get("ddp_created").getAsString();
+        String createdAt = datstatParticipantData.getAsJsonObject().get("datstat_created").getAsString();
         LOG.info("loading participant: {} email: {} ", altpid, emailAddress);
 
         TransactionWrapper.useTxn(handle -> {
@@ -601,11 +724,16 @@ public class StudyDataLoaderMain {
             Boolean hasFollowup = false;
             Boolean isSuccess = false;
             Boolean previousRun = false;
+            Boolean hasMedicalHistory = false;
+            Boolean hasATConsent = false;
+            Boolean hasATRegistration = false;
+            Boolean hasATContactingPhysician = false;
+            Boolean hasATGenomeStudy = false;
+            Boolean hasATAssent = false;
             StudyMigrationRun migrationRun;
 
             boolean auth0Collision = false;
             try {
-
                 //verify if participant is already loaded..
                 JdbiUser jdbiUser = handle.attach(JdbiUser.class);
                 userGuid = jdbiUser.getUserGuidByAltpid(altpid);
@@ -614,6 +742,7 @@ public class StudyDataLoaderMain {
                     ActivityInstanceDao activityInstanceDao = handle.attach(ActivityInstanceDao.class);
                     ActivityInstanceStatusDao activityInstanceStatusDao = handle.attach(ActivityInstanceStatusDao.class);
                     JdbiUmbrellaStudy jdbiUmbrellaStudy = handle.attach(JdbiUmbrellaStudy.class);
+                    JdbiActivityInstance jdbiActivityInstance = handle.attach(JdbiActivityInstance.class);
 
                     String phoneNumber = null;
                     JsonElement releaseSurvey = sourceData.get("releasesurvey");
@@ -645,9 +774,20 @@ public class StudyDataLoaderMain {
                     hasRelease = (sourceData.get("releasesurvey") != null && !sourceData.get("releasesurvey").isJsonNull());
                     hasBloodRelease = (sourceData.get("bdreleasesurvey") != null && !sourceData.get("bdreleasesurvey").isJsonNull());
                     hasFollowup = (sourceData.get("followupsurvey") != null && !sourceData.get("followupsurvey").isJsonNull());
+                    hasMedicalHistory = (sourceData.get("medicalhistorysurvey") != null && !sourceData
+                            .get("medicalhistorysurvey").isJsonNull());
+                    hasATConsent = (sourceData.get("atconsentsurvey")) != null && !sourceData
+                            .get("atconsentsurvey").isJsonNull();
+                    hasATRegistration = (sourceData.get("atregistrationsurvey")) != null && !sourceData
+                            .get("atregistrationsurvey").isJsonNull();
+                    hasATContactingPhysician = (sourceData.get("atcontactingphysiciansurvey")) != null && !sourceData
+                            .get("atcontactingphysiciansurvey").isJsonNull();
+                    hasATGenomeStudy = (sourceData.get("atgenomestudysurvey")) != null && !sourceData
+                            .get("atgenomestudysurvey").isJsonNull();
+                    hasATAssent = (sourceData.get("atassentsurvey")) != null && !sourceData
+                            .get("atassentsurvey").isJsonNull();
 
                     var answerDao = handle.attach(AnswerDao.class);
-
                     //create prequal
                     dataLoader.createPrequal(handle,
                             userGuid, studyId,
@@ -656,6 +796,125 @@ public class StudyDataLoaderMain {
                             activityInstanceDao,
                             activityInstanceStatusDao,
                             answerDao);
+
+
+                    if (hasATRegistration) {
+                        String activityCode = mappingData.get("RegistrationSurvey").getAsJsonObject()
+                                .get("activity_code").getAsString();
+                        List<ActivityInstanceDto> activityInstanceDtoList = jdbiActivityInstance
+                                .findAllByUserGuidAndActivityCode(userGuid, activityCode, studyId);
+                        activityInstanceDao.deleteByInstanceGuid(activityInstanceDtoList.get(0).getGuid());
+                        ActivityInstanceDto instanceDto = dataLoader.createActivityInstance(sourceData.get("atregistrationsurvey"),
+                                userGuid, studyId,
+                                activityCode, createdAt,
+                                jdbiActivity,
+                                activityInstanceDao,
+                                activityInstanceStatusDao);
+                        dataLoader.loadATRegistrationSurveyData(handle, sourceData.get("atregistrationsurvey"),
+                                mappingData.get("RegistrationSurvey"),
+                                studyDto, userDto, instanceDto,
+                                answerDao);
+                    }
+
+                    if (hasATConsent) {
+                        String activityCode = mappingData.get("ConsentSurvey").getAsJsonObject()
+                                .get("activity_code").getAsString();
+                        List<ActivityInstanceDto> activityInstanceDtoList = jdbiActivityInstance
+                                .findAllByUserGuidAndActivityCode(userGuid, activityCode, studyId);
+                        activityInstanceDao.deleteByInstanceGuid(activityInstanceDtoList.get(0).getGuid());
+                        ActivityInstanceDto instanceDto = dataLoader.createActivityInstance(sourceData.get("atconsentsurvey"),
+                                userGuid, studyId,
+                                activityCode, createdAt,
+                                jdbiActivity,
+                                activityInstanceDao,
+                                activityInstanceStatusDao);
+                        dataLoader.loadATConsentSurveyData(handle, sourceData.get("atconsentsurvey"),
+                                mappingData.get("ConsentSurvey"),
+                                studyDto, userDto, instanceDto,
+                                answerDao);
+                    }
+
+                    if (hasATAssent) {
+                        String activityCode = mappingData.get("AssentSurvey").getAsJsonObject()
+                                .get("activity_code").getAsString();
+                        ActivityInstanceDto instanceDto = dataLoader.createActivityInstance(sourceData.get("atassentsurvey"),
+                                userGuid, studyId,
+                                activityCode, createdAt,
+                                jdbiActivity,
+                                activityInstanceDao,
+                                activityInstanceStatusDao);
+                        dataLoader.loadATAssentSurveyData(handle, sourceData.get("atassentsurvey"),
+                                mappingData.get("AssentSurvey"),
+                                studyDto, userDto, instanceDto,
+                                answerDao);
+                    }
+
+                    if (hasATContactingPhysician) {
+                        String activityCode = mappingData.get("ContactingPhysicianSurvey").getAsJsonObject()
+                                .get("activity_code").getAsString();
+                        List<ActivityInstanceDto> activityInstanceDtoList = jdbiActivityInstance
+                                .findAllByUserGuidAndActivityCode(userGuid, activityCode, studyId);
+                        activityInstanceDao.deleteByInstanceGuid(activityInstanceDtoList.get(0).getGuid());
+                        ActivityInstanceDto instanceDto = dataLoader.createActivityInstance(sourceData.get("atcontactingphysiciansurvey"),
+                                userGuid, studyId,
+                                activityCode, createdAt,
+                                jdbiActivity,
+                                activityInstanceDao,
+                                activityInstanceStatusDao);
+                        dataLoader.loadATContactingPhysicianSurveyData(handle, sourceData.get("atcontactingphysiciansurvey"),
+                                mappingData.get("ContactingPhysicianSurvey"),
+                                studyDto, userDto, instanceDto,
+                                answerDao);
+                    }
+
+                    if (hasMedicalHistory) {
+                        String activityCode = mappingData.get("atcp_registry_questionnaire").getAsJsonObject()
+                                .get("activity_code").getAsString();
+                        List<ActivityInstanceDto> activityInstanceDtoList = jdbiActivityInstance
+                                .findAllByUserGuidAndActivityCode(userGuid, activityCode, studyId);
+                        activityInstanceDao.deleteByInstanceGuid(activityInstanceDtoList.get(0).getGuid());
+                        ActivityInstanceDto instanceDto = dataLoader.createActivityInstance(sourceData.get("medicalhistorysurvey"),
+                                userGuid, studyId,
+                                activityCode, createdAt,
+                                jdbiActivity,
+                                activityInstanceDao,
+                                activityInstanceStatusDao);
+                        dataLoader.loadMedicalHistorySurveyData(handle, sourceData.get("medicalhistorysurvey"),
+                                mappingData.get("atcp_registry_questionnaire"),
+                                studyDto, userDto, instanceDto,
+                                answerDao);
+                    }
+
+                    if (hasATGenomeStudy) {
+                        String activityCode = mappingData.get("GenomeStudySurvey").getAsJsonObject()
+                                .get("activity_code").getAsString();
+                        ActivityInstanceDto instanceDto = dataLoader.createActivityInstance(sourceData.get("atgenomestudysurvey"),
+                                userGuid, studyId,
+                                activityCode, createdAt,
+                                jdbiActivity,
+                                activityInstanceDao,
+                                activityInstanceStatusDao);
+                        dataLoader.loadATGenomeStudySurveyData(handle, sourceData.get("atgenomestudysurvey"),
+                                mappingData.get("GenomeStudySurvey"),
+                                studyDto, userDto, instanceDto,
+                                answerDao);
+                    }
+
+                    int registrationStatus = datstatParticipantData.getAsJsonObject().get("registration_status").getAsInt();
+                    LocalDateTime lastSubmitedDateTime = LocalDateTime.parse(datstatParticipantData.getAsJsonObject()
+                            .get("datstat_lastmodified").getAsString(), dataLoader.formatter);
+                    Instant lastSubmitedInstant = lastSubmitedDateTime.toInstant(ZoneOffset.UTC);
+                    long lastSubmitedToMillis = lastSubmitedInstant.toEpochMilli();
+
+                    //if registration status is equal or more than 7 we submit review and submission activity
+                    if (registrationStatus >= 7) {
+                        List<ActivityInstanceDto> activityInstanceDtoList = jdbiActivityInstance
+                                .findAllByUserGuidAndActivityCode(userGuid, "REVIEW_AND_SUBMISSION", studyId);
+                        activityInstanceStatusDao.deleteAllByInstanceGuid(activityInstanceDtoList.get(0).getGuid());
+                        activityInstanceStatusDao.insertStatus(activityInstanceDtoList.get(0).getId(), InstanceStatusType.COMPLETE,
+                                lastSubmitedToMillis, userGuid);
+                    }
+
 
                     if (hasAboutYou) {
                         String activityCode = mappingData.get("aboutyousurvey").getAsJsonObject().get("activity_code").getAsString();
@@ -754,7 +1013,6 @@ public class StudyDataLoaderMain {
                                 mappingData.get("followupsurvey"),
                                 studyDto, userDto, instanceDto, activityInstanceDao.getJdbiActivityInstance(), answerDao);
                     }
-
                     JsonElement ddpExitedDt = datstatParticipantData.getAsJsonObject().get("ddp_exited_dt");
                     if (ddpExitedDt != null && !ddpExitedDt.isJsonNull()) {
                         dataLoader.addUserStudyExit(handle, ddpExitedDt.getAsString(), userGuid, studyGuid);
@@ -787,7 +1045,8 @@ public class StudyDataLoaderMain {
                 migrationRun = new StudyMigrationRun(altpid, userGuid, previousRun, emailAddress);
             } else {
                 migrationRun = new StudyMigrationRun(altpid, userGuid, hasAboutYou, hasConsent, hasBloodConsent, hasTissueConsent,
-                        hasRelease, hasBloodRelease, false, hasFollowup, isSuccess, previousRun, emailAddress, auth0Collision);
+                        hasRelease, hasBloodRelease, false, hasFollowup, hasMedicalHistory,
+                        isSuccess, previousRun, emailAddress, auth0Collision);
             }
 
             migrationRunReport.add(migrationRun);
@@ -892,7 +1151,7 @@ public class StudyDataLoaderMain {
                 .withNullString("")
                 .withHeader("AltPid", "Pepper User GUID", "Has About You", "Has Consent", "Has Blood Consent", "Has Tissue Consent",
                         "Has Release", "Has Blood Release",
-                        "Has Followup", "Email", "Previous Run", "Success/Failure", "Auth0 Collision"));
+                        "Has Followup", "Has Medical History", "Email", "Previous Run", "Success/Failure", "Auth0 Collision"));
 
         for (StudyMigrationRun run : migrationRunReport) {
             addRunValues(run, csvPrinter);
@@ -913,6 +1172,7 @@ public class StudyDataLoaderMain {
                 run.getHasRelease(),
                 run.getHasBloodRelease(),
                 run.getHasFollowup(),
+                run.getHasMedicalHistory(),
                 run.getEmailAddress(),
                 run.getPreviousRun(),
                 run.getSuccess(),

@@ -1,5 +1,8 @@
 package org.broadinstitute.ddp.util;
 
+import static org.broadinstitute.ddp.util.MiscUtil.fmt;
+
+import java.io.File;
 import java.io.IOException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -32,11 +35,13 @@ import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
 import com.typesafe.config.Config;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.fluent.Response;
 import org.apache.http.entity.ContentType;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.util.EntityUtils;
 import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
@@ -58,6 +63,8 @@ public class Auth0Util {
     private static final String HTTPS_PREFIX = "https://";
     public static final String PEPPER_USER_GUIDS_USER_APP_METADATA_KEY = "pepper_user_guids";
     public static final String REFRESH_ENDPOINT = "oauth/token";
+    public static final String BULK_IMPORTS_ENDPOINT = "api/v2/jobs/users-imports";
+    public static final String AUTH0_JOB_ENDPOINT = "api/v2/jobs/%s";
     private final String baseUrl;
     // map of cached jwk providers so we don't hammer auth0
     private static final Map<String, JwkProvider> jwkProviderMap = new HashMap<>();
@@ -311,6 +318,57 @@ public class Auth0Util {
         return new Gson().fromJson(responseBody, RefreshTokenResponse.class);
     }
 
+    public BulkUserImportResponse bulkUserWithHashedPassword(String mgmtApiToken, File file) throws Auth0Exception {
+        String connectionId = getAuth0UserNamePasswordConnectionId(mgmtApiToken);
+        HttpEntity httpEntity = MultipartEntityBuilder.create().addBinaryBody("users", file)
+                .addTextBody("connection_id", connectionId)
+                .addTextBody("upsert","true")
+                .addTextBody("send_completion_email", "false")
+                .setContentType(ContentType.MULTIPART_FORM_DATA).build();
+        Request request = Request.Post(baseUrl + BULK_IMPORTS_ENDPOINT)
+                .addHeader("Authorization", "Bearer " + mgmtApiToken)
+                .body(httpEntity);
+        try {
+            return request.execute().handleResponse(new ResponseHandler<BulkUserImportResponse>() {
+                @Override
+                public BulkUserImportResponse handleResponse(HttpResponse response) throws IOException {
+                    int status = response.getStatusLine().getStatusCode();
+                    if (status == 202) {
+                        return new Gson().fromJson(EntityUtils.toString(response.getEntity()),
+                                BulkUserImportResponse.class);
+                    } else {
+                        throw new RuntimeException("Attempt to create bulk user import job returned " + status + ":"
+                                + EntityUtils.toString(response.getEntity()));
+                    }
+                }
+            });
+        } catch (IOException e) {
+            throw new RuntimeException("Could not create bulk user import job", e);
+        }
+    }
+
+    public Auth0JobResponse getAuth0Job(String jobId, String mgmtApiToken) {
+        Request request = Request.Get(fmt(baseUrl + AUTH0_JOB_ENDPOINT, jobId))
+                .addHeader("Authorization", "Bearer " + mgmtApiToken);
+        try {
+            return request.execute().handleResponse(new ResponseHandler<Auth0JobResponse>() {
+                @Override
+                public Auth0JobResponse handleResponse(HttpResponse response) throws IOException {
+                    int status = response.getStatusLine().getStatusCode();
+                    if (status == 200) {
+                        return new Gson().fromJson(EntityUtils.toString(response.getEntity()),
+                                Auth0JobResponse.class);
+                    } else {
+                        throw new RuntimeException("Attempt to get auth0 job returned " + status + ":"
+                                + EntityUtils.toString(response.getEntity()));
+                    }
+                }
+            });
+        } catch (IOException e) {
+            throw new RuntimeException("Could not get auth0 job", e);
+        }
+    }
+
     /**
      * Uses the refreshToken to re-issue an access and id token.
      *
@@ -500,8 +558,10 @@ public class Auth0Util {
         user.setPassword(pwd);
         user.setConnection(USERNAME_PASSWORD_AUTH0_CONN_NAME);
         User createdUser = auth0Mgmt.users().create(user).execute();
+        LOG.info("Created password: {}", pwd);
         return createdUser;
     }
+
 
     /**
      * Will generate a URL that will direct to Auth0 and allow them to change password
@@ -791,4 +851,159 @@ public class Auth0Util {
         }
     }
 
+    public static class BulkUserImportResponse {
+
+        @SerializedName("status")
+        private String status;
+
+        @SerializedName("type")
+        private String type;
+
+        @SerializedName("created_at")
+        private String createdAt;
+
+        @SerializedName("id")
+        private String jobId;
+
+        @SerializedName("connection_id")
+        private String connectionId;
+
+        @SerializedName("external_id")
+        private String externalId;
+
+        public BulkUserImportResponse(String status, String type, String createdAt, String jobId, String connectionId, String externalId) {
+            this.status = status;
+            this.type = type;
+            this.createdAt = createdAt;
+            this.jobId = jobId;
+            this.connectionId = connectionId;
+            this.externalId = externalId;
+        }
+
+        public String getStatus() {
+            return status;
+        }
+
+        public void setStatus(String status) {
+            this.status = status;
+        }
+
+        public String getType() {
+            return type;
+        }
+
+        public void setType(String type) {
+            this.type = type;
+        }
+
+        public String getCreatedAt() {
+            return createdAt;
+        }
+
+        public void setCreatedAt(String createdAt) {
+            this.createdAt = createdAt;
+        }
+
+        public String getJobId() {
+            return jobId;
+        }
+
+        public void setJobId(String jobId) {
+            this.jobId = jobId;
+        }
+
+        public String getConnectionId() {
+            return connectionId;
+        }
+
+        public void setConnectionId(String connectionId) {
+            this.connectionId = connectionId;
+        }
+
+        public String getExternalId() {
+            return externalId;
+        }
+
+        public void setExternalId(String externalId) {
+            this.externalId = externalId;
+        }
+    }
+
+    public static class Auth0JobResponse {
+        @SerializedName("type")
+        private String type;
+
+        @SerializedName("status")
+        private String status;
+
+        @SerializedName("connection_id")
+        private String connectionId;
+
+        @SerializedName("summary")
+        private Map<String, Integer> summary;
+
+        @SerializedName("connection")
+        private String connection;
+
+        @SerializedName("id")
+        private String jobId;
+
+        public Auth0JobResponse(String type, String status, String connectionId, Map<String, Integer> summary,
+                                String connection, String jobId) {
+            this.type = type;
+            this.status = status;
+            this.connectionId = connectionId;
+            this.summary = summary;
+            this.connection = connection;
+            this.jobId = jobId;
+        }
+
+        public String getType() {
+            return type;
+        }
+
+        public void setType(String type) {
+            this.type = type;
+        }
+
+        public String getStatus() {
+            return status;
+        }
+
+        public void setStatus(String status) {
+            this.status = status;
+        }
+
+        public String getConnectionId() {
+            return connectionId;
+        }
+
+        public void setConnectionId(String connectionId) {
+            this.connectionId = connectionId;
+        }
+
+        public Map<String, Integer> getSummary() {
+            return summary;
+        }
+
+        public void setSummary(Map<String, Integer> summary) {
+            this.summary = summary;
+        }
+
+        public String getConnection() {
+            return connection;
+        }
+
+        public void setConnection(String connection) {
+            this.connection = connection;
+        }
+
+        public String getJobId() {
+            return jobId;
+        }
+
+        public void setJobId(String jobId) {
+            this.jobId = jobId;
+        }
+    }
 }
