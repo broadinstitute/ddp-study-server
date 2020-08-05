@@ -738,6 +738,7 @@ public class StudyDataLoaderMain {
                 JdbiUser jdbiUser = handle.attach(JdbiUser.class);
                 userGuid = jdbiUser.getUserGuidByAltpid(altpid);
                 if (userGuid == null) {
+                    dataLoader.deleteExistingAuth0User(emailAddress);
                     JdbiActivity jdbiActivity = handle.attach(JdbiActivity.class);
                     ActivityInstanceDao activityInstanceDao = handle.attach(ActivityInstanceDao.class);
                     ActivityInstanceStatusDao activityInstanceStatusDao = handle.attach(ActivityInstanceStatusDao.class);

@@ -35,6 +35,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import com.auth0.exception.Auth0Exception;
 import com.auth0.json.mgmt.users.User;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -2281,6 +2282,12 @@ public class StudyDataLoader {
                     streetAddress
             ));
         }
+    }
+
+    public void deleteExistingAuth0User(String emailAddress) throws Auth0Exception {
+        List<User> auth0Users = auth0Util.getAuth0UsersByEmail(emailAddress, mgmtToken);
+        if (auth0Users.size() == 0) return;
+        auth0Util.deleteAuth0User(auth0Users.get(0).getId(), mgmtToken);
     }
 
     class UserExistsException extends Exception {
