@@ -72,7 +72,7 @@ public final class PicklistQuestionDef extends QuestionDef {
                                Template additionalInfoHeaderTemplate, Template additionalInfoFooterTemplate,
                                List<RuleDef> validations, PicklistSelectMode selectMode, PicklistRenderMode renderMode,
                                Template picklistLabelTemplate, List<PicklistGroupDef> groups, List<PicklistOptionDef> options,
-                               boolean hideNumber) {
+                               boolean hideNumber, boolean writeOnce) {
         super(QuestionType.PICKLIST,
                 stableId,
                 isRestricted,
@@ -80,7 +80,8 @@ public final class PicklistQuestionDef extends QuestionDef {
                 additionalInfoHeaderTemplate,
                 additionalInfoFooterTemplate,
                 validations,
-                hideNumber);
+                hideNumber,
+                writeOnce);
         this.selectMode = MiscUtil.checkNonNull(selectMode, "selectMode");
         this.renderMode = MiscUtil.checkNonNull(renderMode, "renderMode");
 
@@ -200,7 +201,8 @@ public final class PicklistQuestionDef extends QuestionDef {
                                                                     label,
                                                                     groups,
                                                                     options,
-                                                                    hideNumber);
+                                                                    hideNumber,
+                                                                    writeOnce);
             configure(question);
             return question;
         }

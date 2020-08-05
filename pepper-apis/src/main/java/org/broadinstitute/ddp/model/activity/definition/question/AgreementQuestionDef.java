@@ -16,7 +16,8 @@ public final class AgreementQuestionDef extends QuestionDef {
             Template additionalInfoHeaderTemplate,
             Template additionalInfoFooterTemplate,
             List<RuleDef> validations,
-            boolean hideNumber
+            boolean hideNumber,
+            boolean writeOnce
     ) {
         super(QuestionType.AGREEMENT,
                 stableId,
@@ -25,7 +26,8 @@ public final class AgreementQuestionDef extends QuestionDef {
                 additionalInfoHeaderTemplate,
                 additionalInfoFooterTemplate,
                 validations,
-                hideNumber);
+                hideNumber,
+                writeOnce);
         this.tooltipTemplate = tooltipTemplate;
     }
 
