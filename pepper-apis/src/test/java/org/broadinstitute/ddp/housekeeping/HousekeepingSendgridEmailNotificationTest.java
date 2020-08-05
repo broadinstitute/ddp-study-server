@@ -5,8 +5,15 @@ import static org.broadinstitute.ddp.model.activity.types.InstanceStatusType.CRE
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 import java.time.Instant;
 import java.util.concurrent.Semaphore;
@@ -17,6 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.typesafe.config.Config;
 import org.broadinstitute.ddp.Housekeeping;
 import org.broadinstitute.ddp.HousekeepingTest;
+import org.broadinstitute.ddp.client.ApiResult;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
@@ -25,7 +33,7 @@ import org.broadinstitute.ddp.db.dao.EventActionDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstanceStatusType;
 import org.broadinstitute.ddp.db.dao.JdbiActivityStatusTrigger;
 import org.broadinstitute.ddp.db.dao.JdbiEventConfiguration;
-import org.broadinstitute.ddp.db.dao.JdbiEventTrigger;
+import org.broadinstitute.ddp.db.dao.EventTriggerSql;
 import org.broadinstitute.ddp.db.dao.JdbiExpression;
 import org.broadinstitute.ddp.db.dao.QueuedEventDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
@@ -65,7 +73,7 @@ public class HousekeepingSendgridEmailNotificationTest extends HousekeepingTest 
         TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, apisHandle -> {
             EventActionDao eventActionDao = apisHandle.attach(EventActionDao.class);
             JdbiExpression expressionDao = apisHandle.attach(JdbiExpression.class);
-            JdbiEventTrigger eventTriggerDao = apisHandle.attach(JdbiEventTrigger.class);
+            EventTriggerSql eventTriggerDao = apisHandle.attach(EventTriggerSql.class);
             JdbiActivityStatusTrigger activityStatusTriggerDao = apisHandle.attach(JdbiActivityStatusTrigger.class);
             ActivityInstanceDao activityInstanceDao = apisHandle.attach(ActivityInstanceDao.class);
             JdbiActivityInstanceStatusType statusTypeDao = apisHandle.attach(JdbiActivityInstanceStatusType.class);
@@ -98,7 +106,7 @@ public class HousekeepingSendgridEmailNotificationTest extends HousekeepingTest 
             long falseExpressionId = expressionDao.insertExpression("false").getId();
 
             // setup a status change event trigger so that when status changes, an event is queued
-            long eventTriggerId = eventTriggerDao.insert(EventTriggerType.ACTIVITY_STATUS);
+            long eventTriggerId = eventTriggerDao.insertBaseTrigger(EventTriggerType.ACTIVITY_STATUS);
             activityStatusTriggerDao.insert(eventTriggerId, testActivity.getActivityId(), COMPLETE);
 
             insertedEventConfigId = eventConfigDao.insert(eventTriggerId, testEmailActionId, generatedTestData
@@ -154,6 +162,9 @@ public class HousekeepingSendgridEmailNotificationTest extends HousekeepingTest 
         };
         Housekeeping.setAfterHandler(afterHandler);
 
+        doReturn(ApiResult.ok(200, templateVersion)).when(mockSendGridClient).getTemplateActiveVersionId(anyString());
+        doReturn(ApiResult.ok(200, null)).when(mockSendGridClient).sendMail(any());
+
         String emailSentLogEntry = String.format("Sent template %s version %s to %s", template,
                 templateVersion, testingUser.getEmail());
         moveStatusToInProgressAndThenToComplete();
@@ -168,6 +179,13 @@ public class HousekeepingSendgridEmailNotificationTest extends HousekeepingTest 
         assertTrue("No evidence that email was sent", wasLogEntryFound);
         assertEquals("Handled " + numEventsHandled + " events", 1, numEventsHandled.get());
         assertFalse(wasEventIgnored.get());
+
+        verify(mockSendGridClient, times(1)).getTemplateActiveVersionId(template);
+        verify(mockSendGridClient, times(1)).sendMail(argThat(mail -> {
+            assertNotNull(mail);
+            assertEquals(template, mail.getTemplateId());
+            return true;
+        }));
     }
 
     /**

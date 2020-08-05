@@ -37,7 +37,7 @@ public final class BoolQuestionDef extends QuestionDef {
     public BoolQuestionDef(String stableId, boolean isRestricted, Template promptTemplate,
                            Template additionalInfoHeaderTemplate, Template additionalInfoFooterTemplate,
                            List<RuleDef> validations, Template trueTemplate, Template falseTemplate,
-                           boolean hideNumber) {
+                           boolean hideNumber, boolean writeOnce) {
         super(QuestionType.BOOLEAN,
                 stableId,
                 isRestricted,
@@ -45,7 +45,8 @@ public final class BoolQuestionDef extends QuestionDef {
                 additionalInfoHeaderTemplate,
                 additionalInfoFooterTemplate,
                 validations,
-                hideNumber);
+                hideNumber,
+                writeOnce);
 
         this.trueTemplate = MiscUtil.checkNonNull(trueTemplate, "trueTemplate");
         this.falseTemplate = MiscUtil.checkNonNull(falseTemplate, "falseTemplate");
@@ -92,7 +93,8 @@ public final class BoolQuestionDef extends QuestionDef {
                                                             validations,
                                                             trueTemplate,
                                                             falseTemplate,
-                                                            hideNumber);
+                                                            hideNumber,
+                                                            writeOnce);
             configure(question);
             return question;
         }

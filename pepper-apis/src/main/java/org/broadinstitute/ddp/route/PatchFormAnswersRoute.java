@@ -178,6 +178,12 @@ public class PatchFormAnswersRoute implements Route {
                     Question question = handle.attach(QuestionDao.class).getQuestionByActivityInstanceAndDto(questionDto,
                             instanceGuid, false, languageCodeId);
 
+                    if (question.isReadonly()) {
+                        String msg = "Question with stable id " + questionStableId + " is read-only, cannot update question";
+                        LOG.info(msg);
+                        throw ResponseUtil.haltError(response, 422, new ApiError(ErrorCodes.QUESTION_IS_READONLY, msg));
+                    }
+
                     //validation to check if question is a composite child
                     Optional<Long> parentQuestionId = handle.attach(JdbiCompositeQuestion.class)
                             .findParentQuestionIdByChildQuestionId(question.getQuestionId());

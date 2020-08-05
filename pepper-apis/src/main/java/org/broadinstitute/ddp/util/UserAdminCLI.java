@@ -19,6 +19,7 @@ import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.JdbiClient;
@@ -78,7 +79,7 @@ public class UserAdminCLI {
                 new TransactionWrapper.DbConfiguration(TransactionWrapper.DB.APIS, 1, dbUrl));
         try {
             TransactionWrapper.useTxn(handle -> {
-                var mgmtClient = Auth0Util.getManagementClientForStudy(handle, studyGuid);
+                var mgmtClient = Auth0ManagementClient.forStudy(handle, studyGuid);
 
                 ClientDto clientDto = handle.attach(JdbiClient.class)
                         .findByAuth0ClientIdAndAuth0TenantId(auth0ClientId, auth0TenantId).get();
@@ -104,7 +105,7 @@ public class UserAdminCLI {
                     String auth0UserId = "auth0|" + newUser.getUserId(); // this is safe as long as we use Username-Password connection
                     jdbiUser.insert(auth0UserId, userGuid, clientDto.getId(), hruid);
 
-                    auth0Util.setDDPUserGuidForAuth0User(userGuid, auth0UserId, auth0ClientId, mgmtToken);
+                    mgmtClient.setUserGuidForAuth0User(auth0UserId, auth0ClientId, userGuid);
                     LOG.info("Created new pepper user {} with guid {} and hruid {}", newUser.getEmail(), userGuid, hruid);
                 } else {
                     // user exists, so pull out some details about them

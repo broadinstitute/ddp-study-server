@@ -33,21 +33,12 @@ public class EmailBuilder {
     private Config studyCfg;
     private Config varsCfg;
     private SendGridClient sendGrid;
-    private VelocityEngine velocity;
 
     public EmailBuilder(Path cfgPath, Config studyCfg, Config varsCfg) {
         this.cfgPath = cfgPath;
         this.studyCfg = studyCfg;
         this.varsCfg = varsCfg;
         this.sendGrid = new SendGridClient(studyCfg.getString("sendgrid.apiKey"));
-        this.velocity = new VelocityEngine();
-        initVelocityEngine();
-    }
-
-    private void initVelocityEngine() {
-        // If templates reference a non-existing variable, then throw exception.
-        velocity.addProperty(RuntimeConstants.RUNTIME_REFERENCES_STRICT, true);
-        velocity.init();
     }
 
     private List<Config> searchForConfigs(Set<String> keys) {
@@ -96,7 +87,7 @@ public class EmailBuilder {
         File file = cfgPath.getParent().resolve(emailCfg.getString("filepath")).toFile();
         String html = readRawHtmlContent(file);
         if (emailCfg.getBoolean("render")) {
-            html = renderHtmlContent(file.getName(), html);
+            html = renderHtmlContent(file, html);
         }
         String subject = emailCfg.getString("subject");
         String name = emailCfg.getString("name");
@@ -156,7 +147,7 @@ public class EmailBuilder {
         File file = cfgPath.getParent().resolve(emailCfg.getString("filepath")).toFile();
         String html = readRawHtmlContent(file);
         if (emailCfg.getBoolean("render")) {
-            html = renderHtmlContent(file.getName(), html);
+            html = renderHtmlContent(file, html);
         }
         String subject = emailCfg.getString("subject");
 
@@ -192,10 +183,14 @@ public class EmailBuilder {
         }
     }
 
-    private String renderHtmlContent(String name, String rawHtml) {
+    private String renderHtmlContent(File file, String rawHtml) {
+        VelocityEngine engine = new VelocityEngine();
+        engine.addProperty(RuntimeConstants.RUNTIME_REFERENCES_STRICT, true);
+        engine.addProperty(RuntimeConstants.FILE_RESOURCE_LOADER_PATH, file.getParent());
+        engine.init();
         var ctx = new VelocityContext(varsCfg.resolve().root().unwrapped());
         StringWriter writer = new StringWriter();
-        velocity.evaluate(ctx, writer, name, rawHtml);
+        engine.evaluate(ctx, writer, file.getName(), rawHtml);
         return writer.toString();
     }
 

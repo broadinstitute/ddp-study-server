@@ -225,7 +225,8 @@ public class KitConfigurationTest extends TxnAwareBaseTest {
                                 kc.getKitType(),
                                 kc.getStudyGuid(),
                                 kc.needsApproval(),
-                                List.of(theRule));
+                                List.of(theRule),
+                                kc.getSchedule());
                     })
                     .findFirst()
                     .get();

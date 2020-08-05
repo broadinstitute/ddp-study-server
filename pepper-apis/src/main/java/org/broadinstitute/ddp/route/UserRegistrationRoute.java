@@ -4,10 +4,11 @@ import static spark.Spark.halt;
 
 import java.time.Instant;
 import java.time.ZoneId;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
-import com.auth0.exception.Auth0Exception;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetrics;
@@ -73,8 +74,6 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
     private static final Logger LOG = LoggerFactory.getLogger(UserRegistrationRoute.class);
 
     private static final String MODE_LOGIN = "login";
-    private static final String METADATA_FIRST_NAME = "first_name";
-    private static final String METADATA_LAST_NAME = "last_name";
 
     private final PexInterpreter interpreter;
 
@@ -141,14 +140,18 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                 LOG.info("Successfully exchanged auth0 code for auth0UserId {} for local registration", auth0UserId);
 
                 // Look for potential user metadata.
-                var auth0User = auth0Util.getAuth0User(auth0UserId.get(), mgmtClient.getToken());
+                var getResult = mgmtClient.getAuth0User(auth0UserId.get());
+                if (getResult.hasFailure()) {
+                    throw getResult.hasThrown() ? getResult.getThrown() : getResult.getError();
+                }
+                var auth0User = getResult.getBody();
                 if (auth0User.getUserMetadata() != null) {
                     if (payload.getFirstName() == null) {
-                        Object value = auth0User.getUserMetadata().get(METADATA_FIRST_NAME);
+                        Object value = auth0User.getUserMetadata().get(User.METADATA_FIRST_NAME);
                         payload.setFirstName(value == null ? null : (String) value);
                     }
                     if (payload.getLastName() == null) {
-                        Object value = auth0User.getUserMetadata().get(METADATA_LAST_NAME);
+                        Object value = auth0User.getUserMetadata().get(User.METADATA_LAST_NAME);
                         payload.setLastName(value == null ? null : (String) value);
                     }
                 }
@@ -170,17 +173,17 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                 }
 
                 operatorUser = processInvitation(response, handle, study, invitation, auth0UserId.get(),
-                        payload, clientConfig, auth0Util, mgmtClient);
+                        payload, clientConfig, mgmtClient);
                 ddpUserGuid.set(operatorUser.getGuid());
             } else if (operatorUser == null) {
                 var pair = signUpNewOperator(response, handle, study, auth0UserId.get(),
-                        payload, clientConfig, auth0Util, mgmtClient);
+                        payload, clientConfig, mgmtClient);
                 operatorUser = pair.getOperatorUser();
                 triggerUserRegisteredEvents(handle, study, operatorUser, pair.getParticipantUser());
                 ddpUserGuid.set(operatorUser.getGuid());
             } else {
                 LOG.info("Attempting to register existing user {} with client {} and study {}", auth0UserId, auth0ClientId, studyGuid);
-                ddpUserGuid.set(handleExistingUser(response, payload, handle, study, operatorUser, auth0Util, mgmtClient));
+                ddpUserGuid.set(handleExistingUser(response, payload, handle, study, operatorUser, mgmtClient));
             }
 
             if (doLocalRegistration) {
@@ -194,7 +197,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
 
     private User processInvitation(Response response, Handle handle, StudyDto study, InvitationDto invitation, String auth0UserId,
                                    UserRegistrationPayload payload, StudyClientConfiguration clientConfig,
-                                   Auth0Util auth0Util, Auth0ManagementClient mgmtClient) {
+                                   Auth0ManagementClient mgmtClient) {
         var invitationDao = handle.attach(InvitationDao.class);
         var userDao = handle.attach(UserDao.class);
         String invitationGuid = invitation.getInvitationGuid();
@@ -238,7 +241,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
 
             return user;
         } else if (invitation.getInvitationType() == InvitationType.RECRUITMENT) {
-            var pair = signUpNewOperator(response, handle, study, auth0UserId, payload, clientConfig, auth0Util, mgmtClient);
+            var pair = signUpNewOperator(response, handle, study, auth0UserId, payload, clientConfig, mgmtClient);
             invitationDao.assignAcceptingUser(invitation.getInvitationId(), pair.getParticipantUser().getId(), Instant.now());
             LOG.info("Assigned invitation {} of type {} to participant user {}", invitation.getInvitationGuid(),
                     invitation.getInvitationType(), pair.getParticipantUser().getGuid());
@@ -251,7 +254,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
 
     private UserPair signUpNewOperator(Response response, Handle handle, StudyDto study, String auth0UserId,
                                        UserRegistrationPayload payload, StudyClientConfiguration clientConfig,
-                                       Auth0Util auth0Util, Auth0ManagementClient mgmtClient) {
+                                       Auth0ManagementClient mgmtClient) {
         String studyGuid = study.getGuid();
         LOG.info("Attempting to register new user {} with client {} and study {}",
                 auth0UserId, clientConfig.getAuth0ClientId(), studyGuid);
@@ -271,7 +274,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
         registerUserWithStudy(handle, study, participantUser);
         handle.attach(DataExportDao.class).queueDataSync(participantUser.getId());
 
-        unregisterEmailFromStudyMailingList(handle, study, operatorUser, auth0Util, mgmtClient);
+        unregisterEmailFromStudyMailingList(handle, study, operatorUser, mgmtClient);
         return new UserPair(operatorUser, participantUser);
     }
 
@@ -305,7 +308,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
     }
 
     private String handleExistingUser(Response response, UserRegistrationPayload payload, Handle handle, StudyDto study, User user,
-                                      Auth0Util auth0Util, Auth0ManagementClient mgmtClient) {
+                                      Auth0ManagementClient mgmtClient) {
         String tempUserGuid = payload.getTempUserGuid();
         if (tempUserGuid != null) {
             String msg = String.format("Using existing user to upgrade temporary user with guid '%s' is not supported", tempUserGuid);
@@ -343,7 +346,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                 registerUserWithStudy(handle, study, user);
                 triggerUserRegisteredEvents(handle, study, user, user);
                 handle.attach(DataExportDao.class).queueDataSync(user.getId());
-                unregisterEmailFromStudyMailingList(handle, study, user, auth0Util, mgmtClient);
+                unregisterEmailFromStudyMailingList(handle, study, user, mgmtClient);
                 return user.getGuid();
             }
         } else {
@@ -439,13 +442,14 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
         }
     }
 
-    private void unregisterEmailFromStudyMailingList(Handle handle, StudyDto study, User user,
-                                                     Auth0Util auth0Util, Auth0ManagementClient mgmtClient) {
+    private void unregisterEmailFromStudyMailingList(Handle handle, StudyDto study, User user, Auth0ManagementClient mgmtClient) {
         String userEmail = null;
-        try {
-            userEmail = auth0Util.getAuth0User(user.getAuth0UserId(), mgmtClient.getToken()).getEmail();
-        } catch (Auth0Exception e) {
+        var getResult = mgmtClient.getAuth0User(user.getAuth0UserId());
+        if (getResult.hasFailure()) {
+            var e = getResult.hasThrown() ? getResult.getThrown() : getResult.getError();
             LOG.error("Auth0 request to retrieve auth0 user {} failed", user.getAuth0UserId(), e);
+        } else {
+            userEmail = getResult.getBody().getEmail();
         }
         if (StringUtils.isNotBlank(userEmail)) {
             int numDeleted = handle.attach(JdbiMailingList.class).deleteByEmailAndStudyId(userEmail, study.getId());
@@ -472,12 +476,8 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
         // different deployments can maintain different generated guids
         LOG.info("Setting auth0 user's metadata so that auth0 user {} has ddp user guid {} for client {}",
                 auth0UserId, ddpUserGuid, auth0ClientId);
-
+        mgmtClient.setUserGuidForAuth0User(auth0UserId, auth0ClientId, ddpUserGuid);
         Auth0Util auth0Util = new Auth0Util(mgmtClient.getDomain());
-
-        auth0Util.setDDPUserGuidForAuth0User(ddpUserGuid, auth0UserId, auth0ClientId,
-                                             mgmtClient.getToken());
-
         return new LocalRegistrationResponse(auth0Util.refreshToken(auth0ClientId, auth0ClientSecret, refreshToken));
     }
 
@@ -570,7 +570,8 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
         firstName = StringUtils.isNotBlank(firstName) ? firstName.trim() : null;
         String lastName = payload.getLastName();
         lastName = StringUtils.isNotBlank(lastName) ? lastName.trim() : null;
-        long languageId = determineUserLanguage(handle, payload).getId();
+        LanguageDto languageDto = determineUserLanguage(handle, payload);
+        long languageId = languageDto.getId();
         ZoneId timeZone = parseUserTimeZone(payload.getTimeZone());
 
         if (profile == null) {
@@ -606,6 +607,20 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
             if (shouldUpdate) {
                 profileDao.updateProfile(updated.build());
                 LOG.info("Updated user profile for user with guid {}", user.getGuid());
+            }
+        }
+
+        String auth0UserId = user.getAuth0UserId();
+        if (StringUtils.isNotBlank(auth0UserId)) {
+            LOG.info("User {} has auth0 account, proceeding to sync user_metadata", user.getGuid());
+            Map<String, Object> metadata = new HashMap<>();
+            metadata.put(User.METADATA_LANGUAGE, languageDto.getIsoCode());
+            var result = Auth0ManagementClient.forUser(handle, user.getGuid()).updateUserMetadata(auth0UserId, metadata);
+            if (result.hasThrown() || result.hasError()) {
+                var e = result.hasThrown() ? result.getThrown() : result.getError();
+                LOG.error("Error while updating user_metadata for user {}, user's language may be out-of-sync", user.getGuid(), e);
+            } else {
+                LOG.info("Updated user_metadata for user {}", user.getGuid());
             }
         }
     }

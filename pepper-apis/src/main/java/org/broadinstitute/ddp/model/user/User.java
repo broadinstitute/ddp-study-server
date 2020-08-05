@@ -13,6 +13,10 @@ import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
  */
 public class User {
 
+    public static final String METADATA_FIRST_NAME = "first_name";
+    public static final String METADATA_LAST_NAME = "last_name";
+    public static final String METADATA_LANGUAGE = "language";
+
     private long id;
     private String guid;
     private String hruid;

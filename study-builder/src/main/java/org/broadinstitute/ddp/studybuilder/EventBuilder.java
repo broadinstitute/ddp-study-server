@@ -22,6 +22,7 @@ import org.broadinstitute.ddp.db.dto.SendgridEmailEventActionDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
+import org.broadinstitute.ddp.model.activity.types.DsmNotificationEventType;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
@@ -98,7 +99,7 @@ public class EventBuilder {
             return triggerDao.insertStatusTrigger(activityId, statusType);
         } else if (type == EventTriggerType.DSM_NOTIFICATION) {
             String dsmEvent = triggerCfg.getString("dsmEvent");
-            return triggerDao.insertDsmNotificationTrigger(dsmEvent);
+            return triggerDao.insertDsmNotificationTrigger(DsmNotificationEventType.valueOf(dsmEvent));
         } else if (type == EventTriggerType.WORKFLOW_STATE) {
             if (triggerCfg.hasPath(ACTIVITY_CODE_FIELD)) {
                 String activityCode = triggerCfg.getString(ACTIVITY_CODE_FIELD);

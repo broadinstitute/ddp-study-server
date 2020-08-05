@@ -55,7 +55,7 @@ public final class DateQuestionDef extends QuestionDef {
                            Template additionalInfoHeaderTemplate, Template additionalInfoFooterTemplate,
                            List<RuleDef> validations, DateRenderMode renderMode, boolean displayCalendar,
                            List<DateFieldType> fields, DatePicklistDef picklistDef, boolean hideNumber,
-                           Template placeholderTemplate) {
+                           boolean writeOnce, Template placeholderTemplate) {
         super(QuestionType.DATE,
                 stableId,
                 isRestricted,
@@ -63,8 +63,8 @@ public final class DateQuestionDef extends QuestionDef {
                 additionalInfoHeaderTemplate,
                 additionalInfoFooterTemplate,
                 validations,
-                hideNumber);
-        
+                hideNumber,
+                writeOnce);
         this.renderMode = MiscUtil.checkNonNull(renderMode, "renderMode");
         this.displayCalendar = displayCalendar;
         this.picklistDef = picklistDef;
@@ -80,9 +80,9 @@ public final class DateQuestionDef extends QuestionDef {
                            Template additionalInfoHeaderTemplate, Template additionalInfoFooterTemplate,
                            List<RuleDef> validations, DateRenderMode renderMode, boolean displayCalendar,
                            List<DateFieldType> fields, DatePicklistDef picklistDef,
-                           boolean hideNumber) {
+                           boolean hideNumber, boolean writeOnce) {
         this(stableId, isRestricted, promptTemplate, additionalInfoHeaderTemplate, additionalInfoFooterTemplate,
-                validations, renderMode, displayCalendar, fields, picklistDef, hideNumber, null);
+                validations, renderMode, displayCalendar, fields, picklistDef, hideNumber, writeOnce, null);
     }
 
     public DateRenderMode getRenderMode() {
@@ -166,6 +166,7 @@ public final class DateQuestionDef extends QuestionDef {
                                                             fields,
                                                             picklistDef,
                                                             hideNumber,
+                                                            writeOnce,
                                                             placeholderTemplate);
             configure(question);
             return question;

@@ -60,7 +60,7 @@ public class ParticipantStatusTrackingInfoTest {
     public void testKits_notEnrolled_thenIneligible() {
         var info = new ParticipantStatusTrackingInfo(
                 new ParticipantStatus(null, null, null, null, null, List.of(
-                        new ParticipantStatus.Sample("SALIVA", 1L, null, null, "tracking", "carrier"))),
+                        new ParticipantStatus.Sample("a", "SALIVA", 1L, null, null, "tracking", "carrier"))),
                 EnrollmentStatusType.REGISTERED, "guid");
         assertEquals(1, info.getKits().size());
         assertEquals(RecordStatus.INELIGIBLE, info.getKits().get(0).getStatus());
@@ -70,7 +70,7 @@ public class ParticipantStatusTrackingInfoTest {
     public void testKits_enrolled_whenNoTimestamps_thenSent() {
         var info = new ParticipantStatusTrackingInfo(
                 new ParticipantStatus(null, null, null, null, null, List.of(
-                        new ParticipantStatus.Sample("SALIVA", 1L, null, null, "tracking", "carrier"))),
+                        new ParticipantStatus.Sample("a", "SALIVA", 1L, null, null, "tracking", "carrier"))),
                 EnrollmentStatusType.ENROLLED, "guid");
         assertEquals(1, info.getKits().size());
         assertEquals(RecordStatus.SENT, info.getKits().get(0).getStatus());
@@ -80,7 +80,7 @@ public class ParticipantStatusTrackingInfoTest {
     public void testKits_enrolled_whenDelivered_thenDelivered() {
         var info = new ParticipantStatusTrackingInfo(
                 new ParticipantStatus(null, null, null, null, null, List.of(
-                        new ParticipantStatus.Sample("SALIVA", 1L, 2L, null, "tracking", "carrier"))),
+                        new ParticipantStatus.Sample("a", "SALIVA", 1L, 2L, null, "tracking", "carrier"))),
                 EnrollmentStatusType.ENROLLED, "guid");
         assertEquals(1, info.getKits().size());
         assertEquals(RecordStatus.DELIVERED, info.getKits().get(0).getStatus());
@@ -90,7 +90,7 @@ public class ParticipantStatusTrackingInfoTest {
     public void testKits_enrolled_whenDeliveredAndReceived_thenReceived() {
         var info = new ParticipantStatusTrackingInfo(
                 new ParticipantStatus(null, null, null, null, null, List.of(
-                        new ParticipantStatus.Sample("SALIVA", 1L, 2L, 3L, "tracking", "carrier"))),
+                        new ParticipantStatus.Sample("a", "SALIVA", 1L, 2L, 3L, "tracking", "carrier"))),
                 EnrollmentStatusType.ENROLLED, "guid");
         assertEquals(1, info.getKits().size());
         assertEquals(RecordStatus.RECEIVED, info.getKits().get(0).getStatus());
@@ -100,7 +100,7 @@ public class ParticipantStatusTrackingInfoTest {
     public void testKits_enrolled_whenNotDeliveredButReceived_thenReceived() {
         var info = new ParticipantStatusTrackingInfo(
                 new ParticipantStatus(null, null, null, null, null, List.of(
-                        new ParticipantStatus.Sample("SALIVA", 1L, null, 2L, "tracking", "carrier"))),
+                        new ParticipantStatus.Sample("a", "SALIVA", 1L, null, 2L, "tracking", "carrier"))),
                 EnrollmentStatusType.ENROLLED, "guid");
         assertEquals(1, info.getKits().size());
         assertEquals(RecordStatus.RECEIVED, info.getKits().get(0).getStatus());

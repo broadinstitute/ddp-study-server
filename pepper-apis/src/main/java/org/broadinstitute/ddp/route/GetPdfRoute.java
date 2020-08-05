@@ -13,18 +13,18 @@ import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
-import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dao.PdfDao;
+import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dto.EnrollmentStatusDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
-import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.pdf.PdfConfigInfo;
 import org.broadinstitute.ddp.model.pdf.PdfConfiguration;
 import org.broadinstitute.ddp.model.pdf.PdfVersion;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
+import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.service.PdfBucketService;
 import org.broadinstitute.ddp.service.PdfGenerationService;
 import org.broadinstitute.ddp.service.PdfService;
@@ -66,8 +66,8 @@ public class GetPdfRoute implements Route {
                 throw ResponseUtil.haltError(response, HttpStatus.SC_NOT_FOUND, err);
             }
 
-            UserDto userDto = handle.attach(JdbiUser.class).findByLegacyAltPidIfNotFoundByUserGuid(participantGuidOrAltPid);
-            if (userDto == null) {
+            User user = handle.attach(UserDao.class).findUserByGuidOrAltPid(participantGuidOrAltPid).orElse(null);
+            if (user == null) {
                 String msg = "Could not find participant with GUID or Legacy AltPid " + participantGuidOrAltPid;
                 ApiError err = new ApiError(ErrorCodes.USER_NOT_FOUND, msg);
                 LOG.warn(err.getMessage());
@@ -85,28 +85,28 @@ public class GetPdfRoute implements Route {
             }
             PdfConfigInfo configInfo = pdfConfigInfo.get();
 
-            haltIfUserNotEverEnrolled(handle, userDto, studyDto, response);
+            haltIfUserNotEverEnrolled(handle, user, studyDto, response);
 
             try {
                 PdfVersion pdfVersion = pdfService.findConfigVersionForUser(
-                        handle, configInfo.getId(), userDto.getUserGuid(), studyGuid);
+                        handle, configInfo.getId(), user.getGuid(), studyGuid);
 
                 String umbrellaGuid = handle.attach(JdbiUmbrellaStudy.class).getUmbrellaGuidForStudyGuid(studyGuid);
                 String blobName = PdfBucketService.getBlobName(
                         umbrellaGuid,
                         studyGuid,
-                        userDto.getUserGuid(),
+                        user.getGuid(),
                         configInfo.getConfigName(),
                         pdfVersion.getVersionTag());
 
                 InputStream pdf = pdfBucketService.getPdfFromBucket(blobName).orElse(null);
                 if (pdf == null) {
                     LOG.info("Could not find {} pdf for participant {} using filename {}, generating",
-                            configInfo.getConfigName(), userDto.getUserGuid(), blobName);
+                            configInfo.getConfigName(), user.getGuid(), blobName);
                     PdfConfiguration pdfConfig = handle.attach(PdfDao.class).findFullConfig(pdfVersion);
                     byte[] pdfBytes = pdfGenerationService.generateFlattenedPdfForConfiguration(
                             pdfConfig,
-                            userDto.getUserGuid(),
+                            user.getGuid(),
                             handle);
                     pdf = new ByteArrayInputStream(pdfBytes);
                     pdfBucketService.sendPdfToBucket(blobName, new ByteArrayInputStream(pdfBytes));
@@ -137,15 +137,15 @@ public class GetPdfRoute implements Route {
      * Ensures the user is enrolled (not registered or exited) either currently or previously, or halts the execution of the route.
      *
      * @param handle   the database handle
-     * @param userDto  the user
+     * @param user     the user
      * @param studyDto the study
      * @param response the route response
      */
-    private void haltIfUserNotEverEnrolled(Handle handle, UserDto userDto, StudyDto studyDto, Response response) {
+    private void haltIfUserNotEverEnrolled(Handle handle, User user, StudyDto studyDto, Response response) {
         List<EnrollmentStatusDto> statuses = handle.attach(JdbiUserStudyEnrollment.class)
-                .getAllEnrollmentStatusesByUserAndStudyIdsSortedDesc(userDto.getUserId(), studyDto.getId());
+                .getAllEnrollmentStatusesByUserAndStudyIdsSortedDesc(user.getId(), studyDto.getId());
         if (statuses.isEmpty()) {
-            String msg = "Could not find enrollment status for user with GUID " + userDto.getUserGuid();
+            String msg = "Could not find enrollment status for user with GUID " + user.getGuid();
             ApiError err = new ApiError(ErrorCodes.USER_NOT_FOUND, msg);
             LOG.error(err.getMessage());
             throw ResponseUtil.haltError(response, HttpStatus.SC_INTERNAL_SERVER_ERROR, err);
@@ -156,7 +156,7 @@ public class GetPdfRoute implements Route {
                 .anyMatch(status -> status.getEnrollmentStatus() == EnrollmentStatusType.ENROLLED);
 
         if (currentStatus.isExited() || !hasEnrolledBefore) {
-            String msg = "User " + userDto.getUserGuid() + " was not enrolled in study " + studyDto.getGuid();
+            String msg = "User " + user.getGuid() + " was not enrolled in study " + studyDto.getGuid();
             ApiError err = new ApiError(ErrorCodes.UNSATISFIED_PRECONDITION, msg);
             LOG.error(err.getMessage());
             throw ResponseUtil.haltError(response, HttpStatus.SC_INTERNAL_SERVER_ERROR, err);

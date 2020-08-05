@@ -90,7 +90,6 @@ import org.broadinstitute.ddp.service.MedicalRecordService;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.broadinstitute.ddp.util.TestUtil;
 import org.jdbi.v3.core.Handle;
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -116,11 +115,6 @@ public class DataExporterTest extends TxnAwareBaseTest {
         TransactionWrapper.useTxn(handle -> {
             testData = TestDataSetupUtil.generateBasicUserTestData(handle);
         });
-    }
-
-    @AfterClass
-    public static void cleanup() throws Exception {
-        TestDataSetupUtil.deleteGeneratedTestData();
     }
 
     @Before
@@ -394,7 +388,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
 
             //check Picklist Question
             Assert.assertTrue(esDoc.contains("{\"stableId\":\"TEST_PLQ\",\"questionType\":\"PICKLIST\",\"questionText\":"
-                    + "\"picklist prompt\",\"selectMode\":\"MULTIPLE\",\"options\":[{\"optionStableId\":\"OPTION_YES\","
+                    + "\"picklist prompt\",\"selectMode\":\"MULTIPLE\",\"groups\":[],\"options\":[{\"optionStableId\":\"OPTION_YES\","
                     + "\"optionText\":\"yes\"},{\"optionStableId\":"
                     + "\"OPTION_NO\",\"optionText\":\"no\"},{\"optionStableId\":\"OPTION_NA\",\"optionText\":\"n/a\"}]}"));
 

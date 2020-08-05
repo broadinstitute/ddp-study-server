@@ -21,6 +21,7 @@ import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudyI18n;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.KitConfigurationDao;
+import org.broadinstitute.ddp.db.dao.KitScheduleDao;
 import org.broadinstitute.ddp.db.dao.KitTypeDao;
 import org.broadinstitute.ddp.db.dao.QueuedEventDao;
 import org.broadinstitute.ddp.db.dao.StudyDao;
@@ -38,6 +39,7 @@ import org.broadinstitute.ddp.model.dsm.KitType;
 import org.broadinstitute.ddp.model.governance.AgeOfMajorityRule;
 import org.broadinstitute.ddp.model.governance.GovernancePolicy;
 import org.broadinstitute.ddp.model.kit.KitRuleType;
+import org.broadinstitute.ddp.model.kit.KitSchedule;
 import org.broadinstitute.ddp.model.pex.Expression;
 import org.broadinstitute.ddp.security.AesUtil;
 import org.broadinstitute.ddp.security.EncryptionKey;
@@ -541,6 +543,17 @@ public class StudyBuilder {
                 } else {
                     throw new DDPException("Unsupported kit rule type " + ruleType);
                 }
+            }
+
+            if (kitCfg.hasPath("schedule")) {
+                var schedule = new KitSchedule(
+                        kitId,
+                        kitCfg.getInt("schedule.numOccurrencesPerUser"),
+                        kitCfg.getString("schedule.nextTimeAmount"),
+                        ConfigUtil.getStrIfPresent(kitCfg, "schedule.nextPrepTimeAmount"),
+                        ConfigUtil.getStrIfPresent(kitCfg, "schedule.optOutExpr"),
+                        ConfigUtil.getStrIfPresent(kitCfg, "schedule.individualOptOutExpr"));
+                handle.attach(KitScheduleDao.class).createSchedule(schedule);
             }
         }
     }

@@ -12,7 +12,6 @@ import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.exception.DDPException;
-import org.broadinstitute.ddp.util.Auth0Util;
 import org.junit.Before;
 import org.junit.Ignore;
 //import org.junit.Test;
@@ -44,7 +43,7 @@ public class MBCAuth0PasswordResetEmailScript extends TxnAwareBaseTest {
     @Before
     public void setup() {
         TransactionWrapper.useTxn(handle -> {
-            mgmtClient = Auth0Util.getManagementClientForStudy(handle, STUDY_GUID);
+            mgmtClient = Auth0ManagementClient.forStudy(handle, STUDY_GUID);
         });
     }
 
@@ -88,7 +87,7 @@ public class MBCAuth0PasswordResetEmailScript extends TxnAwareBaseTest {
 
         try {
             emailGenerator.sendPasswordResetEmails(STUDY_GUID, recipientProfiles, FROM_NAME, FROM_EMAIL, MESSAGE_SUBJECT, BASE_WEBPAGE_URL,
-                    SENDGRID_NOT_CONSENTED_TEMPLATE_ID, mgmtClient.getDomain(), mgmtClient.getToken());
+                    SENDGRID_NOT_CONSENTED_TEMPLATE_ID, mgmtClient);
         } catch (DDPException e) {
             LOG.error("Exception executing MBCAuth0PasswordResetEmailScript", e);
         }
@@ -137,7 +136,7 @@ public class MBCAuth0PasswordResetEmailScript extends TxnAwareBaseTest {
 
         try {
             emailGenerator.sendPasswordResetEmails(STUDY_GUID, recipientProfiles, FROM_NAME, FROM_EMAIL, MESSAGE_SUBJECT, BASE_WEBPAGE_URL,
-                    SENDGRID_CONSENTED_TEMPLATE_ID, mgmtClient.getDomain(), mgmtClient.getToken());
+                    SENDGRID_CONSENTED_TEMPLATE_ID, mgmtClient);
         } catch (DDPException e) {
             LOG.error("Exception executing MBCAuth0PasswordResetEmailScript", e);
         }

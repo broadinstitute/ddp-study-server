@@ -37,6 +37,12 @@ where u.auth0_user_id = :auth0UserId
   and u.auth0_tenant_id = :auth0TenantId
 >>
 
+queryUserByGuidOrAltPid() ::= <<
+<select_user()>
+where u.guid = :guidOrAltPid
+   or u.legacy_altpid = :guidOrAltPid
+>>
+
 select_user_and_profile() ::= <<
 select u.user_id              as u_user_id,
        u.guid                 as u_user_guid,
