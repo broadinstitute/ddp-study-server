@@ -27,9 +27,6 @@ public interface ActivityInstanceStatusDao extends SqlObject {
     Logger LOG = LoggerFactory.getLogger(ActivityInstanceStatusDao.class);
 
     @CreateSqlObject
-    JdbiUmbrellaStudy getJdbiUmbrellaStudy();
-
-    @CreateSqlObject
     JdbiUser getJdbiUser();
 
     @CreateSqlObject
@@ -37,27 +34,6 @@ public interface ActivityInstanceStatusDao extends SqlObject {
 
     @CreateSqlObject
     JdbiActivityInstanceStatus getJdbiActivityStatus();
-
-    @CreateSqlObject
-    JdbiActivityInstanceStatusType getJdbiActivityStatusType();
-
-    @CreateSqlObject
-    ActivityStatusEventDao getActivityStatusEventDao();
-
-    @CreateSqlObject
-    JdbiActivity getJdbiActivity();
-
-    @CreateSqlObject
-    JdbiEventConfigurationOccurrenceCounter getJdbiEventConfigurationOccurrenceCounter();
-
-    @CreateSqlObject
-    EventDao getEventDao();
-
-    @CreateSqlObject
-    JdbiUserStudyEnrollment getUserStudyEnrollmentDao();
-
-    @CreateSqlObject
-    UserAnnouncementDao getUserAnnouncementDao();
 
 
     @SqlQuery("select ais.*, aist.activity_instance_status_type_code from activity_instance_status as ais"
@@ -81,14 +57,6 @@ public interface ActivityInstanceStatusDao extends SqlObject {
             + " order by status.updated_at desc")
     @RegisterConstructorMapper(ActivityInstanceStatusDto.class)
     List<ActivityInstanceStatusDto> getAllStatuses(@Bind("instanceId") long instanceId);
-
-    @SqlQuery("select status.*, aist.activity_instance_status_type_code from activity_instance_status as status"
-            + "  join activity_instance_status_type aist on aist.activity_instance_status_type_id = status.activity_instance_status_type_id"
-            + "  join activity_instance ai on ai.activity_instance_id = status.activity_instance_id"
-            + " where ai.activity_instance_guid = :instanceGuid"
-            + " order by status.updated_at desc")
-    @RegisterConstructorMapper(ActivityInstanceStatusDto.class)
-    List<ActivityInstanceStatusDto> getAllStatuses(@Bind("instanceGuid") String instanceGuid);
 
     @SqlQuery("select status.*, aist.activity_instance_status_type_code from activity_instance_status as status "
             + "  join activity_instance ai on ai.activity_instance_id = status.activity_instance_id "
