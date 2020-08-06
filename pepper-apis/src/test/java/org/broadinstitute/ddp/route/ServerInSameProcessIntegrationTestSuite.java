@@ -13,6 +13,7 @@ import org.junit.runners.Suite;
         ListCancersRouteTest.class,
         GetDsmDrugSuggestionsRouteTest.class,
         PatchFormAnswersRouteStandaloneTest.class,
+        PutFormAnswersRouteStandaloneTest.class,
         GetActivityInstanceRouteStandaloneTest.class
 })
 public class ServerInSameProcessIntegrationTestSuite extends IntegrationTestSuite {

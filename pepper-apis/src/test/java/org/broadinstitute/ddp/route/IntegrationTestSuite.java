@@ -96,7 +96,7 @@ import org.slf4j.LoggerFactory;
         PatchMedicalProviderRouteTest.class,
         PostMedicalProviderRouteTest.class,
         ProfileRouteTest.class,
-        PutFormAnswersRouteTest.class,
+        PutFormAnswersRouteStandaloneTest.class,
         JoinMailingListRouteTest.class,
         AdminUpdateInvitationDetailsRouteTest.class,
         UserActivityInstanceListRouteTest.class,
