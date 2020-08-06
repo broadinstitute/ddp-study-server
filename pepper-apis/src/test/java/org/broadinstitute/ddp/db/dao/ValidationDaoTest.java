@@ -78,7 +78,7 @@ public class ValidationDaoTest extends TxnAwareBaseTest {
             var nonExistingQuestionDto = new QuestionDto(
                     QuestionType.TEXT, -1, "stuff", -1,
                     -1L, -1L,
-                    -1, false, false, false, -1, -1, null
+                    -1, false, false, false, false, -1, -1, null
             );
             List<Rule> validations = handle.attach(ValidationDao.class).getValidationRules(nonExistingQuestionDto, enLangId);
             assertEquals(0, validations.size());
@@ -269,7 +269,7 @@ public class ValidationDaoTest extends TxnAwareBaseTest {
         return new QuestionDto(
                 def.getQuestionType(), def.getQuestionId(), def.getStableId(), def.getPromptTemplate().getTemplateId(),
                 null, null,
-                form.getActivityId(), def.isRestricted(), def.isDeprecated(), def.shouldHideNumber(), -1, -1, null
+                form.getActivityId(), def.isRestricted(), def.isDeprecated(), def.shouldHideNumber(), false, -1, -1, null
         );
     }
 }
