@@ -156,7 +156,7 @@ public interface ActivityInstanceStatusDao extends SqlObject {
         if (rowsUpdated != 1) {
             throw new DaoException("Could not update timestamp for activity instance status with id " + statusDto.getId());
         }
-        return new ActivityInstanceStatusDto(statusDto.getId(), 0, statusDto.getInstanceId(),
+        return new ActivityInstanceStatusDto(statusDto.getId(), statusDto.getInstanceId(),
                 statusDto.getOperatorId(), newTimestampMillis, statusDto.getType());
     }
 
