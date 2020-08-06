@@ -210,9 +210,7 @@ public class PatchFormAnswersRoute implements Route {
                     //validation to check if question is a composite child
                     Optional<Long> parentQuestionId = handle.attach(JdbiCompositeQuestion.class)
                             .findParentQuestionIdByChildQuestionId(question.getQuestionId());
-                    // validation to check if question is a composite child
-                    Optional<Long> parentQuestionId = new JdbiCompositeQuestionCached(handle)
-                            .findParentQuestionIdByChildQuestion(questionDto);
+
                     if (parentQuestionId.isPresent()) {
                         LOG.warn("Passed question stable ID : " + questionStableId + " is a Composite child question. "
                                 + "Only entire Composite question answer can be updated ");
