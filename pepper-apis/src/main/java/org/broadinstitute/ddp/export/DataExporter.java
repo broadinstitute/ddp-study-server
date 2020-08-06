@@ -892,11 +892,11 @@ public class DataExporter {
                     if (componentBlockDef.getComponentType() == MAILING_ADDRESS) {
                         componentDef = new CompositeQuestionDef(componentBlockDef.getComponentType().name(), false,
                                 dummyTemplate, null, null, dummyValidations, null,
-                                null, false, true, null, null, false);
+                                null, false, true, null, null, false, false);
                     } else {
                         componentDef = new CompositeQuestionDef(((PhysicianInstitutionComponentDef) componentBlockDef).getInstitutionType()
                                 .name(), false, dummyTemplate, null, null, dummyValidations, null,
-                                null, false, true, null, null, false);
+                                null, false, true, null, null, false, false);
                     }
 
                     allQuestions.add(componentDef);

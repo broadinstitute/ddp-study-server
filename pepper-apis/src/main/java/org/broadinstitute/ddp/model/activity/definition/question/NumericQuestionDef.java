@@ -33,11 +33,11 @@ public final class NumericQuestionDef extends QuestionDef {
     }
 
     public NumericQuestionDef(String stableId, Template promptTemplate, Template placeholderTemplate,
-                              boolean isRestricted, boolean hideNumber,
+                              boolean isRestricted, boolean hideNumber, boolean writeOnce,
                               Template additionalInfoHeaderTemplate, Template additionalInfoFooterTemplate,
                               List<RuleDef> validations, NumericType numericType) {
         super(QuestionType.NUMERIC, stableId, isRestricted, promptTemplate,
-                additionalInfoHeaderTemplate, additionalInfoFooterTemplate, validations, hideNumber);
+                additionalInfoHeaderTemplate, additionalInfoFooterTemplate, validations, hideNumber, writeOnce);
         this.numericType = MiscUtil.checkNonNull(numericType, "numericType");
         this.placeholderTemplate = placeholderTemplate;
     }
@@ -81,6 +81,7 @@ public final class NumericQuestionDef extends QuestionDef {
                     placeholderTemplate,
                     isRestricted,
                     hideNumber,
+                    writeOnce,
                     getAdditionalInfoHeader(),
                     getAdditionalInfoFooter(),
                     validations,

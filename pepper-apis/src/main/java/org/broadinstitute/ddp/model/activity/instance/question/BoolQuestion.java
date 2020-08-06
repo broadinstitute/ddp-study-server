@@ -26,7 +26,7 @@ public final class BoolQuestion extends Question<BoolAnswer> {
     private transient long falseTemplateId;
 
     public BoolQuestion(String stableId, long promptTemplateId,
-            boolean isRestricted, boolean isDeprecated, Long tooltipTemplateId,
+            boolean isRestricted, boolean isDeprecated, Boolean readonly, Long tooltipTemplateId,
             Long additionalInfoHeaderTemplateId, Long additionalInfoFooterTemplateId,
             List<BoolAnswer> answers, List<Rule<BoolAnswer>> validations,
             long trueTemplateId, long falseTemplateId) {
@@ -35,6 +35,7 @@ public final class BoolQuestion extends Question<BoolAnswer> {
                 promptTemplateId,
                 isRestricted,
                 isDeprecated,
+                readonly,
                 tooltipTemplateId,
                 additionalInfoHeaderTemplateId,
                 additionalInfoFooterTemplateId,
@@ -49,6 +50,7 @@ public final class BoolQuestion extends Question<BoolAnswer> {
                         long trueTemplateId, long falseTemplateId) {
         this(stableId,
                 promptTemplateId,
+                false,
                 false,
                 false,
                 null,

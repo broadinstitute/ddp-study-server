@@ -171,6 +171,7 @@ public class TestFormActivity {
                         null,
                         null,
                         List.of(new RequiredRuleDef(Template.text("agreement required"))),
+                        false,
                         false);
                 result.agreementQuestion = question;
                 builder.addSection(new FormSectionDef(null, List.of(new QuestionBlockDef(question))));

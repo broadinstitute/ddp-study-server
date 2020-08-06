@@ -198,7 +198,8 @@ public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite
                 newTemplate("info header"),
                 newTemplate("info footer"),
                 Arrays.asList(new RequiredRuleDef(newTemplate())),
-                true);
+                true,
+                false);
         FormSectionDef agreementSection = new FormSectionDef(null, TestUtil.wrapQuestions(a1));
 
         Template contentTitle = new Template(TemplateType.HTML, null, "<p>hello title</p>");

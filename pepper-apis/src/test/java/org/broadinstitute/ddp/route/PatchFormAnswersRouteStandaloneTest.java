@@ -289,7 +289,8 @@ public class PatchFormAnswersRouteStandaloneTest {
                 newTemplate(),
                 newTemplate(),
                 Arrays.asList(new RequiredRuleDef(newTemplate())),
-                true);
+                true,
+                false);
         FormSectionDef agreementSection = new FormSectionDef(null, TestUtil.wrapQuestions(a1));
 
         numericIntegerSid = "PATCH_NUMERIC_INTEGER_Q" + timestamp;
