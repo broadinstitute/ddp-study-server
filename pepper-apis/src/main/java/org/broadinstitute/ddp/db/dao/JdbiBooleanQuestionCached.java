@@ -39,14 +39,14 @@ public class JdbiBooleanQuestionCached extends SQLObjectWrapper<JdbiBooleanQuest
     }
 
     @Override
-    public Optional<BooleanQuestionDto> findDtoByQuestion(long questionId) {
-        return delegate.findDtoByQuestion(questionId);
+    public Optional<BooleanQuestionDto> findDtoByQuestionId(long questionId) {
+        return delegate.findDtoByQuestionId(questionId);
     }
 
     @Override
     public Optional<BooleanQuestionDto> findDtoByQuestion(QuestionDto questionDto) {
         if (isNullCache(questionIdToBooleanQuestionCache)) {
-            return delegate.findDtoByQuestion(questionDto.getId());
+            return delegate.findDtoByQuestionId(questionDto.getId());
         } else {
             BooleanQuestionDto boolDto = questionIdToBooleanQuestionCache.get(questionDto.getId());
             if (boolDto == null) {

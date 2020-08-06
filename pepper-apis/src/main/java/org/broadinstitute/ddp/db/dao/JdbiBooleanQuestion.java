@@ -22,10 +22,10 @@ public interface JdbiBooleanQuestion extends SqlObject {
     @UseStringTemplateSqlLocator
     @SqlQuery("queryDtoByQuestionId")
     @RegisterConstructorMapper(BooleanQuestionDto.class)
-    Optional<BooleanQuestionDto> findDtoByQuestion(@Bind("questionId") long questionId);
+    Optional<BooleanQuestionDto> findDtoByQuestionId(@Bind("questionId") long questionId);
 
     default Optional<BooleanQuestionDto> findDtoByQuestion(QuestionDto questionDto) {
-        return findDtoByQuestion(questionDto.getId());
+        return findDtoByQuestionId(questionDto.getId());
     }
 
     @UseStringTemplateSqlLocator

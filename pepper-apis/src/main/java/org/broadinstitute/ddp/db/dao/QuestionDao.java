@@ -1109,7 +1109,7 @@ public interface QuestionDao extends SqlObject {
     default void disableBoolQuestion(long questionId, RevisionMetadata meta) {
         TemplateDao tmplDao = getTemplateDao();
 
-        BooleanQuestionDto booleanQuestion = getJdbiBooleanQuestion().findDtoByQuestion(questionId).orElse(null);
+        BooleanQuestionDto booleanQuestion = getJdbiBooleanQuestion().findDtoByQuestionId(questionId).orElse(null);
         if (booleanQuestion == null || booleanQuestion.getRevisionEnd() != null) {
             throw new NoSuchElementException("Cannot find active boolean question with id " + questionId);
         }
