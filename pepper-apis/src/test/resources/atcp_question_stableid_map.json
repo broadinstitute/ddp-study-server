@@ -475,52 +475,6 @@
             ]
           },
           {
-            "name": "menstruation",
-            "stable_id": "FEMALE_ONSET_OF_PERIOD",
-            "type": "Picklist",
-            "source_type": "integer",
-            "options": [
-              {
-                "type": "integer",
-                "stable_id": "YES"
-              },
-              {
-                "type": "integer",
-                "stable_id": "NO"
-              },
-              {
-                "type": "integer",
-                "stable_id": "DONT_KNOW"
-              }
-            ]
-          },
-          {
-            "name": "menstruation_age",
-            "stable_id": "FEMALE_AGE_OF_ONSET_PERIOD",
-            "type": "Numeric",
-            "source_type": "integer"
-          },
-          {
-            "name": "pregnancy",
-            "stable_id": "FEMALE_PREGNANT",
-            "type": "Picklist",
-            "source_type": "integer",
-            "options": [
-              {
-                "type": "integer",
-                "stable_id": "YES"
-              },
-              {
-                "type": "integer",
-                "stable_id": "NO"
-              },
-              {
-                "type": "integer",
-                "stable_id": "DONT_KNOW"
-              }
-            ]
-          },
-          {
             "name": "infectious_diseases",
             "stable_id": "INFECTIOUS_DISEASES",
             "type": "Picklist",

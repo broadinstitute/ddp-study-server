@@ -28,9 +28,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -988,13 +985,13 @@ public class StudyDataLoader {
             File userJsonFile = bulkUserCreateJson(data, userGuid, emailAddress);
             Auth0Util.BulkUserImportResponse bulkUserImportResponse = auth0Util.bulkUserWithHashedPassword(mgmtToken, userJsonFile);
             Auth0Util.Auth0JobResponse auth0JobResponse = auth0Util.getAuth0Job(bulkUserImportResponse.getJobId(), mgmtToken);
-            while(auth0JobResponse.getStatus().equals("pending")){
+            while (auth0JobResponse.getStatus().equals("pending")) {
                 auth0JobResponse = auth0Util.getAuth0Job(bulkUserImportResponse.getJobId(), mgmtToken);
             }
-            if (auth0JobResponse.getStatus().equals("completed") &&
-                    (auth0JobResponse.getSummary().get("inserted") == 1 || auth0JobResponse.getSummary().get("updated") == 1)) {
+            if (auth0JobResponse.getStatus().equals("completed")
+                    && (auth0JobResponse.getSummary().get("inserted") == 1 || auth0JobResponse.getSummary().get("updated") == 1)) {
                 String expectedAuth0UserId = "auth0|" + data.getAsJsonObject().get("datstat_altpid").getAsString();
-                User auth0User = auth0Util.getAuth0User(expectedAuth0UserId,mgmtToken);
+                User auth0User = auth0Util.getAuth0User(expectedAuth0UserId, mgmtToken);
                 if (auth0User.getEmail().equals(emailAddress)) {
                     auth0UserId = auth0User.getId();
                 }
@@ -1216,7 +1213,8 @@ public class StudyDataLoader {
             status = determineSurveyStatus(surveyData, "platform_consent");
         } else if ("GENOME_STUDY".equals(activityCode)) {
             //Status field is survey_status.  0 and blank are not started, 1 is in progress, and 2 is complete
-            status = determineSurveyStatus(surveyData, "genome_study_status");
+            int regStatus = Integer.parseInt(getStringValueFromElement(surveyData, "registration_status"));
+            status = regStatus >= 6 ? "COMPLETE" : "CREATED";
         } else if ("REGISTRATION".equals(activityCode)) {
             //Status field is survey_status.  0 and blank are not started, 1 is in progress, and 2 is complete
             int regStatus = Integer.parseInt(getStringValueFromElement(surveyData, "registration_status"));
@@ -2286,7 +2284,9 @@ public class StudyDataLoader {
 
     public void deleteExistingAuth0User(String emailAddress) throws Auth0Exception {
         List<User> auth0Users = auth0Util.getAuth0UsersByEmail(emailAddress, mgmtToken);
-        if (auth0Users.size() == 0) return;
+        if (auth0Users.size() == 0) {
+            return;
+        }
         auth0Util.deleteAuth0User(auth0Users.get(0).getId(), mgmtToken);
     }
 

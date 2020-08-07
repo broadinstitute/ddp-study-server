@@ -322,7 +322,7 @@ public class Auth0Util {
         String connectionId = getAuth0UserNamePasswordConnectionId(mgmtApiToken);
         HttpEntity httpEntity = MultipartEntityBuilder.create().addBinaryBody("users", file)
                 .addTextBody("connection_id", connectionId)
-                .addTextBody("upsert","true")
+                .addTextBody("upsert", "true")
                 .addTextBody("send_completion_email", "false")
                 .setContentType(ContentType.MULTIPART_FORM_DATA).build();
         Request request = Request.Post(baseUrl + BULK_IMPORTS_ENDPOINT)
