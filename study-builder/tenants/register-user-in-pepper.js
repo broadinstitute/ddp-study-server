@@ -65,6 +65,9 @@ function (user, context, callback) {
         } else if (context.request.body.study_guid) {
             pepper_params.studyGuid = context.request.body.study_guid;
             console.log('StudyGuid passed in (via body) = ' + pepper_params.studyGuid);
+        } else if (context.clientMetadata.study) {
+            pepper_params.studyGuid = context.clientMetadata.study;
+            console.log('StudyGuid (defaulting to clientMetadata.study) = ' + pepper_params.studyGuid);
         } else {
             console.log('No studyGuid passed in request');
         }
