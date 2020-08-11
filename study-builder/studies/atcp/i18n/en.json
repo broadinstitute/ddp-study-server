@@ -169,7 +169,6 @@
   "contacting_physician_prompt_lastname": "Physician's Last Name*",
   "contacting_physician_prompt_mail": "Physician's Complete Mailing Address*",
   "contacting_physician_prompt_phone": "Physician's Phone*",
-  "contacting_physician_title": "<h2 class=\"subtitle subtitle--light\">Our staff may contact participant's doctor with information about participant's data (if you so consented) or to confirm the A-T diagnosis.\n  To enable that, please complete the following form with participant's physician's information (the doctor who plays the most central role in participant's care.</h2>\n  ",
   "contacting_physician_title_p1": "Our staff may contact",
   "contacting_physician_title_p2": "'s doctor with information about",
   "contacting_physician_title_p3": "'s data (if you so consented) or to confirm the A-T diagnosis. To enable that, please complete the\n      following form with\n  ",
