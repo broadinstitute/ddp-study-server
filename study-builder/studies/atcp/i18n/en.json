@@ -419,14 +419,14 @@
   "genome_gender_male": "Male",
   "genome_gender_picklist_label": "Choose gender...",
   "genome_gender_req_hint": "Gender is required.",
-  "genome_introduction_p1": "\n    <p class=\"subtitle subtitle--light\">\n      If you wish to participate in the whole genome sequencing study, we will send you a saliva sample\n      collection kit to the shipping address that you provide to us below.\n    </p>\n  ",
-  "genome_introduction_p2": "\n    <p class=\"subtitle subtitle--light\">\n      We recommend that you provide the saliva collection in the presence of a healthcare professional if possible.\n      This will  help make sure that the saliva sample is collected properly, which in turn should result in high quality\n      genome sequencing.\n     </p>\n  ",
+  "genome_introduction_p1": "\n      If you wish to participate in the whole genome sequencing study, we will send you a saliva sample\n      collection kit to the shipping address that you provide to us below.\n    ",
+  "genome_introduction_p2": "\n      We recommend that you provide the saliva collection in the presence of a healthcare professional if possible.\n      This will  help make sure that the saliva sample is collected properly, which in turn should result in high quality\n      genome sequencing.\n     ",
   "genome_name": "Genome Study",
   "genome_participant_ethnicity": "'s Ethnicity*",
   "genome_participant_gender": "'s Gender*",
   "genome_sample_kit": "\n    Please send me a saliva sample collection kit so I can provide a sample for whole genome\n    sequencing.\n  ",
   "genome_shipping_address": "Complete Shipping Address*",
-  "genome_study_hr": "\n    <blockquote class=\"blockquote-full\">\n      If you have any questions, please contact us at <span class=\"bold\">+1 954-481-6611 -\n      <a class=\"link-black\" href=\"mailto:support@atfamilies.org\">support@atfamilies.org</a></span>\n    </blockquote>\n  ",
+  "genome_study_hr": "\n      If you have any questions, please contact us at \n    ",
   "genome_summary_complete": "Thank you for signing the Genome Study form.",
   "genome_summary_created": "Genome Study",
   "genome_summary_in_progress": "Genome Study",
@@ -438,5 +438,7 @@
   "picklist_options_yes": "Yes",
   "picklist_options_no": "No",
   "picklist_options_dont_know": "Don't know",
-  "required_field_hint": "* Required field"
+  "required_field_hint": "* Required field",
+  "support_email": "support@atfamilies.org",
+  "support_phone": "+1 954-481-6611 -"
 }
