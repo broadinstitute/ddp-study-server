@@ -13,6 +13,7 @@ import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityValidation;
 import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
+import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.ActivityValidationDto;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.exception.DDPException;
@@ -116,6 +117,11 @@ public class ActivityDefStore {
             }
             return Optional.ofNullable(def);
         }
+    }
+
+    public Optional<FormActivityDef> findActivityDef(Handle handle, String studyGuid, ActivityInstanceDto instanceDto) {
+        return findVersionDto(handle, instanceDto.getActivityId(), instanceDto.getCreatedAtMillis())
+                .map(version -> getActivityDef(studyGuid, instanceDto.getActivityCode(), version.getVersionTag()));
     }
 
     public FormActivityDef getActivityDef(String studyGuid, String activityCode, String versionTag) {

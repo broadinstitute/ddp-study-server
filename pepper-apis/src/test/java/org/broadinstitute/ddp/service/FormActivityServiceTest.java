@@ -107,7 +107,7 @@ public class FormActivityServiceTest extends TxnAwareBaseTest {
     public void testGetBlockVisibilities_withExpr_included() {
         PexInterpreter mockInterpreter = Mockito.mock(PexInterpreter.class);
         when(mockInterpreter.eval(anyString(), any(Handle.class), eq(testData.getUserGuid()), anyString(),
-                any(FormActivityDef.class), any(UserActivityInstanceSummary.class)))
+                any(UserActivityInstanceSummary.class)))
                 .thenReturn(true);
 
         FormActivityService formService = new FormActivityService(mockInterpreter);
@@ -152,7 +152,7 @@ public class FormActivityServiceTest extends TxnAwareBaseTest {
         PexInterpreter mockInterpreter = Mockito.mock(PexInterpreter.class);
 
         when(mockInterpreter.eval(anyString(), any(Handle.class), eq(testData.getUserGuid()), anyString(),
-                any(FormActivityDef.class), any(UserActivityInstanceSummary.class)))
+                any(UserActivityInstanceSummary.class)))
                 .thenThrow(new PexException("testing"));
 
         FormActivityService formService = new FormActivityService(mockInterpreter);

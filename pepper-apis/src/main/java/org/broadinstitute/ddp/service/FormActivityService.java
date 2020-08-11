@@ -52,7 +52,7 @@ public class FormActivityService {
         String expr = block.getShownExpr();
         if (expr != null) {
             try {
-                boolean shown = interpreter.eval(expr, handle, userGuid, instanceGuid, formActivityDef, instanceSummary);
+                boolean shown = interpreter.eval(expr, handle, userGuid, instanceGuid, instanceSummary);
                 vis = new BlockVisibility(block.getBlockGuid(), shown);
             } catch (PexException e) {
                 String msg = String.format("Error evaluating pex expression for form activity instance %s and block %s: `%s`",
