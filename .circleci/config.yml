@@ -295,9 +295,9 @@ commands:
             gcloud app deploy --version="${SHORT_GIT_SHA}" --stop-previous-version --project "broad-ddp-${ENVIRONMENT}" <<parameters.deploy_dir>>/<<parameters.jar_base_name>>.yaml
       - update-deployment-sheet:
           jar_base_name: <<parameters.jar_base_name>>
-#      - delete-old-service-versions:
-#          deploy_dir: <<parameters.deploy_dir>>
-#          deploy_config_base_name: <<parameters.jar_base_name>>
+      - delete-old-service-versions:
+          deploy_dir: <<parameters.deploy_dir>>
+          deploy_config_base_name: <<parameters.jar_base_name>>
 
   delete-old-service-versions:
     parameters:
