@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.security;
 
+import java.io.Serializable;
 import java.util.Collection;
 
 import org.apache.commons.lang3.StringUtils;
@@ -14,7 +15,7 @@ import org.slf4j.LoggerFactory;
  * a user should be able to access various things
  * like profile, study, or participant data.
  */
-public class UserPermissions {
+public class UserPermissions implements Serializable {
 
     private static final Logger LOG = LoggerFactory.getLogger(UserPermissions.class);
 

@@ -17,6 +17,11 @@ public class TextAnswer extends Answer<String> {
         this.value = value;
     }
 
+    public TextAnswer(Long answerId, String questionStableId, String answerGuid, String value, String actInstanceGuid) {
+        super(QuestionType.TEXT, answerId, questionStableId, answerGuid, actInstanceGuid);
+        this.value = value;
+    }
+
     @Override
     public String getValue() {
         return value;

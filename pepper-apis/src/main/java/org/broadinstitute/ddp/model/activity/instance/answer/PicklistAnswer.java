@@ -20,6 +20,12 @@ public final class PicklistAnswer extends Answer<List<SelectedPicklistOption>> {
         this.value = MiscUtil.checkNonNull(options, "options");
     }
 
+    public PicklistAnswer(Long answerId, String questionStableId, String answerGuid, List<SelectedPicklistOption> options,
+                          String actInstanceGuid) {
+        super(QuestionType.PICKLIST, answerId, questionStableId, answerGuid, actInstanceGuid);
+        this.value = MiscUtil.checkNonNull(options, "options");
+    }
+
     public PicklistAnswer(String questionStableId, String answerGuid) {
         super(QuestionType.PICKLIST, null, questionStableId, answerGuid);
         this.value = new ArrayList<>();

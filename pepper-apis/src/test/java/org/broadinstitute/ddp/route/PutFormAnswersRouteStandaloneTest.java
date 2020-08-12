@@ -24,10 +24,12 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import io.restassured.http.ContentType;
+import org.broadinstitute.ddp.cache.CacheService;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.API;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.content.I18nTemplateConstants;
+import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
@@ -74,7 +76,8 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class PutFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
+
+public class PutFormAnswersRouteStandaloneTest {
 
     private static ActivityVersionDto activityVersionDto;
     private static TestDataSetupUtil.GeneratedTestData testData;
@@ -92,8 +95,10 @@ public class PutFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
     //allow tests to add something unique to cleanup
     private List<Consumer<Handle>> testCleanupTasks = new ArrayList<>();
 
+
     @BeforeClass
     public static void setup() {
+        IntegrationTestSuite.setup(false);
         TransactionWrapper.useTxn(handle -> {
             testData = TestDataSetupUtil.generateBasicUserTestData(handle);
             user = testData.getTestingUser();
@@ -663,32 +668,6 @@ public class PutFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
     }
 
     @Test
-    public void given_oneTrueExpr_whenRouteIsCalled_thenItReturns422_AndRespContainsCorrectErrorCode() {
-        try {
-            ActivityInstanceDto instanceDto = TransactionWrapper.withTxn(handle -> {
-                handle.attach(JdbiActivity.class).insertValidation(
-                        RouteTestUtil.createActivityValidationDto(
-                                form, "true", "Should always fail", List.of(stableId)
-                        ),
-                        testData.getUserId(),
-                        testData.getStudyId(),
-                        activityVersionDto.getRevId()
-                );
-                return insertNewInstanceAndDeferCleanup(handle, form.getActivityId());
-            });
-            callEndpoint(instanceDto.getGuid())
-                    .then()
-                    .assertThat()
-                    .statusCode(422).contentType(ContentType.JSON)
-                    .body("code", equalTo(ErrorCodes.ACTIVITY_VALIDATION));
-        } finally {
-            TransactionWrapper.useTxn(handle -> {
-                handle.attach(JdbiActivity.class).deleteValidationsByCode(form.getActivityId());
-            });
-        }
-    }
-
-    @Test
     public void testSnapshotSubstitutions() {
         ActivityInstanceDto instanceDto = TransactionWrapper.withTxn(handle ->
                 insertNewInstanceAndDeferCleanup(handle, form.getActivityId()));
@@ -706,6 +685,36 @@ public class PutFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
             assertTrue(subs.containsKey(I18nTemplateConstants.Snapshot.PARTICIPANT_FIRST_NAME));
             assertTrue(subs.containsKey(I18nTemplateConstants.Snapshot.PARTICIPANT_LAST_NAME));
         });
+    }
+
+    @Test
+    public void given_oneTrueExpr_whenRouteIsCalled_thenItReturns422_AndRespContainsCorrectErrorCode() {
+        try {
+            ActivityInstanceDto instanceDto = TransactionWrapper.withTxn(handle -> {
+                handle.attach(JdbiActivity.class).insertValidation(
+                        RouteTestUtil.createActivityValidationDto(
+                                form, "true", "Should always fail", List.of(stableId)
+                        ),
+                        testData.getUserId(),
+                        testData.getStudyId(),
+                        activityVersionDto.getRevId()
+                );
+                return insertNewInstanceAndDeferCleanup(handle, form.getActivityId());
+            });
+            CacheService.getInstance().resetAllCaches();
+            ActivityDefStore.getInstance().clearCachedActivityValidationDtos(form.getActivityId());
+            callEndpoint(instanceDto.getGuid())
+                    .then()
+                    .assertThat()
+                    .statusCode(422).contentType(ContentType.JSON)
+                    .body("code", equalTo(ErrorCodes.ACTIVITY_VALIDATION));
+        } finally {
+            TransactionWrapper.useTxn(handle -> {
+                handle.attach(JdbiActivity.class).deleteValidationsByCode(form.getActivityId());
+            });
+            CacheService.getInstance().resetAllCaches();
+            ActivityDefStore.getInstance().clearCachedActivityValidationDtos(form.getActivityId());
+        }
     }
 
     private io.restassured.response.Response callEndpoint(String instanceGuid) {

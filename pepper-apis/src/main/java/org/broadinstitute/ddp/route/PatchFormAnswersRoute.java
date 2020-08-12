@@ -1,6 +1,9 @@
 package org.broadinstitute.ddp.route;
 
+import static java.util.stream.Collectors.toList;
+
 import java.lang.reflect.Type;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -18,30 +21,32 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
-
 import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetrics;
 import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetricsTracker;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
+import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.db.dao.AnswerDao;
+import org.broadinstitute.ddp.db.dao.ActivityInstanceStatusDao;
+import org.broadinstitute.ddp.db.dao.AnswerCachedDao;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
-import org.broadinstitute.ddp.db.dao.JdbiActivity;
-import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiCompositeQuestion;
+import org.broadinstitute.ddp.db.dao.JdbiCompositeQuestionCached;
 import org.broadinstitute.ddp.db.dao.JdbiNumericQuestion;
-import org.broadinstitute.ddp.db.dao.JdbiQuestion;
-import org.broadinstitute.ddp.db.dao.QuestionDao;
+import org.broadinstitute.ddp.db.dao.JdbiQuestionCached;
+import org.broadinstitute.ddp.db.dao.QuestionCachedDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
+import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
+import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.AnswerDto;
 import org.broadinstitute.ddp.db.dto.CompositeQuestionDto;
 import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.db.dto.NumericQuestionDto;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
+import org.broadinstitute.ddp.db.dto.UserActivityInstanceSummary;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.exception.OperationNotAllowedException;
 import org.broadinstitute.ddp.exception.RequiredParameterMissingException;
@@ -52,6 +57,8 @@ import org.broadinstitute.ddp.json.PatchAnswerPayload;
 import org.broadinstitute.ddp.json.PatchAnswerResponse;
 import org.broadinstitute.ddp.json.errors.AnswerValidationError;
 import org.broadinstitute.ddp.json.errors.ApiError;
+import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
+import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.instance.answer.AgreementAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
@@ -79,18 +86,14 @@ import org.broadinstitute.ddp.security.DDPAuth;
 import org.broadinstitute.ddp.service.ActivityValidationService;
 import org.broadinstitute.ddp.service.FormActivityService;
 import org.broadinstitute.ddp.util.ActivityInstanceUtil;
-import org.broadinstitute.ddp.util.FormActivityStatusUtil;
 import org.broadinstitute.ddp.util.GsonPojoValidator;
 import org.broadinstitute.ddp.util.JsonValidationError;
 import org.broadinstitute.ddp.util.MiscUtil;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
-
 import org.jdbi.v3.core.Handle;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import spark.Request;
 import spark.Response;
 import spark.Route;
@@ -119,6 +122,7 @@ public class PatchFormAnswersRoute implements Route {
 
     @Override
     public Object handle(Request request, Response response) {
+        long startTime = System.currentTimeMillis();
         String participantGuid = request.params(PathParam.USER_GUID);
         String studyGuid = request.params(PathParam.STUDY_GUID);
         String instanceGuid = request.params(PathParam.INSTANCE_GUID);
@@ -129,8 +133,10 @@ public class PatchFormAnswersRoute implements Route {
         LOG.info("Attempting to patch answers for activity instance {}", instanceGuid);
 
         PatchAnswerResponse result = TransactionWrapper.withTxn(handle -> {
-            ActivityInstanceDto instanceDto = RouteUtil.findAccessibleInstanceOrHalt(
+            UserActivityInstanceSummary instanceSummary = RouteUtil.findUserActivityInstanceSummaryOrHalt(
                     response, handle, participantGuid, studyGuid, instanceGuid);
+
+            ActivityInstanceDto instanceDto = instanceSummary.getActivityInstanceByGuid(instanceGuid).get();
 
             if (!ActivityType.FORMS.equals(instanceDto.getActivityType())) {
                 String msg = "Activity " + instanceGuid + " is not a form activity that accepts answers";
@@ -147,6 +153,15 @@ public class PatchFormAnswersRoute implements Route {
                 throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.BAD_PAYLOAD, msg));
             }
 
+            ActivityDefStore activityStore = ActivityDefStore.getInstance();
+            ActivityDto activityDto = activityStore.findActivityDto(handle, instanceDto.getActivityId())
+                    .orElseThrow(() -> new DDPException("Could not find activity dto for instance " + instanceGuid));
+            ActivityVersionDto versionDto = activityStore
+                    .findVersionDto(handle, instanceDto.getActivityId(), instanceDto.getCreatedAtMillis())
+                    .orElseThrow(() -> new DDPException("Could not find activity version for instance " + instanceGuid));
+            FormActivityDef formActivityDef = activityStore.findActivityDef(handle, studyGuid, activityDto, versionDto)
+                    .orElseThrow(() -> new DDPException("Could not find activity definition for instance " + instanceGuid));
+
             PatchAnswerResponse res = new PatchAnswerResponse();
             List<AnswerSubmission> submissions = payload.getSubmissions();
             if (submissions == null || submissions.isEmpty()) {
@@ -154,15 +169,16 @@ public class PatchFormAnswersRoute implements Route {
                 return res;
             }
 
-            if (ActivityInstanceUtil.isReadonly(handle, instanceGuid)) {
+            if (ActivityInstanceUtil.isReadonly(formActivityDef.getEditTimeoutSec(), instanceDto.getCreatedAtMillis(),
+                    instanceDto.getStatusType().name(), formActivityDef.isWriteOnce(), instanceDto.isReadonly())) {
                 String msg = "Activity instance with GUID " + instanceGuid
                         + " is read-only, cannot submit answer(s) for it";
                 LOG.info(msg);
                 throw ResponseUtil.haltError(response, 422, new ApiError(ErrorCodes.ACTIVITY_INSTANCE_IS_READONLY, msg));
             }
 
-            var jdbiQuestion = handle.attach(JdbiQuestion.class);
-            var answerDao = handle.attach(AnswerDao.class);
+            var jdbiQuestion = new JdbiQuestionCached(handle);
+            var answerDao = new AnswerCachedDao(handle);
 
             LanguageDto preferredUserLanguage = RouteUtil.getUserLanguage(request);
             String isoLanguageCode = preferredUserLanguage.getIsoCode();
@@ -172,10 +188,17 @@ public class PatchFormAnswersRoute implements Route {
                 Map<String, List<Rule>> failedRulesByQuestion = new HashMap<>();
                 for (AnswerSubmission submission : submissions) {
                     String questionStableId = extractQuestionStableId(submission, response);
+                    QuestionDef questionDef = formActivityDef.getQuestionByStableId(questionStableId);
 
-                    Optional<QuestionDto> optDto = jdbiQuestion.findDtoByStableIdAndInstanceGuid(questionStableId, instanceGuid);
+                    if (questionDef == null) {
+                        LOG.warn("Could not find questiondef with id: " + questionStableId);
+                    }
+
+                    Optional<QuestionDto> optDto = jdbiQuestion.findDtoByStableIdAndInstance(questionStableId, instanceDto);
                     QuestionDto questionDto = extractQuestionDto(response, questionStableId, optDto);
-                    Question question = handle.attach(QuestionDao.class).getQuestionByActivityInstanceAndDto(questionDto,
+                    // @TODO might be able to get rid of this query and a bunch of *CachedDao classes
+                    // if can figure out how to create Rule objects from RuleDef
+                    Question question = new QuestionCachedDao(handle).getQuestionByActivityInstanceAndDto(questionDto,
                             instanceGuid, false, languageCodeId);
 
                     if (question.isReadonly()) {
@@ -187,6 +210,7 @@ public class PatchFormAnswersRoute implements Route {
                     //validation to check if question is a composite child
                     Optional<Long> parentQuestionId = handle.attach(JdbiCompositeQuestion.class)
                             .findParentQuestionIdByChildQuestionId(question.getQuestionId());
+
                     if (parentQuestionId.isPresent()) {
                         LOG.warn("Passed question stable ID : " + questionStableId + " is a Composite child question. "
                                 + "Only entire Composite question answer can be updated ");
@@ -201,8 +225,8 @@ public class PatchFormAnswersRoute implements Route {
                         LOG.info(msg);
                         throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.BAD_PAYLOAD, msg));
                     }
-
-                    if (question.getQuestionType() == QuestionType.TEXT
+                    // does this very-specific check need to be here?
+                    if (questionDef.getQuestionType() == QuestionType.TEXT
                             && ((TextQuestion) question).getInputType() == TextInputType.EMAIL
                             && answer.getValue() != null
                     ) {
@@ -226,19 +250,22 @@ public class PatchFormAnswersRoute implements Route {
                     } else {
                         // Attempt to figure out the answer to update if one exists.
                         Long answerId = null;
-                        if (answer.getAnswerGuid() == null) {
-                            Set<Long> answerIds = answerDao.getAnswerSql()
-                                    .findAnswerIdsByInstanceGuidAndQuestionId(instanceGuid, questionDto.getId());
-                            if (answerIds.size() > 1) {
+                        String answerGuid = answer.getAnswerGuid();
+                        if (answerGuid == null) {
+                            List<AnswerDto> answerDtos = answerDao.getAnswerSql().findDtosByInstanceGuidAndQuestionId(instanceGuid,
+                                    questionDto.getId());
+                            if (answerDtos.size() > 1) {
                                 String errMsg = String.format(
                                         "Question %s is expected to have 1 answer but found %d answers instead",
                                         questionStableId,
-                                        answerIds.size()
+                                        answerDtos.size()
                                 );
                                 LOG.error(errMsg);
                                 throw ResponseUtil.haltError(response, 500, new ApiError(ErrorCodes.SERVER_ERROR, errMsg));
-                            } else if (answerIds.size() == 1) {
-                                answerId = answerIds.iterator().next();
+                            } else if (answerDtos.size() == 1) {
+                                AnswerDto answerDto = answerDtos.get(0);
+                                answerId = answerDto.getId();
+                                answerGuid = answerDto.getGuid();
                             }
                         } else {
                             AnswerDto answerDto = answerDao.getAnswerSql().findDtoByGuid(answer.getAnswerGuid()).orElse(null);
@@ -248,16 +275,17 @@ public class PatchFormAnswersRoute implements Route {
                                 throw ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.ANSWER_NOT_FOUND, msg));
                             } else {
                                 answerId = answerDto.getId();
+                                answerGuid = answerDto.getGuid();
                             }
                         }
 
-                        String answerGuid;
                         if (answerId == null) {
                             // Did not provide answer guid and no answer exist yet so create one
-                            answerGuid = answerDao.createAnswer(operatorUser.getId(), instanceDto.getId(), answer).getAnswerGuid();
+                            answerGuid = answerDao.createAnswer(operatorUser.getId(), instanceDto.getId(), answer, questionDef)
+                                    .getAnswerGuid();
                             LOG.info("Created answer with guid {} for question stable id {}", answerGuid, questionStableId);
                         } else {
-                            answerGuid = answerDao.updateAnswer(operatorUser.getId(), answerId, answer).getAnswerGuid();
+                            answerDao.updateAnswer(operatorUser.getId(), answerId, answer, questionDef);
                             LOG.info("Updated answer with guid {} for question stable id {}", answerGuid, questionStableId);
                         }
 
@@ -283,34 +311,31 @@ public class PatchFormAnswersRoute implements Route {
                 throw ResponseUtil.haltError(response, 400, new ApiError(ErrorCodes.REQUIRED_PARAMETER_MISSING, e.getMessage()));
             }
 
-            res.setBlockVisibilities(formService.getBlockVisibilities(handle, participantGuid, instanceGuid));
+
+            res.setBlockVisibilities(formService.getBlockVisibilities(handle, instanceSummary, formActivityDef, participantGuid,
+                    instanceGuid));
 
             List<ActivityValidationFailure> failures = getActivityValidationFailures(
-                    handle, participantGuid, instanceGuid, languageCodeId
+                    handle, participantGuid, instanceDto, languageCodeId
             );
             if (!failures.isEmpty()) {
                 LOG.info("Activity validation failed, reasons: {}", createValidationFailureSummaries(failures));
                 return enrichPayloadWithValidationFailures(res, failures);
             }
+            handle.attach(ActivityInstanceStatusDao.class).updateOrInsertStatus(instanceDto, InstanceStatusType.IN_PROGRESS,
+                    Instant.now().toEpochMilli(), operatorUser.getId(), instanceSummary.getParticipantUser());
 
-            FormActivityStatusUtil.updateFormActivityStatus(
-                    handle,
-                    InstanceStatusType.IN_PROGRESS,
-                    instanceGuid,
-                    operatorGuid
-            );
             handle.attach(DataExportDao.class).queueDataSync(participantGuid, studyGuid);
 
-            String studyActivityCode = handle.attach(JdbiActivity.class).queryActivityById(
-                    instanceDto.getActivityId()).getActivityCode();
             GoogleAnalyticsMetricsTracker.getInstance().sendAnalyticsMetrics(studyGuid, GoogleAnalyticsMetrics.EVENT_CATEGORY_PATCH_ANSWERS,
                     GoogleAnalyticsMetrics.EVENT_ACTION_PATCH_ANSWERS, GoogleAnalyticsMetrics.EVENT_LABEL_PATCH_ANSWERS,
-                    studyActivityCode, 1);
+                    activityDto.getActivityCode(), 1);
 
             return res;
         });
 
         response.status(200);
+        LOG.info("Processing PatchFormAnswersRoute took: {} ms", System.currentTimeMillis() - startTime);
         return result;
     }
 
@@ -369,17 +394,17 @@ public class PatchFormAnswersRoute implements Route {
                                  QuestionDto questionDto, JsonElement value) {
         switch (questionDto.getType()) {
             case BOOLEAN:
-                return convertBoolAnswer(stableId, guid, value);
+                return convertBoolAnswer(stableId, guid, instanceGuid, value);
             case PICKLIST:
-                return convertPicklistAnswer(stableId, guid, value);
+                return convertPicklistAnswer(stableId, guid, instanceGuid, value);
             case TEXT:
-                return convertTextAnswer(stableId, guid, value);
+                return convertTextAnswer(stableId, guid, instanceGuid, value);
             case DATE:
-                return convertDateAnswer(stableId, guid, value);
+                return convertDateAnswer(stableId, guid, instanceGuid, value);
             case NUMERIC:
-                return convertNumericAnswer(handle, questionDto, guid, value);
+                return convertNumericAnswer(handle, questionDto, guid, instanceGuid, value);
             case AGREEMENT:
-                return convertAgreementAnswer(stableId, guid, value);
+                return convertAgreementAnswer(stableId, guid, instanceGuid, value);
             case COMPOSITE:
                 return convertCompositeAnswer(handle, response, instanceGuid, stableId, guid, value);
             default:
@@ -395,10 +420,10 @@ public class PatchFormAnswersRoute implements Route {
      * @param value    the answer value
      * @return boolean answer object, or null if value is not boolean
      */
-    private BoolAnswer convertBoolAnswer(String stableId, String guid, JsonElement value) {
+    private BoolAnswer convertBoolAnswer(String stableId, String guid, String activityInstanceGuid, JsonElement value) {
         if (value != null && value.isJsonPrimitive() && value.getAsJsonPrimitive().isBoolean()) {
             boolean boolValue = value.getAsJsonPrimitive().getAsBoolean();
-            return new BoolAnswer(null, stableId, guid, boolValue);
+            return new BoolAnswer(null, stableId, guid, boolValue, activityInstanceGuid);
         } else {
             return null;
         }
@@ -412,7 +437,7 @@ public class PatchFormAnswersRoute implements Route {
      * @param value    the answer value
      * @return picklist answer object, or null if value is not a list of options
      */
-    private PicklistAnswer convertPicklistAnswer(String stableId, String guid, JsonElement value) {
+    private PicklistAnswer convertPicklistAnswer(String stableId, String guid, String actInstanceGuid, JsonElement value) {
         if (value == null || !value.isJsonArray()) {
             return null;
         }
@@ -420,7 +445,7 @@ public class PatchFormAnswersRoute implements Route {
             Type selectedOptionListType = new TypeToken<ArrayList<SelectedPicklistOption>>() {
             }.getType();
             List<SelectedPicklistOption> selected = gson.fromJson(value, selectedOptionListType);
-            return new PicklistAnswer(null, stableId, guid, selected);
+            return new PicklistAnswer(null, stableId, guid, selected, actInstanceGuid);
         } catch (JsonSyntaxException e) {
             LOG.warn("Failed to convert submitted answer to a picklist answer", e);
             return null;
@@ -435,10 +460,10 @@ public class PatchFormAnswersRoute implements Route {
      * @param value    the answer value
      * @return text answer object, or null if value is not a string
      */
-    private TextAnswer convertTextAnswer(String stableId, String guid, JsonElement value) {
+    private TextAnswer convertTextAnswer(String stableId, String guid, String actInstanceGuid, JsonElement value) {
         if (value != null && value.isJsonPrimitive() && value.getAsJsonPrimitive().isString()) {
             String textValue = value.getAsJsonPrimitive().getAsString();
-            return new TextAnswer(null, stableId, guid, textValue);
+            return new TextAnswer(null, stableId, guid, textValue, actInstanceGuid);
         } else {
             return null;
         }
@@ -452,11 +477,11 @@ public class PatchFormAnswersRoute implements Route {
      * @param value    the answer value
      * @return date answer object, or null if value is not as expected
      */
-    private DateAnswer convertDateAnswer(String stableId, String guid, JsonElement value) {
+    private DateAnswer convertDateAnswer(String stableId, String guid, String actInstanceGuid, JsonElement value) {
         if (value != null && value.isJsonObject()) {
             try {
                 DateValue dateValue = gson.fromJson(value, DateValue.class);
-                return new DateAnswer(null, stableId, guid, dateValue);
+                return new DateAnswer(null, stableId, guid, dateValue, actInstanceGuid);
             } catch (JsonSyntaxException e) {
                 LOG.warn("Failed to convert submitted answer to a date answer", e);
                 return null;
@@ -468,7 +493,8 @@ public class PatchFormAnswersRoute implements Route {
         }
     }
 
-    private NumericAnswer convertNumericAnswer(Handle handle, QuestionDto questionDto, String guid, JsonElement value) {
+    private NumericAnswer convertNumericAnswer(Handle handle, QuestionDto questionDto, String guid, String actInstanceGuid,
+                                               JsonElement value) {
         if (value == null || value.isJsonNull() || (value.isJsonPrimitive() && value.getAsJsonPrimitive().isNumber())) {
             NumericQuestionDto numericQuestionDto = handle.attach(JdbiNumericQuestion.class)
                     .findDtoByQuestionId(questionDto.getId())
@@ -478,7 +504,7 @@ public class PatchFormAnswersRoute implements Route {
                 if (value != null && !value.isJsonNull()) {
                     intValue = value.getAsLong();
                 }
-                return new NumericIntegerAnswer(null, questionDto.getStableId(), guid, intValue);
+                return new NumericIntegerAnswer(null, questionDto.getStableId(), guid, intValue, actInstanceGuid);
             } else {
                 throw new DDPException("Unhandled numeric answer type " + numericQuestionDto.getNumericType());
             }
@@ -494,8 +520,8 @@ public class PatchFormAnswersRoute implements Route {
             throw ResponseUtil.haltError(response, HttpStatus.SC_BAD_REQUEST, new ApiError(ErrorCodes.BAD_PAYLOAD, msg));
         };
         if (value != null && value.isJsonArray()) {
-            CompositeAnswer compAnswer = new CompositeAnswer(null, parentStableId, answerGuid);
-            JdbiCompositeQuestion compositeQuestionDao = handle.attach(JdbiCompositeQuestion.class);
+            CompositeAnswer compAnswer = new CompositeAnswer(null, parentStableId, answerGuid, instanceGuid);
+            JdbiCompositeQuestion compositeQuestionDao = new JdbiCompositeQuestionCached(handle);
             Optional<CompositeQuestionDto> compositeQuestionOpt = compositeQuestionDao
                     .findDtoByInstanceGuidAndStableId(instanceGuid, parentStableId);
             if (!compositeQuestionOpt.isPresent()) {
@@ -556,9 +582,9 @@ public class PatchFormAnswersRoute implements Route {
      * @param value    the answer value
      * @return agreement answer object, or null if value is not as expected
      */
-    private AgreementAnswer convertAgreementAnswer(String stableId, String guid, JsonElement value) {
+    private AgreementAnswer convertAgreementAnswer(String stableId, String guid, String actInstanceGuid, JsonElement value) {
         if (value != null && value.isJsonPrimitive() && value.getAsJsonPrimitive().isBoolean()) {
-            return new AgreementAnswer(null, stableId, guid, value.getAsJsonPrimitive().getAsBoolean());
+            return new AgreementAnswer(null, stableId, guid, value.getAsJsonPrimitive().getAsBoolean(), actInstanceGuid);
         }
         return null;
     }
@@ -635,7 +661,7 @@ public class PatchFormAnswersRoute implements Route {
                     questionRules
                             .filter(rule -> !rule.getAllowSave())
                             .filter(rule -> !rule.validate(currentQuestion, currentAnswer))
-                            .collect(Collectors.toList())
+                            .collect(toList())
             );
         }
 
@@ -648,15 +674,14 @@ public class PatchFormAnswersRoute implements Route {
     }
 
     private List<String> createValidationFailureSummaries(List<ActivityValidationFailure> failures) {
-        return failures.stream().map(failure -> failure.getErrorMessage()).collect(Collectors.toList());
+        return failures.stream().map(failure -> failure.getErrorMessage()).collect(toList());
     }
 
     private List<ActivityValidationFailure> getActivityValidationFailures(
-            Handle handle, String participantGuid, String activityInstanceGuid, long languageCodeId
+            Handle handle, String participantGuid, ActivityInstanceDto instanceDto, long languageCodeId
     ) {
-        long activityId = handle.attach(JdbiActivityInstance.class).getActivityIdByGuid(activityInstanceGuid);
         return actValidationService.validate(
-                handle, interpreter, participantGuid, activityInstanceGuid, activityId, languageCodeId
+                handle, interpreter, participantGuid, instanceDto.getGuid(), instanceDto.getActivityId(), languageCodeId
         );
     }
 }

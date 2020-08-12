@@ -11,7 +11,10 @@ import org.junit.runners.Suite;
 @Suite.SuiteClasses({
         GetParticipantInfoRouteTest.class,
         ListCancersRouteTest.class,
-        GetDsmDrugSuggestionsRouteTest.class
+        GetDsmDrugSuggestionsRouteTest.class,
+        PatchFormAnswersRouteStandaloneTest.class,
+        PutFormAnswersRouteStandaloneTest.class,
+        GetActivityInstanceRouteStandaloneTest.class
 })
 public class ServerInSameProcessIntegrationTestSuite extends IntegrationTestSuite {
 }

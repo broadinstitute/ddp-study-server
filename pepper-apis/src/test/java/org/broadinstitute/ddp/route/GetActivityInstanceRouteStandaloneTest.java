@@ -37,6 +37,7 @@ import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.constants.RouteConstants.API;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.content.ContentStyle;
+import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
@@ -93,7 +94,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase {
+public class GetActivityInstanceRouteStandaloneTest extends IntegrationTestSuite.TestCase {
 
     public static final String TEXT_QUESTION_STABLE_ID = "TEXT_Q";
     private static TestDataSetupUtil.GeneratedTestData testData;
@@ -391,6 +392,10 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
                 .body("sections[1].blocks[0].question.answers[0].value", equalTo("valid answer"));
         resp.then().assertThat()
                 .body("sections[1].blocks[0].question.answers[0].type", equalTo("TEXT"));
+        //        resp.then().assertThat()
+        //                .body("sections[1].blocks[0].question.answers[0]", hasKey("type"));
+        //        resp.then().assertThat()
+        //                .body("sections[1].blocks[0].question.answers[0]", not(hasKey("questionStableId")));
     }
 
     @Test
@@ -671,6 +676,7 @@ public class GetActivityInstanceRouteTest extends IntegrationTestSuite.TestCase 
 
     @Test
     public void given_oneTrueExpr_whenRouteIsCalled_thenItReturnsOkAndResponseContainsFailedValidations() {
+        ActivityDefStore.getInstance().clear();
         try {
             TransactionWrapper.useTxn(handle -> {
                 handle.attach(JdbiActivity.class).insertValidation(

@@ -13,6 +13,9 @@ basic_scaling:
   idle_timeout: 20m
 {{end}}
 
+vpc_access_connector:
+  name: "projects/broad-ddp-{{$environment}}/locations/us-central1/connectors/appengine-default-connect"
+
 network:
   instance_tag: study-server # necessary for firewall rules so that DSM will accept https requests from pepper
 {{if and (eq $environment "dev") (eq $gae "true") }}

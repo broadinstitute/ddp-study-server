@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.model.activity.definition;
 
+import java.util.stream.Stream;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
@@ -22,5 +23,10 @@ public final class QuestionBlockDef extends FormBlockDef {
 
     public QuestionDef getQuestion() {
         return question;
+    }
+
+    @Override
+    public Stream<QuestionDef> getQuestions() {
+        return Stream.of(question);
     }
 }

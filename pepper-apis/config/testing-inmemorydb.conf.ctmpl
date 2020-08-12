@@ -59,6 +59,8 @@
         "backendTestClientName2": "{{$testingAuth.backendTestClientName2}}"
     },
     "googleGeocodingApiKey": "{{$testingConf.Data.geocodingKey}}",
+    "jcacheConfigurationFile": "src/test/resources/redisson-test-jcache.yaml",
+    "redisServerAddress":"redis://127.0.0.1:6379",
     "kits": {
         "checkEnabled": true,
         "intervalSecs": 30,

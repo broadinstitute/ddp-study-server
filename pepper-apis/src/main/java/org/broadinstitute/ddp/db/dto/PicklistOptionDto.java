@@ -1,9 +1,11 @@
 package org.broadinstitute.ddp.db.dto;
 
+import java.io.Serializable;
+
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
-public class PicklistOptionDto {
+public class PicklistOptionDto implements TimestampRevisioned, Serializable {
 
     private long id;
     private String stableId;
@@ -14,6 +16,8 @@ public class PicklistOptionDto {
     private boolean isExclusive;
     private int displayOrder;
     private long revisionId;
+    private Long revisionStartTimestamp;
+    private Long revisionEndTimestamp;
 
     @JdbiConstructor
     public PicklistOptionDto(@ColumnName("picklist_option_id") long id,
@@ -24,7 +28,9 @@ public class PicklistOptionDto {
                              @ColumnName("allow_details") boolean allowDetails,
                              @ColumnName("is_exclusive") boolean isExclusive,
                              @ColumnName("display_order") int displayOrder,
-                             @ColumnName("revision_id") long revisionId) {
+                             @ColumnName("revision_id") long revisionId,
+                             @ColumnName("revision_start_timestamp") Long revisionStartTimestamp,
+                             @ColumnName("revision_end_timestamp") Long revisionEndTimestamp) {
         this.id = id;
         this.stableId = stableId;
         this.optionLabelTemplateId = optionLabelTemplateId;
@@ -34,6 +40,8 @@ public class PicklistOptionDto {
         this.isExclusive = isExclusive;
         this.displayOrder = displayOrder;
         this.revisionId = revisionId;
+        this.revisionStartTimestamp = revisionStartTimestamp;
+        this.revisionEndTimestamp = revisionEndTimestamp;
     }
 
     public long getId() {
@@ -74,5 +82,13 @@ public class PicklistOptionDto {
 
     public long getRevisionId() {
         return revisionId;
+    }
+
+    public Long getRevisionStartTimestamp() {
+        return revisionStartTimestamp;
+    }
+
+    public Long getRevisionEndTimestamp() {
+        return revisionEndTimestamp;
     }
 }

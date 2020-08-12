@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.db.DaoException;
+import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.db.dto.validation.LengthDto;
 import org.broadinstitute.ddp.db.dto.validation.NumOptionsSelectedDto;
 import org.broadinstitute.ddp.db.dto.validation.RegexDto;
@@ -115,14 +116,14 @@ public interface ValidationDao extends SqlObject {
     /**
      * Get all validations for a given question by id and language code.
      *
-     * @param questionId the question id
+     * @param questionDto the question dto object
      * @param langCodeId the language code id
      * @return list of validations corresponding to the question
      */
-    default List<Rule> getValidationRules(long questionId, long langCodeId) {
+    default List<Rule> getValidationRules(QuestionDto questionDto, long langCodeId) {
         List<Rule> rules = new ArrayList<>();
 
-        List<ValidationDto> validationDtos = getJdbiQuestionValidation().getAllActiveValidations(questionId);
+        List<ValidationDto> validationDtos = getJdbiQuestionValidation().getAllActiveValidations(questionDto);
 
         I18nContentRenderer i18nContentRenderer = new I18nContentRenderer();
 
@@ -153,7 +154,7 @@ public interface ValidationDao extends SqlObject {
         });
 
         LOG.info("Found {} validations for question id {} using language code id {}",
-                rules.size(), questionId, langCodeId);
+                rules.size(), questionDto.getId(), langCodeId);
         return rules;
     }
 
