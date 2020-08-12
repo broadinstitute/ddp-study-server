@@ -641,20 +641,24 @@ public class StudyDataLoaderMain {
         String hashedPasswordsData = new String(Files.readAllBytes(Paths.get(pswPath)));
         JsonElement hashedPasswordsJson;
         try {
-            hashedPasswordsJson = new Gson().fromJson(hashedPasswordsData, new TypeToken<JsonObject>() {
+            hashedPasswordsJson = new Gson().fromJson(hashedPasswordsData, new TypeToken<JsonArray>() {
             }.getType());
         } catch (Exception e) {
             LOG.error("Failed to load file data as JSON ", e);
             return;
         }
-        JsonObject hashedPasswordsJsonObject = hashedPasswordsJson.getAsJsonObject();
+        JsonArray hashedPasswordsJsonArray = hashedPasswordsJson.getAsJsonArray();
         for (String altpid : altpidBucketDataMap.keySet()) {
             Map<String, JsonElement> surveyDataMap = altpidBucketDataMap.get(altpid);
 
             JsonElement datstatData = surveyDataMap.get("datstatparticipantdata");
-            if (hashedPasswordsJsonObject.has(altpid)) {
-                surveyDataMap.get("datstatparticipantdata").getAsJsonObject()
-                        .add("password", hashedPasswordsJsonObject.get(altpid).getAsJsonObject().get("hashedPassword"));
+            for (JsonElement item: hashedPasswordsJsonArray) {
+                if (item.getAsJsonObject().has(altpid)
+                        && item.getAsJsonObject().get(altpid) != null
+                        && !item.getAsJsonObject().get(altpid).isJsonNull()) {
+                    surveyDataMap.get("datstatparticipantdata").getAsJsonObject()
+                            .add("password", item.getAsJsonObject().get(altpid));
+                }
             }
             if (datstatData.getAsJsonObject().get("datstat_email").isJsonNull()) {
                 continue;
