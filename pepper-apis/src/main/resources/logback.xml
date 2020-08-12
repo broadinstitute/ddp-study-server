@@ -17,7 +17,6 @@
         </filter>
     </appender>
 
-    <logger name="org.broadinstitute.ddp.monitoring.StackdriverMetricsTracker" level="ERROR"/>
     <root level="info">
         <appender-ref ref="STDOUT" />
         <appender-ref ref="SLACK" />
