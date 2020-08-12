@@ -3,12 +3,9 @@
 service: housekeeping
 runtime: java11
 instance_class: B4
-# B2 allows background threads and we can use manual scaling
 
-{{if eq $environment "dev"}}
 vpc_access_connector:
-  name: "projects/broad-ddp-dev/locations/us-central1/connectors/appengine-default-connect"
-{{end}}
+  name: "projects/broad-ddp-{{$environment}}/locations/us-central1/connectors/appengine-default-connect"
 
 manual_scaling:
   instances: 1
