@@ -363,6 +363,53 @@
           "type": "date",
           "ignore_malformed": false,
           "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "FOLLOWUP_v1": {
+          "type": "keyword"
+        },
+        "FOLLOWUP_v1_status": {
+          "type": "keyword"
+        },
+        "FOLLOWUP_v1_created_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "FOLLOWUP_v1_updated_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "FOLLOWUP_v1_completed_at": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy HH:mm:ss||strict_date_time||strict_date_time_no_millis||epoch_millis"
+        },
+        "CURRENTLY_MEDICATED": {
+          "type": "keyword"
+        },
+        "DK_CURRENT_MED_NAMES": {
+          "type": "keyword"
+        },
+        "CURRENT_MED_LIST": {
+          "type": "text"
+        },
+        "PREVIOUSLY_MEDICATED": {
+          "type": "keyword"
+        },
+        "DK_PAST_MED_NAMES": {
+          "type": "keyword"
+        },
+        "PAST_MED_LIST": {
+          "type": "text"
+        },
+        "FOLLOWUP_FULLNAME": {
+          "type": "text"
+        },
+        "FOLLOWUP_DOB": {
+          "type": "date",
+          "ignore_malformed": false,
+          "format": "MM/dd/yyyy||strict_date"
         }
       }
     }
