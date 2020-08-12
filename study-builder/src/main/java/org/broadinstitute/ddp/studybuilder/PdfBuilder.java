@@ -319,21 +319,22 @@ public class PdfBuilder {
             String activityCode = subCfg.getString("activityCode");
             long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
 
+            String parentStableId = ConfigUtil.getStrIfPresent(fileCfg, "parentQuestionStableId");
             if (SubstitutionType.ACTIVITY_DATE.name().equals(type)) {
                 template.addSubstitution(new ActivityDateSubstitution(field, activityId));
             } else if (QuestionType.TEXT.name().equals(type)) {
                 String stableId = subCfg.getString("questionStableId");
-                template.addSubstitution(new AnswerSubstitution(field, activityId, QuestionType.TEXT, stableId));
+                template.addSubstitution(new AnswerSubstitution(field, activityId, QuestionType.TEXT, stableId, parentStableId));
             } else if (QuestionType.DATE.name().equals(type)) {
                 String stableId = subCfg.getString("questionStableId");
-                template.addSubstitution(new AnswerSubstitution(field, activityId, QuestionType.DATE, stableId));
+                template.addSubstitution(new AnswerSubstitution(field, activityId, QuestionType.DATE, stableId, parentStableId));
             } else if (QuestionType.BOOLEAN.name().equals(type)) {
                 String stableId = subCfg.getString("questionStableId");
                 boolean checkIfFalse = subCfg.getBoolean("checkIfFalse");
-                template.addSubstitution(new BooleanAnswerSubstitution(field, activityId, stableId, checkIfFalse));
+                template.addSubstitution(new BooleanAnswerSubstitution(field, activityId, stableId, checkIfFalse, parentStableId));
             } else if (QuestionType.PICKLIST.name().equals(type)) {
                 String stableId = subCfg.getString("questionStableId");
-                template.addSubstitution(new AnswerSubstitution(field, activityId, QuestionType.PICKLIST, stableId));
+                template.addSubstitution(new AnswerSubstitution(field, activityId, QuestionType.PICKLIST, stableId, parentStableId));
             } else {
                 throw new DDPException("Unsupported custom pdf substitution type " + type);
             }

@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dto.pdf.MailingAddressTemplateDto;
@@ -124,8 +125,15 @@ public interface PdfDao extends SqlObject {
 
     private void insertAnswerSubstitution(AnswerSubstitution substitution) {
         PdfSql pdfSql = getPdfSql();
-        DBUtils.checkInsert(1, pdfSql.insertBaseAnswerSubstitution(
-                substitution.getId(), substitution.getActivityId(), substitution.getQuestionStableId()));
+        if (StringUtils.isNotBlank(substitution.getParentQuestionStableId())) {
+            DBUtils.checkInsert(1, pdfSql.insertBaseAnswerSubstitution(
+                    substitution.getId(), substitution.getActivityId(),
+                    substitution.getQuestionStableId(), substitution.getParentQuestionStableId()));
+        } else {
+            DBUtils.checkInsert(1, pdfSql.insertBaseAnswerSubstitution(
+                    substitution.getId(), substitution.getActivityId(),
+                    substitution.getQuestionStableId()));
+        }
         if (substitution.getQuestionType() == QuestionType.BOOLEAN) {
             BooleanAnswerSubstitution boolSubstitution = (BooleanAnswerSubstitution) substitution;
             DBUtils.checkInsert(1, pdfSql.insertBooleanAnswerSubstitution(substitution.getId(), boolSubstitution.checkIfFalse()));

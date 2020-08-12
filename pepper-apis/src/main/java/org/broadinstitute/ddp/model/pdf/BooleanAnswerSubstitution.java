@@ -14,12 +14,20 @@ public final class BooleanAnswerSubstitution extends AnswerSubstitution {
                                      @ColumnName("placeholder") String placeholder,
                                      @ColumnName("activity_id") long activityId,
                                      @ColumnName("question_stable_id") String questionStableId,
-                                     @ColumnName("check_if_false") boolean checkIfFalse) {
-        super(id, templateId, placeholder, activityId, QuestionType.BOOLEAN, questionStableId);
+                                     @ColumnName("check_if_false") boolean checkIfFalse,
+                                     @ColumnName("parent_question_stable_id") String parentQuestionStableId) {
+        super(id, templateId, placeholder, activityId, QuestionType.BOOLEAN, questionStableId, parentQuestionStableId);
         this.checkIfFalse = checkIfFalse;
     }
 
-    public BooleanAnswerSubstitution(String placeholder, long activityId, String questionStableId, boolean checkIfFalse) {
+    public BooleanAnswerSubstitution(String placeholder, long activityId, String questionStableId,
+                                     boolean checkIfFalse, String parentQuestionStableId) {
+        super(placeholder, activityId, QuestionType.BOOLEAN, questionStableId, parentQuestionStableId);
+        this.checkIfFalse = checkIfFalse;
+    }
+
+    public BooleanAnswerSubstitution(String placeholder, long activityId, String questionStableId,
+                                     boolean checkIfFalse) {
         super(placeholder, activityId, QuestionType.BOOLEAN, questionStableId);
         this.checkIfFalse = checkIfFalse;
     }

@@ -147,6 +147,20 @@ public interface PdfSql extends SqlObject {
             @Bind("activityId") long activityId,
             @Bind("stableId") String questionStableId);
 
+    @SqlUpdate("insert into pdf_answer_substitution (pdf_substitution_id, question_stable_code_id, parent_question_stable_id) "
+            + "(select :subId, qsc.question_stable_code_id, pqsc.question_stable_code_id "
+            + "   from "
+            + "(select question_stable_code_id from question_stable_code where stable_id = :stableId "
+            + "    and umbrella_study_id = (select study_id from study_activity where study_activity_id = :activityId)) as qsc"
+            + " , "
+            + "(select question_stable_code_id from question_stable_code where stable_id = :parentStableId "
+            + "    and umbrella_study_id = (select study_id from study_activity where study_activity_id = :activityId)) as pqsc)")
+    int insertBaseAnswerSubstitution(
+            @Bind("subId") long substitutionId,
+            @Bind("activityId") long activityId,
+            @Bind("stableId") String questionStableId,
+            @Bind("parentStableId") String parentQuestionStableId);
+
     @SqlUpdate("insert into pdf_boolean_answer_substitution (pdf_answer_substitution_id, check_if_false) values (:subId, :checkIfFalse)")
     int insertBooleanAnswerSubstitution(@Bind("subId") long substitutionId, @Bind("checkIfFalse") boolean checkIfFalse);
 
