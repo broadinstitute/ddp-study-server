@@ -319,7 +319,7 @@ public class PdfBuilder {
             String activityCode = subCfg.getString("activityCode");
             long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
 
-            String parentStableId = ConfigUtil.getStrIfPresent(fileCfg, "parentQuestionStableId");
+            String parentStableId = ConfigUtil.getStrIfPresent(subCfg, "parentQuestionStableId");
             if (SubstitutionType.ACTIVITY_DATE.name().equals(type)) {
                 template.addSubstitution(new ActivityDateSubstitution(field, activityId));
             } else if (QuestionType.TEXT.name().equals(type)) {

@@ -132,6 +132,7 @@ select stype.pdf_substitution_type_code as substitution_type,
          limit 1
        ) as a_question_type,
        qsc.stable_id               as a_question_stable_id,
+       pqsc.stable_id              as a_parent_question_stable_id,
        sbool.check_if_false        as a_check_if_false
   from pdf_template_substitution_set as ptss
   join pdf_substitution as sub on sub.pdf_substitution_id = ptss.pdf_substitution_id
@@ -141,5 +142,6 @@ select stype.pdf_substitution_type_code as substitution_type,
   left join pdf_answer_substitution as sans on sans.pdf_substitution_id = sub.pdf_substitution_id
   left join pdf_boolean_answer_substitution as sbool on sbool.pdf_answer_substitution_id = sans.pdf_substitution_id
   left join question_stable_code as qsc on qsc.question_stable_code_id = sans.question_stable_code_id
+  left join question_stable_code as pqsc on pqsc.question_stable_code_id = sans.parent_question_stable_id
  where ptss.pdf_custom_template_id in (<customTemplateIds>)
 >>
