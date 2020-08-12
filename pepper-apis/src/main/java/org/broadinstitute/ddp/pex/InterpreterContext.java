@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.pex;
 
+import org.broadinstitute.ddp.db.dto.UserActivityInstanceSummary;
 import org.jdbi.v3.core.Handle;
 
 /**
@@ -12,6 +13,7 @@ class InterpreterContext {
     private final Handle handle;
     private final String userGuid;
     private final String activityInstanceGuid;
+    private UserActivityInstanceSummary activityInstanceSummary;
 
     // enum for whether ai guid is relevant
 
@@ -19,6 +21,12 @@ class InterpreterContext {
         this.handle = handle;
         this.userGuid = userGuid;
         this.activityInstanceGuid = activityInstanceGuid;
+    }
+
+    InterpreterContext(Handle handle, String userGuid, String activityInstanceGuid,
+                       UserActivityInstanceSummary activityInstanceSummary) {
+        this(handle, userGuid, activityInstanceGuid);
+        this.activityInstanceSummary = activityInstanceSummary;
     }
 
     public Handle getHandle() {
@@ -31,5 +39,9 @@ class InterpreterContext {
 
     public String getActivityInstanceGuid() {
         return activityInstanceGuid;
+    }
+
+    public UserActivityInstanceSummary getActivityInstanceSummary() {
+        return activityInstanceSummary;
     }
 }
