@@ -328,19 +328,26 @@ public class TreeWalkInterpreter implements PexInterpreter {
                                         String instanceType, PredicateContext predicateCtx,
                                         UserActivityInstanceSummary instanceSummary) {
 
+        long studyId = new JdbiUmbrellaStudyCached(ictx.getHandle())
+                .getIdByGuid(studyGuid)
+                .orElseThrow(() -> {
+                    String msg = String.format("Study guid '%s' does not refer to a valid study", studyGuid);
+                    return new PexFetchException(new NoSuchElementException(msg));
+                });
+
         QuestionType questionType;
         if (instanceSummary != null) {
             questionType = instanceSummary.getLatestActivityInstance(activityCode)
-                        .map(instanceDto -> ActivityDefStore.getInstance().findActivityDef(ictx.getHandle(), studyGuid, instanceDto)
-                                .orElseGet(() -> null))
-                        .map(activityDef -> activityDef.getQuestionByStableId(stableId))
-                        .map(questionDef -> questionDef.getQuestionType())
-                        .orElseThrow(() -> {
-                            String msg = String.format(
-                                    "Cannot find question %s in form activity def with activity code %s for user %s in study %s",
-                                    stableId, activityCode, ictx.getUserGuid(), studyGuid);
-                            throw new PexFetchException(new NoSuchElementException(msg));
-                        });
+                    .map(instanceDto -> ActivityDefStore.getInstance().findActivityDef(ictx.getHandle(), studyGuid, instanceDto)
+                            .orElseGet(() -> null))
+                    .map(activityDef -> activityDef.getQuestionByStableId(stableId))
+                    .map(questionDef -> questionDef.getQuestionType())
+                    .orElseThrow(() -> {
+                        String msg = String.format(
+                                "Cannot find question %s in form activity def with activity code %s for user %s in study %s",
+                                stableId, activityCode, ictx.getUserGuid(), studyGuid);
+                        throw new PexFetchException(new NoSuchElementException(msg));
+                    });
         } else {
             questionType = fetcher.findQuestionType(ictx, studyGuid, activityCode, stableId).orElseThrow(() -> {
                 String msg = String.format(
@@ -349,13 +356,6 @@ public class TreeWalkInterpreter implements PexInterpreter {
                 return new PexFetchException(new NoSuchElementException(msg));
             });
         }
-
-        long studyId = new JdbiUmbrellaStudyCached(ictx.getHandle())
-                .getIdByGuid(studyGuid)
-                .orElseThrow(() -> {
-                    String msg = String.format("Study guid '%s' does not refer to a valid study", studyGuid);
-                    return new PexFetchException(new NoSuchElementException(msg));
-                });
 
         String instanceGuid = instanceType.equals(LATEST) ? null : ictx.getActivityInstanceGuid();
 
