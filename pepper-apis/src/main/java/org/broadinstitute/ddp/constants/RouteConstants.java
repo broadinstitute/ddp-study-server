@@ -159,9 +159,6 @@ public class RouteConstants {
         );
 
         public static final String STUDY_PASSWORD_POLICY = STUDY_DETAIL + "/password-policy";
-        public static final String USER_ACTIVITY_ANSWERS_DATACOLLECTION = fmt(BASE
-                        + "/user/%s/studies/%s/activities/%s/answerscollection",
-                PathParam.USER_GUID, PathParam.STUDY_GUID, PathParam.INSTANCE_GUID);
     }
 
     public static final class PathParam {
