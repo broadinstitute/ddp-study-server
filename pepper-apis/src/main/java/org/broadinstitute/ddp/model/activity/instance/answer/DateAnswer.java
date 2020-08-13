@@ -19,9 +19,20 @@ public class DateAnswer extends Answer<DateValue> {
         this.value = MiscUtil.checkNonNull(value, "value");
     }
 
+    public DateAnswer(Long answerId, String questionStableId, String answerGuid, DateValue value, String actInstanceGuid) {
+        super(QuestionType.DATE, answerId, questionStableId, answerGuid, actInstanceGuid);
+        this.value = MiscUtil.checkNonNull(value, "value");
+    }
+
     public DateAnswer(Long answerId, String questionStableId, String answerGuid,
                       Integer year, Integer month, Integer day) {
         super(QuestionType.DATE, answerId, questionStableId, answerGuid);
+        this.value = new DateValue(year, month, day);
+    }
+
+    public DateAnswer(Long answerId, String questionStableId, String answerGuid,
+                      Integer year, Integer month, Integer day, String actInstanceGuid) {
+        super(QuestionType.DATE, answerId, questionStableId, answerGuid, actInstanceGuid);
         this.value = new DateValue(year, month, day);
     }
 

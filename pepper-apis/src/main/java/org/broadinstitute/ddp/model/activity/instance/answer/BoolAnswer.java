@@ -15,6 +15,11 @@ public class BoolAnswer extends Answer<Boolean> {
         this.value = value;
     }
 
+    public BoolAnswer(Long answerId, String questionStableId, String answerGuid, Boolean value, String actInstanceGuid) {
+        super(QuestionType.BOOLEAN, answerId, questionStableId, answerGuid, actInstanceGuid);
+        this.value = value;
+    }
+
     @Override
     public Boolean getValue() {
         return value;

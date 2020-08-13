@@ -71,7 +71,7 @@ public class RouteTestUtil {
             cfgPath = Paths.get(System.getProperty("config.file")).toAbsolutePath().toString();
             cfg = ConfigManager.getInstance().getConfig();
         } catch (Exception e) {
-            throw new RuntimeException("Cloud not load configurations", e);
+            throw new RuntimeException("Could not load configurations", e);
         }
     }
 

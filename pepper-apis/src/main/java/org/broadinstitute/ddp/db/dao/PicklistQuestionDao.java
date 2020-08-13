@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.db.dao;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -13,12 +14,14 @@ import java.util.stream.Collectors;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dto.PicklistGroupDto;
 import org.broadinstitute.ddp.db.dto.PicklistOptionDto;
+import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.db.dto.RevisionDto;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistGroupDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.TemplateType;
 import org.jdbi.v3.core.mapper.reflect.ConstructorMapper;
+import org.jdbi.v3.core.statement.Query;
 import org.jdbi.v3.sqlobject.CreateSqlObject;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.stringtemplate4.StringTemplateSqlLocator;
@@ -346,14 +349,36 @@ public interface PicklistQuestionDao extends SqlObject {
         }
     }
 
-    default GroupAndOptionDtos findOrderedGroupAndOptionDtos(long questionId, long timestamp) {
-        String query = StringTemplateSqlLocator
+    default GroupAndOptionDtos findAllOrderedGroupAndOptionDtos(long questionId) {
+        String queryString = StringTemplateSqlLocator
+                .findStringTemplate(PicklistQuestionDao.class, "queryAllOrderedGroupsAndOptionsByQuestionId")
+                .render();
+        Query query = getHandle().createQuery(queryString)
+                .bind("questionId", questionId);
+        return executeGroupAndOptionDtosQuery(query);
+    }
+
+    default GroupAndOptionDtos findOrderedGroupAndOptionDtos(QuestionDto questionDto, long timestamp) {
+        String queryString = StringTemplateSqlLocator
                 .findStringTemplate(PicklistQuestionDao.class, "queryAllOrderedGroupsAndOptionsByQuestionIdAndTimestamp")
                 .render();
+        Query query = getHandle().createQuery(queryString)
+                .bind("questionId", questionDto.getId())
+                .bind("timestamp", timestamp);
+        return executeGroupAndOptionDtosQuery(query);
+    }
 
-        return getHandle().createQuery(query)
-                .bind("questionId", questionId)
-                .bind("timestamp", timestamp)
+    default Map<Long, GroupAndOptionDtos> findAllOrderedGroupAndOptionDtosByQuestion(long activityId) {
+        String queryString = StringTemplateSqlLocator
+                .findStringTemplate(PicklistQuestionDao.class, "queryAllOrderedGroupsAndOptionsByActivityId")
+                .render();
+        Query query = getHandle().createQuery(queryString)
+                .bind("activityId", activityId);
+        return executeGroupAndOptionDtosByQuestionQuery(query);
+    }
+
+    private GroupAndOptionDtos executeGroupAndOptionDtosQuery(Query query) {
+        return query
                 .registerRowMapper(ConstructorMapper.factory(PicklistOptionDto.class, "po"))
                 .registerRowMapper(ConstructorMapper.factory(PicklistGroupDto.class, "pg"))
                 .reduceRows(new GroupAndOptionDtos(), (container, row) -> {
@@ -379,7 +404,38 @@ public interface PicklistQuestionDao extends SqlObject {
                 });
     }
 
-    class GroupAndOptionDtos {
+    private Map<Long, GroupAndOptionDtos> executeGroupAndOptionDtosByQuestionQuery(Query query) {
+        return query
+                .registerRowMapper(ConstructorMapper.factory(PicklistOptionDto.class, "po"))
+                .registerRowMapper(ConstructorMapper.factory(PicklistGroupDto.class, "pg"))
+                .reduceRows(new HashMap<Long, GroupAndOptionDtos>(), (container, row) -> {
+                    PicklistOptionDto option = row.getRow(PicklistOptionDto.class);
+                    Long questionId = row.getColumn("question_id", Long.class);
+                    Long groupId = row.getColumn("pg_picklist_group_id", Long.class);
+
+                    if (groupId == null) {
+                        container.computeIfAbsent(questionId, (k) -> new GroupAndOptionDtos()).getUngroupedOptions().add(option);
+                    } else {
+                        PicklistGroupDto group = row.getRow(PicklistGroupDto.class);
+                        if (container.computeIfAbsent(questionId, (k) ->
+                                new GroupAndOptionDtos()).getGroupIdToOptions().containsKey(groupId)) {
+                            container.computeIfAbsent(questionId, (k) ->
+                                    new GroupAndOptionDtos()).getGroupIdToOptions().get(groupId).add(option);
+                        } else {
+                            List<PicklistOptionDto> options = new ArrayList<>();
+                            options.add(option);
+
+                            container.computeIfAbsent(questionId, (k) -> new GroupAndOptionDtos()).getGroupIdToOptions().put(groupId,
+                                    options);
+                            container.computeIfAbsent(questionId, (k) -> new GroupAndOptionDtos()).getGroups().add(group);
+                        }
+                    }
+
+                    return container;
+                });
+    }
+
+    class GroupAndOptionDtos implements Serializable {
 
         private List<PicklistGroupDto> groups = new ArrayList<>();
         private List<PicklistOptionDto> ungroupedOptions = new ArrayList<>();
@@ -395,6 +451,18 @@ public interface PicklistQuestionDao extends SqlObject {
 
         public Map<Long, List<PicklistOptionDto>> getGroupIdToOptions() {
             return groupIdToOptions;
+        }
+
+        public GroupAndOptionDtos() {
+            super();
+        }
+
+        public GroupAndOptionDtos(List<PicklistGroupDto> groups, List<PicklistOptionDto> ungroupedOptions,
+                                  Map<Long, List<PicklistOptionDto>> groupIdToOptions) {
+            this.groups = groups;
+            this.ungroupedOptions = ungroupedOptions;
+            this.groupIdToOptions = groupIdToOptions;
+
         }
     }
 }

@@ -19,6 +19,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -43,11 +44,12 @@ import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.API;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
+import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceStatusDao;
-import org.broadinstitute.ddp.db.dao.AnswerDao;
+import org.broadinstitute.ddp.db.dao.AnswerCachedDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstanceStatusType;
@@ -108,11 +110,15 @@ import org.broadinstitute.ddp.util.TestUtil;
 import org.eclipse.jetty.http.HttpStatus;
 import org.jdbi.v3.core.Handle;
 import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
-public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
+@RunWith(Parameterized.class)
+public class PatchFormAnswersRouteStandaloneTest {
 
     private static Gson gson;
 
@@ -152,9 +158,25 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
 
     private static Map<QuestionType, List<String>> answerGuidsToDelete;
 
+    public PatchFormAnswersRouteStandaloneTest(Integer runNumber) {
+
+    }
+
+    @Parameterized.Parameters
+    public static Collection<Object[]> data() {
+        Object[] first = {1};
+        Object[] second = {2};
+        return List.of(first, second);
+    }
+
+    @AfterClass
+    public static void doSuiteTearDown() {
+        IntegrationTestSuite.tearDown();
+    }
 
     @BeforeClass
     public static void setup() {
+        IntegrationTestSuite.setup(false);
         gson = new Gson();
 
         TransactionWrapper.useTxn(handle -> {
@@ -338,7 +360,7 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
     @After
     public void cleanup() {
         TransactionWrapper.useTxn(handle -> {
-            var answerDao = handle.attach(AnswerDao.class);
+            var answerDao = new AnswerCachedDao(handle);
             for (QuestionType type : QuestionType.values()) {
                 for (String answerGuid : answerGuidsToDelete.get(type)) {
                     long id = answerDao.getAnswerSql().findDtoByGuid(answerGuid).get().getId();
@@ -352,11 +374,11 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
 
     private boolean getBoolAnswerValue(String guid) {
         return TransactionWrapper.withTxn(handle ->
-                ((BoolAnswer) handle.attach(AnswerDao.class).findAnswerByGuid(guid).get()).getValue());
+                ((BoolAnswer) new AnswerCachedDao(handle).findAnswerByGuid(guid).get()).getValue());
     }
 
     private String createAnswerAndDeferCleanup(Handle handle, Answer answer) {
-        String guid = handle.attach(AnswerDao.class)
+        String guid = new AnswerCachedDao(handle)
                 .createAnswer(testData.getUserId(), instanceDto.getId(), answer)
                 .getAnswerGuid();
         assertNotNull(guid);
@@ -566,7 +588,7 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
         assertNotNull(firstAnswer.getQuestionStableId());
 
         TransactionWrapper.useTxn(handle -> {
-            Optional<Answer> savedCompositeAnswer = handle.attach(AnswerDao.class)
+            Optional<Answer> savedCompositeAnswer = new AnswerCachedDao(handle)
                     .findAnswerByInstanceGuidAndQuestionStableId(instanceGuid, firstAnswer.getQuestionStableId());
             assertTrue(savedCompositeAnswer.isPresent());
             CompositeAnswer compositeAnswer = (CompositeAnswer) savedCompositeAnswer.get();
@@ -919,7 +941,7 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
 
         answerGuidsToDelete.get(QuestionType.PICKLIST).add(guid);
         PicklistAnswer answer = (PicklistAnswer) TransactionWrapper.withTxn(handle ->
-                handle.attach(AnswerDao.class).findAnswerByGuid(guid).get());
+                new AnswerCachedDao(handle).findAnswerByGuid(guid).get());
 
         assertNotNull(answer);
         assertEquals(guid, answer.getAnswerGuid());
@@ -947,7 +969,7 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
                 .body("answers[0].answerGuid", equalTo(answerGuid));
 
         PicklistAnswer answer = (PicklistAnswer) TransactionWrapper.withTxn(handle ->
-                handle.attach(AnswerDao.class).findAnswerByGuid(answerGuid).get());
+                new AnswerCachedDao(handle).findAnswerByGuid(answerGuid).get());
 
         assertNotNull(answer);
         assertEquals(1, answer.getValue().size());
@@ -970,7 +992,7 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
 
         answerGuidsToDelete.get(QuestionType.PICKLIST).add(guid);
         PicklistAnswer answer = (PicklistAnswer) TransactionWrapper.withTxn(handle ->
-                handle.attach(AnswerDao.class).findAnswerByGuid(guid).get());
+                new AnswerCachedDao(handle).findAnswerByGuid(guid).get());
 
         assertNotNull(answer);
         assertEquals(1, answer.getValue().size());
@@ -1035,7 +1057,7 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
 
         answerGuidsToDelete.get(QuestionType.PICKLIST).add(guid);
         PicklistAnswer answer = (PicklistAnswer) TransactionWrapper.withTxn(handle ->
-                handle.attach(AnswerDao.class).findAnswerByGuid(guid).get());
+                new AnswerCachedDao(handle).findAnswerByGuid(guid).get());
 
         assertNotNull(answer);
         assertEquals(2, answer.getValue().size());
@@ -1055,7 +1077,7 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
 
         answerGuidsToDelete.get(QuestionType.PICKLIST).add(guid);
         PicklistAnswer answer = (PicklistAnswer) TransactionWrapper.withTxn(handle ->
-                handle.attach(AnswerDao.class).findAnswerByGuid(guid).get());
+                new AnswerCachedDao(handle).findAnswerByGuid(guid).get());
 
         assertNotNull(answer);
         assertEquals(0, answer.getValue().size());
@@ -1088,7 +1110,7 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
 
         answerGuidsToDelete.get(QuestionType.PICKLIST).add(guid);
         PicklistAnswer answer = (PicklistAnswer) TransactionWrapper.withTxn(handle ->
-                handle.attach(AnswerDao.class).findAnswerByGuid(guid).get());
+                new AnswerCachedDao(handle).findAnswerByGuid(guid).get());
 
         assertNotNull(answer);
         assertEquals(1, answer.getValue().size());
@@ -1177,7 +1199,7 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
 
         answerGuidsToDelete.get(QuestionType.DATE).add(guid);
         DateAnswer answer = (DateAnswer) TransactionWrapper.withTxn(handle ->
-                handle.attach(AnswerDao.class).findAnswerByGuid(guid).get());
+                new AnswerCachedDao(handle).findAnswerByGuid(guid).get());
 
         assertNotNull(answer);
         assertEquals(guid, answer.getAnswerGuid());
@@ -1264,7 +1286,7 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
 
         answerGuidsToDelete.get(QuestionType.DATE).add(guid);
         DateAnswer answer = (DateAnswer) TransactionWrapper.withTxn(handle ->
-                handle.attach(AnswerDao.class).findAnswerByGuid(guid).get());
+                new AnswerCachedDao(handle).findAnswerByGuid(guid).get());
 
         assertNotNull(answer);
         assertEquals(guid, answer.getAnswerGuid());
@@ -1297,7 +1319,7 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
 
         assertEquals(guid, nextGuid);
         DateAnswer answer = (DateAnswer) TransactionWrapper.withTxn(handle ->
-                handle.attach(AnswerDao.class).findAnswerByGuid(guid).get());
+                new AnswerCachedDao(handle).findAnswerByGuid(guid).get());
 
         assertNotNull(answer);
         assertEquals(updated, answer.getValue());
@@ -1345,7 +1367,7 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
 
         answerGuidsToDelete.get(QuestionType.DATE).add(guid);
         DateAnswer answer = (DateAnswer) TransactionWrapper.withTxn(handle ->
-                handle.attach(AnswerDao.class).findAnswerByGuid(guid).get());
+                new AnswerCachedDao(handle).findAnswerByGuid(guid).get());
 
         assertNotNull(answer);
         assertEquals(guid, answer.getAnswerGuid());
@@ -1369,7 +1391,7 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
 
         answerGuidsToDelete.get(QuestionType.DATE).add(guid);
         DateAnswer answer = (DateAnswer) TransactionWrapper.withTxn(handle ->
-                handle.attach(AnswerDao.class).findAnswerByGuid(guid).get());
+                new AnswerCachedDao(handle).findAnswerByGuid(guid).get());
 
         assertNotNull(answer);
         assertEquals(guid, answer.getAnswerGuid());
@@ -1425,7 +1447,7 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
 
         answerGuidsToDelete.get(QuestionType.NUMERIC).add(guid);
         NumericAnswer answer = (NumericAnswer) TransactionWrapper.withTxn(handle ->
-                handle.attach(AnswerDao.class).findAnswerByGuid(guid).get());
+                new AnswerCachedDao(handle).findAnswerByGuid(guid).get());
 
         assertNotNull(answer);
         assertEquals(guid, answer.getAnswerGuid());
@@ -1457,7 +1479,7 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
 
         assertEquals(guid, nextGuid);
         NumericAnswer answer = (NumericAnswer) TransactionWrapper.withTxn(handle ->
-                handle.attach(AnswerDao.class).findAnswerByGuid(guid).get());
+                new AnswerCachedDao(handle).findAnswerByGuid(guid).get());
 
         assertNotNull(answer);
         assertEquals(75L, answer.getValue());
@@ -1479,7 +1501,7 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
 
         answerGuidsToDelete.get(QuestionType.NUMERIC).add(guid);
         NumericAnswer answer = (NumericAnswer) TransactionWrapper.withTxn(handle ->
-                handle.attach(AnswerDao.class).findAnswerByGuid(guid).get());
+                new AnswerCachedDao(handle).findAnswerByGuid(guid).get());
 
         assertNotNull(answer);
         assertEquals(guid, answer.getAnswerGuid());
@@ -1567,7 +1589,7 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
         answerGuidsToDelete.get(QuestionType.BOOLEAN).add(answerGuid);
 
         ActivityInstanceStatusDto prevStatus = queryStatus(instanceGuid);
-        assertEquals(getActivityStatusTypeId(InstanceStatusType.IN_PROGRESS), prevStatus.getTypeId());
+        assertEquals((InstanceStatusType.IN_PROGRESS), prevStatus.getType());
 
         data = new PatchAnswerPayload();
         data.addSubmission(new AnswerSubmission(boolStableId, answerGuid, new JsonPrimitive(true)));
@@ -1576,13 +1598,13 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
         response = request.execute().returnResponse();
         assertEquals(200, response.getStatusLine().getStatusCode());
 
-        assertEquals(prevStatus.getTypeId(), queryStatus(instanceGuid).getTypeId());
+        assertEquals(prevStatus.getType(), queryStatus(instanceGuid).getType());
     }
 
     @Test
     public void testSuccessfulStatusUpdateAfterPatch() throws Exception {
         ActivityInstanceStatusDto prevStatus = queryStatus(instanceGuid);
-        assertEquals(prevStatus.getTypeId(), getActivityStatusTypeId(InstanceStatusType.CREATED));
+        assertEquals(prevStatus.getType(), InstanceStatusType.CREATED);
 
         PatchAnswerPayload data = new PatchAnswerPayload();
         data.addSubmission(new AnswerSubmission(boolStableId, null, new JsonPrimitive(true)));
@@ -1594,8 +1616,8 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
 
         ActivityInstanceStatusDto newStatus = queryStatus(instanceGuid);
 
-        assertNotEquals(prevStatus.getTypeId(), newStatus.getTypeId());
-        assertEquals(getActivityStatusTypeId(InstanceStatusType.IN_PROGRESS), newStatus.getTypeId());
+        assertNotEquals(prevStatus, newStatus);
+        assertEquals(InstanceStatusType.IN_PROGRESS, newStatus.getType());
     }
 
     @Test
@@ -1613,7 +1635,6 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
 
         response = request.execute().returnResponse();
         assertEquals(422, response.getStatusLine().getStatusCode());
-
         String json = EntityUtils.toString(response.getEntity());
         ApiError resp = gson.fromJson(json, ApiError.class);
         assertEquals(ErrorCodes.ACTIVITY_INSTANCE_IS_READONLY, resp.getCode());
@@ -1658,23 +1679,35 @@ public class PatchFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
                         testData.getStudyId(),
                         activityVersionDto.getRevId()
                 );
+
+                ActivityDefStore.getInstance().clearCachedActivityValidationDtos(activity.getActivityId());
+
                 TextAnswer answer = new TextAnswer(null, textStableId, null, "old value");
                 return createAnswerAndDeferCleanup(handle, answer);
             });
-            PatchAnswerPayload data = new PatchAnswerPayload();
-            data.addSubmission(new AnswerSubmission(textStableId, answerGuid, new JsonPrimitive("hi there")));
-            givenAnswerPatchRequest(instanceGuid, data)
-                    .then().assertThat()
-                    .statusCode(200).contentType(ContentType.JSON)
-                    .body("validationFailures", is(notNullValue()))
-                    .body("validationFailures.size()", equalTo(1))
-                    .body("answers.size()", equalTo(1));
+
+            Runnable executePatch = () -> {
+                PatchAnswerPayload data = new PatchAnswerPayload();
+
+                data.addSubmission(new AnswerSubmission(textStableId, answerGuid, new JsonPrimitive("hi there")));
+                givenAnswerPatchRequest(instanceGuid, data)
+                        .then().assertThat()
+                        .statusCode(200).contentType(ContentType.JSON)
+                        .body("validationFailures", is(notNullValue()))
+                        .body("validationFailures.size()", equalTo(1))
+                        .body("answers.size()", equalTo(1));
+            };
+            executePatch.run();
+            //second time to pick up cached version
+            executePatch.run();
         } finally {
             TransactionWrapper.useTxn(handle -> {
                 handle.attach(JdbiActivity.class).deleteValidationsByCode(activity.getActivityId());
+                ActivityDefStore.getInstance().clearCachedActivityValidationDtos(activity.getActivityId());
             });
         }
     }
+
 
     private String extractAnswerGuid(HttpResponse response) throws IOException {
         String json = EntityUtils.toString(response.getEntity());

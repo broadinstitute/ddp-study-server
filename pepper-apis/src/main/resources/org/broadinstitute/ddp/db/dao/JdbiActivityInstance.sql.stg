@@ -12,6 +12,7 @@ select ai.activity_instance_id,
        ai.ondemand_trigger_id,
        act.study_id,
        act.allow_unauthenticated,
+       act.study_activity_code,
        act_type.activity_type_code as activity_type,
        ai.section_index,
        (select aist.activity_instance_status_type_code

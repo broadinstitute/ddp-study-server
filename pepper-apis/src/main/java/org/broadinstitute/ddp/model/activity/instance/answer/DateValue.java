@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.model.activity.instance.answer;
 
 import java.beans.ConstructorProperties;
+import java.io.Serializable;
 import java.time.DateTimeException;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -29,7 +30,7 @@ import org.slf4j.LoggerFactory;
  * inclusive range [1, 31]. The year represents the numeric year in the AD calendar scheme. Note
  * there is no year zero. </p>
  */
-public class DateValue {
+public class DateValue implements Serializable {
 
     private static final Logger LOG = LoggerFactory.getLogger(DateValue.class);
 

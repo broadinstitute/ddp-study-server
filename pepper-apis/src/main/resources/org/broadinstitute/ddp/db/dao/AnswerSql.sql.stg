@@ -31,6 +31,12 @@ findDtoByGuid() ::= <<
 <all_answer_dtos_select()> where a.answer_guid = :guid
 >>
 
+findDtosByInstanceGuidAndQuestionId() ::= <<
+<all_answer_dtos_select()>
+ join activity_instance as ai on ai.activity_instance_id = a.activity_instance_id
+ where a.question_id = :questionId and ai.activity_instance_guid = :instanceGuid
+>>
+
 findLatestDateValueByQuestionStableIdAndUserId() ::= <<
 select da.year, da.month, da.day
   from activity_instance as ai

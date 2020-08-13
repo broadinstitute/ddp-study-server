@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.db.dao;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -55,7 +56,7 @@ public interface AuthDao extends SqlObject {
         List<String> adminStudyGuids = findAdminAccessibleStudyGuids(operatorGuid);
 
         return new UserPermissions(operatorGuid, status.isAccountLocked(), status.isRevoked(),
-                clientStudyGuids, participants.values(), adminStudyGuids);
+                clientStudyGuids, new ArrayList<>(participants.values()), adminStudyGuids);
     }
 
     @SqlQuery("select us.guid from study_admin as sa"

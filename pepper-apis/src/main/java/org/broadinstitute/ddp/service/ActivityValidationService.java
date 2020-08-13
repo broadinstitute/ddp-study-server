@@ -3,14 +3,13 @@ package org.broadinstitute.ddp.service;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.broadinstitute.ddp.db.dao.JdbiActivity;
+import org.broadinstitute.ddp.content.I18nContentRenderer;
+import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.dto.ActivityValidationDto;
 import org.broadinstitute.ddp.model.activity.instance.validation.ActivityValidationFailure;
 import org.broadinstitute.ddp.pex.PexException;
 import org.broadinstitute.ddp.pex.PexInterpreter;
-
 import org.jdbi.v3.core.Handle;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,9 +39,11 @@ public class ActivityValidationService {
             long activityId,
             long languageCodeId
     ) {
-        List<ActivityValidationDto> activityValidationDtos = handle.attach(JdbiActivity.class)
-                .findValidationsById(activityId, languageCodeId);
-        List<ActivityValidationFailure> validationFailures = new ArrayList<>();
+        ActivityDefStore activityStore = ActivityDefStore.getInstance();
+        List<ActivityValidationDto> activityValidationDtos = activityStore
+                .findUntranslatedActivityValidationDtos(handle, activityId);
+
+        List<ActivityValidationDto> failedDtos = new ArrayList<>();
         for (ActivityValidationDto validationDto: activityValidationDtos) {
             try {
                 if (validationDto.getPreconditionText() != null) {
@@ -55,11 +56,7 @@ public class ActivityValidationService {
                 }
                 boolean validationFailed = interpreter.eval(validationDto.getExpressionText(), handle, userGuid, activityInstanceGuid);
                 if (validationFailed) {
-                    validationFailures.add(
-                            new ActivityValidationFailure(
-                                    validationDto.getErrorMessage(), validationDto.getAffectedQuestionStableIds()
-                            )
-                    );
+                    failedDtos.add(validationDto);
                 }
             } catch (PexException e) {
                 // DDP-4124: If the validation fails because we are unable to find all the data (PEX Exception), then just ignore.
@@ -67,6 +64,15 @@ public class ActivityValidationService {
                 LOG.warn("Failed to evaluate a PEX expression or precondition. This is not considered an error", e);
             }
         }
+
+        // Render the messages only after we have determined the failed validations instead of during query time.
+        List<ActivityValidationFailure> validationFailures = new ArrayList<>();
+        var renderer = new I18nContentRenderer();
+        for (var failed : failedDtos) {
+            String msg = renderer.renderContent(handle, failed.getErrorMessageTemplateId(), languageCodeId);
+            validationFailures.add(new ActivityValidationFailure(msg, failed.getAffectedQuestionStableIds()));
+        }
+
         return validationFailures;
     }
 

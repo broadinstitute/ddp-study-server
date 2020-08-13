@@ -17,14 +17,16 @@ import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.InvitationDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
-import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
+import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudyCached;
 import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
+import org.broadinstitute.ddp.db.dto.UserActivityInstanceSummary;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
@@ -80,8 +82,13 @@ public class TreeWalkInterpreter implements PexInterpreter {
     private static final Logger LOG = LoggerFactory.getLogger(TreeWalkInterpreter.class);
     private static final PexFetcher fetcher = new PexFetcher();
 
-    @Override
     public boolean eval(String expression, Handle handle, String userGuid, String activityInstanceGuid) {
+        return eval(expression, handle, userGuid, activityInstanceGuid, null);
+    }
+
+    @Override
+    public boolean eval(String expression, Handle handle, String userGuid, String activityInstanceGuid,
+                        UserActivityInstanceSummary activityInstanceSummary) {
         CharStream chars = CharStreams.fromString(expression);
         FailFastLexer lexer = new FailFastLexer(chars);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
@@ -96,7 +103,7 @@ public class TreeWalkInterpreter implements PexInterpreter {
             throw new PexParseException(e.getCause());
         }
 
-        InterpreterContext ictx = new InterpreterContext(handle, userGuid, activityInstanceGuid);
+        InterpreterContext ictx = new InterpreterContext(handle, userGuid, activityInstanceGuid, activityInstanceSummary);
         PexValueVisitor visitor = new PexValueVisitor(this, ictx);
 
         Object result = visitor.visit(tree);
@@ -241,6 +248,7 @@ public class TreeWalkInterpreter implements PexInterpreter {
                         }
                     })
                     .collect(Collectors.toList());
+
             return fetcher.findLatestActivityInstanceStatus(ictx, studyGuid, activityCode)
                     .map(latestStatus -> expectedStatuses.contains(latestStatus))
                     .orElseThrow(() -> {
@@ -316,19 +324,35 @@ public class TreeWalkInterpreter implements PexInterpreter {
 
     private Object applyAnswerPredicate(InterpreterContext ictx, String studyGuid, String activityCode, String stableId,
                                         String instanceType, PredicateContext predicateCtx) {
-        long studyId = ictx.getHandle().attach(JdbiUmbrellaStudy.class)
+
+        long studyId = new JdbiUmbrellaStudyCached(ictx.getHandle())
                 .getIdByGuid(studyGuid)
                 .orElseThrow(() -> {
                     String msg = String.format("Study guid '%s' does not refer to a valid study", studyGuid);
                     return new PexFetchException(new NoSuchElementException(msg));
                 });
 
-        QuestionType questionType = fetcher.findQuestionType(ictx, studyGuid, activityCode, stableId).orElseThrow(() -> {
-            String msg = String.format(
-                    "Cannot find question %s in form %s for user %s and study %s",
-                    stableId, activityCode, ictx.getUserGuid(), studyGuid);
-            return new PexFetchException(new NoSuchElementException(msg));
-        });
+        QuestionType questionType;
+        if (ictx.getActivityInstanceSummary() != null) {
+            questionType = ictx.getActivityInstanceSummary().getLatestActivityInstance(activityCode)
+                    .map(instanceDto -> ActivityDefStore.getInstance().findActivityDef(ictx.getHandle(), studyGuid, instanceDto)
+                            .orElseGet(() -> null))
+                    .map(activityDef -> activityDef.getQuestionByStableId(stableId))
+                    .map(questionDef -> questionDef.getQuestionType())
+                    .orElseThrow(() -> {
+                        String msg = String.format(
+                                "Cannot find question %s in form activity def with activity code %s for user %s in study %s",
+                                stableId, activityCode, ictx.getUserGuid(), studyGuid);
+                        throw new PexFetchException(new NoSuchElementException(msg));
+                    });
+        } else {
+            questionType = fetcher.findQuestionType(ictx, studyGuid, activityCode, stableId).orElseThrow(() -> {
+                String msg = String.format(
+                        "Cannot find question %s in form %s for user %s and study %s",
+                        stableId, activityCode, ictx.getUserGuid(), studyGuid);
+                return new PexFetchException(new NoSuchElementException(msg));
+            });
+        }
 
         String instanceGuid = instanceType.equals(LATEST) ? null : ictx.getActivityInstanceGuid();
 
@@ -460,9 +484,22 @@ public class TreeWalkInterpreter implements PexInterpreter {
                                                 long studyId, String activityCode, String instanceGuid, String stableId) {
         if (predicateCtx instanceof HasOptionPredicateContext) {
             String optionStableId = extractString(((HasOptionPredicateContext) predicateCtx).STR());
-            List<String> value = StringUtils.isBlank(instanceGuid)
-                    ? fetcher.findLatestPicklistAnswer(ictx, activityCode, stableId, studyId)
-                    : fetcher.findSpecificPicklistAnswer(ictx, activityCode, instanceGuid, stableId);
+            List<String> value;
+            if (ictx.getActivityInstanceSummary() != null) {
+                if (StringUtils.isBlank(instanceGuid)) {
+                    value = ictx.getActivityInstanceSummary().getLatestActivityInstance(activityCode)
+                            .map(instanceDto -> fetcher.findPicklistAnswer(ictx, instanceDto, stableId))
+                            .orElse(null);
+                } else {
+                    value = ictx.getActivityInstanceSummary().getActivityInstanceByGuid(instanceGuid)
+                            .map(instanceDto -> fetcher.findPicklistAnswer(ictx, instanceDto, stableId))
+                            .orElse(null);
+                }
+            } else {
+                value = StringUtils.isBlank(instanceGuid)
+                        ? fetcher.findLatestPicklistAnswer(ictx, activityCode, stableId, studyId)
+                        : fetcher.findSpecificPicklistAnswer(ictx, activityCode, instanceGuid, stableId);
+            }
             if (value == null) {
                 return false;
             } else {
