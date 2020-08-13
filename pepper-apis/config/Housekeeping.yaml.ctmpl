@@ -10,7 +10,11 @@ vpc_access_connector:
 manual_scaling:
   instances: 1
 # todo arz give housekeeping and backends different app names for tcell
+{{if and (or (eq $environment "dev") (eq $environment "test")) (eq $gae "true") }}
+entrypoint: java -javaagent:tcell/tcellagent.jar -agentpath:/opt/cprof/profiler_java_agent.so=-cprof_enable_heap_sampling=true,-cprof_service=housekeeping,-cprof_cpu_use_per_thread_timers=true -Xms820m -Xmx820m -jar Housekeeping.jar
+{{else}}
 entrypoint: java -javaagent:tcell/tcellagent.jar -Xms820m -Xmx820m -jar Housekeeping.jar
+{{end}}
 
 # GAE does not like the "=" character in entrypoint and does not support "." in environment variables
 env_variables:
