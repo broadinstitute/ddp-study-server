@@ -877,4 +877,7 @@ workflows:
             branches:
               only:
                 - develop
+                - test
+                - staging
+                - production
 
