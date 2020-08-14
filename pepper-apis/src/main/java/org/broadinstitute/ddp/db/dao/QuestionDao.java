@@ -1051,10 +1051,11 @@ public interface QuestionDao extends SqlObject {
     default void insertQuestion(long activityId, CompositeQuestionDef compositeQuestion, long revisionId) {
         boolean acceptable = compositeQuestion.getChildren().stream().allMatch(child -> {
             QuestionType type = child.getQuestionType();
-            return type == QuestionType.DATE || type == QuestionType.PICKLIST || type == QuestionType.TEXT;
+            return type == QuestionType.DATE || type == QuestionType.PICKLIST
+                    || type == QuestionType.TEXT || type == QuestionType.NUMERIC;
         });
         if (!acceptable) {
-            throw new DaoException("Composites only support DATE, PICKLIST, and TEXT child questions");
+            throw new DaoException("Composites only support DATE, PICKLIST, TEXT and NUMERIC child questions");
         }
 
         insertBaseQuestion(activityId, compositeQuestion, revisionId);
