@@ -1784,15 +1784,6 @@ MailingAddress:
     - $ref: '../pepper.yml#/components/schemas/BaseMailAddress'
     - type: object
       description: a participant's mailing address, to be used for delivery.
-      required:
-        - description
-        - name
-        - street1
-        - city
-        - state
-        - country
-        - zip
-        - phone
       properties:
         guid:
           type: string
