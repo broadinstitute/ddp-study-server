@@ -666,11 +666,11 @@ public class StudyDataLoaderMain {
             String email = datstatData.getAsJsonObject().get("datstat_email").getAsString().toLowerCase();
             setRunEmail(dryRun, datstatData);
 
-            if (!dryRun && preProcessedData.getAuth0ExistingEmails().contains(email)) {
-                LOG.error("Skipped altpid: {} . Email : {} already exists in Auth0. ", altpid, email);
-                skippedList.add(altpid);
-                continue;
-            }
+            //if (!dryRun && preProcessedData.getAuth0ExistingEmails().contains(email)) {
+                //LOG.error("Skipped altpid: {} . Email : {} already exists in Auth0. ", altpid, email);
+                //skippedList.add(altpid);
+                //continue;
+            //}
             if (altPidUserList == null || altPidUserList.isEmpty() || altPidUserList.contains(altpid)) {
                 processParticipant(studyGuid, surveyDataMap, mappingData, dataLoader,
                         preProcessedData.getUserAddressData().get(altpid), addressService, olcService);
@@ -742,6 +742,7 @@ public class StudyDataLoaderMain {
                 JdbiUser jdbiUser = handle.attach(JdbiUser.class);
                 userGuid = jdbiUser.getUserGuidByAltpid(altpid);
                 if (userGuid == null) {
+                    //Todo after multigoverned user: move this deletion to createLegacyPepperUser start
                     dataLoader.deleteExistingAuth0User(emailAddress);
                     JdbiActivity jdbiActivity = handle.attach(JdbiActivity.class);
                     ActivityInstanceDao activityInstanceDao = handle.attach(ActivityInstanceDao.class);

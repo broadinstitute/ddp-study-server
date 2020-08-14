@@ -268,6 +268,8 @@ public class StudyDataLoader {
         JdbiUser userDao = handle.attach(JdbiUser.class);
         JdbiClient clientDao = handle.attach(JdbiClient.class);
 
+        //Todo after multigoverned users, check if user with this email already exists in auth0, if so skip creation of user
+        //otherwise we create new user in auth0
         UserDto pepperUser = createLegacyPepperUser(userDao, clientDao, datstatData, userGuid, userHruid, clientDto);
 
 
@@ -976,17 +978,18 @@ public class StudyDataLoader {
 
     public UserDto createLegacyPepperUser(JdbiUser userDao, JdbiClient clientDao,
                                           JsonElement data, String userGuid, String userHruid, ClientDto clientDto) throws Exception {
-
         String emailAddress = data.getAsJsonObject().get("datstat_email").getAsString();
         boolean hasPassword = data.getAsJsonObject().has("password");
         String auth0UserId = null;
         // Create a user for the given domain
         if (hasPassword) {
+            auth0Util.deleteAuth0User("auth0|" + data.getAsJsonObject().get("datstat_altpid").getAsString(), mgmtToken);
             File userJsonFile = bulkUserCreateJson(data, userGuid, emailAddress);
             Auth0Util.BulkUserImportResponse bulkUserImportResponse = auth0Util.bulkUserWithHashedPassword(mgmtToken, userJsonFile);
             Auth0Util.Auth0JobResponse auth0JobResponse = auth0Util.getAuth0Job(bulkUserImportResponse.getJobId(), mgmtToken);
             while (auth0JobResponse.getStatus().equals("pending")) {
                 auth0JobResponse = auth0Util.getAuth0Job(bulkUserImportResponse.getJobId(), mgmtToken);
+                Thread.sleep(200);
             }
             if (auth0JobResponse.getStatus().equals("completed")
                     && (auth0JobResponse.getSummary().get("inserted") == 1 || auth0JobResponse.getSummary().get("updated") == 1)) {
@@ -1786,7 +1789,11 @@ public class StudyDataLoader {
         }
 
         if (valueEl != null && !valueEl.isJsonNull()) {
-            answerGuid = answerNumericQuestion(stableId, participantGuid, instanceGuid, valueEl.getAsLong(), answerDao);
+            try {
+                answerGuid = answerNumericQuestion(stableId, participantGuid, instanceGuid, valueEl.getAsLong(), answerDao);
+            } catch (Exception e) {
+                answerGuid = answerNumericQuestion(stableId, participantGuid, instanceGuid, null, answerDao);
+            }
         }
         sourceDataSurveyQs.get(surveyName).add(questionName);
         return answerGuid;
