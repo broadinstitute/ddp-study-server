@@ -65,6 +65,13 @@ LEFT JOIN create_invitation_event_action as ciea on ciea.event_action_id = ea.ev
 LEFT JOIN event_action_target_activity as eata on eata.event_action_id = ea.event_action_id
 >>
 
+getEventConfigurationByEventConfigurationId() ::= <<
+<eventConfigurationLookup()>
+    where
+        ec.event_configuration_id = :eventConfigurationId
+        and ec.is_active = 1
+>>
+
 getEventConfigurationsForStudyIdAndTriggerType() ::= <<
 <eventConfigurationLookup()>
     where
@@ -158,6 +165,7 @@ getNotificationConfigsForMailingListByEventType() ::= <<
 select_all_queued_events() ::= <<
 select q.queued_event_id,
        q.operator_user_id as operator_id,
+       q.study_activity_id,
        ptp.guid           as participant_guid,
        ptp.hruid          as participant_hruid,
        prf.first_name     as participant_first_name,

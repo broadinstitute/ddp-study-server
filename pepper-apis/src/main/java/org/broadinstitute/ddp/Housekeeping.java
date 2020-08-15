@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -43,6 +44,7 @@ import org.broadinstitute.ddp.db.dao.JdbiQueuedEvent;
 import org.broadinstitute.ddp.db.dao.QueuedEventDao;
 import org.broadinstitute.ddp.db.dao.StudyDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
+import org.broadinstitute.ddp.db.dto.EventConfigurationDto;
 import org.broadinstitute.ddp.db.dto.QueuedEventDto;
 import org.broadinstitute.ddp.db.housekeeping.dao.JdbiEvent;
 import org.broadinstitute.ddp.db.housekeeping.dao.JdbiMessage;
@@ -68,6 +70,9 @@ import org.broadinstitute.ddp.housekeeping.schedule.OnDemandExportJob;
 import org.broadinstitute.ddp.housekeeping.schedule.StudyDataExportJob;
 import org.broadinstitute.ddp.housekeeping.schedule.TemporaryUserCleanupJob;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
+import org.broadinstitute.ddp.model.event.ActivityInstanceCreationEventAction;
+import org.broadinstitute.ddp.model.event.EventConfiguration;
+import org.broadinstitute.ddp.model.event.EventSignal;
 import org.broadinstitute.ddp.model.study.StudySettings;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.monitoring.PointsReducerFactory;
@@ -84,6 +89,7 @@ import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.ddp.util.GuidUtils;
 import org.broadinstitute.ddp.util.LiquibaseUtil;
 import org.broadinstitute.ddp.util.LogbackConfigurationPrinter;
+import org.jdbi.v3.core.Handle;
 import org.quartz.Scheduler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -352,7 +358,15 @@ public class Housekeeping {
                                 TransactionWrapper.useTxn(TransactionWrapper.DB.HOUSEKEEPING, housekeepingHandle -> {
                                     JdbiEvent jdbiEvent = housekeepingHandle.attach(JdbiEvent.class);
                                     JdbiMessage jdbiMessage = housekeepingHandle.attach(JdbiMessage.class);
-                                    if (jdbiEvent.shouldHandleEvent(
+                                    if (pendingEvent.getActionType() == EventActionType.ACTIVITY_INSTANCE_CREATION) {
+                                        Optional<EventConfigurationDto> eventConfOptDto =
+                                                eventDao.getEventConfigurationDtoById(pendingEvent.getEventConfigurationId());
+                                        if (!eventConfOptDto.isPresent()) {
+                                            LOG.error("No event configuration found for ID: {} . skipping queued event : {} ",
+                                                    pendingEvent.getEventConfigurationId(), pendingEvent.getQueuedEventId());
+                                        }
+                                        createActivityInstance(apisHandle, eventConfOptDto.get(), pendingEvent);
+                                    } else if (jdbiEvent.shouldHandleEvent(
                                             pendingEventId,
                                             pendingEvent.getActionType().name(),
                                             pendingEvent.getMaxOccurrencesPerUser())) {
@@ -664,6 +678,22 @@ public class Housekeeping {
             LOG.error("Error during message handling", e);
         }
     }
+
+    private static void createActivityInstance(Handle apisHandle, EventConfigurationDto eventConfDto, QueuedEventDto pendingEvent) {
+        User participant = apisHandle.attach(UserDao.class)
+                .findUserByGuid(pendingEvent.getParticipantGuid())
+                .orElse(null);
+        Optional<StudySettings> settings = apisHandle.attach(
+                StudyDao.class).findSettings(pendingEvent.getStudyGuid());
+
+        EventConfiguration eventConf = new EventConfiguration(eventConfDto);
+        ActivityInstanceCreationEventAction eventAction = new ActivityInstanceCreationEventAction(
+                eventConf, pendingEvent.getStudyActivityId());
+        eventAction.doAction(apisHandle, new EventSignal(pendingEvent.getOperatorUserId(),
+                participant.getId(), pendingEvent.getParticipantGuid(),
+                settings.get().getStudyId(), pendingEvent.getTriggerType()));
+    }
+
 
     private static boolean checkUserExists(String participantGuid) {
         return TransactionWrapper.withTxn(TransactionWrapper.DB.APIS, apihandle ->

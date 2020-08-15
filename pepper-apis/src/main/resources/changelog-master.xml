@@ -223,4 +223,5 @@
     <include file="db-changes/seed/fix-spanish-activity-instance-status-type.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-4615-kit-schedule.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/add-is-write-once-column-to-question.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-4852-queued-event-add-column.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

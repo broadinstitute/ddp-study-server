@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="sampath" id="20200815-queued-event-add-column">
+        <addColumn tableName="queued_event">
+            <column name="study_activity_id" type="bigint(20)">
+                <constraints references="study_activity(study_activity_id)"
+                             foreignKeyName="queued_event_study_activity_fk"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+</databaseChangeLog>
