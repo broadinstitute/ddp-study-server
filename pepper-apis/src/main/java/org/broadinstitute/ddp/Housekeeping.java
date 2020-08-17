@@ -41,7 +41,7 @@ import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.JdbiMessageDestination;
 import org.broadinstitute.ddp.db.dao.JdbiQueuedEvent;
-import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
+import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudyCached;
 import org.broadinstitute.ddp.db.dao.QueuedEventDao;
 import org.broadinstitute.ddp.db.dao.StudyDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
@@ -685,8 +685,7 @@ public class Housekeeping {
         User participant = apisHandle.attach(UserDao.class)
                 .findUserByGuid(pendingEvent.getParticipantGuid())
                 .orElse(null);
-        StudyDto studyDto = apisHandle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(pendingEvent.getStudyGuid());
-
+        StudyDto studyDto = new JdbiUmbrellaStudyCached(apisHandle).findByStudyGuid(pendingEvent.getStudyGuid());
         EventConfiguration eventConf = new EventConfiguration(eventConfDto);
         ActivityInstanceCreationEventAction eventAction = new ActivityInstanceCreationEventAction(
                 eventConf, eventConfDto.getActivityInstanceCreationStudyActivityId());
