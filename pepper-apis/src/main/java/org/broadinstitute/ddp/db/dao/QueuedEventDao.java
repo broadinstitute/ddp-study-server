@@ -68,14 +68,12 @@ public interface QueuedEventDao extends SqlObject {
 
 
     default long insertActivityInstanceCreation(long eventConfigurationId, long postAfterEpochSeconds, long participantId,
-                                                long operatorId, long studyActivityId) {
-
+                                                long operatorId) {
         // insert into base queued_event
         long queuedEventId = getJdbiQueuedEvent().insert(eventConfigurationId,
                 postAfterEpochSeconds,
                 participantId,
-                operatorId,
-                studyActivityId);
+                operatorId);
         return queuedEventId;
     }
 

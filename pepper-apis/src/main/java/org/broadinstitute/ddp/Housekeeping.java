@@ -688,7 +688,7 @@ public class Housekeeping {
 
         EventConfiguration eventConf = new EventConfiguration(eventConfDto);
         ActivityInstanceCreationEventAction eventAction = new ActivityInstanceCreationEventAction(
-                eventConf, pendingEvent.getStudyActivityId());
+                eventConf, eventConfDto.getActivityInstanceCreationStudyActivityId());
         eventAction.doAction(apisHandle, new EventSignal(pendingEvent.getOperatorUserId(),
                 participant.getId(), pendingEvent.getParticipantGuid(),
                 settings.get().getStudyId(), pendingEvent.getTriggerType()));

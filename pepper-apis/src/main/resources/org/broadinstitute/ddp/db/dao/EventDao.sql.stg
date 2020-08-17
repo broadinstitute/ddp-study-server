@@ -165,7 +165,6 @@ getNotificationConfigsForMailingListByEventType() ::= <<
 select_all_queued_events() ::= <<
 select q.queued_event_id,
        q.operator_user_id as operator_id,
-       q.study_activity_id,
        ptp.guid           as participant_guid,
        ptp.hruid          as participant_hruid,
        prf.first_name     as participant_first_name,

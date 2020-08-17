@@ -63,7 +63,7 @@ public class PubSubMessageBuilderTest extends TxnAwareBaseTest {
         QueuedEventDto event = new QueuedNotificationDto(
                 new QueuedEventDto(1L, testData.getUserId(), testData.getUserGuid(), testData.getUserHruid(),
                         1L, EventTriggerType.REACHED_AOM, EventActionType.NOTIFICATION, null, null,
-                        "topic", null, null, testData.getStudyGuid(), null),
+                        "topic", null, null, testData.getStudyGuid()),
                 new NotificationDetailsDto(NotificationType.EMAIL, NotificationServiceType.SENDGRID,
                         null, null, "url", "apiKey", "fromName", "fromEmail",
                         "salutation", "first", "last"));
@@ -88,7 +88,7 @@ public class PubSubMessageBuilderTest extends TxnAwareBaseTest {
             QueuedEventDto event = new QueuedNotificationDto(
                     new QueuedEventDto(1L, testData.getUserId(), gov.getGovernedUserGuid(), "hruid",
                             1L, EventTriggerType.REACHED_AOM, EventActionType.NOTIFICATION, null, null,
-                            "topic", null, null, testData.getStudyGuid(), null),
+                            "topic", null, null, testData.getStudyGuid()),
                     new NotificationDetailsDto(NotificationType.EMAIL, NotificationServiceType.SENDGRID,
                             null, null, "url", "apiKey", "fromName", "fromEmail",
                             "salutation", "first", "last"));
@@ -130,7 +130,7 @@ public class PubSubMessageBuilderTest extends TxnAwareBaseTest {
             QueuedEventDto event = new QueuedNotificationDto(
                     new QueuedEventDto(1L, operator.getId(), gov.getGovernedUserGuid(), "hruid",
                             1L, EventTriggerType.REACHED_AOM, EventActionType.NOTIFICATION, null, null,
-                            "topic", null, null, testData.getStudyGuid(), null),
+                            "topic", null, null, testData.getStudyGuid()),
                     new NotificationDetailsDto(NotificationType.EMAIL, NotificationServiceType.SENDGRID,
                             null, null, "url", "apiKey", "fromName", "fromEmail",
                             "salutation", "first", "last"));
@@ -170,7 +170,7 @@ public class PubSubMessageBuilderTest extends TxnAwareBaseTest {
             QueuedEventDto event = new QueuedNotificationDto(
                     new QueuedEventDto(1L, user.getId(), user.getGuid(), user.getHruid(),
                             1L, EventTriggerType.ACTIVITY_STATUS, EventActionType.NOTIFICATION, null, null,
-                            "topic", null, null, testData.getStudyGuid(), null),
+                            "topic", null, null, testData.getStudyGuid()),
                     new NotificationDetailsDto(NotificationType.EMAIL, NotificationServiceType.SENDGRID,
                             null, null, "url", "apiKey", "fromName", "fromEmail",
                             "salutation", "first", "last"));

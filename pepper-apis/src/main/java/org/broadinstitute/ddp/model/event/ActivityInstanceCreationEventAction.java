@@ -46,8 +46,7 @@ public class ActivityInstanceCreationEventAction extends EventAction {
                 long queuedEventId = queuedEventDao.insertActivityInstanceCreation(eventConfiguration.getEventConfigurationId(),
                         postAfter,
                         signal.getParticipantId(),
-                        signal.getOperatorId(),
-                        studyActivityId
+                        signal.getOperatorId()
                 );
                 LOG.info("Created activity instance queued event: {}", queuedEventId);
             }

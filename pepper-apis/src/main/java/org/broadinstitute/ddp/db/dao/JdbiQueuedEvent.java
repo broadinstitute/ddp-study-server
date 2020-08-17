@@ -21,15 +21,6 @@ public interface JdbiQueuedEvent extends SqlObject {
                 @Bind("participantId") Long participantUserId,
                 @Bind("operatorId") Long operatorUserId);
 
-    @SqlUpdate("insert into queued_event(event_configuration_id,post_after,participant_user_id,operator_user_id, study_activity_id) "
-            + "values(:configId,:postAfter,:participantId,:operatorId, :studyActivityId)")
-    @GetGeneratedKeys
-    long insert(@Bind("configId") long eventConfigurationId,
-                @Bind("postAfter") Long postAfterEpochSeconds,
-                @Bind("participantId") Long participantUserId,
-                @Bind("operatorId") Long operatorUserId,
-                @Bind("studyActivityId") Long studyActivityId);
-
     /**
      * Consider using {@link #deleteAllByQueuedEventId(long)} to ensure that
      * subclass tables for the queued event are deleted.

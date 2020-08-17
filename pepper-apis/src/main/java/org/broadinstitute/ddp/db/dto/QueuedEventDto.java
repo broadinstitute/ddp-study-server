@@ -25,7 +25,6 @@ public class QueuedEventDto {
     private String precondition;
     private String cancelCondition;
     private String studyGuid;
-    private Long studyActivityId;
 
     @JdbiConstructor
     public QueuedEventDto(
@@ -41,8 +40,7 @@ public class QueuedEventDto {
             @ColumnName("gcp_topic") String pubSubTopic,
             @ColumnName("precondition") String precondition,
             @ColumnName("cancel_condition") String cancelCondition,
-            @ColumnName("study_guid") String studyGuid,
-            @ColumnName("study_activity_id") Long studyActivityId) {
+            @ColumnName("study_guid") String studyGuid) {
         ddpEventId = eventConfigurationId + "." + participantGuid;
         this.queuedEventId = queuedEventId;
         this.operatorUserId = operatorUserId;
@@ -57,7 +55,6 @@ public class QueuedEventDto {
         this.precondition = precondition;
         this.cancelCondition = cancelCondition;
         this.studyGuid = studyGuid;
-        this.studyActivityId = studyActivityId;
     }
 
     public QueuedEventDto(QueuedEventDto other) {
@@ -73,8 +70,7 @@ public class QueuedEventDto {
                 other.getPubSubTopic(),
                 other.getPrecondition(),
                 other.getCancelCondition(),
-                other.getStudyGuid(),
-                other.getStudyActivityId());
+                other.getStudyGuid());
     }
 
     public String getHousekeepingVersion() {
@@ -135,9 +131,5 @@ public class QueuedEventDto {
 
     public String getStudyGuid() {
         return studyGuid;
-    }
-
-    public Long getStudyActivityId() {
-        return studyActivityId;
     }
 }
