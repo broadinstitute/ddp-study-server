@@ -41,11 +41,13 @@ import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.JdbiMessageDestination;
 import org.broadinstitute.ddp.db.dao.JdbiQueuedEvent;
+import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.QueuedEventDao;
 import org.broadinstitute.ddp.db.dao.StudyDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dto.EventConfigurationDto;
 import org.broadinstitute.ddp.db.dto.QueuedEventDto;
+import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.housekeeping.dao.JdbiEvent;
 import org.broadinstitute.ddp.db.housekeeping.dao.JdbiMessage;
 import org.broadinstitute.ddp.event.HousekeepingTaskReceiver;
@@ -683,15 +685,14 @@ public class Housekeeping {
         User participant = apisHandle.attach(UserDao.class)
                 .findUserByGuid(pendingEvent.getParticipantGuid())
                 .orElse(null);
-        Optional<StudySettings> settings = apisHandle.attach(
-                StudyDao.class).findSettings(pendingEvent.getStudyGuid());
+        StudyDto studyDto = apisHandle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(pendingEvent.getStudyGuid());
 
         EventConfiguration eventConf = new EventConfiguration(eventConfDto);
         ActivityInstanceCreationEventAction eventAction = new ActivityInstanceCreationEventAction(
                 eventConf, eventConfDto.getActivityInstanceCreationStudyActivityId());
         eventAction.doAction(apisHandle, new EventSignal(pendingEvent.getOperatorUserId(),
                 participant.getId(), pendingEvent.getParticipantGuid(),
-                settings.get().getStudyId(), pendingEvent.getTriggerType()));
+                studyDto.getId(), pendingEvent.getTriggerType()));
     }
 
 
