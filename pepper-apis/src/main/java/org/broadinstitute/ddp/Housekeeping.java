@@ -365,6 +365,7 @@ public class Housekeeping {
                                                 pendingEvent.getEventConfigurationId(), pendingEvent.getQueuedEventId());
                                     } else {
                                         createActivityInstance(apisHandle, eventConfOptDto.get(), pendingEvent);
+                                        queuedEventDao.deleteAllByQueuedEventId(pendingEvent.getQueuedEventId());
                                         continue;
                                     }
                                 }
