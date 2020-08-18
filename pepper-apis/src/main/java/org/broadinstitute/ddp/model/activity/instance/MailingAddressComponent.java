@@ -16,12 +16,15 @@ public class MailingAddressComponent extends FormComponent {
     private transient Long titleTemplateId;
     private transient Long subtitleTemplateId;
 
-    public MailingAddressComponent(Long titleTemplateId, Long subtitleTemplateId, boolean hideNumber) {
+    public MailingAddressComponent(Long titleTemplateId, Long subtitleTemplateId, boolean hideNumber,
+                                   boolean requireVerified, boolean requirePhone) {
         super(ComponentType.MAILING_ADDRESS);
         hideDisplayNumber = hideNumber;
-        titleTemplateId = titleTemplateId;
-        subtitleTemplateId = subtitleTemplateId;
+        this.titleTemplateId = titleTemplateId;
+        this.subtitleTemplateId = subtitleTemplateId;
         serializedFields = new SerializedFields();
+        serializedFields.setRequireVerified(requireVerified);
+        serializedFields.setRequirePhone(requirePhone);
     }
 
     @Override
@@ -60,18 +63,38 @@ public class MailingAddressComponent extends FormComponent {
         }
     }
 
+    public boolean shouldRequireVerified() {
+        return serializedFields.requireVerified;
+    }
+
+    public boolean shouldRequirePhone() {
+        return serializedFields.requirePhone;
+    }
+
     public static class SerializedFields {
         @SerializedName("titleText")
         private String titleText;
         @SerializedName("subtitleText")
         private String subtitleText;
+        @SerializedName("requireVerified")
+        private boolean requireVerified;
+        @SerializedName("requirePhone")
+        private boolean requirePhone;
 
         public void setTitleText(String titleText) {
-            titleText = titleText;
+            this.titleText = titleText;
         }
 
         public void setSubtitleText(String subtitleText) {
-            subtitleText = subtitleText;
+            this.subtitleText = subtitleText;
+        }
+
+        public void setRequireVerified(boolean requireVerified) {
+            this.requireVerified = requireVerified;
+        }
+
+        public void setRequirePhone(boolean requirePhone) {
+            this.requirePhone = requirePhone;
         }
     }
 }
