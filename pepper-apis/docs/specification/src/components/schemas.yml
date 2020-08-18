@@ -688,7 +688,7 @@ Component.MailingAddress:
               type: string
             requireVerified:
               type: boolean
-              description: when `true`, address should be verified as deliverable
+              description: when `true`, address should be [verified](#operation/verifyMailingAddress) as deliverable
             requirePhone:
               type: boolean
               description: |
