@@ -5,8 +5,10 @@ import java.time.Instant;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstanceStatus;
+import org.broadinstitute.ddp.db.dao.QueuedEventDao;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.EventConfigurationDto;
+import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.service.EventService;
@@ -32,6 +34,29 @@ public class ActivityInstanceCreationEventAction extends EventAction {
 
     @Override
     public void doAction(PexInterpreter interpreter, Handle handle, EventSignal signal) {
+        Integer delayBeforePosting = eventConfiguration.getPostDelaySeconds();
+        if (delayBeforePosting != null && delayBeforePosting > 0) {
+            long postAfter = Instant.now().getEpochSecond() + delayBeforePosting;
+            if (!eventConfiguration.dispatchToHousekeeping()) {
+                throw new DDPException("ActivityInstance creation with delaySeconds > 0 are currently only supported "
+                        + "as asynchronous events. Please set dispatch_to_housekeeping to true");
+            } else {
+                //insert queued event
+                QueuedEventDao queuedEventDao = handle.attach(QueuedEventDao.class);
+                long queuedEventId = queuedEventDao.insertActivityInstanceCreation(eventConfiguration.getEventConfigurationId(),
+                        postAfter,
+                        signal.getParticipantId(),
+                        signal.getOperatorId()
+                );
+                LOG.info("Created activity instance queued event: {}", queuedEventId);
+            }
+        } else {
+            //synchronous action
+            doAction(handle, signal);
+        }
+    }
+
+    public void doAction(Handle handle, EventSignal signal) {
         JdbiActivityInstance jdbiActivityInstance = handle.attach(JdbiActivityInstance.class);
         JdbiActivityInstanceStatus jdbiActivityInstanceStatus = handle.attach(JdbiActivityInstanceStatus.class);
         JdbiActivity jdbiActivity = handle.attach(JdbiActivity.class);

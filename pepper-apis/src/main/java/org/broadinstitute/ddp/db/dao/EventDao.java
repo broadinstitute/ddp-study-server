@@ -54,6 +54,13 @@ public interface EventDao extends SqlObject {
                 .collect(Collectors.toList());
     }
 
+    @SqlQuery("getEventConfigurationByEventConfigurationId")
+    @UseStringTemplateSqlLocator
+    @RegisterConstructorMapper(EventConfigurationDto.class)
+    @UseRowReducer(EventConfigurationActionReducer.class)
+    Optional<EventConfigurationDto> getEventConfigurationDtoById(
+            @Bind("eventConfigurationId") long eventConfigurationId);
+
     @SqlQuery("getEventConfigurationsForStudyIdAndTriggerType")
     @UseStringTemplateSqlLocator
     @RegisterConstructorMapper(EventConfigurationDto.class)

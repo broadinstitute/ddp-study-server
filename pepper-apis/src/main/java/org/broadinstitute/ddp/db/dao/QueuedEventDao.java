@@ -66,6 +66,18 @@ public interface QueuedEventDao extends SqlObject {
         return jdbiQueuedEvent.deleteQueuedEventsByUserIds(userIds);
     }
 
+
+    default long insertActivityInstanceCreation(long eventConfigurationId, long postAfterEpochSeconds, long participantId,
+                                                long operatorId) {
+        //insert into base queued_event
+        long queuedEventId = getJdbiQueuedEvent().insert(eventConfigurationId,
+                postAfterEpochSeconds,
+                participantId,
+                operatorId);
+        return queuedEventId;
+    }
+
+
     /**
      * When sending notifications to users, please use {@link #insertNotification(long, Long, Long, Long, Map)} to
      * properly reference user rows.  This method is for sending emails to people other than users, such
