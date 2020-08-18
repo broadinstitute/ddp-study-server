@@ -686,6 +686,12 @@ Component.MailingAddress:
               type: string
             subtitleText:
               type: string
+            requireVerified:
+              type: boolean
+              description: when `true`, address should be verified as deliverable
+            requirePhone:
+              type: boolean
+              description: when `true`, phone field should be filled out
 ConditionalRule:
   type: object
   title: ConditionalRule
