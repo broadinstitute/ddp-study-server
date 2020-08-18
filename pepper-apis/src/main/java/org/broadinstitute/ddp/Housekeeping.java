@@ -357,18 +357,21 @@ public class Housekeeping {
                             }
 
                             if (hasMetPrecondition) {
+                                if (pendingEvent.getActionType() == EventActionType.ACTIVITY_INSTANCE_CREATION) {
+                                    Optional<EventConfigurationDto> eventConfOptDto =
+                                            eventDao.getEventConfigurationDtoById(pendingEvent.getEventConfigurationId());
+                                    if (!eventConfOptDto.isPresent()) {
+                                        LOG.error("No event configuration found for ID: {} . skipping queued event : {} ",
+                                                pendingEvent.getEventConfigurationId(), pendingEvent.getQueuedEventId());
+                                    } else {
+                                        createActivityInstance(apisHandle, eventConfOptDto.get(), pendingEvent);
+                                        continue;
+                                    }
+                                }
                                 TransactionWrapper.useTxn(TransactionWrapper.DB.HOUSEKEEPING, housekeepingHandle -> {
                                     JdbiEvent jdbiEvent = housekeepingHandle.attach(JdbiEvent.class);
                                     JdbiMessage jdbiMessage = housekeepingHandle.attach(JdbiMessage.class);
-                                    if (pendingEvent.getActionType() == EventActionType.ACTIVITY_INSTANCE_CREATION) {
-                                        Optional<EventConfigurationDto> eventConfOptDto =
-                                                eventDao.getEventConfigurationDtoById(pendingEvent.getEventConfigurationId());
-                                        if (!eventConfOptDto.isPresent()) {
-                                            LOG.error("No event configuration found for ID: {} . skipping queued event : {} ",
-                                                    pendingEvent.getEventConfigurationId(), pendingEvent.getQueuedEventId());
-                                        }
-                                        createActivityInstance(apisHandle, eventConfOptDto.get(), pendingEvent);
-                                    } else if (jdbiEvent.shouldHandleEvent(
+                                    if (jdbiEvent.shouldHandleEvent(
                                             pendingEventId,
                                             pendingEvent.getActionType().name(),
                                             pendingEvent.getMaxOccurrencesPerUser())) {
