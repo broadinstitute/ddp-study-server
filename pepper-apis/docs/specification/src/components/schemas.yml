@@ -691,7 +691,8 @@ Component.MailingAddress:
               description: when `true`, address should be verified as deliverable
             requirePhone:
               type: boolean
-              description: when `true`, phone field should be filled out
+              description: |
+                     when `true`, the activity may require that there be a saved mailing address with a non-empty value for `phone` in order to be [completed](#operation/putAnswers).
 ConditionalRule:
   type: object
   title: ConditionalRule
