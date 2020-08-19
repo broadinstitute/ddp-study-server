@@ -19,6 +19,7 @@ import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
+import org.broadinstitute.ddp.model.activity.instance.answer.NumericAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
@@ -97,6 +98,8 @@ public class CompositeQuestionFormatStrategy implements ResponseFormatStrategy<C
                 return (boolValue == null ? "" : boolValue.toString());
             case TEXT:
                 return StringUtils.defaultString(((TextAnswer) answer).getValue(), "");
+            case NUMERIC:
+                return (answer.getValue() == null ? "" : answer.getValue().toString());
             case DATE:
                 DateValue dateValue = ((DateAnswer) answer).getValue();
                 return (dateValue == null ? null : dateValue.toDefaultDateFormat());
