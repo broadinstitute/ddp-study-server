@@ -43,19 +43,26 @@ public interface JdbiComponent extends SqlObject {
                 @Bind("hideNumber") boolean hideNumber,
                 @Bind("revisionId") long revisionId);
 
-    @SqlUpdate("insert into mailing_address_component (component_id, title_template_id, subtitle_template_id)"
-            + " values (:componentId, :titleTemplateId, :subtitleTemplateId)")
+    @SqlUpdate("insert into mailing_address_component (component_id, title_template_id, subtitle_template_id,"
+            + "        require_verified, require_phone)"
+            + " values (:componentId, :titleTemplateId, :subtitleTemplateId, :requireVerified, :requirePhone)")
     int insertMailingAddressComponent(
             @Bind("componentId") long componentId,
             @Bind("titleTemplateId") Long titleTemplateId,
-            @Bind("subtitleTemplateId") Long subtitleTemplateId);
+            @Bind("subtitleTemplateId") Long subtitleTemplateId,
+            @Bind("requireVerified") boolean requireVerified,
+            @Bind("requirePhone") boolean requirePhone);
 
     @SqlUpdate("update mailing_address_component"
             + "    set title_template_id = :titleTemplateId,"
-            + "        subtitle_template_id = :subtitleTemplateId"
+            + "        subtitle_template_id = :subtitleTemplateId,"
+            + "        require_verified = :requireVerified,"
+            + "        require_phone = :requirePhone"
             + "  where component_id = :componentId")
     int updateMailingAddressComponent(
             @Bind("componentId") long componentId,
             @Bind("titleTemplateId") Long titleTemplateId,
-            @Bind("subtitleTemplateId") Long subtitleTemplateId);
+            @Bind("subtitleTemplateId") Long subtitleTemplateId,
+            @Bind("requireVerified") boolean requireVerified,
+            @Bind("requirePhone") boolean requirePhone);
 }

@@ -49,12 +49,13 @@ public class BackfillMailingAddressComponentTitle implements CustomTask {
 
             if (compDto == null) {
                 long titleTemplateId = createTitleTemplate(handle, dto.getRevisionId());
-                DBUtils.checkInsert(1, jdbiComponent.insertMailingAddressComponent(componentId, titleTemplateId, null));
+                DBUtils.checkInsert(1, jdbiComponent.insertMailingAddressComponent(componentId, titleTemplateId, null, false, false));
                 LOG.info("Inserted mailing address component {} with titleTemplateId={}", componentId, titleTemplateId);
             } else if (compDto.getTitleTemplateId() == null) {
                 long titleTemplateId = createTitleTemplate(handle, dto.getRevisionId());
                 DBUtils.checkUpdate(1, jdbiComponent.updateMailingAddressComponent(
-                        componentId, titleTemplateId, compDto.getSubtitleTemplateId()));
+                        componentId, titleTemplateId, compDto.getSubtitleTemplateId(),
+                        compDto.shouldRequireVerified(), compDto.shouldRequirePhone()));
                 LOG.info("Updated mailing address component {} with titleTemplateId={}", componentId, titleTemplateId);
             } else {
                 LOG.info("Mailing address component with id={} already has titleTemplateId={}",
