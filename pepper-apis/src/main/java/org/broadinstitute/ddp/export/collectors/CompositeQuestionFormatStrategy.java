@@ -97,6 +97,8 @@ public class CompositeQuestionFormatStrategy implements ResponseFormatStrategy<C
                 return (boolValue == null ? "" : boolValue.toString());
             case TEXT:
                 return StringUtils.defaultString(((TextAnswer) answer).getValue(), "");
+            case NUMERIC:
+                return (answer.getValue() == null ? "" : answer.getValue().toString());
             case DATE:
                 DateValue dateValue = ((DateAnswer) answer).getValue();
                 return (dateValue == null ? null : dateValue.toDefaultDateFormat());
