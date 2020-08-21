@@ -1,7 +1,11 @@
 {
+  "i18n_activity_type_name_trans": {
+    "forms": "Forms"
+  },
   "i18n_activity_instance_status_type_name_trans": {
     "complete": "Complete",
-    "created": "Created",
+    "created": "New",
+    "created2": "Created",
     "in_progress": "In Progress"
   },
   "i18n_validation_msg_trans": {
@@ -16,8 +20,5 @@
     "complete": "This question needs to be completely filled in.",
     "age_range": "The age must be within specified values.",
     "int_range": "Minimum or maximum number requirement is not met."
-  },
-  "i18n_activity_type_name_trans": {
-    "forms": "Forms"
   }
 }
