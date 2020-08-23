@@ -2,11 +2,13 @@ package org.broadinstitute.ddp.model.activity.definition;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
 import com.google.gson.annotations.SerializedName;
+import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
 import org.broadinstitute.ddp.model.activity.types.ListStyleHint;
@@ -57,5 +59,10 @@ public final class GroupBlockDef extends FormBlockDef {
 
     public void addNestedBlock(FormBlockDef nestedBlock) {
         this.nested.add(nestedBlock);
+    }
+
+    @Override
+    public Stream<QuestionDef> getQuestions() {
+        return getNested().stream().flatMap(cblock -> cblock.getQuestions());
     }
 }

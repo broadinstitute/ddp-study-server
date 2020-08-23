@@ -16,4 +16,5 @@ public final class InstitutionComponentDef extends PhysicianInstitutionComponent
         super(ComponentType.INSTITUTION, allowMultiple, addButtonTemplate, titleTemplate, subtitleTemplate, institutionType,
                 showFields, required);
     }
+
 }

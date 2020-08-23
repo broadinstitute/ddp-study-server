@@ -1,9 +1,11 @@
 package org.broadinstitute.ddp.model.activity.definition;
 
+import java.util.stream.Stream;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
 import com.google.gson.annotations.SerializedName;
+import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
 import org.broadinstitute.ddp.util.MiscUtil;
@@ -36,5 +38,10 @@ public final class ContentBlockDef extends FormBlockDef {
 
     public Template getBodyTemplate() {
         return bodyTemplate;
+    }
+
+    @Override
+    public Stream<QuestionDef> getQuestions() {
+        return Stream.of();
     }
 }

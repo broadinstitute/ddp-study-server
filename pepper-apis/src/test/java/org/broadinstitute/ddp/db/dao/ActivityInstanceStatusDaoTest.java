@@ -112,7 +112,7 @@ public class ActivityInstanceStatusDaoTest extends TxnAwareBaseTest {
             assertTrue(current.isPresent());
             assertEquals(newStatusId, current.get().getId());
             assertEquals(newMillis, current.get().getUpdatedAt());
-            assertEquals(getStatusTypeId(handle, InstanceStatusType.IN_PROGRESS), current.get().getTypeId());
+            assertEquals(InstanceStatusType.IN_PROGRESS, current.get().getType());
 
             handle.rollback();
         });
@@ -124,17 +124,17 @@ public class ActivityInstanceStatusDaoTest extends TxnAwareBaseTest {
             ActivityInstanceStatusDao dao = handle.attach(ActivityInstanceStatusDao.class);
             FormActivityDef form = setupDummyActivity(handle, testData.getStudyGuid(), testData.getUserId());
             ActivityInstanceDto instanceDto = manuallyInsertInstance(handle, form.getActivityId(), testData.getUserId());
-            long oldStatusTypeId = dao.insertStatus(instanceDto.getId(), InstanceStatusType.COMPLETE,
-                    Instant.now().toEpochMilli(), testData.getUserGuid()).getTypeId();
+            InstanceStatusType oldStatusType = dao.insertStatus(instanceDto.getId(), InstanceStatusType.COMPLETE,
+                    Instant.now().toEpochMilli(), testData.getUserGuid()).getType();
             Arrays.asList(InstanceStatusType.CREATED, InstanceStatusType.IN_PROGRESS).forEach(newStatus -> {
-                long newStatusTypeId = dao.insertStatus(
+                InstanceStatusType newStatusType = dao.insertStatus(
                         instanceDto.getId(),
                         newStatus,
                         Instant.now().toEpochMilli() + 2000L,
                         testData.getUserGuid()
-                ).getTypeId();
+                ).getType();
                 Optional<ActivityInstanceStatusDto> current = dao.getCurrentStatus(instanceDto.getId());
-                assertEquals("Transitioning from COMPLETE to " + newStatus + " not allowed", oldStatusTypeId, current.get().getTypeId());
+                assertEquals("Transitioning from COMPLETE to " + newStatus + " not allowed", oldStatusType, current.get().getType());
             });
             handle.rollback();
         });

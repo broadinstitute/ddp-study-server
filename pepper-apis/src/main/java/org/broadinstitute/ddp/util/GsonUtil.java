@@ -17,6 +17,7 @@ import org.broadinstitute.ddp.model.activity.definition.SectionIcon;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.RuleDef;
 import org.broadinstitute.ddp.model.activity.instance.question.TextQuestion;
+import org.broadinstitute.ddp.transformers.Exclude;
 import org.broadinstitute.ddp.transformers.LocalDateAdapter;
 
 public class GsonUtil {
@@ -35,16 +36,8 @@ public class GsonUtil {
                 .registerTypeAdapter(SectionIcon.class, new SectionIcon.Serializer())
                 .registerTypeAdapter(LocalDate.class, new LocalDateAdapter().nullSafe())
                 .registerTypeAdapter(TextQuestion.class, new TextQuestion.Serializer())
+                .setExclusionStrategies(new ExcludeAnnotationStrategy())
                 .serializeNulls();
-    }
-
-    /**
-     * Builds a standard gson, but using the given exclusions
-     *
-     * @param classAndFieldsExclusions Exclusions to apply
-     */
-    public static GsonBuilder standardBuilder(ClassAndFieldsExclusion... classAndFieldsExclusions) {
-        return standardBuilder().setExclusionStrategies(new ClassAndFieldsExclusionStrategy(classAndFieldsExclusions));
     }
 
     /**
@@ -114,4 +107,24 @@ public class GsonUtil {
             return false;
         }
     }
+
+    /**
+     * When applied to GsonBuilder it will exclude fields marked with the @Exclude annotation
+     *
+     * @see Exclude
+     */
+    public static class ExcludeAnnotationStrategy implements ExclusionStrategy {
+        @Override
+        public boolean shouldSkipClass(Class<?> clazz) {
+            return false;
+        }
+
+        @Override
+        public boolean shouldSkipField(FieldAttributes field) {
+            return field.getAnnotation(Exclude.class) != null;
+        }
+    }
+
+    ;
+
 }

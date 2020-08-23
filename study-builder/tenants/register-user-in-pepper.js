@@ -20,7 +20,7 @@ function (user, context, callback) {
     var pepperClientClaim = 'https://datadonationplatform.org/cid';
     var pepperTenantClaim = 'https://datadonationplatform.org/t';
 
-    var tenantDomain = 'https://' + context.tenant + '.auth0.com/';
+    var tenantDomain = 'https://' + auth0.domain + '/';
     context.idToken[pepperTenantClaim] = tenantDomain;
     context.idToken[pepperClientClaim] = context.clientID;
 

@@ -11,6 +11,9 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -18,22 +21,26 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 import io.restassured.http.ContentType;
+import org.broadinstitute.ddp.cache.CacheService;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.API;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.content.I18nTemplateConstants;
+import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiExpression;
+import org.broadinstitute.ddp.db.dao.JdbiMailAddress;
 import org.broadinstitute.ddp.db.dao.JdbiRevision;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.JdbiWorkflowTransition;
@@ -53,18 +60,25 @@ import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.definition.validation.LengthRuleDef;
 import org.broadinstitute.ddp.model.activity.definition.validation.RequiredRuleDef;
+import org.broadinstitute.ddp.model.activity.instance.ComponentBlock;
+import org.broadinstitute.ddp.model.activity.instance.FormInstance;
+import org.broadinstitute.ddp.model.activity.instance.FormSection;
+import org.broadinstitute.ddp.model.activity.instance.MailingAddressComponent;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
+import org.broadinstitute.ddp.model.activity.types.FormType;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.activity.types.TemplateType;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
+import org.broadinstitute.ddp.model.address.MailAddress;
 import org.broadinstitute.ddp.model.workflow.ActivityState;
 import org.broadinstitute.ddp.model.workflow.StateType;
 import org.broadinstitute.ddp.model.workflow.StaticState;
 import org.broadinstitute.ddp.model.workflow.WorkflowTransition;
+import org.broadinstitute.ddp.service.DsmAddressValidationStatus;
 import org.broadinstitute.ddp.util.Auth0Util;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.broadinstitute.ddp.util.TestUtil;
@@ -73,8 +87,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
+import spark.HaltException;
 
-public class PutFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
+
+public class PutFormAnswersRouteStandaloneTest {
 
     private static ActivityVersionDto activityVersionDto;
     private static TestDataSetupUtil.GeneratedTestData testData;
@@ -92,8 +108,10 @@ public class PutFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
     //allow tests to add something unique to cleanup
     private List<Consumer<Handle>> testCleanupTasks = new ArrayList<>();
 
+
     @BeforeClass
     public static void setup() {
+        IntegrationTestSuite.setup(false);
         TransactionWrapper.useTxn(handle -> {
             testData = TestDataSetupUtil.generateBasicUserTestData(handle);
             user = testData.getTestingUser();
@@ -663,32 +681,6 @@ public class PutFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
     }
 
     @Test
-    public void given_oneTrueExpr_whenRouteIsCalled_thenItReturns422_AndRespContainsCorrectErrorCode() {
-        try {
-            ActivityInstanceDto instanceDto = TransactionWrapper.withTxn(handle -> {
-                handle.attach(JdbiActivity.class).insertValidation(
-                        RouteTestUtil.createActivityValidationDto(
-                                form, "true", "Should always fail", List.of(stableId)
-                        ),
-                        testData.getUserId(),
-                        testData.getStudyId(),
-                        activityVersionDto.getRevId()
-                );
-                return insertNewInstanceAndDeferCleanup(handle, form.getActivityId());
-            });
-            callEndpoint(instanceDto.getGuid())
-                    .then()
-                    .assertThat()
-                    .statusCode(422).contentType(ContentType.JSON)
-                    .body("code", equalTo(ErrorCodes.ACTIVITY_VALIDATION));
-        } finally {
-            TransactionWrapper.useTxn(handle -> {
-                handle.attach(JdbiActivity.class).deleteValidationsByCode(form.getActivityId());
-            });
-        }
-    }
-
-    @Test
     public void testSnapshotSubstitutions() {
         ActivityInstanceDto instanceDto = TransactionWrapper.withTxn(handle ->
                 insertNewInstanceAndDeferCleanup(handle, form.getActivityId()));
@@ -706,6 +698,112 @@ public class PutFormAnswersRouteTest extends IntegrationTestSuite.TestCase {
             assertTrue(subs.containsKey(I18nTemplateConstants.Snapshot.PARTICIPANT_FIRST_NAME));
             assertTrue(subs.containsKey(I18nTemplateConstants.Snapshot.PARTICIPANT_LAST_NAME));
         });
+    }
+
+    @Test
+    public void given_oneTrueExpr_whenRouteIsCalled_thenItReturns422_AndRespContainsCorrectErrorCode() {
+        try {
+            ActivityInstanceDto instanceDto = TransactionWrapper.withTxn(handle -> {
+                handle.attach(JdbiActivity.class).insertValidation(
+                        RouteTestUtil.createActivityValidationDto(
+                                form, "true", "Should always fail", List.of(stableId)
+                        ),
+                        testData.getUserId(),
+                        testData.getStudyId(),
+                        activityVersionDto.getRevId()
+                );
+                return insertNewInstanceAndDeferCleanup(handle, form.getActivityId());
+            });
+            CacheService.getInstance().resetAllCaches();
+            ActivityDefStore.getInstance().clearCachedActivityValidationDtos(form.getActivityId());
+            callEndpoint(instanceDto.getGuid())
+                    .then()
+                    .assertThat()
+                    .statusCode(422).contentType(ContentType.JSON)
+                    .body("code", equalTo(ErrorCodes.ACTIVITY_VALIDATION));
+        } finally {
+            TransactionWrapper.useTxn(handle -> {
+                handle.attach(JdbiActivity.class).deleteValidationsByCode(form.getActivityId());
+            });
+            CacheService.getInstance().resetAllCaches();
+            ActivityDefStore.getInstance().clearCachedActivityValidationDtos(form.getActivityId());
+        }
+    }
+
+    @Test
+    public void testCheckAddressRequirements_noRequirements() {
+        var mockHandle = mock(Handle.class);
+        var form = new FormInstance(1L, 1L, 1L, "", FormType.GENERAL, "", "", "", "CREATED",
+                null, null, null, null, null, 1L, null, null, null, false, 0);
+        form.addBodySections(List.of(new FormSection(List.of(
+                new ComponentBlock(new MailingAddressComponent(1L, 1L, false, false, false))))));
+        new PutFormAnswersRoute(null, null, null, null)
+                .checkAddressRequirements(mockHandle, "", form);
+        // all good!
+    }
+
+    @Test
+    public void testCheckAddressRequirements_requireVerified() {
+        var mockHandle = mock(Handle.class);
+        var mockAddrDao = mock(JdbiMailAddress.class);
+        doReturn(mockAddrDao).when(mockHandle).attach(JdbiMailAddress.class);
+
+        var form = new FormInstance(1L, 1L, 1L, "", FormType.GENERAL, "", "", "", "CREATED",
+                null, null, null, null, null, 1L, null, null, null, false, 0);
+        form.addBodySections(List.of(new FormSection(List.of(
+                new ComponentBlock(new MailingAddressComponent(1L, 1L, false, true, false))))));
+        var route = new PutFormAnswersRoute(null, null, null, null);
+
+        var addr = new MailAddress("", "", "", "", "", "", "", "", "", "",
+                DsmAddressValidationStatus.DSM_INVALID_ADDRESS_STATUS, true);
+        doReturn(Optional.of(addr)).when(mockAddrDao).findDefaultAddressForParticipant(anyString());
+
+        try {
+            route.checkAddressRequirements(mockHandle, "", form);
+            fail("expected exception not thrown");
+        } catch (HaltException halt) {
+            assertEquals(422, halt.statusCode());
+            assertTrue(halt.body().contains("verified"));
+        }
+
+        addr = new MailAddress("", "", "", "", "", "", "", "", "", "",
+                DsmAddressValidationStatus.DSM_VALID_ADDRESS_STATUS, true);
+        doReturn(Optional.of(addr)).when(mockAddrDao).findDefaultAddressForParticipant(anyString());
+
+        route.checkAddressRequirements(mockHandle, "", form);
+        // Should not have thrown! Not catching it so it gets handled by junit itself.
+    }
+
+    @Test
+    public void testCheckAddressRequirements_requirePhone() {
+        var mockHandle = mock(Handle.class);
+        var mockAddrDao = mock(JdbiMailAddress.class);
+        doReturn(mockAddrDao).when(mockHandle).attach(JdbiMailAddress.class);
+
+        var form = new FormInstance(1L, 1L, 1L, "", FormType.GENERAL, "", "", "", "CREATED",
+                null, null, null, null, null, 1L, null, null, null, false, 0);
+        form.addBodySections(List.of(new FormSection(List.of(
+                new ComponentBlock(new MailingAddressComponent(1L, 1L, false, true, true))))));
+        var route = new PutFormAnswersRoute(null, null, null, null);
+
+        var addr = new MailAddress("", "", "", "", "", "", "", "", "", "",
+                DsmAddressValidationStatus.DSM_EASYPOST_SUGGESTED_ADDRESS_STATUS, true);
+        doReturn(Optional.of(addr)).when(mockAddrDao).findDefaultAddressForParticipant(anyString());
+
+        try {
+            route.checkAddressRequirements(mockHandle, "", form);
+            fail("expected exception not thrown");
+        } catch (HaltException halt) {
+            assertEquals(422, halt.statusCode());
+            assertTrue(halt.body().contains("phone"));
+        }
+
+        addr = new MailAddress("", "", "", "", "", "", "", "111-222-3333", "", "",
+                DsmAddressValidationStatus.DSM_EASYPOST_SUGGESTED_ADDRESS_STATUS, true);
+        doReturn(Optional.of(addr)).when(mockAddrDao).findDefaultAddressForParticipant(anyString());
+
+        route.checkAddressRequirements(mockHandle, "", form);
+        // Should not have thrown! Not catching it so it gets handled by junit itself.
     }
 
     private io.restassured.response.Response callEndpoint(String instanceGuid) {

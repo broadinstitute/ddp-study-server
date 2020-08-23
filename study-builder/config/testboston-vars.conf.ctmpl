@@ -17,11 +17,9 @@
   "baseWebUrl": "{{$conf.baseWebUrl}}",
   "recaptchaSiteKey": "{{$conf.recaptchaSiteServerKey}}",
   "passwordRedirectUrl": "{{$conf.passwordRedirectUrl}}",
-  "assetsBucketName": "{{$conf.assetsBucketName}}",
   "sendgridApiKey": "{{$conf.sendgridApiKey}}",
   "sendgridFromName": "{{$conf.sendgridFromName}}",
   "sendgridFromEmail": "{{$conf.sendgridFromEmail}}",
-  "sendgridDefaultSalutation" : "{{$conf.sendgridDefaultSalutation}}",
   "analyticsToken": "{{$conf.analyticsToken}}",
 
 {{if not $conf.irbPassword}}

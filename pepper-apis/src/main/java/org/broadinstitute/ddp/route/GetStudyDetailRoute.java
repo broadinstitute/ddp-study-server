@@ -10,6 +10,7 @@ import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
+import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudyCached;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudyI18n;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dto.EnrollmentStatusDto;
@@ -49,7 +50,7 @@ public class GetStudyDetailRoute implements Route {
 
         StudyDetail detail = TransactionWrapper.withTxn(handle -> {
             JdbiUserStudyEnrollment enrollmentDao = handle.attach(JdbiUserStudyEnrollment.class);
-            JdbiUmbrellaStudy studyDao = handle.attach(JdbiUmbrellaStudy.class);
+            JdbiUmbrellaStudy studyDao = new JdbiUmbrellaStudyCached(handle);
             JdbiUmbrellaStudyI18n translationDao = handle.attach(JdbiUmbrellaStudyI18n.class);
 
             StudyDto study = studyDao.findByStudyGuid(studyIdentifier);

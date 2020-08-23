@@ -14,6 +14,7 @@ public class ActivityInstanceDto {
     private String guid;
     private long studyId;
     private long activityId;
+    private String activityCode;
     private long participantId;
     private long createdAtMillis;
     private Boolean isReadonly;
@@ -33,6 +34,7 @@ public class ActivityInstanceDto {
             @ColumnName("activity_instance_guid") String guid,
             @ColumnName("study_id") long studyId,
             @ColumnName("study_activity_id") long activityId,
+            @ColumnName("study_activity_code") String activityCode,
             @ColumnName("participant_id") long participantId,
             @ColumnName("created_at") long createdAtMillis,
             @ColumnName("first_completed_at") Long firstCompletedAt,
@@ -48,6 +50,7 @@ public class ActivityInstanceDto {
         this.guid = guid;
         this.studyId = studyId;
         this.activityId = activityId;
+        this.activityCode = activityCode;
         this.participantId = participantId;
         this.createdAtMillis = createdAtMillis;
         this.firstCompletedAt = firstCompletedAt;
@@ -74,6 +77,10 @@ public class ActivityInstanceDto {
 
     public long getActivityId() {
         return activityId;
+    }
+
+    public String getActivityCode() {
+        return activityCode;
     }
 
     public long getParticipantId() {

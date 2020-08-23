@@ -36,7 +36,7 @@
             <id>CircleciParallelBuild</id>
             <properties>
                 <include.test.pattern>**/*Test.java</include.test.pattern>
-                <exclude.test.pattern>*ListCancersRouteTest, *GetCancerSuggestionsRouteTest, *GetDsmDrugSuggestionsRouteTest</exclude.test.pattern>
+                <exclude.test.pattern>*ListCancersRouteTest, *GetCancerSuggestionsRouteTest, *GetDsmDrugSuggestionsRouteTest, *StandaloneTest</exclude.test.pattern>
             </properties>
         </profile>
     </profiles>
@@ -446,6 +446,21 @@
             <artifactId>jetty-servlets</artifactId>
             <version>9.4.28.v20200408</version>
         </dependency>
+        <dependency>
+            <groupId>org.redisson</groupId>
+            <artifactId>redisson</artifactId>
+            <version>3.13.1</version>
+        </dependency>
+        <dependency>
+            <groupId>io.netty</groupId>
+            <artifactId>netty-common</artifactId>
+            <version>4.1.50.Final</version>
+        </dependency>
+        <dependency>
+            <groupId>de.ruedigermoeller</groupId>
+            <artifactId>fst</artifactId>
+            <version>2.57</version>
+        </dependency>
 
     </dependencies>
 
@@ -464,15 +479,13 @@
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-core</artifactId>
-                <version>2.9.10</version>
+                <version>2.11.0</version>
             </dependency>
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-annotations</artifactId>
-                <version>2.9.10</version>
+                <version>2.11.0</version>
             </dependency>
-
-            <!-- from com.opencsv:opencsv -->
             <dependency>
                 <groupId>commons-beanutils</groupId>
                 <artifactId>commons-beanutils</artifactId>

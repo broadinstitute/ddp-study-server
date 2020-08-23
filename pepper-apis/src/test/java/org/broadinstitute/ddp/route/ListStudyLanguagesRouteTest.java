@@ -82,7 +82,8 @@ public class ListStudyLanguagesRouteTest extends IntegrationTestSuite.TestCase {
         HttpResponse httpResponse = Request.Get(url).execute().returnResponse();
         assertEquals(200, httpResponse.getStatusLine().getStatusCode());
         String json = EntityUtils.toString(httpResponse.getEntity());
-        Type listType = new TypeToken<List<StudyLanguage>>(){}.getType();
+        Type listType = new TypeToken<List<StudyLanguage>>() {
+        }.getType();
         List<StudyLanguage> languageList = gson.fromJson(json, listType);
         assertEquals(0, languageList.size());
 
@@ -95,6 +96,8 @@ public class ListStudyLanguagesRouteTest extends IntegrationTestSuite.TestCase {
 
         StudyLanguage lang = languageList.get(0);
         assertEquals("English", lang.getDisplayName());
+        assertEquals(0, lang.getStudyId());
+        assertEquals(0, lang.getLanguageId());
         assertTrue(lang.isDefault());
         assertEquals("en", lang.getLanguageCode());
         lang = languageList.get(1);

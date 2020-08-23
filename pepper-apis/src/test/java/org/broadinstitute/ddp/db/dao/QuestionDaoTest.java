@@ -18,6 +18,7 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
+import org.broadinstitute.ddp.cache.CacheService;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.QuestionStableIdExistsException;
@@ -1146,12 +1147,16 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             String instanceGuid = TestDataSetupUtil
                     .generateTestFormActivityInstanceForUser(handle, form.getActivityId(), testData.getUserGuid())
                     .getGuid();
+            QuestionDao[] daos = {new QuestionCachedDao(handle), handle.attach(QuestionDao.class)};
+            Question question = null;
 
-            Question question = handle.attach(QuestionDao.class)
-                    .getQuestionByBlockId(block.getBlockId(), instanceGuid, langCodeId).get();
-            assertEquals(QuestionType.PICKLIST, question.getQuestionType());
-            assertEquals(prompt.getTemplateId(), (Long) question.getPromptTemplateId());
-            assertEquals(sid, question.getStableId());
+            for (QuestionDao dao : daos) {
+                CacheService.getInstance().resetAllCaches();
+                question = dao.getQuestionByBlockId(block.getBlockId(), instanceGuid, langCodeId).get();
+                assertEquals(QuestionType.PICKLIST, question.getQuestionType());
+                assertEquals(prompt.getTemplateId(), (Long) question.getPromptTemplateId());
+                assertEquals(sid, question.getStableId());
+            }
 
             PicklistQuestion actual = (PicklistQuestion) question;
 
@@ -1655,6 +1660,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
                     activityInstanceDto.getGuid(),
                     List.of(ans.getAnswerId()),
                     Collections.emptyList(),
+                    true,
                     langCodeId);
             assertEquals(QuestionType.COMPOSITE, question.getQuestionType());
             assertEquals(prompt.getTemplateId(), (Long) question.getPromptTemplateId());
@@ -1770,6 +1776,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
                     activityInstanceDto.getGuid(),
                     List.of(ans.getAnswerId()),
                     Collections.emptyList(),
+                    true,
                     langCodeId);
 
             handle.rollback();

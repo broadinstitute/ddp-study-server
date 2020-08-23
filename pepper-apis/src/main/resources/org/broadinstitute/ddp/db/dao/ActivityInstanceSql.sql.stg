@@ -3,6 +3,7 @@ group ActivityInstanceSql;
 all_form_instance_responses_with_latest_status_and_answers_select() ::= <<
 select ai.activity_instance_id   as a_instance_id,
        ai.activity_instance_guid as a_instance_guid,
+       ai.activity_instance_guid as activity_instance_guid,
        ai.participant_id         as a_participant_id,
        ai.is_readonly            as a_is_readonly,
        ai.created_at             as a_created_at,

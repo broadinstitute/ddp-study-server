@@ -65,6 +65,13 @@ LEFT JOIN create_invitation_event_action as ciea on ciea.event_action_id = ea.ev
 LEFT JOIN event_action_target_activity as eata on eata.event_action_id = ea.event_action_id
 >>
 
+getEventConfigurationByEventConfigurationId() ::= <<
+<eventConfigurationLookup()>
+    where
+        ec.event_configuration_id = :eventConfigurationId
+        and ec.is_active = 1
+>>
+
 getEventConfigurationsForStudyIdAndTriggerType() ::= <<
 <eventConfigurationLookup()>
     where

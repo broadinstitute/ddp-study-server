@@ -304,7 +304,7 @@ public interface QuestionDao extends SqlObject {
                     .findAnswerIdsByInstanceGuidAndQuestionId(activityInstanceGuid, dto.getId()));
         }
 
-        List<Rule> untypedRules = getValidationDao().getValidationRules(dto.getId(), langCodeId);
+        List<Rule> untypedRules = getValidationDao().getValidationRules(dto, langCodeId);
 
         Question question;
 
@@ -328,7 +328,7 @@ public interface QuestionDao extends SqlObject {
                 question = getAgreementQuestion(dto, activityInstanceGuid, answerIds, untypedRules);
                 break;
             case COMPOSITE:
-                question = getCompositeQuestion(dto, activityInstanceGuid, answerIds, untypedRules, langCodeId);
+                question = getCompositeQuestion(dto, activityInstanceGuid, answerIds, untypedRules, retrieveAnswers, langCodeId);
                 break;
             default:
                 throw new DaoException("Unknown question type: " + dto.getType());
@@ -353,7 +353,7 @@ public interface QuestionDao extends SqlObject {
                                             List<Long> answerIds,
                                             List<Rule> untypedRules) {
         BooleanQuestionDto booleanQuestionDto = getJdbiBooleanQuestion()
-                .findDtoByQuestionId(dto.getId())
+                .findDtoByQuestion(dto)
                 .orElseThrow(() -> new DaoException("Could not find boolean question for id " + dto.getId()));
 
         AnswerDao answerDao = getAnswerDao();
@@ -390,7 +390,7 @@ public interface QuestionDao extends SqlObject {
                                                  List<Long> answerIds,
                                                  List<Rule> untypedRules) {
         PicklistQuestionDto picklistQuestionDto = getJdbiPicklistQuestion()
-                .findDtoByQuestionId(dto.getId())
+                .findDtoByQuestion(dto)
                 .orElseThrow(() -> new DaoException("Could not find picklist question for id " + dto.getId()));
 
         AnswerDao answerDao = getAnswerDao();
@@ -412,7 +412,7 @@ public interface QuestionDao extends SqlObject {
                         activityInstanceGuid, dto.getId(), dto.getStableId())));
 
         PicklistQuestionDao.GroupAndOptionDtos container = getPicklistQuestionDao()
-                .findOrderedGroupAndOptionDtos(dto.getId(), timestamp);
+                .findOrderedGroupAndOptionDtos(dto, timestamp);
 
         List<PicklistGroup> groups = new ArrayList<>();
         List<PicklistOption> allOptions = new ArrayList<>();
@@ -461,7 +461,7 @@ public interface QuestionDao extends SqlObject {
                                          List<Long> answerIds,
                                          List<Rule> untypedRules) {
         TextQuestionDto textQuestionDto = getJdbiTextQuestion()
-                .findDtoByQuestionId(dto.getId())
+                .findDtoByQuestion(dto)
                 .orElseThrow(() -> new DaoException("Could not find text question for id " + dto.getId()));
 
         AnswerDao answerDao = getAnswerDao();
@@ -641,15 +641,15 @@ public interface QuestionDao extends SqlObject {
                                                    String activityInstanceGuid,
                                                    List<Long> answerIds,
                                                    List<Rule> untypedRules,
+                                                   boolean retrieveAnswers,
                                                    long langCodeId) {
         CompositeQuestionDto compositeQuestionDto = getJdbiCompositeQuestion()
-                .findDtoByQuestionId(dto.getId())
+                .findDtoByQuestion(dto)
                 .orElseThrow(() -> new DaoException("Could not find composite question using question id " + dto.getId()));
 
-        boolean retrieveChildAnswers = true;
         List<Question> childQuestions = compositeQuestionDto.getChildQuestions().stream()
                 .map(childQuestionDto ->
-                        getQuestionByActivityInstanceAndDto(childQuestionDto, activityInstanceGuid, retrieveChildAnswers, langCodeId))
+                        getQuestionByActivityInstanceAndDto(childQuestionDto, activityInstanceGuid, retrieveAnswers, langCodeId))
                 .collect(toList());
 
         AnswerDao answerDao = getAnswerDao();
@@ -1051,10 +1051,11 @@ public interface QuestionDao extends SqlObject {
     default void insertQuestion(long activityId, CompositeQuestionDef compositeQuestion, long revisionId) {
         boolean acceptable = compositeQuestion.getChildren().stream().allMatch(child -> {
             QuestionType type = child.getQuestionType();
-            return type == QuestionType.DATE || type == QuestionType.PICKLIST || type == QuestionType.TEXT;
+            return type == QuestionType.DATE || type == QuestionType.PICKLIST
+                    || type == QuestionType.TEXT || type == QuestionType.NUMERIC;
         });
         if (!acceptable) {
-            throw new DaoException("Composites only support DATE, PICKLIST, and TEXT child questions");
+            throw new DaoException("Composites only support DATE, PICKLIST, TEXT and NUMERIC child questions");
         }
 
         insertBaseQuestion(activityId, compositeQuestion, revisionId);
@@ -1452,7 +1453,7 @@ public interface QuestionDao extends SqlObject {
                         "Could not find picklist question definition for id %d and timestamp %d", questionDto.getId(), timestamp)));
 
         PicklistQuestionDao.GroupAndOptionDtos container = getPicklistQuestionDao()
-                .findOrderedGroupAndOptionDtos(questionDto.getId(), timestamp);
+                .findOrderedGroupAndOptionDtos(questionDto, timestamp);
 
         TemplateDao templateDao = getTemplateDao();
         List<PicklistGroupDef> groups = new ArrayList<>();
@@ -1514,7 +1515,7 @@ public interface QuestionDao extends SqlObject {
 
     default CompositeQuestionDef findCompositeQuestionDefByDtoAndTimestamp(QuestionDto questionDto, long timestamp) {
         CompositeQuestionDto compositeDto = getJdbiCompositeQuestion()
-                .findDtoByQuestionId(questionDto.getId())
+                .findDtoByQuestion(questionDto)
                 .orElseThrow(() -> new DaoException(String.format(
                         "Could not find composite question definition for id %d and timestamp %d", questionDto.getId(), timestamp)));
 

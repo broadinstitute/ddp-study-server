@@ -45,7 +45,10 @@ clients:
       ##LOCALHOST_ORIGINS##
     client_metadata:
       study: testboston
-
+    jwt_configuration:
+      alg: RS256
+      lifetime_in_seconds: 36000
+    oidc_conformant: true
   - name: testboston-crc-client
     app_type: spa
     callbacks:
@@ -60,3 +63,7 @@ clients:
       ##LOCALHOST_ORIGINS##
     client_metadata:
       study: testboston
+    jwt_configuration:
+      alg: RS256
+      lifetime_in_seconds: 36000
+    oidc_conformant: true

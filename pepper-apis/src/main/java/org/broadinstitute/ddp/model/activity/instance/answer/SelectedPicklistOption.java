@@ -1,12 +1,13 @@
 package org.broadinstitute.ddp.model.activity.instance.answer;
 
+import java.io.Serializable;
 import javax.validation.constraints.NotBlank;
 
 import com.google.gson.annotations.SerializedName;
 import org.broadinstitute.ddp.util.MiscUtil;
 import org.hibernate.validator.constraints.Length;
 
-public class SelectedPicklistOption {
+public class SelectedPicklistOption implements Serializable {
 
     @NotBlank
     @SerializedName("stableId")

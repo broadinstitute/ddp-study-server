@@ -5,19 +5,22 @@ import static org.broadinstitute.ddp.constants.RouteConstants.Header.BEARER;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 
+import com.google.gson.Gson;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.content.ContentStyle;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
-import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
+import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudyCached;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
+import org.broadinstitute.ddp.db.dto.UserActivityInstanceSummary;
 import org.broadinstitute.ddp.filter.StudyLanguageResolutionFilter;
 import org.broadinstitute.ddp.filter.TokenConverterFilter;
 import org.broadinstitute.ddp.json.errors.ApiError;
@@ -26,6 +29,7 @@ import org.broadinstitute.ddp.security.DDPAuth;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import spark.HaltException;
 import spark.Request;
 import spark.Response;
 import spark.utils.SparkUtils;
@@ -130,6 +134,30 @@ public class RouteUtil {
         return studyGuid;
     }
 
+    public static UserActivityInstanceSummary findUserActivityInstanceSummaryOrHalt(Response response, Handle handle,
+                                                                                    String participantGuid, String studyGuid,
+                                                                                    String instanceGuid) {
+        var found = findUserAndStudyOrHalt(handle, participantGuid, studyGuid);
+        var studyDto = found.getStudyDto();
+        User user = found.getUser();
+
+        Supplier<HaltException> handleMissing = () -> {
+            String msg = "Could not find activity instance with guid " + instanceGuid;
+            return ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.ACTIVITY_NOT_FOUND, msg));
+        };
+
+
+        UserActivityInstanceSummary activityInstanceSummary = handle.attach(JdbiActivityInstance.class)
+                .getActivityInstanceSummary(user, studyDto.getId())
+                .orElseThrow(handleMissing);
+
+        ActivityInstanceDto instanceDto = activityInstanceSummary.getActivityInstanceByGuid(instanceGuid).orElseThrow(handleMissing);
+
+        haltIfError(user, participantGuid, studyGuid, instanceGuid, studyDto, instanceDto, response);
+
+        return activityInstanceSummary;
+    }
+
     /**
      * Get the activity instance, ensuring the study/user/instance exists and the instance is accessible. Otherwise, will set the
      * appropriate route response.
@@ -146,6 +174,7 @@ public class RouteUtil {
         var found = findUserAndStudyOrHalt(handle, participantGuid, studyGuid);
         var studyDto = found.getStudyDto();
         var user = found.getUser();
+
         ActivityInstanceDto instanceDto = handle.attach(JdbiActivityInstance.class)
                 .getByActivityInstanceGuid(instanceGuid)
                 .orElseThrow(() -> {
@@ -153,20 +182,29 @@ public class RouteUtil {
                     return ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.ACTIVITY_NOT_FOUND, msg));
                 });
 
-        if (instanceDto.getStudyId() != studyDto.getId() || instanceDto.getParticipantId() != user.getId()) {
-            LOG.warn("Activity instance {} does not belong to participant {} in study {}", instanceGuid, participantGuid, studyGuid);
-            String msg = "Could not find activity instance with guid " + instanceGuid;
-            throw ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.ACTIVITY_NOT_FOUND, msg));
-        } else if (instanceDto.isHidden()) {
-            String msg = "Activity instance " + instanceGuid + " is hidden and cannot be retrieved or interacted with";
-            throw ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.ACTIVITY_NOT_FOUND, msg));
-        } else if (user.isTemporary() && !instanceDto.isAllowUnauthenticated()) {
-            String msg = "Activity instance " + instanceGuid + " not accessible to unauthenticated users";
-            throw ResponseUtil.haltError(response, 401, new ApiError(ErrorCodes.OPERATION_NOT_ALLOWED, msg));
-        }
+        haltIfError(user, participantGuid, studyGuid, instanceGuid, studyDto, instanceDto, response);
 
         return instanceDto;
     }
+
+    public static void haltIfError(User user, String participantGuid, String studyGuid, String instanceGuid, StudyDto studyDto,
+                                   ActivityInstanceDto instanceDto, Response response) {
+        if (instanceDto.getStudyId() != studyDto.getId() || instanceDto.getParticipantId() != user.getId()) {
+            LOG.warn("Activity instance {} does not belong to participant {} in study {}", instanceGuid, participantGuid, studyGuid);
+            LOG.warn("InstanceDTO: " + new Gson().toJson(instanceDto));
+            LOG.warn("User: " + new Gson().toJson(user));
+            LOG.warn("StudyDto: " + new Gson().toJson(studyDto));
+            String msg = "Could not find activity instance with guid " + instanceGuid;
+            throw ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.ACTIVITY_NOT_FOUND, msg));
+        } else if (instanceDto.isHidden()) {
+            String msg = "Activity instance " + instanceDto.getGuid() + " is hidden and cannot be retrieved or interacted with";
+            throw ResponseUtil.haltError(response, 404, new ApiError(ErrorCodes.ACTIVITY_NOT_FOUND, msg));
+        } else if (user.isTemporary() && !instanceDto.isAllowUnauthenticated()) {
+            String msg = "Activity instance " + instanceDto.getGuid() + " not accessible to unauthenticated users";
+            throw ResponseUtil.haltError(response, 401, new ApiError(ErrorCodes.OPERATION_NOT_ALLOWED, msg));
+        }
+    }
+
 
     /**
      * Resolve the language to use for request. If study guid is provided, will lookup study's supported languages.
@@ -193,7 +231,7 @@ public class RouteUtil {
      * @return user and study
      */
     public static UserAndStudy findUserAndStudyOrHalt(Handle handle, String userGuid, String studyGuid) {
-        StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
+        StudyDto studyDto = new JdbiUmbrellaStudyCached(handle).findByStudyGuid(studyGuid);
         if (studyDto == null) {
             var err = new ApiError(ErrorCodes.STUDY_NOT_FOUND, "Could not find study with guid " + studyGuid);
             LOG.warn(err.getMessage());
@@ -216,7 +254,7 @@ public class RouteUtil {
      * @return user and study
      */
     public static UserAndStudy findPotentiallyLegacyUserAndStudyOrHalt(Handle handle, String userGuidOrAltPid, String studyGuid) {
-        StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
+        StudyDto studyDto = new JdbiUmbrellaStudyCached(handle).findByStudyGuid(studyGuid);
         if (studyDto == null) {
             var err = new ApiError(ErrorCodes.STUDY_NOT_FOUND, "Could not find study with guid " + studyGuid);
             LOG.warn(err.getMessage());

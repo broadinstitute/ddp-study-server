@@ -15,9 +15,10 @@ import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
+import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudyCached;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudyI18n;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
-import org.broadinstitute.ddp.db.dao.StudyLanguageDao;
+import org.broadinstitute.ddp.db.dao.StudyLanguageCachedDao;
 import org.broadinstitute.ddp.db.dto.EnrollmentStatusDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.StudyI18nDto;
@@ -60,7 +61,7 @@ public class GetStudiesRoute implements Route {
         DDPAuth authInfo = RouteUtil.getDDPAuth(request);
 
         return TransactionWrapper.withTxn(handle -> {
-            JdbiUmbrellaStudy studyDao = handle.attach(JdbiUmbrellaStudy.class);
+            JdbiUmbrellaStudy studyDao = new JdbiUmbrellaStudyCached(handle);
             JdbiUserStudyEnrollment enrollmentDao = handle.attach(JdbiUserStudyEnrollment.class);
 
             List<StudyDto> studiesDto = studyDao.findByUmbrellaGuid(umbrellaGuid);
@@ -72,7 +73,7 @@ public class GetStudiesRoute implements Route {
             List<StudySummary> umbrellaStudies = new ArrayList<>();
             for (StudyDto study : studiesDto) {
                 JdbiUmbrellaStudyI18n translationDao = handle.attach(JdbiUmbrellaStudyI18n.class);
-                Set<Locale> supportedLocales = handle.attach(StudyLanguageDao.class)
+                Set<Locale> supportedLocales = new StudyLanguageCachedDao(handle)
                         .findLanguages(study.getGuid())
                         .stream()
                         .map(StudyLanguage::toLocale)
