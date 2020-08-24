@@ -111,6 +111,9 @@
 {{end}}{{end}}
     "elasticsearchUsername": "pepper_backend",
     "elasticsearchBatchSize": 100,
+{{if $elasticsearchConf.Data.proxy}}
+    "elasticsearchProxy": "{{$elasticsearchConf.Data.proxy}}",
+{{end}}
     "dbInstanceId": "{{$conf.Data.dbInstanceId}}",
     "dsmJwtSecret": "{{$dsm_conf.Data.portal.jwtDdpSecret}}",
     "dsmJwtSigner": "org.broadinstitute.kdux",

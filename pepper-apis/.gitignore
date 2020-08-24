@@ -24,6 +24,7 @@ surefire-report.html
 # rendered secrets
 config/*.conf
 !config/waf.conf
+!config/squid.conf
 output/
 output-config/
 output-build-config/
