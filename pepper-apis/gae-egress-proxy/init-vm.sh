@@ -26,7 +26,7 @@ gcloud --project="$PROJECT_ID" compute instances create "$INSTANCE_NAME" \
   --zone=us-central1-a \
   --machine-type=g1-small \
   --image-project=ubuntu-os-cloud \
-  --image-family=ubuntu-minimal-1804-lts \
+  --image-family=ubuntu-minimal-2004-lts \
   --tags=gae-egress-proxy \
   --network=default \
   --address="$INSTANCE_NAME"
@@ -35,7 +35,7 @@ gcloud --project="$PROJECT_ID" compute instances describe "$INSTANCE_NAME" --zon
 echo ""
 echo "=> setting up docker in vm..."
 gcloud --project="$PROJECT_ID" compute ssh "$INSTANCE_NAME" --zone=us-central1-a \
-  --command="echo 'apt-get update && apt-get install -y docker.io && apt-get install -y docker-compose' | sudo su"
+  --command="apt-get update && apt-get install -y docker.io && apt-get install -y docker-compose && mkdir /app' | sudo su"
 
 echo ""
 echo "=> done!"

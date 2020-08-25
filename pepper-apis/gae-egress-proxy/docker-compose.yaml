@@ -1,7 +1,6 @@
 squid:
-  image: datadog/squid:latest
+  image: broadinstitute/pepper-squid:latest
   volumes:
-    - /app/squid.conf:/etc/squid/squid.conf
     - /var/log/squid:/var/log/squid
   ports:
     - "3128:3128"
