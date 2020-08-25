@@ -7,6 +7,16 @@ $ ./build-and-push.sh
 $ ./pepper-squid.sh ... deploy
 ```
 
+## Connecting to Proxy VM
+
+Once setup, the GAE services will need to be configured to use the appropriate
+VPC connector. These services may reference the internal DNS for the proxy VM,
+like so:
+
+```
+http://[nstance_name].c.[project_id].internal:3128
+```
+
 ## References
 
 * Squid configuration [docs][docs].
