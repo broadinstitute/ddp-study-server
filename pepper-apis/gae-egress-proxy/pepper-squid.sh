@@ -20,7 +20,7 @@ sudo_run() {
 
 case "$CMD" in
   deploy)
-    echo "=> uploading files to vm..."
+    echo "=> deploying to vm..."
     gcloud --project="$PROJECT_ID" compute scp --zone=us-central1-a \
       docker-compose.yaml "root@$INSTANCE_NAME:/app"
     sudo_run "docker-compose -f /app/docker-compose.yaml -p pepper pull

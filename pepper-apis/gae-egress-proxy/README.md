@@ -20,7 +20,7 @@ http://[nstance_name].c.[project_id].internal:3128
 ## References
 
 * Squid configuration [docs][docs].
-* See what version of squid is available [on ubuntu][ubuntu].
+* See what version of squid is available [on ubuntu][ubuntu-search].
 
 [docs]: http://www.squid-cache.org/Doc/config/
 [ubuntu-search]: https://packages.ubuntu.com/search?keywords=squid
