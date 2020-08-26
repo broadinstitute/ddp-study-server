@@ -33,9 +33,18 @@ gcloud --project="$PROJECT_ID" compute instances create "$INSTANCE_NAME" \
 gcloud --project="$PROJECT_ID" compute instances describe "$INSTANCE_NAME" --zone=us-central1-a
 
 echo ""
-echo "=> setting up docker in vm..."
+echo "=> setting up vm..."
 gcloud --project="$PROJECT_ID" compute ssh "$INSTANCE_NAME" --zone=us-central1-a \
-  --command="apt-get update && apt-get install -y docker.io && apt-get install -y docker-compose && mkdir /app' | sudo su"
+  --command="cd /tmp \
+    && sudo apt-get update \
+    && sudo apt-get install -y curl docker.io docker-compose \
+    && curl -sSO https://dl.google.com/cloudagents/add-monitoring-agent-repo.sh \
+    && sudo bash add-monitoring-agent-repo.sh \
+    && sudo apt-get update \
+    && sudo apt-get install -y 'stackdriver-agent=6.*' \
+    && sudo service stackdriver-agent start \
+    && sudo service stackdriver-agent status \
+    && sudo mkdir /app"
 
 echo ""
 echo "=> done!"
