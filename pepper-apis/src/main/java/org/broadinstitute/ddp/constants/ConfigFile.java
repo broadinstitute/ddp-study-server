@@ -118,6 +118,7 @@ public class ConfigFile {
     public static final String ELASTICSEARCH_PASSWORD = "elasticsearchPassword";
     public static final String ELASTICSEARCH_USERNAME = "elasticsearchUsername";
     public static final String ELASTICSEARCH_EXPORT_BATCH_SIZE = "elasticsearchBatchSize";
+    public static final String ELASTICSEARCH_PROXY = "elasticsearchProxy";
 
     public static final String DSM_BASE_URL = "dsmBaseUrl";
     public static final String DSM_JWT_SECRET = "dsmJwtSecret";
