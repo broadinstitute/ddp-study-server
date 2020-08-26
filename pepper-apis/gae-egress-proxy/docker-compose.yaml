@@ -1,0 +1,6 @@
+squid:
+  image: broadinstitute/pepper-squid:latest
+  volumes:
+    - /var/log/squid:/var/log/squid
+  ports:
+    - "3128:3128"
