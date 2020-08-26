@@ -41,7 +41,9 @@ import org.broadinstitute.ddp.model.activity.definition.ActivityDef;
 import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
 import org.broadinstitute.ddp.model.activity.instance.FormResponse;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
+import org.broadinstitute.ddp.model.activity.instance.answer.AnswerRow;
 import org.broadinstitute.ddp.model.activity.instance.answer.BoolAnswer;
+import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
@@ -49,11 +51,13 @@ import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOpt
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.activity.types.InstitutionType;
+import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.address.MailAddress;
 import org.broadinstitute.ddp.model.governance.Governance;
 import org.broadinstitute.ddp.model.pdf.ActivityDateSubstitution;
 import org.broadinstitute.ddp.model.pdf.AnswerSubstitution;
 import org.broadinstitute.ddp.model.pdf.BooleanAnswerSubstitution;
+import org.broadinstitute.ddp.model.pdf.CompositeAnswerSubstitution;
 import org.broadinstitute.ddp.model.pdf.CustomTemplate;
 import org.broadinstitute.ddp.model.pdf.MailingAddressTemplate;
 import org.broadinstitute.ddp.model.pdf.PdfConfiguration;
@@ -551,12 +555,11 @@ public class PdfGenerationService {
                         break;
                     case ANSWER:
                         convertSubstitutionToPdf((AnswerSubstitution) substitution, form,
-                                                 participant, instances,
-                                                 errors);
+                                participant, instances, template, errors);
                         break;
                     case ACTIVITY_DATE:
                         convertSubstitutionToPdf((ActivityDateSubstitution) substitution, form,
-                                                 participant, instances, errors);
+                                participant, instances, errors);
                         break;
                     default:
                         errors.add("Tried to use unsupported custom substitution type: " + type.toString());
@@ -656,7 +659,7 @@ public class PdfGenerationService {
      */
     private void convertSubstitutionToPdf(AnswerSubstitution substitution,
                                           PdfAcroForm form, Participant participant, Map<Long, ActivityResponse> instances,
-                                          List<String> errors) throws IOException {
+                                          CustomTemplate template, List<String> errors) throws IOException {
         if (!instances.containsKey(substitution.getActivityId())) {
             errors.add(String.format("Did not find activity instance for user guid %s and activityId=%d questionStableId=%s."
                     + " Required for PDF ANSWER substitutions", participant.getUser().getGuid(),
@@ -669,14 +672,19 @@ public class PdfGenerationService {
 
         String placeholder = substitution.getPlaceholder();
         PdfFormField field = form.getField(placeholder);
-        if (field == null) {
+        if (field == null && substitution.getQuestionType() != QuestionType.COMPOSITE) {
             errors.add(String.format("Could not find PDFFormField field with name: %s", placeholder));
             return;
         }
 
-        field.setFont(PdfFontFactory.createFont());
+        if (field != null) {
+            field.setFont(PdfFontFactory.createFont());
+        }
 
         Answer answer = instance.getAnswer(substitution.getQuestionStableId());
+        if (StringUtils.isNotEmpty(substitution.getParentQuestionStableId())) {
+            return;
+        }
         switch (substitution.getQuestionType()) {
             case BOOLEAN:
                 BooleanAnswerSubstitution booleanSubstitution = (BooleanAnswerSubstitution) substitution;
@@ -706,8 +714,124 @@ public class PdfGenerationService {
             case PICKLIST:
                 //sets selected option stableIds.
                 List<String> selectedOptions = new ArrayList<>();
-                for (SelectedPicklistOption option : ((PicklistAnswer) answer).getValue()) {
-                    selectedOptions.add(option.getStableId());
+                if (answer != null) {
+                    for (SelectedPicklistOption option : ((PicklistAnswer) answer).getValue()) {
+                        selectedOptions.add(option.getStableId());
+                    }
+                }
+                if (CollectionUtils.isNotEmpty(selectedOptions)) {
+                    field.setValue(String.join(", ", selectedOptions));
+                }
+                break;
+
+            case COMPOSITE:
+                CompositeAnswerSubstitution compositeSubstitution = (CompositeAnswerSubstitution) substitution;
+                if (answer == null) {
+                    return;
+                }
+
+                List<AnswerRow> compositeAnswers = ((CompositeAnswer) answer).getValue();
+                PdfDocument compositeMaster = new PdfDocument(new PdfWriter(new ByteArrayOutputStream()));
+                int pagesWritten = 0;
+                try {
+                    int currentDocumentIndex = 0;
+                    for (AnswerRow answerRow : compositeAnswers) {
+                        //TODO create one PDF
+                        byte[] renderedCompositePdf = renderCompositePdf(answerRow, compositeSubstitution, template, errors);
+                        copyPdfToMasterDoc(renderedCompositePdf, currentDocumentIndex, compositeMaster);
+                        copyPdfToMasterDoc(renderedCompositePdf, currentDocumentIndex, form.getPdfDocument());
+                        currentDocumentIndex++;
+                    }
+                } finally {
+                    pagesWritten = form.getPdfDocument().getNumberOfPages();
+                }
+
+                //TODO hook created compositeMaster PDF to main form !!!
+                break;
+
+            default:
+                errors.add("tried to use an unsupported answer type " + substitution.getQuestionType());
+                return;
+        }
+    }
+
+    private byte[] renderCompositePdf(AnswerRow answerRow, CompositeAnswerSubstitution compositeSubstitution,
+                                      CustomTemplate template, List<String> errors) throws IOException {
+
+        try (ByteArrayOutputStream renderedCompositeStream = new ByteArrayOutputStream();
+             PdfDocument renderedCompositePdf = new PdfDocument(
+                     new PdfReader(template.asByteStream()), new PdfWriter(renderedCompositeStream))) {
+
+            PdfAcroForm compositeForm = PdfAcroForm.getAcroForm(renderedCompositePdf, true);
+            compositeForm.setGenerateAppearance(true);
+
+            List<Answer> childAnswers = answerRow.getValues();
+
+            for (Answer childAnswer : childAnswers) {
+                LOG.info("ans / ques stable: {} ... answer guid: {} ",
+                        childAnswer.getQuestionStableId(), childAnswer.getAnswerGuid());
+
+                for (AnswerSubstitution sub : compositeSubstitution.getChildAnswerSubstitutions()) {
+                    if (sub.getQuestionStableId().equalsIgnoreCase(childAnswer.getQuestionStableId())) {
+                        LOG.info("stable ID MATCH in loop: {} ", childAnswer.getQuestionStableId());
+                        convertChildSubstitutionToPdf(sub, compositeForm, childAnswer, errors);
+                    }
+                }
+            }
+
+            renderedCompositePdf.close();
+            return renderedCompositeStream.toByteArray();
+        }
+    }
+
+
+    private void convertChildSubstitutionToPdf(AnswerSubstitution substitution,
+                                               PdfAcroForm form,
+                                               Answer answer,
+                                               List<String> errors) throws IOException {
+
+        String placeholder = substitution.getPlaceholder();
+        PdfFormField field = form.getField(placeholder);
+        if (field == null) {
+            errors.add(String.format("Could not find Child answer PDFFormField field with name: %s", placeholder));
+            return;
+        }
+
+        field.setFont(PdfFontFactory.createFont());
+
+        switch (substitution.getQuestionType()) {
+            case BOOLEAN:
+                BooleanAnswerSubstitution booleanSubstitution = (BooleanAnswerSubstitution) substitution;
+                Boolean boolValue = answer == null ? null : ((BoolAnswer) answer).getValue();
+                if (boolValue != null) {
+                    boolean shouldCheck;
+                    if (booleanSubstitution.checkIfFalse()) {
+                        shouldCheck = !boolValue;
+                    } else {
+                        shouldCheck = boolValue;
+                    }
+                    setIsChecked(field, shouldCheck);
+                }
+                break;
+            case TEXT:
+                String textValue = answer == null ? null : ((TextAnswer) answer).getValue();
+                if (textValue != null) {
+                    field.setValue(textValue);
+                }
+                break;
+            case DATE:
+                DateValue dateValue = answer == null ? null : ((DateAnswer) answer).getValue();
+                if (dateValue != null) {
+                    field.setValue(dateValue.toDefaultDateFormat());
+                }
+                break;
+            case PICKLIST:
+                //sets selected option stableIds.
+                List<String> selectedOptions = new ArrayList<>();
+                if (answer != null) {
+                    for (SelectedPicklistOption option : ((PicklistAnswer) answer).getValue()) {
+                        selectedOptions.add(option.getStableId());
+                    }
                 }
                 if (CollectionUtils.isNotEmpty(selectedOptions)) {
                     field.setValue(String.join(", ", selectedOptions));

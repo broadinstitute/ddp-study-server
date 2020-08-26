@@ -147,7 +147,7 @@ public interface PdfSql extends SqlObject {
             @Bind("activityId") long activityId,
             @Bind("stableId") String questionStableId);
 
-    @SqlUpdate("insert into pdf_answer_substitution (pdf_substitution_id, question_stable_code_id, parent_question_stable_id) "
+    @SqlUpdate("insert into pdf_answer_substitution (pdf_substitution_id, question_stable_code_id, parent_question_stable_code_id) "
             + "(select :subId, qsc.question_stable_code_id, pqsc.question_stable_code_id "
             + "   from "
             + "(select question_stable_code_id from question_stable_code where stable_id = :stableId "

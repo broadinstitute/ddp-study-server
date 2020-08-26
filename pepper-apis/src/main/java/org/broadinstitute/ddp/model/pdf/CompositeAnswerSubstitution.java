@@ -5,7 +5,7 @@ import java.util.List;
 
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 
-public class CompositeAnswerSubstitution extends PdfSubstitution {
+public class CompositeAnswerSubstitution extends AnswerSubstitution {
 
     private long activityId;
     private QuestionType questionType = QuestionType.COMPOSITE;
@@ -13,14 +13,15 @@ public class CompositeAnswerSubstitution extends PdfSubstitution {
     private List<AnswerSubstitution> childAnswerSubstitutions;
 
     public CompositeAnswerSubstitution(String placeholder, long activityId, String questionStableId) {
-        super(SubstitutionType.COMPOSITE_ANSWER, placeholder);
+        super(placeholder, activityId, QuestionType.COMPOSITE, questionStableId);
+
         this.activityId = activityId;
         this.questionStableId = questionStableId;
     }
 
     public CompositeAnswerSubstitution(String placeholder, long activityId, String questionStableId,
                                        List<AnswerSubstitution> childAnswerSubstitutions) {
-        super(SubstitutionType.COMPOSITE_ANSWER, placeholder);
+        super(placeholder, activityId, QuestionType.COMPOSITE, questionStableId);
         this.activityId = activityId;
         this.questionStableId = questionStableId;
         this.childAnswerSubstitutions = childAnswerSubstitutions;
@@ -48,4 +49,5 @@ public class CompositeAnswerSubstitution extends PdfSubstitution {
     public List<AnswerSubstitution> getChildAnswerSubstitutions() {
         return childAnswerSubstitutions;
     }
+
 }
