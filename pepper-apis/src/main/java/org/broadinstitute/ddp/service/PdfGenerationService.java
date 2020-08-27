@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import com.google.common.collect.Sets;
 import com.itextpdf.forms.PdfAcroForm;
@@ -682,7 +683,6 @@ public class PdfGenerationService {
         }
 
         Answer answer = instance.getAnswer(substitution.getQuestionStableId());
-        LOG.info("sub question type: {} ... field : {} ", substitution.getQuestionType(), field.getFieldName());
         switch (substitution.getQuestionType()) {
             case BOOLEAN:
                 BooleanAnswerSubstitution booleanSubstitution = (BooleanAnswerSubstitution) substitution;
@@ -724,26 +724,27 @@ public class PdfGenerationService {
                 break;
 
             case COMPOSITE:
+                //passed form contains custom composite template pages. just remove those empty pages
+                int pageCount = form.getPdfDocument().getNumberOfPages();
+                IntStream.range(1, pageCount+1).forEach(i -> form.getPdfDocument().removePage(i));
+
                 CompositeAnswerSubstitution compositeSubstitution = (CompositeAnswerSubstitution) substitution;
                 if (answer == null) {
                     return;
                 }
 
                 List<AnswerRow> compositeAnswers = ((CompositeAnswer) answer).getValue();
-                int pagesWritten = 0;
                 try {
                     int currentDocumentIndex = 0;
                     for (AnswerRow answerRow : compositeAnswers) {
-                        //TODO create one PDF
                         byte[] renderedCompositePdf = renderCompositePdf(answerRow, compositeSubstitution, template, errors);
                         copyPdfToMasterDoc(renderedCompositePdf, currentDocumentIndex, form.getPdfDocument());
                         currentDocumentIndex++;
                     }
                 } finally {
-                    pagesWritten = form.getPdfDocument().getNumberOfPages();
+                    //
                 }
 
-                //TODO hook created compositeMaster PDF to main form !!!
                 break;
 
             default:
