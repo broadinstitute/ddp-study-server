@@ -682,9 +682,7 @@ public class PdfGenerationService {
         }
 
         Answer answer = instance.getAnswer(substitution.getQuestionStableId());
-        if (StringUtils.isNotEmpty(substitution.getParentQuestionStableId())) {
-            return;
-        }
+        LOG.info("sub question type: {} ... field : {} ", substitution.getQuestionType(), field.getFieldName());
         switch (substitution.getQuestionType()) {
             case BOOLEAN:
                 BooleanAnswerSubstitution booleanSubstitution = (BooleanAnswerSubstitution) substitution;
@@ -697,6 +695,7 @@ public class PdfGenerationService {
                         shouldCheck = boolValue;
                     }
                     setIsChecked(field, shouldCheck);
+                    LOG.info("Boolean field : {} should check: {} ", field.getFieldName(), shouldCheck);
                 }
                 break;
             case TEXT:
@@ -731,14 +730,12 @@ public class PdfGenerationService {
                 }
 
                 List<AnswerRow> compositeAnswers = ((CompositeAnswer) answer).getValue();
-                PdfDocument compositeMaster = new PdfDocument(new PdfWriter(new ByteArrayOutputStream()));
                 int pagesWritten = 0;
                 try {
                     int currentDocumentIndex = 0;
                     for (AnswerRow answerRow : compositeAnswers) {
                         //TODO create one PDF
                         byte[] renderedCompositePdf = renderCompositePdf(answerRow, compositeSubstitution, template, errors);
-                        copyPdfToMasterDoc(renderedCompositePdf, currentDocumentIndex, compositeMaster);
                         copyPdfToMasterDoc(renderedCompositePdf, currentDocumentIndex, form.getPdfDocument());
                         currentDocumentIndex++;
                     }
@@ -759,8 +756,8 @@ public class PdfGenerationService {
                                       CustomTemplate template, List<String> errors) throws IOException {
 
         try (ByteArrayOutputStream renderedCompositeStream = new ByteArrayOutputStream();
-             PdfDocument renderedCompositePdf = new PdfDocument(
-                     new PdfReader(template.asByteStream()), new PdfWriter(renderedCompositeStream))) {
+                 PdfDocument renderedCompositePdf = new PdfDocument(
+                         new PdfReader(template.asByteStream()), new PdfWriter(renderedCompositeStream))) {
 
             PdfAcroForm compositeForm = PdfAcroForm.getAcroForm(renderedCompositePdf, true);
             compositeForm.setGenerateAppearance(true);
@@ -799,6 +796,7 @@ public class PdfGenerationService {
 
         field.setFont(PdfFontFactory.createFont());
 
+        LOG.info("child sub question type: {} ... field : {} ", substitution.getQuestionType(), field.getFieldName());
         switch (substitution.getQuestionType()) {
             case BOOLEAN:
                 BooleanAnswerSubstitution booleanSubstitution = (BooleanAnswerSubstitution) substitution;
@@ -811,6 +809,7 @@ public class PdfGenerationService {
                         shouldCheck = boolValue;
                     }
                     setIsChecked(field, shouldCheck);
+                    LOG.info("Child Boolean field : {} should check: {} ", field.getFieldName(), shouldCheck);
                 }
                 break;
             case TEXT:
