@@ -124,9 +124,6 @@ commands:
             develop)
               DEPLOY_ENV=dev
             ;;
-            add_redis_caching)
-              DEPLOY_ENV=dev
-            ;;
             test)
               DEPLOY_ENV=test
             ;;
@@ -825,7 +822,6 @@ workflows:
             branches:
               only:
                 - develop
-                - add_redis_caching
                 - &rc /^rc.*/
                 - &hotfix /^hotfix.*/
       - parallel-compile-and-test-job:
@@ -838,7 +834,6 @@ workflows:
             branches:
               only:
                 - develop
-                - add_redis_caching
           requires:
             - parallel-compile-and-test-job
             - compile-and-run-test-suite-job
