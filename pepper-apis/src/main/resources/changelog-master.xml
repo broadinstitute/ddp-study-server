@@ -226,4 +226,5 @@
     <include file="db-changes/schema/DDP-4876-mailing-address-component-required-flags.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-4854-increase-i18nstudyactivity-title-len.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/seed/testboston-delivered.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-4842-pdf-composite-answer-substitution.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>
