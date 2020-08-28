@@ -724,25 +724,21 @@ public class PdfGenerationService {
                 break;
 
             case COMPOSITE:
+                if (answer == null) {
+                    return;
+                }
+
                 //passed form contains custom composite template pages. just remove those empty pages
                 int pageCount = form.getPdfDocument().getNumberOfPages();
                 IntStream.range(1, pageCount+1).forEach(i -> form.getPdfDocument().removePage(i));
 
                 CompositeAnswerSubstitution compositeSubstitution = (CompositeAnswerSubstitution) substitution;
-                if (answer == null) {
-                    return;
-                }
-
                 List<AnswerRow> compositeAnswers = ((CompositeAnswer) answer).getValue();
-                try {
-                    int currentDocumentIndex = 0;
-                    for (AnswerRow answerRow : compositeAnswers) {
-                        byte[] renderedCompositePdf = renderCompositePdf(answerRow, compositeSubstitution, template, errors);
-                        copyPdfToMasterDoc(renderedCompositePdf, currentDocumentIndex, form.getPdfDocument());
-                        currentDocumentIndex++;
-                    }
-                } finally {
-                    //
+                int currentDocumentIndex = 0;
+                for (AnswerRow answerRow : compositeAnswers) {
+                    byte[] renderedCompositePdf = renderCompositePdf(answerRow, compositeSubstitution, template, errors);
+                    copyPdfToMasterDoc(renderedCompositePdf, currentDocumentIndex, form.getPdfDocument());
+                    currentDocumentIndex++;
                 }
 
                 break;
@@ -752,36 +748,6 @@ public class PdfGenerationService {
                 return;
         }
     }
-
-    private byte[] renderCompositePdf(AnswerRow answerRow, CompositeAnswerSubstitution compositeSubstitution,
-                                      CustomTemplate template, List<String> errors) throws IOException {
-
-        try (ByteArrayOutputStream renderedCompositeStream = new ByteArrayOutputStream();
-                 PdfDocument renderedCompositePdf = new PdfDocument(
-                         new PdfReader(template.asByteStream()), new PdfWriter(renderedCompositeStream))) {
-
-            PdfAcroForm compositeForm = PdfAcroForm.getAcroForm(renderedCompositePdf, true);
-            compositeForm.setGenerateAppearance(true);
-
-            List<Answer> childAnswers = answerRow.getValues();
-
-            for (Answer childAnswer : childAnswers) {
-                LOG.info("ans / ques stable: {} ... answer guid: {} ",
-                        childAnswer.getQuestionStableId(), childAnswer.getAnswerGuid());
-
-                for (AnswerSubstitution sub : compositeSubstitution.getChildAnswerSubstitutions()) {
-                    if (sub.getQuestionStableId().equalsIgnoreCase(childAnswer.getQuestionStableId())) {
-                        LOG.info("stable ID MATCH in loop: {} ", childAnswer.getQuestionStableId());
-                        convertChildSubstitutionToPdf(sub, compositeForm, childAnswer, errors);
-                    }
-                }
-            }
-
-            renderedCompositePdf.close();
-            return renderedCompositeStream.toByteArray();
-        }
-    }
-
 
     private void convertChildSubstitutionToPdf(AnswerSubstitution substitution,
                                                PdfAcroForm form,
@@ -797,7 +763,6 @@ public class PdfGenerationService {
 
         field.setFont(PdfFontFactory.createFont());
 
-        LOG.info("child sub question type: {} ... field : {} ", substitution.getQuestionType(), field.getFieldName());
         switch (substitution.getQuestionType()) {
             case BOOLEAN:
                 BooleanAnswerSubstitution booleanSubstitution = (BooleanAnswerSubstitution) substitution;
@@ -810,7 +775,6 @@ public class PdfGenerationService {
                         shouldCheck = boolValue;
                     }
                     setIsChecked(field, shouldCheck);
-                    LOG.info("Child Boolean field : {} should check: {} ", field.getFieldName(), shouldCheck);
                 }
                 break;
             case TEXT:
@@ -841,6 +805,34 @@ public class PdfGenerationService {
             default:
                 errors.add("tried to use an unsupported answer type " + substitution.getQuestionType());
                 return;
+        }
+    }
+
+
+    private byte[] renderCompositePdf(AnswerRow answerRow, CompositeAnswerSubstitution compositeSubstitution,
+                                      CustomTemplate template, List<String> errors) throws IOException {
+
+        try (ByteArrayOutputStream renderedCompositeStream = new ByteArrayOutputStream();
+                 PdfDocument renderedCompositePdf = new PdfDocument(
+                         new PdfReader(template.asByteStream()), new PdfWriter(renderedCompositeStream))) {
+
+            PdfAcroForm compositeForm = PdfAcroForm.getAcroForm(renderedCompositePdf, true);
+            compositeForm.setGenerateAppearance(true);
+
+            List<Answer> childAnswers = answerRow.getValues();
+
+            for (Answer childAnswer : childAnswers) {
+                if (childAnswer != null) {
+                    for (AnswerSubstitution sub : compositeSubstitution.getChildAnswerSubstitutions()) {
+                        if (sub.getQuestionStableId().equalsIgnoreCase(childAnswer.getQuestionStableId())) {
+                            convertChildSubstitutionToPdf(sub, compositeForm, childAnswer, errors);
+                        }
+                    }
+                }
+            }
+
+            renderedCompositePdf.close();
+            return renderedCompositeStream.toByteArray();
         }
     }
 

@@ -346,38 +346,27 @@ public interface PdfDao extends SqlObject {
         if (!customTemplates.isEmpty()) {
             findSubstitutionsByCustomTemplateIds(customTemplates.keySet())
                     .forEach(sub -> customTemplates.get(sub.getTemplateId()).addSubstitution(sub));
-            for (CustomTemplate template: customTemplates.values()) {
 
+            //build CompositeAnswerSubstitution's
+            for (CustomTemplate template: customTemplates.values()) {
                 Map<String, CompositeAnswerSubstitution> compositeSubs = new HashMap<>();
                 Iterator<PdfSubstitution> subsItr = template.getSubstitutions().iterator();
                 while (subsItr.hasNext()) {
                     PdfSubstitution sub = subsItr.next();
+                    if (!(sub instanceof AnswerSubstitution)) {
+                        continue;
+                    }
                     AnswerSubstitution answerSub = (AnswerSubstitution) sub;
                     String parentStableCode = answerSub.getParentQuestionStableId();
                     if (StringUtils.isNotBlank(parentStableCode)) {
                         if (!compositeSubs.containsKey(parentStableCode)) {
                             compositeSubs.put(parentStableCode,
                                     new CompositeAnswerSubstitution(null, answerSub.getActivityId(), parentStableCode));
-                            //TODO .. delete child from subs list
                         }
                         compositeSubs.get(parentStableCode).addChildAnswerSubstitutions(answerSub);
                         subsItr.remove();
                     }
                 }
-
-                /*for (PdfSubstitution sub : template.getSubstitutions()) {
-                    AnswerSubstitution answerSub = (AnswerSubstitution)sub;
-                    String parentStableCode = answerSub.getParentQuestionStableId();
-                    if (StringUtils.isNotBlank(parentStableCode)) {
-                        if (!compositeSubs.containsKey(parentStableCode)) {
-                            compositeSubs.put(parentStableCode,
-                                    new CompositeAnswerSubstitution(null, answerSub.getActivityId(), parentStableCode));
-                            //TODO .. delete child from subs list
-                        }
-                        compositeSubs.get(parentStableCode).addChildAnswerSubstitutions(answerSub);
-                        //template.getSubstitutions().remove(sub);
-                    }
-                }*/
 
                 if (!compositeSubs.isEmpty()) {
                     compositeSubs.forEach((key, compSub) -> template.addSubstitution(compSub));
