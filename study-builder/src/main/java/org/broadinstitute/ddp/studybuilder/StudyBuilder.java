@@ -156,6 +156,9 @@ public class StudyBuilder {
         numRows = helper.invalidateMailingAddressStatuses(studyDto.getId());
         LOG.info("invalidated {} mailing addresses", numRows);
 
+        numRows = helper.invalidateKitScheduleRecords(studyDto.getId());
+        LOG.info("invalidated {} kit schedule records", numRows);
+
         numRows = helper.renamePdfConfigurations(studyDto.getId());
         LOG.info("renamed {} pdf configurations", numRows);
 
@@ -623,6 +626,12 @@ public class StudyBuilder {
                 + "        select mailing_address_validation_status_id from mailing_address_validation_status where name = 'INVALID')"
                 + "  where address_id in (<addressIds>)")
         int updateAddressStatusesToInvalid(@BindList(value = "addressIds", onEmpty = BindList.EmptyHandling.NULL) Set<Long> addressIds);
+
+        @SqlUpdate("update kit_schedule_record as r"
+                + "   join kit_configuration as k on k.kit_configuration_id = r.kit_configuration_id"
+                + "    set r.opted_out = true, r.num_occurrences = 100"
+                + "  where k.study_id = :studyId")
+        int invalidateKitScheduleRecords(@Bind("studyId") long studyId);
 
         @SqlUpdate("update pdf_document_configuration"
                 + "    set configuration_name = concat(configuration_name, '-', umbrella_study_id)"
