@@ -730,7 +730,7 @@ public class PdfGenerationService {
 
                 //passed form contains custom composite template pages. just remove those empty pages
                 int pageCount = form.getPdfDocument().getNumberOfPages();
-                IntStream.range(1, pageCount+1).forEach(i -> form.getPdfDocument().removePage(i));
+                IntStream.range(1, pageCount + 1).forEach(i -> form.getPdfDocument().removePage(i));
 
                 CompositeAnswerSubstitution compositeSubstitution = (CompositeAnswerSubstitution) substitution;
                 List<AnswerRow> compositeAnswers = ((CompositeAnswer) answer).getValue();
