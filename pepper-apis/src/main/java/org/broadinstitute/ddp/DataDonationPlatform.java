@@ -119,6 +119,7 @@ import org.broadinstitute.ddp.route.InvitationVerifyRoute;
 import org.broadinstitute.ddp.route.JoinMailingListRoute;
 import org.broadinstitute.ddp.route.ListCancersRoute;
 import org.broadinstitute.ddp.route.ListStudyLanguagesRoute;
+import org.broadinstitute.ddp.route.GetShouldDisplayLanguageChangePopupRoute;
 import org.broadinstitute.ddp.route.ListUserStudyInvitationsRoute;
 import org.broadinstitute.ddp.route.PatchActivityInstanceRoute;
 import org.broadinstitute.ddp.route.PatchFormAnswersRoute;
@@ -347,6 +348,7 @@ public class DataDonationPlatform {
         get(API.STUDY_DETAIL, new GetStudyDetailRoute(), responseSerializer);
         get(API.STUDY_PASSWORD_POLICY, new GetStudyPasswordPolicyRoute(), responseSerializer);
         get(API.STUDY_LANGUAGES, new ListStudyLanguagesRoute(), responseSerializer);
+        get(API.DISPLAY_LANGUAGE_POPUP, new GetShouldDisplayLanguageChangePopupRoute(), responseSerializer);
         post(API.INVITATION_VERIFY, new InvitationVerifyRoute(), jsonSerializer);
         post(API.INVITATION_CHECK, new InvitationCheckStatusRoute(), jsonSerializer);
 

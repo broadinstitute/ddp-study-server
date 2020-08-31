@@ -88,6 +88,7 @@ import org.slf4j.LoggerFactory;
         GetMailAddressInfoRouteTest.class,
         GetMedicalProviderListRouteTest.class,
         GetPrequalifierInstanceRouteTest.class,
+        GetShouldDisplayLanguageChangePopupRouteTest.class,
         GetUserAnnouncementsRouteTest.class,
         GetWorkflowRouteTest.class,
         HealthCheckRouteTest.class,
