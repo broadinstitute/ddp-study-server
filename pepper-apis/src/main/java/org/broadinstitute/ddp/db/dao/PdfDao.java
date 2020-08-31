@@ -127,16 +127,10 @@ public interface PdfDao extends SqlObject {
 
     private void insertAnswerSubstitution(AnswerSubstitution substitution) {
         PdfSql pdfSql = getPdfSql();
-        //TODO refactor below into one
-        if (StringUtils.isNotBlank(substitution.getParentQuestionStableId())) {
-            DBUtils.checkInsert(1, pdfSql.insertBaseAnswerSubstitution(
-                    substitution.getId(), substitution.getActivityId(),
-                    substitution.getQuestionStableId(), substitution.getParentQuestionStableId()));
-        } else {
-            DBUtils.checkInsert(1, pdfSql.insertBaseAnswerSubstitution(
-                    substitution.getId(), substitution.getActivityId(),
-                    substitution.getQuestionStableId()));
-        }
+        DBUtils.checkInsert(1, pdfSql.insertBaseAnswerSubstitution(
+                substitution.getId(), substitution.getActivityId(),
+                substitution.getQuestionStableId(), substitution.getParentQuestionStableId()));
+
         if (substitution.getQuestionType() == QuestionType.BOOLEAN) {
             BooleanAnswerSubstitution boolSubstitution = (BooleanAnswerSubstitution) substitution;
             DBUtils.checkInsert(1, pdfSql.insertBooleanAnswerSubstitution(substitution.getId(), boolSubstitution.checkIfFalse()));
