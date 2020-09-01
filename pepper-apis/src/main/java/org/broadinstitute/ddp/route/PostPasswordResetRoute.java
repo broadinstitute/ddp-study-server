@@ -3,11 +3,9 @@ package org.broadinstitute.ddp.route;
 import java.util.Optional;
 
 import okhttp3.HttpUrl;
-
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
-
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.QueryParam;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -15,10 +13,8 @@ import org.broadinstitute.ddp.db.dao.JdbiClient;
 import org.broadinstitute.ddp.db.dto.ClientDto;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.util.ResponseUtil;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import spark.Request;
 import spark.Response;
 import spark.Route;
@@ -35,13 +31,12 @@ public class PostPasswordResetRoute implements Route {
     public Object handle(Request request, Response response) throws Exception {
         String auth0ClientId = request.queryParams(QueryParam.AUTH0_CLIENT_ID);
         String auth0Domain = request.queryParams(QueryParam.AUTH0_DOMAIN);
-        String email = request.queryParams(QueryParam.EMAIL);
         String auth0Success = request.queryParams(QueryParam.SUCCESS);
 
-        if (StringUtils.isBlank(auth0ClientId) || StringUtils.isBlank(email)) {
-            String errMsg = "auth0ClientId and email query string parameters are mandatory";
+        if (StringUtils.isBlank(auth0ClientId)) {
+            String errMsg = "auth0ClientId query string parameter is mandatory";
             LOG.warn(errMsg);
-            ResponseUtil.haltError(response, HttpStatus.SC_BAD_REQUEST, new ApiError(ErrorCodes.REQUIRED_PARAMETER_MISSING, errMsg));
+            throw ResponseUtil.haltError(response, HttpStatus.SC_BAD_REQUEST, new ApiError(ErrorCodes.REQUIRED_PARAMETER_MISSING, errMsg));
         }
 
         HttpUrl clientPwdResetUrl = null;
@@ -67,7 +62,6 @@ public class PostPasswordResetRoute implements Route {
         }
 
         HttpUrl.Builder urlBuilder = clientPwdResetUrl.newBuilder();
-        urlBuilder.addQueryParameter(QueryParam.EMAIL, email);
 
         if (!Boolean.valueOf(auth0Success)) {
             String errMsg = "success parameter is FALSE, which means that the Auth0 link has expired";
