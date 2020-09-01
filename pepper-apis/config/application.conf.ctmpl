@@ -70,6 +70,9 @@
         "apiLimitRate": {{$conf.Data.rateLimit.apiLimitRate}}
     },
     "sendgrid": {
+    {{if $conf.Data.sendgrid.proxy}}
+        "proxy": "{{$conf.Data.sendgrid.proxy}}",
+    {{end}}
         "fromName": "{{$conf.Data.sendgrid.fromName}}",
         "fromEmail": "{{$conf.Data.sendgrid.fromEmail}}"
     },

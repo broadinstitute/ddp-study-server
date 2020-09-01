@@ -22,7 +22,7 @@ case "$CMD" in
   deploy)
     echo "=> deploying to vm..."
     gcloud --project="$PROJECT_ID" compute scp --zone=us-central1-a \
-      docker-compose.yaml "root@$INSTANCE_NAME:/app"
+      squid.conf docker-compose.yaml "root@$INSTANCE_NAME:/app"
     sudo_run "docker-compose -f /app/docker-compose.yaml -p pepper pull \
       && docker-compose -f /app/docker-compose.yaml -p pepper down \
       && docker-compose -f /app/docker-compose.yaml -p pepper up -d"
