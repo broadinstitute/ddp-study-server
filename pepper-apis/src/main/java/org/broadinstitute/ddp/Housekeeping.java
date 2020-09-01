@@ -88,6 +88,7 @@ import org.broadinstitute.ddp.service.PdfBucketService;
 import org.broadinstitute.ddp.service.PdfGenerationService;
 import org.broadinstitute.ddp.service.PdfService;
 import org.broadinstitute.ddp.util.ConfigManager;
+import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.GuidUtils;
 import org.broadinstitute.ddp.util.LiquibaseUtil;
 import org.broadinstitute.ddp.util.LogbackConfigurationPrinter;
@@ -580,7 +581,7 @@ public class Housekeeping {
         PdfGenerationHandler pdfGenerationHandler = new PdfGenerationHandler(pdfService, pdfBucketService, pdfGenerationService);
         Gson gson = new Gson();
         if (sendGridSupplier == null) {
-            sendGridSupplier = SendGridClient::new;
+            sendGridSupplier = apiKey -> new SendGridClient(apiKey, ConfigUtil.getStrIfPresent(cfg, ConfigFile.Sendgrid.PROXY));
         }
         final SendGridSupplier sendGridProvider = sendGridSupplier;
         try {
