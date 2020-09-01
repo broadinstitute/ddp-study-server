@@ -24,6 +24,8 @@ public class ParticipantProfile {
     private boolean doNotContact;
     @SerializedName("createdAt")
     private long createdAt;
+    @SerializedName("shouldSkipLanguageProfile")
+    private boolean shouldSkipLanguageProfile;
 
     public ParticipantProfile(
             String firstName,
@@ -35,7 +37,8 @@ public class ParticipantProfile {
             String email,
             String preferredLanguage,
             Boolean doNotContact,
-            long createdAt
+            long createdAt,
+            Boolean shouldSkipLanguageProfile
     ) {
         this.firstName = firstName;
         this.lastName = lastName;
@@ -47,6 +50,7 @@ public class ParticipantProfile {
         this.preferredLanguage = preferredLanguage;
         this.doNotContact = (doNotContact == null ? false : doNotContact);
         this.createdAt = createdAt;
+        this.shouldSkipLanguageProfile = (shouldSkipLanguageProfile == null ? false : shouldSkipLanguageProfile);
     }
 
     public static Builder builder() {
@@ -64,6 +68,7 @@ public class ParticipantProfile {
         private String preferredLanguage;
         private Boolean doNotContact;
         private long createdAt;
+        private Boolean shouldSkipLanguagePopup;
 
         public ParticipantProfile build() {
             return new ParticipantProfile(
@@ -76,7 +81,8 @@ public class ParticipantProfile {
                     email,
                     preferredLanguage,
                     doNotContact,
-                    createdAt
+                    createdAt,
+                    shouldSkipLanguagePopup
             );
         }
 
@@ -127,6 +133,11 @@ public class ParticipantProfile {
 
         public Builder setCreatedAt(long createdAt) {
             this.createdAt = createdAt;
+            return this;
+        }
+
+        public Builder setShouldSkipLanguagePopup(Boolean shouldSkipLanguagePopup) {
+            this.shouldSkipLanguagePopup = shouldSkipLanguagePopup;
             return this;
         }
     }

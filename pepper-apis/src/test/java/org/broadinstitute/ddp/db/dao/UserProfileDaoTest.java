@@ -46,6 +46,7 @@ public class UserProfileDaoTest extends TxnAwareBaseTest {
             assertNull(actual.getPreferredLangCode());
             assertNull(actual.getDoNotContact());
             assertNull(actual.getIsDeceased());
+            assertNull(actual.getShouldSkipLanguagePopup());
 
             handle.rollback();
         });

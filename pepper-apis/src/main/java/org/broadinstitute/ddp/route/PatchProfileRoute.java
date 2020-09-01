@@ -73,6 +73,9 @@ public class PatchProfileRoute implements Route {
                 && json.has(Profile.BIRTH_DAY_IN_MONTH);
         LocalDate parsedBirthDate = providedBirthDateElements ? parseBirthDate(payload) : null;
 
+        boolean providedShouldSkipLanguagePopup = json.has(Profile.SHOULD_SKIP_LANGUAGE_POPUP);
+        Boolean shouldSkipLanguagePopup = providedShouldSkipLanguagePopup ? payload.getShouldSkipLanguagePopup() : null;
+
         Profile modifiedProfile = TransactionWrapper.withTxn((Handle handle) -> {
             boolean providedLanguage = json.has(Profile.PREFERRED_LANGUAGE);
             LanguageDto languageDto = providedLanguage ? parseLanguage(payload) : null;
@@ -109,6 +112,10 @@ public class PatchProfileRoute implements Route {
 
             if (providedLanguage) {
                 builder.setPreferredLangId(languageDto == null ? null : languageDto.getId());
+            }
+
+            if (providedShouldSkipLanguagePopup) {
+                builder.setShouldSkipLanguagePopup(shouldSkipLanguagePopup);
             }
 
             profile = profileDao.updateProfile(builder.build());

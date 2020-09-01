@@ -102,7 +102,7 @@ public class UserDaoTest extends TxnAwareBaseTest {
         handle.attach(UserProfileDao.class).createProfile(
                 new UserProfile.Builder(tempUser.getId())
                         .setFirstName("first").setLastName("last").setPreferredLangId(langId).setDoNotContact(false)
-                        .build());
+                        .setShouldSkipLanguagePopup(false).build());
 
         ActivityInstanceDto instance = handle.attach(ActivityInstanceDao.class)
                 .insertInstance(form.getActivityId(), tempUser.getGuid());

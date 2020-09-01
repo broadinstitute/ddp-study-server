@@ -615,6 +615,9 @@ public class TestDataSetupUtil {
                 .setPreferredLangId(LanguageStore
                         .get(TestConstants.TEST_USER_PROFILE_PREFERRED_LANGUAGE)
                         .getId())
+                .setShouldSkipLanguagePopup(random
+                        ? rand.nextBoolean()
+                        : TestConstants.TEST_USER_PROFILE_SKIP_LANGUAGE_POPUP)
                 .build();
         handle.attach(UserProfileDao.class).createProfile(profile);
         return profile;

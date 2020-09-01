@@ -477,7 +477,8 @@ public class DataExporter {
         }
         ParticipantProfile profile = new ParticipantProfile(userProfile.getFirstName(), userProfile.getLastName(),
                 user.getGuid(), user.getHruid(), user.getLegacyAltPid(), user.getLegacyShortId(), user.getEmail(),
-                userProfile.getPreferredLangCode(), userProfile.getDoNotContact(), user.getCreatedAt());
+                userProfile.getPreferredLangCode(), userProfile.getDoNotContact(), user.getCreatedAt(),
+                userProfile.getShouldSkipLanguagePopup());
 
         Set<String> proxies = new HashSet<>();
         Set<String> governedUsers = new HashSet<>();
@@ -739,6 +740,7 @@ public class DataExporter {
             builder.setLastName(userProfile.getLastName());
             builder.setPreferredLanguage(userProfile.getPreferredLangCode());
             builder.setDoNotContact(userProfile.getDoNotContact());
+            builder.setShouldSkipLanguagePopup(userProfile.getShouldSkipLanguagePopup());
         }
         builder.setGuid(user.getGuid())
                 .setHruid(user.getHruid())
