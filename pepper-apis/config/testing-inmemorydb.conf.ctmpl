@@ -106,6 +106,7 @@
     },
     "housekeepingMaxConnections": 50,
     "sendgrid": {
+        "proxy": null,
         "fromName": "Pepper Local",
         "fromEmail": "noreply@datadonationplatform.org"
     },

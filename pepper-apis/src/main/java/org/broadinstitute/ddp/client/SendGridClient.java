@@ -2,20 +2,27 @@ package org.broadinstitute.ddp.client;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import javax.annotation.Nullable;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.annotations.SerializedName;
 import com.sendgrid.Attachments;
+import com.sendgrid.Client;
 import com.sendgrid.Mail;
 import com.sendgrid.Method;
 import com.sendgrid.Request;
 import com.sendgrid.Response;
 import com.sendgrid.SendGrid;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.http.HttpHost;
+import org.apache.http.impl.client.HttpClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,8 +66,24 @@ public class SendGridClient {
                 .build();
     }
 
+    public SendGridClient(String apiKey, @Nullable String proxy) {
+        var httpClientBuilder = HttpClients.custom();
+        if (proxy != null && !proxy.isBlank()) {
+            URL proxyUrl;
+            try {
+                proxyUrl = new URL(proxy);
+            } catch (MalformedURLException e) {
+                throw new IllegalArgumentException("proxy needs to be a valid url");
+            }
+            httpClientBuilder.setProxy(new HttpHost(proxyUrl.getHost(), proxyUrl.getPort(), proxyUrl.getProtocol()));
+            LOG.info("Using SendGrid proxy: {}", proxy);
+        }
+        var client = new Client(httpClientBuilder.build());
+        this.sendGrid = new SendGrid(apiKey, client);
+    }
+
     public SendGridClient(String apiKey) {
-        this(new SendGrid(apiKey));
+        this(apiKey, null);
     }
 
     public SendGridClient(SendGrid sendGrid) {
