@@ -8,10 +8,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import okhttp3.HttpUrl;
-
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
-
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.API;
@@ -26,9 +24,7 @@ import org.broadinstitute.ddp.security.EncryptionKey;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.broadinstitute.ddp.util.TestDataSetupUtil.GeneratedTestData;
 import org.broadinstitute.ddp.util.TestUtil;
-
 import org.hamcrest.Matchers;
-
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -41,7 +37,6 @@ public class PostPasswordResetRouteTest extends IntegrationTestSuite.TestCase {
     private static String auth0Domain;
     private static final String testEmail = "test_user@datadonationplatform.org";
     private static final String testRedirectUrl = "http://www.datadonationplatform.org/default-password-reset-page/";
-    private static final String testRedirectUrlWithEmail = testRedirectUrl + "?" + QueryParam.EMAIL + "=" + testEmail;
 
     @BeforeClass
     public static void setup() {
@@ -63,13 +58,12 @@ public class PostPasswordResetRouteTest extends IntegrationTestSuite.TestCase {
         Map<String, String> queryParams = new HashMap<>();
         queryParams.put(QueryParam.AUTH0_CLIENT_ID, auth0ClientId);
         queryParams.put(QueryParam.AUTH0_DOMAIN, auth0Domain);
-        queryParams.put(QueryParam.EMAIL, testEmail);
         queryParams.put(QueryParam.SUCCESS, "true");
         HttpUrl fullUrl = buildEncodedUrl(url, queryParams);
         given(TestUtil.RestAssured.nonFollowingRequestSpec())
                 .when().get(fullUrl.toString()).then().assertThat()
                 .statusCode(HttpStatus.SC_MOVED_TEMPORARILY)
-                .header(HttpHeaders.LOCATION, equalTo(testRedirectUrlWithEmail));
+                .header(HttpHeaders.LOCATION, equalTo(testRedirectUrl));
     }
 
     @Test
@@ -77,7 +71,6 @@ public class PostPasswordResetRouteTest extends IntegrationTestSuite.TestCase {
         Map<String, String> queryParams = new HashMap<>();
         queryParams.put(QueryParam.AUTH0_CLIENT_ID, nonExistentAuth0Client);
         queryParams.put(QueryParam.AUTH0_DOMAIN, auth0Domain);
-        queryParams.put(QueryParam.EMAIL, testEmail);
         queryParams.put(QueryParam.SUCCESS, "true");
         HttpUrl fullUrl = buildEncodedUrl(url, queryParams);
         given().when().get(fullUrl.toString()).then().assertThat()
@@ -93,7 +86,6 @@ public class PostPasswordResetRouteTest extends IntegrationTestSuite.TestCase {
         Map<String, String> queryParams = new HashMap<>();
         queryParams.put(QueryParam.AUTH0_CLIENT_ID, auth0ClientId);
         queryParams.put(QueryParam.AUTH0_DOMAIN, auth0Domain);
-        queryParams.put(QueryParam.EMAIL, testEmail);
         queryParams.put(QueryParam.SUCCESS, "true");
         HttpUrl fullUrl = buildEncodedUrl(url, queryParams);
         given().when().get(fullUrl.toString()).then().assertThat()
@@ -105,23 +97,10 @@ public class PostPasswordResetRouteTest extends IntegrationTestSuite.TestCase {
     }
 
     @Test
-    public void test_WhenRouteIsCalledWithEmptyEmail_ItRespondsWithBadRequest() {
-        Map<String, String> queryParams = new HashMap<>();
-        queryParams.put(QueryParam.AUTH0_CLIENT_ID, auth0ClientId);
-        queryParams.put(QueryParam.AUTH0_DOMAIN, auth0Domain);
-        queryParams.put(QueryParam.EMAIL, "");
-        queryParams.put(QueryParam.SUCCESS, "true");
-        HttpUrl fullUrl = buildEncodedUrl(url, queryParams);
-        given().when().get(fullUrl.toString()).then().assertThat()
-                .statusCode(HttpStatus.SC_BAD_REQUEST);
-    }
-
-    @Test
     public void test_WhenRouteIsCalledWithEmptyClientId_ItRespondsWithBadRequest() {
         Map<String, String> queryParams = new HashMap<>();
         queryParams.put(QueryParam.AUTH0_CLIENT_ID, "");
         queryParams.put(QueryParam.AUTH0_DOMAIN, auth0Domain);
-        queryParams.put(QueryParam.EMAIL, testEmail);
         queryParams.put(QueryParam.SUCCESS, "true");
         HttpUrl fullUrl = buildEncodedUrl(url, queryParams);
         given().when().get(fullUrl.toString()).then().assertThat()
@@ -133,13 +112,12 @@ public class PostPasswordResetRouteTest extends IntegrationTestSuite.TestCase {
         Map<String, String> queryParams = new HashMap<>();
         queryParams.put(QueryParam.AUTH0_CLIENT_ID, auth0ClientId);
         queryParams.put(QueryParam.AUTH0_DOMAIN, "");
-        queryParams.put(QueryParam.EMAIL, testEmail);
         queryParams.put(QueryParam.SUCCESS, "true");
         HttpUrl fullUrl = buildEncodedUrl(url, queryParams);
         given(TestUtil.RestAssured.nonFollowingRequestSpec())
                 .when().get(fullUrl.toString()).then().assertThat()
                 .statusCode(HttpStatus.SC_MOVED_TEMPORARILY)
-                .header(HttpHeaders.LOCATION, equalTo(testRedirectUrlWithEmail));
+                .header(HttpHeaders.LOCATION, equalTo(testRedirectUrl));
     }
 
     @Test
@@ -182,7 +160,6 @@ public class PostPasswordResetRouteTest extends IntegrationTestSuite.TestCase {
             Map<String, String> queryParams = new HashMap<>();
             queryParams.put(QueryParam.AUTH0_CLIENT_ID, duplicatedAuth0ClientId);
             queryParams.put(QueryParam.AUTH0_DOMAIN, "");
-            queryParams.put(QueryParam.EMAIL, testEmail);
             queryParams.put(QueryParam.SUCCESS, "true");
             HttpUrl fullUrl = buildEncodedUrl(url, queryParams);
             given().when().get(fullUrl.toString()).then().assertThat()
@@ -206,7 +183,6 @@ public class PostPasswordResetRouteTest extends IntegrationTestSuite.TestCase {
         Map<String, String> queryParams = new HashMap<>();
         queryParams.put(QueryParam.AUTH0_CLIENT_ID, auth0ClientId);
         queryParams.put(QueryParam.AUTH0_DOMAIN, auth0Domain);
-        queryParams.put(QueryParam.EMAIL, testEmail);
         queryParams.put(QueryParam.SUCCESS, "false");
         HttpUrl fullUrl = buildEncodedUrl(url, queryParams);
         given(TestUtil.RestAssured.nonFollowingRequestSpec())
@@ -224,7 +200,6 @@ public class PostPasswordResetRouteTest extends IntegrationTestSuite.TestCase {
         Map<String, String> queryParams = new HashMap<>();
         queryParams.put(QueryParam.AUTH0_CLIENT_ID, auth0ClientId);
         queryParams.put(QueryParam.AUTH0_DOMAIN, auth0Domain);
-        queryParams.put(QueryParam.EMAIL, testEmail);
         queryParams.put(QueryParam.SUCCESS, "true");
         HttpUrl fullUrl = buildEncodedUrl(url, queryParams);
         given().when().get(fullUrl.toString()).then().assertThat()
@@ -244,7 +219,6 @@ public class PostPasswordResetRouteTest extends IntegrationTestSuite.TestCase {
         Map<String, String> queryParams = new HashMap<>();
         queryParams.put(QueryParam.AUTH0_CLIENT_ID, auth0ClientId);
         queryParams.put(QueryParam.AUTH0_DOMAIN, auth0Domain);
-        queryParams.put(QueryParam.EMAIL, testEmail);
         queryParams.put(QueryParam.SUCCESS, "true");
         HttpUrl fullUrl = buildEncodedUrl(url, queryParams);
         given().when().get(fullUrl.toString()).then().assertThat()

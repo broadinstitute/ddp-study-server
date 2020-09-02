@@ -987,6 +987,15 @@ Error.NotFound:
           type: string
           enum:
             - NOT_FOUND
+Error.OperationNotAllowed:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Error'
+    - type: object
+      properties:
+        code:
+          type: string
+          enum:
+            - OPERATION_NOT_ALLOWED
 Error.RegisterNotFound:
   allOf:
     - $ref: '../pepper.yml#/components/schemas/Error'
