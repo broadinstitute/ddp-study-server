@@ -685,67 +685,45 @@ public class PdfGenerationService {
         Answer answer = instance.getAnswer(substitution.getQuestionStableId());
         switch (substitution.getQuestionType()) {
             case BOOLEAN:
-                BooleanAnswerSubstitution booleanSubstitution = (BooleanAnswerSubstitution) substitution;
-                Boolean boolValue = answer == null ? null : ((BoolAnswer) answer).getValue();
-                if (boolValue != null) {
-                    boolean shouldCheck;
-                    if (booleanSubstitution.checkIfFalse()) {
-                        shouldCheck = !boolValue;
-                    } else {
-                        shouldCheck = boolValue;
-                    }
-                    setIsChecked(field, shouldCheck);
-                    LOG.info("Boolean field : {} should check: {} ", field.getFieldName(), shouldCheck);
-                }
+                substituteBoolean((BooleanAnswerSubstitution) substitution, answer, field);
                 break;
             case TEXT:
-                String textValue = answer == null ? null : ((TextAnswer) answer).getValue();
-                if (textValue != null) {
-                    field.setValue(textValue);
-                }
+                substituteText(answer, field);
                 break;
             case DATE:
-                DateValue dateValue = answer == null ? null : ((DateAnswer) answer).getValue();
-                if (dateValue != null) {
-                    field.setValue(dateValue.toDefaultDateFormat());
-                }
+                substituteDate(field, answer);
                 break;
             case PICKLIST:
-                //sets selected option stableIds.
-                List<String> selectedOptions = new ArrayList<>();
-                if (answer != null) {
-                    for (SelectedPicklistOption option : ((PicklistAnswer) answer).getValue()) {
-                        selectedOptions.add(option.getStableId());
-                    }
-                }
-                if (CollectionUtils.isNotEmpty(selectedOptions)) {
-                    field.setValue(String.join(", ", selectedOptions));
-                }
+                substitutePicklist(answer, field);
                 break;
 
             case COMPOSITE:
-                if (answer == null) {
-                    return;
-                }
-
-                //passed form contains custom composite template pages. just remove those empty pages
-                int pageCount = form.getPdfDocument().getNumberOfPages();
-                IntStream.range(1, pageCount + 1).forEach(i -> form.getPdfDocument().removePage(i));
-
-                CompositeAnswerSubstitution compositeSubstitution = (CompositeAnswerSubstitution) substitution;
-                List<AnswerRow> compositeAnswers = ((CompositeAnswer) answer).getValue();
-                int currentDocumentIndex = 0;
-                for (AnswerRow answerRow : compositeAnswers) {
-                    byte[] renderedCompositePdf = renderCompositePdf(answerRow, compositeSubstitution, template, errors);
-                    copyPdfToMasterDoc(renderedCompositePdf, currentDocumentIndex, form.getPdfDocument());
-                    currentDocumentIndex++;
-                }
-
+                substituteComposite((CompositeAnswerSubstitution) substitution, form, template, errors, answer);
                 break;
 
             default:
                 errors.add("tried to use an unsupported answer type " + substitution.getQuestionType());
                 return;
+        }
+    }
+
+    private void substituteComposite(CompositeAnswerSubstitution substitution, PdfAcroForm form, CustomTemplate template,
+                                     List<String> errors, Answer answer) throws IOException {
+        if (answer == null) {
+            return;
+        }
+
+        //passed form contains custom composite template pages. just remove those empty pages
+        int pageCount = form.getPdfDocument().getNumberOfPages();
+        IntStream.range(1, pageCount + 1).forEach(i -> form.getPdfDocument().removePage(i));
+
+        CompositeAnswerSubstitution compositeSubstitution = substitution;
+        List<AnswerRow> compositeAnswers = ((CompositeAnswer) answer).getValue();
+        int currentDocumentIndex = 0;
+        for (AnswerRow answerRow : compositeAnswers) {
+            byte[] renderedCompositePdf = renderCompositePdf(answerRow, compositeSubstitution, template, errors);
+            copyPdfToMasterDoc(renderedCompositePdf, currentDocumentIndex, form.getPdfDocument());
+            currentDocumentIndex++;
         }
     }
 
@@ -765,41 +743,16 @@ public class PdfGenerationService {
 
         switch (substitution.getQuestionType()) {
             case BOOLEAN:
-                BooleanAnswerSubstitution booleanSubstitution = (BooleanAnswerSubstitution) substitution;
-                Boolean boolValue = answer == null ? null : ((BoolAnswer) answer).getValue();
-                if (boolValue != null) {
-                    boolean shouldCheck;
-                    if (booleanSubstitution.checkIfFalse()) {
-                        shouldCheck = !boolValue;
-                    } else {
-                        shouldCheck = boolValue;
-                    }
-                    setIsChecked(field, shouldCheck);
-                }
+                substituteBoolean((BooleanAnswerSubstitution) substitution, answer, field);
                 break;
             case TEXT:
-                String textValue = answer == null ? null : ((TextAnswer) answer).getValue();
-                if (textValue != null) {
-                    field.setValue(textValue);
-                }
+                substituteText(answer, field);
                 break;
             case DATE:
-                DateValue dateValue = answer == null ? null : ((DateAnswer) answer).getValue();
-                if (dateValue != null) {
-                    field.setValue(dateValue.toDefaultDateFormat());
-                }
+                substituteDate(field, answer);
                 break;
             case PICKLIST:
-                //sets selected option stableIds.
-                List<String> selectedOptions = new ArrayList<>();
-                if (answer != null) {
-                    for (SelectedPicklistOption option : ((PicklistAnswer) answer).getValue()) {
-                        selectedOptions.add(option.getStableId());
-                    }
-                }
-                if (CollectionUtils.isNotEmpty(selectedOptions)) {
-                    field.setValue(String.join(", ", selectedOptions));
-                }
+                substitutePicklist(answer, field);
                 break;
 
             default:
@@ -808,6 +761,46 @@ public class PdfGenerationService {
         }
     }
 
+    private void substituteBoolean(BooleanAnswerSubstitution substitution, Answer answer, PdfFormField field) {
+        BooleanAnswerSubstitution booleanSubstitution = substitution;
+        Boolean boolValue = answer == null ? null : ((BoolAnswer) answer).getValue();
+        if (boolValue != null) {
+            boolean shouldCheck;
+            if (booleanSubstitution.checkIfFalse()) {
+                shouldCheck = !boolValue;
+            } else {
+                shouldCheck = boolValue;
+            }
+            setIsChecked(field, shouldCheck);
+        }
+    }
+
+    private void substituteDate(PdfFormField field, Answer answer) {
+        DateValue dateValue = answer == null ? null : ((DateAnswer) answer).getValue();
+        if (dateValue != null) {
+            field.setValue(dateValue.toDefaultDateFormat());
+        }
+    }
+
+    private void substituteText(Answer answer, PdfFormField field) {
+        String textValue = answer == null ? null : ((TextAnswer) answer).getValue();
+        if (textValue != null) {
+            field.setValue(textValue);
+        }
+    }
+
+    private void substitutePicklist(Answer answer, PdfFormField field) {
+        //sets selected option stableIds.
+        List<String> selectedOptions = new ArrayList<>();
+        if (answer != null) {
+            for (SelectedPicklistOption option : ((PicklistAnswer) answer).getValue()) {
+                selectedOptions.add(option.getStableId());
+            }
+        }
+        if (CollectionUtils.isNotEmpty(selectedOptions)) {
+            field.setValue(String.join(", ", selectedOptions));
+        }
+    }
 
     private byte[] renderCompositePdf(AnswerRow answerRow, CompositeAnswerSubstitution compositeSubstitution,
                                       CustomTemplate template, List<String> errors) throws IOException {
