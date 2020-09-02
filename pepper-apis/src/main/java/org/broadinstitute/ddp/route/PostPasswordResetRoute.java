@@ -31,6 +31,7 @@ public class PostPasswordResetRoute implements Route {
     public Object handle(Request request, Response response) throws Exception {
         String auth0ClientId = request.queryParams(QueryParam.AUTH0_CLIENT_ID);
         String auth0Domain = request.queryParams(QueryParam.AUTH0_DOMAIN);
+        String email = request.queryParams(QueryParam.EMAIL);
         String auth0Success = request.queryParams(QueryParam.SUCCESS);
 
         if (StringUtils.isBlank(auth0ClientId)) {
@@ -62,6 +63,9 @@ public class PostPasswordResetRoute implements Route {
         }
 
         HttpUrl.Builder urlBuilder = clientPwdResetUrl.newBuilder();
+        if (StringUtils.isNotBlank(email)) {
+            urlBuilder.addQueryParameter(QueryParam.EMAIL, email);
+        }
 
         if (!Boolean.valueOf(auth0Success)) {
             String errMsg = "success parameter is FALSE, which means that the Auth0 link has expired";
