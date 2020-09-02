@@ -26,12 +26,6 @@ public final class BooleanAnswerSubstitution extends AnswerSubstitution {
         this.checkIfFalse = checkIfFalse;
     }
 
-    public BooleanAnswerSubstitution(String placeholder, long activityId, String questionStableId,
-                                     boolean checkIfFalse) {
-        super(placeholder, activityId, QuestionType.BOOLEAN, questionStableId);
-        this.checkIfFalse = checkIfFalse;
-    }
-
     public boolean checkIfFalse() {
         return checkIfFalse;
     }
