@@ -23,6 +23,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -224,6 +225,128 @@ public class StudyDataLoaderTest {
         mockDataLoader.auth0Domain = pretendDomain;
         mockDataLoader.mgmtToken = pretendMgmtToken;
         mockDataLoader.mgmtClient = mockMgmtClient;
+
+        mockDataLoader.datStatEnumLookup = new HashMap<>();
+
+        //Independently consent
+        List<String> optionList = new ArrayList<>(2);
+        optionList.add(0, "prion_consent_s6_INDEPENDENT_NO");
+        optionList.add(1, "prion_consent_s6_INDEPENDENT_YES");
+        mockDataLoader.datStatEnumLookup.put("independently_consent", optionList);
+
+        //Participant gender
+        optionList = new ArrayList<>(4);
+        optionList.add(0, null);
+        optionList.add(1, "FEMALE");
+        optionList.add(2, "MALE");
+        optionList.add(3, "PREFER_NOT");
+        mockDataLoader.datStatEnumLookup.put("participant_gender", optionList);
+
+        //Current status
+        optionList = new ArrayList<>(4);
+        optionList.add(0, null);
+        optionList.add(1, "SYMPTOMATIC");
+        optionList.add(2, "AT_RISK");
+        optionList.add(3, "CONTROL");
+        mockDataLoader.datStatEnumLookup.put("current_status", optionList);
+
+        //Doctor diagnosed
+        optionList = new ArrayList<>(2);
+        optionList.add(0, "DIAGNOSED_NO");
+        optionList.add(1, "DIAGNOSED_YES");
+        mockDataLoader.datStatEnumLookup.put("doctor_diagnosed", optionList);
+
+        //Prion subtype
+        optionList = new ArrayList<>(9);
+        optionList.add(0, null);
+        optionList.add(1, "CJD");
+        optionList.add(2, "FFI");
+        optionList.add(3, "GSS");
+        optionList.add(4, "VPSPr");
+        optionList.add(5, "PSA");
+        optionList.add(6, "KURU");
+        optionList.add(7, "vCJD");
+        optionList.add(8, "sFI");
+        mockDataLoader.datStatEnumLookup.put("prion_subtype", optionList);
+
+        //Genetic testing
+        optionList = new ArrayList<>(4);
+        optionList.add(0, null);
+        optionList.add(1, "WAITING");
+        optionList.add(2, "KNOWN");
+        optionList.add(3, "NO");
+        mockDataLoader.datStatEnumLookup.put("genetic_testing", optionList);
+
+        //Move ability
+        optionList = new ArrayList<>(4);
+        optionList.add(0, null);
+        optionList.add(1, "ASSIST");
+        optionList.add(2, "IND");
+        optionList.add(3, "BED");
+        mockDataLoader.datStatEnumLookup.put("move_ability", optionList);
+
+        //Cognitive ability
+        optionList = new ArrayList<>(4);
+        optionList.add(0, null);
+        optionList.add(1, "IMP");
+        optionList.add(2, "NORM");
+        optionList.add(3, "SEV");
+        mockDataLoader.datStatEnumLookup.put("cognitive_ability", optionList);
+
+        //Eat ability
+        optionList = new ArrayList<>(4);
+        optionList.add(0, null);
+        optionList.add(1, "ASSIST");
+        optionList.add(2, "NORM");
+        optionList.add(3, "TUBE");
+        mockDataLoader.datStatEnumLookup.put("eat_ability", optionList);
+
+        //Travel ability
+        optionList = new ArrayList<>(4);
+        optionList.add(0, null);
+        optionList.add(1, "ASSIST");
+        optionList.add(2, "YES");
+        optionList.add(3, "NO");
+        mockDataLoader.datStatEnumLookup.put("travel_ability", optionList);
+
+        //participant disease risk
+        optionList = new ArrayList<>(7);
+        optionList.add(0, null);
+        optionList.add(1, "SUSPECTED_EXPOSED");
+        optionList.add(2, "MEDICAL_INFORMED");
+        optionList.add(3, "RELATIVE_UNTESTED");
+        optionList.add(4, "RELATIVE_TESTED");
+        optionList.add(5, "PARTICIPANT_TESTED");
+        optionList.add(6, "OTHER");
+        mockDataLoader.datStatEnumLookup.put("participant_disease_risk", optionList);
+
+        //medical procedure risk
+        optionList = new ArrayList<>(6);
+        optionList.add(0, null);
+        optionList.add(1, "MEDICAL_PROCEDURE_TRANSFUSION");
+        optionList.add(2, "MEDICAL_PROCEDURE_INSTRUMENTS");
+        optionList.add(3, "MEDICAL_PROCEDURE_TRANSPLANT");
+        optionList.add(4, "MEDICAL_PROCEDURE_HGH");
+        optionList.add(5, "MEDICAL_PROCEDURE_OTHER");
+        mockDataLoader.datStatEnumLookup.put("medical_procedure_risk", optionList);
+
+        //know_which_mutation
+        optionList = new ArrayList<>(2);
+        optionList.add(0, "KNOWN_MUTATION_NO");
+        optionList.add(1, "KNOWN_MUTATION_YES");
+        mockDataLoader.datStatEnumLookup.put("know_which_mutation", optionList);
+
+        //earliest_symptom_estimated
+        optionList = new ArrayList<>(2);
+        optionList.add(0, null);
+        optionList.add(1, "ESTIMATED_DATE");
+        mockDataLoader.datStatEnumLookup.put("earliest_symptom_estimated", optionList);
+
+        //diagnosis_date_estimated
+        optionList = new ArrayList<>(2);
+        optionList.add(0, null);
+        optionList.add(1, "YES");
+        mockDataLoader.datStatEnumLookup.put("diagnosis_date_estimated", optionList);
     }
 
     @Test
@@ -677,7 +800,7 @@ public class StudyDataLoaderTest {
                 any(JsonElement.class),
                 anyString(),
                 anyString(),
-                any(ClientDto.class), "cmi-mbc"
+                any(ClientDto.class), eq("cmi-mbc")
         )).thenCallRealMethod();
 
         mockDataLoader.createLegacyPepperUser(
