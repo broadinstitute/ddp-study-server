@@ -1,9 +1,0 @@
-{
-  "applications": [
-    {
-      "application": "kibana-.kibana",
-      "privileges": ["space_all"],
-      "resources": ["space:prion"]
-    }
-  ]
-}
