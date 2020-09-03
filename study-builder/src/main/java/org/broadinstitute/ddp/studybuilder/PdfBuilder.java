@@ -135,6 +135,9 @@ public class PdfBuilder {
     }
 
     void run(Handle handle) {
+        if (!cfg.hasPath("pdfs")) {
+            return;
+        }
         for (Config pdfCfg : cfg.getConfigList("pdfs")) {
             insertPdfConfig(handle, pdfCfg);
         }
