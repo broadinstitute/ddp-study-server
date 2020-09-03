@@ -409,7 +409,7 @@ public class StudyDataLoaderMain {
         processParticipant(studyGuid, surveyDataMap, mappingData, dataLoader, null, addressService, olcService);
 
         try {
-            createReport(migrationRunReport, studyGuid);
+            createReport(migrationRunReport);
         } catch (Exception e) {
             LOG.error("Failed to create migration run report. ", e);
         }
@@ -558,7 +558,7 @@ public class StudyDataLoaderMain {
             }
         }
         try {
-            createReport(migrationRunReport, studyGuid);
+            createReport(migrationRunReport);
         } catch (Exception e) {
             LOG.error("Failed to create migration run report. ", e);
         }
@@ -956,7 +956,7 @@ public class StudyDataLoaderMain {
     }
 
 
-    private void createReport(List<StudyMigrationRun> migrationRunReport, String studyGuid) throws Exception {
+    private void createReport(List<StudyMigrationRun> migrationRunReport) throws Exception {
 
         BufferedWriter writer;
         if (StringUtils.isBlank(reportFileName)) {
@@ -971,7 +971,7 @@ public class StudyDataLoaderMain {
             writer = Files.newBufferedWriter(Paths.get(".", reportFileName));
         }
         CSVPrinter csvPrinter;
-        if (migrationRunReport != null && migrationRunReport.get(0) != null) {
+        if (migrationRunReport != null && !migrationRunReport.isEmpty() && migrationRunReport.get(0) != null) {
             csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT
                 .withNullString("")
                 .withHeader("AltPid", "Pepper User GUID", "Email", "Previous Run", "Success/Failure",
@@ -980,7 +980,7 @@ public class StudyDataLoaderMain {
                     "Has Blood Release", "Has Followup"));
 
             for (StudyMigrationRun run : migrationRunReport) {
-                addRunValues(run, csvPrinter, studyGuid);
+                addRunValues(run, csvPrinter);
             }
             csvPrinter.close();
         }
@@ -988,7 +988,7 @@ public class StudyDataLoaderMain {
         LOG.info("Generated migration run report file: {} ", reportFileName);
     }
 
-    private void addRunValues(StudyMigrationRun run, CSVPrinter printer, String studyGuid) throws IOException {
+    private void addRunValues(StudyMigrationRun run, CSVPrinter printer) throws IOException {
         printer.printRecord(
                 run.getAltPid(),
                 run.getPepperUserGuid(),

@@ -105,7 +105,7 @@ public class StudyDataLoader {
     Map<Integer, String> yesNoDkLookup;
     Map<Integer, Boolean> booleanValueLookup;
     Auth0ManagementClient mgmtClient;
-    private Map<String, List<String>> datStatEnumLookup;
+    Map<String, List<String>> datStatEnumLookup;
     Auth0Util auth0Util;
     String auth0Domain;
     String mgmtToken;
@@ -1589,10 +1589,10 @@ public class StudyDataLoader {
                 } else if (!optionName.equalsIgnoreCase("Other")) {
                     selectedPicklistOptions.add(new SelectedPicklistOption(optionNameEl.getAsString().toUpperCase()));
                 } else {
-                  //currently only RACE has Other however Gen2 MBC has other details without user selecting "Other"
-                  //hence MBC Other is taken care below as special case..
-                  //after MBC below code should help
-                  //just select everything after Other (substr)
+                    //currently only RACE has Other however Gen2 MBC has other details without user selecting "Other"
+                    //hence MBC Other is taken care below as special case..
+                    //after MBC below code should help
+                    //just select everything after Other (substr)
                     /*String sourceValue = value.getAsString();
                     String detailText = sourceValue.substring(sourceValue.lastIndexOf("Other") + 6);
                     selectedPicklistOptions.add(new SelectedPicklistOption(optionNameEl.getAsString().toUpperCase(), detailText));*/
