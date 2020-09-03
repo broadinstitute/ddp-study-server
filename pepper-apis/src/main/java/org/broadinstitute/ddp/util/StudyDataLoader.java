@@ -165,11 +165,6 @@ public class StudyDataLoader {
         altNames.put("OTHER_YES", "other_therapy");
         altNames.put("CLINICAL_TRIAL", "exp_clinical_trial");
 
-        altNames.put("drugstart_year", "drugstartyear");
-        altNames.put("drugstart_month", "drugstartmonth");
-        altNames.put("drugend_year", "drugendyear");
-        altNames.put("drugend_month", "drugendmonth");
-
         altNames.put("affected", "effected");
 
         //index is value in export file and element is stable id
@@ -558,7 +553,8 @@ public class StudyDataLoader {
 
         long activityInstanceId = dto.getId();
 
-        if (ddpLastUpdatedAt.equals(ddpCreatedAt)) {
+        if (activityCode.toLowerCase().contains("prion") && ddpLastUpdatedAt.equals(ddpCreatedAt)) {
+            //In Gen2 Prion, sometimes the last updated time doesn't actually get updated
             ddpLastUpdatedAt++;
         }
 
@@ -569,7 +565,8 @@ public class StudyDataLoader {
             dto = jdbiActivityInstance.getByActivityInstanceId(dto.getId()).get();
         } else if (InstanceStatusType.COMPLETE == instanceCurrentStatus) {
             if (ddpCompletedAt == null) {
-                if ("PRIONCONSENT".equals(activityCode) || "PRIONMEDICAL".equals(activityCode)) {
+                if (activityCode.toLowerCase().contains("PRION")) {
+                    //Prion frequently doesn't have the completed at field populated for completed studies
                     ddpCompletedAt = ddpLastUpdatedAt;
                 } else {
                     throw new Exception("No completed/submitted date value passed for " + activityCode
@@ -1480,7 +1477,8 @@ public class StudyDataLoader {
         //Get the option value using either datStatEnumLookup or yesNoDkLookup
         boolean foundValue = false;
         String val = null;
-        if (datStatEnumLookup.get(questionName) != null && datStatEnumLookup.get(questionName).get(value.getAsInt()) != null) {
+        if (("MedicalSurvey".equals(surveyName) || "ConsentSurvey".equals(surveyName))
+            && datStatEnumLookup.get(questionName) != null && datStatEnumLookup.get(questionName).get(value.getAsInt()) != null) {
             foundValue = true;
             val = datStatEnumLookup.get(questionName).get(value.getAsInt());
         } else if (yesNoDkLookup.get(value.getAsInt()) != null) {
@@ -1551,14 +1549,13 @@ public class StudyDataLoader {
         //ex:- "American Indian or Native American, Japanese, Other, something else not on the list"
         //"something else not on the list" is other text / other details.
         //parse by `,` and check each value ..
-        String valueString = value.getAsString();
-        String[] optValues = valueString.split(",");
-        List<String> optValuesList = new ArrayList<>(Arrays.asList(optValues));
+        String[] optValues = value.getAsString().split(",");
+        List<String> optValuesList = new ArrayList<>();
+        optValuesList.addAll(Arrays.asList(optValues));
         optValuesList.replaceAll(String::trim);
 
         List<String> pepperPLOptions = new ArrayList<>();
         JsonArray options = mapElement.getAsJsonObject().getAsJsonArray("options");
-        JsonObject sourceDataObject = sourceDataElement.getAsJsonObject();
         for (JsonElement option : options) {
             JsonObject optionObject = option.getAsJsonObject();
             JsonElement optionNameEl = optionObject.get("name");
@@ -1570,10 +1567,10 @@ public class StudyDataLoader {
             }
             pepperPLOptions.add(optionName.toUpperCase());
             final String optName = optionName;
-            if (optionName.equalsIgnoreCase(valueString)
+            if (optionName.equalsIgnoreCase(value.getAsString())
                     || optValuesList.stream().anyMatch(x -> x.equalsIgnoreCase(optName))) {
                 //If specify text was exported as a separate key/value pair, make sure it gets passed through
-                if (optionObject.get("text") != null) {
+                if (optionObject.get("text") != null && ("MedicalSurvey".equals(surveyName) || "ConsentSurvey".equals(surveyName))) {
                     String otherTextKey;
                     if ("MedicalSurvey".equals(surveyName)) {
                         //For Prion medical survey, text contains full name of key, so don't concatenate
@@ -1583,7 +1580,6 @@ public class StudyDataLoader {
                         otherTextKey = questionName.concat(".").concat(optionName).concat(".").concat(
                             optionObject.get("text").getAsString());
                     }
-                    JsonElement otherTextEl = sourceDataObject.get(otherTextKey);
                     String otherText = getStringValueFromElement(sourceDataElement, otherTextKey);
                     selectedPicklistOptions.add(new SelectedPicklistOption(optionName.toUpperCase(), otherText));
                 } else if (!optionName.equalsIgnoreCase("Other")) {
@@ -1643,18 +1639,24 @@ public class StudyDataLoader {
             if (value != null && value.getAsInt() == 1) { //option checked
                 if (option.getAsJsonObject().get("text") != null) {
                     //other text details
-                    String otherTextKey;
-                    if ("MedicalSurvey".equals(surveyName)) {
-                        //For Prion medical survey, text contains the full name of the key--don't concatenate
-                        otherTextKey = option.getAsJsonObject().get("text").getAsString();
-                    } else {
-                        //Otherwise, the name of the key is [optionName].[valueAssociatedWithTextInMapping]
-                        otherTextKey = key.concat(".").concat(option.getAsJsonObject().get("text").getAsString());
-                    }
+                    if ("MedicalSurvey".equals(surveyName) || "ConsentSurvey".equals(surveyName)) {
+                        String otherTextKey;
 
-                    String otherText = getStringValueFromElement(sourceDataElement, otherTextKey);
-                    selectedPicklistOptions.add(new SelectedPicklistOption(optionName.getAsString().toUpperCase(),
-                            otherText));
+                        if ("MedicalSurvey".equals(surveyName)) {
+                            //For Prion medical survey, text contains the full name of the key--don't concatenate
+                            otherTextKey = option.getAsJsonObject().get("text").getAsString();
+                        } else {
+                            //Otherwise, the name of the key is [optionName].[valueAssociatedWithTextInMapping]
+                            otherTextKey = key.concat(".").concat(option.getAsJsonObject().get("text").getAsString());
+                        }
+
+                        String otherText = getStringValueFromElement(sourceDataElement, otherTextKey);
+                        selectedPicklistOptions.add(new SelectedPicklistOption(optionName.getAsString().toUpperCase(),
+                                otherText));
+                    } else {
+                        String otherText = getTextDetails(sourceDataElement, option, key);
+                        selectedPicklistOptions.add(new SelectedPicklistOption(optionName.getAsString().toUpperCase(), otherText));
+                    }
                 } else {
                     selectedPicklistOptions.add(new SelectedPicklistOption(optionName.getAsString().toUpperCase()));
                 }
