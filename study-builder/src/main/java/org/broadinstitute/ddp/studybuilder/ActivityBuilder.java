@@ -105,6 +105,9 @@ public class ActivityBuilder {
     }
 
     private void insertActivities(Handle handle) {
+        if (!cfg.hasPath("activities")) {
+            return;
+        }
         Instant timestamp = ConfigUtil.getInstantIfPresent(cfg, "activityTimestamp");
         for (Config activityCfg : cfg.getConfigList("activities")) {
             Config definitionCfg = readDefinitionConfig(activityCfg.getString("filepath"));
@@ -201,6 +204,10 @@ public class ActivityBuilder {
     }
 
     private void insertActivityStatusIcons(Handle handle) {
+        if (!cfg.hasPath("activityStatusIcons")) {
+            return;
+        }
+
         JdbiFormTypeActivityInstanceStatusType jdbiStatusIcon = handle.attach(JdbiFormTypeActivityInstanceStatusType.class);
 
         String reason = String.format("Create activity status icons for study=%s", studyDto.getGuid());

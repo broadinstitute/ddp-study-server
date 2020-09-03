@@ -33,6 +33,9 @@ public class WorkflowBuilder {
     }
 
     private void insertTransitions(Handle handle) {
+        if (!cfg.hasPath("workflowTransitions")) {
+            return;
+        }
         for (Config transitionCfg : cfg.getConfigList("workflowTransitions")) {
             insertTransitionSet(handle, transitionCfg);
         }
