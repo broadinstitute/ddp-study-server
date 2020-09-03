@@ -1478,7 +1478,7 @@ public class StudyDataLoader {
         boolean foundValue = false;
         String val = null;
         if (("MedicalSurvey".equals(surveyName) || "ConsentSurvey".equals(surveyName))
-            && datStatEnumLookup.get(questionName) != null && datStatEnumLookup.get(questionName).get(value.getAsInt()) != null) {
+                && datStatEnumLookup.get(questionName) != null && datStatEnumLookup.get(questionName).get(value.getAsInt()) != null) {
             foundValue = true;
             val = datStatEnumLookup.get(questionName).get(value.getAsInt());
         } else if (yesNoDkLookup.get(value.getAsInt()) != null) {
