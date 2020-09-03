@@ -65,7 +65,7 @@
   "consent_cost_detail": "No.",
   "consent_cost_title": "6. Will it cost me anything to participate in this research initiative?",
   "consent_dob": "DOB of Participant",
-  "consent_guardian_dob": "DOB of Parent or Legal guardian",
+  "consent_guardian_dob": "DOB of Parent or Legal Guardian",
   "consent_dob_range_hint": "The date you have entered was invalid - please enter a new date in MM DD YYYY format and make sure it is before today's date.",
   "consent_dob_req_hint": "Please enter your date of birth in MM DD YYYY format",
   "consent_download_indicates_p1": "We encourage you to download and read the complete consent form carefully.",
