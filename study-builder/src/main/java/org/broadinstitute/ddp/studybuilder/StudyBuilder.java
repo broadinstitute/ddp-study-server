@@ -41,6 +41,7 @@ import org.broadinstitute.ddp.model.governance.GovernancePolicy;
 import org.broadinstitute.ddp.model.kit.KitRuleType;
 import org.broadinstitute.ddp.model.kit.KitSchedule;
 import org.broadinstitute.ddp.model.pex.Expression;
+import org.broadinstitute.ddp.model.study.StudyLanguage;
 import org.broadinstitute.ddp.security.AesUtil;
 import org.broadinstitute.ddp.security.EncryptionKey;
 import org.broadinstitute.ddp.util.ConfigUtil;
@@ -398,6 +399,10 @@ public class StudyBuilder {
     }
 
     private void insertStudyDetails(Handle handle, long studyId) {
+        if (!cfg.hasPath("studyDetails")) {
+            return;
+        }
+
         JdbiUmbrellaStudyI18n jdbiStudyI18n = handle.attach(JdbiUmbrellaStudyI18n.class);
         JdbiLanguageCode jdbiLangCode = handle.attach(JdbiLanguageCode.class);
 
@@ -424,12 +429,19 @@ public class StudyBuilder {
 
         JdbiLanguageCode jdbiLangCode = handle.attach(JdbiLanguageCode.class);
         StudyLanguageDao studyLanguageDao = handle.attach(StudyLanguageDao.class);
+        List<StudyLanguage> currentLanguages = studyLanguageDao.findLanguages(studyId);
 
         boolean defaultSet = false;
         Long defaultLanguageCodeId = null;
         String defaultLanguageCode = null;
         for (Config languageCfg : cfg.getConfigList("supportedLanguages")) {
             String lang = languageCfg.getString("language");
+            boolean alreadyExists = currentLanguages.stream().anyMatch(l -> l.getLanguageCode().equals(lang));
+            if (alreadyExists) {
+                LOG.info("Study already has language {}", lang);
+                continue;
+            }
+
             Boolean isDefault = false;
             if (languageCfg.hasPath("isDefault")) {
                 isDefault = languageCfg.getBoolean("isDefault");
@@ -465,8 +477,11 @@ public class StudyBuilder {
             LOG.info("Setting language {} as default", defaultLanguageCode);
             studyLanguageDao.setAsDefaultLanguage(studyId, defaultLanguageCodeId);
         } else {
-            LOG.error("No language is set as default. Please set default language");
-            throw new DDPException("No language is set as default ");
+            boolean alreadyHasDefault = currentLanguages.stream().anyMatch(StudyLanguage::isDefault);
+            if (!alreadyHasDefault) {
+                LOG.error("No language is set as default. Please set default language");
+                throw new DDPException("No language is set as default ");
+            }
         }
     }
 
@@ -506,6 +521,10 @@ public class StudyBuilder {
     }
 
     private void insertSendgrid(Handle handle, long studyId) {
+        if (!cfg.hasPath("sendgrid")) {
+            return;
+        }
+
         Config sendgridCfg = cfg.getConfig("sendgrid");
         String apiKey = sendgridCfg.getString("apiKey");
         String fromName = sendgridCfg.getString("fromName");
@@ -517,6 +536,10 @@ public class StudyBuilder {
     }
 
     private void insertKits(Handle handle, long studyId, long userId) {
+        if (!cfg.hasPath("kits")) {
+            return;
+        }
+
         KitConfigurationDao kitDao = handle.attach(KitConfigurationDao.class);
         KitTypeDao kitTypeDao = handle.attach(KitTypeDao.class);
 

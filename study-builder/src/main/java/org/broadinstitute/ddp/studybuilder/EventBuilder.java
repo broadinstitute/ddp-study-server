@@ -64,6 +64,9 @@ public class EventBuilder {
     }
 
     private void insertEvents(Handle handle) {
+        if (!cfg.hasPath("events")) {
+            return;
+        }
         for (Config eventCfg : cfg.getConfigList("events")) {
             insertEvent(handle, eventCfg);
         }
