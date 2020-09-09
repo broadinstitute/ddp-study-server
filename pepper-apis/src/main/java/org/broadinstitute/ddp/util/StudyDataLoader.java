@@ -432,7 +432,7 @@ public class StudyDataLoader {
         answerTextQuestion("PREQUAL_LAST_NAME", participantGuid, dto.getGuid(),
                 profile.getLastName(), answerDao);
 
-        List<SelectedPicklistOption> options = new ArrayList<SelectedPicklistOption>();
+        List<SelectedPicklistOption> options = new ArrayList<>();
         options.add(new SelectedPicklistOption("DIAGNOSED"));
         answerPickListQuestion("PREQUAL_SELF_DESCRIBE", participantGuid, dto.getGuid(),
                 options, answerDao);
@@ -1310,7 +1310,7 @@ public class StudyDataLoader {
         String participantGuid = userDto.getUserGuid();
         String instanceGuid = instanceDto.getGuid();
 
-        sourceDataSurveyQs.put(surveyName, new ArrayList<String>());
+        sourceDataSurveyQs.put(surveyName, new ArrayList<>());
         //iterate through mappingData and try to retrieve sourceData for each element
         //iterate through each question_stable_mapping
         JsonArray questionStableArray = mappingData.getAsJsonObject().getAsJsonArray("question_answer_stables");
