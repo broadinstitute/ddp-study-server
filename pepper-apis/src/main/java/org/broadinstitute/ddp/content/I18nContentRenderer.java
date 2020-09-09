@@ -20,6 +20,7 @@ import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.db.dao.TemplateDao;
+import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.model.user.UserProfile;
 import org.jdbi.v3.core.Handle;
@@ -51,6 +52,9 @@ public class I18nContentRenderer {
     public static RenderValueProvider newValueProvider(Handle handle, long participantUserId, Map<String, String> snapshot) {
         var builder = new RenderValueProvider.Builder();
 
+        String guid = handle.attach(UserDao.class).findUserById(participantUserId).get().getGuid();
+        builder.setParticipantGuid(guid);
+
         UserProfile profile = handle.attach(UserProfileDao.class)
                 .findProfileByUserId(participantUserId)
                 .orElse(null);
@@ -60,6 +64,9 @@ public class I18nContentRenderer {
             }
             if (profile.getLastName() != null) {
                 builder.setParticipantLastName(profile.getLastName());
+            }
+            if (profile.getBirthDate() != null) {
+                builder.setParticipantBirthDate(profile.getBirthDate());
             }
         }
 
