@@ -8,6 +8,7 @@ import static org.junit.Assert.assertNotNull;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
@@ -23,6 +24,7 @@ import org.apache.http.client.fluent.Request;
 import org.apache.http.util.EntityUtils;
 import org.broadinstitute.ddp.constants.RouteConstants.API;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
+import org.broadinstitute.ddp.content.I18nTemplateConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
@@ -56,7 +58,6 @@ import org.junit.Test;
 
 public class UserActivityInstanceListRouteTest extends IntegrationTestSuite.TestCase {
 
-    private static final String DUMMY_SUMMARY_FOR_CREATED = "Dummy summary for CREATED";
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static FormActivityDef prequal;
     private static String prequal1Guid;
@@ -103,7 +104,7 @@ public class UserActivityInstanceListRouteTest extends IntegrationTestSuite.Test
 
         prequal = FormActivityDef.formBuilder(FormType.PREQUALIFIER, code, "v1", testData.getStudyGuid())
                 .addName(new Translation("en", "Test prequal"))
-                .addSummary(new SummaryTranslation("en", DUMMY_SUMMARY_FOR_CREATED, InstanceStatusType.CREATED))
+                .addSummary(new SummaryTranslation("en", "$ddp.testResultTimeCompleted(\"MM/dd/uuuu\")", InstanceStatusType.CREATED))
                 .addSection(new FormSectionDef(null, Arrays.asList(controlBlock, toggledBlock)))
                 .build();
         handle.attach(ActivityDao.class).insertActivity(prequal,
@@ -113,6 +114,10 @@ public class UserActivityInstanceListRouteTest extends IntegrationTestSuite.Test
         ActivityInstanceDto instanceDto = handle.attach(ActivityInstanceDao.class)
                 .insertInstance(prequal.getActivityId(), userGuid);
         prequal1Guid = instanceDto.getGuid();
+
+        handle.attach(ActivityInstanceDao.class).saveSubstitutions(instanceDto.getId(), Map.of(
+                I18nTemplateConstants.Snapshot.TEST_RESULT_TIME_COMPLETED,
+                Instant.parse("2020-09-08T11:12:13.123Z").toString()));
 
         Answer answer = new BoolAnswer(null, toggleQuestionStableId, null, true);
         answerId = handle.attach(AnswerDao.class)
@@ -165,10 +170,8 @@ public class UserActivityInstanceListRouteTest extends IntegrationTestSuite.Test
 
         Assert.assertTrue(StringUtils.isNotBlank(userActivity.getActivityCode()));
         Assert.assertTrue(StringUtils.isNotBlank(userActivity.getActivityName()));
-        Assert.assertNotNull(userActivity.getActivitySummary());
-        Assert.assertTrue(
-                userActivity.getActivitySummary().equals(DUMMY_SUMMARY_FOR_CREATED)
-        );
+        Assert.assertEquals(InstanceStatusType.CREATED.name(), userActivity.getStatusTypeCode());
+        Assert.assertEquals("09/08/2020", userActivity.getActivitySummary());
 
         Assert.assertTrue("Could not find prequal in list of activity instances for test user", hasPrequal);
         Assert.assertFalse(hasReadonlyActivities);

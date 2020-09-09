@@ -50,6 +50,16 @@ public class I18nContentRenderer {
     }
 
     public static RenderValueProvider newValueProvider(Handle handle, long participantUserId, Map<String, String> snapshot) {
+        var builder = newValueProviderBuilder(handle, participantUserId);
+
+        // If there are saved snapshot substitution values, override with those so final rendered
+        // content will be consistent with what user last saw when snapshot was taken.
+        builder.withSnapshot(snapshot);
+
+        return builder.build();
+    }
+
+    public static RenderValueProvider.Builder newValueProviderBuilder(Handle handle, long participantUserId) {
         var builder = new RenderValueProvider.Builder();
 
         String guid = handle.attach(UserDao.class).findUserById(participantUserId).get().getGuid();
@@ -75,11 +85,7 @@ public class I18nContentRenderer {
                 .orElse(ZoneOffset.UTC);
         builder.setDate(LocalDate.now(zone));
 
-        // If there are saved snapshot substitution values, override with those so final rendered
-        // content will be consistent with what user last saw when snapshot was taken.
-        builder.withSnapshot(snapshot);
-
-        return builder.build();
+        return builder;
     }
 
     public I18nContentRenderer() {

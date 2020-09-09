@@ -287,6 +287,7 @@ public class ActivityInstanceDao {
                     activityTitle = (activityTitle == null ? "" : activityTitle);
 
                     boolean isActivityWriteOnce = rs.getBoolean(SqlConstants.StudyActivityTable.IS_WRITE_ONCE);
+                    long activityInstanceId = rs.getLong(ActivityInstanceTable.ID);
                     String activityInstanceGuid = rs.getString(ActivityInstanceTable.GUID);
                     String activityTypeCode = rs.getString(ActivityTypeTable.TYPE_CODE);
                     String formTypeCode = rs.getString(SqlConstants.FormTypeTable.CODE);
@@ -312,6 +313,7 @@ public class ActivityInstanceDao {
 
                     ActivityInstanceSummary activityInstanceSummary = new ActivityInstanceSummary(
                             activityCode,
+                            activityInstanceId,
                             activityInstanceGuid,
                             activityName,
                             activityTitle,

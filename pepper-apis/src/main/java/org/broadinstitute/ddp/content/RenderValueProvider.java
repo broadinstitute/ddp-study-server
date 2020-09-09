@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.content;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
@@ -99,7 +100,7 @@ public class RenderValueProvider {
             return null;
         }
         try {
-            return DateTimeFormatter.ofPattern(format).format(testResultTimeCompleted);
+            return DateTimeFormatter.ofPattern(format).withZone(ZoneOffset.UTC).format(testResultTimeCompleted);
         } catch (Exception e) {
             LOG.warn("Error formatting test result time completed value '{}' using format '{}'", testResultTimeCompleted, format, e);
             return testResultTimeCompleted.toString();
