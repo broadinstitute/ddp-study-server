@@ -18,6 +18,7 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.ActivityDefStore;
+import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.InvitationDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
@@ -260,6 +261,50 @@ public class TreeWalkInterpreter implements PexInterpreter {
             return fetcher.findLatestActivityInstanceStatus(ictx, studyGuid, activityCode).isPresent();
         } else {
             throw new PexUnsupportedException("Unsupported form predicate: " + predCtx.getText());
+        }
+    }
+
+    private Object evalFormInstanceQuery(InterpreterContext ictx, PexParser.FormInstanceQueryContext ctx) {
+        String studyGuid = extractString(ctx.study().STR());
+        String activityCode = extractString(ctx.form().STR());
+        String instanceType = ctx.instance().INSTANCE_TYPE().getText();
+
+        long activityId = ictx.getHandle().attach(JdbiActivity.class)
+                .findActivityByStudyGuidAndCode(studyGuid, activityCode)
+                .map(ActivityDto::getActivityId)
+                .orElseThrow(() -> {
+                    String msg = String.format("Could not find activity with study guid %s and activity code %s", studyGuid, activityCode);
+                    return new PexFetchException(new NoSuchElementException(msg));
+                });
+
+        final long instanceId;
+        if (instanceType.equals(LATEST)) {
+            instanceId = ictx.getHandle().attach(JdbiActivityInstance.class)
+                    .findLatestInstanceIdByUserGuidAndActivityId(ictx.getUserGuid(), activityId)
+                    .orElseThrow(() -> new PexFetchException("Could not find latest instance for activity " + activityCode));
+        } else {
+            String instanceGuid = ictx.getActivityInstanceGuid();
+            if (StringUtils.isBlank(instanceGuid)) {
+                throw new PexFetchException("No instance guid available for specific instance query");
+            }
+            instanceId = ictx.getHandle().attach(JdbiActivityInstance.class).getActivityInstanceId(instanceGuid);
+        }
+
+        return applyFormInstancePredicate(ictx, ctx.formInstancePredicate(), instanceId);
+    }
+
+    private Object applyFormInstancePredicate(InterpreterContext ictx, PexParser.FormInstancePredicateContext predCtx, long instanceId) {
+        if (predCtx instanceof PexParser.InstanceSnapshotSubstitutionQueryContext) {
+            String subName = extractString(((PexParser.InstanceSnapshotSubstitutionQueryContext) predCtx).STR());
+            String value = ictx.getHandle().attach(ActivityInstanceDao.class)
+                    .findSubstitutions(instanceId)
+                    .get(subName);
+            if (value == null) {
+                throw new PexFetchException("Could not find snapshot substitution " + subName);
+            }
+            return value;
+        } else {
+            throw new PexUnsupportedException("Unsupported form instance predicate: " + predCtx.getText());
         }
     }
 
@@ -643,6 +688,11 @@ public class TreeWalkInterpreter implements PexInterpreter {
         @Override
         public Object visitFormQuery(PexParser.FormQueryContext ctx) {
             return interpreter.evalFormQuery(ictx, ctx);
+        }
+
+        @Override
+        public Object visitFormInstanceQuery(PexParser.FormInstanceQueryContext ctx) {
+            return interpreter.evalFormInstanceQuery(ictx, ctx);
         }
 
         @Override

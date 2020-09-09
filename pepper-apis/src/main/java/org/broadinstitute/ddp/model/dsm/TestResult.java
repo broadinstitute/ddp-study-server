@@ -33,6 +33,17 @@ public class TestResult {
         return result;
     }
 
+    public String getNormalizedResult() {
+        String res = result.toUpperCase();
+        if ("NEG".equals(res)) {
+            return "NEGATIVE";
+        } else if ("POS".equals(res)) {
+            return "POSITIVE";
+        } else {
+            return res;
+        }
+    }
+
     public String getReason() {
         return reason;
     }
