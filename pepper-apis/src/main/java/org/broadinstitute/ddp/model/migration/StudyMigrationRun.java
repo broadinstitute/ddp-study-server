@@ -2,8 +2,8 @@ package org.broadinstitute.ddp.model.migration;
 
 public class StudyMigrationRun {
 
-    private String altPid;
-    private String pepperUserGuid;
+    private final String altPid;
+    private final String pepperUserGuid;
     private Boolean hasAboutYou;
     private Boolean hasConsent;
     private Boolean hasBloodConsent;
@@ -13,11 +13,11 @@ public class StudyMigrationRun {
     private Boolean hasLovedOne;
     private Boolean hasFollowup;
     private Boolean isSuccess;
-    private Boolean previousRun;
-    private String emailAddress;
+    private final Boolean previousRun;
+    private final String emailAddress;
     private Boolean auth0Collision;
     private Boolean foundInAuth0;
-    private Boolean isPrion;
+    private final Boolean isPrion;
     private Boolean hasPrionConsent;
     private Boolean hasPrionMedical;
 

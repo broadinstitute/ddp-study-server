@@ -84,7 +84,7 @@ import org.slf4j.LoggerFactory;
 
 public class StudyDataLoaderTest {
     private static final Logger LOG = LoggerFactory.getLogger(StudyDataLoaderTest.class);
-    private static String PARTICIPANT_DATA_TEST_DATA_LOCATION = "src/test/resources/dm-survey-mbc-testdata-8148.json";
+    private static final String PARTICIPANT_DATA_TEST_DATA_LOCATION = "src/test/resources/dm-survey-mbc-testdata-8148.json";
     public static final String QUESTION_STABLE_MAP_FILE = "src/test/resources/question_stableid_map.json";
     private static OLCService olcService;
     private static AddressService addressService;
@@ -486,7 +486,7 @@ public class StudyDataLoaderTest {
                         assertEquals("Boston", dto.getCity());
                         assertEquals("MA", dto.getState());
                         assertEquals("02111", dto.getPostalCode());
-                        assertEquals(null, dto.getPhone());
+                        assertNull(dto.getPhone());
                         assertEquals("119", dto.getLegacyGuid());
                         assertEquals(InstitutionType.PHYSICIAN, dto.getInstitutionType());
                     } else {
@@ -574,16 +574,16 @@ public class StudyDataLoaderTest {
 
         assertEquals((int) dateAnswers.get("DIAGNOSIS_DATE").getMonth(), 3);
         assertEquals((int) dateAnswers.get("DIAGNOSIS_DATE").getYear(), 2018);
-        assertEquals(dateAnswers.get("DIAGNOSIS_DATE").getDay(), null);
+        assertNull(dateAnswers.get("DIAGNOSIS_DATE").getDay());
 
-        assertEquals(dateAnswers.get("BIRTH_YEAR").getMonth(), null);
+        assertNull(dateAnswers.get("BIRTH_YEAR").getMonth());
         assertEquals((int) dateAnswers.get("BIRTH_YEAR").getYear(), 1978);
-        assertEquals(dateAnswers.get("BIRTH_YEAR").getDay(), null);
+        assertNull(dateAnswers.get("BIRTH_YEAR").getDay());
 
         List<SelectedPicklistOption> race = pickListAnswers.get("RACE");
         assertEquals(3, race.size());
         assertEquals("AMERICAN_INDIAN", race.get(0).getStableId());
-        assertEquals(null, race.get(0).getDetailText());
+        assertNull(race.get(0).getDetailText());
         assertEquals("OTHER", race.get(2).getStableId());
         assertEquals("something else not on the list", race.get(2).getDetailText());
 
