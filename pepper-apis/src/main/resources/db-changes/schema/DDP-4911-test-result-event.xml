@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="20200908-test-result-event-type-table">
+        <createTable tableName="test_result_event_type">
+            <column name="test_result_event_type_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="test_result_event_type_pk"/>
+            </column>
+            <column name="test_result_event_type_code" type="varchar(20)">
+                <constraints nullable="false" unique="true" uniqueConstraintName="test_result_event_type_uk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20200908-test-result-event-types">
+        <insert tableName="test_result_event_type">
+            <column name="test_result_event_type_code" value="NEGATIVE"/>
+        </insert>
+        <insert tableName="test_result_event_type">
+            <column name="test_result_event_type_code" value="POSITIVE"/>
+        </insert>
+        <insert tableName="test_result_event_type">
+            <column name="test_result_event_type_code" value="OTHER"/>
+        </insert>
+        <insert tableName="test_result_event_type">
+            <column name="test_result_event_type_code" value="ANY"/>
+        </insert>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20200908-dsm-notification-trigger-test-result-event-type-column">
+        <addColumn tableName="dsm_notification_trigger">
+            <column name="test_result_event_type_id" type="bigint">
+                <constraints nullable="true"
+                             references="test_result_event_type(test_result_event_type_id)"
+                             foreignKeyName="dsm_notification_trigger_test_result_event_type_fk"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="yufeng" id="20200908-test-result-dsm-event-type">
+        <insert tableName="dsm_notification_event_type">
+            <column name="dsm_notification_event_type_code" value="TEST_RESULT"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

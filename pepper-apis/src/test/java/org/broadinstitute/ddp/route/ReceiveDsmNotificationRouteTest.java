@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.route;
 import static io.restassured.RestAssured.given;
 import static org.broadinstitute.ddp.model.activity.types.DsmNotificationEventType.SALIVA_RECEIVED;
 import static org.broadinstitute.ddp.model.activity.types.DsmNotificationEventType.TESTBOSTON_RECEIVED;
+import static org.broadinstitute.ddp.model.activity.types.DsmNotificationEventType.TEST_RESULT;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.junit.Assert.assertEquals;
@@ -10,13 +11,21 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.time.Instant;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
+import com.google.gson.JsonObject;
 import io.restassured.http.ContentType;
 import io.restassured.mapper.ObjectMapperType;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.API;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
+import org.broadinstitute.ddp.content.I18nTemplateConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.db.dao.ActivityDao;
+import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.EventActionDao;
 import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.EventTriggerDao;
@@ -28,8 +37,15 @@ import org.broadinstitute.ddp.db.dto.QueuedEventDto;
 import org.broadinstitute.ddp.db.dto.QueuedNotificationDto;
 import org.broadinstitute.ddp.db.dto.SendgridEmailEventActionDto;
 import org.broadinstitute.ddp.json.dsm.DsmNotificationPayload;
+import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
+import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
+import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
+import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.DsmNotificationEventType;
+import org.broadinstitute.ddp.model.dsm.TestResult;
+import org.broadinstitute.ddp.model.dsm.TestResultEventType;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
+import org.broadinstitute.ddp.util.GsonUtil;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.jdbi.v3.core.Handle;
 import org.junit.After;
@@ -131,6 +147,58 @@ public class ReceiveDsmNotificationRouteTest extends DsmRouteTest {
     }
 
     @Test
+    public void testNotificationEventTestResultMissingEventData() {
+        var payload = new DsmNotificationPayload(null, TEST_RESULT.name(), 1L);
+        given().auth().oauth2(dsmClientAccessToken)
+                .pathParam("study", testData.getStudyGuid())
+                .pathParam("user", testData.getUserGuid())
+                .body(payload, ObjectMapperType.GSON)
+                .when().post(urlTemplate)
+                .then().assertThat()
+                .statusCode(400).contentType(ContentType.JSON)
+                .body("code", equalTo(ErrorCodes.BAD_PAYLOAD))
+                .body("message", containsString("Missing test result"));
+    }
+
+    @Test
+    public void testNotificationEventTestResultBadEventData() {
+        var payload = new DsmNotificationPayload(null, TEST_RESULT.name(), 1L);
+        var result = new JsonObject();
+        result.addProperty("result", "NEGATIVE");
+        result.addProperty("reason", "the reason");
+        result.addProperty("timeCompleted", "faulty timestamp");
+        payload.setEventData(result);
+        given().auth().oauth2(dsmClientAccessToken)
+                .pathParam("study", testData.getStudyGuid())
+                .pathParam("user", testData.getUserGuid())
+                .body(payload, ObjectMapperType.GSON)
+                .when().post(urlTemplate)
+                .then().assertThat()
+                .statusCode(400).contentType(ContentType.JSON)
+                .body("code", equalTo(ErrorCodes.BAD_PAYLOAD))
+                .body("message", containsString("parsing event data"));
+    }
+
+    @Test
+    public void testNotificationEventTestResultInvalidEventData() {
+        var payload = new DsmNotificationPayload(null, TEST_RESULT.name(), 1L);
+        var result = new JsonObject();
+        result.addProperty("result", "NEGATIVE");
+        result.addProperty("reason", "the reason");
+        payload.setEventData(result);
+        given().auth().oauth2(dsmClientAccessToken)
+                .pathParam("study", testData.getStudyGuid())
+                .pathParam("user", testData.getUserGuid())
+                .body(payload, ObjectMapperType.GSON)
+                .when().post(urlTemplate)
+                .then().assertThat()
+                .log().all()
+                .statusCode(400).contentType(ContentType.JSON)
+                .body("code", equalTo(ErrorCodes.BAD_PAYLOAD))
+                .body("message", containsString("'timeCompleted' must not be null"));
+    }
+
+    @Test
     public void testEvents_success() {
         var payload = new DsmNotificationPayload(null, SALIVA_RECEIVED.name(), 1L);
         given().auth().oauth2(dsmClientAccessToken)
@@ -167,6 +235,55 @@ public class ReceiveDsmNotificationRouteTest extends DsmRouteTest {
                 .then().assertThat()
                 .statusCode(200);
         assertFalse("events should not have ran", checkIfNotificationQueued());
+    }
+
+    @Test
+    public void testEvents_testResult() {
+        var activity = TransactionWrapper.withTxn(handle -> {
+            var form = FormActivityDef.generalFormBuilder("ACT" + System.currentTimeMillis(), "v1", testData.getStudyGuid())
+                    .addName(new Translation("en", "dummy activity"))
+                    .build();
+            handle.attach(ActivityDao.class).insertActivity(form, RevisionMetadata.now(testData.getUserId(), "test"));
+            return form;
+        });
+        TransactionWrapper.useTxn(handle -> {
+            long triggerId = handle.attach(EventTriggerDao.class)
+                    .insertDsmNotificationTestResultTrigger(TestResultEventType.ANY);
+            long actionId = handle.attach(EventActionDao.class)
+                    .insertInstanceCreationAction(activity.getActivityId());
+            handle.attach(JdbiEventConfiguration.class).insert(
+                    triggerId, actionId, testData.getStudyId(),
+                    Instant.now().toEpochMilli(), 1, null, null, null, false, 1);
+        });
+
+        var payload = new DsmNotificationPayload(null, TEST_RESULT.name(), 1L);
+        var result = new TestResult("NEGATIVE", "reason 1", Instant.now());
+        payload.setEventData(GsonUtil.standardGson().toJsonTree(result));
+        given().auth().oauth2(dsmClientAccessToken)
+                .pathParam("study", testData.getStudyGuid())
+                .pathParam("user", testData.getUserGuid())
+                .body(payload, ObjectMapperType.GSON)
+                .log().all()
+                .when().post(urlTemplate)
+                .then().assertThat()
+                .log().all()
+                .statusCode(200);
+
+        TransactionWrapper.useTxn(handle -> {
+            var instanceDao = handle.attach(ActivityInstanceDao.class);
+            List<ActivityResponse> instances = instanceDao.findBaseResponsesByStudyAndUserIds(
+                    testData.getStudyId(), Set.of(testData.getUserId()), true, Set.of(activity.getActivityId()))
+                    .collect(Collectors.toList());
+            assertEquals(1, instances.size());
+
+            ActivityResponse instance = instances.get(0);
+            Map<String, String> substitutions = instanceDao.findSubstitutions(instance.getId());
+            assertFalse(substitutions.isEmpty());
+            assertEquals("NEGATIVE", substitutions.get(I18nTemplateConstants.Snapshot.TEST_RESULT_CODE));
+            assertEquals("reason 1", substitutions.get(I18nTemplateConstants.Snapshot.TEST_RESULT_REASON));
+            assertEquals(result.getTimeCompleted().toString(),
+                    substitutions.get(I18nTemplateConstants.Snapshot.TEST_RESULT_TIME_COMPLETED));
+        });
     }
 
     private boolean checkIfNotificationQueued() {

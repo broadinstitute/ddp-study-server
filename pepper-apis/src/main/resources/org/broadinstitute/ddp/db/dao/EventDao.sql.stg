@@ -23,6 +23,8 @@ SELECT
      wst.workflow_state_id,
      wst.trigger_automatically,
      dnet.dsm_notification_event_type_code as dsm_notification_event_type,
+     (select test_result_event_type_code from test_result_event_type
+       where test_result_event_type_id = dnt.test_result_event_type_id) as test_result_event_type,
      ann_act.message_template_id as announcement_msg_template_id,
      ann_act.is_permanent as announcement_is_permanent,
      ann_act.create_for_proxies as announcement_create_for_proxies,
