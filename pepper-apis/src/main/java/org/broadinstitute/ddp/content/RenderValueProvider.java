@@ -8,6 +8,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -84,6 +85,22 @@ public class RenderValueProvider {
      */
     public String testResultCode() {
         return testResultCode;
+    }
+
+    /**
+     * Returns test result code in user-friendly display, using the provided text.
+     */
+    public String testResultDisplay(String posText, String negText, String otherText) {
+        if (StringUtils.isBlank(testResultCode)) {
+            return null;
+        }
+        if ("POSITIVE".equals(testResultCode)) {
+            return posText;
+        } else if ("NEGATIVE".equals(testResultCode)) {
+            return negText;
+        } else {
+            return otherText;
+        }
     }
 
     /**

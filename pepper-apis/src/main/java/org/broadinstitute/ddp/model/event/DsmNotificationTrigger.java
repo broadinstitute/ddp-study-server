@@ -32,7 +32,7 @@ public class DsmNotificationTrigger extends EventTrigger {
                 var expectedType = testResultEventType == null ? TestResultEventType.ANY : testResultEventType;
                 return eventType == dsmSignal.getDsmEventType()
                         && dsmSignal.getTestResult() != null
-                        && expectedType.matches(dsmSignal.getTestResult().getNormalizedResult());
+                        && expectedType.matches(dsmSignal.getTestResult().getResult());
             } else {
                 return eventType == dsmSignal.getDsmEventType();
             }
