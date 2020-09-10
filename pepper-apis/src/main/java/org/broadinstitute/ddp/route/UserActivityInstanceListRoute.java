@@ -76,17 +76,17 @@ public class UserActivityInstanceListRoute implements Route {
                 var sharedSnapshot = I18nContentRenderer
                         .newValueProviderBuilder(handle, found.getUser().getId())
                         .build().getSnapshot();
-
                 for (var summary : summaries) {
+                    if (StringUtils.isBlank(summary.getActivitySummary())) {
+                        continue;
+                    }
                     Map<String, String> subs = substitutions.getOrDefault(summary.getActivityInstanceId(), new HashMap<>());
                     var provider = new RenderValueProvider.Builder()
                             .withSnapshot(sharedSnapshot)
                             .withSnapshot(subs)
                             .build();
-
                     Map<String, Object> context = new HashMap<>();
                     context.put(I18nTemplateConstants.DDP, provider);
-
                     String summaryText = renderer.renderToString(summary.getActivitySummary(), context);
                     summary.setActivitySummary(summaryText);
                 }
