@@ -4,18 +4,14 @@ import static org.broadinstitute.ddp.util.ResponseUtil.halt400ErrorResponse;
 
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.content.I18nContentRenderer;
-import org.broadinstitute.ddp.content.I18nTemplateConstants;
-import org.broadinstitute.ddp.content.RenderValueProvider;
 import org.broadinstitute.ddp.db.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dto.LanguageDto;
@@ -60,38 +56,13 @@ public class UserActivityInstanceListRoute implements Route {
 
         return TransactionWrapper.withTxn(handle -> {
             var found = RouteUtil.findUserAndStudyOrHalt(handle, userGuid, studyGuid);
-
             LanguageDto preferredUserLanguage = RouteUtil.getUserLanguage(request);
             List<ActivityInstanceSummary> summaries = activityInstanceDao.listActivityInstancesForUser(
                     handle, userGuid, studyGuid, preferredUserLanguage.getIsoCode()
             );
             performActivityInstanceNumbering(summaries);
             summaries = filterActivityInstancesFromDisplay(summaries);
-
-            if (!summaries.isEmpty()) {
-                Set<Long> instanceIds = summaries.stream().map(ActivityInstanceSummary::getActivityInstanceId).collect(Collectors.toSet());
-                var instanceDao = handle.attach(org.broadinstitute.ddp.db.dao.ActivityInstanceDao.class);
-                var substitutions = instanceDao.bulkFindSubstitutions(instanceIds)
-                        .collect(Collectors.toMap(wrapper -> wrapper.getActivityInstanceId(), wrapper -> wrapper.unwrap()));
-                var sharedSnapshot = I18nContentRenderer
-                        .newValueProviderBuilder(handle, found.getUser().getId())
-                        .build().getSnapshot();
-                for (var summary : summaries) {
-                    if (StringUtils.isBlank(summary.getActivitySummary())) {
-                        continue;
-                    }
-                    Map<String, String> subs = substitutions.getOrDefault(summary.getActivityInstanceId(), new HashMap<>());
-                    var provider = new RenderValueProvider.Builder()
-                            .withSnapshot(sharedSnapshot)
-                            .withSnapshot(subs)
-                            .build();
-                    Map<String, Object> context = new HashMap<>();
-                    context.put(I18nTemplateConstants.DDP, provider);
-                    String summaryText = renderer.renderToString(summary.getActivitySummary(), context);
-                    summary.setActivitySummary(summaryText);
-                }
-            }
-
+            activityInstanceDao.renderActivitySummaryText(handle, found.getUser().getId(), summaries);
             return summaries;
         });
     }
