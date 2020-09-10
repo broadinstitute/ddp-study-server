@@ -62,8 +62,8 @@ public class I18nContentRenderer {
     public static RenderValueProvider.Builder newValueProviderBuilder(Handle handle, long participantUserId) {
         var builder = new RenderValueProvider.Builder();
 
-        String guid = handle.attach(UserDao.class).findUserById(participantUserId).get().getGuid();
-        builder.setParticipantGuid(guid);
+        handle.attach(UserDao.class).findUserById(participantUserId)
+                .ifPresent(user -> builder.setParticipantGuid(user.getGuid()));
 
         UserProfile profile = handle.attach(UserProfileDao.class)
                 .findProfileByUserId(participantUserId)
