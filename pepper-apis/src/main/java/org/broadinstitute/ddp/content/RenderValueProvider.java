@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.content;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
@@ -21,6 +22,7 @@ public class RenderValueProvider {
     private String participantFirstName;
     private String participantLastName;
     private LocalDate participantBirthDate;
+    private ZoneId participantTimeZone;
     private LocalDate date;
     private String testResultCode;
     private String testResultReason;
@@ -100,7 +102,8 @@ public class RenderValueProvider {
             return null;
         }
         try {
-            return DateTimeFormatter.ofPattern(format).withZone(ZoneOffset.UTC).format(testResultTimeCompleted);
+            ZoneId zone = participantTimeZone == null ? ZoneOffset.UTC : participantTimeZone;
+            return DateTimeFormatter.ofPattern(format).withZone(zone).format(testResultTimeCompleted);
         } catch (Exception e) {
             LOG.warn("Error formatting test result time completed value '{}' using format '{}'", testResultTimeCompleted, format, e);
             return testResultTimeCompleted.toString();
@@ -121,6 +124,9 @@ public class RenderValueProvider {
         }
         if (participantBirthDate != null) {
             snapshot.put(I18nTemplateConstants.Snapshot.PARTICIPANT_BIRTH_DATE, participantBirthDate.toString());
+        }
+        if (participantTimeZone != null) {
+            snapshot.put(I18nTemplateConstants.Snapshot.PARTICIPANT_TIME_ZONE, participantTimeZone.toString());
         }
         if (date != null) {
             snapshot.put(I18nTemplateConstants.Snapshot.DATE, date.toString());
@@ -161,6 +167,11 @@ public class RenderValueProvider {
 
         public Builder setParticipantBirthDate(LocalDate participantBirthDate) {
             provider.participantBirthDate = participantBirthDate;
+            return this;
+        }
+
+        public Builder setParticipantTimeZone(ZoneId participantTimeZone) {
+            provider.participantTimeZone = participantTimeZone;
             return this;
         }
 
@@ -205,6 +216,11 @@ public class RenderValueProvider {
                 provider.participantBirthDate = LocalDate.parse(value);
             }
 
+            value = snapshot.get(I18nTemplateConstants.Snapshot.PARTICIPANT_TIME_ZONE);
+            if (value != null) {
+                provider.participantTimeZone = ZoneId.of(value);
+            }
+
             value = snapshot.get(I18nTemplateConstants.Snapshot.DATE);
             if (value != null) {
                 provider.date = LocalDate.parse(value);
@@ -234,6 +250,7 @@ public class RenderValueProvider {
             copy.participantFirstName = provider.participantFirstName;
             copy.participantLastName = provider.participantLastName;
             copy.participantBirthDate = provider.participantBirthDate;
+            copy.participantTimeZone = provider.participantTimeZone;
             copy.date = provider.date;
             copy.testResultCode = provider.testResultCode;
             copy.testResultReason = provider.testResultReason;

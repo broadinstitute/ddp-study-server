@@ -68,6 +68,7 @@ public class I18nContentRenderer {
         UserProfile profile = handle.attach(UserProfileDao.class)
                 .findProfileByUserId(participantUserId)
                 .orElse(null);
+        ZoneId zone = ZoneOffset.UTC;
         if (profile != null) {
             if (profile.getFirstName() != null) {
                 builder.setParticipantFirstName(profile.getFirstName());
@@ -78,11 +79,12 @@ public class I18nContentRenderer {
             if (profile.getBirthDate() != null) {
                 builder.setParticipantBirthDate(profile.getBirthDate());
             }
+            if (profile.getTimeZone() != null) {
+                zone = profile.getTimeZone();
+            }
         }
 
-        ZoneId zone = Optional.ofNullable(profile)
-                .map(UserProfile::getTimeZone)
-                .orElse(ZoneOffset.UTC);
+        builder.setParticipantTimeZone(zone);
         builder.setDate(LocalDate.now(zone));
 
         return builder;
