@@ -116,8 +116,10 @@ public class UserActivityInstanceListRouteTest extends IntegrationTestSuite.Test
         prequal1Guid = instanceDto.getGuid();
 
         handle.attach(ActivityInstanceDao.class).saveSubstitutions(instanceDto.getId(), Map.of(
+                I18nTemplateConstants.Snapshot.PARTICIPANT_TIME_ZONE,
+                "America/New_York",
                 I18nTemplateConstants.Snapshot.TEST_RESULT_TIME_COMPLETED,
-                Instant.parse("2020-09-08T11:12:13.123Z").toString()));
+                Instant.parse("2020-09-08T03:12:13.123Z").toString()));
 
         Answer answer = new BoolAnswer(null, toggleQuestionStableId, null, true);
         answerId = handle.attach(AnswerDao.class)
@@ -171,7 +173,8 @@ public class UserActivityInstanceListRouteTest extends IntegrationTestSuite.Test
         Assert.assertTrue(StringUtils.isNotBlank(userActivity.getActivityCode()));
         Assert.assertTrue(StringUtils.isNotBlank(userActivity.getActivityName()));
         Assert.assertEquals(InstanceStatusType.CREATED.name(), userActivity.getStatusTypeCode());
-        Assert.assertEquals("09/08/2020", userActivity.getActivitySummary());
+        Assert.assertEquals("should be the previous day due to timezone",
+                "09/07/2020", userActivity.getActivitySummary());
 
         Assert.assertTrue("Could not find prequal in list of activity instances for test user", hasPrequal);
         Assert.assertFalse(hasReadonlyActivities);
