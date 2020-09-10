@@ -120,7 +120,6 @@ public class ActivityInstanceCreationEventAction extends EventAction {
                 if (result != null) {
                     var provider = new RenderValueProvider.Builder()
                             .setTestResultCode(result.getNormalizedResult())
-                            .setTestResultReason(result.getReason())
                             .setTestResultTimeCompleted(result.getTimeCompleted())
                             .build();
                     handle.attach(ActivityInstanceDao.class).saveSubstitutions(

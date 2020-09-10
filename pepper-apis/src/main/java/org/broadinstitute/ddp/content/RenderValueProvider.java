@@ -25,7 +25,6 @@ public class RenderValueProvider {
     private ZoneId participantTimeZone;
     private LocalDate date;
     private String testResultCode;
-    private String testResultReason;
     private Instant testResultTimeCompleted;
 
     private RenderValueProvider() {
@@ -88,13 +87,6 @@ public class RenderValueProvider {
     }
 
     /**
-     * Returns test result reason, if available.
-     */
-    public String testResultReason() {
-        return testResultReason;
-    }
-
-    /**
      * Returns test result time completed in given format, if available.
      */
     public String testResultTimeCompleted(String format) {
@@ -133,9 +125,6 @@ public class RenderValueProvider {
         }
         if (testResultCode != null) {
             snapshot.put(I18nTemplateConstants.Snapshot.TEST_RESULT_CODE, testResultCode);
-        }
-        if (testResultReason != null) {
-            snapshot.put(I18nTemplateConstants.Snapshot.TEST_RESULT_REASON, testResultReason);
         }
         if (testResultTimeCompleted != null) {
             snapshot.put(I18nTemplateConstants.Snapshot.TEST_RESULT_TIME_COMPLETED, testResultTimeCompleted.toString());
@@ -185,11 +174,6 @@ public class RenderValueProvider {
             return this;
         }
 
-        public Builder setTestResultReason(String testResultReason) {
-            provider.testResultReason = testResultReason;
-            return this;
-        }
-
         public Builder setTestResultTimeCompleted(Instant testResultTimeCompleted) {
             provider.testResultTimeCompleted = testResultTimeCompleted;
             return this;
@@ -231,11 +215,6 @@ public class RenderValueProvider {
                 provider.testResultCode = value;
             }
 
-            value = snapshot.get(I18nTemplateConstants.Snapshot.TEST_RESULT_REASON);
-            if (value != null) {
-                provider.testResultReason = value;
-            }
-
             value = snapshot.get(I18nTemplateConstants.Snapshot.TEST_RESULT_TIME_COMPLETED);
             if (value != null) {
                 provider.testResultTimeCompleted = Instant.parse(value);
@@ -253,7 +232,6 @@ public class RenderValueProvider {
             copy.participantTimeZone = provider.participantTimeZone;
             copy.date = provider.date;
             copy.testResultCode = provider.testResultCode;
-            copy.testResultReason = provider.testResultReason;
             copy.testResultTimeCompleted = provider.testResultTimeCompleted;
             return copy;
         }

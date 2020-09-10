@@ -257,7 +257,7 @@ public class ReceiveDsmNotificationRouteTest extends DsmRouteTest {
         });
 
         var payload = new DsmNotificationPayload(null, TEST_RESULT.name(), 1L);
-        var result = new TestResult("NEGATIVE", "reason 1", Instant.now());
+        var result = new TestResult("NEGATIVE", Instant.now());
         payload.setEventData(GsonUtil.standardGson().toJsonTree(result));
         given().auth().oauth2(dsmClientAccessToken)
                 .pathParam("study", testData.getStudyGuid())
@@ -280,7 +280,6 @@ public class ReceiveDsmNotificationRouteTest extends DsmRouteTest {
             Map<String, String> substitutions = instanceDao.findSubstitutions(instance.getId());
             assertFalse(substitutions.isEmpty());
             assertEquals("NEGATIVE", substitutions.get(I18nTemplateConstants.Snapshot.TEST_RESULT_CODE));
-            assertEquals("reason 1", substitutions.get(I18nTemplateConstants.Snapshot.TEST_RESULT_REASON));
             assertEquals(result.getTimeCompleted().toString(),
                     substitutions.get(I18nTemplateConstants.Snapshot.TEST_RESULT_TIME_COMPLETED));
         });

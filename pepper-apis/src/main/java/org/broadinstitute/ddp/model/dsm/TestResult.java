@@ -14,18 +14,13 @@ public class TestResult {
     @SerializedName("result")
     private String result;
 
-    @NotBlank
-    @SerializedName("reason")
-    private String reason;
-
     @NotNull
     @SerializedName("timeCompleted")
     @JsonAdapter(InstantToIsoDateTimeUtcStrAdapter.class)
     private Instant timeCompleted;
 
-    public TestResult(String result, String reason, Instant timeCompleted) {
+    public TestResult(String result, Instant timeCompleted) {
         this.result = result;
-        this.reason = reason;
         this.timeCompleted = timeCompleted;
     }
 
@@ -42,10 +37,6 @@ public class TestResult {
         } else {
             return res;
         }
-    }
-
-    public String getReason() {
-        return reason;
     }
 
     public Instant getTimeCompleted() {
