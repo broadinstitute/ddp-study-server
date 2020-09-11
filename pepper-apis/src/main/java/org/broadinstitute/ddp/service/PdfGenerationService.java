@@ -691,7 +691,7 @@ public class PdfGenerationService {
                 substituteText(answer, field);
                 break;
             case DATE:
-                substituteDate(field, answer);
+                substituteDate(answer, field);
                 break;
             case PICKLIST:
                 substitutePicklist(answer, field);
@@ -749,7 +749,7 @@ public class PdfGenerationService {
                 substituteText(answer, field);
                 break;
             case DATE:
-                substituteDate(field, answer);
+                substituteDate(answer, field);
                 break;
             case PICKLIST:
                 substitutePicklist(answer, field);
@@ -762,11 +762,10 @@ public class PdfGenerationService {
     }
 
     private void substituteBoolean(BooleanAnswerSubstitution substitution, Answer answer, PdfFormField field) {
-        BooleanAnswerSubstitution booleanSubstitution = substitution;
         Boolean boolValue = answer == null ? null : ((BoolAnswer) answer).getValue();
         if (boolValue != null) {
             boolean shouldCheck;
-            if (booleanSubstitution.checkIfFalse()) {
+            if (substitution.checkIfFalse()) {
                 shouldCheck = !boolValue;
             } else {
                 shouldCheck = boolValue;
@@ -775,7 +774,7 @@ public class PdfGenerationService {
         }
     }
 
-    private void substituteDate(PdfFormField field, Answer answer) {
+    private void substituteDate(Answer answer, PdfFormField field) {
         DateValue dateValue = answer == null ? null : ((DateAnswer) answer).getValue();
         if (dateValue != null) {
             field.setValue(dateValue.toDefaultDateFormat());
@@ -817,7 +816,7 @@ public class PdfGenerationService {
             for (Answer childAnswer : childAnswers) {
                 if (childAnswer != null) {
                     for (AnswerSubstitution sub : compositeSubstitution.getChildAnswerSubstitutions()) {
-                        if (sub.getQuestionStableId().equalsIgnoreCase(childAnswer.getQuestionStableId())) {
+                        if (sub.getQuestionStableId().equals(childAnswer.getQuestionStableId())) {
                             convertChildSubstitutionToPdf(sub, compositeForm, childAnswer, errors);
                         }
                     }

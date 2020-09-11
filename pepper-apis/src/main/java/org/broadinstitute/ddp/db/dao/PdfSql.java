@@ -138,13 +138,13 @@ public interface PdfSql extends SqlObject {
     int insertActivityDateSubstitution(@Bind("subId") long substitutionId, @Bind("activityId") long activityId);
 
     @SqlUpdate("insert into pdf_answer_substitution (pdf_substitution_id, question_stable_code_id, parent_question_stable_code_id) "
-            + "(select :subId, "
+            + " values ("
+            + " :subId, "
             + "(select question_stable_code_id from question_stable_code where stable_id = :stableId "
             + "    and umbrella_study_id = (select study_id from study_activity where study_activity_id = :activityId)) "
             + " , "
             + "(select question_stable_code_id from question_stable_code where stable_id = :parentStableId "
-            + "    and umbrella_study_id = (select study_id from study_activity where study_activity_id = :activityId)) "
-            + "   from dual) ")
+            + "    and umbrella_study_id = (select study_id from study_activity where study_activity_id = :activityId))) ")
     int insertBaseAnswerSubstitution(
             @Bind("subId") long substitutionId,
             @Bind("activityId") long activityId,
