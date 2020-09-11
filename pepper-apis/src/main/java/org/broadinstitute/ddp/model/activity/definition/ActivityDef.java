@@ -57,6 +57,9 @@ public abstract class ActivityDef {
     @SerializedName("excludeFromDisplay")
     protected boolean excludeFromDisplay;
 
+    @SerializedName("excludeStatusIconFromDisplay")
+    protected boolean excludeStatusIconFromDisplay;
+
     @SerializedName("allowUnauthenticated")
     protected boolean allowUnauthenticated;
 
@@ -224,6 +227,10 @@ public abstract class ActivityDef {
         return excludeFromDisplay;
     }
 
+    public boolean isExcludeStatusIconFromDisplay() {
+        return excludeStatusIconFromDisplay;
+    }
+
     public boolean isAllowUnauthenticated() {
         return allowUnauthenticated;
     }
@@ -250,6 +257,7 @@ public abstract class ActivityDef {
         protected Long editTimeoutSec = null;
         protected boolean allowOndemandTrigger = false;
         protected boolean excludeFromDisplay = false;
+        protected boolean excludeStatusIconFromDisplay = false;
         protected boolean allowUnauthenticated = false;
         protected List<Translation> names = new ArrayList<>();
         protected List<Translation> titles = new ArrayList<>();
@@ -275,6 +283,7 @@ public abstract class ActivityDef {
             activity.editTimeoutSec = editTimeoutSec;
             activity.allowOndemandTrigger = allowOndemandTrigger;
             activity.excludeFromDisplay = excludeFromDisplay;
+            activity.excludeStatusIconFromDisplay = excludeStatusIconFromDisplay;
             activity.allowUnauthenticated = allowUnauthenticated;
             activity.readonlyHintTemplate = readonlyHintTemplate;
             activity.isFollowup = isFollowup;
@@ -332,6 +341,11 @@ public abstract class ActivityDef {
 
         public T setExcludeFromDisplay(boolean excludeFromDisplay) {
             this.excludeFromDisplay = excludeFromDisplay;
+            return self();
+        }
+
+        public T setExcludeStatusIconFromDisplay(boolean excludeStatusIconFromDisplay) {
+            this.excludeStatusIconFromDisplay = excludeStatusIconFromDisplay;
             return self();
         }
 

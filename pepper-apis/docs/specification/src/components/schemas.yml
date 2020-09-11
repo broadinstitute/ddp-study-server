@@ -230,6 +230,7 @@ Activity.Summary:
       description: a Base64 encoded png or jpg image
       example: YW55IGN...BwbGVhc3VyZQ==
       type: string
+      nullable: true
     instanceGuid:
       example: 6B03213FD0
       type: string
