@@ -43,7 +43,6 @@ import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.DsmNotificationEventType;
 import org.broadinstitute.ddp.model.dsm.TestResult;
-import org.broadinstitute.ddp.model.dsm.TestResultEventType;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.util.GsonUtil;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
@@ -247,8 +246,7 @@ public class ReceiveDsmNotificationRouteTest extends DsmRouteTest {
             return form;
         });
         TransactionWrapper.useTxn(handle -> {
-            long triggerId = handle.attach(EventTriggerDao.class)
-                    .insertDsmNotificationTestResultTrigger(TestResultEventType.ANY);
+            long triggerId = handle.attach(EventTriggerDao.class).insertDsmNotificationTrigger(TEST_RESULT);
             long actionId = handle.attach(EventActionDao.class)
                     .insertInstanceCreationAction(activity.getActivityId());
             handle.attach(JdbiEventConfiguration.class).insert(

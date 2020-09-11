@@ -177,7 +177,7 @@ public class NotificationEventActionTest extends TxnAwareBaseTest {
         long eventConfigurationId = insertInvitationEmailEventConfiguration(handle, triggerType);
         return new EventConfigurationDto(eventConfigurationId, triggerType, EventActionType.NOTIFICATION, 0, true,
                 null, null, null, MessageDestination.PARTICIPANT_NOTIFICATION.name(),
-                null, null, null, null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null,
                 notificationType, serviceType, linkedActivityId,
                 null, null, null, null, null, null);
     }

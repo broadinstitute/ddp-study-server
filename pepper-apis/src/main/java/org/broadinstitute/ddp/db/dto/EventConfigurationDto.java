@@ -9,7 +9,6 @@ import org.broadinstitute.ddp.model.activity.types.DsmNotificationEventType;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
-import org.broadinstitute.ddp.model.dsm.TestResultEventType;
 import org.broadinstitute.ddp.model.event.NotificationServiceType;
 import org.broadinstitute.ddp.model.event.NotificationType;
 import org.broadinstitute.ddp.model.event.PdfAttachment;
@@ -47,7 +46,6 @@ public class EventConfigurationDto {
 
     /* DSM_NOTIFICATION */
     private DsmNotificationEventType dsmNotificationEventType;
-    private TestResultEventType testResultEventType;
 
     /* MEDICAL_UPDATE */
     // No sub-table
@@ -115,7 +113,6 @@ public class EventConfigurationDto {
                                  Long workflowStateId,
                                  Boolean triggerAutomatically,
                                  DsmNotificationEventType dsmNotificationEventType,
-                                 TestResultEventType testResultEventType,
                                  Long announcementMsgTemplateId,
                                  Boolean announcementIsPermanent,
                                  Boolean announcementCreateForProxies,
@@ -142,7 +139,6 @@ public class EventConfigurationDto {
         this.workflowStateId = workflowStateId;
         this.triggerAutomatically = triggerAutomatically;
         this.dsmNotificationEventType = dsmNotificationEventType;
-        this.testResultEventType = testResultEventType;
         this.announcementMsgTemplateId = announcementMsgTemplateId;
         this.isAnnouncementPermanent = announcementIsPermanent;
         this.createAnnouncementForProxies = announcementCreateForProxies;
@@ -211,10 +207,6 @@ public class EventConfigurationDto {
 
     public DsmNotificationEventType getDsmNotificationEventType() {
         return dsmNotificationEventType;
-    }
-
-    public TestResultEventType getTestResultEventType() {
-        return testResultEventType;
     }
 
     public Long getAnnouncementMsgTemplateId() {

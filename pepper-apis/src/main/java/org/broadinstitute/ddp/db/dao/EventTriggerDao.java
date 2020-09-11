@@ -1,13 +1,10 @@
 package org.broadinstitute.ddp.db.dao;
 
-import javax.annotation.Nullable;
-
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.model.activity.types.DsmNotificationEventType;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
-import org.broadinstitute.ddp.model.dsm.TestResultEventType;
 import org.jdbi.v3.sqlobject.CreateSqlObject;
 
 public interface EventTriggerDao {
@@ -46,17 +43,7 @@ public interface EventTriggerDao {
     default long insertDsmNotificationTrigger(DsmNotificationEventType dsmEventType) {
         var eventTriggerSql = getEventTriggerSql();
         long triggerId = eventTriggerSql.insertBaseTrigger(EventTriggerType.DSM_NOTIFICATION);
-        DBUtils.checkInsert(1, eventTriggerSql.insertDsmNotificationTrigger(triggerId, dsmEventType, null));
-        return triggerId;
-    }
-
-    default long insertDsmNotificationTestResultTrigger(@Nullable TestResultEventType type) {
-        if (type == null) {
-            type = TestResultEventType.ANY;
-        }
-        var eventTriggerSql = getEventTriggerSql();
-        long triggerId = eventTriggerSql.insertBaseTrigger(EventTriggerType.DSM_NOTIFICATION);
-        DBUtils.checkInsert(1, eventTriggerSql.insertDsmNotificationTrigger(triggerId, DsmNotificationEventType.TEST_RESULT, type));
+        DBUtils.checkInsert(1, eventTriggerSql.insertDsmNotificationTrigger(triggerId, dsmEventType));
         return triggerId;
     }
 

@@ -32,7 +32,6 @@ import org.broadinstitute.ddp.model.copy.CopyConfiguration;
 import org.broadinstitute.ddp.model.copy.CopyConfigurationPair;
 import org.broadinstitute.ddp.model.copy.CopyLocation;
 import org.broadinstitute.ddp.model.copy.CopyLocationType;
-import org.broadinstitute.ddp.model.dsm.TestResultEventType;
 import org.broadinstitute.ddp.model.pdf.PdfConfigInfo;
 import org.broadinstitute.ddp.model.workflow.ActivityState;
 import org.broadinstitute.ddp.model.workflow.StateType;
@@ -105,13 +104,7 @@ public class EventBuilder {
         } else if (type == EventTriggerType.DSM_NOTIFICATION) {
             String dsmEvent = triggerCfg.getString("dsmEvent");
             var dsmEventType = DsmNotificationEventType.valueOf(dsmEvent);
-            if (dsmEventType == DsmNotificationEventType.TEST_RESULT) {
-                String value = ConfigUtil.getStrIfPresent(triggerCfg, "testResultEventType");
-                var testResultEventType = value == null ? null : TestResultEventType.valueOf(value);
-                return triggerDao.insertDsmNotificationTestResultTrigger(testResultEventType);
-            } else {
-                return triggerDao.insertDsmNotificationTrigger(dsmEventType);
-            }
+            return triggerDao.insertDsmNotificationTrigger(dsmEventType);
         } else if (type == EventTriggerType.WORKFLOW_STATE) {
             if (triggerCfg.hasPath(ACTIVITY_CODE_FIELD)) {
                 String activityCode = triggerCfg.getString(ACTIVITY_CODE_FIELD);
@@ -272,12 +265,7 @@ public class EventBuilder {
             return String.format("%s/%s/%s", type, activityCode, statusType);
         } else if (EventTriggerType.DSM_NOTIFICATION.name().equals(type)) {
             String dsmEvent = triggerCfg.getString("dsmEvent");
-            String testResultEventType = ConfigUtil.getStrIfPresent(triggerCfg, "testResultEventType");
-            if (StringUtils.isNotBlank(testResultEventType)) {
-                return String.format("%s/%s/%s", type, dsmEvent, testResultEventType);
-            } else {
-                return String.format("%s/%s", type, dsmEvent);
-            }
+            return String.format("%s/%s", type, dsmEvent);
         } else if (EventTriggerType.WORKFLOW_STATE.name().equals(type)) {
             String detail = null;
             if (triggerCfg.hasPath(ACTIVITY_CODE_FIELD)) {
