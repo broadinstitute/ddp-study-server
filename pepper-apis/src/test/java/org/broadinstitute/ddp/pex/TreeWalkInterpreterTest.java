@@ -16,9 +16,11 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
+import org.broadinstitute.ddp.content.I18nTemplateConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
@@ -165,6 +167,9 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
         ActivityInstanceDao activityInstanceDao = handle.attach(ActivityInstanceDao.class);
         firstInstance = activityInstanceDao.insertInstance(form.getActivityId(), userGuid);
         secondInstance = activityInstanceDao.insertInstance(form.getActivityId(), userGuid);
+
+        activityInstanceDao.saveSubstitutions(firstInstance.getId(), Map.of(
+                I18nTemplateConstants.Snapshot.TEST_RESULT_CODE, "NEGATIVE"));
     }
 
     @Test
@@ -746,6 +751,15 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
                 "user.studies[\"%s\"].forms[\"%s\"].hasInstance()",
                 studyGuid, "blah");
         assertFalse(run(expr));
+    }
+
+    @Test
+    public void testEval_formInstanceQuery_snapshotSubstitution() {
+        String expr = String.format(
+                "user.studies[\"%s\"].forms[\"%s\"].instances[specific]"
+                        + ".snapshotSubstitution(\"DDP_TEST_RESULT_CODE\") == \"NEGATIVE\"",
+                studyGuid, activityCode);
+        assertTrue(run(expr));
     }
 
     private void testEval_textAnswerQuery(String expr, boolean expectedTestResult) {

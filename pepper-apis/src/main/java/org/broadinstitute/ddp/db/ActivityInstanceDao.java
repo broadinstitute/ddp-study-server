@@ -15,8 +15,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import com.typesafe.config.Config;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.ddp.constants.ConfigFile.SqlQuery;
 import org.broadinstitute.ddp.constants.SqlConstants;
@@ -25,6 +28,9 @@ import org.broadinstitute.ddp.constants.SqlConstants.ActivityTypeTable;
 import org.broadinstitute.ddp.constants.SqlConstants.LanguageCodeTable;
 import org.broadinstitute.ddp.constants.SqlFile.ActivityInstanceSql;
 import org.broadinstitute.ddp.content.ContentStyle;
+import org.broadinstitute.ddp.content.I18nContentRenderer;
+import org.broadinstitute.ddp.content.I18nTemplateConstants;
+import org.broadinstitute.ddp.content.RenderValueProvider;
 import org.broadinstitute.ddp.db.dao.FormActivityDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
@@ -58,6 +64,7 @@ public class ActivityInstanceDao {
     private static String SECTIONS_SIZE_FOR_ACTIVITY_INSTANCE;
 
     private final FormInstanceDao formInstanceDao;
+    private final I18nContentRenderer renderer;
 
     /**
      * Instantiate ActivityInstanceDao object.
@@ -66,6 +73,7 @@ public class ActivityInstanceDao {
             FormInstanceDao formInstanceDao
     ) {
         this.formInstanceDao = formInstanceDao;
+        this.renderer = new I18nContentRenderer();
     }
 
     /**
@@ -287,6 +295,7 @@ public class ActivityInstanceDao {
                     activityTitle = (activityTitle == null ? "" : activityTitle);
 
                     boolean isActivityWriteOnce = rs.getBoolean(SqlConstants.StudyActivityTable.IS_WRITE_ONCE);
+                    long activityInstanceId = rs.getLong(ActivityInstanceTable.ID);
                     String activityInstanceGuid = rs.getString(ActivityInstanceTable.GUID);
                     String activityTypeCode = rs.getString(ActivityTypeTable.TYPE_CODE);
                     String formTypeCode = rs.getString(SqlConstants.FormTypeTable.CODE);
@@ -313,6 +322,7 @@ public class ActivityInstanceDao {
 
                     ActivityInstanceSummary activityInstanceSummary = new ActivityInstanceSummary(
                             activityCode,
+                            activityInstanceId,
                             activityInstanceGuid,
                             activityName,
                             activityTitle,
@@ -365,6 +375,39 @@ public class ActivityInstanceDao {
         return I18nUtil.getActivityInstanceTranslation(
                 activitySummaries, isoLanguageCode
         );
+    }
+
+    /**
+     * Iterate through activity instance summaries and render the summary texts.
+     *
+     * @param handle the database handle
+     * @param userId the user who owns the activity instances
+     * @param summaries the list of summaries
+     */
+    public void renderActivitySummaryText(Handle handle, long userId, List<ActivityInstanceSummary> summaries) {
+        if (!summaries.isEmpty()) {
+            Set<Long> instanceIds = summaries.stream().map(ActivityInstanceSummary::getActivityInstanceId).collect(Collectors.toSet());
+            var instanceDao = handle.attach(org.broadinstitute.ddp.db.dao.ActivityInstanceDao.class);
+            var substitutions = instanceDao.bulkFindSubstitutions(instanceIds)
+                    .collect(Collectors.toMap(wrapper -> wrapper.getActivityInstanceId(), wrapper -> wrapper.unwrap()));
+            var sharedSnapshot = I18nContentRenderer
+                    .newValueProviderBuilder(handle, userId)
+                    .build().getSnapshot();
+            for (var summary : summaries) {
+                if (StringUtils.isBlank(summary.getActivitySummary())) {
+                    continue;
+                }
+                Map<String, String> subs = substitutions.getOrDefault(summary.getActivityInstanceId(), new HashMap<>());
+                var provider = new RenderValueProvider.Builder()
+                        .withSnapshot(sharedSnapshot)
+                        .withSnapshot(subs)
+                        .build();
+                Map<String, Object> context = new HashMap<>();
+                context.put(I18nTemplateConstants.DDP, provider);
+                String summaryText = renderer.renderToString(summary.getActivitySummary(), context);
+                summary.setActivitySummary(summaryText);
+            }
+        }
     }
 
     /**
