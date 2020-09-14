@@ -302,7 +302,8 @@ public class ActivityInstanceDao {
                     String statusTypeCode =
                             rs.getString(SqlConstants.ActivityInstanceStatusTypeTable.ACTIVITY_STATUS_TYPE_CODE);
                     FormType formType = formTypeCode != null ? FormType.valueOf(formTypeCode) : null;
-                    Blob iconBlob = formTypeAndStatusTypeToIcon.get(formType + "-" + statusTypeCode);
+                    boolean excludeStatusIconFromDisplay = rs.getBoolean(SqlConstants.StudyActivityTable.EXCLUDE_STATUS_ICON_FROM_DISPLAY);
+                    Blob iconBlob = excludeStatusIconFromDisplay ? null : formTypeAndStatusTypeToIcon.get(formType + "-" + statusTypeCode);
                     String iconBase64 = iconBlob != null
                             ? Base64.getEncoder().encodeToString(iconBlob.getBytes(1, (int) iconBlob.length())) : null;
 
