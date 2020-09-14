@@ -8,9 +8,9 @@
       "ddp_created": "2019-02-20T19:14:09Z"
     },
     "datstatsurveydata": {
-      "MedicalSurvey": {
+      "medicalsurvey": {
         "ddp_created": "2020-01-29T03:14:10Z",
-        "ddp_lastupdated": "2020-10-29T19:14:10Z",
+        "ddp_lastupdated": "2020-10-29T19:14:11Z",
         "ddp_firstcompleted": null,
         "participant_birth_year": null,
         "participant_gender": 3,
@@ -18,7 +18,6 @@
         "participant_address_state": "Massachusetts",
         "participant_address_zip": "02142",
         "participant_address_country": "AM",
-        "portal_user_id": "adb38a813b039aa2bb3037d2",
         "current_status": 1,
         "doctor_diagnosed": 1,
         "control.effected": 1,
@@ -74,14 +73,13 @@
         "datstat.sessionid": "54dee901-c421-4669-bb1f-544f3a393f19",
         "datstat.submissionstatus": 2
       },
-      "ConsentSurvey": {
+      "consentsurvey": {
         "age_majority": 1,
         "follow_up": 1,
         "independently_consent": 1,
         "full_name": "A Person",
         "representative_name": "A Representative",
         "representative_relationship": "A Relationship",
-        "portal_user_id": "adb38a813b039aa2bb3037d2",
         "survey_status": "COMPLETE",
         "ddp_created": "2019-10-29T19:14:09Z",
         "ddp_lastupdated": "2019-10-29T19:14:10Z",
