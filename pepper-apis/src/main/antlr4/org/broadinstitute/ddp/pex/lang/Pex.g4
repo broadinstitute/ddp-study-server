@@ -22,6 +22,7 @@ expr
 query
   : 'user' '.' study '.' studyPredicate                                                  # StudyQuery
   | 'user' '.' study '.' form '.' formPredicate                                          # FormQuery
+  | 'user' '.' study '.' form '.' instance '.' formInstancePredicate                     # FormInstanceQuery
   | 'user' '.' study '.' form '.' question '.' questionPredicate                         # QuestionQuery
   | 'user' '.' study '.' form '.' question '.' 'answers' '.' predicate                   # DefaultLatestAnswerQuery
   | 'user' '.' study '.' form '.' instance '.' question '.' 'answers' '.' predicate      # AnswerQuery
@@ -43,6 +44,11 @@ studyPredicate
 formPredicate
   : 'isStatus' '(' STR ( ',' STR )* ')'  # IsStatusPredicate
   | 'hasInstance' '(' ')'         # HasInstancePredicate
+  ;
+
+// Form predicate functions for a particular instance
+formInstancePredicate
+  : 'snapshotSubstitution' '(' STR ')'   # InstanceSnapshotSubstitutionQuery
   ;
 
 // Question predicate functions

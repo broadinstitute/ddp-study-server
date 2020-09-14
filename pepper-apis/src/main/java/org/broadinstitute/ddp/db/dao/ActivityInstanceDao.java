@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.db.dao;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -219,6 +220,10 @@ public interface ActivityInstanceDao extends SqlObject {
     @ValueColumn("value")
     Map<String, String> findSubstitutions(@Bind("instanceId") long instanceId);
 
+    @SqlQuery("select * from activity_instance_substitution where activity_instance_id in (<instanceIds>)")
+    @UseRowReducer(BulkFindSubstitutionsReducer.class)
+    Stream<SubstitutionsWrapper> bulkFindSubstitutions(@BindList("instanceIds") Set<Long> instanceIds);
+
     @UseStringTemplateSqlLocator
     @SqlQuery("queryBaseResponsesByInstanceId")
     @RegisterConstructorMapper(FormResponse.class)
@@ -301,6 +306,34 @@ public interface ActivityInstanceDao extends SqlObject {
             // Only supports form activities now.
             FormResponse instance = view.getRow(FormResponse.class);
             container.put(instance.getId(), instance);
+        }
+    }
+
+    class BulkFindSubstitutionsReducer implements LinkedHashMapRowReducer<Long, SubstitutionsWrapper> {
+        @Override
+        public void accumulate(Map<Long, SubstitutionsWrapper> container, RowView view) {
+            long instanceId = view.getColumn("activity_instance_id", Long.class);
+            String variable = view.getColumn("variable_name", String.class);
+            String value = view.getColumn("value", String.class);
+            container.computeIfAbsent(instanceId, SubstitutionsWrapper::new).unwrap().put(variable, value);
+        }
+    }
+
+    // A wrapper around a Map to work better with JDBI for bulk querying substitutions.
+    class SubstitutionsWrapper {
+        private long activityInstanceId;
+        private Map<String, String> subs = new HashMap<>();
+
+        public SubstitutionsWrapper(long activityInstanceId) {
+            this.activityInstanceId = activityInstanceId;
+        }
+
+        public long getActivityInstanceId() {
+            return activityInstanceId;
+        }
+
+        public Map<String, String> unwrap() {
+            return subs;
         }
     }
 }

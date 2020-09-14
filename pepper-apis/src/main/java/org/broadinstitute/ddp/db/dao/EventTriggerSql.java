@@ -23,6 +23,6 @@ public interface EventTriggerSql extends SqlObject {
             + "  where dsm_notification_event_type_code = :dsmEventType")
     int insertDsmNotificationTrigger(
             @Bind("triggerId") long triggerId,
-            @Bind("dsmEventType")DsmNotificationEventType dsmEventType);
+            @Bind("dsmEventType") DsmNotificationEventType dsmEventType);
 
 }

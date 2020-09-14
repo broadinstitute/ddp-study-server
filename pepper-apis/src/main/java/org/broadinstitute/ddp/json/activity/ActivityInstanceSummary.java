@@ -55,6 +55,7 @@ public class ActivityInstanceSummary implements TranslatedSummary {
     @SerializedName("isFollowup")
     private boolean isFollowup;
 
+    private transient long activityInstanceId;
     private transient String isoLanguageCode;
     private transient String activityTypeName;
     private transient boolean excludeFromDisplay;
@@ -65,6 +66,7 @@ public class ActivityInstanceSummary implements TranslatedSummary {
      */
     public ActivityInstanceSummary(
             String activityCode,
+            long activityInstanceId,
             String activityInstanceGuid,
             String activityName,
             String activityTitle,
@@ -84,6 +86,7 @@ public class ActivityInstanceSummary implements TranslatedSummary {
             boolean isFollowup
     ) {
         this.activityCode = activityCode;
+        this.activityInstanceId = activityInstanceId;
         this.activityInstanceGuid = activityInstanceGuid;
         this.activityName = activityName;
         this.activityTitle = activityTitle;
@@ -107,6 +110,10 @@ public class ActivityInstanceSummary implements TranslatedSummary {
 
     public String getActivityCode() {
         return activityCode;
+    }
+
+    public long getActivityInstanceId() {
+        return activityInstanceId;
     }
 
     @Override
@@ -136,6 +143,10 @@ public class ActivityInstanceSummary implements TranslatedSummary {
 
     public String getActivitySummary() {
         return activitySummary;
+    }
+
+    public void setActivitySummary(String activitySummary) {
+        this.activitySummary = activitySummary;
     }
 
     public String getStatusTypeCode() {

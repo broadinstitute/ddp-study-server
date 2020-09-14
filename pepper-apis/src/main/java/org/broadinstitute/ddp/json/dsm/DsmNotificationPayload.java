@@ -4,6 +4,7 @@ import java.util.Optional;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotBlank;
 
+import com.google.gson.JsonElement;
 import com.google.gson.annotations.SerializedName;
 import org.broadinstitute.ddp.model.activity.types.DsmNotificationEventType;
 
@@ -18,6 +19,9 @@ public class DsmNotificationPayload {
 
     @SerializedName("eventDate")
     private long eventDate;
+
+    @SerializedName("eventData")
+    private JsonElement eventData;
 
     public DsmNotificationPayload(@Nullable String eventInfo, String eventType, long eventDate) {
         this.eventInfo = eventInfo;
@@ -35,5 +39,13 @@ public class DsmNotificationPayload {
         } catch (Exception e) {
             return Optional.empty();
         }
+    }
+
+    public JsonElement getEventData() {
+        return eventData;
+    }
+
+    public void setEventData(JsonElement eventData) {
+        this.eventData = eventData;
     }
 }
