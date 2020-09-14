@@ -11,6 +11,7 @@ public class AnswerSubstitution extends PdfSubstitution {
     private long activityId;
     private QuestionType questionType;
     private String questionStableId;
+    private String parentQuestionStableId;
 
     @JdbiConstructor
     public AnswerSubstitution(@ColumnName("pdf_substitution_id") long id,
@@ -18,11 +19,13 @@ public class AnswerSubstitution extends PdfSubstitution {
                               @ColumnName("placeholder") String placeholder,
                               @ColumnName("activity_id") long activityId,
                               @ColumnName("question_type") QuestionType questionType,
-                              @ColumnName("question_stable_id") String questionStableId) {
+                              @ColumnName("question_stable_id") String questionStableId,
+                              @ColumnName("parent_question_stable_id") String parentQuestionStableId) {
         super(id, templateId, ANSWER, placeholder);
         this.activityId = activityId;
         this.questionType = questionType;
         this.questionStableId = questionStableId;
+        this.parentQuestionStableId = parentQuestionStableId;
     }
 
     public AnswerSubstitution(String placeholder, long activityId, QuestionType questionType, String questionStableId) {
@@ -31,6 +34,16 @@ public class AnswerSubstitution extends PdfSubstitution {
         this.questionType = questionType;
         this.questionStableId = questionStableId;
     }
+
+    public AnswerSubstitution(String placeholder, long activityId, QuestionType questionType,
+                              String questionStableId, String parentQuestionStableId) {
+        super(ANSWER, placeholder);
+        this.activityId = activityId;
+        this.questionType = questionType;
+        this.questionStableId = questionStableId;
+        this.parentQuestionStableId = parentQuestionStableId;
+    }
+
 
     public long getActivityId() {
         return activityId;
@@ -42,5 +55,9 @@ public class AnswerSubstitution extends PdfSubstitution {
 
     public String getQuestionStableId() {
         return questionStableId;
+    }
+
+    public String getParentQuestionStableId() {
+        return parentQuestionStableId;
     }
 }

@@ -228,4 +228,5 @@
     <include file="db-changes/seed/testboston-delivered.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-4927-exclude-status-icon-from-display.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/seed/DDP-4911-test-result-event.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-4842-pdf-composite-answer-substitution.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

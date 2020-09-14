@@ -1,11 +1,13 @@
 package org.broadinstitute.ddp.db.dao;
 
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dto.pdf.MailingAddressTemplateDto;
@@ -15,6 +17,7 @@ import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.pdf.ActivityDateSubstitution;
 import org.broadinstitute.ddp.model.pdf.AnswerSubstitution;
 import org.broadinstitute.ddp.model.pdf.BooleanAnswerSubstitution;
+import org.broadinstitute.ddp.model.pdf.CompositeAnswerSubstitution;
 import org.broadinstitute.ddp.model.pdf.CustomTemplate;
 import org.broadinstitute.ddp.model.pdf.MailingAddressTemplate;
 import org.broadinstitute.ddp.model.pdf.PdfActivityDataSource;
@@ -125,7 +128,9 @@ public interface PdfDao extends SqlObject {
     private void insertAnswerSubstitution(AnswerSubstitution substitution) {
         PdfSql pdfSql = getPdfSql();
         DBUtils.checkInsert(1, pdfSql.insertBaseAnswerSubstitution(
-                substitution.getId(), substitution.getActivityId(), substitution.getQuestionStableId()));
+                substitution.getId(), substitution.getActivityId(),
+                substitution.getQuestionStableId(), substitution.getParentQuestionStableId()));
+
         if (substitution.getQuestionType() == QuestionType.BOOLEAN) {
             BooleanAnswerSubstitution boolSubstitution = (BooleanAnswerSubstitution) substitution;
             DBUtils.checkInsert(1, pdfSql.insertBooleanAnswerSubstitution(substitution.getId(), boolSubstitution.checkIfFalse()));
@@ -335,6 +340,32 @@ public interface PdfDao extends SqlObject {
         if (!customTemplates.isEmpty()) {
             findSubstitutionsByCustomTemplateIds(customTemplates.keySet())
                     .forEach(sub -> customTemplates.get(sub.getTemplateId()).addSubstitution(sub));
+
+            //build CompositeAnswerSubstitution's
+            for (CustomTemplate template: customTemplates.values()) {
+                Map<String, CompositeAnswerSubstitution> compositeSubs = new HashMap<>();
+                Iterator<PdfSubstitution> subsItr = template.getSubstitutions().iterator();
+                while (subsItr.hasNext()) {
+                    PdfSubstitution sub = subsItr.next();
+                    if (!(sub instanceof AnswerSubstitution)) {
+                        continue;
+                    }
+                    AnswerSubstitution answerSub = (AnswerSubstitution) sub;
+                    String parentStableCode = answerSub.getParentQuestionStableId();
+                    if (StringUtils.isNotBlank(parentStableCode)) {
+                        if (!compositeSubs.containsKey(parentStableCode)) {
+                            compositeSubs.put(parentStableCode,
+                                    new CompositeAnswerSubstitution(null, answerSub.getActivityId(), parentStableCode));
+                        }
+                        compositeSubs.get(parentStableCode).addChildAnswerSubstitutions(answerSub);
+                        subsItr.remove();
+                    }
+                }
+
+                if (!compositeSubs.isEmpty()) {
+                    compositeSubs.forEach((key, compSub) -> template.addSubstitution(compSub));
+                }
+            }
         }
 
         return templates;
