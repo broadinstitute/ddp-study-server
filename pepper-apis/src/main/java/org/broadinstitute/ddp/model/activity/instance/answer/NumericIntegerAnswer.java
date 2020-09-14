@@ -16,6 +16,11 @@ public class NumericIntegerAnswer extends NumericAnswer<Long> {
         this.value = value;
     }
 
+    public NumericIntegerAnswer(Long answerId, String questionStableId, String answerGuid, Long value, String actInstanceGuid) {
+        super(answerId, questionStableId, answerGuid, NumericType.INTEGER, actInstanceGuid);
+        this.value = value;
+    }
+
     @Override
     public Long getValue() {
         return value;

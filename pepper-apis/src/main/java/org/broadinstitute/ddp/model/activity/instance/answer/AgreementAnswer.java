@@ -8,6 +8,11 @@ public final class AgreementAnswer extends Answer<Boolean> {
     @SerializedName("value")
     private Boolean value;
 
+    public AgreementAnswer(Long answerId, String questionStableId, String answerGuid, Boolean value, String actInstanceGuid) {
+        super(QuestionType.AGREEMENT, answerId, questionStableId, answerGuid, actInstanceGuid);
+        this.value = value;
+    }
+
     public AgreementAnswer(Long answerId, String questionStableId, String answerGuid, Boolean value) {
         super(QuestionType.AGREEMENT, answerId, questionStableId, answerGuid);
         this.value = value;

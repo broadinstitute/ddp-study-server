@@ -28,6 +28,7 @@ import org.apache.http.HttpStatus;
 import org.apache.http.entity.ContentType;
 import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetricsTracker;
 import org.broadinstitute.ddp.cache.LanguageStore;
+import org.broadinstitute.ddp.cache.CacheService;
 import org.broadinstitute.ddp.client.DsmClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.ErrorCodes;
@@ -259,6 +260,8 @@ public class DataDonationPlatform {
             LOG.info("Running liquibase migrations in StudyServer against database url: {}", dbUrl);
             LiquibaseUtil.runLiquibase(dbUrl, TransactionWrapper.DB.APIS);
         }
+        //@TODO figure out how to do this only at deployment time.
+        CacheService.getInstance().resetAllCaches();
         TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, LanguageStore::init);
 
         if (appEnginePort != null) {
@@ -425,6 +428,7 @@ public class DataDonationPlatform {
 
         // User activity answers routes
         FormActivityService formService = new FormActivityService(interpreter);
+
         patch(API.USER_ACTIVITY_ANSWERS,
                 new PatchFormAnswersRoute(formService, activityValidationService, interpreter),
                 responseSerializer);

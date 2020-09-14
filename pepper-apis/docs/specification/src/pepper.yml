@@ -2,7 +2,7 @@ openapi: 3.0.0
 servers: []
 info:
   description: 'Pepper API specification'
-  version: 1.8.0
+  version: 1.9.1
   title: Pepper
   contact:
     email: info@datadonationplatform.org
@@ -122,6 +122,8 @@ paths:
     $ref: 'endpoints/cancers.yml'
   /autocomplete/institution:
     $ref: 'endpoints/autocomplete.institution.yml'
+  /post-password-reset:
+    $ref: 'endpoints/post-password-reset.yml'
 components:
   parameters:
     $ref: 'components/parameters.yml'

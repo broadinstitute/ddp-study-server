@@ -69,7 +69,9 @@ public interface ComponentDao extends SqlObject {
             formComponent = new MailingAddressComponent(
                     mailingAddressComponentDto.getTitleTemplateId(),
                     mailingAddressComponentDto.getSubtitleTemplateId(),
-                    componentDto.shouldHideNumber());
+                    componentDto.shouldHideNumber(),
+                    mailingAddressComponentDto.shouldRequireVerified(),
+                    mailingAddressComponentDto.shouldRequirePhone());
         } else {
             throw new DaoException("Cannot process component type " + componentDto.getComponentType());
         }
@@ -139,7 +141,10 @@ public interface ComponentDao extends SqlObject {
             subtitleTemplateId = templateDao.insertTemplate(mailAddressCompDef.getSubtitleTemplate(), revisionId);
         }
 
-        DBUtils.checkInsert(1, getJdbiComponent().insertMailingAddressComponent(componentId, titleTemplateId, subtitleTemplateId));
+        DBUtils.checkInsert(1, getJdbiComponent().insertMailingAddressComponent(
+                componentId, titleTemplateId, subtitleTemplateId,
+                mailAddressCompDef.shouldRequireVerified(),
+                mailAddressCompDef.shouldRequirePhone()));
 
         LOG.info("Inserted mailing address component {}", componentId);
         return componentId;
@@ -166,6 +171,8 @@ public interface ComponentDao extends SqlObject {
             }
             MailingAddressComponentDef comp = new MailingAddressComponentDef(titleTmpl, subtitleTmpl);
             comp.setHideNumber(componentDto.shouldHideNumber());
+            comp.setRequireVerified(mailingAddressComponentDto.shouldRequireVerified());
+            comp.setRequirePhone(mailingAddressComponentDto.shouldRequirePhone());
             return comp;
         }
 

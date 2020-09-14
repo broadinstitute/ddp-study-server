@@ -22,6 +22,20 @@ post:
   description: save a new address for a participant
   tags:
     - Mailing Address
+  parameters:
+    - in: query
+      name: strict
+      description: |
+        if true, the request will fail if the following fields are `null` or empty.
+          * `name`
+          * `street1`
+          * `city`
+          * `state`
+          * `country`
+          * `zip`
+      schema:
+        type: boolean
+        default: false
   requestBody:
     $ref: '../pepper.yml#/components/requestBodies/MailingAddress'
   responses:

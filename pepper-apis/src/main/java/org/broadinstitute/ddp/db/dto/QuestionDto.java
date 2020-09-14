@@ -1,12 +1,13 @@
 package org.broadinstitute.ddp.db.dto;
 
+import java.io.Serializable;
 import javax.annotation.Nullable;
 
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
-public class QuestionDto {
+public class QuestionDto implements Serializable {
 
     private QuestionType type;
     private long id;

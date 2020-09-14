@@ -18,8 +18,12 @@ import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.jdbi.v3.core.Handle;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public final class ElasticsearchServiceUtil {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ElasticsearchServiceUtil.class);
 
     public static String getIndexForStudy(Handle handle, StudyDto studyDto, ElasticSearchIndexType elasticSearchIndexType) {
         String type = elasticSearchIndexType.getElasticSearchCompatibleLabel();
@@ -42,11 +46,23 @@ public final class ElasticsearchServiceUtil {
                 new UsernamePasswordCredentials(userName, password));
 
         URL url = new URL(cfg.getString(ConfigFile.ELASTICSEARCH_URL));
+        LOG.info("Creating Elasticsearch client with URL: {}", url);
+
+        String proxy = ConfigUtil.getStrIfPresent(cfg, ConfigFile.ELASTICSEARCH_PROXY);
+        final URL proxyUrl = StringUtils.isNotBlank(proxy) ? new URL(proxy) : null;
+        if (proxyUrl != null) {
+            LOG.info("Using Elasticsearch client proxy: {}", proxy);
+        }
 
         RestClientBuilder builder = RestClient.builder(
                 new HttpHost(url.getHost(), url.getPort(), url.getProtocol()))
-                .setHttpClientConfigCallback(httpClientBuilder -> httpClientBuilder
-                        .setDefaultCredentialsProvider(credentialsProvider))
+                .setHttpClientConfigCallback(httpClientBuilder -> {
+                    httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
+                    if (proxyUrl != null) {
+                        httpClientBuilder.setProxy(new HttpHost(proxyUrl.getHost(), proxyUrl.getPort(), proxyUrl.getProtocol()));
+                    }
+                    return httpClientBuilder;
+                })
                 .setMaxRetryTimeoutMillis(100000);
 
         return new RestHighLevelClient(builder);

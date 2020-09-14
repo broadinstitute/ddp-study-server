@@ -5,7 +5,7 @@ import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
-import org.broadinstitute.ddp.db.dao.StudyLanguageDao;
+import org.broadinstitute.ddp.db.dao.StudyLanguageCachedDao;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.util.ResponseUtil;
@@ -32,7 +32,7 @@ public class ListStudyLanguagesRoute implements Route {
             }
 
             long umbrellaStudyId = studyDto.getId();
-            var studyLanguageDao = handle.attach(StudyLanguageDao.class);
+            var studyLanguageDao = new StudyLanguageCachedDao(handle);
             return studyLanguageDao.findLanguages(umbrellaStudyId);
         });
 

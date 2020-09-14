@@ -17,10 +17,17 @@ import java.util.List;
 import java.util.Optional;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
+import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
+import org.broadinstitute.ddp.db.dao.JdbiActivity;
+import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
+import org.broadinstitute.ddp.db.dao.UserDao;
+import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
+import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
+import org.broadinstitute.ddp.db.dto.UserActivityInstanceSummary;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.json.form.BlockVisibility;
 import org.broadinstitute.ddp.model.activity.definition.ConditionalBlockDef;
@@ -35,6 +42,7 @@ import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.TemplateType;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
+import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.pex.PexException;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.pex.TreeWalkInterpreter;
@@ -70,7 +78,24 @@ public class FormActivityServiceTest extends TxnAwareBaseTest {
     public void testGetBlockVisibilities_withoutExpr_excluded() {
         TransactionWrapper.useTxn(handle -> {
             setupActivityAndInstance(handle);
-            List<BlockVisibility> visibilities = service.getBlockVisibilities(handle, testData.getUserGuid(), instanceGuid);
+            Optional<User> user = handle.attach(UserDao.class).findUserByGuid(testData.getUserGuid());
+            Optional<UserActivityInstanceSummary> summary =
+                    handle.attach(JdbiActivityInstance.class).getActivityInstanceSummary(user.get(), testData.getStudyId());
+            Optional<ActivityInstanceDto> instanceDtoOptional = summary.get().getActivityInstanceByGuid(instanceGuid);
+            ActivityInstanceDto instanceDto = instanceDtoOptional.get();
+            ActivityDefStore activityStore = ActivityDefStore.getInstance();
+            ActivityVersionDto versionDto = activityStore
+                    .findVersionDto(handle, instanceDto.getActivityId(), instanceDto.getCreatedAtMillis())
+                    .orElseThrow(() -> new DDPException("Could not find activity version for instance " + instanceGuid));
+            Optional<ActivityDto> activityDtoOptional =
+                    handle.attach(JdbiActivity.class).findActivityByStudyGuidAndCode(testData.getStudyGuid(),
+                            instanceDto.getActivityCode());
+            FormActivityDef formDef = activityStore.findActivityDef(handle, testData.getStudyGuid(), activityDtoOptional.get(),
+                    versionDto)
+                    .orElseThrow(() -> new DDPException("Could not find activity definition for instance " + instanceGuid));
+
+            List<BlockVisibility> visibilities = service.getBlockVisibilities(handle, summary.get(), formDef, testData.getUserGuid(),
+                    instanceGuid);
             assertNotNull(visibilities);
             assertEquals(2, visibilities.size());
             assertFalse(visibilities.stream().anyMatch(vis -> vis.getGuid().equals(controlBlockGuid)));
@@ -81,14 +106,32 @@ public class FormActivityServiceTest extends TxnAwareBaseTest {
     @Test
     public void testGetBlockVisibilities_withExpr_included() {
         PexInterpreter mockInterpreter = Mockito.mock(PexInterpreter.class);
-        when(mockInterpreter.eval(anyString(), any(Handle.class), eq(testData.getUserGuid()), anyString()))
+        when(mockInterpreter.eval(anyString(), any(Handle.class), eq(testData.getUserGuid()), anyString(),
+                any(UserActivityInstanceSummary.class)))
                 .thenReturn(true);
 
         FormActivityService formService = new FormActivityService(mockInterpreter);
 
         TransactionWrapper.useTxn(handle -> {
             setupActivityAndInstance(handle);
-            List<BlockVisibility> visibilities = formService.getBlockVisibilities(handle, testData.getUserGuid(), instanceGuid);
+            Optional<User> user = handle.attach(UserDao.class).findUserByGuid(testData.getUserGuid());
+            Optional<UserActivityInstanceSummary> summary =
+                    handle.attach(JdbiActivityInstance.class).getActivityInstanceSummary(user.get(), testData.getStudyId());
+            Optional<ActivityInstanceDto> instanceDtoOptional = summary.get().getActivityInstanceByGuid(instanceGuid);
+            ActivityInstanceDto instanceDto = instanceDtoOptional.get();
+            ActivityDefStore activityStore = ActivityDefStore.getInstance();
+            ActivityVersionDto versionDto = activityStore
+                    .findVersionDto(handle, instanceDto.getActivityId(), instanceDto.getCreatedAtMillis())
+                    .orElseThrow(() -> new DDPException("Could not find activity version for instance " + instanceGuid));
+            Optional<ActivityDto> activityDtoOptional =
+                    handle.attach(JdbiActivity.class).findActivityByStudyGuidAndCode(testData.getStudyGuid(),
+                            instanceDto.getActivityCode());
+            FormActivityDef formDef = activityStore.findActivityDef(handle, testData.getStudyGuid(), activityDtoOptional.get(),
+                    versionDto)
+                    .orElseThrow(() -> new DDPException("Could not find activity definition for instance " + instanceGuid));
+
+            List<BlockVisibility> visibilities = formService.getBlockVisibilities(handle, summary.get(), formDef, testData.getUserGuid(),
+                    instanceGuid);
             assertNotNull(visibilities);
             assertEquals(2, visibilities.size());
 
@@ -107,14 +150,32 @@ public class FormActivityServiceTest extends TxnAwareBaseTest {
         thrown.expectMessage("pex expression");
 
         PexInterpreter mockInterpreter = Mockito.mock(PexInterpreter.class);
-        when(mockInterpreter.eval(anyString(), any(Handle.class), eq(testData.getUserGuid()), anyString()))
+
+        when(mockInterpreter.eval(anyString(), any(Handle.class), eq(testData.getUserGuid()), anyString(),
+                any(UserActivityInstanceSummary.class)))
                 .thenThrow(new PexException("testing"));
 
         FormActivityService formService = new FormActivityService(mockInterpreter);
 
         TransactionWrapper.useTxn(handle -> {
             setupActivityAndInstance(handle);
-            formService.getBlockVisibilities(handle, testData.getUserGuid(), instanceGuid);
+            Optional<User> user = handle.attach(UserDao.class).findUserByGuid(testData.getUserGuid());
+            Optional<UserActivityInstanceSummary> summary =
+                    handle.attach(JdbiActivityInstance.class).getActivityInstanceSummary(user.get(), testData.getStudyId());
+            Optional<ActivityInstanceDto> instanceDtoOptional = summary.get().getActivityInstanceByGuid(instanceGuid);
+            ActivityInstanceDto instanceDto = instanceDtoOptional.get();
+            ActivityDefStore activityStore = ActivityDefStore.getInstance();
+            ActivityVersionDto versionDto = activityStore
+                    .findVersionDto(handle, instanceDto.getActivityId(), instanceDto.getCreatedAtMillis())
+                    .orElseThrow(() -> new DDPException("Could not find activity version for instance " + instanceGuid));
+            Optional<ActivityDto> activityDtoOptional =
+                    handle.attach(JdbiActivity.class).findActivityByStudyGuidAndCode(testData.getStudyGuid(),
+                            instanceDto.getActivityCode());
+            FormActivityDef formDef = activityStore.findActivityDef(handle, testData.getStudyGuid(), activityDtoOptional.get(),
+                    versionDto)
+                    .orElseThrow(() -> new DDPException("Could not find activity definition for instance " + instanceGuid));
+
+            formService.getBlockVisibilities(handle, summary.get(), formDef, testData.getUserGuid(), instanceGuid);
             fail("expected exception was not thrown");
         });
     }
@@ -123,7 +184,24 @@ public class FormActivityServiceTest extends TxnAwareBaseTest {
     public void testGetBlockVisibilities_nestedBlock_included() {
         TransactionWrapper.useTxn(handle -> {
             setupActivityAndInstance(handle);
-            List<BlockVisibility> visibilities = service.getBlockVisibilities(handle, testData.getUserGuid(), instanceGuid);
+            Optional<User> user = handle.attach(UserDao.class).findUserByGuid(testData.getUserGuid());
+            Optional<UserActivityInstanceSummary> summary =
+                    handle.attach(JdbiActivityInstance.class).getActivityInstanceSummary(user.get(), testData.getStudyId());
+            Optional<ActivityInstanceDto> instanceDtoOptional = summary.get().getActivityInstanceByGuid(instanceGuid);
+            ActivityInstanceDto instanceDto = instanceDtoOptional.get();
+            ActivityDefStore activityStore = ActivityDefStore.getInstance();
+            ActivityVersionDto versionDto = activityStore
+                    .findVersionDto(handle, instanceDto.getActivityId(), instanceDto.getCreatedAtMillis())
+                    .orElseThrow(() -> new DDPException("Could not find activity version for instance " + instanceGuid));
+            Optional<ActivityDto> activityDtoOptional =
+                    handle.attach(JdbiActivity.class).findActivityByStudyGuidAndCode(testData.getStudyGuid(),
+                            instanceDto.getActivityCode());
+            FormActivityDef formDef = activityStore.findActivityDef(handle, testData.getStudyGuid(), activityDtoOptional.get(),
+                    versionDto)
+                    .orElseThrow(() -> new DDPException("Could not find activity definition for instance " + instanceGuid));
+
+            List<BlockVisibility> visibilities = service.getBlockVisibilities(handle, summary.get(), formDef, testData.getUserGuid(),
+                    instanceGuid);
             assertNotNull(visibilities);
             assertEquals(2, visibilities.size());
             assertTrue(visibilities.stream().anyMatch(vis -> vis.getGuid().equals(conditionalNestedBlockGuid)));

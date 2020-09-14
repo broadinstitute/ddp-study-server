@@ -1,8 +1,10 @@
 package org.broadinstitute.ddp.route;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetrics;
 import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetricsTracker;
 import org.broadinstitute.ddp.constants.ErrorCodes;
@@ -14,23 +16,32 @@ import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiFormActivitySetting;
+import org.broadinstitute.ddp.db.dao.JdbiMailAddress;
 import org.broadinstitute.ddp.db.dto.FormActivitySettingDto;
 import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.json.PutAnswersResponse;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.json.workflow.WorkflowResponse;
+import org.broadinstitute.ddp.model.activity.instance.ComponentBlock;
+import org.broadinstitute.ddp.model.activity.instance.FormComponent;
 import org.broadinstitute.ddp.model.activity.instance.FormInstance;
+import org.broadinstitute.ddp.model.activity.instance.MailingAddressComponent;
 import org.broadinstitute.ddp.model.activity.instance.validation.ActivityValidationFailure;
+import org.broadinstitute.ddp.model.activity.types.BlockType;
+import org.broadinstitute.ddp.model.activity.types.ComponentType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
+import org.broadinstitute.ddp.model.address.MailAddress;
 import org.broadinstitute.ddp.model.workflow.ActivityState;
 import org.broadinstitute.ddp.model.workflow.WorkflowState;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.security.DDPAuth;
 import org.broadinstitute.ddp.service.ActivityValidationService;
+import org.broadinstitute.ddp.service.DsmAddressValidationStatus;
 import org.broadinstitute.ddp.service.WorkflowService;
 import org.broadinstitute.ddp.util.FormActivityStatusUtil;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
+import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
@@ -100,6 +111,9 @@ public class PutFormAnswersRoute implements Route {
                         throw ResponseUtil.haltError(response, 422, new ApiError(ErrorCodes.QUESTION_REQUIREMENTS_NOT_MET, msg));
                     }
 
+                    // FIXME: address doesn't get saved until this PUT call finishes, so we couldn't check address here.
+                    // checkAddressRequirements(handle, userGuid, form);
+
                     List<ActivityValidationFailure> validationFailures = actValidationService.validate(
                             handle, interpreter, userGuid, instanceGuid, form.getActivityId(), langCodeId
                     );
@@ -151,5 +165,47 @@ public class PutFormAnswersRoute implements Route {
 
         response.status(200);
         return resp;
+    }
+
+    void checkAddressRequirements(Handle handle, String participantGuid, FormInstance form) {
+        boolean addressRequireVerified = false;
+        boolean addressRequirePhone = false;
+
+        for (var section : form.getAllSections()) {
+            for (var block : section.getBlocks()) {
+                if (block.isShown() && block.getBlockType() == BlockType.COMPONENT) {
+                    FormComponent comp = ((ComponentBlock) block).getFormComponent();
+                    if (comp.getComponentType() == ComponentType.MAILING_ADDRESS) {
+                        MailingAddressComponent addrComp = (MailingAddressComponent) comp;
+                        addressRequireVerified = addressRequireVerified || addrComp.shouldRequireVerified();
+                        addressRequirePhone = addressRequirePhone || addrComp.shouldRequirePhone();
+                    }
+                }
+            }
+        }
+
+        if (addressRequireVerified || addressRequirePhone) {
+            Optional<MailAddress> address = handle.attach(JdbiMailAddress.class).findDefaultAddressForParticipant(participantGuid);
+            if (addressRequireVerified) {
+                boolean isVerified = address
+                        .map(a -> DsmAddressValidationStatus.addressValidStatuses().contains(a.getStatusType()))
+                        .orElse(false);
+                if (!isVerified) {
+                    String msg = "Address needs to be verified";
+                    LOG.info(msg);
+                    throw ResponseUtil.haltError(422, new ApiError(ErrorCodes.QUESTION_REQUIREMENTS_NOT_MET, msg));
+                }
+            }
+            if (addressRequirePhone) {
+                boolean hasPhone = address
+                        .map(a -> StringUtils.isNotBlank(a.getPhone()))
+                        .orElse(false);
+                if (!hasPhone) {
+                    String msg = "Address requires a phone number";
+                    LOG.info(msg);
+                    throw ResponseUtil.haltError(422, new ApiError(ErrorCodes.QUESTION_REQUIREMENTS_NOT_MET, msg));
+                }
+            }
+        }
     }
 }

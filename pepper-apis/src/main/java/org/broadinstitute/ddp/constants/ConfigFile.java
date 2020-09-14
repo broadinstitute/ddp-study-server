@@ -118,6 +118,7 @@ public class ConfigFile {
     public static final String ELASTICSEARCH_PASSWORD = "elasticsearchPassword";
     public static final String ELASTICSEARCH_USERNAME = "elasticsearchUsername";
     public static final String ELASTICSEARCH_EXPORT_BATCH_SIZE = "elasticsearchBatchSize";
+    public static final String ELASTICSEARCH_PROXY = "elasticsearchProxy";
 
     public static final String DSM_BASE_URL = "dsmBaseUrl";
     public static final String DSM_JWT_SECRET = "dsmJwtSecret";
@@ -126,6 +127,9 @@ public class ConfigFile {
 
     public static final String AUTH0_IP_WHITE_LIST = "auth0IpWhiteList";
     public static final String PREFERRED_SOURCE_IP_HEADER = "preferredSourceIPHeader";
+
+    public static final String JCACHE_CONFIGURATION_FILE = "jcacheConfigurationFile";
+    public static final String REDIS_SERVER_ADDRESS = "redisServerAddress";
 
     public static final class SqlQuery {
         public static final String FORM_ACTIVITY_BY_GUID = "activities.formActivityByGuidQuery";
@@ -181,5 +185,7 @@ public class ConfigFile {
         public static final String TEMPLATE_VERSION = "version";
         public static final String FROM_NAME = "sendgrid.fromName";
         public static final String FROM_EMAIL = "sendgrid.fromEmail";
+        // The proxy URL to use for all outgoing SendGrid requests.
+        public static final String PROXY = "sendgrid.proxy";
     }
 }

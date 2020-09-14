@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.model.activity.definition;
 
 import java.lang.reflect.Type;
+import java.util.stream.Stream;
 import javax.validation.constraints.NotNull;
 
 import com.google.gson.JsonDeserializationContext;
@@ -8,6 +9,7 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
+import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
 import org.broadinstitute.ddp.model.activity.types.ComponentType;
 
@@ -39,6 +41,11 @@ public abstract class ComponentBlockDef extends FormBlockDef {
 
     public void setHideNumber(boolean hideNumber) {
         this.hideNumber = hideNumber;
+    }
+
+    @Override
+    public Stream<QuestionDef> getQuestions() {
+        return Stream.of();
     }
 
     public static class Deserializer implements JsonDeserializer<ComponentBlockDef> {

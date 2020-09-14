@@ -1,13 +1,15 @@
 package org.broadinstitute.ddp.model.study;
 
+import java.io.Serializable;
 import java.util.Locale;
 
 import com.google.gson.annotations.SerializedName;
 import org.broadinstitute.ddp.db.dto.LanguageDto;
+import org.broadinstitute.ddp.transformers.Exclude;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
-public class StudyLanguage {
+public class StudyLanguage implements Serializable {
 
     @SerializedName("languageCode")
     private String languageCode;
@@ -18,8 +20,11 @@ public class StudyLanguage {
     @SerializedName("isDefault")
     private boolean isDefault;
 
-    private transient long studyId;
-    private transient long languageId;
+    @Exclude
+    private long studyId;
+
+    @Exclude
+    private long languageId;
 
     @JdbiConstructor
     public StudyLanguage(@ColumnName("iso_language_code") String languageCode,
