@@ -78,7 +78,8 @@ public class StudyDataLoaderMain {
     private String reportFileName;
     private String dryRunEmail;
     private boolean isDeleteAuth0Email;
-    private boolean isUseExistingAuth0Users; //TODO: Use this
+    private boolean isUseExistingAuth0Users;
+    private boolean isSkipPrequal;
     private String mappingFileName = null;
     private String preProcessFileName = null;
     private String serviceAccountFile = null;
@@ -108,6 +109,7 @@ public class StudyDataLoaderMain {
         options.addOption("e", true, "Dry run test email");
         options.addOption("de", false, "Delete auth0 email");
         options.addOption("ue", false, "Use existing Auth0 accounts");
+        options.addOption("sp", false, "Do not look for prequalifier");
         options.addOption("mf", true, "Mapping file");
         options.addOption("gsa", true, "google cloud service account file");
         options.addOption("gb", true, "google bucket file");
@@ -161,7 +163,6 @@ public class StudyDataLoaderMain {
         boolean hasServiceAccount = cmd.hasOption("gsa");
         boolean hasMappingFile = cmd.hasOption("mf");
         boolean hasBucketName = cmd.hasOption("gb");
-        boolean isUseExistingAuth0 = cmd.hasOption("ue");
 
         if (cmd.hasOption("help")) {
             HelpFormatter formatter = new HelpFormatter();
@@ -230,6 +231,7 @@ public class StudyDataLoaderMain {
 
         dataLoaderMain.isDeleteAuth0Email = cmd.hasOption("de");
         dataLoaderMain.isUseExistingAuth0Users = cmd.hasOption("ue");
+        dataLoaderMain.isSkipPrequal = cmd.hasOption("sp");
 
         if (isDryRun && hasTestEmail) {
             dataLoaderMain.dryRunEmail = cmd.getOptionValue('e');
@@ -551,7 +553,7 @@ public class StudyDataLoaderMain {
             String email = datstatData.getAsJsonObject().get("datstat_email").getAsString().toLowerCase();
             setRunEmail(dryRun, datstatData);
 
-            if (!dryRun && preProcessedData.getAuth0ExistingEmails().contains(email)  && !"PRION".equals(studyGuid)) {
+            if (!dryRun && preProcessedData.getAuth0ExistingEmails().contains(email)  && !isUseExistingAuth0Users) {
                 LOG.error("Skipped altpid: {} . Email : {} already exists in Auth0. ", altpid, email);
                 skippedList.add(altpid);
                 continue;
@@ -651,7 +653,7 @@ public class StudyDataLoaderMain {
                     long studyId = studyDto.getId();
                     foundInAuth0 = dataLoader.isExistingAuth0User(datstatParticipantData);
                     userGuid = dataLoader.loadParticipantData(handle, datstatParticipantData, datstatParticipantMappingData,
-                            phoneNumber, studyDto, clientDto, address, olcService, addressService);
+                            phoneNumber, studyDto, clientDto, address, olcService, addressService, isUseExistingAuth0Users);
                     UserDto userDto = jdbiUser.findByUserGuid(userGuid);
                     JsonElement completeStatusElement;
 
@@ -679,7 +681,7 @@ public class StudyDataLoaderMain {
                     var answerDao = handle.attach(AnswerDao.class);
 
                     //create prequal
-                    if (!"PRION".equals(studyGuid)) {
+                    if (!isSkipPrequal) {
                         dataLoader.createPrequal(handle,
                                 userGuid, studyId,
                                 createdAt,

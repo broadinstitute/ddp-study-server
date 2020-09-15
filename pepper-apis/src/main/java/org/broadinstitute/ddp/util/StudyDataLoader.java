@@ -326,7 +326,7 @@ public class StudyDataLoader {
 
     public String loadParticipantData(Handle handle, JsonElement datstatData, JsonElement mappingData, String phoneNumber,
                                       StudyDto studyDto, ClientDto clientDto, MailAddress address, OLCService olcService,
-                                      AddressService addressService) throws Exception {
+                                      AddressService addressService, boolean useExistingAuth0Users) throws Exception {
 
         //load data
         JdbiUser jdbiUser = handle.attach(JdbiUser.class);
@@ -347,7 +347,7 @@ public class StudyDataLoader {
         JdbiClient clientDao = handle.attach(JdbiClient.class);
 
         UserDto pepperUser = createLegacyPepperUser(userDao, clientDao, datstatData, userGuid, userHruid, clientDto,
-                studyDto.getGuid());
+                useExistingAuth0Users);
 
         JdbiLanguageCode jdbiLanguageCode = handle.attach(JdbiLanguageCode.class);
         UserProfileDao profileDao = handle.attach(UserProfileDao.class);
@@ -983,28 +983,26 @@ public class StudyDataLoader {
 
     public UserDto createLegacyPepperUser(JdbiUser userDao, JdbiClient clientDao,
                                           JsonElement data, String userGuid, String userHruid, ClientDto clientDto,
-                                          String studyGuid) throws Exception {
+                                          boolean useExistingAuth0Users) throws Exception {
 
         String emailAddress = data.getAsJsonObject().get("datstat_email").getAsString();
-
-        //If this is Prion, first check for an existing Auth0 user
         String userAction = "created";
         User newAuth0User = null;
-        if ("PRION".equals(studyGuid)) {
+
+        //If configured to use existing Auth0 users, first check to see if there's already an Auth0 user we should use
+        if (useExistingAuth0Users) {
             List<User> auth0UsersByEmail = auth0Util.getAuth0UsersByEmail(emailAddress, mgmtToken);
             if (auth0UsersByEmail != null && auth0UsersByEmail.size() > 0) {
                 userAction = "found";
                 newAuth0User = auth0UsersByEmail.get(0);
                 LOG.info("Using existing Auth0 user");
-            } else {
-                LOG.info("Prion user with email " + emailAddress + " not found in Auth0");
             }
         }
 
         if (newAuth0User == null) {
             // Create a user for the given domain
-            if ("PRION".equals(studyGuid)) {
-                LOG.info("WARNING: User not found--creating with random password");
+            if (useExistingAuth0Users) {
+                LOG.info("User not found: creating with random password");
             }
             String randomPass = generateRandomPassword();
             newAuth0User = auth0Util.createAuth0User(emailAddress, randomPass, mgmtToken);
@@ -1579,22 +1577,12 @@ public class StudyDataLoader {
             if (value != null && value.getAsInt() == 1) { //option checked
                 if (option.getAsJsonObject().get("text") != null) {
                     //other text details
-                    //TODO: This should only happen for Prion...
-                    if ("medicalsurvey".equals(surveyName) || "consentsurvey".equals(surveyName)) {
-                        String otherTextKey;
-
-                        if ("medicalsurvey".equals(surveyName)) {
-                            //For medical survey, text contains the full name of the key--don't concatenate
-                            otherTextKey = option.getAsJsonObject().get("text").getAsString();
-                        } else {
-                            //Otherwise, the name of the key is [optionName].[valueAssociatedWithTextInMapping]
-                            otherTextKey = key.concat(".").concat(option.getAsJsonObject().get("text").getAsString());
-                        }
-
+                    //For medical survey, the "text" attribute in the mapping contains the full name of the key
+                    if ("medicalsurvey".equals(surveyName)) {
+                        String otherTextKey = option.getAsJsonObject().get("text").getAsString();
                         String otherText = getStringValueFromElement(sourceDataElement, otherTextKey);
-                        selectedPicklistOptions.add(new SelectedPicklistOption(optionName.getAsString().toUpperCase(),
-                                otherText));
-                    } else {
+                        selectedPicklistOptions.add(new SelectedPicklistOption(optionName.getAsString().toUpperCase(), otherText));
+                    } else { //Otherwise, append the "text" attribute value to the key of the question
                         String otherText = getTextDetails(sourceDataElement, option, key);
                         selectedPicklistOptions.add(new SelectedPicklistOption(optionName.getAsString().toUpperCase(), otherText));
                     }

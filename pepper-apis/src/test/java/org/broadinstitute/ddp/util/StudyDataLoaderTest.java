@@ -800,7 +800,7 @@ public class StudyDataLoaderTest {
                 any(JsonElement.class),
                 anyString(),
                 anyString(),
-                any(ClientDto.class), eq("cmi-mbc")
+                any(ClientDto.class), false
         )).thenCallRealMethod();
 
         mockDataLoader.createLegacyPepperUser(
@@ -809,7 +809,7 @@ public class StudyDataLoaderTest {
                 participantData,
                 pretendUserGuid,
                 pretendUserHruid,
-                mockClientDto, "cmi-mbc"
+                mockClientDto, false
         );
 
         ArgumentCaptor<String> creationEmail = ArgumentCaptor.forClass(String.class);
