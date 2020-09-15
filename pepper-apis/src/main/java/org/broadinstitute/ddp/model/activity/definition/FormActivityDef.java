@@ -98,7 +98,8 @@ public class FormActivityDef extends ActivityDef {
             ListStyleHint listStyleHint,
             Template lastUpdatedTextTemplate,
             LocalDateTime lastUpdated,
-            boolean isFollowup
+            boolean isFollowup,
+            boolean hideInstances
     ) {
         super(
                 ActivityType.FORMS,
@@ -114,7 +115,8 @@ public class FormActivityDef extends ActivityDef {
                 translatedDescriptions,
                 translatedSummaries,
                 readonlyHintTemplate,
-                isFollowup
+                isFollowup,
+                hideInstances
         );
         this.formType = MiscUtil.checkNonNull(formType, "formType");
         this.sections = MiscUtil.checkNonNull(sections, "sections");
@@ -299,7 +301,8 @@ public class FormActivityDef extends ActivityDef {
                     listStyleHint,
                     lastUpdatedTextTemplate,
                     lastUpdated,
-                    isFollowup
+                    isFollowup,
+                    hideInstances
             );
             configure(form);
             form.listStyleHint = listStyleHint;

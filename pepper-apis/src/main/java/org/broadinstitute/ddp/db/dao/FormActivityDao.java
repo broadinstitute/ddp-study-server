@@ -77,7 +77,7 @@ public interface FormActivityDao extends SqlObject {
         long activityId = jdbiActivity.insertActivity(activityTypeId, studyId, activity.getActivityCode(),
                 activity.getMaxInstancesPerUser(), activity.getDisplayOrder(), activity.isWriteOnce(), activity.getEditTimeoutSec(),
                 activity.isOndemandTriggerAllowed(), activity.isExcludeFromDisplay(), activity.isExcludeStatusIconFromDisplay(),
-                activity.isAllowUnauthenticated(), activity.isFollowup());
+                activity.isAllowUnauthenticated(), activity.isFollowup(), activity.isHideInstances());
         activity.setActivityId(activityId);
 
         long versionId = jdbiVersion.insert(activity.getActivityId(), activity.getVersionTag(), revisionId);
