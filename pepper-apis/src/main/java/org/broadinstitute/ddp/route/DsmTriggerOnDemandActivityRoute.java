@@ -88,7 +88,7 @@ public class DsmTriggerOnDemandActivityRoute extends ValidatedJsonInputRoute<Tri
             }
 
             ActivityInstanceDao instanceDao = handle.attach(ActivityInstanceDao.class);
-            if (activityDto.isHideInstances()) {
+            if (activityDto.isHideExistingInstancesOnCreation()) {
                 //hide existing instances
                 instanceDao.bulkUpdateIsHiddenByActivityIds(user.getId(), true, Set.of(activityDto.getActivityId()));
             }

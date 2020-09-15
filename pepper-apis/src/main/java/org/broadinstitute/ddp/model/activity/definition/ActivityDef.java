@@ -63,8 +63,8 @@ public abstract class ActivityDef {
     @SerializedName("allowUnauthenticated")
     protected boolean allowUnauthenticated;
 
-    @SerializedName("hideInstances")
-    protected boolean hideInstances;
+    @SerializedName("hideExistingInstancesOnCreation")
+    protected boolean hideExistingInstancesOnCreation;
 
     @NotEmpty
     @SerializedName("translatedNames")
@@ -111,7 +111,7 @@ public abstract class ActivityDef {
             List<SummaryTranslation> translatedSummaries,
             Template readonlyHintTemplate,
             boolean isFollowup,
-            boolean hideInstances
+            boolean hideExistingInstancesOnCreation
     ) {
         this.activityType = MiscUtil.checkNonNull(activityType, "activityType");
         this.activityCode = MiscUtil.checkNotBlank(activityCode, "activityCode");
@@ -131,7 +131,7 @@ public abstract class ActivityDef {
         this.translatedSummaries = translatedSummaries;
         this.readonlyHintTemplate = readonlyHintTemplate;
         this.isFollowup = isFollowup;
-        this.hideInstances = hideInstances;
+        this.hideExistingInstancesOnCreation = hideExistingInstancesOnCreation;
     }
 
     /**
@@ -245,7 +245,7 @@ public abstract class ActivityDef {
     }
 
     public boolean isHideInstances() {
-        return hideInstances;
+        return hideExistingInstancesOnCreation;
     }
 
     /**
@@ -275,7 +275,7 @@ public abstract class ActivityDef {
         protected List<SummaryTranslation> summaries = new ArrayList<>();
         protected Template readonlyHintTemplate;
         protected boolean isFollowup;
-        protected boolean hideInstances;
+        protected boolean hideExistingInstancesOnCreation;
 
         /**
          * Returns the subclass builder instance to enable method chaining.
@@ -297,7 +297,7 @@ public abstract class ActivityDef {
             activity.allowUnauthenticated = allowUnauthenticated;
             activity.readonlyHintTemplate = readonlyHintTemplate;
             activity.isFollowup = isFollowup;
-            activity.hideInstances = hideInstances;
+            activity.hideExistingInstancesOnCreation = hideExistingInstancesOnCreation;
         }
 
         public T setActivityCode(String activityCode) {
@@ -450,8 +450,8 @@ public abstract class ActivityDef {
             return self();
         }
 
-        public T setHideInstances(boolean hideInstances) {
-            this.hideInstances = hideInstances;
+        public T setHideInstances(boolean hideExistingInstancesOnCreation) {
+            this.hideExistingInstancesOnCreation = hideExistingInstancesOnCreation;
             return self();
         }
     }

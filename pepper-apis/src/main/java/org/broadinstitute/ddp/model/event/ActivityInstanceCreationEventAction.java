@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.model.event;
 
 import java.time.Instant;
+import java.util.Set;
 
 import org.broadinstitute.ddp.content.RenderValueProvider;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
@@ -85,6 +86,12 @@ public class ActivityInstanceCreationEventAction extends EventAction {
                     activityDto.getMaxInstancesPerUser()
             );
             return;
+        }
+
+        if (activityDto.isHideExistingInstancesOnCreation()) {
+            //hide existing instances
+            handle.attach(ActivityInstanceDao.class).bulkUpdateIsHiddenByActivityIds(signal.getParticipantId(),
+                    true, Set.of(studyActivityId));
         }
 
         // All fine, creating an activity instance

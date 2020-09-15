@@ -20,7 +20,7 @@ public class ActivityDto {
     private boolean writeOnce;
     private boolean allowOndemandTrigger;
     private boolean isFollowup;
-    private boolean hideInstances;
+    private boolean hideExistingInstancesOnCreation;
 
     /**
      * Instantiate an ActivityDto object.
@@ -37,7 +37,7 @@ public class ActivityDto {
             boolean writeOnce,
             boolean allowOndemandTrigger,
             boolean isFollowup,
-            boolean hideInstances
+            boolean hideExistingInstancesOnCreation
     ) {
         this.activityId = activityId;
         this.activityCode = activityCode;
@@ -50,7 +50,7 @@ public class ActivityDto {
         this.writeOnce = writeOnce;
         this.allowOndemandTrigger = allowOndemandTrigger;
         this.isFollowup = isFollowup;
-        this.hideInstances = hideInstances;
+        this.hideExistingInstancesOnCreation = hideExistingInstancesOnCreation;
     }
 
     public String getActivityCode() {
@@ -97,8 +97,8 @@ public class ActivityDto {
         return allowOndemandTrigger;
     }
 
-    public boolean isHideInstances() {
-        return hideInstances;
+    public boolean isHideExistingInstancesOnCreation() {
+        return hideExistingInstancesOnCreation;
     }
 
     public static class ActivityRowMapper implements RowMapper<ActivityDto> {

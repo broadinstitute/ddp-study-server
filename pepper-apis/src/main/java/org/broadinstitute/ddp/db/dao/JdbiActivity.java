@@ -27,10 +27,11 @@ public interface JdbiActivity extends SqlObject {
     @SqlUpdate("insert into study_activity"
             + " (activity_type_id,study_id,study_activity_code,max_instances_per_user,display_order,"
             + "is_write_once, instantiate_upon_registration,edit_timeout_sec,allow_ondemand_trigger,"
-            + "exclude_from_display, exclude_status_icon_from_display, allow_unauthenticated, is_followup, hide_instances)"
+            + "exclude_from_display, exclude_status_icon_from_display, allow_unauthenticated, "
+            + "is_followup, hide_existing_instances_on_creation)"
             + " values(:activityTypeId,:studyId,:activityCode,"
             + ":maxInstancesPerUser,:displayOrder,:writeOnce,0,:editTimeoutSec,:allowOndemandTrigger,"
-            + ":excludeFromDisplay, :excludeStatusIconFromDisplay, :allowUnauthenticated, :isFollowup, :hideInstances)")
+            + ":excludeFromDisplay, :excludeStatusIconFromDisplay, :allowUnauthenticated, :isFollowup, :hideExistingInstancesOnCreation)")
     @GetGeneratedKeys()
     long insertActivity(
             @Bind("activityTypeId") long activityTypeId,
@@ -45,7 +46,7 @@ public interface JdbiActivity extends SqlObject {
             @Bind("excludeStatusIconFromDisplay") boolean excludeStatusIconFromDisplay,
             @Bind("allowUnauthenticated") boolean allowUnauthenticated,
             @Bind("isFollowup") boolean isFollowup,
-            @Bind("hideInstances") boolean hideInstances
+            @Bind("hideExistingInstancesOnCreation") boolean hideExistingInstancesOnCreation
     );
 
     @SqlUpdate("insert into form_activity(study_activity_id,form_type_id) values(?,?)")

@@ -62,7 +62,7 @@ public final class ConsentActivityDef extends FormActivityDef {
             Template lastUpdatedTextTemplate,
             LocalDateTime lastUpdated,
             boolean isFollowup,
-            boolean hideInstances
+            boolean hideExistingInstancesOnCreation
     ) {
         super(
                 FormType.CONSENT,
@@ -84,7 +84,7 @@ public final class ConsentActivityDef extends FormActivityDef {
                 lastUpdatedTextTemplate,
                 lastUpdated,
                 isFollowup,
-                hideInstances
+                hideExistingInstancesOnCreation
         );
         this.consentedExpr = MiscUtil.checkNotBlank(consentedExpr, "consentedExpr");
         this.elections = MiscUtil.checkNonNull(elections, "elections");
@@ -205,7 +205,7 @@ public final class ConsentActivityDef extends FormActivityDef {
                     lastUpdatedTextTemplate,
                     lastUpdated,
                     isFollowup,
-                    hideInstances
+                    hideExistingInstancesOnCreation
             );
             configure(consent);
             consent.setConsentConditionId(consentConditionId);
