@@ -3,7 +3,7 @@
     "guid": "PRION",
     "survey": [
       {
-        "name": "ConsentSurvey",
+        "name": "consentsurvey",
         "activity_code": "PRIONCONSENT",
         "question_answer_stables": [
           {
@@ -26,45 +26,45 @@
           },
           {
             "name": "age_majority",
-            "stable_id": "prion_consent_s6_age",
+            "stable_id": "prion_consent_s7_age",
             "type": "Agreement",
             "source_type": "integer"
           },
           {
             "name": "follow_up",
-            "stable_id": "prion_consent_s6_participation_options",
+            "stable_id": "prion_consent_s7_participation_options",
             "type": "Boolean",
             "source_type": "integer"
           },
           {
             "name": "independently_consent",
-            "stable_id": "prion_consent_s6_consent_type",
+            "stable_id": "prion_consent_s7_consent_type",
             "type": "Picklist",
             "source_type": "integer",
             "options": [
               {
-                "name": "prion_consent_s6_INDEPENDENT_YES",
+                "name": "prion_consent_s7_INDEPENDENT_YES",
                 "type": "integer"
               },
               {
-                "name": "prion_consent_s6_INDEPENDENT_NO",
+                "name": "prion_consent_s7_INDEPENDENT_NO",
                 "type": "integer"
               }
             ]
           },
           {
             "name": "full_name",
-            "stable_id": "prion_consent_s6_consent_fullname",
+            "stable_id": "prion_consent_s7_consent_fullname",
             "type": "string"
           },
           {
             "name": "representative_name",
-            "stable_id": "prion_consent_s6_representative_fullname",
+            "stable_id": "prion_consent_s7_representative_fullname",
             "type": "string"
           },
           {
             "name": "representative_relationship",
-            "stable_id": "prion_consent_s6_representative_authority",
+            "stable_id": "prion_consent_s7_representative_authority",
             "type": "string"
           },
           {
@@ -76,7 +76,7 @@
         ]
       },
       {
-        "name": "MedicalSurvey",
+        "name": "medicalsurvey",
         "activity_code": "PRIONMEDICAL",
         "question_answer_stables": [
           {

@@ -230,8 +230,8 @@ public class StudyDataLoaderTest {
 
         //Independently consent
         List<String> optionList = new ArrayList<>(2);
-        optionList.add(0, "prion_consent_s6_INDEPENDENT_NO");
-        optionList.add(1, "prion_consent_s6_INDEPENDENT_YES");
+        optionList.add(0, "prion_consent_s7_INDEPENDENT_NO");
+        optionList.add(1, "prion_consent_s7_INDEPENDENT_YES");
         mockDataLoader.datStatEnumLookup.put("independently_consent", optionList);
 
         //Participant gender

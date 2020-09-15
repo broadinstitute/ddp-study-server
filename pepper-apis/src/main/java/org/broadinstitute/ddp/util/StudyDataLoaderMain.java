@@ -78,6 +78,7 @@ public class StudyDataLoaderMain {
     private String reportFileName;
     private String dryRunEmail;
     private boolean isDeleteAuth0Email;
+    private boolean isUseExistingAuth0Users; //TODO: Use this
     private String mappingFileName = null;
     private String preProcessFileName = null;
     private String serviceAccountFile = null;
@@ -106,6 +107,7 @@ public class StudyDataLoaderMain {
         options.addOption("prodrun", false, "Production Run");
         options.addOption("e", true, "Dry run test email");
         options.addOption("de", false, "Delete auth0 email");
+        options.addOption("ue", false, "Use existing Auth0 accounts");
         options.addOption("mf", true, "Mapping file");
         options.addOption("gsa", true, "google cloud service account file");
         options.addOption("gb", true, "google bucket file");
@@ -133,6 +135,8 @@ public class StudyDataLoaderMain {
          example: -e foo29@broadinstitute.org
          Generated email ID will be foo29+1547662520564@broadinstitute.org
 
+         "ue": Expect to use existing Auth0 emails and warn if not found but proceed to create new Auth0 account
+
          "de" : Delete email(s) that already exist in Auth0 . Once migration run is complete, all participant/user emails that
          exist in Auth0 (marked in output csv report Auth0Collision column) will be deleted
 
@@ -157,6 +161,7 @@ public class StudyDataLoaderMain {
         boolean hasServiceAccount = cmd.hasOption("gsa");
         boolean hasMappingFile = cmd.hasOption("mf");
         boolean hasBucketName = cmd.hasOption("gb");
+        boolean isUseExistingAuth0 = cmd.hasOption("ue");
 
         if (cmd.hasOption("help")) {
             HelpFormatter formatter = new HelpFormatter();
@@ -224,6 +229,7 @@ public class StudyDataLoaderMain {
         }
 
         dataLoaderMain.isDeleteAuth0Email = cmd.hasOption("de");
+        dataLoaderMain.isUseExistingAuth0Users = cmd.hasOption("ue");
 
         if (isDryRun && hasTestEmail) {
             dataLoaderMain.dryRunEmail = cmd.getOptionValue('e');
@@ -347,8 +353,7 @@ public class StudyDataLoaderMain {
         JsonElement combinedConsentSurveyData = surveyData.getAsJsonObject().get("combinedconsentsurvey");
         JsonElement followupSurveyData = surveyData.getAsJsonObject().get("followupsurvey");
         JsonElement followupConsentSurveyData = surveyData.getAsJsonObject().get("followupconsentsurvey");
-        JsonElement prionConsentSurveyData = surveyData.getAsJsonObject().get("ConsentSurvey");
-        JsonElement medicalSurveyData = surveyData.getAsJsonObject().get("MedicalSurvey");
+        JsonElement medicalSurveyData = surveyData.getAsJsonObject().get("medicalsurvey");
 
         surveyDataMap.put("datstatparticipantdata", datstatParticipantData);
         surveyDataMap.put("releasesurvey", releaseSurveyData);
@@ -359,8 +364,7 @@ public class StudyDataLoaderMain {
         surveyDataMap.put("combinedconsentsurvey", combinedConsentSurveyData);
         surveyDataMap.put("followupsurvey", followupSurveyData);
         surveyDataMap.put("followupconsentsurvey", followupConsentSurveyData);
-        surveyDataMap.put("ConsentSurvey", prionConsentSurveyData);
-        surveyDataMap.put("MedicalSurvey", medicalSurveyData);
+        surveyDataMap.put("medicalsurvey", medicalSurveyData);
         return surveyDataMap;
     }
 
@@ -609,7 +613,6 @@ public class StudyDataLoaderMain {
             Boolean hasFollowupConsents = false;
             Boolean isSuccess = false;
             Boolean previousRun = false;
-            Boolean hasPrionConsent = false;
             Boolean hasMedical = false;
             StudyMigrationRun migrationRun;
 
@@ -662,12 +665,11 @@ public class StudyDataLoaderMain {
                     hasFollowup = (sourceData.get("followupsurvey") != null && !sourceData.get("followupsurvey").isJsonNull());
                     hasFollowupConsents = (sourceData.get("followupconsentsurvey") != null
                             && sourceData.get("followupconsentsurvey").getAsJsonArray().size() > 0);
-                    hasPrionConsent = (sourceData.get("ConsentSurvey") != null && !sourceData.get("ConsentSurvey").isJsonNull());
-                    boolean hasSomeMedical = sourceData.get("MedicalSurvey") != null && !sourceData.get(
-                            "MedicalSurvey").isJsonNull();
-                    hasMedical = (hasSomeMedical && hasPrionConsent && (completeStatusElement =
-                            sourceData.get("ConsentSurvey").getAsJsonObject().get("complete_status")) != null
-                            && !completeStatusElement.isJsonNull() && "1".equals(completeStatusElement.getAsString()));
+                    boolean hasSomeMedical = sourceData.get("medicalsurvey") != null && !sourceData.get(
+                            "medicalsurvey").isJsonNull();
+                    hasMedical = (hasSomeMedical && hasConsent && (completeStatusElement =
+                            sourceData.get("consentsurvey").getAsJsonObject().get("survey_status")) != null
+                            && !completeStatusElement.isJsonNull() && "COMPLETE".equals(completeStatusElement.getAsString()));
 
                     if (hasSomeMedical && !hasMedical) {
                         LOG.warn("Not loading medical questionnaire for participant (altpid " + altpid + ", email "
@@ -703,34 +705,18 @@ public class StudyDataLoaderMain {
                     }
 
                     if (hasMedical) {
-                        LOG.info("Loading Prion medical survey");
-                        String activityCode = mappingData.get("MedicalSurvey").getAsJsonObject().get("activity_code").getAsString();
+                        LOG.info("Loading medical survey");
+                        String activityCode = mappingData.get("medicalsurvey").getAsJsonObject().get("activity_code").getAsString();
                         ActivityInstanceDto instanceDto = dataLoader.createActivityInstance(sourceData.get(
-                                "MedicalSurvey"),
+                                "medicalsurvey"),
                                 userGuid, studyId,
                                 activityCode, createdAt,
                                 jdbiActivity,
                                 activityInstanceDao,
                                 activityInstanceStatusDao,
                                 jdbiActivityInstance);
-                        dataLoader.loadMedicalSurveyData(handle, sourceData.get("MedicalSurvey"),
-                                mappingData.get("MedicalSurvey"),
-                                studyDto, userDto, instanceDto, answerDao);
-                    }
-
-                    if (hasPrionConsent) {
-                        LOG.info("Loading Prion consent survey");
-                        String activityCode = mappingData.get("ConsentSurvey").getAsJsonObject().get("activity_code").getAsString();
-                        ActivityInstanceDto instanceDto = dataLoader.createActivityInstance(sourceData.get(
-                                "ConsentSurvey"),
-                                userGuid, studyId,
-                                activityCode, createdAt,
-                                jdbiActivity,
-                                activityInstanceDao,
-                                activityInstanceStatusDao,
-                                jdbiActivityInstance);
-                        dataLoader.loadPrionConsentSurveyData(handle, sourceData.get("ConsentSurvey"),
-                                mappingData.get("ConsentSurvey"),
+                        dataLoader.loadMedicalSurveyData(handle, sourceData.get("medicalsurvey"),
+                                mappingData.get("medicalsurvey"),
                                 studyDto, userDto, instanceDto, answerDao);
                     }
 
@@ -865,11 +851,11 @@ public class StudyDataLoaderMain {
             }
 
             if (previousRun) {
-                migrationRun = new StudyMigrationRun(altpid, userGuid, previousRun, emailAddress, studyGuid);
+                migrationRun = new StudyMigrationRun(altpid, userGuid, previousRun, emailAddress);
             } else {
                 migrationRun = new StudyMigrationRun(altpid, userGuid, hasAboutYou, hasConsent, hasBloodConsent,
-                    hasTissueConsent, hasRelease, hasBloodRelease, false, hasFollowup, isSuccess, previousRun,
-                    emailAddress, auth0Collision, hasPrionConsent, hasMedical, foundInAuth0, studyGuid);
+                    hasTissueConsent, hasRelease, hasBloodRelease, false, hasFollowup, hasMedical,
+                    isSuccess, previousRun, emailAddress, auth0Collision, foundInAuth0);
             }
 
             migrationRunReport.add(migrationRun);
@@ -975,7 +961,7 @@ public class StudyDataLoaderMain {
             csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT
                 .withNullString("")
                 .withHeader("AltPid", "Pepper User GUID", "Email", "Previous Run", "Success/Failure",
-                    "Auth0 Collision", "Found in Auth0", "Is Prion", "Has Prion Consent", "Has Prion Medical",
+                    "Auth0 Collision", "Found in Auth0", "Has Medical",
                     "Has About You", "Has Consent", "Has Blood Consent", "Has Tissue Consent", "Has Release",
                     "Has Blood Release", "Has Followup"));
 
@@ -997,9 +983,7 @@ public class StudyDataLoaderMain {
                 run.getSuccess(),
                 run.getAuth0Collision(),
                 run.getFoundInAuth0(),
-                run.getIsPrion(),
-                run.getHasPrionConsent(),
-                run.getHasPrionMedical(),
+                run.getHasMedical(),
                 run.getHasAboutYou(),
                 run.getHasConsent(),
                 run.getHasBloodConsent(),

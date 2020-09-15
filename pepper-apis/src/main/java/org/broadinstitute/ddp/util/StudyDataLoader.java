@@ -172,8 +172,8 @@ public class StudyDataLoader {
 
         //Independently consent
         List<String> optionList = new ArrayList<>(2);
-        optionList.add(0, "prion_consent_s6_INDEPENDENT_NO");
-        optionList.add(1, "prion_consent_s6_INDEPENDENT_YES");
+        optionList.add(0, "prion_consent_s7_INDEPENDENT_NO");
+        optionList.add(1, "prion_consent_s7_INDEPENDENT_YES");
         datStatEnumLookup.put("independently_consent", optionList);
 
         //Participant gender
@@ -452,7 +452,7 @@ public class StudyDataLoader {
                                                       ActivityInstanceStatusDao activityInstanceStatusDao,
                                                       JdbiActivityInstance jdbiActivityInstance) throws Exception {
 
-        BaseSurvey baseSurvey = getBaseSurveyForActivity(surveyData, activityCode);
+        BaseSurvey baseSurvey = getBaseSurvey(surveyData);
         if (baseSurvey.getDdpCreated() == null) {
             LOG.warn("No createdAt for survey: {} participant guid: {} . using participant data created_at ",
                     activityCode, participantGuid);
@@ -473,10 +473,6 @@ public class StudyDataLoader {
         Long ddpCreatedAt;
         Long ddpCompletedAt = null;
 
-        //If the survey is completed but no completion date was set, use last updated.
-        if (submissionStatus != null && submissionStatus.equals(1) && (ddpCompleted == null || ddpCompleted.isEmpty())) {
-            ddpCompleted = ddpLastUpdated;
-        }
 
         if (ddpCreated != null) {
             Instant instant;
@@ -539,8 +535,8 @@ public class StudyDataLoader {
 
         // Read only is always undefined for things that aren't consent- we rely on the user being terminated to show read only activities
         boolean itIsCompletedConsent = (activityCode == "CONSENT" || activityCode == "TISSUECONSENT"
-                || activityCode == "BLOODCONSENT" || activityCode == "FOLLOWUPCONSENT"
-                || activityCode.equals("PRIONCONSENT")) && instanceCurrentStatus == InstanceStatusType.COMPLETE;
+                || activityCode == "BLOODCONSENT" || activityCode == "FOLLOWUPCONSENT")
+                    && instanceCurrentStatus == InstanceStatusType.COMPLETE;
         Boolean isReadonly = itIsCompletedConsent ? true : null;
         ActivityInstanceDto dto = activityInstanceDao
                 .insertInstance(studyActivityId, participantGuid, participantGuid, InstanceStatusType.CREATED,
@@ -553,11 +549,6 @@ public class StudyDataLoader {
 
         long activityInstanceId = dto.getId();
 
-        if (activityCode.toLowerCase().contains("prion") && ddpLastUpdatedAt.equals(ddpCreatedAt)) {
-            //In Gen2 Prion, sometimes the last updated time doesn't actually get updated
-            ddpLastUpdatedAt++;
-        }
-
         if (InstanceStatusType.IN_PROGRESS == instanceCurrentStatus) {
             activityInstanceStatusDao
                     .insertStatus(activityInstanceId, InstanceStatusType.IN_PROGRESS, ddpLastUpdatedAt, participantGuid);
@@ -565,13 +556,9 @@ public class StudyDataLoader {
             dto = jdbiActivityInstance.getByActivityInstanceId(dto.getId()).get();
         } else if (InstanceStatusType.COMPLETE == instanceCurrentStatus) {
             if (ddpCompletedAt == null) {
-                if (activityCode.toLowerCase().contains("PRION")) {
-                    //Prion frequently doesn't have the completed at field populated for completed studies
-                    ddpCompletedAt = ddpLastUpdatedAt;
-                } else {
-                    throw new Exception("No completed/submitted date value passed for " + activityCode
+                //ddpCompletedAt = ddpLastUpdatedAt;
+                throw new Exception("No completed/submitted date value passed for " + activityCode
                         + " survey with status COMPLETE. user guid: " + participantGuid);
-                }
             }
             activityInstanceStatusDao.insertStatus(activityInstanceId, InstanceStatusType.COMPLETE, ddpCompletedAt, participantGuid);
             if (ddpLastUpdatedAt > ddpCompletedAt) {
@@ -735,7 +722,7 @@ public class StudyDataLoader {
 
 
     private void updateUserStudyEnrollment(Handle handle, JsonElement surveyData, String userGuid, String studyGuid) throws Exception {
-        BaseSurvey baseSurvey = getBaseSurvey(surveyData, getStringValueFromElement(surveyData, "survey_status"));
+        BaseSurvey baseSurvey = getBaseSurvey(surveyData);
         if (InstanceStatusType.COMPLETE.name().equalsIgnoreCase(baseSurvey.getSurveyStatus())) {
             long updatedAt;
             if (baseSurvey.getDdpFirstCompleted() != null) {
@@ -785,23 +772,6 @@ public class StudyDataLoader {
                 studyDto, userDto, instanceDto, answerDao);
     }
 
-    public void loadPrionConsentSurveyData(Handle handle,
-                                      JsonElement surveyData,
-                                      JsonElement mappingData,
-                                      StudyDto studyDto,
-                                      UserDto userDto,
-                                      ActivityInstanceDto instanceDto,
-                                      AnswerDao answerDao) throws Exception {
-        LOG.info("Populating Prion Consent Survey...");
-        if (surveyData == null || surveyData.isJsonNull()) {
-            LOG.warn("NO Prion Consent Survey !");
-            return;
-        }
-
-        processSurveyData(handle, "ConsentSurvey", surveyData, mappingData,
-                studyDto, userDto, instanceDto, answerDao);
-    }
-
     public void loadMedicalSurveyData(Handle handle,
                                            JsonElement surveyData,
                                            JsonElement mappingData,
@@ -815,7 +785,7 @@ public class StudyDataLoader {
             return;
         }
 
-        processSurveyData(handle, "MedicalSurvey", surveyData, mappingData,
+        processSurveyData(handle, "medicalsurvey", surveyData, mappingData,
                 studyDto, userDto, instanceDto, answerDao);
     }
 
@@ -1054,15 +1024,8 @@ public class StudyDataLoader {
         long createdAtMillis = createdAtDate.toInstant(ZoneOffset.UTC).toEpochMilli();
         long updatedAtMillis = lastModifiedDate.toInstant(ZoneOffset.UTC).toEpochMilli();
 
+        String shortId = data.getAsJsonObject().get("ddp_participant_shortid").getAsString();
         String altpid = data.getAsJsonObject().get("datstat_altpid").getAsString();
-        JsonElement shortIdElem = data.getAsJsonObject().get("ddp_participant_shortid");
-        String shortId;
-        if (shortIdElem == null || shortIdElem.isJsonNull()) {
-            //If no short ID, just use first 6 characters of the altpid
-            shortId = altpid.substring(0, 6);
-        } else {
-            shortId = data.getAsJsonObject().get("ddp_participant_shortid").getAsString();
-        }
 
         long userId = userDao.insertMigrationUser(auth0UserId, userGuid, clientDto.getId(), userHruid,
                 altpid, shortId, createdAtMillis, updatedAtMillis);
@@ -1191,31 +1154,7 @@ public class StudyDataLoader {
         return stateCode;
     }
 
-    private BaseSurvey getBaseSurveyForActivity(JsonElement surveyData, String activityCode) {
-        String status;
-        if ("PRIONCONSENT".equals(activityCode)) {
-            // Status field is complete_status.  Blank and 0 are in progress and 1 is complete
-            String completeStatus = getStringValueFromElement(surveyData, "complete_status");
-
-            status = (completeStatus != null && !completeStatus.isEmpty() && "1".equals(completeStatus))
-                ? "COMPLETE" : "IN_PROGRESS";
-        } else if ("PRIONMEDICAL".equals(activityCode)) {
-            //Status field is survey_status.  0 and blank are not started, 1 is in progress, and 2 is complete
-            String surveyStatus = getStringValueFromElement(surveyData, "survey_status");
-            if (surveyStatus != null && !surveyStatus.isEmpty() && "1".equals(surveyStatus)) {
-                status = "IN_PROGRESS";
-            } else if (surveyStatus != null && !surveyStatus.isEmpty() && "2".equals(surveyStatus)) {
-                status = "COMPLETE";
-            } else {
-                status = "CREATED";
-            }
-        } else {
-            status = getStringValueFromElement(surveyData, "survey_status");
-        }
-        return getBaseSurvey(surveyData, status);
-    }
-
-    private BaseSurvey getBaseSurvey(JsonElement surveyData, String surveyStatus) {
+    private BaseSurvey getBaseSurvey(JsonElement surveyData) {
 
         Integer datstatSubmissionIdNum = getIntegerValueFromElement(surveyData, "datstat.submissionid");
         Long datstatSubmissionId = null;
@@ -1229,14 +1168,16 @@ public class StudyDataLoader {
         String ddpLastUpdated = getStringValueFromElement(surveyData, "ddp_lastupdated");
         String surveyVersion = getStringValueFromElement(surveyData, "surveyversion");
         String activityVersion = getStringValueFromElement(surveyData, "consent_version");
+        String surveyStatus = getStringValueFromElement(surveyData, "survey_status");
         Integer datstatSubmissionStatus = getIntegerValueFromElement(surveyData, "datstat.submissionstatus");
 
         if (ddpFirstCompleted == null) {
             ddpFirstCompleted = ddpLastSubmitted;
         }
 
-        return new BaseSurvey(datstatSubmissionId, datstatSessionId, ddpCreated, ddpFirstCompleted,
+        BaseSurvey baseSurvey = new BaseSurvey(datstatSubmissionId, datstatSessionId, ddpCreated, ddpFirstCompleted,
                 ddpLastUpdated, surveyVersion, activityVersion, surveyStatus, datstatSubmissionStatus);
+        return baseSurvey;
     }
 
     private String getStringValueFromElement(JsonElement element, String key) {
@@ -1427,7 +1368,6 @@ public class StudyDataLoader {
         String sourceType = getStringValueFromElement(mapElement, "source_type");
         //handle options
         String stableId = getStringValueFromElement(mapElement, "stable_id");
-        LOG.info("Processing picklist question " + questionName + " with stable id " + stableId);
 
         List<SelectedPicklistOption> selectedPicklistOptions = new ArrayList<>();
         if (mapElement.getAsJsonObject().get("options") == null || mapElement.getAsJsonObject().get("options").isJsonNull()) {
@@ -1477,7 +1417,7 @@ public class StudyDataLoader {
         //Get the option value using either datStatEnumLookup or yesNoDkLookup
         boolean foundValue = false;
         String val = null;
-        if (("MedicalSurvey".equals(surveyName) || "ConsentSurvey".equals(surveyName))
+        if (("medicalsurvey".equals(surveyName) || "consentsurvey".equals(surveyName))
                 && datStatEnumLookup.get(questionName) != null && datStatEnumLookup.get(questionName).get(value.getAsInt()) != null) {
             foundValue = true;
             val = datStatEnumLookup.get(questionName).get(value.getAsInt());
@@ -1505,8 +1445,8 @@ public class StudyDataLoader {
                             && StringUtils.isNotEmpty(specifyKeyElement.getAsString())) {
                         foundSpecify = true;
                         String otherTextKey;
-                        if ("MedicalSurvey".equals(surveyName)) {
-                            //For Prion medical survey, text contains the full name of the key, so don't concatenate
+                        if ("medicalsurvey".equals(surveyName)) {
+                            //For medical survey, text contains the full name of the key, so don't concatenate
                             otherTextKey = specifyKeyElement.getAsString();
                         } else {
                             //Otherwise, the name of the key is [optionName].[valueAssociatedWithTextInMapping]
@@ -1570,10 +1510,10 @@ public class StudyDataLoader {
             if (optionName.equalsIgnoreCase(value.getAsString())
                     || optValuesList.stream().anyMatch(x -> x.equalsIgnoreCase(optName))) {
                 //If specify text was exported as a separate key/value pair, make sure it gets passed through
-                if (optionObject.get("text") != null && ("MedicalSurvey".equals(surveyName) || "ConsentSurvey".equals(surveyName))) {
+                if (optionObject.get("text") != null && ("medicalsurvey".equals(surveyName) || "consentsurvey".equals(surveyName))) {
                     String otherTextKey;
-                    if ("MedicalSurvey".equals(surveyName)) {
-                        //For Prion medical survey, text contains full name of key, so don't concatenate
+                    if ("medicalsurvey".equals(surveyName)) {
+                        //For medical survey, text contains full name of key, so don't concatenate
                         otherTextKey = optionObject.get("text").getAsString();
                     } else {
                         //Otherwise, the name of the key is [optionName].[valueAssociatedWithTextInMapping]
@@ -1639,11 +1579,12 @@ public class StudyDataLoader {
             if (value != null && value.getAsInt() == 1) { //option checked
                 if (option.getAsJsonObject().get("text") != null) {
                     //other text details
-                    if ("MedicalSurvey".equals(surveyName) || "ConsentSurvey".equals(surveyName)) {
+                    //TODO: This should only happen for Prion...
+                    if ("medicalsurvey".equals(surveyName) || "consentsurvey".equals(surveyName)) {
                         String otherTextKey;
 
-                        if ("MedicalSurvey".equals(surveyName)) {
-                            //For Prion medical survey, text contains the full name of the key--don't concatenate
+                        if ("medicalsurvey".equals(surveyName)) {
+                            //For medical survey, text contains the full name of the key--don't concatenate
                             otherTextKey = option.getAsJsonObject().get("text").getAsString();
                         } else {
                             //Otherwise, the name of the key is [optionName].[valueAssociatedWithTextInMapping]
@@ -1876,8 +1817,11 @@ public class StudyDataLoader {
         String answerGuid = null;
         String questionName = mapElement.getAsJsonObject().get("name").getAsString();
         sourceDataSurveyQs.get(surveyName).add(questionName);
-        String stableId = getStringValueFromElement(mapElement, "stable_id");
-        LOG.info("Processing med list composite question " + questionName + " with stable id " + stableId);
+        String stableId = null;
+        JsonElement stableIdElement = mapElement.getAsJsonObject().get("stable_id");
+        if (!stableIdElement.isJsonNull()) {
+            stableId = stableIdElement.getAsString();
+        }
 
         //source data has array of composite data
         JsonElement dataArrayEl = sourceDataElement.getAsJsonObject().get(questionName);

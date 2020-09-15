@@ -5,13 +5,12 @@
       "datstat_firstname": "A Person",
       "datstat_lastname": "",
       "datstat_email": "cdye+testprionquick201910220318aaa@broadinstitute.org",
-      "ddp_created": "2019-02-20T19:14:09Z"
+      "ddp_created": "2019-02-20T19:14:09Z",
+      "ddp_participant_shortid": "4db38a"
     },
     "datstatsurveydata": {
       "medicalsurvey": {
         "ddp_created": "2020-01-29T03:14:10Z",
-        "ddp_lastupdated": "2020-10-29T19:14:11Z",
-        "ddp_firstcompleted": null,
         "participant_birth_year": null,
         "participant_gender": 3,
         "participant_address_city": "Town",
@@ -66,12 +65,14 @@
         "previous_research.mrc": 0,
         "previous_research.other": 0,
         "previous_research_specify": "some2here",
-        "survey_status": "IN_PROGRESS",
         "know_which_mutation": 1,
         "specific_mutation": "invis2ble",
         "datstat.submissionid": 419,
         "datstat.sessionid": "54dee901-c421-4669-bb1f-544f3a393f19",
-        "datstat.submissionstatus": 2
+        "datstat.submissionstatus": 2,
+        "survey_status": "IN_PROGRESS",
+        "ddp_lastupdated": "2020-10-29T19:14:11Z",
+        "ddp_firstcompleted": null
       },
       "consentsurvey": {
         "age_majority": 1,
@@ -80,13 +81,13 @@
         "full_name": "A Person",
         "representative_name": "A Representative",
         "representative_relationship": "A Relationship",
-        "survey_status": "COMPLETE",
         "ddp_created": "2019-10-29T19:14:09Z",
-        "ddp_lastupdated": "2019-10-29T19:14:10Z",
-        "ddp_firstcompleted": "2019-10-29T19:14:10Z",
         "datstat.submissionid": 579,
         "datstat.sessionid": "e400eaa6-0530-41e9-93a4-45f5a72917e3",
-        "datstat.submissionstatus": 2
+        "datstat.submissionstatus": 2,
+        "survey_status": "COMPLETE",
+        "ddp_lastupdated": "2019-10-29T19:14:10Z",
+        "ddp_firstcompleted": "2019-10-29T19:14:10Z"
       }
     }
   }
