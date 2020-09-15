@@ -493,6 +493,11 @@
   "genome_summary_in_progress": "Genome Study",
   "genome_title": "Genome Study",
 
+  "review_title": "Review & Submission",
+  "review_summary": "Review & Submission",
+  "review_created": "Review & Submission",
+  "review_complete": "Thank you for signing the Review & Submission form.",
+  "review_in_progress": "Review & Submission",
   "review_introduction_p1": "Please review the information you provided during this enrollment process and submit when you have confirmed that it is correct.",
   "review_introduction_p2": "We look forward to learning about your experiences with A-T.",
 
