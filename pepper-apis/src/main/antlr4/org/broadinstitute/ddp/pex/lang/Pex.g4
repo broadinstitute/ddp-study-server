@@ -27,6 +27,7 @@ query
   | 'user' '.' study '.' form '.' question '.' 'answers' '.' predicate                   # DefaultLatestAnswerQuery
   | 'user' '.' study '.' form '.' instance '.' question '.' 'answers' '.' predicate      # AnswerQuery
   | 'user' '.' 'profile' '.' profileDataQuery   # ProfileQuery
+  | 'user' '.' 'event' '.' 'testResult' '.' testResultQuery   # EventTestResultQuery
   ;
 
 study : 'studies' '[' STR ']' ;
@@ -71,6 +72,12 @@ predicate
 // Queries to pull out various pieces of profile data
 profileDataQuery
   : 'birthDate' '(' ')'   # ProfileBirthDateQuery
+  ;
+
+// Queries for current test result event.
+testResultQuery
+  : 'isCorrected' '(' ')'   # IsCorrectedTestResultQuery
+  | 'isPositive' '(' ')'    # IsPositiveTestResultQuery
   ;
 
 
