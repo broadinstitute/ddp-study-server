@@ -10,18 +10,25 @@ import org.broadinstitute.ddp.transformers.InstantToIsoDateTimeUtcStrAdapter;
 
 public class TestResult {
 
+    public static final String NEGATIVE_CODE = "NEGATIVE";
+    public static final String POSITIVE_CODE = "POSITIVE";
+
     @NotBlank
     @SerializedName("result")
-    private String result;
+    private final String result;
 
     @NotNull
     @SerializedName("timeCompleted")
     @JsonAdapter(InstantToIsoDateTimeUtcStrAdapter.class)
-    private Instant timeCompleted;
+    private final Instant timeCompleted;
 
-    public TestResult(String result, Instant timeCompleted) {
+    @SerializedName("isCorrected")
+    private final boolean isCorrected;
+
+    public TestResult(String result, Instant timeCompleted, boolean isCorrected) {
         this.result = result;
         this.timeCompleted = timeCompleted;
+        this.isCorrected = isCorrected;
     }
 
     public String getResult() {
@@ -31,9 +38,9 @@ public class TestResult {
     public String getNormalizedResult() {
         String res = result.toUpperCase();
         if ("NEG".equals(res)) {
-            return "NEGATIVE";
+            return NEGATIVE_CODE;
         } else if ("POS".equals(res)) {
-            return "POSITIVE";
+            return POSITIVE_CODE;
         } else {
             return res;
         }
@@ -41,5 +48,9 @@ public class TestResult {
 
     public Instant getTimeCompleted() {
         return timeCompleted;
+    }
+
+    public boolean isCorrected() {
+        return isCorrected;
     }
 }

@@ -9,6 +9,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.model.dsm.TestResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -94,9 +95,9 @@ public class RenderValueProvider {
         if (StringUtils.isBlank(testResultCode)) {
             return null;
         }
-        if ("POSITIVE".equals(testResultCode)) {
+        if (TestResult.POSITIVE_CODE.equals(testResultCode)) {
             return posText;
-        } else if ("NEGATIVE".equals(testResultCode)) {
+        } else if (TestResult.NEGATIVE_CODE.equals(testResultCode)) {
             return negText;
         } else {
             return otherText;
