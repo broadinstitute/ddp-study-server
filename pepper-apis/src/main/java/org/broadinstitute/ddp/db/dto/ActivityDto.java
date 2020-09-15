@@ -20,6 +20,7 @@ public class ActivityDto {
     private boolean writeOnce;
     private boolean allowOndemandTrigger;
     private boolean isFollowup;
+    private boolean hideExistingInstancesOnCreation;
 
     /**
      * Instantiate an ActivityDto object.
@@ -35,7 +36,8 @@ public class ActivityDto {
             Long editTimeoutSec,
             boolean writeOnce,
             boolean allowOndemandTrigger,
-            boolean isFollowup
+            boolean isFollowup,
+            boolean hideExistingInstancesOnCreation
     ) {
         this.activityId = activityId;
         this.activityCode = activityCode;
@@ -48,6 +50,7 @@ public class ActivityDto {
         this.writeOnce = writeOnce;
         this.allowOndemandTrigger = allowOndemandTrigger;
         this.isFollowup = isFollowup;
+        this.hideExistingInstancesOnCreation = hideExistingInstancesOnCreation;
     }
 
     public String getActivityCode() {
@@ -94,6 +97,10 @@ public class ActivityDto {
         return allowOndemandTrigger;
     }
 
+    public boolean isHideExistingInstancesOnCreation() {
+        return hideExistingInstancesOnCreation;
+    }
+
     public static class ActivityRowMapper implements RowMapper<ActivityDto> {
         @Override
         public ActivityDto map(ResultSet rs, StatementContext ctx) throws SQLException {
@@ -107,7 +114,8 @@ public class ActivityDto {
                     (Long) rs.getObject(SqlConstants.StudyActivityTable.EDIT_TIMEOUT_SEC),
                     rs.getBoolean(SqlConstants.StudyActivityTable.IS_WRITE_ONCE),
                     rs.getBoolean(SqlConstants.StudyActivityTable.ALLOW_ONDEMAND_TRIGGER),
-                    rs.getBoolean(SqlConstants.StudyActivityTable.IS_FOLLOWUP));
+                    rs.getBoolean(SqlConstants.StudyActivityTable.IS_FOLLOWUP),
+                    rs.getBoolean(SqlConstants.StudyActivityTable.HIDE_INSTANCES));
         }
     }
 }
