@@ -1,0 +1,1540 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <title>Prion Registry</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+    <link href="https://fonts.googleapis.com/css?family=Raleway:300i,300,400,500,700" rel="stylesheet">
+    <link id="app-favicon" rel="icon" type="image/x-icon" href="https://storage.googleapis.com/dev-prion-assets/images/favicon.ico">
+    <script src="https://kit.fontawesome.com/6ff953c590.js" crossorigin="anonymous"></script>
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+    <!-- Optional theme -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+
+    <!--Material icons-->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+</head>
+<body>
+
+<!--[if IE 8]>
+<script src="//cdnjs.cloudflare.com/ajax/libs/ie8/0.2.5/ie8.js"></script>
+<![endif]-->
+
+<!--[if lte IE 9]>
+<script src="https://cdn.auth0.com/js/base64.js"></script>
+<script src="https://cdn.auth0.com/js/es5-shim.min.js"></script>
+<![endif]-->
+
+<script src="https://cdn.auth0.com/js/lock/11.9/lock.min.js"></script>
+
+<style type="text/css">
+
+    /* Basic element styling */
+    @media only screen and (min-width: 1026px) {
+        html {
+            font-size: 18px !important;
+        }
+    }
+    html,
+    body {
+        margin: 0;
+        padding: 0 !important;
+        height: 100%;
+        font-size: 15px;
+        background-color:#f9f3e8;
+    }
+
+    body, a {
+        font-family: 'Raleway', sans-serif !important;
+    }
+    h2 {
+        font-size: 1.5rem !important;
+        font-family: 'Raleway', sans-serif !important;
+        font-weight: 500 !important;
+        margin-bottom: 15px !important;
+        text-align: left !important;
+        margin-top: 20px !important;
+        color: #333 !important;
+        max-width: 804px;
+    }
+    h5 {
+        font-size: 1rem;
+        font-family: 'Raleway', sans-serif;
+        line-height: 1.5rem;
+        font-weight: 400 !important;
+        color: #333 !important;
+        margin-top: 0 !important;
+        margin-bottom: 10px !important;
+        text-align: left !important;
+        max-width: 804px;
+    }
+    p {
+        font-size: 1rem;
+        font-family: 'Raleway', sans-serif;
+        line-height: 1.5rem;
+        font-weight: 400 !important;
+        display: block !important;
+        color: #000000 !important;
+    }
+
+    span {
+        font-family: 'Raleway', sans-serif !important;
+    }
+
+    a,
+    button {
+        text-decoration: none !important;
+        outline: 0 !important;
+    }
+
+    button {
+        max-width: 804px;
+    }
+
+    .auth0-lock.auth0-lock .auth0-lock-input-block {
+        max-width: 804px;
+    }
+
+    a:hover,
+    a:active,
+    a:focus {
+        outline: 0;
+    }
+
+    /* Margins and padding */
+    .NoMargin {
+        margin: 0 !important;
+    }
+
+    .NoTopMargin {
+        margin-top: 0 !important;
+    }
+
+    .TopPaddingTen {
+        padding-top: 10px;
+    }
+
+    .NoPadding {
+        padding: 0 !important;
+    }
+
+    /* Auth0 element styling */
+    .auth0-lock.auth0-lock .auth0-lock-widget {
+        max-height: unset !important;
+    }
+
+    .auth0-lock-back-button {
+        z-index: 2000 !important;
+    }
+
+    .auth0-lock .auth0-lock-opened-in-frame .auth0-lock-with-tabs {
+        height:available !important;
+    }
+
+    .auth0-lock-header-welcome, .auth0-lock-header{
+        background-color: #F2B815 !important;
+        border-top-left-radius: 0 !important;
+        border-top-right-radius: 0 !important;
+        padding: 0 !important;
+    }
+
+    .auth0-lock.auth0-lock, .auth0-lock.auth0-lock.auth0-lock-opened .auth0-lock-widget
+    {
+        position: static !important;
+    }
+
+    @media screen and (max-width: 480px) {
+        .auth0-lock.auth0-lock.auth0-lock-opened .auth0-lock-widget {
+            position: static !important;
+        }
+    }
+
+    .auth0-lock.auth0-lock .auth0-lock-overlay {
+        position: static !important;
+        display: none !important;
+        overflow: hidden !important;
+        height: 0px !important;
+        width: 0px !important;
+    }
+
+    .auth0-lock.auth0-lock, .auth0-lock.auth0-lock * {
+        box-sizing: border-box !important;
+    }
+
+    .auth0-lock.auth0-lock .auth0-lock-header-bg {
+        height: 1% !important;
+    }
+
+    .auth0-lock-header-logo {
+        text-align: left;
+        margin-left: 80px !important;
+        height: 55px !important;
+    }
+
+    .auth0-lock.auth0-lock .auth0-lock-header {
+        height: unset;
+    }
+
+    .auth0-lock-cred-pane .auth0-lock-quiet, .auth0-lock-cred-pane, .auth0-lock.auth0-lock.auth0-lock-opened .auth0-lock-widget,
+    .auth0-lock-widget-container, .auth0-lock-center {
+        background-color:#f9f3e8 !important;
+    }
+
+    .auth0-lock.auth0-lock.auth0-lock-opened .auth0-lock-widget,
+    .auth0-lock-widget-container, .auth0-lock-center{
+        min-height: 100% !important;
+        width: 100% !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+
+    .auth0-lock.auth0-lock .auth0-lock-submit {
+        padding-left: 30px;
+        padding-right: 30px;
+        padding-top:10px;
+        width: 100%;
+        box-sizing: border-box;
+        background-color: #82B547 !important;
+        margin-bottom: 25px;
+        display: block !important;
+        border-top-left-radius: 5px;
+        border-top-right-radius: 5px;
+    }
+
+    .auth0-lock-content {
+        padding: 0 !important;
+        margin: 0;
+    }
+
+    .auth0-lock.auth0-lock.auth0-lock-opened.auth0-lock-with-tabs .auth0-lock-body-content {
+        padding-top: unset !important;
+    }
+
+    .auth0-lock-alternative-link {
+        font-size: 0.75rem;
+        font-weight: 300;
+        font-style: italic;
+        color: #717174;
+    }
+
+    .auth0-lock-alternative-link:hover {
+        color: #82B547;
+    }
+
+    .auth0-lock-password-strength {
+        display: none;
+    }
+
+    .auth0-lock.auth0-lock .auth0-lock-form .auth0-lock-alternative .auth0-lock-alternative-link {
+        color: #717174;
+        font-size: 0.75rem;
+        line-height: 1.42857143;
+    }
+
+    .auth0-lock-input-wrap {
+        padding-left: 0 !important;
+        border-color: rgb(206, 206, 206) !important;
+    }
+
+    .auth0-lock-input-wrap.auth0-lock-focused {
+        border-color: #a0a0a0 !important;
+    }
+
+    .auth0-lock-error-msg:after {
+        content: unset;
+    }
+
+    .auth0-lock.auth0-lock .auth0-lock-form p {
+        text-align: left !important;
+    }
+
+    .auth0-lock-input-block.auth0-lock-input-show-password .auth0-lock-input-block.auth0-lock-input-password.auth0-lock-error::after {
+        content: unset;
+        font-family: 'Raleway', sans-serif;
+        font-size: 12px;
+        color: #f00;
+    }
+
+    .auth0-lock-input-block.auth0-lock-input-email {
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+    }
+
+    @media (min-width: 481px) {
+        .auth0-lock-error-msg span {
+            padding: unset !important;
+        }
+
+        .auth0-lock-error-msg {
+            color: #f00;
+            background: none !important;
+            box-shadow: none !important;
+            position: relative !important;
+            left: unset !important;
+            border-radius: unset !important;
+            top: unset !important;
+            margin: 5px 0 0 0 !important;
+        }
+    }
+
+    /* Container element styling */
+    .MiddleContainer {
+        background-color: #ffffff;
+        margin-left: 50px;
+        margin-right: 50px;
+        padding: 30px 45px 1px;
+        min-height: calc(100vh - 248px);
+    }
+
+    @media only screen and (max-width: 767px) {
+        .MiddleContainer {
+            margin-left: 0px;
+            margin-right: 0px;
+        }
+    }
+
+    @media only screen and (max-width: 992px) and (min-width: 768px) {
+        .MiddleContainer {
+            margin-left: 25px;
+            margin-right: 25px;
+        }
+    }
+
+    /* Styling options */
+    .Color--green {
+        color: #82B547 !important;
+        font-size: 15px;
+        font-weight: 900;
+    }
+
+    .flex-row {
+        flex-flow: row !important;
+        display: flex !important;
+    }
+
+    /* Specific element styling */
+    .Input-label {
+        color: rgb(51, 51, 51);
+        font-size: 0.9rem;
+        font-weight: 400;
+        margin-bottom: 10px;
+        margin-top: 0;
+        margin-right: 10px;
+        font-family: 'Raleway', sans-serif !important;
+    }
+
+    .tooltip {
+        box-sizing: border-box !important;
+        display: inline-block !important;
+        font-stretch: 100%;
+        margin-top: 10px;
+    }
+
+    .tooltip .tooltiptext {
+        background-color: #efefef !important;
+        color: #717174;
+        font-family: 'Raleway', sans-serif !important;
+        font-size: 0.7rem;
+        width: 250px !important;
+        visibility: hidden;
+        position: absolute;
+        z-index: 1;
+        opacity: 0;
+        transition: opacity 0.3s;
+        font-weight: 400;
+        line-height: 1.42857143;
+        border-radius: 4px;
+        padding: 3px 8px;
+        left: -46px;
+        top: -15px;
+    }
+
+    .tooltip .tooltiptext::after {
+        content: "";
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        margin-left: -5px;
+        border-width: 5px;
+        border-style: solid;
+        border-color: #efefef transparent transparent transparent;
+    }
+
+    .tooltip:hover .tooltiptext {
+        visibility: visible;
+        opacity: 1;
+    }
+
+    i.fa {
+        font-family: 'Font Awesome 5 Pro' !important;
+        display: inline-block !important;
+        position: unset;
+        opacity: unset;
+    }
+
+    /* Header */
+    .auth0-lock.auth0-lock .auth0-lock-header {
+        height: unset;
+        text-align: unset;
+        font-size: 15px !important;
+        font-family: 'Raleway', sans-serif !important;
+        background-color: #F2B815 !important;
+        border-top-left-radius: 0 !important;
+        border-top-right-radius: 0 !important;
+        padding: 0 !important;
+    }
+
+    .auth0-lock.auth0-lock .auth0-lock-header-bg {
+        height: 1% !important;
+    }
+
+    .auth0-lock-header-logo {
+        text-align: left;
+        margin-left: 80px !important;
+        height: 55px !important;
+    }
+
+    .loginHeader {
+        line-height: 1.1 !important;
+        margin-top: 20px !important;
+    }
+
+    .Header {
+        height: auto;
+        width: 100%;
+        z-index: 1000;
+    }
+
+    .Header-background {
+        position: relative;
+        padding: 30px 80px 20px 80px;
+        margin: 0;
+        background: #F2B816 none;
+        border-radius: 0;
+        border: none;
+        -webkit-box-shadow: none;
+        box-shadow: none;
+        z-index: 100;
+        width: 100%;
+    }
+
+    @media only screen and (max-width: 992px) {
+        .Header-background {
+            padding: 25px 0 0 0 !important;
+        }
+        .navbar-header {
+            padding: 0 25px 25px 25px !important;
+        }
+        .navbar-collapse {
+            padding: 0 25px 10px 25px !important;
+        }
+    }
+
+    .Header-logo img {
+        height: 55px;
+    }
+
+    .Header-hamburger {
+        padding: 9px 10px !important;
+        margin: 8px 0 0 8px !important;
+        background-color: transparent ;
+        background-image: none;
+        border: 2px solid #ffffff !important;
+        border-radius: 4px;
+        transition: all 0.5s ease;
+    }
+
+    .Header-hamburger .icon-bar,
+    .Header-hamburger:hover .icon-bar,
+    .Header-hamburger:focus .icon-bar,
+    .Header-hamburger:active .icon-bar {
+        background-color: #ffffff !important;
+    }
+
+    .Header-hamburger:hover {
+        background-color: transparent !important;
+        box-shadow: 2px 2px 4px #a88838;
+    }
+
+    .Header-hamburger:focus {
+        background-color: transparent !important;
+    }
+
+    .Header-collapse {
+        padding: 0;
+        overflow-x: visible;
+        border-top: none;
+        -webkit-box-shadow: none;
+        box-shadow: none;
+    }
+
+    .Header-collapse.in,
+    .Header-collapse.collapsing {
+        overflow: hidden;
+    }
+
+    .Header-collapse.in,
+    .Header-collapse.collapsing {
+        background: #F2B816;
+    }
+
+    .Header-collapse.in li.Nav-item,
+    .Header-collapse.collapsing li.Nav-item {
+        display: block;
+        width: 100%;
+        float: right;
+        text-align: right;
+    }
+
+    .Header-collapse.in li.Nav-item-JoinUs,
+    .Header-collapse.collapsing li.Nav-item-JoinUs {
+        width: auto;
+        text-align: center;
+        padding-top: 10px !important;
+    }
+
+    .Nav ul {
+        list-style: none;
+        float: right;
+    }
+
+    .Nav-item {
+        display: inline;
+        padding: 0 0 0 30px !important;
+        font-weight: 500;
+    }
+
+    .Nav-item:first-of-type {
+        padding-left: 20px !important;
+    }
+
+    #JoinUs {
+        padding: 12px 30px !important;
+    }
+
+    .Nav-itemLink {
+        cursor: pointer;
+        color: #ffffff !important;
+        font-size: 1rem;
+        line-height: 3.2rem !important;
+        text-shadow: none;
+        padding: 0 !important;
+        transition: all 0.3s ease-in-out;
+    }
+
+    .Nav-itemLink--active {
+        font-weight: 700;
+        color: #a88838 !important;
+    }
+
+    .Nav-itemLink:hover {
+        color: #a88838 !important;
+    }
+
+    @media only screen and (max-width: 1025px) {
+        .Header-logo {
+            margin: 0;
+        }
+    }
+
+    .Button {
+        border-radius: 2px;
+        font-weight: 500;
+        font-size: 1rem;
+        padding: 12px 30px;
+        margin-bottom: 15px;
+        cursor: pointer;
+        transition: all 0.3s ease-in-out;
+        text-align: center;
+        margin-top: 5px;
+    }
+
+    .Button:hover {
+        box-shadow: 1px 1px 5px #9E9E9E;
+    }
+
+    .Button--secondaryWhite,
+    .Button--secondaryWhite:active,
+    .Button--secondaryWhite:focus {
+        border-radius: 3px;
+        background-color: transparent !important;
+        border: 2px solid #ffffff;
+        color: #ffffff !important;
+    }
+
+    .Button--active {
+        font-weight: 700;
+        color: #a88838 !important;
+        border: 2px solid #a88838 !important;
+    }
+
+    /* Footer styling */
+    .Footer {
+        position: relative;
+        bottom: 0;
+        width: 100%;
+        min-height: 90px;
+        padding: 20px 50px;
+        z-index: 2;
+        background-color: #f9f3e8;
+        margin: 0 0 0 0;
+        clear: both;
+    }
+
+    .Footer-left img {
+        height: 50px;
+    }
+
+    .Footer-left {
+        padding-left: 20px;
+        padding-top: 5px;
+        height: 90px;
+    }
+
+    p.Footer-contact {
+        font-size: 0.9rem !important;
+        color: #727272 !important;
+        font-weight: 500 !important;
+        margin-top: 10px;
+        margin-bottom: 0;
+    }
+
+    .Footer-links {
+        height: 90px;
+        padding: 31px 0 0;
+    }
+
+    .Footer-text {
+        font-size: 0.9rem !important;
+        color: #727272;
+        margin-top: 0;
+        margin-bottom: 0;
+    }
+
+    .Footer-link {
+        font-weight: 500;
+        color: #727272;
+        display: inline;
+        cursor: pointer;
+        text-align: right;
+        transition: color 0.2s linear;
+        padding-left: 30px;
+        align-items: unset;
+        border: none;
+        border-image-width: 0;
+        white-space: nowrap;
+    }
+
+    .Footer-link:hover{
+        color: #82B547 !important;
+    }
+
+    .Footer-arrow {
+        font-size: 0.5rem;
+        margin: 0 5px 5px 30px;
+    }
+
+    .Float--right {
+        float: right !important;
+    }
+
+    .backToTopText {
+        font-weight: 500 !important;
+    }
+
+    .backToTopLink {
+        padding: 0;
+        align-items: flex-start;
+    }
+
+    @media only screen and (max-width: 767px) {
+        .Footer {
+            padding: 20px 25px 20px 25px;
+            min-height: 280px;
+        }
+        .Footer-left {
+            padding-top: 6px;
+            padding-left: 0;
+            height: unset;
+        }
+        .Footer-links {
+            padding-top: 0;
+            height: unset;
+        }
+        .Footer-text {
+            margin-top: 5px;
+        }
+        .Footer-text,
+        .Footer-link {
+            display: block;
+            float: left !important;
+            text-align: left;
+            padding-left: 0;
+            width: 100%;
+        }
+        .Footer-text {
+            margin-top: 20px;
+        }
+        .Footer-arrow {
+            margin-left: 0;
+        }
+    }
+
+    @media only screen and (max-width: 991px) and (min-width: 768px) {
+        .Footer {
+            padding: 20px 25px 20px 25px;
+        }
+        .Footer-left {
+            padding-left: 0;
+        }
+    }
+
+    @media only screen and (max-width: 1199px) and (min-width: 992px) {
+        .Footer-links {
+            padding-top: 20px;
+        }
+    }
+
+    .SimpleButton {
+        line-height: 3.2rem !important;
+        background: none;
+        border: none;
+        padding: 0;
+        outline: none;
+        font-size: 1rem;
+        transition: color 0.3s ease;
+        cursor: pointer;
+        font-weight: 500;
+        text-decoration: none;
+        color: #ffffff !important;
+        margin-top: 5px;
+    }
+
+    .SimpleButton:hover {
+        color: #a88838 !important;
+        text-decoration: none;
+    }
+
+    .SimpleButton:active {
+        text-decoration: none;
+        font-weight: 700;
+        color: #a88838 !important;
+    }
+
+    /* Language selector styles */
+    .SimpleButton .ddp-globe {
+        stroke: #ffffff;
+        fill: transparent;
+        vertical-align: middle;
+        transition: stroke 0.3s ease;
+    }
+
+    .SimpleButton:hover .ddp-globe {
+        stroke: #a88838;
+        fill: transparent;
+    }
+
+    .SimpleButton:active .ddp-globe {
+        stroke: #a88838;
+        fill: transparent;
+    }
+
+    .ddp-current-language {
+        vertical-align: middle;
+    }
+
+    i.ddp-dropdown-arrow {
+        vertical-align: middle;
+    }
+
+    .language-dropdown {
+        float: left;
+        overflow: hidden;
+    }
+
+    .dropdown-content {
+        background-color: rgb(255, 255, 255);
+        border-radius: 4px;
+        box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.2), 0 4px 5px 0 rgba(0, 0, 0, 0.14), 0 1px 10px 0 rgba(0, 0, 0, 0.12);
+        box-sizing: border-box;
+        color: rgb(51, 51, 51);
+        display: none;
+        padding: 10px !important;
+        position: fixed;
+        min-width: 112px;
+        max-width: 280px;
+        font-size: 14px;
+        font-weight: 400;
+    }
+
+    dropdown-content.show {
+        display: block;
+    }
+
+    button.language-menu-item {
+        width: 100%;
+        display: block;
+        line-height: 48px;
+        height: 48px;
+        text-align: left;
+        max-width: 100%;
+        padding: 0 !important;
+        background-color: white;
+        border: none !important;
+        color: rgba(0, 0, 0, 0.87);
+    }
+
+    button.language-menu-item:hover {
+        background-color: #F2F2F2;
+    }
+
+    button.language-menu-item:focus {
+        background-color: #DEDEDE;
+    }
+
+    button.language-menu-item:first-of-type {
+        line-height: 32px !important;
+        padding-bottom: 16px !important;
+    }
+
+    button.language-menu-item:last-of-type {
+        line-height: 31px !important;
+        padding-top: 16px !important;
+    }
+</style>
+
+<script>
+    // Decode utf8 characters properly
+    var config = JSON.parse(decodeURIComponent(escape(window.atob('@@config@@'))));
+    config.extraParams = config.extraParams || {};
+    var mode = config.extraParams.mode;
+    var languageCode = config.extraParams.language;
+    var headerLogo = 'https://storage.googleapis.com/dev-prion-assets/images/prion-logo.svg';
+    var studyColor = '#DDDDDD';
+
+    var mainUrl = '';
+    var authLoc = Math.max(config.callbackURL.indexOf('/auth'), config.callbackURL.indexOf('/login-landing'));
+    if (authLoc === -1) {
+        mainUrl = config.callbackURL;
+    }
+    else {
+        mainUrl = config.callbackURL.substring(0,authLoc);
+    }
+
+    var loginUrl = `${mainUrl}/change-language-redirect?language=${languageCode}&destination=login-landing/login`;
+    var registerUrl = `${mainUrl}/change-language-redirect?language=${languageCode}&destination=redirect-join`;
+    var contactEmail = 'info@prionregistry.org';
+
+    var connection = config.connection;
+    var prompt = !prompt;
+    var languageDictionary;
+    var language;
+    var showPasswordRecentText = false;
+    var doNotShowRegLink = false;
+    var dictionaries = {};
+    dictionaries['en'] = {
+        title: ' ',
+        blankErrorHint: 'Please fill out this field.',
+        emailInputPlaceholder: '   ',
+        passwordInputPlaceholder: '    ',
+        lastLoginInstructions: 'Last time you signed in with',
+        signUpTitle: ' ',
+        loginAtLabel: 'Sign in at %s',
+        signUpLabel: 'Join Us',
+        signUpSubmitLabel: 'Join Us',
+        databaseSignUpInstructions: '<h2 class="Auth0Title">Join Us</h2> <h5>Do you or a relative of yours have prion disease? Tell us about it and join us making a difference...</h5> <h5>Please fill out the form below to register. We will use this account to communicate with you regarding the Prion Registry.</h5>',
+        loginTitle: ' ',
+        loginLabel: 'Sign In',
+        loginSubmitLabel: 'Sign In',
+        loginWithLabel: 'Sign in with %s',
+        forgotPasswordTitle: ' ',
+        forgotPasswordAction: 'Forgot your password?',
+        forgotPasswordInstructions: '<h2 class="Auth0Title">Forgot your password?</h2> <h5>Please enter your email address and we will send you password reset instructions.</h5>',
+        forgotPasswordSubmitLabel: 'Submit',
+        firstNameHint: 'Please fill out this field.',
+        lastNameHint: 'Please fill out this field.',
+        alreadyRegisteredText: 'Already registered? Sign In here',
+        passwordTooltipText: 'Password must be at least 8 characters long.',
+        loginDescriptionText: 'You can log into the Prion Registry using your email account.',
+        emailPrompt: 'Email Address*',
+        passwordPrompt: 'Password*',
+        firstNamePrompt: 'First Name*',
+        lastNamePrompt: 'Last Name*',
+        registerMessageText: 'Don\'t have an account? Join us here',
+        passwordResetSuccessMessage: 'Already registered? Sign In here',
+        logoAlt: 'Prion Registry Logo',
+        learnMore: 'Learn More',
+        signIn: 'Sign In',
+        joinUs: 'Join Us',
+        home: 'Home',
+        backToTop: 'Back to top',
+        privacyPolicy: 'Privacy Policy',
+        contactUs: 'Contact us: ',
+        successForgotPassword: 'If you have previously registered, please check your email to reset your password.',
+        languageSelection: 'language selection',
+        invalidErrorHint: 'Invalid',
+        unrecoverableError: 'Something went wrong. Please contact technical support.',
+        error: {
+            forgotPassword: {
+                too_many_requests: 'We\'re sorry. There are too many requests right now. Please reload the page and try again. If this persists, please try again later.',
+                'lock.fallback': 'We\'re sorry, something went wrong when requesting the password change.'
+            }
+        },
+        login: {
+            password_leaked: 'We have detected a potential security issue with this account. To protect your account, we have blocked this login. An email was sent with instruction on how to unblock your account.',
+            too_many_attempts: 'Your account has been blocked after multiple consecutive login attempts.',
+            'lock.fallback': 'We\'re sorry, something went wrong when attempting to log in.',
+            'lock.invalid_email_password': 'Wrong email or password.',
+            'lock.network': 'We could not reach the server. Please check your connection and try again.'
+        }
+    };
+
+    dictionaries['es'] = {
+        title: ' ',
+        blankErrorHint: 'Por favor rellene este campo.',
+        emailInputPlaceholder: '   ',
+        passwordInputPlaceholder: '    ',
+        lastLoginInstructions: 'La última vez que iniciaste sesión con',
+        signUpTitle: ' ',
+        loginAtLabel: 'Inicia sesión en %s',
+        signUpLabel: 'Únete a nosotros',
+        signUpSubmitLabel: 'Únete a nosotros',
+        databaseSignUpInstructions: '<h2 class="Auth0Title">Únete a nosotros</h2> <h5>¿Usted o un pariente suyo tiene enfermedad priónica? Cuéntanos y únete a nosotros para marcar la diferencia ...</h5> <h5>Por favor complete el siguiente formulario para registrarse. Utilizaremos esta cuenta para comunicarnos con usted con respecto al Registro de Priones.</h5>',
+        loginTitle: ' ',
+        loginLabel: 'Registrarse',
+        loginSubmitLabel: 'Registrarse',
+        loginWithLabel: 'Inicia sesión con %s',
+        forgotPasswordTitle: ' ',
+        forgotPasswordAction: '¿Olvidaste tu contraseña?',
+        forgotPasswordInstructions: '<h2 class="Auth0Title">¿Olvidaste tu contraseña?</h2> <h5>Ingrese su dirección de correo electrónico y le enviaremos las instrucciones para restablecer la contraseña.</h5>',
+        forgotPasswordSubmitLabel: 'Enviar',
+        firstNameHint: 'Por favor rellene este campo.',
+        lastNameHint: 'Por favor rellene este campo.',
+        alreadyRegisteredText: '¿Ya registrado? Firme aquí',
+        passwordTooltipText: 'La contraseña debe tener al menos 8 caracteres.',
+        loginDescriptionText: 'Puede iniciar sesión en el Registro de Prion utilizando su cuenta de correo electrónico.',
+        emailPrompt: 'Dirección de correo electrónico*',
+        passwordPrompt: 'Contraseña*',
+        firstNamePrompt: 'Nombre de pila*',
+        lastNamePrompt: 'Apellido*',
+        registerMessageText: '¿No tienes una cuenta? Únete a nosotros aquí',
+        passwordResetSuccessMessage: '¿Ya registrado? Firme aquí',
+        logoAlt: 'Logotipo del registro de priones',
+        learnMore: 'Aprende más',
+        signIn: 'Registrarse',
+        joinUs: 'Únete a nosotros',
+        home: 'Casa',
+        backToTop: 'Volver arriba',
+        privacyPolicy: 'Política de privacidad',
+        contactUs: 'Contacta con nosotros:',
+        successForgotPassword: 'Si se ha registrado previamente, revise su correo electrónico para restablecer su contraseña.',
+        languageSelection: 'Selección de idioma',
+        invalidErrorHint: 'Invalid',
+        unrecoverableError: 'Something went wrong. Please contact technical support.',
+        error: {
+            forgotPassword: {
+                too_many_requests: '(es) We\'re sorry. There are too many requests right now. Please reload the page and try again. If this persists, please try again later.',
+                'lock.fallback': '(es) We\'re sorry, something went wrong when requesting the password change.'
+            }
+        },
+        login: {
+            password_leaked: '(es) We have detected a potential security issue with this account. To protect your account, we have blocked this login. An email was sent with instruction on how to unblock your account.',
+            too_many_attempts: '(es) Your account has been blocked after multiple consecutive login attempts.',
+            'lock.fallback': '(es) We\'re sorry, something went wrong when attempting to log in.',
+            'lock.invalid_email_password': '(es) Wrong email or password.',
+            'lock.network': '(es) We could not reach the server. Please check your connection and try again.'
+        }
+    };
+    dictionaries['he'] = {
+        title: ' ',
+        blankErrorHint: 'אנא מלא את השדה הזה.',
+        emailInputPlaceholder: '   ',
+        passwordInputPlaceholder: '    ',
+        lastLoginInstructions: 'בפעם האחרונה שנכנסת אליו',
+        signUpTitle: ' ',
+        loginAtLabel: 'היכנס ב %s',
+        signUpLabel: 'הצטרף אלינו',
+        signUpSubmitLabel: 'הצטרף אלינו',
+        databaseSignUpInstructions: '<h2 class="Auth0Title">הצטרף אלינו</h2> <h5>האם אתה או קרוב משפחה שלך חולים במחלת פריון? ספר לנו על זה והצטרף אלינו עם שינוי ...</h5> <h5>מלא את הטופס למטה כדי להירשם. אנו נשתמש בחשבון זה כדי לתקשר איתך בנוגע לרישום ה- Prion.</h5>',
+        loginTitle: ' ',
+        loginLabel: 'להתחבר',
+        loginSubmitLabel: 'להתחבר',
+        loginWithLabel: 'להתחבר עם %s',
+        forgotPasswordTitle: ' ',
+        forgotPasswordAction: 'שכחת ססמה?',
+        forgotPasswordInstructions: '<h2 class="Auth0Title">שכחת ססמה?</h2> <h5>אנא הכנס את כתובת הדוא"ל שלך ואנו נשלח לך הוראות לאיפוס סיסמה.</h5>',
+        forgotPasswordSubmitLabel: 'שלח',
+        firstNameHint: 'אנא מלא את השדה הזה.',
+        lastNameHint: 'אנא מלא את השדה הזה.',
+        alreadyRegisteredText: 'כבר רשום? היכנס כאן',
+        passwordTooltipText: 'הסיסמה חייבת להיות באורך של לפחות 8 תווים.',
+        loginDescriptionText: 'אתה יכול להיכנס לרישום Prion באמצעות חשבון הדוא"ל שלך.',
+        emailPrompt: 'כתובת דוא"ל*',
+        passwordPrompt: 'סיסמה*',
+        firstNamePrompt: 'שם פרטי*',
+        lastNamePrompt: 'שם משפחה*',
+        registerMessageText: 'אין לך חשבון? הצטרפו אלינו לכאן',
+        passwordResetSuccessMessage: 'כבר רשום? היכנס כאן',
+        logoAlt: 'לוגו הרישום של פריון',
+        learnMore: 'למד עוד',
+        signIn: 'להתחבר',
+        joinUs: 'הצטרף אלינו',
+        home: 'בית',
+        backToTop: 'חזרה למעלה',
+        privacyPolicy: 'מדיניות פרטיות',
+        contactUs: 'צור קשר:',
+        successForgotPassword: 'אם נרשמת בעבר, אנא בדוק את הדוא"ל שלך כדי לאפס את הסיסמה שלך.',
+        languageSelection: 'בחירת שפה',
+        invalidErrorHint: '(he) Invalid',
+        unrecoverableError: '(he) Something went wrong. Please contact technical support.',
+        error: {
+            forgotPassword: {
+                too_many_requests: '(he) We\'re sorry. There are too many requests right now. Please reload the page and try again. If this persists, please try again later.',
+                'lock.fallback': '(he) We\'re sorry, something went wrong when requesting the password change.'
+            }
+        },
+        login: {
+            password_leaked: '(he) We have detected a potential security issue with this account. To protect your account, we have blocked this login. An email was sent with instruction on how to unblock your account.',
+            too_many_attempts: '(he) Your account has been blocked after multiple consecutive login attempts.',
+            'lock.fallback': '(he) We\'re sorry, something went wrong when attempting to log in.',
+            'lock.invalid_email_password': '(he) Wrong email or password.',
+            'lock.network': '(he) We could not reach the server. Please check your connection and try again.'
+        }
+    };
+    dictionaries['zh'] = {
+        title: ' ',
+        blankErrorHint: '請填寫此字段。',
+        emailInputPlaceholder: '   ',
+        passwordInputPlaceholder: '    ',
+        lastLoginInstructions: '您上次登錄的時間',
+        signUpTitle: ' ',
+        loginAtLabel: '在登錄 %s',
+        signUpLabel: '加入我們',
+        signUpSubmitLabel: '加入我們',
+        databaseSignUpInstructions: '<h2 class="Auth0Title">加入我們</h2> <h5>您或您的親戚有病毒病嗎？ 告訴我們並加入我們吧！</h5> <h5>請填寫下面的表格進行註冊。 我們將使用此帳戶與您就Prion註冊中心進行溝通。</h5>',
+        loginTitle: ' ',
+        loginLabel: '登入',
+        loginSubmitLabel: '登入',
+        loginWithLabel: '登陸使用 %s',
+        forgotPasswordTitle: ' ',
+        forgotPasswordAction: '忘記密碼了嗎？',
+        forgotPasswordInstructions: '<h2 class="Auth0Title">忘記密碼了嗎？</h2> <h5>請輸入您的電子郵件地址，我們將向您發送密碼重置說明。</h5>',
+        forgotPasswordSubmitLabel: '提交',
+        firstNameHint: '請填寫此字段。',
+        lastNameHint: '請填寫此字段。',
+        alreadyRegisteredText: '註冊過了？ 在這裡登入',
+        passwordTooltipText: '密码长度必须至少为8个字符。',
+        loginDescriptionText: '您可以使用您的電子郵件帳戶登錄Prion Registry。',
+        emailPrompt: '電子郵件地址*',
+        passwordPrompt: '密碼*',
+        firstNamePrompt: '名字*',
+        lastNamePrompt: '姓*',
+        registerMessageText: '還沒有帳號？ 在這裡加入我們',
+        passwordResetSuccessMessage: 'כבר רשום? היכנס כאן',
+        logoAlt: 'Prion Registry徽標',
+        learnMore: '學到更多',
+        signIn: '登入',
+        joinUs: '加入我們',
+        home: '家',
+        backToTop: '回到頂部',
+        privacyPolicy: '隐私政策',
+        contactUs: '聯繫我們：',
+        successForgotPassword: '如果您以前註冊過，請檢查您的電子郵件以重置密碼。',
+        languageSelection: '語言選擇',
+        invalidErrorHint: '(zh) Invalid',
+        unrecoverableError: '(zh) Something went wrong. Please contact technical support.',
+        error: {
+            forgotPassword: {
+                too_many_requests: '(zh) We\'re sorry. There are too many requests right now. Please reload the page and try again. If this persists, please try again later.',
+                'lock.fallback': '(zh) We\'re sorry, something went wrong when requesting the password change.'
+            }
+        },
+        login: {
+            password_leaked: '(zh) We have detected a potential security issue with this account. To protect your account, we have blocked this login. An email was sent with instruction on how to unblock your account.',
+            too_many_attempts: '(zh) Your account has been blocked after multiple consecutive login attempts.',
+            'lock.fallback': '(zh) We\'re sorry, something went wrong when attempting to log in.',
+            'lock.invalid_email_password': '(zh) Wrong email or password.',
+            'lock.network': '(zh) We could not reach the server. Please check your connection and try again.'
+        }
+    };
+    if ('en' !== languageCode && 'es' !== languageCode && 'he' !== languageCode && 'zh' !== languageCode) {
+        console.log('invalid language code; using default');
+        languageCode = 'en';
+    }
+
+    languageDictionary = dictionaries[languageCode];
+    languageDictionary.error = languageDictionary.error || {};
+    languageDictionary.error.signUp = languageDictionary.error.signUp || {};
+    languageDictionary.error.signUp.user_exists = languageDictionary.alreadyRegisteredText;
+    languageDictionary.success = {
+        forgotPassword: languageDictionary.successForgotPassword
+    };
+    languageDictionary.displayNames = {
+        en: 'English',
+        he: 'עברית',
+        es: 'Español',
+        zh: '中文'
+    };
+
+    var otherLanguages = Object.keys(languageDictionary.displayNames).filter(x => x !== languageCode);
+
+    var loginHint = config.extraParams.login_hint;
+    var realOptions = {
+        additionalSignUpFields: [
+            {
+                name: "first_name",
+                placeholder: "  ",
+                validator: function(first_name) {
+                    return {
+                        valid: first_name.length > 0,
+                        hint: languageDictionary.firstNameHint
+                    };
+                }
+            },
+            {
+                name: "last_name",
+                placeholder: "   ",
+                validator: function(last_name) {
+                    return {
+                        valid: last_name.length > 0,
+                        hint: languageDictionary.lastNameHint
+                    };
+                }
+            }
+        ],
+        avatar: null,
+        autofocus: false,
+        auth: {
+            redirectUrl: config.callbackURL,
+            responseType: (config.internalOptions || {}).response_type ||
+            config.callbackOnLocationHash ? 'token' : 'code',
+            params: config.internalOptions
+        },
+        assetsUrl:  config.assetsUrl,
+        allowedConnections: connection ? [connection] : null,
+        rememberLastLogin: false,
+        language: language,
+        languageCode: languageCode,
+        languageDictionary: languageDictionary,
+        theme: {
+            logo:            headerLogo,
+            primaryColor:    studyColor
+        },
+        prefill: loginHint ? { email: loginHint, username: loginHint } : null,
+        closable: false,
+        configurationBaseUrl: config.clientConfigurationBaseUrl,
+        overrides: {
+            __tenant: config.auth0Tenant,
+            __token_issuer: mainUrl}
+    };
+    var options = {allowForgotPassword:true};
+    if (mode === 'signup') {
+        options.allowSignUp = true;
+        options.allowLogin = false;
+    }
+    else if (mode === 'login') {
+        options.allowSignUp = false;
+        options.allowLogin = true;
+    }
+    else {
+        options.allowSignUp = true;
+        options.allowLogin = true;
+    }
+    if (config.extraParams.showPasswordReset) {
+        options.allowSignUp = false;
+        options.allowLogin = false;
+    }
+    if (config.extraParams.show_password_reset) {
+        options.initialScreen = 'forgotPassword';
+    }
+    if (config.extraParams.user_email) {
+        realOptions.prefill = {email: config.extraParams.user_email, username: config.extraParams.user_email};
+    }
+    if (config.extraParams.password_was_reset) {
+        showPasswordRecentText = true;
+    }
+    var lock = new Auth0Lock(config.clientID, config.auth0Domain, realOptions);
+
+    window.onclick = function(event) {
+        if (!document.getElementsByClassName('language-dropdown')[0].contains(event.target)){
+            closeDropdown()
+        }
+    };
+
+    function closeDropdown() {
+        let dropdowns = document.getElementsByClassName("dropdown-content");
+        let i;
+        for (i = 0; i < dropdowns.length; i++) {
+            let openDropdown = dropdowns[i];
+            if (openDropdown.classList.contains('show')) {
+                openDropdown.classList.remove('show');
+            }
+        }
+    }
+
+    function switchLanguage(lang) {
+        console.log('switching language to ' + JSON.stringify(lang));
+        if (mode === 'login') {
+            window.location.href = loginUrl.replace(languageCode, lang);
+        }
+        else {
+            window.location.href =  registerUrl.replace(languageCode, lang);
+        }
+    }
+
+    function showDropDown() {
+        document.getElementById("langDropdown").classList.toggle("show");
+    }
+
+    function addHelp() {
+        // we use setInterval because auth0's on() methods for display
+        // do not account for all the display modes and they appear to fire
+        // before animations complete, not after
+        setInterval(function() {
+            if (!document.getElementById('ddp-password-hint')) {
+                //Add password prompt and hint
+                var passwordHint = document.createElement('div');
+                if (mode === 'signup'){
+                    passwordHint.innerHTML = '<div id="ddp-password-hint"><label class="Input-label">' + languageDictionary.passwordPrompt + '</label>' +
+                        '                    <i class="fa fa-question-circle Color--green tooltip" aria-hidden="true">' +
+                        '<span class="tooltiptext">' + languageDictionary.passwordTooltipText + '</span></i></div>';
+                }
+                else {
+                    passwordHint.innerHTML = '<div id="ddp-password-hint" class="TopPaddingTen"><label class="Input-label TopMargin10">' + languageDictionary.passwordPrompt + '</label></div>';
+                }
+
+                var passwordBlock = document.getElementsByClassName('auth0-lock-input-show-password')[0];
+                if (passwordBlock) {
+                    console.log('appending password hint');
+                    passwordBlock.insertBefore(passwordHint, passwordBlock.childNodes[0]);
+                }
+            }
+            if (!document.getElementById('ddp-email-prompt')) {
+                // If we are logging in, add some instructions
+                if (mode === 'login' && !document.getElementsByClassName('auth0-lock-back-button')[0]) {
+                    var loginInstructions = document.createElement('div');
+                    loginInstructions.innerHTML = '<div id="ddp-login-instructions"><h2 class="loginHeader">' + languageDictionary.loginLabel + '</h2> <h5 class="loginText">' + languageDictionary.loginDescriptionText + '</h5></div>';
+                    var beforeBlock = document.getElementsByClassName('auth0-lock-input-email')[0];
+                    if (beforeBlock) {
+                        console.log('appending login instructions');
+                        beforeBlock.parentElement.insertBefore(loginInstructions, beforeBlock);
+                    }
+                }
+
+                //Add email prompt
+                var emailPrompt = document.createElement('div');
+                emailPrompt.innerHTML = '<div id="ddp-email-prompt"><label class="Input-label">' + languageDictionary.emailPrompt + '</label></div>';
+                var emailBlock = document.getElementsByClassName('auth0-lock-input-email')[0];
+                if (emailBlock) {
+                    console.log('appending email prompt');
+                    emailBlock.insertBefore(emailPrompt, emailBlock.childNodes[0]);
+                }
+            }
+            if (!document.getElementById('ddp-first-name-prompt')) {
+                //Add first name prompt
+                var firstNamePrompt = document.createElement('div');
+                firstNamePrompt.innerHTML = '<div id="ddp-first-name-prompt"><label class="Input-label NoTopMargin">' + languageDictionary.firstNamePrompt + '</label></div>';
+                var firstNameBlock = document.getElementsByClassName('auth0-lock-input-first_name')[0];
+                if (firstNameBlock) {
+                    console.log('appending first name prompt');
+                    firstNameBlock.insertBefore(firstNamePrompt, firstNameBlock.childNodes[0]);
+                }
+            }
+            if (!document.getElementById('ddp-last-name-prompt')) {
+                //Add last name prompt
+                var lastNamePrompt = document.createElement('div');
+                lastNamePrompt.innerHTML = '<div id="ddp-last-name-prompt"><label class="Input-label">' + languageDictionary.lastNamePrompt + '</label></div>';
+                var lastNameBlock = document.getElementsByClassName('auth0-lock-input-last_name')[0];
+                if (lastNameBlock) {
+                    console.log('appending last name prompt');
+                    lastNameBlock.insertBefore(lastNamePrompt, lastNameBlock.childNodes[0]);
+                }
+            }
+            if (!document.getElementById('ddp-moved') && mode === 'signup' && document.getElementById('ddp-email-prompt') &&
+                document.getElementById('ddp-first-name-prompt') &&
+                document.getElementById('ddp-last-name-prompt') && document.getElementById('ddp-password-hint') &&
+                document.getElementsByClassName('auth0-lock-input-email') &&
+                document.getElementsByClassName('auth0-lock-input-email')[0]) {
+
+                console.log('reordering elements');
+
+                //Reorder elements to make first name and last name come before email address and password
+                //Get the email address block
+                var emailAddressBlock = document.getElementsByClassName('auth0-lock-input-email')[0];
+
+                //Get the parent of the email address block
+                var parentBlock = emailAddressBlock.parentElement;
+
+                //Move the first name block before the email address block
+                firstNameBlock = document.getElementsByClassName('auth0-lock-input-first_name')[0];
+                parentBlock.insertBefore(firstNameBlock, emailAddressBlock);
+
+                //Move the last name block before the email address block
+                lastNameBlock = document.getElementsByClassName('auth0-lock-input-last_name')[0];
+                parentBlock.insertBefore(lastNameBlock, emailAddressBlock);
+
+                //Add an element to the bottom to indicate that we changed the order
+                var moved = document.createElement('div');
+                moved.setAttribute('id', 'ddp-moved');
+                document.lastChild.appendChild(moved);
+            }
+            if (!document.getElementById('ddp-set-focus') && mode === 'signup') {
+                var toFocus = document.getElementsByClassName('auth0-lock-input')[0];
+                if (toFocus) {
+                    console.log('focusing');
+                    toFocus.focus();
+                    var focused = document.createElement('div');
+                    focused.setAttribute('id', 'ddp-set-focus');
+                    document.lastChild.appendChild(focused);
+                    toFocus.focus();
+                }
+            }
+            if (!document.getElementById('ddp-header')) {
+                // tweak the header
+                var signInClass = 'Nav-itemLink';
+                var joinUsClass = 'Button Button--secondaryWhite';
+
+                if (mode === 'signup') {
+                    joinUsClass = 'Button Button--active';
+                }
+                if (mode === 'login' && !document.getElementsByClassName('auth0-lock-back-button')[0]) {
+                    signInClass = 'Nav-itemLink Nav-itemLink--active';
+                }
+
+                var globeSVG = '<svg class="ddp-globe" width="24px" height="24px" viewBox="0 0 24 24" aria-live="title" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">' +
+                    '  <title>' + languageDictionary.languageSelection + '</title>' +
+                    '    <g id="Language-Selector-3" transform="translate(-1243.000000, -20.000000)">' +
+                    '      <g id="nav-bar" transform="translate(1.000000, 0.000000)">' +
+                    '        <g id="Globe" transform="translate(1243.000000, 21.000000)">' +
+                    '          <g id="earth-3">' +
+                    '            <g stroke-width="1.5">' +
+                    '              <circle id="Oval" cx="11" cy="11" r="10.3125"></circle>' +
+                    '              <path d="M8.51491667,21.0109167 C7.11975,18.9649167 6.1875,15.2469167 6.1875,11 C6.1875,6.75308333 7.11975,3.03508333 8.51491667,0.989083333" id="Shape"></path>' +
+                    '              <path d="M0.6875,11 L21.3125,11" id="Shape"></path>' +
+                    '              <path d="M2.27516667,16.5 L19.7248333,16.5" id="Shape"></path>' +
+                    '              <path d="M2.27516667,5.5 L19.7248333,5.5" id="Shape"></path>' +
+                    '              <path d="M13.4850833,0.989083333 C14.88025,3.03508333 15.8125,6.75308333 15.8125,11 C15.8125,15.2469167 14.88025,18.9649167 13.4850833,21.0109167" id="Shape"></path>' +
+                    '            </g>' +
+                    '          </g>' +
+                    '        </g>' +
+                    '      </g>' +
+                    '    </g>' +
+                    '</svg>';
+
+                var languageSelector =
+                    '<li class="Nav-item">' +
+                    '<div [hidden]="!loaded" class=" language-dropdown Nav-itemLink">' +
+                    '<button class="SimpleButton dropdown-button" onclick="showDropDown()"> ' + globeSVG +
+                    ' <span class="ddp-current-language">' + languageDictionary.displayNames[languageCode] + '</span> ' +
+                    '<i class="material-icons ddp-dropdown-arrow">arrow_drop_down</i> ' +
+                    '</button>' +
+                    '<div id="langDropdown" class="dropdown-content">' +
+                    '<button class="language-menu-item" onclick="switchLanguage(otherLanguages[0])">' + languageDictionary.displayNames[otherLanguages[0]] + '</button>' +
+                    '<button class="language-menu-item" onclick="switchLanguage(otherLanguages[1])">' + languageDictionary.displayNames[otherLanguages[1]] + '</button>' +
+                    '<button class="language-menu-item" onclick="switchLanguage(otherLanguages[2])">' + languageDictionary.displayNames[otherLanguages[2]] + '</button>' +
+                    '</div>' +
+                    '</div>' +
+                    '</li>';
+
+                var header = document.createElement('div');
+                header.innerHTML=`<header class="Header" id="ddp-header"><a id="top"/><nav class="navbar navbar-default Header-background">` +
+                    `<div class="navbar-header">` +
+                    `<button type="button" class="navbar-toggle collapsed Header-hamburger" data-toggle="collapse" ` +
+                    `data-target="#menu" aria-expanded="false">` +
+                    `<span class="sr-only"></span>` +
+                    `<span class="icon-bar"></span>` +
+                    `<span class="icon-bar"></span>` +
+                    `<span class="icon-bar"></span>` +
+                    `</button>` +
+                    `<a class="Header-logo" href="${mainUrl}">` +
+                    `<img src="${headerLogo}" alt="${languageDictionary.logoAlt}"></a>` +
+                    `</div>` +
+                    `<div class="collapse navbar-collapse Header-collapse" id="menu">` +
+                    `<ul class="nav navbar-nav navbar-right NoMargin">${languageSelector}` +
+                    `<li class="Nav-item"><a href="${mainUrl}/learn-more" class="Nav-itemLink">` +
+                    `${languageDictionary.learnMore}</a></li>` +
+                    `<li class="Nav-item"><a href="${loginUrl}" class="${signInClass}" id="SignIn">` +
+                    `${languageDictionary.signIn}</a></li>` +
+                    `<li class="Nav-item Nav-item-JoinUs">` +
+                    `<a class="${joinUsClass}" href="${registerUrl}" id="JoinUs">${languageDictionary.joinUs}</a>` +
+                    `</li>` +
+                    `</ul>` +
+                    `</div>` +
+                    `</nav></header>`;
+
+                var auth0LockHeader = document.getElementsByClassName('auth0-lock-header-logo')[0];
+                if (auth0LockHeader) {
+                    console.log('appending header');
+                    auth0LockHeader.parentElement.removeChild(auth0LockHeader);
+                    var headerWelcome = document.getElementsByClassName('auth0-lock-header-welcome')[0];
+                    headerWelcome.insertBefore(header,(headerWelcome.hasChildNodes())
+                        ? headerWelcome.childNodes[0]
+                        : null);
+                }
+            }
+            else if (mode === 'login' && document.getElementsByClassName('auth0-lock-back-button')[0] && document.getElementsByClassName('Nav-itemLink--active')[0]) {
+                console.log('marking link inactive');
+                var signInElem = document.getElementsByClassName('Nav-itemLink--active')[0];
+                signInElem.setAttribute('class', 'Nav-itemLink');
+            }
+            else if (mode === 'login' && !document.getElementsByClassName('auth0-lock-back-button')[0] && !document.getElementsByClassName('Nav-itemLink--active')[0]) {
+                console.log('marking link active');
+                signInElem = document.getElementById('SignIn');
+                signInElem.setAttribute('class', 'Nav-itemLink Nav-itemLink--active');
+            }
+            if (!document.getElementById('ddp-footer') && document.getElementById('ddp-middle-container')) {
+                var footer = document.createElement('div');
+                footer.setAttribute('id', 'ddp-footer');
+                footer.innerHTML =
+                `<footer class="Footer row">` +
+                    `<div class="col-lg-6 col-md-4 col-sm-4 col-xs-12 Footer-left">` +
+                        `<a href="${mainUrl}">` +
+                        `<img src="https://storage.googleapis.com/dev-prion-assets/images/project-logo-dark.svg" alt="${languageDictionary.logoAlt}"/>` +
+                        `</a>` +
+                        `<p class="Footer-contact">${languageDictionary.contactUs}` +
+                            `<a href="mailto:${contactEmail}" class="Footer-link NoPadding">${contactEmail}</a>` +
+                        `</p>` +
+                    `</div>` +
+                    `<div class="col-lg-6 col-md-4 col-sm-8 col-xs-12 Footer-links">` +
+                        `<p class="Footer-text Float--right">` +
+                            `<a href="${mainUrl}" class="Footer-link">${languageDictionary.home}</a> ` +
+                            `<a href="${mainUrl}/learn-more" class="Footer-link">${languageDictionary.learnMore}</a> ` +
+                            `<a href="${registerUrl}" class="Footer-link">${languageDictionary.joinUs}</a> ` +
+                            `<a href="${loginUrl}?destParamValue=login" class="Footer-link">${languageDictionary.signIn}</a> ` +
+                            `<a href="${mainUrl}/privacy-policy" class="Footer-link">${languageDictionary.privacyPolicy}</a> ` +
+                            `<a href="#top" class="Footer-link backToTopLink">` +
+                                `<i class="fas fa-arrow-up Footer-arrow"></i>` +
+                                `<span class="backToTopText">${languageDictionary.backToTop}</span>` +
+                            `</a>` +
+                        `</p>` +
+                    `</div>` +
+                `</footer>`;
+
+                var parBlock = document.getElementById('ddp-middle-container').parentElement;
+
+                if (parBlock) {
+                    console.log('appending footer');
+                    parBlock.appendChild(footer);
+                }
+            }
+            if (!document.getElementById('ddp-middle-container') && document.getElementsByClassName('auth0-lock-form')[0] &&
+                !document.getElementsByClassName('auth0-loading-screen')[0] && document.getElementById('ddp-help')) {
+                var middleContainer = document.createElement('div');
+                middleContainer.setAttribute('id', 'ddp-middle-container');
+                middleContainer.setAttribute('class', 'MiddleContainer');
+
+                var button = document.getElementsByClassName('auth0-lock-submit')[0];
+                var mainSection = button.previousSibling;
+                var formSection = document.getElementsByClassName('auth0-lock-form')[0];
+
+                if (mainSection && button && formSection) {
+                    console.log('Moving elements into middle container');
+
+                    //Put the middle container into the document
+                    button.parentElement.insertBefore(middleContainer, button);
+
+                    //Put the main section in the new middle container
+                    middleContainer.appendChild(mainSection);
+
+                    //Put the button in the middle container
+                    middleContainer.appendChild(button);
+                }
+            }
+
+            if (!document.getElementById('ddp-help') && document.getElementsByClassName('auth0-lock-form')[0] &&
+                !document.getElementsByClassName('auth0-loading-screen')[0]) {
+                var lockForm = document.getElementsByClassName('auth0-lock-form');
+
+                var showSignUpHelp = document.getElementsByClassName('auth0-lock-last-login-pane').length === 0;
+                if (mode === 'login' && !doNotShowRegLink) {
+                    // navigate back to registration
+                    var registerMessageWrapper = document.createElement("p");
+                    registerMessageWrapper.setAttribute('class','auth0-lock-alternative');
+                    registerMessageWrapper.setAttribute('id','ddp-reg');
+                    registerMessageWrapper.setAttribute('style','margin-top:0;font-size: small;text-align: left;');
+                    if (showSignUpHelp) {
+                        var registerMessage = document.createElement('p');
+                        registerMessage.setAttribute('style','margin-top:0;margin-bottom:5px');
+                        registerMessage.innerHTML =  "<a class='auth0-lock-alternative-link' href='" + registerUrl + "'>" + languageDictionary.registerMessageText + "</a>.";
+                        registerMessageWrapper.appendChild(registerMessage);
+                        if (lockForm) {
+                            console.log('appending register message');
+                            lockForm[0].appendChild(registerMessageWrapper);
+                        }
+                    }
+                }
+                var helpWrapper = document.createElement('div');
+                helpWrapper.setAttribute('id','ddp-help');
+                helpWrapper.setAttribute('style','display:flex;flex-direction:row;align-items:center;margin-top:5px;flex-wrap:none;');
+                if (lockForm) {
+                    console.log('appending help wrapper');
+                    lockForm[0].appendChild(helpWrapper);
+                }
+                if (mode === 'signup' || options.allowSignUp) {
+                    console.log('appending sign in here to help wrapper');
+                    var loginLink = document.createElement('a');
+                    loginLink.setAttribute('class', 'auth0-lock-alternative-link');
+                    loginLink.setAttribute('href', loginUrl);
+                    loginLink.innerText = languageDictionary.alreadyRegisteredText;
+                    var switchToLogin = document.createElement('p');
+                    switchToLogin.setAttribute('style','text-align:left;margin-top:15px;margin-bottom:5px');
+                    switchToLogin.innerText = '';
+                    switchToLogin.appendChild(loginLink);
+                    helpWrapper.parentElement.appendChild(switchToLogin);
+                }
+                if (showPasswordRecentText) {
+                    if (!document.getElementById('ddp-pwd')) {
+                        console.log('prepending reset password wrapper');
+                        var resetPasswordWrapper = document.createElement("p");
+                        resetPasswordWrapper.setAttribute('class','auth0-lock-alternative');
+                        resetPasswordWrapper.setAttribute('id','ddp-pwd');
+                        resetPasswordWrapper.setAttribute('style','margin-top:0px;');
+                        var resetPasswordText = document.createElement("div");
+                        resetPasswordText.innerText = languageDictionary.passwordResetSuccessMessage;
+                        resetPasswordWrapper.appendChild(resetPasswordText);
+                        document.getElementsByClassName('auth0-lock-content')[0].prepend(resetPasswordWrapper);
+                    }
+                }
+            }
+        },200);
+    }
+    lock.on('show',function() {
+        addHelp();
+        var getInputElement = function(name) {
+            return document.getElementsByName(name)[0];
+        };
+        var setFocus = function(theElement) {
+            theElement.focus();
+            return true;
+        };
+        var getElementWithFocus = function() {
+            return document.querySelector(':focus');
+        };
+        var intervalId = setInterval(function() {
+            var firstNameElement = getInputElement('first_name');
+            if(firstNameElement){
+                setFocus(firstNameElement);
+                var elementWithFocus = getElementWithFocus();
+                if(elementWithFocus && elementWithFocus.name && firstNameElement.name === elementWithFocus.name){
+                    clearInterval(intervalId);
+                }
+            }
+        }, 200);
+    });
+    lock.on('forgot_password ready', function() {
+    });
+    console.log('auth mode: ' + mode);
+    lock.show(options);
+</script>
+</body>
+</html>
