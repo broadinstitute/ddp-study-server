@@ -199,6 +199,11 @@
   "assent_voluntary_details": "You can ask the researchers questions before you make up your mind. You can also talk to your mom or dad or anyone you want to about the study. You can ask to read the information the doctor gives your mom or dad about this study.",
   "assent_voluntary_title": "You do not have to be in the study if you don't want to.",
 
+  "contacting_physician_name": "Contacting Physician",
+  "contacting_physician_title": "Contacting Physician",
+  "contacting_physician_summary_created": "Contacting Physician",
+  "contacting_physician_summary_in_progress": "Contacting Physician",
+  "contacting_physician_summary_complete": "Thank you for signing the contacting physician form.",
   "contacting_physician_lastname_req_hint": "Physician's Last Name is required",
   "contacting_physician_mail_req_hint": "Physician's Complete Mailing Address is required",
   "contacting_physician_phone_req_hint": "Physician's Phone is required",
