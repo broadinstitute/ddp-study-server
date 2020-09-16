@@ -74,7 +74,7 @@ public class JdbiActivityTest extends TxnAwareBaseTest {
         FormActivityDef form = new FormActivityDef(
                 FormType.GENERAL, activityCode, "v1", studyGuid, 1, 1, false,
                 names, titles, subtitles, descriptions, summaries,
-                readonlyHint, null, sections, null, null, null, false
+                readonlyHint, null, sections, null, null, null, false, false
         );
         handle.attach(FormActivityDao.class).insertActivity(form, revId);
 

@@ -255,7 +255,7 @@ public class ReceiveDsmNotificationRouteTest extends DsmRouteTest {
         });
 
         var payload = new DsmNotificationPayload(null, TEST_RESULT.name(), 1L);
-        var result = new TestResult("NEGATIVE", Instant.now());
+        var result = new TestResult("NEGATIVE", Instant.now(), false);
         payload.setEventData(GsonUtil.standardGson().toJsonTree(result));
         given().auth().oauth2(dsmClientAccessToken)
                 .pathParam("study", testData.getStudyGuid())

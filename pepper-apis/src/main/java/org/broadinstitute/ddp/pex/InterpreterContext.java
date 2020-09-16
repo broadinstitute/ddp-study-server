@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.pex;
 
 import org.broadinstitute.ddp.db.dto.UserActivityInstanceSummary;
+import org.broadinstitute.ddp.model.event.EventSignal;
 import org.jdbi.v3.core.Handle;
 
 /**
@@ -13,20 +14,16 @@ class InterpreterContext {
     private final Handle handle;
     private final String userGuid;
     private final String activityInstanceGuid;
-    private UserActivityInstanceSummary activityInstanceSummary;
+    private final UserActivityInstanceSummary activityInstanceSummary;
+    private final EventSignal eventSignal;
 
-    // enum for whether ai guid is relevant
-
-    InterpreterContext(Handle handle, String userGuid, String activityInstanceGuid) {
+    InterpreterContext(Handle handle, String userGuid, String activityInstanceGuid,
+                       UserActivityInstanceSummary activityInstanceSummary, EventSignal eventSignal) {
         this.handle = handle;
         this.userGuid = userGuid;
         this.activityInstanceGuid = activityInstanceGuid;
-    }
-
-    InterpreterContext(Handle handle, String userGuid, String activityInstanceGuid,
-                       UserActivityInstanceSummary activityInstanceSummary) {
-        this(handle, userGuid, activityInstanceGuid);
         this.activityInstanceSummary = activityInstanceSummary;
+        this.eventSignal = eventSignal;
     }
 
     public Handle getHandle() {
@@ -43,5 +40,9 @@ class InterpreterContext {
 
     public UserActivityInstanceSummary getActivityInstanceSummary() {
         return activityInstanceSummary;
+    }
+
+    public EventSignal getEventSignal() {
+        return eventSignal;
     }
 }

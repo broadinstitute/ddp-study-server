@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.route;
 import static org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 
 import java.time.Instant;
+import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
@@ -86,8 +87,12 @@ public class DsmTriggerOnDemandActivityRoute extends ValidatedJsonInputRoute<Tri
                 return;
             }
 
-            ActivityInstanceDto instanceDto = handle.attach(ActivityInstanceDao.class)
-                    .insertInstance(activityDto.getActivityId(), participantGuid, participantGuid,
+            ActivityInstanceDao instanceDao = handle.attach(ActivityInstanceDao.class);
+            if (activityDto.isHideExistingInstancesOnCreation()) {
+                //hide existing instances
+                instanceDao.bulkUpdateIsHiddenByActivityIds(user.getId(), true, Set.of(activityDto.getActivityId()));
+            }
+            ActivityInstanceDto instanceDto = instanceDao.insertInstance(activityDto.getActivityId(), participantGuid, participantGuid,
                             InstanceStatusType.CREATED, null, Instant.now().toEpochMilli(), payload.getTriggerId());
 
             if (instanceDto == null || StringUtils.isBlank(instanceDto.getGuid())) {

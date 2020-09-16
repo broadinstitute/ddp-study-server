@@ -54,11 +54,17 @@ import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.DateFieldType;
 import org.broadinstitute.ddp.model.activity.types.DateRenderMode;
+import org.broadinstitute.ddp.model.activity.types.DsmNotificationEventType;
+import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.activity.types.NumericType;
 import org.broadinstitute.ddp.model.activity.types.PicklistRenderMode;
 import org.broadinstitute.ddp.model.activity.types.PicklistSelectMode;
 import org.broadinstitute.ddp.model.activity.types.TemplateType;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
+import org.broadinstitute.ddp.model.dsm.TestResult;
+import org.broadinstitute.ddp.model.event.ActivityInstanceStatusChangeSignal;
+import org.broadinstitute.ddp.model.event.DsmNotificationSignal;
+import org.broadinstitute.ddp.model.event.EventSignal;
 import org.broadinstitute.ddp.model.governance.AgeOfMajorityRule;
 import org.broadinstitute.ddp.model.governance.GovernancePolicy;
 import org.broadinstitute.ddp.model.invitation.InvitationType;
@@ -1230,11 +1236,70 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
         });
     }
 
+    @Test
+    public void testEval_eventTestResult() {
+        String expr = "user.event.testResult.isCorrected()";
+        EventSignal signal = newDsmEventSignal(new TestResult("NEGATIVE", Instant.now(), true));
+        assertTrue(runEvalEventSignal(expr, signal));
+
+        expr = "user.event.testResult.isCorrected()";
+        signal = newDsmEventSignal(new TestResult("NEGATIVE", Instant.now(), false));
+        assertFalse(runEvalEventSignal(expr, signal));
+
+        expr = "user.event.testResult.isPositive()";
+        signal = newDsmEventSignal(new TestResult("Positive", Instant.now(), false));
+        assertTrue(runEvalEventSignal(expr, signal));
+
+        expr = "user.event.testResult.isPositive()";
+        signal = newDsmEventSignal(new TestResult("INCONCLUSIVE", Instant.now(), false));
+        assertFalse(runEvalEventSignal(expr, signal));
+
+        expr = "user.event.testResult.isCorrected() && user.event.testResult.isPositive()";
+        signal = newDsmEventSignal(new TestResult("POS", Instant.now(), true));
+        assertTrue(runEvalEventSignal(expr, signal));
+
+        expr = "user.event.testResult.isCorrected() && !user.event.testResult.isPositive()";
+        signal = newDsmEventSignal(new TestResult("NEG", Instant.now(), true));
+        assertTrue(runEvalEventSignal(expr, signal));
+    }
+
+    @Test
+    public void testEval_eventTestResult_notEvent() {
+        thrown.expect(PexRuntimeException.class);
+        thrown.expectMessage(containsString("Expected event signal"));
+        String expr = "user.event.testResult.isCorrected()";
+        assertTrue(run(expr));
+    }
+
+    @Test
+    public void testEval_eventTestResult_notDsmTestResult() {
+        thrown.expect(PexRuntimeException.class);
+        thrown.expectMessage(containsString("Expected DSM notification"));
+        String expr = "user.event.testResult.isCorrected()";
+        EventSignal signal = new ActivityInstanceStatusChangeSignal(1L, 1L, "guid", 2L, 3L, 4L, InstanceStatusType.COMPLETE);
+        assertTrue(runEvalEventSignal(expr, signal));
+    }
+
     private boolean run(String expr) {
         return TransactionWrapper.withTxn(handle -> new TreeWalkInterpreter().eval(expr, handle, userGuid, firstInstance.getGuid()));
     }
 
     private boolean run(Handle handle, String expr) {
         return new TreeWalkInterpreter().eval(expr, handle, userGuid, firstInstance.getGuid());
+    }
+
+    private boolean runEvalEventSignal(String expr, EventSignal signal) {
+        return TransactionWrapper.withTxn(handle -> new TreeWalkInterpreter()
+                .eval(expr, handle, userGuid, firstInstance.getGuid(), null, signal));
+    }
+
+    private DsmNotificationSignal newDsmEventSignal(TestResult testResult) {
+        return new DsmNotificationSignal(
+                testData.getUserId(),
+                testData.getUserId(),
+                userGuid,
+                testData.getStudyId(),
+                DsmNotificationEventType.TEST_RESULT,
+                testResult);
     }
 }

@@ -32,8 +32,12 @@ import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
+import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
+import org.broadinstitute.ddp.model.dsm.TestResult;
+import org.broadinstitute.ddp.model.event.DsmNotificationSignal;
+import org.broadinstitute.ddp.model.event.EventSignal;
 import org.broadinstitute.ddp.model.governance.GovernancePolicy;
 import org.broadinstitute.ddp.model.invitation.InvitationType;
 import org.broadinstitute.ddp.model.user.UserProfile;
@@ -83,6 +87,7 @@ public class TreeWalkInterpreter implements PexInterpreter {
     private static final Logger LOG = LoggerFactory.getLogger(TreeWalkInterpreter.class);
     private static final PexFetcher fetcher = new PexFetcher();
 
+    @Override
     public boolean eval(String expression, Handle handle, String userGuid, String activityInstanceGuid) {
         return eval(expression, handle, userGuid, activityInstanceGuid, null);
     }
@@ -90,6 +95,12 @@ public class TreeWalkInterpreter implements PexInterpreter {
     @Override
     public boolean eval(String expression, Handle handle, String userGuid, String activityInstanceGuid,
                         UserActivityInstanceSummary activityInstanceSummary) {
+        return eval(expression, handle, userGuid, activityInstanceGuid, activityInstanceSummary, null);
+    }
+
+    @Override
+    public boolean eval(String expression, Handle handle, String userGuid, String activityInstanceGuid,
+                        UserActivityInstanceSummary activityInstanceSummary, EventSignal signal) {
         CharStream chars = CharStreams.fromString(expression);
         FailFastLexer lexer = new FailFastLexer(chars);
         CommonTokenStream tokens = new CommonTokenStream(lexer);
@@ -104,7 +115,7 @@ public class TreeWalkInterpreter implements PexInterpreter {
             throw new PexParseException(e.getCause());
         }
 
-        InterpreterContext ictx = new InterpreterContext(handle, userGuid, activityInstanceGuid, activityInstanceSummary);
+        InterpreterContext ictx = new InterpreterContext(handle, userGuid, activityInstanceGuid, activityInstanceSummary, signal);
         PexValueVisitor visitor = new PexValueVisitor(this, ictx);
 
         Object result = visitor.visit(tree);
@@ -610,6 +621,30 @@ public class TreeWalkInterpreter implements PexInterpreter {
         }
     }
 
+    private Object evalEventTestResultQuery(InterpreterContext ictx, PexParser.EventTestResultQueryContext ctx) {
+        EventSignal eventSignal = ictx.getEventSignal();
+        if (eventSignal == null) {
+            throw new PexRuntimeException("Expected event signal data but none found in evaluation context");
+        }
+        if (eventSignal.getEventTriggerType() != EventTriggerType.DSM_NOTIFICATION) {
+            throw new PexRuntimeException("Expected DSM notification but found in evaluation context event type "
+                    + eventSignal.getEventTriggerType());
+        }
+        TestResult testResult = ((DsmNotificationSignal) eventSignal).getTestResult();
+        if (testResult == null) {
+            throw new PexRuntimeException("Expected test result event data but none found in evaluation context");
+        }
+
+        PexParser.TestResultQueryContext queryCtx = ctx.testResultQuery();
+        if (queryCtx instanceof PexParser.IsCorrectedTestResultQueryContext) {
+            return testResult.isCorrected();
+        } else if (queryCtx instanceof PexParser.IsPositiveTestResultQueryContext) {
+            return TestResult.POSITIVE_CODE.equals(testResult.getNormalizedResult());
+        } else {
+            throw new PexUnsupportedException("Unhandled test result query: " + queryCtx.getText());
+        }
+    }
+
     /**
      * A parse tree visitor that returns PEX values, which are just Java objects.
      *
@@ -713,6 +748,11 @@ public class TreeWalkInterpreter implements PexInterpreter {
         @Override
         public Object visitProfileQuery(PexParser.ProfileQueryContext ctx) {
             return interpreter.evalProfileQuery(ictx, ctx);
+        }
+
+        @Override
+        public Object visitEventTestResultQuery(PexParser.EventTestResultQueryContext ctx) {
+            return interpreter.evalEventTestResultQuery(ictx, ctx);
         }
     }
 }
