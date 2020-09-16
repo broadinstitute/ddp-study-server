@@ -157,13 +157,10 @@
 	"consent_make_changes_phone": "",
 	"consent_guardian_signature": "",
 	"consent_guardian_dob": "",
-<<<<<<< HEAD
 	"contacting_physician_name": "Contacting Physician",
 	"contacting_physician_summary_created": "Contacting Physician",
 	"contacting_physician_summary_in_progress": "Contacting Physician",
 	"contacting_physician_summary_complete": "Thank you for signing the contacting physician form.",
-=======
->>>>>>> 511025e0d0c5af37ae8771d67e3ac89ef2ce6d35
 	"contacting_physician_lastname_req_hint": "",
 	"contacting_physician_mail_req_hint": "",
 	"contacting_physician_phone_req_hint": "",
