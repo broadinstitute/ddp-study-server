@@ -800,7 +800,7 @@ public class StudyDataLoaderTest {
                 any(JsonElement.class),
                 anyString(),
                 anyString(),
-                any(ClientDto.class), false
+                any(ClientDto.class), eq(false)
         )).thenCallRealMethod();
 
         mockDataLoader.createLegacyPepperUser(
