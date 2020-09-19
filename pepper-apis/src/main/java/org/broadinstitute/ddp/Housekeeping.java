@@ -10,6 +10,7 @@ import java.util.Optional;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -22,8 +23,6 @@ import com.google.cloud.pubsub.v1.MessageReceiver;
 import com.google.cloud.pubsub.v1.Publisher;
 import com.google.cloud.pubsub.v1.Subscriber;
 import com.google.gson.Gson;
-import com.google.protobuf.Duration;
-import com.google.pubsub.v1.ExpirationPolicy;
 import com.google.pubsub.v1.ProjectSubscriptionName;
 import com.google.pubsub.v1.ProjectTopicName;
 import com.google.pubsub.v1.PubsubMessage;
@@ -89,7 +88,6 @@ import org.broadinstitute.ddp.service.PdfGenerationService;
 import org.broadinstitute.ddp.service.PdfService;
 import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.ddp.util.ConfigUtil;
-import org.broadinstitute.ddp.util.GuidUtils;
 import org.broadinstitute.ddp.util.LiquibaseUtil;
 import org.broadinstitute.ddp.util.LogbackConfigurationPrinter;
 import org.jdbi.v3.core.Handle;
@@ -168,7 +166,7 @@ public class Housekeeping {
     private static AfterHandlerCallback afterHandling;
 
     private static Scheduler scheduler;
-    private static Subscriber eventSubscriber;
+    private static Subscriber taskSubscriber;
 
     public static void setAfterHandler(AfterHandlerCallback afterHandler) {
         synchronized (afterHandlerGuard) {
@@ -215,48 +213,10 @@ public class Housekeeping {
         }
         TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, LanguageStore::init);
 
+        setupScheduler(cfg);
+        setupTaskReceiver(cfg, pubSubProject);
+
         final PubSubConnectionManager pubsubConnectionManager = new PubSubConnectionManager(usePubSubEmulator);
-
-        boolean runScheduler = cfg.getBoolean(ConfigFile.RUN_SCHEDULER);
-        if (runScheduler) {
-            LOG.info("Booting job scheduler...");
-            scheduler = JobScheduler.initializeWith(cfg,
-                    CheckAgeUpJob::register,
-                    CheckKitsJob::register,
-                    DataSyncJob::register,
-                    DatabaseBackupJob::register,
-                    DatabaseBackupCheckJob::register,
-                    OnDemandExportJob::register,
-                    TemporaryUserCleanupJob::register,
-                    StudyDataExportJob::register);
-
-            if (cfg.getBoolean(ConfigFile.PUBSUB_ENABLE_HKEEP_TASKS)) {
-                var topicName = ProjectTopicName.of(pubSubProject, cfg.getString(ConfigFile.PUBSUB_HKEEP_TASKS_TOPIC));
-                pubsubConnectionManager.createTopicIfNotExists(topicName);
-
-                var subName = ProjectSubscriptionName.of(pubSubProject,
-                        String.format("%s-%s", topicName.getTopic(), GuidUtils.randomAlphaNumeric()));
-                pubsubConnectionManager.createSubscriptionIfNotExists(Subscription.newBuilder()
-                        .setName(subName.toString())
-                        .setTopic(topicName.toString())
-                        .setAckDeadlineSeconds(PubSubConnectionManager.ACK_DEADLINE_SECONDS)
-                        .setExpirationPolicy(ExpirationPolicy.newBuilder().setTtl(Duration.newBuilder()
-                                .setSeconds(PubSubConnectionManager.SUB_EXPIRATION_DAYS * 24 * 60 * 60)
-                                .build()).build())
-                        .build());
-                LOG.info("Created housekeeping tasks subscription {}", subName);
-
-                HousekeepingTaskReceiver receiver = new HousekeepingTaskReceiver(subName.getSubscription(), scheduler);
-                eventSubscriber = pubsubConnectionManager.subscribe(subName, receiver);
-                eventSubscriber.startAsync();
-                LOG.info("Started housekeeping tasks subscriber to subscription {}", subName);
-            } else {
-                LOG.warn("Housekeeping tasks is not enabled");
-            }
-        } else {
-            LOG.info("Housekeeping job scheduler is not set to run");
-        }
-
         TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, handle -> {
             JdbiMessageDestination messageDestinationDao = handle.attach(JdbiMessageDestination.class);
             for (String topicName : messageDestinationDao.getAllTopics()) {
@@ -461,13 +421,63 @@ public class Housekeeping {
             }
         }
         pubsubConnectionManager.close();
-        if (eventSubscriber != null) {
-            eventSubscriber.stopAsync();
+        if (taskSubscriber != null) {
+            taskSubscriber.stopAsync();
         }
         if (scheduler != null) {
             JobScheduler.shutdownScheduler(scheduler, true);
         }
         LOG.info("Housekeeping is shutting down");
+    }
+
+    private static void setupScheduler(Config cfg) {
+        boolean runScheduler = cfg.getBoolean(ConfigFile.RUN_SCHEDULER);
+        boolean enableHKeepTasks = cfg.getBoolean(ConfigFile.PUBSUB_ENABLE_HKEEP_TASKS);
+        if (runScheduler || enableHKeepTasks) {
+            LOG.info("Booting job scheduler...");
+            scheduler = JobScheduler.initializeWith(cfg);
+            try {
+                // Setup background jobs if scheduler is enabled.
+                if (runScheduler) {
+                    CheckAgeUpJob.register(scheduler, cfg);
+                    CheckKitsJob.register(scheduler, cfg);
+                    DataSyncJob.register(scheduler, cfg);
+                    DatabaseBackupJob.register(scheduler, cfg);
+                    DatabaseBackupCheckJob.register(scheduler, cfg);
+                    TemporaryUserCleanupJob.register(scheduler, cfg);
+                    StudyDataExportJob.register(scheduler, cfg);
+                }
+                // Setup jobs needed for housekeeping-tasks if that's enabled.
+                if (cfg.getBoolean(ConfigFile.PUBSUB_ENABLE_HKEEP_TASKS)) {
+                    OnDemandExportJob.register(scheduler, cfg);
+                    if (!scheduler.checkExists(TemporaryUserCleanupJob.getKey())) {
+                        TemporaryUserCleanupJob.register(scheduler, cfg);
+                    }
+                }
+            } catch (Exception e) {
+                JobScheduler.shutdownScheduler(scheduler, false);
+                throw new DDPException("Failed to setup scheduler jobs", e);
+            }
+        } else {
+            LOG.info("Housekeeping job scheduler is not set to run");
+        }
+    }
+
+    private static void setupTaskReceiver(Config cfg, String projectId) {
+        boolean enableHKeepTasks = cfg.getBoolean(ConfigFile.PUBSUB_ENABLE_HKEEP_TASKS);
+        if (enableHKeepTasks) {
+            var subName = ProjectSubscriptionName.of(projectId, cfg.getString(ConfigFile.PUBSUB_HKEEP_TASKS_SUB));
+            var receiver = new HousekeepingTaskReceiver(subName, scheduler);
+            taskSubscriber = Subscriber.newBuilder(subName, receiver).build();
+            try {
+                taskSubscriber.startAsync().awaitRunning(30L, TimeUnit.SECONDS);
+            } catch (TimeoutException e) {
+                throw new DDPException("Could not start housekeeping tasks subscriber", e);
+            }
+            LOG.info("Started housekeeping tasks subscriber to subscription {}", subName);
+        } else {
+            LOG.warn("Housekeeping tasks is not enabled");
+        }
     }
 
     private static void respondToGAEStartHook(String envPort) {
