@@ -1,10 +1,15 @@
 package org.broadinstitute.ddp.content;
 
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.model.dsm.TestResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,12 +20,24 @@ public class RenderValueProvider {
 
     private static final Logger LOG = LoggerFactory.getLogger(RenderValueProvider.class);
 
+    private String participantGuid;
     private String participantFirstName;
     private String participantLastName;
+    private LocalDate participantBirthDate;
+    private ZoneId participantTimeZone;
     private LocalDate date;
+    private String testResultCode;
+    private Instant testResultTimeCompleted;
 
     private RenderValueProvider() {
         // Use builder.
+    }
+
+    /**
+     * Returns participant's guid, if available.
+     */
+    public String participantGuid() {
+        return participantGuid;
     }
 
     /**
@@ -38,6 +55,21 @@ public class RenderValueProvider {
     }
 
     /**
+     * Returns participant's birth date in given format, if available.
+     */
+    public String participantBirthDate(String format) {
+        if (participantBirthDate == null) {
+            return null;
+        }
+        try {
+            return DateTimeFormatter.ofPattern(format).format(participantBirthDate);
+        } catch (Exception e) {
+            LOG.warn("Error formatting participant birth date value '{}' using format '{}'", participantBirthDate, format, e);
+            return participantBirthDate.toString();
+        }
+    }
+
+    /**
      * Returns today's date in given format. Might return a snapshot-ed date.
      */
     public String date(String format) {
@@ -50,18 +82,70 @@ public class RenderValueProvider {
     }
 
     /**
-     * Get provided values as a map to save as snapshot. Should not be called within templates.
+     * Returns test result code, if available.
      */
+    public String testResultCode() {
+        return testResultCode;
+    }
+
+    /**
+     * Returns test result code in user-friendly display, using the provided text.
+     */
+    public String testResultDisplay(String posText, String negText, String otherText) {
+        if (StringUtils.isBlank(testResultCode)) {
+            return null;
+        }
+        if (TestResult.POSITIVE_CODE.equals(testResultCode)) {
+            return posText;
+        } else if (TestResult.NEGATIVE_CODE.equals(testResultCode)) {
+            return negText;
+        } else {
+            return otherText;
+        }
+    }
+
+    /**
+     * Returns test result time completed in given format, if available.
+     */
+    public String testResultTimeCompleted(String format) {
+        if (testResultTimeCompleted == null) {
+            return null;
+        }
+        try {
+            ZoneId zone = participantTimeZone == null ? ZoneOffset.UTC : participantTimeZone;
+            return DateTimeFormatter.ofPattern(format).withZone(zone).format(testResultTimeCompleted);
+        } catch (Exception e) {
+            LOG.warn("Error formatting test result time completed value '{}' using format '{}'", testResultTimeCompleted, format, e);
+            return testResultTimeCompleted.toString();
+        }
+    }
+
+    // Get provided values as a map to save as snapshot. Should not be called within templates.
     public Map<String, String> getSnapshot() {
         var snapshot = new HashMap<String, String>();
+        if (participantGuid != null) {
+            snapshot.put(I18nTemplateConstants.Snapshot.PARTICIPANT_GUID, participantGuid);
+        }
         if (participantFirstName != null) {
             snapshot.put(I18nTemplateConstants.Snapshot.PARTICIPANT_FIRST_NAME, participantFirstName);
         }
         if (participantLastName != null) {
             snapshot.put(I18nTemplateConstants.Snapshot.PARTICIPANT_LAST_NAME, participantLastName);
         }
+        if (participantBirthDate != null) {
+            snapshot.put(I18nTemplateConstants.Snapshot.PARTICIPANT_BIRTH_DATE, participantBirthDate.toString());
+        }
+        if (participantTimeZone != null) {
+            snapshot.put(I18nTemplateConstants.Snapshot.PARTICIPANT_TIME_ZONE, participantTimeZone.toString());
+        }
         if (date != null) {
             snapshot.put(I18nTemplateConstants.Snapshot.DATE, date.toString());
+        }
+        if (testResultCode != null) {
+            snapshot.put(I18nTemplateConstants.Snapshot.TEST_RESULT_CODE, testResultCode);
+        }
+        if (testResultTimeCompleted != null) {
+            snapshot.put(I18nTemplateConstants.Snapshot.TEST_RESULT_TIME_COMPLETED, testResultTimeCompleted.toString());
         }
         return snapshot;
     }
@@ -71,6 +155,11 @@ public class RenderValueProvider {
 
         public Builder() {
             provider = new RenderValueProvider();
+        }
+
+        public Builder setParticipantGuid(String participantGuid) {
+            provider.participantGuid = participantGuid;
+            return this;
         }
 
         public Builder setParticipantFirstName(String participantFirstName) {
@@ -83,13 +172,38 @@ public class RenderValueProvider {
             return this;
         }
 
+        public Builder setParticipantBirthDate(LocalDate participantBirthDate) {
+            provider.participantBirthDate = participantBirthDate;
+            return this;
+        }
+
+        public Builder setParticipantTimeZone(ZoneId participantTimeZone) {
+            provider.participantTimeZone = participantTimeZone;
+            return this;
+        }
+
         public Builder setDate(LocalDate date) {
             provider.date = date;
             return this;
         }
 
+        public Builder setTestResultCode(String testResultCode) {
+            provider.testResultCode = testResultCode;
+            return this;
+        }
+
+        public Builder setTestResultTimeCompleted(Instant testResultTimeCompleted) {
+            provider.testResultTimeCompleted = testResultTimeCompleted;
+            return this;
+        }
+
         public Builder withSnapshot(Map<String, String> snapshot) {
-            String value = snapshot.get(I18nTemplateConstants.Snapshot.PARTICIPANT_FIRST_NAME);
+            String value = snapshot.get(I18nTemplateConstants.Snapshot.PARTICIPANT_GUID);
+            if (value != null) {
+                provider.participantGuid = value;
+            }
+
+            value = snapshot.get(I18nTemplateConstants.Snapshot.PARTICIPANT_FIRST_NAME);
             if (value != null) {
                 provider.participantFirstName = value;
             }
@@ -99,9 +213,29 @@ public class RenderValueProvider {
                 provider.participantLastName = value;
             }
 
+            value = snapshot.get(I18nTemplateConstants.Snapshot.PARTICIPANT_BIRTH_DATE);
+            if (value != null) {
+                provider.participantBirthDate = LocalDate.parse(value);
+            }
+
+            value = snapshot.get(I18nTemplateConstants.Snapshot.PARTICIPANT_TIME_ZONE);
+            if (value != null) {
+                provider.participantTimeZone = ZoneId.of(value);
+            }
+
             value = snapshot.get(I18nTemplateConstants.Snapshot.DATE);
             if (value != null) {
                 provider.date = LocalDate.parse(value);
+            }
+
+            value = snapshot.get(I18nTemplateConstants.Snapshot.TEST_RESULT_CODE);
+            if (value != null) {
+                provider.testResultCode = value;
+            }
+
+            value = snapshot.get(I18nTemplateConstants.Snapshot.TEST_RESULT_TIME_COMPLETED);
+            if (value != null) {
+                provider.testResultTimeCompleted = Instant.parse(value);
             }
 
             return this;
@@ -109,9 +243,14 @@ public class RenderValueProvider {
 
         public RenderValueProvider build() {
             RenderValueProvider copy = new RenderValueProvider();
+            copy.participantGuid = provider.participantGuid;
             copy.participantFirstName = provider.participantFirstName;
             copy.participantLastName = provider.participantLastName;
+            copy.participantBirthDate = provider.participantBirthDate;
+            copy.participantTimeZone = provider.participantTimeZone;
             copy.date = provider.date;
+            copy.testResultCode = provider.testResultCode;
+            copy.testResultTimeCompleted = provider.testResultTimeCompleted;
             return copy;
         }
     }

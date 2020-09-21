@@ -81,8 +81,10 @@ public class SqlConstants {
         public static final String IS_WRITE_ONCE = "is_write_once";
         public static final String ALLOW_ONDEMAND_TRIGGER = "allow_ondemand_trigger";
         public static final String EXCLUDE_FROM_DISPLAY = "exclude_from_display";
+        public static final String EXCLUDE_STATUS_ICON_FROM_DISPLAY = "exclude_status_icon_from_display";
         public static final String ALLOW_UNAUTHENTICATED = "allow_unauthenticated";
         public static final String IS_FOLLOWUP = "is_followup";
+        public static final String HIDE_INSTANCES = "hide_existing_instances_on_creation";
     }
 
     public static final class ActivityVersionTable {

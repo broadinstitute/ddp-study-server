@@ -9,19 +9,17 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
-
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
+import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.db.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.json.activity.ActivityInstanceSummary;
 import org.broadinstitute.ddp.security.DDPAuth;
 import org.broadinstitute.ddp.util.RouteUtil;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import spark.Request;
 import spark.Response;
 import spark.Route;
@@ -34,9 +32,11 @@ public class UserActivityInstanceListRoute implements Route {
     private static final Logger LOG = LoggerFactory.getLogger(UserActivityInstanceListRoute.class);
 
     private ActivityInstanceDao activityInstanceDao;
+    private I18nContentRenderer renderer;
 
     public UserActivityInstanceListRoute(ActivityInstanceDao activityInstanceDao) {
         this.activityInstanceDao = activityInstanceDao;
+        this.renderer = new I18nContentRenderer();
     }
 
     @Override
@@ -50,18 +50,21 @@ public class UserActivityInstanceListRoute implements Route {
         if (StringUtils.isBlank(studyGuid)) {
             halt400ErrorResponse(response, ErrorCodes.MISSING_STUDY_GUID);
         }
-        LOG.info("Looking up activity instances for user {} in study {}", userGuid, studyGuid);
+
         DDPAuth ddpAuth = RouteUtil.getDDPAuth(request);
-        return TransactionWrapper.withTxn(
-                handle -> {
-                    LanguageDto preferredUserLanguage = RouteUtil.getUserLanguage(request);
-                    List<ActivityInstanceSummary> summaries = activityInstanceDao.listActivityInstancesForUser(
-                            handle, userGuid, studyGuid, preferredUserLanguage.getIsoCode()
-                    );
-                    performActivityInstanceNumbering(summaries);
-                    return filterActivityInstancesFromDisplay(summaries);
-                }
-        );
+        LOG.info("Looking up activity instances for user {} in study {} by operator {}", userGuid, studyGuid, ddpAuth.getOperator());
+
+        return TransactionWrapper.withTxn(handle -> {
+            var found = RouteUtil.findUserAndStudyOrHalt(handle, userGuid, studyGuid);
+            LanguageDto preferredUserLanguage = RouteUtil.getUserLanguage(request);
+            List<ActivityInstanceSummary> summaries = activityInstanceDao.listActivityInstancesForUser(
+                    handle, userGuid, studyGuid, preferredUserLanguage.getIsoCode()
+            );
+            performActivityInstanceNumbering(summaries);
+            summaries = filterActivityInstancesFromDisplay(summaries);
+            activityInstanceDao.renderActivitySummaryText(handle, found.getUser().getId(), summaries);
+            return summaries;
+        });
     }
 
     /**

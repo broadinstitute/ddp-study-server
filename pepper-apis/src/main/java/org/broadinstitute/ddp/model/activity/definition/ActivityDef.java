@@ -57,8 +57,14 @@ public abstract class ActivityDef {
     @SerializedName("excludeFromDisplay")
     protected boolean excludeFromDisplay;
 
+    @SerializedName("excludeStatusIconFromDisplay")
+    protected boolean excludeStatusIconFromDisplay;
+
     @SerializedName("allowUnauthenticated")
     protected boolean allowUnauthenticated;
+
+    @SerializedName("hideExistingInstancesOnCreation")
+    protected boolean hideExistingInstancesOnCreation;
 
     @NotEmpty
     @SerializedName("translatedNames")
@@ -104,7 +110,8 @@ public abstract class ActivityDef {
             List<Translation> translatedDescriptions,
             List<SummaryTranslation> translatedSummaries,
             Template readonlyHintTemplate,
-            boolean isFollowup
+            boolean isFollowup,
+            boolean hideExistingInstancesOnCreation
     ) {
         this.activityType = MiscUtil.checkNonNull(activityType, "activityType");
         this.activityCode = MiscUtil.checkNotBlank(activityCode, "activityCode");
@@ -124,6 +131,7 @@ public abstract class ActivityDef {
         this.translatedSummaries = translatedSummaries;
         this.readonlyHintTemplate = readonlyHintTemplate;
         this.isFollowup = isFollowup;
+        this.hideExistingInstancesOnCreation = hideExistingInstancesOnCreation;
     }
 
     /**
@@ -224,12 +232,20 @@ public abstract class ActivityDef {
         return excludeFromDisplay;
     }
 
+    public boolean isExcludeStatusIconFromDisplay() {
+        return excludeStatusIconFromDisplay;
+    }
+
     public boolean isAllowUnauthenticated() {
         return allowUnauthenticated;
     }
 
     public boolean isFollowup() {
         return isFollowup;
+    }
+
+    public boolean isHideInstances() {
+        return hideExistingInstancesOnCreation;
     }
 
     /**
@@ -250,6 +266,7 @@ public abstract class ActivityDef {
         protected Long editTimeoutSec = null;
         protected boolean allowOndemandTrigger = false;
         protected boolean excludeFromDisplay = false;
+        protected boolean excludeStatusIconFromDisplay = false;
         protected boolean allowUnauthenticated = false;
         protected List<Translation> names = new ArrayList<>();
         protected List<Translation> titles = new ArrayList<>();
@@ -258,6 +275,7 @@ public abstract class ActivityDef {
         protected List<SummaryTranslation> summaries = new ArrayList<>();
         protected Template readonlyHintTemplate;
         protected boolean isFollowup;
+        protected boolean hideExistingInstancesOnCreation;
 
         /**
          * Returns the subclass builder instance to enable method chaining.
@@ -275,9 +293,11 @@ public abstract class ActivityDef {
             activity.editTimeoutSec = editTimeoutSec;
             activity.allowOndemandTrigger = allowOndemandTrigger;
             activity.excludeFromDisplay = excludeFromDisplay;
+            activity.excludeStatusIconFromDisplay = excludeStatusIconFromDisplay;
             activity.allowUnauthenticated = allowUnauthenticated;
             activity.readonlyHintTemplate = readonlyHintTemplate;
             activity.isFollowup = isFollowup;
+            activity.hideExistingInstancesOnCreation = hideExistingInstancesOnCreation;
         }
 
         public T setActivityCode(String activityCode) {
@@ -332,6 +352,11 @@ public abstract class ActivityDef {
 
         public T setExcludeFromDisplay(boolean excludeFromDisplay) {
             this.excludeFromDisplay = excludeFromDisplay;
+            return self();
+        }
+
+        public T setExcludeStatusIconFromDisplay(boolean excludeStatusIconFromDisplay) {
+            this.excludeStatusIconFromDisplay = excludeStatusIconFromDisplay;
             return self();
         }
 
@@ -422,6 +447,11 @@ public abstract class ActivityDef {
 
         public T setIsFollowup(boolean isFollowup) {
             this.isFollowup = isFollowup;
+            return self();
+        }
+
+        public T setHideInstances(boolean hideExistingInstancesOnCreation) {
+            this.hideExistingInstancesOnCreation = hideExistingInstancesOnCreation;
             return self();
         }
     }

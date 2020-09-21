@@ -12,10 +12,12 @@ public class StudyMigrationRun {
     private Boolean hasBloodRelease;
     private Boolean hasLovedOne;
     private Boolean hasFollowup;
+    private Boolean hasMedical;
     private Boolean isSuccess;
     private Boolean previousRun;
     private String emailAddress;
     private Boolean auth0Collision;
+    private Boolean foundInAuth0;
 
     public StudyMigrationRun(String altPid, String pepperUserGuid, Boolean previousRun, String emailAddress) {
         this.altPid = altPid;
@@ -26,7 +28,8 @@ public class StudyMigrationRun {
 
     public StudyMigrationRun(String altPid, String pepperUserGuid, Boolean hasAboutYou, Boolean hasConsent, Boolean hasBloodConsent,
                              Boolean hasTissueConsent, Boolean hasRelease, Boolean hasBloodRelease, Boolean hasLovedOne,
-                             Boolean hasFollowup, Boolean isSuccess, Boolean previousRun, String emailAddress, Boolean auth0Collision) {
+                             Boolean hasFollowup, Boolean hasMedical, Boolean isSuccess, Boolean previousRun, String emailAddress,
+                             Boolean auth0Collision, Boolean foundInAuth0) {
         this.altPid = altPid;
         this.pepperUserGuid = pepperUserGuid;
         this.hasAboutYou = hasAboutYou;
@@ -37,10 +40,12 @@ public class StudyMigrationRun {
         this.hasBloodRelease = hasBloodRelease;
         this.hasLovedOne = hasLovedOne;
         this.hasFollowup = hasFollowup;
+        this.hasMedical = hasMedical;
         this.isSuccess = isSuccess;
         this.previousRun = previousRun;
         this.emailAddress = emailAddress;
         this.auth0Collision = auth0Collision;
+        this.foundInAuth0 = foundInAuth0;
     }
 
     public String getAltPid() {
@@ -49,6 +54,10 @@ public class StudyMigrationRun {
 
     public String getPepperUserGuid() {
         return pepperUserGuid;
+    }
+
+    public Boolean getHasMedical() {
+        return hasMedical;
     }
 
     public Boolean getHasAboutYou() {
@@ -85,6 +94,10 @@ public class StudyMigrationRun {
 
     public Boolean getAuth0Collision() {
         return auth0Collision;
+    }
+
+    public Boolean getFoundInAuth0() {
+        return foundInAuth0;
     }
 
     public Boolean getHasBloodConsent() {

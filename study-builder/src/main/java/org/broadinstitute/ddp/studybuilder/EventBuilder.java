@@ -102,7 +102,8 @@ public class EventBuilder {
             return triggerDao.insertStatusTrigger(activityId, statusType);
         } else if (type == EventTriggerType.DSM_NOTIFICATION) {
             String dsmEvent = triggerCfg.getString("dsmEvent");
-            return triggerDao.insertDsmNotificationTrigger(DsmNotificationEventType.valueOf(dsmEvent));
+            var dsmEventType = DsmNotificationEventType.valueOf(dsmEvent);
+            return triggerDao.insertDsmNotificationTrigger(dsmEventType);
         } else if (type == EventTriggerType.WORKFLOW_STATE) {
             if (triggerCfg.hasPath(ACTIVITY_CODE_FIELD)) {
                 String activityCode = triggerCfg.getString(ACTIVITY_CODE_FIELD);

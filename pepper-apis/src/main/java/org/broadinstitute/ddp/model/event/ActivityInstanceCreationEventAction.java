@@ -1,7 +1,10 @@
 package org.broadinstitute.ddp.model.event;
 
 import java.time.Instant;
+import java.util.Set;
 
+import org.broadinstitute.ddp.content.RenderValueProvider;
+import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstanceStatus;
@@ -9,7 +12,9 @@ import org.broadinstitute.ddp.db.dao.QueuedEventDao;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.EventConfigurationDto;
 import org.broadinstitute.ddp.exception.DDPException;
+import org.broadinstitute.ddp.model.activity.types.DsmNotificationEventType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
+import org.broadinstitute.ddp.model.dsm.TestResult;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.service.EventService;
 import org.jdbi.v3.core.Handle;
@@ -83,6 +88,12 @@ public class ActivityInstanceCreationEventAction extends EventAction {
             return;
         }
 
+        if (activityDto.isHideExistingInstancesOnCreation()) {
+            //hide existing instances
+            handle.attach(ActivityInstanceDao.class).bulkUpdateIsHiddenByActivityIds(signal.getParticipantId(),
+                    true, Set.of(studyActivityId));
+        }
+
         // All fine, creating an activity instance
         String activityInstanceGuid = jdbiActivityInstance.generateUniqueGuid();
         long newActivityInstanceId = jdbiActivityInstance.insert(
@@ -108,6 +119,23 @@ public class ActivityInstanceCreationEventAction extends EventAction {
                 signal.getParticipantId(),
                 signal.getStudyId(),
                 newActivityInstanceId);
+
+        if (signal instanceof DsmNotificationSignal) {
+            var dsmSignal = (DsmNotificationSignal) signal;
+            if (dsmSignal.getDsmEventType() == DsmNotificationEventType.TEST_RESULT) {
+                TestResult result = dsmSignal.getTestResult();
+                if (result != null) {
+                    var provider = new RenderValueProvider.Builder()
+                            .setTestResultCode(result.getNormalizedResult())
+                            .setTestResultTimeCompleted(result.getTimeCompleted())
+                            .build();
+                    handle.attach(ActivityInstanceDao.class).saveSubstitutions(
+                            newActivityInstanceId,
+                            provider.getSnapshot());
+                    LOG.info("Saved test result data as substitution snapshot for activity instance {}", newActivityInstanceId);
+                }
+            }
+        }
 
         EventService.getInstance().processAllActionsForEventSignal(handle, new ActivityInstanceStatusChangeSignal(
                 signal.getOperatorId(),

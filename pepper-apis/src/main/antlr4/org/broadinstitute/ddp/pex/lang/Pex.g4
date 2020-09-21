@@ -22,10 +22,12 @@ expr
 query
   : 'user' '.' study '.' studyPredicate                                                  # StudyQuery
   | 'user' '.' study '.' form '.' formPredicate                                          # FormQuery
+  | 'user' '.' study '.' form '.' instance '.' formInstancePredicate                     # FormInstanceQuery
   | 'user' '.' study '.' form '.' question '.' questionPredicate                         # QuestionQuery
   | 'user' '.' study '.' form '.' question '.' 'answers' '.' predicate                   # DefaultLatestAnswerQuery
   | 'user' '.' study '.' form '.' instance '.' question '.' 'answers' '.' predicate      # AnswerQuery
   | 'user' '.' 'profile' '.' profileDataQuery   # ProfileQuery
+  | 'user' '.' 'event' '.' 'testResult' '.' testResultQuery   # EventTestResultQuery
   ;
 
 study : 'studies' '[' STR ']' ;
@@ -43,6 +45,11 @@ studyPredicate
 formPredicate
   : 'isStatus' '(' STR ( ',' STR )* ')'  # IsStatusPredicate
   | 'hasInstance' '(' ')'         # HasInstancePredicate
+  ;
+
+// Form predicate functions for a particular instance
+formInstancePredicate
+  : 'snapshotSubstitution' '(' STR ')'   # InstanceSnapshotSubstitutionQuery
   ;
 
 // Question predicate functions
@@ -65,6 +72,12 @@ predicate
 // Queries to pull out various pieces of profile data
 profileDataQuery
   : 'birthDate' '(' ')'   # ProfileBirthDateQuery
+  ;
+
+// Queries for current test result event.
+testResultQuery
+  : 'isCorrected' '(' ')'   # IsCorrectedTestResultQuery
+  | 'isPositive' '(' ')'    # IsPositiveTestResultQuery
   ;
 
 

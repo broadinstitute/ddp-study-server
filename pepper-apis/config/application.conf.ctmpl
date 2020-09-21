@@ -48,7 +48,7 @@
     "pdfArchiveUseFilesystem": false,
     "pubsub": {
         "enableHousekeepingTasks": {{$conf.Data.pubsub.enableHousekeepingTasks}},
-        "housekeepingTasksTopic": "{{$conf.Data.pubsub.housekeepingTasksTopic}}",
+        "housekeepingTasksSubscription": "{{$conf.Data.pubsub.housekeepingTasksSubscription}}",
     },
     "studyExportBucket": "{{$conf.Data.studyExportBucket}}",
     "schedules": {

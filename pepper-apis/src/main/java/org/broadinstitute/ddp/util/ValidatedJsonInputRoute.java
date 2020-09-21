@@ -77,6 +77,18 @@ public abstract class ValidatedJsonInputRoute<T> implements Route {
     }
 
     /**
+     * Getter for validator with lazy-initialization.
+     *
+     * @return a validator instance
+     */
+    protected GsonPojoValidator getValidator() {
+        if (validator == null) {
+            validator = new GsonPojoValidator();
+        }
+        return validator;
+    }
+
+    /**
      * Override if you want to parse Json your way.
      *
      * @return the target class for the request body to POJO object
@@ -145,10 +157,7 @@ public abstract class ValidatedJsonInputRoute<T> implements Route {
      * Where we actually do the validation. Default implementation uses the Hibernate Validator.
      */
     protected List<JsonValidationError> validateObject(T deserializedObject, Request request) {
-        if (validator == null) {
-            validator = new GsonPojoValidator();
-        }
-        return validator.validateAsJson(deserializedObject);
+        return getValidator().validateAsJson(deserializedObject);
     }
 
     protected String buildErrorMessage(List<JsonValidationError> validationErrors) {

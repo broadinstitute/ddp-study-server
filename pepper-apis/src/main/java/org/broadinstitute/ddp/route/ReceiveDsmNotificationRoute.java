@@ -1,5 +1,8 @@
 package org.broadinstitute.ddp.route;
 
+import java.util.List;
+import javax.validation.ValidationException;
+
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
@@ -9,10 +12,12 @@ import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.json.dsm.DsmNotificationPayload;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.activity.types.DsmNotificationEventType;
+import org.broadinstitute.ddp.model.dsm.TestResult;
 import org.broadinstitute.ddp.model.event.DsmNotificationSignal;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.model.user.User;
 import org.broadinstitute.ddp.service.EventService;
+import org.broadinstitute.ddp.util.JsonValidationError;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
@@ -69,18 +74,54 @@ public class ReceiveDsmNotificationRoute extends ValidatedJsonInputRoute<DsmNoti
                 return ResponseUtil.haltError(response, HttpStatus.SC_NOT_FOUND, err);
             });
 
+            TestResult testResult = null;
+            if (eventType == DsmNotificationEventType.TEST_RESULT) {
+                testResult = parseTestResult(response, payload);
+            }
+
             LOG.info("Running events for userGuid={} and DSM notification eventType={}", userGuid, eventType);
             var signal = new DsmNotificationSignal(
                     user.getId(),
                     user.getId(),
                     userGuid,
                     studyDto.getId(),
-                    eventType);
+                    eventType,
+                    testResult);
             EventService.getInstance().processAllActionsForEventSignal(handle, signal);
 
             LOG.info("Finished running events for userGuid={} and DSM notification eventType={}", userGuid, eventType);
             response.status(HttpStatus.SC_OK);
             return null;
         });
+    }
+
+    private TestResult parseTestResult(Response response, DsmNotificationPayload payload) {
+        TestResult testResult;
+        try {
+            testResult = getGson().fromJson(payload.getEventData(), TestResult.class);
+        } catch (Exception e) {
+            LOG.error("Error while parsing test result event data", e);
+            var err = new ApiError(ErrorCodes.BAD_PAYLOAD, "Error while parsing event data");
+            throw ResponseUtil.haltError(response, HttpStatus.SC_BAD_REQUEST, err);
+        }
+
+        if (testResult == null) {
+            var err = new ApiError(ErrorCodes.BAD_PAYLOAD, "Missing test result event data");
+            throw ResponseUtil.haltError(response, HttpStatus.SC_BAD_REQUEST, err);
+        }
+
+        try {
+            List<JsonValidationError> validationErrors = getValidator().validateAsJson(testResult);
+            if (!validationErrors.isEmpty()) {
+                var err = new ApiError(ErrorCodes.BAD_PAYLOAD, buildErrorMessage(validationErrors));
+                throw ResponseUtil.haltError(response, HttpStatus.SC_BAD_REQUEST, err);
+            }
+        } catch (ValidationException e) {
+            LOG.error("Error while validating test result event data", e);
+            var err = new ApiError(ErrorCodes.SERVER_ERROR, "Error while validating event data");
+            throw ResponseUtil.haltError(response, HttpStatus.SC_INTERNAL_SERVER_ERROR, err);
+        }
+
+        return testResult;
     }
 }
