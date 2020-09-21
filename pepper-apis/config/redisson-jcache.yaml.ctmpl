@@ -20,7 +20,7 @@ singleServerConfig:
   dnsMonitoringInterval: 5000
   pingConnectionInterval: 3000
 threads: 16
-nettyThreads: 48
+nettyThreads: 128
 codec: !<org.redisson.codec.FstCodec> {}
 transportMode: "NIO"
 {{end}}
