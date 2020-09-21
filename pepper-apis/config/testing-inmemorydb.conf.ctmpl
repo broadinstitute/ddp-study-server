@@ -92,7 +92,7 @@
     "pdfArchiveUseFilesystem": true,
     "pubsub": {
         "enableHousekeepingTasks": false,
-        "housekeepingTasksTopic": "local-housekeeping-tasks",
+        "housekeepingTasksSubscription": "local-housekeeping-tasks-sub",
     },
     "studyExportBucket": "ddp-dev-study-exports-testing",
     "schedules": {

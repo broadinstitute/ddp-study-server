@@ -99,7 +99,7 @@ public class ConfigFile {
     public static final String BACKEND_AUTH0_TEST_SECRET2 = "backendTestSecret2";
     public static final String BACKEND_AUTH0_TEST_CLIENT_NAME2 = "backendTestClientName2";
     public static final String PUBSUB_ENABLE_HKEEP_TASKS = "pubsub.enableHousekeepingTasks";
-    public static final String PUBSUB_HKEEP_TASKS_TOPIC = "pubsub.housekeepingTasksTopic";
+    public static final String PUBSUB_HKEEP_TASKS_SUB = "pubsub.housekeepingTasksSubscription";
     public static final String SLACK_HOOK = "slack.hook";
     public static final String SLACK_CHANNEL = "slack.channel";
     public static final String TEST_USER_AUTH0_ID = "testUserAuth0Id";
