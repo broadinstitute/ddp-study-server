@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 import com.google.common.base.Functions;
@@ -102,7 +101,7 @@ public class UpdateActivityNamingDetails implements CustomTask {
                     titles.getOrDefault(language, null),
                     subtitles.getOrDefault(language, null),
                     descriptions.getOrDefault(language, null));
-            if (isAnyTextDifferent(current, latest)) {
+            if (!current.equals(latest)) {
                 newDetails.add(latest);
             }
         }
@@ -131,13 +130,5 @@ public class UpdateActivityNamingDetails implements CustomTask {
             }
         }
         return newDetails;
-    }
-
-    private boolean isAnyTextDifferent(ActivityI18nDetail current, ActivityI18nDetail latest) {
-        return hash(current) != hash(latest);
-    }
-
-    private int hash(ActivityI18nDetail detail) {
-        return Objects.hash(detail.getName(), detail.getTitle(), detail.getSubtitle(), detail.getDescription());
     }
 }
