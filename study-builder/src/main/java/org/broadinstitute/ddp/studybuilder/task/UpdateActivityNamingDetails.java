@@ -59,16 +59,17 @@ public class UpdateActivityNamingDetails implements CustomTask {
                     .collect(Collectors.toMap(ActivityI18nDetail::getIsoLangCode, Functions.identity()));
 
             Map<String, String> names = collectTranslatedText(definition, "translatedNames");
+            Map<String, String> secondNames = collectTranslatedText(definition, "translatedSecondNames");
             Map<String, String> titles = collectTranslatedText(definition, "translatedTitles");
             Map<String, String> subtitles = collectTranslatedText(definition, "translatedSubtitles");
             Map<String, String> descriptions = collectTranslatedText(definition, "translatedDescriptions");
 
-            var newDetails = buildDetailsForUpdate(currentDetails, names, titles, subtitles, descriptions);
+            var newDetails = buildDetailsForUpdate(currentDetails, names, secondNames, titles, subtitles, descriptions);
             activityI18nDao.updateDetails(newDetails);
             LOG.info("Updated for {} languages: {}", newDetails.size(),
                     newDetails.stream().map(ActivityI18nDetail::getIsoLangCode).collect(Collectors.toList()));
 
-            newDetails = buildDetailsForInsert(activityId, currentDetails, names, titles, subtitles, descriptions);
+            newDetails = buildDetailsForInsert(activityId, currentDetails, names, secondNames, titles, subtitles, descriptions);
             activityI18nDao.insertDetails(newDetails);
             LOG.info("Created for {} languages: {}", newDetails.size(),
                     newDetails.stream().map(ActivityI18nDetail::getIsoLangCode).collect(Collectors.toList()));
@@ -86,6 +87,7 @@ public class UpdateActivityNamingDetails implements CustomTask {
     private List<ActivityI18nDetail> buildDetailsForUpdate(
             Map<String, ActivityI18nDetail> currentDetails,
             Map<String, String> names,
+            Map<String, String> secondNames,
             Map<String, String> titles,
             Map<String, String> subtitles,
             Map<String, String> descriptions) {
@@ -98,6 +100,7 @@ public class UpdateActivityNamingDetails implements CustomTask {
                     current.getLangCodeId(),
                     current.getIsoLangCode(),
                     names.get(language),
+                    secondNames.getOrDefault(language, null),
                     titles.getOrDefault(language, null),
                     subtitles.getOrDefault(language, null),
                     descriptions.getOrDefault(language, null));
@@ -112,6 +115,7 @@ public class UpdateActivityNamingDetails implements CustomTask {
             long activityId,
             Map<String, ActivityI18nDetail> currentDetails,
             Map<String, String> names,
+            Map<String, String> secondNames,
             Map<String, String> titles,
             Map<String, String> subtitles,
             Map<String, String> descriptions) {
@@ -124,6 +128,7 @@ public class UpdateActivityNamingDetails implements CustomTask {
                         activityId,
                         language,
                         names.get(language),
+                        secondNames.getOrDefault(language, null),
                         titles.getOrDefault(language, null),
                         subtitles.getOrDefault(language, null),
                         descriptions.getOrDefault(language, null)));

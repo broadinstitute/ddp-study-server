@@ -28,6 +28,7 @@ public class RenderValueProvider {
     private LocalDate date;
     private String testResultCode;
     private Instant testResultTimeCompleted;
+    private Integer activityInstanceNumber;
 
     private RenderValueProvider() {
         // Use builder.
@@ -120,6 +121,17 @@ public class RenderValueProvider {
         }
     }
 
+    /**
+     * Returns the activity instance number, if available.
+     */
+    public String activityInstanceNumber() {
+        if (activityInstanceNumber == null) {
+            return null;
+        } else {
+            return String.valueOf(activityInstanceNumber);
+        }
+    }
+
     // Get provided values as a map to save as snapshot. Should not be called within templates.
     public Map<String, String> getSnapshot() {
         var snapshot = new HashMap<String, String>();
@@ -197,6 +209,11 @@ public class RenderValueProvider {
             return this;
         }
 
+        public Builder setActivityInstanceNumber(Integer activityInstanceNumber) {
+            provider.activityInstanceNumber = activityInstanceNumber;
+            return this;
+        }
+
         public Builder withSnapshot(Map<String, String> snapshot) {
             String value = snapshot.get(I18nTemplateConstants.Snapshot.PARTICIPANT_GUID);
             if (value != null) {
@@ -251,6 +268,7 @@ public class RenderValueProvider {
             copy.date = provider.date;
             copy.testResultCode = provider.testResultCode;
             copy.testResultTimeCompleted = provider.testResultTimeCompleted;
+            copy.activityInstanceNumber = provider.activityInstanceNumber;
             return copy;
         }
     }
