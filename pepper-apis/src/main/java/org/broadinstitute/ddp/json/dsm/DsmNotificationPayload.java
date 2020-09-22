@@ -1,14 +1,24 @@
 package org.broadinstitute.ddp.json.dsm;
 
+import java.time.Instant;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotBlank;
 
 import com.google.gson.JsonElement;
+import com.google.gson.annotations.JsonAdapter;
 import com.google.gson.annotations.SerializedName;
 import org.broadinstitute.ddp.model.activity.types.DsmNotificationEventType;
+import org.broadinstitute.ddp.transformers.InstantToIsoDateTimeUtcStrAdapter;
 
 public class DsmNotificationPayload {
+
+    @SerializedName("kitRequestId")
+    private String kitRequestGuid;
+
+    @SerializedName("eventTime")
+    @JsonAdapter(InstantToIsoDateTimeUtcStrAdapter.class)
+    private Instant eventTime;
 
     @SerializedName("eventInfo")
     private String eventInfo;
@@ -47,5 +57,21 @@ public class DsmNotificationPayload {
 
     public void setEventData(JsonElement eventData) {
         this.eventData = eventData;
+    }
+
+    public String getKitRequestGuid() {
+        return kitRequestGuid;
+    }
+
+    public void setKitRequestGuid(String kitRequestGuid) {
+        this.kitRequestGuid = kitRequestGuid;
+    }
+
+    public Instant getEventTime() {
+        return eventTime;
+    }
+
+    public void setEventTime(Instant eventTime) {
+        this.eventTime = eventTime;
     }
 }

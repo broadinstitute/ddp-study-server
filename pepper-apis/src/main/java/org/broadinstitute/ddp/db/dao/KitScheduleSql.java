@@ -35,8 +35,8 @@ public interface KitScheduleSql extends SqlObject {
 
     @GetGeneratedKeys
     @SqlUpdate("insert into kit_schedule_record (participant_user_id, kit_configuration_id, opted_out, num_occurrences,"
-            + "        initial_kit_request_id, initial_kit_sent_time, last_occurrence_time, current_occurrence_prep_time)"
-            + " values (:userId, :configId, :optedOut, :numOccurrences, :initialKitRequestId, :initialKitSentTime,"
+            + "        initial_kit_request_id, last_occurrence_time, current_occurrence_prep_time)"
+            + " values (:userId, :configId, :optedOut, :numOccurrences, :initialKitRequestId,"
             + "        :lastOccurrenceTime, :currentOccurrencePrepTime)")
     long insertRecord(
             @Bind("userId") long userId,
@@ -44,7 +44,6 @@ public interface KitScheduleSql extends SqlObject {
             @Bind("optedOut") boolean optedOut,
             @Bind("numOccurrences") int numOccurrences,
             @Bind("initialKitRequestId") long initialKitRequestId,
-            @Bind("initialKitSentTime") Instant initialKitSentTime,
             @Bind("lastOccurrenceTime") Instant lastOccurrenceTime,
             @Bind("currentOccurrencePrepTime") Instant currentOccurrencePrepTime);
 
@@ -52,7 +51,6 @@ public interface KitScheduleSql extends SqlObject {
             + "    set opted_out = :optedOut,"
             + "        num_occurrences = :numOccurrences,"
             + "        initial_kit_request_id = :initialKitRequestId,"
-            + "        initial_kit_sent_time = :initialKitSentTime,"
             + "        last_occurrence_time = :lastOccurrenceTime,"
             + "        current_occurrence_prep_time = :currentOccurrencePrepTime"
             + "  where kit_schedule_record_id = :id")
@@ -61,16 +59,17 @@ public interface KitScheduleSql extends SqlObject {
             @Bind("optedOut") boolean optedOut,
             @Bind("numOccurrences") int numOccurrences,
             @Bind("initialKitRequestId") long initialKitRequestId,
-            @Bind("initialKitSentTime") Instant initialKitSentTime,
             @Bind("lastOccurrenceTime") Instant lastOccurrenceTime,
             @Bind("currentOccurrencePrepTime") Instant currentOccurrencePrepTime);
 
     @SqlUpdate("update kit_schedule_record set opted_out = :optedOut where kit_schedule_record_id = :id")
     int updateRecordOptOut(@Bind("id") long recordId, @Bind("optedOut") boolean optedOut);
 
+    @Deprecated
     @SqlUpdate("update kit_schedule_record set initial_kit_sent_time = :time where kit_schedule_record_id = :id")
     int updateRecordInitialKitSentTime(@Bind("id") long recordId, @Bind("time") Instant sentTime);
 
+    @Deprecated
     @SqlBatch("update kit_schedule_record set initial_kit_sent_time = :time where kit_schedule_record_id = :id")
     int[] bulkUpdateRecordInitialKitSentTime(@Bind("id") List<Long> ids, @Bind("time") List<Instant> sentTimes);
 

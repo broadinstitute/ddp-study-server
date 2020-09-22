@@ -81,12 +81,13 @@ public class CheckKitsJob implements Job {
             LOG.info("Running job {}", getKey());
             long start = Instant.now().toEpochMilli();
 
+            // DEPRECATED
             // We don't want to bombard DSM with kit status calls, so only call if time is up.
-            if (Instant.now().getEpochSecond() - lastStatusCheckEpochSecs > statusCheckSecs) {
-                TransactionWrapper.useTxn(TransactionWrapper.DB.APIS,
-                        handle -> kitCheckService.checkPendingKitStatuses(handle, dsmClient));
-                lastStatusCheckEpochSecs = Instant.now().getEpochSecond();
-            }
+            // if (Instant.now().getEpochSecond() - lastStatusCheckEpochSecs > statusCheckSecs) {
+            //     TransactionWrapper.useTxn(TransactionWrapper.DB.APIS,
+            //             handle -> kitCheckService.checkPendingKitStatuses(handle, dsmClient));
+            //     lastStatusCheckEpochSecs = Instant.now().getEpochSecond();
+            // }
 
             KitCheckService.KitCheckResult result = TransactionWrapper.withTxn(TransactionWrapper.DB.APIS, handle -> {
                 LOG.info("Checking for initial kits");

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="yufeng" id="20200921-kit-status">
+        <addColumn tableName="kit_request">
+            <column name="shipped_at" type="datetime(6)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="delivered_at" type="datetime(6)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="received_back_at" type="datetime(6)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="yufeng" author="20200921-migrate-kit-sent-time">
+        <sql>
+            update kit_request as kr
+              join kit_schedule_record as ksr on ksr.initial_kit_request_id = kr.kit_request_id
+               set kr.shipped_at = ksr.initial_kit_sent_time
+             where ksr.initial_kit_sent_time is not null
+        </sql>
+        <dropColumn tableName="kit_schedule_record" columnName="initial_kit_sent_time"/>
+    </changeSet>
+
+</databaseChangeLog>

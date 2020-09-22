@@ -133,6 +133,7 @@ public class KitCheckService {
      * @param apisHandle the database handle
      * @param dsmClient  the dsm client
      */
+    @Deprecated
     public void checkPendingKitStatuses(Handle apisHandle, DsmClient dsmClient) {
         var kitScheduleDao = apisHandle.attach(KitScheduleDao.class);
         Map<String, List<PendingScheduleRecord>> groupByStudyBatch = new HashMap<>();
@@ -153,6 +154,7 @@ public class KitCheckService {
         }
     }
 
+    @Deprecated
     private void checkPendingKitStatusesForBatch(Handle apisHandle, DsmClient dsmClient,
                                                  Map<String, List<PendingScheduleRecord>> groupByStudyBatch) {
         var kitScheduleDao = apisHandle.attach(KitScheduleDao.class);

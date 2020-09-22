@@ -187,10 +187,36 @@ public interface DsmKitRequestDao extends SqlObject {
      * @param kitId the id
      * @return an Optional with a DsmKitRequest present if found in database
      */
-    @SqlQuery("selectKitRequestbyId")
+    @SqlQuery("selectKitRequestById")
     @UseStringTemplateSqlLocator
     @RegisterBeanMapper(DsmKitRequest.class)
-    Optional<DsmKitRequest> findKitRequest(long kitId);
+    Optional<DsmKitRequest> findKitRequest(@Bind("kitId") long kitId);
+
+    @SqlQuery("selectKitRequestByGuid")
+    @UseStringTemplateSqlLocator
+    @RegisterBeanMapper(DsmKitRequest.class)
+    Optional<DsmKitRequest> findKitRequestByGuid(@Bind("guid") String kitRequestGuid);
+
+    @SqlUpdate("update kit_request set shipped_at = :shippedAt where kit_request_id = :kitId")
+    int updateKitRequestShippedAt(@Bind("kitId") long kitId, @Bind("shippedAt") Instant shippedAt);
+
+    default void updateShippedAt(long kitId, Instant shippedAt) {
+        DBUtils.checkUpdate(1, updateKitRequestShippedAt(kitId, shippedAt));
+    }
+
+    @SqlUpdate("update kit_request set delivered_at = :deliveredAt where kit_request_id = :kitId")
+    int updateKitRequestDeliveredAt(@Bind("kitId") long kitId, @Bind("deliveredAt") Instant deliveredAt);
+
+    default void updateDeliveredAt(long kitId, Instant deliveredAt) {
+        DBUtils.checkUpdate(1, updateKitRequestDeliveredAt(kitId, deliveredAt));
+    }
+
+    @SqlUpdate("update kit_request set received_back_at = :receivedBackAt where kit_request_id = :kitId")
+    int updateKitRequestReceivedBackAt(@Bind("kitId") long kitId, @Bind("receivedBackAt") Instant receivedBackAt);
+
+    default void updateReceivedBackAt(long kitId, Instant receivedBackAt) {
+        DBUtils.checkUpdate(1, updateKitRequestReceivedBackAt(kitId, receivedBackAt));
+    }
 
     /**
      * Delete the request kit. For support of testing only

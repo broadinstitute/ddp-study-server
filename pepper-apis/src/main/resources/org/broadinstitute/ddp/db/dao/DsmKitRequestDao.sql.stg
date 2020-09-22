@@ -16,7 +16,7 @@ insertKitRequest() ::= <<
         :creationTime,
         :needsApproval)
 >>
-selectKitRequestbyId() ::= <<
+selectKitRequestById() ::= <<
     SELECT
          kit_request_id id,
          kit_request_guid kitRequestId,
@@ -24,14 +24,37 @@ selectKitRequestbyId() ::= <<
          mailing_address_id,
          coalesce(u.legacy_altpid, u.guid) as participantId,
          kt.name kitType,
-         kr.needs_approval needsApproval
+         kr.needs_approval needsApproval,
+         kr.shipped_at,
+         kr.delivered_at,
+         kr.received_back_at
      FROM
          kit_request kr
          JOIN kit_type kt on kr.kit_type_id=kt.kit_type_id
          LEFT JOIN mailing_address ma on kr.mailing_address_id=ma.address_id
          LEFT JOIN user u on ma.participant_user_id=u.user_id
     WHERE
-        kit_request_id=?
+        kit_request_id=:kitId
+>>
+selectKitRequestByGuid() ::= <<
+    SELECT
+         kit_request_id id,
+         kit_request_guid kitRequestId,
+         study_id,
+         mailing_address_id,
+         coalesce(u.legacy_altpid, u.guid) as participantId,
+         kt.name kitType,
+         kr.needs_approval needsApproval,
+         kr.shipped_at,
+         kr.delivered_at,
+         kr.received_back_at
+     FROM
+         kit_request kr
+         JOIN kit_type kt on kr.kit_type_id=kt.kit_type_id
+         LEFT JOIN mailing_address ma on kr.mailing_address_id=ma.address_id
+         LEFT JOIN user u on ma.participant_user_id=u.user_id
+    WHERE
+        kit_request_guid = :guid
 >>
 selectAllKitRequestsForStudy() ::= <<
      SELECT
@@ -41,7 +64,10 @@ selectAllKitRequestsForStudy() ::= <<
           mailing_address_id,
           coalesce(u.legacy_altpid, u.guid) as participantId,
           kt.name kitType,
-          kr.needs_approval needsApproval
+          kr.needs_approval needsApproval,
+          kr.shipped_at,
+          kr.delivered_at,
+          kr.received_back_at
       FROM
           kit_request kr
           JOIN kit_type kt on kr.kit_type_id=kt.kit_type_id
@@ -61,7 +87,10 @@ selectAllKitRequestsForStudyWithStatus(statusCodes) ::= <<
           mailing_address_id,
           coalesce(u.legacy_altpid, u.guid) as participantId,
           kt.name kitType,
-          kr.needs_approval needsApproval
+          kr.needs_approval needsApproval,
+          kr.shipped_at,
+          kr.delivered_at,
+          kr.received_back_at
       FROM
           kit_request kr
           JOIN kit_type kt on kr.kit_type_id=kt.kit_type_id
@@ -84,7 +113,10 @@ selectAllKitRequestsAfterGuid() ::= <<
       mailing_address_id,
       coalesce(u.legacy_altpid, u.guid) as participantId,
       kt.name kitType,
-      kr.needs_approval needsApproval
+      kr.needs_approval needsApproval,
+      kr.shipped_at,
+      kr.delivered_at,
+      kr.received_back_at
     FROM
       kit_request kr
       JOIN kit_type kt on kr.kit_type_id=kt.kit_type_id
@@ -106,7 +138,10 @@ selectAllKitRequestsAfterGuidWithStatus(statusCodes) ::= <<
       mailing_address_id,
       coalesce(u.legacy_altpid, u.guid) as participantId,
       kt.name kitType,
-      kr.needs_approval needsApproval
+      kr.needs_approval needsApproval,
+      kr.shipped_at,
+      kr.delivered_at,
+      kr.received_back_at
     FROM
       kit_request kr
       JOIN kit_type kt on kr.kit_type_id=kt.kit_type_id

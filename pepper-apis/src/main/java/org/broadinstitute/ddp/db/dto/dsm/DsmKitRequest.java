@@ -1,5 +1,7 @@
 package org.broadinstitute.ddp.db.dto.dsm;
 
+import java.time.Instant;
+
 /**
  * The POJO for DSM kit requests. Implemented to match JSON API requirements for
  * DSM integration.
@@ -11,6 +13,10 @@ public class DsmKitRequest {
     private String kitRequestId;
     private String kitType;
     private boolean needsApproval;
+
+    private transient Instant shippedAt;
+    private transient Instant deliveredAt;
+    private transient Instant receivedBackAt;
 
     /**
      * The database id for the related database row.
@@ -75,5 +81,44 @@ public class DsmKitRequest {
 
     public void setNeedsApproval(boolean needsApproval) {
         this.needsApproval = needsApproval;
+    }
+
+    /**
+     * Time (approximately) the kit was shipped to participant.
+     *
+     * @return shipped timestamp
+     */
+    public Instant getShippedAt() {
+        return shippedAt;
+    }
+
+    public void setShippedAt(Instant shippedAt) {
+        this.shippedAt = shippedAt;
+    }
+
+    /**
+     * Time (approximately) the kit was delivered to participant's address.
+     *
+     * @return delivered timestamp
+     */
+    public Instant getDeliveredAt() {
+        return deliveredAt;
+    }
+
+    public void setDeliveredAt(Instant deliveredAt) {
+        this.deliveredAt = deliveredAt;
+    }
+
+    /**
+     * Time (approximately) the kit was received back at the lab.
+     *
+     * @return received back timestamp
+     */
+    public Instant getReceivedBackAt() {
+        return receivedBackAt;
+    }
+
+    public void setReceivedBackAt(Instant receivedBackAt) {
+        this.receivedBackAt = receivedBackAt;
     }
 }

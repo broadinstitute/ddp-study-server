@@ -16,6 +16,7 @@ import org.jdbi.v3.sqlobject.CreateSqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterColumnMapperFactory;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.customizer.FetchSize;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.stringtemplate4.UseStringTemplateSqlLocator;
 
@@ -41,17 +42,19 @@ public interface KitScheduleDao {
 
     default long createScheduleRecord(long userId, long kitConfigurationId, long initialKitRequestId) {
         return getKitScheduleSql().insertRecord(
-                userId, kitConfigurationId, false, 0, initialKitRequestId, null, null, null);
+                userId, kitConfigurationId, false, 0, initialKitRequestId, null, null);
     }
 
     default void updateRecordOptOut(long recordId, boolean optedOut) {
         DBUtils.checkUpdate(1, getKitScheduleSql().updateRecordOptOut(recordId, optedOut));
     }
 
+    @Deprecated
     default void updateRecordInitialKitSentTime(long recordId, Instant sentTime) {
         DBUtils.checkUpdate(1, getKitScheduleSql().updateRecordInitialKitSentTime(recordId, sentTime));
     }
 
+    @Deprecated
     default void updateRecordInitialKitSentTimes(List<Long> recordIds, List<Instant> sentTimes) {
         if (recordIds.size() != sentTimes.size()) {
             throw new DaoException("List size for record ids and sent times must match");
@@ -76,6 +79,7 @@ public interface KitScheduleDao {
     @RegisterConstructorMapper(KitScheduleRecord.class)
     Optional<KitScheduleRecord> findRecord(@Bind("id") long recordId);
 
+    @Deprecated
     @UseStringTemplateSqlLocator
     @SqlQuery("findAllEligibleRecordsWaitingForKitStatus")
     @RegisterConstructorMapper(PendingScheduleRecord.class)
@@ -86,5 +90,6 @@ public interface KitScheduleDao {
     @SqlQuery("findPendingScheduleRecords")
     @RegisterConstructorMapper(PendingScheduleRecord.class)
     @RegisterColumnMapperFactory(EnumByOrdinalMapperFactory.class)
+    @FetchSize(10_000)
     Stream<PendingScheduleRecord> findPendingScheduleRecords(@Bind("configId") long kitConfigurationId);
 }

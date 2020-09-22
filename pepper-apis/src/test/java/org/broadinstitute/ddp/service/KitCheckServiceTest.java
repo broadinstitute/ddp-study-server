@@ -314,7 +314,7 @@ public class KitCheckServiceTest extends TxnAwareBaseTest {
             long kitReqId = kitRequestDao.createKitRequest(testData.getStudyGuid(), testData.getUserId(), addr.getId(), kitTypeId);
             long recordId = kitScheduleDao.createScheduleRecord(testData.getUserId(), kitConfigId, kitReqId);
             Instant sentTime = Instant.now().minus(1, ChronoUnit.HOURS);
-            kitScheduleDao.updateRecordInitialKitSentTime(recordId, sentTime);
+            kitRequestDao.updateShippedAt(kitReqId, sentTime);
 
             // Run
             var actualResult = new KitCheckService().scheduleNextKits(handle);
