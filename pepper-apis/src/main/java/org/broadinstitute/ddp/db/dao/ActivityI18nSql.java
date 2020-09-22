@@ -77,4 +77,16 @@ public interface ActivityI18nSql extends SqlObject {
     long[] bulkInsertSummaries(
             @Bind("activityId") long activityId,
             @BindMethods("s") Iterable<SummaryTranslation> summaries);
+
+    //
+    // updates
+    //
+
+    @SqlBatch("update i18n_study_activity"
+            + "   set name = :d.getName,"
+            + "       title = :d.getTitle,"
+            + "       subtitle = :d.getSubtitle,"
+            + "       description = :d.getDescription"
+            + " where i18n_study_activity_id = :d.getId")
+    int[] bulkUpdateDetails(@BindMethods("d") Iterable<ActivityI18nDetail> details);
 }
