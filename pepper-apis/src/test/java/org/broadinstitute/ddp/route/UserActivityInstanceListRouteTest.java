@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -27,6 +28,7 @@ import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.content.I18nTemplateConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
+import org.broadinstitute.ddp.db.dao.ActivityI18nDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
@@ -36,6 +38,7 @@ import org.broadinstitute.ddp.json.activity.ActivityInstanceSummary;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
 import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
+import org.broadinstitute.ddp.model.activity.definition.i18n.ActivityI18nDetail;
 import org.broadinstitute.ddp.model.activity.definition.i18n.SummaryTranslation;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.definition.question.BoolQuestionDef;
@@ -233,25 +236,72 @@ public class UserActivityInstanceListRouteTest extends IntegrationTestSuite.Test
                     .insertInstance(prequal.getActivityId(), userGuid)
                     .getGuid();
         });
-        List<ActivityInstanceSummary> userActivities = getUserActivities();
-        Assert.assertEquals("The number of instances didn't match the expectation", 2, userActivities.size());
-        ActivityInstanceSummary firstPrequal = userActivities
-                .stream()
-                .filter(p -> p.getActivityInstanceGuid().equals(prequal1Guid))
-                .collect(Collectors.toList()).get(0);
-        Matcher matcher = Pattern.compile("\\d$").matcher(firstPrequal.getActivityName());
-        Assert.assertFalse("The first summary in a group should not be numbered", matcher.find());
-        ActivityInstanceSummary mostRecentPrequal = userActivities
-                .stream()
-                .filter(p -> p.getActivityInstanceGuid().equals(prequal2Guid))
-                .collect(Collectors.toList()).get(0);
-        Assert.assertTrue(
-                "Numbering does not respect the instance creation date",
-                mostRecentPrequal.getActivityName().endsWith("#2")
-        );
-        TransactionWrapper.useTxn(handle -> {
-            handle.attach(ActivityInstanceDao.class).deleteByInstanceGuid(prequal2Guid);
+        try {
+            List<ActivityInstanceSummary> userActivities = getUserActivities();
+            Assert.assertEquals("The number of instances didn't match the expectation", 2, userActivities.size());
+            ActivityInstanceSummary firstPrequal = userActivities
+                    .stream()
+                    .filter(p -> p.getActivityInstanceGuid().equals(prequal1Guid))
+                    .collect(Collectors.toList()).get(0);
+            Matcher matcher = Pattern.compile("\\d$").matcher(firstPrequal.getActivityName());
+            Assert.assertFalse("The first summary in a group should not be numbered", matcher.find());
+            ActivityInstanceSummary mostRecentPrequal = userActivities
+                    .stream()
+                    .filter(p -> p.getActivityInstanceGuid().equals(prequal2Guid))
+                    .collect(Collectors.toList()).get(0);
+            Assert.assertTrue(
+                    "Numbering does not respect the instance creation date",
+                    mostRecentPrequal.getActivityName().endsWith("#2")
+            );
+        } finally {
+            TransactionWrapper.useTxn(handle -> {
+                handle.attach(ActivityInstanceDao.class).deleteByInstanceGuid(prequal2Guid);
+            });
+        }
+    }
+
+    @Test
+    public void testWhenSecondNameIsPresent_itIsUsedInsteadOfDefaultNumbering() throws Exception {
+        var oldDetails = new AtomicReference<ActivityI18nDetail>();
+        String prequal2Guid = TransactionWrapper.withTxn(handle -> {
+            var dao = handle.attach(ActivityI18nDao.class);
+            var enDetails = dao.findDetailsByActivityId(prequal.getActivityId()).get(0);
+            oldDetails.set(enDetails);
+            dao.updateDetails(List.of(new ActivityI18nDetail(
+                    enDetails.getId(),
+                    enDetails.getActivityId(),
+                    enDetails.getLangCodeId(),
+                    enDetails.getIsoLangCode(),
+                    "participant $ddp.participantGuid() instance $ddp.activityInstanceNumber()",
+                    "new instance! #$ddp.activityInstanceNumber()",
+                    enDetails.getTitle(),
+                    enDetails.getSubtitle(),
+                    enDetails.getDescription())));
+            return handle.attach(ActivityInstanceDao.class)
+                    .insertInstance(prequal.getActivityId(), userGuid)
+                    .getGuid();
         });
+        try {
+            List<ActivityInstanceSummary> userActivities = getUserActivities();
+            Assert.assertEquals(2, userActivities.size());
+            ActivityInstanceSummary firstPrequal = userActivities
+                    .stream()
+                    .filter(p -> p.getActivityInstanceGuid().equals(prequal1Guid))
+                    .collect(Collectors.toList()).get(0);
+            Assert.assertEquals("should be able to render name",
+                    "participant " + userGuid + " instance 1", firstPrequal.getActivityName());
+            ActivityInstanceSummary mostRecentPrequal = userActivities
+                    .stream()
+                    .filter(p -> p.getActivityInstanceGuid().equals(prequal2Guid))
+                    .collect(Collectors.toList()).get(0);
+            Assert.assertEquals("should use second name and be able to render it",
+                    "new instance! #2", mostRecentPrequal.getActivityName());
+        } finally {
+            TransactionWrapper.useTxn(handle -> {
+                handle.attach(ActivityInstanceDao.class).deleteByInstanceGuid(prequal2Guid);
+                handle.attach(ActivityI18nDao.class).updateDetails(List.of(oldDetails.get()));
+            });
+        }
     }
 
     @Test

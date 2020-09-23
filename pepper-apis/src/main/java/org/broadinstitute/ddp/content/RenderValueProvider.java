@@ -28,6 +28,7 @@ public class RenderValueProvider {
     private LocalDate date;
     private String testResultCode;
     private Instant testResultTimeCompleted;
+    private Integer activityInstanceNumber;
 
     private RenderValueProvider() {
         // Use builder.
@@ -120,6 +121,41 @@ public class RenderValueProvider {
         }
     }
 
+    /**
+     * Returns the activity instance number, if available.
+     */
+    public String activityInstanceNumber() {
+        if (activityInstanceNumber == null) {
+            return null;
+        } else {
+            return String.valueOf(activityInstanceNumber);
+        }
+    }
+
+    /**
+     * Provides more flexibility for how to display an activity instance number, if available. The activity instance
+     * number will first be adjusted by subtracting the given offset. Then, if the adjusted number is less than the
+     * given cutoff number, then no number will be displayed. The cutoff number effectively serves as the first number
+     * to be displayed after the offset adjustment. The prefix is useful for optionally adding additional text when a
+     * number is displayed (e.g. prepending a space or a "#" symbol).
+     *
+     * @param offsetToSubtract subtract this amount from the number
+     * @param numberCutoff     if adjusted number is less than this cutoff number, no number will be displayed
+     * @param prefix           a prefix to prepend
+     * @return adjusted number
+     */
+    public String activityInstanceNumberDisplay(int offsetToSubtract, int numberCutoff, String prefix) {
+        if (activityInstanceNumber == null) {
+            return null;
+        }
+        int adjustedNumber = activityInstanceNumber - offsetToSubtract;
+        if (adjustedNumber < numberCutoff) {
+            return "";
+        } else {
+            return prefix + adjustedNumber;
+        }
+    }
+
     // Get provided values as a map to save as snapshot. Should not be called within templates.
     public Map<String, String> getSnapshot() {
         var snapshot = new HashMap<String, String>();
@@ -197,6 +233,11 @@ public class RenderValueProvider {
             return this;
         }
 
+        public Builder setActivityInstanceNumber(Integer activityInstanceNumber) {
+            provider.activityInstanceNumber = activityInstanceNumber;
+            return this;
+        }
+
         public Builder withSnapshot(Map<String, String> snapshot) {
             String value = snapshot.get(I18nTemplateConstants.Snapshot.PARTICIPANT_GUID);
             if (value != null) {
@@ -251,6 +292,7 @@ public class RenderValueProvider {
             copy.date = provider.date;
             copy.testResultCode = provider.testResultCode;
             copy.testResultTimeCompleted = provider.testResultTimeCompleted;
+            copy.activityInstanceNumber = provider.activityInstanceNumber;
             return copy;
         }
     }

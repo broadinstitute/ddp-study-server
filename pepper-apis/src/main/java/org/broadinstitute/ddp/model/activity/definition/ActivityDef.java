@@ -71,6 +71,10 @@ public abstract class ActivityDef {
     protected List<@Valid @NotNull Translation> translatedNames;
 
     @NotNull
+    @SerializedName("translatedSecondNames")
+    protected List<@Valid @NotNull Translation> translatedSecondNames;
+
+    @NotNull
     @SerializedName("translatedTitles")
     protected List<@Valid @NotNull Translation> translatedTitles;
 
@@ -125,6 +129,7 @@ public abstract class ActivityDef {
         } else {
             throw new IllegalArgumentException("Need at least one name translation");
         }
+        this.translatedSecondNames = new ArrayList<>();
         this.translatedTitles = translatedTitles;
         this.translatedSubtitles = translatedSubtitles;
         this.translatedDescriptions = translatedDescriptions;
@@ -185,6 +190,10 @@ public abstract class ActivityDef {
 
     public List<Translation> getTranslatedNames() {
         return translatedNames;
+    }
+
+    public List<Translation> getTranslatedSecondNames() {
+        return translatedSecondNames;
     }
 
     public List<Translation> getTranslatedTitles() {
@@ -269,6 +278,7 @@ public abstract class ActivityDef {
         protected boolean excludeStatusIconFromDisplay = false;
         protected boolean allowUnauthenticated = false;
         protected List<Translation> names = new ArrayList<>();
+        protected List<Translation> secondNames = new ArrayList<>();
         protected List<Translation> titles = new ArrayList<>();
         protected List<Translation> subtitles = new ArrayList<>();
         protected List<Translation> descriptions = new ArrayList<>();
@@ -298,6 +308,7 @@ public abstract class ActivityDef {
             activity.readonlyHintTemplate = readonlyHintTemplate;
             activity.isFollowup = isFollowup;
             activity.hideExistingInstancesOnCreation = hideExistingInstancesOnCreation;
+            activity.translatedSecondNames.addAll(secondNames);
         }
 
         public T setActivityCode(String activityCode) {
@@ -377,6 +388,21 @@ public abstract class ActivityDef {
 
         public T clearNames() {
             this.names.clear();
+            return self();
+        }
+
+        public T addSecondName(Translation secondName) {
+            this.secondNames.add(secondName);
+            return self();
+        }
+
+        public T addSecondNames(Collection<Translation> secondNames) {
+            this.secondNames.addAll(secondNames);
+            return self();
+        }
+
+        public T clearSecondNames() {
+            this.secondNames.clear();
             return self();
         }
 

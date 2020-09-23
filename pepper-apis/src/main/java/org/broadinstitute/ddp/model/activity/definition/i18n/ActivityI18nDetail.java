@@ -12,6 +12,7 @@ public class ActivityI18nDetail {
     private final long langCodeId;
     private final String isoLangCode;
     private final String name;
+    private final String secondName;
     private final String title;
     private final String subtitle;
     private final String description;
@@ -23,6 +24,7 @@ public class ActivityI18nDetail {
             @ColumnName("language_code_id") long langCodeId,
             @ColumnName("iso_language_code") String isoLangCode,
             @ColumnName("name") String name,
+            @ColumnName("second_name") String secondName,
             @ColumnName("title") String title,
             @ColumnName("subtitle") String subtitle,
             @ColumnName("description") String description) {
@@ -31,18 +33,21 @@ public class ActivityI18nDetail {
         this.langCodeId = langCodeId;
         this.isoLangCode = isoLangCode;
         this.name = name;
+        this.secondName = secondName;
         this.title = title;
         this.subtitle = subtitle;
         this.description = description;
     }
 
     // For inserting new activity details.
-    public ActivityI18nDetail(long activityId, String isoLangCode, String name, String title, String subtitle, String description) {
+    public ActivityI18nDetail(long activityId, String isoLangCode, String name, String secondName,
+                              String title, String subtitle, String description) {
         this.id = 0L;
         this.activityId = activityId;
         this.langCodeId = 0L;
         this.isoLangCode = isoLangCode;
         this.name = name;
+        this.secondName = secondName;
         this.title = title;
         this.subtitle = subtitle;
         this.description = description;
@@ -66,6 +71,10 @@ public class ActivityI18nDetail {
 
     public String getName() {
         return name;
+    }
+
+    public String getSecondName() {
+        return secondName;
     }
 
     public String getTitle() {
@@ -94,6 +103,7 @@ public class ActivityI18nDetail {
                 && langCodeId == that.langCodeId
                 && Objects.equals(isoLangCode, that.isoLangCode)
                 && Objects.equals(name, that.name)
+                && Objects.equals(secondName, that.secondName)
                 && Objects.equals(title, that.title)
                 && Objects.equals(subtitle, that.subtitle)
                 && Objects.equals(description, that.description);
@@ -101,6 +111,6 @@ public class ActivityI18nDetail {
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, activityId, langCodeId, isoLangCode, name, title, subtitle, description);
+        return Objects.hash(id, activityId, langCodeId, isoLangCode, name, secondName, title, subtitle, description);
     }
 }
