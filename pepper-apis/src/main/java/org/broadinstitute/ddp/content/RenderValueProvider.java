@@ -132,6 +132,30 @@ public class RenderValueProvider {
         }
     }
 
+    /**
+     * Provides more flexibility for how to display an activity instance number, if available. The activity instance
+     * number will first be adjusted by subtracting the given offset. Then, if the adjusted number is less than the
+     * given cutoff number, then no number will be displayed. The cutoff number effectively serves as the first number
+     * to be displayed after the offset adjustment. The prefix is useful for optionally adding additional text when a
+     * number is displayed (e.g. prepending a space or a "#" symbol).
+     *
+     * @param offsetToSubtract subtract this amount from the number
+     * @param numberCutoff     if adjusted number is less than this cutoff number, no number will be displayed
+     * @param prefix           a prefix to prepend
+     * @return adjusted number
+     */
+    public String activityInstanceNumberDisplay(int offsetToSubtract, int numberCutoff, String prefix) {
+        if (activityInstanceNumber == null) {
+            return null;
+        }
+        int adjustedNumber = activityInstanceNumber - offsetToSubtract;
+        if (adjustedNumber < numberCutoff) {
+            return "";
+        } else {
+            return prefix + adjustedNumber;
+        }
+    }
+
     // Get provided values as a map to save as snapshot. Should not be called within templates.
     public Map<String, String> getSnapshot() {
         var snapshot = new HashMap<String, String>();
