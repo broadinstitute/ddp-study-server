@@ -67,11 +67,6 @@ public class SqlConstants {
         public static final String TABLE_NAME = "study_activity";
         public static final String ID = "study_activity_id";
         public static final String CODE = "study_activity_code";
-        public static final String ACTIVITY_TYPE_ID = "activity_type_id";
-        public static final String STUDY_ID = "study_id";
-        public static final String DISPLAY_ORDER = "display_order";
-        public static final String INSTANTIATE_UPON_REGISTRATION = "instantiate_upon_registration";
-        public static final String MAX_INSTANCES_PER_USER = "max_instances_per_user";
         public static final String NAME_TRANS = "activity_name_trans";
         public static final String TITLE_TRANS = "activity_title_trans";
         public static final String SUBTITLE_TRANS = "activity_subtitle_trans";
@@ -79,12 +74,10 @@ public class SqlConstants {
         public static final String SUMMARY_TRANS = "activity_summary_trans";
         public static final String EDIT_TIMEOUT_SEC = "edit_timeout_sec";
         public static final String IS_WRITE_ONCE = "is_write_once";
-        public static final String ALLOW_ONDEMAND_TRIGGER = "allow_ondemand_trigger";
         public static final String EXCLUDE_FROM_DISPLAY = "exclude_from_display";
         public static final String EXCLUDE_STATUS_ICON_FROM_DISPLAY = "exclude_status_icon_from_display";
         public static final String ALLOW_UNAUTHENTICATED = "allow_unauthenticated";
         public static final String IS_FOLLOWUP = "is_followup";
-        public static final String HIDE_INSTANCES = "hide_existing_instances_on_creation";
     }
 
     public static final class ActivityVersionTable {

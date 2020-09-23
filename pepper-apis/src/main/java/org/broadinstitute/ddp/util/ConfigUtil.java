@@ -39,6 +39,13 @@ public class ConfigUtil {
     }
 
     /**
+     * Get value as long if the key is present and value is not null.
+     */
+    public static Long getLongIfPresent(Config cfg, String key) {
+        return cfg.hasPath(key) ? cfg.getLong(key) : null;
+    }
+
+    /**
      * Get value as boolean if the key is present and value is not null.
      */
     public static Boolean getBoolIfPresent(Config cfg, String key) {
