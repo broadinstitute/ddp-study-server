@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.db.dao;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,6 +33,15 @@ public interface ActivityI18nDao extends SqlObject {
         long[] ids = getActivityI18nSql().bulkInsertSummaries(activityId, summaries);
         DBUtils.checkInsert(summaries.size(), ids.length);
         return ids;
+    }
+
+    //
+    // updates
+    //
+
+    default void updateDetails(List<ActivityI18nDetail> details) {
+        int[] updatedCounts = getActivityI18nSql().bulkUpdateDetails(details);
+        DBUtils.checkUpdate(details.size(), Arrays.stream(updatedCounts).sum());
     }
 
     //

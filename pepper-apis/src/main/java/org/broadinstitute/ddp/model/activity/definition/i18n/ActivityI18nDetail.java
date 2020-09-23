@@ -1,5 +1,7 @@
 package org.broadinstitute.ddp.model.activity.definition.i18n;
 
+import java.util.Objects;
+
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
@@ -76,5 +78,29 @@ public class ActivityI18nDetail {
 
     public String getDescription() {
         return description;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        ActivityI18nDetail that = (ActivityI18nDetail) o;
+        return id == that.id
+                && activityId == that.activityId
+                && langCodeId == that.langCodeId
+                && Objects.equals(isoLangCode, that.isoLangCode)
+                && Objects.equals(name, that.name)
+                && Objects.equals(title, that.title)
+                && Objects.equals(subtitle, that.subtitle)
+                && Objects.equals(description, that.description);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, activityId, langCodeId, isoLangCode, name, title, subtitle, description);
     }
 }
