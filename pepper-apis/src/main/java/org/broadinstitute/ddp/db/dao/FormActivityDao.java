@@ -85,6 +85,8 @@ public interface FormActivityDao extends SqlObject {
 
         Map<String, String> names = activity.getTranslatedNames().stream()
                 .collect(Collectors.toMap(Translation::getLanguageCode, Translation::getText));
+        Map<String, String> secondNames = activity.getTranslatedSecondNames().stream()
+                .collect(Collectors.toMap(Translation::getLanguageCode, Translation::getText));
         Map<String, String> titles = activity.getTranslatedTitles().stream()
                 .collect(Collectors.toMap(Translation::getLanguageCode, Translation::getText));
         Map<String, String> subtitles = activity.getTranslatedSubtitles().stream()
@@ -100,6 +102,7 @@ public interface FormActivityDao extends SqlObject {
                     activityId,
                     isoLangCode,
                     name,
+                    secondNames.getOrDefault(isoLangCode, null),
                     titles.getOrDefault(isoLangCode, null),
                     subtitles.getOrDefault(isoLangCode, null),
                     descriptions.getOrDefault(isoLangCode, null)

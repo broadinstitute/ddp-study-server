@@ -60,6 +60,8 @@ public class ActivityInstanceSummary implements TranslatedSummary {
     private transient String activityTypeName;
     private transient boolean excludeFromDisplay;
     private transient boolean isHidden;
+    private transient String activitySecondName;
+    private transient int instanceNumber;
 
     /**
      * Instantiates ActivityInstanceSummary object.
@@ -69,6 +71,7 @@ public class ActivityInstanceSummary implements TranslatedSummary {
             long activityInstanceId,
             String activityInstanceGuid,
             String activityName,
+            String activitySecondName,
             String activityTitle,
             String activitySubtitle,
             String activityDescription,
@@ -89,6 +92,7 @@ public class ActivityInstanceSummary implements TranslatedSummary {
         this.activityInstanceId = activityInstanceId;
         this.activityInstanceGuid = activityInstanceGuid;
         this.activityName = activityName;
+        this.activitySecondName = activitySecondName;
         this.activityTitle = activityTitle;
         this.activitySubtitle = activitySubtitle;
         this.activityDescription = activityDescription;
@@ -127,6 +131,10 @@ public class ActivityInstanceSummary implements TranslatedSummary {
 
     public void setActivityName(String activityName) {
         this.activityName = activityName;
+    }
+
+    public String getActivitySecondName() {
+        return activitySecondName;
     }
 
     public String getActivityTitle() {
@@ -208,5 +216,13 @@ public class ActivityInstanceSummary implements TranslatedSummary {
 
     public void setNumQuestionsAnswered(int numQuestionsAnswered) {
         this.numQuestionsAnswered = numQuestionsAnswered;
+    }
+
+    public int getInstanceNumber() {
+        return instanceNumber;
+    }
+
+    public void setInstanceNumber(int instanceNumber) {
+        this.instanceNumber = instanceNumber;
     }
 }
