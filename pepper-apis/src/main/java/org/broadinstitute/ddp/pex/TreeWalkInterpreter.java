@@ -260,14 +260,9 @@ public class TreeWalkInterpreter implements PexInterpreter {
                         }
                     })
                     .collect(Collectors.toList());
-
             return fetcher.findLatestActivityInstanceStatus(ictx, studyGuid, activityCode)
-                    .map(latestStatus -> expectedStatuses.contains(latestStatus))
-                    .orElseThrow(() -> {
-                        String msg = String.format("No activity instance of form %s found for user %s and study %s",
-                                activityCode, ictx.getUserGuid(), studyGuid);
-                        return new PexFetchException(new NoSuchElementException(msg));
-                    });
+                    .map(expectedStatuses::contains)
+                    .orElse(false);
         } else if (predCtx instanceof PexParser.HasInstancePredicateContext) {
             return fetcher.findLatestActivityInstanceStatus(ictx, studyGuid, activityCode).isPresent();
         } else {

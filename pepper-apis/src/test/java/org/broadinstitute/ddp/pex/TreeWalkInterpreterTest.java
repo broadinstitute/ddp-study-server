@@ -3,7 +3,6 @@ package org.broadinstitute.ddp.pex;
 import static org.broadinstitute.ddp.pex.RetrievedActivityInstanceType.LATEST;
 import static org.broadinstitute.ddp.pex.RetrievedActivityInstanceType.SPECIFIC;
 import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -17,7 +16,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.content.I18nTemplateConstants;
@@ -697,8 +695,6 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
 
     @Test
     public void testEval_formQuery_userDoesNotHaveInstance() {
-        thrown.expect(PexFetchException.class);
-        thrown.expectCause(instanceOf(NoSuchElementException.class));
         TransactionWrapper.useTxn(handle -> {
             FormActivityDef form = FormActivityDef.generalFormBuilder("PEX_ANOTHER_ACT", "v1", studyGuid)
                     .addName(new Translation("en", "another pex test activity"))
@@ -709,8 +705,7 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
             String expr = String.format(
                     "user.studies[\"%s\"].forms[\"%s\"].isStatus(\"CREATED\")",
                     studyGuid, form.getActivityCode());
-            run(handle, expr);
-            fail("Expected exception was not thrown");
+            assertFalse(run(handle, expr));
         });
     }
 
