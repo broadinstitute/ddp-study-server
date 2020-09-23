@@ -121,7 +121,7 @@ public class BrainPrequalV2 implements CustomTask {
         //may be look for template brain_prequal_contact_title and disable rather than these sql updates !!
         helper.updateTemplateRevision(templateId, newTemplateRevId);
         long tmpVarId = helper.findTemplateVariableId(templateId);
-        helper.updateVarSubstitutionValue(tmpVarId, ""); //create new variable and add it ?
+        helper.updateVarSubstitutionValue(tmpVarId, "");
 
         //populate section with ageup questions
         SectionBlockDao sectionBlockDao = handle.attach(SectionBlockDao.class);
@@ -169,7 +169,6 @@ public class BrainPrequalV2 implements CustomTask {
 
         //update PREQUAL_SELF_DESCRIBE.DIAGNOSIED option prompt
         PicklistOptionDto selfOptionDto = jdbiPicklistOption.getActiveByStableId(questionDto.getId(), "DIAGNOSED").get();
-        jdbiPicklistOption.updateRevisionByOptionId(selfOptionDto.getId(), activityVersionDto.getRevId());
         long selfOptTemplateId = selfOptionDto.getOptionLabelTemplateId();
         long selfOptTemplateVarId = helper.findTemplateVariableId(selfOptTemplateId);
         helper.updateVarSubstitutionValue(selfOptTemplateVarId, selfOptionText);
