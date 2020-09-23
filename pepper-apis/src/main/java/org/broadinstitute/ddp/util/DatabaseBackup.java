@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -57,8 +58,14 @@ public class DatabaseBackup {
     public List<Operation> createBackups() {
         String gcpProject = cfg.getString(ConfigFile.GOOGLE_PROJECT_ID);
         String instanceId = cfg.getString(ConfigFile.DB_INSTANCE_ID);
-        return TransactionWrapper.withTxn(TransactionWrapper.DB.HOUSEKEEPING,
-                handle -> List.of(createBackup(handle, gcpProject, instanceId)));
+        return TransactionWrapper.withTxn(TransactionWrapper.DB.HOUSEKEEPING, handle -> {
+            List<Operation> ops = new ArrayList<>();
+            Operation op = createBackup(handle, gcpProject, instanceId);
+            if (op != null) {
+                ops.add(op);
+            }
+            return ops;
+        });
     }
 
     public void checkBackupJobs() {
