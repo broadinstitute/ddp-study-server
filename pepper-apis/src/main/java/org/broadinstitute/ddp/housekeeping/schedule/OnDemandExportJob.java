@@ -84,7 +84,10 @@ public class OnDemandExportJob implements Job {
 
         TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, handle -> {
             StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
-            if (!studyDto.isDataExportEnabled()) {
+            if (studyDto == null) {
+                LOG.warn("Unknown study '{}', skipping data export", studyGuid);
+                return;
+            } else if (!studyDto.isDataExportEnabled()) {
                 LOG.warn("Study {} does not have data export enabled, skipping data export", studyGuid);
                 return;
             }
