@@ -94,7 +94,7 @@ public class BrainPrequalV2 implements CustomTask {
                 studyGuid, activityCode, versionTag);
         RevisionMetadata meta = new RevisionMetadata(timestamp.toEpochMilli(), adminUser.getUserId(), reason);
         SqlHelper helper = handle.attach(SqlHelper.class);
-        String selfOptionText = "I have been diagnosed with brain tumor.";
+        String selfOptionText = "I have been diagnosed with brain cancer.";
         String promptText = "First, how will you be participating in the Brain Tumor Project? ";
 
         //load new activity def/conf
