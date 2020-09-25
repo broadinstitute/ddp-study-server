@@ -286,6 +286,7 @@ public class ActivityInstanceDao {
                 while (rs.next()) {
                     String activityCode = rs.getString(SqlConstants.StudyActivityTable.CODE);
                     String activityName = rs.getString(SqlConstants.StudyActivityTable.NAME_TRANS);
+                    String activitySecondName = rs.getString(SqlConstants.StudyActivityTable.SECOND_NAME_TRANS);
                     String activityTitle = rs.getString(SqlConstants.StudyActivityTable.TITLE_TRANS);
                     String activitySubtitle = rs.getString(SqlConstants.StudyActivityTable.SUBTITLE_TRANS);
                     String activityDescription = rs.getString(SqlConstants.StudyActivityTable.DESCRIPTION_TRANS);
@@ -325,6 +326,7 @@ public class ActivityInstanceDao {
                             activityInstanceId,
                             activityInstanceGuid,
                             activityName,
+                            activitySecondName,
                             activityTitle,
                             activitySubtitle,
                             activityDescription,
@@ -378,35 +380,60 @@ public class ActivityInstanceDao {
     }
 
     /**
-     * Iterate through activity instance summaries and render the summary texts.
+     * Iterate through activity instance summaries and render the naming details and summary texts, as necessary. For
+     * activity instance name, the first instance may leverage content substitutions to render in it's activity number
+     * (which is 1). For activity instance with number greater than 1, if there is a "second name" then the second name
+     * will be used to render the name, otherwise " #N" will be appended to the original name (where N is the instance
+     * number).
      *
-     * @param handle the database handle
-     * @param userId the user who owns the activity instances
+     * @param handle    the database handle
+     * @param userId    the user who owns the activity instances
      * @param summaries the list of summaries
      */
-    public void renderActivitySummaryText(Handle handle, long userId, List<ActivityInstanceSummary> summaries) {
-        if (!summaries.isEmpty()) {
-            Set<Long> instanceIds = summaries.stream().map(ActivityInstanceSummary::getActivityInstanceId).collect(Collectors.toSet());
-            var instanceDao = handle.attach(org.broadinstitute.ddp.db.dao.ActivityInstanceDao.class);
-            var substitutions = instanceDao.bulkFindSubstitutions(instanceIds)
-                    .collect(Collectors.toMap(wrapper -> wrapper.getActivityInstanceId(), wrapper -> wrapper.unwrap()));
-            var sharedSnapshot = I18nContentRenderer
-                    .newValueProviderBuilder(handle, userId)
-                    .build().getSnapshot();
-            for (var summary : summaries) {
-                if (StringUtils.isBlank(summary.getActivitySummary())) {
-                    continue;
-                }
-                Map<String, String> subs = substitutions.getOrDefault(summary.getActivityInstanceId(), new HashMap<>());
-                var provider = new RenderValueProvider.Builder()
-                        .withSnapshot(sharedSnapshot)
-                        .withSnapshot(subs)
-                        .build();
-                Map<String, Object> context = new HashMap<>();
-                context.put(I18nTemplateConstants.DDP, provider);
-                String summaryText = renderer.renderToString(summary.getActivitySummary(), context);
-                summary.setActivitySummary(summaryText);
+    public void renderActivitySummary(Handle handle, long userId, List<ActivityInstanceSummary> summaries) {
+        if (summaries.isEmpty()) {
+            return;
+        }
+
+        Set<Long> instanceIds = summaries.stream().map(ActivityInstanceSummary::getActivityInstanceId).collect(Collectors.toSet());
+        var instanceDao = handle.attach(org.broadinstitute.ddp.db.dao.ActivityInstanceDao.class);
+        var substitutions = instanceDao.bulkFindSubstitutions(instanceIds)
+                .collect(Collectors.toMap(wrapper -> wrapper.getActivityInstanceId(), wrapper -> wrapper.unwrap()));
+        var sharedSnapshot = I18nContentRenderer
+                .newValueProviderBuilder(handle, userId)
+                .build().getSnapshot();
+
+        for (var summary : summaries) {
+            if (StringUtils.isBlank(summary.getActivitySummary())) {
+                continue;
             }
+
+            Map<String, String> subs = substitutions.getOrDefault(summary.getActivityInstanceId(), new HashMap<>());
+            var provider = new RenderValueProvider.Builder()
+                    .setActivityInstanceNumber(summary.getInstanceNumber())
+                    .withSnapshot(sharedSnapshot)
+                    .withSnapshot(subs)
+                    .build();
+            Map<String, Object> context = new HashMap<>();
+            context.put(I18nTemplateConstants.DDP, provider);
+
+            // Render the name.
+            final String nameText;
+            if (summary.getInstanceNumber() > 1) {
+                if (StringUtils.isNotBlank(summary.getActivitySecondName())) {
+                    nameText = renderer.renderToString(summary.getActivitySecondName(), context);
+                } else {
+                    String originalName = renderer.renderToString(summary.getActivityName(), context);
+                    nameText = originalName + " #" + summary.getInstanceNumber();
+                }
+            } else {
+                nameText = renderer.renderToString(summary.getActivityName(), context);
+            }
+            summary.setActivityName(nameText);
+
+            // Render the summary.
+            String summaryText = renderer.renderToString(summary.getActivitySummary(), context);
+            summary.setActivitySummary(summaryText);
         }
     }
 

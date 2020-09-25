@@ -68,6 +68,7 @@ public class SqlConstants {
         public static final String ID = "study_activity_id";
         public static final String CODE = "study_activity_code";
         public static final String NAME_TRANS = "activity_name_trans";
+        public static final String SECOND_NAME_TRANS = "activity_second_name_trans";
         public static final String TITLE_TRANS = "activity_title_trans";
         public static final String SUBTITLE_TRANS = "activity_subtitle_trans";
         public static final String DESCRIPTION_TRANS = "activity_description_trans";
