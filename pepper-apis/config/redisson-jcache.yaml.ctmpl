@@ -7,7 +7,7 @@ singleServerConfig:
   connectTimeout: 10000
   timeout: 3000
   retryAttempts: 3
-  retryInterval: 1500
+  retryInterval: 3000
   password: null
   subscriptionsPerConnection: 5
   clientName: null
@@ -15,7 +15,7 @@ singleServerConfig:
   subscriptionConnectionMinimumIdleSize: 1
   subscriptionConnectionPoolSize: 50
   connectionMinimumIdleSize: 24
-  connectionPoolSize: 64
+  connectionPoolSize: 86
   database: 0
   dnsMonitoringInterval: 5000
   pingConnectionInterval: 3000
