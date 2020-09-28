@@ -80,7 +80,7 @@ public class BrainPrequalV2 implements CustomTask {
         String versionTag = dataCfg.getString("versionTag");
         UserDto adminUser = handle.attach(JdbiUser.class).findByUserGuid(cfg.getString("adminUser.guid"));
         StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(cfg.getString("study.guid"));
-        Instant timestamp = Instant.parse(dataCfg.getString("timestamp"));
+        Instant timestamp = Instant.now();
         String studyGuid = studyDto.getGuid();
         long studyId = studyDto.getId();
         long activityId = ActivityBuilder.findActivityId(handle, studyId, activityCode);
