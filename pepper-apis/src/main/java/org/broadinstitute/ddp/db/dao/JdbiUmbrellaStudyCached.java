@@ -200,8 +200,8 @@ public class JdbiUmbrellaStudyCached extends SQLObjectWrapper<JdbiUmbrellaStudy>
 
     private void addToCacheAsync(StudyDto dto) {
         if (dto != null) {
-            idToStudyCache.putAsync(dto.getId(), dto);
-            studyGuidToIdCache.putAsync(dto.getGuid(), dto.getId());
+            idToStudyCache.put(dto.getId(), dto);
+            studyGuidToIdCache.put(dto.getGuid(), dto.getId());
         }
     }
 }
