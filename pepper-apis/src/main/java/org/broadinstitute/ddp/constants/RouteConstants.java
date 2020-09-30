@@ -47,8 +47,6 @@ public class RouteConstants {
         public static final String PARTICIPANTS_INFO_FOR_STUDY =
                 fmt(STUDY_ALL + "/participant-info" + "/%s", PathParam.STUDY_GUID);
         public static final String STUDY_LANGUAGES = fmt(BASE + "/studies/%s/languages", PathParam.STUDY_GUID);
-        public static final String DISPLAY_LANGUAGE_POPUP =
-                fmt(BASE + "/studies/%s/display-language-popup", PathParam.STUDY_GUID);
         public static final String INVITATION_VERIFY = fmt(BASE + "/studies/%s/invitation-verify", PathParam.STUDY_GUID);
         public static final String INVITATION_CHECK = fmt(BASE + "/studies/%s/invitation-check", PathParam.STUDY_GUID);
 

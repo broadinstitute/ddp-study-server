@@ -13,6 +13,7 @@ import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudyCached;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudyI18n;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
+import org.broadinstitute.ddp.db.dao.StudyDao;
 import org.broadinstitute.ddp.db.dto.EnrollmentStatusDto;
 import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
@@ -21,6 +22,7 @@ import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.study.EnrollmentStatusCount;
 import org.broadinstitute.ddp.model.study.StudyDetail;
+import org.broadinstitute.ddp.model.study.StudySettings;
 import org.broadinstitute.ddp.security.DDPAuth;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
@@ -79,6 +81,11 @@ public class GetStudyDetailRoute implements Route {
             String name = preferredTranslation.map(trans -> trans.getName()).orElse(study.getName());
             String summary = preferredTranslation.map(trans -> trans.getSummary()).orElse(null);
 
+            Boolean shouldDisplayLanguageChangePopup = handle.attach(StudyDao.class)
+                  .findSettings(study.getId())
+                  .map(StudySettings::shouldDisplayLanguageChangePopup)
+                  .orElse(false);
+
             boolean restricted = study.getIrbPassword() != null;
             return new StudyDetail(
                     study.getGuid(),
@@ -87,7 +94,8 @@ public class GetStudyDetailRoute implements Route {
                     enrollmentStatusCount.getRegisteredCount(),
                     enrollmentStatusCount.getParticipantCount(),
                     restricted,
-                    study.getStudyEmail()
+                    study.getStudyEmail(),
+                    shouldDisplayLanguageChangePopup
             );
         });
 

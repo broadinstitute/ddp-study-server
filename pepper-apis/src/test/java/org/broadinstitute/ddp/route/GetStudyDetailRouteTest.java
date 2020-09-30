@@ -5,6 +5,7 @@ import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudyI18n;
+import org.broadinstitute.ddp.db.dao.StudyDao;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.hamcrest.Matchers;
 import org.junit.BeforeClass;
@@ -33,6 +34,40 @@ public class GetStudyDetailRouteTest extends IntegrationTestSuite.TestCase {
                 .then().assertThat().statusCode(200)
                 .body("name", Matchers.is(Matchers.notNullValue()))
                 .body("summary", Matchers.is(Matchers.nullValue()));
+    }
+
+    @Test
+    public void test_givenPopupSettingUnspecified_whenRouteIsCalled_thenItReturns200_andFalse() {
+        RestAssured.given().auth().oauth2(token)
+                .when().get(url)
+                .then().assertThat().statusCode(200)
+                .body("shouldDisplayLanguageChangePopup", Matchers.is(Matchers.hasValue(false)));
+    }
+
+    @Test
+    public void test_givenPopupSettingTrue_whenRouteIsCalled_thenItReturns200_andTrue() {
+        TransactionWrapper.useTxn(handle -> {
+            StudyDao dao = handle.attach(StudyDao.class);
+            dao.addSettings(testData.getStudyId(), null, null, false, null, false, true);
+        });
+
+        RestAssured.given().auth().oauth2(token)
+          .when().get(url)
+          .then().assertThat().statusCode(200)
+          .body("shouldDisplayLanguageChangePopup", Matchers.is(Matchers.hasValue(true)));
+    }
+
+    @Test
+    public void test_givenPopupSettingFalse_whenRouteIsCalled_thenItReturns200_andFalse() {
+        TransactionWrapper.useTxn(handle -> {
+            StudyDao dao = handle.attach(StudyDao.class);
+            dao.addSettings(testData.getStudyId(), null, null, false, null, false, false);
+        });
+
+        RestAssured.given().auth().oauth2(token)
+          .when().get(url)
+          .then().assertThat().statusCode(200)
+          .body("shouldDisplayLanguageChangePopup", Matchers.is(Matchers.hasValue(false)));
     }
 
     @Test
