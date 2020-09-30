@@ -9,8 +9,12 @@ import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.model.address.OLCPrecision;
 import org.jdbi.v3.core.Handle;
 import org.redisson.api.RLocalCachedMap;
+import org.redisson.client.RedisException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class JdbiUmbrellaStudyCached extends SQLObjectWrapper<JdbiUmbrellaStudy> implements JdbiUmbrellaStudy {
+    private static final Logger LOG = LoggerFactory.getLogger(JdbiUmbrellaStudyCached.class);
 
     private static RLocalCachedMap<Long, StudyDto> idToStudyCache;
     private static RLocalCachedMap<String, Long> studyGuidToIdCache;
@@ -56,7 +60,14 @@ public class JdbiUmbrellaStudyCached extends SQLObjectWrapper<JdbiUmbrellaStudy>
             return delegate.findByStudyGuid(studyGuid);
         } else {
             StudyDto dto;
-            Long id = studyGuidToIdCache.get(studyGuid);
+            Long id = null;
+            try {
+                id = studyGuidToIdCache.get(studyGuid);
+            } catch (RedisException e) {
+                LOG.warn("Failed to retrieve value from Redis cache: " + studyGuidToIdCache.getName() + " key lookedup:" +  studyGuid
+                                + "Will try to retrieve from database",
+                        e);
+            }
             if (id == null) {
                 dto = delegate.findByStudyGuid(studyGuid);
                 addToCacheAsync(dto);
@@ -73,6 +84,11 @@ public class JdbiUmbrellaStudyCached extends SQLObjectWrapper<JdbiUmbrellaStudy>
             return delegate.findById(studyId);
         } else {
             StudyDto dto = idToStudyCache.get(studyId);
+            try {
+                dto = idToStudyCache.get(studyId);
+            } catch (RedisException e) {
+                LOG.warn("Failed to retrieve value from Redis cache: " + idToStudyCache.getName() + " key lookedup:" +  studyId, e);
+            }
             if (dto == null) {
                 dto = delegate.findById(studyId);
                 addToCacheAsync(dto);
@@ -200,8 +216,12 @@ public class JdbiUmbrellaStudyCached extends SQLObjectWrapper<JdbiUmbrellaStudy>
 
     private void addToCacheAsync(StudyDto dto) {
         if (dto != null) {
-            idToStudyCache.put(dto.getId(), dto);
-            studyGuidToIdCache.put(dto.getGuid(), dto.getId());
+            try {
+                idToStudyCache.put(dto.getId(), dto);
+                studyGuidToIdCache.put(dto.getGuid(), dto.getId());
+            } catch (RedisException e) {
+                LOG.warn("Failed to store value to Redis cache", e);
+            }
         }
     }
 }
