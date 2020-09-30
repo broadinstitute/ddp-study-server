@@ -64,6 +64,13 @@ import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * General task to iterate through all templates in a study and update them in-place. For each template, this will
+ * compare the template text, the variables, and the variable translations, updating these things in-place without
+ * revisioning. This task makes certain assumptions, such as that activity definition structure is the same in both
+ * database and in config files. Due to these assumptions and the fact that templates are updated in-place instead of
+ * revisioned, use this task with caution and only if it makes sense for your use-case.
+ */
 public class UpdateTemplatesInPlace implements CustomTask {
 
     private static final Logger LOG = LoggerFactory.getLogger(UpdateTemplatesInPlace.class);
