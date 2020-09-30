@@ -10,8 +10,12 @@ import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.db.dto.validation.ValidationDto;
 import org.jdbi.v3.core.Handle;
 import org.redisson.api.RLocalCachedMap;
+import org.redisson.client.RedisException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class JdbiQuestionValidationCached extends SQLObjectWrapper<JdbiQuestionValidation> implements JdbiQuestionValidation {
+    private static final Logger LOG = LoggerFactory.getLogger(JdbiQuestionValidationCached.class);
     private static RLocalCachedMap<Long, List<ValidationDto>> questionIdToValidationsCache;
 
     private void initializeCaching() {
@@ -48,7 +52,13 @@ public class JdbiQuestionValidationCached extends SQLObjectWrapper<JdbiQuestionV
         if (isNullCache()) {
             return delegate.getAllActiveValidations(questionDto);
         } else {
-            List<ValidationDto> validations = questionIdToValidationsCache.get(questionDto.getId());
+            List<ValidationDto> validations = null;
+            try {
+                validations = questionIdToValidationsCache.get(questionDto.getId());
+            } catch (RedisException e) {
+                LOG.warn("Failed to retrieve value from Redis cache: " + questionIdToValidationsCache.getName() + " key lookedup:"
+                        + questionDto.getId() + "Will try to retrieve from database", e);
+            }
             if (validations == null) {
                 Map<Long, List<ValidationDto>> data = cacheActivityValidations(questionDto.getActivityId());
                 validations = data.get(questionDto.getId());
