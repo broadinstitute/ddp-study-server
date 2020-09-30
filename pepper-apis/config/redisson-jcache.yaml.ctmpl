@@ -18,7 +18,7 @@ singleServerConfig:
   connectionPoolSize: 86
   database: 0
   dnsMonitoringInterval: 5000
-  pingConnectionInterval: 3000
+  pingConnectionInterval: 15000
 threads: 16
 nettyThreads: 256
 codec: !<org.redisson.codec.FstCodec> {}
