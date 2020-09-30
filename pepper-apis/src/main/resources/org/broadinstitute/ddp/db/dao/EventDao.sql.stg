@@ -17,6 +17,7 @@ SELECT
          e.expression_text from expression e
      WHERE e.expression_id = ec.cancel_expression_id) as cancel_expression,
      ec.max_occurrences_per_user,
+     ec.execution_order,
      md.gcp_topic,
      aist.activity_instance_status_type_code as instance_status_type,
      ast.study_activity_id as activity_status_trigger_study_activity_id,
@@ -70,6 +71,13 @@ getEventConfigurationByEventConfigurationId() ::= <<
     where
         ec.event_configuration_id = :eventConfigurationId
         and ec.is_active = 1
+>>
+
+getEventConfigurationsByStudyId() ::= <<
+<eventConfigurationLookup()>
+    where
+        ec.umbrella_study_id = :studyId
+    order by ec.execution_order asc
 >>
 
 getEventConfigurationsForStudyIdAndTriggerType() ::= <<

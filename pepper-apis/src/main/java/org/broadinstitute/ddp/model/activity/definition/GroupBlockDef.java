@@ -49,6 +49,10 @@ public final class GroupBlockDef extends FormBlockDef {
         return presentationHint;
     }
 
+    public void setPresentationHint(PresentationHint presentationHint) {
+        this.presentationHint = presentationHint;
+    }
+
     public Template getTitleTemplate() {
         return titleTemplate;
     }

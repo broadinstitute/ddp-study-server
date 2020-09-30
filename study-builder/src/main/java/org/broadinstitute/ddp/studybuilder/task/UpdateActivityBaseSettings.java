@@ -131,13 +131,13 @@ public class UpdateActivityBaseSettings implements CustomTask {
                 newDetails.stream().map(ActivityI18nDetail::getIsoLangCode).collect(Collectors.toList()));
     }
 
-    private Map<String, ActivityI18nDetail> buildLatestNamingDetails(long activityId, Config activityCfg,
+    private Map<String, ActivityI18nDetail> buildLatestNamingDetails(long activityId, Config definition,
                                                                      Map<String, ActivityI18nDetail> currentDetails) {
-        Map<String, String> names = collectTranslatedText(activityCfg, "translatedNames");
-        Map<String, String> secondNames = collectTranslatedText(activityCfg, "translatedSecondNames");
-        Map<String, String> titles = collectTranslatedText(activityCfg, "translatedTitles");
-        Map<String, String> subtitles = collectTranslatedText(activityCfg, "translatedSubtitles");
-        Map<String, String> descriptions = collectTranslatedText(activityCfg, "translatedDescriptions");
+        Map<String, String> names = collectTranslatedText(definition, "translatedNames");
+        Map<String, String> secondNames = collectTranslatedText(definition, "translatedSecondNames");
+        Map<String, String> titles = collectTranslatedText(definition, "translatedTitles");
+        Map<String, String> subtitles = collectTranslatedText(definition, "translatedSubtitles");
+        Map<String, String> descriptions = collectTranslatedText(definition, "translatedDescriptions");
         Map<String, ActivityI18nDetail> details = new HashMap<>();
         // Adding something (like a title) without adding a name in that language doesn't make sense,
         // so keying off of the name is the way to go, and name is also required.
@@ -156,9 +156,9 @@ public class UpdateActivityBaseSettings implements CustomTask {
         return details;
     }
 
-    private Map<String, String> collectTranslatedText(Config activityCfg, String key) {
+    private Map<String, String> collectTranslatedText(Config definition, String key) {
         Map<String, String> container = new HashMap<>();
-        for (Config textCfg : activityCfg.getConfigList(key)) {
+        for (Config textCfg : definition.getConfigList(key)) {
             container.put(textCfg.getString("language"), textCfg.getString("text"));
         }
         return container;
@@ -212,10 +212,10 @@ public class UpdateActivityBaseSettings implements CustomTask {
                 summary.getLanguageCode());
     }
 
-    private Map<String, SummaryTranslation> buildLatestStatusSummaries(long activityId, Config activityCfg,
+    private Map<String, SummaryTranslation> buildLatestStatusSummaries(long activityId, Config definition,
                                                                        Map<String, SummaryTranslation> currentSummaries) {
         Map<String, SummaryTranslation> summaries = new HashMap<>();
-        for (Config summaryCfg : activityCfg.getConfigList("translatedSummaries")) {
+        for (Config summaryCfg : definition.getConfigList("translatedSummaries")) {
             var statusType = InstanceStatusType.valueOf(summaryCfg.getString("statusCode"));
             var language = summaryCfg.getString("language");
             var text = summaryCfg.getString("text");

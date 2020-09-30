@@ -25,6 +25,7 @@ public class EventConfigurationDto {
     private String preconditionExpression;
     private String cancelExpression;
     private Integer maxOccurrencesPerUser;
+    private int executionOrder;
     private String gcpTopic; // FIXME should not be a base field of EventAction
 
     /**
@@ -107,6 +108,7 @@ public class EventConfigurationDto {
                                  String preconditionExpression,
                                  String cancelExpression,
                                  Integer maxOccurrencesPerUser,
+                                 int executionOrder,
                                  String gcpTopic,
                                  InstanceStatusType instanceStatusType,
                                  Long activityStatusTriggerStudyActivityId,
@@ -133,6 +135,7 @@ public class EventConfigurationDto {
         this.preconditionExpression = preconditionExpression;
         this.cancelExpression = cancelExpression;
         this.maxOccurrencesPerUser = maxOccurrencesPerUser;
+        this.executionOrder = executionOrder;
         this.gcpTopic = gcpTopic;
         this.instanceStatusType = instanceStatusType;
         this.activityStatusTriggerStudyActivityId = activityStatusTriggerStudyActivityId;
@@ -183,6 +186,10 @@ public class EventConfigurationDto {
 
     public Integer getMaxOccurrencesPerUser() {
         return maxOccurrencesPerUser;
+    }
+
+    public int getExecutionOrder() {
+        return executionOrder;
     }
 
     public String getGcpTopic() {
