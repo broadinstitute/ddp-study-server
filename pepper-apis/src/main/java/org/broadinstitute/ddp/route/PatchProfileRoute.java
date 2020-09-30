@@ -115,7 +115,7 @@ public class PatchProfileRoute implements Route {
             }
 
             if (providedShouldSkipLanguagePopup) {
-                builder.setShouldSkipLanguagePopup(shouldSkipLanguagePopup);
+                builder.setSkipLanguagePopup(shouldSkipLanguagePopup);
             }
 
             profile = profileDao.updateProfile(builder.build());

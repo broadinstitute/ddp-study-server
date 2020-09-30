@@ -19,7 +19,7 @@ public class  UserProfile implements Serializable {
     private ZoneId timeZone;
     private Boolean doNotContact;
     private Boolean isDeceased;
-    private Boolean shouldSkipLanguagePopup;
+    private Boolean skipLanguagePopup;
 
     @JdbiConstructor
     public UserProfile(@ColumnName("user_id") long userId,
@@ -32,7 +32,7 @@ public class  UserProfile implements Serializable {
                        @ColumnName("time_zone") ZoneId timeZone,
                        @ColumnName("do_not_contact") Boolean doNotContact,
                        @ColumnName("is_deceased") Boolean isDeceased,
-                       @ColumnName("should_skip_language_popup") Boolean shouldSkipLanguagePopup) {
+                       @ColumnName("should_skip_language_popup") Boolean skipLanguagePopup) {
         this.userId = userId;
         this.firstName = firstName;
         this.lastName = lastName;
@@ -43,7 +43,7 @@ public class  UserProfile implements Serializable {
         this.timeZone = timeZone;
         this.doNotContact = doNotContact;
         this.isDeceased = isDeceased;
-        this.shouldSkipLanguagePopup = shouldSkipLanguagePopup;
+        this.skipLanguagePopup = skipLanguagePopup;
     }
 
     public long getUserId() {
@@ -86,8 +86,8 @@ public class  UserProfile implements Serializable {
         return isDeceased;
     }
 
-    public Boolean getShouldSkipLanguagePopup() {
-        return shouldSkipLanguagePopup;
+    public Boolean getSkipLanguagePopup() {
+        return skipLanguagePopup;
     }
 
     public enum SexType {
@@ -113,7 +113,7 @@ public class  UserProfile implements Serializable {
                     other.getTimeZone(),
                     other.getDoNotContact(),
                     other.getIsDeceased(),
-                    other.getShouldSkipLanguagePopup());
+                    other.getSkipLanguagePopup());
         }
 
         public Builder setFirstName(String firstName) {
@@ -159,8 +159,8 @@ public class  UserProfile implements Serializable {
             return this;
         }
 
-        public Builder setShouldSkipLanguagePopup(Boolean shouldSkipLanguagePopup) {
-            profile.shouldSkipLanguagePopup = shouldSkipLanguagePopup;
+        public Builder setSkipLanguagePopup(Boolean skipLanguagePopup) {
+            profile.skipLanguagePopup = skipLanguagePopup;
             return this;
         }
 
@@ -176,7 +176,7 @@ public class  UserProfile implements Serializable {
                     profile.timeZone,
                     profile.doNotContact,
                     profile.isDeceased,
-                    profile.shouldSkipLanguagePopup);
+                    profile.skipLanguagePopup);
         }
     }
 }

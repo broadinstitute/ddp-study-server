@@ -28,7 +28,7 @@ public interface UserProfileDao extends SqlObject {
                 profile.getTimeZone(),
                 profile.getDoNotContact(),
                 profile.getIsDeceased(),
-                profile.getShouldSkipLanguagePopup());
+                profile.getSkipLanguagePopup());
     }
 
     default UserProfile updateProfile(UserProfile profile) {
@@ -42,7 +42,7 @@ public interface UserProfileDao extends SqlObject {
                 profile.getTimeZone(),
                 profile.getDoNotContact(),
                 profile.getIsDeceased(),
-                profile.getShouldSkipLanguagePopup());
+                profile.getSkipLanguagePopup());
         DBUtils.checkUpdate(1, numUpdated);
         return findProfileByUserId(profile.getUserId())
                 .orElseThrow(() -> new DaoException("Could not find profile for use id " + profile.getUserId()));

@@ -436,7 +436,7 @@ public class UserRegistrationRouteTest extends IntegrationTestSuite.TestCase {
             assertEquals(ZoneId.of("America/Los_Angeles"), profile.getTimeZone());
             assertEquals("foo", profile.getFirstName());
             assertEquals("bar", profile.getLastName());
-            assertEquals(false, profile.getShouldSkipLanguagePopup());
+            assertEquals(false, profile.getSkipLanguagePopup());
 
             JdbiUserStudyEnrollment jdbiEnrollment = handle.attach(JdbiUserStudyEnrollment.class);
             Optional<EnrollmentStatusType> enrollment = jdbiEnrollment

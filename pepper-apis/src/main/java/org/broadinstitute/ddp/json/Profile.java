@@ -53,7 +53,7 @@ public class Profile {
         this.preferredLanguage = other.getPreferredLangCode();
         this.firstName = other.getFirstName();
         this.lastName = other.getLastName();
-        this.shouldSkipLanguagePopup = other.getShouldSkipLanguagePopup();
+        this.shouldSkipLanguagePopup = other.getSkipLanguagePopup();
         // NOTE: timezone is currently not exposed in Profile API JSON.
     }
 
