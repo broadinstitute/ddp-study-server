@@ -15,8 +15,12 @@ import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.jdbi.v3.core.Handle;
 import org.redisson.api.RLocalCachedMap;
+import org.redisson.client.RedisException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class JdbiQuestionCached extends SQLObjectWrapper<JdbiQuestion> implements JdbiQuestion {
+    private static final Logger LOG = LoggerFactory.getLogger(JdbiQuestionCached.class);
     private static RLocalCachedMap<String, List<QuestionDto>> questionKeyToQuestionDtosCache;
 
     public JdbiQuestionCached(Handle handle) {
@@ -52,8 +56,15 @@ public class JdbiQuestionCached extends SQLObjectWrapper<JdbiQuestion> implement
         if (isNullCache(questionKeyToQuestionDtosCache)) {
             return delegate.findDtoByStableIdAndInstance(stableId, activityInstance);
         } else {
-            List<QuestionDto> cachedQuestionDtos = questionKeyToQuestionDtosCache.get(buildQuestionKey(activityInstance.getActivityId(),
-                    stableId));
+            List<QuestionDto> cachedQuestionDtos = null;
+            String key = buildQuestionKey(activityInstance.getActivityId(),
+                    stableId);
+            try {
+                cachedQuestionDtos = questionKeyToQuestionDtosCache.get(key);
+            } catch (RedisException e) {
+                LOG.warn("Failed to retrieve value from Redis cache: " + questionKeyToQuestionDtosCache.getName() + " key lookedup:" + key
+                        + "Will try to retrieve from database", e);
+            }
             if (cachedQuestionDtos == null) {
                 Map<String, List<QuestionDto>> mapOfDtos = cacheQuestionDtosForStudyActivity(activityInstance.getActivityId());
                 cachedQuestionDtos = mapOfDtos.getOrDefault(buildQuestionKey(activityInstance.getActivityId(), stableId),
@@ -80,7 +91,11 @@ public class JdbiQuestionCached extends SQLObjectWrapper<JdbiQuestion> implement
         List<QuestionDto> dtos = delegate.findDtosByActivityId(activityId);
         Map<String, List<QuestionDto>> dtoMap = dtos.stream().collect(
                 groupingBy(dto -> buildQuestionKey(activityId, dto.getStableId())));
-        questionKeyToQuestionDtosCache.putAllAsync(dtoMap);
+        try {
+            questionKeyToQuestionDtosCache.putAllAsync(dtoMap);
+        } catch (RedisException e) {
+            LOG.warn("Failed to store value from Redis cache: " + questionKeyToQuestionDtosCache.getName(), e);
+        }
         return dtoMap;
     }
 
