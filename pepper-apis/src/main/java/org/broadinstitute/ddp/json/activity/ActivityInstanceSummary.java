@@ -62,6 +62,9 @@ public class ActivityInstanceSummary implements TranslatedSummary {
     private transient boolean isHidden;
     private transient String activitySecondName;
     private transient int instanceNumber;
+    private transient String versionTag;
+    private transient long versionId;
+    private transient long revisionStart;
 
     /**
      * Instantiates ActivityInstanceSummary object.
@@ -86,7 +89,10 @@ public class ActivityInstanceSummary implements TranslatedSummary {
             boolean excludeFromDisplay,
             boolean isHidden,
             long createdAt,
-            boolean isFollowup
+            boolean isFollowup,
+            String versionTag,
+            long versionId,
+            long revisionStart
     ) {
         this.activityCode = activityCode;
         this.activityInstanceId = activityInstanceId;
@@ -110,6 +116,9 @@ public class ActivityInstanceSummary implements TranslatedSummary {
         this.isHidden = isHidden;
         this.createdAt = createdAt;
         this.isFollowup = isFollowup;
+        this.versionTag = versionTag;
+        this.versionId = versionId;
+        this.revisionStart = revisionStart;
     }
 
     public String getActivityCode() {
@@ -200,6 +209,22 @@ public class ActivityInstanceSummary implements TranslatedSummary {
 
     public boolean isHidden() {
         return isHidden;
+    }
+
+    public boolean isFollowup() {
+        return isFollowup;
+    }
+
+    public String getVersionTag() {
+        return versionTag;
+    }
+
+    public long getVersionId() {
+        return versionId;
+    }
+
+    public long getRevisionStart() {
+        return revisionStart;
     }
 
     public int getNumQuestions() {
