@@ -8,8 +8,12 @@ import org.broadinstitute.ddp.cache.CacheService;
 import org.broadinstitute.ddp.model.study.StudyLanguage;
 import org.jdbi.v3.core.Handle;
 import org.redisson.api.RLocalCachedMap;
+import org.redisson.client.RedisException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class StudyLanguageCachedDao extends SQLObjectWrapper<StudyLanguageDao> implements StudyLanguageDao {
+    private static final Logger LOG = LoggerFactory.getLogger(StudyLanguageCachedDao.class);
     private static RLocalCachedMap<Long, List<StudyLanguage>> studyIdToLanguageCache;
 
     public StudyLanguageCachedDao(Handle handle) {
@@ -82,10 +86,20 @@ public class StudyLanguageCachedDao extends SQLObjectWrapper<StudyLanguageDao> i
         if (isNullCache(studyIdToLanguageCache)) {
             return delegate.findLanguages(umbrellaStudyId);
         } else {
-            List<StudyLanguage> result = studyIdToLanguageCache.get(umbrellaStudyId);
+            List<StudyLanguage> result = null;
+            try {
+                result = studyIdToLanguageCache.get(umbrellaStudyId);
+            } catch (RedisException e) {
+                LOG.warn("Failed to retrieve value from Redis cache: " + studyIdToLanguageCache.getName() + " key lookedup:"
+                        + umbrellaStudyId + "Will try to retrieve from database", e);
+            }
             if (result == null) {
                 result = delegate.findLanguages(umbrellaStudyId);
-                studyIdToLanguageCache.putAsync(umbrellaStudyId, result);
+                try {
+                    studyIdToLanguageCache.putAsync(umbrellaStudyId, result);
+                } catch (RedisException e) {
+                    LOG.warn("Failed to store value to Redis cache: " + studyIdToLanguageCache.getName() + " key " + umbrellaStudyId, e);
+                }
             }
             return result;
         }

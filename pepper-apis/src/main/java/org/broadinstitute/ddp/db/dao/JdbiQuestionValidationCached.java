@@ -69,7 +69,12 @@ public class JdbiQuestionValidationCached extends SQLObjectWrapper<JdbiQuestionV
 
     private Map<Long, List<ValidationDto>> cacheActivityValidations(Long activityId) {
         Map<Long, List<ValidationDto>> dataToCache = delegate.getAllActiveValidationsForActivity(activityId);
-        questionIdToValidationsCache.putAllAsync(dataToCache);
+        try {
+            questionIdToValidationsCache.putAllAsync(dataToCache);
+        } catch (RedisException e) {
+            LOG.warn("Failed to cache data to Redis: " + questionIdToValidationsCache.getName() + " to key" + activityId, e);
+        }
+
         return dataToCache;
     }
 
