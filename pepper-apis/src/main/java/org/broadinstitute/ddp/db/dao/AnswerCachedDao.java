@@ -9,6 +9,7 @@ import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
 import org.jdbi.v3.core.Handle;
 import org.redisson.api.RLocalCachedMap;
+import org.redisson.client.RedisException;
 
 public class AnswerCachedDao extends SQLObjectWrapper<AnswerDao> implements AnswerDao {
     private static RLocalCachedMap<String, Long> activityInstanceGuidAndQuestionKeyToAnswerIdCache;
@@ -97,10 +98,19 @@ public class AnswerCachedDao extends SQLObjectWrapper<AnswerDao> implements Answ
         if (isNullCache(idToAnswerCache)) {
             return delegate.findAnswerById(answerId);
         } else {
-            Optional<Answer> optAnswer = Optional.ofNullable(idToAnswerCache.get(answerId));
-            if (optAnswer.isEmpty()) {
+            Answer answer = null;
+            try {
+                answer = idToAnswerCache.get(answerId);
+            } catch (RedisException e) {
+                LOG.warn("Failed to retrieve value from Redis cache: " + idToAnswerCache.getName() + " key lookedup:"
+                        + answerId + "Will try to retrieve from database", e);
+            }
+            Optional<Answer> optAnswer;
+            if (answer == null) {
                 optAnswer = delegate.findAnswerById(answerId);
                 addToCache(optAnswer);
+            } else {
+                optAnswer = Optional.of(answer);
             }
             return optAnswer;
         }
@@ -145,10 +155,19 @@ public class AnswerCachedDao extends SQLObjectWrapper<AnswerDao> implements Answ
 
     private void addToCache(Answer answer) {
         if (!isNullCache(idToAnswerCache)) {
-            idToAnswerCache.putAsync(answer.getAnswerId(), answer);
+            try {
+                idToAnswerCache.putAsync(answer.getAnswerId(), answer);
+            } catch (RedisException e) {
+                LOG.warn("Failed to save to Redis cache: " + idToAnswerCache.getName() + " with key:" + answer.getAnswerId(), e);
+            }
+
             String key = buildKey(answer);
             if (key != null) {
-                activityInstanceGuidAndQuestionKeyToAnswerIdCache.putAsync(key, answer.getAnswerId());
+                try {
+                    activityInstanceGuidAndQuestionKeyToAnswerIdCache.putAsync(key, answer.getAnswerId());
+                } catch (RedisException e) {
+                    LOG.warn("Failed to save to Redis cache: " + idToAnswerCache.getName() + " with key:" + key, e);
+                }
             }
         }
     }
