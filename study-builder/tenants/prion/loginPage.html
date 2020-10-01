@@ -287,6 +287,10 @@
         }
     }
 
+    .auth0-global-message.auth0-global-message-error a {
+        color: #ffffff;
+    }
+
     /* Container element styling */
     .MiddleContainer {
         background-color: #ffffff;
@@ -1075,7 +1079,7 @@
     languageDictionary = dictionaries[languageCode];
     languageDictionary.error = languageDictionary.error || {};
     languageDictionary.error.signUp = languageDictionary.error.signUp || {};
-    languageDictionary.error.signUp.user_exists = languageDictionary.alreadyRegisteredText;
+    languageDictionary.error.signUp.user_exists = '<a class="error-link-header" href="' + loginUrl + '">' + languageDictionary.alreadyRegisteredText + '</a>';
     languageDictionary.success = {
         forgotPassword: languageDictionary.successForgotPassword
     };
