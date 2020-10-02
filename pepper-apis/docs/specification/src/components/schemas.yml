@@ -1139,6 +1139,9 @@ ProfileModel:
       lastName:
         type: string
         example: Barium
+      skipLanguagePopup:
+        type: boolean
+        example: true
 
 #####
 #

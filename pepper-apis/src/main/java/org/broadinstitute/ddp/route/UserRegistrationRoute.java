@@ -580,7 +580,6 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                     .setLastName(lastName)
                     .setPreferredLangId(languageId)
                     .setTimeZone(timeZone)
-                    .setSkipLanguagePopup(false)
                     .build();
             profileDao.createProfile(profile);
             LOG.info("Initialized user profile for user with guid {}", user.getGuid());

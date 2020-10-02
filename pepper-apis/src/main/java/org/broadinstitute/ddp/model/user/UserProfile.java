@@ -32,7 +32,7 @@ public class  UserProfile implements Serializable {
                        @ColumnName("time_zone") ZoneId timeZone,
                        @ColumnName("do_not_contact") Boolean doNotContact,
                        @ColumnName("is_deceased") Boolean isDeceased,
-                       @ColumnName("should_skip_language_popup") Boolean skipLanguagePopup) {
+                       @ColumnName("skip_language_popup") Boolean skipLanguagePopup) {
         this.userId = userId;
         this.firstName = firstName;
         this.lastName = lastName;

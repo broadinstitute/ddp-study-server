@@ -51,10 +51,14 @@ public class GetStudyDetailRouteTest extends IntegrationTestSuite.TestCase {
             dao.addSettings(testData.getStudyId(), null, null, false, null, false, true);
         });
 
-        RestAssured.given().auth().oauth2(token)
-          .when().get(url)
-          .then().assertThat().statusCode(200)
-          .body("shouldDisplayLanguageChangePopup", Matchers.is(true));
+        try {
+            RestAssured.given().auth().oauth2(token)
+              .when().get(url)
+              .then().assertThat().statusCode(200)
+              .body("shouldDisplayLanguageChangePopup", Matchers.is(true));
+        } finally {
+            TransactionWrapper.useTxn(handle -> handle.attach(StudyDao.class).getStudySql().deleteSettings(testData.getStudyId()));
+        }
     }
 
     @Test
@@ -64,10 +68,14 @@ public class GetStudyDetailRouteTest extends IntegrationTestSuite.TestCase {
             dao.addSettings(testData.getStudyId(), null, null, false, null, false, false);
         });
 
-        RestAssured.given().auth().oauth2(token)
-          .when().get(url)
-          .then().assertThat().statusCode(200)
-          .body("shouldDisplayLanguageChangePopup", Matchers.is(false));
+        try {
+            RestAssured.given().auth().oauth2(token)
+              .when().get(url)
+              .then().assertThat().statusCode(200)
+              .body("shouldDisplayLanguageChangePopup", Matchers.is(false));
+        } finally {
+            TransactionWrapper.useTxn(handle -> handle.attach(StudyDao.class).getStudySql().deleteSettings(testData.getStudyId()));
+        }
     }
 
     @Test

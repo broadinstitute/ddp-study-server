@@ -27,7 +27,7 @@ select en.user_study_enrollment_id as enrollment_id,
        up.is_deceased           as p_is_deceased,
        up.time_zone             as p_time_zone,
        up.preferred_language_id as p_preferred_language_id,
-       up.should_skip_language_popup as p_should_skip_language_popup,
+       up.skip_language_popup as p_skip_language_popup,
        (select iso_language_code from language_code where language_code_id = up.preferred_language_id) as p_iso_language_code,
        addr.address_id   as a_id,
        addr.address_guid as a_guid,
@@ -91,7 +91,7 @@ select en.user_study_enrollment_id as enrollment_id,
        up.is_deceased           as p_is_deceased,
        up.time_zone             as p_time_zone,
        up.preferred_language_id as p_preferred_language_id,
-       up.should_skip_language_popup as p_should_skip_language_popup,
+       up.skip_language_popup as p_skip_language_popup,
        (select iso_language_code from language_code where language_code_id = up.preferred_language_id) as p_iso_language_code
   from user_study_enrollment as en
   join user as u on u.user_id = en.user_id

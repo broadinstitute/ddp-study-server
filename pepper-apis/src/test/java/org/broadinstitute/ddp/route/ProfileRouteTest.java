@@ -43,7 +43,7 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
     private static final String firstName = "Fakie";
     private static final String lastName = "McFakerton";
     private static final String preferredLanguage = Locale.ENGLISH.getLanguage();
-    private static final Boolean shouldSkipLanguagePopup = false;
+    private static final Boolean skipLanguagePopup = false;
     private static final Collection<String> profileUserIdsToDelete = new HashSet<>();
     private static final Gson gson = new Gson();
     private static String token;
@@ -108,19 +108,19 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
 
     private void postDummyProfile() throws Exception {
         profileUserIdsToDelete.add(guid);
-        Profile profile = new Profile(birthDate, sex, preferredLanguage, firstName, lastName, shouldSkipLanguagePopup);
+        Profile profile = new Profile(birthDate, sex, preferredLanguage, firstName, lastName, skipLanguagePopup);
         successfulAddPostCheck(profile);
     }
 
     private JsonObject createProfileJsonObject(String sex, LocalDate birthDate, String preferredLanguage,
-                                               String firstName, String lastName, Boolean shouldSkipLanguagePopup) {
+                                               String firstName, String lastName, Boolean skipLanguagePopup) {
         JsonObject updatedProfile = new JsonObject();
         updatedProfile.addProperty(Profile.SEX, sex);
         updatedProfile.addProperty(Profile.BIRTH_DATE, birthDate != null ? birthDate.toString() : null);
         updatedProfile.addProperty(Profile.PREFERRED_LANGUAGE, preferredLanguage);
         updatedProfile.addProperty(Profile.FIRST_NAME, firstName);
         updatedProfile.addProperty(Profile.LAST_NAME, lastName);
-        updatedProfile.addProperty(Profile.SHOULD_SKIP_LANGUAGE_POPUP, shouldSkipLanguagePopup);
+        updatedProfile.addProperty(Profile.SKIP_LANGUAGE_POPUP, skipLanguagePopup);
 
         return updatedProfile;
     }
@@ -158,7 +158,7 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
         Assert.assertNull(queriedProfile.getBirthYear());
         Assert.assertNull(queriedProfile.getBirthDate());
         Assert.assertNull(queriedProfile.getPreferredLanguage());
-        Assert.assertNull(queriedProfile.getShouldSkipLanguagePopup());
+        Assert.assertNull(queriedProfile.getSkipLanguagePopup());
 
     }
 
@@ -166,7 +166,7 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
     @Test
     public void testAddProfileDuplicateUserId() throws Exception {
         postDummyProfile();
-        failedAddCheck(new Profile(birthDate, sex, preferredLanguage, firstName, lastName, shouldSkipLanguagePopup));
+        failedAddCheck(new Profile(birthDate, sex, preferredLanguage, firstName, lastName, skipLanguagePopup));
         TransactionWrapper.withTxn((handle) -> {
             checkNumProfile(handle.getConnection(), 1);
             return null;
@@ -197,7 +197,7 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
     public void testAddProfileBadLanguage() throws Exception {
         profileUserIdsToDelete.add(guid);
 
-        Profile payload = new Profile(birthDate, sex, "abc", firstName, lastName, shouldSkipLanguagePopup);
+        Profile payload = new Profile(birthDate, sex, "abc", firstName, lastName, skipLanguagePopup);
 
         Response response = RouteTestUtil.buildAuthorizedPostRequest(token, url, gson.toJson(payload)).execute();
         HttpResponse res = response.returnResponse();
@@ -267,7 +267,7 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
         Assert.assertEquals(birthYear, queriedProfile.getBirthYear());
         Assert.assertEquals(birthDate.toString(), queriedProfile.getBirthDate());
         Assert.assertEquals(preferredLanguage, queriedProfile.getPreferredLanguage());
-        Assert.assertEquals(shouldSkipLanguagePopup, queriedProfile.getShouldSkipLanguagePopup());
+        Assert.assertEquals(skipLanguagePopup, queriedProfile.getSkipLanguagePopup());
     }
 
     //tests that if there is an existing user with a partially complete profile, you can retrieve it.
@@ -292,7 +292,7 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
         Assert.assertNull(queriedProfile.getBirthYear());
         Assert.assertNull(queriedProfile.getBirthDate());
         Assert.assertNull(queriedProfile.getPreferredLanguage());
-        Assert.assertNull(queriedProfile.getShouldSkipLanguagePopup());
+        Assert.assertNull(queriedProfile.getSkipLanguagePopup());
     }
 
     /**
@@ -331,7 +331,7 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
         Assert.assertEquals("ru", queriedProfile.getPreferredLanguage());
         Assert.assertEquals("foo", queriedProfile.getFirstName());
         Assert.assertEquals("bar", queriedProfile.getLastName());
-        Assert.assertEquals(true, queriedProfile.getShouldSkipLanguagePopup());
+        Assert.assertEquals(true, queriedProfile.getSkipLanguagePopup());
     }
 
     // For existing profile and user, update some information (not all).
@@ -342,7 +342,7 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
         updatedProfile.addProperty(Profile.SEX, (String) null);
         updatedProfile.addProperty(Profile.BIRTH_DATE, (String) null);
         updatedProfile.addProperty(Profile.PREFERRED_LANGUAGE, (String) null);
-        updatedProfile.addProperty(Profile.SHOULD_SKIP_LANGUAGE_POPUP, (String) null);
+        updatedProfile.addProperty(Profile.SKIP_LANGUAGE_POPUP, (String) null);
 
         Response response = RouteTestUtil.buildAuthorizedPatchRequest(token, url, updatedProfile.toString()).execute();
         HttpResponse res = response.returnResponse();
@@ -355,7 +355,7 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
         Assert.assertNull(queriedProfile.getBirthMonth());
         Assert.assertNull(queriedProfile.getBirthDayInMonth());
         Assert.assertNull(queriedProfile.getPreferredLanguage());
-        Assert.assertNull(queriedProfile.getShouldSkipLanguagePopup());
+        Assert.assertNull(queriedProfile.getSkipLanguagePopup());
     }
 
     // test where no changes were made to an existing profile for existing user.
@@ -363,7 +363,7 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
     public void testNoPatchProfile() throws Exception {
         postDummyProfile();
         JsonObject updatedProfile = createProfileJsonObject(sex,
-                birthDate, preferredLanguage, firstName, lastName, shouldSkipLanguagePopup);
+                birthDate, preferredLanguage, firstName, lastName, skipLanguagePopup);
 
         Response response = RouteTestUtil.buildAuthorizedPatchRequest(token, url, updatedProfile.toString()).execute();
         HttpResponse res = response.returnResponse();
@@ -379,7 +379,7 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
         Assert.assertEquals(preferredLanguage, queriedProfile.getPreferredLanguage());
         Assert.assertEquals(firstName, queriedProfile.getFirstName());
         Assert.assertEquals(lastName, queriedProfile.getLastName());
-        Assert.assertEquals(shouldSkipLanguagePopup, queriedProfile.getShouldSkipLanguagePopup());
+        Assert.assertEquals(skipLanguagePopup, queriedProfile.getSkipLanguagePopup());
     }
 
     // tests for trying to patch a user profile that isn't in the database.
@@ -387,7 +387,7 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
     public void testPatchProfileDoesntExist() throws Exception {
         profileUserIdsToDelete.add(guid);
         JsonObject updatedProfile = createProfileJsonObject(sex,
-                birthDate, preferredLanguage, firstName, lastName, shouldSkipLanguagePopup);
+                birthDate, preferredLanguage, firstName, lastName, skipLanguagePopup);
 
         Response response = RouteTestUtil.buildAuthorizedPatchRequest(token, url, updatedProfile.toString()).execute();
         HttpResponse res = response.returnResponse();
@@ -422,7 +422,7 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
     public void testPatchBadLanguage() throws Exception {
         postDummyProfile();
         JsonObject updatedProfile = createProfileJsonObject(UserProfile.SexType.MALE.name(),
-                birthDate, "not-a-language", firstName, lastName, shouldSkipLanguagePopup);
+                birthDate, "not-a-language", firstName, lastName, skipLanguagePopup);
 
         Response response = RouteTestUtil.buildAuthorizedPatchRequest(token, url, updatedProfile.toString()).execute();
         HttpResponse res = response.returnResponse();
@@ -459,10 +459,10 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
     }
 
     /**
-     * makes sure patch works with setting shouldSkipLanguagePopup to true, false, and null
+     * makes sure patch works with setting skipLanguagePopup to true, false, and null
      */
     @Test
-    public void testPatchShouldSkipLanguagePopup() throws Exception {
+    public void testPatchSkipLanguagePopup() throws Exception {
         postDummyProfile();
         JsonObject updatedProfile = createProfileJsonObject(sex, birthDate, preferredLanguage, firstName, lastName,
                 true);
@@ -473,7 +473,7 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
 
         String bodyToString = EntityUtils.toString(res.getEntity());
         Profile queriedProfile = gson.fromJson(bodyToString, Profile.class);
-        Assert.assertTrue(queriedProfile.getShouldSkipLanguagePopup());
+        Assert.assertTrue(queriedProfile.getSkipLanguagePopup());
 
         updatedProfile = createProfileJsonObject(sex, birthDate, preferredLanguage, firstName, lastName, false);
         response = RouteTestUtil.buildAuthorizedPatchRequest(token, url, updatedProfile.toString()).execute();
@@ -481,7 +481,7 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
         Assert.assertEquals(HttpStatus.SC_OK, res.getStatusLine().getStatusCode());
         bodyToString = EntityUtils.toString(res.getEntity());
         queriedProfile = gson.fromJson(bodyToString, Profile.class);
-        Assert.assertFalse(queriedProfile.getShouldSkipLanguagePopup());
+        Assert.assertFalse(queriedProfile.getSkipLanguagePopup());
 
         updatedProfile = createProfileJsonObject(sex, birthDate, preferredLanguage, firstName, lastName, null);
         response = RouteTestUtil.buildAuthorizedPatchRequest(token, url, updatedProfile.toString()).execute();
@@ -489,7 +489,7 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
         Assert.assertEquals(HttpStatus.SC_OK, res.getStatusLine().getStatusCode());
         bodyToString = EntityUtils.toString(res.getEntity());
         queriedProfile = gson.fromJson(bodyToString, Profile.class);
-        Assert.assertEquals(null, queriedProfile.getShouldSkipLanguagePopup());
+        Assert.assertEquals(null, queriedProfile.getSkipLanguagePopup());
     }
 
     /**

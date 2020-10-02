@@ -20,4 +20,9 @@
         </addColumn>
     </changeSet>
 
+    <changeSet author="charlotte" id="20201002-rename-skip-language-popup-profile">
+        <renameColumn tableName="user_profile" oldColumnName="should_skip_language_popup"
+                      newColumnName="skip_language_popup" columnDataType="boolean"/>
+    </changeSet>
+
 </databaseChangeLog>
