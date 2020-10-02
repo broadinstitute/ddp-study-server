@@ -404,30 +404,42 @@ public interface ValidationDao extends SqlObject {
                 .findDtosByQuestionIdAndTimestamp(questionId, timestamp)
                 .stream().map(dto -> {
                     // todo: query templates, data for validation rules
+                    RuleDef ruleDef;
                     switch (dto.getRuleType()) {
                         case REQUIRED:
-                            return new RequiredRuleDef(null);
+                            ruleDef = new RequiredRuleDef(null);
+                            break;
                         case COMPLETE:
-                            return new CompleteRuleDef(null);
+                            ruleDef = new CompleteRuleDef(null);
+                            break;
                         case LENGTH:
-                            return new LengthRuleDef(null, null, null);
+                            ruleDef = new LengthRuleDef(null, null, null);
+                            break;
                         case REGEX:
-                            return new RegexRuleDef(null, "");
+                            ruleDef = new RegexRuleDef(null, "");
+                            break;
                         case NUM_OPTIONS_SELECTED:
-                            return new NumOptionsSelectedRuleDef(null, null, null);
+                            ruleDef = new NumOptionsSelectedRuleDef(null, null, null);
+                            break;
                         case DAY_REQUIRED:      // fall through
                         case MONTH_REQUIRED:    // fall through
                         case YEAR_REQUIRED:
-                            return new DateFieldRequiredRuleDef(dto.getRuleType(), null);
+                            ruleDef = new DateFieldRequiredRuleDef(dto.getRuleType(), null);
+                            break;
                         case AGE_RANGE:
-                            return new AgeRangeRuleDef(null, 0, null);
+                            ruleDef = new AgeRangeRuleDef(null, 0, null);
+                            break;
                         case DATE_RANGE:
-                            return new DateRangeRuleDef(null, null, null, false);
+                            ruleDef = new DateRangeRuleDef(null, null, null, false);
+                            break;
                         case INT_RANGE:
-                            return new IntRangeRuleDef(null, null, null);
+                            ruleDef = new IntRangeRuleDef(null, null, null);
+                            break;
                         default:
                             throw new DaoException("Unhandled validation rule type " + dto.getRuleType());
                     }
+                    ruleDef.setHintTemplateId(dto.getHintTemplateId());
+                    return ruleDef;
                 })
                 .collect(Collectors.toList());
     }

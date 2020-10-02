@@ -28,6 +28,11 @@ public interface JdbiBlockGroupHeader extends SqlObject {
     Optional<BlockGroupHeaderDto> findGroupHeaderDto(@Bind("blockId") long blockId, @Bind("instanceGuid") String instanceGuid);
 
     @UseStringTemplateSqlLocator
+    @SqlQuery("queryDtoByBlockIdAndTimestamp")
+    @RegisterRowMapper(BlockGroupHeaderDto.BlockGroupHeaderDtoMapper.class)
+    Optional<BlockGroupHeaderDto> findGroupHeaderDto(@Bind("blockId") long blockId, @Bind("timestamp") long timestamp);
+
+    @UseStringTemplateSqlLocator
     @SqlQuery("queryLatestDtoByBlockId")
     @RegisterRowMapper(BlockGroupHeaderDto.BlockGroupHeaderDtoMapper.class)
     Optional<BlockGroupHeaderDto> findLatestGroupHeaderDto(@Bind("blockId") long blockId);

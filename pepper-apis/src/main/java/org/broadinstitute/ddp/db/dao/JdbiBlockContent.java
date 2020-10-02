@@ -36,4 +36,13 @@ public interface JdbiBlockContent extends SqlObject {
     @RegisterConstructorMapper(BlockContentDto.class)
     Optional<BlockContentDto> findDtoByBlockIdAndInstanceGuid(@Bind("blockId") long blockId,
                                                               @Bind("instanceGuid") String instanceGuid);
+
+    @SqlQuery("select bt.*"
+            + "  from block_content as bt"
+            + "  join revision as r on r.revision_id = bt.revision_id"
+            + " where bt.block_id = :blockId"
+            + "   and r.start_date <= :timestamp and (r.end_date is null or :timestamp < r.end_date)")
+    @RegisterConstructorMapper(BlockContentDto.class)
+    Optional<BlockContentDto> findDtoByBlockIdAndTimestamp(@Bind("blockId") long blockId,
+                                                           @Bind("timestamp") long timestamp);
 }

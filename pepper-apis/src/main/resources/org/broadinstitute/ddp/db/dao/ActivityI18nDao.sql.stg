@@ -13,3 +13,18 @@ findDetailById() ::= <<
 findDetailsByActivityId() ::= <<
 <select_all_i18n_details()> where study_activity_id = :activityId
 >>
+
+select_all_i18n_summaries() ::= <<
+select i18n.i18n_study_activity_summary_trans_id,
+       i18n.study_activity_id,
+       aist.activity_instance_status_type_code as instance_status_type,
+       lang.iso_language_code,
+       i18n.translation_text
+  from i18n_study_activity_summary_trans as i18n
+  join language_code as lang on lang.language_code_id = i18n.language_code_id
+  join activity_instance_status_type as aist on aist.activity_instance_status_type_id = i18n.activity_instance_status_type_id
+>>
+
+findSummariesByActivityId() ::= <<
+<select_all_i18n_summaries()> where study_activity_id = :activityId
+>>

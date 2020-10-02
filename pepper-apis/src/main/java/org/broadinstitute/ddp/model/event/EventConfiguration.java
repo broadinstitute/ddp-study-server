@@ -18,6 +18,7 @@ public class EventConfiguration {
     private Integer maxOccurrencesPerUser;
     private boolean dispatchToHousekeeping;
     private Integer postDelaySeconds;
+    private int executionOrder;
 
     public EventConfiguration(EventConfigurationDto dto) {
         this.eventConfigurationId = dto.getEventConfigurationId();
@@ -28,6 +29,7 @@ public class EventConfiguration {
         this.maxOccurrencesPerUser = dto.getMaxOccurrencesPerUser();
         this.dispatchToHousekeeping = dto.dispatchToHousekeeping();
         this.postDelaySeconds = dto.getPostDelaySeconds();
+        this.executionOrder = dto.getExecutionOrder();
 
         switch (eventTriggerType) {
             case ACTIVITY_STATUS:
@@ -165,17 +167,22 @@ public class EventConfiguration {
         return postDelaySeconds;
     }
 
+    public int getExecutionOrder() {
+        return executionOrder;
+    }
+
     @Override
     public String toString() {
         return "EventConfiguration{"
                 + "eventConfigurationId=" + eventConfigurationId
                 + ", eventActionType=" + eventActionType
                 + ", eventTriggerType=" + eventTriggerType
-                + ", preconditionExpression='" + preconditionExpression + '\''
-                + ", cancelExpression='" + cancelExpression + '\''
+                + ", preconditionExpression='" + preconditionExpression + "'"
+                + ", cancelExpression='" + cancelExpression + "'"
                 + ", maxOccurrencesPerUser=" + maxOccurrencesPerUser
                 + ", dispatchToHousekeeping=" + dispatchToHousekeeping
                 + ", postDelaySeconds=" + postDelaySeconds
+                + ", executionOrder=" + executionOrder
                 + '}';
     }
 }

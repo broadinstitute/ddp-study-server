@@ -33,6 +33,12 @@ public interface EventDao extends SqlObject {
 
     Logger LOG = LoggerFactory.getLogger(EventDao.class);
 
+    default List<EventConfiguration> getAllEventConfigurationsByStudyId(long studyId) {
+        return getEventConfigurationDtosByStudyId(studyId).stream()
+                .map(dto -> new EventConfiguration(dto))
+                .collect(Collectors.toList());
+    }
+
     default List<EventConfiguration> getAllEventConfigurationsByStudyIdAndTriggerType(long studyId,
                                                                                       EventTriggerType eventTriggerType) {
         return getEventConfigurationDtosForStudyIdAndTriggerType(studyId, eventTriggerType).stream()
@@ -60,6 +66,13 @@ public interface EventDao extends SqlObject {
     @UseRowReducer(EventConfigurationActionReducer.class)
     Optional<EventConfigurationDto> getEventConfigurationDtoById(
             @Bind("eventConfigurationId") long eventConfigurationId);
+
+    @SqlQuery("getEventConfigurationsByStudyId")
+    @UseStringTemplateSqlLocator
+    @RegisterConstructorMapper(EventConfigurationDto.class)
+    @UseRowReducer(EventConfigurationActionReducer.class)
+    List<EventConfigurationDto> getEventConfigurationDtosByStudyId(
+            @Bind("studyId") long studyId);
 
     @SqlQuery("getEventConfigurationsForStudyIdAndTriggerType")
     @UseStringTemplateSqlLocator
