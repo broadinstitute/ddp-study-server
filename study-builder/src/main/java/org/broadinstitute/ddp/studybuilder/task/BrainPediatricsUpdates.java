@@ -8,6 +8,7 @@ import java.util.Set;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import org.broadinstitute.ddp.db.dao.JdbiExpression;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
@@ -142,15 +143,36 @@ public class BrainPediatricsUpdates implements CustomTask {
                     3, exprIds.size()));
         }
         helper.bulkUpdateExpressionText(newCancelExpr, exprIds);
+        
+        //add cancel expr to existing RELEASE MEDICAL_UPDATE event
+        String releasePdfGenCancelExpr = "!(user.studies[\"cmi-brain\"].forms[\"CONSENT\"].hasInstance()"
+                + " && user.studies[\"cmi-brain\"].forms[\"RELEASE\"].hasInstance()"
+                + " && user.studies[\"cmi-brain\"].forms[\"CONSENT\"].isStatus(\"COMPLETE\")"
+                + " && user.studies[\"cmi-brain\"].forms[\"RELEASE\"].isStatus(\"COMPLETE\"))";
+        List<Long> medicalEventIds = helper.findExistingBrainDsmEvents(studyId, "MEDICAL_UPDATE");
+        if (medicalEventIds.size() != 1) {
+            throw new RuntimeException("Expecting 1 release Medical Update event config rows, got :" + rowCount
+                    + "  aborting patch ");
+        }
+        //insert expr
+        Expression expr = handle.attach(JdbiExpression.class).insertExpression(releasePdfGenCancelExpr);
+        if (expr == null) {
+            throw new RuntimeException("Failed to insert new expression :" + releasePdfGenCancelExpr + "  aborting patch ");
+        }
+        rowCount = helper.addCancelExprToEvents(studyId, releasePdfGenCancelExpr, medicalEventIds);
+        if (rowCount != 1) {
+            throw new RuntimeException("Expecting to update 1 Brain release Medical Update event event config rows, got :" + rowCount
+                    + "  aborting patch ");
+        }
 
         //add cancel expr to existing DSM_NOTIFICATION events
         String cancelExprText = "user.studies[\"cmi-brain\"].forms[\"CONSENT\"].hasInstance()";
-        List<Long> dsmEVentIds = helper.findExistingBrainDsmEvents(studyId);
-        if (dsmEVentIds.size() != 4) {
+        List<Long> dsmEventIds = helper.findExistingBrainDsmEvents(studyId, "DSM_NOTIFICATION");
+        if (dsmEventIds.size() != 4) {
             throw new RuntimeException("Expecting 4 Brain DSM_NOTIFICATION event config rows, got :" + rowCount
                     + "  aborting patch ");
         }
-        rowCount = helper.addCancelExprToDsmEvents(studyId, cancelExprText, dsmEVentIds);
+        rowCount = helper.addCancelExprToEvents(studyId, cancelExprText, dsmEventIds);
         if (rowCount != 4) {
             throw new RuntimeException("Expecting to update 4 Brain DSM_NOTIFICATION event config rows, got :" + rowCount
                     + "  aborting patch ");
@@ -270,17 +292,17 @@ public class BrainPediatricsUpdates implements CustomTask {
         @SqlQuery(" select event_configuration_id from event_configuration c, event_trigger et, event_trigger_type tt"
                 + " where c.event_trigger_id = et.event_trigger_id"
                 + " and tt.event_trigger_type_id = et.event_trigger_type_id"
-                + " and tt.event_trigger_type_code = 'DSM_NOTIFICATION' "
+                + " and tt.event_trigger_type_code = :triggerType "
                 + " and c.umbrella_study_id = :studyId"
                 + " and c.cancel_expression_id is null")
-        List<Long> findExistingBrainDsmEvents(@Bind("studyId") long studyId);
+        List<Long> findExistingBrainDsmEvents(@Bind("studyId") long studyId, @Bind("triggerType") String triggerType);
 
         @SqlUpdate("update event_configuration ec set ec.cancel_expression_id = "
                 + "( select max(e.expression_id) from expression e "
                 + " where e.expression_text = :exprText)"
                 + " where ec.event_configuration_id IN (<ids>)")
-        int addCancelExprToDsmEvents(@Bind("studyId") long studyId, @Bind("exprText") String exprText,
-                                     @BindList(value = "ids", onEmpty = BindList.EmptyHandling.NULL) List<Long> ids);
+        int addCancelExprToEvents(@Bind("studyId") long studyId, @Bind("exprText") String exprText,
+                                  @BindList(value = "ids", onEmpty = BindList.EmptyHandling.NULL) List<Long> ids);
 
 
         @SqlUpdate("update event_configuration "
