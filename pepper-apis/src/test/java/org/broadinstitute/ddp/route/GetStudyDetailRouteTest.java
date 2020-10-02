@@ -41,7 +41,7 @@ public class GetStudyDetailRouteTest extends IntegrationTestSuite.TestCase {
         RestAssured.given().auth().oauth2(token)
                 .when().get(url)
                 .then().assertThat().statusCode(200)
-                .body("shouldDisplayLanguageChangePopup", Matchers.is(Matchers.hasValue(false)));
+                .body("shouldDisplayLanguageChangePopup", Matchers.is(false));
     }
 
     @Test
@@ -54,7 +54,7 @@ public class GetStudyDetailRouteTest extends IntegrationTestSuite.TestCase {
         RestAssured.given().auth().oauth2(token)
           .when().get(url)
           .then().assertThat().statusCode(200)
-          .body("shouldDisplayLanguageChangePopup", Matchers.is(Matchers.hasValue(true)));
+          .body("shouldDisplayLanguageChangePopup", Matchers.is(true));
     }
 
     @Test
@@ -67,7 +67,7 @@ public class GetStudyDetailRouteTest extends IntegrationTestSuite.TestCase {
         RestAssured.given().auth().oauth2(token)
           .when().get(url)
           .then().assertThat().statusCode(200)
-          .body("shouldDisplayLanguageChangePopup", Matchers.is(Matchers.hasValue(false)));
+          .body("shouldDisplayLanguageChangePopup", Matchers.is(false));
     }
 
     @Test
