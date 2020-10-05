@@ -8,10 +8,12 @@ import java.util.Set;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.JdbiExpression;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
+import org.broadinstitute.ddp.db.dto.EventConfigurationDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.exception.DDPException;
@@ -33,9 +35,9 @@ import org.slf4j.LoggerFactory;
 
 public class BrainPediatricsUpdates implements CustomTask {
     private static final Logger LOG = LoggerFactory.getLogger(BrainPediatricsUpdates.class);
-    private static final String EVENT_DATA_FILE = "patches/new-study-events.conf";
-    private static final String WORKFLOW_DATA_FILE = "patches/new-study-workflows.conf";
-    private static final String PDF_DATA_FILE = "patches/new-study-pdfs.conf";
+    private static final String EVENT_DATA_FILE = "patches/pediatrics-study-events.conf";
+    private static final String WORKFLOW_DATA_FILE = "patches/pediatrics-study-workflows.conf";
+    private static final String PDF_DATA_FILE = "patches/pediatrics-study-pdfs.conf";
 
     private Path cfgPath;
     private Config cfg;
@@ -258,7 +260,7 @@ public class BrainPediatricsUpdates implements CustomTask {
                                                      @Bind("sourceActivityCode") String sourceActivityCode,
                                                      @Bind("targetActivityCode") String targetActivityCode);
 
-        @SqlUpdate("update event_configuration set is_active = false, max_occurrences_per_user = 0 "
+        @SqlUpdate("update event_configuration set is_active = false "
                 + " where event_configuration_id in (<eventIds>)")
         int disableStudyEvents(@BindList("eventIds") Set<Long> eventIds);
 

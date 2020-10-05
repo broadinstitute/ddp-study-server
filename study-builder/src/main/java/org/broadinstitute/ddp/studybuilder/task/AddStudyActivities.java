@@ -17,7 +17,7 @@ import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class AddStudyActivities implements CustomTask {
+abstract class AddStudyActivities implements CustomTask {
     private static final Logger LOG = LoggerFactory.getLogger(AddStudyActivities.class);
 
     protected String studyGuid;
