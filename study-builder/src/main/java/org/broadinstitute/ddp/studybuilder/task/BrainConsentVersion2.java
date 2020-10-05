@@ -3,6 +3,8 @@ package org.broadinstitute.ddp.studybuilder.task;
 import java.io.File;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.Arrays;
+import java.util.List;
 
 import com.google.gson.Gson;
 import com.typesafe.config.Config;
@@ -15,6 +17,7 @@ import org.broadinstitute.ddp.db.dao.JdbiQuestion;
 import org.broadinstitute.ddp.db.dao.JdbiRevision;
 import org.broadinstitute.ddp.db.dao.JdbiTextQuestion;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
+import org.broadinstitute.ddp.db.dao.JdbiVariableSubstitution;
 import org.broadinstitute.ddp.db.dao.PdfDao;
 import org.broadinstitute.ddp.db.dao.SectionBlockDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
@@ -25,6 +28,7 @@ import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.TextQuestionDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
+import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.definition.question.TextQuestionDef;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.pdf.PdfActivityDataSource;
@@ -114,7 +118,7 @@ public class BrainConsentVersion2 implements CustomTask {
         QuestionDto dobDto = jdbiQuestion.findLatestDtoByStudyIdAndQuestionStableId(studyId, "CONSENT_DOB").get();
         long dobBlockId = helper.findQuestionBlockId(dobDto.getId());
         SectionBlockMembershipDto dobSectionDto = jdbiFormSectionBlock.getActiveMembershipByBlockId(dobBlockId).get();
-        long newV2RevId = jdbiRevision.insertStart(timestamp.toEpochMilli(), adminUser.getId(), "new question in version 2");
+        long newV2RevId = jdbiRevision.insertStart(timestamp.toEpochMilli(), adminUser.getId(), "consent version#2 change");
         SectionBlockDao sectionBlockDao = handle.attach(SectionBlockDao.class);
         int dobDisplayOrder = dobSectionDto.getDisplayOrder();
 
@@ -131,10 +135,17 @@ public class BrainConsentVersion2 implements CustomTask {
         long fullnameNewRevId = jdbiRevision.copyAndTerminate(fullNameRevId, meta);
         jdbiFormSectionBlock.updateRevisionIdById(fullNameDto.getId(), fullnameNewRevId);
         helper.updateFormSectionBlockDisplayOrder(fullNameSectionDto.getId(), dobSectionDto.getDisplayOrder() + 5);
+
         //update template placeholder text
         String newTemplateText = "Your Signature (Full Name)*";
         long tmplVarId = helper.findTemplateVariableId(fullNameTextDto.getPlaceholderTemplateId());
-        helper.updateVarValueByTemplateVarId(tmplVarId, newTemplateText);
+        JdbiVariableSubstitution jdbiVarSubst = handle.attach(JdbiVariableSubstitution.class);
+        List<Translation> transList = jdbiVarSubst.fetchSubstitutionsForTemplateVariable(tmplVarId);
+        Translation currTranslation = transList.get(0);
+        long newFullNameSubRevId = jdbiRevision.copyAndTerminate(currTranslation.getRevisionId().get(), meta);
+        long[] revIds = {newFullNameSubRevId};
+        jdbiVarSubst.bulkUpdateRevisionIdsBySubIds(Arrays.asList(currTranslation.getId().get()), revIds);
+        jdbiVarSubst.insert(currTranslation.getLanguageCode(), newTemplateText, newV2RevId, tmplVarId);
 
         //pdf version
         LOG.info("Adding new pdf version for consent");
@@ -177,9 +188,6 @@ public class BrainConsentVersion2 implements CustomTask {
 
         @SqlUpdate("update form_section__block set display_order = :displayOrder where form_section__block_id = :formSectionBlockId")
         int updateFormSectionBlockDisplayOrder(@Bind("formSectionBlockId") long formSectionBlockId, @Bind("displayOrder") int displayOrder);
-
-        @SqlUpdate("update i18n_template_substitution set substitution_value = :value where template_variable_id = :id")
-        int updateVarValueByTemplateVarId(@Bind("id") long templateVarId, @Bind("value") String value);
 
     }
 }
