@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Stream;
 
 import org.broadinstitute.ddp.cache.CacheService;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
@@ -92,5 +94,10 @@ public class JdbiQuestionValidationCached extends SQLObjectWrapper<JdbiQuestionV
     @Override
     public List<ValidationDto> findDtosByQuestionIdAndTimestamp(long questionId, long timestamp) {
         return delegate.findDtosByQuestionIdAndTimestamp(questionId, timestamp);
+    }
+
+    @Override
+    public Stream<ValidationDto> findDtosByQuestionIdsAndTimestamp(Set<Long> questionIds, long timestamp) {
+        return delegate.findDtosByQuestionIdsAndTimestamp(questionIds, timestamp);
     }
 }

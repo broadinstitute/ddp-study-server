@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Stream;
 
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.db.dto.validation.ValidationDto;
@@ -12,6 +14,7 @@ import org.jdbi.v3.core.result.RowView;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
@@ -23,7 +26,8 @@ public interface JdbiQuestionValidation extends SqlObject {
     @GetGeneratedKeys
     long insert(long questionId, long validationId);
 
-    @SqlQuery("select vt.validation_type_code, val.* from question__validation as qv"
+    @SqlQuery("select qv.question_id, vt.validation_type_code, val.*"
+            + " from question__validation as qv"
             + " join validation as val on val.validation_id = qv.validation_id"
             + " join validation_type as vt on vt.validation_type_id = val.validation_type_id"
             + " join revision as rev on rev.revision_id = val.revision_id"
@@ -35,7 +39,8 @@ public interface JdbiQuestionValidation extends SqlObject {
         return getAllActiveValidations(questionDto.getId());
     }
 
-    @SqlQuery("select qv.question_id, vt.validation_type_code, val.* from question__validation as qv"
+    @SqlQuery("select qv.question_id, vt.validation_type_code, val.*"
+            + " from question__validation as qv"
             + " join validation as val on val.validation_id = qv.validation_id"
             + " join validation_type as vt on vt.validation_type_id = val.validation_type_id"
             + " join revision as rev on rev.revision_id = val.revision_id"
@@ -45,7 +50,8 @@ public interface JdbiQuestionValidation extends SqlObject {
     @UseRowReducer(ValidationRowReducer.class)
     Map<Long, List<ValidationDto>> getAllActiveValidationsForActivity(@Bind("activityId") long activityId);
 
-    @SqlQuery("select vt.validation_type_code, val.* from question__validation as qv"
+    @SqlQuery("select qv.question_id, vt.validation_type_code, val.*"
+            + " from question__validation as qv"
             + " join validation as val on val.validation_id = qv.validation_id"
             + " join validation_type as vt on vt.validation_type_id = val.validation_type_id"
             + " join revision as rev on rev.revision_id = val.revision_id"
@@ -53,7 +59,7 @@ public interface JdbiQuestionValidation extends SqlObject {
     @RegisterRowMapper(ValidationDto.ValidationDtoMapper.class)
     Optional<ValidationDto> getRequiredValidationIfActive(long questionId);
 
-    @SqlQuery("select vt.validation_type_code, val.*"
+    @SqlQuery("select qv.question_id, vt.validation_type_code, val.*"
             + "  from question__validation as qv"
             + "  join validation as val on val.validation_id = qv.validation_id"
             + "  join validation_type as vt on vt.validation_type_id = val.validation_type_id"
@@ -65,6 +71,19 @@ public interface JdbiQuestionValidation extends SqlObject {
     List<ValidationDto> findDtosByQuestionIdAndTimestamp(@Bind("questionId") long questionId,
                                                          @Bind("timestamp") long timestamp);
 
+    @SqlQuery("select qv.question_id, vt.validation_type_code, val.*"
+            + "  from question__validation as qv"
+            + "  join validation as val on val.validation_id = qv.validation_id"
+            + "  join validation_type as vt on vt.validation_type_id = val.validation_type_id"
+            + "  join revision as rev on rev.revision_id = val.revision_id"
+            + " where qv.question_id in (<questionIds>)"
+            + "   and rev.start_date <= :timestamp"
+            + "   and (rev.end_date is null or :timestamp < rev.end_date)"
+            + " order by qv.question_id asc, val.validation_id asc")
+    @RegisterRowMapper(ValidationDto.ValidationDtoMapper.class)
+    Stream<ValidationDto> findDtosByQuestionIdsAndTimestamp(
+            @BindList(value = "questionIds", onEmpty = BindList.EmptyHandling.NULL) Set<Long> questionIds,
+            @Bind("timestamp") long timestamp);
 
     class ValidationRowReducer implements LinkedHashMapRowReducer<Long, Map.Entry<Long, List<ValidationDto>>> {
 

@@ -1,15 +1,17 @@
 package org.broadinstitute.ddp.db.dao;
 
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
-import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.jdbi.v3.sqlobject.SqlObject;
-import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
+import org.jdbi.v3.sqlobject.config.KeyColumn;
+import org.jdbi.v3.sqlobject.config.ValueColumn;
 import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
-import org.jdbi.v3.stringtemplate4.UseStringTemplateSqlLocator;
 
 public interface JdbiBlockConditionalControl extends SqlObject {
 
@@ -17,21 +19,27 @@ public interface JdbiBlockConditionalControl extends SqlObject {
     @GetGeneratedKeys
     long insert(@Bind("blockId") long blockId, @Bind("controlQuestionId") long controlQuestionId);
 
-    @UseStringTemplateSqlLocator
-    @SqlQuery("queryQuestionDtoByBlockIdAndInstanceGuid")
-    @RegisterConstructorMapper(QuestionDto.class)
-    Optional<QuestionDto> findControlQuestionDto(@Bind("blockId") long blockId, @Bind("instanceGuid") String instanceGuid);
-
-    @SqlQuery("select qt.question_type_code, qsc.stable_id, q.*, rev.start_date as revision_start, rev.end_date as revision_end"
+    @SqlQuery("select bcc.control_question_id"
             + "  from block_conditional_control as bcc"
             + "  join question as q on q.question_id = bcc.control_question_id"
-            + "  join question_type as qt on qt.question_type_id = q.question_type_id"
-            + "  join question_stable_code as qsc on qsc.question_stable_code_id = q.question_stable_code_id"
             + "  join revision as rev on rev.revision_id = q.revision_id"
+            + "  join activity_instance as ai on ai.study_activity_id = q.study_activity_id"
             + " where bcc.block_id = :blockId"
+            + "   and ai.activity_instance_guid = :instanceGuid"
+            + "   and rev.start_date <= ai.created_at"
+            + "   and (rev.end_date is null or ai.created_at < rev.end_date)")
+    Optional<Long> findControlQuestionId(@Bind("blockId") long blockId, @Bind("instanceGuid") String instanceGuid);
+
+    @SqlQuery("select bcc.block_id, bcc.control_question_id"
+            + "  from block_conditional_control as bcc"
+            + "  join question as q on q.question_id = bcc.control_question_id"
+            + "  join revision as rev on rev.revision_id = q.revision_id"
+            + " where bcc.block_id in (<blockIds>)"
             + "   and rev.start_date <= :timestamp"
             + "   and (rev.end_date is null or :timestamp < rev.end_date)")
-    @RegisterConstructorMapper(QuestionDto.class)
-    Optional<QuestionDto> findControlQuestionDtoByBlockIdAndTimestamp(@Bind("blockId") long blockId,
-                                                                      @Bind("timestamp") long timestamp);
+    @KeyColumn("block_id")
+    @ValueColumn("control_question_id")
+    Map<Long, Long> findControlQuestionIdsByBlockIdsAndTimestamp(
+            @BindList(value = "blockIds", onEmpty = BindList.EmptyHandling.NULL) Set<Long> blockIds,
+            @Bind("timestamp") long timestamp);
 }

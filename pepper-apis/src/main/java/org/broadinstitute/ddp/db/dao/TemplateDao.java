@@ -15,6 +15,9 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.cache.LanguageStore;
@@ -26,15 +29,20 @@ import org.broadinstitute.ddp.model.activity.definition.template.TemplateVariabl
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.TemplateType;
 import org.jdbi.v3.core.mapper.RowMapper;
+import org.jdbi.v3.core.result.LinkedHashMapRowReducer;
+import org.jdbi.v3.core.result.RowView;
 import org.jdbi.v3.core.statement.StatementContext;
 import org.jdbi.v3.sqlobject.CreateSqlObject;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.KeyColumn;
+import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
+import org.jdbi.v3.sqlobject.statement.UseRowReducer;
 import org.jdbi.v3.stringtemplate4.StringTemplateSqlLocator;
+import org.jdbi.v3.stringtemplate4.UseStringTemplateSqlLocator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -171,53 +179,43 @@ public interface TemplateDao extends SqlObject {
     Map<Long, TextAndVarCount> findAllTextAndVarCountsByIds(@BindList("templateIds") Set<Long> templateIds);
 
     default Template loadTemplateById(long templateId) {
-        String query = StringTemplateSqlLocator
-                .findStringTemplate(TemplateDao.class, "queryTemplateById")
-                .render();
+        return loadTemplatesByIds(Set.of(templateId)).findFirst().orElse(null);
+    }
 
-        Map<Long, Template> templateMap = getHandle().createQuery(query)
-                .bind("templateId", templateId)
-                .reduceRows(new HashMap<>(), (accumulator, row) -> {
-                    Long fetchedTemplateId = row.getColumn("t_template_id", Long.class);
-                    Long templateRevisionId = row.getColumn("template_revision_id", Long.class);
-                    String templateTypeCode = row.getColumn("template_type_code", String.class);
-                    String templateCode = row.getColumn("template_code", String.class);
-                    String templateText = row.getColumn("template_text", String.class);
-                    Template prompt = accumulator.computeIfAbsent(
-                            fetchedTemplateId,
-                            id -> new Template(templateId,
-                                        TemplateType.valueOf(templateTypeCode),
-                                        templateCode,
-                                        templateText,
-                                        templateRevisionId.longValue()));
+    @UseStringTemplateSqlLocator
+    @SqlQuery("queryTemplatesByIds")
+    @RegisterConstructorMapper(Template.class)
+    @RegisterConstructorMapper(TemplateVariable.class)
+    @RegisterConstructorMapper(Translation.class)
+    @UseRowReducer(TemplateReducer.class)
+    Stream<Template> loadTemplatesByIds(
+            @BindList(value = "templateIds", onEmpty = BindList.EmptyHandling.NULL) Set<Long> templateIds);
 
-                    Long variableId = row.getColumn("template_variable_id", Long.class);
-                    String variableName = row.getColumn("variable_name", String.class);
-                    String languageCode = row.getColumn("iso_language_code", String.class);
+    default Map<Long, Template> collectTemplatesByIds(Set<Long> templateIds) {
+        return loadTemplatesByIds(templateIds)
+                .collect(Collectors.toMap(Template::getTemplateId, Function.identity()));
+    }
 
-                    Long translationId = row.getColumn("substitution_id", Long.class);
-                    Long translationRevisionId = row.getColumn("substitution_revision_id", Long.class);
-                    String translatedTxt = row.getColumn("substitution_value", String.class);
+    class TemplateReducer implements LinkedHashMapRowReducer<Long, Template> {
+        @Override
+        public void accumulate(Map<Long, Template> container, RowView view) {
+            long id = view.getColumn("template_id", Long.class);
+            Template template = container.computeIfAbsent(id, key -> view.getRow(Template.class));
 
-                    if (StringUtils.isNotBlank(variableName) && StringUtils.isNotBlank(languageCode)) {
-                        Translation translation = new Translation(translationId, languageCode, translatedTxt, translationRevisionId);
-                        
-                        Optional<TemplateVariable> existingVariable = prompt.getVariable(variableName);
-                        if (existingVariable.isPresent()) {
-                            TemplateVariable variable = existingVariable.get();
-                            variable.addTranslation(translation);
-                        } else {
-                            List<Translation> translationList = new ArrayList<>();
-                            translationList.add(translation);
-                            TemplateVariable variable = new TemplateVariable(variableId, variableName, translationList);
+            String variableName = view.getColumn("variable_name", String.class);
+            if (StringUtils.isNotBlank(variableName)) {
+                var variable = template.getVariable(variableName).orElse(null);
+                if (variable == null) {
+                    variable = view.getRow(TemplateVariable.class);
+                    template.addVariable(variable);
+                }
 
-                            prompt.addVariable(variable);
-                        }
-                    }
-                    return accumulator;
-                });
-
-        return templateMap.get(templateId);
+                Long subId = view.getColumn("substitution_id", Long.class);
+                if (subId != null) {
+                    variable.addTranslation(view.getRow(Translation.class));
+                }
+            }
+        }
     }
 
     class TextAndVarCountMapper implements RowMapper<TextAndVarCount> {

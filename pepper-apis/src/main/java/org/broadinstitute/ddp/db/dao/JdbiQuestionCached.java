@@ -133,4 +133,9 @@ public class JdbiQuestionCached extends SQLObjectWrapper<JdbiQuestion> implement
     public int updateIsDeprecatedById(long questionId, boolean isDeprecated) {
         return delegate.updateIsDeprecatedById(questionId, isDeprecated);
     }
+
+    @Override
+    public Stream<QuestionDto> findQuestionDtosByIds(Set<Long> questionIds) {
+        return delegate.findQuestionDtosByIds(questionIds);
+    }
 }

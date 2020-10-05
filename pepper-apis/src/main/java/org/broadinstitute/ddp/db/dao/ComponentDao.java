@@ -1,8 +1,17 @@
 package org.broadinstitute.ddp.db.dao;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dto.ComponentDto;
+import org.broadinstitute.ddp.db.dto.FormBlockDto;
 import org.broadinstitute.ddp.db.dto.InstitutionPhysicianComponentDto;
 import org.broadinstitute.ddp.db.dto.MailingAddressComponentDto;
 import org.broadinstitute.ddp.model.activity.definition.ComponentBlockDef;
@@ -47,34 +56,33 @@ public interface ComponentDao extends SqlObject {
         JdbiComponent jdbiComponent = getJdbiComponent();
 
         // query must pay attention to revisions
-        ComponentDto componentDto = jdbiComponent.findByBlockId(activityInstanceGuid, blockId);
-        long componentId = componentDto.getComponentId();
+        long componentId = jdbiComponent.findComponentIdByBlockIdAndInstanceGuid(blockId, activityInstanceGuid);
+        ComponentDto componentDto = jdbiComponent.findComponentDtosByIds(Set.of(componentId)).findFirst().get();
         FormComponent formComponent = null;
 
         boolean isInstitution = componentDto.getComponentType() == ComponentType.INSTITUTION;
         boolean isPhysician = componentDto.getComponentType() == ComponentType.PHYSICIAN;
         if (isInstitution || isPhysician) {
-            InstitutionPhysicianComponentDto institutionDto = getJdbiInstitutionPhysicianComponent().findById(componentId);
+            var institutionComponentDto = (InstitutionPhysicianComponentDto) componentDto;
             if (isInstitution) {
-                formComponent = new InstitutionComponent(institutionDto, componentDto.shouldHideNumber());
+                formComponent = new InstitutionComponent(institutionComponentDto, componentDto.shouldHideNumber());
             } else if (isPhysician) {
-                formComponent = new PhysicianComponent(institutionDto, componentDto.shouldHideNumber());
+                formComponent = new PhysicianComponent(institutionComponentDto, componentDto.shouldHideNumber());
             } else {
                 throw new DaoException("Unknown component type " + componentDto.getComponentType());
             }
         } else if (componentDto.getComponentType() == ComponentType.MAILING_ADDRESS) {
-            MailingAddressComponentDto mailingAddressComponentDto = getJdbiComponent()
-                    .findMailingAddressComponentDtoById(componentId)
-                    .orElseThrow(() -> new DaoException("Could not find mailing address component with id " + componentId));
+            var addressComponentDto = (MailingAddressComponentDto) componentDto;
             formComponent = new MailingAddressComponent(
-                    mailingAddressComponentDto.getTitleTemplateId(),
-                    mailingAddressComponentDto.getSubtitleTemplateId(),
+                    addressComponentDto.getTitleTemplateId(),
+                    addressComponentDto.getSubtitleTemplateId(),
                     componentDto.shouldHideNumber(),
-                    mailingAddressComponentDto.shouldRequireVerified(),
-                    mailingAddressComponentDto.shouldRequirePhone());
+                    addressComponentDto.shouldRequireVerified(),
+                    addressComponentDto.shouldRequirePhone());
         } else {
             throw new DaoException("Cannot process component type " + componentDto.getComponentType());
         }
+
         return formComponent;
     }
 
@@ -150,61 +158,80 @@ public interface ComponentDao extends SqlObject {
         return componentId;
     }
 
-    default ComponentBlockDef findDefByBlockIdAndTimestamp(long blockId, long timestamp) {
-        ComponentDto componentDto = getJdbiComponent()
-                .findDtoByBlockIdAndTimestamp(blockId, timestamp)
-                .orElseThrow(() -> new DaoException(String.format(
-                        "Could not find component block definition for id %d and timestamp %d", blockId, timestamp)));
+    default Map<Long, ComponentBlockDef> collectBlockDefs(List<FormBlockDto> blockDtos, long timestamp) {
+        if (blockDtos == null || blockDtos.isEmpty()) {
+            return new HashMap<>();
+        }
 
-        TemplateDao templateDao = getTemplateDao();
+        Set<Long> blockIds = new HashSet<>();
+        for (var blockDto : blockDtos) {
+            blockIds.add(blockDto.getId());
+        }
 
-        long componentId = componentDto.getComponentId();
-        if (componentDto.getComponentType() == ComponentType.MAILING_ADDRESS) {
-            MailingAddressComponentDto mailingAddressComponentDto = getJdbiComponent()
-                    .findMailingAddressComponentDtoById(componentId)
-                    .orElseThrow(() -> new DaoException("Could not find mailing address component with id " + componentId));
-            Template titleTmpl = null;
-            if (mailingAddressComponentDto.getTitleTemplateId() != null) {
-                titleTmpl = templateDao.loadTemplateById(mailingAddressComponentDto.getTitleTemplateId());
+        Map<Long, Long> blockIdToComponentId = getJdbiComponent()
+                .findComponentIdsByBlockIdsAndTimestamp(blockIds, timestamp);
+        Map<Long, ComponentDto> componentDtos = getJdbiComponent()
+                .findComponentDtosByIds(Set.copyOf(blockIdToComponentId.values()))
+                .collect(Collectors.toMap(ComponentDto::getComponentId, Function.identity()));
+
+        Set<Long> templateIds = new HashSet<>();
+        for (var componentDto : componentDtos.values()) {
+            templateIds.addAll(componentDto.getTemplateIds());
+        }
+        Map<Long, Template> templates = getTemplateDao().collectTemplatesByIds(templateIds);
+
+        Map<Long, ComponentBlockDef> blockDefs = new HashMap<>();
+        for (var blockDto : blockDtos) {
+            long componentId = blockIdToComponentId.get(blockDto.getId());
+            ComponentDto componentDto = componentDtos.get(componentId);
+
+            ComponentBlockDef blockDef;
+            if (componentDto.getComponentType() == ComponentType.MAILING_ADDRESS) {
+                blockDef = buildAddressBlockDef((MailingAddressComponentDto) componentDto, templates);
+            } else {
+                blockDef = buildInstitutionBlockDef((InstitutionPhysicianComponentDto) componentDto, templates);
             }
-            Template subtitleTmpl = null;
-            if (mailingAddressComponentDto.getSubtitleTemplateId() != null) {
-                subtitleTmpl = templateDao.loadTemplateById(mailingAddressComponentDto.getSubtitleTemplateId());
-            }
-            MailingAddressComponentDef comp = new MailingAddressComponentDef(titleTmpl, subtitleTmpl);
-            comp.setHideNumber(componentDto.shouldHideNumber());
-            comp.setRequireVerified(mailingAddressComponentDto.shouldRequireVerified());
-            comp.setRequirePhone(mailingAddressComponentDto.shouldRequirePhone());
-            return comp;
+
+            blockDef.setHideNumber(componentDto.shouldHideNumber());
+            blockDef.setBlockId(blockDto.getId());
+            blockDef.setBlockGuid(blockDto.getGuid());
+            blockDef.setShownExpr(blockDto.getShownExpr());
+
+            blockDefs.put(blockDto.getId(), blockDef);
         }
 
-        InstitutionPhysicianComponentDto compDto = getJdbiInstitutionPhysicianComponent().findById(componentId);
+        return blockDefs;
+    }
 
-        // todo: query templates
-        Template buttonTmpl = null;
-        if (compDto.getButtonTemplateId() != null) {
-            buttonTmpl = templateDao.loadTemplateById(compDto.getButtonTemplateId());
-        }
+    private ComponentBlockDef buildAddressBlockDef(MailingAddressComponentDto addressComponentDto,
+                                                   Map<Long, Template> templates) {
+        Template titleTmpl = templates.getOrDefault(addressComponentDto.getTitleTemplateId(), null);
+        Template subtitleTmpl = templates.getOrDefault(addressComponentDto.getSubtitleTemplateId(), null);
+        var blockDef = new MailingAddressComponentDef(titleTmpl, subtitleTmpl);
+        blockDef.setRequireVerified(addressComponentDto.shouldRequireVerified());
+        blockDef.setRequirePhone(addressComponentDto.shouldRequirePhone());
+        return blockDef;
+    }
 
-        Template titleTmpl = null;
-        if (compDto.getTitleTemplateId() != null) {
-            titleTmpl = templateDao.loadTemplateById(compDto.getTitleTemplateId());
-        }
-
-        Template subtitleTmpl = null;
-        if (compDto.getSubtitleTemplateId() != null) {
-            subtitleTmpl = templateDao.loadTemplateById(compDto.getSubtitleTemplateId());
-        }
-
-        PhysicianInstitutionComponentDef comp;
-        if (compDto.getInstitutionType() == InstitutionType.PHYSICIAN) {
-            comp = new PhysicianComponentDef(compDto.getAllowMultiple(), buttonTmpl, titleTmpl, subtitleTmpl,
-                    compDto.getInstitutionType(), compDto.showFields(), compDto.isRequired());
+    private ComponentBlockDef buildInstitutionBlockDef(InstitutionPhysicianComponentDto institutionComponentDto,
+                                                       Map<Long, Template> templates) {
+        Template titleTmpl = templates.getOrDefault(institutionComponentDto.getTitleTemplateId(), null);
+        Template subtitleTmpl = templates.getOrDefault(institutionComponentDto.getSubtitleTemplateId(), null);
+        Template buttonTmpl = templates.getOrDefault(institutionComponentDto.getButtonTemplateId(), null);
+        if (institutionComponentDto.getInstitutionType() == InstitutionType.PHYSICIAN) {
+            return new PhysicianComponentDef(
+                    institutionComponentDto.getAllowMultiple(),
+                    buttonTmpl, titleTmpl, subtitleTmpl,
+                    institutionComponentDto.getInstitutionType(),
+                    institutionComponentDto.showFields(),
+                    institutionComponentDto.isRequired());
         } else {
-            comp = new InstitutionComponentDef(compDto.getAllowMultiple(), buttonTmpl, titleTmpl, subtitleTmpl,
-                    compDto.getInstitutionType(), compDto.showFields(), compDto.isRequired());
+            return new InstitutionComponentDef(
+                    institutionComponentDto.getAllowMultiple(),
+                    buttonTmpl, titleTmpl, subtitleTmpl,
+                    institutionComponentDto.getInstitutionType(),
+                    institutionComponentDto.showFields(),
+                    institutionComponentDto.isRequired());
         }
-        comp.setHideNumber(componentDto.shouldHideNumber());
-        return comp;
     }
 }

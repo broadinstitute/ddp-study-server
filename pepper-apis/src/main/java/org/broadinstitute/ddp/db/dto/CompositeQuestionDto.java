@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.db.dto;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.broadinstitute.ddp.model.activity.types.OrientationType;
 import org.jdbi.v3.core.mapper.Nested;
@@ -63,5 +64,17 @@ public final class CompositeQuestionDto extends QuestionDto {
 
     public Optional<QuestionDto> getChildQuestionByStableId(String childAnswerStableId) {
         return childQuestions.stream().filter(child -> child.getStableId().equals(childAnswerStableId)).findFirst();
+    }
+
+    @Override
+    public Set<Long> getTemplateIds() {
+        var ids = super.getTemplateIds();
+        if (addButtonTemplateId != null) {
+            ids.add(addButtonTemplateId);
+        }
+        if (additionalItemTemplateId != null) {
+            ids.add(additionalItemTemplateId);
+        }
+        return ids;
     }
 }

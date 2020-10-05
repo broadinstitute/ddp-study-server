@@ -1,13 +1,10 @@
 package org.broadinstitute.ddp.db.dao;
 
-import java.util.List;
-import java.util.Optional;
 import javax.cache.Cache;
 import javax.cache.expiry.Duration;
 
 import org.broadinstitute.ddp.cache.CacheService;
 import org.broadinstitute.ddp.cache.ModelChangeType;
-import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.db.dto.TextQuestionDto;
 import org.broadinstitute.ddp.model.activity.types.SuggestionType;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
@@ -30,9 +27,9 @@ public class JdbiTextQuestionCached extends SQLObjectWrapper<JdbiTextQuestion> i
         }
     }
 
-    private void initializeCacheData(long activityId) {
-        delegate.findDtoByActivityId(activityId).forEach(dto -> questionIdToTextQuestionCache.put(dto.getId(), dto));
-    }
+    // private void initializeCacheData(long activityId) {
+    //     delegate.findDtoByActivityId(activityId).forEach(dto -> questionIdToTextQuestionCache.put(dto.getId(), dto));
+    // }
 
     @Override
     public int insert(long questionId, TextInputType inputType, SuggestionType suggestionType, Long placeholderTemplateId,
@@ -46,27 +43,27 @@ public class JdbiTextQuestionCached extends SQLObjectWrapper<JdbiTextQuestion> i
         return delegate.update(questionId, inputType, suggestionType, placeholderTemplateId);
     }
 
-    public Optional<TextQuestionDto> findDtoByQuestion(QuestionDto questionDto) {
-        if (isNullCache(questionIdToTextQuestionCache)) {
-            return delegate.findDtoByQuestionId(questionDto.getId());
-        } else {
-            TextQuestionDto dto = questionIdToTextQuestionCache.get(questionDto.getId());
-            if (dto == null) {
-                initializeCacheData(questionDto.getActivityId());
-                dto = questionIdToTextQuestionCache.get(questionDto.getId());
-            }
-            return Optional.ofNullable(dto);
-        }
-    }
+    // public Optional<TextQuestionDto> findDtoByQuestion(QuestionDto questionDto) {
+    //     if (isNullCache(questionIdToTextQuestionCache)) {
+    //         return delegate.findDtoByQuestionId(questionDto.getId());
+    //     } else {
+    //         TextQuestionDto dto = questionIdToTextQuestionCache.get(questionDto.getId());
+    //         if (dto == null) {
+    //             initializeCacheData(questionDto.getActivityId());
+    //             dto = questionIdToTextQuestionCache.get(questionDto.getId());
+    //         }
+    //         return Optional.ofNullable(dto);
+    //     }
+    // }
 
 
-    @Override
-    public Optional<TextQuestionDto> findDtoByQuestionId(long questionId) {
-        return delegate.findDtoByQuestionId(questionId);
-    }
+    // @Override
+    // public Optional<TextQuestionDto> findDtoByQuestionId(long questionId) {
+    //     return delegate.findDtoByQuestionId(questionId);
+    // }
 
-    @Override
-    public List<TextQuestionDto> findDtoByActivityId(long activityId) {
-        return delegate.findDtoByActivityId(activityId);
-    }
+    // @Override
+    // public List<TextQuestionDto> findDtoByActivityId(long activityId) {
+    //     return delegate.findDtoByActivityId(activityId);
+    // }
 }

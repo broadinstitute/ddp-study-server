@@ -2,8 +2,10 @@ package org.broadinstitute.ddp.db.dao;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -399,10 +401,11 @@ public interface ValidationDao extends SqlObject {
         getJdbiIntRangeValidation().insert(rule.getRuleId(), rule.getMin(), rule.getMax());
     }
 
-    default List<RuleDef> findRuleDefsByQuestionIdAndTimestamp(long questionId, long timestamp) {
-        return getJdbiQuestionValidation()
-                .findDtosByQuestionIdAndTimestamp(questionId, timestamp)
-                .stream().map(dto -> {
+    default Map<Long, List<RuleDef>> collectRuleDefs(Set<Long> questionIds, long timestamp) {
+        Map<Long, List<RuleDef>> questionIdToRuleDefs = new HashMap<>();
+        getJdbiQuestionValidation()
+                .findDtosByQuestionIdsAndTimestamp(questionIds, timestamp)
+                .forEach(dto -> {
                     // todo: query templates, data for validation rules
                     RuleDef ruleDef;
                     switch (dto.getRuleType()) {
@@ -439,8 +442,10 @@ public interface ValidationDao extends SqlObject {
                             throw new DaoException("Unhandled validation rule type " + dto.getRuleType());
                     }
                     ruleDef.setHintTemplateId(dto.getHintTemplateId());
-                    return ruleDef;
-                })
-                .collect(Collectors.toList());
+                    questionIdToRuleDefs
+                            .computeIfAbsent(dto.getQuestionId(), id -> new ArrayList<>())
+                            .add(ruleDef);
+                });
+        return questionIdToRuleDefs;
     }
 }

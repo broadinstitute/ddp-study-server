@@ -73,11 +73,11 @@ public class JdbiCompositeQuestionTest extends TxnAwareBaseTest {
             FormActivityDef act = insertCompositeActivity(handle, testData.getUserGuid(), testData.getStudyGuid(), childQuestionDefs);
             QuestionBlockDef firstQuestionInFormDef = extractFirstQuestion(act);
             Long firstQuestionInFormId = firstQuestionInFormDef.getQuestion().getQuestionId();
-            JdbiCompositeQuestion dao = daoBuilder.buildDao(handle);
-            Optional<CompositeQuestionDto> compositeQuestionDefOpt = dao
-                    .findDtoByQuestionId(firstQuestionInFormId);
-            assertTrue(compositeQuestionDefOpt.isPresent());
-            CompositeQuestionDto compositeQuestionDto = compositeQuestionDefOpt.get();
+            // JdbiCompositeQuestion dao = daoBuilder.buildDao(handle);
+            CompositeQuestionDto compositeQuestionDto = (CompositeQuestionDto) handle.attach(JdbiQuestion.class)
+                    .findQuestionDtoById(firstQuestionInFormId)
+                    .orElse(null);
+            assertNotNull(compositeQuestionDto);
             assertNotNull(compositeQuestionDto.getAddButtonTemplateId());
             assertNotNull(compositeQuestionDto.getAdditionalItemTemplateId());
             assertNotEquals(compositeQuestionDto.getAddButtonTemplateId(), compositeQuestionDto
@@ -103,11 +103,11 @@ public class JdbiCompositeQuestionTest extends TxnAwareBaseTest {
             FormActivityDef act = insertCompositeActivity(handle, testData.getUserGuid(), testData.getStudyGuid());
             QuestionBlockDef firstQuestionInFormDef = extractFirstQuestion(act);
             Long firstQuestionInFormId = firstQuestionInFormDef.getQuestion().getQuestionId();
-            JdbiCompositeQuestion dao = daoBuilder.buildDao(handle);
-            Optional<CompositeQuestionDto> compositeQuestionDefOpt = dao
-                    .findDtoByQuestionId(firstQuestionInFormId);
-            assertTrue(compositeQuestionDefOpt.isPresent());
-            CompositeQuestionDto compositeQuestionDto = compositeQuestionDefOpt.get();
+            // JdbiCompositeQuestion dao = daoBuilder.buildDao(handle);
+            CompositeQuestionDto compositeQuestionDto = (CompositeQuestionDto) handle.attach(JdbiQuestion.class)
+                    .findQuestionDtoById(firstQuestionInFormId)
+                    .orElse(null);
+            assertNotNull(compositeQuestionDto);
             assertNotNull(compositeQuestionDto.getAddButtonTemplateId());
             assertNotNull(compositeQuestionDto.getAdditionalItemTemplateId());
             assertNotEquals(compositeQuestionDto.getAddButtonTemplateId(), compositeQuestionDto

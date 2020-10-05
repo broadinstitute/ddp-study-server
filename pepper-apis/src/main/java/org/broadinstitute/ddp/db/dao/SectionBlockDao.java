@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.broadinstitute.ddp.db.DaoException;
@@ -518,79 +519,182 @@ public interface SectionBlockDao extends SqlObject {
         }
     }
 
-    default FormSectionDef findSectionDefByIdAndTimestamp(long sectionId, long timestamp) {
-        List<FormBlockDef> blockDefs = getJdbiFormSectionBlock()
-                .findOrderedFormBlockDtosBySectionIdAndTimestamp(sectionId, timestamp)
-                .stream().map(dto -> findBlockDefByDtoAndTimestamp(dto, timestamp))
-                .collect(Collectors.toList());
-
-        // todo: query icons
-
-        FormSectionDto sectionDto = getJdbiFormSection().findById(sectionId);
-        FormSectionDef sectionDef = new FormSectionDef(sectionDto.getSectionCode(), blockDefs);
-        sectionDef.setSectionId(sectionId);
-        if (sectionDto.getNameTemplateId() != null) {
-            sectionDef.setNameTemplate(getTemplateDao().loadTemplateById(sectionDto.getNameTemplateId()));
+    default Map<Long, FormSectionDef> collectSectionDefs(Set<Long> sectionIds, long timestamp) {
+        if (sectionIds == null || sectionIds.isEmpty()) {
+            return new HashMap<>();
         }
 
-        return sectionDef;
-    }
+        List<FormBlockDto> orderedBlockDtos = getJdbiFormSectionBlock()
+                .findOrderedFormBlockDtosBySectionIdsAndTimestamp(sectionIds, timestamp);
+        Map<Long, FormBlockDef> allBlockDefs = collectBlockDefs(orderedBlockDtos, timestamp);
 
-    default FormBlockDef findBlockDefByDtoAndTimestamp(FormBlockDto blockDto, long timestamp) {
-        FormBlockDef blockDef;
-        switch (blockDto.getType()) {
-            case CONTENT:
-                blockDef = getContentBlockDao().findDefByBlockIdAndTimestamp(blockDto.getId(), timestamp);
-                break;
-            case QUESTION:
-                blockDef = getQuestionDao().findBlockDefByBlockIdAndTimestamp(blockDto.getId(), timestamp);
-                break;
-            case COMPONENT:
-                blockDef = getComponentDao().findDefByBlockIdAndTimestamp(blockDto.getId(), timestamp);
-                break;
-            case CONDITIONAL:
-                blockDef = findConditionalBlockDefByBlockIdAndTimestamp(blockDto.getId(), timestamp);
-                break;
-            case GROUP:
-                blockDef = findGroupBlockDefByBlockIdAndTimestamp(blockDto.getId(), timestamp);
-                break;
-            default:
-                throw new DaoException("Unhandled block type " + blockDto.getType());
+        List<FormSectionDto> sectionDtos = getJdbiFormSection().findByIds(sectionIds);
+        Map<Long, List<FormBlockDef>> sectionIdToBlockDefs = new HashMap<>();
+        for (var blockDto : orderedBlockDtos) {
+            sectionIdToBlockDefs
+                    .computeIfAbsent(blockDto.getSectionId(), id -> new ArrayList<>())
+                    .add(allBlockDefs.get(blockDto.getId()));
         }
-        blockDef.setBlockId(blockDto.getId());
-        blockDef.setBlockGuid(blockDto.getGuid());
-        blockDef.setShownExpr(blockDto.getShownExpr());
-        return blockDef;
+
+        Set<Long> templateIds = new HashSet<>();
+        for (var sectionDto : sectionDtos) {
+            Long nameTemplateId = sectionDto.getNameTemplateId();
+            if (nameTemplateId != null) {
+                templateIds.add(nameTemplateId);
+            }
+        }
+        Map<Long, Template> templates = getTemplateDao().collectTemplatesByIds(templateIds);
+
+        Map<Long, FormSectionDef> sectionDefs = new HashMap<>();
+        for (var sectionDto : sectionDtos) {
+            List<FormBlockDef> blockDefs = sectionIdToBlockDefs.getOrDefault(sectionDto.getId(), new ArrayList<>());
+
+            var sectionDef = new FormSectionDef(sectionDto.getSectionCode(), blockDefs);
+            sectionDef.setSectionId(sectionDto.getId());
+            sectionDef.setNameTemplate(templates.getOrDefault(sectionDto.getNameTemplateId(), null));
+
+            sectionDefs.put(sectionDto.getId(), sectionDef);
+        }
+
+        return sectionDefs;
     }
 
-    default ConditionalBlockDef findConditionalBlockDefByBlockIdAndTimestamp(long blockId, long timestamp) {
-        QuestionDef control = getJdbiBlockConditionalControl()
-                .findControlQuestionDtoByBlockIdAndTimestamp(blockId, timestamp)
-                .map(dto -> getQuestionDao().findQuestionDefByDtoAndTimestamp(dto, timestamp))
-                .orElseThrow(() -> new DaoException(String.format(
-                        "Could not find control question definition for block id %d and timestamp %d", blockId, timestamp)));
-        ConditionalBlockDef condBlockDef = new ConditionalBlockDef(control);
-        condBlockDef.getNested().addAll(findNestedBlockDefsByBlockIdAndTimestamp(blockId, timestamp));
-        return condBlockDef;
+    default Map<Long, FormBlockDef> collectBlockDefs(List<FormBlockDto> blockDtos, long timestamp) {
+        if (blockDtos == null || blockDtos.isEmpty()) {
+            return new HashMap<>();
+        }
+
+        List<FormBlockDto> contentBlockDtos = new ArrayList<>();
+        List<FormBlockDto> questionBlockDtos = new ArrayList<>();
+        List<FormBlockDto> componentBlockDtos = new ArrayList<>();
+        List<FormBlockDto> conditionalBlockDtos = new ArrayList<>();
+        List<FormBlockDto> groupBlockDtos = new ArrayList<>();
+
+        for (var blockDto : blockDtos) {
+            switch (blockDto.getType()) {
+                case CONTENT:
+                    contentBlockDtos.add(blockDto);
+                    break;
+                case QUESTION:
+                    questionBlockDtos.add(blockDto);
+                    break;
+                case COMPONENT:
+                    componentBlockDtos.add(blockDto);
+                    break;
+                case CONDITIONAL:
+                    conditionalBlockDtos.add(blockDto);
+                    break;
+                case GROUP:
+                    groupBlockDtos.add(blockDto);
+                    break;
+                default:
+                    throw new DaoException("Unhandled block type " + blockDto.getType());
+            }
+        }
+
+        Map<Long, FormBlockDef> blockDefs = new HashMap<>();
+        blockDefs.putAll(getContentBlockDao().collectBlockDefs(contentBlockDtos, timestamp));
+        blockDefs.putAll(getQuestionDao().collectBlockDefs(questionBlockDtos, timestamp));
+        blockDefs.putAll(getComponentDao().collectBlockDefs(componentBlockDtos, timestamp));
+        blockDefs.putAll(collectConditionalBlockDefs(conditionalBlockDtos, timestamp));
+        blockDefs.putAll(collectGroupBlockDefs(groupBlockDtos, timestamp));
+
+        return blockDefs;
     }
 
-    default GroupBlockDef findGroupBlockDefByBlockIdAndTimestamp(long blockId, long timestamp) {
-        BlockGroupHeaderDto groupDto = getJdbiBlockGroupHeader()
-                .findGroupHeaderDto(blockId, timestamp)
-                .orElseThrow(() -> new DaoException(String.format(
-                        "Could not find group definition for block id %d and timestamp %d", blockId, timestamp)));
-        Template titleTemplate = groupDto.getTitleTemplateId() == null ? null
-                : getTemplateDao().loadTemplateById(groupDto.getTitleTemplateId());
-        GroupBlockDef groupBlockDef = new GroupBlockDef(groupDto.getListStyleHint(), titleTemplate);
-        groupBlockDef.setPresentationHint(groupDto.getPresentationHint());
-        groupBlockDef.getNested().addAll(findNestedBlockDefsByBlockIdAndTimestamp(blockId, timestamp));
-        return groupBlockDef;
+    default Map<Long, ConditionalBlockDef> collectConditionalBlockDefs(List<FormBlockDto> blockDtos, long timestamp) {
+        if (blockDtos == null || blockDtos.isEmpty()) {
+            return new HashMap<>();
+        }
+
+        Set<Long> blockIds = new HashSet<>();
+        for (var blockDto : blockDtos) {
+            blockIds.add(blockDto.getId());
+        }
+
+        Map<Long, Long> blockIdToControlQuestionId = getJdbiBlockConditionalControl()
+                .findControlQuestionIdsByBlockIdsAndTimestamp(blockIds, timestamp);
+        Map<Long, QuestionDef> questionDefs = getQuestionDao()
+                .collectQuestionDefs(Set.copyOf(blockIdToControlQuestionId.values()), timestamp);
+        Map<Long, List<FormBlockDef>> parentIdToNestedDefs = collectNestedBlockDefs(blockIds, timestamp);
+
+        Map<Long, ConditionalBlockDef> blockDefs = new HashMap<>();
+        for (var blockDto : blockDtos) {
+            long controlQuestionId = blockIdToControlQuestionId.get(blockDto.getId());
+            QuestionDef controlQuestionDef = questionDefs.get(controlQuestionId);
+            List<FormBlockDef> nestedDefs = parentIdToNestedDefs.getOrDefault(blockDto.getId(), new ArrayList<>());
+
+            var blockDef = new ConditionalBlockDef(controlQuestionDef);
+            blockDef.getNested().addAll(nestedDefs);
+            blockDef.setBlockId(blockDto.getId());
+            blockDef.setBlockGuid(blockDto.getGuid());
+            blockDef.setShownExpr(blockDto.getShownExpr());
+
+            blockDefs.put(blockDto.getId(), blockDef);
+        }
+
+        return blockDefs;
     }
 
-    default List<FormBlockDef> findNestedBlockDefsByBlockIdAndTimestamp(long parentBlockId, long timestamp) {
-        return getJdbiBlockNesting()
-                .findOrderedNestedFormBlockDtosByBlockIdAndTimestamp(parentBlockId, timestamp)
-                .stream().map(nested -> findBlockDefByDtoAndTimestamp(nested, timestamp))
-                .collect(Collectors.toList());
+    default Map<Long, GroupBlockDef> collectGroupBlockDefs(List<FormBlockDto> blockDtos, long timestamp) {
+        if (blockDtos == null || blockDtos.isEmpty()) {
+            return new HashMap<>();
+        }
+
+        Set<Long> blockIds = new HashSet<>();
+        for (var blockDto : blockDtos) {
+            blockIds.add(blockDto.getId());
+        }
+
+        Map<Long, BlockGroupHeaderDto> groupDtos = getJdbiBlockGroupHeader()
+                .findDtosByBlockIdsAndTimestamp(blockIds, timestamp)
+                .collect(Collectors.toMap(BlockGroupHeaderDto::getBlockId, Function.identity()));
+        Map<Long, List<FormBlockDef>> parentIdToNestedDefs = collectNestedBlockDefs(blockIds, timestamp);
+
+        Set<Long> templateIds = new HashSet<>();
+        for (var groupDto : groupDtos.values()) {
+            Long titleTemplateId = groupDto.getTitleTemplateId();
+            if (titleTemplateId != null) {
+                templateIds.add(titleTemplateId);
+            }
+        }
+        Map<Long, Template> templates = getTemplateDao().collectTemplatesByIds(templateIds);
+
+        Map<Long, GroupBlockDef> blockDefs = new HashMap<>();
+        for (var blockDto : blockDtos) {
+            BlockGroupHeaderDto groupDto = groupDtos.get(blockDto.getId());
+            Template titleTemplate = templates.getOrDefault(groupDto.getTitleTemplateId(), null);
+            List<FormBlockDef> nestedDefs = parentIdToNestedDefs.getOrDefault(blockDto.getId(), new ArrayList<>());
+
+            var blockDef = new GroupBlockDef(groupDto.getListStyleHint(), titleTemplate);
+            blockDef.setPresentationHint(groupDto.getPresentationHint());
+            blockDef.getNested().addAll(nestedDefs);
+            blockDef.setBlockId(blockDto.getId());
+            blockDef.setBlockGuid(blockDto.getGuid());
+            blockDef.setShownExpr(blockDto.getShownExpr());
+
+            blockDefs.put(blockDto.getId(), blockDef);
+        }
+
+        return blockDefs;
+    }
+
+    default Map<Long, List<FormBlockDef>> collectNestedBlockDefs(Set<Long> parentBlockIds, long timestamp) {
+        if (parentBlockIds == null || parentBlockIds.isEmpty()) {
+            return new HashMap<>();
+        }
+
+        List<FormBlockDto> orderedNestedDtos = getJdbiBlockNesting()
+                .findOrderedNestedDtosByParentIdsAndTimestamp(parentBlockIds, timestamp);
+        Map<Long, FormBlockDef> allNestedDefs = collectBlockDefs(orderedNestedDtos, timestamp);
+
+        Map<Long, List<FormBlockDef>> parentIdToNestedBlockDefs = new HashMap<>();
+        for  (var nestedDto : orderedNestedDtos) {
+            parentIdToNestedBlockDefs
+                    .computeIfAbsent(nestedDto.getParentBlockId(), id -> new ArrayList<>())
+                    .add(allNestedDefs.get(nestedDto.getId()));
+        }
+
+        return parentIdToNestedBlockDefs;
     }
 }

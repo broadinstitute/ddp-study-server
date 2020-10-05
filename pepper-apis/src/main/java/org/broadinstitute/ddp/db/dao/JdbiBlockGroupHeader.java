@@ -1,12 +1,15 @@
 package org.broadinstitute.ddp.db.dao;
 
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Stream;
 
 import org.broadinstitute.ddp.db.dto.BlockGroupHeaderDto;
 import org.broadinstitute.ddp.model.activity.types.PresentationHint;
 import org.jdbi.v3.sqlobject.SqlObject;
-import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
+import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
@@ -24,16 +27,18 @@ public interface JdbiBlockGroupHeader extends SqlObject {
 
     @UseStringTemplateSqlLocator
     @SqlQuery("queryDtoByBlockIdAndInstanceGuid")
-    @RegisterRowMapper(BlockGroupHeaderDto.BlockGroupHeaderDtoMapper.class)
+    @RegisterConstructorMapper(BlockGroupHeaderDto.class)
     Optional<BlockGroupHeaderDto> findGroupHeaderDto(@Bind("blockId") long blockId, @Bind("instanceGuid") String instanceGuid);
 
     @UseStringTemplateSqlLocator
-    @SqlQuery("queryDtoByBlockIdAndTimestamp")
-    @RegisterRowMapper(BlockGroupHeaderDto.BlockGroupHeaderDtoMapper.class)
-    Optional<BlockGroupHeaderDto> findGroupHeaderDto(@Bind("blockId") long blockId, @Bind("timestamp") long timestamp);
+    @SqlQuery("queryDtosByBlockIdsAndTimestamp")
+    @RegisterConstructorMapper(BlockGroupHeaderDto.class)
+    Stream<BlockGroupHeaderDto> findDtosByBlockIdsAndTimestamp(
+            @BindList(value = "blockIds", onEmpty = BindList.EmptyHandling.NULL) Set<Long> blockIds,
+            @Bind("timestamp") long timestamp);
 
     @UseStringTemplateSqlLocator
     @SqlQuery("queryLatestDtoByBlockId")
-    @RegisterRowMapper(BlockGroupHeaderDto.BlockGroupHeaderDtoMapper.class)
+    @RegisterConstructorMapper(BlockGroupHeaderDto.class)
     Optional<BlockGroupHeaderDto> findLatestGroupHeaderDto(@Bind("blockId") long blockId);
 }

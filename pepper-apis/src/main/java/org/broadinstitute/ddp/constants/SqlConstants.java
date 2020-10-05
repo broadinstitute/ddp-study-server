@@ -238,17 +238,6 @@ public class SqlConstants {
         public static final String REVISION_ID = "revision_id";
     }
 
-    public static final class BlockGroupHeaderTable {
-        public static final String ID = "block_group_header_id";
-        public static final String BLOCK_ID = "block_id";
-        public static final String TITLE_TEMPLATE_ID = "title_template_id";
-        public static final String REVISION_ID = "revision_id";
-    }
-
-    public static final class PresentationHintTable {
-        public static final String CODE = "presentation_hint_code";
-    }
-
     public static final class TemplateTable {
         public static final String TABLE_NAME = "template";
         public static final String ID = "template_id";

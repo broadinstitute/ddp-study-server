@@ -358,14 +358,14 @@ public interface PicklistQuestionDao extends SqlObject {
         return executeGroupAndOptionDtosQuery(query);
     }
 
-    default GroupAndOptionDtos findOrderedGroupAndOptionDtos(QuestionDto questionDto, long timestamp) {
+    default Map<Long, GroupAndOptionDtos> findOrderedGroupAndOptionDtos(Set<Long> questionIds, long timestamp) {
         String queryString = StringTemplateSqlLocator
-                .findStringTemplate(PicklistQuestionDao.class, "queryAllOrderedGroupsAndOptionsByQuestionIdAndTimestamp")
+                .findStringTemplate(PicklistQuestionDao.class, "queryAllOrderedGroupsAndOptionsByQuestionIdsAndTimestamp")
                 .render();
         Query query = getHandle().createQuery(queryString)
-                .bind("questionId", questionDto.getId())
+                .bindList("questionIds", List.copyOf(questionIds))
                 .bind("timestamp", timestamp);
-        return executeGroupAndOptionDtosQuery(query);
+        return executeGroupAndOptionDtosByQuestionQuery(query);
     }
 
     default Map<Long, GroupAndOptionDtos> findAllOrderedGroupAndOptionDtosByQuestion(long activityId) {
@@ -381,7 +381,12 @@ public interface PicklistQuestionDao extends SqlObject {
         return query
                 .registerRowMapper(ConstructorMapper.factory(PicklistOptionDto.class, "po"))
                 .registerRowMapper(ConstructorMapper.factory(PicklistGroupDto.class, "pg"))
-                .reduceRows(new GroupAndOptionDtos(), (container, row) -> {
+                .reduceRows(null, (container, row) -> {
+                    if (container == null) {
+                        long questionId = row.getColumn("question_id", Long.class);
+                        container = new GroupAndOptionDtos(questionId);
+                    }
+
                     PicklistOptionDto option = row.getRow(PicklistOptionDto.class);
                     Long groupId = row.getColumn("pg_picklist_group_id", Long.class);
 
@@ -408,38 +413,45 @@ public interface PicklistQuestionDao extends SqlObject {
         return query
                 .registerRowMapper(ConstructorMapper.factory(PicklistOptionDto.class, "po"))
                 .registerRowMapper(ConstructorMapper.factory(PicklistGroupDto.class, "pg"))
-                .reduceRows(new HashMap<Long, GroupAndOptionDtos>(), (container, row) -> {
+                .reduceRows(new HashMap<>(), (result, row) -> {
                     PicklistOptionDto option = row.getRow(PicklistOptionDto.class);
-                    Long questionId = row.getColumn("question_id", Long.class);
+                    long questionId = row.getColumn("question_id", Long.class);
                     Long groupId = row.getColumn("pg_picklist_group_id", Long.class);
+                    var container = result.computeIfAbsent(questionId, (k) -> new GroupAndOptionDtos(questionId));
 
                     if (groupId == null) {
-                        container.computeIfAbsent(questionId, (k) -> new GroupAndOptionDtos()).getUngroupedOptions().add(option);
+                        container.getUngroupedOptions().add(option);
                     } else {
                         PicklistGroupDto group = row.getRow(PicklistGroupDto.class);
-                        if (container.computeIfAbsent(questionId, (k) ->
-                                new GroupAndOptionDtos()).getGroupIdToOptions().containsKey(groupId)) {
-                            container.computeIfAbsent(questionId, (k) ->
-                                    new GroupAndOptionDtos()).getGroupIdToOptions().get(groupId).add(option);
+                        if (container.getGroupIdToOptions().containsKey(groupId)) {
+                            container.getGroupIdToOptions().get(groupId).add(option);
                         } else {
                             List<PicklistOptionDto> options = new ArrayList<>();
                             options.add(option);
 
-                            container.computeIfAbsent(questionId, (k) -> new GroupAndOptionDtos()).getGroupIdToOptions().put(groupId,
-                                    options);
-                            container.computeIfAbsent(questionId, (k) -> new GroupAndOptionDtos()).getGroups().add(group);
+                            container.getGroupIdToOptions().put(groupId, options);
+                            container.getGroups().add(group);
                         }
                     }
 
-                    return container;
+                    return result;
                 });
     }
 
     class GroupAndOptionDtos implements Serializable {
 
+        private long questionId;
         private List<PicklistGroupDto> groups = new ArrayList<>();
         private List<PicklistOptionDto> ungroupedOptions = new ArrayList<>();
         private Map<Long, List<PicklistOptionDto>> groupIdToOptions = new HashMap<>();
+
+        public GroupAndOptionDtos(long questionId) {
+            this.questionId = questionId;
+        }
+
+        public long getQuestionId() {
+            return questionId;
+        }
 
         public List<PicklistGroupDto> getGroups() {
             return groups;
@@ -453,16 +465,34 @@ public interface PicklistQuestionDao extends SqlObject {
             return groupIdToOptions;
         }
 
-        public GroupAndOptionDtos() {
-            super();
-        }
-
         public GroupAndOptionDtos(List<PicklistGroupDto> groups, List<PicklistOptionDto> ungroupedOptions,
                                   Map<Long, List<PicklistOptionDto>> groupIdToOptions) {
             this.groups = groups;
             this.ungroupedOptions = ungroupedOptions;
             this.groupIdToOptions = groupIdToOptions;
 
+        }
+
+        public Set<Long> getTemplateIds() {
+            var ids = new HashSet<Long>();
+            for (var group : groups) {
+                ids.add(group.getNameTemplateId());
+            }
+
+            var options = new ArrayList<>(ungroupedOptions);
+            groupIdToOptions.values().forEach(options::addAll);
+
+            for (var option : options) {
+                ids.add(option.getOptionLabelTemplateId());
+                if (option.getDetailLabelTemplateId() != null) {
+                    ids.add(option.getDetailLabelTemplateId());
+                }
+                if (option.getTooltipTemplateId() != null) {
+                    ids.add(option.getTooltipTemplateId());
+                }
+            }
+
+            return ids;
         }
     }
 }

@@ -52,12 +52,6 @@ all_parent_and_child_dtos_order_by() ::= <<
 order by c.display_order
 >>
 
-queryDtoAndChildrenDtosByQuestionId() ::= <<
-<all_parent_and_child_dtos_select()>
- where p.question_id = :questionId
-<all_parent_and_child_dtos_order_by()>
->>
-
 queryDtoAndChildrenDtosByActivityId()  ::= <<
 <all_parent_and_child_dtos_select()>
  where pq.study_activity_id = :activityId

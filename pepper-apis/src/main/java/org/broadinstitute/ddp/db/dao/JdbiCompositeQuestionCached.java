@@ -5,7 +5,10 @@ import static java.util.stream.Collectors.toList;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Stream;
 
 import javax.cache.Cache;
 import javax.cache.expiry.Duration;
@@ -39,19 +42,19 @@ public class JdbiCompositeQuestionCached extends SQLObjectWrapper<JdbiCompositeQ
         }
     }
 
-    @Override
-    public Optional<CompositeQuestionDto> findDtoByQuestion(QuestionDto questionDto) {
-        if (isNullCache(idToCompositeQuestionDtoCache)) {
-            return delegate.findDtoByQuestionId(questionDto.getId());
-        } else {
-            CompositeQuestionDto dto = idToCompositeQuestionDtoCache.get(questionDto.getId());
-            if (dto == null) {
-                cacheDtosForActivity(questionDto.getActivityId());
-                dto = idToCompositeQuestionDtoCache.get(questionDto.getId());
-            }
-            return Optional.ofNullable(dto);
-        }
-    }
+    // @Override
+    // public Optional<CompositeQuestionDto> findDtoByQuestion(QuestionDto questionDto) {
+    //     if (isNullCache(idToCompositeQuestionDtoCache)) {
+    //         return delegate.findDtoByQuestionId(questionDto.getId());
+    //     } else {
+    //         CompositeQuestionDto dto = idToCompositeQuestionDtoCache.get(questionDto.getId());
+    //         if (dto == null) {
+    //             cacheDtosForActivity(questionDto.getActivityId());
+    //             dto = idToCompositeQuestionDtoCache.get(questionDto.getId());
+    //         }
+    //         return Optional.ofNullable(dto);
+    //     }
+    // }
 
     @Override
     public Optional<Long> findParentQuestionIdByChildQuestion(QuestionDto questionDto) {
@@ -113,10 +116,10 @@ public class JdbiCompositeQuestionCached extends SQLObjectWrapper<JdbiCompositeQ
         delegate.insertChild(parentQuestionId, childQuestionIds, orderIdxs);
     }
 
-    @Override
-    public Optional<CompositeQuestionDto> findDtoByQuestionId(long questionId) {
-        return delegate.findDtoByQuestionId(questionId);
-    }
+    // @Override
+    // public Optional<CompositeQuestionDto> findDtoByQuestionId(long questionId) {
+    //     return delegate.findDtoByQuestionId(questionId);
+    // }
 
     @Override
     public List<CompositeQuestionDto> findDtosByActivityId(long activityId) {
@@ -135,5 +138,15 @@ public class JdbiCompositeQuestionCached extends SQLObjectWrapper<JdbiCompositeQ
                 return Collections.emptyList();
             }
         }
+    }
+
+    @Override
+    public Map<Long, List<Long>> findOrderedChildQuestionIdsByParentIds(Set<Long> parentQuestionIds) {
+        return delegate.findOrderedChildQuestionIdsByParentIds(parentQuestionIds);
+    }
+
+    @Override
+    public Stream<IdPair> _findOrderedChildIdsByParentIds(Set<Long> parentQuestionIds) {
+        return delegate._findOrderedChildIdsByParentIds(parentQuestionIds);
     }
 }

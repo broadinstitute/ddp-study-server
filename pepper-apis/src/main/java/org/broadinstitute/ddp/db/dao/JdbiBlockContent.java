@@ -1,11 +1,14 @@
 package org.broadinstitute.ddp.db.dao;
 
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Stream;
 
 import org.broadinstitute.ddp.db.dto.BlockContentDto;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.SqlUpdate;
@@ -39,10 +42,12 @@ public interface JdbiBlockContent extends SqlObject {
 
     @SqlQuery("select bt.*"
             + "  from block_content as bt"
-            + "  join revision as r on r.revision_id = bt.revision_id"
-            + " where bt.block_id = :blockId"
-            + "   and r.start_date <= :timestamp and (r.end_date is null or :timestamp < r.end_date)")
+            + "  join revision as rev on rev.revision_id = bt.revision_id"
+            + " where bt.block_id in (<blockIds>)"
+            + "   and rev.start_date <= :timestamp"
+            + "   and (rev.end_date is null or :timestamp < rev.end_date)")
     @RegisterConstructorMapper(BlockContentDto.class)
-    Optional<BlockContentDto> findDtoByBlockIdAndTimestamp(@Bind("blockId") long blockId,
-                                                           @Bind("timestamp") long timestamp);
+    Stream<BlockContentDto> findDtosByBlockIdsAndTimestamp(
+            @BindList(value = "blockIds", onEmpty = BindList.EmptyHandling.NULL) Set<Long> blockId,
+            @Bind("timestamp") long timestamp);
 }

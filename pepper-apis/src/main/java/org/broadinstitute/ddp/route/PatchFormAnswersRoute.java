@@ -34,7 +34,7 @@ import org.broadinstitute.ddp.db.dao.AnswerCachedDao;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
 import org.broadinstitute.ddp.db.dao.JdbiCompositeQuestion;
 import org.broadinstitute.ddp.db.dao.JdbiCompositeQuestionCached;
-import org.broadinstitute.ddp.db.dao.JdbiNumericQuestion;
+import org.broadinstitute.ddp.db.dao.JdbiQuestion;
 import org.broadinstitute.ddp.db.dao.JdbiQuestionCached;
 import org.broadinstitute.ddp.db.dao.QuestionCachedDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
@@ -496,8 +496,8 @@ public class PatchFormAnswersRoute implements Route {
     private NumericAnswer convertNumericAnswer(Handle handle, QuestionDto questionDto, String guid, String actInstanceGuid,
                                                JsonElement value) {
         if (value == null || value.isJsonNull() || (value.isJsonPrimitive() && value.getAsJsonPrimitive().isNumber())) {
-            NumericQuestionDto numericQuestionDto = handle.attach(JdbiNumericQuestion.class)
-                    .findDtoByQuestionId(questionDto.getId())
+            NumericQuestionDto numericQuestionDto = (NumericQuestionDto) handle.attach(JdbiQuestion.class)
+                    .findQuestionDtoById(questionDto.getId())
                     .orElseThrow(() -> new DDPException("Could not find numeric question with id " + questionDto.getId()));
             if (numericQuestionDto.getNumericType() == NumericType.INTEGER) {
                 Long intValue = null;
