@@ -8,12 +8,10 @@ import java.util.Set;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
-import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.JdbiExpression;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
-import org.broadinstitute.ddp.db.dto.EventConfigurationDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.exception.DDPException;
