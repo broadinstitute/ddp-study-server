@@ -12,17 +12,12 @@
         </addColumn>
     </changeSet>
 
-    <changeSet author="charlotte" id="20200831-skip-language-popup-profile">
+    <changeSet author="charlotte" id="202001005-skip-language-popup-profile">
         <addColumn tableName="user_profile">
-            <column name="should_skip_language_popup" type="boolean">
+            <column name="skip_language_popup" type="boolean">
                 <constraints nullable="true"/>
             </column>
         </addColumn>
-    </changeSet>
-
-    <changeSet author="charlotte" id="20201002-rename-skip-language-popup-profile">
-        <renameColumn tableName="user_profile" oldColumnName="should_skip_language_popup"
-                      newColumnName="skip_language_popup" columnDataType="boolean"/>
     </changeSet>
 
 </databaseChangeLog>
