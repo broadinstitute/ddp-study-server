@@ -134,9 +134,21 @@ public class AnswerCachedDao extends SQLObjectWrapper<AnswerDao> implements Answ
             return delegate.findAnswerByInstanceGuidAndQuestionStableId(instanceGuid, questionStableId);
         } else {
             Answer answer = null;
-            Long answerId = activityInstanceGuidAndQuestionKeyToAnswerIdCache.get(buildKey(instanceGuid, questionStableId));
+            Long answerId = null;
+            String key = buildKey(instanceGuid, questionStableId);
+            try {
+                answerId = activityInstanceGuidAndQuestionKeyToAnswerIdCache.get(key);
+            } catch (RedisException e) {
+                LOG.warn("Failed to retrieve value from Redis cache: " + activityInstanceGuidAndQuestionKeyToAnswerIdCache.getName()
+                        + " key lookedup:" + key + "Will try to retrieve from database", e);
+            }
             if (answerId != null) {
-                answer = idToAnswerCache.get(answerId);
+                try {
+                    answer = idToAnswerCache.get(answerId);
+                } catch (RedisException e) {
+                    LOG.warn("Failed to retrieve value from Redis cache: " + idToAnswerCache.getName()
+                            + " key lookedup:" + answerId + "Will try to retrieve from database", e);
+                }
             }
             if (answer == null) {
                 Optional<Answer> answerOpt = delegate.findAnswerByInstanceGuidAndQuestionStableId(instanceGuid, questionStableId);

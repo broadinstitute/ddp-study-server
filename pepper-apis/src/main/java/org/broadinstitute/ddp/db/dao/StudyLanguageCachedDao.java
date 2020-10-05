@@ -43,7 +43,11 @@ public class StudyLanguageCachedDao extends SQLObjectWrapper<StudyLanguageDao> i
 
     @Override
     public long insert(long umbrellaStudyId, long languageCodeId) {
-        studyIdToLanguageCache.remove(umbrellaStudyId);
+        try {
+            studyIdToLanguageCache.remove(umbrellaStudyId);
+        } catch (RedisException e) {
+            LOG.warn("Failed to remove values from Redis caches", e);
+        }
         return delegate.insert(umbrellaStudyId, languageCodeId);
     }
 
