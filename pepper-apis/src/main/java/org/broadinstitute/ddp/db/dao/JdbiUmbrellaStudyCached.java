@@ -146,8 +146,12 @@ public class JdbiUmbrellaStudyCached extends SQLObjectWrapper<JdbiUmbrellaStudy>
 
     private void removeFromCache(StudyDto dto) {
         if (dto != null) {
-            idToStudyCache.removeAsync(dto.getId());
-            studyGuidToIdCache.removeAsync(dto.getGuid());
+            try {
+                idToStudyCache.removeAsync(dto.getId());
+                studyGuidToIdCache.removeAsync(dto.getGuid());
+            } catch (RedisException e) {
+                LOG.warn("Failed to remove values from Redis caches", e);
+            }
         }
     }
 
