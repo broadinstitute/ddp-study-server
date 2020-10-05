@@ -21,6 +21,9 @@ public final class ContentBlockDef extends FormBlockDef {
     @SerializedName("bodyTemplate")
     private Template bodyTemplate;
 
+    private transient Long titleTemplateId;
+    private transient long bodyTemplateId;
+
     public ContentBlockDef(Template bodyTemplate) {
         super(BlockType.CONTENT);
         this.bodyTemplate = bodyTemplate;
@@ -36,8 +39,24 @@ public final class ContentBlockDef extends FormBlockDef {
         return titleTemplate;
     }
 
+    public Long getTitleTemplateId() {
+        return titleTemplateId;
+    }
+
+    public void setTitleTemplateId(Long titleTemplateId) {
+        this.titleTemplateId = titleTemplateId;
+    }
+
     public Template getBodyTemplate() {
         return bodyTemplate;
+    }
+
+    public long getBodyTemplateId() {
+        return bodyTemplateId;
+    }
+
+    public void setBodyTemplateId(long bodyTemplateId) {
+        this.bodyTemplateId = bodyTemplateId;
     }
 
     @Override

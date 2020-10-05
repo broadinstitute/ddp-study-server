@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.db.dto;
 
-import java.beans.ConstructorProperties;
+import org.jdbi.v3.core.mapper.reflect.ColumnName;
+import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
 public class BlockContentDto {
 
@@ -10,8 +11,13 @@ public class BlockContentDto {
     private Long titleTemplateId;
     private long revisionId;
 
-    @ConstructorProperties({"block_content_id", "block_id", "body_template_id", "title_template_id", "revision_id"})
-    public BlockContentDto(long id, long blockId, long bodyTemplateId, Long titleTemplateId, long revisionId) {
+    @JdbiConstructor
+    public BlockContentDto(
+            @ColumnName("block_content_id") long id,
+            @ColumnName("block_id") long blockId,
+            @ColumnName("body_template_id") long bodyTemplateId,
+            @ColumnName("title_template_id") Long titleTemplateId,
+            @ColumnName("revision_id") long revisionId) {
         this.id = id;
         this.blockId = blockId;
         this.bodyTemplateId = bodyTemplateId;

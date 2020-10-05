@@ -92,4 +92,9 @@ public interface ActivityI18nSql extends SqlObject {
             + "       description = :d.getDescription"
             + " where i18n_study_activity_id = :d.getId")
     int[] bulkUpdateDetails(@BindMethods("d") Iterable<ActivityI18nDetail> details);
+
+    @SqlBatch("update i18n_study_activity_summary_trans"
+            + "   set translation_text = :s.getText"
+            + " where i18n_study_activity_summary_trans_id = :s.getId")
+    int[] bulkUpdateSummaries(@BindMethods("s") Iterable<SummaryTranslation> summaries);
 }

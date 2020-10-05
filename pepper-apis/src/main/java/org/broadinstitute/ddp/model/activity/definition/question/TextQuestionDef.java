@@ -166,7 +166,7 @@ public final class TextQuestionDef extends QuestionDef {
 
         public Builder setPlaceholderTemplate(Template placeholderTemplate) {
             this.placeholderTemplate = placeholderTemplate;
-            return self();
+            return this;
         }
 
         public Builder setConfirmEntry(boolean confirmEntry) {
@@ -189,7 +189,7 @@ public final class TextQuestionDef extends QuestionDef {
                 suggestions = new ArrayList<>();
             }
             suggestions.addAll(suggestionsToAdd);
-            return self();
+            return this;
         }
 
         public TextQuestionDef build() {

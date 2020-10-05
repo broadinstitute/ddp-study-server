@@ -27,6 +27,7 @@ public abstract class RuleDef {
     protected boolean allowSave = false;
 
     protected transient Long ruleId;
+    protected transient Long hintTemplateId;
 
     RuleDef(RuleType ruleType, Template hintTemplate) {
         this.ruleType = MiscUtil.checkNonNull(ruleType, "ruleType");
@@ -55,6 +56,14 @@ public abstract class RuleDef {
 
     public boolean getAllowSave() {
         return this.allowSave;
+    }
+
+    public Long getHintTemplateId() {
+        return hintTemplateId;
+    }
+
+    public void setHintTemplateId(Long hintTemplateId) {
+        this.hintTemplateId = hintTemplateId;
     }
 
     public static class Deserializer implements JsonDeserializer<RuleDef> {

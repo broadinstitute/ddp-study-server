@@ -56,7 +56,6 @@ public class FormActivityDef extends ActivityDef {
     protected boolean snapshotSubstitutionsOnSubmit;
 
     private transient List<FormBlockDef> cachedToggleableBlocks;
-
     private transient Map<String, QuestionDef> stableIdToQuestion;
 
     public static FormBuilder formBuilder() {

@@ -152,6 +152,7 @@ public interface FormActivityDao extends SqlObject {
 
     default FormActivityDef findDefByDtoAndVersion(ActivityDto activityDto, String versionTag, long versionId, long revisionStart) {
         SectionBlockDao sectionBlockDao = getSectionBlockDao();
+        TemplateDao templateDao = getTemplateDao();
 
         FormType type = getJdbiActivity().findFormTypeByActivityId(activityDto.getActivityId());
         String studyGuid = getJdbiUmbrellaStudy().findGuidByStudyId(activityDto.getStudyId());
@@ -164,15 +165,24 @@ public interface FormActivityDao extends SqlObject {
                 .setDisplayOrder(activityDto.getDisplayOrder())
                 .setWriteOnce(activityDto.isWriteOnce())
                 .setEditTimeoutSec(activityDto.getEditTimeoutSec())
-                .setAllowOndemandTrigger(activityDto.isOndemandTriggerAllowed());
+                .setAllowOndemandTrigger(activityDto.isOndemandTriggerAllowed())
+                .setAllowUnauthenticated(activityDto.isUnauthenticatedAllowed())
+                .setExcludeFromDisplay(activityDto.shouldExcludeFromDisplay())
+                .setExcludeStatusIconFromDisplay(activityDto.shouldExcludeStatusIconFromDisplay())
+                .setHideInstances(activityDto.isHideExistingInstancesOnCreation())
+                .setIsFollowup(activityDto.isFollowup());
 
         List<Translation> names = new ArrayList<>();
+        List<Translation> secondNames = new ArrayList<>();
         List<Translation> titles = new ArrayList<>();
         List<Translation> subtitles = new ArrayList<>();
         List<Translation> descriptions = new ArrayList<>();
         getActivityI18nDao().findDetailsByActivityId(activityDto.getActivityId()).forEach(detail -> {
             String isoLangCode = detail.getIsoLangCode();
             names.add(new Translation(isoLangCode, detail.getName()));
+            if (detail.getSecondName() != null) {
+                secondNames.add(new Translation(isoLangCode, detail.getSecondName()));
+            }
             if (detail.getTitle() != null) {
                 titles.add(new Translation(isoLangCode, detail.getTitle()));
             }
@@ -184,6 +194,7 @@ public interface FormActivityDao extends SqlObject {
             }
         });
         builder.addNames(names);
+        builder.addSecondNames(secondNames);
         builder.addTitles(titles);
         builder.addSubtitles(subtitles);
         builder.addDescriptions(descriptions);
@@ -194,6 +205,14 @@ public interface FormActivityDao extends SqlObject {
                 .findSettingDtoByActivityIdAndTimestamp(activityDto.getActivityId(), revisionStart)
                 .ifPresent(dto -> {
                     builder.setListStyleHint(dto.getListStyleHint());
+                    builder.setLastUpdated(dto.getLastUpdated());
+                    if (dto.getLastUpdatedTextTemplateId() != null) {
+                        builder.setLastUpdatedTextTemplate(templateDao.loadTemplateById(dto.getLastUpdatedTextTemplateId()));
+                    }
+                    if (dto.getReadonlyHintTemplateId() != null) {
+                        builder.setReadonlyHintTemplate(templateDao.loadTemplateById(dto.getReadonlyHintTemplateId()));
+                    }
+                    builder.setSnapshotSubstitutionsOnSubmit(dto.shouldSnapshotSubstitutionsOnSubmit());
                     if (dto.getIntroductionSectionId() != null) {
                         builder.setIntroduction(sectionBlockDao
                                 .findSectionDefByIdAndTimestamp(dto.getIntroductionSectionId(), revisionStart));
