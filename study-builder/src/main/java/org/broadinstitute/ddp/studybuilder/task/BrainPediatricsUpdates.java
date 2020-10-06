@@ -18,6 +18,7 @@ import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.governance.AgeOfMajorityRule;
 import org.broadinstitute.ddp.model.governance.GovernancePolicy;
 import org.broadinstitute.ddp.model.pex.Expression;
+import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
 import org.broadinstitute.ddp.studybuilder.EventBuilder;
 import org.broadinstitute.ddp.studybuilder.PdfBuilder;
 import org.broadinstitute.ddp.studybuilder.WorkflowBuilder;
@@ -185,6 +186,32 @@ public class BrainPediatricsUpdates implements CustomTask {
 
         insertStudyGovernance(handle, studyDto);
 
+        long aboutYouActivityId = ActivityBuilder.findActivityId(handle, studyId, "ABOUTYOU");
+        String currText = "Tell us about your experiences with brain cancer by filling out the initial survey.";
+        String newText = "Tell us about your experiences with brain cancer by filling out the about-you survey.";
+        //update about-you dashboard summary text
+        long summaryTransId = helper.findSummaryTranslationIdByActivityAndText(aboutYouActivityId, currText);
+        int thisRowCount = helper.updateSummaryTransText(summaryTransId, newText);
+        if (thisRowCount != 1) {
+            throw new RuntimeException("Expecting to update 1 Brain summary trans row, got :" + thisRowCount
+                    + "  aborting patch ");
+        }
+        currText = "Tell us about your experiences with brain cancer by submitting the initial survey.";
+        newText = "Tell us about your experiences with brain cancer by submitting the about-you survey.";
+        //update about-you dashboard summary text
+        summaryTransId = helper.findSummaryTranslationIdByActivityAndText(aboutYouActivityId, currText);
+        thisRowCount = helper.updateSummaryTransText(summaryTransId, newText);
+        if (thisRowCount != 1) {
+            throw new RuntimeException("Expecting to update 1 Brain summary trans row, got :" + thisRowCount
+                    + "  aborting patch ");
+        }
+        //update name
+        thisRowCount = helper.update18nActivityName(aboutYouActivityId, "Medical Questionnaire (About You)");
+        if (thisRowCount != 1) {
+            throw new RuntimeException("Expecting to update 1 Brain i18n activity row, got :" + thisRowCount
+                    + "  aborting patch ");
+        }
+
     }
 
     private void addNewEvents(Handle handle, StudyDto studyDto, long adminUserId) {
@@ -334,6 +361,16 @@ public class BrainPediatricsUpdates implements CustomTask {
         @SqlUpdate("delete from workflow_transition where workflow_transition_id in (<ids>)")
         int deleteWorkflow(@BindList(value = "ids", onEmpty = BindList.EmptyHandling.NULL) List<Long> ids);
 
+
+        @SqlQuery("select i18n_study_activity_summary_trans_id from i18n_study_activity_summary_trans s"
+                    + " where s.study_activity_id = :studyActivityId and translation_text = :text")
+        long findSummaryTranslationIdByActivityAndText(@Bind("studyActivityId") long studyActivityId, @Bind("text") String text);
+
+        @SqlUpdate("update i18n_study_activity_summary_trans set translation_text = :text where i18n_study_activity_summary_trans_id = :id")
+        int updateSummaryTransText(@Bind("id") long id, @Bind("text") String text);
+
+        @SqlUpdate("update i18n_study_activity set name = :name where study_activity_id = :studyActivityId")
+        int update18nActivityName(@Bind("studyActivityId") long studyActivityId, @Bind("name") String name);
     }
 
 }
