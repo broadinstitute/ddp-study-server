@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.route;
 
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.db.dao.JbdiActivityInstanceStatusTypeCached;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstanceStatusType;
 import org.broadinstitute.ddp.security.DDPAuth;
 import org.broadinstitute.ddp.util.RouteUtil;
@@ -19,7 +20,7 @@ public class GetActivityInstanceStatusTypeListRoute implements Route {
         return TransactionWrapper.withTxn(
                 handle -> {
                     DDPAuth ddpAuth = RouteUtil.getDDPAuth(request);
-                    return handle.attach(JdbiActivityInstanceStatusType.class)
+                    return handle.attach(JbdiActivityInstanceStatusTypeCached.class)
                             .getActivityInstanceStatusTypes(ddpAuth.getPreferredLanguage());
                 }
         );
