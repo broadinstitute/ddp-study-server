@@ -1139,6 +1139,9 @@ ProfileModel:
       lastName:
         type: string
         example: Barium
+      skipLanguagePopup:
+        type: boolean
+        example: true
 
 #####
 #
@@ -1484,6 +1487,8 @@ Study.Detail:
       properties:
         summary:
           type: string
+        shouldDisplayLanguageChangePopup:
+          type: boolean
 #####
 #
 # Question Validation Types

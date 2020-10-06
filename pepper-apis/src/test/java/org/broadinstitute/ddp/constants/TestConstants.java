@@ -29,6 +29,7 @@ public class TestConstants {
     public static final int TEST_USER_PROFILE_BIRTH_YEAR = 1906;
     public static final UserProfile.SexType TEST_USER_PROFILE_SEX = UserProfile.SexType.FEMALE;
     public static final String TEST_USER_PROFILE_PREFERRED_LANGUAGE = "en";
+    public static final Boolean TEST_USER_PROFILE_SKIP_LANGUAGE_POPUP = false;
     public static final String TEST_USER_MAIL_ADDRESS_STREET_NAME = "86 Brattle Street";
     public static final String TEST_USER_MAIL_ADDRESS_STREET_APT = "Apt 42";
     public static final String TEST_USER_MAIL_ADDRESS_CITY = "Cambridge";

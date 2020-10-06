@@ -73,6 +73,7 @@ public class AddProfileRoute extends ValidatedJsonInputRoute<Profile> {
                             .setSexType(sexType)
                             .setBirthDate(profile.getBirthDate() != null ? LocalDate.parse(profile.getBirthDate()) : null)
                             .setPreferredLangId(langId)
+                            .setSkipLanguagePopup(profile.getSkipLanguagePopup())
                             .build());
                 } catch (DateTimeParseException e) {
                     String errorMsg = "Provided birth date is not a valid date";

@@ -62,6 +62,7 @@ select u.user_id              as u_user_id,
        up.sex                   as p_sex,
        up.birth_date            as p_birth_date,
        up.do_not_contact        as p_do_not_contact,
+       up.skip_language_popup as p_skip_language_popup
        up.is_deceased           as p_is_deceased,
        up.time_zone             as p_time_zone,
        up.preferred_language_id as p_preferred_language_id,
