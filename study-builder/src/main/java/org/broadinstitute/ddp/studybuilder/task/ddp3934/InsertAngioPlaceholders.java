@@ -10,8 +10,8 @@ import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 
 import com.typesafe.config.Config;
-
 import org.broadinstitute.ddp.db.dao.JdbiDateQuestion;
+import org.broadinstitute.ddp.db.dao.JdbiQuestion;
 import org.broadinstitute.ddp.db.dao.JdbiTemplate;
 import org.broadinstitute.ddp.db.dao.JdbiTemplateVariable;
 import org.broadinstitute.ddp.db.dao.JdbiTextQuestion;
@@ -264,7 +264,8 @@ public class InsertAngioPlaceholders implements CustomTask {
                 switch (question.type) {
                     case TEXT: {
                         JdbiTextQuestion questionDao = handle.attach(JdbiTextQuestion.class);
-                        TextQuestionDto questionDetail = questionDao.findDtoByQuestionId(question.id).orElseThrow();
+                        TextQuestionDto questionDetail = (TextQuestionDto) handle.attach(JdbiQuestion.class)
+                                .findQuestionDtoById(question.id).orElseThrow();
                         questionDao.update(question.id,
                                             questionDetail.getInputType(),
                                             questionDetail.getSuggestionType(),
@@ -273,7 +274,8 @@ public class InsertAngioPlaceholders implements CustomTask {
                     
                     case DATE: {
                         JdbiDateQuestion questionDao = handle.attach(JdbiDateQuestion.class);
-                        DateQuestionDto questionDetail = questionDao.findDtoByQuestionId(question.id).orElseThrow();
+                        DateQuestionDto questionDetail = (DateQuestionDto) handle.attach(JdbiQuestion.class)
+                                .findQuestionDtoById(question.id).orElseThrow();
                         questionDao.update(question.id,
                                             questionDetail.getRenderMode(),
                                             questionDetail.shouldDisplayCalendar(),
