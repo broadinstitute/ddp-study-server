@@ -253,11 +253,19 @@ public interface ActivityInstanceDao extends SqlObject {
             @BindList(value = "activityIds", onEmpty = BindList.EmptyHandling.NULL) Set<Long> activityIds);
 
     default Optional<FormResponse> findFormResponseWithAnswersByInstanceId(long instanceId) {
-        return getActivityInstanceSql().findFormResponseWithAnswers(true, instanceId, null);
+        return findFormResponsesWithAnswersByInstanceIds(Set.of(instanceId)).findFirst();
     }
 
     default Optional<FormResponse> findFormResponseWithAnswersByInstanceGuid(String instanceGuid) {
-        return getActivityInstanceSql().findFormResponseWithAnswers(false, null, instanceGuid);
+        return findFormResponsesWithAnswersByInstanceGuids(Set.of(instanceGuid)).findFirst();
+    }
+
+    default Stream<FormResponse> findFormResponsesWithAnswersByInstanceIds(Set<Long> instanceIds) {
+        return getActivityInstanceSql().findFormResponseWithAnswers(true, instanceIds, null);
+    }
+
+    default Stream<FormResponse> findFormResponsesWithAnswersByInstanceGuids(Set<String> instanceGuids) {
+        return getActivityInstanceSql().findFormResponseWithAnswers(false, null, instanceGuids);
     }
 
     default Stream<FormResponse> findFormResponsesWithAnswersByUserIds(long studyId, Set<Long> userIds) {

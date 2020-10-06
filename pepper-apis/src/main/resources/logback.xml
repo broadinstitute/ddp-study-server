@@ -16,9 +16,7 @@
             <onMismatch>DENY</onMismatch>
         </filter>
     </appender>
-    <logger name="org.redisson" level="DEBUG">
-        <appender-ref ref="STDOUT" />
-    </logger>
+
     <root level="info">
         <appender-ref ref="STDOUT" />
         <appender-ref ref="SLACK" />

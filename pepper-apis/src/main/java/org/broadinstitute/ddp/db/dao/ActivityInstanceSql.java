@@ -3,7 +3,6 @@ package org.broadinstitute.ddp.db.dao;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -33,13 +32,13 @@ public interface ActivityInstanceSql extends SqlObject {
             @Bind("value") List<String> values);
 
     @UseStringTemplateSqlLocator
-    @SqlQuery("queryFormResponseWithAnswers")
+    @SqlQuery("queryFormResponsesWithAnswers")
     @RegisterConstructorMapper(value = FormResponse.class, prefix = "a")
     @UseRowReducer(FormResponsesWithAnswersForUsersReducer.class)
-    Optional<FormResponse> findFormResponseWithAnswers(
+    Stream<FormResponse> findFormResponseWithAnswers(
             @Define("byId") boolean byId,
-            @Bind("instanceId") Long instanceId,
-            @Bind("instanceGuid") String instanceGuid);
+            @BindList(value = "instanceIds", onEmpty = BindList.EmptyHandling.NULL) Set<Long> instanceIds,
+            @BindList(value = "instanceGuids", onEmpty = BindList.EmptyHandling.NULL) Set<String> instanceGuids);
 
     @UseStringTemplateSqlLocator
     @SqlQuery("bulkQueryFormResponsesSubsetWithAnswersByStudyId")

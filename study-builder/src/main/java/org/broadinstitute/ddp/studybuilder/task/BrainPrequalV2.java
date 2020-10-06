@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.studybuilder.task;
 import java.io.File;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -15,6 +16,7 @@ import org.broadinstitute.ddp.db.dao.JdbiQuestion;
 import org.broadinstitute.ddp.db.dao.JdbiRevision;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
+import org.broadinstitute.ddp.db.dao.JdbiVariableSubstitution;
 import org.broadinstitute.ddp.db.dao.PicklistQuestionDao;
 import org.broadinstitute.ddp.db.dao.QuestionDao;
 import org.broadinstitute.ddp.db.dao.SectionBlockDao;
@@ -30,6 +32,7 @@ import org.broadinstitute.ddp.model.activity.definition.ActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
+import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
@@ -116,12 +119,15 @@ public class BrainPrequalV2 implements CustomTask {
 
         String templateVarName = "brain_prequal_contact_title";
         long templateId = helper.findTemplateIdByVariableName(templateVarName);
-        long templateRevId = helper.findTemplateRevisionId(templateId);
-        long newTemplateRevId = jdbiRevision.copyAndTerminate(templateRevId, meta);
-        //may be look for template brain_prequal_contact_title and disable rather than these sql updates !!
-        helper.updateTemplateRevision(templateId, newTemplateRevId);
-        long tmpVarId = helper.findTemplateVariableId(templateId);
-        helper.updateVarSubstitutionValue(tmpVarId, "");
+        long tmplVarId = helper.findTemplateVariableId(templateId);
+        String newTemplateText = "";
+        JdbiVariableSubstitution jdbiVarSubst = handle.attach(JdbiVariableSubstitution.class);
+        List<Translation> transList = jdbiVarSubst.fetchSubstitutionsForTemplateVariable(tmplVarId);
+        Translation currTranslation = transList.get(0);
+        long newTemplateRevId = jdbiRevision.copyAndTerminate(currTranslation.getRevisionId().get(), meta);
+        long[] revIds = {newTemplateRevId};
+        jdbiVarSubst.bulkUpdateRevisionIdsBySubIds(Arrays.asList(currTranslation.getId().get()), revIds);
+        jdbiVarSubst.insert(currTranslation.getLanguageCode(), newTemplateText, activityVersionDto.getRevId(), tmplVarId);
 
         //populate section with ageup questions
         SectionBlockDao sectionBlockDao = handle.attach(SectionBlockDao.class);
@@ -224,17 +230,6 @@ public class BrainPrequalV2 implements CustomTask {
             }
         }
 
-        @SqlUpdate("update template set revision_id = :revisionId where template_id = :templateId")
-        int _updateTemplateRevision(@Bind("templateId") long templateId, @Bind("revisionId") long revisionId);
-
-        default void updateTemplateRevision(long templateId, long revisionId) {
-            int numUpdated = _updateTemplateRevision(templateId, revisionId);
-            if (numUpdated != 1) {
-                throw new DDPException("Expected to update 1 row of templateId ="
-                        + templateId + " but updated " + numUpdated);
-            }
-        }
-
         @SqlUpdate("update event_configuration set is_active = false where event_configuration_id in (<eventIds>)")
         int disableStudyEvents(@BindList("eventIds")Set<Long> eventIds);
 
@@ -264,9 +259,6 @@ public class BrainPrequalV2 implements CustomTask {
         //used max to handle multiple study versions in lower regions
         @SqlQuery("select max(template_id) from template_variable where variable_name = :varName")
         long findTemplateIdByVariableName(@Bind("varName") String varName);
-
-        @SqlQuery("select revision_id from template where template_id = :templateId")
-        long findTemplateRevisionId(@Bind("templateId") long templateId);
 
         @SqlQuery("select template_variable_id from template_variable where template_id = :templateId")
         long findTemplateVariableId(@Bind("templateId") long templateId);
