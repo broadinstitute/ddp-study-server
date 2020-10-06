@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.db;
 
+import java.sql.Blob;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,10 +13,12 @@ import org.broadinstitute.ddp.db.dao.FormActivityDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityValidation;
 import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
+import org.broadinstitute.ddp.db.dao.JdbiFormTypeActivityInstanceStatusType;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.ActivityValidationDto;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
+import org.broadinstitute.ddp.db.dto.IconBlobDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.model.activity.definition.ConditionalBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
@@ -41,6 +44,7 @@ public class ActivityDefStore {
     private Map<Long, ActivityDto> activityDtoMap;
     private Map<Long, List<ActivityVersionDto>> versionDtoListMap;
     private Map<Long, List<ActivityValidationDto>> validationDtoListMap;
+    private Map<String, Map<String, Blob>> studyActivityStatusIconBlobs;
 
     public static ActivityDefStore getInstance() {
         if (instance == null) {
@@ -59,6 +63,7 @@ public class ActivityDefStore {
         activityDtoMap = new HashMap<>();
         versionDtoListMap = new HashMap<>();
         validationDtoListMap = new HashMap<>();
+        studyActivityStatusIconBlobs = new HashMap<>();
     }
 
     public void clear() {
@@ -67,6 +72,25 @@ public class ActivityDefStore {
             activityDtoMap.clear();
             versionDtoListMap.clear();
             validationDtoListMap.clear();
+            studyActivityStatusIconBlobs.clear();
+        }
+    }
+
+    public Map<String, Blob> findActivityStatusIcons(Handle handle, String studyGuid) {
+        synchronized (lockVar) {
+            Map<String, Blob> icons = studyActivityStatusIconBlobs.get(studyGuid);
+            if (icons == null) {
+                icons = new HashMap<>();
+                var jdbiActivityStatusIcon = handle.attach(JdbiFormTypeActivityInstanceStatusType.class);
+                List<IconBlobDto> iconBlobs = jdbiActivityStatusIcon.getIconBlobs(studyGuid);
+                // Transforming a List of icon blobs into a Map having form type and activity instance status type
+                // concatenated with "-" as a delimiter as keys and icon blobs as values, e.g. { "CONSENT-5": "<icon blob>" }
+                for (var blob : iconBlobs) {
+                    icons.put(blob.getFormType() + "-" + blob.getStatusTypeCode(), blob.getIconBlob());
+                }
+                studyActivityStatusIconBlobs.put(studyGuid, icons);
+            }
+            return icons;
         }
     }
 
@@ -138,10 +162,17 @@ public class ActivityDefStore {
 
     public Pair<Integer, Integer> countQuestionsAndAnswers(Handle handle, String userGuid,
                                                            FormActivityDef formActivityDef,
-                                                           String instanceGuid) {
-        FormResponse formResponse = handle.attach(ActivityInstanceDao.class)
-                .findFormResponseWithAnswersByInstanceGuid(instanceGuid)
-                .orElse(null);
+                                                           String instanceGuid,
+                                                           Map<String, FormResponse> instanceResponses) {
+        FormResponse formResponse;
+        if (instanceResponses == null || !instanceResponses.containsKey(instanceGuid)) {
+            formResponse = handle.attach(ActivityInstanceDao.class)
+                    .findFormResponseWithAnswersByInstanceGuid(instanceGuid)
+                    .orElse(null);
+        } else {
+            formResponse = instanceResponses.get(instanceGuid);
+        }
+
         if (formResponse != null) {
             formResponse.unwrapComposites();
         }
