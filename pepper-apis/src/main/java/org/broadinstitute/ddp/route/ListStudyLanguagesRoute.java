@@ -25,7 +25,7 @@ public class ListStudyLanguagesRoute implements Route {
 
         var result = TransactionWrapper.withTxn(handle -> {
             //Get the umbrella study id
-            StudyDto studyDto = handle.attach(JdbiUmbrellaStudyCached.class).findByStudyGuid(studyGuid);
+            StudyDto studyDto = new JdbiUmbrellaStudyCached(handle).findByStudyGuid(studyGuid);
             if (studyDto == null) {
                 String msg = "Could not find study with guid " + studyGuid;
                 LOG.warn(msg);
