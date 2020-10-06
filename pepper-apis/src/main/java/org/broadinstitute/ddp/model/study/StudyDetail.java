@@ -5,7 +5,10 @@ import com.google.gson.annotations.SerializedName;
 public class StudyDetail extends StudySummary {
     @SerializedName("summary")
     private String summary;
-    
+
+    @SerializedName("shouldDisplayLanguageChangePopup")
+    private boolean shouldDisplayLanguageChangePopup;
+
     public StudyDetail(
             String studyGuid,
             String name,
@@ -13,13 +16,19 @@ public class StudyDetail extends StudySummary {
             int registrationCount,
             int participantCount,
             boolean restricted,
-            String studyEmail
+            String studyEmail,
+            boolean shouldDisplayLanguageChangePopup
     ) {
         super(studyGuid, name, registrationCount, participantCount, restricted, studyEmail);
         this.summary = summary;
+        this.shouldDisplayLanguageChangePopup = shouldDisplayLanguageChangePopup;
     }
 
     public String getSummary() {
         return this.summary;
+    }
+
+    public boolean getShouldDisplayLanguageChangePopup() {
+        return this.shouldDisplayLanguageChangePopup;
     }
 }
