@@ -60,6 +60,7 @@ public class UserActivityInstanceListRoute implements Route {
             // IMPORTANT: do numbering before filtering so each instance is assigned their correct number.
             performActivityInstanceNumbering(summaries);
             summaries = filterActivityInstancesFromDisplay(summaries);
+            activityInstanceDao.countActivitySummaryQuestionsAndAnswers(handle, userGuid, studyGuid, summaries);
             activityInstanceDao.renderActivitySummary(handle, found.getUser().getId(), summaries);
             return summaries;
         });
