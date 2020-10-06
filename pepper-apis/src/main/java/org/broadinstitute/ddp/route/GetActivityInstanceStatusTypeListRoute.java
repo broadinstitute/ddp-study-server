@@ -15,7 +15,7 @@ public class GetActivityInstanceStatusTypeListRoute implements Route {
         return TransactionWrapper.withTxn(
                 handle -> {
                     DDPAuth ddpAuth = RouteUtil.getDDPAuth(request);
-                    return handle.attach(JbdiActivityInstanceStatusTypeCached.class)
+                    return new JbdiActivityInstanceStatusTypeCached(handle)
                             .getActivityInstanceStatusTypes(ddpAuth.getPreferredLanguage());
                 }
         );
