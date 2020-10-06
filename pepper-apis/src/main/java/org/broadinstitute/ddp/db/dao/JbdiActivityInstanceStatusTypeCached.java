@@ -12,7 +12,8 @@ import org.redisson.client.RedisException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class JbdiActivityInstanceStatusTypeCached extends SQLObjectWrapper<JdbiActivityInstanceStatusType> implements JdbiActivityInstanceStatusType {
+public class JbdiActivityInstanceStatusTypeCached extends SQLObjectWrapper<JdbiActivityInstanceStatusType>
+        implements JdbiActivityInstanceStatusType {
     private static final Logger LOG = LoggerFactory.getLogger(GetActivityInstanceStatusTypeListRoute.class);
     private static RLocalCachedMap<String, List<ActivityInstanceStatusType>> languageCodeToActivityInstanceStatusType;
 
