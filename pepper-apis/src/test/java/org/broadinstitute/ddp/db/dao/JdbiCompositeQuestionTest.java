@@ -8,12 +8,14 @@ import static org.junit.Assert.assertTrue;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.cache.DaoBuilder;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.CompositeQuestionDto;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
@@ -46,18 +48,18 @@ public class JdbiCompositeQuestionTest extends TxnAwareBaseTest {
     private static final String SID_COMP1 = "TESTSIDCOMP1";
 
     private static TestDataSetupUtil.GeneratedTestData testData;
-    private DaoBuilder<JdbiCompositeQuestion> daoBuilder;
+    private DaoBuilder<JdbiQuestion> jdbiQuestionBuilder;
     private boolean isCachedDao;
 
-    public JdbiCompositeQuestionTest(DaoBuilder daoBuilder, boolean isCachedDao) {
-        this.daoBuilder = daoBuilder;
+    public JdbiCompositeQuestionTest(DaoBuilder jdbiQuestionBuilder, boolean isCachedDao) {
+        this.jdbiQuestionBuilder = jdbiQuestionBuilder;
         this.isCachedDao = isCachedDao;
     }
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
-        Object[] uncached = {(DaoBuilder<JdbiCompositeQuestion>)(handle) -> handle.attach(JdbiCompositeQuestion.class), false};
-        Object[] cached = {(DaoBuilder<JdbiCompositeQuestion>)(handle) -> new JdbiCompositeQuestionCached(handle), true};
+        Object[] uncached = {(DaoBuilder<JdbiQuestion>) (handle) -> handle.attach(JdbiQuestion.class), false};
+        Object[] cached = {(DaoBuilder<JdbiQuestion>) JdbiQuestionCached::new, true};
         return List.of(uncached, cached);
     }
 
@@ -73,8 +75,8 @@ public class JdbiCompositeQuestionTest extends TxnAwareBaseTest {
             FormActivityDef act = insertCompositeActivity(handle, testData.getUserGuid(), testData.getStudyGuid(), childQuestionDefs);
             QuestionBlockDef firstQuestionInFormDef = extractFirstQuestion(act);
             Long firstQuestionInFormId = firstQuestionInFormDef.getQuestion().getQuestionId();
-            // JdbiCompositeQuestion dao = daoBuilder.buildDao(handle);
-            CompositeQuestionDto compositeQuestionDto = (CompositeQuestionDto) handle.attach(JdbiQuestion.class)
+            var jdbiQuestion = jdbiQuestionBuilder.buildDao(handle);
+            CompositeQuestionDto compositeQuestionDto = (CompositeQuestionDto) jdbiQuestion
                     .findQuestionDtoById(firstQuestionInFormId)
                     .orElse(null);
             assertNotNull(compositeQuestionDto);
@@ -83,15 +85,21 @@ public class JdbiCompositeQuestionTest extends TxnAwareBaseTest {
             assertNotEquals(compositeQuestionDto.getAddButtonTemplateId(), compositeQuestionDto
                     .getAdditionalItemTemplateId());
             assertTrue(compositeQuestionDto.isAllowMultiple());
-            assertEquals(childQuestionDefs.length, compositeQuestionDto.getChildQuestions().size());
+
+            List<Long> childIds = jdbiQuestion
+                    .collectOrderedCompositeChildIdsByParentIds(Set.of(compositeQuestionDto.getId()))
+                    .get(compositeQuestionDto.getId());
+            assertEquals(childQuestionDefs.length, childIds.size());
+
+            Map<Long, QuestionDto> childDtos = jdbiQuestion.findQuestionDtosByIds(Set.copyOf(childIds))
+                    .collect(Collectors.toMap(QuestionDto::getId, Function.identity()));
             for (int i = 0; i < childQuestionDefs.length; i++) {
                 QuestionDef childDef = childQuestionDefs[i];
-                QuestionDto childDto = compositeQuestionDto.getChildQuestions().get(i);
+                QuestionDto childDto = childDtos.get(childIds.get(i));
                 assertEquals(childDef.getQuestionId(), (Long) childDto.getId());
                 assertEquals(childDef.getStableId(), childDto.getStableId());
                 assertEquals(childDef.getQuestionType(), childDto.getType());
             }
-
 
             handle.rollback();
         });
@@ -103,8 +111,7 @@ public class JdbiCompositeQuestionTest extends TxnAwareBaseTest {
             FormActivityDef act = insertCompositeActivity(handle, testData.getUserGuid(), testData.getStudyGuid());
             QuestionBlockDef firstQuestionInFormDef = extractFirstQuestion(act);
             Long firstQuestionInFormId = firstQuestionInFormDef.getQuestion().getQuestionId();
-            // JdbiCompositeQuestion dao = daoBuilder.buildDao(handle);
-            CompositeQuestionDto compositeQuestionDto = (CompositeQuestionDto) handle.attach(JdbiQuestion.class)
+            CompositeQuestionDto compositeQuestionDto = (CompositeQuestionDto) jdbiQuestionBuilder.buildDao(handle)
                     .findQuestionDtoById(firstQuestionInFormId)
                     .orElse(null);
             assertNotNull(compositeQuestionDto);
@@ -113,97 +120,10 @@ public class JdbiCompositeQuestionTest extends TxnAwareBaseTest {
             assertNotEquals(compositeQuestionDto.getAddButtonTemplateId(), compositeQuestionDto
                     .getAdditionalItemTemplateId());
             assertTrue(compositeQuestionDto.isAllowMultiple());
-            assertEquals(0, compositeQuestionDto.getChildQuestions().size());
 
             handle.rollback();
         });
     }
-
-
-    @Test
-    public void testGetCompositeQuestionDtoActivityInstanceIdAndStableId() {
-        TransactionWrapper.useTxn(handle -> {
-            QuestionDef[] childQuestionDefs = {buildTextQuestionDef(), buildDateQuestionDef()};
-            FormActivityDef act = insertCompositeActivity(handle, testData.getUserGuid(), testData.getStudyGuid(), childQuestionDefs);
-            ActivityInstanceDao activityInstanceDao = handle.attach(ActivityInstanceDao.class);
-            ActivityInstanceDto activityInstanceDto = activityInstanceDao.insertInstance(act.getActivityId(), testData.getUserGuid());
-            QuestionBlockDef firstQuestionInFormDef = extractFirstQuestion(act);
-            Long firstQuestionInFormId = firstQuestionInFormDef.getQuestion().getQuestionId();
-            JdbiCompositeQuestion dao = daoBuilder.buildDao(handle);
-            Optional<CompositeQuestionDto> compositeQuestionDefOpt = dao
-                    .findDtoByInstanceGuidAndStableId(
-                            activityInstanceDto.getGuid(), firstQuestionInFormDef.getQuestion().getStableId());
-            assertTrue(compositeQuestionDefOpt.isPresent());
-            CompositeQuestionDto compositeQuestionDto = compositeQuestionDefOpt.get();
-            assertNotNull(compositeQuestionDto.getAddButtonTemplateId());
-            assertNotNull(compositeQuestionDto.getAdditionalItemTemplateId());
-            assertNotEquals(compositeQuestionDto.getAddButtonTemplateId(), compositeQuestionDto
-                    .getAdditionalItemTemplateId());
-            assertTrue(compositeQuestionDto.isAllowMultiple());
-            assertEquals(childQuestionDefs.length, compositeQuestionDto.getChildQuestions().size());
-            for (int i = 0; i < childQuestionDefs.length; i++) {
-                QuestionDef childDef = childQuestionDefs[i];
-                QuestionDto childDto = compositeQuestionDto.getChildQuestions().get(i);
-                assertEquals(childDef.getQuestionId(), (Long) childDto.getId());
-                assertEquals(childDef.getStableId(), childDto.getStableId());
-                assertEquals(childDef.getQuestionType(), childDto.getType());
-            }
-
-
-            handle.rollback();
-        });
-    }
-
-    @Test
-    public void testGetCompositeQuestionDtoActivityInstanceIdAndStableIdWithoutChildren() {
-        TransactionWrapper.useTxn(handle -> {
-            FormActivityDef act = insertCompositeActivity(handle, testData.getUserGuid(), testData.getStudyGuid());
-            ActivityInstanceDao activityInstanceDao = handle.attach(ActivityInstanceDao.class);
-            ActivityInstanceDto activityInstanceDto = activityInstanceDao.insertInstance(act.getActivityId(), testData.getUserGuid());
-            QuestionBlockDef firstQuestionInFormDef = extractFirstQuestion(act);
-            Long firstQuestionInFormId = firstQuestionInFormDef.getQuestion().getQuestionId();
-            JdbiCompositeQuestion dao = daoBuilder.buildDao(handle);
-            Optional<CompositeQuestionDto> compositeQuestionDefOpt = dao
-                    .findDtoByInstanceGuidAndStableId(
-                            activityInstanceDto.getGuid(), firstQuestionInFormDef.getQuestion().getStableId());
-            assertTrue(compositeQuestionDefOpt.isPresent());
-            CompositeQuestionDto compositeQuestionDto = compositeQuestionDefOpt.get();
-            assertNotNull(compositeQuestionDto.getAddButtonTemplateId());
-            assertNotNull(compositeQuestionDto.getAdditionalItemTemplateId());
-            assertNotEquals(compositeQuestionDto.getAddButtonTemplateId(), compositeQuestionDto
-                    .getAdditionalItemTemplateId());
-            assertTrue(compositeQuestionDto.isAllowMultiple());
-            assertEquals(0, compositeQuestionDto.getChildQuestions().size());
-
-            handle.rollback();
-        });
-    }
-
-    @Test
-    public void testGetCompositeQuestionDtoByActivityId() {
-        TransactionWrapper.useTxn(handle -> {
-            FormActivityDef act = insertCompositeActivity(handle, testData.getUserGuid(), testData.getStudyGuid());
-            ActivityInstanceDao activityInstanceDao = handle.attach(ActivityInstanceDao.class);
-            ActivityInstanceDto activityInstanceDto = activityInstanceDao.insertInstance(act.getActivityId(), testData.getUserGuid());
-            QuestionBlockDef firstQuestionInFormDef = extractFirstQuestion(act);
-            Long firstQuestionInFormId = firstQuestionInFormDef.getQuestion().getQuestionId();
-            JdbiCompositeQuestion dao = daoBuilder.buildDao(handle);
-            List<CompositeQuestionDto> compQDtos = dao
-                    .findDtosByActivityId(activityInstanceDto.getActivityId());
-            assertTrue(!compQDtos.isEmpty());
-            assertEquals(1, compQDtos.size());
-            CompositeQuestionDto compositeQuestionDto = compQDtos.get(0);
-            assertNotNull(compositeQuestionDto.getAddButtonTemplateId());
-            assertNotNull(compositeQuestionDto.getAdditionalItemTemplateId());
-            assertNotEquals(compositeQuestionDto.getAddButtonTemplateId(), compositeQuestionDto
-                    .getAdditionalItemTemplateId());
-            assertTrue(compositeQuestionDto.isAllowMultiple());
-            assertEquals(0, compositeQuestionDto.getChildQuestions().size());
-
-            handle.rollback();
-        });
-    }
-
 
     private QuestionBlockDef extractFirstQuestion(FormActivityDef activity) {
         return activity.getSections().get(0).getBlocks().stream()

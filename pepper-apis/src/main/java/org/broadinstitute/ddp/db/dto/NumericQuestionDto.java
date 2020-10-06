@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.db.dto;
 
+import java.io.Serializable;
 import java.util.Set;
 
 import org.broadinstitute.ddp.model.activity.types.NumericType;
@@ -7,7 +8,7 @@ import org.jdbi.v3.core.mapper.Nested;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
-public final class NumericQuestionDto extends QuestionDto {
+public final class NumericQuestionDto extends QuestionDto implements Serializable {
 
     private NumericType numericType;
     private Long placeholderTemplateId;

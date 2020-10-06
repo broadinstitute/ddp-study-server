@@ -181,7 +181,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             actDao.insertActivity(form, RevisionMetadata.now(testData.getUserId(), "test"));
             assertNotNull(question.getQuestionId());
 
-            Optional<QuestionDto> actual = handle.attach(JdbiQuestion.class).getQuestionDtoById(question.getQuestionId());
+            Optional<QuestionDto> actual = handle.attach(JdbiQuestion.class).findQuestionDtoById(question.getQuestionId());
             assertTrue(actual.isPresent());
             assertTrue(actual.get().isDeprecated());
 
@@ -212,9 +212,9 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             actDao.changeVersion(form.getActivityId(), "v2", meta);
             dao.disableBoolQuestion(question.getQuestionId(), meta);
 
-            assertTrue(jdbiQuestion.getQuestionDtoById(question.getQuestionId()).isPresent());
-            assertTrue(jdbiQuestion.getQuestionDtoById(question.getQuestionId()).isPresent());
-            assertFalse(jdbiQuestion.getQuestionDtoIfActive(question.getQuestionId()).isPresent());
+            QuestionDto questionDto = jdbiQuestion.findQuestionDtoById(question.getQuestionId()).orElse(null);
+            assertNotNull(questionDto);
+            assertTrue(questionDto.isDeprecated());
             assertFalse(jdbiTmpl.getRevisionIdIfActive(prompt.getTemplateId()).isPresent());
             assertFalse(jdbiTmpl.getRevisionIdIfActive(trueTmpl.getTemplateId()).isPresent());
             assertFalse(jdbiTmpl.getRevisionIdIfActive(falseTmpl.getTemplateId()).isPresent());
@@ -246,7 +246,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             FormActivityDef form = buildSingleSectionForm(testData.getStudyGuid(), def);
             ActivityVersionDto version = actDao.insertActivity(form, RevisionMetadata.now(testData.getUserId(), "test"));
 
-            QuestionDto questionDto = jdbiQuestion.getQuestionDtoById(def.getQuestionId()).get();
+            QuestionDto questionDto = jdbiQuestion.findQuestionDtoById(def.getQuestionId()).get();
             TextQuestionDef actual = (TextQuestionDef) dao
                     .collectQuestionDefs(Set.of(questionDto.getId()), version.getRevStart())
                     .get(questionDto.getId());
@@ -281,7 +281,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             FormActivityDef form = buildSingleSectionForm(testData.getStudyGuid(), def);
             ActivityVersionDto version = actDao.insertActivity(form, RevisionMetadata.now(testData.getUserId(), "test"));
 
-            QuestionDto questionDto = jdbiQuestion.getQuestionDtoById(def.getQuestionId()).get();
+            QuestionDto questionDto = jdbiQuestion.findQuestionDtoById(def.getQuestionId()).get();
             TextQuestionDef actual = (TextQuestionDef) dao
                     .collectQuestionDefs(Set.of(questionDto.getId()), version.getRevStart())
                     .get(questionDto.getId());
@@ -325,7 +325,9 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             actDao.changeVersion(form.getActivityId(), "v2", meta);
             dao.disableTextQuestion(question.getQuestionId(), meta);
 
-            assertFalse(jdbiQuestion.getQuestionDtoIfActive(question.getQuestionId()).isPresent());
+            assertTrue(jdbiQuestion.findQuestionDtoById(question.getQuestionId())
+                    .map(QuestionDto::isDeprecated)
+                    .orElse(false));
             assertFalse(jdbiTmpl.getRevisionIdIfActive(prompt.getTemplateId()).isPresent());
             assertFalse(jdbiTmpl.getRevisionIdIfActive(placeholder.getTemplateId()).isPresent());
 
@@ -364,7 +366,9 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             actDao.changeVersion(form.getActivityId(), "v2", meta);
             dao.disableDateQuestion(question.getQuestionId(), meta);
 
-            assertFalse(jdbiQuestion.getQuestionDtoIfActive(question.getQuestionId()).isPresent());
+            assertTrue(jdbiQuestion.findQuestionDtoById(question.getQuestionId())
+                    .map(QuestionDto::isDeprecated)
+                    .orElse(false));
             assertFalse(jdbiTmpl.getRevisionIdIfActive(prompt.getTemplateId()).isPresent());
 
             handle.rollback();
@@ -444,7 +448,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             FormActivityDef form = buildSingleSectionForm(testData.getStudyGuid(), def);
             ActivityVersionDto version = actDao.insertActivity(form, RevisionMetadata.now(testData.getUserId(), "test"));
 
-            QuestionDto questionDto = jdbiQuestion.getQuestionDtoById(def.getQuestionId()).get();
+            QuestionDto questionDto = jdbiQuestion.findQuestionDtoById(def.getQuestionId()).get();
             PicklistQuestionDef actual = (PicklistQuestionDef) dao
                     .collectQuestionDefs(Set.of(questionDto.getId()), version.getRevStart())
                     .get(questionDto.getId());
@@ -508,8 +512,9 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             actDao.changeVersion(form.getActivityId(), "v2", meta);
             dao.disablePicklistQuestion(question.getQuestionId(), meta);
 
-            assertTrue(jdbiQuestion.getQuestionDtoById(question.getQuestionId()).isPresent());
-            assertFalse(jdbiQuestion.getQuestionDtoIfActive(question.getQuestionId()).isPresent());
+            QuestionDto questionDto = jdbiQuestion.findQuestionDtoById(question.getQuestionId()).orElse(null);
+            assertNotNull(questionDto);
+            assertTrue(questionDto.isDeprecated());
             assertFalse(jdbiTmpl.getRevisionIdIfActive(prompt.getTemplateId()).isPresent());
             assertFalse(jdbiTmpl.getRevisionIdIfActive(label.getTemplateId()).isPresent());
             assertFalse(jdbiOption.isCurrentlyActive(question.getQuestionId(), "other"));
@@ -778,7 +783,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             GetGenericQuestionData genericQuestionData = genericGetTextQuestionSetUp(handle);
 
             QuestionDto questionDto = handle.attach(JdbiQuestion.class)
-                    .getQuestionDtoById(genericQuestionData.getQuestion().getQuestionId()).get();
+                    .findQuestionDtoById(genericQuestionData.getQuestion().getQuestionId()).get();
 
             Question question1 = handle.attach(QuestionDao.class)
                     .getQuestionByActivityInstanceAndDto(questionDto,
@@ -800,7 +805,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             GetGenericQuestionData genericQuestionData = genericGetTextQuestionSetUp(handle);
 
             QuestionDto questionDto = handle.attach(JdbiQuestion.class)
-                    .getQuestionDtoById(genericQuestionData.getQuestion().getQuestionId()).get();
+                    .findQuestionDtoById(genericQuestionData.getQuestion().getQuestionId()).get();
 
             Question question1 = handle.attach(QuestionDao.class)
                     .getQuestionByActivityInstanceAndDto(questionDto,
@@ -840,7 +845,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             GetGenericQuestionData genericQuestionData = genericGetTextQuestionSetUp(handle);
 
             QuestionDto questionDto = handle.attach(JdbiQuestion.class)
-                    .getQuestionDtoById(genericQuestionData.getQuestion().getQuestionId()).get();
+                    .findQuestionDtoById(genericQuestionData.getQuestion().getQuestionId()).get();
 
             Question question1 = handle.attach(QuestionDao.class)
                     .getQuestionByUserGuidAndQuestionDto(questionDto,
@@ -925,7 +930,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             GetGenericQuestionData genericQuestionData = genericGetTextQuestionSetUp(handle);
 
             QuestionDto questionDto = handle.attach(JdbiQuestion.class)
-                    .getQuestionDtoById(genericQuestionData.getQuestion().getQuestionId()).get();
+                    .findQuestionDtoById(genericQuestionData.getQuestion().getQuestionId()).get();
 
             Question question1 = handle.attach(QuestionDao.class).getQuestionByActivityInstanceAndDto(questionDto,
                     genericQuestionData.getActivityInstanceGuid(), true, langCodeId);
@@ -960,7 +965,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
                             new BoolAnswer(null, sid, null, true));
 
             QuestionDto questionDto = handle.attach(JdbiQuestion.class)
-                    .getQuestionDtoById(question.getQuestionId()).get();
+                    .findQuestionDtoById(question.getQuestionId()).get();
 
             List<Long> answers = new ArrayList<>();
             answers.add(answer.getAnswerId());
@@ -1007,7 +1012,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
                     .generateTestFormActivityInstanceForUser(handle, version1.getActivityId(), testData.getUserGuid());
 
             QuestionDto questionDto = handle.attach(JdbiQuestion.class)
-                    .getQuestionDtoById(question.getQuestionId()).get();
+                    .findQuestionDtoById(question.getQuestionId()).get();
 
             questionDto = new QuestionDto(questionDto.getType(), questionDto.getId() + 1,
                     questionDto.getStableId(), questionDto.getPromptTemplateId(), null, null, questionDto.getActivityId(),
@@ -1054,7 +1059,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
                             new PicklistAnswer(null, sid, null, List.of(new SelectedPicklistOption("PO1"))));
 
             QuestionDto questionDto = handle.attach(JdbiQuestion.class)
-                    .getQuestionDtoById(question.getQuestionId()).get();
+                    .findQuestionDtoById(question.getQuestionId()).get();
 
             List<Long> answers = new ArrayList<>();
             answers.add(answer.getAnswerId());
@@ -1120,7 +1125,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
                     .generateTestFormActivityInstanceForUser(handle, version1.getActivityId(), testData.getUserGuid());
 
             QuestionDto questionDto = handle.attach(JdbiQuestion.class)
-                    .getQuestionDtoById(question.getQuestionId()).get();
+                    .findQuestionDtoById(question.getQuestionId()).get();
 
             questionDto = new QuestionDto(questionDto.getType(), questionDto.getId() + 1,
                     questionDto.getStableId(), questionDto.getPromptTemplateId(),
@@ -1201,7 +1206,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             GetGenericQuestionData genericQuestionData = genericGetTextQuestionSetUp(handle);
 
             QuestionDto questionDto = handle.attach(JdbiQuestion.class)
-                    .getQuestionDtoById(genericQuestionData.getQuestion().getQuestionId()).get();
+                    .findQuestionDtoById(genericQuestionData.getQuestion().getQuestionId()).get();
 
             List<Rule> rules = new ArrayList<>(Arrays.asList(
                     new RequiredRule<TextAnswer>(genericQuestionData.getQuestion().getValidations().get(0).getRuleId(), null,
@@ -1238,7 +1243,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             GetGenericQuestionData genericQuestionData = genericGetTextQuestionSetUp(handle);
 
             QuestionDto questionDto = handle.attach(JdbiQuestion.class)
-                    .getQuestionDtoById(genericQuestionData.getQuestion().getQuestionId()).get();
+                    .findQuestionDtoById(genericQuestionData.getQuestion().getQuestionId()).get();
 
             questionDto = new QuestionDto(questionDto.getType(), questionDto.getId() + 1,
                     questionDto.getStableId(), questionDto.getPromptTemplateId(),
@@ -1352,7 +1357,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
                             new DateAnswer(null, sid, null, new DateValue(2018, 10, 10)));
 
             QuestionDto questionDto = handle.attach(JdbiQuestion.class)
-                    .getQuestionDtoById(question.getQuestionId()).get();
+                    .findQuestionDtoById(question.getQuestionId()).get();
 
             List<Long> answers = new ArrayList<>();
             answers.add(answer.getAnswerId());
@@ -1411,7 +1416,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
                             new DateAnswer(null, sid, null, dateValue));
 
             QuestionDto questionDto = handle.attach(JdbiQuestion.class)
-                    .getQuestionDtoById(question.getQuestionId()).get();
+                    .findQuestionDtoById(question.getQuestionId()).get();
 
             List<Long> answers = new ArrayList<>();
             answers.add(answer.getAnswerId());
@@ -1463,7 +1468,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
                             new DateAnswer(null, sid, null, new DateValue(2018, 10, 10)));
 
             QuestionDto questionDto = handle.attach(JdbiQuestion.class)
-                    .getQuestionDtoById(question.getQuestionId()).get();
+                    .findQuestionDtoById(question.getQuestionId()).get();
 
             List<Long> answers = new ArrayList<>();
             answers.add(answer.getAnswerId());
@@ -1506,7 +1511,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
                     .generateTestFormActivityInstanceForUser(handle, version1.getActivityId(), testData.getUserGuid());
 
             QuestionDto questionDto = handle.attach(JdbiQuestion.class)
-                    .getQuestionDtoById(question.getQuestionId()).get();
+                    .findQuestionDtoById(question.getQuestionId()).get();
 
             questionDto = new QuestionDto(questionDto.getType(), questionDto.getId() + 1,
                     questionDto.getStableId(), questionDto.getPromptTemplateId(),
@@ -1601,7 +1606,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
                             new AgreementAnswer(null, sid, null, true));
 
             QuestionDto questionDto = handle.attach(JdbiQuestion.class)
-                    .getQuestionDtoById(question.getQuestionId()).get();
+                    .findQuestionDtoById(question.getQuestionId()).get();
 
             List<Long> answers = new ArrayList<>();
             answers.add(answer.getAnswerId());
@@ -1673,7 +1678,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             assertNotNull(ans.getAnswerGuid());
 
             QuestionDto questionDto = handle.attach(JdbiQuestion.class)
-                    .getQuestionDtoById(questionDef.getQuestionId()).get();
+                    .findQuestionDtoById(questionDef.getQuestionId()).get();
 
             Question question = handle.attach(QuestionDao.class).getCompositeQuestion(
                     (CompositeQuestionDto) questionDto,
@@ -1781,7 +1786,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             assertNotNull(ans.getAnswerGuid());
 
             QuestionDto questionDto = handle.attach(JdbiQuestion.class)
-                    .getQuestionDtoById(questionDef.getQuestionId()).get();
+                    .findQuestionDtoById(questionDef.getQuestionId()).get();
 
             questionDto = new QuestionDto(questionDto.getType(), questionDto.getId() + 1,
                     questionDto.getStableId(), questionDto.getPromptTemplateId(),

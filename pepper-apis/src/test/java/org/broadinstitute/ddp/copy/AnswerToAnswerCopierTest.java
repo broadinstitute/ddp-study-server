@@ -397,6 +397,6 @@ public class AnswerToAnswerCopierTest extends TxnAwareBaseTest {
     }
 
     private QuestionDto getQuestionDto(Handle handle, QuestionDef questionDef) {
-        return handle.attach(JdbiQuestion.class).getQuestionDtoById(questionDef.getQuestionId()).get();
+        return handle.attach(JdbiQuestion.class).findQuestionDtoById(questionDef.getQuestionId()).get();
     }
 }

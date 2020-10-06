@@ -58,8 +58,8 @@ public class ValidationDto implements Serializable {
         public ValidationDto map(ResultSet rs, StatementContext ctx) throws SQLException {
             return new ValidationDto(
                     RuleType.valueOf(rs.getString(ValidationTypeTable.TYPE_CODE)),
-                    rs.getLong(ValidationTable.ID),
                     (Long) rs.getObject("question_id"),
+                    rs.getLong(ValidationTable.ID),
                     rs.getBoolean(ValidationTable.ALLOW_SAVE),
                     (Long) rs.getObject(ValidationTable.CORRECTION_HINT),
                     rs.getLong(ValidationTable.REVISION_ID));

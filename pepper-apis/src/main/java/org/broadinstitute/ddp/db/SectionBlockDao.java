@@ -12,7 +12,7 @@ import org.broadinstitute.ddp.db.dao.JdbiBlockContent;
 import org.broadinstitute.ddp.db.dao.JdbiBlockGroupHeader;
 import org.broadinstitute.ddp.db.dao.JdbiBlockNesting;
 import org.broadinstitute.ddp.db.dao.JdbiFormSectionBlock;
-import org.broadinstitute.ddp.db.dao.QuestionDao;
+import org.broadinstitute.ddp.db.dao.QuestionCachedDao;
 import org.broadinstitute.ddp.db.dto.BlockContentDto;
 import org.broadinstitute.ddp.db.dto.BlockGroupHeaderDto;
 import org.broadinstitute.ddp.db.dto.FormBlockDto;
@@ -84,7 +84,8 @@ public class SectionBlockDao {
                 block = new ContentBlock(blockContentDto.getTitleTemplateId(), blockContentDto.getBodyTemplateId());
                 break;
             case QUESTION:
-                block = handle.attach(QuestionDao.class).getQuestionByBlockId(dto.getId(), instanceGuid, includeDeprecated, langCodeId)
+                block = new QuestionCachedDao(handle)
+                        .getQuestionByBlockId(dto.getId(), instanceGuid, includeDeprecated, langCodeId)
                         .map(QuestionBlock::new)
                         .orElse(null);
                 break;
@@ -94,7 +95,7 @@ public class SectionBlockDao {
                 block = new ComponentBlock(formComponent);
                 break;
             case CONDITIONAL:
-                block = handle.attach(QuestionDao.class)
+                block = new QuestionCachedDao(handle)
                         .getControlQuestionByBlockId(dto.getId(), instanceGuid, includeDeprecated, langCodeId)
                         .map(control -> {
                             List<FormBlock> nested = handle.attach(JdbiBlockNesting.class)

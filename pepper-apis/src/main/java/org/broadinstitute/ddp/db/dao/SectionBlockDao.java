@@ -594,7 +594,7 @@ public interface SectionBlockDao extends SqlObject {
 
         Map<Long, FormBlockDef> blockDefs = new HashMap<>();
         blockDefs.putAll(getContentBlockDao().collectBlockDefs(contentBlockDtos, timestamp));
-        blockDefs.putAll(getQuestionDao().collectBlockDefs(questionBlockDtos, timestamp));
+        blockDefs.putAll(new QuestionCachedDao(getHandle()).collectBlockDefs(questionBlockDtos, timestamp));
         blockDefs.putAll(getComponentDao().collectBlockDefs(componentBlockDtos, timestamp));
         blockDefs.putAll(collectConditionalBlockDefs(conditionalBlockDtos, timestamp));
         blockDefs.putAll(collectGroupBlockDefs(groupBlockDtos, timestamp));
@@ -614,7 +614,7 @@ public interface SectionBlockDao extends SqlObject {
 
         Map<Long, Long> blockIdToControlQuestionId = getJdbiBlockConditionalControl()
                 .findControlQuestionIdsByBlockIdsAndTimestamp(blockIds, timestamp);
-        Map<Long, QuestionDef> questionDefs = getQuestionDao()
+        Map<Long, QuestionDef> questionDefs = new QuestionCachedDao(getHandle())
                 .collectQuestionDefs(Set.copyOf(blockIdToControlQuestionId.values()), timestamp);
         Map<Long, List<FormBlockDef>> parentIdToNestedDefs = collectNestedBlockDefs(blockIds, timestamp);
 

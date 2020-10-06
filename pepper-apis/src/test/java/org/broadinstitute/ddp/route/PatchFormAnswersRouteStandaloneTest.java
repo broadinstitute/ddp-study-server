@@ -747,8 +747,10 @@ public class PatchFormAnswersRouteStandaloneTest {
         this.answerGuidsToDelete.put(QuestionType.COMPOSITE, new ArrayList<>(Arrays.asList(compositeAnswerResponse.getAnswerGuid())));
 
         TransactionWrapper.useTxn(handle -> {
-            Optional<QuestionDto> optCompQuestion = handle.attach(JdbiQuestion.class).findDtoByStableIdAndInstanceGuid(compStabledId,
-                    instanceGuid);
+            var jdbiQuestion = handle.attach(JdbiQuestion.class);
+            Optional<QuestionDto> optCompQuestion = jdbiQuestion
+                    .findIdByStableIdAndInstanceGuid(compStabledId, instanceGuid)
+                    .flatMap(jdbiQuestion::findQuestionDtoById);
             assertTrue(optCompQuestion.isPresent());
             Question compositeQuestionWithAnswers = handle.attach(QuestionDao.class)
                     .getQuestionByIdAndActivityInstanceGuid(optCompQuestion.get().getId(), instanceGuid,

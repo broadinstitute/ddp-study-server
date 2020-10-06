@@ -14,7 +14,6 @@ import java.util.stream.Collectors;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dto.PicklistGroupDto;
 import org.broadinstitute.ddp.db.dto.PicklistOptionDto;
-import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.db.dto.RevisionDto;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistGroupDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
@@ -349,13 +348,8 @@ public interface PicklistQuestionDao extends SqlObject {
         }
     }
 
-    default GroupAndOptionDtos findAllOrderedGroupAndOptionDtos(long questionId) {
-        String queryString = StringTemplateSqlLocator
-                .findStringTemplate(PicklistQuestionDao.class, "queryAllOrderedGroupsAndOptionsByQuestionId")
-                .render();
-        Query query = getHandle().createQuery(queryString)
-                .bind("questionId", questionId);
-        return executeGroupAndOptionDtosQuery(query);
+    default GroupAndOptionDtos findOrderedGroupAndOptionDtos(long questionId, long timestamp) {
+        return findOrderedGroupAndOptionDtos(Set.of(questionId), timestamp).get(questionId);
     }
 
     default Map<Long, GroupAndOptionDtos> findOrderedGroupAndOptionDtos(Set<Long> questionIds, long timestamp) {
@@ -366,47 +360,6 @@ public interface PicklistQuestionDao extends SqlObject {
                 .bindList("questionIds", List.copyOf(questionIds))
                 .bind("timestamp", timestamp);
         return executeGroupAndOptionDtosByQuestionQuery(query);
-    }
-
-    default Map<Long, GroupAndOptionDtos> findAllOrderedGroupAndOptionDtosByQuestion(long activityId) {
-        String queryString = StringTemplateSqlLocator
-                .findStringTemplate(PicklistQuestionDao.class, "queryAllOrderedGroupsAndOptionsByActivityId")
-                .render();
-        Query query = getHandle().createQuery(queryString)
-                .bind("activityId", activityId);
-        return executeGroupAndOptionDtosByQuestionQuery(query);
-    }
-
-    private GroupAndOptionDtos executeGroupAndOptionDtosQuery(Query query) {
-        return query
-                .registerRowMapper(ConstructorMapper.factory(PicklistOptionDto.class, "po"))
-                .registerRowMapper(ConstructorMapper.factory(PicklistGroupDto.class, "pg"))
-                .reduceRows(null, (container, row) -> {
-                    if (container == null) {
-                        long questionId = row.getColumn("question_id", Long.class);
-                        container = new GroupAndOptionDtos(questionId);
-                    }
-
-                    PicklistOptionDto option = row.getRow(PicklistOptionDto.class);
-                    Long groupId = row.getColumn("pg_picklist_group_id", Long.class);
-
-                    if (groupId == null) {
-                        container.getUngroupedOptions().add(option);
-                    } else {
-                        PicklistGroupDto group = row.getRow(PicklistGroupDto.class);
-                        if (container.getGroupIdToOptions().containsKey(groupId)) {
-                            container.getGroupIdToOptions().get(groupId).add(option);
-                        } else {
-                            List<PicklistOptionDto> options = new ArrayList<>();
-                            options.add(option);
-
-                            container.getGroupIdToOptions().put(groupId, options);
-                            container.getGroups().add(group);
-                        }
-                    }
-
-                    return container;
-                });
     }
 
     private Map<Long, GroupAndOptionDtos> executeGroupAndOptionDtosByQuestionQuery(Query query) {
@@ -463,14 +416,6 @@ public interface PicklistQuestionDao extends SqlObject {
 
         public Map<Long, List<PicklistOptionDto>> getGroupIdToOptions() {
             return groupIdToOptions;
-        }
-
-        public GroupAndOptionDtos(List<PicklistGroupDto> groups, List<PicklistOptionDto> ungroupedOptions,
-                                  Map<Long, List<PicklistOptionDto>> groupIdToOptions) {
-            this.groups = groups;
-            this.ungroupedOptions = ungroupedOptions;
-            this.groupIdToOptions = groupIdToOptions;
-
         }
 
         public Set<Long> getTemplateIds() {

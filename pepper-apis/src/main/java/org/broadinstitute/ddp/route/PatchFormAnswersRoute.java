@@ -7,12 +7,14 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -32,9 +34,6 @@ import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceStatusDao;
 import org.broadinstitute.ddp.db.dao.AnswerCachedDao;
 import org.broadinstitute.ddp.db.dao.DataExportDao;
-import org.broadinstitute.ddp.db.dao.JdbiCompositeQuestion;
-import org.broadinstitute.ddp.db.dao.JdbiCompositeQuestionCached;
-import org.broadinstitute.ddp.db.dao.JdbiQuestion;
 import org.broadinstitute.ddp.db.dao.JdbiQuestionCached;
 import org.broadinstitute.ddp.db.dao.QuestionCachedDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
@@ -177,8 +176,9 @@ public class PatchFormAnswersRoute implements Route {
                 throw ResponseUtil.haltError(response, 422, new ApiError(ErrorCodes.ACTIVITY_INSTANCE_IS_READONLY, msg));
             }
 
-            var jdbiQuestion = new JdbiQuestionCached(handle);
             var answerDao = new AnswerCachedDao(handle);
+            var questionDao = new QuestionCachedDao(handle);
+            var jdbiQuestion = questionDao.getJdbiQuestion();
 
             LanguageDto preferredUserLanguage = RouteUtil.getUserLanguage(request);
             String isoLanguageCode = preferredUserLanguage.getIsoCode();
@@ -194,11 +194,13 @@ public class PatchFormAnswersRoute implements Route {
                         LOG.warn("Could not find questiondef with id: " + questionStableId);
                     }
 
-                    Optional<QuestionDto> optDto = jdbiQuestion.findDtoByStableIdAndInstance(questionStableId, instanceDto);
+                    Optional<QuestionDto> optDto = jdbiQuestion
+                            .findIdByStableIdAndInstanceGuid(questionStableId, instanceGuid)
+                            .flatMap(jdbiQuestion::findQuestionDtoById);
                     QuestionDto questionDto = extractQuestionDto(response, questionStableId, optDto);
                     // @TODO might be able to get rid of this query and a bunch of *CachedDao classes
                     // if can figure out how to create Rule objects from RuleDef
-                    Question question = new QuestionCachedDao(handle).getQuestionByActivityInstanceAndDto(questionDto,
+                    Question question = questionDao.getQuestionByActivityInstanceAndDto(questionDto,
                             instanceGuid, false, languageCodeId);
 
                     if (question.isReadonly()) {
@@ -208,9 +210,8 @@ public class PatchFormAnswersRoute implements Route {
                     }
 
                     //validation to check if question is a composite child
-                    Optional<Long> parentQuestionId = handle.attach(JdbiCompositeQuestion.class)
-                            .findParentQuestionIdByChildQuestionId(question.getQuestionId());
-
+                    Optional<Long> parentQuestionId = jdbiQuestion
+                            .findCompositeParentIdByChildId(question.getQuestionId());
                     if (parentQuestionId.isPresent()) {
                         LOG.warn("Passed question stable ID : " + questionStableId + " is a Composite child question. "
                                 + "Only entire Composite question answer can be updated ");
@@ -402,11 +403,11 @@ public class PatchFormAnswersRoute implements Route {
             case DATE:
                 return convertDateAnswer(stableId, guid, instanceGuid, value);
             case NUMERIC:
-                return convertNumericAnswer(handle, questionDto, guid, instanceGuid, value);
+                return convertNumericAnswer(handle, (NumericQuestionDto) questionDto, guid, instanceGuid, value);
             case AGREEMENT:
                 return convertAgreementAnswer(stableId, guid, instanceGuid, value);
             case COMPOSITE:
-                return convertCompositeAnswer(handle, response, instanceGuid, stableId, guid, value);
+                return convertCompositeAnswer(handle, response, instanceGuid, (CompositeQuestionDto) questionDto, guid, value);
             default:
                 throw new RuntimeException("Unhandled question type " + questionDto.getType());
         }
@@ -493,20 +494,17 @@ public class PatchFormAnswersRoute implements Route {
         }
     }
 
-    private NumericAnswer convertNumericAnswer(Handle handle, QuestionDto questionDto, String guid, String actInstanceGuid,
+    private NumericAnswer convertNumericAnswer(Handle handle, NumericQuestionDto numericDto, String guid, String actInstanceGuid,
                                                JsonElement value) {
         if (value == null || value.isJsonNull() || (value.isJsonPrimitive() && value.getAsJsonPrimitive().isNumber())) {
-            NumericQuestionDto numericQuestionDto = (NumericQuestionDto) handle.attach(JdbiQuestion.class)
-                    .findQuestionDtoById(questionDto.getId())
-                    .orElseThrow(() -> new DDPException("Could not find numeric question with id " + questionDto.getId()));
-            if (numericQuestionDto.getNumericType() == NumericType.INTEGER) {
+            if (numericDto.getNumericType() == NumericType.INTEGER) {
                 Long intValue = null;
                 if (value != null && !value.isJsonNull()) {
                     intValue = value.getAsLong();
                 }
-                return new NumericIntegerAnswer(null, questionDto.getStableId(), guid, intValue, actInstanceGuid);
+                return new NumericIntegerAnswer(null, numericDto.getStableId(), guid, intValue, actInstanceGuid);
             } else {
-                throw new DDPException("Unhandled numeric answer type " + numericQuestionDto.getNumericType());
+                throw new DDPException("Unhandled numeric answer type " + numericDto.getNumericType());
             }
         } else {
             return null;
@@ -514,58 +512,61 @@ public class PatchFormAnswersRoute implements Route {
     }
 
     private CompositeAnswer convertCompositeAnswer(Handle handle, Response response, String instanceGuid,
-                                                   String parentStableId, String answerGuid, JsonElement value) {
+                                                   CompositeQuestionDto compositeDto, String answerGuid, JsonElement value) {
+        String parentStableId = compositeDto.getStableId();
         final Consumer<String> haltError = (String msg) -> {
             LOG.info(msg);
             throw ResponseUtil.haltError(response, HttpStatus.SC_BAD_REQUEST, new ApiError(ErrorCodes.BAD_PAYLOAD, msg));
         };
+
         if (value != null && value.isJsonArray()) {
-            CompositeAnswer compAnswer = new CompositeAnswer(null, parentStableId, answerGuid, instanceGuid);
-            JdbiCompositeQuestion compositeQuestionDao = new JdbiCompositeQuestionCached(handle);
-            Optional<CompositeQuestionDto> compositeQuestionOpt = compositeQuestionDao
-                    .findDtoByInstanceGuidAndStableId(instanceGuid, parentStableId);
-            if (!compositeQuestionOpt.isPresent()) {
-                String msg = "Could not locate parent composite question id with stableId:" + parentStableId
-                        + " and activity instance guid:" + instanceGuid;
-                haltError.accept(msg);
-            }
-            CompositeQuestionDto compositeQuestion = compositeQuestionOpt.get();
+            var compAnswer = new CompositeAnswer(null, parentStableId, answerGuid, instanceGuid);
+            var jdbiQuestion = new JdbiQuestionCached(handle);
             JsonArray childAnswersJsonArray = value.getAsJsonArray();
-            if (!compositeQuestion.isAllowMultiple() && childAnswersJsonArray.size() > 1) {
+            if (!compositeDto.isAllowMultiple() && childAnswersJsonArray.size() > 1) {
                 haltError.accept("Answers to composite question with stable id: " + parentStableId
                         + " are restricted to only one row");
             }
-            childAnswersJsonArray.forEach((jsonChildRowElement) -> {
+
+            List<Long> childIds = jdbiQuestion
+                    .collectOrderedCompositeChildIdsByParentIds(Set.of(compositeDto.getId()))
+                    .getOrDefault(compositeDto.getId(), new ArrayList<>());
+            Map<String, QuestionDto> childDtos = jdbiQuestion.findQuestionDtosByIds(Set.copyOf(childIds))
+                    .collect(Collectors.toMap(QuestionDto::getStableId, Function.identity()));
+
+            for (JsonElement jsonChildRowElement : childAnswersJsonArray) {
                 if (jsonChildRowElement.isJsonArray()) {
                     JsonArray jsonChildRowArray = jsonChildRowElement.getAsJsonArray();
-                    Set<String> stableQuestionIdsAllowedInRow = compositeQuestion.getChildQuestions().stream()
-                            .map(child -> child.getStableId()).collect(Collectors.toSet());
+                    Set<String> stableQuestionIdsAllowedInRow = new HashSet<>(childDtos.keySet());
                     List<Answer> childAnswersRow = new ArrayList<>();
-                    jsonChildRowArray.forEach(jsonChildAnswer -> {
+
+                    for (JsonElement jsonChildAnswer : jsonChildRowArray) {
                         AnswerSubmission childAnswerSubmission = gson.fromJson(jsonChildAnswer, AnswerSubmission.class);
                         if (childAnswerSubmission == null) {
                             haltError.accept("A child answer had an invalid answer");
                         }
+
                         String childAnswerStableId = extractQuestionStableId(childAnswerSubmission, response);
-                        Optional<QuestionDto> correspondingChildQuestion = compositeQuestion.getChildQuestionByStableId(
-                                childAnswerStableId);
-                        if (!correspondingChildQuestion.isPresent()) {
-                            haltError.accept("Question stable id:" + childAnswerStableId + " in child answer is not "
-                                    + "valid");
+                        Optional<QuestionDto> correspondingChildQuestion = Optional.ofNullable(childDtos.get(childAnswerStableId));
+                        if (correspondingChildQuestion.isEmpty()) {
+                            haltError.accept("Question stable id:" + childAnswerStableId + " in child answer is not valid");
                         }
+
                         if (!stableQuestionIdsAllowedInRow.remove(childAnswerStableId)) {
-                            haltError.accept("Question stable id:" + childAnswerStableId + "was used more than once "
-                                    + "in answer");
+                            haltError.accept("Question stable id:" + childAnswerStableId + "was used more than once in answer");
                         }
+
                         QuestionDto childQuestionDto = extractQuestionDto(response, childAnswerStableId, correspondingChildQuestion);
                         childAnswersRow.add(convertAnswer(handle, response, instanceGuid, childAnswerStableId,
                                 childAnswerSubmission.getAnswerGuid(), childQuestionDto, childAnswerSubmission.getValue()));
-                    });
+                    }
+
                     compAnswer.addRowOfChildAnswers(childAnswersRow);
                 } else {
                     haltError.accept("An composite answer submission was expected to be an array but was not");
                 }
-            });
+            }
+
             return compAnswer;
         } else {
             LOG.info("Provided answer value for question stable id {} and with "

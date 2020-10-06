@@ -63,26 +63,25 @@ public interface ComponentDao extends SqlObject {
         boolean isInstitution = componentDto.getComponentType() == ComponentType.INSTITUTION;
         boolean isPhysician = componentDto.getComponentType() == ComponentType.PHYSICIAN;
         if (isInstitution || isPhysician) {
-            var institutionComponentDto = (InstitutionPhysicianComponentDto) componentDto;
+            var institutionDto = (InstitutionPhysicianComponentDto) componentDto;
             if (isInstitution) {
-                formComponent = new InstitutionComponent(institutionComponentDto, componentDto.shouldHideNumber());
+                formComponent = new InstitutionComponent(institutionDto, componentDto.shouldHideNumber());
             } else if (isPhysician) {
-                formComponent = new PhysicianComponent(institutionComponentDto, componentDto.shouldHideNumber());
+                formComponent = new PhysicianComponent(institutionDto, componentDto.shouldHideNumber());
             } else {
                 throw new DaoException("Unknown component type " + componentDto.getComponentType());
             }
         } else if (componentDto.getComponentType() == ComponentType.MAILING_ADDRESS) {
-            var addressComponentDto = (MailingAddressComponentDto) componentDto;
+            var mailingAddressComponentDto = (MailingAddressComponentDto) componentDto;
             formComponent = new MailingAddressComponent(
-                    addressComponentDto.getTitleTemplateId(),
-                    addressComponentDto.getSubtitleTemplateId(),
+                    mailingAddressComponentDto.getTitleTemplateId(),
+                    mailingAddressComponentDto.getSubtitleTemplateId(),
                     componentDto.shouldHideNumber(),
-                    addressComponentDto.shouldRequireVerified(),
-                    addressComponentDto.shouldRequirePhone());
+                    mailingAddressComponentDto.shouldRequireVerified(),
+                    mailingAddressComponentDto.shouldRequirePhone());
         } else {
             throw new DaoException("Cannot process component type " + componentDto.getComponentType());
         }
-
         return formComponent;
     }
 
