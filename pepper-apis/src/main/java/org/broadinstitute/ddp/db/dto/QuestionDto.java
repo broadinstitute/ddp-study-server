@@ -1,6 +1,8 @@
 package org.broadinstitute.ddp.db.dto;
 
 import java.io.Serializable;
+import java.util.HashSet;
+import java.util.Set;
 import javax.annotation.Nullable;
 
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
@@ -26,14 +28,14 @@ public class QuestionDto implements Serializable {
     private Long revisionEnd;
 
     @JdbiConstructor
-    public QuestionDto(@ColumnName("question_type_code") QuestionType type,
+    public QuestionDto(@ColumnName("question_type") QuestionType type,
                        @ColumnName("question_id") long id,
                        @ColumnName("stable_id") String stableId,
-                       @ColumnName("question_prompt_template_id") long promptTemplateId,
+                       @ColumnName("prompt_template_id") long promptTemplateId,
                        @ColumnName("tooltip_template_id") Long tooltipTemplateId,
                        @ColumnName("info_header_template_id") Long additionalInfoHeaderTemplateId,
                        @ColumnName("info_footer_template_id") Long additionalInfoFooterTemplateId,
-                       @ColumnName("study_activity_id") long activityId,
+                       @ColumnName("activity_id") long activityId,
                        @ColumnName("is_restricted") boolean isRestricted,
                        @ColumnName("is_deprecated") Boolean isDeprecated,
                        @ColumnName("hide_number") Boolean hideNumber,
@@ -156,5 +158,20 @@ public class QuestionDto implements Serializable {
 
     public Long getRevisionEnd() {
         return revisionEnd;
+    }
+
+    public Set<Long> getTemplateIds() {
+        var ids = new HashSet<Long>();
+        ids.add(promptTemplateId);
+        if (tooltipTemplateId != null) {
+            ids.add(tooltipTemplateId);
+        }
+        if (additionalInfoHeaderTemplateId != null) {
+            ids.add(additionalInfoHeaderTemplateId);
+        }
+        if (additionalInfoFooterTemplateId != null) {
+            ids.add(additionalInfoFooterTemplateId);
+        }
+        return ids;
     }
 }

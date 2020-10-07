@@ -5,7 +5,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.broadinstitute.ddp.db.dao.JdbiCompositeQuestion;
+import org.broadinstitute.ddp.db.dao.JdbiQuestion;
+import org.broadinstitute.ddp.db.dao.JdbiQuestionCached;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.CompositeQuestionDto;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
@@ -26,14 +27,14 @@ public class AnswerToProfileCopier {
 
     private final Handle handle;
     private final long operatorId;
-    private final JdbiCompositeQuestion jdbiCompositeQuestion;
+    private final JdbiQuestion jdbiQuestion;
     private final UserProfileDao profileDao;
     private final Map<Long, CompositeQuestionDto> parentDtosByChildId = new HashMap<>();
 
     public AnswerToProfileCopier(Handle handle, long operatorId) {
         this.handle = handle;
         this.operatorId = operatorId;
-        this.jdbiCompositeQuestion = handle.attach(JdbiCompositeQuestion.class);
+        this.jdbiQuestion = new JdbiQuestionCached(handle);
         this.profileDao = handle.attach(UserProfileDao.class);
     }
 
@@ -82,16 +83,16 @@ public class AnswerToProfileCopier {
     public Answer extractSourceChildAnswer(FormResponse sourceInstance, QuestionDto sourceQuestion) {
         CompositeQuestionDto parentDto = parentDtosByChildId.get(sourceQuestion.getId());
         if (parentDto == null) {
-            parentDto = jdbiCompositeQuestion
-                    .findParentDtoByChildQuestionId(sourceQuestion.getId())
+            parentDto = jdbiQuestion
+                    .findCompositeParentIdByChildId(sourceQuestion.getId())
+                    .flatMap(jdbiQuestion::findQuestionDtoById)
+                    .map(dto -> (CompositeQuestionDto) dto)
                     .orElse(null);
             if (parentDto == null) {
                 LOG.info("No parent composite question found for source question {}", sourceQuestion.getStableId());
                 return null;
             }
-            for (var childDto : parentDto.getChildQuestions()) {
-                parentDtosByChildId.put(childDto.getId(), parentDto);
-            }
+            parentDtosByChildId.put(sourceQuestion.getId(), parentDto);
         }
 
         var parentAnswer = (CompositeAnswer) sourceInstance.getAnswer(parentDto.getStableId());

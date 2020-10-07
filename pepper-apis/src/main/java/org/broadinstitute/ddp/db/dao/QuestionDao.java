@@ -4,8 +4,11 @@ import static java.util.stream.Collectors.toList;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.CollectionUtils;
@@ -62,6 +65,7 @@ import org.broadinstitute.ddp.model.activity.types.DateFieldType;
 import org.broadinstitute.ddp.model.activity.types.DateRenderMode;
 import org.broadinstitute.ddp.model.activity.types.PicklistRenderMode;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
+import org.broadinstitute.ddp.model.activity.types.SuggestionType;
 import org.broadinstitute.ddp.model.activity.types.TemplateType;
 import org.broadinstitute.ddp.util.QuestionUtil;
 import org.jdbi.v3.sqlobject.CreateSqlObject;
@@ -176,7 +180,8 @@ public interface QuestionDao extends SqlObject {
                                                     boolean includeDeprecated,
                                                     long langCodeId) {
         QuestionDto dto = getJdbiBlockQuestion()
-                .getQuestionDto(blockId, activityInstanceGuid)
+                .findQuestionId(blockId, activityInstanceGuid)
+                .flatMap(questionId -> getJdbiQuestion().findQuestionDtoById(questionId))
                 .orElseThrow(() -> new DaoException(String.format(
                         "No question found for block %d and activity instance %s", blockId, activityInstanceGuid)));
         if (dto.isDeprecated() && !includeDeprecated) {
@@ -215,7 +220,8 @@ public interface QuestionDao extends SqlObject {
                                                            boolean includeDeprecated,
                                                            long langCodeId) {
         QuestionDto questionDto = getHandle().attach(JdbiBlockConditionalControl.class)
-                .findControlQuestionDto(blockId, activityInstanceGuid)
+                .findControlQuestionId(blockId, activityInstanceGuid)
+                .flatMap(questionId -> getJdbiQuestion().findQuestionDtoById(questionId))
                 .orElseThrow(() -> new DaoException("No control question found for block " + blockId
                         + " and activity instance " + activityInstanceGuid));
         if (questionDto.isDeprecated() && !includeDeprecated) {
@@ -251,7 +257,8 @@ public interface QuestionDao extends SqlObject {
             boolean retrieveAnswers,
             long langCodeId
     ) {
-        return getJdbiQuestion().getQuestionDtoIfActive(questionId)
+        return getJdbiQuestion().findQuestionDtoById(questionId)
+                .filter(dto -> dto.getRevisionEnd() == null)
                 .map(dto -> getQuestionByActivityInstanceAndDto(dto, activityInstanceGuid, retrieveAnswers, langCodeId))
                 .orElseThrow(() -> new DaoException(String.format("No question found with id %d", questionId)));
     }
@@ -313,25 +320,26 @@ public interface QuestionDao extends SqlObject {
 
         switch (dto.getType()) {
             case BOOLEAN:
-                question = getBooleanQuestion(dto, activityInstanceGuid, answerIds, untypedRules);
+                question = getBooleanQuestion((BooleanQuestionDto) dto, activityInstanceGuid, answerIds, untypedRules);
                 break;
             case PICKLIST:
-                question = getPicklistQuestion(dto, activityInstanceGuid, answerIds, untypedRules);
+                question = getPicklistQuestion((PicklistQuestionDto) dto, activityInstanceGuid, answerIds, untypedRules);
                 break;
             case TEXT:
-                question = getTextQuestion(dto, activityInstanceGuid, answerIds, untypedRules);
+                question = getTextQuestion((TextQuestionDto) dto, activityInstanceGuid, answerIds, untypedRules);
                 break;
             case DATE:
-                question = getDateQuestion(dto, activityInstanceGuid, answerIds, untypedRules);
+                question = getDateQuestion((DateQuestionDto) dto, activityInstanceGuid, answerIds, untypedRules);
                 break;
             case NUMERIC:
-                question = getNumericQuestion(dto, activityInstanceGuid, answerIds, untypedRules);
+                question = getNumericQuestion((NumericQuestionDto) dto, activityInstanceGuid, answerIds, untypedRules);
                 break;
             case AGREEMENT:
-                question = getAgreementQuestion(dto, activityInstanceGuid, answerIds, untypedRules);
+                question = getAgreementQuestion((AgreementQuestionDto) dto, activityInstanceGuid, answerIds, untypedRules);
                 break;
             case COMPOSITE:
-                question = getCompositeQuestion(dto, activityInstanceGuid, answerIds, untypedRules, retrieveAnswers, langCodeId);
+                question = getCompositeQuestion((CompositeQuestionDto) dto,
+                        activityInstanceGuid, answerIds, untypedRules, retrieveAnswers, langCodeId);
                 break;
             default:
                 throw new DaoException("Unknown question type: " + dto.getType());
@@ -351,14 +359,10 @@ public interface QuestionDao extends SqlObject {
      * @param untypedRules         list of untyped validations for question (may be empty)
      * @return boolean question object
      */
-    default BoolQuestion getBooleanQuestion(QuestionDto dto,
+    default BoolQuestion getBooleanQuestion(BooleanQuestionDto dto,
                                             String activityInstanceGuid,
                                             List<Long> answerIds,
                                             List<Rule> untypedRules) {
-        BooleanQuestionDto booleanQuestionDto = getJdbiBooleanQuestion()
-                .findDtoByQuestion(dto)
-                .orElseThrow(() -> new DaoException("Could not find boolean question for id " + dto.getId()));
-
         AnswerDao answerDao = getAnswerDao();
         List<BoolAnswer> boolAnswers = answerIds.stream()
                 .map(answerId -> (BoolAnswer) answerDao.findAnswerById(answerId)
@@ -375,8 +379,8 @@ public interface QuestionDao extends SqlObject {
         return new BoolQuestion(dto.getStableId(), dto.getPromptTemplateId(),
                 dto.isRestricted(), dto.isDeprecated(), isReadonly, dto.getTooltipTemplateId(),
                 dto.getAdditionalInfoHeaderTemplateId(), dto.getAdditionalInfoFooterTemplateId(),
-                boolAnswers, rules, booleanQuestionDto.getTrueTemplateId(),
-                booleanQuestionDto.getFalseTemplateId());
+                boolAnswers, rules, dto.getTrueTemplateId(),
+                dto.getFalseTemplateId());
     }
 
     /**
@@ -388,14 +392,10 @@ public interface QuestionDao extends SqlObject {
      * @param untypedRules         list of untyped validations for question (may be empty)
      * @return picklist question object
      */
-    default PicklistQuestion getPicklistQuestion(QuestionDto dto,
+    default PicklistQuestion getPicklistQuestion(PicklistQuestionDto dto,
                                                  String activityInstanceGuid,
                                                  List<Long> answerIds,
                                                  List<Rule> untypedRules) {
-        PicklistQuestionDto picklistQuestionDto = getJdbiPicklistQuestion()
-                .findDtoByQuestion(dto)
-                .orElseThrow(() -> new DaoException("Could not find picklist question for id " + dto.getId()));
-
         AnswerDao answerDao = getAnswerDao();
         List<PicklistAnswer> picklistAnswers = answerIds.stream()
                 .map(answerId -> (PicklistAnswer) answerDao.findAnswerById(answerId)
@@ -415,7 +415,7 @@ public interface QuestionDao extends SqlObject {
                         activityInstanceGuid, dto.getId(), dto.getStableId())));
 
         PicklistQuestionDao.GroupAndOptionDtos container = getPicklistQuestionDao()
-                .findOrderedGroupAndOptionDtos(dto, timestamp);
+                .findOrderedGroupAndOptionDtos(dto.getId(), timestamp);
 
         List<PicklistGroup> groups = new ArrayList<>();
         List<PicklistOption> allOptions = new ArrayList<>();
@@ -461,9 +461,9 @@ public interface QuestionDao extends SqlObject {
                 dto.isRestricted(), dto.isDeprecated(), isReadonly, dto.getTooltipTemplateId(),
                 dto.getAdditionalInfoHeaderTemplateId(), dto.getAdditionalInfoFooterTemplateId(),
                 picklistAnswers, rules,
-                picklistQuestionDto.getSelectMode(),
-                picklistQuestionDto.getRenderMode(),
-                picklistQuestionDto.getLabelTemplateId(),
+                dto.getSelectMode(),
+                dto.getRenderMode(),
+                dto.getLabelTemplateId(),
                 allOptions, groups);
     }
 
@@ -476,14 +476,10 @@ public interface QuestionDao extends SqlObject {
      * @param untypedRules         list of untyped validations for question (may be empty)
      * @return text question object
      */
-    default TextQuestion getTextQuestion(QuestionDto dto,
+    default TextQuestion getTextQuestion(TextQuestionDto dto,
                                          String activityInstanceGuid,
                                          List<Long> answerIds,
                                          List<Rule> untypedRules) {
-        TextQuestionDto textQuestionDto = getJdbiTextQuestion()
-                .findDtoByQuestion(dto)
-                .orElseThrow(() -> new DaoException("Could not find text question for id " + dto.getId()));
-
         AnswerDao answerDao = getAnswerDao();
         List<TextAnswer> textAnswers = answerIds.stream()
                 .map(answerId -> (TextAnswer) answerDao.findAnswerById(answerId)
@@ -497,22 +493,27 @@ public interface QuestionDao extends SqlObject {
 
         boolean isReadonly = QuestionUtil.isReadonly(getHandle(), dto, activityInstanceGuid);
 
+        List<String> suggestions = new ArrayList<>();
+        if (dto.getSuggestionType() == SuggestionType.INCLUDED) {
+            suggestions = getJdbiQuestion().findTextQuestionSuggestions(dto.getId());
+        }
+
         return new TextQuestion(dto.getStableId(), dto.getPromptTemplateId(),
-                textQuestionDto.getPlaceholderTemplateId(),
-                textQuestionDto.isRestricted(),
-                textQuestionDto.isDeprecated(),
+                dto.getPlaceholderTemplateId(),
+                dto.isRestricted(),
+                dto.isDeprecated(),
                 isReadonly,
-                textQuestionDto.getTooltipTemplateId(),
-                textQuestionDto.getAdditionalInfoHeaderTemplateId(),
-                textQuestionDto.getAdditionalInfoFooterTemplateId(),
+                dto.getTooltipTemplateId(),
+                dto.getAdditionalInfoHeaderTemplateId(),
+                dto.getAdditionalInfoFooterTemplateId(),
                 textAnswers,
                 rules,
-                textQuestionDto.getInputType(),
-                textQuestionDto.getSuggestionType(),
-                textQuestionDto.getSuggestions(),
-                textQuestionDto.isConfirmEntry(),
-                textQuestionDto.getConfirmPromptTemplateId(),
-                textQuestionDto.getMismatchMessageTemplateId());
+                dto.getInputType(),
+                dto.getSuggestionType(),
+                suggestions,
+                dto.isConfirmEntry(),
+                dto.getConfirmPromptTemplateId(),
+                dto.getMismatchMessageTemplateId());
     }
 
     /**
@@ -524,14 +525,10 @@ public interface QuestionDao extends SqlObject {
      * @param untypedRules         list of untyped validations for question (may be empty)
      * @return date question object
      */
-    default DateQuestion getDateQuestion(QuestionDto dto,
+    default DateQuestion getDateQuestion(DateQuestionDto dto,
                                          String activityInstanceGuid,
                                          List<Long> answerIds,
                                          List<Rule> untypedRules) {
-        DateQuestionDto dateQuestionDto = getJdbiDateQuestion()
-                .findDtoByQuestionId(dto.getId())
-                .orElseThrow(() -> new DaoException("Could not find date question for id " + dto.getId()));
-
         AnswerDao answerDao = getAnswerDao();
         List<DateAnswer> dateAnswers = answerIds.stream()
                 .map(answerId -> (DateAnswer) answerDao.findAnswerById(answerId)
@@ -543,9 +540,7 @@ public interface QuestionDao extends SqlObject {
                 .map(rule -> (Rule<DateAnswer>) rule)
                 .collect(toList());
 
-        List<DateFieldType> fieldTypes = getHandle()
-                .attach(JdbiDateQuestionFieldOrder.class)
-                .getOrderedFieldsByQuestionId(dto.getId());
+        List<DateFieldType> fieldTypes = dto.getFields();
         if (fieldTypes.isEmpty()) {
             throw new DaoException("Date question should have at least one date field but none found for question id "
                     + dto.getId());
@@ -553,13 +548,13 @@ public interface QuestionDao extends SqlObject {
 
         boolean isReadonly = QuestionUtil.isReadonly(getHandle(), dto, activityInstanceGuid);
 
-        if (dateQuestionDto.getRenderMode().equals(DateRenderMode.PICKLIST)) {
-            DatePicklistDef config = getJdbiDateQuestion().getDatePicklistDefByQuestionId(dto.getId()).get();
+        if (dto.getRenderMode().equals(DateRenderMode.PICKLIST)) {
+            DatePicklistDef config = dto.getPicklistDef();
             return new DatePicklistQuestion(dto.getStableId(), dto.getPromptTemplateId(),
                     dto.isRestricted(), dto.isDeprecated(), isReadonly, dto.getTooltipTemplateId(),
                     dto.getAdditionalInfoHeaderTemplateId(), dto.getAdditionalInfoFooterTemplateId(),
-                    dateAnswers, rules, dateQuestionDto.getRenderMode(), dateQuestionDto.shouldDisplayCalendar(),
-                    fieldTypes, dateQuestionDto.getPlaceholderTemplateId(), config.getUseMonthNames(), config.getStartYear(),
+                    dateAnswers, rules, dto.getRenderMode(), dto.shouldDisplayCalendar(),
+                    fieldTypes, dto.getPlaceholderTemplateId(), config.getUseMonthNames(), config.getStartYear(),
                     config.getEndYear(), config.getFirstSelectedYear());
         } else {
             return new DateQuestion(dto.getStableId(), dto.getPromptTemplateId(),
@@ -569,10 +564,10 @@ public interface QuestionDao extends SqlObject {
                     dto.getAdditionalInfoFooterTemplateId(),
                     dateAnswers,
                     rules,
-                    dateQuestionDto.getRenderMode(),
-                    dateQuestionDto.shouldDisplayCalendar(),
+                    dto.getRenderMode(),
+                    dto.shouldDisplayCalendar(),
                     fieldTypes,
-                    dateQuestionDto.getPlaceholderTemplateId());
+                    dto.getPlaceholderTemplateId());
         }
     }
 
@@ -585,10 +580,8 @@ public interface QuestionDao extends SqlObject {
      * @param untypedRules         list of untyped validations for question (may be empty)
      * @return numeric question object
      */
-    default Question getNumericQuestion(QuestionDto dto, String activityInstanceGuid, List<Long> answerIds, List<Rule> untypedRules) {
-        NumericQuestionDto numericQuestionDto = getJdbiNumericQuestion().findDtoByQuestionId(dto.getId())
-                .orElseThrow(() -> new DaoException("Could not find numeric question with id " + dto.getId()));
-
+    default Question getNumericQuestion(NumericQuestionDto dto, String activityInstanceGuid,
+                                        List<Long> answerIds, List<Rule> untypedRules) {
         AnswerDao answerDao = getAnswerDao();
         List<NumericAnswer> answers = answerIds.stream()
                 .map(answerId -> (NumericAnswer) answerDao.findAnswerById(answerId)
@@ -604,7 +597,7 @@ public interface QuestionDao extends SqlObject {
         return new NumericQuestion(
                 dto.getStableId(),
                 dto.getPromptTemplateId(),
-                numericQuestionDto.getPlaceholderTemplateId(),
+                dto.getPlaceholderTemplateId(),
                 dto.isRestricted(),
                 dto.isDeprecated(),
                 isReadonly,
@@ -613,7 +606,7 @@ public interface QuestionDao extends SqlObject {
                 dto.getAdditionalInfoFooterTemplateId(),
                 answers,
                 rules,
-                numericQuestionDto.getNumericType());
+                dto.getNumericType());
     }
 
     /**
@@ -625,7 +618,7 @@ public interface QuestionDao extends SqlObject {
      * @param untypedRules         list of untyped validations for question (may be empty)
      * @return agreement question object
      */
-    default AgreementQuestion getAgreementQuestion(QuestionDto dto,
+    default AgreementQuestion getAgreementQuestion(AgreementQuestionDto dto,
                                                    String activityInstanceGuid,
                                                    List<Long> answerIds,
                                                    List<Rule> untypedRules) {
@@ -657,20 +650,21 @@ public interface QuestionDao extends SqlObject {
      * @param untypedRules         list of untyped validations for question (may be empty)
      * @return composite question object
      */
-    default CompositeQuestion getCompositeQuestion(QuestionDto dto,
+    default CompositeQuestion getCompositeQuestion(CompositeQuestionDto dto,
                                                    String activityInstanceGuid,
                                                    List<Long> answerIds,
                                                    List<Rule> untypedRules,
                                                    boolean retrieveAnswers,
                                                    long langCodeId) {
-        CompositeQuestionDto compositeQuestionDto = getJdbiCompositeQuestion()
-                .findDtoByQuestion(dto)
-                .orElseThrow(() -> new DaoException("Could not find composite question using question id " + dto.getId()));
-
-        List<Question> childQuestions = compositeQuestionDto.getChildQuestions().stream()
-                .map(childQuestionDto ->
-                        getQuestionByActivityInstanceAndDto(childQuestionDto, activityInstanceGuid, retrieveAnswers, langCodeId))
-                .collect(toList());
+        JdbiQuestion jdbiQuestion = getJdbiQuestion();
+        List<Long> childIds = jdbiQuestion.findCompositeChildIdsByParentId(dto.getId());
+        List<Question> childQuestions;
+        try (var stream = jdbiQuestion.findQuestionDtosByIds(childIds)) {
+            childQuestions = stream
+                    .map(childQuestionDto ->
+                            getQuestionByActivityInstanceAndDto(childQuestionDto, activityInstanceGuid, retrieveAnswers, langCodeId))
+                    .collect(toList());
+        }
 
         AnswerDao answerDao = getAnswerDao();
         List<CompositeAnswer> compositeAnswers = answerIds.stream()
@@ -690,9 +684,9 @@ public interface QuestionDao extends SqlObject {
         return new CompositeQuestion(dto.getStableId(), dto.getPromptTemplateId(),
                 dto.isRestricted(), dto.isDeprecated(), isReadonly, dto.getTooltipTemplateId(),
                 dto.getAdditionalInfoHeaderTemplateId(), dto.getAdditionalInfoFooterTemplateId(),
-                rules, compositeQuestionDto.isAllowMultiple(), compositeQuestionDto.isUnwrapOnExport(),
-                compositeQuestionDto.getAddButtonTemplateId(), compositeQuestionDto.getAdditionalItemTemplateId(),
-                childQuestions, compositeQuestionDto.getChildOrientation(), compositeAnswers);
+                rules, dto.isAllowMultiple(), dto.isUnwrapOnExport(),
+                dto.getAddButtonTemplateId(), dto.getAdditionalItemTemplateId(),
+                childQuestions, dto.getChildOrientation(), compositeAnswers);
     }
 
 
@@ -1130,7 +1124,8 @@ public interface QuestionDao extends SqlObject {
     default void disableBoolQuestion(long questionId, RevisionMetadata meta) {
         TemplateDao tmplDao = getTemplateDao();
 
-        BooleanQuestionDto booleanQuestion = getJdbiBooleanQuestion().findDtoByQuestionId(questionId).orElse(null);
+        QuestionDto dto = getJdbiQuestion().findQuestionDtoById(questionId).orElse(null);
+        BooleanQuestionDto booleanQuestion = dto == null ? null : (BooleanQuestionDto) dto;
         if (booleanQuestion == null || booleanQuestion.getRevisionEnd() != null) {
             throw new NoSuchElementException("Cannot find active boolean question with id " + questionId);
         }
@@ -1147,7 +1142,8 @@ public interface QuestionDao extends SqlObject {
      * @param meta       the revision metadata used for terminating data
      */
     default void disableTextQuestion(long questionId, RevisionMetadata meta) {
-        TextQuestionDto question = getJdbiTextQuestion().findDtoByQuestionId(questionId).orElse(null);
+        QuestionDto dto = getJdbiQuestion().findQuestionDtoById(questionId).orElse(null);
+        TextQuestionDto question = dto == null ? null : (TextQuestionDto) dto;
         if (question == null || question.getRevisionEnd() != null) {
             throw new NoSuchElementException("Cannot find active text question with id " + questionId);
         }
@@ -1167,7 +1163,7 @@ public interface QuestionDao extends SqlObject {
      * @param meta       the revision metadata used for terminating data
      */
     default void disableDateQuestion(long questionId, RevisionMetadata meta) {
-        QuestionDto question = getJdbiQuestion().getQuestionDtoById(questionId).orElse(null);
+        QuestionDto question = getJdbiQuestion().findQuestionDtoById(questionId).orElse(null);
         if (question == null || question.getRevisionEnd() != null) {
             throw new NoSuchElementException("Cannot find active date question with id " + questionId);
         }
@@ -1181,7 +1177,8 @@ public interface QuestionDao extends SqlObject {
      * @param meta       the revision metadata used for terminating data
      */
     default void disableNumericQuestion(long questionId, RevisionMetadata meta) {
-        NumericQuestionDto questionDto = getJdbiNumericQuestion().findDtoByQuestionId(questionId).orElse(null);
+        QuestionDto dto = getJdbiQuestion().findQuestionDtoById(questionId).orElse(null);
+        NumericQuestionDto questionDto = dto == null ? null : (NumericQuestionDto) dto;
         if (questionDto == null || questionDto.getRevisionEnd() != null) {
             throw new NoSuchElementException("Cannot find active numeric question with id " + questionId);
         }
@@ -1201,7 +1198,8 @@ public interface QuestionDao extends SqlObject {
     default void disablePicklistQuestion(long questionId, RevisionMetadata meta) {
         TemplateDao tmplDao = getTemplateDao();
 
-        PicklistQuestionDto picklistQuestion = getJdbiPicklistQuestion().findDtoByQuestionId(questionId).orElse(null);
+        QuestionDto dto = getJdbiQuestion().findQuestionDtoById(questionId).orElse(null);
+        PicklistQuestionDto picklistQuestion = dto == null ? null : (PicklistQuestionDto) dto;
         if (picklistQuestion == null || picklistQuestion.getRevisionEnd() != null) {
             throw new NoSuchElementException("Cannot find active picklist question with id " + questionId);
         }
@@ -1220,7 +1218,8 @@ public interface QuestionDao extends SqlObject {
      * agreement question doesn't have any specific data so far, it boils down to the former
      */
     default void disableAgreementQuestion(long questionId, RevisionMetadata meta) {
-        AgreementQuestionDto questionDto = getJdbiAgreementQuestion().findDtoByQuestionId(questionId).orElse(null);
+        QuestionDto dto = getJdbiQuestion().findQuestionDtoById(questionId).orElse(null);
+        AgreementQuestionDto questionDto = dto == null ? null : (AgreementQuestionDto) dto;
         if (questionDto == null || questionDto.getRevisionEnd() != null) {
             throw new NoSuchElementException("Cannot find active agreement question with id " + questionId);
         }
@@ -1255,8 +1254,11 @@ public interface QuestionDao extends SqlObject {
     }
 
     default QuestionBlockDef findBlockDefByBlockIdAndTimestamp(long blockId, long timestamp) {
-        QuestionDef questionDef = getJdbiBlockQuestion()
-                .findQuestionDtoByBlockIdAndTimestamp(blockId, timestamp)
+        Long questionId = getJdbiBlockQuestion()
+                .findQuestionIdsByBlockIdsAndTimestamp(Set.of(blockId), timestamp)
+                .get(blockId);
+        QuestionDef questionDef = Optional.ofNullable(questionId)
+                .flatMap(id -> getJdbiQuestion().findQuestionDtoById(id))
                 .map(dto -> findQuestionDefByDtoAndTimestamp(dto, timestamp))
                 .orElseThrow(() -> new DaoException(String.format(
                         "Could not find question definition for block id %d and timestamp %d", blockId, timestamp)));
@@ -1270,22 +1272,22 @@ public interface QuestionDao extends SqlObject {
                 questionDef = findAgreementQuestionDefByDtoAndTimestamp(questionDto, timestamp);
                 break;
             case BOOLEAN:
-                questionDef = findBoolQuestionDefByDtoAndTimestamp(questionDto, timestamp);
+                questionDef = findBoolQuestionDefByDtoAndTimestamp((BooleanQuestionDto) questionDto, timestamp);
                 break;
             case TEXT:
-                questionDef = findTextQuestionDefByDtoAndTimestamp(questionDto, timestamp);
+                questionDef = findTextQuestionDefByDtoAndTimestamp((TextQuestionDto) questionDto, timestamp);
                 break;
             case DATE:
-                questionDef = findDateQuestionDefByDtoAndTimestamp(questionDto, timestamp);
+                questionDef = findDateQuestionDefByDtoAndTimestamp((DateQuestionDto) questionDto, timestamp);
                 break;
             case NUMERIC:
-                questionDef = findNumericQuestionDefByDtoAndTimestamp(questionDto, timestamp);
+                questionDef = findNumericQuestionDefByDtoAndTimestamp((NumericQuestionDto) questionDto, timestamp);
                 break;
             case PICKLIST:
-                questionDef = findPicklistQuestionDefByDtoAndTimestamp(questionDto, timestamp);
+                questionDef = findPicklistQuestionDefByDtoAndTimestamp((PicklistQuestionDto) questionDto, timestamp);
                 break;
             case COMPOSITE:
-                questionDef = findCompositeQuestionDefByDtoAndTimestamp(questionDto, timestamp);
+                questionDef = findCompositeQuestionDefByDtoAndTimestamp((CompositeQuestionDto) questionDto, timestamp);
                 break;
             default:
                 throw new DaoException("Unhandled question type " + questionDto.getType());
@@ -1321,56 +1323,48 @@ public interface QuestionDao extends SqlObject {
         return def;
     }
 
-    default BoolQuestionDef findBoolQuestionDefByDtoAndTimestamp(QuestionDto questionDto, long timestamp) {
-        BooleanQuestionDto boolDto = getJdbiBooleanQuestion().findDtoByQuestionId(questionDto.getId())
-                .orElseThrow(() -> new DaoException(String.format(
-                        "Could not find boolean question dto with question id=%d while querying boolean question definition",
-                        questionDto.getId())));
-
+    default BoolQuestionDef findBoolQuestionDefByDtoAndTimestamp(BooleanQuestionDto boolDto, long timestamp) {
         TemplateDao templateDao = getTemplateDao();
-        Template prompt = templateDao.loadTemplateById(questionDto.getPromptTemplateId());
-        Template tooltipTemplate = questionDto.getTooltipTemplateId() == null ? null
-                : templateDao.loadTemplateById(questionDto.getTooltipTemplateId());
-        Template additionalInfoHeader = questionDto.getAdditionalInfoHeaderTemplateId() == null ? null
-                : templateDao.loadTemplateById(questionDto.getAdditionalInfoHeaderTemplateId());
-        Template additionalInfoFooter = questionDto.getAdditionalInfoFooterTemplateId() == null ? null
-                : templateDao.loadTemplateById(questionDto.getAdditionalInfoFooterTemplateId());
+        Template prompt = templateDao.loadTemplateById(boolDto.getPromptTemplateId());
+        Template tooltipTemplate = boolDto.getTooltipTemplateId() == null ? null
+                : templateDao.loadTemplateById(boolDto.getTooltipTemplateId());
+        Template additionalInfoHeader = boolDto.getAdditionalInfoHeaderTemplateId() == null ? null
+                : templateDao.loadTemplateById(boolDto.getAdditionalInfoHeaderTemplateId());
+        Template additionalInfoFooter = boolDto.getAdditionalInfoFooterTemplateId() == null ? null
+                : templateDao.loadTemplateById(boolDto.getAdditionalInfoFooterTemplateId());
         Template trueTemplate = templateDao.loadTemplateById(boolDto.getTrueTemplateId());
         Template falseTemplate = templateDao.loadTemplateById(boolDto.getFalseTemplateId());
 
         List<RuleDef> validations = getValidationDao()
-                .findRuleDefsByQuestionIdAndTimestamp(questionDto.getId(), timestamp);
+                .findRuleDefsByQuestionIdAndTimestamp(boolDto.getId(), timestamp);
 
-        return BoolQuestionDef.builder(questionDto.getStableId(), prompt, trueTemplate, falseTemplate)
-                .setQuestionId(questionDto.getId())
+        return BoolQuestionDef.builder(boolDto.getStableId(), prompt, trueTemplate, falseTemplate)
+                .setQuestionId(boolDto.getId())
                 .setTooltip(tooltipTemplate)
                 .setAdditionalInfoHeader(additionalInfoHeader)
                 .setAdditionalInfoFooter(additionalInfoFooter)
-                .setRestricted(questionDto.isRestricted())
-                .setDeprecated(questionDto.isDeprecated())
-                .setWriteOnce(questionDto.isWriteOnce())
-                .setHideNumber(questionDto.shouldHideNumber())
+                .setRestricted(boolDto.isRestricted())
+                .setDeprecated(boolDto.isDeprecated())
+                .setWriteOnce(boolDto.isWriteOnce())
+                .setHideNumber(boolDto.shouldHideNumber())
                 .addValidations(validations)
                 .build();
     }
 
-    default TextQuestionDef findTextQuestionDefByDtoAndTimestamp(QuestionDto questionDto, long timestamp) {
-        TextQuestionDto textDto = getJdbiTextQuestion().findDtoByQuestionId(questionDto.getId())
-                .orElseThrow(() -> new DaoException(String.format(
-                        "Could not find text question dto with question id=%d while querying text question definition",
-                        questionDto.getId())));
-
+    default TextQuestionDef findTextQuestionDefByDtoAndTimestamp(TextQuestionDto textDto, long timestamp) {
         TemplateDao templateDao = getTemplateDao();
-        Template prompt = templateDao.loadTemplateById(questionDto.getPromptTemplateId());
-        Template tooltipTemplate = questionDto.getTooltipTemplateId() == null ? null
-                : templateDao.loadTemplateById(questionDto.getTooltipTemplateId());
-        Template additionalInfoHeader = questionDto.getAdditionalInfoHeaderTemplateId() == null ? null
-                : templateDao.loadTemplateById(questionDto.getAdditionalInfoHeaderTemplateId());
-        Template additionalInfoFooter = questionDto.getAdditionalInfoFooterTemplateId() == null ? null
-                : templateDao.loadTemplateById(questionDto.getAdditionalInfoFooterTemplateId());
+        Template prompt = templateDao.loadTemplateById(textDto.getPromptTemplateId());
+        Template tooltipTemplate = textDto.getTooltipTemplateId() == null ? null
+                : templateDao.loadTemplateById(textDto.getTooltipTemplateId());
+        Template additionalInfoHeader = textDto.getAdditionalInfoHeaderTemplateId() == null ? null
+                : templateDao.loadTemplateById(textDto.getAdditionalInfoHeaderTemplateId());
+        Template additionalInfoFooter = textDto.getAdditionalInfoFooterTemplateId() == null ? null
+                : templateDao.loadTemplateById(textDto.getAdditionalInfoFooterTemplateId());
 
-        //query suggestions
-        List<String> suggestions = getJdbiTextQuestionSuggestion().getTextQuestionSuggestions(textDto.getId());
+        List<String> suggestions = new ArrayList<>();
+        if (textDto.getSuggestionType() == SuggestionType.INCLUDED) {
+            suggestions = getJdbiQuestion().findTextQuestionSuggestions(textDto.getId());
+        }
 
         List<RuleDef> validations = getValidationDao()
                 .findRuleDefsByQuestionIdAndTimestamp(textDto.getId(), timestamp);
@@ -1397,7 +1391,7 @@ public interface QuestionDao extends SqlObject {
                 .setQuestionId(textDto.getId())
                 .setRestricted(textDto.isRestricted())
                 .setDeprecated(textDto.isDeprecated())
-                .setWriteOnce(questionDto.isWriteOnce())
+                .setWriteOnce(textDto.isWriteOnce())
                 .setHideNumber(textDto.shouldHideNumber())
                 .setConfirmEntry(textDto.isConfirmEntry())
                 .setConfirmPromptTemplate(confirmPromptTemplate)
@@ -1407,96 +1401,78 @@ public interface QuestionDao extends SqlObject {
                 .build();
     }
 
-    default DateQuestionDef findDateQuestionDefByDtoAndTimestamp(QuestionDto questionDto, long timestamp) {
-        DateQuestionDto dateDto = getJdbiDateQuestion()
-                .findDtoByQuestionId(questionDto.getId())
-                .orElseThrow(() -> new DaoException(String.format(
-                        "Could not find date question definition for id %d and timestamp %d", questionDto.getId(), timestamp)));
-
+    default DateQuestionDef findDateQuestionDefByDtoAndTimestamp(DateQuestionDto dateDto, long timestamp) {
         DatePicklistDef picklistDef = null;
         if (dateDto.getRenderMode() == DateRenderMode.PICKLIST) {
-            picklistDef = getJdbiDateQuestion()
-                    .getDatePicklistDefByQuestionId(questionDto.getId())
-                    .orElse(null);
+            picklistDef = dateDto.getPicklistDef();
         }
 
-        List<DateFieldType> fields = getJdbiDateQuestionFieldOrder()
-                .getOrderedFieldsByQuestionId(questionDto.getId());
+        List<DateFieldType> fields = dateDto.getFields();
 
         TemplateDao templateDao = getTemplateDao();
-        Template prompt = templateDao.loadTemplateById(questionDto.getPromptTemplateId());
-        Template tooltipTemplate = questionDto.getTooltipTemplateId() == null ? null
-                : templateDao.loadTemplateById(questionDto.getTooltipTemplateId());
-        Template additionalInfoHeader = questionDto.getAdditionalInfoHeaderTemplateId() == null ? null
-                : templateDao.loadTemplateById(questionDto.getAdditionalInfoHeaderTemplateId());
-        Template additionalInfoFooter = questionDto.getAdditionalInfoFooterTemplateId() == null ? null
-                : templateDao.loadTemplateById(questionDto.getAdditionalInfoFooterTemplateId());
+        Template prompt = templateDao.loadTemplateById(dateDto.getPromptTemplateId());
+        Template tooltipTemplate = dateDto.getTooltipTemplateId() == null ? null
+                : templateDao.loadTemplateById(dateDto.getTooltipTemplateId());
+        Template additionalInfoHeader = dateDto.getAdditionalInfoHeaderTemplateId() == null ? null
+                : templateDao.loadTemplateById(dateDto.getAdditionalInfoHeaderTemplateId());
+        Template additionalInfoFooter = dateDto.getAdditionalInfoFooterTemplateId() == null ? null
+                : templateDao.loadTemplateById(dateDto.getAdditionalInfoFooterTemplateId());
         Template placeholderTemplate = dateDto.getPlaceholderTemplateId() == null ? null
                 : templateDao.loadTemplateById(dateDto.getPlaceholderTemplateId());
 
         List<RuleDef> validations = getValidationDao()
-                .findRuleDefsByQuestionIdAndTimestamp(questionDto.getId(), timestamp);
+                .findRuleDefsByQuestionIdAndTimestamp(dateDto.getId(), timestamp);
 
-        return DateQuestionDef.builder(dateDto.getRenderMode(), questionDto.getStableId(), prompt)
+        return DateQuestionDef.builder(dateDto.getRenderMode(), dateDto.getStableId(), prompt)
                 .setDisplayCalendar(dateDto.shouldDisplayCalendar())
                 .setPicklistDef(picklistDef)
-                .setQuestionId(questionDto.getId())
+                .setQuestionId(dateDto.getId())
                 .setTooltip(tooltipTemplate)
                 .setPlaceholderTemplate(placeholderTemplate)
                 .setAdditionalInfoHeader(additionalInfoHeader)
                 .setAdditionalInfoFooter(additionalInfoFooter)
-                .setRestricted(questionDto.isRestricted())
-                .setDeprecated(questionDto.isDeprecated())
-                .setWriteOnce(questionDto.isWriteOnce())
-                .setHideNumber(questionDto.shouldHideNumber())
+                .setRestricted(dateDto.isRestricted())
+                .setDeprecated(dateDto.isDeprecated())
+                .setWriteOnce(dateDto.isWriteOnce())
+                .setHideNumber(dateDto.shouldHideNumber())
                 .addValidations(validations)
                 .addFields(fields)
                 .build();
     }
 
-    default QuestionDef findNumericQuestionDefByDtoAndTimestamp(QuestionDto questionDto, long timestamp) {
-        NumericQuestionDto numericQuestionDto = getJdbiNumericQuestion().findDtoByQuestionId(questionDto.getId())
-                .orElseThrow(() -> new DaoException(String.format(
-                        "Could not find numeric question dto with question id %d while querying numeric question definition",
-                        questionDto.getId())));
-
+    default QuestionDef findNumericQuestionDefByDtoAndTimestamp(NumericQuestionDto numericDto, long timestamp) {
         TemplateDao templateDao = getTemplateDao();
-        Template prompt = templateDao.loadTemplateById(questionDto.getPromptTemplateId());
-        Template tooltipTemplate = questionDto.getTooltipTemplateId() == null
-                ? null : templateDao.loadTemplateById(questionDto.getTooltipTemplateId());
-        Template additionalInfoHeader = (questionDto.getAdditionalInfoHeaderTemplateId() == null)
-                ? null : templateDao.loadTemplateById(questionDto.getAdditionalInfoHeaderTemplateId());
-        Template additionalInfoFooter = (questionDto.getAdditionalInfoFooterTemplateId() == null)
-                ? null : templateDao.loadTemplateById(questionDto.getAdditionalInfoFooterTemplateId());
-        Template placeholderTemplate = (numericQuestionDto.getPlaceholderTemplateId() == null)
-                ? null : templateDao.loadTemplateById(numericQuestionDto.getPlaceholderTemplateId());
+        Template prompt = templateDao.loadTemplateById(numericDto.getPromptTemplateId());
+        Template tooltipTemplate = numericDto.getTooltipTemplateId() == null
+                ? null : templateDao.loadTemplateById(numericDto.getTooltipTemplateId());
+        Template additionalInfoHeader = (numericDto.getAdditionalInfoHeaderTemplateId() == null)
+                ? null : templateDao.loadTemplateById(numericDto.getAdditionalInfoHeaderTemplateId());
+        Template additionalInfoFooter = (numericDto.getAdditionalInfoFooterTemplateId() == null)
+                ? null : templateDao.loadTemplateById(numericDto.getAdditionalInfoFooterTemplateId());
+        Template placeholderTemplate = (numericDto.getPlaceholderTemplateId() == null)
+                ? null : templateDao.loadTemplateById(numericDto.getPlaceholderTemplateId());
 
         List<RuleDef> validations = getValidationDao()
-                .findRuleDefsByQuestionIdAndTimestamp(questionDto.getId(), timestamp);
+                .findRuleDefsByQuestionIdAndTimestamp(numericDto.getId(), timestamp);
 
         return NumericQuestionDef
-                .builder(numericQuestionDto.getNumericType(), questionDto.getStableId(), prompt)
+                .builder(numericDto.getNumericType(), numericDto.getStableId(), prompt)
                 .setPlaceholderTemplate(placeholderTemplate)
                 .setTooltip(tooltipTemplate)
                 .setAdditionalInfoHeader(additionalInfoHeader)
                 .setAdditionalInfoFooter(additionalInfoFooter)
-                .setQuestionId(questionDto.getId())
-                .setRestricted(questionDto.isRestricted())
-                .setDeprecated(questionDto.isDeprecated())
-                .setWriteOnce(questionDto.isWriteOnce())
-                .setHideNumber(questionDto.shouldHideNumber())
+                .setQuestionId(numericDto.getId())
+                .setRestricted(numericDto.isRestricted())
+                .setDeprecated(numericDto.isDeprecated())
+                .setWriteOnce(numericDto.isWriteOnce())
+                .setHideNumber(numericDto.shouldHideNumber())
                 .addValidations(validations)
                 .build();
     }
 
-    default PicklistQuestionDef findPicklistQuestionDefByDtoAndTimestamp(QuestionDto questionDto, long timestamp) {
-        PicklistQuestionDto picklistDto = getJdbiPicklistQuestion()
-                .findDtoByQuestionId(questionDto.getId())
-                .orElseThrow(() -> new DaoException(String.format(
-                        "Could not find picklist question definition for id %d and timestamp %d", questionDto.getId(), timestamp)));
-
+    default PicklistQuestionDef findPicklistQuestionDefByDtoAndTimestamp(PicklistQuestionDto picklistDto, long timestamp) {
         PicklistQuestionDao.GroupAndOptionDtos container = getPicklistQuestionDao()
-                .findOrderedGroupAndOptionDtos(questionDto, timestamp);
+                .findOrderedGroupAndOptionDtos(picklistDto.getId(), timestamp);
 
         TemplateDao templateDao = getTemplateDao();
         List<PicklistGroupDef> groups = new ArrayList<>();
@@ -1552,13 +1528,13 @@ public interface QuestionDao extends SqlObject {
                 })
                 .collect(Collectors.toList());
 
-        Template prompt = templateDao.loadTemplateById(questionDto.getPromptTemplateId());
-        Template tooltipTemplate = questionDto.getTooltipTemplateId() == null ? null
-                : templateDao.loadTemplateById(questionDto.getTooltipTemplateId());
-        Template additionalInfoHeader = questionDto.getAdditionalInfoHeaderTemplateId() == null ? null
-                : templateDao.loadTemplateById(questionDto.getAdditionalInfoHeaderTemplateId());
-        Template additionalInfoFooter = questionDto.getAdditionalInfoFooterTemplateId() == null ? null
-                : templateDao.loadTemplateById(questionDto.getAdditionalInfoFooterTemplateId());
+        Template prompt = templateDao.loadTemplateById(picklistDto.getPromptTemplateId());
+        Template tooltipTemplate = picklistDto.getTooltipTemplateId() == null ? null
+                : templateDao.loadTemplateById(picklistDto.getTooltipTemplateId());
+        Template additionalInfoHeader = picklistDto.getAdditionalInfoHeaderTemplateId() == null ? null
+                : templateDao.loadTemplateById(picklistDto.getAdditionalInfoHeaderTemplateId());
+        Template additionalInfoFooter = picklistDto.getAdditionalInfoFooterTemplateId() == null ? null
+                : templateDao.loadTemplateById(picklistDto.getAdditionalInfoFooterTemplateId());
 
         Template label = null;
         if (picklistDto.getRenderMode() == PicklistRenderMode.DROPDOWN) {
@@ -1566,42 +1542,45 @@ public interface QuestionDao extends SqlObject {
         }
 
         List<RuleDef> validations = getValidationDao()
-                .findRuleDefsByQuestionIdAndTimestamp(questionDto.getId(), timestamp);
+                .findRuleDefsByQuestionIdAndTimestamp(picklistDto.getId(), timestamp);
 
-        return PicklistQuestionDef.builder(picklistDto.getSelectMode(), picklistDto.getRenderMode(), questionDto.getStableId(), prompt)
+        return PicklistQuestionDef.builder(picklistDto.getSelectMode(), picklistDto.getRenderMode(), picklistDto.getStableId(), prompt)
                 .setLabel(label)
-                .setQuestionId(questionDto.getId())
+                .setQuestionId(picklistDto.getId())
                 .setTooltip(tooltipTemplate)
                 .setAdditionalInfoHeader(additionalInfoHeader)
                 .setAdditionalInfoFooter(additionalInfoFooter)
-                .setRestricted(questionDto.isRestricted())
-                .setDeprecated(questionDto.isDeprecated())
-                .setWriteOnce(questionDto.isWriteOnce())
-                .setHideNumber(questionDto.shouldHideNumber())
+                .setRestricted(picklistDto.isRestricted())
+                .setDeprecated(picklistDto.isDeprecated())
+                .setWriteOnce(picklistDto.isWriteOnce())
+                .setHideNumber(picklistDto.shouldHideNumber())
                 .addValidations(validations)
                 .addGroups(groups)
                 .addOptions(ungroupedOptions)
                 .build();
     }
 
-    default CompositeQuestionDef findCompositeQuestionDefByDtoAndTimestamp(QuestionDto questionDto, long timestamp) {
-        CompositeQuestionDto compositeDto = getJdbiCompositeQuestion()
-                .findDtoByQuestion(questionDto)
-                .orElseThrow(() -> new DaoException(String.format(
-                        "Could not find composite question definition for id %d and timestamp %d", questionDto.getId(), timestamp)));
-
-        List<QuestionDef> childrenDefs = compositeDto.getChildQuestions()
-                .stream().map(child -> findQuestionDefByDtoAndTimestamp(child, timestamp))
-                .collect(toList());
+    default CompositeQuestionDef findCompositeQuestionDefByDtoAndTimestamp(CompositeQuestionDto compositeDto, long timestamp) {
+        JdbiQuestion jdbiQuestion = getJdbiQuestion();
+        List<Long> childIds = jdbiQuestion.findCompositeChildIdsByParentId(compositeDto.getId());
+        Map<Long, QuestionDef> childrenDefs;
+        try (var stream = jdbiQuestion.findQuestionDtosByIds(childIds)) {
+            childrenDefs = stream
+                    .map(child -> findQuestionDefByDtoAndTimestamp(child, timestamp))
+                    .collect(Collectors.toMap(QuestionDef::getQuestionId, Function.identity()));
+        }
+        List<QuestionDef> orderedChildDefs = childIds.stream()
+                .map(childrenDefs::get)
+                .collect(Collectors.toList());
 
         TemplateDao templateDao = getTemplateDao();
-        Template prompt = templateDao.loadTemplateById(questionDto.getPromptTemplateId());
-        Template tooltipTemplate = questionDto.getTooltipTemplateId() == null ? null
-                : templateDao.loadTemplateById(questionDto.getTooltipTemplateId());
-        Template additionalInfoHeader = questionDto.getAdditionalInfoHeaderTemplateId() == null ? null
-                : templateDao.loadTemplateById(questionDto.getAdditionalInfoHeaderTemplateId());
-        Template additionalInfoFooter = questionDto.getAdditionalInfoFooterTemplateId() == null ? null
-                : templateDao.loadTemplateById(questionDto.getAdditionalInfoFooterTemplateId());
+        Template prompt = templateDao.loadTemplateById(compositeDto.getPromptTemplateId());
+        Template tooltipTemplate = compositeDto.getTooltipTemplateId() == null ? null
+                : templateDao.loadTemplateById(compositeDto.getTooltipTemplateId());
+        Template additionalInfoHeader = compositeDto.getAdditionalInfoHeaderTemplateId() == null ? null
+                : templateDao.loadTemplateById(compositeDto.getAdditionalInfoHeaderTemplateId());
+        Template additionalInfoFooter = compositeDto.getAdditionalInfoFooterTemplateId() == null ? null
+                : templateDao.loadTemplateById(compositeDto.getAdditionalInfoFooterTemplateId());
 
         Template buttonTmpl = null;
         if (compositeDto.getAddButtonTemplateId() != null) {
@@ -1614,10 +1593,10 @@ public interface QuestionDao extends SqlObject {
         }
 
         List<RuleDef> validations = getValidationDao()
-                .findRuleDefsByQuestionIdAndTimestamp(questionDto.getId(), timestamp);
+                .findRuleDefsByQuestionIdAndTimestamp(compositeDto.getId(), timestamp);
 
         return CompositeQuestionDef.builder()
-                .setStableId(questionDto.getStableId())
+                .setStableId(compositeDto.getStableId())
                 .setPrompt(prompt)
                 .setAllowMultiple(compositeDto.isAllowMultiple())
                 .setUnwrapOnExport(compositeDto.isUnwrapOnExport())
@@ -1626,13 +1605,13 @@ public interface QuestionDao extends SqlObject {
                 .setAdditionalInfoHeader(additionalInfoHeader)
                 .setAdditionalInfoFooter(additionalInfoFooter)
                 .setTooltip(tooltipTemplate)
-                .setQuestionId(questionDto.getId())
-                .setRestricted(questionDto.isRestricted())
-                .setDeprecated(questionDto.isDeprecated())
-                .setWriteOnce(questionDto.isWriteOnce())
-                .setHideNumber(questionDto.shouldHideNumber())
+                .setQuestionId(compositeDto.getId())
+                .setRestricted(compositeDto.isRestricted())
+                .setDeprecated(compositeDto.isDeprecated())
+                .setWriteOnce(compositeDto.isWriteOnce())
+                .setHideNumber(compositeDto.shouldHideNumber())
                 .addValidations(validations)
-                .addChildrenQuestions(childrenDefs)
+                .addChildrenQuestions(orderedChildDefs)
                 .setChildOrientation(compositeDto.getChildOrientation())
                 .build();
     }

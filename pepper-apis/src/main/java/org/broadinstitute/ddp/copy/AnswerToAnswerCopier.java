@@ -7,7 +7,8 @@ import java.util.Optional;
 
 import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.JdbiCompositeAnswer;
-import org.broadinstitute.ddp.db.dao.JdbiCompositeQuestion;
+import org.broadinstitute.ddp.db.dao.JdbiQuestion;
+import org.broadinstitute.ddp.db.dao.JdbiQuestionCached;
 import org.broadinstitute.ddp.db.dto.CompositeQuestionDto;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.exception.DDPException;
@@ -34,16 +35,16 @@ public class AnswerToAnswerCopier {
 
     private final Handle handle;
     private final long operatorId;
-    private final JdbiCompositeQuestion jdbiCompositeQuestion;
     private final JdbiCompositeAnswer jdbiCompositeAnswer;
+    private final JdbiQuestion jdbiQuestion;
     private final AnswerDao answerDao;
     private final Map<Long, CompositeQuestionDto> parentDtosByChildId = new HashMap<>();
 
     public AnswerToAnswerCopier(Handle handle, long operatorIdForNewAnswers) {
         this.handle = handle;
         this.operatorId = operatorIdForNewAnswers;
-        this.jdbiCompositeQuestion = handle.attach(JdbiCompositeQuestion.class);
         this.jdbiCompositeAnswer = handle.attach(JdbiCompositeAnswer.class);
+        this.jdbiQuestion = new JdbiQuestionCached(handle);
         this.answerDao = handle.attach(AnswerDao.class);
     }
 
@@ -68,13 +69,13 @@ public class AnswerToAnswerCopier {
     public Optional<CompositeQuestionDto> retrieveParentQuestion(QuestionDto childQuestion) {
         CompositeQuestionDto parentDto = parentDtosByChildId.get(childQuestion.getId());
         if (parentDto == null) {
-            parentDto = jdbiCompositeQuestion
-                    .findParentDtoByChildQuestionId(childQuestion.getId())
+            parentDto = jdbiQuestion
+                    .findCompositeParentIdByChildId(childQuestion.getId())
+                    .flatMap(jdbiQuestion::findQuestionDtoById)
+                    .map(dto -> (CompositeQuestionDto) dto)
                     .orElse(null);
             if (parentDto != null) {
-                for (var childDto : parentDto.getChildQuestions()) {
-                    parentDtosByChildId.put(childDto.getId(), parentDto);
-                }
+                parentDtosByChildId.put(childQuestion.getId(), parentDto);
             }
         }
         return Optional.ofNullable(parentDto);

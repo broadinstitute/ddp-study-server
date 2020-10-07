@@ -1,13 +1,11 @@
 package org.broadinstitute.ddp.db.dao;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.time.Year;
-import java.util.Optional;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -43,16 +41,6 @@ public class JdbiDateQuestionTest extends TxnAwareBaseTest {
     }
 
     @Test
-    public void testGetDateQuestionDtoByQuestionId_notFound() {
-        TransactionWrapper.useTxn(handle -> {
-            JdbiDateQuestion dao = handle.attach(JdbiDateQuestion.class);
-            Optional<DateQuestionDto> dto = dao.findDtoByQuestionId(-1);
-            assertNotNull(dto);
-            assertFalse(dto.isPresent());
-        });
-    }
-
-    @Test
     public void testGetDateQuestionDtoByQuestionId() {
         TransactionWrapper.useTxn(handle -> {
             FormActivityDef act = insertDateActivity(handle);
@@ -67,22 +55,13 @@ public class JdbiDateQuestionTest extends TxnAwareBaseTest {
                                boolean expectedDisplay) {
         long questionId = extractQuestion(activity, stableId).getQuestionId();
 
-        JdbiDateQuestion dao = handle.attach(JdbiDateQuestion.class);
-        Optional<DateQuestionDto> dto = dao.findDtoByQuestionId(questionId);
+        DateQuestionDto dto = (DateQuestionDto) handle.attach(JdbiQuestion.class)
+                .findQuestionDtoById(questionId)
+                .orElse(null);
 
-        assertTrue(dto.isPresent());
-        assertEquals(expectedMode, dto.get().getRenderMode());
-        assertEquals(expectedDisplay, dto.get().shouldDisplayCalendar());
-    }
-
-    @Test
-    public void testGetDatePicklistConfigByQuestionId_notFound() {
-        TransactionWrapper.useTxn(handle -> {
-            JdbiDateQuestion dao = handle.attach(JdbiDateQuestion.class);
-            Optional<DatePicklistDef> config = dao.getDatePicklistDefByQuestionId(-1);
-            assertNotNull(config);
-            assertFalse(config.isPresent());
-        });
+        assertNotNull(dto);
+        assertEquals(expectedMode, dto.getRenderMode());
+        assertEquals(expectedDisplay, dto.shouldDisplayCalendar());
     }
 
     @Test
@@ -91,15 +70,17 @@ public class JdbiDateQuestionTest extends TxnAwareBaseTest {
             FormActivityDef act = insertDateActivity(handle);
             long questionId = extractQuestion(act, SID_DATE_TEXT).getQuestionId();
 
-            JdbiDateQuestion dao = handle.attach(JdbiDateQuestion.class);
-            Optional<DatePicklistDef> config = dao.getDatePicklistDefByQuestionId(questionId);
+            DatePicklistDef config = handle.attach(JdbiQuestion.class)
+                    .findQuestionDtoById(questionId)
+                    .map(dto -> ((DateQuestionDto) dto).getPicklistDef())
+                    .orElse(null);
 
-            assertTrue(config.isPresent());
-            assertNull(config.get().getUseMonthNames());
-            assertNull(config.get().getYearsForward());
-            assertNull(config.get().getYearsBack());
-            assertNull(config.get().getYearAnchor());
-            assertNull(config.get().getFirstSelectedYear());
+            assertNotNull(config);
+            assertNull(config.getUseMonthNames());
+            assertNull(config.getYearsForward());
+            assertNull(config.getYearsBack());
+            assertNull(config.getYearAnchor());
+            assertNull(config.getFirstSelectedYear());
 
             handle.rollback();
         });
@@ -111,18 +92,20 @@ public class JdbiDateQuestionTest extends TxnAwareBaseTest {
             FormActivityDef act = insertDateActivity(handle);
             long questionId = extractQuestion(act, SID_DATE_PICKLIST).getQuestionId();
 
-            JdbiDateQuestion dao = handle.attach(JdbiDateQuestion.class);
-            Optional<DatePicklistDef> config = dao.getDatePicklistDefByQuestionId(questionId);
+            DatePicklistDef config = handle.attach(JdbiQuestion.class)
+                    .findQuestionDtoById(questionId)
+                    .map(dto -> ((DateQuestionDto) dto).getPicklistDef())
+                    .orElse(null);
 
-            assertTrue(config.isPresent());
-            assertTrue(config.get().getUseMonthNames());
-            assertEquals((Integer) 3, config.get().getYearsForward());
-            assertEquals((Integer) 80, config.get().getYearsBack());
-            assertEquals((Integer) 1988, config.get().getFirstSelectedYear());
-            assertNull(config.get().getYearAnchor());
+            assertNotNull(config);
+            assertTrue(config.getUseMonthNames());
+            assertEquals((Integer) 3, config.getYearsForward());
+            assertEquals((Integer) 80, config.getYearsBack());
+            assertEquals((Integer) 1988, config.getFirstSelectedYear());
+            assertNull(config.getYearAnchor());
 
-            assertEquals(Year.now().getValue() - 80, config.get().getStartYear());
-            assertEquals(Year.now().getValue() + 3, config.get().getEndYear());
+            assertEquals(Year.now().getValue() - 80, config.getStartYear());
+            assertEquals(Year.now().getValue() + 3, config.getEndYear());
 
             handle.rollback();
         });

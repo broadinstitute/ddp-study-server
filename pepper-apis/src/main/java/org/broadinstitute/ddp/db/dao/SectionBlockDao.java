@@ -14,6 +14,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.stream.Collectors;
@@ -564,8 +565,11 @@ public interface SectionBlockDao extends SqlObject {
     }
 
     default ConditionalBlockDef findConditionalBlockDefByBlockIdAndTimestamp(long blockId, long timestamp) {
-        QuestionDef control = getJdbiBlockConditionalControl()
-                .findControlQuestionDtoByBlockIdAndTimestamp(blockId, timestamp)
+        Long questionId = getJdbiBlockConditionalControl()
+                .findControlQuestionIdsByBlockIdsAndTimestamp(Set.of(blockId), timestamp)
+                .get(blockId);
+        QuestionDef control = Optional.ofNullable(questionId)
+                .flatMap(id -> getQuestionDao().getJdbiQuestion().findQuestionDtoById(id))
                 .map(dto -> getQuestionDao().findQuestionDefByDtoAndTimestamp(dto, timestamp))
                 .orElseThrow(() -> new DaoException(String.format(
                         "Could not find control question definition for block id %d and timestamp %d", blockId, timestamp)));
