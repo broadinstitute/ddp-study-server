@@ -4,9 +4,8 @@ service: pepper-backend
 runtime: java11
 instance_class: B8
 {{if eq $environment "prod"}}
-basic_scaling:
-  max_instances: 6
-  idle_timeout: 45m
+manual_scaling:
+  instances: 3
 {{else}}
 basic_scaling:
   max_instances: 4
