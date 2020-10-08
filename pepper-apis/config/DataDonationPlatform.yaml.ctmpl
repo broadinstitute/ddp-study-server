@@ -3,7 +3,7 @@
 service: pepper-backend
 runtime: java11
 instance_class: B8
-{{if eq $environment "prod"}}
+{{if (or (eq $environment "prod") (eq $environment "staging"))}}
 manual_scaling:
   instances: 3
 {{else}}
