@@ -212,6 +212,18 @@ public class BrainPediatricsUpdates implements CustomTask {
                     + "  aborting patch ");
         }
 
+        //update kit rule expr
+        String currentKitRuleExpr = "user.studies[\"cmi-brain\"].forms[\"RELEASE\"].isStatus(\"COMPLETE\")";
+        String newKitRuleExpr = "(user.studies[\"cmi-brain\"].forms[\"RELEASE\"].hasInstance() "
+                + " && user.studies[\"cmi-brain\"].forms[\"RELEASE\"].isStatus(\"COMPLETE\")) "
+                + " || (user.studies[\"cmi-brain\"].forms[\"RELEASE_MINOR\"].hasInstance() "
+                + " && user.studies[\"cmi-brain\"].forms[\"RELEASE_MINOR\"].isStatus(\"COMPLETE\"))";
+        long kitRuleExprId = helper.findKitRuleExpressionIdByStudyAndExp(studyId, currentKitRuleExpr);
+        thisRowCount = helper.updateKitRuleExpressionText(kitRuleExprId, newKitRuleExpr);
+        if (thisRowCount != 1) {
+            throw new RuntimeException("Expecting to update 1 Brain kit rule expression row, got :" + thisRowCount
+                    + "  aborting patch ");
+        }
     }
 
     private void addNewEvents(Handle handle, StudyDto studyDto, long adminUserId) {
@@ -371,6 +383,17 @@ public class BrainPediatricsUpdates implements CustomTask {
 
         @SqlUpdate("update i18n_study_activity set name = :name where study_activity_id = :studyActivityId")
         int update18nActivityName(@Bind("studyActivityId") long studyActivityId, @Bind("name") String name);
+
+        @SqlQuery("select e.expression_id from kit_configuration kc, kit_configuration__kit_rule kckr, kit_rule kr, "
+                + "kit_pex_rule kpr, expression e "
+                + "where kckr.kit_configuration_id = kc.kit_configuration_id and kr.kit_rule_id = kckr.kit_rule_id "
+                + "and kpr.kit_rule_id = kr.kit_rule_id "
+                + "and e.expression_id = kpr.expression_id "
+                + "and kc.study_id = :studyId and e.expression_text = :text")
+        long findKitRuleExpressionIdByStudyAndExp(@Bind("studyId") long studyId, @Bind("text") String text);
+
+        @SqlUpdate("update expression set expression_text = :text where expression_id = :id")
+        int updateKitRuleExpressionText(@Bind("id") long id, @Bind("text") String text);
     }
 
 }
