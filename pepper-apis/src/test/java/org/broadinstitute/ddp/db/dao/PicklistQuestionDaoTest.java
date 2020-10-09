@@ -71,7 +71,7 @@ public class PicklistQuestionDaoTest extends TxnAwareBaseTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         Object[] uncached = {(DaoBuilder<PicklistQuestionDao>) (handle) -> handle.attach(PicklistQuestionDao.class), false};
-        Object[] cached = {(DaoBuilder<PickListQuestionCachedDao>) (handle) -> new PickListQuestionCachedDao(handle), true};
+        Object[] cached = {(DaoBuilder<PicklistQuestionCachedDao>) (handle) -> new PicklistQuestionCachedDao(handle), true};
         return List.of(uncached, cached);
     }
 
