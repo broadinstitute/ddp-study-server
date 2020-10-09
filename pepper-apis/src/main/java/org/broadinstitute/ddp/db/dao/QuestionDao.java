@@ -3,12 +3,14 @@ package org.broadinstitute.ddp.db.dao;
 import static java.util.stream.Collectors.toList;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.CollectionUtils;
@@ -18,6 +20,7 @@ import org.broadinstitute.ddp.db.dto.AgreementQuestionDto;
 import org.broadinstitute.ddp.db.dto.BooleanQuestionDto;
 import org.broadinstitute.ddp.db.dto.CompositeQuestionDto;
 import org.broadinstitute.ddp.db.dto.DateQuestionDto;
+import org.broadinstitute.ddp.db.dto.FormBlockDto;
 import org.broadinstitute.ddp.db.dto.NumericQuestionDto;
 import org.broadinstitute.ddp.db.dto.PicklistGroupDto;
 import org.broadinstitute.ddp.db.dto.PicklistOptionDto;
@@ -1253,366 +1256,353 @@ public interface QuestionDao extends SqlObject {
         getValidationDao().disableBaseRule(validation, meta);
     }
 
-    default QuestionBlockDef findBlockDefByBlockIdAndTimestamp(long blockId, long timestamp) {
-        Long questionId = getJdbiBlockQuestion()
-                .findQuestionIdsByBlockIdsAndTimestamp(Set.of(blockId), timestamp)
-                .get(blockId);
-        QuestionDef questionDef = Optional.ofNullable(questionId)
-                .flatMap(id -> getJdbiQuestion().findQuestionDtoById(id))
-                .map(dto -> findQuestionDefByDtoAndTimestamp(dto, timestamp))
-                .orElseThrow(() -> new DaoException(String.format(
-                        "Could not find question definition for block id %d and timestamp %d", blockId, timestamp)));
-        return new QuestionBlockDef(questionDef);
-    }
-
-    default QuestionDef findQuestionDefByDtoAndTimestamp(QuestionDto questionDto, long timestamp) {
-        QuestionDef questionDef;
-        switch (questionDto.getType()) {
-            case AGREEMENT:
-                questionDef = findAgreementQuestionDefByDtoAndTimestamp(questionDto, timestamp);
-                break;
-            case BOOLEAN:
-                questionDef = findBoolQuestionDefByDtoAndTimestamp((BooleanQuestionDto) questionDto, timestamp);
-                break;
-            case TEXT:
-                questionDef = findTextQuestionDefByDtoAndTimestamp((TextQuestionDto) questionDto, timestamp);
-                break;
-            case DATE:
-                questionDef = findDateQuestionDefByDtoAndTimestamp((DateQuestionDto) questionDto, timestamp);
-                break;
-            case NUMERIC:
-                questionDef = findNumericQuestionDefByDtoAndTimestamp((NumericQuestionDto) questionDto, timestamp);
-                break;
-            case PICKLIST:
-                questionDef = findPicklistQuestionDefByDtoAndTimestamp((PicklistQuestionDto) questionDto, timestamp);
-                break;
-            case COMPOSITE:
-                questionDef = findCompositeQuestionDefByDtoAndTimestamp((CompositeQuestionDto) questionDto, timestamp);
-                break;
-            default:
-                throw new DaoException("Unhandled question type " + questionDto.getType());
+    default Map<Long, QuestionBlockDef> collectBlockDefs(Collection<FormBlockDto> blockDtos, long timestamp) {
+        if (blockDtos == null || blockDtos.isEmpty()) {
+            return new HashMap<>();
         }
-        return questionDef;
+
+        Set<Long> blockIds = new HashSet<>();
+        for (var blockDto : blockDtos) {
+            blockIds.add(blockDto.getId());
+        }
+
+        Map<Long, Long> blockIdToQuestionId = getJdbiBlockQuestion()
+                .findQuestionIdsByBlockIdsAndTimestamp(blockIds, timestamp);
+        Map<Long, QuestionDef> questionDefs = collectQuestionDefs(blockIdToQuestionId.values(), timestamp);
+
+        Map<Long, QuestionBlockDef> blockDefs = new HashMap<>();
+        for (var blockDto : blockDtos) {
+            long questionId = blockIdToQuestionId.get(blockDto.getId());
+            QuestionDef questionDef = questionDefs.get(questionId);
+
+            var blockDef = new QuestionBlockDef(questionDef);
+            blockDef.setBlockId(blockDto.getId());
+            blockDef.setBlockGuid(blockDto.getGuid());
+            blockDef.setShownExpr(blockDto.getShownExpr());
+
+            blockDefs.put(blockDto.getId(), blockDef);
+        }
+
+        return blockDefs;
     }
 
-    default AgreementQuestionDef findAgreementQuestionDefByDtoAndTimestamp(QuestionDto questionDto, long timestamp) {
-        TemplateDao templateDao = getTemplateDao();
-        Template prompt = templateDao.loadTemplateById(questionDto.getPromptTemplateId());
-        Template tooltipTemplate = questionDto.getTooltipTemplateId() == null ? null
-                : templateDao.loadTemplateById(questionDto.getTooltipTemplateId());
-        Template additionalInfoHeader = questionDto.getAdditionalInfoHeaderTemplateId() == null ? null
-                : templateDao.loadTemplateById(questionDto.getAdditionalInfoHeaderTemplateId());
-        Template additionalInfoFooter = questionDto.getAdditionalInfoFooterTemplateId() == null ? null
-                : templateDao.loadTemplateById(questionDto.getAdditionalInfoFooterTemplateId());
+    default Map<Long, QuestionDef> collectQuestionDefs(Collection<Long> questionIds, long timestamp) {
+        if (questionIds == null || questionIds.isEmpty()) {
+            return new HashMap<>();
+        }
 
-        List<RuleDef> validations = getValidationDao()
-                .findRuleDefsByQuestionIdAndTimestamp(questionDto.getId(), timestamp);
+        List<QuestionDto> questionDtos;
+        try (var stream = getJdbiQuestion().findQuestionDtosByIds(questionIds)) {
+            questionDtos = stream.collect(toList());
+        }
+        Map<Long, List<RuleDef>> questionIdToRuleDefs = getValidationDao().collectRuleDefs(questionIds, timestamp);
 
-        AgreementQuestionDef def = new AgreementQuestionDef(
-                questionDto.getStableId(),
-                questionDto.isRestricted(),
-                prompt,
-                tooltipTemplate,
-                additionalInfoHeader, additionalInfoFooter,
-                validations,
-                questionDto.shouldHideNumber(),
-                questionDto.isWriteOnce());
-        def.setDeprecated(questionDto.isDeprecated());
-        def.setQuestionId(questionDto.getId());
+        Set<Long> templateIds = new HashSet<>();
+        for (var questionDto : questionDtos) {
+            templateIds.addAll(questionDto.getTemplateIds());
+        }
+        Map<Long, Template> templates = getTemplateDao().collectTemplatesByIds(templateIds);
 
-        return def;
+        Map<Long, QuestionDef> questionDefs = new HashMap<>();
+        List<PicklistQuestionDto> picklistDtos = new ArrayList<>();
+        List<CompositeQuestionDto> compositeDtos = new ArrayList<>();
+
+        for (var questionDto : questionDtos) {
+            long questionId = questionDto.getId();
+            List<RuleDef> ruleDefs = questionIdToRuleDefs.getOrDefault(questionId, new ArrayList<>());
+            QuestionDef questionDef;
+            switch (questionDto.getType()) {
+                case AGREEMENT:
+                    questionDef = buildAgreementQuestionDef((AgreementQuestionDto) questionDto, ruleDefs, templates);
+                    questionDefs.put(questionId, questionDef);
+                    break;
+                case BOOLEAN:
+                    questionDef = buildBoolQuestionDef((BooleanQuestionDto) questionDto, ruleDefs, templates);
+                    questionDefs.put(questionId, questionDef);
+                    break;
+                case DATE:
+                    questionDef = buildDateQuestionDef((DateQuestionDto) questionDto, ruleDefs, templates);
+                    questionDefs.put(questionId, questionDef);
+                    break;
+                case NUMERIC:
+                    questionDef = buildNumericQuestionDef((NumericQuestionDto) questionDto, ruleDefs, templates);
+                    questionDefs.put(questionId, questionDef);
+                    break;
+                case PICKLIST:
+                    picklistDtos.add((PicklistQuestionDto) questionDto);
+                    break;
+                case TEXT:
+                    questionDef = buildTextQuestionDef((TextQuestionDto) questionDto, ruleDefs, templates);
+                    questionDefs.put(questionId, questionDef);
+                    break;
+                case COMPOSITE:
+                    compositeDtos.add((CompositeQuestionDto) questionDto);
+                    break;
+                default:
+                    throw new DaoException("Unhandled question type " + questionDto.getType());
+            }
+        }
+
+        questionDefs.putAll(collectPicklistQuestionDefs(picklistDtos, questionIdToRuleDefs, templates, timestamp));
+        questionDefs.putAll(collectCompositeQuestionDefs(compositeDtos, questionIdToRuleDefs, templates, timestamp));
+
+        return questionDefs;
     }
 
-    default BoolQuestionDef findBoolQuestionDefByDtoAndTimestamp(BooleanQuestionDto boolDto, long timestamp) {
-        TemplateDao templateDao = getTemplateDao();
-        Template prompt = templateDao.loadTemplateById(boolDto.getPromptTemplateId());
-        Template tooltipTemplate = boolDto.getTooltipTemplateId() == null ? null
-                : templateDao.loadTemplateById(boolDto.getTooltipTemplateId());
-        Template additionalInfoHeader = boolDto.getAdditionalInfoHeaderTemplateId() == null ? null
-                : templateDao.loadTemplateById(boolDto.getAdditionalInfoHeaderTemplateId());
-        Template additionalInfoFooter = boolDto.getAdditionalInfoFooterTemplateId() == null ? null
-                : templateDao.loadTemplateById(boolDto.getAdditionalInfoFooterTemplateId());
-        Template trueTemplate = templateDao.loadTemplateById(boolDto.getTrueTemplateId());
-        Template falseTemplate = templateDao.loadTemplateById(boolDto.getFalseTemplateId());
+    private Map<Long, PicklistQuestionDef> collectPicklistQuestionDefs(Collection<PicklistQuestionDto> picklistDtos,
+                                                                       Map<Long, List<RuleDef>> questionIdToRuleDefs,
+                                                                       Map<Long, Template> templates,
+                                                                       long timestamp) {
+        Set<Long> questionIds = new HashSet<>();
+        for (var picklistDto : picklistDtos) {
+            questionIds.add(picklistDto.getId());
+        }
 
-        List<RuleDef> validations = getValidationDao()
-                .findRuleDefsByQuestionIdAndTimestamp(boolDto.getId(), timestamp);
+        Map<Long, PicklistQuestionDao.GroupAndOptionDtos> questionIdToContainer = getPicklistQuestionDao()
+                .findOrderedGroupAndOptionDtos(questionIds, timestamp);
 
-        return BoolQuestionDef.builder(boolDto.getStableId(), prompt, trueTemplate, falseTemplate)
-                .setQuestionId(boolDto.getId())
-                .setTooltip(tooltipTemplate)
-                .setAdditionalInfoHeader(additionalInfoHeader)
-                .setAdditionalInfoFooter(additionalInfoFooter)
-                .setRestricted(boolDto.isRestricted())
-                .setDeprecated(boolDto.isDeprecated())
-                .setWriteOnce(boolDto.isWriteOnce())
-                .setHideNumber(boolDto.shouldHideNumber())
-                .addValidations(validations)
-                .build();
+        Set<Long> templateIds = new HashSet<>();
+        for (var picklistDto : picklistDtos) {
+            templateIds.addAll(picklistDto.getTemplateIds());
+        }
+        for (var container : questionIdToContainer.values()) {
+            templateIds.addAll(container.getTemplateIds());
+        }
+        Map<Long, Template> picklistTemplates = getTemplateDao().collectTemplatesByIds(templateIds);
+        templates.putAll(picklistTemplates);
+
+        Map<Long, PicklistQuestionDef> picklistDefs = new HashMap<>();
+        for (var picklistDto : picklistDtos) {
+            long questionId = picklistDto.getId();
+            List<RuleDef> ruleDefs = questionIdToRuleDefs.getOrDefault(questionId, new ArrayList<>());
+            var container = questionIdToContainer.get(questionId);
+            var picklistDef = buildPicklistQuestionDef(picklistDto, container, ruleDefs, templates);
+            picklistDefs.put(questionId, picklistDef);
+        }
+
+        return picklistDefs;
     }
 
-    default TextQuestionDef findTextQuestionDefByDtoAndTimestamp(TextQuestionDto textDto, long timestamp) {
-        TemplateDao templateDao = getTemplateDao();
-        Template prompt = templateDao.loadTemplateById(textDto.getPromptTemplateId());
-        Template tooltipTemplate = textDto.getTooltipTemplateId() == null ? null
-                : templateDao.loadTemplateById(textDto.getTooltipTemplateId());
-        Template additionalInfoHeader = textDto.getAdditionalInfoHeaderTemplateId() == null ? null
-                : templateDao.loadTemplateById(textDto.getAdditionalInfoHeaderTemplateId());
-        Template additionalInfoFooter = textDto.getAdditionalInfoFooterTemplateId() == null ? null
-                : templateDao.loadTemplateById(textDto.getAdditionalInfoFooterTemplateId());
+    private Map<Long, CompositeQuestionDef> collectCompositeQuestionDefs(Collection<CompositeQuestionDto> compositeDtos,
+                                                                         Map<Long, List<RuleDef>> questionIdToRuleDefs,
+                                                                         Map<Long, Template> templates,
+                                                                         long timestamp) {
+        Set<Long> questionIds = new HashSet<>();
+        for (var compositeDto : compositeDtos) {
+            questionIds.add(compositeDto.getId());
+        }
+
+        Map<Long, List<Long>> parentIdToChildIds = getJdbiQuestion()
+                .collectOrderedCompositeChildIdsByParentIds(questionIds);
+
+        Set<Long> allChildIds = new HashSet<>();
+        for (var childIds : parentIdToChildIds.values()) {
+            allChildIds.addAll(childIds);
+        }
+        Map<Long, QuestionDef> allChildDefs = collectQuestionDefs(allChildIds, timestamp);
+
+        Map<Long, CompositeQuestionDef> compositeDefs = new HashMap<>();
+        for (var compositeDto : compositeDtos) {
+            long questionId = compositeDto.getId();
+            List<RuleDef> ruleDefs = questionIdToRuleDefs.getOrDefault(questionId, new ArrayList<>());
+
+            List<QuestionDef> childDefs = new ArrayList<>();
+            List<Long> childIds = parentIdToChildIds.getOrDefault(questionId, new ArrayList<>());
+            for (var childId : childIds) {
+                childDefs.add(allChildDefs.get(childId));
+            }
+
+            var compositeDef = buildCompositeQuestionDef(compositeDto, childDefs, ruleDefs, templates);
+            compositeDefs.put(questionId, compositeDef);
+        }
+
+        return compositeDefs;
+    }
+
+    private void configureBaseQuestionDef(QuestionDef.AbstractQuestionBuilder builder,
+                                          QuestionDto questionDto,
+                                          List<RuleDef> ruleDefs,
+                                          Map<Long, Template> templates) {
+        Template tooltipTemplate = templates.getOrDefault(questionDto.getTooltipTemplateId(), null);
+        Template headerTemplate = templates.getOrDefault(questionDto.getAdditionalInfoHeaderTemplateId(), null);
+        Template footerTemplate = templates.getOrDefault(questionDto.getAdditionalInfoFooterTemplateId(), null);
+        builder.addValidations(ruleDefs)
+                .setQuestionId(questionDto.getId())
+                .setRestricted(questionDto.isRestricted())
+                .setDeprecated(questionDto.isDeprecated())
+                .setWriteOnce(questionDto.isWriteOnce())
+                .setHideNumber(questionDto.shouldHideNumber())
+                .setAdditionalInfoHeader(headerTemplate)
+                .setAdditionalInfoFooter(footerTemplate)
+                .setTooltip(tooltipTemplate);
+    }
+
+    private AgreementQuestionDef buildAgreementQuestionDef(AgreementQuestionDto dto,
+                                                           List<RuleDef> ruleDefs,
+                                                           Map<Long, Template> templates) {
+        Template prompt = templates.get(dto.getPromptTemplateId());
+        var builder = AgreementQuestionDef.builder(dto.getStableId(), prompt);
+        configureBaseQuestionDef(builder, dto, ruleDefs, templates);
+        return builder.build();
+    }
+
+    private BoolQuestionDef buildBoolQuestionDef(BooleanQuestionDto dto,
+                                                 List<RuleDef> ruleDefs,
+                                                 Map<Long, Template> templates) {
+        Template prompt = templates.get(dto.getPromptTemplateId());
+        Template trueTemplate = templates.get(dto.getTrueTemplateId());
+        Template falseTemplate = templates.get(dto.getFalseTemplateId());
+        var builder = BoolQuestionDef.builder(dto.getStableId(), prompt, trueTemplate, falseTemplate);
+        configureBaseQuestionDef(builder, dto, ruleDefs, templates);
+        return builder.build();
+    }
+
+    private DateQuestionDef buildDateQuestionDef(DateQuestionDto dto,
+                                                 List<RuleDef> ruleDefs,
+                                                 Map<Long, Template> templates) {
+        Template prompt = templates.get(dto.getPromptTemplateId());
+        Template placeholderTemplate = templates.getOrDefault(dto.getPlaceholderTemplateId(), null);
+
+        DatePicklistDef picklistDef = null;
+        if (dto.getRenderMode() == DateRenderMode.PICKLIST) {
+            picklistDef = dto.getPicklistDef();
+        }
+
+        var builder = DateQuestionDef
+                .builder(dto.getRenderMode(), dto.getStableId(), prompt)
+                .setDisplayCalendar(dto.shouldDisplayCalendar())
+                .setPlaceholderTemplate(placeholderTemplate)
+                .setPicklistDef(picklistDef)
+                .addFields(dto.getFields());
+        configureBaseQuestionDef(builder, dto, ruleDefs, templates);
+
+        return builder.build();
+    }
+
+    private NumericQuestionDef buildNumericQuestionDef(NumericQuestionDto dto,
+                                                       List<RuleDef> ruleDefs,
+                                                       Map<Long, Template> templates) {
+        Template prompt = templates.get(dto.getPromptTemplateId());
+        Template placeholderTemplate = templates.getOrDefault(dto.getPlaceholderTemplateId(), null);
+        var builder = NumericQuestionDef
+                .builder(dto.getNumericType(), dto.getStableId(), prompt)
+                .setPlaceholderTemplate(placeholderTemplate);
+        configureBaseQuestionDef(builder, dto, ruleDefs, templates);
+        return builder.build();
+    }
+
+    private TextQuestionDef buildTextQuestionDef(TextQuestionDto dto,
+                                                 List<RuleDef> ruleDefs,
+                                                 Map<Long, Template> templates) {
+        Template prompt = templates.get(dto.getPromptTemplateId());
+        Template placeholderTemplate = templates.getOrDefault(dto.getPlaceholderTemplateId(), null);
+        Template confirmPromptTemplate = templates.getOrDefault(dto.getConfirmPromptTemplateId(), null);
+        Template mismatchMessageTemplate = templates.getOrDefault(dto.getMismatchMessageTemplateId(), null);
 
         List<String> suggestions = new ArrayList<>();
-        if (textDto.getSuggestionType() == SuggestionType.INCLUDED) {
-            suggestions = getJdbiQuestion().findTextQuestionSuggestions(textDto.getId());
+        if (dto.getSuggestionType() == SuggestionType.INCLUDED) {
+            suggestions = getJdbiQuestion().findTextQuestionSuggestions(dto.getId());
         }
 
-        List<RuleDef> validations = getValidationDao()
-                .findRuleDefsByQuestionIdAndTimestamp(textDto.getId(), timestamp);
-
-        Template placeholderTemplate = null;
-        if (textDto.getPlaceholderTemplateId() != null) {
-            placeholderTemplate = templateDao.loadTemplateById(textDto.getPlaceholderTemplateId());
-        }
-        Template confirmPromptTemplate = null;
-        if (textDto.getConfirmPromptTemplateId() != null) {
-            confirmPromptTemplate = templateDao.loadTemplateById(textDto.getConfirmPromptTemplateId());
-        }
-        Template mismatchMessageTemplate = null;
-        if (textDto.getMismatchMessageTemplateId() != null) {
-            mismatchMessageTemplate = templateDao.loadTemplateById(textDto.getMismatchMessageTemplateId());
-        }
-
-        return TextQuestionDef.builder(textDto.getInputType(), textDto.getStableId(), prompt)
-                .setSuggestionType(textDto.getSuggestionType())
+        var builder = TextQuestionDef
+                .builder(dto.getInputType(), dto.getStableId(), prompt)
+                .setSuggestionType(dto.getSuggestionType())
                 .setPlaceholderTemplate(placeholderTemplate)
-                .setTooltip(tooltipTemplate)
-                .setAdditionalInfoHeader(additionalInfoHeader)
-                .setAdditionalInfoFooter(additionalInfoFooter)
-                .setQuestionId(textDto.getId())
-                .setRestricted(textDto.isRestricted())
-                .setDeprecated(textDto.isDeprecated())
-                .setWriteOnce(textDto.isWriteOnce())
-                .setHideNumber(textDto.shouldHideNumber())
-                .setConfirmEntry(textDto.isConfirmEntry())
+                .setConfirmEntry(dto.isConfirmEntry())
                 .setConfirmPromptTemplate(confirmPromptTemplate)
                 .setMismatchMessage(mismatchMessageTemplate)
-                .addSuggestions(suggestions)
-                .addValidations(validations)
-                .build();
+                .addSuggestions(suggestions);
+        configureBaseQuestionDef(builder, dto, ruleDefs, templates);
+
+        return builder.build();
     }
 
-    default DateQuestionDef findDateQuestionDefByDtoAndTimestamp(DateQuestionDto dateDto, long timestamp) {
-        DatePicklistDef picklistDef = null;
-        if (dateDto.getRenderMode() == DateRenderMode.PICKLIST) {
-            picklistDef = dateDto.getPicklistDef();
+    private PicklistQuestionDef buildPicklistQuestionDef(PicklistQuestionDto dto,
+                                                         PicklistQuestionDao.GroupAndOptionDtos container,
+                                                         List<RuleDef> ruleDefs,
+                                                         Map<Long, Template> templates) {
+        Template prompt = templates.get(dto.getPromptTemplateId());
+        Template label = null;
+        if (dto.getRenderMode() == PicklistRenderMode.DROPDOWN) {
+            label = templates.get(dto.getLabelTemplateId());
         }
 
-        List<DateFieldType> fields = dateDto.getFields();
-
-        TemplateDao templateDao = getTemplateDao();
-        Template prompt = templateDao.loadTemplateById(dateDto.getPromptTemplateId());
-        Template tooltipTemplate = dateDto.getTooltipTemplateId() == null ? null
-                : templateDao.loadTemplateById(dateDto.getTooltipTemplateId());
-        Template additionalInfoHeader = dateDto.getAdditionalInfoHeaderTemplateId() == null ? null
-                : templateDao.loadTemplateById(dateDto.getAdditionalInfoHeaderTemplateId());
-        Template additionalInfoFooter = dateDto.getAdditionalInfoFooterTemplateId() == null ? null
-                : templateDao.loadTemplateById(dateDto.getAdditionalInfoFooterTemplateId());
-        Template placeholderTemplate = dateDto.getPlaceholderTemplateId() == null ? null
-                : templateDao.loadTemplateById(dateDto.getPlaceholderTemplateId());
-
-        List<RuleDef> validations = getValidationDao()
-                .findRuleDefsByQuestionIdAndTimestamp(dateDto.getId(), timestamp);
-
-        return DateQuestionDef.builder(dateDto.getRenderMode(), dateDto.getStableId(), prompt)
-                .setDisplayCalendar(dateDto.shouldDisplayCalendar())
-                .setPicklistDef(picklistDef)
-                .setQuestionId(dateDto.getId())
-                .setTooltip(tooltipTemplate)
-                .setPlaceholderTemplate(placeholderTemplate)
-                .setAdditionalInfoHeader(additionalInfoHeader)
-                .setAdditionalInfoFooter(additionalInfoFooter)
-                .setRestricted(dateDto.isRestricted())
-                .setDeprecated(dateDto.isDeprecated())
-                .setWriteOnce(dateDto.isWriteOnce())
-                .setHideNumber(dateDto.shouldHideNumber())
-                .addValidations(validations)
-                .addFields(fields)
-                .build();
-    }
-
-    default QuestionDef findNumericQuestionDefByDtoAndTimestamp(NumericQuestionDto numericDto, long timestamp) {
-        TemplateDao templateDao = getTemplateDao();
-        Template prompt = templateDao.loadTemplateById(numericDto.getPromptTemplateId());
-        Template tooltipTemplate = numericDto.getTooltipTemplateId() == null
-                ? null : templateDao.loadTemplateById(numericDto.getTooltipTemplateId());
-        Template additionalInfoHeader = (numericDto.getAdditionalInfoHeaderTemplateId() == null)
-                ? null : templateDao.loadTemplateById(numericDto.getAdditionalInfoHeaderTemplateId());
-        Template additionalInfoFooter = (numericDto.getAdditionalInfoFooterTemplateId() == null)
-                ? null : templateDao.loadTemplateById(numericDto.getAdditionalInfoFooterTemplateId());
-        Template placeholderTemplate = (numericDto.getPlaceholderTemplateId() == null)
-                ? null : templateDao.loadTemplateById(numericDto.getPlaceholderTemplateId());
-
-        List<RuleDef> validations = getValidationDao()
-                .findRuleDefsByQuestionIdAndTimestamp(numericDto.getId(), timestamp);
-
-        return NumericQuestionDef
-                .builder(numericDto.getNumericType(), numericDto.getStableId(), prompt)
-                .setPlaceholderTemplate(placeholderTemplate)
-                .setTooltip(tooltipTemplate)
-                .setAdditionalInfoHeader(additionalInfoHeader)
-                .setAdditionalInfoFooter(additionalInfoFooter)
-                .setQuestionId(numericDto.getId())
-                .setRestricted(numericDto.isRestricted())
-                .setDeprecated(numericDto.isDeprecated())
-                .setWriteOnce(numericDto.isWriteOnce())
-                .setHideNumber(numericDto.shouldHideNumber())
-                .addValidations(validations)
-                .build();
-    }
-
-    default PicklistQuestionDef findPicklistQuestionDefByDtoAndTimestamp(PicklistQuestionDto picklistDto, long timestamp) {
-        PicklistQuestionDao.GroupAndOptionDtos container = getPicklistQuestionDao()
-                .findOrderedGroupAndOptionDtos(picklistDto.getId(), timestamp);
-
-        TemplateDao templateDao = getTemplateDao();
         List<PicklistGroupDef> groups = new ArrayList<>();
-        for (PicklistGroupDto dto : container.getGroups()) {
-            Template nameTemplate = templateDao.loadTemplateById(dto.getNameTemplateId());
-            List<PicklistOptionDef> options = container.getGroupIdToOptions().get(dto.getId())
+        for (PicklistGroupDto groupDto : container.getGroups()) {
+            Template nameTemplate = templates.get(groupDto.getNameTemplateId());
+            List<PicklistOptionDef> options = container.getGroupIdToOptions().get(groupDto.getId())
                     .stream().map(optionDto -> {
-                        Template optionLabel = templateDao.loadTemplateById(optionDto.getOptionLabelTemplateId());
+                        Template optionLabel = templates.get(optionDto.getOptionLabelTemplateId());
                         Template detailLabel = !optionDto.getAllowDetails() ? null
-                                : templateDao.loadTemplateById(optionDto.getDetailLabelTemplateId());
-                        Template tooltipTemplate = optionDto.getTooltipTemplateId() == null ? null
-                                : templateDao.loadTemplateById(optionDto.getTooltipTemplateId());
+                                : templates.get(optionDto.getDetailLabelTemplateId());
+                        Template tooltipTemplate = templates.getOrDefault(optionDto.getTooltipTemplateId(), null);
                         return new PicklistOptionDef(optionDto.getId(), optionDto.getStableId(),
                                 optionLabel, tooltipTemplate, detailLabel, optionDto.isExclusive());
                     })
                     .collect(Collectors.toList());
-            groups.add(new PicklistGroupDef(dto.getId(), dto.getStableId(), nameTemplate, options));
+            groups.add(new PicklistGroupDef(groupDto.getId(), groupDto.getStableId(), nameTemplate, options));
         }
 
         List<PicklistOptionDef> ungroupedOptions = container.getUngroupedOptions()
                 .stream().map(optionDto -> {
-                    Template optionLabel = templateDao.loadTemplateById(optionDto.getOptionLabelTemplateId());
+                    Template optionLabel = templates.get(optionDto.getOptionLabelTemplateId());
                     Template detailLabel = !optionDto.getAllowDetails() ? null
-                            : templateDao.loadTemplateById(optionDto.getDetailLabelTemplateId());
-                    Template tooltipTemplate = optionDto.getTooltipTemplateId() == null ? null
-                            : templateDao.loadTemplateById(optionDto.getTooltipTemplateId());
-                    Template nestedOptionsTemplate = optionDto.getNestedOptionsTemplateId() == null ? null
-                            : templateDao.loadTemplateById(optionDto.getNestedOptionsTemplateId());
+                            : templates.get(optionDto.getDetailLabelTemplateId());
+                    Template tooltipTemplate = templates.getOrDefault(optionDto.getTooltipTemplateId(), null);
+                    Template nestedOptionsTemplate = templates.getOrDefault(optionDto.getNestedOptionsTemplateId(), null);
 
                     PicklistOptionDef optionDef = null;
                     if (CollectionUtils.isEmpty(optionDto.getNestedOptions())) {
                         optionDef = new PicklistOptionDef(optionDto.getId(), optionDto.getStableId(),
                                 optionLabel, tooltipTemplate, detailLabel, optionDto.isExclusive());
                     } else {
-                        if (CollectionUtils.isNotEmpty(optionDto.getNestedOptions())) {
-                            List<PicklistOptionDef> nestedOptions = new ArrayList<>();
-                            for (PicklistOptionDto nestedOptionDto : optionDto.getNestedOptions()) {
-                                Template nestedOptionLabel = templateDao.loadTemplateById(nestedOptionDto.getOptionLabelTemplateId());
-                                Template nestedDetailLabel = !nestedOptionDto.getAllowDetails() ? null
-                                        : templateDao.loadTemplateById(nestedOptionDto.getDetailLabelTemplateId());
-                                Template nestedTooltipTemplate = nestedOptionDto.getTooltipTemplateId() == null ? null
-                                        : templateDao.loadTemplateById(nestedOptionDto.getTooltipTemplateId());
-                                nestedOptions.add(new PicklistOptionDef(nestedOptionDto.getId(), nestedOptionDto.getStableId(),
-                                        nestedOptionLabel, nestedTooltipTemplate, nestedDetailLabel,
-                                        nestedOptionDto.isExclusive()));
-                            }
-                            optionDef = new PicklistOptionDef(optionDto.getId(), optionDto.getStableId(),
-                                    optionLabel, tooltipTemplate, detailLabel, optionDto.isExclusive(),
-                                    nestedOptionsTemplate, nestedOptions);
+                        List<PicklistOptionDef> nestedOptions = new ArrayList<>();
+                        for (PicklistOptionDto nestedOptionDto : optionDto.getNestedOptions()) {
+                            Template nestedOptionLabel = templates.get(nestedOptionDto.getOptionLabelTemplateId());
+                            Template nestedDetailLabel = !nestedOptionDto.getAllowDetails() ? null
+                                    : templates.get(nestedOptionDto.getDetailLabelTemplateId());
+                            Template nestedTooltipTemplate = templates.getOrDefault(nestedOptionDto.getTooltipTemplateId(), null);
+                            nestedOptions.add(new PicklistOptionDef(nestedOptionDto.getId(), nestedOptionDto.getStableId(),
+                                    nestedOptionLabel, nestedTooltipTemplate, nestedDetailLabel,
+                                    nestedOptionDto.isExclusive()));
                         }
+                        optionDef = new PicklistOptionDef(optionDto.getId(), optionDto.getStableId(),
+                                optionLabel, tooltipTemplate, detailLabel, optionDto.isExclusive(),
+                                nestedOptionsTemplate, nestedOptions);
                     }
                     return optionDef;
                 })
                 .collect(Collectors.toList());
 
-        Template prompt = templateDao.loadTemplateById(picklistDto.getPromptTemplateId());
-        Template tooltipTemplate = picklistDto.getTooltipTemplateId() == null ? null
-                : templateDao.loadTemplateById(picklistDto.getTooltipTemplateId());
-        Template additionalInfoHeader = picklistDto.getAdditionalInfoHeaderTemplateId() == null ? null
-                : templateDao.loadTemplateById(picklistDto.getAdditionalInfoHeaderTemplateId());
-        Template additionalInfoFooter = picklistDto.getAdditionalInfoFooterTemplateId() == null ? null
-                : templateDao.loadTemplateById(picklistDto.getAdditionalInfoFooterTemplateId());
-
-        Template label = null;
-        if (picklistDto.getRenderMode() == PicklistRenderMode.DROPDOWN) {
-            label = templateDao.loadTemplateById(picklistDto.getLabelTemplateId());
-        }
-
-        List<RuleDef> validations = getValidationDao()
-                .findRuleDefsByQuestionIdAndTimestamp(picklistDto.getId(), timestamp);
-
-        return PicklistQuestionDef.builder(picklistDto.getSelectMode(), picklistDto.getRenderMode(), picklistDto.getStableId(), prompt)
+        var builder = PicklistQuestionDef
+                .builder(dto.getSelectMode(), dto.getRenderMode(), dto.getStableId(), prompt)
                 .setLabel(label)
-                .setQuestionId(picklistDto.getId())
-                .setTooltip(tooltipTemplate)
-                .setAdditionalInfoHeader(additionalInfoHeader)
-                .setAdditionalInfoFooter(additionalInfoFooter)
-                .setRestricted(picklistDto.isRestricted())
-                .setDeprecated(picklistDto.isDeprecated())
-                .setWriteOnce(picklistDto.isWriteOnce())
-                .setHideNumber(picklistDto.shouldHideNumber())
-                .addValidations(validations)
                 .addGroups(groups)
-                .addOptions(ungroupedOptions)
-                .build();
+                .addOptions(ungroupedOptions);
+        configureBaseQuestionDef(builder, dto, ruleDefs, templates);
+
+        return builder.build();
     }
 
-    default CompositeQuestionDef findCompositeQuestionDefByDtoAndTimestamp(CompositeQuestionDto compositeDto, long timestamp) {
-        JdbiQuestion jdbiQuestion = getJdbiQuestion();
-        List<Long> childIds = jdbiQuestion.findCompositeChildIdsByParentId(compositeDto.getId());
-        Map<Long, QuestionDef> childrenDefs;
-        try (var stream = jdbiQuestion.findQuestionDtosByIds(childIds)) {
-            childrenDefs = stream
-                    .map(child -> findQuestionDefByDtoAndTimestamp(child, timestamp))
-                    .collect(Collectors.toMap(QuestionDef::getQuestionId, Function.identity()));
-        }
-        List<QuestionDef> orderedChildDefs = childIds.stream()
-                .map(childrenDefs::get)
-                .collect(Collectors.toList());
+    private CompositeQuestionDef buildCompositeQuestionDef(CompositeQuestionDto dto,
+                                                           List<QuestionDef> childQuestionDefs,
+                                                           List<RuleDef> ruleDefs,
+                                                           Map<Long, Template> templates) {
+        Template prompt = templates.get(dto.getPromptTemplateId());
+        Template buttonTmpl = templates.getOrDefault(dto.getAddButtonTemplateId(), null);
+        Template addItemTmpl = templates.getOrDefault(dto.getAdditionalItemTemplateId(), null);
 
-        TemplateDao templateDao = getTemplateDao();
-        Template prompt = templateDao.loadTemplateById(compositeDto.getPromptTemplateId());
-        Template tooltipTemplate = compositeDto.getTooltipTemplateId() == null ? null
-                : templateDao.loadTemplateById(compositeDto.getTooltipTemplateId());
-        Template additionalInfoHeader = compositeDto.getAdditionalInfoHeaderTemplateId() == null ? null
-                : templateDao.loadTemplateById(compositeDto.getAdditionalInfoHeaderTemplateId());
-        Template additionalInfoFooter = compositeDto.getAdditionalInfoFooterTemplateId() == null ? null
-                : templateDao.loadTemplateById(compositeDto.getAdditionalInfoFooterTemplateId());
-
-        Template buttonTmpl = null;
-        if (compositeDto.getAddButtonTemplateId() != null) {
-            buttonTmpl = templateDao.loadTemplateById(compositeDto.getAddButtonTemplateId());
-        }
-
-        Template addItemTmpl = null;
-        if (compositeDto.getAdditionalItemTemplateId() != null) {
-            addItemTmpl = templateDao.loadTemplateById(compositeDto.getAdditionalItemTemplateId());
-        }
-
-        List<RuleDef> validations = getValidationDao()
-                .findRuleDefsByQuestionIdAndTimestamp(compositeDto.getId(), timestamp);
-
-        return CompositeQuestionDef.builder()
-                .setStableId(compositeDto.getStableId())
+        var builder = CompositeQuestionDef.builder()
+                .setStableId(dto.getStableId())
                 .setPrompt(prompt)
-                .setAllowMultiple(compositeDto.isAllowMultiple())
-                .setUnwrapOnExport(compositeDto.isUnwrapOnExport())
+                .setAllowMultiple(dto.isAllowMultiple())
+                .setUnwrapOnExport(dto.isUnwrapOnExport())
                 .setAddButtonTemplate(buttonTmpl)
                 .setAdditionalItemTemplate(addItemTmpl)
-                .setAdditionalInfoHeader(additionalInfoHeader)
-                .setAdditionalInfoFooter(additionalInfoFooter)
-                .setTooltip(tooltipTemplate)
-                .setQuestionId(compositeDto.getId())
-                .setRestricted(compositeDto.isRestricted())
-                .setDeprecated(compositeDto.isDeprecated())
-                .setWriteOnce(compositeDto.isWriteOnce())
-                .setHideNumber(compositeDto.shouldHideNumber())
-                .addValidations(validations)
-                .addChildrenQuestions(orderedChildDefs)
-                .setChildOrientation(compositeDto.getChildOrientation())
-                .build();
+                .setChildOrientation(dto.getChildOrientation())
+                .addChildrenQuestions(childQuestionDefs);
+        configureBaseQuestionDef(builder, dto, ruleDefs, templates);
+
+        return builder.build();
     }
 }
