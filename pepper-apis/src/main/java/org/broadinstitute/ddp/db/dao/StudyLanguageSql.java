@@ -27,6 +27,13 @@ public interface StudyLanguageSql extends SqlObject {
     long insert(@Bind("studyId") long studyId,
                 @Bind("languageCodeId") long languageCodeId);
 
+    @SqlUpdate("update study_language"
+            + "    set name = :name"
+            + "  where umbrella_study_id = :studyId and language_code_id = :languageCodeId")
+    int update(@Bind("studyId") long studyId,
+               @Bind("languageCodeId") long languageCodeId,
+               @Bind("name") String name);
+
     @SqlUpdate("delete from study_language where study_language_id = :id")
     int deleteById(@Bind("id") long id);
 
