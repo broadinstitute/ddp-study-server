@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.cache;
 
+import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -68,12 +69,13 @@ public class CacheService {
             }
             URI redissonConfigPathUri = redissonConfigPath.toUri();
             cacheManager = buildCacheManager(redissonConfigPathUri);
-            String redisAddress = ConfigManager.getInstance().getConfig().getString(ConfigFile.REDIS_SERVER_ADDRESS);
-            Config redissonConfig = new Config();
-            redissonConfig.useSingleServer()
-                    .setTimeout(30000)
-                    .setAddress(redisAddress);
-            redissonClient = Redisson.create(redissonConfig);
+            // Separate configuration needs to be instantiated for non-JCache API elements
+            try {
+                Config redissonConfig = Config.fromYAML(redissonConfigPathUri.toURL());
+                redissonClient = Redisson.create(redissonConfig);
+            } catch (IOException e) {
+                throw new DDPException("Path for configuration file: " + ConfigFile.JCACHE_CONFIGURATION_FILE + " could not be read");
+            }
         } else {
             LOG.warn("Configuration file not set: " + ConfigFile.JCACHE_CONFIGURATION_FILE + "JCache is not enabled");
             cacheManager = new NullCacheManager();
