@@ -10,12 +10,12 @@ singleServerConfig:
   retryInterval: 3000
   password: null
   subscriptionsPerConnection: 5
-  clientName: null
+  clientName: pepper-backend
   address: "redis://{{$conf.Data.redis.host}}:{{$conf.Data.redis.port}}"
   subscriptionConnectionMinimumIdleSize: 1
   subscriptionConnectionPoolSize: 50
   connectionMinimumIdleSize: 24
-  connectionPoolSize: 86
+  connectionPoolSize: 64
   database: 0
   dnsMonitoringInterval: 5000
   pingConnectionInterval: 15000
