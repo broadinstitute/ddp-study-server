@@ -7,6 +7,7 @@ import org.broadinstitute.ddp.cache.CacheService;
 import org.broadinstitute.ddp.cache.ModelChangeType;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.model.address.OLCPrecision;
+import org.broadinstitute.ddp.util.TestRedisConnection;
 import org.jdbi.v3.core.Handle;
 import org.redisson.api.RLocalCachedMap;
 import org.redisson.client.RedisException;
@@ -64,9 +65,9 @@ public class JdbiUmbrellaStudyCached extends SQLObjectWrapper<JdbiUmbrellaStudy>
             try {
                 id = studyGuidToIdCache.get(studyGuid);
             } catch (RedisException e) {
-                LOG.warn("Failed to retrieve value from Redis cache: " + studyGuidToIdCache.getName() + " key lookedup:" +  studyGuid
-                                + "Will try to retrieve from database",
-                        e);
+                LOG.warn("Failed to retrieve value from Redis cache: " + studyGuidToIdCache.getName() + " key lookedup:" + studyGuid
+                                + "Will try to retrieve from database", e);
+                TestRedisConnection.doTest();
             }
             if (id == null) {
                 dto = delegate.findByStudyGuid(studyGuid);
@@ -87,7 +88,8 @@ public class JdbiUmbrellaStudyCached extends SQLObjectWrapper<JdbiUmbrellaStudy>
             try {
                 dto = idToStudyCache.get(studyId);
             } catch (RedisException e) {
-                LOG.warn("Failed to retrieve value from Redis cache: " + idToStudyCache.getName() + " key lookedup:" +  studyId, e);
+                LOG.warn("Failed to retrieve value from Redis cache: " + idToStudyCache.getName() + " key lookedup:" + studyId, e);
+                TestRedisConnection.doTest();
             }
             if (dto == null) {
                 dto = delegate.findById(studyId);
@@ -151,6 +153,7 @@ public class JdbiUmbrellaStudyCached extends SQLObjectWrapper<JdbiUmbrellaStudy>
                 studyGuidToIdCache.removeAsync(dto.getGuid());
             } catch (RedisException e) {
                 LOG.warn("Failed to remove values from Redis caches", e);
+                TestRedisConnection.doTest();
             }
         }
     }
@@ -225,6 +228,7 @@ public class JdbiUmbrellaStudyCached extends SQLObjectWrapper<JdbiUmbrellaStudy>
                 studyGuidToIdCache.put(dto.getGuid(), dto.getId());
             } catch (RedisException e) {
                 LOG.warn("Failed to store value to Redis cache", e);
+                TestRedisConnection.doTest();
             }
         }
     }
