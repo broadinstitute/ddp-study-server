@@ -6,7 +6,7 @@ import java.util.Optional;
 
 import org.broadinstitute.ddp.cache.CacheService;
 import org.broadinstitute.ddp.model.study.StudyLanguage;
-import org.broadinstitute.ddp.util.TestRedisConnection;
+import org.broadinstitute.ddp.util.RedisConnectionValidator;
 import org.jdbi.v3.core.Handle;
 import org.redisson.api.RLocalCachedMap;
 import org.redisson.client.RedisException;
@@ -48,7 +48,7 @@ public class StudyLanguageCachedDao extends SQLObjectWrapper<StudyLanguageDao> i
             studyIdToLanguageCache.remove(umbrellaStudyId);
         } catch (RedisException e) {
             LOG.warn("Failed to remove values from Redis caches", e);
-            TestRedisConnection.doTest();
+            RedisConnectionValidator.doTest();
         }
         return delegate.insert(umbrellaStudyId, languageCodeId);
     }
@@ -98,7 +98,7 @@ public class StudyLanguageCachedDao extends SQLObjectWrapper<StudyLanguageDao> i
             } catch (RedisException e) {
                 LOG.warn("Failed to retrieve value from Redis cache: " + studyIdToLanguageCache.getName() + " key lookedup:"
                         + umbrellaStudyId + "Will try to retrieve from database", e);
-                TestRedisConnection.doTest();
+                RedisConnectionValidator.doTest();
             }
             if (result == null) {
                 result = delegate.findLanguages(umbrellaStudyId);
@@ -106,7 +106,7 @@ public class StudyLanguageCachedDao extends SQLObjectWrapper<StudyLanguageDao> i
                     studyIdToLanguageCache.putAsync(umbrellaStudyId, result);
                 } catch (RedisException e) {
                     LOG.warn("Failed to store value to Redis cache: " + studyIdToLanguageCache.getName() + " key " + umbrellaStudyId, e);
-                    TestRedisConnection.doTest();
+                    RedisConnectionValidator.doTest();
                 }
             }
             return result;

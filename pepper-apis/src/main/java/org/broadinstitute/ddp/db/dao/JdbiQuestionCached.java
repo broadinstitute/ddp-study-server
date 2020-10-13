@@ -13,7 +13,7 @@ import java.util.stream.Stream;
 import org.broadinstitute.ddp.cache.CacheService;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
-import org.broadinstitute.ddp.util.TestRedisConnection;
+import org.broadinstitute.ddp.util.RedisConnectionValidator;
 import org.jdbi.v3.core.Handle;
 import org.redisson.api.RLocalCachedMap;
 import org.redisson.client.RedisException;
@@ -65,7 +65,7 @@ public class JdbiQuestionCached extends SQLObjectWrapper<JdbiQuestion> implement
             } catch (RedisException e) {
                 LOG.warn("Failed to retrieve value from Redis cache: " + questionKeyToQuestionDtosCache.getName() + " key lookedup:" + key
                         + "Will try to retrieve from database", e);
-                TestRedisConnection.doTest();
+                RedisConnectionValidator.doTest();
             }
             if (cachedQuestionDtos == null) {
                 Map<String, List<QuestionDto>> mapOfDtos = cacheQuestionDtosForStudyActivity(activityInstance.getActivityId());
@@ -97,7 +97,7 @@ public class JdbiQuestionCached extends SQLObjectWrapper<JdbiQuestion> implement
             questionKeyToQuestionDtosCache.putAllAsync(dtoMap);
         } catch (RedisException e) {
             LOG.warn("Failed to store value from Redis cache: " + questionKeyToQuestionDtosCache.getName(), e);
-            TestRedisConnection.doTest();
+            RedisConnectionValidator.doTest();
         }
         return dtoMap;
     }
