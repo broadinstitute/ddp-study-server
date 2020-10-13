@@ -6,8 +6,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
 
-public class TestRedisConnection {
-    private static final Logger LOG = LoggerFactory.getLogger(TestRedisConnection.class);
+public class RedisConnectionValidator {
+    private static final Logger LOG = LoggerFactory.getLogger(RedisConnectionValidator.class);
 
     public static void doTest() {
         String redisAddress = ConfigManager.getInstance().getConfig().getString(ConfigFile.REDIS_SERVER_ADDRESS);
