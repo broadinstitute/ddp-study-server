@@ -133,7 +133,12 @@ public class SlackAppender<E> extends AppenderBase<ILoggingEvent> {
                 logBreadCrumb = e.getMDCPropertyMap().get(MDCLogBreadCrumbFilter.LOG_BREADCRUMB);
             }
             if (StringUtils.isNotBlank(logBreadCrumb)) {
-                attachments.add(Attachment.builder().text("grep for `" + logBreadCrumb + "`").build());
+                var attachment = Attachment.builder().text("grep for `" + logBreadCrumb + "`")
+                        .appUnfurl(false)
+                        .msgUnfurl(false)
+                        .replyUnfurl(false)
+                        .threadRootUnfurl(false).build();
+                attachments.add(attachment);
             }
 
             Payload messagePayload = Payload.builder()
