@@ -22,6 +22,11 @@
   "prequal_relationship_select_label": "Choose relationship...",
   "prequal_relationship_parent": "Parent",
   "prequal_relationship_guardian": "Guardian",
+  "prequal_child_primary_diagnosis_req": "Please specify patient's primary diagnosis.",
+
+  "consent_first_name": "First Name",
+  "consent_last_name": "Last Name",
+  "consent_name_template": "Your name &ast;",
 
   "demographics_name": "Demographics",
   "demographics_title": "Demographics",
@@ -36,8 +41,9 @@
   "demographics_last_name_req_hint": "Last name cannot be empty.",
   "demographics_middle_name_placeholder": "Complete legal additional name of subject at birth (If the subject has a middle name)",
 
-  "demographics_mailing_address_placeholder": "Current Mailing address*",
-  "demographics_mailing_address_req_hint": "Address cannot be empty.",
+  "demographics_mailing_address_title": "Your Mailing Address",
+  "demographics_mailing_address_subtitle": "We ask you this so we can send you a kit to collect saliva.",
+
   "demographics_city_municipality_placeholder": "Name of city/municipality in which subject was born*",
   "demographics_city_municipality_req_hint": "City/municipality cannot be empty.",
   "demographics_country_prompt": "Country of birth",
@@ -124,7 +130,7 @@
   "medical_ear_severe": "Severe. No hearing (even with aid)",
   "medical_dental_mouth": "According to you, does your child have physical dental or mouth issues?",
   "medical_communication": "According to you, compared to children their own age does your child have communication issues?",
-  "medical_communication_tip": "NOTE: NEEDS CHECK | Verbal, explicit about the type of communications. \"speech or language problems\" Whether the parents or anyone in the child's life or doctor's etc... any providers",
+  "medical_communication_tip": "ADD Definition (Verbal, explicit about the type of communictaions. \"speech or lanuguae problems\" Whether the parents or any one in the child's life or doctor's etc..... any providers have ever felt that there were any concerns, or idenitififed challenges or acocomodations needed or provded in XXXXXXXXXXX.",
   "medical_communication_normal": "Normal. Age-appropriate communication",
   "medical_communication_mild": "Mild. Delayed development of communication",
   "medical_communication_moderate": "Moderate. Communication unintelligible to parents or completely reliant on non-verbal communication",
@@ -144,6 +150,7 @@
   "medical_mobility_mild": "Mild. Clumsy age-appropriate mode of mobility",
   "medical_mobility_moderate": "Moderate. Mobile but through age-inappropriate mode",
   "medical_mobility_severe": "Severe. Immobile",
+  "medical_mobility_tooltip": "separate from developmental domain (device usage)",
   "medical_epilepsy": "According to you, does your child have epilepsy, seizures, spasms, convulsions",
   "medical_epilepsy_none": "None",
   "medical_epilepsy_mild": "Mild. Myoclonic or absence seizures only or < 1 generalised tonic-clonic seizure/month",
@@ -418,6 +425,22 @@
   "legacy_willing_answer_more": "Are you willing to answer more questions about the passing of \"subject\"?",
   "legacy_willing_answer_more_yes": "Yes",
   "legacy_willing_answer_more_no": "No",
+
+  "family_member_survey_name": "Family Member Survey",
+  "family_member_alive": "Is your loved one alive?",
+  "family_member_alive_yes": "Yes",
+  "family_member_alive_no": "No",
+  "family_member_alive_req": "Please choose one of the above options.",
+  "family_member_relationship": "Relationship to your loved one",
+  "family_member_pass_away_date": "When did your loved one pass away?",
+  "family_member_know_cause": "Do you know the cause of your loved one's passing?",
+  "family_member_know_cause_yes": "Yes",
+  "family_member_know_cause_no": "No",
+  "family_member_cause": "What is the cause of your loved one's passing?",
+  "family_member_willing_answer_more": "Are you willing to answer more questions about the passing of your loved one?",
+  "family_member_willing_answer_more_yes": "Yes",
+  "family_member_willing_answer_more_no": "No",
+  "family_member_rel_max_len": "Must have at most 100 characters.",
 
   "required_field_hint": "* Required field"
 }
