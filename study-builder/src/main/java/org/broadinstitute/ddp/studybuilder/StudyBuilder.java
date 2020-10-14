@@ -511,13 +511,15 @@ public class StudyBuilder {
         String analyticsToken = ConfigUtil.getStrIfPresent(settingsCfg, "analyticsToken");
         boolean shouldDeleteUnsendableEmails = settingsCfg.hasPath("shouldDeleteUnsendableEmails")
                 && settingsCfg.getBoolean("shouldDeleteUnsendableEmails");
+        boolean shouldDisplayLanguageChangePopup = settingsCfg.hasPath("shouldDisplayLanguageChangePopup")
+                && settingsCfg.getBoolean("shouldDisplayLanguageChangePopup");
 
         handle.attach(StudyDao.class).addSettings(studyDto.getId(), inviteError, revisionId, analyticsEnabled, analyticsToken,
-                shouldDeleteUnsendableEmails);
+                shouldDeleteUnsendableEmails, shouldDisplayLanguageChangePopup);
         LOG.info("Created settings for study={}, inviteErrorTmplId={}, analyticsEnabled={}, analyticsToken={},"
-                        + " shouldDeleteUnsendableEmails={}",
+                        + " shouldDeleteUnsendableEmails={}, shouldDisplayLanguageChangePopup={}",
                 studyDto.getGuid(), inviteError == null ? null : inviteError.getTemplateId(), analyticsEnabled, analyticsToken,
-                shouldDeleteUnsendableEmails);
+                shouldDeleteUnsendableEmails, shouldDisplayLanguageChangePopup);
     }
 
     private void insertSendgrid(Handle handle, long studyId) {

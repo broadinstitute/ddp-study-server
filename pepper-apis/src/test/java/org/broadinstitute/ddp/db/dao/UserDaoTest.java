@@ -7,6 +7,8 @@ import static org.junit.Assert.assertTrue;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.cache.LanguageStore;
@@ -51,6 +53,18 @@ public class UserDaoTest extends TxnAwareBaseTest {
                     .build();
             handle.attach(ActivityDao.class).insertActivity(form, RevisionMetadata.now(testData.getUserId(), "test"));
             assertNotNull(form.getActivityId());
+        });
+    }
+
+    @Test
+    public void testFindUsersAndProfilesByGuids() {
+        TransactionWrapper.useTxn(handle -> {
+            List<User> users = handle.attach(UserDao.class)
+                    .findUsersAndProfilesByGuids(Set.of(testData.getUserGuid()))
+                    .collect(Collectors.toList());
+            assertEquals(1, users.size());
+            assertEquals(testData.getUserGuid(), users.get(0).getGuid());
+            assertNotNull(users.get(0).getProfile());
         });
     }
 
@@ -102,7 +116,7 @@ public class UserDaoTest extends TxnAwareBaseTest {
         handle.attach(UserProfileDao.class).createProfile(
                 new UserProfile.Builder(tempUser.getId())
                         .setFirstName("first").setLastName("last").setPreferredLangId(langId).setDoNotContact(false)
-                        .build());
+                        .setSkipLanguagePopup(false).build());
 
         ActivityInstanceDto instance = handle.attach(ActivityInstanceDao.class)
                 .insertInstance(form.getActivityId(), tempUser.getGuid());
