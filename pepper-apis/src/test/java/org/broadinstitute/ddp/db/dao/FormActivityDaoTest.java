@@ -363,7 +363,7 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
         return inst.get();
     }
 
-    private void runInsertPicklistQuestionTest(boolean allowDetails) {
+    private void    runInsertPicklistQuestionTest(boolean allowDetails) {
         TransactionWrapper.useTxn(handle -> {
             Template prompt = new Template(TemplateType.TEXT, "prompt", "picklist question");
             Template label = new Template(TemplateType.TEXT, "label", "picklist label");

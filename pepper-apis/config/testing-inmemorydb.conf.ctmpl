@@ -59,6 +59,8 @@
         "backendTestClientName2": "{{$testingAuth.backendTestClientName2}}"
     },
     "googleGeocodingApiKey": "{{$testingConf.Data.geocodingKey}}",
+    "jcacheConfigurationFile": "src/test/resources/redisson-test-jcache.yaml",
+    "redisServerAddress":"redis://127.0.0.1:6379",
     "kits": {
         "checkEnabled": true,
         "intervalSecs": 30,
@@ -90,7 +92,7 @@
     "pdfArchiveUseFilesystem": true,
     "pubsub": {
         "enableHousekeepingTasks": false,
-        "housekeepingTasksTopic": "local-housekeeping-tasks",
+        "housekeepingTasksSubscription": "local-housekeeping-tasks-sub",
     },
     "studyExportBucket": "ddp-dev-study-exports-testing",
     "schedules": {
@@ -104,6 +106,7 @@
     },
     "housekeepingMaxConnections": 50,
     "sendgrid": {
+        "proxy": null,
         "fromName": "Pepper Local",
         "fromEmail": "noreply@datadonationplatform.org"
     },

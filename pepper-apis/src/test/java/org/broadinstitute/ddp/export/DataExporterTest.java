@@ -654,7 +654,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
             User user = new User(1L, TEST_USER_GUID, "blah-hruid", "blah-legacy-altpid", "blah-shortid",
                     false, 1L, 1L, "auth", timestamp, timestamp, null);
             user.setEmail("test@datadonationplatform.org");
-            user.setProfile(new UserProfile(1L, "first-foo", "last-bar", null, null, 1L, "en", null, true, null));
+            user.setProfile(new UserProfile(1L, "first-foo", "last-bar", null, null, 1L, "en", null, true, null, null));
             if (!emptyAddress) {
                 MailAddress address = new MailAddress("foo bar", "85 Main St", "Apt 2", "Boston", "MA", "US", "02115", "6171112233", null,
                         "", DsmAddressValidationStatus.DSM_INVALID_ADDRESS_STATUS, true);
@@ -668,7 +668,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
                     InstitutionType.PHYSICIAN, "inst a", "dr. a", "boston", "ma", null, null, null, null));
             if (!emptyActivity) {
                 FormResponse instance = new FormResponse(1L, "instance-guid-xyz", 1L, false, timestamp, firstCompletedAt, 1L, "ACT", "v1",
-                        new ActivityInstanceStatusDto(2L, 2L, 1L, 1L, lastUpdatedAt, InstanceStatusType.COMPLETE));
+                        new ActivityInstanceStatusDto(2L, 1L, 1L, lastUpdatedAt, InstanceStatusType.COMPLETE));
                 instance.putAnswer(new BoolAnswer(1L, "Q_BOOL", "guid", true));
                 instance.putAnswer(new TextAnswer(2L, "Q_TEXT", "guid", "john smith"));
                 instance.putAnswer(new NumericIntegerAnswer(3L, "Q_NUMERIC", "guid", 25L));

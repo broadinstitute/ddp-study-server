@@ -18,6 +18,7 @@ public class Profile {
     public static final String PREFERRED_LANGUAGE = "preferredLanguage";
     public static final String FIRST_NAME = "firstName";
     public static final String LAST_NAME = "lastName";
+    public static final String SKIP_LANGUAGE_POPUP = "skipLanguagePopup";
 
     @Deprecated
     @SerializedName(BIRTH_MONTH)
@@ -38,6 +39,8 @@ public class Profile {
     private String lastName;
     @SerializedName(BIRTH_DATE)
     private String birthDate;
+    @SerializedName(SKIP_LANGUAGE_POPUP)
+    private Boolean skipLanguagePopup;
 
     public Profile(UserProfile other) {
         LocalDate birthDate = other.getBirthDate();
@@ -50,11 +53,12 @@ public class Profile {
         this.preferredLanguage = other.getPreferredLangCode();
         this.firstName = other.getFirstName();
         this.lastName = other.getLastName();
+        this.skipLanguagePopup = other.getSkipLanguagePopup();
         // NOTE: timezone is currently not exposed in Profile API JSON.
     }
 
     public Profile(LocalDate birthDate,
-                   String sex, String preferredLanguage, String firstName, String lastName) {
+                   String sex, String preferredLanguage, String firstName, String lastName, Boolean skipLanguagePopup) {
 
         this.birthDate = birthDate != null ? birthDate.toString() : null;
         this.sex = sex;
@@ -64,6 +68,7 @@ public class Profile {
         this.birthDayInMonth = birthDate != null ? birthDate.getDayOfMonth() : null;
         this.birthMonth = birthDate != null ? birthDate.getMonthValue() : null;
         this.birthYear = birthDate != null ? birthDate.getYear() : null;
+        this.skipLanguagePopup = skipLanguagePopup;
     }
 
     public Integer getBirthDayInMonth() {
@@ -96,5 +101,9 @@ public class Profile {
 
     public String getBirthDate() {
         return birthDate;
+    }
+
+    public Boolean getSkipLanguagePopup() {
+        return skipLanguagePopup;
     }
 }

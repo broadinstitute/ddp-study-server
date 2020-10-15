@@ -230,6 +230,7 @@ Activity.Summary:
       description: a Base64 encoded png or jpg image
       example: YW55IGN...BwbGVhc3VyZQ==
       type: string
+      nullable: true
     instanceGuid:
       example: 6B03213FD0
       type: string
@@ -686,6 +687,13 @@ Component.MailingAddress:
               type: string
             subtitleText:
               type: string
+            requireVerified:
+              type: boolean
+              description: when `true`, address should be [verified](#operation/verifyMailingAddress) as deliverable
+            requirePhone:
+              type: boolean
+              description: |
+                     when `true`, the activity may require that there be a saved mailing address with a non-empty value for `phone` in order to be [completed](#operation/putAnswers).
 ConditionalRule:
   type: object
   title: ConditionalRule
@@ -980,6 +988,15 @@ Error.NotFound:
           type: string
           enum:
             - NOT_FOUND
+Error.OperationNotAllowed:
+  allOf:
+    - $ref: '../pepper.yml#/components/schemas/Error'
+    - type: object
+      properties:
+        code:
+          type: string
+          enum:
+            - OPERATION_NOT_ALLOWED
 Error.RegisterNotFound:
   allOf:
     - $ref: '../pepper.yml#/components/schemas/Error'
@@ -1122,6 +1139,9 @@ ProfileModel:
       lastName:
         type: string
         example: Barium
+      skipLanguagePopup:
+        type: boolean
+        example: true
 
 #####
 #
@@ -1467,6 +1487,8 @@ Study.Detail:
       properties:
         summary:
           type: string
+        shouldDisplayLanguageChangePopup:
+          type: boolean
 #####
 #
 # Question Validation Types
@@ -1777,15 +1799,6 @@ MailingAddress:
     - $ref: '../pepper.yml#/components/schemas/BaseMailAddress'
     - type: object
       description: a participant's mailing address, to be used for delivery.
-      required:
-        - description
-        - name
-        - street1
-        - city
-        - state
-        - country
-        - zip
-        - phone
       properties:
         guid:
           type: string

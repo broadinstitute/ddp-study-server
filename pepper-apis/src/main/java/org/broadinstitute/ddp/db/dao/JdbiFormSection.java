@@ -7,7 +7,7 @@ import static org.broadinstitute.ddp.constants.SqlConstants.FormSectionTable.TAB
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.dto.FormSectionDto;
 import org.jdbi.v3.sqlobject.SqlObject;
-import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
+import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
@@ -24,10 +24,10 @@ public interface JdbiFormSection extends SqlObject {
     long insert(@Bind("sectionCode") String sectionCode, @Bind("nameTemplateId") Long nameTemplateId);
 
     @SqlQuery("select * from " + TABLE_NAME + " where " + SECTION_CODE + "= ?")
-    @RegisterRowMapper(FormSectionDto.FormSectionDtoMapper.class)
+    @RegisterConstructorMapper(FormSectionDto.class)
     FormSectionDto findByCode(String sectionCode);
 
     @SqlQuery("select * from " + TABLE_NAME + " where " + ID + "= ?")
-    @RegisterRowMapper(FormSectionDto.FormSectionDtoMapper.class)
+    @RegisterConstructorMapper(FormSectionDto.class)
     FormSectionDto findById(long formSectionId);
 }

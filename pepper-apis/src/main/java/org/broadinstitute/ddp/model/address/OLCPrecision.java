@@ -1,6 +1,8 @@
 package org.broadinstitute.ddp.model.address;
 
-public enum OLCPrecision {
+import java.io.Serializable;
+
+public enum OLCPrecision implements Serializable {
     LEAST(20., 2, 2200), LESS(1., 4, 110.), MEDIUM(0.05, 6, 5.5), MORE(0.0025, 8, 0.275), MOST(0.000125, 11, 0.014);
 
     private double blockSizeInDegrees;

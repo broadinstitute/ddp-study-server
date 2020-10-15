@@ -14,6 +14,11 @@ public abstract class NumericAnswer<T extends Number> extends Answer<T> {
         this.numericType = numericType;
     }
 
+    NumericAnswer(Long answerId, String questionStableId, String answerGuid, NumericType numericType, String actInstanceGuid) {
+        super(QuestionType.NUMERIC, answerId, questionStableId, answerGuid, actInstanceGuid);
+        this.numericType = numericType;
+    }
+
     public NumericType getNumericType() {
         return numericType;
     }

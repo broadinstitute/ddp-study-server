@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.model.activity.instance.answer;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import javax.validation.Valid;
@@ -8,7 +9,7 @@ import com.google.gson.annotations.JsonAdapter;
 import org.broadinstitute.ddp.transformers.AnswerRowAdapter;
 
 @JsonAdapter(AnswerRowAdapter.class)
-public class AnswerRow {
+public class AnswerRow implements Serializable {
     @Valid
     private List<Answer> values;
 

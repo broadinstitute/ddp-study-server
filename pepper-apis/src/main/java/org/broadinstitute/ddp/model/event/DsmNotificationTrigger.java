@@ -19,7 +19,15 @@ public class DsmNotificationTrigger extends EventTrigger {
 
     @Override
     public boolean isTriggered(Handle handle, EventSignal eventSignal) {
-        return eventSignal instanceof DsmNotificationSignal
-                && ((DsmNotificationSignal) eventSignal).getDsmEventType().equals(eventType);
+        if (eventSignal instanceof DsmNotificationSignal) {
+            DsmNotificationSignal dsmSignal = (DsmNotificationSignal) eventSignal;
+            if (dsmSignal.getDsmEventType() == DsmNotificationEventType.TEST_RESULT) {
+                return eventType == dsmSignal.getDsmEventType() && dsmSignal.getTestResult() != null;
+            } else {
+                return eventType == dsmSignal.getDsmEventType();
+            }
+        } else {
+            return false;
+        }
     }
 }

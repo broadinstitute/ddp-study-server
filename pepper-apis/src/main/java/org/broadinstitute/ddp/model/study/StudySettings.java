@@ -10,6 +10,7 @@ public class StudySettings {
     private boolean analyticsEnabled;
     private String analyticsToken;
     private boolean shouldDeleteUnsendableEmails;
+    private boolean shouldDisplayLanguageChangePopup;
 
     @JdbiConstructor
     public StudySettings(
@@ -17,12 +18,14 @@ public class StudySettings {
             @ColumnName("invite_error_template_id") Long inviteErrorTemplateId,
             @ColumnName("analytics_enabled") boolean analyticsEnabled,
             @ColumnName("analytics_token") String analyticsToken,
-            @ColumnName("should_delete_unsendable_emails") boolean shouldDeleteUnsendableEmails) {
+            @ColumnName("should_delete_unsendable_emails") boolean shouldDeleteUnsendableEmails,
+            @ColumnName("should_display_language_change_popup") boolean shouldDisplayLanguageChangePopup) {
         this.studyId = studyId;
         this.inviteErrorTemplateId = inviteErrorTemplateId;
         this.analyticsEnabled = analyticsEnabled;
         this.analyticsToken = analyticsToken;
         this.shouldDeleteUnsendableEmails = shouldDeleteUnsendableEmails;
+        this.shouldDisplayLanguageChangePopup = shouldDisplayLanguageChangePopup;
     }
 
     public long getStudyId() {
@@ -43,5 +46,9 @@ public class StudySettings {
 
     public boolean shouldDeleteUnsendableEmails() {
         return shouldDeleteUnsendableEmails;
+    }
+
+    public boolean shouldDisplayLanguageChangePopup() {
+        return shouldDisplayLanguageChangePopup;
     }
 }

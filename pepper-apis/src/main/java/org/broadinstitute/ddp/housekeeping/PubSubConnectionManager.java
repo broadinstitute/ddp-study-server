@@ -38,7 +38,6 @@ public class PubSubConnectionManager {
     private static final Logger LOG = LoggerFactory.getLogger(PubSubConnectionManager.class);
 
     public static final int ACK_DEADLINE_SECONDS = 60;
-    public static final long SUB_EXPIRATION_DAYS = 10L;
 
     private final boolean useEmulator;
 

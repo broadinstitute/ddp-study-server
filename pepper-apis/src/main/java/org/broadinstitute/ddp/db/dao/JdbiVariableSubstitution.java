@@ -50,7 +50,7 @@ public interface JdbiVariableSubstitution extends SqlObject {
                     @Bind("text") String text);
 
     @SqlUpdate("UPDATE i18n_template_substitution AS i18n "
-                + "INNER JOIN language_code AS lc ON lc.iso_language_code = :languageCode"
+                + "INNER JOIN language_code AS lc ON lc.iso_language_code = :languageCode "
                 + "SET i18n.language_code_id = lc.language_code_id, "
                 + "substitution_value = :text, "
                 + "revision_id = :revisionId "
@@ -61,7 +61,7 @@ public interface JdbiVariableSubstitution extends SqlObject {
                     @Bind("text") String text);
 
     @SqlQuery("SELECT sub.i18n_template_substitution_id AS id, "
-                + "     lc.iso_language_code, "
+                + "     lc.iso_language_code AS languageCode, "
                 + "     sub.substitution_value AS text, "
                 + "     sub.revision_id AS revision_id "
                 + "FROM i18n_template_substitution AS sub "

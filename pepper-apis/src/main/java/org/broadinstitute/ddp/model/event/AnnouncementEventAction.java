@@ -28,6 +28,10 @@ public class AnnouncementEventAction extends EventAction {
         createForProxies = dto.shouldCreateAnnouncementForProxies();
     }
 
+    public long getMessageTemplateId() {
+        return messageTemplateId;
+    }
+
     @Override
     public void doAction(PexInterpreter pexInterpreter, Handle handle, EventSignal eventSignal) {
         UserAnnouncementDao announcementDao = handle.attach(UserAnnouncementDao.class);

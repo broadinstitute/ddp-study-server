@@ -1,30 +1,28 @@
 package org.broadinstitute.ddp.model.activity.definition.i18n;
 
 import java.util.Optional;
-
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
 import com.google.gson.annotations.SerializedName;
-
 import org.broadinstitute.ddp.util.MiscUtil;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
 public class Translation {
 
-    private transient Long id;
-    private transient Long revisionId;
+    protected transient Long id;
+    protected transient Long revisionId;
 
     @NotBlank
     @SerializedName("language")
-    private String languageCode;
+    protected String languageCode;
 
     @NotNull
     @SerializedName("text")
-    private String text;
+    protected String text;
 
     @JdbiConstructor
-    public Translation(long id, String languageCode, String text, long revisionId) {
+    public Translation(long id, String languageCode, String text, Long revisionId) {
         this.id = id;
         this.revisionId = revisionId;
         this.text = text;

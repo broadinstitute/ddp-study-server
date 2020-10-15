@@ -203,7 +203,7 @@ public class ActivityResponseCollectorTest {
 
     private FormResponse newTestInstance() {
         FormResponse instance = new FormResponse(1L, "guid", 1L, false, Instant.now().toEpochMilli(), null, 1L, "a", "v1",
-                new ActivityInstanceStatusDto(1L, 1L, 1L, 1L, Instant.now().toEpochMilli(), InstanceStatusType.IN_PROGRESS));
+                new ActivityInstanceStatusDto(1L, 1L, 1L, Instant.now().toEpochMilli(), InstanceStatusType.IN_PROGRESS));
         instance.putAnswer(new TextAnswer(3L, "COND_TEXT", "guid", "conditional foobar"));
         instance.putAnswer(new TextAnswer(1L, "COND_TEXT2", "guid", "conditional2 foobar"));
         instance.putAnswer(new TextAnswer(3L, "GROUP_TEXT", "guid", "group foobar"));
@@ -233,7 +233,7 @@ public class ActivityResponseCollectorTest {
                 new BoolAnswer(3L, "child2", "guid2", true));
 
         FormResponse instance = new FormResponse(1L, "guid", 1L, false, Instant.now().toEpochMilli(), null, 1L, "act", "v1",
-                new ActivityInstanceStatusDto(1L, 1L, 1L, 1L, Instant.now().toEpochMilli(), InstanceStatusType.IN_PROGRESS));
+                new ActivityInstanceStatusDto(1L, 1L, 1L, Instant.now().toEpochMilli(), InstanceStatusType.IN_PROGRESS));
         instance.putAnswer(answer);
 
         return instance;

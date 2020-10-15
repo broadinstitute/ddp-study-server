@@ -70,7 +70,7 @@ public class EventService {
                         cancelExpr, eventConfig.getEventConfigurationId());
                 try {
                     boolean shouldCancel = pexInterpreter.eval(cancelExpr, handle, eventSignal.getParticipantGuid(),
-                            null);
+                            null, null, eventSignal);
                     if (shouldCancel) {
                         LOG.info("Cancel expression `{}` evaluated to TRUE, skipping the configuration", cancelExpr);
                         return;
@@ -89,7 +89,7 @@ public class EventService {
             );
             try {
                 if (precondExpr != null && !pexInterpreter.eval(precondExpr, handle,
-                        eventSignal.getParticipantGuid(), null)) {
+                        eventSignal.getParticipantGuid(), null, null, eventSignal)) {
                     LOG.info("Precondition expression {} evaluated to FALSE, skipping the configuration", precondExpr);
                     return;
                 }

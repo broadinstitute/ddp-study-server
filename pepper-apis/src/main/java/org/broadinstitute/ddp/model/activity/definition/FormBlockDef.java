@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.model.activity.definition;
 
 import java.lang.reflect.Type;
+import java.util.stream.Stream;
 import javax.validation.constraints.NotNull;
 
 import com.google.gson.JsonDeserializationContext;
@@ -8,6 +9,7 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.google.gson.annotations.SerializedName;
+import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
 
 public abstract class FormBlockDef {
@@ -64,6 +66,8 @@ public abstract class FormBlockDef {
     public void setShownExprId(Long shownExprId) {
         this.shownExprId = shownExprId;
     }
+
+    public abstract Stream<QuestionDef> getQuestions();
 
     public static class Deserializer implements JsonDeserializer<FormBlockDef> {
         @Override

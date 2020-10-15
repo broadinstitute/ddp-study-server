@@ -53,6 +53,10 @@ public class FormSectionDef {
         return nameTemplate;
     }
 
+    public void setNameTemplate(Template nameTemplate) {
+        this.nameTemplate = nameTemplate;
+    }
+
     public List<SectionIcon> getIcons() {
         return icons;
     }

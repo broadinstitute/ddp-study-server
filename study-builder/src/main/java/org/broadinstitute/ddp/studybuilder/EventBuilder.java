@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 import com.typesafe.config.Config;
 import org.broadinstitute.ddp.db.dao.EventActionDao;
 import org.broadinstitute.ddp.db.dao.EventTriggerDao;
+import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiEventConfiguration;
 import org.broadinstitute.ddp.db.dao.JdbiExpression;
 import org.broadinstitute.ddp.db.dao.JdbiRevision;
@@ -31,6 +32,10 @@ import org.broadinstitute.ddp.model.copy.CopyConfiguration;
 import org.broadinstitute.ddp.model.copy.CopyConfigurationPair;
 import org.broadinstitute.ddp.model.copy.CopyLocation;
 import org.broadinstitute.ddp.model.copy.CopyLocationType;
+import org.broadinstitute.ddp.model.event.ActivityStatusChangeTrigger;
+import org.broadinstitute.ddp.model.event.DsmNotificationTrigger;
+import org.broadinstitute.ddp.model.event.EventTrigger;
+import org.broadinstitute.ddp.model.event.WorkflowStateTrigger;
 import org.broadinstitute.ddp.model.pdf.PdfConfigInfo;
 import org.broadinstitute.ddp.model.workflow.ActivityState;
 import org.broadinstitute.ddp.model.workflow.StateType;
@@ -64,6 +69,9 @@ public class EventBuilder {
     }
 
     private void insertEvents(Handle handle) {
+        if (!cfg.hasPath("events")) {
+            return;
+        }
         for (Config eventCfg : cfg.getConfigList("events")) {
             insertEvent(handle, eventCfg);
         }
@@ -99,7 +107,8 @@ public class EventBuilder {
             return triggerDao.insertStatusTrigger(activityId, statusType);
         } else if (type == EventTriggerType.DSM_NOTIFICATION) {
             String dsmEvent = triggerCfg.getString("dsmEvent");
-            return triggerDao.insertDsmNotificationTrigger(DsmNotificationEventType.valueOf(dsmEvent));
+            var dsmEventType = DsmNotificationEventType.valueOf(dsmEvent);
+            return triggerDao.insertDsmNotificationTrigger(dsmEventType);
         } else if (type == EventTriggerType.WORKFLOW_STATE) {
             if (triggerCfg.hasPath(ACTIVITY_CODE_FIELD)) {
                 String activityCode = triggerCfg.getString(ACTIVITY_CODE_FIELD);
@@ -252,7 +261,7 @@ public class EventBuilder {
         }
     }
 
-    private String triggerAsStr(Config triggerCfg) {
+    public static String triggerAsStr(Config triggerCfg) {
         String type = triggerCfg.getString("type");
         if (EventTriggerType.ACTIVITY_STATUS.name().equals(type)) {
             String activityCode = triggerCfg.getString(ACTIVITY_CODE_FIELD);
@@ -269,6 +278,28 @@ public class EventBuilder {
                 detail = triggerCfg.getString(WORKFLOW_STATE_FIELD);
             }
             return String.format("%s/%s", type, detail);
+        } else {
+            return type;
+        }
+    }
+
+    public static String triggerAsStr(Handle handle, EventTrigger trigger) {
+        String type = trigger.getEventConfigurationDto().getEventTriggerType().name();
+        if (trigger instanceof ActivityStatusChangeTrigger) {
+            ActivityStatusChangeTrigger trig = (ActivityStatusChangeTrigger) trigger;
+            String activityCode = handle.attach(JdbiActivity.class)
+                    .queryActivityById(trig.getStudyActivityId())
+                    .getActivityCode();
+            String statusType = trig.getInstanceStatusType().name();
+            return String.format("%s/%s/%s", type, activityCode, statusType);
+        } else if (trigger instanceof DsmNotificationTrigger) {
+            DsmNotificationTrigger trig = (DsmNotificationTrigger) trigger;
+            String dsmEvent = trig.getDsmEventType().name();
+            return String.format("%s/%s", type, dsmEvent);
+        } else if (trigger instanceof WorkflowStateTrigger) {
+            // FIXME: workflow_state trigger is an old feature that's not really used anymore. Fix this later.
+            WorkflowStateTrigger trig = (WorkflowStateTrigger) trigger;
+            return String.format("%s/%s", type, "");
         } else {
             return type;
         }

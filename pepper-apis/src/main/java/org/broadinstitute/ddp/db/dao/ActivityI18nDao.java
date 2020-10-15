@@ -1,9 +1,11 @@
 package org.broadinstitute.ddp.db.dao;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
 import org.broadinstitute.ddp.db.DBUtils;
+import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.model.activity.definition.i18n.ActivityI18nDetail;
 import org.broadinstitute.ddp.model.activity.definition.i18n.SummaryTranslation;
 import org.jdbi.v3.sqlobject.CreateSqlObject;
@@ -35,6 +37,25 @@ public interface ActivityI18nDao extends SqlObject {
     }
 
     //
+    // updates
+    //
+
+    default void updateDetails(List<ActivityI18nDetail> details) {
+        int[] updatedCounts = getActivityI18nSql().bulkUpdateDetails(details);
+        DBUtils.checkUpdate(details.size(), Arrays.stream(updatedCounts).sum());
+    }
+
+    default void updateSummaries(List<SummaryTranslation> summaries) {
+        for (var summary : summaries) {
+            if (summary.getId().isEmpty()) {
+                throw new DaoException("Updating activity summary requires setting the id");
+            }
+        }
+        int[] updatedCounts = getActivityI18nSql().bulkUpdateSummaries(summaries);
+        DBUtils.checkUpdate(summaries.size(), Arrays.stream(updatedCounts).sum());
+    }
+
+    //
     // queries
     //
 
@@ -47,4 +68,9 @@ public interface ActivityI18nDao extends SqlObject {
     @SqlQuery("findDetailsByActivityId")
     @RegisterConstructorMapper(ActivityI18nDetail.class)
     List<ActivityI18nDetail> findDetailsByActivityId(@Bind("activityId") long activityId);
+
+    @UseStringTemplateSqlLocator
+    @SqlQuery("findSummariesByActivityId")
+    @RegisterConstructorMapper(SummaryTranslation.class)
+    List<SummaryTranslation> findSummariesByActivityId(@Bind("activityId") long activityId);
 }

@@ -38,6 +38,7 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Options;
 import org.apache.commons.io.IOUtils;
+import org.broadinstitute.ddp.cache.CacheService;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.SqlConstants;
@@ -301,6 +302,7 @@ public class TestDataSetupUtil {
     }
 
     public static GeneratedTestData generateBasicUserTestData(Handle handle, boolean forceUserCreation) {
+        CacheService.getInstance().resetAllCaches();
         String sendgridApiKey = cfg.getString(ConfigFile.SENDGRID_API_KEY);
         String backendTestAuth0ClientId = auth0Config.getString(ConfigFile.BACKEND_AUTH0_TEST_CLIENT_ID);
         String backendTestSecret = auth0Config.getString(ConfigFile.BACKEND_AUTH0_TEST_SECRET);
@@ -613,6 +615,9 @@ public class TestDataSetupUtil {
                 .setPreferredLangId(LanguageStore
                         .get(TestConstants.TEST_USER_PROFILE_PREFERRED_LANGUAGE)
                         .getId())
+                .setSkipLanguagePopup(random
+                        ? rand.nextBoolean()
+                        : TestConstants.TEST_USER_PROFILE_SKIP_LANGUAGE_POPUP)
                 .build();
         handle.attach(UserProfileDao.class).createProfile(profile);
         return profile;
@@ -900,13 +905,13 @@ public class TestDataSetupUtil {
 
         CustomTemplate customTemplate = new CustomTemplate(fileContents);
         customTemplate.addSubstitution(new BooleanAnswerSubstitution(fieldValues.get(0),
-                consentActivityId, generatedTestData.getBloodQuestionStableId(), false));
+                consentActivityId, generatedTestData.getBloodQuestionStableId(), false, null));
         customTemplate.addSubstitution(new BooleanAnswerSubstitution(fieldValues.get(1),
-                consentActivityId, generatedTestData.getBloodQuestionStableId(), true));
+                consentActivityId, generatedTestData.getBloodQuestionStableId(), true, null));
         customTemplate.addSubstitution(new BooleanAnswerSubstitution(fieldValues.get(2),
-                consentActivityId, generatedTestData.getTissueQuestionStableId(), false));
+                consentActivityId, generatedTestData.getTissueQuestionStableId(), false, null));
         customTemplate.addSubstitution(new BooleanAnswerSubstitution(fieldValues.get(3),
-                consentActivityId, generatedTestData.getTissueQuestionStableId(), true));
+                consentActivityId, generatedTestData.getTissueQuestionStableId(), true, null));
         customTemplate.addSubstitution(new AnswerSubstitution(fieldValues.get(4),
                 consentActivityId, QuestionType.TEXT, generatedTestData.getSignatureQuestionStableId()));
         customTemplate.addSubstitution(new AnswerSubstitution(fieldValues.get(5),

@@ -4,14 +4,19 @@ service: pepper-backend
 runtime: java11
 instance_class: B8
 {{if eq $environment "prod"}}
-basic_scaling:
-  max_instances: 6
-  idle_timeout: 45m
+manual_scaling:
+  instances: 3
+{{else if eq $environment "staging"}}
+manual_scaling:
+  instances: 1
 {{else}}
 basic_scaling:
   max_instances: 4
   idle_timeout: 20m
 {{end}}
+
+vpc_access_connector:
+  name: "projects/broad-ddp-{{$environment}}/locations/us-central1/connectors/appengine-default-connect"
 
 network:
   instance_tag: study-server # necessary for firewall rules so that DSM will accept https requests from pepper

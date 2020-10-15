@@ -87,7 +87,7 @@ public class NotificationTemplateVariables {
     public static final String SALUTATION = "salutation";
     public static final String PROXY_FIRST_NAME = "proxy_firstName";
     public static final String PROXY_LAST_NAME = "proxy_lastName";
-    public static final String ACTIVITY_INSTANCE_GUID = "activityInstance_guid";
+    public static final String ACTIVITY_INSTANCE_GUID = "activityInstanceGuid";
     public static final String PARTICIPANT_FROM_EMAIL = "participant_fromEmail";
     public static final String BASE_WEB_URL = "baseWebUrl";
     public static final String LINK = "link";

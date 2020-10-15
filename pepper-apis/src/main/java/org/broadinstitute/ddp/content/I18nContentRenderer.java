@@ -20,6 +20,7 @@ import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.db.dao.TemplateDao;
+import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.model.user.UserProfile;
 import org.jdbi.v3.core.Handle;
@@ -49,11 +50,25 @@ public class I18nContentRenderer {
     }
 
     public static RenderValueProvider newValueProvider(Handle handle, long participantUserId, Map<String, String> snapshot) {
+        var builder = newValueProviderBuilder(handle, participantUserId);
+
+        // If there are saved snapshot substitution values, override with those so final rendered
+        // content will be consistent with what user last saw when snapshot was taken.
+        builder.withSnapshot(snapshot);
+
+        return builder.build();
+    }
+
+    public static RenderValueProvider.Builder newValueProviderBuilder(Handle handle, long participantUserId) {
         var builder = new RenderValueProvider.Builder();
+
+        handle.attach(UserDao.class).findUserById(participantUserId)
+                .ifPresent(user -> builder.setParticipantGuid(user.getGuid()));
 
         UserProfile profile = handle.attach(UserProfileDao.class)
                 .findProfileByUserId(participantUserId)
                 .orElse(null);
+        ZoneId zone = ZoneOffset.UTC;
         if (profile != null) {
             if (profile.getFirstName() != null) {
                 builder.setParticipantFirstName(profile.getFirstName());
@@ -61,18 +76,18 @@ public class I18nContentRenderer {
             if (profile.getLastName() != null) {
                 builder.setParticipantLastName(profile.getLastName());
             }
+            if (profile.getBirthDate() != null) {
+                builder.setParticipantBirthDate(profile.getBirthDate());
+            }
+            if (profile.getTimeZone() != null) {
+                zone = profile.getTimeZone();
+            }
         }
 
-        ZoneId zone = Optional.ofNullable(profile)
-                .map(UserProfile::getTimeZone)
-                .orElse(ZoneOffset.UTC);
+        builder.setParticipantTimeZone(zone);
         builder.setDate(LocalDate.now(zone));
 
-        // If there are saved snapshot substitution values, override with those so final rendered
-        // content will be consistent with what user last saw when snapshot was taken.
-        builder.withSnapshot(snapshot);
-
-        return builder.build();
+        return builder;
     }
 
     public I18nContentRenderer() {
