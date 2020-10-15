@@ -16,9 +16,20 @@
             <onMismatch>DENY</onMismatch>
         </filter>
     </appender>
-    <logger name="org.redisson" level="DEBUG">
+    <appender name="REDISCONNVALIDATOR" class="org.broadinstitute.ddp.log.RedisConnectionValidatorAppender">
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>ERROR</level>
+            <OnMismatch>DENY</OnMismatch>
+            <OnMatch>ALLOW</OnMatch>
+        </filter>
+    </appender>
+
+    <logger name="org.redisson" level="info">
         <appender-ref ref="STDOUT" />
+        <appender-ref ref="SLACK" />
+        <appender-ref ref="REDISCONNVALIDATOR" />
     </logger>
+
     <root level="info">
         <appender-ref ref="STDOUT" />
         <appender-ref ref="SLACK" />

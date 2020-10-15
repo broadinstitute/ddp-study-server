@@ -7,6 +7,7 @@ import org.broadinstitute.ddp.cache.CacheService;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.CompositeAnswer;
+import org.broadinstitute.ddp.util.RedisConnectionValidator;
 import org.jdbi.v3.core.Handle;
 import org.redisson.api.RLocalCachedMap;
 import org.redisson.client.RedisException;
@@ -104,6 +105,7 @@ public class AnswerCachedDao extends SQLObjectWrapper<AnswerDao> implements Answ
             } catch (RedisException e) {
                 LOG.warn("Failed to retrieve value from Redis cache: " + idToAnswerCache.getName() + " key lookedup:"
                         + answerId + "Will try to retrieve from database", e);
+                RedisConnectionValidator.doTest();
             }
             Optional<Answer> optAnswer;
             if (answer == null) {
@@ -134,9 +136,23 @@ public class AnswerCachedDao extends SQLObjectWrapper<AnswerDao> implements Answ
             return delegate.findAnswerByInstanceGuidAndQuestionStableId(instanceGuid, questionStableId);
         } else {
             Answer answer = null;
-            Long answerId = activityInstanceGuidAndQuestionKeyToAnswerIdCache.get(buildKey(instanceGuid, questionStableId));
+            Long answerId = null;
+            String key = buildKey(instanceGuid, questionStableId);
+            try {
+                answerId = activityInstanceGuidAndQuestionKeyToAnswerIdCache.get(key);
+            } catch (RedisException e) {
+                LOG.warn("Failed to retrieve value from Redis cache: " + activityInstanceGuidAndQuestionKeyToAnswerIdCache.getName()
+                        + " key lookedup:" + key + "Will try to retrieve from database", e);
+                RedisConnectionValidator.doTest();
+            }
             if (answerId != null) {
-                answer = idToAnswerCache.get(answerId);
+                try {
+                    answer = idToAnswerCache.get(answerId);
+                } catch (RedisException e) {
+                    LOG.warn("Failed to retrieve value from Redis cache: " + idToAnswerCache.getName()
+                            + " key lookedup:" + answerId + "Will try to retrieve from database", e);
+                    RedisConnectionValidator.doTest();
+                }
             }
             if (answer == null) {
                 Optional<Answer> answerOpt = delegate.findAnswerByInstanceGuidAndQuestionStableId(instanceGuid, questionStableId);
@@ -159,6 +175,7 @@ public class AnswerCachedDao extends SQLObjectWrapper<AnswerDao> implements Answ
                 idToAnswerCache.putAsync(answer.getAnswerId(), answer);
             } catch (RedisException e) {
                 LOG.warn("Failed to save to Redis cache: " + idToAnswerCache.getName() + " with key:" + answer.getAnswerId(), e);
+                RedisConnectionValidator.doTest();
             }
 
             String key = buildKey(answer);
@@ -167,6 +184,7 @@ public class AnswerCachedDao extends SQLObjectWrapper<AnswerDao> implements Answ
                     activityInstanceGuidAndQuestionKeyToAnswerIdCache.putAsync(key, answer.getAnswerId());
                 } catch (RedisException e) {
                     LOG.warn("Failed to save to Redis cache: " + idToAnswerCache.getName() + " with key:" + key, e);
+                    RedisConnectionValidator.doTest();
                 }
             }
         }

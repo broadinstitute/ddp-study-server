@@ -105,11 +105,15 @@ public class ActivityBuilder {
     }
 
     private void insertActivities(Handle handle) {
-        if (!cfg.hasPath("activities")) {
+        Instant timestamp = ConfigUtil.getInstantIfPresent(cfg, "activityTimestamp");
+        insertActivities(handle, cfg, timestamp);
+    }
+
+    public void insertActivities(Handle handle, Config activitiesCfg, Instant timestamp) {
+        if (!activitiesCfg.hasPath("activities")) {
             return;
         }
-        Instant timestamp = ConfigUtil.getInstantIfPresent(cfg, "activityTimestamp");
-        for (Config activityCfg : cfg.getConfigList("activities")) {
+        for (Config activityCfg : activitiesCfg.getConfigList("activities")) {
             Config definitionCfg = readDefinitionConfig(activityCfg.getString("filepath"));
             ActivityDef def = gson.fromJson(ConfigUtil.toJson(definitionCfg), ActivityDef.class);
             validateDefinition(def);

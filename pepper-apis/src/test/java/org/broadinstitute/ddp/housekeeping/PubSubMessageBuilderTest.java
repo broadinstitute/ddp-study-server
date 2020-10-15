@@ -164,7 +164,9 @@ public class PubSubMessageBuilderTest extends TxnAwareBaseTest {
     public void testCreateMessage_deleteUnsendableEmail() {
         TransactionWrapper.useTxn(handle -> {
             boolean shouldDeleteUnsendableEmails = true;
-            handle.attach(StudyDao.class).addSettings(testData.getStudyId(), null, null, false, null, shouldDeleteUnsendableEmails);
+            boolean shouldDisplayLanguageChangePopup = false;
+            handle.attach(StudyDao.class).addSettings(testData.getStudyId(), null, null, false, null,
+                    shouldDeleteUnsendableEmails, shouldDisplayLanguageChangePopup);
 
             User user = handle.attach(UserDao.class).createUser(testData.getClientId(), null);
             QueuedEventDto event = new QueuedNotificationDto(

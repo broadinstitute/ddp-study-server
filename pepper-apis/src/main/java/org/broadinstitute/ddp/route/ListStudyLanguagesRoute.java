@@ -4,7 +4,7 @@ import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
-import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
+import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudyCached;
 import org.broadinstitute.ddp.db.dao.StudyLanguageCachedDao;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.json.errors.ApiError;
@@ -17,6 +17,7 @@ import spark.Route;
 
 public class ListStudyLanguagesRoute implements Route {
     private static final Logger LOG = LoggerFactory.getLogger(ListStudyLanguagesRoute.class);
+    private static final int MAX_AGE_SECS = 12 * 60 * 60;
 
     @Override public Object handle(Request request, Response response) throws Exception {
         String studyGuid = request.params(RouteConstants.PathParam.STUDY_GUID);
@@ -24,7 +25,7 @@ public class ListStudyLanguagesRoute implements Route {
 
         var result = TransactionWrapper.withTxn(handle -> {
             //Get the umbrella study id
-            StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
+            StudyDto studyDto = new JdbiUmbrellaStudyCached(handle).findByStudyGuid(studyGuid);
             if (studyDto == null) {
                 String msg = "Could not find study with guid " + studyGuid;
                 LOG.warn(msg);
@@ -35,7 +36,7 @@ public class ListStudyLanguagesRoute implements Route {
             var studyLanguageDao = new StudyLanguageCachedDao(handle);
             return studyLanguageDao.findLanguages(umbrellaStudyId);
         });
-
+        response.header("Cache-Control", "max-age=" + MAX_AGE_SECS);
         response.status(HttpStatus.SC_OK);
         return result;
     }

@@ -35,7 +35,7 @@ public class BackfillStudySettingsAnalytics implements CustomTask {
         long studyId = dto.getId();
 
         //insert into study_settings
-        studyDao.addSettings(studyId, null, null, true, analyticsToken, false);
+        studyDao.addSettings(studyId, null, null, true, analyticsToken, false, false);
 
         Optional<StudySettings> studySettingsOpt = studyDao.findSettings(studyId);
         StudySettings studySettings = studySettingsOpt.get();

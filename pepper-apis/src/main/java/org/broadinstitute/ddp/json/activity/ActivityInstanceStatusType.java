@@ -1,8 +1,10 @@
 package org.broadinstitute.ddp.json.activity;
 
+import java.io.Serializable;
+
 import com.google.gson.annotations.SerializedName;
 
-public class ActivityInstanceStatusType {
+public class ActivityInstanceStatusType implements Serializable {
     @SerializedName("code")
     private String activityInstanceStatusTypeCode;
     @SerializedName("name")
