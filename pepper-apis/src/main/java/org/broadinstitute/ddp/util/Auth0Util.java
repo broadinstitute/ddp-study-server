@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.util;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -36,6 +37,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.client.fluent.Request;
 import org.apache.http.client.fluent.Response;
+import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.ContentType;
 import org.apache.http.util.EntityUtils;
 import org.broadinstitute.ddp.client.Auth0ManagementClient;
@@ -45,6 +47,7 @@ import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dto.Auth0TenantDto;
 import org.broadinstitute.ddp.db.dto.EnrollmentStatusDto;
 import org.broadinstitute.ddp.db.dto.UserDto;
+import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.json.auth0.Auth0CallResponse;
 import org.broadinstitute.ddp.security.JWTConverter;
 import org.jdbi.v3.core.Handle;
@@ -462,6 +465,36 @@ public class Auth0Util {
         com.auth0.net.Request<PasswordChangeTicket> request = mgmt.tickets().requestPasswordChange(ticket);
         LOG.info("Creating password reset for {}", userEmail);
         return request.execute().getTicket();
+    }
+
+    private String addParamToUrlString(String urlString, String paramName, String paramVal) {
+        try {
+            URIBuilder builder = new URIBuilder(urlString);
+            builder.addParameter(paramName, paramVal);
+            return builder.build().toString();
+        } catch (URISyntaxException e) {
+            throw new DDPException("Problem processing URI for resetlink: " + urlString, e);
+        }
+    }
+
+    /**
+     * Will generate a URL that will direct to Auth0 and allow them to change password
+     *
+     * @param userEmail    the email for the user
+     * @param connectionId the Auth0 connection id {@link #generatePasswordResetLink}
+     * @param mgmtApiToken Auth0 token with Management API grant
+     * @param redirectUrl  Auth0 will redirect to this URL after user has reset the password
+     * @return a String containing the Auth0 reset password URL
+     * @throws Auth0Exception if there is a problem
+     */
+    public String generatePasswordResetLink(String userEmail, String connectionId, String mgmtApiToken, String redirectUrl,
+                                            Map<String, String> additionalUrlParams)
+            throws Auth0Exception {
+       String resetUrl = generatePasswordResetLink(userEmail, connectionId, mgmtApiToken, redirectUrl);
+        for (Map.Entry<String, String> keyValue : additionalUrlParams.entrySet()) {
+            resetUrl = addParamToUrlString(resetUrl, keyValue.getKey(), keyValue.getValue());
+        }
+        return resetUrl;
     }
 
     /**

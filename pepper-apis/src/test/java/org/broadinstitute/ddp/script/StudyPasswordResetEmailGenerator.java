@@ -3,10 +3,7 @@ package org.broadinstitute.ddp.script;
 import static java.util.stream.Collectors.toList;
 
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import com.auth0.exception.Auth0Exception;
 import com.auth0.json.mgmt.users.User;
@@ -133,16 +130,16 @@ public class StudyPasswordResetEmailGenerator {
                     continue;
                 }
 
-                String originalAuth0ResetLink;
+                String resetLinkWithStudyParam;
+                Map<String, String> params = new HashMap<>();
+                params.put("study", studyGuid);
                 try {
-                    originalAuth0ResetLink = auth0Util.generatePasswordResetLink(userEmail, auth0UserNamePasswordConnectionId,
-                            mgmtClient.getToken(), redirectUrlAfterPasswordReset);
+                    resetLinkWithStudyParam = auth0Util.generatePasswordResetLink(userEmail, auth0UserNamePasswordConnectionId,
+                            mgmtClient.getToken(), redirectUrlAfterPasswordReset, params);
                 } catch (Auth0Exception e) {
                     LOG.error("Could not generate password reset link for email: " + userEmail + " and user id: " + profile.getUserId());
                     continue;
                 }
-
-                String resetLinkWithStudyParam = addParamToUrlString(originalAuth0ResetLink, "study", studyGuid);
 
                 Map<String, String> templateSubstitutions = new DdpParticipantSendGridEmailPersonalization()
                         .setLinkValue(resetLinkWithStudyParam)
@@ -258,13 +255,5 @@ public class StudyPasswordResetEmailGenerator {
         return sendgridApiKey;
     }
 
-    private String addParamToUrlString(String urlString, String paramName, String paramVal) {
-        try {
-            URIBuilder builder = new URIBuilder(urlString);
-            builder.addParameter(paramName, paramVal);
-            return builder.build().toString();
-        } catch (URISyntaxException e) {
-            throw new DDPException("Problem processing URI for resetlink: " + urlString, e);
-        }
-    }
+
 }
