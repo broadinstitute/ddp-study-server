@@ -138,8 +138,6 @@ public class BrainConsentVersion2 implements CustomTask {
         JdbiRevision jdbiRevision = handle.attach(JdbiRevision.class);
 
         //change version
-        ActivityVersionDto activityVersionDto = activityDao.changeVersion(activityId, versionTag, meta);
-
         JdbiQuestion jdbiQuestion = handle.attach(JdbiQuestion.class);
         QuestionDto fullNameDto = jdbiQuestion.findLatestDtoByStudyIdAndQuestionStableId(studyId, "CONSENT_FULLNAME").get();
         TextQuestionDto fullNameTextDto = handle.attach(JdbiTextQuestion.class).findDtoByQuestionId(fullNameDto.getId()).get();
