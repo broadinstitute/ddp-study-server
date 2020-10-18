@@ -125,8 +125,10 @@ public class BrainConsentVersion2 implements CustomTask {
 
         //remove consent icons
         List<Long> iconIds = helper.findSectionIconIdByActivity(activityId);
-        helper.deleteActivityIcons(Set.copyOf(iconIds));
-        LOG.info("deleted form section icons for consent");
+        if (!iconIds.isEmpty()) {
+            helper.deleteActivityIcons(Set.copyOf(iconIds));
+            LOG.info("deleted form section icons for consent");
+        }
 
         //consent ver: 2 stuff
         String reason = String.format(
