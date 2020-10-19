@@ -327,10 +327,21 @@ public class Auth0Util {
      * Returns all users that have the given email address and associated with passed connection
      */
     public List<User> getAuth0UsersByEmail(String emailAddress, String mgmtApiToken, String connection) throws Auth0Exception {
+        List<User> results = new ArrayList<>();
         ManagementAPI auth0Mgmt = new ManagementAPI(baseUrl, mgmtApiToken);
-        String query = "email:" + emailAddress + " AND identities.connection:" + connection;
-        UserFilter userFilter = new UserFilter().withQuery(query);
-        return auth0Mgmt.users().list(userFilter).execute().getItems();
+        String query = "email:\"" + emailAddress + "\" AND identities.connection:\"" + connection +"\"";
+        UserFilter filter = new UserFilter()
+                .withFields("email,user_id", true)
+                .withPage(0, 100)
+                .withQuery(query)
+                .withSearchEngine("v3");
+        try {
+            UsersPage page = auth0Mgmt.users().list(filter).execute();
+            results.addAll(page.getItems());
+        } catch (Auth0Exception e) {
+            LOG.error("Error while retrieving auth0 user emails, continuing pagination", e);
+        }
+        return results;
     }
 
     public Map<String, String> getAuth0UsersByEmails(Set<String> emailIds, String mgmtApiToken) {
