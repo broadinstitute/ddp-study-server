@@ -123,6 +123,13 @@ public class BrainConsentVersion2 implements CustomTask {
         long tmplId = helper.findTemplateIdByTemplateText("$brain_consent_s3_election_agree");
         helper.updateGroupHeaderStyleHintByTemplateId(tmplId, ListStyleHint.NONE.name());
 
+        //update consent subtitle
+        String newSubtitle = "<p class=\"no-margin sticky__text\"><span>"
+                + " If you have questions about the study or the consent form at any time, please contact us at </span> "
+                + "        <a href=\"tel:651-229-3480\" class=\"Link\">651-229-3480</a> or "
+                + "        <a href=\"mailto:info@braincancerproject.org\" class=\"Link\">info@braincancerproject.org</a>.</p>";
+        helper.update18nActivitySubtitle(activityDto.getActivityId(), newSubtitle);
+
         //remove consent icons
         List<Long> iconIds = helper.findSectionIconIdByActivity(activityId);
         if (!iconIds.isEmpty()) {
@@ -233,6 +240,9 @@ public class BrainConsentVersion2 implements CustomTask {
 
         @SqlUpdate("update form_section__block set display_order = :displayOrder where form_section__block_id = :formSectionBlockId")
         int updateFormSectionBlockDisplayOrder(@Bind("formSectionBlockId") long formSectionBlockId, @Bind("displayOrder") int displayOrder);
+
+        @SqlUpdate("update i18n_study_activity set subtitle = :text where study_activity_id = :studyActivityId")
+        int update18nActivitySubtitle(@Bind("studyActivityId") long studyActivityId, @Bind("text") String text);
 
         @SqlQuery("select fsi.form_section_icon_id from form_section_icon fsi, form_activity__form_section fafs "
                 + " where fafs.form_section_id = fsi.form_section_id "
