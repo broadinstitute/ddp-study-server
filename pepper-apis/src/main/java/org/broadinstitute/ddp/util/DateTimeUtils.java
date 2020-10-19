@@ -2,6 +2,9 @@ package org.broadinstitute.ddp.util;
 
 import java.time.Duration;
 import java.time.Period;
+import java.time.ZoneId;
+
+import org.broadinstitute.ddp.exception.DDPException;
 
 public class DateTimeUtils {
 
@@ -23,5 +26,17 @@ public class DateTimeUtils {
             timeAmount = "PT" + timeAmount.split("T")[1];
         }
         return Duration.parse(timeAmount);
+    }
+
+    public static ZoneId parseUserTimeZone(String givenTimeZone) {
+        if (givenTimeZone != null) {
+            try {
+                return ZoneId.of(givenTimeZone);
+            } catch (Exception e) {
+                throw new DDPException("Provided timezone '" + givenTimeZone + "' is invalid", e);
+            }
+        } else {
+            return null;
+        }
     }
 }

@@ -113,6 +113,7 @@ import org.broadinstitute.ddp.route.GetStudyPasswordPolicyRoute;
 import org.broadinstitute.ddp.route.GetTempMailingAddressRoute;
 import org.broadinstitute.ddp.route.GetUserAnnouncementsRoute;
 import org.broadinstitute.ddp.route.GetWorkflowRoute;
+import org.broadinstitute.ddp.route.GovernedParticipantRegistrationRoute;
 import org.broadinstitute.ddp.route.HealthCheckRoute;
 import org.broadinstitute.ddp.route.InvitationCheckStatusRoute;
 import org.broadinstitute.ddp.route.InvitationVerifyRoute;
@@ -324,6 +325,7 @@ public class DataDonationPlatform {
 
         post(API.REGISTRATION, new UserRegistrationRoute(interpreter), responseSerializer);
         post(API.TEMP_USERS, new CreateTemporaryUserRoute(), responseSerializer);
+        post(API.GOVERNED_REGISTRATION, new GovernedParticipantRegistrationRoute(), responseSerializer);
 
         // Admin APIs
         before(API.ADMIN_BASE + "/*", new StudyAdminAuthFilter());

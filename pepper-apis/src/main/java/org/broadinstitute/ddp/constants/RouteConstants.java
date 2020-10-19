@@ -30,6 +30,7 @@ public class RouteConstants {
 
         public static final String REGISTRATION = BASE + "/register";
         public static final String TEMP_USERS = BASE + "/temporary-users";
+        public static final String GOVERNED_REGISTRATION = BASE + "/register-governed";
         public static final String ACTIVITY_INSTANCE_STATUS_TYPE_LIST = BASE + "/activity-instance-status-types";
 
         public static final String ADMIN_BASE = BASE + "/admin";
