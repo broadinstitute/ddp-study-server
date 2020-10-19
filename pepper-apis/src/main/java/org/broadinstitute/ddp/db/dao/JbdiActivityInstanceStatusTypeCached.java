@@ -6,6 +6,7 @@ import org.broadinstitute.ddp.cache.CacheService;
 import org.broadinstitute.ddp.json.activity.ActivityInstanceStatusType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.route.GetActivityInstanceStatusTypeListRoute;
+import org.broadinstitute.ddp.util.RedisConnectionValidator;
 import org.jdbi.v3.core.Handle;
 import org.redisson.api.RLocalCachedMap;
 import org.redisson.client.RedisException;
@@ -49,6 +50,7 @@ public class JbdiActivityInstanceStatusTypeCached extends SQLObjectWrapper<JdbiA
             } catch (RedisException e) {
                 LOG.warn("Failed to retrieve value from Redis cache: " + languageCodeToActivityInstanceStatusType.getName()
                         + " key lookedup: " + isoLanguageCode + " Will try to retrieve from database", e);
+                RedisConnectionValidator.doTest();
             }
             if (statusTypes == null) {
                 statusTypes = delegate.getActivityInstanceStatusTypes(isoLanguageCode);
