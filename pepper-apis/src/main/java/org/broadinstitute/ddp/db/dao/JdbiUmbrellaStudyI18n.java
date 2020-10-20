@@ -44,6 +44,16 @@ public interface JdbiUmbrellaStudyI18n extends SqlObject {
                 @Bind("name") String name,
                 @Bind("summary") String summary);
 
+    @SqlUpdate("update i18n_umbrella_study"
+            + "    set name = :name, summary = :summary"
+            + "  where umbrella_study_id = :studyId"
+            + "    and language_code_id = (select language_code_id from language_code where iso_language_code = :lang)")
+    int updateByStudyIdAndLanguage(
+            @Bind("studyId") long umbrellaStudyId,
+            @Bind("lang") String isoLanguageCode,
+            @Bind("name") String name,
+            @Bind("summary") String summary);
+
     @SqlUpdate("DELETE FROM i18n_umbrella_study WHERE id = :id")
     int deleteById(@Bind("id") long id);
 

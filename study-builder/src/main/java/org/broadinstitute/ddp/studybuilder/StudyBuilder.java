@@ -8,6 +8,7 @@ import java.util.Set;
 
 import com.typesafe.config.Config;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.JdbiAuth0Tenant;
 import org.broadinstitute.ddp.db.dao.JdbiClient;
@@ -30,6 +31,7 @@ import org.broadinstitute.ddp.db.dao.StudyLanguageDao;
 import org.broadinstitute.ddp.db.dto.Auth0TenantDto;
 import org.broadinstitute.ddp.db.dto.ClientDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
+import org.broadinstitute.ddp.db.dto.StudyI18nDto;
 import org.broadinstitute.ddp.db.dto.UmbrellaDto;
 import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.exception.DDPException;
@@ -96,7 +98,7 @@ public class StudyBuilder {
         UserDto adminDto = getAdminUserOrInsert(handle, webClient.getId());
 
         insertStudyGovernance(handle, studyDto);
-        insertStudyDetails(handle, studyDto.getId());
+        insertOrUpdateStudyDetails(handle, studyDto.getId());
         insertOrUpdateStudyLanguages(handle, studyDto.getId());
         insertSettings(handle, studyDto, adminDto.getUserId());
         insertSendgrid(handle, studyDto.getId());
@@ -398,13 +400,14 @@ public class StudyBuilder {
         }
     }
 
-    private void insertStudyDetails(Handle handle, long studyId) {
+    public void insertOrUpdateStudyDetails(Handle handle, long studyId) {
         if (!cfg.hasPath("studyDetails")) {
             return;
         }
 
         JdbiUmbrellaStudyI18n jdbiStudyI18n = handle.attach(JdbiUmbrellaStudyI18n.class);
         JdbiLanguageCode jdbiLangCode = handle.attach(JdbiLanguageCode.class);
+        List<StudyI18nDto> currentDtos = jdbiStudyI18n.findTranslationsByStudyId(studyId);
 
         for (Config detailCfg : cfg.getConfigList("studyDetails")) {
             String lang = detailCfg.getString("language");
@@ -416,9 +419,21 @@ public class StudyBuilder {
                 throw new DDPException("Could not find language using code: " + lang);
             }
 
-            long detailId = jdbiStudyI18n.insert(studyId, langCodeId, name, summary);
-            LOG.info("Created study details with id={}, language={}, name={}, summary={}",
-                    detailId, lang, name, StringUtils.abbreviate(summary, 50));
+            var latest = new StudyI18nDto(lang, name, summary);
+            var current = currentDtos.stream()
+                    .filter(d -> d.getLanguageCode().equals(lang))
+                    .findFirst().orElse(null);
+
+            if (current == null) {
+                long detailId = jdbiStudyI18n.insert(studyId, langCodeId, name, summary);
+                LOG.info("Created study details with id={}, language={}, name={}, summary={}",
+                        detailId, lang, name, StringUtils.abbreviate(summary, 50));
+            } else if (!current.equals(latest)) {
+                DBUtils.checkUpdate(1, jdbiStudyI18n.updateByStudyIdAndLanguage(studyId, lang, name, summary));
+                LOG.info("Updated study details for language {}", lang);
+            } else {
+                LOG.info("Study details for language {} already up-to-date", lang);
+            }
         }
     }
 

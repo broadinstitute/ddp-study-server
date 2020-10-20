@@ -1,5 +1,7 @@
 package org.broadinstitute.ddp.db.dto;
 
+import java.util.Objects;
+
 public class StudyI18nDto {
     private String languageCode;
     private String name;
@@ -21,5 +23,24 @@ public class StudyI18nDto {
 
     public String getSummary() {
         return this.summary;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        StudyI18nDto that = (StudyI18nDto) o;
+        return languageCode.equals(that.languageCode)
+                && name.equals(that.name)
+                && Objects.equals(summary, that.summary);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(languageCode, name, summary);
     }
 }
