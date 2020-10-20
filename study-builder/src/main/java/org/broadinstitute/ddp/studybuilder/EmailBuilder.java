@@ -10,6 +10,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import com.google.gson.Gson;
@@ -71,8 +72,8 @@ public class EmailBuilder {
                         email.getKey(), email.getTemplateId(), email.getVersionId());
             }
         }
-        Map<String, String> mappings = emails.stream()
-                .collect(Collectors.toMap(EmailInfo::getKey, EmailInfo::getTemplateId));
+        Map<String, String> mappings = new TreeMap<>();
+        emails.forEach(info -> mappings.put(info.getKey(), info.getTemplateId()));
         LOG.info("Created {} email templates:\n{}", emails.size(), prettyGson.toJson(mappings));
     }
 
