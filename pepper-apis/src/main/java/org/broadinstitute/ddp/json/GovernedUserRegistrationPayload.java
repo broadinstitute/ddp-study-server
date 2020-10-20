@@ -1,7 +1,5 @@
 package org.broadinstitute.ddp.json;
 
-import javax.validation.constraints.NotBlank;
-
 import com.google.gson.annotations.SerializedName;
 
 /**
@@ -9,11 +7,6 @@ import com.google.gson.annotations.SerializedName;
  */
 
 public class GovernedUserRegistrationPayload {
-
-    // Required properties
-    @NotBlank
-    @SerializedName("studyGuid")
-    private final String studyGuid;
 
     // Optional properties
     @SerializedName("languageCode")
@@ -28,13 +21,7 @@ public class GovernedUserRegistrationPayload {
     @SerializedName("timeZone")
     private String timeZone;
 
-    public GovernedUserRegistrationPayload(String studyGuid) {
-        this.studyGuid = studyGuid;
-    }
-
-    public String getStudyGuid() {
-        return studyGuid;
-    }
+    public GovernedUserRegistrationPayload() {}
 
     public String getLanguageCode() {
         return languageCode;
