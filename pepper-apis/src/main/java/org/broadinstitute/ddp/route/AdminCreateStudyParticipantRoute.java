@@ -75,7 +75,7 @@ public class AdminCreateStudyParticipantRoute extends ValidatedJsonInputRoute<Cr
                 throw ResponseUtil.haltError(HttpStatus.SC_BAD_REQUEST, new ApiError(ErrorCodes.INVALID_INVITATION, msg));
             } else if (invitation.isAccepted()) {
                 String msg = String.format("Invitation %s has already been accepted", invitationGuid);
-                LOG.error(msg);
+                LOG.info(msg);
                 throw ResponseUtil.haltError(HttpStatus.SC_BAD_REQUEST, new ApiError(ErrorCodes.INVALID_INVITATION, msg));
             } else if (invitation.getUserId() != null) {
                 String msg = String.format("Invitation %s has already been assigned to another user", invitationGuid);

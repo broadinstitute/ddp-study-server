@@ -118,7 +118,7 @@ public class InvitationCheckStatusRoute extends ValidatedJsonInputRoute<Invitati
             LOG.error("Invitation {} is voided", invitationGuid);
             return new ApiError(ErrorCodes.INVALID_INVITATION, getInviteErrorMessage(handle, studyDto.getId(), langCode));
         } else if (invitation.isAccepted()) {
-            LOG.error("Invitation {} has already been accepted", invitationGuid);
+            LOG.info("Invitation {} has already been accepted", invitationGuid);
             return new ApiError(ErrorCodes.INVALID_INVITATION, getInviteErrorMessage(handle, studyDto.getId(), langCode));
         } else {
             LOG.info("Invitation {} is valid", invitationGuid);
