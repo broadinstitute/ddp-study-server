@@ -26,6 +26,10 @@ public interface KitScheduleDao {
     @CreateSqlObject
     KitScheduleSql getKitScheduleSql();
 
+    //
+    // Kit schedule
+    //
+
     default void createSchedule(KitSchedule schedule) {
         DBUtils.checkInsert(1, getKitScheduleSql().insertSchedule(
                 schedule.getConfigId(),
@@ -40,10 +44,13 @@ public interface KitScheduleDao {
     @RegisterConstructorMapper(KitSchedule.class)
     Optional<KitSchedule> findSchedule(@Bind("configId") long kitConfigurationId);
 
+    //
+    // Schedule record
+    //
 
-    default long createScheduleRecord(long userId, long kitConfigurationId, long initialKitRequestId) {
+    default long createScheduleRecord(long userId, long kitConfigurationId) {
         return getKitScheduleSql().insertRecord(
-                userId, kitConfigurationId, false, 0, initialKitRequestId, null, null, null);
+                userId, kitConfigurationId, false, 0, null, null, null);
     }
 
     default void updateRecordOptOut(long recordId, boolean optedOut) {
@@ -70,20 +77,13 @@ public interface KitScheduleDao {
         DBUtils.checkUpdate(1, getKitScheduleSql().incrementRecordNumOccurrences(recordId, Instant.now()));
     }
 
-    @SqlQuery("select rec.*,"
-            + "       (select kit_request_guid from kit_request"
-            + "         where kit_request_id = rec.initial_kit_request_id) as initial_kit_request_guid"
-            + "  from kit_schedule_record as rec"
-            + " where rec.kit_schedule_record_id = :id")
+    @SqlQuery("select * from kit_schedule_record where kit_schedule_record_id = :id")
     @RegisterConstructorMapper(KitScheduleRecord.class)
     Optional<KitScheduleRecord> findRecord(@Bind("id") long recordId);
 
-    @UseStringTemplateSqlLocator
-    @SqlQuery("findAllEligibleRecordsWaitingForKitStatus")
-    @RegisterConstructorMapper(PendingScheduleRecord.class)
-    @RegisterColumnMapperFactory(EnumByOrdinalMapperFactory.class)
-    @FetchSize(KitCheckService.DEFAULT_QUERY_FETCH_SIZE)
-    Stream<PendingScheduleRecord> findAllEligibleRecordsWaitingForKitStatus();
+    @SqlQuery("select * from kit_schedule_record where participant_user_id = :userId and kit_configuration_id = :kitConfigId")
+    @RegisterConstructorMapper(KitScheduleRecord.class)
+    Optional<KitScheduleRecord> findRecord(@Bind("userId") long participantUserId, @Bind("kitConfigId") long kitConfigurationId);
 
     @UseStringTemplateSqlLocator
     @SqlQuery("findPendingScheduleRecords")

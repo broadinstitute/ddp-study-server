@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.route;
 
+import java.time.Instant;
 import java.util.List;
 import javax.validation.ValidationException;
 
@@ -8,10 +9,16 @@ import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
+import org.broadinstitute.ddp.db.dao.KitConfigurationDao;
+import org.broadinstitute.ddp.db.dao.KitScheduleDao;
+import org.broadinstitute.ddp.db.dao.KitTypeDao;
 import org.broadinstitute.ddp.db.dto.StudyDto;
+import org.broadinstitute.ddp.db.dto.kit.KitConfigurationDto;
+import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.json.dsm.DsmNotificationPayload;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.activity.types.DsmNotificationEventType;
+import org.broadinstitute.ddp.model.dsm.KitType;
 import org.broadinstitute.ddp.model.dsm.TestResult;
 import org.broadinstitute.ddp.model.event.DsmNotificationSignal;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
@@ -21,6 +28,7 @@ import org.broadinstitute.ddp.util.JsonValidationError;
 import org.broadinstitute.ddp.util.ResponseUtil;
 import org.broadinstitute.ddp.util.RouteUtil;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
+import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
@@ -79,6 +87,11 @@ public class ReceiveDsmNotificationRoute extends ValidatedJsonInputRoute<DsmNoti
                 testResult = parseTestResult(response, payload);
             }
 
+            if (eventType == DsmNotificationEventType.TESTBOSTON_SENT) {
+                KitType kitType = handle.attach(KitTypeDao.class).getTestBostonKitType();
+                recordInitialKitSentTime(handle, studyDto, user, kitType, Instant.now());
+            }
+
             LOG.info("Running events for userGuid={} and DSM notification eventType={}", userGuid, eventType);
             var signal = new DsmNotificationSignal(
                     user.getId(),
@@ -123,5 +136,26 @@ public class ReceiveDsmNotificationRoute extends ValidatedJsonInputRoute<DsmNoti
         }
 
         return testResult;
+    }
+
+    private void recordInitialKitSentTime(Handle handle, StudyDto studyDto, User user, KitType kitType, Instant timestamp) {
+        long kitConfigId = handle.attach(KitConfigurationDao.class)
+                .getKitConfigurationDtosByStudyId(studyDto.getId())
+                .stream()
+                .filter(kit -> kit.getKitTypeId() == kitType.getId())
+                .map(KitConfigurationDto::getId)
+                .findFirst()
+                .orElseThrow(() -> new DDPException(String.format(
+                        "Could not find kit configuration for study %s and kit type %s",
+                        studyDto.getGuid(), kitType.getName())));
+
+        var kitScheduleDao = handle.attach(KitScheduleDao.class);
+        var record = kitScheduleDao.findRecord(user.getId(), kitConfigId).orElse(null);
+
+        if (record != null && record.getInitialKitSentTime() == null) {
+            kitScheduleDao.updateRecordInitialKitSentTime(record.getId(), timestamp);
+            LOG.info("Updated initial kit sent time to {} for participant={}, study={}, kitConfigurationId={}",
+                    timestamp, user.getGuid(), studyDto.getGuid(), kitConfigId);
+        }
     }
 }

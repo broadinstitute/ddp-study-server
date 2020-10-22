@@ -6,7 +6,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.typesafe.config.Config;
-import org.broadinstitute.ddp.client.DsmClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.monitoring.PointsReducerFactory;
@@ -39,9 +38,6 @@ public class CheckKitsJob implements Job {
      */
     private static final Map<String, StackdriverMetricsTracker> kitCounterMonitorByStudy = new HashMap<>();
     private static KitCheckService kitCheckService = null;
-    private static DsmClient dsmClient = null;
-    private static long lastStatusCheckEpochSecs = -1;
-    private static long statusCheckSecs = -1;
 
     public static JobKey getKey() {
         return Keys.Kits.CheckJob;
@@ -54,9 +50,6 @@ public class CheckKitsJob implements Job {
         }
 
         kitCheckService = new KitCheckService(cfg.getInt(ConfigFile.Kits.BATCH_SIZE));
-        dsmClient = new DsmClient(cfg);
-        statusCheckSecs = cfg.getLong(ConfigFile.Kits.STATUS_CHECK_SECS);
-        LOG.info("Job {} status check seconds is set to {}", getKey(), statusCheckSecs);
 
         JobDetail job = JobBuilder.newJob(CheckKitsJob.class)
                 .withIdentity(getKey())
@@ -82,13 +75,6 @@ public class CheckKitsJob implements Job {
         try {
             LOG.info("Running job {}", getKey());
             long start = Instant.now().toEpochMilli();
-
-            // We don't want to bombard DSM with kit status calls, so only call if time is up.
-            if (Instant.now().getEpochSecond() - lastStatusCheckEpochSecs > statusCheckSecs) {
-                TransactionWrapper.useTxn(TransactionWrapper.DB.APIS,
-                        handle -> kitCheckService.checkPendingKitStatuses(handle, dsmClient));
-                lastStatusCheckEpochSecs = Instant.now().getEpochSecond();
-            }
 
             KitCheckService.KitCheckResult result = TransactionWrapper.withTxn(TransactionWrapper.DB.APIS, handle -> {
                 LOG.info("Checking for initial kits");
