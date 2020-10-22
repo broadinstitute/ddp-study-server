@@ -72,7 +72,7 @@ predicate
 // Queries to pull out various pieces of profile data
 profileDataQuery
   : 'birthDate' '(' ')'   # ProfileBirthDateQuery
-  | 'isGovernedParticipant' '(' ')' #`ProfileIsGovernedParticipantQuery`
+  | 'isGovernedParticipant' '(' ')' #ProfileIsGovernedParticipantQuery
   ;
 
 // Queries for current test result event.
