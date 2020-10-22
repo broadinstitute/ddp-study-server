@@ -382,9 +382,8 @@ public class Housekeeping {
                                                 if (message != null) {
                                                     // publish the message and delete it from the queue when published
                                                     Publisher publisher = null;
-                                                    // todo arz cache publishers, creating them is expensive
                                                     try {
-                                                        publisher = pubsubConnectionManager.createPublisher(ProjectTopicName.of(
+                                                        publisher = pubsubConnectionManager.getOrCreatePublisher(ProjectTopicName.of(
                                                                 pubSubProject, pendingEvent.getPubSubTopic()));
                                                     } catch (IOException e) {
                                                         throw new DDPException("Could not create publisher for " + pendingEvent

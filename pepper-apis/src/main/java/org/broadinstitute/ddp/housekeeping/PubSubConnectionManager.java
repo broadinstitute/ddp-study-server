@@ -1,8 +1,8 @@
 package org.broadinstitute.ddp.housekeeping;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.core.NoCredentialsProvider;
@@ -23,7 +23,6 @@ import com.google.pubsub.v1.ProjectTopicName;
 import com.google.pubsub.v1.PushConfig;
 import com.google.pubsub.v1.Subscription;
 import com.google.pubsub.v1.Topic;
-import com.google.pubsub.v1.TopicName;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import org.broadinstitute.ddp.util.PubSubEmulator;
@@ -51,13 +50,13 @@ public class PubSubConnectionManager {
 
     private final SubscriptionAdminClient subscriptionAdminClient;
 
-    private static final Collection<Publisher> PUBLISHERS_TO_SHUTDOWN = new ArrayList<>();
+    private static final Map<String, Publisher> PUBLISHERS_TO_SHUTDOWN = new HashMap<>();
 
     static {
         // last gasp attempt to shutdown any created publishers
         // that have not been cleaned up properly
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            for (Publisher publisher : PUBLISHERS_TO_SHUTDOWN) {
+            for (Publisher publisher : PUBLISHERS_TO_SHUTDOWN.values()) {
                 try {
                     publisher.shutdown();
                 } catch (Exception e) {
@@ -185,8 +184,12 @@ public class PubSubConnectionManager {
      * call {@link Publisher#shutdown} when done with the publisher
      * to avoid resource leaks
      */
-    public Publisher createPublisher(TopicName topicName) throws IOException {
-        Publisher publisher = null;
+    public Publisher getOrCreatePublisher(ProjectTopicName topicName) throws IOException {
+        Publisher publisher = PUBLISHERS_TO_SHUTDOWN.getOrDefault(topicName.toString(), null);
+        if (publisher != null) {
+            return publisher;
+        }
+
         if (useEmulator) {
             publisher = Publisher.newBuilder(topicName)
                     .setChannelProvider(channelProvider)
@@ -195,8 +198,9 @@ public class PubSubConnectionManager {
         } else {
             publisher = Publisher.newBuilder(topicName).build();
         }
+
         // add the publisher to the list of things to shutdown for better cleanup
-        PUBLISHERS_TO_SHUTDOWN.add(publisher);
+        PUBLISHERS_TO_SHUTDOWN.put(topicName.toString(), publisher);
         return publisher;
     }
 
