@@ -3,7 +3,6 @@ package org.broadinstitute.ddp.export;
 import java.util.List;
 import java.util.Map;
 
-import org.broadinstitute.ddp.db.dto.InvitationDto;
 import org.broadinstitute.ddp.model.pdf.PdfConfigInfo;
 import org.broadinstitute.ddp.model.pdf.PdfVersion;
 
