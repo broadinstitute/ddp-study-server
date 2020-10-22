@@ -104,10 +104,6 @@ public class Participant {
         return invitations;
     }
 
-    public void setInvitations(List<InvitationDto> invitations) {
-        this.invitations = invitations;
-    }
-
     public void addInvitation(InvitationDto invitationDto) {
         this.invitations.add(invitationDto);
     }
