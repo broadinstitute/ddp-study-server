@@ -11,11 +11,13 @@ import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.model.kit.KitSchedule;
 import org.broadinstitute.ddp.model.kit.KitScheduleRecord;
 import org.broadinstitute.ddp.model.kit.PendingScheduleRecord;
+import org.broadinstitute.ddp.service.KitCheckService;
 import org.jdbi.v3.core.mapper.EnumByOrdinalMapperFactory;
 import org.jdbi.v3.sqlobject.CreateSqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterColumnMapperFactory;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.customizer.FetchSize;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.stringtemplate4.UseStringTemplateSqlLocator;
 
@@ -80,11 +82,13 @@ public interface KitScheduleDao {
     @SqlQuery("findAllEligibleRecordsWaitingForKitStatus")
     @RegisterConstructorMapper(PendingScheduleRecord.class)
     @RegisterColumnMapperFactory(EnumByOrdinalMapperFactory.class)
+    @FetchSize(KitCheckService.DEFAULT_QUERY_FETCH_SIZE)
     Stream<PendingScheduleRecord> findAllEligibleRecordsWaitingForKitStatus();
 
     @UseStringTemplateSqlLocator
     @SqlQuery("findPendingScheduleRecords")
     @RegisterConstructorMapper(PendingScheduleRecord.class)
     @RegisterColumnMapperFactory(EnumByOrdinalMapperFactory.class)
+    @FetchSize(KitCheckService.DEFAULT_QUERY_FETCH_SIZE)
     Stream<PendingScheduleRecord> findPendingScheduleRecords(@Bind("configId") long kitConfigurationId);
 }
