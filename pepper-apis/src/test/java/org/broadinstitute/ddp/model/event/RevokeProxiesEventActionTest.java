@@ -28,7 +28,7 @@ public class RevokeProxiesEventActionTest extends TxnAwareBaseTest {
     public void test_noProxies() {
         TransactionWrapper.useTxn(handle -> {
             var signal = new EventSignal(testData.getUserId(), testData.getUserId(), testData.getUserGuid(),
-                    testData.getStudyId(), EventTriggerType.GOVERNED_USER_REGISTERED);
+                    testData.getUserGuid(), testData.getStudyId(), EventTriggerType.GOVERNED_USER_REGISTERED);
             new RevokeProxiesEventAction(null, null).doAction(null, handle, signal);
             // all good!
 
@@ -51,7 +51,7 @@ public class RevokeProxiesEventActionTest extends TxnAwareBaseTest {
             userGovernanceDao.grantGovernedStudy(govId2, testData.getStudyId());
 
             var signal = new EventSignal(participant.getId(), participant.getId(), participant.getGuid(),
-                    testData.getStudyId(), EventTriggerType.GOVERNED_USER_REGISTERED);
+                    testData.getUserGuid(), testData.getStudyId(), EventTriggerType.GOVERNED_USER_REGISTERED);
             new RevokeProxiesEventAction(null, null).doAction(null, handle, signal);
 
             assertEquals(0, userGovernanceDao.findActiveGovernancesByParticipantAndStudyGuids(
@@ -79,7 +79,7 @@ public class RevokeProxiesEventActionTest extends TxnAwareBaseTest {
             userGovernanceDao.grantGovernedStudy(govId2, study2.getId());
 
             var signal = new EventSignal(participant.getId(), participant.getId(), participant.getGuid(),
-                    testData.getStudyId(), EventTriggerType.GOVERNED_USER_REGISTERED);
+                    testData.getUserGuid(), testData.getStudyId(), EventTriggerType.GOVERNED_USER_REGISTERED);
             new RevokeProxiesEventAction(null, null).doAction(null, handle, signal);
 
             assertEquals(0, userGovernanceDao.findActiveGovernancesByParticipantAndStudyGuids(

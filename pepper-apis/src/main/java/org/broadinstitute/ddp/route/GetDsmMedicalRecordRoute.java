@@ -19,9 +19,11 @@ import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.dsm.Institution;
 import org.broadinstitute.ddp.model.dsm.Participant;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
+import org.broadinstitute.ddp.security.DDPAuth;
 import org.broadinstitute.ddp.service.MedicalRecordService;
 import org.broadinstitute.ddp.transformers.DateTimeFormatUtils;
 import org.broadinstitute.ddp.util.ResponseUtil;
+import org.broadinstitute.ddp.util.RouteUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
@@ -43,6 +45,8 @@ public class GetDsmMedicalRecordRoute implements Route {
 
     @Override
     public Participant handle(Request request, Response response) {
+        DDPAuth ddpAuth = RouteUtil.getDDPAuth(request);
+        String operatorGuid = ddpAuth.getOperator();
         return TransactionWrapper.withTxn(handle -> {
             logger.info("Starting GetDsmMedicalRecordRoute.handle");
             logger.info("Checking Study and Participant GUIDs");
@@ -96,7 +100,7 @@ public class GetDsmMedicalRecordRoute implements Route {
 
             // Converting booleans to ints because it's the format DSM expects
             MedicalRecordService.ParticipantConsents consents = medicalRecordService.fetchBloodAndTissueConsents(
-                    handle, dsmParticipant.getUserId(), dsmParticipant.getUserGuid(), studyDto.getId(), studyGuid);
+                    handle, dsmParticipant.getUserId(), dsmParticipant.getUserGuid(), operatorGuid, studyDto.getId(), studyGuid);
             int hasConsentedToBloodDraw = consents.hasConsentedToBloodDraw()
                     ? DsmConsentElection.ELECTION_SELECTED.getNumberValue() : DsmConsentElection.ELECTION_NOT_SELECTED.getNumberValue();
             participant.setHasConsentedToBloodDraw(hasConsentedToBloodDraw);

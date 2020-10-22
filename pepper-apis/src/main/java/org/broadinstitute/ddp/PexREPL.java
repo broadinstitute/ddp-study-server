@@ -129,7 +129,7 @@ public class PexREPL {
 
         try {
             boolean result = TransactionWrapper.withTxn(
-                    handle -> interp.eval(expr, handle, userCtx.get(), instanceCtx.get()));
+                    handle -> interp.eval(expr, handle, userCtx.get(), userCtx.get(), instanceCtx.get()));
             System.out.println(result);
         } catch (PexException e) {
             System.out.println("Error: " + e);

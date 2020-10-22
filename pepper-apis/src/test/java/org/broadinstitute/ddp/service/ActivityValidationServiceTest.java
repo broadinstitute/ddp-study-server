@@ -95,7 +95,7 @@ public class ActivityValidationServiceTest extends TxnAwareBaseTest {
         TransactionWrapper.useTxn(handle -> {
             insertValidation(handle, "false", "Should never fail");
             List<ActivityValidationFailure> validationFailures = actValidationService.validate(
-                    handle, interpreter, userGuid, activityInstanceGuid, activityId, langCodeId
+                    handle, interpreter, userGuid, userGuid, activityInstanceGuid, activityId, langCodeId
             );
             Assert.assertTrue(validationFailures.isEmpty());
             handle.rollback();
@@ -107,7 +107,7 @@ public class ActivityValidationServiceTest extends TxnAwareBaseTest {
         TransactionWrapper.useTxn(handle -> {
             insertValidation(handle, "true", "Should always fail");
             List<ActivityValidationFailure> validationFailures = actValidationService.validate(
-                    handle, interpreter, userGuid, activityInstanceGuid, activityId, langCodeId
+                    handle, interpreter, userGuid, userGuid, activityInstanceGuid, activityId, langCodeId
             );
             Assert.assertEquals(1, validationFailures.size());
             Assert.assertNotNull(validationFailures.get(0));
@@ -124,7 +124,7 @@ public class ActivityValidationServiceTest extends TxnAwareBaseTest {
             Assert.assertEquals(
                     2,
                     actValidationService.validate(
-                            handle, interpreter, userGuid, activityInstanceGuid, activityId, langCodeId
+                            handle, interpreter, userGuid, userGuid, activityInstanceGuid, activityId, langCodeId
                     ).get(0).getAffectedQuestionStableIds().size()
             );
             handle.rollback();
@@ -138,7 +138,8 @@ public class ActivityValidationServiceTest extends TxnAwareBaseTest {
             insertValidation(handle, "true", "Should always fail");
             Assert.assertEquals(
                     2,
-                    actValidationService.validate(handle, interpreter, userGuid, activityInstanceGuid, activityId, langCodeId).size()
+                    actValidationService.validate(handle, interpreter, userGuid, userGuid, activityInstanceGuid, activityId, langCodeId)
+                            .size()
             );
             handle.rollback();
         });
@@ -151,7 +152,8 @@ public class ActivityValidationServiceTest extends TxnAwareBaseTest {
             insertValidation(handle, "true", "Should always fail");
             Assert.assertEquals(
                     1,
-                    actValidationService.validate(handle, interpreter, userGuid, activityInstanceGuid, activityId, langCodeId).size()
+                    actValidationService.validate(handle, interpreter, userGuid, userGuid, activityInstanceGuid, activityId, langCodeId)
+                            .size()
             );
             handle.rollback();
         });
@@ -162,7 +164,8 @@ public class ActivityValidationServiceTest extends TxnAwareBaseTest {
         TransactionWrapper.useTxn(handle -> {
             insertValidation(handle, "true & true", "Should fail - syntax");
             Assert.assertTrue(
-                    actValidationService.validate(handle, interpreter, userGuid, activityInstanceGuid, activityId, langCodeId).isEmpty()
+                    actValidationService.validate(handle, interpreter, userGuid, userGuid, activityInstanceGuid, activityId, langCodeId)
+                            .isEmpty()
             );
             handle.rollback();
         });
@@ -174,7 +177,8 @@ public class ActivityValidationServiceTest extends TxnAwareBaseTest {
             insertValidation(handle, "true", "true", "Precondition is TRUE - expression should fail");
             Assert.assertEquals(
                     1,
-                    actValidationService.validate(handle, interpreter, userGuid, activityInstanceGuid, activityId, langCodeId).size()
+                    actValidationService.validate(handle, interpreter, userGuid, userGuid, activityInstanceGuid, activityId, langCodeId)
+                            .size()
             );
             handle.rollback();
         });
@@ -185,7 +189,8 @@ public class ActivityValidationServiceTest extends TxnAwareBaseTest {
         TransactionWrapper.useTxn(handle -> {
             insertValidation(handle, "false", "true", "Precondition is FALSE - expression should NOT fail");
             Assert.assertTrue(
-                    actValidationService.validate(handle, interpreter, userGuid, activityInstanceGuid, activityId, langCodeId).isEmpty()
+                    actValidationService.validate(handle, interpreter, userGuid, userGuid, activityInstanceGuid, activityId, langCodeId)
+                            .isEmpty()
             );
             handle.rollback();
         });
@@ -197,7 +202,8 @@ public class ActivityValidationServiceTest extends TxnAwareBaseTest {
             insertValidation(handle, null, "true", "Precondition is NULL - expression should NOT fail");
             Assert.assertEquals(
                     1,
-                    actValidationService.validate(handle, interpreter, userGuid, activityInstanceGuid, activityId, langCodeId).size()
+                    actValidationService.validate(handle, interpreter, userGuid, userGuid, activityInstanceGuid, activityId, langCodeId)
+                            .size()
             );
             handle.rollback();
         });
@@ -208,7 +214,8 @@ public class ActivityValidationServiceTest extends TxnAwareBaseTest {
         TransactionWrapper.useTxn(handle -> {
             insertValidation(handle, "true & true", "true", "Precondition is malformed - expression should NOT fail");
             Assert.assertTrue(
-                    actValidationService.validate(handle, interpreter, userGuid, activityInstanceGuid, activityId, langCodeId).isEmpty()
+                    actValidationService.validate(handle, interpreter, userGuid, userGuid, activityInstanceGuid, activityId, langCodeId)
+                            .isEmpty()
             );
             handle.rollback();
         });

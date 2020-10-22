@@ -5,8 +5,10 @@ import org.broadinstitute.ddp.constants.RouteConstants.PathParam;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.json.consent.ConsentSummary;
 import org.broadinstitute.ddp.json.errors.ApiError;
+import org.broadinstitute.ddp.security.DDPAuth;
 import org.broadinstitute.ddp.service.ConsentService;
 import org.broadinstitute.ddp.util.ResponseUtil;
+import org.broadinstitute.ddp.util.RouteUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Request;
@@ -29,6 +31,8 @@ public class GetConsentSummaryRoute implements Route {
 
     @Override
     public Object handle(Request request, Response response) {
+        DDPAuth ddpAuth = RouteUtil.getDDPAuth(request);
+        String operatorGuid = ddpAuth.getOperator();
         String userGuid = request.params(PathParam.USER_GUID);
         String studyGuid = request.params(PathParam.STUDY_GUID);
         String consentActivityCode = request.params(PathParam.ACTIVITY_CODE);
@@ -37,7 +41,7 @@ public class GetConsentSummaryRoute implements Route {
                 consentActivityCode, userGuid, studyGuid);
 
         ConsentSummary summary = TransactionWrapper.withTxn(
-                handle -> service.getLatestConsentSummary(handle, userGuid, studyGuid, consentActivityCode).orElse(null));
+                handle -> service.getLatestConsentSummary(handle, userGuid, operatorGuid, studyGuid, consentActivityCode).orElse(null));
 
         if (summary == null) {
             String msg = "Study does not have consent activity";

@@ -208,7 +208,8 @@ public class KitCheckService {
         if (schedule.getOptOutExpr() != null && record.getNumOccurrences() == 0) {
             // This is the first occurrence and schedule allows opt-out. Let's see if we should apply it.
             try {
-                boolean shouldOptOut = interpreter.eval(schedule.getOptOutExpr(), apisHandle, pending.getUserGuid(), null);
+                boolean shouldOptOut = interpreter.eval(schedule.getOptOutExpr(),
+                        apisHandle, pending.getUserGuid(), pending.getUserGuid(), null);
                 if (shouldOptOut) {
                     // They're opting out, save that and move on.
                     kitScheduleDao.updateRecordOptOut(record.getId(), true);
@@ -228,8 +229,8 @@ public class KitCheckService {
                 pending.getUserId(),
                 pending.getUserId(),
                 pending.getUserGuid(),
-                pending.getStudyId(),
-                EventTriggerType.KIT_PREP);
+                pending.getUserGuid(),
+                pending.getStudyId(), EventTriggerType.KIT_PREP);
         EventService.getInstance().processAllActionsForEventSignal(apisHandle, signal);
         kitScheduleDao.updateRecordCurrentOccurrencePrepTime(record.getId(), Instant.now());
         LOG.info("Preparation step finished for participant {} and occurrence {} of kit_configuration_id={}",
@@ -250,7 +251,7 @@ public class KitCheckService {
             // This is the first occurrence, and schedule allows opt-out, and they haven't been given the opportunity
             // to opt-out yet since there's no prep step. Let's check it now.
             try {
-                boolean shouldOptOut = interpreter.eval(schedule.getOptOutExpr(), apisHandle, userGuid, null);
+                boolean shouldOptOut = interpreter.eval(schedule.getOptOutExpr(), apisHandle, userGuid, userGuid, null);
                 if (shouldOptOut) {
                     // They're opting out, save that and move on.
                     kitScheduleDao.updateRecordOptOut(record.getId(), true);
@@ -269,7 +270,7 @@ public class KitCheckService {
         if (schedule.getIndividualOptOutExpr() != null) {
             // Schedule allows opting out of individual kits, let's check it.
             try {
-                boolean shouldOptOut = interpreter.eval(schedule.getIndividualOptOutExpr(), apisHandle, userGuid, null);
+                boolean shouldOptOut = interpreter.eval(schedule.getIndividualOptOutExpr(), apisHandle, userGuid, userGuid, null);
                 if (shouldOptOut) {
                     // They're opting out, bump up the occurrence and move on.
                     kitScheduleDao.incrementRecordNumOccurrence(record.getId());

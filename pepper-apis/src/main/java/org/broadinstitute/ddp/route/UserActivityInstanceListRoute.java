@@ -49,7 +49,8 @@ public class UserActivityInstanceListRoute implements Route {
         }
 
         DDPAuth ddpAuth = RouteUtil.getDDPAuth(request);
-        LOG.info("Looking up activity instances for user {} in study {} by operator {}", userGuid, studyGuid, ddpAuth.getOperator());
+        String operatorGuid = ddpAuth.getOperator();
+        LOG.info("Looking up activity instances for user {} in study {} by operator {}", userGuid, studyGuid, operatorGuid);
 
         return TransactionWrapper.withTxn(handle -> {
             var found = RouteUtil.findUserAndStudyOrHalt(handle, userGuid, studyGuid);
@@ -60,7 +61,7 @@ public class UserActivityInstanceListRoute implements Route {
             // IMPORTANT: do numbering before filtering so each instance is assigned their correct number.
             performActivityInstanceNumbering(summaries);
             summaries = filterActivityInstancesFromDisplay(summaries);
-            activityInstanceDao.countActivitySummaryQuestionsAndAnswers(handle, userGuid, studyGuid, summaries);
+            activityInstanceDao.countActivitySummaryQuestionsAndAnswers(handle, userGuid, operatorGuid, studyGuid, summaries);
             activityInstanceDao.renderActivitySummary(handle, found.getUser().getId(), summaries);
             return summaries;
         });

@@ -223,7 +223,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
 
                     invitationDao.markAccepted(invitation.getInvitationId(), Instant.now());
 
-                    EventSignal signal = new EventSignal(user.getId(), user.getId(), user.getGuid(),
+                    EventSignal signal = new EventSignal(user.getId(), user.getId(), user.getGuid(), user.getGuid(),
                             study.getId(), EventTriggerType.GOVERNED_USER_REGISTERED);
                     EventService.getInstance().processAllActionsForEventSignal(handle, signal);
                 } else {
@@ -584,8 +584,8 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
                 operator.getId(),
                 participant.getId(),
                 participant.getGuid(),
-                studyDto.getId(),
-                EventTriggerType.USER_REGISTERED);
+                operator.getGuid(),
+                studyDto.getId(), EventTriggerType.USER_REGISTERED);
         EventService.getInstance().processAllActionsForEventSignal(handle, signal);
     }
 

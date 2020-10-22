@@ -88,18 +88,18 @@ public class TreeWalkInterpreter implements PexInterpreter {
     private static final PexFetcher fetcher = new PexFetcher();
 
     @Override
-    public boolean eval(String expression, Handle handle, String userGuid, String activityInstanceGuid) {
-        return eval(expression, handle, userGuid, activityInstanceGuid, null);
+    public boolean eval(String expression, Handle handle, String userGuid, String operatorGuid, String activityInstanceGuid) {
+        return eval(expression, handle, userGuid, operatorGuid, activityInstanceGuid, null);
     }
 
     @Override
-    public boolean eval(String expression, Handle handle, String userGuid, String activityInstanceGuid,
+    public boolean eval(String expression, Handle handle, String userGuid, String operatorGuid, String activityInstanceGuid,
                         UserActivityInstanceSummary activityInstanceSummary) {
-        return eval(expression, handle, userGuid, activityInstanceGuid, activityInstanceSummary, null);
+        return eval(expression, handle, userGuid, operatorGuid, activityInstanceGuid, activityInstanceSummary, null);
     }
 
     @Override
-    public boolean eval(String expression, Handle handle, String userGuid, String activityInstanceGuid,
+    public boolean eval(String expression, Handle handle, String userGuid, String operatorGuid, String activityInstanceGuid,
                         UserActivityInstanceSummary activityInstanceSummary, EventSignal signal) {
         CharStream chars = CharStreams.fromString(expression);
         FailFastLexer lexer = new FailFastLexer(chars);
@@ -115,7 +115,8 @@ public class TreeWalkInterpreter implements PexInterpreter {
             throw new PexParseException(e.getCause());
         }
 
-        InterpreterContext ictx = new InterpreterContext(handle, userGuid, activityInstanceGuid, activityInstanceSummary, signal);
+        InterpreterContext ictx = new InterpreterContext(handle, userGuid, operatorGuid, activityInstanceGuid,
+                activityInstanceSummary, signal);
         PexValueVisitor visitor = new PexValueVisitor(this, ictx);
 
         Object result = visitor.visit(tree);
@@ -201,12 +202,21 @@ public class TreeWalkInterpreter implements PexInterpreter {
         }
     }
 
-    private boolean evalStudyQuery(InterpreterContext ictx, StudyQueryContext ctx) {
-        String umbrellaStudyGuid = extractString(ctx.study().STR());
-        return applyStudyPredicate(ictx, ctx.studyPredicate(), umbrellaStudyGuid);
+    private String getUserGuidByUserType(InterpreterContext ictx, TerminalNode node) {
+        if (UserType.OPERATOR.equals(node.getText())) {
+            return ictx.getOperatorGuid();
+        } else {
+            return ictx.getUserGuid();
+        }
     }
 
-    private boolean applyStudyPredicate(InterpreterContext ictx, StudyPredicateContext predCtx, String studyGuid) {
+    private boolean evalStudyQuery(InterpreterContext ictx, StudyQueryContext ctx) {
+        String userGuid = getUserGuidByUserType(ictx, ctx.USER_TYPE());
+        String umbrellaStudyGuid = extractString(ctx.study().STR());
+        return applyStudyPredicate(ictx, ctx.studyPredicate(), userGuid, umbrellaStudyGuid);
+    }
+
+    private boolean applyStudyPredicate(InterpreterContext ictx, StudyPredicateContext predCtx, String userGuid, String studyGuid) {
         if (predCtx instanceof PexParser.HasAgedUpPredicateContext) {
             GovernancePolicy policy = ictx.getHandle().attach(StudyGovernanceDao.class)
                     .findPolicyByStudyGuid(studyGuid)
@@ -215,7 +225,6 @@ public class TreeWalkInterpreter implements PexInterpreter {
                 throw new PexFetchException(new NoSuchElementException("Governance policy for " + studyGuid + " does not exist"));
             }
 
-            String userGuid = ictx.getUserGuid();
             UserProfile profile = ictx.getHandle().attach(UserProfileDao.class).findProfileByUserGuid(userGuid).orElse(null);
             if (profile == null || profile.getBirthDate() == null) {
                 LOG.warn("User {} in study {} does not have profile or birth date to evaluate age-up policy, defaulting to false",
@@ -234,7 +243,7 @@ public class TreeWalkInterpreter implements PexInterpreter {
             }
             return ictx.getHandle()
                     .attach(InvitationDao.class)
-                    .findInvitations(studyGuid, ictx.getUserGuid())
+                    .findInvitations(studyGuid, userGuid)
                     .stream()
                     .anyMatch(invite -> invite.getInvitationType() == inviteType);
         } else {
@@ -245,10 +254,12 @@ public class TreeWalkInterpreter implements PexInterpreter {
     private boolean evalFormQuery(InterpreterContext ictx, FormQueryContext ctx) {
         String umbrellaStudyGuid = extractString(ctx.study().STR());
         String studyActivityCode = extractString(ctx.form().STR());
-        return applyFormPredicate(ictx, ctx.formPredicate(), umbrellaStudyGuid, studyActivityCode);
+        String userGuid = getUserGuidByUserType(ictx, ctx.USER_TYPE());
+        return applyFormPredicate(ictx, ctx.formPredicate(), userGuid, umbrellaStudyGuid, studyActivityCode);
     }
 
-    private boolean applyFormPredicate(InterpreterContext ictx, FormPredicateContext predCtx, String studyGuid, String activityCode) {
+    private boolean applyFormPredicate(InterpreterContext ictx, FormPredicateContext predCtx, String userGuid,
+                                       String studyGuid, String activityCode) {
         if (predCtx instanceof IsStatusPredicateContext) {
             List<InstanceStatusType> expectedStatuses = ((IsStatusPredicateContext) predCtx).STR().stream()
                     .map(node -> {
@@ -260,17 +271,18 @@ public class TreeWalkInterpreter implements PexInterpreter {
                         }
                     })
                     .collect(Collectors.toList());
-            return fetcher.findLatestActivityInstanceStatus(ictx, studyGuid, activityCode)
+            return fetcher.findLatestActivityInstanceStatus(ictx, userGuid, studyGuid, activityCode)
                     .map(expectedStatuses::contains)
                     .orElse(false);
         } else if (predCtx instanceof PexParser.HasInstancePredicateContext) {
-            return fetcher.findLatestActivityInstanceStatus(ictx, studyGuid, activityCode).isPresent();
+            return fetcher.findLatestActivityInstanceStatus(ictx, userGuid, studyGuid, activityCode).isPresent();
         } else {
             throw new PexUnsupportedException("Unsupported form predicate: " + predCtx.getText());
         }
     }
 
     private Object evalFormInstanceQuery(InterpreterContext ictx, PexParser.FormInstanceQueryContext ctx) {
+        String userGuid = getUserGuidByUserType(ictx, ctx.USER_TYPE());
         String studyGuid = extractString(ctx.study().STR());
         String activityCode = extractString(ctx.form().STR());
         String instanceType = ctx.instance().INSTANCE_TYPE().getText();
@@ -286,7 +298,7 @@ public class TreeWalkInterpreter implements PexInterpreter {
         final long instanceId;
         if (instanceType.equals(LATEST)) {
             instanceId = ictx.getHandle().attach(JdbiActivityInstance.class)
-                    .findLatestInstanceIdByUserGuidAndActivityId(ictx.getUserGuid(), activityId)
+                    .findLatestInstanceIdByUserGuidAndActivityId(userGuid, activityId)
                     .orElseThrow(() -> new PexFetchException("Could not find latest instance for activity " + activityCode));
         } else {
             String instanceGuid = ictx.getActivityInstanceGuid();
@@ -315,6 +327,7 @@ public class TreeWalkInterpreter implements PexInterpreter {
     }
 
     private boolean evalQuestionQuery(InterpreterContext ictx, QuestionQueryContext ctx) {
+        String userGuid = getUserGuidByUserType(ictx, ctx.USER_TYPE());
         String studyGuid = extractString(ctx.study().STR());
         String activityCode = extractString(ctx.form().STR());
         String stableId = extractString(ctx.question().STR());
@@ -327,13 +340,14 @@ public class TreeWalkInterpreter implements PexInterpreter {
                     return new PexFetchException(new NoSuchElementException(msg));
                 });
 
-        return applyQuestionPredicate(ictx, activityId, stableId, ctx.questionPredicate());
+        return applyQuestionPredicate(ictx, userGuid, activityId, stableId, ctx.questionPredicate());
     }
 
-    private boolean applyQuestionPredicate(InterpreterContext ictx, long activityId, String stableId, QuestionPredicateContext predCtx) {
+    private boolean applyQuestionPredicate(InterpreterContext ictx, String userGuid, long activityId,
+                                           String stableId, QuestionPredicateContext predCtx) {
         if (predCtx instanceof PexParser.IsAnsweredPredicateContext) {
             Long instanceId = ictx.getHandle().attach(JdbiActivityInstance.class)
-                    .findLatestInstanceIdByUserGuidAndActivityId(ictx.getUserGuid(), activityId)
+                    .findLatestInstanceIdByUserGuidAndActivityId(userGuid, activityId)
                     .orElse(null);
             if (instanceId == null) {
                 return false;
@@ -359,21 +373,23 @@ public class TreeWalkInterpreter implements PexInterpreter {
     }
 
     private Object evalDefaultLatestAnswerQuery(InterpreterContext ictx, DefaultLatestAnswerQueryContext ctx) {
+        String userGuid = getUserGuidByUserType(ictx, ctx.USER_TYPE());
         String studyGuid = extractString(ctx.study().STR());
         String activityCode = extractString(ctx.form().STR());
         String stableId = extractString(ctx.question().STR());
-        return applyAnswerPredicate(ictx, studyGuid, activityCode, stableId, LATEST, ctx.predicate());
+        return applyAnswerPredicate(ictx, userGuid, studyGuid, activityCode, stableId, LATEST, ctx.predicate());
     }
 
     private Object evalAnswerQuery(InterpreterContext ictx, AnswerQueryContext ctx) {
+        String userGuid = getUserGuidByUserType(ictx, ctx.USER_TYPE());
         String studyGuid = extractString(ctx.study().STR());
         String activityCode = extractString(ctx.form().STR());
         String type = ctx.instance().INSTANCE_TYPE().getText();
         String stableId = extractString(ctx.question().STR());
-        return applyAnswerPredicate(ictx, studyGuid, activityCode, stableId, type, ctx.predicate());
+        return applyAnswerPredicate(ictx, userGuid, studyGuid, activityCode, stableId, type, ctx.predicate());
     }
 
-    private Object applyAnswerPredicate(InterpreterContext ictx, String studyGuid, String activityCode, String stableId,
+    private Object applyAnswerPredicate(InterpreterContext ictx, String userGuid, String studyGuid, String activityCode, String stableId,
                                         String instanceType, PredicateContext predicateCtx) {
 
         long studyId = new JdbiUmbrellaStudyCached(ictx.getHandle())
@@ -393,14 +409,14 @@ public class TreeWalkInterpreter implements PexInterpreter {
                     .orElseThrow(() -> {
                         String msg = String.format(
                                 "Cannot find question %s in form activity def with activity code %s for user %s in study %s",
-                                stableId, activityCode, ictx.getUserGuid(), studyGuid);
+                                stableId, activityCode, userGuid, studyGuid);
                         throw new PexFetchException(new NoSuchElementException(msg));
                     });
         } else {
-            questionType = fetcher.findQuestionType(ictx, studyGuid, activityCode, stableId).orElseThrow(() -> {
+            questionType = fetcher.findQuestionType(ictx, userGuid, studyGuid, activityCode, stableId).orElseThrow(() -> {
                 String msg = String.format(
                         "Cannot find question %s in form %s for user %s and study %s",
-                        stableId, activityCode, ictx.getUserGuid(), studyGuid);
+                        stableId, activityCode, userGuid, studyGuid);
                 return new PexFetchException(new NoSuchElementException(msg));
             });
         }
@@ -409,15 +425,15 @@ public class TreeWalkInterpreter implements PexInterpreter {
 
         switch (questionType) {
             case BOOLEAN:
-                return applyBoolAnswerPredicate(ictx, predicateCtx, studyId, activityCode, instanceGuid, stableId);
+                return applyBoolAnswerPredicate(ictx, predicateCtx, userGuid, studyId, activityCode, instanceGuid, stableId);
             case TEXT:
-                return applyTextAnswerPredicate(ictx, predicateCtx, studyId, activityCode, instanceGuid, stableId);
+                return applyTextAnswerPredicate(ictx, predicateCtx, userGuid, studyId, activityCode, instanceGuid, stableId);
             case PICKLIST:
-                return applyPicklistAnswerPredicate(ictx, predicateCtx, studyId, activityCode, instanceGuid, stableId);
+                return applyPicklistAnswerPredicate(ictx, predicateCtx, userGuid, studyId, activityCode, instanceGuid, stableId);
             case DATE:
-                return applyDateAnswerPredicate(ictx, predicateCtx, studyId, activityCode, instanceGuid, stableId);
+                return applyDateAnswerPredicate(ictx, predicateCtx, userGuid, studyId, activityCode, instanceGuid, stableId);
             case NUMERIC:
-                return applyNumericAnswerPredicate(ictx, predicateCtx, studyId, activityCode, instanceGuid, stableId);
+                return applyNumericAnswerPredicate(ictx, predicateCtx, userGuid, studyId, activityCode, instanceGuid, stableId);
             default:
                 throw new PexUnsupportedException("Question " + stableId + " with type "
                         + questionType + " is currently not supported");
@@ -425,11 +441,12 @@ public class TreeWalkInterpreter implements PexInterpreter {
     }
 
     private Object applyBoolAnswerPredicate(InterpreterContext ictx, PredicateContext predicateCtx,
-                                            long studyId, String activityCode, String instanceGuid, String stableId) {
+                                            String userGuid, long studyId, String activityCode,
+                                            String instanceGuid, String stableId) {
         if (predicateCtx instanceof HasTruePredicateContext || predicateCtx instanceof HasFalsePredicateContext) {
             boolean expected = (predicateCtx instanceof HasTruePredicateContext);
             Boolean value = StringUtils.isBlank(instanceGuid)
-                    ? fetcher.findLatestBoolAnswer(ictx, activityCode, stableId, studyId)
+                    ? fetcher.findLatestBoolAnswer(ictx, userGuid, activityCode, stableId, studyId)
                     : fetcher.findSpecificBoolAnswer(ictx, activityCode, instanceGuid, stableId);
             if (value == null) {
                 return false;
@@ -438,10 +455,10 @@ public class TreeWalkInterpreter implements PexInterpreter {
             }
         } else if (predicateCtx instanceof PexParser.ValueQueryContext) {
             Boolean value = StringUtils.isBlank(instanceGuid)
-                    ? fetcher.findLatestBoolAnswer(ictx, activityCode, stableId, studyId)
+                    ? fetcher.findLatestBoolAnswer(ictx, userGuid, activityCode, stableId, studyId)
                     : fetcher.findSpecificBoolAnswer(ictx, activityCode, instanceGuid, stableId);
             if (value == null) {
-                String msg = String.format("User %s does not have boolean answer for question %s", ictx.getUserGuid(), stableId);
+                String msg = String.format("User %s does not have boolean answer for question %s", userGuid, stableId);
                 throw new PexFetchException(msg);
             } else {
                 return value;
@@ -469,10 +486,10 @@ public class TreeWalkInterpreter implements PexInterpreter {
     }
 
     private Object applyDateAnswerPredicate(InterpreterContext ictx, PredicateContext predicateCtx,
-                                            long studyId, String activityCode, String instanceGuid, String stableId) {
+                                            String userGuid, long studyId, String activityCode, String instanceGuid, String stableId) {
         if (predicateCtx instanceof HasDatePredicateContext) {
             Optional<DateValue> dateValue = StringUtils.isBlank(instanceGuid)
-                    ? fetcher.findLatestDateAnswer(ictx, activityCode, stableId, studyId)
+                    ? fetcher.findLatestDateAnswer(ictx, userGuid, activityCode, stableId, studyId)
                     : fetcher.findSpecificDateAnswer(ictx, activityCode, instanceGuid, stableId);
             return dateValue.isPresent();
         } else if (predicateCtx instanceof AgeAtLeastPredicateContext) {
@@ -481,17 +498,17 @@ public class TreeWalkInterpreter implements PexInterpreter {
             ChronoUnit timeUnit = ChronoUnit.valueOf(predCtx.TIMEUNIT().getText());
 
             Optional<DateValue> dateValue = StringUtils.isBlank(instanceGuid)
-                    ? fetcher.findLatestDateAnswer(ictx, activityCode, stableId, studyId)
+                    ? fetcher.findLatestDateAnswer(ictx, userGuid, activityCode, stableId, studyId)
                     : fetcher.findSpecificDateAnswer(ictx, activityCode, instanceGuid, stableId);
 
             return isOldEnough(dateValue, timeUnit, minimumAge);
         } else if (predicateCtx instanceof PexParser.ValueQueryContext) {
             Optional<DateValue> dateValue = StringUtils.isBlank(instanceGuid)
-                    ? fetcher.findLatestDateAnswer(ictx, activityCode, stableId, studyId)
+                    ? fetcher.findLatestDateAnswer(ictx, userGuid, activityCode, stableId, studyId)
                     : fetcher.findSpecificDateAnswer(ictx, activityCode, instanceGuid, stableId);
 
             if (dateValue.isEmpty()) {
-                String msg = String.format("User %s does not have date answer for question %s", ictx.getUserGuid(), stableId);
+                String msg = String.format("User %s does not have date answer for question %s", userGuid, stableId);
                 throw new PexFetchException(msg);
             }
 
@@ -499,7 +516,7 @@ public class TreeWalkInterpreter implements PexInterpreter {
             if (value == null) {
                 String msg = String.format(
                         "Could not convert date answer to date value for user %s and question %s",
-                        ictx.getUserGuid(), stableId);
+                        userGuid, stableId);
                 throw new PexRuntimeException(msg);
             }
 
@@ -510,18 +527,18 @@ public class TreeWalkInterpreter implements PexInterpreter {
     }
 
     private Object applyTextAnswerPredicate(InterpreterContext ictx, PredicateContext predicateCtx,
-                                            long studyId, String activityCode, String instanceGuid, String stableId) {
+                                            String userGuid, long studyId, String activityCode, String instanceGuid, String stableId) {
         if (predicateCtx instanceof PexParser.HasTextPredicateContext) {
             String value = StringUtils.isBlank(instanceGuid)
-                    ? fetcher.findLatestTextAnswer(ictx, activityCode, stableId, studyId)
+                    ? fetcher.findLatestTextAnswer(ictx, userGuid, activityCode, stableId, studyId)
                     : fetcher.findSpecificTextAnswer(ictx, activityCode, instanceGuid, stableId);
             return StringUtils.isNotBlank(value);
         } else if (predicateCtx instanceof PexParser.ValueQueryContext) {
             String value = StringUtils.isBlank(instanceGuid)
-                    ? fetcher.findLatestTextAnswer(ictx, activityCode, stableId, studyId)
+                    ? fetcher.findLatestTextAnswer(ictx, userGuid, activityCode, stableId, studyId)
                     : fetcher.findSpecificTextAnswer(ictx, activityCode, instanceGuid, stableId);
             if (value == null) {
-                String msg = String.format("User %s does not have text answer for question %s", ictx.getUserGuid(), stableId);
+                String msg = String.format("User %s does not have text answer for question %s", userGuid, stableId);
                 throw new PexFetchException(msg);
             } else {
                 return value;
@@ -532,7 +549,7 @@ public class TreeWalkInterpreter implements PexInterpreter {
     }
 
     private Object applyPicklistAnswerPredicate(InterpreterContext ictx, PredicateContext predicateCtx,
-                                                long studyId, String activityCode, String instanceGuid, String stableId) {
+                                                String userGuid, long studyId, String activityCode, String instanceGuid, String stableId) {
         if (predicateCtx instanceof HasOptionPredicateContext) {
             String optionStableId = extractString(((HasOptionPredicateContext) predicateCtx).STR());
             List<String> value;
@@ -548,7 +565,7 @@ public class TreeWalkInterpreter implements PexInterpreter {
                 }
             } else {
                 value = StringUtils.isBlank(instanceGuid)
-                        ? fetcher.findLatestPicklistAnswer(ictx, activityCode, stableId, studyId)
+                        ? fetcher.findLatestPicklistAnswer(ictx, userGuid, activityCode, stableId, studyId)
                         : fetcher.findSpecificPicklistAnswer(ictx, activityCode, instanceGuid, stableId);
             }
             if (value == null) {
@@ -562,7 +579,7 @@ public class TreeWalkInterpreter implements PexInterpreter {
                     .map(this::extractString)
                     .collect(Collectors.toList());
             List<String> value = StringUtils.isBlank(instanceGuid)
-                    ? fetcher.findLatestPicklistAnswer(ictx, activityCode, stableId, studyId)
+                    ? fetcher.findLatestPicklistAnswer(ictx, userGuid, activityCode, stableId, studyId)
                     : fetcher.findSpecificPicklistAnswer(ictx, activityCode, instanceGuid, stableId);
             if (value == null) {
                 return false;
@@ -577,13 +594,13 @@ public class TreeWalkInterpreter implements PexInterpreter {
     }
 
     private Object applyNumericAnswerPredicate(InterpreterContext ictx, PredicateContext predicateCtx,
-                                               long studyId, String activityCode, String instanceGuid, String stableId) {
+                                               String userGuid, long studyId, String activityCode, String instanceGuid, String stableId) {
         if (predicateCtx instanceof PexParser.ValueQueryContext) {
             Long value = StringUtils.isBlank(instanceGuid)
-                    ? fetcher.findLatestNumericIntegerAnswer(ictx, activityCode, stableId, studyId)
+                    ? fetcher.findLatestNumericIntegerAnswer(ictx, userGuid, activityCode, stableId, studyId)
                     : fetcher.findSpecificNumericIntegerAnswer(ictx, activityCode, instanceGuid, stableId);
             if (value == null) {
-                String msg = String.format("User %s does not have numeric answer for question %s", ictx.getUserGuid(), stableId);
+                String msg = String.format("User %s does not have numeric answer for question %s", userGuid, stableId);
                 throw new PexFetchException(msg);
             } else {
                 return value;
@@ -611,6 +628,8 @@ public class TreeWalkInterpreter implements PexInterpreter {
             } else {
                 return birthDate;
             }
+        } else if (queryCtx instanceof PexParser.ProfileIsGovernedParticipantQueryContext) {
+            return !ictx.getUserGuid().equals(ictx.getOperatorGuid());
         } else {
             throw new PexUnsupportedException("Unhandled profile data query: " + queryCtx.getText());
         }

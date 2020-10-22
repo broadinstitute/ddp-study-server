@@ -100,7 +100,7 @@ public class ConsentServiceTest extends TxnAwareBaseTest {
     @Test
     public void testGetAllConsentSummaries_noneFound() {
         TransactionWrapper.useTxn(handle -> {
-            List<ConsentSummary> summaries = service.getAllConsentSummariesByUserGuid(handle, userGuid, "abc");
+            List<ConsentSummary> summaries = service.getAllConsentSummariesByUserGuid(handle, userGuid, userGuid, "abc");
             assertNotNull(summaries);
             assertTrue(summaries.isEmpty());
         });
@@ -109,7 +109,7 @@ public class ConsentServiceTest extends TxnAwareBaseTest {
     @Test
     public void testGetAllConsentSummaries_found() {
         TransactionWrapper.useTxn(handle -> {
-            List<ConsentSummary> summaries = service.getAllConsentSummariesByUserGuid(handle, userGuid, studyGuid);
+            List<ConsentSummary> summaries = service.getAllConsentSummariesByUserGuid(handle, userGuid, userGuid, studyGuid);
             assertNotNull(summaries);
             assertFalse(summaries.isEmpty());
 
@@ -136,13 +136,13 @@ public class ConsentServiceTest extends TxnAwareBaseTest {
 
         service = new ConsentService(interpreter, mockDao, consentElectionDao);
 
-        TransactionWrapper.useTxn(handle -> service.getAllConsentSummariesByUserGuid(handle, userGuid, studyGuid));
+        TransactionWrapper.useTxn(handle -> service.getAllConsentSummariesByUserGuid(handle, userGuid, userGuid, studyGuid));
     }
 
     @Test
     public void testGetAllConsentSummaries_noInstanceNoEval() {
         PexInterpreter mockInterp = Mockito.mock(PexInterpreter.class);
-        when(mockInterp.eval(anyString(), any(Handle.class), anyString(), anyString()))
+        when(mockInterp.eval(anyString(), any(Handle.class), anyString(), anyString(), anyString()))
                 .thenThrow(new PexException("should not be thrown"));
 
         StudyActivityDao mockDao = Mockito.mock(StudyActivityDao.class);
@@ -152,7 +152,7 @@ public class ConsentServiceTest extends TxnAwareBaseTest {
         service = new ConsentService(mockInterp, mockDao, consentElectionDao);
 
         TransactionWrapper.useTxn(handle -> {
-            List<ConsentSummary> summaries = service.getAllConsentSummariesByUserGuid(handle, userGuid, studyGuid);
+            List<ConsentSummary> summaries = service.getAllConsentSummariesByUserGuid(handle, userGuid, userGuid, studyGuid);
             assertNotNull(summaries);
             assertEquals(1, summaries.size());
 
@@ -175,7 +175,7 @@ public class ConsentServiceTest extends TxnAwareBaseTest {
     @Test
     public void testGetAllConsentSummaries_hasInstanceRunEval() {
         PexInterpreter mockInterp = Mockito.mock(PexInterpreter.class);
-        when(mockInterp.eval(anyString(), any(Handle.class), anyString(), anyString()))
+        when(mockInterp.eval(anyString(), any(Handle.class), anyString(), anyString(), anyString()))
                 .thenReturn(true);
 
         StudyActivityDao mockDao = Mockito.mock(StudyActivityDao.class);
@@ -189,7 +189,7 @@ public class ConsentServiceTest extends TxnAwareBaseTest {
         service = new ConsentService(mockInterp, mockDao, mockElectDao);
 
         TransactionWrapper.useTxn(handle -> {
-            List<ConsentSummary> summaries = service.getAllConsentSummariesByUserGuid(handle, userGuid, studyGuid);
+            List<ConsentSummary> summaries = service.getAllConsentSummariesByUserGuid(handle, userGuid, userGuid, studyGuid);
             assertNotNull(summaries);
             assertEquals(1, summaries.size());
 
@@ -210,7 +210,7 @@ public class ConsentServiceTest extends TxnAwareBaseTest {
     @Test
     public void testGetConsentSummary_noneFound() {
         TransactionWrapper.useTxn(handle -> {
-            Optional<ConsentSummary> summary = service.getLatestConsentSummary(handle, userGuid, studyGuid, "abc");
+            Optional<ConsentSummary> summary = service.getLatestConsentSummary(handle, userGuid, userGuid, studyGuid, "abc");
             assertNotNull(summary);
             assertFalse(summary.isPresent());
         });
@@ -219,7 +219,7 @@ public class ConsentServiceTest extends TxnAwareBaseTest {
     @Test
     public void testGetConsentSummary_found() {
         TransactionWrapper.useTxn(handle -> {
-            ConsentSummary summary = service.getLatestConsentSummary(handle, userGuid, studyGuid, noElectionsActCode).get();
+            ConsentSummary summary = service.getLatestConsentSummary(handle, userGuid, userGuid, studyGuid, noElectionsActCode).get();
             assertNotNull(summary);
             assertEquals(noElectionsActCode, summary.getActivityCode());
             assertNull(summary.getInstanceGuid());
@@ -239,13 +239,13 @@ public class ConsentServiceTest extends TxnAwareBaseTest {
 
         service = new ConsentService(interpreter, mockDao, consentElectionDao);
 
-        TransactionWrapper.useTxn(handle -> service.getLatestConsentSummary(handle, userGuid, studyGuid, noElectionsActCode));
+        TransactionWrapper.useTxn(handle -> service.getLatestConsentSummary(handle, userGuid, userGuid, studyGuid, noElectionsActCode));
     }
 
     @Test
     public void testGetConsentSummary_noInstanceNoEval() {
         PexInterpreter mockInterp = Mockito.mock(PexInterpreter.class);
-        when(mockInterp.eval(anyString(), any(Handle.class), anyString(), anyString()))
+        when(mockInterp.eval(anyString(), any(Handle.class), anyString(), anyString(), anyString()))
                 .thenThrow(new PexException("should not be thrown"));
 
         StudyActivityDao mockDao = Mockito.mock(StudyActivityDao.class);
@@ -255,7 +255,7 @@ public class ConsentServiceTest extends TxnAwareBaseTest {
         service = new ConsentService(mockInterp, mockDao, consentElectionDao);
 
         TransactionWrapper.useTxn(handle -> {
-            ConsentSummary summary = service.getLatestConsentSummary(handle, userGuid, studyGuid, hasElectionsActCode).get();
+            ConsentSummary summary = service.getLatestConsentSummary(handle, userGuid, userGuid, studyGuid, hasElectionsActCode).get();
             assertNotNull(summary);
 
             assertEquals(hasElectionsActCode, summary.getActivityCode());
@@ -275,7 +275,7 @@ public class ConsentServiceTest extends TxnAwareBaseTest {
     @Test
     public void testGetConsentSummary_hasInstanceRunEval() {
         PexInterpreter mockInterp = Mockito.mock(PexInterpreter.class);
-        when(mockInterp.eval(anyString(), any(Handle.class), anyString(), anyString()))
+        when(mockInterp.eval(anyString(), any(Handle.class), anyString(), anyString(), anyString()))
                 .thenReturn(true);
 
         StudyActivityDao mockDao = Mockito.mock(StudyActivityDao.class);
@@ -289,7 +289,7 @@ public class ConsentServiceTest extends TxnAwareBaseTest {
         service = new ConsentService(mockInterp, mockDao, mockElectDao);
 
         TransactionWrapper.useTxn(handle -> {
-            ConsentSummary summary = service.getLatestConsentSummary(handle, userGuid, studyGuid, hasElectionsActCode).get();
+            ConsentSummary summary = service.getLatestConsentSummary(handle, userGuid, userGuid, studyGuid, hasElectionsActCode).get();
             assertNotNull(summary);
 
             assertEquals(hasElectionsActCode, summary.getActivityCode());

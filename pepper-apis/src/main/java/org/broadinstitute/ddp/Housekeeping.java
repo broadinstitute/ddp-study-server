@@ -295,6 +295,7 @@ public class Housekeeping {
                                     shouldCancel = pexInterpreter.eval(pendingEvent.getCancelCondition(),
                                             apisHandle,
                                             pendingEvent.getParticipantGuid(),
+                                            pendingEvent.getOperatorGuid(),
                                             null);
                                 } catch (PexException e) {
                                     LOG.warn("Failed to evaluate cancelCondition pex, defaulting to false: `{}`",
@@ -319,6 +320,7 @@ public class Housekeeping {
                                         hasMetPrecondition = pexInterpreter.eval(pendingEvent.getPrecondition(),
                                                 apisHandle,
                                                 pendingEvent.getParticipantGuid(),
+                                                pendingEvent.getOperatorGuid(),
                                                 null);
                                     } catch (PexException e) {
                                         LOG.warn("Failed to evaluate precondition pex, defaulting to false: `{}`",
@@ -720,7 +722,7 @@ public class Housekeeping {
         ActivityInstanceCreationEventAction eventAction = new ActivityInstanceCreationEventAction(
                 eventConf, eventConfDto.getActivityInstanceCreationStudyActivityId());
         eventAction.doAction(apisHandle, new EventSignal(pendingEvent.getOperatorUserId(),
-                participant.getId(), pendingEvent.getParticipantGuid(),
+                participant.getId(), pendingEvent.getParticipantGuid(), pendingEvent.getOperatorGuid(),
                 studyDto.getId(), pendingEvent.getTriggerType()));
     }
 
