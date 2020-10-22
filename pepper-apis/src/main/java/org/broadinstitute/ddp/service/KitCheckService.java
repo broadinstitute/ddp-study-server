@@ -37,6 +37,8 @@ import org.slf4j.LoggerFactory;
 
 public class KitCheckService {
 
+    public static final int DEFAULT_QUERY_FETCH_SIZE = 300;
+
     private static final Logger LOG = LoggerFactory.getLogger(KitCheckService.class);
     private static final int DEFAULT_PENDING_BATCH_SIZE = 300;
 
@@ -392,6 +394,7 @@ public class KitCheckService {
                 .findStringTemplate(KitCheckService.class, "queryAddressInfoForEnrolledUsersWithoutKits")
                 .render();
         return apisHandle.createQuery(query)
+                .setFetchSize(DEFAULT_QUERY_FETCH_SIZE)
                 .bind("studyGuid", studyGuid)
                 .bind("kitTypeId", kitTypeId)
                 .registerRowMapper(ConstructorMapper.factory(PotentialRecipient.class))
