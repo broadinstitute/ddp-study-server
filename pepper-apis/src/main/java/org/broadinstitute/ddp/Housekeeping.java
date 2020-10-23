@@ -519,8 +519,8 @@ public class Housekeeping {
                 new JavaHeapDumper().dumpHeap(projectId, bucketName);
                 response.status(200);
                 return "";
-            } catch(IOException e) {
-                LOG.error("Heap dump failed",e);
+            } catch (IOException e) {
+                LOG.error("Heap dump failed", e);
                 response.status(500);
                 return "";
             }
