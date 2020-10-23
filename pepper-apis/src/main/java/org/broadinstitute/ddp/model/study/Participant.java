@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.broadinstitute.ddp.db.dto.EnrollmentStatusDto;
+import org.broadinstitute.ddp.db.dto.InvitationDto;
 import org.broadinstitute.ddp.db.dto.MedicalProviderDto;
 import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
@@ -29,11 +30,13 @@ public class Participant {
     private LocalDate dateOfMajority;
     private LocalDate birthDate;
     private DateValue dateOfDiagnosis;
+    private List<InvitationDto> invitations;
 
     public Participant(EnrollmentStatusDto status, User user) {
         this.status = status;
         this.user = user;
         this.providers = new ArrayList<>();
+        this.invitations = new ArrayList<>();
         this.responses = new HashMap<>();
     }
 
@@ -52,6 +55,7 @@ public class Participant {
     public void addProvider(MedicalProviderDto providerDto) {
         providers.add(providerDto);
     }
+
 
     public LocalDate getBirthDate() {
         return birthDate;
@@ -93,5 +97,14 @@ public class Participant {
 
     public void setDateOfMajority(LocalDate dateOfMajority) {
         this.dateOfMajority = dateOfMajority;
+    }
+
+
+    public List<InvitationDto> getInvitations() {
+        return invitations;
+    }
+
+    public void addInvitation(InvitationDto invitationDto) {
+        this.invitations.add(invitationDto);
     }
 }
