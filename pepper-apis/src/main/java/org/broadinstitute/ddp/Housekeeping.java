@@ -540,8 +540,8 @@ public class Housekeeping {
             }
         }
 
-//        Spark.stop();
-//        Spark.awaitStop();
+        //        Spark.stop();
+        //        Spark.awaitStop();
         if (receivedPing.get()) {
             LOG.info("Received ping from GAE, proceeding with Housekeeping startup");
         } else {
