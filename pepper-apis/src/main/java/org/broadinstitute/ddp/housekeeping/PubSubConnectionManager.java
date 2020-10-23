@@ -254,16 +254,15 @@ public class PubSubConnectionManager {
     }
 
     /**
-     * Creates a new subscriber
+     * Creates a new subscriber builder
      */
-    public Subscriber subscribe(ProjectSubscriptionName projectSubscriptionName, MessageReceiver receiver) {
+    public Subscriber.Builder subscribeBuilder(ProjectSubscriptionName projectSubscriptionName, MessageReceiver receiver) {
         if (useEmulator) {
             return Subscriber.newBuilder(projectSubscriptionName, receiver)
                     .setCredentialsProvider(pubsubCredsProvider)
-                    .setChannelProvider(channelProvider)
-                    .build();
+                    .setChannelProvider(channelProvider);
         } else {
-            return Subscriber.newBuilder(projectSubscriptionName, receiver).build();
+            return Subscriber.newBuilder(projectSubscriptionName, receiver);
         }
     }
 
