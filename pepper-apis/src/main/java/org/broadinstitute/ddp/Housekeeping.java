@@ -18,6 +18,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import com.google.api.core.ApiFuture;
 import com.google.api.core.ApiFutureCallback;
 import com.google.api.core.ApiFutures;
+import com.google.api.gax.core.InstantiatingExecutorProvider;
 import com.google.api.gax.rpc.ApiException;
 import com.google.cloud.pubsub.v1.AckReplyConsumer;
 import com.google.cloud.pubsub.v1.MessageReceiver;
@@ -484,7 +485,12 @@ public class Housekeeping {
         if (enableHKeepTasks) {
             var subName = ProjectSubscriptionName.of(projectId, cfg.getString(ConfigFile.PUBSUB_HKEEP_TASKS_SUB));
             var receiver = new HousekeepingTaskReceiver(subName, scheduler);
-            taskSubscriber = Subscriber.newBuilder(subName, receiver).build();
+            taskSubscriber = Subscriber.newBuilder(subName, receiver)
+                    .setParallelPullCount(1)
+                    .setExecutorProvider(InstantiatingExecutorProvider.newBuilder()
+                            .setExecutorThreadCount(1)
+                            .build())
+                    .build();
             try {
                 taskSubscriber.startAsync().awaitRunning(30L, TimeUnit.SECONDS);
             } catch (TimeoutException e) {
@@ -693,7 +699,12 @@ public class Housekeeping {
                         }
                     };
 
-            Subscriber subscriber = pubsubConnectionManager.subscribe(projectSubscriptionName, receiver);
+            Subscriber subscriber = pubsubConnectionManager.subscribeBuilder(projectSubscriptionName, receiver)
+                    .setParallelPullCount(1)
+                    .setExecutorProvider(InstantiatingExecutorProvider.newBuilder()
+                            .setExecutorThreadCount(1)
+                            .build())
+                    .build();
             subscriber.startAsync();
         } catch (Exception e) {
             LOG.error("Error during message handling", e);
