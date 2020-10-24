@@ -512,7 +512,20 @@ public class Housekeeping {
             response.status(200);
             return "";
         });
-        Spark.get("/heapdump", (request, response) -> {
+        Spark.post("/heapdump", (request, response) -> {
+            String postedPassword = request.queryParams("password");
+            if (StringUtils.isNotEmpty(postedPassword)) {
+                String configuredPwd = ConfigManager.getInstance().getConfig().getString(ConfigFile.HEALTHCHECK_PASSWORD);
+                if (!configuredPwd.equals(postedPassword)) {
+                    LOG.error("Invalid password for heapdump call");
+                    response.status(404);
+                    return "";
+                }
+            } else {
+                LOG.error("Missing password for heapdump call");
+                response.status(404);
+                return "";
+            }
             try {
                 String projectId = ConfigManager.getInstance().getConfig().getString(ConfigFile.GOOGLE_PROJECT_ID);
                 String bucketName = projectId + "-heap-dumps";
@@ -539,7 +552,7 @@ public class Housekeeping {
                 LOG.warn("Wait interrupted", e);
             }
         }
-
+        // Commenting out while we keep heapdump functionality
         //        Spark.stop();
         //        Spark.awaitStop();
         if (receivedPing.get()) {
