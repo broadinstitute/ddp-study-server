@@ -50,6 +50,7 @@ public class JavaHeapDumper {
         try (FileInputStream localDumpFileStream = new FileInputStream(localDumpFile)) {
             Blob blob = GoogleBucketUtil.uploadFile(storage, bucketName, DEFAULT_BUCKET_PATH + "/" + fileName,
                     "application/octet-stream", localDumpFileStream);
+            LOG.info("Heap dump saved to bucket:" + bucketName + " to path: " + DEFAULT_BUCKET_PATH + "/" + fileName);
         } catch (DDPException e) {
             LOG.error("Could not upload the dump file at: " + fileName, e);
             throw e;
