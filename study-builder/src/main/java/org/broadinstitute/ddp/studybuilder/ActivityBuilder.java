@@ -106,7 +106,14 @@ public class ActivityBuilder {
 
     private void insertActivities(Handle handle) {
         Instant timestamp = ConfigUtil.getInstantIfPresent(cfg, "activityTimestamp");
-        for (Config activityCfg : cfg.getConfigList("activities")) {
+        insertActivities(handle, cfg, timestamp);
+    }
+
+    public void insertActivities(Handle handle, Config activitiesCfg, Instant timestamp) {
+        if (!activitiesCfg.hasPath("activities")) {
+            return;
+        }
+        for (Config activityCfg : activitiesCfg.getConfigList("activities")) {
             Config definitionCfg = readDefinitionConfig(activityCfg.getString("filepath"));
             ActivityDef def = gson.fromJson(ConfigUtil.toJson(definitionCfg), ActivityDef.class);
             validateDefinition(def);
@@ -201,6 +208,10 @@ public class ActivityBuilder {
     }
 
     private void insertActivityStatusIcons(Handle handle) {
+        if (!cfg.hasPath("activityStatusIcons")) {
+            return;
+        }
+
         JdbiFormTypeActivityInstanceStatusType jdbiStatusIcon = handle.attach(JdbiFormTypeActivityInstanceStatusType.class);
 
         String reason = String.format("Create activity status icons for study=%s", studyDto.getGuid());

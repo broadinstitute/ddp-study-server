@@ -1,5 +1,7 @@
 package org.broadinstitute.ddp.db.dto;
 
+import java.io.Serializable;
+
 import org.jdbi.v3.core.mapper.Nested;
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
@@ -7,7 +9,7 @@ import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 /**
  * DTO class to represent boolean question that includes all base question data.
  */
-public final class BooleanQuestionDto extends QuestionDto {
+public final class BooleanQuestionDto extends QuestionDto implements Serializable {
 
     private long trueTemplateId;
     private long falseTemplateId;

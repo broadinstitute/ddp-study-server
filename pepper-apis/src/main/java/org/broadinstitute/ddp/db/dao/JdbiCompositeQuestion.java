@@ -48,6 +48,17 @@ public interface JdbiCompositeQuestion extends SqlObject {
     @UseRowReducer(RowReducer.class)
     Optional<CompositeQuestionDto> findDtoByQuestionId(@Bind("questionId") long questionId);
 
+    default Optional<CompositeQuestionDto> findDtoByQuestion(QuestionDto questionDto) {
+        return findDtoByQuestionId(questionDto.getId());
+    }
+
+    @UseStringTemplateSqlLocator
+    @SqlQuery("queryDtoAndChildrenDtosByActivityId")
+    @RegisterConstructorMapper(value = CompositeQuestionDto.class, prefix = "p")
+    @RegisterConstructorMapper(value = QuestionDto.class, prefix = "c")
+    @UseRowReducer(RowReducer.class)
+    List<CompositeQuestionDto> findDtosByActivityId(@Bind("activityId") long activityId);
+
     @UseStringTemplateSqlLocator
     @SqlQuery("queryDtoAndChildrenDtosByActivityInstanceGuidAndStableId")
     @RegisterConstructorMapper(value = CompositeQuestionDto.class, prefix = "p")
@@ -65,12 +76,12 @@ public interface JdbiCompositeQuestion extends SqlObject {
     Optional<CompositeQuestionDto> findParentDtoByChildQuestionId(@Bind("childQuestionId") long childQuestionId);
 
     @UseStringTemplateSqlLocator
-    @SqlQuery("queryCompositeQuestionIdByChildQuestionStableId")
-    Optional<Long> findParentQuestionIdByChildQuestionStableId(@Bind("childQuestionStableId") String childQuestionStableId);
-
-    @UseStringTemplateSqlLocator
     @SqlQuery("queryCompositeQuestionIdByChildQuestionId")
     Optional<Long> findParentQuestionIdByChildQuestionId(@Bind("childQuestionId") long childQuestionId);
+
+    default Optional<Long>  findParentQuestionIdByChildQuestion(QuestionDto questionDto) {
+        return findParentQuestionIdByChildQuestionId(questionDto.getId());
+    }
 
     class RowReducer implements LinkedHashMapRowReducer<Long, CompositeQuestionDto> {
         @Override

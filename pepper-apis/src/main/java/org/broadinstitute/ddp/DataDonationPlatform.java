@@ -28,6 +28,7 @@ import org.apache.http.HttpStatus;
 import org.apache.http.entity.ContentType;
 import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetricsTracker;
 import org.broadinstitute.ddp.cache.LanguageStore;
+import org.broadinstitute.ddp.cache.CacheService;
 import org.broadinstitute.ddp.client.DsmClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.ErrorCodes;
@@ -119,15 +120,15 @@ import org.broadinstitute.ddp.route.JoinMailingListRoute;
 import org.broadinstitute.ddp.route.ListCancersRoute;
 import org.broadinstitute.ddp.route.ListStudyLanguagesRoute;
 import org.broadinstitute.ddp.route.ListUserStudyInvitationsRoute;
-import org.broadinstitute.ddp.route.PatchFormAnswersRoute;
 import org.broadinstitute.ddp.route.PatchActivityInstanceRoute;
+import org.broadinstitute.ddp.route.PatchFormAnswersRoute;
 import org.broadinstitute.ddp.route.PatchMedicalProviderRoute;
 import org.broadinstitute.ddp.route.PatchProfileRoute;
 import org.broadinstitute.ddp.route.PostMedicalProviderRoute;
 import org.broadinstitute.ddp.route.PostPasswordResetRoute;
 import org.broadinstitute.ddp.route.PutFormAnswersRoute;
 import org.broadinstitute.ddp.route.PutTempMailingAddressRoute;
-import org.broadinstitute.ddp.route.SendDsmNotificationRoute;
+import org.broadinstitute.ddp.route.ReceiveDsmNotificationRoute;
 import org.broadinstitute.ddp.route.SendEmailRoute;
 import org.broadinstitute.ddp.route.SendExitNotificationRoute;
 import org.broadinstitute.ddp.route.SetParticipantDefaultMailAddressRoute;
@@ -259,6 +260,8 @@ public class DataDonationPlatform {
             LOG.info("Running liquibase migrations in StudyServer against database url: {}", dbUrl);
             LiquibaseUtil.runLiquibase(dbUrl, TransactionWrapper.DB.APIS);
         }
+        //@TODO figure out how to do this only at deployment time.
+        CacheService.getInstance().resetAllCaches();
         TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, LanguageStore::init);
 
         if (appEnginePort != null) {
@@ -425,6 +428,7 @@ public class DataDonationPlatform {
 
         // User activity answers routes
         FormActivityService formService = new FormActivityService(interpreter);
+
         patch(API.USER_ACTIVITY_ANSWERS,
                 new PatchFormAnswersRoute(formService, activityValidationService, interpreter),
                 responseSerializer);
@@ -451,7 +455,7 @@ public class DataDonationPlatform {
         get(API.DSM_PARTICIPANT_MEDICAL_INFO, new GetDsmMedicalRecordRoute(medicalRecordService), responseSerializer);
         get(API.DSM_PARTICIPANT_INSTITUTIONS, new GetDsmParticipantInstitutionsRoute(), responseSerializer);
 
-        post(API.DSM_NOTIFICATION, new SendDsmNotificationRoute(), responseSerializer);
+        post(API.DSM_NOTIFICATION, new ReceiveDsmNotificationRoute(), jsonSerializer);
         post(API.DSM_TERMINATE_USER, new DsmExitUserRoute(), responseSerializer);
 
         PdfService pdfService = new PdfService();

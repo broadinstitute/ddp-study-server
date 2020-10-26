@@ -38,6 +38,7 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.Options;
 import org.apache.commons.io.IOUtils;
+import org.broadinstitute.ddp.cache.CacheService;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.SqlConstants;
@@ -48,20 +49,15 @@ import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.ClientDao;
-import org.broadinstitute.ddp.db.dao.EventActionDao;
 import org.broadinstitute.ddp.db.dao.FormActivityDao;
-import org.broadinstitute.ddp.db.dao.JdbiActivityInstanceStatusType;
 import org.broadinstitute.ddp.db.dao.JdbiActivityStatusTrigger;
 import org.broadinstitute.ddp.db.dao.JdbiAuth0Tenant;
 import org.broadinstitute.ddp.db.dao.JdbiClient;
 import org.broadinstitute.ddp.db.dao.JdbiClientUmbrellaStudy;
-import org.broadinstitute.ddp.db.dao.JdbiDsmNotificationEventType;
-import org.broadinstitute.ddp.db.dao.JdbiDsmNotificationTrigger;
 import org.broadinstitute.ddp.db.dao.JdbiEventAction;
 import org.broadinstitute.ddp.db.dao.JdbiEventConfiguration;
 import org.broadinstitute.ddp.db.dao.JdbiEventConfigurationOccurrenceCounter;
-import org.broadinstitute.ddp.db.dao.JdbiEventTrigger;
-import org.broadinstitute.ddp.db.dao.JdbiExpression;
+import org.broadinstitute.ddp.db.dao.EventTriggerSql;
 import org.broadinstitute.ddp.db.dao.JdbiMailAddress;
 import org.broadinstitute.ddp.db.dao.JdbiMedicalProvider;
 import org.broadinstitute.ddp.db.dao.JdbiRevision;
@@ -78,7 +74,6 @@ import org.broadinstitute.ddp.db.dto.Auth0TenantDto;
 import org.broadinstitute.ddp.db.dto.EnrollmentStatusDto;
 import org.broadinstitute.ddp.db.dto.MedicalProviderDto;
 import org.broadinstitute.ddp.db.dto.SendgridConfigurationDto;
-import org.broadinstitute.ddp.db.dto.SendgridEmailEventActionDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.model.activity.definition.ConsentActivityDef;
@@ -99,7 +94,6 @@ import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.DateFieldType;
 import org.broadinstitute.ddp.model.activity.types.DateRenderMode;
-import org.broadinstitute.ddp.model.activity.types.DsmNotificationEventType;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.activity.types.FormType;
@@ -308,6 +302,7 @@ public class TestDataSetupUtil {
     }
 
     public static GeneratedTestData generateBasicUserTestData(Handle handle, boolean forceUserCreation) {
+        CacheService.getInstance().resetAllCaches();
         String sendgridApiKey = cfg.getString(ConfigFile.SENDGRID_API_KEY);
         String backendTestAuth0ClientId = auth0Config.getString(ConfigFile.BACKEND_AUTH0_TEST_CLIENT_ID);
         String backendTestSecret = auth0Config.getString(ConfigFile.BACKEND_AUTH0_TEST_SECRET);
@@ -574,86 +569,6 @@ public class TestDataSetupUtil {
     }
 
     /**
-     * Generates an event configuration whose most typical use is queuing a Housekeeping event
-     * This method was originally created for serving the SendDsmNotificationRouteTest, so
-     * it inserts quite a lot of things. You can create a more generic method instead
-     *
-     * @param generatedTestData    Test data which is used for getting userGuid, studyGuid etc.
-     * @param sendgridTemplateGuid GUID of the Sendgrid template used for sending an e-mail
-     * @return id of the generated event configuration
-     */
-    public static long generateDsmNotificationTestEventConfiguration(
-            Handle handle,
-            TestDataSetupUtil.GeneratedTestData generatedTestData,
-            String sendgridTemplateGuid
-    ) {
-        EventActionDao eventActionDao = handle.attach(EventActionDao.class);
-        JdbiExpression expressionDao = handle.attach(JdbiExpression.class);
-        JdbiEventTrigger eventTriggerDao = handle.attach(JdbiEventTrigger.class);
-        JdbiActivityStatusTrigger activityStatusTriggerDao = handle.attach(JdbiActivityStatusTrigger.class);
-        ActivityInstanceDao activityInstanceDao = handle.attach(ActivityInstanceDao.class);
-        JdbiActivityInstanceStatusType statusTypeDao = handle.attach(JdbiActivityInstanceStatusType.class);
-        JdbiEventConfiguration eventConfigDao = handle.attach(JdbiEventConfiguration.class);
-        JdbiDsmNotificationEventType dsmNotificationEventTypeDao = handle.attach(JdbiDsmNotificationEventType.class);
-
-        SendgridEmailEventActionDto eventActionDto = new SendgridEmailEventActionDto(sendgridTemplateGuid, "en", false);
-        long testEmailActionId = eventActionDao.insertNotificationAction(eventActionDto);
-
-        // create a new activity
-        FormActivityDef testActivity = TestDataSetupUtil.generateTestFormActivityForUser(
-                handle, generatedTestData.getUserGuid(), generatedTestData.getStudyGuid()
-        );
-
-        Auth0Util.TestingUser testingUser = generatedTestData.getTestingUser();
-        long testingUserId = testingUser.getUserId();
-        String testingUserGuid = testingUser.getUserGuid();
-        LOG.info("Using generated testing user {} with guid {} and auth0 id {}", testingUserId, testingUserGuid,
-                testingUser.getAuth0Id());
-
-        // create an activity instance of the created activity for the user
-        ActivityInstanceDto testActivityInstance = TestDataSetupUtil.generateTestFormActivityInstanceForUser(
-                handle, testActivity.getActivityId(), testingUserGuid
-        );
-        LOG.info("Created activity instance {} with guid {}", testActivityInstance.getId(),
-                testActivityInstance.getGuid());
-
-        long trueExpressionId = expressionDao.insertExpression("true").getId();
-        long falseExpressionId = expressionDao.insertExpression("false").getId();
-
-        // setup a status change event trigger so that when status changes, an event is queued
-        long eventTriggerId = eventTriggerDao.insert(EventTriggerType.DSM_NOTIFICATION);
-
-        Optional<Long> dsmNotificationEventTypeId = dsmNotificationEventTypeDao
-                .findIdByCode(DsmNotificationEventType.SALIVA_RECEIVED.name());
-
-        // create an instance of the DSM notication trigger subclass
-        handle.attach(JdbiDsmNotificationTrigger.class).insert(
-                eventTriggerId,
-                dsmNotificationEventTypeId.get()
-        );
-
-        // a user must be eligible for DSM operations
-        handle.attach(JdbiUserStudyEnrollment.class).changeUserStudyEnrollmentStatus(
-                testingUserGuid,
-                generatedTestData.getStudyGuid(),
-                EnrollmentStatusType.ENROLLED);
-
-        // finally, create the event configuration
-        return eventConfigDao.insert(
-                eventTriggerId,
-                testEmailActionId,
-                generatedTestData.getStudyId(),
-                Instant.now().toEpochMilli(),
-                1,
-                null,
-                trueExpressionId,
-                falseExpressionId,
-                true,
-                1
-        );
-    }
-
-    /**
      * Creates a new test user
      */
     private static Auth0Util.TestingUser generateTestUser(Handle handle,
@@ -700,6 +615,9 @@ public class TestDataSetupUtil {
                 .setPreferredLangId(LanguageStore
                         .get(TestConstants.TEST_USER_PROFILE_PREFERRED_LANGUAGE)
                         .getId())
+                .setSkipLanguagePopup(random
+                        ? rand.nextBoolean()
+                        : TestConstants.TEST_USER_PROFILE_SKIP_LANGUAGE_POPUP)
                 .build();
         handle.attach(UserProfileDao.class).createProfile(profile);
         return profile;
@@ -740,7 +658,7 @@ public class TestDataSetupUtil {
                 generatedTestData.getUserId());
         handle.attach(JdbiEventConfiguration.class).deleteById(generatedTestData.getEnrollmentConfigurationId());
         handle.attach(JdbiActivityStatusTrigger.class).deleteById(generatedTestData.getConsentActivityStatusTriggerId());
-        handle.attach(JdbiEventTrigger.class).deleteById(generatedTestData.getEnrollmentEventTriggerId());
+        handle.attach(EventTriggerSql.class).deleteBaseTriggerById(generatedTestData.getEnrollmentEventTriggerId());
         handle.attach(JdbiEventAction.class)
                 .deleteById(generatedTestData.getEnrollmentActionId());
     }
@@ -753,7 +671,8 @@ public class TestDataSetupUtil {
         generatedTestData.setEnrollmentActionId(handle.attach(JdbiEventAction.class)
                 .insert(null, EventActionType.USER_ENROLLED));
 
-        generatedTestData.setEnrollmentEventTriggerId(handle.attach(JdbiEventTrigger.class).insert(EventTriggerType.ACTIVITY_STATUS));
+        generatedTestData.setEnrollmentEventTriggerId(
+                handle.attach(EventTriggerSql.class).insertBaseTrigger(EventTriggerType.ACTIVITY_STATUS));
 
         generatedTestData.setConsentActivityStatusTriggerId(generatedTestData.getEnrollmentEventTriggerId());
 
@@ -986,13 +905,13 @@ public class TestDataSetupUtil {
 
         CustomTemplate customTemplate = new CustomTemplate(fileContents);
         customTemplate.addSubstitution(new BooleanAnswerSubstitution(fieldValues.get(0),
-                consentActivityId, generatedTestData.getBloodQuestionStableId(), false));
+                consentActivityId, generatedTestData.getBloodQuestionStableId(), false, null));
         customTemplate.addSubstitution(new BooleanAnswerSubstitution(fieldValues.get(1),
-                consentActivityId, generatedTestData.getBloodQuestionStableId(), true));
+                consentActivityId, generatedTestData.getBloodQuestionStableId(), true, null));
         customTemplate.addSubstitution(new BooleanAnswerSubstitution(fieldValues.get(2),
-                consentActivityId, generatedTestData.getTissueQuestionStableId(), false));
+                consentActivityId, generatedTestData.getTissueQuestionStableId(), false, null));
         customTemplate.addSubstitution(new BooleanAnswerSubstitution(fieldValues.get(3),
-                consentActivityId, generatedTestData.getTissueQuestionStableId(), true));
+                consentActivityId, generatedTestData.getTissueQuestionStableId(), true, null));
         customTemplate.addSubstitution(new AnswerSubstitution(fieldValues.get(4),
                 consentActivityId, QuestionType.TEXT, generatedTestData.getSignatureQuestionStableId()));
         customTemplate.addSubstitution(new AnswerSubstitution(fieldValues.get(5),

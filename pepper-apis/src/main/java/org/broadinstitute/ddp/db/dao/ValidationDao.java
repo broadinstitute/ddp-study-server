@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import org.broadinstitute.ddp.content.I18nContentRenderer;
 import org.broadinstitute.ddp.db.DaoException;
+import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.db.dto.validation.LengthDto;
 import org.broadinstitute.ddp.db.dto.validation.NumOptionsSelectedDto;
 import org.broadinstitute.ddp.db.dto.validation.RegexDto;
@@ -115,14 +116,14 @@ public interface ValidationDao extends SqlObject {
     /**
      * Get all validations for a given question by id and language code.
      *
-     * @param questionId the question id
+     * @param questionDto the question dto object
      * @param langCodeId the language code id
      * @return list of validations corresponding to the question
      */
-    default List<Rule> getValidationRules(long questionId, long langCodeId) {
+    default List<Rule> getValidationRules(QuestionDto questionDto, long langCodeId) {
         List<Rule> rules = new ArrayList<>();
 
-        List<ValidationDto> validationDtos = getJdbiQuestionValidation().getAllActiveValidations(questionId);
+        List<ValidationDto> validationDtos = getJdbiQuestionValidation().getAllActiveValidations(questionDto);
 
         I18nContentRenderer i18nContentRenderer = new I18nContentRenderer();
 
@@ -153,7 +154,7 @@ public interface ValidationDao extends SqlObject {
         });
 
         LOG.info("Found {} validations for question id {} using language code id {}",
-                rules.size(), questionId, langCodeId);
+                rules.size(), questionDto.getId(), langCodeId);
         return rules;
     }
 
@@ -403,30 +404,42 @@ public interface ValidationDao extends SqlObject {
                 .findDtosByQuestionIdAndTimestamp(questionId, timestamp)
                 .stream().map(dto -> {
                     // todo: query templates, data for validation rules
+                    RuleDef ruleDef;
                     switch (dto.getRuleType()) {
                         case REQUIRED:
-                            return new RequiredRuleDef(null);
+                            ruleDef = new RequiredRuleDef(null);
+                            break;
                         case COMPLETE:
-                            return new CompleteRuleDef(null);
+                            ruleDef = new CompleteRuleDef(null);
+                            break;
                         case LENGTH:
-                            return new LengthRuleDef(null, null, null);
+                            ruleDef = new LengthRuleDef(null, null, null);
+                            break;
                         case REGEX:
-                            return new RegexRuleDef(null, "");
+                            ruleDef = new RegexRuleDef(null, "");
+                            break;
                         case NUM_OPTIONS_SELECTED:
-                            return new NumOptionsSelectedRuleDef(null, null, null);
+                            ruleDef = new NumOptionsSelectedRuleDef(null, null, null);
+                            break;
                         case DAY_REQUIRED:      // fall through
                         case MONTH_REQUIRED:    // fall through
                         case YEAR_REQUIRED:
-                            return new DateFieldRequiredRuleDef(dto.getRuleType(), null);
+                            ruleDef = new DateFieldRequiredRuleDef(dto.getRuleType(), null);
+                            break;
                         case AGE_RANGE:
-                            return new AgeRangeRuleDef(null, 0, null);
+                            ruleDef = new AgeRangeRuleDef(null, 0, null);
+                            break;
                         case DATE_RANGE:
-                            return new DateRangeRuleDef(null, null, null, false);
+                            ruleDef = new DateRangeRuleDef(null, null, null, false);
+                            break;
                         case INT_RANGE:
-                            return new IntRangeRuleDef(null, null, null);
+                            ruleDef = new IntRangeRuleDef(null, null, null);
+                            break;
                         default:
                             throw new DaoException("Unhandled validation rule type " + dto.getRuleType());
                     }
+                    ruleDef.setHintTemplateId(dto.getHintTemplateId());
+                    return ruleDef;
                 })
                 .collect(Collectors.toList());
     }

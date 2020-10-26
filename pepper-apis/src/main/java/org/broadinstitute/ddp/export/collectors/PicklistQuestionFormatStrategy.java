@@ -9,6 +9,7 @@ import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.content.HtmlConverter;
 import org.broadinstitute.ddp.elastic.MappingUtil;
+import org.broadinstitute.ddp.model.activity.definition.question.PicklistGroupDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
@@ -33,6 +34,15 @@ public class PicklistQuestionFormatStrategy implements ResponseFormatStrategy<Pi
             props.put(definition.getStableId(), MappingUtil.newTextType());
         }
 
+        for (PicklistGroupDef group : definition.getGroups()) {
+            for (PicklistOptionDef optionDef : group.getOptions()) {
+                if (optionDef.isDetailsAllowed()) {
+                    String key = detailHeader(definition.getStableId(), optionDef.getStableId());
+                    props.put(key, MappingUtil.newTextType());
+                }
+            }
+        }
+
         for (PicklistOptionDef optionDef : definition.getPicklistOptions()) {
             if (optionDef.isDetailsAllowed()) {
                 String key = detailHeader(definition.getStableId(), optionDef.getStableId());
@@ -50,6 +60,26 @@ public class PicklistQuestionFormatStrategy implements ResponseFormatStrategy<Pi
         props.put("questionType", definition.getQuestionType().name());
         props.put("questionText", HtmlConverter.getPlainText(definition.getPromptTemplate().render("en")));
         props.put("selectMode", definition.getSelectMode());
+        //add PL Groups
+        List<Object> groups = new ArrayList<>();
+        for (PicklistGroupDef group : definition.getGroups()) {
+            Map<String, Object> groupDef = new HashMap<>();
+            String groupStableId = group.getStableId();
+            String groupTxt = HtmlConverter.getPlainText(group.getNameTemplate().render("en"));
+            List<Object> options = new ArrayList<>();
+            for (PicklistOptionDef optionDef : group.getOptions()) {
+                Map<String, String> stableIdTxt = new HashMap<>();
+                stableIdTxt.put("optionStableId", optionDef.getStableId());
+                stableIdTxt.put("optionText", HtmlConverter.getPlainText(optionDef.getOptionLabelTemplate().render("en")));
+                options.add(stableIdTxt);
+            }
+            groupDef.put("groupStableId", groupStableId);
+            groupDef.put("groupText", groupTxt);
+            groupDef.put("options", options);
+            groups.add(groupDef);
+        }
+        props.put("groups", groups);
+
         List<Object> options = new ArrayList<>();
         for (PicklistOptionDef optionDef : definition.getPicklistOptions()) {
             Map<String, String> stableIdTxt = new HashMap<>();
@@ -65,6 +95,14 @@ public class PicklistQuestionFormatStrategy implements ResponseFormatStrategy<Pi
     public List<String> headers(PicklistQuestionDef definition) {
         List<String> headers = new ArrayList<>();
         headers.add(definition.getStableId());
+
+        for (PicklistGroupDef group : definition.getGroups()) {
+            for (PicklistOptionDef optionDef : group.getOptions()) {
+                if (optionDef.isDetailsAllowed()) {
+                    headers.add(detailHeader(definition.getStableId(), optionDef.getStableId()));
+                }
+            }
+        }
 
         for (PicklistOptionDef optionDef : definition.getPicklistOptions()) {
             if (optionDef.isDetailsAllowed()) {
@@ -84,8 +122,15 @@ public class PicklistQuestionFormatStrategy implements ResponseFormatStrategy<Pi
             mapping.put(selected.getStableId(), selected);
         }
 
+        List<PicklistOptionDef> options = new ArrayList<>();
         List<String> selectedIds = new ArrayList<>();
-        for (PicklistOptionDef option : question.getPicklistOptions()) {
+        for (PicklistGroupDef group : question.getGroups()) {
+            options.addAll(group.getOptions());
+        }
+
+        options.addAll(question.getPicklistOptions());
+
+        for (PicklistOptionDef option : options) {
             String osid = option.getStableId();
             if (mapping.containsKey(osid)) {
                 SelectedPicklistOption selected = mapping.get(osid);

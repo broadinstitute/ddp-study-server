@@ -23,6 +23,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -83,7 +84,7 @@ import org.slf4j.LoggerFactory;
 
 public class StudyDataLoaderTest {
     private static final Logger LOG = LoggerFactory.getLogger(StudyDataLoaderTest.class);
-    private static String PARTICIPANT_DATA_TEST_DATA_LOCATION = "src/test/resources/dm-survey-mbc-testdata-8148.json";
+    private static final String PARTICIPANT_DATA_TEST_DATA_LOCATION = "src/test/resources/dm-survey-mbc-testdata-8148.json";
     public static final String QUESTION_STABLE_MAP_FILE = "src/test/resources/question_stableid_map.json";
     private static OLCService olcService;
     private static AddressService addressService;
@@ -180,7 +181,8 @@ public class StudyDataLoaderTest {
         when(mockDataLoader.createActivityInstance(any(JsonElement.class),
                 anyString(), anyLong(), anyString(), anyString(), any(JdbiActivity.class),
                 any(ActivityInstanceDao.class),
-                any(ActivityInstanceStatusDao.class))).thenReturn(mockInstanceDto);
+                any(ActivityInstanceStatusDao.class),
+                any(JdbiActivityInstance.class))).thenReturn(mockInstanceDto);
 
         JdbiActivityInstance mockActivityDao = mock(JdbiActivityInstance.class);
         JdbiUserStudyLegacyData mockLegacyDataDao = mock(JdbiUserStudyLegacyData.class);
@@ -222,6 +224,129 @@ public class StudyDataLoaderTest {
         mockDataLoader.auth0Util = mockAuth0Util;
         mockDataLoader.auth0Domain = pretendDomain;
         mockDataLoader.mgmtToken = pretendMgmtToken;
+        mockDataLoader.mgmtClient = mockMgmtClient;
+
+        mockDataLoader.datStatEnumLookup = new HashMap<>();
+
+        //Independently consent
+        List<String> optionList = new ArrayList<>(2);
+        optionList.add(0, "prion_consent_s7_INDEPENDENT_NO");
+        optionList.add(1, "prion_consent_s7_INDEPENDENT_YES");
+        mockDataLoader.datStatEnumLookup.put("independently_consent", optionList);
+
+        //Participant gender
+        optionList = new ArrayList<>(4);
+        optionList.add(0, null);
+        optionList.add(1, "FEMALE");
+        optionList.add(2, "MALE");
+        optionList.add(3, "PREFER_NOT");
+        mockDataLoader.datStatEnumLookup.put("participant_gender", optionList);
+
+        //Current status
+        optionList = new ArrayList<>(4);
+        optionList.add(0, null);
+        optionList.add(1, "SYMPTOMATIC");
+        optionList.add(2, "AT_RISK");
+        optionList.add(3, "CONTROL");
+        mockDataLoader.datStatEnumLookup.put("current_status", optionList);
+
+        //Doctor diagnosed
+        optionList = new ArrayList<>(2);
+        optionList.add(0, "DIAGNOSED_NO");
+        optionList.add(1, "DIAGNOSED_YES");
+        mockDataLoader.datStatEnumLookup.put("doctor_diagnosed", optionList);
+
+        //Prion subtype
+        optionList = new ArrayList<>(9);
+        optionList.add(0, null);
+        optionList.add(1, "CJD");
+        optionList.add(2, "FFI");
+        optionList.add(3, "GSS");
+        optionList.add(4, "VPSPr");
+        optionList.add(5, "PSA");
+        optionList.add(6, "KURU");
+        optionList.add(7, "vCJD");
+        optionList.add(8, "sFI");
+        mockDataLoader.datStatEnumLookup.put("prion_subtype", optionList);
+
+        //Genetic testing
+        optionList = new ArrayList<>(4);
+        optionList.add(0, null);
+        optionList.add(1, "WAITING");
+        optionList.add(2, "KNOWN");
+        optionList.add(3, "NO");
+        mockDataLoader.datStatEnumLookup.put("genetic_testing", optionList);
+
+        //Move ability
+        optionList = new ArrayList<>(4);
+        optionList.add(0, null);
+        optionList.add(1, "ASSIST");
+        optionList.add(2, "IND");
+        optionList.add(3, "BED");
+        mockDataLoader.datStatEnumLookup.put("move_ability", optionList);
+
+        //Cognitive ability
+        optionList = new ArrayList<>(4);
+        optionList.add(0, null);
+        optionList.add(1, "IMP");
+        optionList.add(2, "NORM");
+        optionList.add(3, "SEV");
+        mockDataLoader.datStatEnumLookup.put("cognitive_ability", optionList);
+
+        //Eat ability
+        optionList = new ArrayList<>(4);
+        optionList.add(0, null);
+        optionList.add(1, "ASSIST");
+        optionList.add(2, "NORM");
+        optionList.add(3, "TUBE");
+        mockDataLoader.datStatEnumLookup.put("eat_ability", optionList);
+
+        //Travel ability
+        optionList = new ArrayList<>(4);
+        optionList.add(0, null);
+        optionList.add(1, "ASSIST");
+        optionList.add(2, "YES");
+        optionList.add(3, "NO");
+        mockDataLoader.datStatEnumLookup.put("travel_ability", optionList);
+
+        //participant disease risk
+        optionList = new ArrayList<>(7);
+        optionList.add(0, null);
+        optionList.add(1, "SUSPECTED_EXPOSED");
+        optionList.add(2, "MEDICAL_INFORMED");
+        optionList.add(3, "RELATIVE_UNTESTED");
+        optionList.add(4, "RELATIVE_TESTED");
+        optionList.add(5, "PARTICIPANT_TESTED");
+        optionList.add(6, "OTHER");
+        mockDataLoader.datStatEnumLookup.put("participant_disease_risk", optionList);
+
+        //medical procedure risk
+        optionList = new ArrayList<>(6);
+        optionList.add(0, null);
+        optionList.add(1, "MEDICAL_PROCEDURE_TRANSFUSION");
+        optionList.add(2, "MEDICAL_PROCEDURE_INSTRUMENTS");
+        optionList.add(3, "MEDICAL_PROCEDURE_TRANSPLANT");
+        optionList.add(4, "MEDICAL_PROCEDURE_HGH");
+        optionList.add(5, "MEDICAL_PROCEDURE_OTHER");
+        mockDataLoader.datStatEnumLookup.put("medical_procedure_risk", optionList);
+
+        //know_which_mutation
+        optionList = new ArrayList<>(2);
+        optionList.add(0, "KNOWN_MUTATION_NO");
+        optionList.add(1, "KNOWN_MUTATION_YES");
+        mockDataLoader.datStatEnumLookup.put("know_which_mutation", optionList);
+
+        //earliest_symptom_estimated
+        optionList = new ArrayList<>(2);
+        optionList.add(0, null);
+        optionList.add(1, "ESTIMATED_DATE");
+        mockDataLoader.datStatEnumLookup.put("earliest_symptom_estimated", optionList);
+
+        //diagnosis_date_estimated
+        optionList = new ArrayList<>(2);
+        optionList.add(0, null);
+        optionList.add(1, "YES");
+        mockDataLoader.datStatEnumLookup.put("diagnosis_date_estimated", optionList);
     }
 
     @Test
@@ -249,7 +374,7 @@ public class StudyDataLoaderTest {
         StudyDto studyDto = new StudyDto(pretendStudyId, pretendStudyGuid, "MBC", null, null,
                 1L, 2L, null, false, null, null, false);
 
-        ActivityInstanceDto instanceDto = new ActivityInstanceDto(1L, pretendInstanceGuid, 1L, 1L, 1L,
+        ActivityInstanceDto instanceDto = new ActivityInstanceDto(1L, pretendInstanceGuid, 1L, 1L, "X", 1L,
                 1L, 1L, true, false, null, null, null, true, 0);
 
         mockDataLoader.loadReleaseSurveyData(
@@ -262,9 +387,6 @@ public class StudyDataLoaderTest {
                 mockAnswerDao);
 
         ArgumentCaptor<String> legacyDataCaptor = ArgumentCaptor.forClass(String.class);
-        verify(mockJdbiUserStudyLegacyData, times(1)).insert(anyLong(), anyLong(), anyLong(),
-                anyString(), legacyDataCaptor.capture()
-        );
 
         //release address and physician.streetaddress are saved into legacy_data
         String expectedAddress = "{\"fullName\":null,\"street1\":\"415 Main Street\",\"street2\":null,\"city\":\"Cambridge\","
@@ -294,7 +416,7 @@ public class StudyDataLoaderTest {
                         assertEquals("MA", dto.getState());
                         assertEquals("Boston", dto.getCity());
                         assertEquals("GUID_110", dto.getLegacyGuid());
-                        assertEquals(InstitutionType.INITIAL_BIOPSY, dto.getInstitutionType());
+                        assertEquals(InstitutionType.INSTITUTION, dto.getInstitutionType());
                     } else if (dto.getInstitutionName().equals("BW")) {
                         assertEquals("MA", dto.getState());
                         assertEquals("Boston", dto.getCity());
@@ -342,7 +464,7 @@ public class StudyDataLoaderTest {
                 null, now, now);
         StudyDto studyDto = new StudyDto(pretendStudyId, pretendStudyGuid, "MBC", null, null,
                 1L, 2L, null, false, null, null, false);
-        ActivityInstanceDto instanceDto = new ActivityInstanceDto(1L, pretendInstanceGuid, 1L, 1L, 1L,
+        ActivityInstanceDto instanceDto = new ActivityInstanceDto(1L, pretendInstanceGuid, 1L, 1L, "X", 1L,
                 1L, 1L, true, false, null, null, null, true, 0);
         mockDataLoader.loadBloodReleaseSurveyData(
                 mockHandle,
@@ -364,7 +486,7 @@ public class StudyDataLoaderTest {
                         assertEquals("Boston", dto.getCity());
                         assertEquals("MA", dto.getState());
                         assertEquals("02111", dto.getPostalCode());
-                        assertEquals(null, dto.getPhone());
+                        assertNull(dto.getPhone());
                         assertEquals("119", dto.getLegacyGuid());
                         assertEquals(InstitutionType.PHYSICIAN, dto.getInstitutionType());
                     } else {
@@ -401,7 +523,7 @@ public class StudyDataLoaderTest {
         StudyDto studyDto = new StudyDto(pretendStudyId, pretendStudyGuid, "MBC", null, null,
                 1L, 2L, null, false, null, null, false);
 
-        ActivityInstanceDto instanceDto = new ActivityInstanceDto(1L, pretendInstanceGuid, 1L, 1L, 1L,
+        ActivityInstanceDto instanceDto = new ActivityInstanceDto(1L, pretendInstanceGuid, 1L, 1L, "X", 1L,
                 1L, 1L, true, false, null, null, null, true, 0);
 
         mockDataLoader.loadAboutYouSurveyData(
@@ -452,16 +574,16 @@ public class StudyDataLoaderTest {
 
         assertEquals((int) dateAnswers.get("DIAGNOSIS_DATE").getMonth(), 3);
         assertEquals((int) dateAnswers.get("DIAGNOSIS_DATE").getYear(), 2018);
-        assertEquals(dateAnswers.get("DIAGNOSIS_DATE").getDay(), null);
+        assertNull(dateAnswers.get("DIAGNOSIS_DATE").getDay());
 
-        assertEquals(dateAnswers.get("BIRTH_YEAR").getMonth(), null);
+        assertNull(dateAnswers.get("BIRTH_YEAR").getMonth());
         assertEquals((int) dateAnswers.get("BIRTH_YEAR").getYear(), 1978);
-        assertEquals(dateAnswers.get("BIRTH_YEAR").getDay(), null);
+        assertNull(dateAnswers.get("BIRTH_YEAR").getDay());
 
         List<SelectedPicklistOption> race = pickListAnswers.get("RACE");
         assertEquals(3, race.size());
         assertEquals("AMERICAN_INDIAN", race.get(0).getStableId());
-        assertEquals(null, race.get(0).getDetailText());
+        assertNull(race.get(0).getDetailText());
         assertEquals("OTHER", race.get(2).getStableId());
         assertEquals("something else not on the list", race.get(2).getDetailText());
 
@@ -678,7 +800,7 @@ public class StudyDataLoaderTest {
                 any(JsonElement.class),
                 anyString(),
                 anyString(),
-                any(ClientDto.class)
+                any(ClientDto.class), eq(false)
         )).thenCallRealMethod();
 
         mockDataLoader.createLegacyPepperUser(
@@ -687,7 +809,7 @@ public class StudyDataLoaderTest {
                 participantData,
                 pretendUserGuid,
                 pretendUserHruid,
-                mockClientDto
+                mockClientDto, false
         );
 
         ArgumentCaptor<String> creationEmail = ArgumentCaptor.forClass(String.class);
@@ -718,8 +840,7 @@ public class StudyDataLoaderTest {
         assertEquals(1496934180000L, (long) createdAtDateCaptor.getValue());
         assertEquals(1496934180000L, (long) lastModifiedDateCaptor.getValue());
 
-        verify(mockAuth0Util, times(1)).setDDPUserGuidForAuth0User(
-                anyString(),
+        verify(mockMgmtClient, times(1)).setUserGuidForAuth0User(
                 anyString(),
                 anyString(),
                 anyString());
@@ -735,7 +856,7 @@ public class StudyDataLoaderTest {
         StudyDto studyDto = new StudyDto(pretendStudyId, pretendStudyGuid, "MBC", null, null,
                 1L, 2L, null, false, null, null, false);
 
-        ActivityInstanceDto instanceDto = new ActivityInstanceDto(1L, pretendInstanceGuid, 1L, 1L, 1L,
+        ActivityInstanceDto instanceDto = new ActivityInstanceDto(1L, pretendInstanceGuid, 1L, 1L, "X", 1L,
                 1L, 1L, true, false, null, null, null, true, 0);
 
         doCallRealMethod().when(mockDataLoader).loadFollowupSurveyData(
@@ -861,7 +982,7 @@ public class StudyDataLoaderTest {
         StudyDto studyDto = new StudyDto(pretendStudyId, pretendStudyGuid, "MBC", null, null,
                 1L, 2L, null, false, null, null, false);
 
-        ActivityInstanceDto instanceDto = new ActivityInstanceDto(1L, pretendInstanceGuid, 1L, 1L, 1L,
+        ActivityInstanceDto instanceDto = new ActivityInstanceDto(1L, pretendInstanceGuid, 1L, 1L, "X", 1L,
                 1L, 1L, true, false, null, null, null, true, 0);
 
         doCallRealMethod().when(mockDataLoader).loadTissueConsentSurveyData(
@@ -923,7 +1044,7 @@ public class StudyDataLoaderTest {
         StudyDto studyDto = new StudyDto(pretendStudyId, pretendStudyGuid, "MBC", null, null,
                 1L, 2L, null, false, null, null, false);
 
-        ActivityInstanceDto instanceDto = new ActivityInstanceDto(1L, pretendInstanceGuid, 1L, 1L, 1L,
+        ActivityInstanceDto instanceDto = new ActivityInstanceDto(1L, pretendInstanceGuid, 1L, 1L, "X", 1L,
                 1L, 1L, true, false, null, null, null, true, 0);
 
         doCallRealMethod().when(mockDataLoader).loadConsentSurveyData(

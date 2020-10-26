@@ -15,7 +15,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.auth0.exception.Auth0Exception;
 import com.auth0.json.mgmt.users.User;
 import com.google.gson.Gson;
 import com.google.protobuf.ByteString;
@@ -23,11 +22,12 @@ import com.google.pubsub.v1.PubsubMessage;
 import com.typesafe.config.Config;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.cache.LanguageStore;
+import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.NotificationTemplateVariables;
 import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
-import org.broadinstitute.ddp.db.dao.StudyLanguageDao;
+import org.broadinstitute.ddp.db.dao.StudyLanguageCachedDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
@@ -47,7 +47,6 @@ import org.broadinstitute.ddp.model.event.NotificationType;
 import org.broadinstitute.ddp.model.governance.Governance;
 import org.broadinstitute.ddp.model.study.StudyLanguage;
 import org.broadinstitute.ddp.model.user.UserProfile;
-import org.broadinstitute.ddp.util.Auth0Util;
 import org.broadinstitute.ddp.util.GsonUtil;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
@@ -143,13 +142,13 @@ public class PubSubMessageBuilder {
                         }
                     }
 
-                    User auth0User = null;
-                    try {
-                        var mgmtClient = Auth0Util.getManagementClientForStudy(apisHandle, pendingEvent.getStudyGuid());
-                        auth0User = new Auth0Util(mgmtClient.getDomain()).getAuth0User(auth0UserId, mgmtClient.getToken());
-                    } catch (Auth0Exception e) {
+                    var mgmtClient = Auth0ManagementClient.forStudy(apisHandle, pendingEvent.getStudyGuid());
+                    var getResult = mgmtClient.getAuth0User(auth0UserId);
+                    if (getResult.hasFailure()) {
+                        var e = getResult.hasThrown() ? getResult.getThrown() : getResult.getError();
                         throw new MessageBuilderException("Could not get auth0 user " + auth0UserId, e);
                     }
+                    User auth0User = getResult.getBody();
                     if (auth0User != null) {
                         if (StringUtils.isNotBlank(auth0User.getEmail())) {
                             sendToList.add(auth0User.getEmail());
@@ -288,7 +287,7 @@ public class PubSubMessageBuilder {
         }
 
         if (preferredTemplate == null) {
-            List<StudyLanguage> studyLanguages = handle.attach(StudyLanguageDao.class).findLanguages(studyGuid);
+            List<StudyLanguage> studyLanguages = new StudyLanguageCachedDao(handle).findLanguages(studyGuid);
             LanguageDto languageDto = studyLanguages.stream()
                     .filter(StudyLanguage::isDefault)
                     .findFirst()

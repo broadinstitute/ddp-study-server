@@ -27,7 +27,7 @@ public final class CompositeQuestion extends Question<CompositeAnswer> {
     private OrientationType childOrientation;
 
     public CompositeQuestion(String stableId, long promptTemplateId,
-                            boolean isRestricted, boolean isDeprecated, Long tooltipTemplateId,
+                            boolean isRestricted, boolean isDeprecated, Boolean readonly, Long tooltipTemplateId,
                             Long additionalInfoHeaderTemplateId, Long additionalInfoFooterTemplateId,
                             List<Rule<CompositeAnswer>> validations, boolean allowMultiple, boolean unwrapOnExport,
                             Long addButtonTextTemplateId, Long additionalItemTextTemplateId,
@@ -37,6 +37,7 @@ public final class CompositeQuestion extends Question<CompositeAnswer> {
                 promptTemplateId,
                 isRestricted,
                 isDeprecated,
+                readonly,
                 tooltipTemplateId,
                 additionalInfoHeaderTemplateId,
                 additionalInfoFooterTemplateId,
@@ -57,6 +58,7 @@ public final class CompositeQuestion extends Question<CompositeAnswer> {
             List<Question> childQuestions, List<CompositeAnswer> answers) {
         this(stableId,
                 promptTemplateId,
+                false,
                 false,
                 false,
                 null,

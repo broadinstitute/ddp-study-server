@@ -1,41 +1,33 @@
 package org.broadinstitute.ddp.db.dto;
 
-import static org.broadinstitute.ddp.constants.SqlConstants.FormSectionTable.ID;
-import static org.broadinstitute.ddp.constants.SqlConstants.FormSectionTable.SECTION_CODE;
-
-import java.sql.ResultSet;
-import java.sql.SQLException;
-
-import org.jdbi.v3.core.mapper.RowMapper;
-import org.jdbi.v3.core.statement.StatementContext;
+import org.jdbi.v3.core.mapper.reflect.ColumnName;
+import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
 public class FormSectionDto {
 
-    private Long sectionRowId;
-
+    private long id;
     private String sectionCode;
+    private Long nameTemplateId;
 
-    /**
-     * Instantiate FormSectionDto object.
-     */
-    public FormSectionDto(long sectionRowId, String sectionCode) {
-        this.sectionRowId = sectionRowId;
+    @JdbiConstructor
+    public FormSectionDto(
+            @ColumnName("form_section_id") long id,
+            @ColumnName("form_section_code") String sectionCode,
+            @ColumnName("name_template_id") Long nameTemplateId) {
+        this.id = id;
         this.sectionCode = sectionCode;
+        this.nameTemplateId = nameTemplateId;
     }
 
-    public Long getFormSectionId() {
-        return sectionRowId;
+    public long getId() {
+        return id;
     }
 
     public String getSectionCode() {
         return sectionCode;
     }
 
-    public static class FormSectionDtoMapper implements RowMapper<FormSectionDto> {
-
-        @Override
-        public FormSectionDto map(ResultSet rs, StatementContext ctx) throws SQLException {
-            return new FormSectionDto(rs.getLong(ID), rs.getString(SECTION_CODE));
-        }
+    public Long getNameTemplateId() {
+        return nameTemplateId;
     }
 }

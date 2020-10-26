@@ -26,7 +26,7 @@ public class Auth0UtilTest extends TxnAwareBaseTest {
     public static void setUp() {
         TransactionWrapper.useTxn(handle -> {
             basicTestData = TestDataSetupUtil.generateBasicUserTestData(handle);
-            mgmtClient = Auth0Util.getManagementClientForStudy(handle, basicTestData.getStudyGuid());
+            mgmtClient = Auth0ManagementClient.forStudy(handle, basicTestData.getStudyGuid());
             auth0Util = new Auth0Util(mgmtClient.getDomain());
         });
     }

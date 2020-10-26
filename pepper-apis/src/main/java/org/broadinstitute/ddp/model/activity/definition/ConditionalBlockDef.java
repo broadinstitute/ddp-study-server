@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.model.activity.definition;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Stream;
 import javax.validation.Valid;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
@@ -36,5 +37,11 @@ public final class ConditionalBlockDef extends FormBlockDef {
 
     public void addNestedBlock(FormBlockDef block) {
         nested.add(block);
+    }
+
+    @Override
+    public Stream<QuestionDef> getQuestions() {
+        Stream<QuestionDef> nestedQuestions = getNested().stream().flatMap(cblock -> cblock.getQuestions());
+        return Stream.concat(Stream.of(control), nestedQuestions);
     }
 }

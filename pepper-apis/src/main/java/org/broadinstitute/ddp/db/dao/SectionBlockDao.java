@@ -19,7 +19,9 @@ import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import org.broadinstitute.ddp.db.DaoException;
+import org.broadinstitute.ddp.db.dto.BlockGroupHeaderDto;
 import org.broadinstitute.ddp.db.dto.FormBlockDto;
+import org.broadinstitute.ddp.db.dto.FormSectionDto;
 import org.broadinstitute.ddp.db.dto.RevisionDto;
 import org.broadinstitute.ddp.db.dto.SectionBlockMembershipDto;
 import org.broadinstitute.ddp.model.activity.definition.ConditionalBlockDef;
@@ -32,6 +34,7 @@ import org.broadinstitute.ddp.model.activity.definition.PhysicianInstitutionComp
 import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.SectionIcon;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
+import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.model.activity.instance.FormSection;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.BlockType;
@@ -521,9 +524,16 @@ public interface SectionBlockDao extends SqlObject {
                 .stream().map(dto -> findBlockDefByDtoAndTimestamp(dto, timestamp))
                 .collect(Collectors.toList());
 
-        // todo: query sectionCode, templates, icons
+        // todo: query icons
 
-        return new FormSectionDef(null, blockDefs);
+        FormSectionDto sectionDto = getJdbiFormSection().findById(sectionId);
+        FormSectionDef sectionDef = new FormSectionDef(sectionDto.getSectionCode(), blockDefs);
+        sectionDef.setSectionId(sectionId);
+        if (sectionDto.getNameTemplateId() != null) {
+            sectionDef.setNameTemplate(getTemplateDao().loadTemplateById(sectionDto.getNameTemplateId()));
+        }
+
+        return sectionDef;
     }
 
     default FormBlockDef findBlockDefByDtoAndTimestamp(FormBlockDto blockDto, long timestamp) {
@@ -565,8 +575,14 @@ public interface SectionBlockDao extends SqlObject {
     }
 
     default GroupBlockDef findGroupBlockDefByBlockIdAndTimestamp(long blockId, long timestamp) {
-        // todo: query group header, template
-        GroupBlockDef groupBlockDef = new GroupBlockDef();
+        BlockGroupHeaderDto groupDto = getJdbiBlockGroupHeader()
+                .findGroupHeaderDto(blockId, timestamp)
+                .orElseThrow(() -> new DaoException(String.format(
+                        "Could not find group definition for block id %d and timestamp %d", blockId, timestamp)));
+        Template titleTemplate = groupDto.getTitleTemplateId() == null ? null
+                : getTemplateDao().loadTemplateById(groupDto.getTitleTemplateId());
+        GroupBlockDef groupBlockDef = new GroupBlockDef(groupDto.getListStyleHint(), titleTemplate);
+        groupBlockDef.setPresentationHint(groupDto.getPresentationHint());
         groupBlockDef.getNested().addAll(findNestedBlockDefsByBlockIdAndTimestamp(blockId, timestamp));
         return groupBlockDef;
     }

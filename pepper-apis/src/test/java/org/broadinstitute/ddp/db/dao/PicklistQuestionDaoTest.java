@@ -8,12 +8,15 @@ import static org.junit.Assert.fail;
 
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.function.Consumer;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
+import org.broadinstitute.ddp.cache.CacheService;
+import org.broadinstitute.ddp.cache.DaoBuilder;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.PicklistOptionDto;
@@ -36,14 +39,18 @@ import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
+@RunWith(Parameterized.class)
 public class PicklistQuestionDaoTest extends TxnAwareBaseTest {
 
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static String userGuid;
     private static long userId;
+    private final DaoBuilder<PicklistQuestionDao> daoBuilder;
+    private final boolean isCachedDao;
 
-    private PicklistQuestionDao dao;
     private ActivityDao activityDao;
     private ActivityInstanceDao instanceDao;
     private JdbiPicklistOption jdbiOption;
@@ -53,6 +60,18 @@ public class PicklistQuestionDaoTest extends TxnAwareBaseTest {
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
+
+    public PicklistQuestionDaoTest(DaoBuilder daoBuilder, boolean isCachedDao) {
+        this.daoBuilder = daoBuilder;
+        this.isCachedDao = isCachedDao;
+    }
+
+    @Parameterized.Parameters
+    public static Collection<Object[]> data() {
+        Object[] uncached = {(DaoBuilder<PicklistQuestionDao>) (handle) -> handle.attach(PicklistQuestionDao.class), false};
+        Object[] cached = {(DaoBuilder<PickListQuestionCachedDao>) (handle) -> new PickListQuestionCachedDao(handle), true};
+        return List.of(uncached, cached);
+    }
 
     @BeforeClass
     public static void setup() {
@@ -82,7 +101,6 @@ public class PicklistQuestionDaoTest extends TxnAwareBaseTest {
 
     private void rolledbackTest(Consumer<Handle> test) {
         TransactionWrapper.useTxn(handle -> {
-            dao = handle.attach(PicklistQuestionDao.class);
             activityDao = handle.attach(ActivityDao.class);
             instanceDao = handle.attach(ActivityInstanceDao.class);
             jdbiOption = handle.attach(JdbiPicklistOption.class);
@@ -116,7 +134,8 @@ public class PicklistQuestionDaoTest extends TxnAwareBaseTest {
             ActivityVersionDto version2 = activityDao.changeVersion(activity.getActivityId(), "v2", meta);
             RevisionDto revDto = RevisionDto.fromStartMetadata(version2.getRevId(), meta);
             PicklistOptionDef option2 = new PicklistOptionDef("PO2", textTmpl("option2"));
-            dao.addOption(question.getQuestionId(), option2, 1, revDto);
+            CacheService.getInstance().resetAllCaches();
+            daoBuilder.buildDao(handle).addOption(question.getQuestionId(), option2, 1, revDto);
             assertNotNull(option2.getOptionId());
 
             // Ensure new option is added but not part of existing instance
@@ -142,7 +161,8 @@ public class PicklistQuestionDaoTest extends TxnAwareBaseTest {
             RevisionDto revDto = RevisionDto.fromStartMetadata(version2.getRevId(), meta);
             PicklistOptionDef otherOption = new PicklistOptionDef("PO_OTHER",
                     textTmpl("other option label"), textTmpl("detail field label"));
-            dao.addOption(question.getQuestionId(), otherOption, 1, revDto);
+            CacheService.getInstance().resetAllCaches();
+            daoBuilder.buildDao(handle).addOption(question.getQuestionId(), otherOption, 1, revDto);
             assertNotNull(otherOption.getOptionId());
 
             // Ensure other option is added but not part of existing instance
@@ -164,7 +184,8 @@ public class PicklistQuestionDaoTest extends TxnAwareBaseTest {
             ActivityVersionDto version2 = activityDao.changeVersion(activity.getActivityId(), "v2", meta);
             RevisionDto revDto = RevisionDto.fromStartMetadata(version2.getRevId(), meta);
             PicklistOptionDef option1 = new PicklistOptionDef("PO1", textTmpl("option1"));
-            dao.addOption(question.getQuestionId(), option1, 1, revDto);
+            CacheService.getInstance().resetAllCaches();
+            daoBuilder.buildDao(handle).addOption(question.getQuestionId(), option1, 1, revDto);
 
             fail("Expected exception not thrown");
         });
@@ -180,7 +201,8 @@ public class PicklistQuestionDaoTest extends TxnAwareBaseTest {
             PicklistOptionDef option2 = new PicklistOptionDef("PO2", textTmpl("option2"));
 
             // Add to start of option list.
-            dao.addOption(question.getQuestionId(), option2, 0, revDto);
+            CacheService.getInstance().resetAllCaches();
+            daoBuilder.buildDao(handle).addOption(question.getQuestionId(), option2, 0, revDto);
 
             List<PicklistOptionDto> options = jdbiOption.findAllActiveOrderedOptionsByQuestionId(question.getQuestionId());
             assertEquals(2, options.size());
@@ -199,7 +221,8 @@ public class PicklistQuestionDaoTest extends TxnAwareBaseTest {
             PicklistOptionDef option2 = new PicklistOptionDef("PO2", textTmpl("option2"));
 
             // Add to the end with some randomly large position.
-            dao.addOption(question.getQuestionId(), option2, 25, revDto);
+            CacheService.getInstance().resetAllCaches();
+            daoBuilder.buildDao(handle).addOption(question.getQuestionId(), option2, 25, revDto);
 
             List<PicklistOptionDto> options = jdbiOption.findAllActiveOrderedOptionsByQuestionId(question.getQuestionId());
             assertEquals(2, options.size());
@@ -217,10 +240,11 @@ public class PicklistQuestionDaoTest extends TxnAwareBaseTest {
             RevisionDto revDto = RevisionDto.fromStartMetadata(version1.getRevId(), meta);
             PicklistOptionDef option2 = new PicklistOptionDef("PO2", textTmpl("option2"));
             PicklistOptionDef option3 = new PicklistOptionDef("PO3", textTmpl("option3"));
-            dao.addOption(question.getQuestionId(), option2, 1, revDto);
+            CacheService.getInstance().resetAllCaches();
+            daoBuilder.buildDao(handle).addOption(question.getQuestionId(), option2, 1, revDto);
 
             // Add to middle of option list.
-            dao.addOption(question.getQuestionId(), option3, 1, revDto);
+            daoBuilder.buildDao(handle).addOption(question.getQuestionId(), option3, 1, revDto);
 
             List<PicklistOptionDto> options = jdbiOption.findAllActiveOrderedOptionsByQuestionId(question.getQuestionId());
             assertEquals(3, options.size());
@@ -243,7 +267,8 @@ public class PicklistQuestionDaoTest extends TxnAwareBaseTest {
                     new Translation("en", "option 2 english"),
                     new Translation("ru", "option 2 russian"))));
             PicklistOptionDef option2 = new PicklistOptionDef("PO2", tmpl2);
-            dao.addOption(question.getQuestionId(), option2, 1, revDto);
+            CacheService.getInstance().resetAllCaches();
+            daoBuilder.buildDao(handle).addOption(question.getQuestionId(), option2, 1, revDto);
 
             // Create an activity instance
             String instanceGuid = createActivityInstance(activity);
@@ -255,7 +280,8 @@ public class PicklistQuestionDaoTest extends TxnAwareBaseTest {
             // Terminate option 2 in new version
             meta = new RevisionMetadata(version1.getRevStart() + 5000L, userId, "test");
             ActivityVersionDto version2 = activityDao.changeVersion(activity.getActivityId(), "v2", meta);
-            dao.disableOption(question.getQuestionId(), "PO2", meta);
+            CacheService.getInstance().resetAllCaches();
+            daoBuilder.buildDao(handle).disableOption(question.getQuestionId(), "PO2", meta);
 
             // Ensure option 2 shows up for old instance but not new ones
             Optional<PicklistOptionDto> opt = jdbiOption.getByStableId(question.getQuestionId(), "PO2", instanceGuid);
@@ -278,7 +304,8 @@ public class PicklistQuestionDaoTest extends TxnAwareBaseTest {
 
             // Terminate non-existing option
             RevisionMetadata meta = new RevisionMetadata(version1.getRevStart() + 5000L, userId, "test");
-            dao.disableOption(question.getQuestionId(), "PO2", meta);
+            CacheService.getInstance().resetAllCaches();
+            daoBuilder.buildDao(handle).disableOption(question.getQuestionId(), "PO2", meta);
 
             fail("Expected exception not thrown");
         });

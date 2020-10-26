@@ -1,8 +1,10 @@
 package org.broadinstitute.ddp.db.dao;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.broadinstitute.ddp.db.dto.PicklistQuestionDto;
+import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.model.activity.types.PicklistRenderMode;
 import org.broadinstitute.ddp.model.activity.types.PicklistSelectMode;
 import org.jdbi.v3.sqlobject.SqlObject;
@@ -32,4 +34,13 @@ public interface JdbiPicklistQuestion extends SqlObject {
     @SqlQuery("queryDtoByQuestionId")
     @RegisterConstructorMapper(PicklistQuestionDto.class)
     Optional<PicklistQuestionDto> findDtoByQuestionId(@Bind("questionId") long questionId);
+
+    default Optional<PicklistQuestionDto> findDtoByQuestion(QuestionDto questionDto) {
+        return findDtoByQuestionId(questionDto.getId());
+    }
+
+    @UseStringTemplateSqlLocator
+    @SqlQuery("queryDtoByActivityId")
+    @RegisterConstructorMapper(PicklistQuestionDto.class)
+    List<PicklistQuestionDto> findDtosByActivityId(@Bind("activityId") long activityId);
 }

@@ -9,6 +9,7 @@ import javax.validation.constraints.Size;
 
 import com.google.gson.annotations.SerializedName;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
+import org.broadinstitute.ddp.transformers.Exclude;
 
 public class CompositeAnswer extends Answer<List<AnswerRow>> {
 
@@ -18,11 +19,19 @@ public class CompositeAnswer extends Answer<List<AnswerRow>> {
     @SerializedName("value")
     private List<AnswerRow> values;
 
-    private transient boolean allowMultiple;
-    private transient boolean unwrapOnExport;
+    @Exclude
+    private boolean allowMultiple;
+
+    @Exclude
+    private boolean unwrapOnExport;
 
     public CompositeAnswer(Long answerId, String questionStableId, String answerGuid) {
         super(QuestionType.COMPOSITE, answerId, questionStableId, answerGuid);
+        this.values = new ArrayList<>();
+    }
+
+    public CompositeAnswer(Long answerId, String questionStableId, String answerGuid, String actInstanceGuid) {
+        super(QuestionType.COMPOSITE, answerId, questionStableId, answerGuid, actInstanceGuid);
         this.values = new ArrayList<>();
     }
 

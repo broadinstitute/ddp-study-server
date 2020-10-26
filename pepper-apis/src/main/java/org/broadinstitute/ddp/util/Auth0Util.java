@@ -61,7 +61,6 @@ public class Auth0Util {
 
     public static final String USERNAME_PASSWORD_AUTH0_CONN_NAME = "Username-Password-Authentication";
     private static final String HTTPS_PREFIX = "https://";
-    public static final String PEPPER_USER_GUIDS_USER_APP_METADATA_KEY = "pepper_user_guids";
     public static final String REFRESH_ENDPOINT = "oauth/token";
     public static final String BULK_IMPORTS_ENDPOINT = "api/v2/jobs/users-imports";
     public static final String AUTH0_JOB_ENDPOINT = "api/v2/jobs/%s";
@@ -90,38 +89,6 @@ public class Auth0Util {
     }
 
     /**
-     * Adds the ddp user.guid to the given auth0 user's app_metadata.
-     * The app_metadata contains a mapping between each client and
-     * the user.guid so that different dev clients can operate with the
-     * same user without trampling on the user.guid.
-     */
-    public void setDDPUserGuidForAuth0User(String ddpUserGuid, String auth0UserId, String auth0ClientId, String mgmtApiToken) {
-        String bareDomain = parseBareDomain(baseUrl);
-        ManagementAPI auth0Mgmt = new ManagementAPI(bareDomain, mgmtApiToken);
-        LOG.info("About to update auth0 user {} with ddp guid {} for client {}.",
-                auth0UserId, ddpUserGuid, auth0ClientId);
-        try {
-            User auth0User = auth0Mgmt.users().get(auth0UserId, null).execute();
-            Map<String, Object> appMetadata = auth0User.getAppMetadata();
-            if (appMetadata == null) {
-                appMetadata = new HashMap<>();
-            }
-            if (!appMetadata.containsKey(PEPPER_USER_GUIDS_USER_APP_METADATA_KEY)) {
-                appMetadata.put(PEPPER_USER_GUIDS_USER_APP_METADATA_KEY, new HashMap<>());
-            }
-            Map<String, String> guidByClientId =
-                    (Map<String, String>) appMetadata.get(PEPPER_USER_GUIDS_USER_APP_METADATA_KEY);
-            guidByClientId.put(auth0ClientId, ddpUserGuid);
-            User updatedUser = new User();
-            updatedUser.setAppMetadata(appMetadata);
-            auth0Mgmt.users().update(auth0UserId, updatedUser).execute();
-        } catch (Auth0Exception e) {
-            throw new RuntimeException("Failed to get auth0 user " + auth0UserId, e);
-        }
-        LOG.info("Updated auth0 user {} with ddp guid {} for client {}.", auth0UserId, ddpUserGuid, auth0ClientId);
-    }
-
-    /**
      * Verifies the JWT and decodes it.  Safe to use everywhere.
      */
     public static String getVerifiedAuth0UserId(String idToken, String auth0Domain) {
@@ -136,19 +103,6 @@ public class Auth0Util {
         }
         DecodedJWT verifiedJWT = JWTConverter.verifyDDPToken(idToken, jwkProvider);
         return verifiedJWT.getSubject();
-    }
-
-
-    /**
-     * Queries the study for its management api creds
-     * and returns a new management api client.
-     */
-    public static Auth0ManagementClient getManagementClientForStudy(Handle handle, String studyGuid) {
-        Auth0TenantDto auth0TenantDto = handle.attach(JdbiAuth0Tenant.class).findByStudyGuid(studyGuid);
-        return new Auth0ManagementClient(
-                auth0TenantDto.getDomain(),
-                auth0TenantDto.getManagementClientId(),
-                auth0TenantDto.getManagementClientSecret());
     }
 
     /**
@@ -206,14 +160,6 @@ public class Auth0Util {
             }
         });
         return isValid;
-    }
-
-    public static Auth0ManagementClient getManagementClientForUser(Handle handle, String userGuid) {
-        Auth0TenantDto auth0TenantDto = handle.attach(JdbiAuth0Tenant.class).findByUserGuid(userGuid);
-        return new Auth0ManagementClient(
-                auth0TenantDto.getDomain(),
-                auth0TenantDto.getManagementClientId(),
-                auth0TenantDto.getManagementClientSecret());
     }
 
     /**
@@ -399,11 +345,6 @@ public class Auth0Util {
         }
     }
 
-    public User getAuth0User(String auth0UserId, String mgmtApiToken) throws Auth0Exception {
-        ManagementAPI auth0Mgmt = new ManagementAPI(baseUrl, mgmtApiToken);
-        return auth0Mgmt.users().get(auth0UserId, null).execute();
-    }
-
     /**
      * Creates a ManagementAPI instance eligible to manipulate the user in Auth0
      *
@@ -411,7 +352,7 @@ public class Auth0Util {
      * @return A ManagementAPI instance able to change the user's data in Auth0
      */
     public static ManagementAPI getManagementApiInstanceForUser(String userGuid, Handle handle) {
-        var mgmtClient = Auth0Util.getManagementClientForUser(handle, userGuid);
+        var mgmtClient = Auth0ManagementClient.forUser(handle, userGuid);
         String mgmtToken = mgmtClient.getToken();
         String auth0Domain = mgmtClient.getDomain();
         return new ManagementAPI(auth0Domain, mgmtToken);

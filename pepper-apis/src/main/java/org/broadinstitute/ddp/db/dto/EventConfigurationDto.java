@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.broadinstitute.ddp.model.activity.types.DsmNotificationEventType;
 import org.broadinstitute.ddp.model.activity.types.EventActionType;
 import org.broadinstitute.ddp.model.activity.types.EventTriggerType;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
@@ -24,6 +25,7 @@ public class EventConfigurationDto {
     private String preconditionExpression;
     private String cancelExpression;
     private Integer maxOccurrencesPerUser;
+    private int executionOrder;
     private String gcpTopic; // FIXME should not be a base field of EventAction
 
     /**
@@ -44,7 +46,7 @@ public class EventConfigurationDto {
     // No sub-table
 
     /* DSM_NOTIFICATION */
-    private String dsmNotificationEventType; // FIXME Turn into real enum
+    private DsmNotificationEventType dsmNotificationEventType;
 
     /* MEDICAL_UPDATE */
     // No sub-table
@@ -106,12 +108,13 @@ public class EventConfigurationDto {
                                  String preconditionExpression,
                                  String cancelExpression,
                                  Integer maxOccurrencesPerUser,
+                                 int executionOrder,
                                  String gcpTopic,
                                  InstanceStatusType instanceStatusType,
                                  Long activityStatusTriggerStudyActivityId,
                                  Long workflowStateId,
                                  Boolean triggerAutomatically,
-                                 String dsmNotificationEventType,
+                                 DsmNotificationEventType dsmNotificationEventType,
                                  Long announcementMsgTemplateId,
                                  Boolean announcementIsPermanent,
                                  Boolean announcementCreateForProxies,
@@ -132,6 +135,7 @@ public class EventConfigurationDto {
         this.preconditionExpression = preconditionExpression;
         this.cancelExpression = cancelExpression;
         this.maxOccurrencesPerUser = maxOccurrencesPerUser;
+        this.executionOrder = executionOrder;
         this.gcpTopic = gcpTopic;
         this.instanceStatusType = instanceStatusType;
         this.activityStatusTriggerStudyActivityId = activityStatusTriggerStudyActivityId;
@@ -184,6 +188,10 @@ public class EventConfigurationDto {
         return maxOccurrencesPerUser;
     }
 
+    public int getExecutionOrder() {
+        return executionOrder;
+    }
+
     public String getGcpTopic() {
         return gcpTopic;
     }
@@ -204,7 +212,7 @@ public class EventConfigurationDto {
         return triggerAutomatically;
     }
 
-    public String getDsmNotificationEventType() {
+    public DsmNotificationEventType getDsmNotificationEventType() {
         return dsmNotificationEventType;
     }
 

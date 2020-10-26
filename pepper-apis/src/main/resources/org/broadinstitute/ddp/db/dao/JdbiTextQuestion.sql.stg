@@ -1,6 +1,6 @@
 group JdbiTextQuestion;
 
-queryDtoAndSuggestionsByQuestionId() ::= <<
+all_select()::= <<
 select tqit.text_question_input_type_code   p_input_type_code,
        st.suggestion_type_code              p_suggestion_type_code,
        tq.placeholder_template_id           p_placeholder_template_id,
@@ -20,6 +20,7 @@ select tqit.text_question_input_type_code   p_input_type_code,
        q.is_restricted                      p_is_restricted,
        q.revision_id                        p_revision_id,
        q.hide_number                        p_hide_number,
+       q.is_write_once                      p_is_write_once,
        q.is_deprecated                      p_is_deprecated,
        rev.start_date                       p_revision_start,
        rev.end_date                         p_revision_end,
@@ -32,6 +33,15 @@ select tqit.text_question_input_type_code   p_input_type_code,
   join text_question_input_type as tqit on tqit.text_question_input_type_id = tq.input_type_id
   left join suggestion_type as st on st.suggestion_type_id = tq.suggestion_type_id
   left join text_question_suggestion tqs on tqs.text_question_id = tq.question_id
+>>
+queryDtoAndSuggestionsByQuestionId() ::= <<
+<all_select()>
  where tq.question_id = :questionId
+ order by tqs.display_order
+>>
+
+queryDtoAndSuggestionsByActivityId() ::= <<
+<all_select()>
+ where q.study_activity_id = :activityId
  order by tqs.display_order
 >>

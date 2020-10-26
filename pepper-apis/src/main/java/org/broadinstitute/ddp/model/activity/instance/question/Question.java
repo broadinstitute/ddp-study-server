@@ -45,6 +45,9 @@ public abstract class Question<T extends Answer> implements Renderable {
     @SerializedName("tooltip")
     protected String tooltip;
 
+    @SerializedName("readonly")
+    private Boolean readonly;
+
     @Nullable
     @SerializedName("additionalInfoHeader")
     protected String additionalInfoHeader;
@@ -77,12 +80,13 @@ public abstract class Question<T extends Answer> implements Renderable {
     private transient boolean shouldHideQuestionNumber;
 
     public Question(QuestionType questionType, String stableId, long promptTemplateId,
-                    boolean isRestricted, boolean isDeprecated, Long tooltipTemplateId,
+                    boolean isRestricted, boolean isDeprecated, Boolean readonly, Long tooltipTemplateId,
                     Long additionalInfoHeaderTemplateId, Long additionalInfoFooterTemplateId,
                     List<T> answers, List<Rule<T>> validations) {
         this(questionType, stableId, promptTemplateId, answers, validations);
         this.isRestricted = isRestricted;
         this.isDeprecated = isDeprecated;
+        this.readonly = readonly;
         this.tooltipTemplateId = tooltipTemplateId;
         this.additionalInfoHeaderTemplateId = additionalInfoHeaderTemplateId;
         this.additionalInfoFooterTemplateId = additionalInfoFooterTemplateId;
@@ -175,6 +179,18 @@ public abstract class Question<T extends Answer> implements Renderable {
 
     public Long getTooltipTemplateId() {
         return tooltipTemplateId;
+    }
+
+    public boolean isReadonly() {
+        return Optional.ofNullable(readonly).orElse(false);
+    }
+
+    public Boolean getReadonly() {
+        return readonly;
+    }
+
+    public void makeReadonly() {
+        this.readonly = true;
     }
 
     public void setActivityValidationFailures(List<ActivityValidationFailure> activityValidationFailures) {

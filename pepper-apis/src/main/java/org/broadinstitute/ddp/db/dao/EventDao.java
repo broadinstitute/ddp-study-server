@@ -33,6 +33,12 @@ public interface EventDao extends SqlObject {
 
     Logger LOG = LoggerFactory.getLogger(EventDao.class);
 
+    default List<EventConfiguration> getAllEventConfigurationsByStudyId(long studyId) {
+        return getEventConfigurationDtosByStudyId(studyId).stream()
+                .map(dto -> new EventConfiguration(dto))
+                .collect(Collectors.toList());
+    }
+
     default List<EventConfiguration> getAllEventConfigurationsByStudyIdAndTriggerType(long studyId,
                                                                                       EventTriggerType eventTriggerType) {
         return getEventConfigurationDtosForStudyIdAndTriggerType(studyId, eventTriggerType).stream()
@@ -53,6 +59,20 @@ public interface EventDao extends SqlObject {
                 .filter(eventConfiguration -> eventConfiguration.dispatchToHousekeeping())
                 .collect(Collectors.toList());
     }
+
+    @SqlQuery("getEventConfigurationByEventConfigurationId")
+    @UseStringTemplateSqlLocator
+    @RegisterConstructorMapper(EventConfigurationDto.class)
+    @UseRowReducer(EventConfigurationActionReducer.class)
+    Optional<EventConfigurationDto> getEventConfigurationDtoById(
+            @Bind("eventConfigurationId") long eventConfigurationId);
+
+    @SqlQuery("getEventConfigurationsByStudyId")
+    @UseStringTemplateSqlLocator
+    @RegisterConstructorMapper(EventConfigurationDto.class)
+    @UseRowReducer(EventConfigurationActionReducer.class)
+    List<EventConfigurationDto> getEventConfigurationDtosByStudyId(
+            @Bind("studyId") long studyId);
 
     @SqlQuery("getEventConfigurationsForStudyIdAndTriggerType")
     @UseStringTemplateSqlLocator
@@ -146,14 +166,6 @@ public interface EventDao extends SqlObject {
     @SqlQuery("getNotificationTemplatesForEvent")
     @RegisterConstructorMapper(NotificationTemplate.class)
     List<NotificationTemplate> getNotificationTemplatesForEvent(@Bind("eventConfigId") long eventConfigurationId);
-
-    @SqlQuery("getDsmNotificationConfigurationIds")
-    @UseStringTemplateSqlLocator
-    List<Long> getDsmNotificationConfigurationIds(
-            @Bind("umbrellaStudyGuid") String umbrellaStudyGuid,
-            @Bind("userGuid") String userGuid,
-            @Bind("notificationEventTypeCode") String eventTypeCode
-    );
 
     /**
      * Gets the configurations associated with notifications that should be sent when someone joins a study's mailing list

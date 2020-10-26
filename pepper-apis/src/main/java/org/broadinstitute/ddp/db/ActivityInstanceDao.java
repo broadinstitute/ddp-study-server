@@ -9,14 +9,17 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import com.typesafe.config.Config;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.broadinstitute.ddp.constants.ConfigFile.SqlQuery;
 import org.broadinstitute.ddp.constants.SqlConstants;
@@ -25,17 +28,20 @@ import org.broadinstitute.ddp.constants.SqlConstants.ActivityTypeTable;
 import org.broadinstitute.ddp.constants.SqlConstants.LanguageCodeTable;
 import org.broadinstitute.ddp.constants.SqlFile.ActivityInstanceSql;
 import org.broadinstitute.ddp.content.ContentStyle;
+import org.broadinstitute.ddp.content.I18nContentRenderer;
+import org.broadinstitute.ddp.content.I18nTemplateConstants;
+import org.broadinstitute.ddp.content.RenderValueProvider;
 import org.broadinstitute.ddp.db.dao.FormActivityDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
-import org.broadinstitute.ddp.db.dao.JdbiFormTypeActivityInstanceStatusType;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
-import org.broadinstitute.ddp.db.dto.IconBlobDto;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.json.UserActivity;
 import org.broadinstitute.ddp.json.activity.ActivityInstanceSummary;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.instance.ActivityInstance;
+import org.broadinstitute.ddp.model.activity.instance.ActivityResponse;
+import org.broadinstitute.ddp.model.activity.instance.FormResponse;
 import org.broadinstitute.ddp.model.activity.types.ActivityType;
 import org.broadinstitute.ddp.model.activity.types.FormType;
 import org.broadinstitute.ddp.service.ActivityInstanceCreationValidation;
@@ -58,6 +64,7 @@ public class ActivityInstanceDao {
     private static String SECTIONS_SIZE_FOR_ACTIVITY_INSTANCE;
 
     private final FormInstanceDao formInstanceDao;
+    private final I18nContentRenderer renderer;
 
     /**
      * Instantiate ActivityInstanceDao object.
@@ -66,6 +73,7 @@ public class ActivityInstanceDao {
             FormInstanceDao formInstanceDao
     ) {
         this.formInstanceDao = formInstanceDao;
+        this.renderer = new I18nContentRenderer();
     }
 
     /**
@@ -258,17 +266,9 @@ public class ActivityInstanceDao {
             String studyGuid,
             String isoLanguageCode
     ) {
-        JdbiFormTypeActivityInstanceStatusType jdbiFormTypeActivityInstanceStatusType =
-                handle.attach(JdbiFormTypeActivityInstanceStatusType.class);
-        Map<String, Blob> formTypeAndStatusTypeToIcon = new HashMap<>();
-        List<IconBlobDto> iconBlobs = jdbiFormTypeActivityInstanceStatusType.getIconBlobs(studyGuid);
-        // Transforming a List of icon blobs into a Map having form type and activity instance status type
-        // concatenated with "-" as a delimiter as keys and icon blobs as values, e.g. { "CONSENT-5": "<icon blob>" }
-        iconBlobs.forEach(blob -> formTypeAndStatusTypeToIcon.put(
-                blob.getFormType() + "-" + blob.getStatusTypeCode(), blob.getIconBlob()
-                )
-        );
-        Collection<ActivityInstanceSummary> activitySummaries = new ArrayList<>();
+        ActivityDefStore activityDefStore = ActivityDefStore.getInstance();
+        Map<String, Blob> formTypeAndStatusTypeToIcon = activityDefStore.findActivityStatusIcons(handle, studyGuid);
+        List<ActivityInstanceSummary> activitySummaries = new ArrayList<>();
         try {
             try (PreparedStatement stmt = handle.getConnection().prepareStatement(INSTANCE_SUMMARIES_FOR_USER)) {
                 stmt.setString(1, studyGuid);
@@ -278,6 +278,7 @@ public class ActivityInstanceDao {
                 while (rs.next()) {
                     String activityCode = rs.getString(SqlConstants.StudyActivityTable.CODE);
                     String activityName = rs.getString(SqlConstants.StudyActivityTable.NAME_TRANS);
+                    String activitySecondName = rs.getString(SqlConstants.StudyActivityTable.SECOND_NAME_TRANS);
                     String activityTitle = rs.getString(SqlConstants.StudyActivityTable.TITLE_TRANS);
                     String activitySubtitle = rs.getString(SqlConstants.StudyActivityTable.SUBTITLE_TRANS);
                     String activityDescription = rs.getString(SqlConstants.StudyActivityTable.DESCRIPTION_TRANS);
@@ -287,13 +288,15 @@ public class ActivityInstanceDao {
                     activityTitle = (activityTitle == null ? "" : activityTitle);
 
                     boolean isActivityWriteOnce = rs.getBoolean(SqlConstants.StudyActivityTable.IS_WRITE_ONCE);
+                    long activityInstanceId = rs.getLong(ActivityInstanceTable.ID);
                     String activityInstanceGuid = rs.getString(ActivityInstanceTable.GUID);
                     String activityTypeCode = rs.getString(ActivityTypeTable.TYPE_CODE);
                     String formTypeCode = rs.getString(SqlConstants.FormTypeTable.CODE);
                     String statusTypeCode =
                             rs.getString(SqlConstants.ActivityInstanceStatusTypeTable.ACTIVITY_STATUS_TYPE_CODE);
                     FormType formType = formTypeCode != null ? FormType.valueOf(formTypeCode) : null;
-                    Blob iconBlob = formTypeAndStatusTypeToIcon.get(formType + "-" + statusTypeCode);
+                    boolean excludeStatusIconFromDisplay = rs.getBoolean(SqlConstants.StudyActivityTable.EXCLUDE_STATUS_ICON_FROM_DISPLAY);
+                    Blob iconBlob = excludeStatusIconFromDisplay ? null : formTypeAndStatusTypeToIcon.get(formType + "-" + statusTypeCode);
                     String iconBase64 = iconBlob != null
                             ? Base64.getEncoder().encodeToString(iconBlob.getBytes(1, (int) iconBlob.length())) : null;
 
@@ -310,10 +313,16 @@ public class ActivityInstanceDao {
                     boolean isFollowup = rs.getBoolean(SqlConstants.StudyActivityTable.IS_FOLLOWUP);
                     boolean isHidden = rs.getBoolean(SqlConstants.ActivityInstanceTable.IS_HIDDEN);
 
+                    String versionTag = rs.getString(SqlConstants.ActivityVersionTable.TAG);
+                    long versionId = rs.getLong(SqlConstants.ActivityVersionTable.REVISION_ID);
+                    long revisionStart = rs.getLong(SqlConstants.RevisionTable.START_DATE);
+
                     ActivityInstanceSummary activityInstanceSummary = new ActivityInstanceSummary(
                             activityCode,
+                            activityInstanceId,
                             activityInstanceGuid,
                             activityName,
+                            activitySecondName,
                             activityTitle,
                             activitySubtitle,
                             activityDescription,
@@ -328,30 +337,11 @@ public class ActivityInstanceDao {
                             excludeFromDisplay,
                             isHidden,
                             createdAt,
-                            isFollowup
+                            isFollowup,
+                            versionTag,
+                            versionId,
+                            revisionStart
                     );
-
-                    if (ActivityType.valueOf(activityTypeCode) == FORMS) {
-                        String versionTag = rs.getString(SqlConstants.ActivityVersionTable.TAG);
-                        long versionId = rs.getLong(SqlConstants.ActivityVersionTable.REVISION_ID);
-                        long revisionStart = rs.getLong(SqlConstants.RevisionTable.START_DATE);
-                        ActivityDefStore activityDefStore = ActivityDefStore.getInstance();
-                        FormActivityDef formActivityDef = activityDefStore.getActivityDef(studyGuid, activityCode, versionTag);
-                        if (formActivityDef == null) {
-                            Optional<ActivityDto> activityDto = handle.attach(JdbiActivity.class)
-                                    .findActivityByStudyGuidAndCode(studyGuid, activityCode);
-                            formActivityDef = handle.attach(FormActivityDao.class).findDefByDtoAndVersion(
-                                    activityDto.get(), versionTag, versionId, revisionStart);
-                            activityDefStore.setActivityDef(studyGuid, activityCode, versionTag, formActivityDef);
-                        }
-
-                        Pair<Integer, Integer> questionAndAnswerCounts = activityDefStore.countQuestionsAndAnswers(
-                                handle, userGuid, formActivityDef, activityInstanceGuid);
-
-                        activityInstanceSummary.setNumQuestions(questionAndAnswerCounts.getLeft());
-                        activityInstanceSummary.setNumQuestionsAnswered(questionAndAnswerCounts.getRight());
-
-                    }
 
                     activitySummaries.add(activityInstanceSummary);
                 }
@@ -364,6 +354,109 @@ public class ActivityInstanceDao {
         return I18nUtil.getActivityInstanceTranslation(
                 activitySummaries, isoLanguageCode
         );
+    }
+
+    /**
+     * Iterate through list of activity summaries and count up how many questions are answered.
+     *
+     * @param handle            the database handle
+     * @param userGuid          the user guid
+     * @param studyGuid         the study guid
+     * @param activitySummaries the list of activity summaries
+     */
+    public void countActivitySummaryQuestionsAndAnswers(Handle handle, String userGuid, String studyGuid,
+                                                        List<ActivityInstanceSummary> activitySummaries) {
+        ActivityDefStore activityDefStore = ActivityDefStore.getInstance();
+
+        Set<String> instanceGuids = activitySummaries.stream()
+                .map(ActivityInstanceSummary::getActivityInstanceGuid)
+                .collect(Collectors.toSet());
+        Map<String, FormResponse> instanceResponses = handle
+                .attach(org.broadinstitute.ddp.db.dao.ActivityInstanceDao.class)
+                .findFormResponsesWithAnswersByInstanceGuids(instanceGuids)
+                .collect(Collectors.toMap(ActivityResponse::getGuid, Function.identity()));
+
+        for (var summary : activitySummaries) {
+            if (ActivityType.valueOf(summary.getActivityType()) == FORMS) {
+                String activityCode = summary.getActivityCode();
+                String versionTag = summary.getVersionTag();
+                long versionId = summary.getVersionId();
+                long revisionStart = summary.getRevisionStart();
+
+                FormActivityDef formActivityDef = activityDefStore.getActivityDef(studyGuid, activityCode, versionTag);
+                if (formActivityDef == null) {
+                    ActivityDto activityDto = handle.attach(JdbiActivity.class)
+                            .findActivityByStudyGuidAndCode(studyGuid, activityCode).get();
+                    formActivityDef = handle.attach(FormActivityDao.class).findDefByDtoAndVersion(
+                            activityDto, versionTag, versionId, revisionStart);
+                    activityDefStore.setActivityDef(studyGuid, activityCode, versionTag, formActivityDef);
+                }
+
+                Pair<Integer, Integer> questionAndAnswerCounts = activityDefStore.countQuestionsAndAnswers(
+                        handle, userGuid, formActivityDef, summary.getActivityInstanceGuid(), instanceResponses);
+
+                summary.setNumQuestions(questionAndAnswerCounts.getLeft());
+                summary.setNumQuestionsAnswered(questionAndAnswerCounts.getRight());
+            }
+        }
+    }
+
+    /**
+     * Iterate through activity instance summaries and render the naming details and summary texts, as necessary. For
+     * activity instance name, the first instance may leverage content substitutions to render in it's activity number
+     * (which is 1). For activity instance with number greater than 1, if there is a "second name" then the second name
+     * will be used to render the name, otherwise " #N" will be appended to the original name (where N is the instance
+     * number).
+     *
+     * @param handle    the database handle
+     * @param userId    the user who owns the activity instances
+     * @param summaries the list of summaries
+     */
+    public void renderActivitySummary(Handle handle, long userId, List<ActivityInstanceSummary> summaries) {
+        if (summaries.isEmpty()) {
+            return;
+        }
+
+        Set<Long> instanceIds = summaries.stream().map(ActivityInstanceSummary::getActivityInstanceId).collect(Collectors.toSet());
+        var instanceDao = handle.attach(org.broadinstitute.ddp.db.dao.ActivityInstanceDao.class);
+        var substitutions = instanceDao.bulkFindSubstitutions(instanceIds)
+                .collect(Collectors.toMap(wrapper -> wrapper.getActivityInstanceId(), wrapper -> wrapper.unwrap()));
+        var sharedSnapshot = I18nContentRenderer
+                .newValueProviderBuilder(handle, userId)
+                .build().getSnapshot();
+
+        for (var summary : summaries) {
+            if (StringUtils.isBlank(summary.getActivitySummary())) {
+                continue;
+            }
+
+            Map<String, String> subs = substitutions.getOrDefault(summary.getActivityInstanceId(), new HashMap<>());
+            var provider = new RenderValueProvider.Builder()
+                    .setActivityInstanceNumber(summary.getInstanceNumber())
+                    .withSnapshot(sharedSnapshot)
+                    .withSnapshot(subs)
+                    .build();
+            Map<String, Object> context = new HashMap<>();
+            context.put(I18nTemplateConstants.DDP, provider);
+
+            // Render the name.
+            final String nameText;
+            if (summary.getInstanceNumber() > 1) {
+                if (StringUtils.isNotBlank(summary.getActivitySecondName())) {
+                    nameText = renderer.renderToString(summary.getActivitySecondName(), context);
+                } else {
+                    String originalName = renderer.renderToString(summary.getActivityName(), context);
+                    nameText = originalName + " #" + summary.getInstanceNumber();
+                }
+            } else {
+                nameText = renderer.renderToString(summary.getActivityName(), context);
+            }
+            summary.setActivityName(nameText);
+
+            // Render the summary.
+            String summaryText = renderer.renderToString(summary.getActivitySummary(), context);
+            summary.setActivitySummary(summaryText);
+        }
     }
 
     /**

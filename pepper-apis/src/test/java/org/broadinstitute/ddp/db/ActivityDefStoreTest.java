@@ -82,7 +82,7 @@ public class ActivityDefStoreTest extends TxnAwareBaseTest {
             answerDao.createAnswer(testData.getUserId(), instanceDto.getId(), composite);
 
             Pair<Integer, Integer> counts = ActivityDefStore.getInstance().countQuestionsAndAnswers(
-                    handle, testData.getUserGuid(), form, instanceDto.getGuid());
+                    handle, testData.getUserGuid(), form, instanceDto.getGuid(), null);
             assertNotNull(counts);
             assertEquals("should count all regular/control/nested/unwrapped questions",
                     (Integer) 6, counts.getLeft());
@@ -95,7 +95,7 @@ public class ActivityDefStoreTest extends TxnAwareBaseTest {
 
     private FormActivityDef createDummyForm() {
         var agreement = new AgreementQuestionDef("AGREE1", false, Template.text("1"), null, null, null,
-                List.of(new RequiredRuleDef(Template.text("hint"))), false);
+                List.of(new RequiredRuleDef(Template.text("hint"))), false, false);
 
         var conditional = new ConditionalBlockDef(BoolQuestionDef
                 .builder("BOOL1", Template.text("2"), Template.text("yes"), Template.text("no"))

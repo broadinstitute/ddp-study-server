@@ -154,7 +154,8 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
                                                             rules,
                                                             yesOpt,
                                                             noOpt,
-                                                            true);
+                                                            true,
+                                                            false);
         FormActivityDef form = buildSingleBlockForm(testData.getStudyGuid(), "Boolean Activity", new QuestionBlockDef(boolQuestion));
 
         TransactionWrapper.useTxn(handle -> {
@@ -202,7 +203,8 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
                                                             null,
                                                             rules,
                                                             TextInputType.TEXT,
-                                                            true);
+                                                            true,
+                                                            false);
         
         FormActivityDef form = buildSingleBlockForm(testData.getStudyGuid(), "Text Activity", new QuestionBlockDef(textQuestion));
 
@@ -361,7 +363,7 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
         return inst.get();
     }
 
-    private void runInsertPicklistQuestionTest(boolean allowDetails) {
+    private void    runInsertPicklistQuestionTest(boolean allowDetails) {
         TransactionWrapper.useTxn(handle -> {
             Template prompt = new Template(TemplateType.TEXT, "prompt", "picklist question");
             Template label = new Template(TemplateType.TEXT, "label", "picklist label");
@@ -471,7 +473,8 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
                                                                 true,
                                                                 fields,
                                                                 picklistDef,
-                                                                true);
+                                                                true,
+                                                                false);
 
             FormActivityDef form = buildSingleBlockForm(testData.getStudyGuid(), "Date Activity", new QuestionBlockDef(dateQuestion));
             FormInstance inst = runInsertAndFetchInstance(handle, form, testData.getUserGuid());
@@ -596,7 +599,8 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
                                                                         Template.text("info header"),
                                                                         Template.text("info footer"),
                                                                         singletonList(new RequiredRuleDef(null)),
-                                                                        true);
+                                                                        true,
+                                                                        false);
             questionSection.getBlocks().add(new QuestionBlockDef(agreementDef));
 
             BoolQuestionDef boolDef = BoolQuestionDef.builder()

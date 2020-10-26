@@ -157,6 +157,13 @@ public interface AnswerSql extends SqlObject {
     Map<Long, QuestionType> findQuestionTypesByAnswerIds(
             @BindList(value = "answerIds", onEmpty = EmptyHandling.NULL) Set<Long> answerIds);
 
+    @UseStringTemplateSqlLocator
+    @SqlQuery("findDtosByInstanceGuidAndQuestionId")
+    @RegisterConstructorMapper(AnswerDto.class)
+    List<AnswerDto> findDtosByInstanceGuidAndQuestionId(
+            @Bind("instanceGuid") String instanceGuid,
+            @Bind("questionId") long questionId);
+
     @SqlQuery("select a.answer_id from answer as a"
             + "  join activity_instance as ai on ai.activity_instance_id = a.activity_instance_id"
             + " where a.question_id = :questionId and ai.activity_instance_guid = :instanceGuid")

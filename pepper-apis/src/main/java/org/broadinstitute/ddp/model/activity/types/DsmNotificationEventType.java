@@ -22,7 +22,15 @@ public enum DsmNotificationEventType {
      */
     TESTBOSTON_SENT,
     /**
+     * Message sent by DSM when TESTBOSTON kit is delivered to participant
+     */
+    TESTBOSTON_DELIVERED,
+    /**
      * Message sent by DSM when TESTBOSTON kit is received back
      */
     TESTBOSTON_RECEIVED,
+    /**
+     * Message sent by DSM when a result from a lab test on a kit is available
+     */
+    TEST_RESULT,
 }

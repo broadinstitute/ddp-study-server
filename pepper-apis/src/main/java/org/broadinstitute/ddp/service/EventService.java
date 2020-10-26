@@ -16,7 +16,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class EventService {
-    private static final Logger logger = LoggerFactory.getLogger(EventService.class);
+
+    private static final Logger LOG = LoggerFactory.getLogger(EventService.class);
 
     private static volatile EventService instance;
 
@@ -32,79 +33,77 @@ public class EventService {
     }
 
     private void processEventSignalForEventConfiguration(Handle handle,
-                                                           EventSignal eventSignal,
-                                                           EventConfiguration eventConfig,
-                                                           PexInterpreter pexInterpreter) {
-        {
-            if (eventConfig.isTriggered(handle, eventSignal)) {
-                logger.info(
-                        "Checking pre-condition, cancel condition and num occurances of EventConfiguration: "
-                                + eventConfig.toString() + " with EventTrigger " + eventConfig.getEventTrigger().toString()
-                                + " against EventSignal: " + eventSignal.toString());
+                                                         EventSignal eventSignal,
+                                                         EventConfiguration eventConfig,
+                                                         PexInterpreter pexInterpreter) {
+        if (eventConfig.isTriggered(handle, eventSignal)) {
+            LOG.info(
+                    "Checking pre-condition, cancel condition and num occurances of EventConfiguration: "
+                            + eventConfig.toString() + " with EventTrigger " + eventConfig.getEventTrigger().toString()
+                            + " against EventSignal: " + eventSignal.toString());
 
-                // Checking if the per-user event configuration counter is not exceeded
-                int numOccurrences = handle.attach(JdbiEventConfigurationOccurrenceCounter.class)
-                        .getOrCreateNumOccurrences(eventConfig.getEventConfigurationId(),
-                                eventSignal.getParticipantId());
+            // Checking if the per-user event configuration counter is not exceeded
+            int numOccurrences = handle.attach(JdbiEventConfigurationOccurrenceCounter.class)
+                    .getOrCreateNumOccurrences(eventConfig.getEventConfigurationId(),
+                            eventSignal.getParticipantId());
 
-                logger.info(
-                        "Checking if the occurrences per user ({}) hit the threshold ({}) for event configuration (id = {}), user id = {}",
-                        numOccurrences,
-                        eventConfig.getMaxOccurrencesPerUser(),
-                        eventConfig.getEventConfigurationId(),
-                        eventSignal.getParticipantId()
+            LOG.info(
+                    "Checking if the occurrences per user ({}) hit the threshold ({}) for event configuration (id = {}), user id = {}",
+                    numOccurrences,
+                    eventConfig.getMaxOccurrencesPerUser(),
+                    eventConfig.getEventConfigurationId(),
+                    eventSignal.getParticipantId()
+            );
+
+            if (eventConfig.getMaxOccurrencesPerUser() != null && numOccurrences >= eventConfig.getMaxOccurrencesPerUser()) {
+                LOG.info(
+                        "The number of this event's configuration occurrences for the participant (id = {}) is {}"
+                                + " while the allowed maximum number of occurrences per user is {}, skipping the configuration",
+                        eventSignal.getParticipantId(), numOccurrences, eventConfig.getMaxOccurrencesPerUser()
                 );
+                return;
+            }
 
-                if (eventConfig.getMaxOccurrencesPerUser() != null && numOccurrences >= eventConfig.getMaxOccurrencesPerUser()) {
-                    logger.info(
-                            "The number of this event's configuration occurrences for the participant (id = {}) is {}"
-                                    + " while the allowed maximum number of occurrences per user is {}, skipping the configuration",
-                            eventSignal.getParticipantId(), numOccurrences, eventConfig.getMaxOccurrencesPerUser()
-                    );
-                    return;
-                }
-
-                String cancelExpr = eventConfig.getCancelExpression();
-                if (StringUtils.isNotBlank(cancelExpr)) {
-                    logger.info("Checking the cancel expression `{}` for the event configuration (id = {})",
-                            cancelExpr, eventConfig.getEventConfigurationId());
-                    try {
-                        boolean shouldCancel = pexInterpreter.eval(cancelExpr, handle, eventSignal.getParticipantGuid(),
-                                null);
-                        if (shouldCancel) {
-                            logger.info("Cancel expression `{}` evaluated to TRUE, skipping the configuration", cancelExpr);
-                            return;
-                        }
-                    } catch (PexException e) {
-                        throw new DaoException("Error evaluating cancel expression: " + cancelExpr, e);
-                    }
-                }
-
-                // Checking if a precondition expression (if exists) evaluates to TRUE
-                String precondExpr = eventConfig.getPreconditionExpression();
-                logger.info(
-                        "Checking the precondition expression `{}` for the event configuration (id = {})",
-                        eventConfig.getPreconditionExpression(),
-                        eventConfig.getEventConfigurationId()
-                );
+            String cancelExpr = eventConfig.getCancelExpression();
+            if (StringUtils.isNotBlank(cancelExpr)) {
+                LOG.info("Checking the cancel expression `{}` for the event configuration (id = {})",
+                        cancelExpr, eventConfig.getEventConfigurationId());
                 try {
-                    if (precondExpr != null && !pexInterpreter.eval(precondExpr, handle,
-                            eventSignal.getParticipantGuid(), null)) {
-                        logger.info("Precondition expression {} evaluated to FALSE, skipping the configuration", precondExpr);
+                    boolean shouldCancel = pexInterpreter.eval(cancelExpr, handle, eventSignal.getParticipantGuid(),
+                            null, null, eventSignal);
+                    if (shouldCancel) {
+                        LOG.info("Cancel expression `{}` evaluated to TRUE, skipping the configuration", cancelExpr);
                         return;
                     }
                 } catch (PexException e) {
-                    throw new DaoException("Error evaluating pex expression " + precondExpr, e);
+                    throw new DaoException("Error evaluating cancel expression: " + cancelExpr, e);
                 }
-
-                eventConfig.doAction(pexInterpreter, handle, eventSignal);
-
-                // Incrementing the counter indicating that the event configuration has been executed
-                handle.attach(JdbiEventConfigurationOccurrenceCounter.class).incNumOccurrences(
-                        eventConfig.getEventConfigurationId(),
-                        eventSignal.getParticipantId()
-                );
             }
+
+            // Checking if a precondition expression (if exists) evaluates to TRUE
+            String precondExpr = eventConfig.getPreconditionExpression();
+            LOG.info(
+                    "Checking the precondition expression `{}` for the event configuration (id = {})",
+                    eventConfig.getPreconditionExpression(),
+                    eventConfig.getEventConfigurationId()
+            );
+            try {
+                if (precondExpr != null && !pexInterpreter.eval(precondExpr, handle,
+                        eventSignal.getParticipantGuid(), null, null, eventSignal)) {
+                    LOG.info("Precondition expression {} evaluated to FALSE, skipping the configuration", precondExpr);
+                    return;
+                }
+            } catch (PexException e) {
+                throw new DaoException("Error evaluating pex expression " + precondExpr, e);
+            }
+
+            eventConfig.doAction(pexInterpreter, handle, eventSignal);
+
+            // Incrementing the counter indicating that the event configuration has been executed
+            handle.attach(JdbiEventConfigurationOccurrenceCounter.class).incNumOccurrences(
+                    eventConfig.getEventConfigurationId(),
+                    eventSignal.getParticipantId()
+            );
         }
     }
 

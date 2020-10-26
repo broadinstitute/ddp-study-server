@@ -231,8 +231,8 @@ public class AddressServiceTest extends TxnAwareBaseTest {
     @Test
     public void testCheckStudyAddress() {
         MailAddress addr = buildTestAddress();
-        var kitConfig = new KitConfiguration(1L, 1, new KitType(1L, "SALIVA"), testData.getStudyGuid(), false, List.of(
-                new KitZipCodeRule(1L, Set.of("12345", "02115"))));
+        var kitConfig = new KitConfiguration(1L, 1, new KitType(1L, "SALIVA"), testData.getStudyGuid(), false,
+                List.of(new KitZipCodeRule(1L, Set.of("12345", "02115"))), null);
 
         var mockHandle = mock(Handle.class);
         var mockKitDao = mock(KitConfigurationDao.class);

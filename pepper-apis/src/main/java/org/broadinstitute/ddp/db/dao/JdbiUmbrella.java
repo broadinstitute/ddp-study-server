@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.db.dao;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.broadinstitute.ddp.db.dto.UmbrellaDto;
@@ -26,6 +27,10 @@ public interface JdbiUmbrella extends SqlObject {
     @SqlQuery("select umbrella_id, umbrella_name, umbrella_guid from umbrella where umbrella_id = :id")
     @RegisterConstructorMapper(UmbrellaDto.class)
     Optional<UmbrellaDto> findById(@Bind("id") long umbrellaId);
+
+    @SqlQuery("select umbrella_id, umbrella_name, umbrella_guid from umbrella")
+    @RegisterConstructorMapper(UmbrellaDto.class)
+    List<UmbrellaDto> findAll();
 
     @SqlUpdate("delete from umbrella where umbrella_id = :id")
     int deleteById(@Bind("id") long id);

@@ -23,7 +23,8 @@ select ans.answer_id,
          where parent_question_id = ans.question_id
            and child_question_id = (select question_id from answer where answer_id = ca.child_answer_id)
        ) as ca_child_col,
-       coalesce((select 1 from composite_answer_item where child_answer_id = ans.answer_id), 0) as is_child_answer
+       coalesce((select 1 from composite_answer_item where child_answer_id = ans.answer_id), 0) as is_child_answer,
+       ai.activity_instance_guid
   from answer as ans
   join activity_instance as ai on ans.activity_instance_id = ai.activity_instance_id
   join user as u on u.user_id = ai.participant_id

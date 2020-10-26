@@ -52,7 +52,8 @@ public final class TextQuestionDef extends QuestionDef {
 
     public TextQuestionDef(String stableId, boolean isRestricted, Template promptTemplate, Template placeholderTemplate,
                            Template additionalInfoHeaderTemplate, Template additionalInfoFooterTemplate,
-                           List<RuleDef> validations, TextInputType inputType, SuggestionType suggestionType, boolean hideNumber) {
+                           List<RuleDef> validations, TextInputType inputType, SuggestionType suggestionType, boolean hideNumber,
+                           boolean writeOnce) {
         this(stableId,
                 isRestricted,
                 promptTemplate,
@@ -61,14 +62,15 @@ public final class TextQuestionDef extends QuestionDef {
                 additionalInfoFooterTemplate,
                 validations,
                 inputType,
-                hideNumber);
+                hideNumber,
+                writeOnce);
         this.suggestionType = suggestionType;
     }
 
     public TextQuestionDef(String stableId, boolean isRestricted, Template promptTemplate,
                            Template placeholderTemplate,
                            Template additionalInfoHeaderTemplate, Template additionalInfoFooterTemplate,
-                           List<RuleDef> validations, TextInputType inputType, boolean hideNumber) {
+                           List<RuleDef> validations, TextInputType inputType, boolean hideNumber, boolean writeOnce) {
         super(QuestionType.TEXT,
                 stableId,
                 isRestricted,
@@ -76,7 +78,8 @@ public final class TextQuestionDef extends QuestionDef {
                 additionalInfoHeaderTemplate,
                 additionalInfoFooterTemplate,
                 validations,
-                hideNumber);
+                hideNumber,
+                writeOnce);
         this.inputType = MiscUtil.checkNonNull(inputType, "inputType");
         this.placeholderTemplate = placeholderTemplate;
     }
@@ -84,7 +87,7 @@ public final class TextQuestionDef extends QuestionDef {
     public TextQuestionDef(String stableId, boolean isRestricted, Template promptTemplate, Template placeholderTemplate,
                            Template additionalInfoHeaderTemplate, Template additionalInfoFooterTemplate,
                            List<RuleDef> validations, TextInputType inputType, SuggestionType suggestionType,
-                           List<String> suggestions, boolean hideNumber, boolean confirmEntry,
+                           List<String> suggestions, boolean hideNumber, boolean writeOnce, boolean confirmEntry,
                            Template confirmPromptTemplate, Template mismatchMessageTemplate) {
         this(stableId,
                 isRestricted,
@@ -94,7 +97,8 @@ public final class TextQuestionDef extends QuestionDef {
                 additionalInfoFooterTemplate,
                 validations,
                 inputType,
-                hideNumber);
+                hideNumber,
+                writeOnce);
         this.suggestionType = suggestionType;
         this.suggestions = suggestions;
         this.confirmEntry = confirmEntry;
@@ -162,7 +166,7 @@ public final class TextQuestionDef extends QuestionDef {
 
         public Builder setPlaceholderTemplate(Template placeholderTemplate) {
             this.placeholderTemplate = placeholderTemplate;
-            return self();
+            return this;
         }
 
         public Builder setConfirmEntry(boolean confirmEntry) {
@@ -185,7 +189,7 @@ public final class TextQuestionDef extends QuestionDef {
                 suggestions = new ArrayList<>();
             }
             suggestions.addAll(suggestionsToAdd);
-            return self();
+            return this;
         }
 
         public TextQuestionDef build() {
@@ -200,6 +204,7 @@ public final class TextQuestionDef extends QuestionDef {
                                                             suggestionType,
                                                             suggestions,
                                                             hideNumber,
+                                                            writeOnce,
                                                             confirmEntry,
                                                             confirmPromptTemplate,
                                                             mismatchMessageTemplate);

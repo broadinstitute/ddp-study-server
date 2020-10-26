@@ -27,6 +27,6 @@ public class FormActivityStatusUtil {
         ActivityInstanceStatusDto actualNewStatusDto = instanceStatusDao.insertStatus(
                 activityInstanceGuid, newStatus, Instant.now().toEpochMilli(), operatorGuid
         );
-        LOG.info("Changed the status of activity instance guid {} to {}", activityInstanceGuid, actualNewStatusDto.getTypeId());
+        LOG.info("Changed the status of activity instance guid {} to {}", activityInstanceGuid, actualNewStatusDto.getType());
     }
 }

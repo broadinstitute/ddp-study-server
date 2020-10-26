@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.db.dto.validation;
 import static org.broadinstitute.ddp.constants.SqlConstants.ValidationTable;
 import static org.broadinstitute.ddp.constants.SqlConstants.ValidationTypeTable;
 
+import java.io.Serializable;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
@@ -10,7 +11,7 @@ import org.broadinstitute.ddp.model.activity.types.RuleType;
 import org.jdbi.v3.core.mapper.RowMapper;
 import org.jdbi.v3.core.statement.StatementContext;
 
-public class ValidationDto {
+public class ValidationDto implements Serializable {
 
     private RuleType ruleType;
     private long id;
