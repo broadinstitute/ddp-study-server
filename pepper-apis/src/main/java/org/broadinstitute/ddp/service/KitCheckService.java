@@ -86,9 +86,9 @@ public class KitCheckService {
 
             LOG.info("Processing potential kit recipients for study {} and kit configuration {}", studyGuid, kitConfigId);
 
-            int processed = 0;
+            int fetched = 0;
             while (true) {
-                int offset = processed;
+                int offset = fetched;
                 Queue<PotentialRecipient> batch = withAPIsTxn(handle -> new ArrayDeque<>(
                         findPotentialKitRecipients(handle, studyGuid, kitTypeId, offset, batchSize)));
                 int fetchedSize = batch.size();
@@ -103,11 +103,11 @@ public class KitCheckService {
                         LOG.error("Error while checking potential kit recipient {}, continuing", candidate.getUserGuid(), e);
                     }
                 }
-                processed += fetchedSize;
+                fetched += fetchedSize;
             }
 
             LOG.info("Finished processing {} potential kit recipients for study {} and kit configuration {}",
-                    processed, studyGuid, kitConfigId);
+                    fetched, studyGuid, kitConfigId);
         }
 
         return kitCheckResult;
@@ -187,9 +187,9 @@ public class KitCheckService {
             String studyGuid = kitConfig.getStudyGuid();
             LOG.info("Checking kit schedule records for study {} and kit configuration {}", studyGuid, kitConfigId);
 
-            int processed = 0;
+            int fetched = 0;
             while (true) {
-                int offset = processed;
+                int offset = fetched;
                 Queue<PendingScheduleRecord> batch = withAPIsTxn(handle -> new ArrayDeque<>(
                         handle.attach(KitScheduleDao.class)
                                 .findPendingScheduleRecords(kitConfig.getId(), offset, batchSize)));
@@ -205,11 +205,11 @@ public class KitCheckService {
                         LOG.error("Error while checking kit schedule record for participant {}, continuing", record.getUserGuid(), e);
                     }
                 }
-                processed += fetchedSize;
+                fetched += fetchedSize;
             }
 
             LOG.info("Finished processing {} kit schedule records for study {} and kit configuration {}",
-                    processed, studyGuid, kitConfigId);
+                    fetched, studyGuid, kitConfigId);
         }
 
         return kitCheckResult;
