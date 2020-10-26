@@ -4,14 +4,14 @@ import static org.broadinstitute.ddp.service.DsmAddressValidationStatus.DSM_INVA
 
 import java.beans.ConstructorProperties;
 import java.time.Instant;
-import java.util.ArrayList;
+import java.util.ArrayDeque;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.DsmKitRequestDao;
@@ -26,6 +26,7 @@ import org.broadinstitute.ddp.model.kit.PendingScheduleRecord;
 import org.broadinstitute.ddp.pex.PexInterpreter;
 import org.broadinstitute.ddp.pex.TreeWalkInterpreter;
 import org.jdbi.v3.core.Handle;
+import org.jdbi.v3.core.HandleCallback;
 import org.jdbi.v3.core.mapper.EnumMapper;
 import org.jdbi.v3.core.mapper.reflect.ConstructorMapper;
 import org.jdbi.v3.stringtemplate4.StringTemplateSqlLocator;
@@ -33,8 +34,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class KitCheckService {
-
-    public static final int DEFAULT_QUERY_FETCH_SIZE = 300;
 
     private static final Logger LOG = LoggerFactory.getLogger(KitCheckService.class);
     private static final int DEFAULT_PENDING_BATCH_SIZE = 300;
@@ -63,123 +62,162 @@ public class KitCheckService {
      * <p>Beyond these minimum requirements, the kit configuration also specifies additional criteria that are evaluated
      * before a participant qualifies for a kit request.
      *
-     * @param apisHandle the apis database handle
      * @return a mapping between each study and the number of participants who had a kit queued in this iteration. The
      *         mapping is <b>not</b> the total number of participants with kits. It's just the number of newly queued
      *         participants.
      */
-    public KitCheckResult checkForInitialKits(Handle apisHandle) {
+    public KitCheckResult checkForInitialKits() {
         KitCheckResult kitCheckResult = new KitCheckResult();
 
-        KitScheduleDao kitScheduleDao = apisHandle.attach(KitScheduleDao.class);
-        DsmKitRequestDao kitRequestDao = apisHandle.attach(DsmKitRequestDao.class);
-        KitConfigurationDao kitConfigurationDao = apisHandle.attach(KitConfigurationDao.class);
+        Queue<KitConfiguration> kitConfigs = withAPIsTxn(handle -> new ArrayDeque<>(
+                handle.attach(KitConfigurationDao.class).kitConfigurationFactory()));
 
-        for (KitConfiguration kitConfiguration : kitConfigurationDao.kitConfigurationFactory()) {
-            long kitTypeId = kitConfiguration.getKitType().getId();
-            String studyGuid = kitConfiguration.getStudyGuid();
+        while (!kitConfigs.isEmpty()) {
+            KitConfiguration kitConfig = kitConfigs.remove();
+            long kitConfigId = kitConfig.getId();
+            long kitTypeId = kitConfig.getKitType().getId();
+            String studyGuid = kitConfig.getStudyGuid();
 
-            int numKits = kitConfiguration.getNumKits();
+            int numKits = kitConfig.getNumKits();
             if (numKits <= 0) {
-                LOG.warn("Kit configuration with id {} has no kit quantity configured, skipping", kitConfiguration.getId());
+                LOG.warn("Kit configuration with id {} has no kit quantity configured, skipping", kitConfigId);
                 continue;
             }
 
-            findPotentialKitRecipients(apisHandle, studyGuid, kitTypeId).forEach(candidate -> {
-                String userGuid = candidate.getUserGuid();
+            LOG.info("Processing potential kit recipients for study {} and kit configuration {}", studyGuid, kitConfigId);
 
-                if (candidate.getAddressId() == null) {
-                    LOG.warn("Participant {} is missing a default mailing address", userGuid);
-                    return;
+            int processed = 0;
+            while (true) {
+                int offset = processed;
+                Queue<PotentialRecipient> batch = withAPIsTxn(handle -> new ArrayDeque<>(
+                        findPotentialKitRecipients(handle, studyGuid, kitTypeId, offset, batchSize)));
+                int fetchedSize = batch.size();
+                if (fetchedSize == 0) {
+                    break;
                 }
-
-                if (candidate.getAddressValidationStatus() == null
-                        || candidate.getAddressValidationStatus() == DSM_INVALID_ADDRESS_STATUS) {
-                    LOG.warn("Participant {} has an invalid mailing address", userGuid);
-                    return;
-                }
-
-                boolean success = kitConfiguration.evaluate(apisHandle, userGuid);
-
-                if (success) {
-                    Long kitRequestId = null;
-                    for (int i = 0; i < numKits; i++) {
-                        LOG.info("Creating kit request for {}", userGuid);
-                        kitRequestId = kitRequestDao.createKitRequest(studyGuid, candidate.getUserId(),
-                                candidate.getAddressId(), kitTypeId, kitConfiguration.needsApproval());
-                        LOG.info("Created kit request id {} for {}. Completed {} out of {} kits",
-                                kitRequestId, userGuid, i + 1, numKits);
+                while (!batch.isEmpty()) {
+                    PotentialRecipient candidate = batch.remove();
+                    try {
+                        processPotentialKitRecipient(studyGuid, kitTypeId, kitCheckResult, kitConfig, candidate);
+                    } catch (Exception e) {
+                        LOG.error("Error while checking potential kit recipient {}, continuing", candidate.getUserGuid(), e);
                     }
-                    if (kitConfiguration.getSchedule() != null) {
-                        // Add a tracking record for participant if kit has a reoccurring schedule.
-                        long id = kitScheduleDao.createScheduleRecord(candidate.getUserId(), kitConfiguration.getId());
-                        LOG.info("Added kit schedule record with id={} for tracking reoccurring kits"
-                                + " for participantGuid={} and kitConfigurationId={}", id, userGuid, kitConfiguration.getId());
-                    }
-                    kitCheckResult.addQueuedParticipantForStudy(studyGuid, candidate.getUserId());
-                } else {
-                    LOG.warn("Participant {} was ineligible for a kit", userGuid);
                 }
-            });
+                processed += fetchedSize;
+            }
+
+            LOG.info("Finished processing {} potential kit recipients for study {} and kit configuration {}",
+                    processed, studyGuid, kitConfigId);
         }
 
         return kitCheckResult;
+    }
+
+    private void processPotentialKitRecipient(String studyGuid, long kitTypeId,
+                                              KitCheckResult kitCheckResult,
+                                              KitConfiguration kitConfiguration,
+                                              PotentialRecipient candidate) {
+        String userGuid = candidate.getUserGuid();
+
+        if (candidate.getAddressId() == null) {
+            LOG.warn("Participant {} is missing a default mailing address", userGuid);
+            return;
+        }
+
+        if (candidate.getAddressValidationStatus() == null
+                || candidate.getAddressValidationStatus() == DSM_INVALID_ADDRESS_STATUS) {
+            LOG.warn("Participant {} has an invalid mailing address", userGuid);
+            return;
+        }
+
+        boolean wasSuccessful = withAPIsTxn(handle -> {
+            boolean success = kitConfiguration.evaluate(handle, userGuid);
+
+            KitScheduleDao kitScheduleDao = handle.attach(KitScheduleDao.class);
+            DsmKitRequestDao kitRequestDao = handle.attach(DsmKitRequestDao.class);
+
+            if (success) {
+                Long kitRequestId = null;
+                int numKits = kitConfiguration.getNumKits();
+                for (int i = 0; i < numKits; i++) {
+                    LOG.info("Creating kit request for {}", userGuid);
+                    kitRequestId = kitRequestDao.createKitRequest(studyGuid, candidate.getUserId(),
+                            candidate.getAddressId(), kitTypeId, kitConfiguration.needsApproval());
+                    LOG.info("Created kit request id {} for {}. Completed {} out of {} kits",
+                            kitRequestId, userGuid, i + 1, numKits);
+                }
+                if (kitConfiguration.getSchedule() != null) {
+                    // Add a tracking record for participant if kit has a reoccurring schedule.
+                    long id = kitScheduleDao.createScheduleRecord(candidate.getUserId(), kitConfiguration.getId());
+                    LOG.info("Added kit schedule record with id={} for tracking reoccurring kits"
+                            + " for participantGuid={} and kitConfigurationId={}", id, userGuid, kitConfiguration.getId());
+                }
+            }
+
+            return success;
+        });
+
+        if (wasSuccessful) {
+            kitCheckResult.addQueuedParticipantForStudy(studyGuid, candidate.getUserId());
+        } else {
+            LOG.warn("Participant {} was ineligible for a kit", userGuid);
+        }
     }
 
     /**
      * Go through all kit configurations and all pending participants and queue up reoccurring kits (e.g. kits after the
      * initial kit).
      *
-     * @param apisHandle the database handle
      * @return mapping of study to number of participants queued in this run
      */
-    public KitCheckResult scheduleNextKits(Handle apisHandle) {
-        var kitConfigs = apisHandle.attach(KitConfigurationDao.class)
-                .kitConfigurationFactory()
-                .stream()
-                .filter(config -> config.getSchedule() != null)
-                .filter(config -> config.getNumKits() >= 0)
-                .collect(Collectors.toList());
+    public KitCheckResult scheduleNextKits() {
+        Queue<KitConfiguration> kitConfigs = withAPIsTxn(handle -> new ArrayDeque<>(
+                handle.attach(KitConfigurationDao.class)
+                        .kitConfigurationFactory()
+                        .stream()
+                        .filter(config -> config.getSchedule() != null)
+                        .filter(config -> config.getNumKits() >= 0)
+                        .collect(Collectors.toList())));
 
-        var kitScheduleDao = apisHandle.attach(KitScheduleDao.class);
         var kitCheckResult = new KitCheckResult();
 
-        for (var kitConfig : kitConfigs) {
-            List<PendingScheduleRecord> batch = new ArrayList<>();
-            kitScheduleDao.findPendingScheduleRecords(kitConfig.getId()).forEach(pending -> {
-                batch.add(pending);
-                if (batch.size() >= batchSize) {
-                    scheduleNextKitsForBatch(apisHandle, kitCheckResult, kitConfig, batch);
-                    batch.clear();
+        while (!kitConfigs.isEmpty()) {
+            KitConfiguration kitConfig = kitConfigs.remove();
+            long kitConfigId = kitConfig.getId();
+            String studyGuid = kitConfig.getStudyGuid();
+            LOG.info("Checking kit schedule records for study {} and kit configuration {}", studyGuid, kitConfigId);
+
+            int processed = 0;
+            while (true) {
+                int offset = processed;
+                Queue<PendingScheduleRecord> batch = withAPIsTxn(handle -> new ArrayDeque<>(
+                        handle.attach(KitScheduleDao.class)
+                                .findPendingScheduleRecords(kitConfig.getId(), offset, batchSize)));
+                int fetchedSize = batch.size();
+                if (fetchedSize == 0) {
+                    break;
                 }
-            });
-            if (!batch.isEmpty()) {
-                scheduleNextKitsForBatch(apisHandle, kitCheckResult, kitConfig, batch);
+                while (!batch.isEmpty()) {
+                    PendingScheduleRecord record = batch.remove();
+                    try {
+                        scheduleNextKitForParticipant(kitCheckResult, kitConfig, record);
+                    } catch (Exception e) {
+                        LOG.error("Error while checking kit schedule record for participant {}, continuing", record.getUserGuid(), e);
+                    }
+                }
+                processed += fetchedSize;
             }
+
+            LOG.info("Finished processing {} kit schedule records for study {} and kit configuration {}",
+                    processed, studyGuid, kitConfigId);
         }
 
         return kitCheckResult;
     }
 
-    private void scheduleNextKitsForBatch(Handle apisHandle, KitCheckResult kitCheckResult,
-                                          KitConfiguration kitConfig, List<PendingScheduleRecord> batch) {
-        LOG.info("Checking recurring kits for {} pending participants in study {} and kit_configuration_id={}",
-                batch.size(), kitConfig.getStudyGuid(), kitConfig.getId());
-        for (var pending : batch) {
-            // If there is an issue with a single participant, don't let that affect others.
-            // So wrap the execution in a savepoint and a try/catch block.
-            try {
-                TransactionWrapper.useSavepoint("sp_" + pending.getUserGuid(), apisHandle, h -> {
-                    scheduleNextKitForParticipant(h, kitCheckResult, kitConfig, pending);
-                });
-            } catch (Exception e) {
-                LOG.error("Error while checking next kits for participant {}, continuing", pending.getUserGuid(), e);
-            }
-        }
-    }
-
-    private void scheduleNextKitForParticipant(Handle apisHandle, KitCheckResult kitCheckResult,
-                                               KitConfiguration kitConfig, PendingScheduleRecord pending) {
+    private void scheduleNextKitForParticipant(KitCheckResult kitCheckResult,
+                                               KitConfiguration kitConfig,
+                                               PendingScheduleRecord pending) {
         KitSchedule schedule = kitConfig.getSchedule();
         KitScheduleRecord record = pending.getRecord();
 
@@ -189,7 +227,7 @@ public class KitCheckService {
             Instant nextTime = schedule.getNextTimePoint(lastTime);
 
             if (nextPrepTime != null && record.shouldPerformPrepStep(nextPrepTime)) {
-                boolean shouldSkip = handlePrepStep(apisHandle, pending, schedule, record);
+                boolean shouldSkip = withAPIsTxn(handle -> handlePrepStep(handle, pending, schedule, record));
                 if (shouldSkip) {
                     return;
                 }
@@ -197,7 +235,10 @@ public class KitCheckService {
 
             if (nextTime.isBefore(Instant.now())) {
                 // Time is up for the next kit!
-                handleNextKit(apisHandle, kitCheckResult, kitConfig, pending);
+                withAPIsTxn(handle -> {
+                    handleNextKit(handle, kitCheckResult, kitConfig, pending);
+                    return null;
+                });
             }
         }
     }
@@ -315,18 +356,20 @@ public class KitCheckService {
         }
     }
 
-    private Stream<PotentialRecipient> findPotentialKitRecipients(Handle apisHandle, String studyGuid, long kitTypeId) {
+    private List<PotentialRecipient> findPotentialKitRecipients(Handle apisHandle, String studyGuid, long kitTypeId,
+                                                                int offset, int limit) {
         String query = StringTemplateSqlLocator
                 .findStringTemplate(KitCheckService.class, "queryAddressInfoForEnrolledUsersWithoutKits")
                 .render();
         return apisHandle.createQuery(query)
-                .setFetchSize(DEFAULT_QUERY_FETCH_SIZE)
                 .bind("studyGuid", studyGuid)
                 .bind("kitTypeId", kitTypeId)
+                .bind("offset", offset)
+                .bind("limit", limit)
                 .registerRowMapper(ConstructorMapper.factory(PotentialRecipient.class))
                 .registerColumnMapper(DsmAddressValidationStatus.class, EnumMapper.byOrdinal(DsmAddressValidationStatus.class))
                 .mapTo(PotentialRecipient.class)
-                .stream();
+                .list();
     }
 
     // Note: public so JDBI mapper can access this.
@@ -405,5 +448,9 @@ public class KitCheckService {
                         .addAll(participants);
             }
         }
+    }
+
+    <R, X extends Exception> R withAPIsTxn(HandleCallback<R, X> callback) throws X {
+        return TransactionWrapper.withTxn(TransactionWrapper.DB.APIS, callback);
     }
 }
