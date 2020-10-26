@@ -23,7 +23,7 @@ public class JavaHeapDumper {
     public static final String DEFAULT_LOCAL_PATH = "/tmp";
     public static final String DEFAULT_BUCKET_PATH = "heap_dumps";
 
-    public void dumpHeap(String filePath) throws IOException {
+    public void dumpHeapToLocalFile(String filePath) throws IOException {
         MBeanServer server = ManagementFactory.getPlatformMBeanServer();
         HotSpotDiagnosticMXBean mxBean = ManagementFactory.newPlatformMXBeanProxy(
                 server, "com.sun.management:type=HotSpotDiagnostic", HotSpotDiagnosticMXBean.class);
@@ -31,15 +31,15 @@ public class JavaHeapDumper {
         mxBean.dumpHeap(filePath, true);
     }
 
-    public void dumpHeap(String projectId, String bucketName) throws IOException, DDPException {
-        dumpHeap(projectId, bucketName, generateDumpFileName());
+    public void dumpHeapToBucket(String projectId, String bucketName) throws IOException, DDPException {
+        dumpHeapToBucket(projectId, bucketName, generateDumpFileName());
     }
 
-    public void dumpHeap(String projectId, String bucketName, final String fileName) throws IOException {
+    public void dumpHeapToBucket(String projectId, String bucketName, final String fileName) throws IOException {
         GoogleCredentials googleCredentials = GoogleCredentialUtil.initCredentials(true);
         Storage storage = GoogleBucketUtil.getStorage(googleCredentials, projectId);
 
-        dumpHeap(DEFAULT_LOCAL_PATH + "/" + fileName);
+        dumpHeapToLocalFile(DEFAULT_LOCAL_PATH + "/" + fileName);
         File localDumpFile = Paths.get(DEFAULT_LOCAL_PATH, fileName).toFile();
         if (localDumpFile.exists()) {
             LOG.info("Created local dump file: " + localDumpFile.getAbsolutePath() + " with size: " + localDumpFile.length());

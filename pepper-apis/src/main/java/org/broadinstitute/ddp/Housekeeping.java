@@ -529,7 +529,7 @@ public class Housekeeping {
             try {
                 String projectId = ConfigManager.getInstance().getConfig().getString(ConfigFile.GOOGLE_PROJECT_ID);
                 String bucketName = projectId + "-heap-dumps";
-                new JavaHeapDumper().dumpHeap(projectId, bucketName);
+                new JavaHeapDumper().dumpHeapToBucket(projectId, bucketName);
                 response.status(200);
                 return "";
             } catch (IOException e) {
