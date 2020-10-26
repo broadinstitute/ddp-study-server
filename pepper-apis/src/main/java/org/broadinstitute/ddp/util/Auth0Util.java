@@ -61,6 +61,7 @@ public class Auth0Util {
 
     public static final String USERNAME_PASSWORD_AUTH0_CONN_NAME = "Username-Password-Authentication";
     private static final String HTTPS_PREFIX = "https://";
+    public static final String PEPPER_USER_GUIDS_USER_APP_METADATA_KEY = "pepper_user_guids";
     public static final String REFRESH_ENDPOINT = "oauth/token";
     public static final String BULK_IMPORTS_ENDPOINT = "api/v2/jobs/users-imports";
     public static final String AUTH0_JOB_ENDPOINT = "api/v2/jobs/%s";
@@ -86,6 +87,38 @@ public class Auth0Util {
             }
         }
         return bareDomain;
+    }
+
+    /**
+     * Adds the ddp user.guid to the given auth0 user's app_metadata.
+     * The app_metadata contains a mapping between each client and
+     * the user.guid so that different dev clients can operate with the
+     * same user without trampling on the user.guid.
+     */
+    public void setDDPUserGuidForAuth0User(String ddpUserGuid, String auth0UserId, String auth0ClientId, String mgmtApiToken) {
+        String bareDomain = parseBareDomain(baseUrl);
+        ManagementAPI auth0Mgmt = new ManagementAPI(bareDomain, mgmtApiToken);
+        LOG.info("About to update auth0 user {} with ddp guid {} for client {}.",
+                auth0UserId, ddpUserGuid, auth0ClientId);
+        try {
+            User auth0User = auth0Mgmt.users().get(auth0UserId, null).execute();
+            Map<String, Object> appMetadata = auth0User.getAppMetadata();
+            if (appMetadata == null) {
+                appMetadata = new HashMap<>();
+            }
+            if (!appMetadata.containsKey(PEPPER_USER_GUIDS_USER_APP_METADATA_KEY)) {
+                appMetadata.put(PEPPER_USER_GUIDS_USER_APP_METADATA_KEY, new HashMap<>());
+            }
+            Map<String, String> guidByClientId =
+                    (Map<String, String>) appMetadata.get(PEPPER_USER_GUIDS_USER_APP_METADATA_KEY);
+            guidByClientId.put(auth0ClientId, ddpUserGuid);
+            User updatedUser = new User();
+            updatedUser.setAppMetadata(appMetadata);
+            auth0Mgmt.users().update(auth0UserId, updatedUser).execute();
+        } catch (Auth0Exception e) {
+            throw new RuntimeException("Failed to get auth0 user " + auth0UserId, e);
+        }
+        LOG.info("Updated auth0 user {} with ddp guid {} for client {}.", auth0UserId, ddpUserGuid, auth0ClientId);
     }
 
     /**
@@ -343,6 +376,11 @@ public class Auth0Util {
         } catch (IOException e) {
             throw new RuntimeException("Could not refresh token", e);
         }
+    }
+
+    public User getAuth0User(String auth0UserId, String mgmtApiToken) throws Auth0Exception {
+        ManagementAPI auth0Mgmt = new ManagementAPI(baseUrl, mgmtApiToken);
+        return auth0Mgmt.users().get(auth0UserId, null).execute();
     }
 
     /**

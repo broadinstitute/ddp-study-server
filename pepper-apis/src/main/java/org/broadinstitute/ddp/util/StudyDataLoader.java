@@ -363,7 +363,8 @@ public class StudyDataLoader {
                                                       long studyId, String activityCode, String createdAt,
                                                       JdbiActivity jdbiActivity,
                                                       ActivityInstanceDao activityInstanceDao,
-                                                      ActivityInstanceStatusDao activityInstanceStatusDao) throws Exception {
+                                                      ActivityInstanceStatusDao activityInstanceStatusDao,
+                                                      JdbiActivityInstance jdbiActivityInstance) throws Exception {
 
         BaseSurvey baseSurvey = getBaseSurveyForActivity(surveyData, activityCode);
         if (baseSurvey.getDdpCreated() == null) {
