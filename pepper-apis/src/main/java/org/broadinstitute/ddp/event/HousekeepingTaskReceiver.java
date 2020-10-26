@@ -1,16 +1,21 @@
 package org.broadinstitute.ddp.event;
 
+import java.io.IOException;
+
 import com.google.cloud.pubsub.v1.AckReplyConsumer;
 import com.google.cloud.pubsub.v1.MessageReceiver;
 import com.google.gson.Gson;
 import com.google.pubsub.v1.ProjectSubscriptionName;
 import com.google.pubsub.v1.PubsubMessage;
+import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.export.DataExporter;
 import org.broadinstitute.ddp.housekeeping.schedule.OnDemandExportJob;
 import org.broadinstitute.ddp.housekeeping.schedule.TemporaryUserCleanupJob;
+import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.ddp.util.GsonUtil;
+import org.broadinstitute.ddp.util.JavaHeapDumper;
 import org.quartz.JobDataMap;
 import org.quartz.JobKey;
 import org.quartz.Scheduler;
@@ -61,6 +66,9 @@ public class HousekeepingTaskReceiver implements MessageReceiver {
             case ELASTIC_EXPORT:
                 handleElasticExport(message, reply);
                 break;
+            case GENERATE_HEAP_DUMP:
+                handleHeapDumpGeneration(message, reply);
+                break;
             default:
                 throw new DDPException("Unhandled task type: " + type);
         }
@@ -110,11 +118,26 @@ public class HousekeepingTaskReceiver implements MessageReceiver {
         }
     }
 
+    private void handleHeapDumpGeneration(PubsubMessage message, AckReplyConsumer reply)  {
+        LOG.info("Received heap dump request via message id {}", message.getMessageId());
+        String projectId = ConfigManager.getInstance().getConfig().getString(ConfigFile.GOOGLE_PROJECT_ID);
+        String bucketName = projectId + "-heap-dumps";
+        try {
+            new JavaHeapDumper().dumpHeapToBucket(projectId, bucketName);
+            LOG.info("Heap dump requested via pub sub message id {} completed", message.getMessageId());
+            reply.ack();
+        } catch (IOException | DDPException e) {
+            LOG.error("Error processing heap dump requested via message id {}. Nack-ing message ", message.getMessageId(), e);
+            reply.nack();
+        }
+    }
+
     public enum TaskType {
         CLEAR_CACHE,
         CLEANUP_TEMP_USERS,
         ELASTIC_EXPORT,
         PING,
+        GENERATE_HEAP_DUMP
     }
 
     public static class ElasticExportPayload {
