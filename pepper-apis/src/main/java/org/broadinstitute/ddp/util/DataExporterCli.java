@@ -176,7 +176,7 @@ public class DataExporterCli {
 
             System.out.println("[export] starting activity definitions export...");
             start = System.currentTimeMillis();
-            List<ActivityExtract> activities = exporter.exportActivityDefinitionsToElasticsearch(handle, studyDto, cfg);
+            List<ActivityExtract> activities = exporter.exportActivityDefinitionsToElasticsearch(handle, studyDto);
             elapsed = System.currentTimeMillis() - start;
             System.out.println(String.format("[export] took %d ms (%.2f s)", elapsed, elapsed / 1000.0));
 
@@ -252,7 +252,7 @@ public class DataExporterCli {
     private void runActivityDefinitionExportToES(String studyGuid) throws Exception {
         TransactionWrapper.useTxn(handle -> {
             StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
-            exporter.exportActivityDefinitionsToElasticsearch(handle, studyDto, cfg);
+            exporter.exportActivityDefinitionsToElasticsearch(handle, studyDto);
         });
     }
 
