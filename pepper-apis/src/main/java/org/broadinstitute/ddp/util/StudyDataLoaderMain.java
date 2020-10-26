@@ -667,9 +667,9 @@ public class StudyDataLoaderMain {
             setRunEmail(dryRun, datstatData);
 
             //if (!dryRun && preProcessedData.getAuth0ExistingEmails().contains(email)) {
-                //LOG.error("Skipped altpid: {} . Email : {} already exists in Auth0. ", altpid, email);
-                //skippedList.add(altpid);
-                //continue;
+            //    LOG.error("Skipped altpid: {} . Email : {} already exists in Auth0. ", altpid, email);
+            //    skippedList.add(altpid);
+            //    continue;
             //}
             if (altPidUserList == null || altPidUserList.isEmpty() || altPidUserList.contains(altpid)) {
                 processParticipant(studyGuid, surveyDataMap, mappingData, dataLoader,
