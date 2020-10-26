@@ -73,7 +73,7 @@ select en.user_study_enrollment_id as enrollment_id,
   left join default_mailing_address as def_addr on def_addr.participant_user_id = u.user_id
   left join mailing_address as addr on def_addr.address_id = addr.address_id
   left join user_medical_provider as mp on mp.user_id = u.user_id and mp.umbrella_study_id = en.study_id
-  left join invitation as i on i.user_id = mp.user_id and i.study_id = en.study_id
+  left join invitation as i on i.user_id = u.user_id and i.study_id = en.study_id
   left join invitation_type as it on i.invitation_type_id = it.invitation_type_id
 >>
 
