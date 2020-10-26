@@ -90,7 +90,6 @@ import org.broadinstitute.ddp.service.PdfGenerationService;
 import org.broadinstitute.ddp.service.PdfService;
 import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.ddp.util.ConfigUtil;
-import org.broadinstitute.ddp.util.JavaHeapDumper;
 import org.broadinstitute.ddp.util.LiquibaseUtil;
 import org.broadinstitute.ddp.util.LogbackConfigurationPrinter;
 import org.jdbi.v3.core.Handle;
@@ -512,32 +511,6 @@ public class Housekeeping {
             response.status(200);
             return "";
         });
-        Spark.post("/heapdump", (request, response) -> {
-            String postedPassword = request.queryParams("password");
-            if (StringUtils.isNotEmpty(postedPassword)) {
-                String configuredPwd = ConfigManager.getInstance().getConfig().getString(ConfigFile.HEALTHCHECK_PASSWORD);
-                if (!configuredPwd.equals(postedPassword)) {
-                    LOG.error("Invalid password for heapdump call");
-                    response.status(404);
-                    return "";
-                }
-            } else {
-                LOG.error("Missing password for heapdump call");
-                response.status(404);
-                return "";
-            }
-            try {
-                String projectId = ConfigManager.getInstance().getConfig().getString(ConfigFile.GOOGLE_PROJECT_ID);
-                String bucketName = projectId + "-heap-dumps";
-                new JavaHeapDumper().dumpHeapToBucket(projectId, bucketName);
-                response.status(200);
-                return "";
-            } catch (IOException e) {
-                LOG.error("Heap dump failed", e);
-                response.status(500);
-                return "";
-            }
-        });
         Spark.awaitInitialization();
         LOG.info("Started HTTP server on port {} and waiting for ping from GAE", envPort);
 
@@ -552,9 +525,9 @@ public class Housekeeping {
                 LOG.warn("Wait interrupted", e);
             }
         }
-        // Commenting out while we keep heapdump functionality
-        //        Spark.stop();
-        //        Spark.awaitStop();
+
+        Spark.stop();
+        Spark.awaitStop();
         if (receivedPing.get()) {
             LOG.info("Received ping from GAE, proceeding with Housekeeping startup");
         } else {
