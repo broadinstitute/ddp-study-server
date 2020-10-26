@@ -107,6 +107,7 @@ import org.broadinstitute.ddp.route.GetParticipantMailAddressRoute;
 import org.broadinstitute.ddp.route.GetPdfRoute;
 import org.broadinstitute.ddp.route.GetPrequalifierInstanceRoute;
 import org.broadinstitute.ddp.route.GetProfileRoute;
+import org.broadinstitute.ddp.route.GetSpecificAnswerRoute;
 import org.broadinstitute.ddp.route.GetStudiesRoute;
 import org.broadinstitute.ddp.route.GetStudyDetailRoute;
 import org.broadinstitute.ddp.route.GetStudyPasswordPolicyRoute;
@@ -439,6 +440,8 @@ public class DataDonationPlatform {
                 new PutFormAnswersRoute(workflowService, activityValidationService, formInstanceDao, interpreter),
                 responseSerializer
         );
+
+        get(API.USER_SPECIFIC_ANSWER, new GetSpecificAnswerRoute(), jsonSerializer);
 
         // User study invitations
         get(API.USER_STUDY_INVITES, new ListUserStudyInvitationsRoute(), jsonSerializer);
