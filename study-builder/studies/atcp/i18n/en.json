@@ -40,10 +40,14 @@
   "registration_postal": "Participant's Postal Code*",
   "registration_postal_req_hint": "Postal code cannot be empty.",
   "registration_prefix_placeholder": "Participant's Prefix/Suffix (optional)",
-  "registration_province_prompt": "Participant's State/Province*",
   "registration_province_req_hint": "Province cannot be empty.",
   "registration_state_req_hint": "State cannot be empty.",
   "registration_street_address_req_hint": "Address cannot be empty.",
+  "registration_state_province_prompt": "Participant's State/Province*",
+  "registration_state_province_req_hint": "State/Province cannot be empty.",
+  "registration_choose_state_province": "Choose state/province...",
+  "registration_country_label": "Choose country...",
+
 
   "consent_agreement_indicates_li1": "Researchers may use my health information, medical information, the results of the DNA sequencing (as indicated in the checkboxes on the next page) and any other data I share via this platform for future research studies - including studies that have not yet been designed; studies for A-T; studies involving diseases other than A-T, and/or studies that may be for commercial purposes, subject to review and approval by the A-T data access committee. This information will be stored without identification information on a cloud-computing storage system administered by Broad Institute.",
   "consent_agreement_indicates_li2": "Researchers may share this information with qualified researchers in a manner that does not include my name, social security number, or any other information that could be used to readily identify me, to be used by other qualified researchers to perform future research studies, including studies that have not yet been designed, studies for A-T; studies involving diseases other than A-T, and studies that may be for commercial purposes.",
