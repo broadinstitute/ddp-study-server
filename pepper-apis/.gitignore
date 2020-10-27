@@ -28,3 +28,6 @@ output/
 output-config/
 output-build-config/
 docker-compose.yaml
+
+# runtestresults
+src/test/resources/runtestresults.csv
