@@ -256,6 +256,8 @@ public class StudyDataLoader {
         //load data
         JdbiUser jdbiUser = handle.attach(JdbiUser.class);
         String altpid = datstatData.getAsJsonObject().get("datstat_altpid").getAsString();
+        boolean isMGU = datstatData.getAsJsonObject().get("registration_type").getAsInt() == 2
+                ? true : false;
         String userGuid = jdbiUser.getUserGuidByAltpid(altpid);
         if (userGuid != null) {
             LOG.warn("Looks like  Participant data already loaded: " + userGuid);
