@@ -1,11 +1,11 @@
 package org.broadinstitute.ddp.housekeeping.schedule;
 
 import java.time.Instant;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 import com.typesafe.config.Config;
-import org.broadinstitute.ddp.client.DsmClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.monitoring.PointsReducerFactory;
@@ -31,21 +31,26 @@ import org.slf4j.LoggerFactory;
 public class CheckKitsJob implements Job {
 
     private static final Logger LOG = LoggerFactory.getLogger(CheckKitsJob.class);
+    private static final int INITIAL_TRIGGER_DELAY_SECS = 10;
 
     /**
      * Key is study guid, value is the metrics transmitter for the study
      */
     private static final Map<String, StackdriverMetricsTracker> kitCounterMonitorByStudy = new HashMap<>();
     private static KitCheckService kitCheckService = null;
-    private static DsmClient dsmClient = null;
-    private static long lastStatusCheckEpochSecs = -1;
-    private static long statusCheckSecs = -1;
 
     public static JobKey getKey() {
         return Keys.Kits.CheckJob;
     }
 
     public static void register(Scheduler scheduler, Config cfg) throws SchedulerException {
+        if (!cfg.getBoolean(ConfigFile.Kits.CHECK_ENABLED)) {
+            LOG.warn("Job {} is disabled, no trigger added", getKey());
+            return;
+        }
+
+        kitCheckService = new KitCheckService(cfg.getInt(ConfigFile.Kits.BATCH_SIZE));
+
         JobDetail job = JobBuilder.newJob(CheckKitsJob.class)
                 .withIdentity(getKey())
                 .requestRecovery(false)
@@ -54,25 +59,15 @@ public class CheckKitsJob implements Job {
         scheduler.addJob(job, true);
         LOG.info("Added job {} to scheduler", getKey());
 
-        if (!cfg.getBoolean(ConfigFile.Kits.CHECK_ENABLED)) {
-            LOG.warn("Job {} is disabled, no trigger added", getKey());
-            return;
-        }
-
         int intervalSecs = cfg.getInt(ConfigFile.Kits.INTERVAL_SECS);
         Trigger trigger = TriggerBuilder.newTrigger()
                 .withIdentity(Keys.Kits.CheckTrigger)
                 .forJob(getKey())
                 .withSchedule(SimpleScheduleBuilder.repeatSecondlyForever(intervalSecs))
-                .startNow()
+                .startAt(new Date(Instant.now().toEpochMilli() + INITIAL_TRIGGER_DELAY_SECS * 1000))
                 .build();
         scheduler.scheduleJob(trigger);
         LOG.info("Added trigger {} for job {} with delay of {} seconds", trigger.getKey(), getKey(), intervalSecs);
-
-        kitCheckService = new KitCheckService(cfg.getInt(ConfigFile.Kits.BATCH_SIZE));
-        dsmClient = new DsmClient(cfg);
-        statusCheckSecs = cfg.getLong(ConfigFile.Kits.STATUS_CHECK_SECS);
-        LOG.info("Job {} status check seconds is set to {}", getKey(), statusCheckSecs);
     }
 
     @Override
@@ -80,13 +75,6 @@ public class CheckKitsJob implements Job {
         try {
             LOG.info("Running job {}", getKey());
             long start = Instant.now().toEpochMilli();
-
-            // We don't want to bombard DSM with kit status calls, so only call if time is up.
-            if (Instant.now().getEpochSecond() - lastStatusCheckEpochSecs > statusCheckSecs) {
-                TransactionWrapper.useTxn(TransactionWrapper.DB.APIS,
-                        handle -> kitCheckService.checkPendingKitStatuses(handle, dsmClient));
-                lastStatusCheckEpochSecs = Instant.now().getEpochSecond();
-            }
 
             KitCheckService.KitCheckResult result = TransactionWrapper.withTxn(TransactionWrapper.DB.APIS, handle -> {
                 LOG.info("Checking for initial kits");

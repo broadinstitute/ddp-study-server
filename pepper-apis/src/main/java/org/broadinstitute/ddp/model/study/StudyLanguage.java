@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.model.study;
 
 import java.io.Serializable;
 import java.util.Locale;
+import java.util.Objects;
 
 import com.google.gson.annotations.SerializedName;
 import org.broadinstitute.ddp.db.dto.LanguageDto;
@@ -65,5 +66,26 @@ public class StudyLanguage implements Serializable {
 
     public LanguageDto toLanguageDto() {
         return new LanguageDto(languageId, languageCode);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        StudyLanguage that = (StudyLanguage) o;
+        return isDefault == that.isDefault
+                && studyId == that.studyId
+                && languageId == that.languageId
+                && Objects.equals(languageCode, that.languageCode)
+                && Objects.equals(displayName, that.displayName);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(languageCode, displayName, isDefault, studyId, languageId);
     }
 }

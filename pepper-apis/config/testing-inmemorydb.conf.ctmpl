@@ -64,7 +64,6 @@
     "kits": {
         "checkEnabled": true,
         "intervalSecs": 30,
-        "statusCheckSecs": 300,  # 5 minutes
         "batchSize": 300
     },
     "elasticsearch": {

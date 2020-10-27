@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.broadinstitute.ddp.db.dto.EnrollmentStatusDto;
+import org.broadinstitute.ddp.db.dto.InvitationDto;
 import org.broadinstitute.ddp.db.dto.MedicalProviderDto;
 import org.broadinstitute.ddp.model.address.MailAddress;
 import org.broadinstitute.ddp.model.study.Participant;
@@ -23,6 +24,7 @@ import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.customizer.BindList;
 import org.jdbi.v3.sqlobject.customizer.Define;
+import org.jdbi.v3.sqlobject.customizer.FetchSize;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.UseRowReducer;
 import org.jdbi.v3.stringtemplate4.UseStringTemplateSqlLocator;
@@ -92,7 +94,9 @@ public interface ParticipantDao extends SqlObject {
     @RegisterConstructorMapper(value = UserProfile.class, prefix = "p")
     @RegisterConstructorMapper(value = MailAddress.class, prefix = "a")
     @RegisterConstructorMapper(value = MedicalProviderDto.class, prefix = "m")
+    @RegisterConstructorMapper(value = InvitationDto.class, prefix = "i")
     @RegisterColumnMapper(DsmAddressValidationStatus.ByOrdinalColumnMapper.class)
+    @FetchSize(300)
     @UseRowReducer(ParticipantsWithUserDataReducer.class)
     Stream<Participant> _findParticipantsWithUserDataByStudyId(
             @Bind("studyId") long studyId,
@@ -137,9 +141,15 @@ public interface ParticipantDao extends SqlObject {
                 }
                 return new Participant(status, user);
             });
-
-            if (row.getColumn("m_user_medical_provider_id", Long.class) != null) {
+            Long medicalProviderId = row.getColumn("m_user_medical_provider_id", Long.class);
+            if (medicalProviderId != null
+                    && participant.getProviders().stream().noneMatch(p -> p.getUserMedicalProviderId() == medicalProviderId)) {
                 participant.addProvider(row.getRow(MedicalProviderDto.class));
+            }
+            Long invitationId = row.getColumn("i_invitation_id", Long.class);
+            if (invitationId != null
+                    && participant.getInvitations().stream().noneMatch(p -> p.getInvitationId() == invitationId)) {
+                participant.addInvitation(row.getRow(InvitationDto.class));
             }
         }
     }

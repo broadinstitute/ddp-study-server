@@ -92,7 +92,7 @@
         <dependency>
             <groupId>com.github.seratch</groupId>
             <artifactId>jslack</artifactId>
-            <version>1.0.20</version>
+            <version>1.0.26</version>
         </dependency>
 
         <dependency>
@@ -646,6 +646,7 @@
                     <environmentVariables>
                         <PUBSUB_EMULATOR_HOST>localhost:8442</PUBSUB_EMULATOR_HOST>
                         <JAVA_HOME>${java.home}</JAVA_HOME>
+                        <GAE_INSTANCE>test-hostname</GAE_INSTANCE>
                     </environmentVariables>
                 </configuration>
             </plugin>
