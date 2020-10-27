@@ -63,6 +63,9 @@ public class HousekeepingTaskReceiver implements MessageReceiver {
             case CLEANUP_TEMP_USERS:
                 handleCleanupTempUsers(message, reply);
                 break;
+            case CSV_EXPORT:
+                handleCsvExport(message, reply);
+                break;
             case ELASTIC_EXPORT:
                 handleElasticExport(message, reply);
                 break;
@@ -94,9 +97,33 @@ public class HousekeepingTaskReceiver implements MessageReceiver {
         }
     }
 
+    private void handleCsvExport(PubsubMessage message, AckReplyConsumer reply) {
+        String data = message.getData() != null ? message.getData().toStringUtf8() : null;
+        var payload = gson.fromJson(data, ExportPayload.class);
+        if (payload == null || payload.getStudy() == null) {
+            LOG.error("Study needs to be provided for CSV_EXPORT task message, ack-ing");
+            reply.ack();
+            return;
+        }
+
+        JobDataMap map = new JobDataMap();
+        map.put(OnDemandExportJob.DATA_STUDY, payload.getStudy());
+        map.put(OnDemandExportJob.DATA_CSV, true);
+
+        JobKey key = OnDemandExportJob.getKey();
+        try {
+            scheduler.triggerJob(key, map);
+            LOG.info("Scheduled job {} for message {}, ack-ing", key, message.getMessageId());
+            reply.ack();
+        } catch (SchedulerException e) {
+            LOG.error("Error triggering job {} for message {}, nack-ing", key, message.getMessageId(), e);
+            reply.nack();
+        }
+    }
+
     private void handleElasticExport(PubsubMessage message, AckReplyConsumer reply) {
         String data = message.getData() != null ? message.getData().toStringUtf8() : null;
-        var payload = gson.fromJson(data, ElasticExportPayload.class);
+        var payload = gson.fromJson(data, ExportPayload.class);
         if (payload == null || payload.getStudy() == null) {
             LOG.error("Study needs to be provided for ELASTIC_EXPORT task message, ack-ing");
             reply.ack();
@@ -105,7 +132,11 @@ public class HousekeepingTaskReceiver implements MessageReceiver {
 
         JobDataMap map = new JobDataMap();
         map.put(OnDemandExportJob.DATA_STUDY, payload.getStudy());
-        map.put(OnDemandExportJob.DATA_INDEX, payload.getIndex());
+        if (payload.getIndex() == null) {
+            map.put(OnDemandExportJob.DATA_INDEX, OnDemandExportJob.ALL_INDICES);
+        } else {
+            map.put(OnDemandExportJob.DATA_INDEX, payload.getIndex());
+        }
 
         JobKey key = OnDemandExportJob.getKey();
         try {
@@ -135,12 +166,13 @@ public class HousekeepingTaskReceiver implements MessageReceiver {
     public enum TaskType {
         CLEAR_CACHE,
         CLEANUP_TEMP_USERS,
+        CSV_EXPORT,
         ELASTIC_EXPORT,
+        GENERATE_HEAP_DUMP,
         PING,
-        GENERATE_HEAP_DUMP
     }
 
-    public static class ElasticExportPayload {
+    public static class ExportPayload {
         private String index;
         private String study;
 

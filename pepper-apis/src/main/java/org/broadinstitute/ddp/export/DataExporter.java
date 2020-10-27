@@ -257,9 +257,7 @@ public class DataExporter {
                     .forEach((auth0UserId, email) -> participants.get(usersMissingEmails.get(auth0UserId)).getUser().setEmail(email));
         }
 
-        ArrayList<Participant> dataset = new ArrayList<>(participants.values());
-        LOG.info("[export] extracted {} participants for study {}", dataset.size(), studyDto.getGuid());
-        return dataset;
+        return new ArrayList<>(participants.values());
     }
 
     /**
@@ -304,6 +302,12 @@ public class DataExporter {
             }
         }
 
+        String index = ElasticsearchServiceUtil.getIndexForStudy(
+                handle,
+                studyDto,
+                exportStructuredDocument ? ElasticSearchIndexType.PARTICIPANTS_STRUCTURED : ElasticSearchIndexType.PARTICIPANTS
+        );
+
         List<Participant> batch = new ArrayList<>();
         Iterator<Participant> iter = participants.iterator();
         int exportsSoFar = 0;
@@ -313,19 +317,20 @@ public class DataExporter {
                 batch.add(participant);
                 if (batch.size() == maxExtractSize || !iter.hasNext()) {
                     int extractSize = batch.size();
-                    LOG.info("Exporting " + extractSize + " elasticsearch records");
+                    LOG.info("[export] exporting {} participant records to index {}", extractSize, index);
 
                     convertInfoToJSONAndExportToES(
                             handle,
                             activities,
                             batch,
                             studyDto,
+                            index,
                             exportStructuredDocument
                     );
                     exportsSoFar += extractSize;
                     batch.clear();
 
-                    LOG.info("Have now exported {} participants out of {} for study: {}.",
+                    LOG.info("[export] have now exported {} participants out of {} for study {}",
                             exportsSoFar, participants.size(), studyDto.getGuid());
                 }
             } catch (Exception e) {
@@ -335,8 +340,7 @@ public class DataExporter {
         }
     }
 
-    public List<ActivityExtract> exportActivityDefinitionsToElasticsearch(
-            Handle handle, StudyDto studyDto, Config cfg) {
+    public List<ActivityExtract> exportActivityDefinitionsToElasticsearch(Handle handle, StudyDto studyDto) {
 
         //get study activities
         List<ActivityExtract> activityExtracts = extractActivities(handle, studyDto);
@@ -368,15 +372,15 @@ public class DataExporter {
         );
 
         try {
-            exportDataToElasticSearch(index, allActivityDefs, cfg);
+            exportDataToElasticSearch(index, allActivityDefs);
         } catch (IOException e) {
-            LOG.error("[activitydefinition export] failed during export ", e);
+            LOG.error("[export] failed during export to index {}", index, e);
         }
 
         return activityExtracts;
     }
 
-    private void exportDataToElasticSearch(String index, Map<String, Object> data, Config cfg) throws IOException {
+    private void exportDataToElasticSearch(String index, Map<String, Object> data) throws IOException {
         if (data.isEmpty()) {
             return;
         }
@@ -458,11 +462,12 @@ public class DataExporter {
                 studyDto,
                 ElasticSearchIndexType.USERS
         );
+        LOG.info("[export] exporting {} user records to index {}", allUsers.size(), index);
 
         try {
-            exportDataToElasticSearch(index, allUsers, cfg);
+            exportDataToElasticSearch(index, allUsers);
         } catch (IOException e) {
-            LOG.error("[users elasticsearch export] failed during export ", e);
+            LOG.error("[export] failed during export to index {}", index, e);
         }
     }
 
@@ -524,14 +529,9 @@ public class DataExporter {
                                                 List<ActivityExtract> activities,
                                                 List<Participant> participants,
                                                 StudyDto studyDto,
+                                                String index,
                                                 boolean exportStructuredDocument
     ) throws IOException {
-        String index = ElasticsearchServiceUtil.getIndexForStudy(
-                handle,
-                studyDto,
-                exportStructuredDocument ? ElasticSearchIndexType.PARTICIPANTS_STRUCTURED : ElasticSearchIndexType.PARTICIPANTS
-        );
-
         List<PdfConfigInfo> studyPdfConfigs = handle.attach(PdfDao.class).findConfigInfoByStudyGuid(studyDto.getGuid());
 
         Map<Long, List<PdfVersion>> configPdfVersions = new HashMap<>();
@@ -1002,7 +1002,7 @@ public class DataExporter {
     public int exportCsvToOutput(Handle handle, StudyDto studyDto, Writer output) throws IOException {
         List<ActivityExtract> activities = extractActivities(handle, studyDto);
         List<Participant> dataset = extractParticipantDataSet(handle, studyDto);
-        return exportDataSetAsCsv(studyDto, activities, dataset, output);
+        return exportDataSetAsCsv(studyDto, activities, dataset.iterator(), output);
     }
 
     /**
@@ -1014,7 +1014,7 @@ public class DataExporter {
      * @return number of participant records written
      * @throws IOException if error while writing
      */
-    public int exportDataSetAsCsv(StudyDto studyDto, List<ActivityExtract> activities, List<Participant> participants,
+    public int exportDataSetAsCsv(StudyDto studyDto, List<ActivityExtract> activities, Iterator<Participant> participants,
                                   Writer output) throws IOException {
         ParticipantMetadataFormatter participantMetaFmt = new ParticipantMetadataFormatter();
         ActivityMetadataCollector activityMetadataCollector = new ActivityMetadataCollector();
@@ -1035,10 +1035,9 @@ public class DataExporter {
         CSVWriter writer = new CSVWriter(output);
         writer.writeNext(headers.toArray(new String[] {}), false);
 
-        int total = participants.size();
         int numWritten = 0;
-
-        for (Participant pt : participants) {
+        while (participants.hasNext()) {
+            Participant pt = participants.next();
             List<String> row = new LinkedList<>();
             try {
                 row.addAll(participantMetaFmt.format(pt.getStatus(), pt.getUser()));
@@ -1073,9 +1072,9 @@ public class DataExporter {
             writer.writeNext(row.toArray(new String[] {}), false);
             numWritten += 1;
 
-            LOG.info("[export] ({}/{}) participant {} for study {}:"
+            LOG.info("[export] ({}) participant {} for study {}:"
                             + " status={}, hasProfile={}, hasAddress={}, numProviders={}, numInstances={}",
-                    numWritten, total, pt.getUser().getGuid(), studyDto.getGuid(),
+                    numWritten, pt.getUser().getGuid(), studyDto.getGuid(),
                     pt.getStatus().getEnrollmentStatus(), pt.getUser().hasProfile(), pt.getUser().hasAddress(),
                     pt.getProviders().size(), pt.getAllResponses().size());
         }
