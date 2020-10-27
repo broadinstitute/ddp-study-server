@@ -20,7 +20,9 @@
 <![endif]-->
 
 <script src="https://cdn.auth0.com/js/lock/11.5.2/lock.min.js"></script>
+<script src="##BASE_URL##/assets/auth0-login-ar.js"></script>
 <script src="##BASE_URL##/assets/auth0-login-ht.js"></script>
+<script src="##BASE_URL##/assets/auth0-login-pt.js"></script>
 
 <style type="text/css">
     body {
@@ -174,6 +176,168 @@
       title: "Byenveni!",
       titleLogin: "Tanpri, konekte",
       titleSignUp: "Kreye kont ou a"
+    };
+    i18n['ar'] = {
+      "error": {
+        "signUp": {
+          "userExists": "إذا كنت قد قمت بالتسجيل بالفعل، قم بتسجيل الدخول هنا."
+        }
+      },
+      "fields": {
+        "firstNamePlaceholder": "اسمك الأول",
+        "lastNamePlaceholder": "اسم عائلتك",
+        "nonBlankHint": "لا يمكن أن يكون فارغًا."
+      },
+      "lastLoginInstructions": "آخِر مرة قمت فيها بتسجيل الدخول باستخدام",
+      "message": {
+        "alreadyRegisteredText": "إذا كنت قد قمت بالتسجيل بالفعل، قم بتسجيل الدخول هنا.",
+        "helpHtml": "للمساعدة، يُرجى الاتصال بـ" + studyHelpEmail + ".",
+        "loginLinkText": "سجل الدخول بحساب موجود.",
+        "registerMessageHtml": "إذا لم تكن قد سجلت نفسك بعد، يُرجى <a class='auth0-lock-alternative-link' href='" + registerUrl + "'>القيام بذلك هنا</a>.",
+        "resetPasswordText": "تمت إعادة تعيين كلمة المرور بنجاح. يُرجى تسجيل الدخول باستخدام كلمة المرور الجديدة.",
+        "switchToLoginText": "هل أنت مُسجّل بالفعل؟ "
+      },
+      "success": {
+        "forgotPassword": "إذا كنت قد قمت بالتسجيل مسبقًا، يُرجى تفقد بريدك الإلكتروني لإعادة تعيين كلمة المرور."
+      },
+      "title": "مرحبًا!",
+      "titleLogin": "يُرجى تسجيل الدخول",
+      "titleSignUp": "إنشاء حسابك"
+    };
+    i18n['fr'] = {
+      "error": {
+        "signUp": {
+          "userExists": "Si vous vous êtes déjà inscrit(e), veuillez vous connecter ici."
+        }
+      },
+      "fields": {
+        "firstNamePlaceholder": "Votre prénom",
+        "lastNamePlaceholder": "Votre nom",
+        "nonBlankHint": "Ce champ ne peut être vide"
+      },
+      "lastLoginInstructions": "Lors de votre dernière connexion, vous avez utilisé",
+      "message": {
+        "alreadyRegisteredText": "Si vous vous êtes déjà inscrit(e), veuillez vous connecter ici.",
+        "helpHtml": "Pour obtenir de l’aide, veuillez contacter " + studyHelpEmail + ".",
+        "loginLinkText": "Connectez-vous avec votre compte existant.",
+        "registerMessageHtml": "Si vous ne vous êtes pas encore inscrit(e), veuillez <a class='auth0-lock-alternative-link' href='" + registerUrl + "'>le faire ici</a>.",
+        "resetPasswordText": "Mot de passe réinitialisé avec succès. Veuillez utiliser votre nouveau mot de passe pour vous connecter.",
+        "switchToLoginText": "Déjà inscrit(e) ? "
+      },
+      "success": {
+        "forgotPassword": "Si vous vous êtes déjà inscrit(e), veuillez vérifier votre adresse e-mail afin de réinitialiser votre mot de passe."
+      },
+      "title": "Bienvenue !",
+      "titleLogin": "Veuillez vous connecter",
+      "titleSignUp": "Créer votre compte"
+    };
+    i18n['pt'] = {
+      "error": {
+        "signUp": {
+          "userExists": "Se já tiver feito o registo, inicie sessão aqui."
+        }
+      },
+      "fields": {
+        "firstNamePlaceholder": "O seu nome próprio",
+        "lastNamePlaceholder": "O seu apelido",
+        "nonBlankHint": "Não pode ficar em branco"
+      },
+      "lastLoginInstructions": "Da última vez, iniciou sessão com",
+      "message": {
+        "alreadyRegisteredText": "Se já tiver feito o registo, inicie sessão aqui.",
+        "helpHtml": "Se precisar de ajuda, entre em contacto com " + studyHelpEmail + ".",
+        "loginLinkText": "Inicie sessão com conta existente.",
+        "registerMessageHtml": "Se ainda não fez o registo, <a class='auth0-lock-alternative-link' href='" + registerUrl + "'>faça-o aqui</a>.",
+        "resetPasswordText": "Palavra-passe reposta com sucesso. Inicie sessão com a sua palavra-passe nova.",
+        "switchToLoginText": "Já está registado? "
+      },
+      "success": {
+        "forgotPassword": "Se já fez o registo anteriormente, consulte o seu e-mail para repor a sua palavra-passe."
+      },
+      "title": "Bem-vindo!",
+      "titleLogin": "Inicie sessão",
+      "titleSignUp": "Crie a sua conta"
+    };
+    i18n['ru'] = {
+      "error": {
+        "signUp": {
+          "userExists": "Если вы уже зарегистрированы, войдите в систему здесь."
+        }
+      },
+      "fields": {
+        "firstNamePlaceholder": "Ваше имя",
+        "lastNamePlaceholder": "Ваша фамилия",
+        "nonBlankHint": "Поле не может быть пустым"
+      },
+      "lastLoginInstructions": "Последний раз вы вошли в систему с",
+      "message": {
+        "alreadyRegisteredText": "Если вы уже зарегистрированы, войдите в систему здесь.",
+        "helpHtml": "За помощью обращайтесь по адресу " + studyHelpEmail + ".",
+        "loginLinkText": "Войдите в систему, используя существующую учетную запись.",
+        "registerMessageHtml": "Если вы еще не зарегистрированы, <a class='auth0-lock-alternative-link' href='" + registerUrl + "'>выполните это здесь</a>.",
+        "resetPasswordText": "Пароль успешно сменен. Пожалуйста, войдите в систему, используя ваш новый пароль.",
+        "switchToLoginText": "Уже зарегистрированы? "
+      },
+      "success": {
+        "forgotPassword": "Если вы ранее зарегистрировались, пожалуйста, проверьте свою электронную почту, чтобы сменить пароль."
+      },
+      "title": "Добро пожаловать!",
+      "titleLogin": "Пожалуйста, войдите в систему",
+      "titleSignUp": "Создайте свою учетную запись"
+    };
+    i18n['vi'] = {
+      "error": {
+        "signUp": {
+          "userExists": "Nếu quý vị đã đăng ký, vui lòng đăng nhập tại đây."
+        }
+      },
+      "fields": {
+        "firstNamePlaceholder": "Tên của quý vị",
+        "lastNamePlaceholder": "Họ của quý vị",
+        "nonBlankHint": "Không được để trống"
+      },
+      "lastLoginInstructions": "Lần cuối cùng quý vị đã đăng nhập bằng",
+      "message": {
+        "alreadyRegisteredText": "Nếu quý vị đã đăng ký, vui lòng đăng nhập tại đây.",
+        "helpHtml": "Để được trợ giúp, vui lòng liên lạc " + studyHelpEmail + ".",
+        "loginLinkText": "Đăng nhập bằng tài khoản hiện có.",
+        "registerMessageHtml": "Nếu quý vị chưa đăng ký, vui lòng <a class='auth0-lock-alternative-link' href='" + registerUrl + "'>đăng ký tại đây</a>.",
+        "resetPasswordText": "Đặt lại mật khẩu thành công. Vui lòng đăng nhập bằng mật khẩu mới của quý vị.",
+        "switchToLoginText": "Đã đăng ký? "
+      },
+      "success": {
+        "forgotPassword": "Nếu quý vị đã đăng ký trước đó, vui lòng xem email của quý vị để biết cách đặt lại mật khẩu."
+      },
+      "title": "Xin hoan nghênh!",
+      "titleLogin": "Vui lòng đăng nhập",
+      "titleSignUp": "Vui lòng tạo tài khoản của quý vị"
+    };
+    i18n['zh'] = {
+      "error": {
+        "signUp": {
+          "userExists": "如果您已经注册，请在此处登录。"
+        }
+      },
+      "fields": {
+        "firstNamePlaceholder": "您的名字",
+        "lastNamePlaceholder": "您的姓氏",
+        "nonBlankHint": "不能为空白"
+      },
+      "lastLoginInstructions": "您上次登录时使用",
+      "message": {
+        "alreadyRegisteredText": "如果您已经注册，请在此处登录。",
+        "helpHtml": "如需帮助，请联系 " + studyHelpEmail + "。",
+        "loginLinkText": "使用现有帐户登录。",
+        "registerMessageHtml": "如果您尚未注册，请<a class='auth0-lock-alternative-link' href='" + registerUrl + "'>在这里注册</a>。",
+        "resetPasswordText": "密码重置成功。请使用您的新密码登录。",
+        "switchToLoginText": "已经注册？"
+      },
+      "success": {
+        "forgotPassword": "如果您之前已经注册，请检查您的电子邮件以重置密码。"
+      },
+      "title": "欢迎您！",
+      "titleLogin": "请登录",
+      "titleSignUp": "创建您的帐户"
     };
 
     var title = i18n[language].title;

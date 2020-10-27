@@ -8,6 +8,7 @@ import java.util.Set;
 
 import com.typesafe.config.Config;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.dao.EventDao;
 import org.broadinstitute.ddp.db.dao.JdbiAuth0Tenant;
 import org.broadinstitute.ddp.db.dao.JdbiClient;
@@ -30,6 +31,7 @@ import org.broadinstitute.ddp.db.dao.StudyLanguageDao;
 import org.broadinstitute.ddp.db.dto.Auth0TenantDto;
 import org.broadinstitute.ddp.db.dto.ClientDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
+import org.broadinstitute.ddp.db.dto.StudyI18nDto;
 import org.broadinstitute.ddp.db.dto.UmbrellaDto;
 import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.exception.DDPException;
@@ -96,8 +98,8 @@ public class StudyBuilder {
         UserDto adminDto = getAdminUserOrInsert(handle, webClient.getId());
 
         insertStudyGovernance(handle, studyDto);
-        insertStudyDetails(handle, studyDto.getId());
-        insertStudyLanguages(handle, studyDto.getId());
+        insertOrUpdateStudyDetails(handle, studyDto.getId());
+        insertOrUpdateStudyLanguages(handle, studyDto.getId());
         insertSettings(handle, studyDto, adminDto.getUserId());
         insertSendgrid(handle, studyDto.getId());
         insertKits(handle, studyDto.getId(), adminDto.getUserId());
@@ -398,13 +400,14 @@ public class StudyBuilder {
         }
     }
 
-    private void insertStudyDetails(Handle handle, long studyId) {
+    public void insertOrUpdateStudyDetails(Handle handle, long studyId) {
         if (!cfg.hasPath("studyDetails")) {
             return;
         }
 
         JdbiUmbrellaStudyI18n jdbiStudyI18n = handle.attach(JdbiUmbrellaStudyI18n.class);
         JdbiLanguageCode jdbiLangCode = handle.attach(JdbiLanguageCode.class);
+        List<StudyI18nDto> currentDtos = jdbiStudyI18n.findTranslationsByStudyId(studyId);
 
         for (Config detailCfg : cfg.getConfigList("studyDetails")) {
             String lang = detailCfg.getString("language");
@@ -416,13 +419,25 @@ public class StudyBuilder {
                 throw new DDPException("Could not find language using code: " + lang);
             }
 
-            long detailId = jdbiStudyI18n.insert(studyId, langCodeId, name, summary);
-            LOG.info("Created study details with id={}, language={}, name={}, summary={}",
-                    detailId, lang, name, StringUtils.abbreviate(summary, 50));
+            var latest = new StudyI18nDto(lang, name, summary);
+            var current = currentDtos.stream()
+                    .filter(d -> d.getLanguageCode().equals(lang))
+                    .findFirst().orElse(null);
+
+            if (current == null) {
+                long detailId = jdbiStudyI18n.insert(studyId, langCodeId, name, summary);
+                LOG.info("Created study details with id={}, language={}, name={}, summary={}",
+                        detailId, lang, name, StringUtils.abbreviate(summary, 50));
+            } else if (!current.equals(latest)) {
+                DBUtils.checkUpdate(1, jdbiStudyI18n.updateByStudyIdAndLanguage(studyId, lang, name, summary));
+                LOG.info("Updated study details for language {}", lang);
+            } else {
+                LOG.info("Study details for language {} already up-to-date", lang);
+            }
         }
     }
 
-    private void insertStudyLanguages(Handle handle, long studyId) {
+    public void insertOrUpdateStudyLanguages(Handle handle, long studyId) {
         if (!cfg.hasPath("supportedLanguages")) {
             return;
         }
@@ -431,57 +446,47 @@ public class StudyBuilder {
         StudyLanguageDao studyLanguageDao = handle.attach(StudyLanguageDao.class);
         List<StudyLanguage> currentLanguages = studyLanguageDao.findLanguages(studyId);
 
-        boolean defaultSet = false;
-        Long defaultLanguageCodeId = null;
-        String defaultLanguageCode = null;
+        StudyLanguage chosenDefault = null;
         for (Config languageCfg : cfg.getConfigList("supportedLanguages")) {
             String lang = languageCfg.getString("language");
-            boolean alreadyExists = currentLanguages.stream().anyMatch(l -> l.getLanguageCode().equals(lang));
-            if (alreadyExists) {
-                LOG.info("Study already has language {}", lang);
-                continue;
-            }
+            String name = ConfigUtil.getStrIfPresent(languageCfg, "name");
 
-            Boolean isDefault = false;
-            if (languageCfg.hasPath("isDefault")) {
-                isDefault = languageCfg.getBoolean("isDefault");
-            }
-
-            String name = null;
-            if (languageCfg.hasPath("name")) {
-                name = languageCfg.getString("name");
+            boolean isDefault = languageCfg.hasPath("isDefault") && languageCfg.getBoolean("isDefault");
+            if (isDefault && chosenDefault != null) {
+                throw new DDPException("Cannot set isDefault: language "
+                        + chosenDefault.getLanguageCode() + " was already designated as default");
             }
 
             Long langCodeId = jdbiLangCode.getLanguageCodeId(lang);
             if (langCodeId == null) {
                 throw new DDPException("Could not find language using code: " + lang);
             }
-            if (isDefault) {
-                if (defaultSet) {
-                    //no more than 1 language can be set as default
-                    throw new DDPException("Cannot set isDefault: true for more than 1 language ");
-                } else {
-                    defaultLanguageCodeId = langCodeId;
-                    defaultLanguageCode = lang;
-                    defaultSet = true;
-                }
+
+            var latest = new StudyLanguage(lang, name, isDefault, studyId, langCodeId);
+            StudyLanguage current = currentLanguages.stream()
+                    .filter(l -> l.getLanguageCode().equals(lang))
+                    .findFirst().orElse(null);
+
+            if (current == null) {
+                long studyLanguageId = studyLanguageDao.insert(studyId, langCodeId, name);
+                LOG.info("Created study language with id={}, languageCode={} languageName={}", studyLanguageId, lang, name);
+            } else if (!current.equals(latest)) {
+                studyLanguageDao.update(studyId, langCodeId, name);
+                LOG.info("Updated study language {}", lang);
+            } else {
+                LOG.info("Study already has language {}", lang);
             }
 
-            //insert into study_language
-            long studyLanguageId = studyLanguageDao.insert(studyId, langCodeId, name);
-            LOG.info("Created study language with id={}, languageCode={} languageName={}", studyLanguageId, lang, name);
+            chosenDefault = isDefault ? latest : chosenDefault;
         }
 
-        //set default language
-        if (defaultSet) {
-            LOG.info("Setting language {} as default", defaultLanguageCode);
-            studyLanguageDao.setAsDefaultLanguage(studyId, defaultLanguageCodeId);
+        // Make sure there is one default language.
+        if (chosenDefault != null) {
+            LOG.info("Setting language {} as default", chosenDefault.getLanguageCode());
+            studyLanguageDao.setAsDefaultLanguage(studyId, chosenDefault.getLanguageId());
         } else {
-            boolean alreadyHasDefault = currentLanguages.stream().anyMatch(StudyLanguage::isDefault);
-            if (!alreadyHasDefault) {
-                LOG.error("No language is set as default. Please set default language");
-                throw new DDPException("No language is set as default ");
-            }
+            LOG.error("No language is set as default. Please set default language");
+            throw new DDPException("No language is set as default");
         }
     }
 

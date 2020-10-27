@@ -43,6 +43,10 @@ public interface StudyLanguageDao extends SqlObject {
         return getStudyLanguageSql().insert(studyDto.getId(), languageCodeId, name);
     }
 
+    default void update(long umbrellaStudyId, long languageCodeId, String name) {
+        DBUtils.checkUpdate(1, getStudyLanguageSql().update(umbrellaStudyId, languageCodeId, name));
+    }
+
     default void deleteStudyLanguageById(long studyLanguageId) {
         //delete the study language row and throw exception if more than 1 row is deleted
         int deleted = getStudyLanguageSql().deleteById(studyLanguageId);

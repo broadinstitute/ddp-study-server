@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.export;
 
+import static java.util.stream.Collectors.toList;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -34,6 +35,7 @@ import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceStatusDao;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
+import org.broadinstitute.ddp.db.dao.InvitationFactory;
 import org.broadinstitute.ddp.db.dao.JdbiMailAddress;
 import org.broadinstitute.ddp.db.dao.JdbiMedicalProvider;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
@@ -209,7 +211,17 @@ public class DataExporterTest extends TxnAwareBaseTest {
             long completeTimestamp = Instant.now().toEpochMilli();
             handle.attach(ActivityInstanceStatusDao.class)
                     .insertStatus(instanceDto.getId(), InstanceStatusType.COMPLETE, completeTimestamp, testData.getUserGuid());
+            String invitationCode1 = UUID.randomUUID().toString();
+            String email1 = testData.getUserGuid() + "@" + invitationCode1;
+            handle.attach(InvitationFactory.class)
+                    .createInvitation(InvitationType.RECRUITMENT, invitationCode1, testData.getStudyId(),
+                            testData.getUserId(), email1);
 
+            String invitationCode2 = UUID.randomUUID().toString();
+            String email2 = testData.getUserGuid() + "@" + invitationCode2;
+            handle.attach(InvitationFactory.class)
+                    .createInvitation(InvitationType.AGE_UP, invitationCode2, testData.getStudyId(),
+                            testData.getUserId(), email2);
             // Extract and test
             List<Participant> extracts = exporter.extractParticipantDataSet(handle, testData.getTestingStudy());
 
@@ -235,6 +247,10 @@ public class DataExporterTest extends TxnAwareBaseTest {
             assertEquals(1, actual.getProviders().size());
             assertEquals(provider.getPhysicianName(), actual.getProviders().get(0).getPhysicianName());
             assertEquals(provider.getStreet(), actual.getProviders().get(0).getStreet());
+
+            assertEquals(2, actual.getInvitations().size());
+            assertTrue(actual.getInvitations().stream().map(inv -> inv.getInvitationGuid()).collect(toList())
+                    .containsAll(List.of(invitationCode1, invitationCode2)));
 
             assertEquals(1, actual.getAllResponses().size());
             assertEquals(instanceDto.getGuid(), actual.getAllResponses().get(0).getGuid());
@@ -408,8 +424,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
         List<ActivityExtract> activities = dataExporterTestData.getActivities();
         List<Participant> participants = dataExporterTestData.getParticipants();
 
-        StudyExtract studyExtract = new StudyExtract(activities, Collections.emptyList(),
-                Collections.emptyMap(), Collections.emptyMap(), Collections.emptyList());
+        StudyExtract studyExtract = new StudyExtract(activities, Collections.emptyList(), Collections.emptyMap(), Collections.emptyMap());
         // Run the test!
         boolean exportStructuredDocument = false;
         Map<String, String> result = TransactionWrapper.withTxn(handle ->
@@ -496,8 +511,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
         DataExporterTestData dataExporterTestData = new DataExporterTestData(false, false);
         List<ActivityExtract> activities = dataExporterTestData.getActivities();
         List<Participant> participants = dataExporterTestData.getParticipants();
-        StudyExtract studyExtract = new StudyExtract(activities, Collections.emptyList(),
-                Collections.emptyMap(), Collections.emptyMap(), Collections.emptyList());
+        StudyExtract studyExtract = new StudyExtract(activities, Collections.emptyList(), Collections.emptyMap(), Collections.emptyMap());
 
         // Run the test!
         boolean exportStructuredDocument = false;
@@ -517,11 +531,13 @@ public class DataExporterTest extends TxnAwareBaseTest {
         List<ActivityExtract> activities = dataExporterTestData.getActivities();
         List<Participant> participants = dataExporterTestData.getParticipants();
 
-        boolean exportStructuredDocument = true;
         InvitationDto invite = new InvitationDto(1L, "invite123", InvitationType.RECRUITMENT,
                 Instant.now(), null, null, null, testData.getStudyId(), 1L, null, "invite notes here");
-        StudyExtract studyExtract = new StudyExtract(activities, Collections.emptyList(),
-                Collections.emptyMap(), Collections.emptyMap(), List.of(invite));
+        participants.get(0).addInvitation(invite);
+
+        boolean exportStructuredDocument = true;
+
+        StudyExtract studyExtract = new StudyExtract(activities, Collections.emptyList(), Collections.emptyMap(), Collections.emptyMap());
 
         Map<String, String> result = TransactionWrapper.withTxn(handle ->
                 exporter.prepareParticipantRecordsForJSONExport(
@@ -538,8 +554,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
         List<ActivityExtract> activities = dataExporterTestData.getActivities();
         List<Participant> participants = dataExporterTestData.getParticipants();
         boolean exportStructuredDocument = true;
-        StudyExtract studyExtract = new StudyExtract(activities, Collections.emptyList(),
-                Collections.emptyMap(), Collections.emptyMap(), Collections.emptyList());
+        StudyExtract studyExtract = new StudyExtract(activities, Collections.emptyList(), Collections.emptyMap(), Collections.emptyMap());
         Map<String, String> result = TransactionWrapper.withTxn(handle ->
                 exporter.prepareParticipantRecordsForJSONExport(
                         studyExtract, participants, exportStructuredDocument, handle, mockMedicalRecordService

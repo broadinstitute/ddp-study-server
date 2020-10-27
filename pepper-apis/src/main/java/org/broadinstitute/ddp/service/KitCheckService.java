@@ -5,17 +5,14 @@ import static org.broadinstitute.ddp.service.DsmAddressValidationStatus.DSM_INVA
 import java.beans.ConstructorProperties;
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.broadinstitute.ddp.client.DsmClient;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.DsmKitRequestDao;
 import org.broadinstitute.ddp.db.dao.KitConfigurationDao;
@@ -36,6 +33,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class KitCheckService {
+
+    public static final int DEFAULT_QUERY_FETCH_SIZE = 300;
 
     private static final Logger LOG = LoggerFactory.getLogger(KitCheckService.class);
     private static final int DEFAULT_PENDING_BATCH_SIZE = 300;
@@ -113,7 +112,7 @@ public class KitCheckService {
                     }
                     if (kitConfiguration.getSchedule() != null) {
                         // Add a tracking record for participant if kit has a reoccurring schedule.
-                        long id = kitScheduleDao.createScheduleRecord(candidate.getUserId(), kitConfiguration.getId(), kitRequestId);
+                        long id = kitScheduleDao.createScheduleRecord(candidate.getUserId(), kitConfiguration.getId());
                         LOG.info("Added kit schedule record with id={} for tracking reoccurring kits"
                                 + " for participantGuid={} and kitConfigurationId={}", id, userGuid, kitConfiguration.getId());
                     }
@@ -125,77 +124,6 @@ public class KitCheckService {
         }
 
         return kitCheckResult;
-    }
-
-    /**
-     * Look through participants that are meant to receive reoccurring kits and find the status of the last sent kit.
-     *
-     * @param apisHandle the database handle
-     * @param dsmClient  the dsm client
-     */
-    public void checkPendingKitStatuses(Handle apisHandle, DsmClient dsmClient) {
-        var kitScheduleDao = apisHandle.attach(KitScheduleDao.class);
-        Map<String, List<PendingScheduleRecord>> groupByStudyBatch = new HashMap<>();
-        var currentBatchSize = new AtomicInteger(0);
-
-        kitScheduleDao.findAllEligibleRecordsWaitingForKitStatus().forEach(pending -> {
-            groupByStudyBatch.computeIfAbsent(pending.getStudyGuid(), key -> new ArrayList<>()).add(pending);
-            currentBatchSize.incrementAndGet();
-            if (currentBatchSize.get() >= batchSize) {
-                checkPendingKitStatusesForBatch(apisHandle, dsmClient, groupByStudyBatch);
-                groupByStudyBatch.clear();
-                currentBatchSize.set(0);
-            }
-        });
-
-        if (currentBatchSize.get() > 0) {
-            checkPendingKitStatusesForBatch(apisHandle, dsmClient, groupByStudyBatch);
-        }
-    }
-
-    private void checkPendingKitStatusesForBatch(Handle apisHandle, DsmClient dsmClient,
-                                                 Map<String, List<PendingScheduleRecord>> groupByStudyBatch) {
-        var kitScheduleDao = apisHandle.attach(KitScheduleDao.class);
-        for (var entry : groupByStudyBatch.entrySet()) {
-            String studyGuid = entry.getKey();
-            List<PendingScheduleRecord> records = entry.getValue();
-            LOG.info("Checking kit status for {} records in study {}", records.size(), studyGuid);
-
-            List<String> userGuids = records.stream()
-                    .map(PendingScheduleRecord::getUserGuid)
-                    .collect(Collectors.toList());
-            Collections.shuffle(userGuids);
-
-            Map<String, Instant> sentTimes = new HashMap<>();
-            dsmClient.paginateParticipantKits(studyGuid, userGuids, (subset, result) -> {
-                if (result.getStatusCode() == 200) {
-                    for (var status : result.getBody()) {
-                        for (var kit : status.getSamples()) {
-                            sentTimes.put(kit.getKitRequestId(), Instant.ofEpochSecond(kit.getSentEpochTimeSec()));
-                        }
-                    }
-                } else if (result.hasThrown()) {
-                    LOG.error("Error looking up kit statuses for {} participants in study {}, continuing pagination",
-                            subset.size(), studyGuid, result.getThrown());
-                } else {
-                    LOG.warn("Response has status code {}, continuing pagination", result.getStatusCode());
-                }
-                return true;
-            });
-
-            List<Long> recordIds = new ArrayList<>();
-            List<Instant> recordKitSentTimes = new ArrayList<>();
-            for (var pending : records) {
-                Instant sentTime = sentTimes.get(pending.getRecord().getInitialKitRequestGuid());
-                if (sentTime != null) {
-                    recordIds.add(pending.getRecord().getId());
-                    recordKitSentTimes.add(sentTime);
-                }
-            }
-
-            kitScheduleDao.updateRecordInitialKitSentTimes(recordIds, recordKitSentTimes);
-            LOG.info("Updated initial kit sent times for {} records", recordIds.size());
-        }
     }
 
     /**
@@ -392,6 +320,7 @@ public class KitCheckService {
                 .findStringTemplate(KitCheckService.class, "queryAddressInfoForEnrolledUsersWithoutKits")
                 .render();
         return apisHandle.createQuery(query)
+                .setFetchSize(DEFAULT_QUERY_FETCH_SIZE)
                 .bind("studyGuid", studyGuid)
                 .bind("kitTypeId", kitTypeId)
                 .registerRowMapper(ConstructorMapper.factory(PotentialRecipient.class))

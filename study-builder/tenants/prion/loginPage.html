@@ -432,20 +432,9 @@
         width: 100%;
     }
 
-    @media only screen and (max-width: 992px) {
-        .Header-background {
-            padding: 25px 0 0 0 !important;
-        }
-        .navbar-header {
-            padding: 0 25px 25px 25px !important;
-        }
-        .navbar-collapse {
-            padding: 0 25px 10px 25px !important;
-        }
-    }
-
     .Header-logo img {
         height: 55px;
+        width: 232.19px;
     }
 
     .Header-hamburger {
@@ -505,6 +494,45 @@
         width: auto;
         text-align: center;
         padding-top: 10px !important;
+    }
+
+    .Nav-item:nth-of-type(4) {
+        padding-left: 33px !important;
+    }
+
+    @media only screen and (min-width: 1026px) and (max-width: 1200px) {
+        .Header-background {
+            padding: 30px 40px 20px 80px !important;
+        }
+        .navbar-nav {
+            float: right !important;
+            width: 649px;
+        }
+    }
+
+    @media only screen and (min-width: 993px) and (max-width: 1025px) {
+        .Header-background {
+            padding: 30px 40px 20px 80px !important;
+        }
+        .navbar-nav {
+            float: right !important;
+            width: 584px;
+        }
+    }
+
+    @media only screen and (min-width: 768px) and (max-width: 992px) {
+        .Header-background {
+            padding: 25px 0 0 0 !important;
+        }
+        .navbar-header {
+            padding: 0 10px 25px 25px !important;
+        }
+        .navbar-collapse {
+            padding: 0 25px 10px 25px !important;
+        }
+        .navbar-nav {
+            width: 415px !important;
+        }
     }
 
     .Nav ul {
@@ -761,11 +789,6 @@
         vertical-align: middle;
     }
 
-    .language-dropdown {
-        float: left;
-        overflow: hidden;
-    }
-
     .dropdown-content {
         background-color: rgb(255, 255, 255);
         border-radius: 4px;
@@ -881,6 +904,7 @@
         signIn: 'Sign In',
         joinUs: 'Join Us',
         home: 'Home',
+        studyListing: 'Study Listing',
         backToTop: 'Back to top',
         privacyPolicy: 'Privacy Policy',
         contactUs: 'Contact us: ',
@@ -938,6 +962,7 @@
         signIn: 'Registrarse',
         joinUs: 'Únete a nosotros',
         home: 'Casa',
+        studyListing: '(es)Study Listing',
         backToTop: 'Volver arriba',
         privacyPolicy: 'Política de privacidad',
         contactUs: 'Contacta con nosotros:',
@@ -994,6 +1019,7 @@
         signIn: 'להתחבר',
         joinUs: 'הצטרף אלינו',
         home: 'בית',
+        studyListing: '(he)Study Listing',
         backToTop: 'חזרה למעלה',
         privacyPolicy: 'מדיניות פרטיות',
         contactUs: 'צור קשר:',
@@ -1050,6 +1076,7 @@
         signIn: '登入',
         joinUs: '加入我們',
         home: '家',
+        studyListing: '(zh) eStudy Listing',
         backToTop: '回到頂部',
         privacyPolicy: '隐私政策',
         contactUs: '聯繫我們：',
@@ -1367,6 +1394,7 @@
                     `<ul class="nav navbar-nav navbar-right NoMargin">${languageSelector}` +
                     `<li class="Nav-item"><a href="${mainUrl}/learn-more" class="Nav-itemLink">` +
                     `${languageDictionary.learnMore}</a></li>` +
+                    `<li class="Nav-item"><a href="${mainUrl}/study-listing" class="Nav-itemLink">${languageDictionary.studyListing}</a></li>` +
                     `<li class="Nav-item"><a href="${loginUrl}" class="${signInClass}" id="SignIn">` +
                     `${languageDictionary.signIn}</a></li>` +
                     `<li class="Nav-item Nav-item-JoinUs">` +

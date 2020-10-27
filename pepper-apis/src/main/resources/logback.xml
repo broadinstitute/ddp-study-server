@@ -20,13 +20,12 @@
         <filter class="ch.qos.logback.classic.filter.LevelFilter">
             <level>ERROR</level>
             <OnMismatch>DENY</OnMismatch>
-            <OnMatch>ALLOW</OnMatch>
+            <OnMatch>ACCEPT</OnMatch>
         </filter>
     </appender>
 
     <logger name="org.redisson" level="info">
         <appender-ref ref="STDOUT" />
-        <appender-ref ref="SLACK" />
         <appender-ref ref="REDISCONNVALIDATOR" />
     </logger>
 
