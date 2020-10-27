@@ -28,7 +28,7 @@ public class DateTimeUtils {
         return Duration.parse(timeAmount);
     }
 
-    public static ZoneId parseUserTimeZone(String givenTimeZone) {
+    public static ZoneId parseTimeZone(String givenTimeZone) {
         if (givenTimeZone != null) {
             try {
                 return ZoneId.of(givenTimeZone);

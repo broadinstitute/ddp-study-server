@@ -523,7 +523,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
         lastName = StringUtils.isNotBlank(lastName) ? lastName.trim() : null;
         LanguageDto languageDto = I18nUtil.determineUserLanguage(handle, payload.getStudyGuid(), payload.getLanguageCode());
         long languageId = languageDto.getId();
-        ZoneId timeZone = DateTimeUtils.parseUserTimeZone(payload.getTimeZone());
+        ZoneId timeZone = DateTimeUtils.parseTimeZone(payload.getTimeZone());
         if (timeZone == null) {
             LOG.info("No user timezone is provided");
         }

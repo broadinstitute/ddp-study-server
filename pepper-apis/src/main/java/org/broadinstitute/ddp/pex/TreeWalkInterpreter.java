@@ -211,7 +211,7 @@ public class TreeWalkInterpreter implements PexInterpreter {
     }
 
     private boolean evalStudyQuery(InterpreterContext ictx, StudyQueryContext ctx) {
-        String userGuid = getUserGuidByUserType(ictx, ctx.USER_TYPE());
+        String userGuid = ictx.getUserGuid();
         String umbrellaStudyGuid = extractString(ctx.study().STR());
         return applyStudyPredicate(ictx, ctx.studyPredicate(), userGuid, umbrellaStudyGuid);
     }

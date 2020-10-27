@@ -27,6 +27,7 @@ import org.broadinstitute.ddp.model.user.UserProfile;
 import org.broadinstitute.ddp.util.DateTimeUtils;
 import org.broadinstitute.ddp.util.I18nUtil;
 import org.broadinstitute.ddp.util.ResponseUtil;
+import org.broadinstitute.ddp.util.RouteUtil;
 import org.broadinstitute.ddp.util.ValidatedJsonInputRoute;
 import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
@@ -39,7 +40,7 @@ public class GovernedParticipantRegistrationRoute extends ValidatedJsonInputRout
 
     @Override
     public Object handle(Request request, Response response, GovernedUserRegistrationPayload payload) throws Exception {
-        String operatorGuid = request.params(RouteConstants.PathParam.USER_GUID);
+        String operatorGuid = RouteUtil.getDDPAuth(request).getOperator();
         String studyGuid = request.params(RouteConstants.PathParam.STUDY_GUID);
         return TransactionWrapper.withTxn(handle -> {
             UserGovernanceDao userGovernanceDao = handle.attach(UserGovernanceDao.class);
@@ -84,7 +85,7 @@ public class GovernedParticipantRegistrationRoute extends ValidatedJsonInputRout
         lastName = StringUtils.isNotBlank(lastName) ? lastName.trim() : null;
         LanguageDto languageDto = I18nUtil.determineUserLanguage(handle, studyGuid, payload.getLanguageCode());
         long languageId = languageDto.getId();
-        ZoneId timeZone = DateTimeUtils.parseUserTimeZone(payload.getTimeZone());
+        ZoneId timeZone = DateTimeUtils.parseTimeZone(payload.getTimeZone());
         if (timeZone == null) {
             LOG.info("No user timezone is provided");
         }

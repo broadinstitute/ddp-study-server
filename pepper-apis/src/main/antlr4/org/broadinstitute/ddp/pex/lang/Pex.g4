@@ -20,14 +20,14 @@ expr
   ;
 
 query
-  : USER_TYPE '.' study '.' studyPredicate                                                  # StudyQuery
+  : 'user' '.' study '.' studyPredicate                                                     # StudyQuery
   | USER_TYPE '.' study '.' form '.' formPredicate                                          # FormQuery
   | USER_TYPE '.' study '.' form '.' instance '.' formInstancePredicate                     # FormInstanceQuery
   | USER_TYPE '.' study '.' form '.' question '.' questionPredicate                         # QuestionQuery
   | USER_TYPE '.' study '.' form '.' question '.' 'answers' '.' predicate                   # DefaultLatestAnswerQuery
   | USER_TYPE '.' study '.' form '.' instance '.' question '.' 'answers' '.' predicate      # AnswerQuery
-  | USER_TYPE '.' 'profile' '.' profileDataQuery   # ProfileQuery
-  | USER_TYPE '.' 'event' '.' 'testResult' '.' testResultQuery   # EventTestResultQuery
+  | USER_TYPE '.' 'profile' '.' profileDataQuery                                            # ProfileQuery
+  | 'user' '.' 'event' '.' 'testResult' '.' testResultQuery                                 # EventTestResultQuery
   ;
 
 study : 'studies' '[' STR ']' ;
