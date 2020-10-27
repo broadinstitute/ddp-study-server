@@ -8,13 +8,19 @@ import java.util.Set;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
+import org.broadinstitute.ddp.db.dao.ActivityDao;
+import org.broadinstitute.ddp.db.dao.JdbiActivity;
+import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
 import org.broadinstitute.ddp.db.dao.JdbiExpression;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
+import org.broadinstitute.ddp.db.dto.ActivityDto;
+import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.exception.DDPException;
+import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.governance.AgeOfMajorityRule;
 import org.broadinstitute.ddp.model.governance.GovernancePolicy;
 import org.broadinstitute.ddp.model.pex.Expression;
@@ -77,8 +83,28 @@ public class BrainPediatricsUpdates implements CustomTask {
         //String studyGuid = studyDto.getGuid();
         long studyId = studyDto.getId();
         UserDto adminUser = handle.attach(JdbiUser.class).findByUserGuid(cfg.getString("adminUser.guid"));
-
         SqlHelper helper = handle.attach(SqlHelper.class);
+
+        //first update styling for release
+        var activityBuilder = new ActivityBuilder(cfgPath.getParent(), cfg, varsCfg, studyDto, adminUser.getUserId());
+        var activityDao = handle.attach(ActivityDao.class);
+        var jdbiActivity = handle.attach(JdbiActivity.class);
+        var jdbiActVersion = handle.attach(JdbiActivityVersion.class);
+        Config definition = activityBuilder.readDefinitionConfig("release.conf");
+        String releaseActivityCode = "RELEASE";
+        ActivityDto activityDto = jdbiActivity.findActivityByStudyIdAndCode(studyDto.getId(), releaseActivityCode).get();
+        ActivityVersionDto versionDto = jdbiActVersion.findByActivityCodeAndVersionTag(studyDto.getId(),
+                releaseActivityCode, "v1").get();
+        FormActivityDef activity = (FormActivityDef) activityDao.findDefByDtoAndVersion(activityDto, versionDto);
+        UpdateTemplatesInPlace updateTemplatesTask = new UpdateTemplatesInPlace();
+        updateTemplatesTask.traverseActivity(handle, releaseActivityCode, definition, activity);
+        //update release subtitle
+        String newSubtitle = "<p class=\"no-margin sticky__text\"><span>"
+                + " If you have questions about the study or the consent form at any time, please contact us at </span> "
+                + "        <a href=\"tel:651-229-3480\" class=\"Link\">651-229-3480</a> or "
+                + "        <a href=\"mailto:info@braincancerproject.org\" class=\"Link\">info@braincancerproject.org</a>.</p>";
+        helper.update18nActivitySubtitle(activityDto.getActivityId(), newSubtitle);
+        LOG.info("updated variables for release styling changes");
 
         List<Long> workflowIdsToDelete = new ArrayList<>();
         //remove workflows
@@ -383,6 +409,9 @@ public class BrainPediatricsUpdates implements CustomTask {
 
         @SqlUpdate("update i18n_study_activity set name = :name where study_activity_id = :studyActivityId")
         int update18nActivityName(@Bind("studyActivityId") long studyActivityId, @Bind("name") String name);
+
+        @SqlUpdate("update i18n_study_activity set subtitle = :text where study_activity_id = :studyActivityId")
+        int update18nActivitySubtitle(@Bind("studyActivityId") long studyActivityId, @Bind("text") String text);
 
         @SqlQuery("select e.expression_id from kit_configuration kc, kit_configuration__kit_rule kckr, kit_rule kr, "
                 + "kit_pex_rule kpr, expression e "

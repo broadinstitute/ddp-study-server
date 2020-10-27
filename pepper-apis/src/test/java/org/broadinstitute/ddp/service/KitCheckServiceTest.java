@@ -4,9 +4,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.spy;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -17,8 +14,6 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
-import org.broadinstitute.ddp.client.ApiResult;
-import org.broadinstitute.ddp.client.DsmClient;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.DsmKitRequestDao;
 import org.broadinstitute.ddp.db.dao.JdbiCountry;
@@ -32,13 +27,10 @@ import org.broadinstitute.ddp.db.dao.KitTypeDao;
 import org.broadinstitute.ddp.db.dto.dsm.DsmKitRequest;
 import org.broadinstitute.ddp.db.dto.kit.KitConfigurationDto;
 import org.broadinstitute.ddp.model.address.MailAddress;
-import org.broadinstitute.ddp.model.dsm.ParticipantKits;
-import org.broadinstitute.ddp.model.dsm.ParticipantStatus;
 import org.broadinstitute.ddp.model.kit.KitConfiguration;
 import org.broadinstitute.ddp.model.kit.KitRuleType;
 import org.broadinstitute.ddp.model.kit.KitSchedule;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
-import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.jdbi.v3.core.Handle;
 import org.junit.AfterClass;
@@ -254,48 +246,6 @@ public class KitCheckServiceTest extends TxnAwareBaseTest {
     }
 
     @Test
-    public void testCheckPendingKitStatuses() {
-        TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, handle -> {
-            // Setup
-            var kitConfigDao = handle.attach(KitConfigurationDao.class);
-            var kitScheduleDao = handle.attach(KitScheduleDao.class);
-            var kitRequestDao = handle.attach(DsmKitRequestDao.class);
-
-            long kitTypeId = handle.attach(KitTypeDao.class).getTestBostonKitType().getId();
-            long kitConfigId = kitConfigDao.insertConfiguration(testData.getStudyId(), 1, kitTypeId, true);
-            kitScheduleDao.createSchedule(new KitSchedule(kitConfigId, 1, "P1D", null, null, null));
-
-            var addr = createTestMailAddress(handle);
-            handle.attach(JdbiUserStudyEnrollment.class).changeUserStudyEnrollmentStatus(
-                    testData.getUserGuid(), testData.getStudyGuid(), EnrollmentStatusType.ENROLLED);
-
-            long kitReqId = kitRequestDao.createKitRequest(testData.getStudyGuid(), testData.getUserId(), addr.getId(), kitTypeId);
-            String kitReqGuid = kitRequestDao.findKitRequest(kitReqId).get().getKitRequestId();
-            long recordId = kitScheduleDao.createScheduleRecord(testData.getUserId(), kitConfigId, kitReqId);
-
-            Instant expectedTime = Instant.now().truncatedTo(ChronoUnit.SECONDS);
-            var spyDsm = spy(new DsmClient(ConfigManager.getInstance().getConfig()));
-            var kitStatus = List.of(new ParticipantKits(testData.getUserGuid(), List.of(
-                    new ParticipantStatus.Sample(
-                            kitReqGuid,
-                            "TESTBOSTON",
-                            expectedTime.getEpochSecond(),
-                            null, null, null, null))));
-            doReturn(ApiResult.ok(200, kitStatus)).when(spyDsm).listParticipantKits(any(), any());
-
-            // Run
-            new KitCheckService().checkPendingKitStatuses(handle, spyDsm);
-
-            // Verify
-            var actualRecord = kitScheduleDao.findRecord(recordId).get();
-            assertEquals(expectedTime, actualRecord.getInitialKitSentTime());
-
-            // Cleanup
-            handle.rollback();
-        });
-    }
-
-    @Test
     public void testScheduleNextKits() {
         TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, handle -> {
             // Setup
@@ -311,8 +261,8 @@ public class KitCheckServiceTest extends TxnAwareBaseTest {
             handle.attach(JdbiUserStudyEnrollment.class).changeUserStudyEnrollmentStatus(
                     testData.getUserGuid(), testData.getStudyGuid(), EnrollmentStatusType.ENROLLED);
 
-            long kitReqId = kitRequestDao.createKitRequest(testData.getStudyGuid(), testData.getUserId(), addr.getId(), kitTypeId);
-            long recordId = kitScheduleDao.createScheduleRecord(testData.getUserId(), kitConfigId, kitReqId);
+            kitRequestDao.createKitRequest(testData.getStudyGuid(), testData.getUserId(), addr.getId(), kitTypeId);
+            long recordId = kitScheduleDao.createScheduleRecord(testData.getUserId(), kitConfigId);
             Instant sentTime = Instant.now().minus(1, ChronoUnit.HOURS);
             kitScheduleDao.updateRecordInitialKitSentTime(recordId, sentTime);
 

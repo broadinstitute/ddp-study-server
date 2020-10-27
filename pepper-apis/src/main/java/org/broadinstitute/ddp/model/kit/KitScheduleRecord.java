@@ -12,8 +12,6 @@ public class KitScheduleRecord {
     private long configId;
     private boolean optedOut;
     private int numOccurrences;
-    private long initialKitRequestId;
-    private String initialKitRequestGuid;
     private Instant initialKitSentTime;
     private Instant lastOccurrenceTime;
     private Instant currentOccurrencePrepTime;
@@ -25,8 +23,6 @@ public class KitScheduleRecord {
             @ColumnName("kit_configuration_id") long configId,
             @ColumnName("opted_out") boolean optedOut,
             @ColumnName("num_occurrences") int numOccurrences,
-            @ColumnName("initial_kit_request_id") Long initialKitRequestId,
-            @ColumnName("initial_kit_request_guid") String initialKitRequestGuid,
             @ColumnName("initial_kit_sent_time") Instant initialKitSentTime,
             @ColumnName("last_occurrence_time") Instant lastOccurrenceTime,
             @ColumnName("current_occurrence_prep_time") Instant currentOccurrencePrepTime) {
@@ -35,8 +31,6 @@ public class KitScheduleRecord {
         this.configId = configId;
         this.optedOut = optedOut;
         this.numOccurrences = numOccurrences;
-        this.initialKitRequestId = initialKitRequestId;
-        this.initialKitRequestGuid = initialKitRequestGuid;
         this.initialKitSentTime = initialKitSentTime;
         this.lastOccurrenceTime = lastOccurrenceTime;
         this.currentOccurrencePrepTime = currentOccurrencePrepTime;
@@ -60,14 +54,6 @@ public class KitScheduleRecord {
 
     public int getNumOccurrences() {
         return numOccurrences;
-    }
-
-    public long getInitialKitRequestId() {
-        return initialKitRequestId;
-    }
-
-    public String getInitialKitRequestGuid() {
-        return initialKitRequestGuid;
     }
 
     public Instant getInitialKitSentTime() {

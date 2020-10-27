@@ -24,6 +24,12 @@ emailTemplates:
     subject: >
       {% if user.user_metadata.language == 'es' %}Restablecimiento de la contraseña de TestBoston
       {% elsif user.user_metadata.language == 'ht' %}Repwograme modpas la pou TestBoston
+      {% elsif user.user_metadata.language == 'ar' %}إعادة تعيين كلمة المرور الخاصة بدراسة TestBoston
+      {% elsif user.user_metadata.language == 'fr' %}Réinitialisation du mot de passe TestBoston
+      {% elsif user.user_metadata.language == 'pt' %}Reposição de palavra-passe TestBoston
+      {% elsif user.user_metadata.language == 'ru' %}Смена пароля TestBoston
+      {% elsif user.user_metadata.language == 'vi' %}Đặt lại mật khẩu TestBoston
+      {% elsif user.user_metadata.language == 'zh' %}TestBoston 密码重置
       {% else %}TestBoston password reset
       {% endif %}
     urlLifetimeInSeconds: 432000
