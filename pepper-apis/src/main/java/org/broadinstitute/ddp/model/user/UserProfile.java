@@ -1,12 +1,13 @@
 package org.broadinstitute.ddp.model.user;
 
+import java.io.Serializable;
 import java.time.LocalDate;
 import java.time.ZoneId;
 
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
-public class UserProfile {
+public class  UserProfile implements Serializable {
 
     private long userId;
     private String firstName;
@@ -18,6 +19,7 @@ public class UserProfile {
     private ZoneId timeZone;
     private Boolean doNotContact;
     private Boolean isDeceased;
+    private Boolean skipLanguagePopup;
 
     @JdbiConstructor
     public UserProfile(@ColumnName("user_id") long userId,
@@ -29,7 +31,8 @@ public class UserProfile {
                        @ColumnName("iso_language_code") String preferredLangCode,
                        @ColumnName("time_zone") ZoneId timeZone,
                        @ColumnName("do_not_contact") Boolean doNotContact,
-                       @ColumnName("is_deceased") Boolean isDeceased) {
+                       @ColumnName("is_deceased") Boolean isDeceased,
+                       @ColumnName("skip_language_popup") Boolean skipLanguagePopup) {
         this.userId = userId;
         this.firstName = firstName;
         this.lastName = lastName;
@@ -40,6 +43,7 @@ public class UserProfile {
         this.timeZone = timeZone;
         this.doNotContact = doNotContact;
         this.isDeceased = isDeceased;
+        this.skipLanguagePopup = skipLanguagePopup;
     }
 
     public long getUserId() {
@@ -82,6 +86,10 @@ public class UserProfile {
         return isDeceased;
     }
 
+    public Boolean getSkipLanguagePopup() {
+        return skipLanguagePopup;
+    }
+
     public enum SexType {
         FEMALE, MALE, INTERSEX, PREFER_NOT_TO_ANSWER
     }
@@ -90,7 +98,7 @@ public class UserProfile {
         private UserProfile profile;
 
         public Builder(long userId) {
-            profile = new UserProfile(userId, null, null, null, null, null, null, null, null, null);
+            profile = new UserProfile(userId, null, null, null, null, null, null, null, null, null, null);
         }
 
         public Builder(UserProfile other) {
@@ -104,7 +112,8 @@ public class UserProfile {
                     other.getPreferredLangCode(),
                     other.getTimeZone(),
                     other.getDoNotContact(),
-                    other.getIsDeceased());
+                    other.getIsDeceased(),
+                    other.getSkipLanguagePopup());
         }
 
         public Builder setFirstName(String firstName) {
@@ -150,6 +159,11 @@ public class UserProfile {
             return this;
         }
 
+        public Builder setSkipLanguagePopup(Boolean skipLanguagePopup) {
+            profile.skipLanguagePopup = skipLanguagePopup;
+            return this;
+        }
+
         public UserProfile build() {
             return new UserProfile(
                     profile.userId,
@@ -161,7 +175,8 @@ public class UserProfile {
                     profile.preferredLangCode,
                     profile.timeZone,
                     profile.doNotContact,
-                    profile.isDeceased);
+                    profile.isDeceased,
+                    profile.skipLanguagePopup);
         }
     }
 }

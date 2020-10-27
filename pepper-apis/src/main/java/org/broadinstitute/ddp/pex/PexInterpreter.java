@@ -1,5 +1,7 @@
 package org.broadinstitute.ddp.pex;
 
+import org.broadinstitute.ddp.db.dto.UserActivityInstanceSummary;
+import org.broadinstitute.ddp.model.event.EventSignal;
 import org.jdbi.v3.core.Handle;
 
 /**
@@ -21,4 +23,10 @@ public interface PexInterpreter {
      * @throws PexUnsupportedException if unsupported features are used in expression
      */
     boolean eval(String expression, Handle handle, String userGuid, String activityInstanceGuid);
+
+    boolean eval(String expression, Handle handle, String userGuid, String activityInstanceGuid,
+                 UserActivityInstanceSummary activityInstanceSummary);
+
+    boolean eval(String expression, Handle handle, String userGuid, String activityInstanceGuid,
+                 UserActivityInstanceSummary activityInstanceSummary, EventSignal signal);
 }

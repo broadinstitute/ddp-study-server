@@ -52,6 +52,7 @@ import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceStatusDao;
 import org.broadinstitute.ddp.db.dao.AnswerDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
+import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiClient;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
@@ -77,6 +78,8 @@ public class StudyDataLoaderMain {
     private String reportFileName;
     private String dryRunEmail;
     private boolean isDeleteAuth0Email;
+    private boolean isUseExistingAuth0Users;
+    private boolean isSkipPrequal;
     private String mappingFileName = null;
     private String preProcessFileName = null;
     private String serviceAccountFile = null;
@@ -105,6 +108,8 @@ public class StudyDataLoaderMain {
         options.addOption("prodrun", false, "Production Run");
         options.addOption("e", true, "Dry run test email");
         options.addOption("de", false, "Delete auth0 email");
+        options.addOption("ue", false, "Use existing Auth0 accounts");
+        options.addOption("sp", false, "Do not look for prequalifier");
         options.addOption("mf", true, "Mapping file");
         options.addOption("gsa", true, "google cloud service account file");
         options.addOption("gb", true, "google bucket file");
@@ -131,6 +136,8 @@ public class StudyDataLoaderMain {
          "e" : Specify email template for dryrun email generation
          example: -e foo29@broadinstitute.org
          Generated email ID will be foo29+1547662520564@broadinstitute.org
+
+         "ue": Expect to use existing Auth0 emails and warn if not found but proceed to create new Auth0 account
 
          "de" : Delete email(s) that already exist in Auth0 . Once migration run is complete, all participant/user emails that
          exist in Auth0 (marked in output csv report Auth0Collision column) will be deleted
@@ -170,7 +177,7 @@ public class StudyDataLoaderMain {
         }
 
         if (!hasMappingFile) {
-            throw new Exception("Please pass mapping file argument. ex: mf  src/test/resources/question_stableid_map.json");
+            throw new Exception("Please pass mapping file argument. ex: mf src/test/resources/question_stableid_map.json");
         }
 
         if (hasFile == hasGoogleBucket) {
@@ -223,6 +230,8 @@ public class StudyDataLoaderMain {
         }
 
         dataLoaderMain.isDeleteAuth0Email = cmd.hasOption("de");
+        dataLoaderMain.isUseExistingAuth0Users = cmd.hasOption("ue");
+        dataLoaderMain.isSkipPrequal = cmd.hasOption("sp");
 
         if (isDryRun && hasTestEmail) {
             dataLoaderMain.dryRunEmail = cmd.getOptionValue('e');
@@ -345,6 +354,8 @@ public class StudyDataLoaderMain {
         JsonElement bdconsentSurveyData = surveyData.getAsJsonObject().get("bdconsentsurvey");
         JsonElement combinedConsentSurveyData = surveyData.getAsJsonObject().get("combinedconsentsurvey");
         JsonElement followupSurveyData = surveyData.getAsJsonObject().get("followupsurvey");
+        JsonElement followupConsentSurveyData = surveyData.getAsJsonObject().get("followupconsentsurvey");
+        JsonElement medicalSurveyData = surveyData.getAsJsonObject().get("medicalsurvey");
 
         surveyDataMap.put("datstatparticipantdata", datstatParticipantData);
         surveyDataMap.put("releasesurvey", releaseSurveyData);
@@ -354,6 +365,8 @@ public class StudyDataLoaderMain {
         surveyDataMap.put("bdconsentsurvey", bdconsentSurveyData);
         surveyDataMap.put("combinedconsentsurvey", combinedConsentSurveyData);
         surveyDataMap.put("followupsurvey", followupSurveyData);
+        surveyDataMap.put("followupconsentsurvey", followupConsentSurveyData);
+        surveyDataMap.put("medicalsurvey", medicalSurveyData);
         return surveyDataMap;
     }
 
@@ -540,7 +553,7 @@ public class StudyDataLoaderMain {
             String email = datstatData.getAsJsonObject().get("datstat_email").getAsString().toLowerCase();
             setRunEmail(dryRun, datstatData);
 
-            if (!dryRun && preProcessedData.getAuth0ExistingEmails().contains(email)) {
+            if (!dryRun && preProcessedData.getAuth0ExistingEmails().contains(email)  && !isUseExistingAuth0Users) {
                 LOG.error("Skipped altpid: {} . Email : {} already exists in Auth0. ", altpid, email);
                 skippedList.add(altpid);
                 continue;
@@ -599,11 +612,14 @@ public class StudyDataLoaderMain {
             Boolean hasRelease = false;
             Boolean hasBloodRelease = false;
             Boolean hasFollowup = false;
+            Boolean hasFollowupConsents = false;
             Boolean isSuccess = false;
             Boolean previousRun = false;
+            Boolean hasMedical = false;
             StudyMigrationRun migrationRun;
 
             boolean auth0Collision = false;
+            boolean foundInAuth0 = false;
             try {
 
                 //verify if participant is already loaded..
@@ -611,6 +627,7 @@ public class StudyDataLoaderMain {
                 userGuid = jdbiUser.getUserGuidByAltpid(altpid);
                 if (userGuid == null) {
                     JdbiActivity jdbiActivity = handle.attach(JdbiActivity.class);
+                    JdbiActivityInstance jdbiActivityInstance = handle.attach(JdbiActivityInstance.class);
                     ActivityInstanceDao activityInstanceDao = handle.attach(ActivityInstanceDao.class);
                     ActivityInstanceStatusDao activityInstanceStatusDao = handle.attach(ActivityInstanceStatusDao.class);
                     JdbiUmbrellaStudy jdbiUmbrellaStudy = handle.attach(JdbiUmbrellaStudy.class);
@@ -634,28 +651,45 @@ public class StudyDataLoaderMain {
                     ClientDto clientDto = clientDtoOpt.get();
 
                     long studyId = studyDto.getId();
+                    foundInAuth0 = dataLoader.isExistingAuth0User(datstatParticipantData);
                     userGuid = dataLoader.loadParticipantData(handle, datstatParticipantData, datstatParticipantMappingData,
-                            phoneNumber, studyDto, clientDto, address, olcService, addressService);
+                            phoneNumber, studyDto, clientDto, address, olcService, addressService, isUseExistingAuth0Users);
                     UserDto userDto = jdbiUser.findByUserGuid(userGuid);
+                    JsonElement completeStatusElement;
 
                     hasAboutYou = (sourceData.get("aboutyousurvey") != null && !sourceData.get("aboutyousurvey").isJsonNull());
-                    hasTissueConsent = (sourceData.get("consentsurvey") != null && !sourceData.get("consentsurvey").isJsonNull());
+                    hasConsent = (sourceData.get("consentsurvey") != null && !sourceData.get("consentsurvey").isJsonNull());
                     hasBloodConsent = (sourceData.get("bdconsentsurvey") != null && !sourceData.get("bdconsentsurvey").isJsonNull());
-                    hasConsent = (sourceData.get("combinedconsentsurvey") != null && !sourceData.get("combinedconsentsurvey").isJsonNull());
+                    hasTissueConsent = (sourceData.get("tissueconsentsurvey") != null
+                            && !sourceData.get("tissueconsentsurvey").isJsonNull());
                     hasRelease = (sourceData.get("releasesurvey") != null && !sourceData.get("releasesurvey").isJsonNull());
                     hasBloodRelease = (sourceData.get("bdreleasesurvey") != null && !sourceData.get("bdreleasesurvey").isJsonNull());
                     hasFollowup = (sourceData.get("followupsurvey") != null && !sourceData.get("followupsurvey").isJsonNull());
+                    hasFollowupConsents = (sourceData.get("followupconsentsurvey") != null
+                            && sourceData.get("followupconsentsurvey").getAsJsonArray().size() > 0);
+                    boolean hasSomeMedical = sourceData.get("medicalsurvey") != null && !sourceData.get(
+                            "medicalsurvey").isJsonNull();
+                    hasMedical = (hasSomeMedical && hasConsent && (completeStatusElement =
+                            sourceData.get("consentsurvey").getAsJsonObject().get("survey_status")) != null
+                            && !completeStatusElement.isJsonNull() && "COMPLETE".equals(completeStatusElement.getAsString()));
+
+                    if (hasSomeMedical && !hasMedical) {
+                        LOG.warn("Not loading medical questionnaire for participant (altpid " + altpid + ", email "
+                                + emailAddress + ") because consent survey has not been completed.");
+                    }
 
                     var answerDao = handle.attach(AnswerDao.class);
 
                     //create prequal
-                    dataLoader.createPrequal(handle,
-                            userGuid, studyId,
-                            createdAt,
-                            jdbiActivity,
-                            activityInstanceDao,
-                            activityInstanceStatusDao,
-                            answerDao);
+                    if (!isSkipPrequal) {
+                        dataLoader.createPrequal(handle,
+                                userGuid, studyId,
+                                createdAt,
+                                jdbiActivity,
+                                activityInstanceDao,
+                                activityInstanceStatusDao,
+                                answerDao);
+                    }
 
                     if (hasAboutYou) {
                         String activityCode = mappingData.get("aboutyousurvey").getAsJsonObject().get("activity_code").getAsString();
@@ -664,29 +698,44 @@ public class StudyDataLoaderMain {
                                 activityCode, createdAt,
                                 jdbiActivity,
                                 activityInstanceDao,
-                                activityInstanceStatusDao);
+                                activityInstanceStatusDao,
+                                jdbiActivityInstance);
                         dataLoader.loadAboutYouSurveyData(handle, sourceData.get("aboutyousurvey"),
                                 mappingData.get("aboutyousurvey"),
                                 studyDto, userDto, instanceDto,
                                 answerDao);
                     }
 
-                    if (hasConsent) {
-                        //For MBC just create activity
-                        //String activityCode = mappingData.get("consentsurvey").getAsJsonObject().get("activity_code").getAsString();
-                        String activityCode = "CONSENT";
-
-                        ActivityInstanceDto instanceDto = dataLoader.createActivityInstance(sourceData.get("combinedconsentsurvey"),
+                    if (hasMedical) {
+                        LOG.info("Loading medical survey");
+                        String activityCode = mappingData.get("medicalsurvey").getAsJsonObject().get("activity_code").getAsString();
+                        ActivityInstanceDto instanceDto = dataLoader.createActivityInstance(sourceData.get(
+                                "medicalsurvey"),
                                 userGuid, studyId,
                                 activityCode, createdAt,
                                 jdbiActivity,
                                 activityInstanceDao,
-                                activityInstanceStatusDao);
+                                activityInstanceStatusDao,
+                                jdbiActivityInstance);
+                        dataLoader.loadMedicalSurveyData(handle, sourceData.get("medicalsurvey"),
+                                mappingData.get("medicalsurvey"),
+                                studyDto, userDto, instanceDto, answerDao);
+                    }
 
-                        /*dataLoader.loadConsentSurveyData(handle, sourceData.get("combinedconsentsurvey"),
+                    if (hasConsent) {
+                        String activityCode = mappingData.get("consentsurvey").getAsJsonObject().get("activity_code").getAsString();
+
+                        ActivityInstanceDto instanceDto = dataLoader.createActivityInstance(sourceData.get("consentsurvey"),
+                                userGuid, studyId,
+                                activityCode, createdAt,
+                                jdbiActivity,
+                                activityInstanceDao,
+                                activityInstanceStatusDao, jdbiActivityInstance);
+
+                        dataLoader.loadConsentSurveyData(handle, sourceData.get("consentsurvey"),
                                 mappingData.get("consentsurvey"),
                                 studyDto, userDto, instanceDto,
-                                answerDao);*/
+                                answerDao);
                     }
 
                     if (hasTissueConsent) {
@@ -696,7 +745,7 @@ public class StudyDataLoaderMain {
                                 activityCode, createdAt,
                                 jdbiActivity,
                                 activityInstanceDao,
-                                activityInstanceStatusDao);
+                                activityInstanceStatusDao, jdbiActivityInstance);
                         dataLoader.loadTissueConsentSurveyData(handle, sourceData.get("consentsurvey"),
                                 mappingData.get("tissueconsentsurvey"),
                                 studyDto, userDto, instanceDto,
@@ -710,7 +759,7 @@ public class StudyDataLoaderMain {
                                 activityCode, createdAt,
                                 jdbiActivity,
                                 activityInstanceDao,
-                                activityInstanceStatusDao);
+                                activityInstanceStatusDao, jdbiActivityInstance);
                         dataLoader.loadBloodConsentSurveyData(handle, sourceData.get("bdconsentsurvey"),
                                 mappingData.get("bdconsentsurvey"),
                                 studyDto, userDto, instanceDto, answerDao);
@@ -723,8 +772,9 @@ public class StudyDataLoaderMain {
                                 activityCode, createdAt,
                                 jdbiActivity,
                                 activityInstanceDao,
-                                activityInstanceStatusDao);
-                        dataLoader.loadReleaseSurveyData(handle, //sourceData.get("datstatparticipantdata"),
+                                activityInstanceStatusDao, jdbiActivityInstance);
+
+                        dataLoader.loadReleaseSurveyData(handle,
                                 sourceData.get("releasesurvey"), mappingData.get("releasesurvey"),
                                 studyDto, userDto, instanceDto, answerDao);
                     }
@@ -736,7 +786,7 @@ public class StudyDataLoaderMain {
                                 activityCode, createdAt,
                                 jdbiActivity,
                                 activityInstanceDao,
-                                activityInstanceStatusDao);
+                                activityInstanceStatusDao, jdbiActivityInstance);
                         dataLoader.loadBloodReleaseSurveyData(handle,
                                 sourceData.get("bdreleasesurvey"), mappingData.get("bdreleasesurvey"),
                                 studyDto, userDto, instanceDto, answerDao);
@@ -749,10 +799,29 @@ public class StudyDataLoaderMain {
                                 activityCode, createdAt,
                                 jdbiActivity,
                                 activityInstanceDao,
-                                activityInstanceStatusDao);
+                                activityInstanceStatusDao, jdbiActivityInstance);
                         dataLoader.loadFollowupSurveyData(handle, sourceData.get("followupsurvey"),
                                 mappingData.get("followupsurvey"),
                                 studyDto, userDto, instanceDto, activityInstanceDao.getJdbiActivityInstance(), answerDao);
+                    }
+
+                    if (hasFollowupConsents) {
+                        String activityCode = mappingData.get("followupconsentsurvey").getAsJsonObject().get("activity_code").getAsString();
+                        //can have multiple followupconsent instances
+                        JsonArray followupConsents = sourceData.get("followupconsentsurvey").getAsJsonArray();
+                        for (JsonElement followupConsent : followupConsents) {
+                            if (followupConsent != null && !followupConsent.isJsonNull()) {
+                                ActivityInstanceDto instanceDto = dataLoader.createActivityInstance(followupConsent,
+                                        userGuid, studyId,
+                                        activityCode, createdAt,
+                                        jdbiActivity,
+                                        activityInstanceDao,
+                                        activityInstanceStatusDao, jdbiActivityInstance);
+                                dataLoader.loadFollowupConsentSurveyData(handle, followupConsent,
+                                        mappingData.get("followupconsentsurvey"),
+                                        studyDto, userDto, instanceDto, activityInstanceDao.getJdbiActivityInstance(), answerDao);
+                            }
+                        }
                     }
 
                     JsonElement ddpExitedDt = datstatParticipantData.getAsJsonObject().get("ddp_exited_dt");
@@ -786,8 +855,9 @@ public class StudyDataLoaderMain {
             if (previousRun) {
                 migrationRun = new StudyMigrationRun(altpid, userGuid, previousRun, emailAddress);
             } else {
-                migrationRun = new StudyMigrationRun(altpid, userGuid, hasAboutYou, hasConsent, hasBloodConsent, hasTissueConsent,
-                        hasRelease, hasBloodRelease, false, hasFollowup, isSuccess, previousRun, emailAddress, auth0Collision);
+                migrationRun = new StudyMigrationRun(altpid, userGuid, hasAboutYou, hasConsent, hasBloodConsent,
+                    hasTissueConsent, hasRelease, hasBloodRelease, false, hasFollowup, hasMedical,
+                    isSuccess, previousRun, emailAddress, auth0Collision, foundInAuth0);
             }
 
             migrationRunReport.add(migrationRun);
@@ -888,16 +958,20 @@ public class StudyDataLoaderMain {
         } else {
             writer = Files.newBufferedWriter(Paths.get(".", reportFileName));
         }
-        CSVPrinter csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT
+        CSVPrinter csvPrinter;
+        if (migrationRunReport != null && !migrationRunReport.isEmpty() && migrationRunReport.get(0) != null) {
+            csvPrinter = new CSVPrinter(writer, CSVFormat.DEFAULT
                 .withNullString("")
-                .withHeader("AltPid", "Pepper User GUID", "Has About You", "Has Consent", "Has Blood Consent", "Has Tissue Consent",
-                        "Has Release", "Has Blood Release",
-                        "Has Followup", "Email", "Previous Run", "Success/Failure", "Auth0 Collision"));
+                .withHeader("AltPid", "Pepper User GUID", "Email", "Previous Run", "Success/Failure",
+                    "Auth0 Collision", "Found in Auth0", "Has Medical",
+                    "Has About You", "Has Consent", "Has Blood Consent", "Has Tissue Consent", "Has Release",
+                    "Has Blood Release", "Has Followup"));
 
-        for (StudyMigrationRun run : migrationRunReport) {
-            addRunValues(run, csvPrinter);
+            for (StudyMigrationRun run : migrationRunReport) {
+                addRunValues(run, csvPrinter);
+            }
+            csvPrinter.close();
         }
-        csvPrinter.close();
 
         LOG.info("Generated migration run report file: {} ", reportFileName);
     }
@@ -906,17 +980,19 @@ public class StudyDataLoaderMain {
         printer.printRecord(
                 run.getAltPid(),
                 run.getPepperUserGuid(),
+                run.getEmailAddress(),
+                run.getPreviousRun(),
+                run.getSuccess(),
+                run.getAuth0Collision(),
+                run.getFoundInAuth0(),
+                run.getHasMedical(),
                 run.getHasAboutYou(),
                 run.getHasConsent(),
                 run.getHasBloodConsent(),
                 run.getHasTissueConsent(),
                 run.getHasRelease(),
                 run.getHasBloodRelease(),
-                run.getHasFollowup(),
-                run.getEmailAddress(),
-                run.getPreviousRun(),
-                run.getSuccess(),
-                run.getAuth0Collision()
+                run.getHasFollowup()
         );
     }
 

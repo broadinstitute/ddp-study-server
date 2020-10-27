@@ -278,6 +278,14 @@ tenant:
       primary: '#ea5323'
 emailProvider: {}
 emailTemplates:
+  - template: reset_email
+    body: ./emailTemplates/reset_email.html
+    enabled: true
+    from: ''
+    resultUrl: '{{ application.callback_domain }}/dashboard'
+    subject: ''
+    syntax: liquid
+    urlLifetimeInSeconds: 432000
   - template: verify_email
     body: ./emailTemplates/verify_email.html
     enabled: false
@@ -297,6 +305,7 @@ clientGrants:
       - 'read:users_app_metadata'
       - 'update:users_app_metadata'
       - 'create:user_tickets'
+      - 'read:connections'
 guardianFactors:
   - name: duo
     enabled: false

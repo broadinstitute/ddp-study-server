@@ -3,6 +3,7 @@ package org.broadinstitute.ddp.event;
 import com.google.cloud.pubsub.v1.AckReplyConsumer;
 import com.google.cloud.pubsub.v1.MessageReceiver;
 import com.google.gson.Gson;
+import com.google.pubsub.v1.ProjectSubscriptionName;
 import com.google.pubsub.v1.PubsubMessage;
 import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.exception.DDPException;
@@ -22,31 +23,23 @@ public class HousekeepingTaskReceiver implements MessageReceiver {
     private static final Logger LOG = LoggerFactory.getLogger(HousekeepingTaskReceiver.class);
     private static final Gson gson = GsonUtil.standardGson();
     private static final String ATTR_TYPE = "type";
-    private static final String ATTR_SUB = "sub";
 
-    private final String subscriptionName;
+    private final ProjectSubscriptionName subName;
     private final Scheduler scheduler;
 
-    public HousekeepingTaskReceiver(String subscriptionName, Scheduler scheduler) {
-        this.subscriptionName = subscriptionName;
+    public HousekeepingTaskReceiver(ProjectSubscriptionName subName, Scheduler scheduler) {
+        this.subName = subName;
         this.scheduler = scheduler;
     }
 
     @Override
     public void receiveMessage(PubsubMessage message, AckReplyConsumer reply) {
-        LOG.info("Received pubsub task message {}", message.getMessageId());
-
-        String targetSubName = message.getAttributesOrDefault(ATTR_SUB, null);
-        if (targetSubName != null && !subscriptionName.equals(targetSubName)) {
-            LOG.info("Received task message for target subscription {} and not our current subscription {}, ack-ing",
-                    targetSubName, subscriptionName);
-            reply.ack();
-            return;
-        }
+        String rawType = message.getAttributesOrDefault(ATTR_TYPE, null);
+        LOG.info("Received pubsub task message {} with type '{}'", message.getMessageId(), rawType);
 
         TaskType type;
         try {
-            type = TaskType.valueOf(message.getAttributesOrDefault(ATTR_TYPE, null));
+            type = TaskType.valueOf(rawType.toUpperCase());
             LOG.info("Type of task message is: {}", type);
         } catch (Exception e) {
             LOG.error("Could not determine task type for message {}, ack-ing", message.getMessageId());
@@ -56,7 +49,8 @@ public class HousekeepingTaskReceiver implements MessageReceiver {
 
         switch (type) {
             case PING:
-                LOG.info("Received PING task message on subscription {}", subscriptionName);
+                LOG.info("Received PING task message on subscription {}, ack-ing", subName);
+                reply.ack();
                 break;
             case CLEAR_CACHE:
                 handleClearCache(message, reply);
@@ -81,12 +75,6 @@ public class HousekeepingTaskReceiver implements MessageReceiver {
     }
 
     private void handleCleanupTempUsers(PubsubMessage message, AckReplyConsumer reply) {
-        if (message.getAttributesOrDefault(ATTR_SUB, null) == null) {
-            LOG.error("Target subscription name is required for CLEANUP_TEMP_USERS task message, ack-ing");
-            reply.ack();
-            return;
-        }
-
         JobKey key = TemporaryUserCleanupJob.getKey();
         try {
             scheduler.triggerJob(key);
@@ -99,15 +87,9 @@ public class HousekeepingTaskReceiver implements MessageReceiver {
     }
 
     private void handleElasticExport(PubsubMessage message, AckReplyConsumer reply) {
-        if (message.getAttributesOrDefault(ATTR_SUB, null) == null) {
-            LOG.error("Target subscription name is required for ELASTIC_EXPORT task message, ack-ing");
-            reply.ack();
-            return;
-        }
-
-        String data = message.getData().toStringUtf8();
+        String data = message.getData() != null ? message.getData().toStringUtf8() : null;
         var payload = gson.fromJson(data, ElasticExportPayload.class);
-        if (payload.getStudy() == null) {
+        if (payload == null || payload.getStudy() == null) {
             LOG.error("Study needs to be provided for ELASTIC_EXPORT task message, ack-ing");
             reply.ack();
             return;

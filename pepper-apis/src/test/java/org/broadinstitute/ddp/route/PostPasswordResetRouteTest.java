@@ -8,10 +8,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import okhttp3.HttpUrl;
-
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpStatus;
-
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants.API;
@@ -26,9 +24,7 @@ import org.broadinstitute.ddp.security.EncryptionKey;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.broadinstitute.ddp.util.TestDataSetupUtil.GeneratedTestData;
 import org.broadinstitute.ddp.util.TestUtil;
-
 import org.hamcrest.Matchers;
-
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -105,15 +101,30 @@ public class PostPasswordResetRouteTest extends IntegrationTestSuite.TestCase {
     }
 
     @Test
-    public void test_WhenRouteIsCalledWithEmptyEmail_ItRespondsWithBadRequest() {
+    public void test_WhenRouteIsCalledWithEmptyEmail_ItRedirectsWithoutEmail() {
         Map<String, String> queryParams = new HashMap<>();
         queryParams.put(QueryParam.AUTH0_CLIENT_ID, auth0ClientId);
         queryParams.put(QueryParam.AUTH0_DOMAIN, auth0Domain);
         queryParams.put(QueryParam.EMAIL, "");
         queryParams.put(QueryParam.SUCCESS, "true");
         HttpUrl fullUrl = buildEncodedUrl(url, queryParams);
-        given().when().get(fullUrl.toString()).then().assertThat()
-                .statusCode(HttpStatus.SC_BAD_REQUEST);
+        given(TestUtil.RestAssured.nonFollowingRequestSpec())
+                .when().get(fullUrl.toString()).then().assertThat()
+                .statusCode(HttpStatus.SC_MOVED_TEMPORARILY)
+                .header(HttpHeaders.LOCATION, equalTo(testRedirectUrl));
+    }
+
+    @Test
+    public void test_WhenRouteIsCalledWithoutEmail_ItRedirectsWithoutEmail() {
+        Map<String, String> queryParams = new HashMap<>();
+        queryParams.put(QueryParam.AUTH0_CLIENT_ID, auth0ClientId);
+        queryParams.put(QueryParam.AUTH0_DOMAIN, auth0Domain);
+        queryParams.put(QueryParam.SUCCESS, "true");
+        HttpUrl fullUrl = buildEncodedUrl(url, queryParams);
+        given(TestUtil.RestAssured.nonFollowingRequestSpec())
+                .when().get(fullUrl.toString()).then().assertThat()
+                .statusCode(HttpStatus.SC_MOVED_TEMPORARILY)
+                .header(HttpHeaders.LOCATION, equalTo(testRedirectUrl));
     }
 
     @Test

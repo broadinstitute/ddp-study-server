@@ -31,6 +31,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import com.typesafe.config.Config;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -98,16 +99,17 @@ public class StudyDataLoader {
     private static final String DEFAULT_PREFERRED_LANGUAGE_CODE = "en";
     private static final String DATSTAT_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss'Z'";
     private static final int DSM_DEFAULT_ON_DEMAND_TRIGGER_ID = -2;
-    private Long defaultKitCreationEpoch = null;
-
     Map<String, List<String>> sourceDataSurveyQs;
     Map<String, String> altNames;
     Map<String, String> dkAltNames;
     Map<Integer, String> yesNoDkLookup;
     Map<Integer, Boolean> booleanValueLookup;
+    Auth0ManagementClient mgmtClient;
+    Map<String, List<String>> datStatEnumLookup;
     Auth0Util auth0Util;
     String auth0Domain;
     String mgmtToken;
+    private Long defaultKitCreationEpoch = null;
 
     public StudyDataLoader(Config cfg) {
 
@@ -115,7 +117,7 @@ public class StudyDataLoader {
         auth0Domain = auth0Config.getString(ConfigFile.DOMAIN);
 
         auth0Util = new Auth0Util(auth0Domain);
-        var mgmtClient = new Auth0ManagementClient(
+        mgmtClient = new Auth0ManagementClient(
                 auth0Domain,
                 auth0Config.getString("managementApiClientId"),
                 auth0Config.getString("managementApiSecret"));
@@ -136,21 +138,157 @@ public class StudyDataLoader {
         dkAltNames = new HashMap<>();
         dkAltNames.put("dk", "Don't know");
 
+        // altNames maps from the name in the mapping to the name in the export file
         altNames = new HashMap<>();
-        altNames.put("AMERICAN_INDIAN", "American Indian or Native American");
-        altNames.put("OTHER_EAST_ASIAN", "Other East Asian");
-        altNames.put("SOUTH_EAST_ASIAN", "South East Asian or Indian");
-        altNames.put("BLACK", "Black or African American");
-        altNames.put("NATIVE_HAWAIIAN", "Native Hawaiian or other Pacific Islander");
-        altNames.put("PREFER_NOT_ANSWER", "I prefer not to answer");
+        altNames.put("SOUTH_EAST_ASIAN", "southeast_asian_indian");
+        altNames.put("BLACK", "black_african_american");
+        altNames.put("PREFER_NOT_ANSWER", "prefer_no_answer");
+        altNames.put("NATIVE_HAWAIIAN", "hawaiian");
 
-        altNames.put("AXILLARY_LYMPH_NODES", "aux_lymph_node");
-        altNames.put("OTHER_LYMPH_NODES", "other_lymph_node");
+        //MPC THERAPIES options entries
+        altNames.put("xtandi", "xtandi_enzalutamide");
+        altNames.put("zytiga", "zytiga_abiraterone");
+        altNames.put("docetaxel", "docetaxel_taxotere");
+        altNames.put("taxol", "paclitaxel_taxol");
+        altNames.put("jevtana", "jevtana_cabazitaxel");
+        altNames.put("opdivo", "opdivo_nivolumab");
+        altNames.put("yervoy", "yervoy_ipilumimab");
+        altNames.put("tecentriq", "tecentriq_aztezolizumab");
+        altNames.put("lynparza", "lynparza_olaparib");
+        altNames.put("rubraca", "rubraca_rucaparib");
+        altNames.put("TAXOTERE", "docetaxel_taxotere");
+        altNames.put("PARAPLATIN", "carboplatin");
+        altNames.put("ETOPOPHOS", "etoposide");
+        altNames.put("NOVANTRONE", "mitoxantrone");
+        altNames.put("EMCYT", "estramustine");
+        altNames.put("FIRMAGON", "degareliz");
+        altNames.put("OTHER_YES", "other_therapy");
+        altNames.put("CLINICAL_TRIAL", "exp_clinical_trial");
 
-        altNames.put("drugstart_year", "drugstartyear");
-        altNames.put("drugstart_month", "drugstartmonth");
-        altNames.put("drugend_year", "drugendyear");
-        altNames.put("drugend_month", "drugendmonth");
+        altNames.put("affected", "effected");
+
+        //index is value in export file and element is stable id
+        datStatEnumLookup = new HashMap<>();
+
+        //Independently consent
+        List<String> optionList = new ArrayList<>(2);
+        optionList.add(0, "prion_consent_s7_INDEPENDENT_NO");
+        optionList.add(1, "prion_consent_s7_INDEPENDENT_YES");
+        datStatEnumLookup.put("independently_consent", optionList);
+
+        //Participant gender
+        optionList = new ArrayList<>(4);
+        optionList.add(0, null);
+        optionList.add(1, "FEMALE");
+        optionList.add(2, "MALE");
+        optionList.add(3, "PREFER_NOT");
+        datStatEnumLookup.put("participant_gender", optionList);
+
+        //Current status
+        optionList = new ArrayList<>(4);
+        optionList.add(0, null);
+        optionList.add(1, "SYMPTOMATIC");
+        optionList.add(2, "AT_RISK");
+        optionList.add(3, "CONTROL");
+        datStatEnumLookup.put("current_status", optionList);
+
+        //Doctor diagnosed
+        optionList = new ArrayList<>(2);
+        optionList.add(0, "DIAGNOSED_NO");
+        optionList.add(1, "DIAGNOSED_YES");
+        datStatEnumLookup.put("doctor_diagnosed", optionList);
+
+        //Prion subtype
+        optionList = new ArrayList<>(9);
+        optionList.add(0, null);
+        optionList.add(1, "CJD");
+        optionList.add(2, "FFI");
+        optionList.add(3, "GSS");
+        optionList.add(4, "VPSPr");
+        optionList.add(5, "PSA");
+        optionList.add(6, "KURU");
+        optionList.add(7, "vCJD");
+        optionList.add(8, "sFI");
+        datStatEnumLookup.put("prion_subtype", optionList);
+
+        //Genetic testing
+        optionList = new ArrayList<>(4);
+        optionList.add(0, null);
+        optionList.add(1, "WAITING");
+        optionList.add(2, "KNOWN");
+        optionList.add(3, "NO");
+        datStatEnumLookup.put("genetic_testing", optionList);
+
+        //Move ability
+        optionList = new ArrayList<>(4);
+        optionList.add(0, null);
+        optionList.add(1, "ASSIST");
+        optionList.add(2, "IND");
+        optionList.add(3, "BED");
+        datStatEnumLookup.put("move_ability", optionList);
+
+        //Cognitive ability
+        optionList = new ArrayList<>(4);
+        optionList.add(0, null);
+        optionList.add(1, "IMP");
+        optionList.add(2, "NORM");
+        optionList.add(3, "SEV");
+        datStatEnumLookup.put("cognitive_ability", optionList);
+
+        //Eat ability
+        optionList = new ArrayList<>(4);
+        optionList.add(0, null);
+        optionList.add(1, "ASSIST");
+        optionList.add(2, "NORM");
+        optionList.add(3, "TUBE");
+        datStatEnumLookup.put("eat_ability", optionList);
+
+        //Travel ability
+        optionList = new ArrayList<>(4);
+        optionList.add(0, null);
+        optionList.add(1, "ASSIST");
+        optionList.add(2, "YES");
+        optionList.add(3, "NO");
+        datStatEnumLookup.put("travel_ability", optionList);
+
+        //participant disease risk
+        optionList = new ArrayList<>(7);
+        optionList.add(0, null);
+        optionList.add(1, "SUSPECTED_EXPOSED");
+        optionList.add(2, "MEDICAL_INFORMED");
+        optionList.add(3, "RELATIVE_UNTESTED");
+        optionList.add(4, "RELATIVE_TESTED");
+        optionList.add(5, "PARTICIPANT_TESTED");
+        optionList.add(6, "OTHER");
+        datStatEnumLookup.put("participant_disease_risk", optionList);
+
+        //medical procedure risk
+        optionList = new ArrayList<>(6);
+        optionList.add(0, null);
+        optionList.add(1, "MEDICAL_PROCEDURE_TRANSFUSION");
+        optionList.add(2, "MEDICAL_PROCEDURE_INSTRUMENTS");
+        optionList.add(3, "MEDICAL_PROCEDURE_TRANSPLANT");
+        optionList.add(4, "MEDICAL_PROCEDURE_HGH");
+        optionList.add(5, "MEDICAL_PROCEDURE_OTHER");
+        datStatEnumLookup.put("medical_procedure_risk", optionList);
+
+        //know_which_mutation
+        optionList = new ArrayList<>(2);
+        optionList.add(0, "KNOWN_MUTATION_NO");
+        optionList.add(1, "KNOWN_MUTATION_YES");
+        datStatEnumLookup.put("know_which_mutation", optionList);
+
+        //earliest_symptom_estimated
+        optionList = new ArrayList<>(2);
+        optionList.add(0, null);
+        optionList.add(1, "ESTIMATED_DATE");
+        datStatEnumLookup.put("earliest_symptom_estimated", optionList);
+
+        //diagnosis_date_estimated
+        optionList = new ArrayList<>(2);
+        optionList.add(0, null);
+        optionList.add(1, "YES");
+        datStatEnumLookup.put("diagnosis_date_estimated", optionList);
     }
 
     void loadMailingListData(Handle handle, JsonElement data, String studyCode) {
@@ -188,14 +326,14 @@ public class StudyDataLoader {
 
     public String loadParticipantData(Handle handle, JsonElement datstatData, JsonElement mappingData, String phoneNumber,
                                       StudyDto studyDto, ClientDto clientDto, MailAddress address, OLCService olcService,
-                                      AddressService addressService) throws Exception {
+                                      AddressService addressService, boolean useExistingAuth0Users) throws Exception {
 
         //load data
         JdbiUser jdbiUser = handle.attach(JdbiUser.class);
         String altpid = datstatData.getAsJsonObject().get("datstat_altpid").getAsString();
         String userGuid = jdbiUser.getUserGuidByAltpid(altpid);
         if (userGuid != null) {
-            LOG.warn("Looks like  Participant data already loaded: " + userGuid);
+            LOG.warn("Looks like Participant data already loaded: " + userGuid);
             return userGuid;
             //watch out.. early return
         }
@@ -208,7 +346,8 @@ public class StudyDataLoader {
         JdbiUser userDao = handle.attach(JdbiUser.class);
         JdbiClient clientDao = handle.attach(JdbiClient.class);
 
-        UserDto pepperUser = createLegacyPepperUser(userDao, clientDao, datstatData, userGuid, userHruid, clientDto);
+        UserDto pepperUser = createLegacyPepperUser(userDao, clientDao, datstatData, userGuid, userHruid, clientDto,
+                useExistingAuth0Users);
 
         JdbiLanguageCode jdbiLanguageCode = handle.attach(JdbiLanguageCode.class);
         UserProfileDao profileDao = handle.attach(UserProfileDao.class);
@@ -293,7 +432,7 @@ public class StudyDataLoader {
         answerTextQuestion("PREQUAL_LAST_NAME", participantGuid, dto.getGuid(),
                 profile.getLastName(), answerDao);
 
-        List<SelectedPicklistOption> options = new ArrayList<SelectedPicklistOption>();
+        List<SelectedPicklistOption> options = new ArrayList<>();
         options.add(new SelectedPicklistOption("DIAGNOSED"));
         answerPickListQuestion("PREQUAL_SELF_DESCRIBE", participantGuid, dto.getGuid(),
                 options, answerDao);
@@ -310,7 +449,8 @@ public class StudyDataLoader {
                                                       long studyId, String activityCode, String createdAt,
                                                       JdbiActivity jdbiActivity,
                                                       ActivityInstanceDao activityInstanceDao,
-                                                      ActivityInstanceStatusDao activityInstanceStatusDao) throws Exception {
+                                                      ActivityInstanceStatusDao activityInstanceStatusDao,
+                                                      JdbiActivityInstance jdbiActivityInstance) throws Exception {
 
         BaseSurvey baseSurvey = getBaseSurvey(surveyData);
         if (baseSurvey.getDdpCreated() == null) {
@@ -332,6 +472,7 @@ public class StudyDataLoader {
         Long ddpLastUpdatedAt;
         Long ddpCreatedAt;
         Long ddpCompletedAt = null;
+
 
         if (ddpCreated != null) {
             Instant instant;
@@ -393,8 +534,9 @@ public class StudyDataLoader {
         }
 
         // Read only is always undefined for things that aren't consent- we rely on the user being terminated to show read only activities
-        boolean itIsCompletedConsent = (activityCode == "CONSENT" || activityCode == "TISSUECONSENT" || activityCode == "BLOODCONSENT")
-                && instanceCurrentStatus == InstanceStatusType.COMPLETE;
+        boolean itIsCompletedConsent = (activityCode == "CONSENT" || activityCode == "TISSUECONSENT"
+                || activityCode == "BLOODCONSENT" || activityCode == "FOLLOWUPCONSENT")
+                    && instanceCurrentStatus == InstanceStatusType.COMPLETE;
         Boolean isReadonly = itIsCompletedConsent ? true : null;
         ActivityInstanceDto dto = activityInstanceDao
                 .insertInstance(studyActivityId, participantGuid, participantGuid, InstanceStatusType.CREATED,
@@ -410,6 +552,8 @@ public class StudyDataLoader {
         if (InstanceStatusType.IN_PROGRESS == instanceCurrentStatus) {
             activityInstanceStatusDao
                     .insertStatus(activityInstanceId, InstanceStatusType.IN_PROGRESS, ddpLastUpdatedAt, participantGuid);
+            //reload activityInstance to get updated status
+            dto = jdbiActivityInstance.getByActivityInstanceId(dto.getId()).get();
         } else if (InstanceStatusType.COMPLETE == instanceCurrentStatus) {
             if (ddpCompletedAt == null) {
                 //ddpCompletedAt = ddpLastUpdatedAt;
@@ -421,6 +565,7 @@ public class StudyDataLoader {
                 activityInstanceStatusDao
                         .insertStatus(activityInstanceId, InstanceStatusType.COMPLETE, ddpLastUpdatedAt, participantGuid);
             }
+            dto = jdbiActivityInstance.getByActivityInstanceId(dto.getId()).get();
         } else {
             //CREATED
             activityInstanceStatusDao.insertStatus(activityInstanceId, InstanceStatusType.CREATED, ddpCreatedAt, participantGuid);
@@ -524,22 +669,19 @@ public class StudyDataLoader {
             return;
         }
 
-        addLegacySurveyAddress(handle, studyDto, userDto, instanceDto, surveyData, "tissuerelease");
-
         processSurveyData(handle, "releasesurvey", surveyData, mappingData,
                 studyDto, userDto, instanceDto, answerDao);
 
-        //handle agreement
-        String surveyStatus = surveyData.getAsJsonObject().get("survey_status").getAsString();
-        if (surveyStatus.equalsIgnoreCase("COMPLETE")) {
-            answerAgreementQuestion("TISSUERELEASE_AGREEMENT", userDto.getUserGuid(),
-                    instanceDto.getGuid(), Boolean.TRUE, answerDao);
-        }
+        //add physicians
+        processInstitutions(handle, surveyData, userDto, studyDto,
+                "physician_list", InstitutionType.PHYSICIAN, "releasesurvey");
 
+        //load initialbiopsy instiution
+        addBiopsyInstitutions(handle, surveyData, userDto, studyDto);
+
+        //add institutions
         processInstitutions(handle, surveyData, userDto, studyDto,
-                "physician_list", InstitutionType.PHYSICIAN, "releasesurvey", instanceDto);
-        processInstitutions(handle, surveyData, userDto, studyDto,
-                "institution_list", InstitutionType.INITIAL_BIOPSY, "releasesurvey", instanceDto);
+                "institution_list", InstitutionType.INSTITUTION, "releasesurvey");
 
         updateUserStudyEnrollment(handle, surveyData, userDto.getUserGuid(), studyDto.getGuid());
 
@@ -627,6 +769,23 @@ public class StudyDataLoader {
         }
 
         processSurveyData(handle, "consentsurvey", surveyData, mappingData,
+                studyDto, userDto, instanceDto, answerDao);
+    }
+
+    public void loadMedicalSurveyData(Handle handle,
+                                           JsonElement surveyData,
+                                           JsonElement mappingData,
+                                           StudyDto studyDto,
+                                           UserDto userDto,
+                                           ActivityInstanceDto instanceDto,
+                                           AnswerDao answerDao) throws Exception {
+        LOG.info("Populating Medical Survey...");
+        if (surveyData == null || surveyData.isJsonNull()) {
+            LOG.warn("NO Medical Survey !");
+            return;
+        }
+
+        processSurveyData(handle, "medicalsurvey", surveyData, mappingData,
                 studyDto, userDto, instanceDto, answerDao);
     }
 
@@ -718,6 +877,29 @@ public class StudyDataLoader {
                 dsmTriggerId == null ? DSM_DEFAULT_ON_DEMAND_TRIGGER_ID : dsmTriggerId.intValue());
     }
 
+    public void loadFollowupConsentSurveyData(Handle handle,
+                                              JsonElement surveyData,
+                                              JsonElement mappingData,
+                                              StudyDto studyDto,
+                                              UserDto userDto,
+                                              ActivityInstanceDto instanceDto,
+                                              JdbiActivityInstance activityInstanceDao,
+                                              AnswerDao answerDao) throws Exception {
+
+        LOG.info("Populating FollowupConsent Survey...");
+        if (surveyData == null || surveyData.isJsonNull()) {
+            LOG.warn("NO Followup Survey !");
+            return;
+        }
+
+        processSurveyData(handle, "followupconsentsurvey", surveyData, mappingData,
+                studyDto, userDto, instanceDto, answerDao);
+
+        Integer dsmTriggerId = getIntegerValueFromElement(surveyData, "ddp_dsmtriggerid");
+        activityInstanceDao.updateOndemandTriggerId(userDto.getUserId(), instanceDto.getId(),
+                dsmTriggerId == null ? DSM_DEFAULT_ON_DEMAND_TRIGGER_ID : dsmTriggerId.intValue());
+    }
+
     public String answerDateQuestion(String pepperQuestionStableId, String participantGuid, String instanceGuid,
                                      DateValue value, AnswerDao answerDao) {
 
@@ -784,21 +966,47 @@ public class StudyDataLoader {
         var jdbiCompositeAnswer = handle.attach(JdbiCompositeAnswer.class);
         if (CollectionUtils.isNotEmpty(nestedGuids)) {
             for (String childGuid : nestedGuids) {
-                childrenAnswerIds.add(answerDao.getAnswerSql().findDtoByGuid(childGuid).get().getId());
+                if (childGuid != null) {
+                    childrenAnswerIds.add(answerDao.getAnswerSql().findDtoByGuid(childGuid).get().getId());
+                }
             }
             jdbiCompositeAnswer.insertChildAnswerItems(parentAnswer.getAnswerId(), childrenAnswerIds, compositeAnswerOrders);
         }
         return parentAnswer.getAnswerGuid();
     }
 
+    public boolean isExistingAuth0User(JsonElement datStatData) throws Exception {
+        String emailAddress = datStatData.getAsJsonObject().get("datstat_email").getAsString();
+        List<User> auth0UsersByEmail = auth0Util.getAuth0UsersByEmail(emailAddress, mgmtToken);
+        return auth0UsersByEmail != null && auth0UsersByEmail.size() > 0;
+    }
+
     public UserDto createLegacyPepperUser(JdbiUser userDao, JdbiClient clientDao,
-                                          JsonElement data, String userGuid, String userHruid, ClientDto clientDto) throws Exception {
+                                          JsonElement data, String userGuid, String userHruid, ClientDto clientDto,
+                                          boolean useExistingAuth0Users) throws Exception {
 
         String emailAddress = data.getAsJsonObject().get("datstat_email").getAsString();
+        String userAction = "created";
+        User newAuth0User = null;
 
-        // Create a user for the given domain
-        String randomPass = generateRandomPassword();
-        User newAuth0User = auth0Util.createAuth0User(emailAddress, randomPass, mgmtToken);
+        //If configured to use existing Auth0 users, first check to see if there's already an Auth0 user we should use
+        if (useExistingAuth0Users) {
+            List<User> auth0UsersByEmail = auth0Util.getAuth0UsersByEmail(emailAddress, mgmtToken);
+            if (auth0UsersByEmail != null && auth0UsersByEmail.size() > 0) {
+                userAction = "found";
+                newAuth0User = auth0UsersByEmail.get(0);
+                LOG.info("Using existing Auth0 user");
+            }
+        }
+
+        if (newAuth0User == null) {
+            // Create a user for the given domain
+            if (useExistingAuth0Users) {
+                LOG.info("User not found: creating with random password");
+            }
+            String randomPass = generateRandomPassword();
+            newAuth0User = auth0Util.createAuth0User(emailAddress, randomPass, mgmtToken);
+        }
 
         String auth0UserId = newAuth0User.getId();
 
@@ -816,14 +1024,15 @@ public class StudyDataLoader {
 
         String shortId = data.getAsJsonObject().get("ddp_participant_shortid").getAsString();
         String altpid = data.getAsJsonObject().get("datstat_altpid").getAsString();
+
         long userId = userDao.insertMigrationUser(auth0UserId, userGuid, clientDto.getId(), userHruid,
                 altpid, shortId, createdAtMillis, updatedAtMillis);
         UserDto newUser = new UserDto(userId, auth0UserId, userGuid, userHruid, altpid,
                 shortId, createdAtMillis, updatedAtMillis);
-        auth0Util.setDDPUserGuidForAuth0User(newUser.getUserGuid(), auth0UserId, clientDto.getAuth0ClientId(), mgmtToken);
+        mgmtClient.setUserGuidForAuth0User(auth0UserId, clientDto.getAuth0ClientId(), newUser.getUserGuid());
 
-        LOG.info("User created: Auth0UserId = " + auth0UserId + ", GUID = " + userGuid + ", HRUID = " + userHruid + ", ALTPID = "
-                + altpid);
+        LOG.info("User " + userAction + ": Auth0UserId = " + auth0UserId + ", GUID = " + userGuid + ", HRUID = " + userHruid
+                + ", " + "ALTPID = " + altpid);
         return newUser;
     }
 
@@ -943,7 +1152,6 @@ public class StudyDataLoader {
         return stateCode;
     }
 
-
     private BaseSurvey getBaseSurvey(JsonElement surveyData) {
 
         Integer datstatSubmissionIdNum = getIntegerValueFromElement(surveyData, "datstat.submissionid");
@@ -1041,7 +1249,7 @@ public class StudyDataLoader {
         String participantGuid = userDto.getUserGuid();
         String instanceGuid = instanceDto.getGuid();
 
-        sourceDataSurveyQs.put(surveyName, new ArrayList<String>());
+        sourceDataSurveyQs.put(surveyName, new ArrayList<>());
         //iterate through mappingData and try to retrieve sourceData for each element
         //iterate through each question_stable_mapping
         JsonArray questionStableArray = mappingData.getAsJsonObject().getAsJsonArray("question_answer_stables");
@@ -1067,9 +1275,12 @@ public class StudyDataLoader {
                 case "Picklist":
                     processPicklistQuestion(thisMap, sourceData, surveyName, participantGuid, instanceGuid, answerDao);
                     break;
+                case "PicklistGroup":
+                    processPicklistGroupQuestion(thisMap, sourceData, surveyName, participantGuid, instanceGuid, answerDao);
+                    break;
                 //case "YesNoDkPicklist":
-                //    processYesNoDkPicklistQuestion(handle, thisMap, sourceData, surveyName, participantGuid, instanceGuid, answerDao);
-                //    break; //todo
+                // processYesNoDkPicklistQuestion(handle, thisMap, sourceData, surveyName, participantGuid, instanceGuid, answerDao);
+                // break; //todo
                 case "Boolean":
                     processBooleanQuestion(thisMap, sourceData, surveyName, participantGuid, instanceGuid, answerDao);
                     break;
@@ -1115,12 +1326,36 @@ public class StudyDataLoader {
 
         JsonElement valueEl = sourceData.getAsJsonObject().get(fieldName);
         if (valueEl != null && !valueEl.isJsonNull() && StringUtils.isNotEmpty(valueEl.getAsString())) {
-            LOG.debug(" study: {} .. userguid: {}  actinstanceguid: {} fieldName: {} fieldValue: {} ",
+            LOG.debug(" study: {} .. userguid: {} actinstanceguid: {} fieldName: {} fieldValue: {} ",
                     studyId, participantId, instanceId, fieldName, valueEl.getAsString());
 
             handle.attach(JdbiUserStudyLegacyData.class).insert(participantId, studyId, instanceId,
                     fieldName, valueEl.getAsString());
         }
+    }
+
+    private String processPicklistGroupQuestion(JsonElement mapElement, JsonElement sourceDataElement, String surveyName,
+                                                String participantGuid, String instanceGuid, AnswerDao answerDao) {
+
+        String answerGuid = null;
+        String stableId = getStringValueFromElement(mapElement, "stable_id");
+
+        if (mapElement.getAsJsonObject().get("groups") == null || mapElement.getAsJsonObject().get("groups").isJsonNull()) {
+            return null;
+        }
+        //iterate through groups
+        JsonArray groupEls = mapElement.getAsJsonObject().get("groups").getAsJsonArray();
+        List<SelectedPicklistOption> selectedPicklistOptions = new ArrayList<>();
+        for (JsonElement group: groupEls) {
+            String groupName = getStringValueFromElement(group, "name");
+            //get selected picklists options
+            selectedPicklistOptions.addAll(getSelectedPicklistOptions(group, sourceDataElement, groupName, surveyName));
+        }
+        if (CollectionUtils.isNotEmpty(selectedPicklistOptions)) {
+            answerGuid = answerPickListQuestion(stableId, participantGuid, instanceGuid, selectedPicklistOptions, answerDao);
+        }
+
+        return answerGuid;
     }
 
     private String processPicklistQuestion(JsonElement mapElement, JsonElement sourceDataElement, String surveyName,
@@ -1177,13 +1412,61 @@ public class StudyDataLoader {
             return selectedPicklistOptions;
         }
 
-        if (yesNoDkLookup.get(value.getAsInt()) != null) {
-            selectedPicklistOptions.add(new SelectedPicklistOption(yesNoDkLookup.get(value.getAsInt())));
+        //Get the option value using either datStatEnumLookup or yesNoDkLookup
+        boolean foundValue = false;
+        String val = null;
+        if (("medicalsurvey".equals(surveyName) || "consentsurvey".equals(surveyName))
+                && datStatEnumLookup.get(questionName) != null && datStatEnumLookup.get(questionName).get(value.getAsInt()) != null) {
+            foundValue = true;
+            val = datStatEnumLookup.get(questionName).get(value.getAsInt());
+        } else if (yesNoDkLookup.get(value.getAsInt()) != null) {
+            foundValue = true;
+            val = yesNoDkLookup.get(value.getAsInt());
         }
+
+        //If we found the value, add a SelectedPicklistOption with the value to selectedPicklistOptions
+        if (foundValue) {
+            //Check for a specify field associated with the selected option
+            boolean foundSpecify = false;
+            JsonArray options = mapElement.getAsJsonObject().getAsJsonArray("options");
+            for (JsonElement option : options) {
+                JsonObject optionObject = option.getAsJsonObject();
+                JsonElement optionNameEl = optionObject.get("stable_id");
+
+                //Find out if this is the selected option
+                if (optionNameEl != null && optionNameEl.getAsString() != null
+                        && !optionNameEl.getAsString().isEmpty() && val.equals(optionNameEl.getAsString())) {
+                    JsonElement specifyKeyElement = optionObject.get("text");
+
+                    //If we find the specify field, set foundSpecify to true and include the specify value
+                    if (specifyKeyElement != null && !specifyKeyElement.isJsonNull()
+                            && StringUtils.isNotEmpty(specifyKeyElement.getAsString())) {
+                        foundSpecify = true;
+                        String otherTextKey;
+                        if ("medicalsurvey".equals(surveyName)) {
+                            //For medical survey, text contains the full name of the key, so don't concatenate
+                            otherTextKey = specifyKeyElement.getAsString();
+                        } else {
+                            //Otherwise, the name of the key is [optionName].[valueAssociatedWithTextInMapping]
+                            otherTextKey = questionName + "." + optionNameEl.getAsString() + "." + specifyKeyElement.getAsString();
+                        }
+
+                        selectedPicklistOptions.add(new SelectedPicklistOption(val,
+                                getStringValueFromElement(sourceDataElement, otherTextKey)));
+                    }
+
+                    //Now that we've found the selected option and checked for specify, done looking through options
+                    break;
+                }
+            }
+            // If we didn't find a specify field, don't include one
+            if (!foundSpecify) {
+                selectedPicklistOptions.add(new SelectedPicklistOption(val));
+            }
+        }
+
         return selectedPicklistOptions;
-
     }
-
 
     private List<SelectedPicklistOption> getPicklistOptionsForSourceStrs(JsonElement mapElement, JsonElement sourceDataElement,
                                                                          String questionName, String surveyName) {
@@ -1192,7 +1475,7 @@ public class StudyDataLoader {
 
         sourceDataSurveyQs.get(surveyName).add(questionName);
 
-        //check if source data doesnot have options. try for a match
+        //check if source data does not have options. try for a match
         if (sourceDataElement != null && !sourceDataElement.getAsJsonObject().get(questionName).isJsonNull()) {
             value = sourceDataElement.getAsJsonObject().get(questionName);
         }
@@ -1212,7 +1495,8 @@ public class StudyDataLoader {
         List<String> pepperPLOptions = new ArrayList<>();
         JsonArray options = mapElement.getAsJsonObject().getAsJsonArray("options");
         for (JsonElement option : options) {
-            JsonElement optionNameEl = option.getAsJsonObject().get("name");
+            JsonObject optionObject = option.getAsJsonObject();
+            JsonElement optionNameEl = optionObject.get("name");
             String optionName = optionNameEl.getAsString();
             if (altNames.get(optionName) != null) {
                 optionName = altNames.get(optionName);
@@ -1223,8 +1507,20 @@ public class StudyDataLoader {
             final String optName = optionName;
             if (optionName.equalsIgnoreCase(value.getAsString())
                     || optValuesList.stream().anyMatch(x -> x.equalsIgnoreCase(optName))) {
-
-                if (!optionName.equalsIgnoreCase("Other")) {
+                //If specify text was exported as a separate key/value pair, make sure it gets passed through
+                if (optionObject.get("text") != null && ("medicalsurvey".equals(surveyName) || "consentsurvey".equals(surveyName))) {
+                    String otherTextKey;
+                    if ("medicalsurvey".equals(surveyName)) {
+                        //For medical survey, text contains full name of key, so don't concatenate
+                        otherTextKey = optionObject.get("text").getAsString();
+                    } else {
+                        //Otherwise, the name of the key is [optionName].[valueAssociatedWithTextInMapping]
+                        otherTextKey = questionName.concat(".").concat(optionName).concat(".").concat(
+                            optionObject.get("text").getAsString());
+                    }
+                    String otherText = getStringValueFromElement(sourceDataElement, otherTextKey);
+                    selectedPicklistOptions.add(new SelectedPicklistOption(optionName.toUpperCase(), otherText));
+                } else if (!optionName.equalsIgnoreCase("Other")) {
                     selectedPicklistOptions.add(new SelectedPicklistOption(optionNameEl.getAsString().toUpperCase()));
                 } else {
                     //currently only RACE has Other however Gen2 MBC has other details without user selecting "Other"
@@ -1281,8 +1577,15 @@ public class StudyDataLoader {
             if (value != null && value.getAsInt() == 1) { //option checked
                 if (option.getAsJsonObject().get("text") != null) {
                     //other text details
-                    String otherText = getTextDetails(sourceDataElement, option, key);
-                    selectedPicklistOptions.add(new SelectedPicklistOption(optionName.getAsString().toUpperCase(), otherText));
+                    //For medical survey, the "text" attribute in the mapping contains the full name of the key
+                    if ("medicalsurvey".equals(surveyName)) {
+                        String otherTextKey = option.getAsJsonObject().get("text").getAsString();
+                        String otherText = getStringValueFromElement(sourceDataElement, otherTextKey);
+                        selectedPicklistOptions.add(new SelectedPicklistOption(optionName.getAsString().toUpperCase(), otherText));
+                    } else { //Otherwise, append the "text" attribute value to the key of the question
+                        String otherText = getTextDetails(sourceDataElement, option, key);
+                        selectedPicklistOptions.add(new SelectedPicklistOption(optionName.getAsString().toUpperCase(), otherText));
+                    }
                 } else {
                     selectedPicklistOptions.add(new SelectedPicklistOption(optionName.getAsString().toUpperCase()));
                 }
@@ -1315,11 +1618,9 @@ public class StudyDataLoader {
         String answerGuid = null;
         JsonElement valueEl;
         String questionName = mapElement.getAsJsonObject().get("name").getAsString();
-        String stableId = null;
-        JsonElement stableIdElement = mapElement.getAsJsonObject().get("stable_id");
-        if (!stableIdElement.isJsonNull()) {
-            stableId = stableIdElement.getAsString();
-        }
+        String stableId = getStringValueFromElement(mapElement, "stable_id");
+        LOG.info("Processing date question: " + questionName + " with stable_id " + stableId);
+
         //check if question has subelements, nullable
         if (mapElement.getAsJsonObject().get("subelements") == null) {
             valueEl = sourceDataElement.getAsJsonObject().get(questionName);
@@ -1382,11 +1683,8 @@ public class StudyDataLoader {
         String questionName = mapElement.getAsJsonObject().get("name").getAsString();
 
         valueEl = sourceDataElement.getAsJsonObject().get(questionName);
-        String stableId = null;
-        JsonElement stableIdElement = mapElement.getAsJsonObject().get("stable_id");
-        if (!stableIdElement.isJsonNull()) {
-            stableId = stableIdElement.getAsString();
-        }
+        String stableId = getStringValueFromElement(mapElement, "stable_id");
+        LOG.info("Processing text question " + questionName + " with stable id " + stableId);
 
         if (valueEl != null && !valueEl.isJsonNull()) {
             answerGuid = answerTextQuestion(stableId, participantGuid, instanceGuid, valueEl.getAsString(), answerDao);
@@ -1400,22 +1698,27 @@ public class StudyDataLoader {
                                             String participantGuid, String instanceGuid, AnswerDao answerDao) throws Exception {
 
         String answerGuid;
-        String stableId = null;
         String questionName = mapElement.getAsJsonObject().get("name").getAsString();
         JsonElement valueEl = sourceDataElement.getAsJsonObject().get(questionName);
         if (valueEl == null || valueEl.isJsonNull()) {
             return null;
         }
-        JsonElement stableIdElement = mapElement.getAsJsonObject().get("stable_id");
-        if (!stableIdElement.isJsonNull()) {
-            stableId = stableIdElement.getAsString();
-        }
+        String stableId = getStringValueFromElement(mapElement, "stable_id");
+        LOG.info("Processing agreement question " + questionName + " with stable id " + stableId);
+
         if (stableId == null) {
             return null;
         }
+
+        boolean agreed = valueEl.getAsBoolean();
+        String sourceType = getStringValueFromElement(mapElement, "source_type");
+        if (StringUtils.isNotBlank(sourceType) && sourceType.equalsIgnoreCase("integer")) {
+            agreed = (valueEl.getAsInt() == 1);
+        }
+
         sourceDataSurveyQs.get(surveyName).add(questionName);
 
-        answerGuid = answerAgreementQuestion(stableId, participantGuid, instanceGuid, valueEl.getAsBoolean(), answerDao);
+        answerGuid = answerAgreementQuestion(stableId, participantGuid, instanceGuid, agreed, answerDao);
         return answerGuid;
     }
 
@@ -1426,11 +1729,8 @@ public class StudyDataLoader {
         String questionName = mapElement.getAsJsonObject().get("name").getAsString();
         sourceDataSurveyQs.get(surveyName).add(questionName);
         //handle composite options (nested answers)
-        String stableId = null;
-        JsonElement stableIdElement = mapElement.getAsJsonObject().get("stable_id");
-        if (!stableIdElement.isJsonNull()) {
-            stableId = stableIdElement.getAsString();
-        }
+        String stableId = getStringValueFromElement(mapElement, "stable_id");
+        LOG.info("Processing composite question " + questionName + " with stable_id " + stableId);
         //handle children/nestedQA
         JsonArray children = mapElement.getAsJsonObject().getAsJsonArray("children");
         List<String> nestedQAGuids = new ArrayList<>();
@@ -1455,6 +1755,10 @@ public class StudyDataLoader {
                         break;
                     case "Boolean":
                         childGuid = processBooleanQuestion(childEl, sourceDataElement, surveyName,
+                                participantGuid, instanceGuid, answerDao);
+                        break;
+                    case "BooleanSpecialPL":
+                        childGuid = processBooleanSpecialPLQuestion(handle, childEl, sourceDataElement, surveyName,
                                 participantGuid, instanceGuid, answerDao);
                         break;
                     case "Agreement":
@@ -1583,15 +1887,10 @@ public class StudyDataLoader {
         //reason: boolean question does not support rendering as a checkbox
         //ex: "current_medication_names.dk": 0 ; "previous_medication_names.dk": 0,
         String answerGuid = null;
-        String stableId = null;
-        JsonElement stableIdElement = mapElement.getAsJsonObject().get("stable_id");
-        if (!stableIdElement.isJsonNull()) {
-            stableId = stableIdElement.getAsString();
-        }
-        if (stableId == null) {
-            return null;
-        }
+        String stableId = getStringValueFromElement(mapElement, "stable_id");
         String questionName = mapElement.getAsJsonObject().get("name").getAsString();
+        LOG.info("Processing boolean special picklist question " + questionName + " with stable id " + stableId);
+
         JsonElement valueEl = sourceDataElement.getAsJsonObject().get(questionName);
         if (valueEl == null || valueEl.isJsonNull()) {
             return null;
@@ -1600,7 +1899,11 @@ public class StudyDataLoader {
         int valueInt = valueEl.getAsInt();
         List<SelectedPicklistOption> selectedOptions = new ArrayList<>();
         if (valueInt == 1) {
-            selectedOptions.add(new SelectedPicklistOption("YES"));
+            if (datStatEnumLookup.containsKey(questionName)) {
+                selectedOptions.add(new SelectedPicklistOption(datStatEnumLookup.get(questionName).get(1)));
+            } else {
+                selectedOptions.add(new SelectedPicklistOption("YES"));
+            }
         }
 
         //answerGuid = answerBooleanQuestion(handle, stableId, participantGuid, instanceGuid, value, answerDao);
@@ -1612,15 +1915,10 @@ public class StudyDataLoader {
                                           String participantGuid, String instanceGuid, AnswerDao answerDao) throws Exception {
 
         String answerGuid = null;
-        String stableId = null;
-        JsonElement stableIdElement = mapElement.getAsJsonObject().get("stable_id");
-        if (!stableIdElement.isJsonNull()) {
-            stableId = stableIdElement.getAsString();
-        }
-        if (stableId == null) {
-            return null;
-        }
+        String stableId = getStringValueFromElement(mapElement, "stable_id");
         String questionName = getStringValueFromElement(mapElement, "name");
+        LOG.info("Processing boolean question " + questionName + " with stable id " + stableId);
+
         JsonElement valueEl = sourceDataElement.getAsJsonObject().get(questionName);
         if (valueEl == null || valueEl.isJsonNull()) {
             return null;
@@ -1706,9 +2004,27 @@ public class StudyDataLoader {
     }
 
 
+    private void addBiopsyInstitutions(Handle handle, JsonElement sourceDataElement, UserDto userDto, StudyDto studyDto) {
+
+        MedicalProviderDao medicalProviderDao = handle.attach(MedicalProviderDao.class);
+        //sourceDataSurveyQs.get("releasesurvey").add("initialbiopsy");
+
+        String instName = getStringValueFromElement(sourceDataElement, "initial_biopsy_institution");
+        String instCity = getStringValueFromElement(sourceDataElement, "initial_biopsy_city");
+        String instState = getStringValueFromElement(sourceDataElement, "initial_biopsy_state");
+
+        if (StringUtils.isNotBlank(instName)) {
+            String guid = getMedicalProviderGuid(handle);
+            medicalProviderDao.insert(new MedicalProviderDto(
+                    null,
+                    guid, userDto.getUserId(), studyDto.getId(),
+                    InstitutionType.INITIAL_BIOPSY, instName, null, instCity, instState,
+                    null, null, null, null));
+        }
+    }
+
     private void processInstitutions(Handle handle, JsonElement sourceDataElement, UserDto userDto, StudyDto studyDto,
-                                     String elementName, InstitutionType type, String surveyName,
-                                     ActivityInstanceDto instanceDto) {
+                                     String elementName, InstitutionType type, String surveyName) {
 
         MedicalProviderDao medicalProviderDao = handle.attach(MedicalProviderDao.class);
         sourceDataSurveyQs.get(surveyName).add(elementName);
@@ -1717,8 +2033,6 @@ public class StudyDataLoader {
             return;
         }
 
-        boolean isFirst = true;
-        InstitutionType thisType = type;
         JsonArray medicalProviderDataArray = medicalProviderDataEl.getAsJsonArray();
         for (JsonElement physicianEl : medicalProviderDataArray) {
             String physicianId = getStringValueFromElement(physicianEl, "physicianid");
@@ -1737,12 +2051,6 @@ public class StudyDataLoader {
                 legacyGuid = physicianId;
             } else {
                 legacyGuid = institutionId;
-                if (isFirst) { //hack for MBC to load first one as Initial Biopsy and rest as Institutions
-                    thisType = InstitutionType.INITIAL_BIOPSY;
-                    isFirst = false;
-                } else {
-                    thisType = InstitutionType.INSTITUTION;
-                }
             }
 
             medicalProviderDao.insert(new MedicalProviderDto(
@@ -1750,7 +2058,7 @@ public class StudyDataLoader {
                     guid,
                     userDto.getUserId(),
                     studyDto.getId(),
-                    thisType,
+                    type,
                     institution,
                     name,
                     city,
@@ -1760,12 +2068,6 @@ public class StudyDataLoader {
                     legacyGuid,
                     streetAddress
             ));
-        }
-    }
-
-    class UserExistsException extends Exception {
-        UserExistsException(String msg) {
-            super(msg);
         }
     }
 
@@ -1779,7 +2081,7 @@ public class StudyDataLoader {
         }
         int actualQsCount = sourceDataEl.getAsJsonObject().entrySet().size();
         Set<Map.Entry<String, JsonElement>> actualQs = sourceDataEl.getAsJsonObject().entrySet();
-        LOG.info("survey Name: {}  .. Qs looked at count: {} ... Actual source Qs: {} ", surveyName,
+        LOG.info("survey Name: {} .. Qs looked at count: {} ... Actual source Qs: {} ", surveyName,
                 mappingQuestions.size(), actualQsCount);
         for (String question : mappingQuestions) {
             LOG.debug(" Mapping Question: {} ", question);
@@ -1808,6 +2110,12 @@ public class StudyDataLoader {
         return new DateValue(gregorianCalendar.get(Calendar.YEAR),
                 gregorianCalendar.get(Calendar.MONTH) + 1, // GregorianCalendar months are 0 indexed
                 gregorianCalendar.get(Calendar.DAY_OF_MONTH));
+    }
+
+    class UserExistsException extends Exception {
+        UserExistsException(String msg) {
+            super(msg);
+        }
     }
 
 }

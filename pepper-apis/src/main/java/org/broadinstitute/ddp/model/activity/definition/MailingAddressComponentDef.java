@@ -16,6 +16,12 @@ public final class MailingAddressComponentDef extends ComponentBlockDef {
     @SerializedName("subtitleTemplate")
     private Template subtitleTemplate;
 
+    @SerializedName("requireVerified")
+    private boolean requireVerified;
+
+    @SerializedName("requirePhone")
+    private boolean requirePhone;
+
     public MailingAddressComponentDef(Template titleTemplate, Template subtitleTemplate) {
         super(ComponentType.MAILING_ADDRESS);
         this.titleTemplate = titleTemplate;
@@ -28,5 +34,21 @@ public final class MailingAddressComponentDef extends ComponentBlockDef {
 
     public Template getSubtitleTemplate() {
         return subtitleTemplate;
+    }
+
+    public boolean shouldRequireVerified() {
+        return requireVerified;
+    }
+
+    public void setRequireVerified(boolean requireVerified) {
+        this.requireVerified = requireVerified;
+    }
+
+    public boolean shouldRequirePhone() {
+        return requirePhone;
+    }
+
+    public void setRequirePhone(boolean requirePhone) {
+        this.requirePhone = requirePhone;
     }
 }

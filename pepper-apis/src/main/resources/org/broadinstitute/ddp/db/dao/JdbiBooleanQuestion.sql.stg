@@ -1,6 +1,6 @@
 group JdbiBooleanQuestion;
 
-queryDtoByQuestionId() ::= <<
+all_questions_select() ::= <<
 select bq.true_template_id,
        bq.false_template_id,
        qt.question_type_code,
@@ -13,5 +13,14 @@ select bq.true_template_id,
   join question_type as qt on qt.question_type_id = q.question_type_id
   join question_stable_code as qsc on qsc.question_stable_code_id = q.question_stable_code_id
   join revision as rev on rev.revision_id = q.revision_id
+>>
+
+queryDtoByQuestionId() ::= <<
+<all_questions_select()>
  where bq.question_id = :questionId
+>>
+
+queryDtoByActivityId() ::= <<
+<all_questions_select()>
+ where q.study_activity_id=:activityId
 >>

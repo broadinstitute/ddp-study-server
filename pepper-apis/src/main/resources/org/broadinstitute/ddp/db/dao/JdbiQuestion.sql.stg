@@ -12,6 +12,12 @@ select qt.question_type_code,
   join revision as rev on rev.revision_id = q.revision_id
 >>
 
+queryQuestionsDtoByActivityId() ::= <<
+<all_questions_select()>
+ where
+   q.study_activity_id = :activityId
+>>
+
 queryQuestionDtoByStableIdAndInstanceGuid() ::= <<
 <all_questions_select()>
   join activity_instance as ai on ai.study_activity_id = q.study_activity_id

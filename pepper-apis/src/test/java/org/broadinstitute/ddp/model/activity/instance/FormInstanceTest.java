@@ -37,6 +37,7 @@ import org.broadinstitute.ddp.content.I18nTemplateConstants;
 import org.broadinstitute.ddp.content.RenderValueProvider;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
+import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dao.UserProfileSql;
 import org.broadinstitute.ddp.exception.DDPException;
@@ -79,10 +80,13 @@ public class FormInstanceTest extends TxnAwareBaseTest {
     @Before
     public void setupMocks() {
         mockHandle = mock(Handle.class);
+        var mockUserDao = mock(UserDao.class);
         var mockProfleDao = mock(UserProfileDao.class);
         var mockActInstDao = mock(ActivityInstanceDao.class);
+        doReturn(mockUserDao).when(mockHandle).attach(UserDao.class);
         doReturn(mockProfleDao).when(mockHandle).attach(UserProfileDao.class);
         doReturn(mockActInstDao).when(mockHandle).attach(ActivityInstanceDao.class);
+        doReturn(Optional.empty()).when(mockUserDao).findUserByGuid(anyString());
         doReturn(Optional.empty()).when(mockProfleDao).findProfileByUserId(anyLong());
         doNothing().when(mockActInstDao).saveSubstitutions(anyLong(), any());
     }

@@ -1,10 +1,16 @@
 package org.broadinstitute.ddp.pex;
 
+import static java.util.stream.Collectors.toList;
+
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import org.broadinstitute.ddp.db.dao.AnswerCachedDao;
+import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
+import org.broadinstitute.ddp.model.activity.instance.answer.Answer;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
+import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.activity.types.QuestionType;
 
@@ -81,7 +87,7 @@ class PexFetcher {
      */
     Boolean findSpecificBoolAnswer(InterpreterContext ictx, String activityCode, String activityInstanceGuid, String stableId) {
         try {
-            PexDao pexDao =  ictx.getHandle().attach(PexDao.class);
+            PexDao pexDao = ictx.getHandle().attach(PexDao.class);
             return pexDao.findSpecificBoolAnswer(activityInstanceGuid, stableId);
         } catch (Exception e) {
             throw new PexFetchException("Could not fetch boolean answer for form "
@@ -185,6 +191,15 @@ class PexFetcher {
             throw new PexFetchException("Could not fetch picklist answers for form "
                     + activityCode + " question " + stableId, e);
         }
+    }
+
+    List<String> findPicklistAnswer(InterpreterContext ictx, ActivityInstanceDto instanceDto, String questionStableId) {
+        Optional<Answer> answer = new AnswerCachedDao(ictx.getHandle())
+                .findAnswerByInstanceGuidAndQuestionStableId(instanceDto.getGuid(), questionStableId);
+        return answer
+                .filter(ans -> ans.getQuestionType().equals(QuestionType.PICKLIST))
+                .map(ans -> ((PicklistAnswer) ans).getValue().stream().map(val -> val.getStableId()).collect(toList()))
+                .orElse(null);
     }
 
     /**

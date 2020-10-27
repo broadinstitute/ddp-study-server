@@ -25,7 +25,9 @@ select
     po.allow_details,
     po.is_exclusive,
     po.display_order,
-    po.revision_id
+    po.revision_id,
+    rev.start_date as revision_start_timestamp,
+    rev.end_date as revision_end_timestamp
 from
     activity_instance as ai,
     picklist_option as po,
@@ -49,7 +51,9 @@ select
     po.allow_details,
     po.is_exclusive,
     po.display_order,
-    po.revision_id
+    po.revision_id,
+    rev.start_date as revision_start_timestamp,
+    rev.end_date as revision_end_timestamp
 from
     activity_instance as ai,
     picklist_option as po,
@@ -73,7 +77,9 @@ select po.picklist_option_id,
        po.allow_details,
        po.is_exclusive,
        po.display_order,
-       po.revision_id
+       po.revision_id,
+       rev.start_date as revision_start_timestamp,
+       rev.end_date as revision_end_timestamp
   from picklist_option as po
   join revision as rev on po.revision_id = rev.revision_id
   join activity_instance as ai on ai.activity_instance_guid = :instanceGuid
@@ -93,7 +99,9 @@ select
     po.allow_details,
     po.is_exclusive,
     po.display_order,
-    po.revision_id
+    po.revision_id,
+    rev.start_date as revision_start_timestamp,
+    rev.end_date as revision_end_timestamp
 from
     picklist_option as po,
     revision as rev
@@ -112,7 +120,9 @@ select po.picklist_option_id,
        po.allow_details,
        po.is_exclusive,
        po.display_order,
-       po.revision_id
+       po.revision_id,
+       rev.start_date as revision_start_timestamp,
+       rev.end_date as revision_end_timestamp
   from picklist_option as po
   join revision as rev on rev.revision_id = po.revision_id
  where po.picklist_question_id = :questionId

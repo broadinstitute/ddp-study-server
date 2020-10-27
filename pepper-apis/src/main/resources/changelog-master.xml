@@ -219,6 +219,19 @@
     <include file="db-changes/schema/add-section-index-column-to-activity-instance.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/seed/DDP-4792-add-hebrew.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/seed/DDP-4803-hebrew-spanish-chinese.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/seed/spanish-and-creole.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/seed/fix-spanish-activity-instance-status-type.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-4615-kit-schedule.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/add-is-write-once-column-to-question.xml" relativeToChangelogFile="true"/>
 <!--  TODO: wasn't merged to Broad
     <include file="db-changes/schema/user_legacy_altpid_change_limit_size.xml" relativeToChangelogFile="true"/> -->
+    <include file="db-changes/schema/DDP-4876-mailing-address-component-required-flags.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-4854-increase-i18nstudyactivity-title-len.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/seed/testboston-delivered.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-4927-exclude-status-icon-from-display.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/seed/DDP-4911-test-result-event.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-4842-pdf-composite-answer-substitution.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-4931-activity-hide-instances.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-5012-activity-second-name.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-4439-language-popup-settings.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

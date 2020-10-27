@@ -68,6 +68,13 @@ public interface ContentBlockDao extends SqlObject {
 
     default ContentBlockDef findDefByBlockIdAndTimestamp(long blockId, long timestamp) {
         // todo: query template
-        return new ContentBlockDef(null);
+        BlockContentDto contentDto = getJdbiBlockContent()
+                .findDtoByBlockIdAndTimestamp(blockId, timestamp)
+                .orElseThrow(() -> new DaoException(
+                        "Could not find content block with id " + blockId + " and timestamp " + timestamp));
+        ContentBlockDef contentDef = new ContentBlockDef(null);
+        contentDef.setTitleTemplateId(contentDto.getTitleTemplateId());
+        contentDef.setBodyTemplateId(contentDto.getBodyTemplateId());
+        return contentDef;
     }
 }

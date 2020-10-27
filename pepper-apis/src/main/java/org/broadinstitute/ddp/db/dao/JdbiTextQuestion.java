@@ -1,8 +1,10 @@
 package org.broadinstitute.ddp.db.dao;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.db.dto.TextQuestionDto;
 import org.broadinstitute.ddp.model.activity.types.SuggestionType;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
@@ -44,9 +46,9 @@ public interface JdbiTextQuestion extends SqlObject {
             + "     tq.placeholder_template_id = :placeholderTemplateId "
             + "WHERE tq.question_id = :questionId")
     boolean update(@Bind("questionId") long questionId,
-                    @Bind("inputType") TextInputType inputType,
-                    @Bind("suggestionType") SuggestionType suggestionType,
-                    @Bind("placeholderTemplateId") Long placeholderTemplateId);
+                   @Bind("inputType") TextInputType inputType,
+                   @Bind("suggestionType") SuggestionType suggestionType,
+                   @Bind("placeholderTemplateId") Long placeholderTemplateId);
 
 
     @UseStringTemplateSqlLocator
@@ -54,6 +56,16 @@ public interface JdbiTextQuestion extends SqlObject {
     @RegisterConstructorMapper(value = TextQuestionDto.class, prefix = "p")
     @UseRowReducer(RowReducer.class)
     Optional<TextQuestionDto> findDtoByQuestionId(@Bind("questionId") long questionId);
+
+    default Optional<TextQuestionDto> findDtoByQuestion(QuestionDto questionDto) {
+        return findDtoByQuestionId(questionDto.getId());
+    }
+
+    @UseStringTemplateSqlLocator
+    @SqlQuery("queryDtoAndSuggestionsByActivityId")
+    @RegisterConstructorMapper(value = TextQuestionDto.class, prefix = "p")
+    @UseRowReducer(RowReducer.class)
+    List<TextQuestionDto> findDtoByActivityId(@Bind("activityId") long activityId);
 
     class RowReducer implements LinkedHashMapRowReducer<Long, TextQuestionDto> {
         @Override
@@ -65,5 +77,4 @@ public interface JdbiTextQuestion extends SqlObject {
             }
         }
     }
-
 }

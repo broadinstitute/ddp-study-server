@@ -10,7 +10,8 @@ select p.user_id,
        p.is_deceased,
        p.time_zone,
        p.preferred_language_id,
-       (select iso_language_code from language_code where language_code_id = p.preferred_language_id) as iso_language_code
+       (select iso_language_code from language_code where language_code_id = p.preferred_language_id) as iso_language_code,
+       p.skip_language_popup
   from user_profile as p
 >>
 

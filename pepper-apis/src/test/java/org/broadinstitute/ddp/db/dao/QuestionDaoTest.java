@@ -18,6 +18,7 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
+import org.broadinstitute.ddp.cache.CacheService;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.QuestionStableIdExistsException;
@@ -953,6 +954,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             List<org.broadinstitute.ddp.model.activity.instance.validation.Rule> rules = new ArrayList<>();
             rules.add(new RequiredRule<BoolAnswer>(rule.getRuleId(), "hint", "message", false));
             Question returnedQuestion = handle.attach(QuestionDao.class).getBooleanQuestion(questionDto,
+                    activityInstanceDto.getGuid(),
                     answers,
                     rules);
 
@@ -995,12 +997,13 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
 
             questionDto = new QuestionDto(questionDto.getType(), questionDto.getId() + 1,
                     questionDto.getStableId(), questionDto.getPromptTemplateId(), null, null, questionDto.getActivityId(),
-                    questionDto.isRestricted(), questionDto.isDeprecated(), questionDto.shouldHideNumber(),
+                    questionDto.isRestricted(), questionDto.isDeprecated(), questionDto.shouldHideNumber(), questionDto.isWriteOnce(),
                     questionDto.getRevisionId(), questionDto.getRevisionStart(), questionDto.getRevisionEnd());
 
             thrown.expect(Exception.class);
             thrown.expectMessage("Could not find boolean question for id " + questionDto.getId());
             handle.attach(QuestionDao.class).getBooleanQuestion(questionDto,
+                    activityInstanceDto.getGuid(),
                     Collections.emptyList(),
                     Collections.emptyList());
 
@@ -1108,8 +1111,8 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
                     questionDto.getStableId(), questionDto.getPromptTemplateId(),
                     questionDto.getAdditionalInfoHeaderTemplateId(), questionDto.getAdditionalInfoFooterTemplateId(),
                     questionDto.getActivityId(), questionDto.isRestricted(), questionDto.isDeprecated(),
-                    questionDto.shouldHideNumber(), questionDto.getRevisionId(), questionDto.getRevisionStart(),
-                    questionDto.getRevisionEnd());
+                    questionDto.shouldHideNumber(), questionDto.isWriteOnce(), questionDto.getRevisionId(),
+                    questionDto.getRevisionStart(), questionDto.getRevisionEnd());
 
             thrown.expect(Exception.class);
             thrown.expectMessage("Could not find picklist question for id " + questionDto.getId());
@@ -1144,12 +1147,16 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             String instanceGuid = TestDataSetupUtil
                     .generateTestFormActivityInstanceForUser(handle, form.getActivityId(), testData.getUserGuid())
                     .getGuid();
+            QuestionDao[] daos = {new QuestionCachedDao(handle), handle.attach(QuestionDao.class)};
+            Question question = null;
 
-            Question question = handle.attach(QuestionDao.class)
-                    .getQuestionByBlockId(block.getBlockId(), instanceGuid, langCodeId).get();
-            assertEquals(QuestionType.PICKLIST, question.getQuestionType());
-            assertEquals(prompt.getTemplateId(), (Long) question.getPromptTemplateId());
-            assertEquals(sid, question.getStableId());
+            for (QuestionDao dao : daos) {
+                CacheService.getInstance().resetAllCaches();
+                question = dao.getQuestionByBlockId(block.getBlockId(), instanceGuid, langCodeId).get();
+                assertEquals(QuestionType.PICKLIST, question.getQuestionType());
+                assertEquals(prompt.getTemplateId(), (Long) question.getPromptTemplateId());
+                assertEquals(sid, question.getStableId());
+            }
 
             PicklistQuestion actual = (PicklistQuestion) question;
 
@@ -1221,7 +1228,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
                     questionDto.getStableId(), questionDto.getPromptTemplateId(),
                     questionDto.getAdditionalInfoHeaderTemplateId(), questionDto.getAdditionalInfoFooterTemplateId(),
                     questionDto.getActivityId(), questionDto.isRestricted(), questionDto.isDeprecated(),
-                    questionDto.shouldHideNumber(), questionDto.getRevisionId(),
+                    questionDto.shouldHideNumber(), questionDto.isWriteOnce(), questionDto.getRevisionId(),
                     questionDto.getRevisionStart(), questionDto.getRevisionEnd());
 
             thrown.expect(DaoException.class);
@@ -1337,7 +1344,8 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             rules.add(DateRangeRule.of(rule.getRuleId(), rule.getHintTemplate().getTemplateText(), "hint", false,
                     rule.getStartDate(), rule.getEndDate()));
 
-            Question question1 = handle.attach(QuestionDao.class).getDateQuestion(questionDto, answers, rules);
+            Question question1 = handle.attach(QuestionDao.class).getDateQuestion(questionDto, activityInstanceDto.getGuid(), answers,
+                    rules);
 
             assertEquals(QuestionType.DATE, question.getQuestionType());
             assertEquals(prompt.getTemplateId(), (Long) question1.getPromptTemplateId());
@@ -1394,7 +1402,8 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             List<org.broadinstitute.ddp.model.activity.instance.validation.Rule> rules = new ArrayList<>();
             rules.add(new RequiredRule<DateAnswer>(rule.getRuleId(), "hint", "message", false));
 
-            Question question1 = handle.attach(QuestionDao.class).getDateQuestion(questionDto, answers, rules);
+            Question question1 = handle.attach(QuestionDao.class).getDateQuestion(questionDto, activityInstanceDto.getGuid(), answers,
+                    rules);
 
             assertEquals(QuestionType.DATE, question.getQuestionType());
             assertEquals(prompt.getTemplateId(), (Long) question1.getPromptTemplateId());
@@ -1445,7 +1454,8 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             List<org.broadinstitute.ddp.model.activity.instance.validation.Rule> rules = new ArrayList<>();
             rules.add(new RequiredRule<DateAnswer>(rule.getRuleId(), "hint", "message", false));
 
-            Question question1 = handle.attach(QuestionDao.class).getDateQuestion(questionDto, answers, rules);
+            Question question1 = handle.attach(QuestionDao.class).getDateQuestion(questionDto, activityInstanceDto.getGuid(), answers,
+                    rules);
 
             assertEquals(QuestionType.DATE, question.getQuestionType());
             assertEquals(prompt.getTemplateId(), (Long) question1.getPromptTemplateId());
@@ -1475,7 +1485,8 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
 
             ActivityVersionDto version1 = handle.attach(ActivityDao.class)
                     .insertActivity(form, RevisionMetadata.now(testData.getUserId(), "test"));
-            TestDataSetupUtil.generateTestFormActivityInstanceForUser(handle, version1.getActivityId(), testData.getUserGuid());
+            ActivityInstanceDto activityInstanceDto = TestDataSetupUtil
+                    .generateTestFormActivityInstanceForUser(handle, version1.getActivityId(), testData.getUserGuid());
 
             QuestionDto questionDto = handle.attach(JdbiQuestion.class)
                     .getQuestionDtoById(question.getQuestionId()).get();
@@ -1484,12 +1495,13 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
                     questionDto.getStableId(), questionDto.getPromptTemplateId(),
                     questionDto.getAdditionalInfoHeaderTemplateId(), questionDto.getAdditionalInfoFooterTemplateId(),
                     questionDto.getActivityId(), questionDto.isRestricted(), questionDto.isDeprecated(),
-                    questionDto.shouldHideNumber(), questionDto.getRevisionId(),
+                    questionDto.shouldHideNumber(), questionDto.isWriteOnce(), questionDto.getRevisionId(),
                     questionDto.getRevisionStart(), questionDto.getRevisionEnd());
 
             thrown.expect(DaoException.class);
             thrown.expectMessage("Could not find date question for id " + questionDto.getId());
-            handle.attach(QuestionDao.class).getDateQuestion(questionDto, Collections.emptyList(), Collections.emptyList());
+            handle.attach(QuestionDao.class).getDateQuestion(questionDto, activityInstanceDto.getGuid(), Collections.emptyList(),
+                    Collections.emptyList());
         });
     }
 
@@ -1556,7 +1568,8 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
                     header,
                     footer,
                     Arrays.asList(rule),
-                    true
+                    true,
+                    false
             );
             FormActivityDef form = buildSingleSectionForm(testData.getStudyGuid(), question);
 
@@ -1577,7 +1590,8 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
             List<org.broadinstitute.ddp.model.activity.instance.validation.Rule> rules = new ArrayList<>();
             rules.add(new RequiredRule<BoolAnswer>(rule.getRuleId(), "hint", "message", false));
 
-            Question question1 = handle.attach(QuestionDao.class).getAgreementQuestion(questionDto, answers, rules);
+            Question question1 = handle.attach(QuestionDao.class).getAgreementQuestion(questionDto, activityInstanceDto.getGuid(),
+                    answers, rules);
 
             assertEquals(QuestionType.AGREEMENT, question1.getQuestionType());
             assertEquals(sid, question1.getStableId());
@@ -1646,6 +1660,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
                     activityInstanceDto.getGuid(),
                     List.of(ans.getAnswerId()),
                     Collections.emptyList(),
+                    true,
                     langCodeId);
             assertEquals(QuestionType.COMPOSITE, question.getQuestionType());
             assertEquals(prompt.getTemplateId(), (Long) question.getPromptTemplateId());
@@ -1752,7 +1767,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
                     questionDto.getStableId(), questionDto.getPromptTemplateId(),
                     questionDto.getAdditionalInfoHeaderTemplateId(), questionDto.getAdditionalInfoFooterTemplateId(),
                     questionDto.getActivityId(), questionDto.isRestricted(), questionDto.isDeprecated(),
-                    questionDto.shouldHideNumber(), questionDto.getRevisionId(),
+                    questionDto.shouldHideNumber(), questionDto.isWriteOnce(), questionDto.getRevisionId(),
                     questionDto.getRevisionStart(), questionDto.getRevisionEnd());
 
             thrown.expect(DaoException.class);
@@ -1761,6 +1776,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
                     activityInstanceDto.getGuid(),
                     List.of(ans.getAnswerId()),
                     Collections.emptyList(),
+                    true,
                     langCodeId);
 
             handle.rollback();

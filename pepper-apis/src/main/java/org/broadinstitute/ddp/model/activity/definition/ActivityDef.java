@@ -57,12 +57,22 @@ public abstract class ActivityDef {
     @SerializedName("excludeFromDisplay")
     protected boolean excludeFromDisplay;
 
+    @SerializedName("excludeStatusIconFromDisplay")
+    protected boolean excludeStatusIconFromDisplay;
+
     @SerializedName("allowUnauthenticated")
     protected boolean allowUnauthenticated;
+
+    @SerializedName("hideExistingInstancesOnCreation")
+    protected boolean hideExistingInstancesOnCreation;
 
     @NotEmpty
     @SerializedName("translatedNames")
     protected List<@Valid @NotNull Translation> translatedNames;
+
+    @NotNull
+    @SerializedName("translatedSecondNames")
+    protected List<@Valid @NotNull Translation> translatedSecondNames;
 
     @NotNull
     @SerializedName("translatedTitles")
@@ -104,7 +114,8 @@ public abstract class ActivityDef {
             List<Translation> translatedDescriptions,
             List<SummaryTranslation> translatedSummaries,
             Template readonlyHintTemplate,
-            boolean isFollowup
+            boolean isFollowup,
+            boolean hideExistingInstancesOnCreation
     ) {
         this.activityType = MiscUtil.checkNonNull(activityType, "activityType");
         this.activityCode = MiscUtil.checkNotBlank(activityCode, "activityCode");
@@ -118,12 +129,14 @@ public abstract class ActivityDef {
         } else {
             throw new IllegalArgumentException("Need at least one name translation");
         }
+        this.translatedSecondNames = new ArrayList<>();
         this.translatedTitles = translatedTitles;
         this.translatedSubtitles = translatedSubtitles;
         this.translatedDescriptions = translatedDescriptions;
         this.translatedSummaries = translatedSummaries;
         this.readonlyHintTemplate = readonlyHintTemplate;
         this.isFollowup = isFollowup;
+        this.hideExistingInstancesOnCreation = hideExistingInstancesOnCreation;
     }
 
     /**
@@ -179,6 +192,10 @@ public abstract class ActivityDef {
         return translatedNames;
     }
 
+    public List<Translation> getTranslatedSecondNames() {
+        return translatedSecondNames;
+    }
+
     public List<Translation> getTranslatedTitles() {
         return translatedTitles;
     }
@@ -224,12 +241,20 @@ public abstract class ActivityDef {
         return excludeFromDisplay;
     }
 
+    public boolean isExcludeStatusIconFromDisplay() {
+        return excludeStatusIconFromDisplay;
+    }
+
     public boolean isAllowUnauthenticated() {
         return allowUnauthenticated;
     }
 
     public boolean isFollowup() {
         return isFollowup;
+    }
+
+    public boolean isHideInstances() {
+        return hideExistingInstancesOnCreation;
     }
 
     /**
@@ -250,14 +275,17 @@ public abstract class ActivityDef {
         protected Long editTimeoutSec = null;
         protected boolean allowOndemandTrigger = false;
         protected boolean excludeFromDisplay = false;
+        protected boolean excludeStatusIconFromDisplay = false;
         protected boolean allowUnauthenticated = false;
         protected List<Translation> names = new ArrayList<>();
+        protected List<Translation> secondNames = new ArrayList<>();
         protected List<Translation> titles = new ArrayList<>();
         protected List<Translation> subtitles = new ArrayList<>();
         protected List<Translation> descriptions = new ArrayList<>();
         protected List<SummaryTranslation> summaries = new ArrayList<>();
         protected Template readonlyHintTemplate;
         protected boolean isFollowup;
+        protected boolean hideExistingInstancesOnCreation;
 
         /**
          * Returns the subclass builder instance to enable method chaining.
@@ -275,9 +303,12 @@ public abstract class ActivityDef {
             activity.editTimeoutSec = editTimeoutSec;
             activity.allowOndemandTrigger = allowOndemandTrigger;
             activity.excludeFromDisplay = excludeFromDisplay;
+            activity.excludeStatusIconFromDisplay = excludeStatusIconFromDisplay;
             activity.allowUnauthenticated = allowUnauthenticated;
             activity.readonlyHintTemplate = readonlyHintTemplate;
             activity.isFollowup = isFollowup;
+            activity.hideExistingInstancesOnCreation = hideExistingInstancesOnCreation;
+            activity.translatedSecondNames.addAll(secondNames);
         }
 
         public T setActivityCode(String activityCode) {
@@ -335,6 +366,11 @@ public abstract class ActivityDef {
             return self();
         }
 
+        public T setExcludeStatusIconFromDisplay(boolean excludeStatusIconFromDisplay) {
+            this.excludeStatusIconFromDisplay = excludeStatusIconFromDisplay;
+            return self();
+        }
+
         public T setAllowUnauthenticated(boolean allowUnauthenticated) {
             this.allowUnauthenticated = allowUnauthenticated;
             return self();
@@ -352,6 +388,21 @@ public abstract class ActivityDef {
 
         public T clearNames() {
             this.names.clear();
+            return self();
+        }
+
+        public T addSecondName(Translation secondName) {
+            this.secondNames.add(secondName);
+            return self();
+        }
+
+        public T addSecondNames(Collection<Translation> secondNames) {
+            this.secondNames.addAll(secondNames);
+            return self();
+        }
+
+        public T clearSecondNames() {
+            this.secondNames.clear();
             return self();
         }
 
@@ -422,6 +473,11 @@ public abstract class ActivityDef {
 
         public T setIsFollowup(boolean isFollowup) {
             this.isFollowup = isFollowup;
+            return self();
+        }
+
+        public T setHideInstances(boolean hideExistingInstancesOnCreation) {
+            this.hideExistingInstancesOnCreation = hideExistingInstancesOnCreation;
             return self();
         }
     }

@@ -76,7 +76,7 @@ ActivityAnswersPatchBadPayloadResponse:
       schema:
         $ref: '../pepper.yml#/components/schemas/Error.ActivityAnswersPatchBadPayload'
 ActivityAnswersPatchInvalidResponse:
-  description: activity instance is read-only or answer submission failed validation
+  description: activity instance or question is read-only or answer submission failed validation
   content:
     application/json:
       schema:

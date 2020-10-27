@@ -1,11 +1,12 @@
 package org.broadinstitute.ddp.security;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 
 import com.google.gson.annotations.SerializedName;
 
-public class ParticipantAccess {
+public class ParticipantAccess implements Serializable {
 
     @SerializedName("p")
     private String participantGuid = "";

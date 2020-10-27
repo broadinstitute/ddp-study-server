@@ -69,7 +69,9 @@ public interface ComponentDao extends SqlObject {
             formComponent = new MailingAddressComponent(
                     mailingAddressComponentDto.getTitleTemplateId(),
                     mailingAddressComponentDto.getSubtitleTemplateId(),
-                    componentDto.shouldHideNumber());
+                    componentDto.shouldHideNumber(),
+                    mailingAddressComponentDto.shouldRequireVerified(),
+                    mailingAddressComponentDto.shouldRequirePhone());
         } else {
             throw new DaoException("Cannot process component type " + componentDto.getComponentType());
         }
@@ -139,7 +141,10 @@ public interface ComponentDao extends SqlObject {
             subtitleTemplateId = templateDao.insertTemplate(mailAddressCompDef.getSubtitleTemplate(), revisionId);
         }
 
-        DBUtils.checkInsert(1, getJdbiComponent().insertMailingAddressComponent(componentId, titleTemplateId, subtitleTemplateId));
+        DBUtils.checkInsert(1, getJdbiComponent().insertMailingAddressComponent(
+                componentId, titleTemplateId, subtitleTemplateId,
+                mailAddressCompDef.shouldRequireVerified(),
+                mailAddressCompDef.shouldRequirePhone()));
 
         LOG.info("Inserted mailing address component {}", componentId);
         return componentId;
@@ -151,6 +156,8 @@ public interface ComponentDao extends SqlObject {
                 .orElseThrow(() -> new DaoException(String.format(
                         "Could not find component block definition for id %d and timestamp %d", blockId, timestamp)));
 
+        TemplateDao templateDao = getTemplateDao();
+
         long componentId = componentDto.getComponentId();
         if (componentDto.getComponentType() == ComponentType.MAILING_ADDRESS) {
             MailingAddressComponentDto mailingAddressComponentDto = getJdbiComponent()
@@ -158,14 +165,16 @@ public interface ComponentDao extends SqlObject {
                     .orElseThrow(() -> new DaoException("Could not find mailing address component with id " + componentId));
             Template titleTmpl = null;
             if (mailingAddressComponentDto.getTitleTemplateId() != null) {
-                titleTmpl = getTemplateDao().loadTemplateById(mailingAddressComponentDto.getTitleTemplateId());
+                titleTmpl = templateDao.loadTemplateById(mailingAddressComponentDto.getTitleTemplateId());
             }
             Template subtitleTmpl = null;
             if (mailingAddressComponentDto.getSubtitleTemplateId() != null) {
-                subtitleTmpl = Template.text("");
+                subtitleTmpl = templateDao.loadTemplateById(mailingAddressComponentDto.getSubtitleTemplateId());
             }
             MailingAddressComponentDef comp = new MailingAddressComponentDef(titleTmpl, subtitleTmpl);
             comp.setHideNumber(componentDto.shouldHideNumber());
+            comp.setRequireVerified(mailingAddressComponentDto.shouldRequireVerified());
+            comp.setRequirePhone(mailingAddressComponentDto.shouldRequirePhone());
             return comp;
         }
 
@@ -174,17 +183,17 @@ public interface ComponentDao extends SqlObject {
         // todo: query templates
         Template buttonTmpl = null;
         if (compDto.getButtonTemplateId() != null) {
-            buttonTmpl = Template.text("");
+            buttonTmpl = templateDao.loadTemplateById(compDto.getButtonTemplateId());
         }
 
         Template titleTmpl = null;
         if (compDto.getTitleTemplateId() != null) {
-            titleTmpl = getTemplateDao().loadTemplateById(compDto.getTitleTemplateId());
+            titleTmpl = templateDao.loadTemplateById(compDto.getTitleTemplateId());
         }
 
         Template subtitleTmpl = null;
         if (compDto.getSubtitleTemplateId() != null) {
-            subtitleTmpl = Template.text("");
+            subtitleTmpl = templateDao.loadTemplateById(compDto.getSubtitleTemplateId());
         }
 
         PhysicianInstitutionComponentDef comp;

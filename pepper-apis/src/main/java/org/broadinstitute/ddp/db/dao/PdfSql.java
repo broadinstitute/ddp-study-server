@@ -137,15 +137,19 @@ public interface PdfSql extends SqlObject {
     @SqlUpdate("insert into pdf_activity_date_substitution (pdf_substitution_id, study_activity_id) values (:subId, :activityId)")
     int insertActivityDateSubstitution(@Bind("subId") long substitutionId, @Bind("activityId") long activityId);
 
-    @SqlUpdate("insert into pdf_answer_substitution (pdf_substitution_id, question_stable_code_id)"
-            + "(select :subId, question_stable_code_id"
-            + "   from question_stable_code as qsc"
-            + "  where qsc.stable_id = :stableId"
-            + "    and qsc.umbrella_study_id = (select study_id from study_activity where study_activity_id = :activityId))")
+    @SqlUpdate("insert into pdf_answer_substitution (pdf_substitution_id, question_stable_code_id, parent_question_stable_code_id) "
+            + " values ("
+            + " :subId, "
+            + "(select question_stable_code_id from question_stable_code where stable_id = :stableId "
+            + "    and umbrella_study_id = (select study_id from study_activity where study_activity_id = :activityId)) "
+            + " , "
+            + "(select question_stable_code_id from question_stable_code where stable_id = :parentStableId "
+            + "    and umbrella_study_id = (select study_id from study_activity where study_activity_id = :activityId))) ")
     int insertBaseAnswerSubstitution(
             @Bind("subId") long substitutionId,
             @Bind("activityId") long activityId,
-            @Bind("stableId") String questionStableId);
+            @Bind("stableId") String questionStableId,
+            @Bind("parentStableId") String parentQuestionStableId);
 
     @SqlUpdate("insert into pdf_boolean_answer_substitution (pdf_answer_substitution_id, check_if_false) values (:subId, :checkIfFalse)")
     int insertBooleanAnswerSubstitution(@Bind("subId") long substitutionId, @Bind("checkIfFalse") boolean checkIfFalse);

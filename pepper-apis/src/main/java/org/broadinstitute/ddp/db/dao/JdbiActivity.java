@@ -13,7 +13,7 @@ import org.broadinstitute.ddp.model.activity.types.ActivityType;
 import org.broadinstitute.ddp.model.activity.types.FormType;
 import org.jdbi.v3.sqlobject.CreateSqlObject;
 import org.jdbi.v3.sqlobject.SqlObject;
-import org.jdbi.v3.sqlobject.config.RegisterRowMapper;
+import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
 import org.jdbi.v3.sqlobject.statement.GetGeneratedKeys;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
@@ -27,10 +27,11 @@ public interface JdbiActivity extends SqlObject {
     @SqlUpdate("insert into study_activity"
             + " (activity_type_id,study_id,study_activity_code,max_instances_per_user,display_order,"
             + "is_write_once, instantiate_upon_registration,edit_timeout_sec,allow_ondemand_trigger,"
-            + "exclude_from_display, allow_unauthenticated, is_followup)"
+            + "exclude_from_display, exclude_status_icon_from_display, allow_unauthenticated, "
+            + "is_followup, hide_existing_instances_on_creation)"
             + " values(:activityTypeId,:studyId,:activityCode,"
             + ":maxInstancesPerUser,:displayOrder,:writeOnce,0,:editTimeoutSec,:allowOndemandTrigger,"
-            + ":excludeFromDisplay, :allowUnauthenticated, :isFollowup)")
+            + ":excludeFromDisplay, :excludeStatusIconFromDisplay, :allowUnauthenticated, :isFollowup, :hideExistingInstancesOnCreation)")
     @GetGeneratedKeys()
     long insertActivity(
             @Bind("activityTypeId") long activityTypeId,
@@ -42,8 +43,38 @@ public interface JdbiActivity extends SqlObject {
             @Bind("editTimeoutSec") Long editTimeoutSec,
             @Bind("allowOndemandTrigger") boolean allowOndemandTrigger,
             @Bind("excludeFromDisplay") boolean excludeFromDisplay,
+            @Bind("excludeStatusIconFromDisplay") boolean excludeStatusIconFromDisplay,
             @Bind("allowUnauthenticated") boolean allowUnauthenticated,
-            @Bind("isFollowup") boolean isFollowup
+            @Bind("isFollowup") boolean isFollowup,
+            @Bind("hideExistingInstancesOnCreation") boolean hideExistingInstancesOnCreation
+    );
+
+    @SqlUpdate("update study_activity"
+            + "    set display_order = :displayOrder,"
+            + "        is_write_once = :writeOnce,"
+            + "        instantiate_upon_registration = :instantiate,"
+            + "        max_instances_per_user = :maxInstancesPerUser,"
+            + "        edit_timeout_sec = :editTimeoutSec,"
+            + "        allow_ondemand_trigger = :allowOndemandTrigger,"
+            + "        exclude_from_display = :excludeFromDisplay,"
+            + "        allow_unauthenticated = :allowUnauthenticated,"
+            + "        is_followup = :isFollowup,"
+            + "        exclude_status_icon_from_display = :excludeStatusIconFromDisplay,"
+            + "        hide_existing_instances_on_creation = :hideExistingInstancesOnCreation"
+            + "  where study_activity_id = :activityId")
+    int updateActivity(
+            @Bind("activityId") long activityId,
+            @Bind("displayOrder") int displayOrder,
+            @Bind("writeOnce") boolean writeOnce,
+            @Bind("instantiate") boolean instantiateUponRegistration,
+            @Bind("maxInstancesPerUser") Integer maxInstancesPerUser,
+            @Bind("editTimeoutSec") Long editTimeoutSec,
+            @Bind("allowOndemandTrigger") boolean allowOndemandTrigger,
+            @Bind("excludeFromDisplay") boolean excludeFromDisplay,
+            @Bind("allowUnauthenticated") boolean allowUnauthenticated,
+            @Bind("isFollowup") boolean isFollowup,
+            @Bind("excludeStatusIconFromDisplay") boolean excludeStatusIconFromDisplay,
+            @Bind("hideExistingInstancesOnCreation") boolean hideExistingInstancesOnCreation
     );
 
     @SqlUpdate("insert into form_activity(study_activity_id,form_type_id) values(?,?)")
@@ -74,20 +105,20 @@ public interface JdbiActivity extends SqlObject {
     Optional<Long> findIdByStudyIdAndCode(@Bind("studyId") long studyId, @Bind("code") String activityCode);
 
     @SqlQuery("select * from study_activity where study_id = :studyId and study_activity_code = :code")
-    @RegisterRowMapper(ActivityDto.ActivityRowMapper.class)
+    @RegisterConstructorMapper(ActivityDto.class)
     Optional<ActivityDto> findActivityByStudyIdAndCode(@Bind("studyId") long studyId, @Bind("code") String activityCode);
 
     @SqlQuery("select * from study_activity where study_id = (select umbrella_study_id from umbrella_study where guid = :studyGuid) "
             + "and study_activity_code = :code")
-    @RegisterRowMapper(ActivityDto.ActivityRowMapper.class)
+    @RegisterConstructorMapper(ActivityDto.class)
     Optional<ActivityDto> findActivityByStudyGuidAndCode(@Bind("studyGuid") String studyGuid, @Bind("code") String activityCode);
 
     @SqlQuery("select * from study_activity where study_id = :studyId order by display_order asc")
-    @RegisterRowMapper(ActivityDto.ActivityRowMapper.class)
+    @RegisterConstructorMapper(ActivityDto.class)
     List<ActivityDto> findOrderedDtosByStudyId(@Bind("studyId") long studyId);
 
     @SqlQuery("select * from study_activity where study_activity_id = ?")
-    @RegisterRowMapper(ActivityDto.ActivityRowMapper.class)
+    @RegisterConstructorMapper(ActivityDto.class)
     ActivityDto queryActivityById(long studyActivityId);
 
     @SqlUpdate("update study_activity set edit_timeout_sec = :editTimeoutSec where study_id = :studyId and study_activity_code = :code")

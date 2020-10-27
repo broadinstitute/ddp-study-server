@@ -20,7 +20,7 @@ function (user, context, callback) {
     var pepperClientClaim = 'https://datadonationplatform.org/cid';
     var pepperTenantClaim = 'https://datadonationplatform.org/t';
 
-    var tenantDomain = 'https://' + context.tenant + '.auth0.com/';
+    var tenantDomain = 'https://' + auth0.domain + '/';
     context.idToken[pepperTenantClaim] = tenantDomain;
     context.idToken[pepperClientClaim] = context.clientID;
 
@@ -65,6 +65,9 @@ function (user, context, callback) {
         } else if (context.request.body.study_guid) {
             pepper_params.studyGuid = context.request.body.study_guid;
             console.log('StudyGuid passed in (via body) = ' + pepper_params.studyGuid);
+        } else if (context.clientMetadata.study) {
+            pepper_params.studyGuid = context.clientMetadata.study;
+            console.log('StudyGuid (defaulting to clientMetadata.study) = ' + pepper_params.studyGuid);
         } else {
             console.log('No studyGuid passed in request');
         }

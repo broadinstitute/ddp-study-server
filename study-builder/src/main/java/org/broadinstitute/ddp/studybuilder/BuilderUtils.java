@@ -15,7 +15,7 @@ import org.broadinstitute.ddp.util.JsonValidationError;
 /**
  * Various helpers for study-builder.
  */
-class BuilderUtils {
+public class BuilderUtils {
 
     private static final GsonPojoValidator validator = new GsonPojoValidator();
     private static final Gson gson = GsonUtil.standardGson();
@@ -55,7 +55,7 @@ class BuilderUtils {
      * @param path the path to look
      * @return a template object
      */
-    static Template parseTemplate(Config cfg, String path) {
+    public static Template parseTemplate(Config cfg, String path) {
         if (cfg.hasPath(path)) {
             Config tmplCfg = cfg.getConfig(path);
             return gson.fromJson(ConfigUtil.toJson(tmplCfg), Template.class);
@@ -70,7 +70,7 @@ class BuilderUtils {
      * @param tmpl the template object
      * @return error message string, or null
      */
-    static String validateTemplate(Template tmpl) {
+    public static String validateTemplate(Template tmpl) {
         List<JsonValidationError> errors = validator.validateAsJson(tmpl);
         if (!errors.isEmpty()) {
             return GsonPojoValidator.createValidationErrorMessage(errors, ", ");
@@ -82,7 +82,7 @@ class BuilderUtils {
     /**
      * Convenience helper to parse and validate a template object from given config.
      */
-    static Template parseAndValidateTemplate(Config cfg, String path) {
+    public static Template parseAndValidateTemplate(Config cfg, String path) {
         Template tmpl = parseTemplate(cfg, path);
         if (tmpl == null) {
             throw new DDPException(path + " is required");

@@ -33,6 +33,7 @@ import com.typesafe.config.Config;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.ddp.cache.LanguageStore;
+import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.DaoException;
@@ -158,7 +159,7 @@ public class DataExporter {
     }
 
     public static Map<String, String> fetchAndCacheAuth0Emails(Handle handle, String studyGuid, Set<String> auth0UserIds) {
-        var mgmtClient = Auth0Util.getManagementClientForStudy(handle, studyGuid);
+        var mgmtClient = Auth0ManagementClient.forStudy(handle, studyGuid);
         Map<String, String> emailResults = new Auth0Util(mgmtClient.getDomain())
                 .getUserPassConnEmailsByAuth0UserIds(auth0UserIds, mgmtClient.getToken());
         emailResults.forEach((auth0UserId, email) -> emailStore.put(auth0UserId, email));
@@ -891,11 +892,11 @@ public class DataExporter {
                     if (componentBlockDef.getComponentType() == MAILING_ADDRESS) {
                         componentDef = new CompositeQuestionDef(componentBlockDef.getComponentType().name(), false,
                                 dummyTemplate, null, null, dummyValidations, null,
-                                null, false, true, null, null, false);
+                                null, false, true, null, null, false, false);
                     } else {
                         componentDef = new CompositeQuestionDef(((PhysicianInstitutionComponentDef) componentBlockDef).getInstitutionType()
                                 .name(), false, dummyTemplate, null, null, dummyValidations, null,
-                                null, false, true, null, null, false);
+                                null, false, true, null, null, false, false);
                     }
 
                     allQuestions.add(componentDef);

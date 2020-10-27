@@ -1,8 +1,11 @@
 package org.broadinstitute.ddp.model.activity.definition.question;
 
+import static java.util.stream.Collectors.toList;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Stream;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 
@@ -72,7 +75,7 @@ public final class PicklistQuestionDef extends QuestionDef {
                                Template additionalInfoHeaderTemplate, Template additionalInfoFooterTemplate,
                                List<RuleDef> validations, PicklistSelectMode selectMode, PicklistRenderMode renderMode,
                                Template picklistLabelTemplate, List<PicklistGroupDef> groups, List<PicklistOptionDef> options,
-                               boolean hideNumber) {
+                               boolean hideNumber, boolean writeOnce) {
         super(QuestionType.PICKLIST,
                 stableId,
                 isRestricted,
@@ -80,7 +83,8 @@ public final class PicklistQuestionDef extends QuestionDef {
                 additionalInfoHeaderTemplate,
                 additionalInfoFooterTemplate,
                 validations,
-                hideNumber);
+                hideNumber,
+                writeOnce);
         this.selectMode = MiscUtil.checkNonNull(selectMode, "selectMode");
         this.renderMode = MiscUtil.checkNonNull(renderMode, "renderMode");
 
@@ -119,6 +123,12 @@ public final class PicklistQuestionDef extends QuestionDef {
 
     public List<PicklistOptionDef> getPicklistOptions() {
         return picklistOptions;
+    }
+
+    public List<PicklistOptionDef> getAllPicklistOptions() {
+        Stream<PicklistOptionDef> groupOptions =
+                getGroups().stream().flatMap(group -> group.getOptions().stream());
+        return Stream.concat(picklistOptions.stream(), groupOptions).collect(toList());
     }
 
     public boolean hasNumOptionsSelectedRule() {
@@ -200,7 +210,8 @@ public final class PicklistQuestionDef extends QuestionDef {
                                                                     label,
                                                                     groups,
                                                                     options,
-                                                                    hideNumber);
+                                                                    hideNumber,
+                                                                    writeOnce);
             configure(question);
             return question;
         }

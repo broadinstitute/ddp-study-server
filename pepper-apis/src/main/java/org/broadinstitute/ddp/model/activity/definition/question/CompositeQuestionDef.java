@@ -32,7 +32,7 @@ public final class CompositeQuestionDef extends QuestionDef {
                                 Template additionalInfoHeaderTemplate, Template additionalInfoFooterTemplate,
                                 List<RuleDef> validations, List<QuestionDef> children, OrientationType childOrientation,
                                 boolean allowMultiple, boolean unwrapOnExport, Template addButtonTemplate,
-                                Template additionalItemTemplate, boolean hideNumber) {
+                                Template additionalItemTemplate, boolean hideNumber, boolean writeOnce) {
         super(QuestionType.COMPOSITE,
                 stableId,
                 isRestricted,
@@ -40,7 +40,8 @@ public final class CompositeQuestionDef extends QuestionDef {
                 additionalInfoHeaderTemplate,
                 additionalInfoFooterTemplate,
                 validations,
-                hideNumber);
+                hideNumber,
+                writeOnce);
         this.children = children;
         this.childOrientation = childOrientation;
         this.allowMultiple = allowMultiple;
@@ -141,7 +142,8 @@ public final class CompositeQuestionDef extends QuestionDef {
                                                                         unwrapOnExport,
                                                                         addButtonTemplate,
                                                                         additionalItemTemplate,
-                                                                        hideNumber);
+                                                                        hideNumber,
+                                                                        writeOnce);
             configure(question);
             return question;
         }

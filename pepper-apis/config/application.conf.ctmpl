@@ -48,7 +48,7 @@
     "pdfArchiveUseFilesystem": false,
     "pubsub": {
         "enableHousekeepingTasks": {{$conf.Data.pubsub.enableHousekeepingTasks}},
-        "housekeepingTasksTopic": "{{$conf.Data.pubsub.housekeepingTasksTopic}}",
+        "housekeepingTasksSubscription": "{{$conf.Data.pubsub.housekeepingTasksSubscription}}",
     },
     "studyExportBucket": "{{$conf.Data.studyExportBucket}}",
     "schedules": {
@@ -70,6 +70,9 @@
         "apiLimitRate": {{$conf.Data.rateLimit.apiLimitRate}}
     },
     "sendgrid": {
+    {{if $conf.Data.sendgrid.proxy}}
+        "proxy": "{{$conf.Data.sendgrid.proxy}}",
+    {{end}}
         "fromName": "{{$conf.Data.sendgrid.fromName}}",
         "fromEmail": "{{$conf.Data.sendgrid.fromEmail}}"
     },
@@ -87,6 +90,18 @@
         "sendMetrics": true,
     {{end}}
     "googleGeocodingApiKey": "{{$conf.Data.geocodingKey}}",
+    "kits": {
+        # Whether to enable kits check
+        "checkEnabled": {{$conf.Data.kits.checkEnabled}},
+        # How many seconds to wait before doing next check
+        "intervalSecs": {{$conf.Data.kits.intervalSecs}},
+        # How many seconds to wait before calling DSM for kit statuses
+        "statusCheckSecs": {{$conf.Data.kits.statusCheckSecs}},
+        # Batch size to use for checking status and scheduling
+        "batchSize": {{$conf.Data.kits.batchSize}}
+    },
+    "jcacheConfigurationFile": "redisson-jcache.yaml",
+    "redisServerAddress": "redis://{{$conf.Data.redis.host}}:{{$conf.Data.redis.port}}",
     "elasticsearch": {
         # Whether to enable data sync to ES
         "syncEnabled": {{$conf.Data.elasticsearch.syncEnabled}},
@@ -99,6 +114,9 @@
 {{end}}{{end}}
     "elasticsearchUsername": "pepper_backend",
     "elasticsearchBatchSize": 100,
+{{if $elasticsearchConf.Data.proxy}}
+    "elasticsearchProxy": "{{$elasticsearchConf.Data.proxy}}",
+{{end}}
     "dbInstanceId": "{{$conf.Data.dbInstanceId}}",
     "dsmJwtSecret": "{{$dsm_conf.Data.portal.jwtDdpSecret}}",
     "dsmJwtSigner": "org.broadinstitute.kdux",
@@ -106,7 +124,7 @@
     {{if eq $environment "dev"}}
         "baseTestUrl": "https://pepper-dev.datadonationplatform.org",
         "baseWebDriverUrl": "https://basil-dev.datadonationplatform.org",
-        "dsmBaseUrl": "https://dsm.dev.datadonationplatform.org:443"
+        "dsmBaseUrl": "https://dsm-dev.datadonationplatform.org:443"
     {{end}}
     {{if eq $environment "test"}}
         "baseTestUrl": "https://pepper-test.datadonationplatform.org",

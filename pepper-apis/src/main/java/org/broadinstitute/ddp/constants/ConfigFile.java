@@ -99,7 +99,7 @@ public class ConfigFile {
     public static final String BACKEND_AUTH0_TEST_SECRET2 = "backendTestSecret2";
     public static final String BACKEND_AUTH0_TEST_CLIENT_NAME2 = "backendTestClientName2";
     public static final String PUBSUB_ENABLE_HKEEP_TASKS = "pubsub.enableHousekeepingTasks";
-    public static final String PUBSUB_HKEEP_TASKS_TOPIC = "pubsub.housekeepingTasksTopic";
+    public static final String PUBSUB_HKEEP_TASKS_SUB = "pubsub.housekeepingTasksSubscription";
     public static final String SLACK_HOOK = "slack.hook";
     public static final String SLACK_CHANNEL = "slack.channel";
     public static final String TEST_USER_AUTH0_ID = "testUserAuth0Id";
@@ -118,6 +118,7 @@ public class ConfigFile {
     public static final String ELASTICSEARCH_PASSWORD = "elasticsearchPassword";
     public static final String ELASTICSEARCH_USERNAME = "elasticsearchUsername";
     public static final String ELASTICSEARCH_EXPORT_BATCH_SIZE = "elasticsearchBatchSize";
+    public static final String ELASTICSEARCH_PROXY = "elasticsearchProxy";
 
     public static final String DSM_BASE_URL = "dsmBaseUrl";
     public static final String DSM_JWT_SECRET = "dsmJwtSecret";
@@ -126,6 +127,9 @@ public class ConfigFile {
 
     public static final String AUTH0_IP_WHITE_LIST = "auth0IpWhiteList";
     public static final String PREFERRED_SOURCE_IP_HEADER = "preferredSourceIPHeader";
+
+    public static final String JCACHE_CONFIGURATION_FILE = "jcacheConfigurationFile";
+    public static final String REDIS_SERVER_ADDRESS = "redisServerAddress";
 
     public static final class SqlQuery {
         public static final String FORM_ACTIVITY_BY_GUID = "activities.formActivityByGuidQuery";
@@ -168,11 +172,20 @@ public class ConfigFile {
         public static final String SYNC_INTERVAL_SECS = "elasticsearch.syncIntervalSecs";
     }
 
+    public static class Kits {
+        public static final String CHECK_ENABLED = "kits.checkEnabled";
+        public static final String INTERVAL_SECS = "kits.intervalSecs";
+        public static final String STATUS_CHECK_SECS = "kits.statusCheckSecs";
+        public static final String BATCH_SIZE = "kits.batchSize";
+    }
+
     public static class Sendgrid {
         public static final String TEMPLATES = "sendgridTemplates";
         public static final String TEMPLATE = "template";
         public static final String TEMPLATE_VERSION = "version";
         public static final String FROM_NAME = "sendgrid.fromName";
         public static final String FROM_EMAIL = "sendgrid.fromEmail";
+        // The proxy URL to use for all outgoing SendGrid requests.
+        public static final String PROXY = "sendgrid.proxy";
     }
 }

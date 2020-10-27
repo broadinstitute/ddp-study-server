@@ -8,10 +8,13 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
 import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.db.TransactionWrapper;
+import org.broadinstitute.ddp.db.dto.QuestionDto;
+import org.broadinstitute.ddp.db.dto.validation.ValidationDto;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
 import org.broadinstitute.ddp.model.activity.definition.i18n.Translation;
@@ -32,6 +35,7 @@ import org.broadinstitute.ddp.model.activity.instance.validation.Rule;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.DateFieldType;
 import org.broadinstitute.ddp.model.activity.types.DateRenderMode;
+import org.broadinstitute.ddp.model.activity.types.QuestionType;
 import org.broadinstitute.ddp.model.activity.types.RuleType;
 import org.broadinstitute.ddp.model.activity.types.TemplateType;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
@@ -71,7 +75,12 @@ public class ValidationDaoTest extends TxnAwareBaseTest {
     @Test
     public void testGetActiveValidations_questionNotFound() {
         TransactionWrapper.useTxn(handle -> {
-            List<Rule> validations = handle.attach(ValidationDao.class).getValidationRules(-1, enLangId);
+            var nonExistingQuestionDto = new QuestionDto(
+                    QuestionType.TEXT, -1, "stuff", -1,
+                    -1L, -1L,
+                    -1, false, false, false, false, -1, -1, null
+            );
+            List<Rule> validations = handle.attach(ValidationDao.class).getValidationRules(nonExistingQuestionDto, enLangId);
             assertEquals(0, validations.size());
         });
     }
@@ -80,10 +89,10 @@ public class ValidationDaoTest extends TxnAwareBaseTest {
     public void testGetActiveValidations_languageCodeNotFound() {
         TransactionWrapper.useTxn(handle -> {
             TextQuestionDef question = builder.build();
-            insertDummyActivity(handle, userGuid, studyGuid, question);
+            var form = insertDummyActivity(handle, userGuid, studyGuid, question);
 
             List<Rule> validations = handle.attach(ValidationDao.class)
-                    .getValidationRules(question.getQuestionId(), -1);
+                    .getValidationRules(buildQuestionDto(form, question), -1);
             assertEquals(0, validations.size());
 
             handle.rollback();
@@ -94,10 +103,10 @@ public class ValidationDaoTest extends TxnAwareBaseTest {
     public void testGetActiveValidations() {
         TransactionWrapper.useTxn(handle -> {
             TextQuestionDef question = builder.addValidation(new RequiredRuleDef(null)).build();
-            insertDummyActivity(handle, userGuid, studyGuid, question);
+            var form = insertDummyActivity(handle, userGuid, studyGuid, question);
 
             List<Rule> validations = handle.attach(ValidationDao.class)
-                    .getValidationRules(question.getQuestionId(), enLangId);
+                    .getValidationRules(buildQuestionDto(form, question), enLangId);
             assertEquals(1, validations.size());
             Rule rule = validations.get(0);
             assertEquals(RuleType.REQUIRED, rule.getRuleType());
@@ -120,10 +129,10 @@ public class ValidationDaoTest extends TxnAwareBaseTest {
                     .addFields(DateFieldType.MONTH, DateFieldType.YEAR, DateFieldType.DAY)
                     .addValidation(ageRuleDef)
                     .build();
-            insertDummyActivity(handle, userGuid, studyGuid, question);
+            var form = insertDummyActivity(handle, userGuid, studyGuid, question);
 
             List<Rule> validations = handle.attach(ValidationDao.class)
-                    .getValidationRules(question.getQuestionId(), enLangId);
+                    .getValidationRules(buildQuestionDto(form, question), enLangId);
             assertEquals(1, validations.size());
             Rule rule = validations.get(0);
             assertEquals(RuleType.AGE_RANGE, rule.getRuleType());
@@ -143,10 +152,10 @@ public class ValidationDaoTest extends TxnAwareBaseTest {
                     .addValidation(new LengthRuleDef(null, 10, 15))
                     .addValidation(new RequiredRuleDef(null))
                     .build();
-            insertDummyActivity(handle, userGuid, studyGuid, question);
+            var form = insertDummyActivity(handle, userGuid, studyGuid, question);
 
             List<Rule> validations = handle.attach(ValidationDao.class)
-                    .getValidationRules(question.getQuestionId(), enLangId);
+                    .getValidationRules(buildQuestionDto(form, question), enLangId);
             assertEquals(3, validations.size());
 
             assertEquals(RuleType.REQUIRED, validations.get(0).getRuleType());
@@ -169,10 +178,10 @@ public class ValidationDaoTest extends TxnAwareBaseTest {
             ruleDefs.forEach(validation -> validation.setAllowSave(true));
 
             TextQuestionDef question = builder.addValidations(ruleDefs).build();
-            insertDummyActivity(handle, userGuid, studyGuid, question);
+            var form = insertDummyActivity(handle, userGuid, studyGuid, question);
 
             List<Rule> validations = handle.attach(ValidationDao.class)
-                    .getValidationRules(question.getQuestionId(), enLangId);
+                    .getValidationRules(buildQuestionDto(form, question), enLangId);
             assertEquals(ruleDefs.size(), validations.size());
             assertEquals(ruleDefs.size(), validations.stream().filter(Rule::getAllowSave).count());
             assertEquals(0, validations.stream().filter(validation -> !validation.getAllowSave()).count());
@@ -194,10 +203,10 @@ public class ValidationDaoTest extends TxnAwareBaseTest {
                     .addFields(DateFieldType.MONTH, DateFieldType.YEAR);
 
             DateQuestionDef question = dateBuilder.addValidations(ruleDefs).build();
-            insertDummyActivity(handle, userGuid, studyGuid, question);
+            var form = insertDummyActivity(handle, userGuid, studyGuid, question);
 
             List<Rule> validations = handle.attach(ValidationDao.class)
-                    .getValidationRules(question.getQuestionId(), enLangId);
+                    .getValidationRules(buildQuestionDto(form, question), enLangId);
             assertEquals(ruleDefs.size(), validations.size());
             assertEquals(ruleDefs.size(), validations.stream().filter(Rule::getAllowSave).count());
             assertEquals(0, validations.stream().filter(validation -> !validation.getAllowSave()).count());
@@ -205,7 +214,47 @@ public class ValidationDaoTest extends TxnAwareBaseTest {
         });
     }
 
-    private FormActivityDef insertDummyActivity(Handle handle, String userGuid, String studyGuid, QuestionDef question) {
+    @Test
+    public void testMutipleQuestionsWithMultipleValidations() {
+        TransactionWrapper.useTxn(handle -> {
+            List<RuleDef> dateRuleDefs = Arrays.asList(
+                    new DateRangeRuleDef(null, LocalDate.now(), LocalDate.now(), false),
+                    new DateFieldRequiredRuleDef(RuleType.YEAR_REQUIRED, null)
+            );
+            dateRuleDefs.forEach(validation -> validation.setAllowSave(true));
+            String stableId = "SID" + Instant.now().toEpochMilli();
+            Template prompt = new Template(TemplateType.TEXT, null, "prompt");
+            DateQuestionDef.Builder dateBuilder = DateQuestionDef.builder(DateRenderMode.PICKLIST, stableId, prompt)
+                    .addFields(DateFieldType.MONTH, DateFieldType.YEAR);
+
+            DateQuestionDef dateQuestionDef = dateBuilder.addValidations(dateRuleDefs).build();
+
+            List<RuleDef> textRuleDefs = Arrays.asList(
+                    new RequiredRuleDef(null),
+                    new RegexRuleDef(null, "abc"),
+                    new LengthRuleDef(null, 10, 15),
+                    new CompleteRuleDef(null)
+            );
+            textRuleDefs.forEach(validation -> validation.setAllowSave(true));
+
+            TextQuestionDef textQuestionDef = builder.addValidations(textRuleDefs).build();
+
+            var form = insertDummyActivity(handle, userGuid, studyGuid, dateQuestionDef, textQuestionDef);
+
+            Map<Long, List<ValidationDto>> validations =
+                    handle.attach(JdbiQuestionValidation.class).getAllActiveValidationsForActivity(form.getActivityId());
+
+            assertEquals(2, validations.size());
+            assertNotNull(validations.get(dateQuestionDef.getQuestionId()));
+            assertNotNull(validations.get(textQuestionDef.getQuestionId()));
+            assertEquals(dateRuleDefs.size(), validations.get(dateQuestionDef.getQuestionId()).size());
+            assertEquals(textRuleDefs.size(), validations.get(textQuestionDef.getQuestionId()).size());
+
+            handle.rollback();
+        });
+    }
+
+    private FormActivityDef insertDummyActivity(Handle handle, String userGuid, String studyGuid, QuestionDef... question) {
         FormActivityDef form = FormActivityDef.generalFormBuilder("ACT" + Instant.now().toEpochMilli(), "v1", studyGuid)
                 .addName(new Translation("en", "test activity"))
                 .addSection(new FormSectionDef(null, TestUtil.wrapQuestions(question)))
@@ -214,5 +263,13 @@ public class ValidationDaoTest extends TxnAwareBaseTest {
         handle.attach(ActivityDao.class).insertActivity(form, RevisionMetadata.now(userId, "add test activity"));
         assertNotNull(form.getActivityId());
         return form;
+    }
+
+    private QuestionDto buildQuestionDto(FormActivityDef form, QuestionDef def) {
+        return new QuestionDto(
+                def.getQuestionType(), def.getQuestionId(), def.getStableId(), def.getPromptTemplate().getTemplateId(),
+                null, null,
+                form.getActivityId(), def.isRestricted(), def.isDeprecated(), def.shouldHideNumber(), false, -1, -1, null
+        );
     }
 }

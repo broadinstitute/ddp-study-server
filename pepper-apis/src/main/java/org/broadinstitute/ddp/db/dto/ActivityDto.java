@@ -1,73 +1,65 @@
 package org.broadinstitute.ddp.db.dto;
 
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.util.Objects;
 
-import org.broadinstitute.ddp.constants.SqlConstants;
-import org.jdbi.v3.core.mapper.RowMapper;
-import org.jdbi.v3.core.statement.StatementContext;
+import org.jdbi.v3.core.mapper.reflect.ColumnName;
+import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
 
 public class ActivityDto {
 
+    private final long activityId;
     private final long activityTypeId;
     private final long studyId;
+    private final int displayOrder;
+    private final boolean writeOnce;
     private final boolean instantiateUponRegistration;
+    private final Integer maxInstancesPerUser;
+    private final Long editTimeoutSec;
+    private final boolean allowOndemandTrigger;
+    private final boolean excludeFromDisplay;
+    private final boolean allowUnauthenticated;
+    private final boolean isFollowup;
+    private final boolean excludeStatusIconFromDisplay;
+    private final boolean hideExistingInstancesOnCreation;
     private String activityCode;
-    private long activityId;
-    private int displayOrder;
-    private Integer maxInstancesPerUser;
-    private Long editTimeoutSec;
-    private boolean writeOnce;
-    private boolean allowOndemandTrigger;
-    private boolean isFollowup;
 
-    /**
-     * Instantiate an ActivityDto object.
-     */
+    @JdbiConstructor
     public ActivityDto(
-            long activityId,
-            String activityCode,
-            long activityTypeId,
-            long studyId,
-            int displayOrder,
-            boolean instantiateUponRegistration,
-            Integer maxInstancesPerUser,
-            Long editTimeoutSec,
-            boolean writeOnce,
-            boolean allowOndemandTrigger,
-            boolean isFollowup
+            @ColumnName("study_activity_id") long activityId,
+            @ColumnName("activity_type_id") long activityTypeId,
+            @ColumnName("study_id") long studyId,
+            @ColumnName("study_activity_code") String activityCode,
+            @ColumnName("display_order") int displayOrder,
+            @ColumnName("is_write_once") boolean writeOnce,
+            @ColumnName("instantiate_upon_registration") boolean instantiateUponRegistration,
+            @ColumnName("max_instances_per_user") Integer maxInstancesPerUser,
+            @ColumnName("edit_timeout_sec") Long editTimeoutSec,
+            @ColumnName("allow_ondemand_trigger") boolean allowOndemandTrigger,
+            @ColumnName("exclude_from_display") boolean excludeFromDisplay,
+            @ColumnName("allow_unauthenticated") boolean allowUnauthenticated,
+            @ColumnName("is_followup") boolean isFollowup,
+            @ColumnName("exclude_status_icon_from_display") boolean excludeStatusIconFromDisplay,
+            @ColumnName("hide_existing_instances_on_creation") boolean hideExistingInstancesOnCreation
     ) {
         this.activityId = activityId;
-        this.activityCode = activityCode;
         this.activityTypeId = activityTypeId;
         this.studyId = studyId;
+        this.activityCode = activityCode;
         this.displayOrder = displayOrder;
+        this.writeOnce = writeOnce;
         this.instantiateUponRegistration = instantiateUponRegistration;
         this.maxInstancesPerUser = maxInstancesPerUser;
         this.editTimeoutSec = editTimeoutSec;
-        this.writeOnce = writeOnce;
         this.allowOndemandTrigger = allowOndemandTrigger;
+        this.excludeFromDisplay = excludeFromDisplay;
+        this.allowUnauthenticated = allowUnauthenticated;
         this.isFollowup = isFollowup;
-    }
-
-    public String getActivityCode() {
-        return activityCode;
-    }
-
-    public void setActivityCode(String activityCode) {
-        this.activityCode = activityCode;
+        this.excludeStatusIconFromDisplay = excludeStatusIconFromDisplay;
+        this.hideExistingInstancesOnCreation = hideExistingInstancesOnCreation;
     }
 
     public long getActivityId() {
         return activityId;
-    }
-
-    public int getDisplayOrder() {
-        return displayOrder;
-    }
-
-    public Integer getMaxInstancesPerUser() {
-        return maxInstancesPerUser;
     }
 
     public long getActivityTypeId() {
@@ -78,36 +70,101 @@ public class ActivityDto {
         return studyId;
     }
 
-    public boolean isInstantiateUponRegistration() {
-        return instantiateUponRegistration;
+    public String getActivityCode() {
+        return activityCode;
     }
 
-    public Long getEditTimeoutSec() {
-        return editTimeoutSec;
+    public void setActivityCode(String activityCode) {
+        this.activityCode = activityCode;
+    }
+
+    public int getDisplayOrder() {
+        return displayOrder;
     }
 
     public boolean isWriteOnce() {
         return writeOnce;
     }
 
+    public boolean isInstantiateUponRegistration() {
+        return instantiateUponRegistration;
+    }
+
+    public Integer getMaxInstancesPerUser() {
+        return maxInstancesPerUser;
+    }
+
+    public Long getEditTimeoutSec() {
+        return editTimeoutSec;
+    }
+
     public boolean isOndemandTriggerAllowed() {
         return allowOndemandTrigger;
     }
 
-    public static class ActivityRowMapper implements RowMapper<ActivityDto> {
-        @Override
-        public ActivityDto map(ResultSet rs, StatementContext ctx) throws SQLException {
-            return new ActivityDto(rs.getLong(SqlConstants.StudyActivityTable.ID),
-                    rs.getString(SqlConstants.StudyActivityTable.CODE),
-                    rs.getLong(SqlConstants.StudyActivityTable.ACTIVITY_TYPE_ID),
-                    rs.getLong(SqlConstants.StudyActivityTable.STUDY_ID),
-                    rs.getInt(SqlConstants.StudyActivityTable.DISPLAY_ORDER),
-                    rs.getBoolean(SqlConstants.StudyActivityTable.INSTANTIATE_UPON_REGISTRATION),
-                    (Integer) rs.getObject(SqlConstants.StudyActivityTable.MAX_INSTANCES_PER_USER),
-                    (Long) rs.getObject(SqlConstants.StudyActivityTable.EDIT_TIMEOUT_SEC),
-                    rs.getBoolean(SqlConstants.StudyActivityTable.IS_WRITE_ONCE),
-                    rs.getBoolean(SqlConstants.StudyActivityTable.ALLOW_ONDEMAND_TRIGGER),
-                    rs.getBoolean(SqlConstants.StudyActivityTable.IS_FOLLOWUP));
+    public boolean shouldExcludeFromDisplay() {
+        return excludeFromDisplay;
+    }
+
+    public boolean isUnauthenticatedAllowed() {
+        return allowUnauthenticated;
+    }
+
+    public boolean isFollowup() {
+        return isFollowup;
+    }
+
+    public boolean shouldExcludeStatusIconFromDisplay() {
+        return excludeStatusIconFromDisplay;
+    }
+
+    public boolean isHideExistingInstancesOnCreation() {
+        return hideExistingInstancesOnCreation;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
         }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        ActivityDto that = (ActivityDto) o;
+        return activityId == that.activityId
+                && activityTypeId == that.activityTypeId
+                && studyId == that.studyId
+                && Objects.equals(activityCode, that.activityCode)
+                && displayOrder == that.displayOrder
+                && writeOnce == that.writeOnce
+                && instantiateUponRegistration == that.instantiateUponRegistration
+                && Objects.equals(maxInstancesPerUser, that.maxInstancesPerUser)
+                && Objects.equals(editTimeoutSec, that.editTimeoutSec)
+                && allowOndemandTrigger == that.allowOndemandTrigger
+                && excludeFromDisplay == that.excludeFromDisplay
+                && allowUnauthenticated == that.allowUnauthenticated
+                && isFollowup == that.isFollowup
+                && excludeStatusIconFromDisplay == that.excludeStatusIconFromDisplay
+                && hideExistingInstancesOnCreation == that.hideExistingInstancesOnCreation;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(
+                activityId,
+                activityTypeId,
+                studyId,
+                activityCode,
+                displayOrder,
+                writeOnce,
+                instantiateUponRegistration,
+                maxInstancesPerUser,
+                editTimeoutSec,
+                allowOndemandTrigger,
+                excludeFromDisplay,
+                allowUnauthenticated,
+                isFollowup,
+                excludeStatusIconFromDisplay,
+                hideExistingInstancesOnCreation);
     }
 }

@@ -3,7 +3,6 @@ package org.broadinstitute.ddp.pex;
 import static org.broadinstitute.ddp.pex.RetrievedActivityInstanceType.LATEST;
 import static org.broadinstitute.ddp.pex.RetrievedActivityInstanceType.SPECIFIC;
 import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.instanceOf;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -16,9 +15,10 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.NoSuchElementException;
+import java.util.Map;
 
 import org.broadinstitute.ddp.TxnAwareBaseTest;
+import org.broadinstitute.ddp.content.I18nTemplateConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
 import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
@@ -52,11 +52,17 @@ import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
 import org.broadinstitute.ddp.model.activity.types.DateFieldType;
 import org.broadinstitute.ddp.model.activity.types.DateRenderMode;
+import org.broadinstitute.ddp.model.activity.types.DsmNotificationEventType;
+import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.activity.types.NumericType;
 import org.broadinstitute.ddp.model.activity.types.PicklistRenderMode;
 import org.broadinstitute.ddp.model.activity.types.PicklistSelectMode;
 import org.broadinstitute.ddp.model.activity.types.TemplateType;
 import org.broadinstitute.ddp.model.activity.types.TextInputType;
+import org.broadinstitute.ddp.model.dsm.TestResult;
+import org.broadinstitute.ddp.model.event.ActivityInstanceStatusChangeSignal;
+import org.broadinstitute.ddp.model.event.DsmNotificationSignal;
+import org.broadinstitute.ddp.model.event.EventSignal;
 import org.broadinstitute.ddp.model.governance.AgeOfMajorityRule;
 import org.broadinstitute.ddp.model.governance.GovernancePolicy;
 import org.broadinstitute.ddp.model.invitation.InvitationType;
@@ -165,6 +171,9 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
         ActivityInstanceDao activityInstanceDao = handle.attach(ActivityInstanceDao.class);
         firstInstance = activityInstanceDao.insertInstance(form.getActivityId(), userGuid);
         secondInstance = activityInstanceDao.insertInstance(form.getActivityId(), userGuid);
+
+        activityInstanceDao.saveSubstitutions(firstInstance.getId(), Map.of(
+                I18nTemplateConstants.Snapshot.TEST_RESULT_CODE, "NEGATIVE"));
     }
 
     @Test
@@ -686,8 +695,6 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
 
     @Test
     public void testEval_formQuery_userDoesNotHaveInstance() {
-        thrown.expect(PexFetchException.class);
-        thrown.expectCause(instanceOf(NoSuchElementException.class));
         TransactionWrapper.useTxn(handle -> {
             FormActivityDef form = FormActivityDef.generalFormBuilder("PEX_ANOTHER_ACT", "v1", studyGuid)
                     .addName(new Translation("en", "another pex test activity"))
@@ -698,8 +705,7 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
             String expr = String.format(
                     "user.studies[\"%s\"].forms[\"%s\"].isStatus(\"CREATED\")",
                     studyGuid, form.getActivityCode());
-            run(handle, expr);
-            fail("Expected exception was not thrown");
+            assertFalse(run(handle, expr));
         });
     }
 
@@ -746,6 +752,15 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
                 "user.studies[\"%s\"].forms[\"%s\"].hasInstance()",
                 studyGuid, "blah");
         assertFalse(run(expr));
+    }
+
+    @Test
+    public void testEval_formInstanceQuery_snapshotSubstitution() {
+        String expr = String.format(
+                "user.studies[\"%s\"].forms[\"%s\"].instances[specific]"
+                        + ".snapshotSubstitution(\"DDP_TEST_RESULT_CODE\") == \"NEGATIVE\"",
+                studyGuid, activityCode);
+        assertTrue(run(expr));
     }
 
     private void testEval_textAnswerQuery(String expr, boolean expectedTestResult) {
@@ -1216,11 +1231,70 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
         });
     }
 
+    @Test
+    public void testEval_eventTestResult() {
+        String expr = "user.event.testResult.isCorrected()";
+        EventSignal signal = newDsmEventSignal(new TestResult("NEGATIVE", Instant.now(), true));
+        assertTrue(runEvalEventSignal(expr, signal));
+
+        expr = "user.event.testResult.isCorrected()";
+        signal = newDsmEventSignal(new TestResult("NEGATIVE", Instant.now(), false));
+        assertFalse(runEvalEventSignal(expr, signal));
+
+        expr = "user.event.testResult.isPositive()";
+        signal = newDsmEventSignal(new TestResult("Positive", Instant.now(), false));
+        assertTrue(runEvalEventSignal(expr, signal));
+
+        expr = "user.event.testResult.isPositive()";
+        signal = newDsmEventSignal(new TestResult("INCONCLUSIVE", Instant.now(), false));
+        assertFalse(runEvalEventSignal(expr, signal));
+
+        expr = "user.event.testResult.isCorrected() && user.event.testResult.isPositive()";
+        signal = newDsmEventSignal(new TestResult("POS", Instant.now(), true));
+        assertTrue(runEvalEventSignal(expr, signal));
+
+        expr = "user.event.testResult.isCorrected() && !user.event.testResult.isPositive()";
+        signal = newDsmEventSignal(new TestResult("NEG", Instant.now(), true));
+        assertTrue(runEvalEventSignal(expr, signal));
+    }
+
+    @Test
+    public void testEval_eventTestResult_notEvent() {
+        thrown.expect(PexRuntimeException.class);
+        thrown.expectMessage(containsString("Expected event signal"));
+        String expr = "user.event.testResult.isCorrected()";
+        assertTrue(run(expr));
+    }
+
+    @Test
+    public void testEval_eventTestResult_notDsmTestResult() {
+        thrown.expect(PexRuntimeException.class);
+        thrown.expectMessage(containsString("Expected DSM notification"));
+        String expr = "user.event.testResult.isCorrected()";
+        EventSignal signal = new ActivityInstanceStatusChangeSignal(1L, 1L, "guid", 2L, 3L, 4L, InstanceStatusType.COMPLETE);
+        assertTrue(runEvalEventSignal(expr, signal));
+    }
+
     private boolean run(String expr) {
         return TransactionWrapper.withTxn(handle -> new TreeWalkInterpreter().eval(expr, handle, userGuid, firstInstance.getGuid()));
     }
 
     private boolean run(Handle handle, String expr) {
         return new TreeWalkInterpreter().eval(expr, handle, userGuid, firstInstance.getGuid());
+    }
+
+    private boolean runEvalEventSignal(String expr, EventSignal signal) {
+        return TransactionWrapper.withTxn(handle -> new TreeWalkInterpreter()
+                .eval(expr, handle, userGuid, firstInstance.getGuid(), null, signal));
+    }
+
+    private DsmNotificationSignal newDsmEventSignal(TestResult testResult) {
+        return new DsmNotificationSignal(
+                testData.getUserId(),
+                testData.getUserId(),
+                userGuid,
+                testData.getStudyId(),
+                DsmNotificationEventType.TEST_RESULT,
+                testResult);
     }
 }

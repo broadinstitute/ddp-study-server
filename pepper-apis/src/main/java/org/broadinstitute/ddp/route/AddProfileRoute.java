@@ -2,10 +2,13 @@ package org.broadinstitute.ddp.route;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.cache.LanguageStore;
+import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.constants.ErrorCodes;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -70,12 +73,32 @@ public class AddProfileRoute extends ValidatedJsonInputRoute<Profile> {
                             .setSexType(sexType)
                             .setBirthDate(profile.getBirthDate() != null ? LocalDate.parse(profile.getBirthDate()) : null)
                             .setPreferredLangId(langId)
+                            .setSkipLanguagePopup(profile.getSkipLanguagePopup())
                             .build());
                 } catch (DateTimeParseException e) {
                     String errorMsg = "Provided birth date is not a valid date";
                     throw ResponseUtil.haltError(response, HttpStatus.SC_BAD_REQUEST, new ApiError(ErrorCodes.INVALID_DATE, errorMsg));
                 } catch (Exception e) {
                     throw new DDPException("Error adding profile for user with guid " + userGuid, e);
+                }
+
+                if (languageDto != null) {
+                    String auth0UserId = handle.attach(UserDao.class)
+                            .findUserByGuid(userGuid)
+                            .map(User::getAuth0UserId)
+                            .orElse(null);
+                    if (StringUtils.isNotBlank(auth0UserId)) {
+                        LOG.info("User {} has auth0 account, proceeding to sync user_metadata", userGuid);
+                        Map<String, Object> metadata = new HashMap<>();
+                        metadata.put(User.METADATA_LANGUAGE, languageDto.getIsoCode());
+                        var result = Auth0ManagementClient.forUser(handle, userGuid).updateUserMetadata(auth0UserId, metadata);
+                        if (result.hasThrown() || result.hasError()) {
+                            var e = result.hasThrown() ? result.getThrown() : result.getError();
+                            LOG.error("Error while updating user_metadata for user {}, user's language may be out-of-sync", userGuid, e);
+                        } else {
+                            LOG.info("Updated user_metadata for user {}", userGuid);
+                        }
+                    }
                 }
             } else {
                 String errorMsg = "Profile already exists for user with guid: " + userGuid;

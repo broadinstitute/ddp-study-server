@@ -18,12 +18,14 @@ import java.net.http.HttpHeaders;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import javax.net.ssl.SSLSession;
 
 import com.google.gson.Gson;
 import com.typesafe.config.Config;
 import org.broadinstitute.ddp.constants.RouteConstants;
+import org.broadinstitute.ddp.model.dsm.ParticipantKits;
 import org.broadinstitute.ddp.model.dsm.ParticipantStatus;
 import org.broadinstitute.ddp.util.ConfigManager;
 import org.broadinstitute.ddp.util.RouteUtil;
@@ -147,6 +149,42 @@ public class DsmClientTest {
         assertNotNull(result.getThrown());
         assertEquals(500, result.getStatusCode());
         assertEquals("from test", result.getThrown().getMessage());
+    }
+
+    @Test
+    public void testListParticipantKits() throws IOException, InterruptedException {
+        var fakeKits = List.of(new ParticipantKits("user1", List.of()));
+
+        when(mockHttp.send(any(), any())).thenReturn(TestResponse.of(200, gson.toJson(fakeKits)));
+        var result = dsm.listParticipantKits("study1", List.of("user1", "user2"));
+
+        assertNotNull(result);
+        assertNotNull(result.getBody());
+        assertNull(result.getError());
+        assertNull(result.getThrown());
+        assertEquals(200, result.getStatusCode());
+        assertEquals(1, result.getBody().size());
+        assertEquals("user1", result.getBody().get(0).getParticipantGuid());
+
+        String expectedPath = DsmClient.PATH_BATCH_KITS_STATUS
+                .replace(RouteConstants.PathParam.STUDY_GUID, "study1");
+        ArgumentCaptor<HttpRequest> captor = ArgumentCaptor.forClass(HttpRequest.class);
+        verify(mockHttp, times(1)).send(captor.capture(), any());
+
+        var actualRequest = captor.getValue();
+        assertEquals("POST", actualRequest.method());
+        assertEquals(expectedPath, actualRequest.uri().getPath());
+    }
+
+    @Test
+    public void testPaginateParticipantKits() throws IOException, InterruptedException {
+        when(mockHttp.send(any(), any())).thenReturn(TestResponse.of(200, gson.toJson(List.of())));
+
+        int batchSize = 1;
+        var numProcessed = dsm.paginateParticipantKits(batchSize, "study1", List.of("user1", "user2"), (subset, page) -> true);
+
+        assertEquals(2, numProcessed);
+        verify(mockHttp, times(2)).send(any(), any());
     }
 
     @Test
