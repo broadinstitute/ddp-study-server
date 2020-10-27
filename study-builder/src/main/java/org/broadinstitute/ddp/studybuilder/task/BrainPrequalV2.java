@@ -10,7 +10,9 @@ import java.util.Set;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.broadinstitute.ddp.db.dao.ActivityDao;
+import org.broadinstitute.ddp.db.dao.EventActionSql;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
+import org.broadinstitute.ddp.db.dao.JdbiExpression;
 import org.broadinstitute.ddp.db.dao.JdbiPicklistOption;
 import org.broadinstitute.ddp.db.dao.JdbiQuestion;
 import org.broadinstitute.ddp.db.dao.JdbiRevision;
@@ -37,6 +39,8 @@ import org.broadinstitute.ddp.model.activity.definition.question.PicklistOptionD
 import org.broadinstitute.ddp.model.activity.definition.question.PicklistQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.QuestionDef;
 import org.broadinstitute.ddp.model.activity.revision.RevisionMetadata;
+import org.broadinstitute.ddp.model.event.NotificationTemplate;
+import org.broadinstitute.ddp.model.pex.Expression;
 import org.broadinstitute.ddp.studybuilder.ActivityBuilder;
 import org.broadinstitute.ddp.util.ConfigUtil;
 import org.broadinstitute.ddp.util.GsonUtil;
@@ -193,6 +197,31 @@ public class BrainPrequalV2 implements CustomTask {
 
         long introBlockId = currFormActivityDef.getIntroduction().getBlocks().get(0).getBlockId();
         sectionBlockDao.disableBlock(introBlockId, meta);
+
+        //update event config for self Welcome email
+        updateNotificationAction(handle, studyDto, varsCfg.getString("emails.participantWelcome"), "CONSENT", helper);
+
+    }
+
+    private void updateNotificationAction(Handle handle, StudyDto studyDto, String templateKey, String activityCode, SqlHelper helper) {
+        long notificationTemplateId = handle.attach(EventActionSql.class)
+                .findNotificationTemplate(templateKey, "en")
+                .map(NotificationTemplate::getId)
+                .get();
+        long activityId = ActivityBuilder.findActivityId(handle, studyDto.getId(), activityCode);
+        helper.updateLinkedActivityId(studyDto.getId(), notificationTemplateId, activityId);
+        LOG.info("Updated notification template with id={} to use linkedActivityId={} ({})",
+                notificationTemplateId, activityId, activityCode);
+
+        //add cancel expr
+        long eventConfigId = helper.findNotificationEventConfigId(studyDto.getId(), notificationTemplateId);
+        String cancelExpr = "!user.studies[\"cmi-brain\"].forms[\"CONSENT\"].hasInstance()";
+        Expression expr = handle.attach(JdbiExpression.class).insertExpression(cancelExpr);
+        helper.addCancelExprToEvent(eventConfigId, expr.getId());
+        //remove precondition expr
+        helper.removeEventPreCond(eventConfigId);
+
+        LOG.info("Added cancel expr and removed pre-condition for event config ID : {} ", eventConfigId);
     }
 
     private interface SqlHelper extends SqlObject {
@@ -231,7 +260,7 @@ public class BrainPrequalV2 implements CustomTask {
         }
 
         @SqlUpdate("update event_configuration set is_active = false where event_configuration_id in (<eventIds>)")
-        int disableStudyEvents(@BindList("eventIds")Set<Long> eventIds);
+        int disableStudyEvents(@BindList("eventIds") Set<Long> eventIds);
 
 
         @SqlQuery("select event_configuration_id from event_configuration c, event_action ea,  event_action_type eat, "
@@ -262,6 +291,44 @@ public class BrainPrequalV2 implements CustomTask {
 
         @SqlQuery("select template_variable_id from template_variable where template_id = :templateId")
         long findTemplateVariableId(@Bind("templateId") long templateId);
-    }
 
+
+        @SqlUpdate("UPDATE user_notification_event_action AS act"
+                + "   JOIN user_notification_template AS unt"
+                + "        ON unt.user_notification_event_action_id = act.user_notification_event_action_id"
+                + "   JOIN notification_template AS t ON t.notification_template_id = unt.notification_template_id"
+                + "   JOIN event_configuration as e on e.event_action_id = act.user_notification_event_action_id"
+                + "    SET act.linked_activity_id = :linkedActivityId"
+                + "  WHERE t.notification_template_id = :notificationTemplateId"
+                + "    AND e.umbrella_study_id = :studyId")
+        int _updateLinkedActivityId(@Bind("studyId") long studyId,
+                                    @Bind("notificationTemplateId") long id,
+                                    @Bind("linkedActivityId") long activityId);
+
+        default void updateLinkedActivityId(long studyId, long notificationTemplateId, long linkedActivityId) {
+            int numChanged = _updateLinkedActivityId(studyId, notificationTemplateId, linkedActivityId);
+            if (numChanged != 1) {
+                throw new DDPException("Expected to update one notification template with id="
+                        + notificationTemplateId + " but changed " + numChanged);
+            }
+        }
+
+        @SqlQuery("select e.event_configuration_id from user_notification_event_action AS act "
+                + " JOIN user_notification_template AS unt "
+                + " ON unt.user_notification_event_action_id = act.user_notification_event_action_id "
+                + " JOIN notification_template AS t ON t.notification_template_id = unt.notification_template_id "
+                + " JOIN event_configuration as e on e.event_action_id = act.user_notification_event_action_id "
+                + " where t.notification_template_id = :notificationTemplateId"
+                + " AND e.umbrella_study_id = :studyId")
+        long findNotificationEventConfigId(@Bind("studyId") long studyId, @Bind("notificationTemplateId") long notificationTemplateId);
+
+        @SqlUpdate("update event_configuration ec set ec.cancel_expression_id = :exprId"
+                + " where ec.event_configuration_id = :eventConfigId")
+        int addCancelExprToEvent(@Bind("eventConfigId") long eventConfigId, @Bind("exprId") long exprId);
+
+        @SqlUpdate("update event_configuration ec set ec.precondition_expression_id = null"
+                + " where ec.event_configuration_id = :eventConfigId")
+        int removeEventPreCond(@Bind("eventConfigId") long eventConfigId);
+
+    }
 }

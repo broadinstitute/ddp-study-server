@@ -6,9 +6,7 @@ select usen.study_id,
        (select guid from user where user_id = usen.user_id) as user_guid,
        addr.address_id,
        vs.code as address_validation_status,
-       rec.*,
-       (select kit_request_guid from kit_request
-         where kit_request_id = rec.initial_kit_request_id) as initial_kit_request_guid
+       rec.*
   from kit_schedule_record as rec
   join user_study_enrollment as usen on usen.user_id = rec.participant_user_id
   join enrollment_status_type as entype on entype.enrollment_status_type_id = usen.enrollment_status_type_id
@@ -21,10 +19,6 @@ select usen.study_id,
    and usen.valid_to is null
    and rec.opted_out = false
    and rec.num_occurrences \< ks.num_occurrences_per_user
->>
-
-findAllEligibleRecordsWaitingForKitStatus() ::= <<
-<select_all_pending_records()> and rec.initial_kit_sent_time is null order by usen.study_id
 >>
 
 findPendingScheduleRecords() ::= <<

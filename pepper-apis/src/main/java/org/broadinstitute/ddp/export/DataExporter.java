@@ -38,7 +38,6 @@ import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.db.ActivityDefStore;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dao.FormActivityDao;
-import org.broadinstitute.ddp.db.dao.InvitationDao;
 import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityVersion;
 import org.broadinstitute.ddp.db.dao.ParticipantDao;
@@ -50,7 +49,6 @@ import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceStatusDto;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.EnrollmentStatusDto;
-import org.broadinstitute.ddp.db.dto.InvitationDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.elastic.ElasticSearchIndexType;
 import org.broadinstitute.ddp.exception.DDPException;
@@ -524,7 +522,7 @@ public class DataExporter {
      */
     private void convertInfoToJSONAndExportToES(Handle handle,
                                                 List<ActivityExtract> activities,
-                                                List<Participant> dataset,
+                                                List<Participant> participants,
                                                 StudyDto studyDto,
                                                 boolean exportStructuredDocument
     ) throws IOException {
@@ -566,18 +564,15 @@ public class DataExporter {
         GovernancePolicy governancePolicy = handle.attach(StudyGovernanceDao.class)
                 .findPolicyByStudyId(studyDto.getId()).orElse(null);
 
-        enrichWithDSMEventDates(handle, medicalRecordService, governancePolicy, studyDto.getId(), dataset);
+        enrichWithDSMEventDates(handle, medicalRecordService, governancePolicy, studyDto.getId(), participants);
 
-        List<InvitationDto> invitations = handle.attach(InvitationDao.class)
-                .findAllInvitations(studyDto.getId());
         StudyExtract studyExtract = new StudyExtract(activities,
                 studyPdfConfigs,
                 configPdfVersions,
-                participantProxyGuids,
-                invitations);
+                participantProxyGuids);
 
         Map<String, String> participantRecords = prepareParticipantRecordsForJSONExport(
-                studyExtract, dataset, exportStructuredDocument, handle, medicalRecordService);
+                studyExtract, participants, exportStructuredDocument, handle, medicalRecordService);
 
         try (RestHighLevelClient client = ElasticsearchServiceUtil.getClientForElasticsearchCloud(cfg)) {
             BulkRequest bulkRequest = new BulkRequest().timeout("2m");
@@ -729,23 +724,23 @@ public class DataExporter {
             MedicalRecordService medicalRecordService
     ) {
         EnrollmentStatusDto statusDto = participant.getStatus();
-        User user = participant.getUser();
+        User participantUser = participant.getUser();
 
         // Profile
         ParticipantProfile.Builder builder = ParticipantProfile.builder();
-        UserProfile userProfile = user.getProfile();
+        UserProfile userProfile = participantUser.getProfile();
         if (userProfile != null) {
             builder.setFirstName(userProfile.getFirstName());
             builder.setLastName(userProfile.getLastName());
             builder.setPreferredLanguage(userProfile.getPreferredLangCode());
             builder.setDoNotContact(userProfile.getDoNotContact());
         }
-        builder.setGuid(user.getGuid())
-                .setHruid(user.getHruid())
-                .setLegacyAltPid(user.getLegacyAltPid())
-                .setLegacyShortId(user.getLegacyShortId())
-                .setEmail(user.getEmail())
-                .setCreatedAt(user.getCreatedAt());
+        builder.setGuid(participantUser.getGuid())
+                .setHruid(participantUser.getHruid())
+                .setLegacyAltPid(participantUser.getLegacyAltPid())
+                .setLegacyShortId(participantUser.getLegacyShortId())
+                .setEmail(participantUser.getEmail())
+                .setCreatedAt(participantUser.getCreatedAt());
         ParticipantProfile participantProfile = builder.build();
 
         // ActivityInstances (aka "surveys")
@@ -777,7 +772,7 @@ public class DataExporter {
             }
         }
 
-        String userGuid = user.getGuid();
+        String userGuid = participantUser.getGuid();
         String studyGuid = statusDto.getStudyGuid();
 
         List<PdfConfigInfo> pdfConfigInfoList = findPdfConfigsForStudyUser(
@@ -789,7 +784,7 @@ public class DataExporter {
 
         // Retrieving information to compute the dsm record
         MedicalRecordService.ParticipantConsents consents = medicalRecordService
-                .fetchBloodAndTissueConsents(handle, user.getId(), userGuid, statusDto.getStudyId(), studyGuid);
+                .fetchBloodAndTissueConsents(handle, participantUser.getId(), userGuid, statusDto.getStudyId(), studyGuid);
 
         DsmComputedRecord dsmComputedRecord =
                 new DsmComputedRecord(participant.getBirthDate(),
@@ -799,23 +794,21 @@ public class DataExporter {
                         consents.hasConsentedToTissueSample(),
                         pdfConfigRecords);
 
-        List<String> proxies = studyExtract.getParticipantProxyGuids().get(user.getGuid());
+        List<String> proxies = studyExtract.getParticipantProxyGuids().get(participantUser.getGuid());
         if (proxies == null) {
             proxies = List.of();
         }
-        List<InvitationDto> invitations = studyExtract.getInvitations().stream()
-                .filter(invite -> invite.getUserId() != null && invite.getUserId().equals(user.getId()))
-                .collect(Collectors.toList());
+
         ParticipantRecord participantRecord = new ParticipantRecord(
                 statusDto.getEnrollmentStatus(),
                 statusDto.getValidFromMillis(),
                 participantProfile,
                 activityInstanceRecords,
                 participant.getProviders(),
-                user.getAddress(),
+                participantUser.getAddress(),
                 dsmComputedRecord,
                 proxies,
-                invitations
+                participant.getInvitations()
         );
         return gson.toJson(participantRecord);
     }

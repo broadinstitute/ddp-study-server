@@ -88,9 +88,13 @@
         studyHelpEmail = 'info@ascproject.org';
     } else if (study_guid === 'cmi-brain') {
         registerUrl = '##BRAIN_BASE_URL##/count-me-in';
-        headerText = 'Brain Cancer Project';
-        headerLogo = '##ASSETS_BUCKET_URL##/brain/brain-stripe.png';
-        studyColor = 'rgb(24, 130, 194)';
+        studyColor = '#7154FF';
+        headerText = '';
+        headerLogo = '##ASSETS_BUCKET_URL##/brain/project-logo.png';
+        if (mode === 'signup') {
+            title = 'Create your account';
+        }
+        applyRedesignedStyles();
     } else if (study_guid === 'cmi-mbc') {
         registerUrl = '##MBC_BASE_URL##/count-me-in';
         headerText = '';
@@ -104,7 +108,7 @@
         if (mode === 'signup') {
             title = 'Create your account';
         }
-        applyOsteoStyles();
+        applyRedesignedStyles();
     } else if (study_guid === 'cmi-mpc') {
         registerUrl = '##MPC_BASE_URL##/count-me-in';
         headerText = '';
@@ -343,7 +347,7 @@
 
     lock.show(options);
 
-    function applyOsteoStyles() {
+    function applyRedesignedStyles() {
         const intervalId = setInterval(function() {
             const titleStyles = "font-family: 'Source Serif Pro', serif; font-size:16pt !important;";
             const containerStyles = "background: white;"

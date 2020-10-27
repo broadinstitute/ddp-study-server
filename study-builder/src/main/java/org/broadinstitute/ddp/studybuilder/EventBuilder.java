@@ -48,9 +48,9 @@ import org.slf4j.LoggerFactory;
 public class EventBuilder {
 
     private static final Logger LOG = LoggerFactory.getLogger(EventBuilder.class);
-    private static final String ACTION_SENDGRID_EMAIL = "SENDGRID_EMAIL";
-    private static final String ACTION_STUDY_EMAIL = "STUDY_EMAIL";
-    private static final String ACTION_INVITATION_EMAIL = "INVITATION_EMAIL";
+    public static final String ACTION_SENDGRID_EMAIL = "SENDGRID_EMAIL";
+    public static final String ACTION_STUDY_EMAIL = "STUDY_EMAIL";
+    public static final String ACTION_INVITATION_EMAIL = "INVITATION_EMAIL";
     private static final String ACTIVITY_CODE_FIELD = "activityCode";
     private static final String WORKFLOW_STATE_FIELD = "state";
 
