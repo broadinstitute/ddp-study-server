@@ -37,7 +37,7 @@ public interface JdbiUserStudyEnrollment extends SqlObject {
             + "  from user_study_enrollment"
             + " where study_id = :studyId"
             + "   and valid_to is null"
-            + " order by user_id"
+            + " order by user_study_enrollment_id"
             + " limit :limit offset :offset")
     Set<Long> findUserIdsByStudyIdAndLimit(
             @Bind("studyId") long studyId,
