@@ -27,6 +27,6 @@ select user.user_id,
           and kit.study_id = study.umbrella_study_id
        )
    and valid_to is null
- order by user.user_id
+ order by usen.user_study_enrollment_id
  limit :limit offset :offset
 >>
