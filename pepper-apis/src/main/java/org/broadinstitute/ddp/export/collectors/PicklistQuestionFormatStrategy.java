@@ -6,6 +6,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.content.HtmlConverter;
 import org.broadinstitute.ddp.elastic.MappingUtil;
@@ -47,6 +48,7 @@ public class PicklistQuestionFormatStrategy implements ResponseFormatStrategy<Pi
             if (optionDef.isDetailsAllowed()) {
                 String key = detailHeader(definition.getStableId(), optionDef.getStableId());
                 props.put(key, MappingUtil.newTextType());
+                //todo add subopts
             }
         }
 
@@ -72,6 +74,7 @@ public class PicklistQuestionFormatStrategy implements ResponseFormatStrategy<Pi
                 stableIdTxt.put("optionStableId", optionDef.getStableId());
                 stableIdTxt.put("optionText", HtmlConverter.getPlainText(optionDef.getOptionLabelTemplate().render("en")));
                 options.add(stableIdTxt);
+                //todo add subopts
             }
             groupDef.put("groupStableId", groupStableId);
             groupDef.put("groupText", groupTxt);
@@ -82,9 +85,25 @@ public class PicklistQuestionFormatStrategy implements ResponseFormatStrategy<Pi
 
         List<Object> options = new ArrayList<>();
         for (PicklistOptionDef optionDef : definition.getPicklistOptions()) {
-            Map<String, String> stableIdTxt = new HashMap<>();
+            Map<String, Object> stableIdTxt = new HashMap<>();
             stableIdTxt.put("optionStableId", optionDef.getStableId());
             stableIdTxt.put("optionText", HtmlConverter.getPlainText(optionDef.getOptionLabelTemplate().render("en")));
+
+            //add nested options
+            if (CollectionUtils.isNotEmpty(optionDef.getNestedPicklistOptions())) {
+                if (optionDef.getNestedOptionsLabelTemplate() != null) {
+                    stableIdTxt.put("nestedOptionsText", HtmlConverter.getPlainText(
+                            optionDef.getNestedOptionsLabelTemplate().render("en")));
+                }
+                List<Object> nestedOptions = new ArrayList<>();
+                for (PicklistOptionDef suboptionDef : optionDef.getNestedPicklistOptions()) {
+                    Map<String, String> suboptStableIdTxt = new HashMap<>();
+                    suboptStableIdTxt.put("optionStableId", suboptionDef.getStableId());
+                    suboptStableIdTxt.put("optionText", HtmlConverter.getPlainText(suboptionDef.getOptionLabelTemplate().render("en")));
+                    nestedOptions.add(suboptStableIdTxt);
+                }
+                stableIdTxt.put("nestedOptions", nestedOptions);
+            }
             options.add(stableIdTxt);
         }
         props.put("options", options);

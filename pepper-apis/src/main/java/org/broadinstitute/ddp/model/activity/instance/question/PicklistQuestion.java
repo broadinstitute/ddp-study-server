@@ -10,6 +10,7 @@ import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
 import com.google.gson.annotations.SerializedName;
+import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.ddp.content.ContentStyle;
 import org.broadinstitute.ddp.content.HtmlConverter;
 import org.broadinstitute.ddp.model.activity.instance.answer.PicklistAnswer;
@@ -155,6 +156,11 @@ public final class PicklistQuestion extends Question<PicklistAnswer> {
 
         for (PicklistOption option : picklistOptions) {
             option.registerTemplateIds(registry);
+            if (CollectionUtils.isNotEmpty(option.getNestedPicklistOptions())) {
+                for (PicklistOption suboption : option.getNestedPicklistOptions()) {
+                    suboption.registerTemplateIds(registry);
+                }
+            }
         }
     }
 
@@ -184,6 +190,11 @@ public final class PicklistQuestion extends Question<PicklistAnswer> {
 
         for (PicklistOption option : picklistOptions) {
             option.applyRenderedTemplates(rendered, style);
+            if (CollectionUtils.isNotEmpty(option.getNestedPicklistOptions())) {
+                for (PicklistOption suboption : option.getNestedPicklistOptions()) {
+                    suboption.applyRenderedTemplates(rendered, style);
+                }
+            }
         }
     }
 }

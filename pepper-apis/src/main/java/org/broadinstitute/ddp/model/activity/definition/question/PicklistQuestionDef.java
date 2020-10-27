@@ -126,6 +126,10 @@ public final class PicklistQuestionDef extends QuestionDef {
     }
 
     public List<PicklistOptionDef> getAllPicklistOptions() {
+        //todo / check.. Do we need to include suboptions here ??
+        //Stream<PicklistOptionDef> nestedOptions =
+        //        picklistOptions.stream().flatMap(def -> def.getNestedPicklistOptions().stream());
+        //Stream.concat(picklistOptions.stream(), nestedOptions).collect(toList());
         Stream<PicklistOptionDef> groupOptions =
                 getGroups().stream().flatMap(group -> group.getOptions().stream());
         return Stream.concat(picklistOptions.stream(), groupOptions).collect(toList());

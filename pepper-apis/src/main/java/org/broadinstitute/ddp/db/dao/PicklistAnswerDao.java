@@ -11,6 +11,7 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dto.AnswerDto;
 import org.broadinstitute.ddp.db.dto.PicklistOptionDto;
@@ -106,6 +107,18 @@ public interface PicklistAnswerDao extends SqlObject {
                 picklistQuestionDef.getAllPicklistOptions().stream()
                         .filter(option -> selectedStableIds.contains(option.getStableId()))
                         .collect(toMap(def -> def.getStableId(), def -> def));
+
+        Map<String, PicklistOptionDef> allSelectedStableIdToNestedOptionDef = new HashMap<>();
+        for (PicklistOptionDef optionDef : selectedStableIdToOptionDef.values()) {
+            //get nested options
+            if (CollectionUtils.isNotEmpty(optionDef.getNestedPicklistOptions())) {
+                Map<String, PicklistOptionDef> selectedStableIdToSuboptionDef = optionDef.getNestedPicklistOptions().stream()
+                        .filter(suboption -> selectedStableIds.contains(suboption.getStableId()))
+                        .collect(toMap(def -> def.getStableId(), def -> def));
+                allSelectedStableIdToNestedOptionDef.putAll(selectedStableIdToSuboptionDef);
+            }
+        }
+        selectedStableIdToOptionDef.putAll(allSelectedStableIdToNestedOptionDef);
 
         boolean hasExclusive = selectedStableIdToOptionDef.values().stream().anyMatch(def -> def.isExclusive());
         if (hasExclusive && selected.size() > 1) {

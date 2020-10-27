@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.model.activity.instance.question;
 
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.function.Consumer;
 import javax.validation.constraints.NotBlank;
@@ -36,9 +37,16 @@ public class PicklistOption implements Renderable {
     @SerializedName("groupId")
     private String groupStableId;
 
+    @SerializedName("nestedOptionsLabel")
+    private String nestedPicklistOptionsLabel;
+
+    @SerializedName("nestedPicklistOptions")
+    private List<PicklistOption> nestedPicklistOptions;
+
     private transient long optionLabelTemplateId;
     private transient Long tooltipTemplateId;
     private transient Long detailLabelTemplateId;
+    private transient Long nestedOptionsLabelTemplateId;
 
     /**
      * Constructs a picklist option. The detail label is required if detail field is allowed.
@@ -56,6 +64,24 @@ public class PicklistOption implements Renderable {
             }
             this.detailLabelTemplateId = detailLabelTemplateId;
         }
+    }
+
+    public PicklistOption(String stableId, long optionLabelTemplateId, Long tooltipTemplateId,
+                          Long detailLabelTemplateId, boolean isDetailsAllowed, boolean isExclusive,
+                          Long nestedPicklistTemplateId, List<PicklistOption> nestedOptions) {
+        this.stableId = MiscUtil.checkNotBlank(stableId, "stableId");
+        this.optionLabelTemplateId = optionLabelTemplateId;
+        this.tooltipTemplateId = tooltipTemplateId;
+        this.isDetailsAllowed = isDetailsAllowed;
+        this.isExclusive = isExclusive;
+        if (isDetailsAllowed) {
+            if (detailLabelTemplateId == null) {
+                throw new IllegalArgumentException("detail label must be provided when allowing attached details field");
+            }
+            this.detailLabelTemplateId = detailLabelTemplateId;
+        }
+        this.nestedOptionsLabelTemplateId  = nestedPicklistTemplateId;
+        this.nestedPicklistOptions = nestedOptions;
     }
 
     public PicklistOption(String groupStableId, String stableId, long optionLabelTemplateId, Long tooltipTemplateId,
@@ -104,6 +130,22 @@ public class PicklistOption implements Renderable {
         return groupStableId;
     }
 
+    public String getNestedPicklistOptionsLabel() {
+        return nestedPicklistOptionsLabel;
+    }
+
+    public List<PicklistOption> getNestedPicklistOptions() {
+        return nestedPicklistOptions;
+    }
+
+    /*public void setNestedPicklistOptionsLabel(String nestedPicklistOptionsLabel) {
+        this.nestedPicklistOptionsLabel = nestedPicklistOptionsLabel;
+    }
+
+    public void setNestedPicklistOptions(List<PicklistOption> nestedPicklistOptions) {
+        this.nestedPicklistOptions = nestedPicklistOptions;
+    }*/
+
     @Override
     public void registerTemplateIds(Consumer<Long> registry) {
         registry.accept(optionLabelTemplateId);
@@ -112,6 +154,9 @@ public class PicklistOption implements Renderable {
         }
         if (tooltipTemplateId != null) {
             registry.accept(tooltipTemplateId);
+        }
+        if (nestedOptionsLabelTemplateId != null) {
+            registry.accept(nestedOptionsLabelTemplateId);
         }
     }
 
@@ -133,6 +178,14 @@ public class PicklistOption implements Renderable {
             tooltip = HtmlConverter.getPlainText(rendered.get(tooltipTemplateId));
             if (tooltip == null) {
                 throw new NoSuchElementException("No rendered template found for tooltip with id " + tooltipTemplateId);
+            }
+        }
+
+        if (nestedOptionsLabelTemplateId != null) {
+            nestedPicklistOptionsLabel = HtmlConverter.getPlainText(rendered.get(nestedOptionsLabelTemplateId));
+            if (nestedPicklistOptionsLabel == null) {
+                throw new NoSuchElementException("No rendered template found for nested options label with id "
+                        + nestedOptionsLabelTemplateId);
             }
         }
 

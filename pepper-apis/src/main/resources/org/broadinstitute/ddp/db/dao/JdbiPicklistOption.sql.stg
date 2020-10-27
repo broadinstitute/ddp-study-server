@@ -2,9 +2,9 @@ group JdbiPicklistOption;
 
 insertOption() ::= <<
 insert into picklist_option (picklist_question_id, picklist_option_stable_id, tooltip_template_id,
-       option_label_template_id, detail_label_template_id, allow_details, is_exclusive, display_order, revision_id)
+       option_label_template_id, detail_label_template_id, allow_details, is_exclusive, display_order, revision_id, nested_options_template_id)
 values (:picklistQuestionId, :stableId, :tooltipTemplateId,
-       :optionLabelTemplateId, :detailLabelTemplateId, :allowDetails, :isExclusive, :displayOrder, :revisionId)
+       :optionLabelTemplateId, :detailLabelTemplateId, :allowDetails, :isExclusive, :displayOrder, :revisionId, :nestedOptionsTemplateId)
 >>
 
 insertOptionByDto() ::= <<
@@ -79,7 +79,8 @@ select po.picklist_option_id,
        po.display_order,
        po.revision_id,
        rev.start_date as revision_start_timestamp,
-       rev.end_date as revision_end_timestamp
+       rev.end_date as revision_end_timestamp,
+       po.nested_options_template_id
   from picklist_option as po
   join revision as rev on po.revision_id = rev.revision_id
   join activity_instance as ai on ai.activity_instance_guid = :instanceGuid
@@ -139,4 +140,40 @@ where po.picklist_question_id = :questionId
 and po.picklist_option_stable_id = :stableId
 and po.revision_id = rev.revision_id
 and rev.end_date is null
+>>
+
+selectAllPicklistSuboptions() ::= <<
+select pno.parent_option_id        as parent_option_id,
+	   po.picklist_option_id        as picklist_option_id,
+       po.picklist_option_stable_id as picklist_option_stable_id,
+       po.option_label_template_id  as option_label_template_id,
+       po.tooltip_template_id       as tooltip_template_id,
+       po.detail_label_template_id  as detail_label_template_id,
+       po.allow_details             as allow_details,
+       po.is_exclusive              as is_exclusive,
+       po.display_order             as display_order,
+       po.revision_id               as revision_id,
+       option_rev.start_date        as revision_start_timestamp,
+       option_rev.end_date        as revision_end_timestamp,
+       po.nested_options_template_id as nested_options_template_id,
+       po.picklist_question_id as question_id
+  from picklist_option as po
+  join picklist_question pq on pq.question_id=po.picklist_question_id
+  join question q on q.question_id=pq.question_id
+  join revision as option_rev on option_rev.revision_id = po.revision_id
+  join picklist_nested_option as pno on pno.nested_option_id = po.picklist_option_id
+>>
+
+queryAllOrderedPicklistSubOptionsByOptionId() ::= <<
+<selectAllPicklistSuboptions()>
+ where po.picklist_question_id = :questionId
+ and pno.parent_option_id = :optionId
+ order by po.display_order asc
+>>
+
+queryAllOrderedPicklistSubOptionsByQuestionId() ::= <<
+<selectAllPicklistSuboptions()>
+ where po.picklist_question_id = :questionId
+ and pno.parent_option_id = :optionId
+ order by po.display_order asc
 >>

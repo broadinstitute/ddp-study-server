@@ -4,6 +4,8 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
+import java.util.List;
+
 import com.google.gson.annotations.SerializedName;
 import org.broadinstitute.ddp.model.activity.definition.template.Template;
 import org.broadinstitute.ddp.util.MiscUtil;
@@ -32,6 +34,12 @@ public class PicklistOptionDef {
 
     @SerializedName("exclusive")
     private boolean isExclusive;
+
+    @SerializedName("nestedOptionsLabelTemplate")
+    private Template nestedOptionsLabelTemplate;
+
+    @SerializedName("nestedPicklistOptions")
+    private List<PicklistOptionDef> nestedPicklistOptions;
 
     private transient Long optionId;
 
@@ -81,6 +89,32 @@ public class PicklistOptionDef {
         this.isExclusive = isExclusive;
     }
 
+    public PicklistOptionDef(Long optionId, String stableId, Template optionLabelTemplate, Template tooltipTemplate,
+                             Template detailLabelTemplate, boolean isExclusive, Template nestedOptionsLabelTemplate) {
+        this.optionId = optionId;
+        this.stableId = MiscUtil.checkNotBlank(stableId, "stableId");
+        this.optionLabelTemplate = MiscUtil.checkNonNull(optionLabelTemplate, "optionLabelTemplate");
+        this.tooltipTemplate = tooltipTemplate;
+        this.isDetailsAllowed = (detailLabelTemplate != null);
+        this.detailLabelTemplate = detailLabelTemplate;
+        this.isExclusive = isExclusive;
+        this.nestedOptionsLabelTemplate = nestedOptionsLabelTemplate;
+    }
+
+    public PicklistOptionDef(Long optionId, String stableId, Template optionLabelTemplate, Template tooltipTemplate,
+                             Template detailLabelTemplate, boolean isExclusive, Template nestedOptionsLabelTemplate,
+                             List<PicklistOptionDef> nestedPicklistOptions) {
+        this.optionId = optionId;
+        this.stableId = MiscUtil.checkNotBlank(stableId, "stableId");
+        this.optionLabelTemplate = MiscUtil.checkNonNull(optionLabelTemplate, "optionLabelTemplate");
+        this.tooltipTemplate = tooltipTemplate;
+        this.isDetailsAllowed = (detailLabelTemplate != null);
+        this.detailLabelTemplate = detailLabelTemplate;
+        this.isExclusive = isExclusive;
+        this.nestedOptionsLabelTemplate = nestedOptionsLabelTemplate;
+        this.nestedPicklistOptions = nestedPicklistOptions;
+    }
+
     public String getStableId() {
         return stableId;
     }
@@ -112,4 +146,20 @@ public class PicklistOptionDef {
     public void setOptionId(Long optionId) {
         this.optionId = optionId;
     }
+
+    public List<PicklistOptionDef> getNestedPicklistOptions() {
+        return nestedPicklistOptions;
+    }
+
+    public Template getNestedOptionsLabelTemplate() {
+        return nestedOptionsLabelTemplate;
+    }
+
+    /*public void setNestedOptionsLabelTemplate(Template nestedOptionsLabelTemplate) {
+        this.nestedOptionsLabelTemplate = nestedOptionsLabelTemplate;
+    }
+
+    public void setNestedPicklistOptions(List<PicklistOptionDef> nestedPicklistOptions) {
+        this.nestedPicklistOptions = nestedPicklistOptions;
+    }*/
 }
