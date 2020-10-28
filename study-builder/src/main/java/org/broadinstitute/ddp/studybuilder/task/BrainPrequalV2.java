@@ -174,7 +174,7 @@ public class BrainPrequalV2 implements CustomTask {
 
         //disable PREQUAL_SELF_DESCRIBE.MAILING_LIST option
         PicklistQuestionDao plQuestionDao = handle.attach(PicklistQuestionDao.class);
-        plQuestionDao.disableOption(questionDto.getId(), "MAILING_LIST", meta);
+        plQuestionDao.disableOption(questionDto.getId(), "MAILING_LIST", meta, false);
         LOG.info("Disabled mailing_list option");
 
         //update PREQUAL_SELF_DESCRIBE.DIAGNOSIED option prompt

@@ -48,7 +48,6 @@ public class PicklistQuestionFormatStrategy implements ResponseFormatStrategy<Pi
             if (optionDef.isDetailsAllowed()) {
                 String key = detailHeader(definition.getStableId(), optionDef.getStableId());
                 props.put(key, MappingUtil.newTextType());
-                //todo add subopts
             }
         }
 
@@ -74,7 +73,6 @@ public class PicklistQuestionFormatStrategy implements ResponseFormatStrategy<Pi
                 stableIdTxt.put("optionStableId", optionDef.getStableId());
                 stableIdTxt.put("optionText", HtmlConverter.getPlainText(optionDef.getOptionLabelTemplate().render("en")));
                 options.add(stableIdTxt);
-                //todo add subopts
             }
             groupDef.put("groupStableId", groupStableId);
             groupDef.put("groupText", groupTxt);
