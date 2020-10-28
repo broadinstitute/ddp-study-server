@@ -1054,6 +1054,8 @@ Participant:
     userGuid:
       type: string
       example: Y9JJVE1MLN8AIZL8DO7D
+    userProfile:
+      $ref: '../pepper.yml#/components/schemas/ProfileModel'
 PicklistOption:
   type: object
   required:

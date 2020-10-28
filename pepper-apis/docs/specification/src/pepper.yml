@@ -96,6 +96,8 @@ paths:
     $ref: 'endpoints/user.studies.activity.yml'
   /user/{user}/studies/{study}/activities/{instance}/answers:
     $ref: 'endpoints/user.studies.activity.answers.yml'
+  /user/{user}/studies/{study}/answers/{stableId}:
+    $ref: 'endpoints/user.studies.answers.yml'
   /user/{user}/studies/{study}/consents:
     $ref: 'endpoints/user.studies.consents.yml'
   /user/{user}/studies/{study}/consents/{instance}:

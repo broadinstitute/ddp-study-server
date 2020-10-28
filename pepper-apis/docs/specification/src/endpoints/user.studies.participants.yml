@@ -22,3 +22,29 @@ get:
         $ref: '../pepper.yml#/components/responses/GetStudyParticipantsResponse'
       default:
         $ref: '../pepper.yml#/components/responses/ErrorResponse'
+post:
+  operationId: createGovernedStudyParticipant
+  tags:
+    - Operator & Participant
+  summary: creates governed participant for current operator in a study
+  description: Creates governed participant in a study, and registers the paricipant for enrollment.
+  parameters:
+    - in: path
+      name: user
+      required: true
+      description: the operator's unique identifier
+      schema:
+        type: string
+    - in: path
+      name: study
+      required: true
+      description: the study's unique identifier
+      schema:
+        type: string
+  requestBody:
+    $ref: '../pepper.yml#/components/requestBodies/RegisterGovernedRequestBody'
+  responses:
+    200:
+      $ref: '../pepper.yml#/components/responses/RegisterResponse'
+    default:
+      $ref: '../pepper.yml#/components/responses/ErrorResponse'
