@@ -158,8 +158,7 @@ public interface PicklistQuestionDao extends SqlObject {
         option.setOptionId(optionId);
 
         if (CollectionUtils.isNotEmpty(option.getNestedPicklistOptions())) {
-            PicklistSql picklistSql = getHandle().attach(PicklistSql.class);
-            int subOptionDisplayOrder = 0;
+            int subOptionDisplayOrder = displayOrder;
             List<Long> nestedOptionIds = new ArrayList<>();
             for (PicklistOptionDef nestedOption : option.getNestedPicklistOptions()) {
                 subOptionDisplayOrder += DISPLAY_ORDER_GAP;
@@ -167,7 +166,7 @@ public interface PicklistQuestionDao extends SqlObject {
                 nestedOptionIds.add(nestedOptionId);
             }
             //now populate nested options join table
-            picklistSql.bulkInsertNestedOptions(optionId, nestedOptionIds);
+            getJdbiPicklistOption().bulkInsertNestedOptions(optionId, nestedOptionIds);
             LOG.info("Inserted {} nested options for picklist option: {} optionId: {}",
                     nestedOptionIds.size(), option.getStableId(), optionId);
         }
@@ -331,8 +330,14 @@ public interface PicklistQuestionDao extends SqlObject {
             if (option.getNestedOptionsTemplateId() != null) {
                 tmplDao.disableTemplate(option.getNestedOptionsTemplateId(), meta);
             }
-            //do we need to disable nested options?
         }
+
+        //disable any nested options
+        List<PicklistOptionDto> nestedOptions = getJdbiPicklistOption().findAllActiveNestedPicklistOptionsByQuestionId(questionId);
+        if (CollectionUtils.isNotEmpty(nestedOptions)) {
+            nestedOptions.stream().forEach(nestedOpt -> disableOption(questionId, nestedOpt.getStableId(), meta, false));
+        }
+
         LOG.info("Terminated {} picklist options for picklist question id {}", options.size(), questionId);
     }
 
@@ -344,7 +349,7 @@ public interface PicklistQuestionDao extends SqlObject {
      * @param optionStableId the picklist option stable id
      * @param meta           the revision metadata to use for terminating data
      */
-    default void disableOption(long questionId, String optionStableId, RevisionMetadata meta) {
+    default void disableOption(long questionId, String optionStableId, RevisionMetadata meta, boolean disableNested) {
         JdbiPicklistOption jdbiOption = getJdbiPicklistOption();
         JdbiRevision jdbiRev = getJdbiRevision();
         TemplateDao tmplDao = getTemplateDao();
@@ -372,7 +377,14 @@ public interface PicklistQuestionDao extends SqlObject {
         if (jdbiRev.tryDeleteOrphanedRevision(oldRevId)) {
             LOG.info("Deleted orphaned revision {} by picklist option {}", oldRevId, optionStableId);
         }
-        //do we need to disable nested options?
+
+        if (disableNested) {
+            List<PicklistOptionDto> nestedOptions = getJdbiPicklistOption().findActiveNestedPicklistOptions(questionId, optionDto.getId());
+            if (CollectionUtils.isNotEmpty(nestedOptions)) {
+                nestedOptions.stream().forEach(nestedOpt -> disableOption(questionId, nestedOpt.getStableId(), meta, false));
+            }
+        }
+
     }
 
     default GroupAndOptionDtos findAllOrderedGroupAndOptionDtos(long questionId) {
@@ -416,6 +428,7 @@ public interface PicklistQuestionDao extends SqlObject {
                         if (parentOptionId == null) {
                             container.getUngroupedOptions().add(option);
                         } else {
+                            //reducer assumes parent option rows are seen before nested option rows
                             container.getUngroupedOptions().stream()
                                     .filter(dto -> dto.getId() == parentOptionId)
                                     .findFirst().get().getNestedPicklistOptions().add(option);
@@ -451,6 +464,7 @@ public interface PicklistQuestionDao extends SqlObject {
                         if (parentOptionId == null) {
                             container.computeIfAbsent(questionId, (k) -> new GroupAndOptionDtos()).getUngroupedOptions().add(option);
                         } else {
+                            //reducer assumes parent option rows are seen before nested option rows
                             container.get(questionId).getUngroupedOptions().stream()
                                     .filter(dto -> dto.getId() == parentOptionId)
                                     .findFirst().get().getNestedPicklistOptions().add(option);
