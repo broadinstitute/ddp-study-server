@@ -17,6 +17,7 @@ import org.jdbi.v3.sqlobject.CreateSqlObject;
 import org.jdbi.v3.sqlobject.SqlObject;
 import org.jdbi.v3.sqlobject.config.RegisterConstructorMapper;
 import org.jdbi.v3.sqlobject.customizer.Bind;
+import org.jdbi.v3.sqlobject.customizer.FetchSize;
 import org.jdbi.v3.sqlobject.statement.SqlQuery;
 import org.jdbi.v3.sqlobject.statement.UseRowReducer;
 import org.jdbi.v3.stringtemplate4.UseStringTemplateSqlLocator;
@@ -99,6 +100,7 @@ public interface StudyGovernanceDao extends SqlObject {
     @UseStringTemplateSqlLocator
     @SqlQuery("queryAllAgeUpCandidatesByStudyId")
     @RegisterConstructorMapper(AgeUpCandidate.class)
+    @FetchSize(300)
     Stream<AgeUpCandidate> findAllAgeUpCandidatesByStudyId(@Bind("studyId") long studyId);
 
     @UseStringTemplateSqlLocator

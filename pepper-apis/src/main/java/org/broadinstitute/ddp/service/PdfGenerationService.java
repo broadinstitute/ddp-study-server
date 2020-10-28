@@ -110,8 +110,8 @@ public class PdfGenerationService {
         byte[] unflattenedPdf = generatePdfForConfiguration(configuration, userGuid, handle);
 
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                 PdfWriter tempWriter = new PdfWriter(baos);
-                 PdfDocument flattenedDoc = new PdfDocument(new PdfReader(new ByteArrayInputStream(unflattenedPdf)), tempWriter)) {
+             PdfWriter tempWriter = new PdfWriter(baos);
+             PdfDocument flattenedDoc = new PdfDocument(new PdfReader(new ByteArrayInputStream(unflattenedPdf)), tempWriter)) {
 
             PdfAcroForm form = PdfAcroForm.getAcroForm(flattenedDoc, false);
             form.flattenFields();
@@ -170,8 +170,8 @@ public class PdfGenerationService {
         checkForErrors(errors, userGuid);
 
         try (ByteArrayOutputStream renderedStream = new ByteArrayOutputStream();
-                 PdfWriter pdfWriter = new PdfWriter(renderedStream);
-                 PdfDocument mergedDoc = new PdfDocument(pdfWriter)) {
+             PdfWriter pdfWriter = new PdfWriter(renderedStream);
+             PdfDocument mergedDoc = new PdfDocument(pdfWriter)) {
             // concatenate each rendered doc to a master doc
 
             int counter = 0;
@@ -220,10 +220,12 @@ public class PdfGenerationService {
 
         Participant participant;
         if (hasParticipantSource) {
-            participant = handle.attach(ParticipantDao.class)
-                    .findParticipantsWithUserDataByUserGuids(config.getStudyId(), Sets.newHashSet(userGuid))
-                    .findFirst()
-                    .orElseThrow(() -> new DDPException("Could not find participant data for pdf generation with guid=" + userGuid));
+            try (var participantStream = handle.attach(ParticipantDao.class)
+                    .findParticipantsWithUserDataByUserGuids(config.getStudyId(), Sets.newHashSet(userGuid))) {
+                participant = participantStream
+                        .findFirst()
+                        .orElseThrow(() -> new DDPException("Could not find participant data for pdf generation with guid=" + userGuid));
+            }
         } else {
             participant = new Participant(null, handle.attach(UserDao.class)
                     .findUserByGuid(userGuid)
@@ -260,10 +262,12 @@ public class PdfGenerationService {
         if (!acceptedActivityVersions.isEmpty()) {
             Set<String> userGuids = Sets.newHashSet(participant.getUser().getGuid());
             Set<String> activityCodes = acceptedActivityVersions.keySet();
-            handle.attach(ActivityInstanceDao.class)
-                    .findFormResponsesSubsetWithAnswersByUserGuids(config.getStudyId(), userGuids, activityCodes)
-                    .peek(FormResponse::unwrapComposites)
-                    .forEach(participant::addResponse);
+            try (var responseStream = handle.attach(ActivityInstanceDao.class)
+                    .findFormResponsesSubsetWithAnswersByUserGuids(config.getStudyId(), userGuids, activityCodes)) {
+                responseStream
+                        .peek(FormResponse::unwrapComposites)
+                        .forEach(participant::addResponse);
+            }
 
             for (Map.Entry<String, Set<String>> entry : acceptedActivityVersions.entrySet()) {
                 String activityCode = entry.getKey();
@@ -386,7 +390,7 @@ public class PdfGenerationService {
 
         try (ByteArrayOutputStream rendered = new ByteArrayOutputStream()) {
             int pagesWritten = mergeAllProviderPdfsIntoOutput(rendered, providerDtos, template, pdfOrderIndex,
-                                                              pdfConfigurationName, errors);
+                    pdfConfigurationName, errors);
             checkForErrors(errors, userGuid);
 
             return (pagesWritten > 0 ? rendered.toByteArray() : template.getRawBytes());
@@ -443,7 +447,7 @@ public class PdfGenerationService {
                                                   List<String> errors) throws IOException {
 
         try (ByteArrayOutputStream renderedStream = new ByteArrayOutputStream();
-                PdfDocument renderedPdf = new PdfDocument(new PdfReader(inputStream), new PdfWriter(renderedStream))) {
+             PdfDocument renderedPdf = new PdfDocument(new PdfReader(inputStream), new PdfWriter(renderedStream))) {
 
             PdfAcroForm form = PdfAcroForm.getAcroForm(renderedPdf, true);
             form.setGenerateAppearance(true);
@@ -457,7 +461,7 @@ public class PdfGenerationService {
                     template.getInstitutionType() == InstitutionType.PHYSICIAN
                             && !fields.containsKey(template.getPhysicianNamePlaceholder()))) {
                 errors.add("template " + pdfOrderIndex + " for configuration " + pdfConfigurationName
-                                   + " is missing necessary fields");
+                        + " is missing necessary fields");
                 return null;
             }
 
@@ -542,7 +546,7 @@ public class PdfGenerationService {
                              Participant participant, Map<Long, ActivityResponse> instances, List<String> errors) throws IOException {
         InputStream templateStream = template.asByteStream();
         try (ByteArrayOutputStream renderedStream = new ByteArrayOutputStream();
-                PdfDocument renderedPdf = new PdfDocument(new PdfReader(templateStream), new PdfWriter(renderedStream))) {
+             PdfDocument renderedPdf = new PdfDocument(new PdfReader(templateStream), new PdfWriter(renderedStream))) {
 
             PdfAcroForm form = PdfAcroForm.getAcroForm(renderedPdf, true);
             form.setGenerateAppearance(true);
@@ -552,7 +556,7 @@ public class PdfGenerationService {
                 switch (type) {
                     case PROFILE:
                         convertSubstitutionToPdf((ProfileSubstitution) substitution, form,
-                                                 pdfOrderIndex, pdfConfigurationName, participant.getUser(), errors);
+                                pdfOrderIndex, pdfConfigurationName, participant.getUser(), errors);
                         break;
                     case ANSWER:
                         convertSubstitutionToPdf((AnswerSubstitution) substitution, form,
@@ -663,7 +667,7 @@ public class PdfGenerationService {
                                           CustomTemplate template, List<String> errors) throws IOException {
         if (!instances.containsKey(substitution.getActivityId())) {
             errors.add(String.format("Did not find activity instance for user guid %s and activityId=%d questionStableId=%s."
-                    + " Required for PDF ANSWER substitutions", participant.getUser().getGuid(),
+                            + " Required for PDF ANSWER substitutions", participant.getUser().getGuid(),
                     substitution.getActivityId(), substitution.getQuestionStableId()));
             return;
         }
@@ -805,8 +809,8 @@ public class PdfGenerationService {
                                       CustomTemplate template, List<String> errors) throws IOException {
 
         try (ByteArrayOutputStream renderedCompositeStream = new ByteArrayOutputStream();
-                 PdfDocument renderedCompositePdf = new PdfDocument(
-                         new PdfReader(template.asByteStream()), new PdfWriter(renderedCompositeStream))) {
+             PdfDocument renderedCompositePdf = new PdfDocument(
+                     new PdfReader(template.asByteStream()), new PdfWriter(renderedCompositeStream))) {
 
             PdfAcroForm compositeForm = PdfAcroForm.getAcroForm(renderedCompositePdf, true);
             compositeForm.setGenerateAppearance(true);
@@ -834,7 +838,7 @@ public class PdfGenerationService {
 
         InputStream templateStream = template.asByteStream();
         try (ByteArrayOutputStream renderedStream = new ByteArrayOutputStream();
-                PdfDocument renderedPdf = new PdfDocument(new PdfReader(templateStream), new PdfWriter(renderedStream))) {
+             PdfDocument renderedPdf = new PdfDocument(new PdfReader(templateStream), new PdfWriter(renderedStream))) {
 
             PdfAcroForm form = PdfAcroForm.getAcroForm(renderedPdf, true);
             form.setGenerateAppearance(true);
@@ -880,8 +884,10 @@ public class PdfGenerationService {
                     || StringUtils.isNotBlank(template.getProxyLastNamePlaceholder())) {
                 Governance governance = null;
                 UserGovernanceDao userGovernanceDao = handle.attach(UserGovernanceDao.class);
-                List<Governance> governances = userGovernanceDao.findActiveGovernancesByParticipantAndStudyGuids(user.getGuid(), studyGuid)
-                        .collect(Collectors.toList());
+                List<Governance> governances;
+                try (var governanceStream = userGovernanceDao.findActiveGovernancesByParticipantAndStudyGuids(user.getGuid(), studyGuid)) {
+                    governances = governanceStream.collect(Collectors.toList());
+                }
                 if (governances.isEmpty()) {
                     String errorMessage = String.format("No proxy found for participant %s in study %s to substitute proxy name ",
                             user.getGuid(), studyGuid);

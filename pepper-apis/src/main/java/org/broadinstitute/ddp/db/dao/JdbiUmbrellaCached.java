@@ -52,7 +52,9 @@ public class JdbiUmbrellaCached extends SQLObjectWrapper<JdbiUmbrella> implement
         if (isUsingNullCache()) {
             return delegate.findAll();
         } else {
-            return streamAll().collect(Collectors.toList());
+            try (var allStream = streamAll()) {
+                return allStream.collect(Collectors.toList());
+            }
         }
     }
 
@@ -61,7 +63,9 @@ public class JdbiUmbrellaCached extends SQLObjectWrapper<JdbiUmbrella> implement
         if (isUsingNullCache()) {
             return delegate.findIdByName(umbrellaName);
         } else {
-            return streamAll().filter(umbrella -> umbrella.getName().equals(umbrellaName)).findAny().map(dto -> dto.getId());
+            try (var allStream = streamAll()) {
+                return allStream.filter(umbrella -> umbrella.getName().equals(umbrellaName)).findAny().map(dto -> dto.getId());
+            }
         }
     }
 
@@ -70,7 +74,9 @@ public class JdbiUmbrellaCached extends SQLObjectWrapper<JdbiUmbrella> implement
         if (isUsingNullCache()) {
             return delegate.findByGuid(umbrellaGuid);
         } else {
-            return streamAll().filter(umbrella -> umbrella.getGuid().equals(umbrellaGuid)).findAny();
+            try (var allStream = streamAll()) {
+                return allStream.filter(umbrella -> umbrella.getGuid().equals(umbrellaGuid)).findAny();
+            }
         }
     }
 

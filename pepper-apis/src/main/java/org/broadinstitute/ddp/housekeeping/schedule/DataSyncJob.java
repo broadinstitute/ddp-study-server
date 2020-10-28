@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.typesafe.config.Config;
 import org.broadinstitute.ddp.constants.ConfigFile;
@@ -15,6 +16,7 @@ import org.broadinstitute.ddp.db.dao.DataExportDao;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.JdbiUser;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
+import org.broadinstitute.ddp.db.dto.EnrollmentStatusDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.UserDto;
 import org.broadinstitute.ddp.export.DataExporter;
@@ -125,9 +127,11 @@ public class DataSyncJob implements Job {
         }
 
         if (!userIdsToQueryStudies.isEmpty()) {
-            handle.attach(JdbiUserStudyEnrollment.class)
-                    .findAllLatestByUserIds(userIdsToQueryStudies)
-                    .forEach(status -> studyUsers.computeIfAbsent(status.getStudyId(), id -> new HashSet<>()).add(status.getUserId()));
+            try (Stream<EnrollmentStatusDto> streamEnrollStatus = handle.attach(JdbiUserStudyEnrollment.class)
+                    .findAllLatestByUserIds(userIdsToQueryStudies)) {
+                streamEnrollStatus
+                        .forEach(status -> studyUsers.computeIfAbsent(status.getStudyId(), id -> new HashSet<>()).add(status.getUserId()));
+            }
         }
 
         if (!usersToRefreshEmails.isEmpty()) {

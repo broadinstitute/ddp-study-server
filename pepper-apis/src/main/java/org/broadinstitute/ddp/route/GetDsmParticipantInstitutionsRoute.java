@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
@@ -108,8 +109,8 @@ public class GetDsmParticipantInstitutionsRoute implements Route {
                 .collect(Collectors.groupingBy(MedicalProviderDto::getUserId));
 
         List<ActivityMapping> activityMappings = handle.attach(ActivityDao.class)
-                .findActivityMappings(studyId, ActivityMappingType.MEDICAL_RELEASE)
-                .collect(Collectors.toList());
+                .findActivityMappings(studyId, ActivityMappingType.MEDICAL_RELEASE);
+
         if (activityMappings.isEmpty()) {
             String errorMessage = "Activity mapping: " + ActivityMappingType.MEDICAL_RELEASE + " not found for: " + studyGuid;
             logger.error(errorMessage);
@@ -120,9 +121,11 @@ public class GetDsmParticipantInstitutionsRoute implements Route {
         Set<Long> releaseActivityIds = activityMappings.stream()
                 .map(ActivityMapping::getActivityId)
                 .collect(Collectors.toSet());
-        Map<Long, List<ActivityResponse>> userIdToReleaseInstances = handle.attach(ActivityInstanceDao.class)
-                .findBaseResponsesByStudyAndUserIds(studyId, Set.copyOf(userIds), true, releaseActivityIds)
-                .collect(Collectors.groupingBy(ActivityResponse::getParticipantId));
+        Map<Long, List<ActivityResponse>> userIdToReleaseInstances;
+        try (Stream<ActivityResponse> responseStream = handle.attach(ActivityInstanceDao.class)
+                .findBaseResponsesByStudyAndUserIds(studyId, Set.copyOf(userIds), true, releaseActivityIds)) {
+            userIdToReleaseInstances = responseStream.collect(Collectors.groupingBy(ActivityResponse::getParticipantId));
+        }
 
         for (Map.Entry<Long, List<MedicalProviderDto>> user : medicalRecordsByUserId.entrySet()) {
             long userId = user.getKey();

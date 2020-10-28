@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.InvitationDao;
@@ -59,9 +60,10 @@ public class AgeUpService {
         InvitationDao invitationDao = handle.attach(InvitationDao.class);
         JdbiUserStudyEnrollment jdbiEnrollment = handle.attach(JdbiUserStudyEnrollment.class);
 
-        List<AgeUpCandidate> potentialCandidates = studyGovernanceDao
-                .findAllAgeUpCandidatesByStudyId(policy.getStudyId())
-                .collect(Collectors.toList());
+        List<AgeUpCandidate> potentialCandidates;
+        try(Stream<AgeUpCandidate> governanceStream = studyGovernanceDao.findAllAgeUpCandidatesByStudyId(policy.getStudyId())) {
+            potentialCandidates = governanceStream.collect(Collectors.toList());
+        }
         Collections.shuffle(potentialCandidates);
 
         String studyGuid = policy.getStudyGuid();

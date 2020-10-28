@@ -140,15 +140,17 @@ public class KitCheckService {
         Map<String, List<PendingScheduleRecord>> groupByStudyBatch = new HashMap<>();
         var currentBatchSize = new AtomicInteger(0);
 
-        kitScheduleDao.findAllEligibleRecordsWaitingForKitStatus().forEach(pending -> {
-            groupByStudyBatch.computeIfAbsent(pending.getStudyGuid(), key -> new ArrayList<>()).add(pending);
-            currentBatchSize.incrementAndGet();
-            if (currentBatchSize.get() >= batchSize) {
-                checkPendingKitStatusesForBatch(apisHandle, dsmClient, groupByStudyBatch);
-                groupByStudyBatch.clear();
-                currentBatchSize.set(0);
-            }
-        });
+        try(Stream<PendingScheduleRecord> records = kitScheduleDao.findAllEligibleRecordsWaitingForKitStatus()) {
+            records.forEach(pending -> {
+                groupByStudyBatch.computeIfAbsent(pending.getStudyGuid(), key -> new ArrayList<>()).add(pending);
+                currentBatchSize.incrementAndGet();
+                if (currentBatchSize.get() >= batchSize) {
+                    checkPendingKitStatusesForBatch(apisHandle, dsmClient, groupByStudyBatch);
+                    groupByStudyBatch.clear();
+                    currentBatchSize.set(0);
+                }
+            });
+        }
 
         if (currentBatchSize.get() > 0) {
             checkPendingKitStatusesForBatch(apisHandle, dsmClient, groupByStudyBatch);
@@ -220,15 +222,17 @@ public class KitCheckService {
 
         for (var kitConfig : kitConfigs) {
             List<PendingScheduleRecord> batch = new ArrayList<>();
-            kitScheduleDao.findPendingScheduleRecords(kitConfig.getId()).forEach(pending -> {
-                batch.add(pending);
-                if (batch.size() >= batchSize) {
+            try (Stream<PendingScheduleRecord> records = kitScheduleDao.findPendingScheduleRecords(kitConfig.getId())) {
+                records.forEach(pending -> {
+                    batch.add(pending);
+                    if (batch.size() >= batchSize) {
+                        scheduleNextKitsForBatch(apisHandle, kitCheckResult, kitConfig, batch);
+                        batch.clear();
+                    }
+                });
+                if (!batch.isEmpty()) {
                     scheduleNextKitsForBatch(apisHandle, kitCheckResult, kitConfig, batch);
-                    batch.clear();
                 }
-            });
-            if (!batch.isEmpty()) {
-                scheduleNextKitsForBatch(apisHandle, kitCheckResult, kitConfig, batch);
             }
         }
 
