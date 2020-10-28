@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.http.HttpStatus;
 
@@ -72,9 +73,11 @@ public class GetUserAnnouncementsRoute implements Route {
 
             UserAnnouncementDao announcementDao = handle.attach(UserAnnouncementDao.class);
 
-            List<UserAnnouncement> announcements = announcementDao
-                    .findAllForUserAndStudy(user.getId(), studyDto.getId())
-                    .collect(Collectors.toList());
+            List<UserAnnouncement> announcements;
+            try (Stream<UserAnnouncement> annStream = announcementDao
+                    .findAllForUserAndStudy(user.getId(), studyDto.getId())) {
+                announcements = annStream.collect(Collectors.toList());
+            }
 
             LOG.info("Found {} announcements for user {} and study {}", announcements.size(), userGuid, studyGuid);
 

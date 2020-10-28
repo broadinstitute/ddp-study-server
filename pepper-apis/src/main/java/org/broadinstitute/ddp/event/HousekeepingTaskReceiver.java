@@ -170,6 +170,7 @@ public class HousekeepingTaskReceiver implements MessageReceiver {
         ELASTIC_EXPORT,
         GENERATE_HEAP_DUMP,
         PING,
+        GENERATE_HEAP_DUMP
     }
 
     public static class ExportPayload {

@@ -2,6 +2,7 @@ package org.broadinstitute.ddp.model.event;
 
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.broadinstitute.ddp.db.dao.UserAnnouncementDao;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
@@ -40,9 +41,11 @@ public class AnnouncementEventAction extends EventAction {
 
         try {
             if (createForProxies) {
-                List<Governance> governances = handle.attach(UserGovernanceDao.class)
-                        .findActiveGovernancesByParticipantAndStudyIds(participantId, studyId)
-                        .collect(Collectors.toList());
+                List<Governance> governances;
+                try (Stream<Governance> governanceStream = handle.attach(UserGovernanceDao.class)
+                        .findActiveGovernancesByParticipantAndStudyIds(participantId, studyId)) {
+                    governances = governanceStream.collect(Collectors.toList());
+                }
                 if (!governances.isEmpty()) {
                     for (var governance : governances) {
                         long id = announcementDao.insert(governance.getProxyUserId(), studyId, messageTemplateId, isPermanent);
