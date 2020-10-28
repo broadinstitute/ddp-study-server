@@ -256,8 +256,7 @@ public class StudyDataLoader {
         //load data
         JdbiUser jdbiUser = handle.attach(JdbiUser.class);
         String altpid = datstatData.getAsJsonObject().get("datstat_altpid").getAsString();
-        boolean isMGU = datstatData.getAsJsonObject().get("registration_type").getAsInt() == 2
-                ? true : false;
+        boolean isMGU = datstatData.getAsJsonObject().get("registration_type").getAsInt() == 2;
         String userGuid = jdbiUser.getUserGuidByAltpid(altpid);
         if (userGuid != null) {
             LOG.warn("Looks like  Participant data already loaded: " + userGuid);
@@ -272,7 +271,14 @@ public class StudyDataLoader {
 
         //Todo after multigoverned users, check if user with this email already exists in auth0, if so skip creation of user
         //otherwise we create new user in auth0
-        UserDto pepperUser = createLegacyPepperUser(userDao, clientDao, datstatData, userGuid, userHruid, clientDto);
+
+        UserDto pepperUser;
+
+        if (isMGU) {
+            String auth0UserId = createAuth0UserWithExistingPassword();
+        }
+        pepperUser = createLegacyPepperUser(userDao, clientDao, datstatData, userGuid, userHruid, clientDto);
+
 
 
         JdbiLanguageCode jdbiLanguageCode = handle.attach(JdbiLanguageCode.class);
@@ -982,29 +988,12 @@ public class StudyDataLoader {
                                           JsonElement data, String userGuid, String userHruid, ClientDto clientDto) throws Exception {
         String emailAddress = data.getAsJsonObject().get("datstat_email").getAsString();
         boolean hasPassword = data.getAsJsonObject().has("password");
-        String auth0UserId = null;
+        String auth0UserId;
         // Create a user for the given domain
         if (hasPassword) {
-            auth0Util.deleteAuth0User("auth0|" + data.getAsJsonObject().get("datstat_altpid").getAsString(), mgmtToken);
-            File userJsonFile = bulkUserCreateJson(data, userGuid, emailAddress);
-            Auth0Util.BulkUserImportResponse bulkUserImportResponse = auth0Util.bulkUserWithHashedPassword(mgmtToken, userJsonFile);
-            Auth0Util.Auth0JobResponse auth0JobResponse = auth0Util.getAuth0Job(bulkUserImportResponse.getJobId(), mgmtToken);
-            while (auth0JobResponse.getStatus().equals("pending")) {
-                auth0JobResponse = auth0Util.getAuth0Job(bulkUserImportResponse.getJobId(), mgmtToken);
-                Thread.sleep(200);
-            }
-            if (auth0JobResponse.getStatus().equals("completed")
-                    && (auth0JobResponse.getSummary().get("inserted") == 1 || auth0JobResponse.getSummary().get("updated") == 1)) {
-                String expectedAuth0UserId = "auth0|" + data.getAsJsonObject().get("datstat_altpid").getAsString();
-                User auth0User = auth0Util.getAuth0User(expectedAuth0UserId, mgmtToken);
-                if (auth0User.getEmail().equals(emailAddress)) {
-                    auth0UserId = auth0User.getId();
-                }
-            }
+            auth0UserId = createAuth0UserWithExistingPassword(data, userGuid, emailAddress);
         } else {
-            String randomPass = generateRandomPassword();
-            User newAuth0User = auth0Util.createAuth0User(emailAddress, randomPass, mgmtToken);
-            auth0UserId = newAuth0User.getId();
+            auth0UserId = createAuth0UserWithRandomPassword(emailAddress);
         }
 
 
@@ -1036,6 +1025,37 @@ public class StudyDataLoader {
                 + altpid);
 
         return newUser;
+    }
+
+    private String createAuth0UserWithRandomPassword(String emailAddress) throws Auth0Exception {
+        String auth0UserId;
+        String randomPass = generateRandomPassword();
+        User newAuth0User = auth0Util.createAuth0User(emailAddress, randomPass, mgmtToken);
+        auth0UserId = newAuth0User.getId();
+        return auth0UserId;
+    }
+
+    private String createAuth0UserWithExistingPassword(JsonElement data, String userGuid, String emailAddress)
+            throws IOException, InterruptedException {
+        String auth0UserId = null;
+        auth0Util.deleteAuth0User("auth0|" + data.getAsJsonObject().get("datstat_altpid").getAsString(), mgmtToken);
+        File userJsonFile = bulkUserCreateJson(data, userGuid, emailAddress);
+        Auth0Util.BulkUserImportResponse bulkUserImportResponse = auth0Util.bulkUserWithHashedPassword(mgmtToken, userJsonFile);
+        Auth0Util.Auth0JobResponse auth0JobResponse = auth0Util.getAuth0Job(bulkUserImportResponse.getJobId(), mgmtToken);
+        while (auth0JobResponse.getStatus().equals("pending")) {
+            auth0JobResponse = auth0Util.getAuth0Job(bulkUserImportResponse.getJobId(), mgmtToken);
+            Thread.sleep(200);
+        }
+        if (auth0JobResponse.getStatus().equals("completed")
+                && (auth0JobResponse.getSummary().get("inserted") == 1 || auth0JobResponse.getSummary().get("updated") == 1)) {
+            String expectedAuth0UserId = "auth0|" + data.getAsJsonObject().get("datstat_altpid").getAsString();
+            User auth0User = auth0Util.getAuth0User(expectedAuth0UserId, mgmtToken);
+            if (auth0User.getEmail().equals(emailAddress)) {
+                auth0UserId = auth0User.getId();
+            }
+        }
+        //TODO -> check if job failed
+        return auth0UserId;
     }
 
     private File bulkUserCreateJson(JsonElement data, String userGuid, String emailAddress) throws IOException {
