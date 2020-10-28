@@ -345,10 +345,10 @@ public interface QuestionDao extends SqlObject {
     /**
      * Build a boolean question.
      *
-     * @param dto          the question dto
+     * @param dto                  the question dto
      * @param activityInstanceGuid the activity instance guid
-     * @param answerIds    list of base answer ids to question (may be empty)
-     * @param untypedRules list of untyped validations for question (may be empty)
+     * @param answerIds            list of base answer ids to question (may be empty)
+     * @param untypedRules         list of untyped validations for question (may be empty)
      * @return boolean question object
      */
     default BoolQuestion getBooleanQuestion(QuestionDto dto,
@@ -428,20 +428,18 @@ public interface QuestionDao extends SqlObject {
                         optionDto.getOptionLabelTemplateId(), optionDto.getTooltipTemplateId(), optionDto.getDetailLabelTemplateId(),
                         optionDto.getAllowDetails(), optionDto.isExclusive());
             } else {
-                //find any suboptions
-                if (CollectionUtils.isNotEmpty(optionDto.getNestedPicklistOptions())) {
-                    List<PicklistOption> nestedOptions = new ArrayList<>();
-                    optionDto.getNestedPicklistOptions().stream().forEach(nestedOptionDto -> {
-                        nestedOptions.add(new PicklistOption(nestedOptionDto.getStableId(),
-                                nestedOptionDto.getOptionLabelTemplateId(), nestedOptionDto.getTooltipTemplateId(),
-                                nestedOptionDto.getDetailLabelTemplateId(), nestedOptionDto.getAllowDetails(),
-                                nestedOptionDto.isExclusive()));
-                    });
+                //add nested options
+                List<PicklistOption> nestedOptions = new ArrayList<>();
+                optionDto.getNestedPicklistOptions().stream().forEach(nestedOptionDto -> {
+                    nestedOptions.add(new PicklistOption(nestedOptionDto.getStableId(),
+                            nestedOptionDto.getOptionLabelTemplateId(), nestedOptionDto.getTooltipTemplateId(),
+                            nestedOptionDto.getDetailLabelTemplateId(), nestedOptionDto.getAllowDetails(),
+                            nestedOptionDto.isExclusive()));
+                });
 
-                    option = new PicklistOption(optionDto.getStableId(),
-                            optionDto.getOptionLabelTemplateId(), optionDto.getTooltipTemplateId(), optionDto.getDetailLabelTemplateId(),
-                            optionDto.getAllowDetails(), optionDto.isExclusive(), optionDto.getNestedOptionsTemplateId(), nestedOptions);
-                }
+                option = new PicklistOption(optionDto.getStableId(),
+                        optionDto.getOptionLabelTemplateId(), optionDto.getTooltipTemplateId(), optionDto.getDetailLabelTemplateId(),
+                        optionDto.getAllowDetails(), optionDto.isExclusive(), optionDto.getNestedOptionsTemplateId(), nestedOptions);
             }
             allOptions.add(option);
         }
@@ -520,10 +518,10 @@ public interface QuestionDao extends SqlObject {
     /**
      * Build a date question.
      *
-     * @param dto          the question dto
+     * @param dto                  the question dto
      * @param activityInstanceGuid the activity instance guid
-     * @param answerIds    list of base answer ids to question (may be empty)
-     * @param untypedRules list of untyped validations for question (may be empty)
+     * @param answerIds            list of base answer ids to question (may be empty)
+     * @param untypedRules         list of untyped validations for question (may be empty)
      * @return date question object
      */
     default DateQuestion getDateQuestion(QuestionDto dto,
@@ -581,10 +579,10 @@ public interface QuestionDao extends SqlObject {
     /**
      * Build a numeric question.
      *
-     * @param dto          the question dto
+     * @param dto                  the question dto
      * @param activityInstanceGuid the activity instance guid
-     * @param answerIds    list of base answer ids to question (may be empty)
-     * @param untypedRules list of untyped validations for question (may be empty)
+     * @param answerIds            list of base answer ids to question (may be empty)
+     * @param untypedRules         list of untyped validations for question (may be empty)
      * @return numeric question object
      */
     default Question getNumericQuestion(QuestionDto dto, String activityInstanceGuid, List<Long> answerIds, List<Rule> untypedRules) {
@@ -621,10 +619,10 @@ public interface QuestionDao extends SqlObject {
     /**
      * Build a agreement question.
      *
-     * @param dto          the question dto
+     * @param dto                  the question dto
      * @param activityInstanceGuid the activity instance guid
-     * @param answerIds    list of base answer ids to question (may be empty)
-     * @param untypedRules list of untyped validations for question (may be empty)
+     * @param answerIds            list of base answer ids to question (may be empty)
+     * @param untypedRules         list of untyped validations for question (may be empty)
      * @return agreement question object
      */
     default AgreementQuestion getAgreementQuestion(QuestionDto dto,
