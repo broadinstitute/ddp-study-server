@@ -416,7 +416,8 @@ public interface PicklistQuestionDao extends SqlObject {
     }
 
     private GroupAndOptionDtos executeGroupAndOptionDtosQuery(Query query) {
-        return query
+        Map<Long, List<PicklistOptionDto>> nestedOptMap = new HashMap<>();
+        GroupAndOptionDtos dtos = query
                 .registerRowMapper(ConstructorMapper.factory(PicklistOptionDto.class, "po"))
                 .registerRowMapper(ConstructorMapper.factory(PicklistGroupDto.class, "pg"))
                 .reduceRows(new GroupAndOptionDtos(), (container, row) -> {
@@ -428,10 +429,8 @@ public interface PicklistQuestionDao extends SqlObject {
                         if (parentOptionId == null) {
                             container.getUngroupedOptions().add(option);
                         } else {
-                            //reducer assumes parent option rows are seen before nested option rows
-                            container.getUngroupedOptions().stream()
-                                    .filter(dto -> dto.getId() == parentOptionId)
-                                    .findFirst().get().getNestedPicklistOptions().add(option);
+                            nestedOptMap.computeIfAbsent(parentOptionId, (k) -> new ArrayList<>());
+                            nestedOptMap.get(parentOptionId).add(option);
                         }
                     } else {
                         PicklistGroupDto group = row.getRow(PicklistGroupDto.class);
@@ -448,10 +447,19 @@ public interface PicklistQuestionDao extends SqlObject {
 
                     return container;
                 });
+
+        dtos.getUngroupedOptions().stream().forEach(parentDto -> {
+            if (nestedOptMap.containsKey(parentDto.getId())) {
+                parentDto.getNestedPicklistOptions().addAll(nestedOptMap.get(parentDto.getId()));
+            }
+        });
+
+        return dtos;
     }
 
     private Map<Long, GroupAndOptionDtos> executeGroupAndOptionDtosByQuestionQuery(Query query) {
-        return query
+        Map<Long, List<PicklistOptionDto>> nestedOptMap = new HashMap<>();
+        Map<Long, GroupAndOptionDtos> dtosMap = query
                 .registerRowMapper(ConstructorMapper.factory(PicklistOptionDto.class, "po"))
                 .registerRowMapper(ConstructorMapper.factory(PicklistGroupDto.class, "pg"))
                 .reduceRows(new HashMap<Long, GroupAndOptionDtos>(), (container, row) -> {
@@ -464,10 +472,8 @@ public interface PicklistQuestionDao extends SqlObject {
                         if (parentOptionId == null) {
                             container.computeIfAbsent(questionId, (k) -> new GroupAndOptionDtos()).getUngroupedOptions().add(option);
                         } else {
-                            //reducer assumes parent option rows are seen before nested option rows
-                            container.get(questionId).getUngroupedOptions().stream()
-                                    .filter(dto -> dto.getId() == parentOptionId)
-                                    .findFirst().get().getNestedPicklistOptions().add(option);
+                            nestedOptMap.computeIfAbsent(parentOptionId, (k) -> new ArrayList<>());
+                            nestedOptMap.get(parentOptionId).add(option);
                         }
                     } else {
                         PicklistGroupDto group = row.getRow(PicklistGroupDto.class);
@@ -487,6 +493,16 @@ public interface PicklistQuestionDao extends SqlObject {
 
                     return container;
                 });
+
+        dtosMap.values().stream().forEach(dto -> {
+            dto.getUngroupedOptions().stream().forEach(parentDto -> {
+                if (nestedOptMap.containsKey(parentDto.getId())) {
+                    parentDto.getNestedPicklistOptions().addAll(nestedOptMap.get(parentDto.getId()));
+                }
+            });
+        });
+
+        return dtosMap;
     }
 
     class GroupAndOptionDtos implements Serializable {
