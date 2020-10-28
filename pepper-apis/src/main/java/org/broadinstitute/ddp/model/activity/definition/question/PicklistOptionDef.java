@@ -155,11 +155,4 @@ public class PicklistOptionDef {
         return nestedOptionsLabelTemplate;
     }
 
-    /*public void setNestedOptionsLabelTemplate(Template nestedOptionsLabelTemplate) {
-        this.nestedOptionsLabelTemplate = nestedOptionsLabelTemplate;
-    }
-
-    public void setNestedPicklistOptions(List<PicklistOptionDef> nestedPicklistOptions) {
-        this.nestedPicklistOptions = nestedPicklistOptions;
-    }*/
 }

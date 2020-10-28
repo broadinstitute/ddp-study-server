@@ -1536,8 +1536,13 @@ public interface QuestionDao extends SqlObject {
                         if (CollectionUtils.isNotEmpty(optionDto.getPicklistSuboptions())) {
                             List<PicklistOptionDef> nestedOptions = new ArrayList<>();
                             for (PicklistOptionDto nestedOptionDto : optionDto.getPicklistSuboptions()) {
+                                Template nestedOptionLabel = templateDao.loadTemplateById(nestedOptionDto.getOptionLabelTemplateId());
+                                Template nestedDetailLabel = !nestedOptionDto.getAllowDetails() ? null
+                                        : templateDao.loadTemplateById(nestedOptionDto.getDetailLabelTemplateId());
+                                Template nestedTooltipTemplate = nestedOptionDto.getTooltipTemplateId() == null ? null
+                                        : templateDao.loadTemplateById(nestedOptionDto.getTooltipTemplateId());
                                 nestedOptions.add(new PicklistOptionDef(nestedOptionDto.getId(), nestedOptionDto.getStableId(),
-                                        optionLabel, tooltipTemplate, detailLabel,
+                                        nestedOptionLabel, nestedTooltipTemplate, nestedDetailLabel,
                                         nestedOptionDto.isExclusive()));
                             }
                             optionDef = new PicklistOptionDef(optionDto.getId(), optionDto.getStableId(),

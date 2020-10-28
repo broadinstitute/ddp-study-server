@@ -47,11 +47,11 @@ queryAllOrderedGroupsAndOptionsByQuestionIdAndTimestamp() ::= <<
 queryAllOrderedGroupsAndOptionsByQuestionId() ::= <<
 <selectAllGroupAndOptions()>
  where po.picklist_question_id = :questionId
- order by pg.display_order asc, po.display_order asc
+ order by pg.display_order asc, po.picklist_option_id, po.display_order asc
 >>
 
 queryAllOrderedGroupsAndOptionsByActivityId() ::= <<
 <selectAllGroupAndOptions()>
  where q.study_activity_id=:activityId
- order by q.question_id, pg.display_order asc, po.display_order asc
+ order by q.question_id, pg.display_order asc, po.picklist_option_id, po.display_order asc
 >>
