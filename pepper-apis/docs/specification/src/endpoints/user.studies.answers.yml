@@ -32,6 +32,12 @@ get:
       content:
         application/json:
           schema:
-            $ref: '../pepper.yml#/components/schemas/Answer.Composite'
+            anyOf:
+              - $ref: '../pepper.yml#/components/schemas/Answer.String'
+              - $ref: '../pepper.yml#/components/schemas/Answer.Date'
+              - $ref: '../pepper.yml#/components/schemas/Answer.Picklist'
+              - $ref: '../pepper.yml#/components/schemas/Answer.Boolean'
+              - $ref: '../pepper.yml#/components/schemas/Answer.Numeric'
+              - $ref: '../pepper.yml#/components/schemas/Answer.Composite'
     default:
       $ref: '../pepper.yml#/components/responses/ErrorResponse'
