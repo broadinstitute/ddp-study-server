@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpStatus;
@@ -322,9 +323,11 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
 
         if (status == null) {
             // Find if user is a proxy of any other user in the study, whether active or not.
-            long numGovernances = handle.attach(UserGovernanceDao.class)
-                    .findGovernancesByProxyAndStudyGuids(user.getGuid(), study.getGuid())
-                    .count();
+            long numGovernances;
+            try (Stream<Governance> govStream = handle.attach(UserGovernanceDao.class)
+                    .findGovernancesByProxyAndStudyGuids(user.getGuid(), study.getGuid())) {
+                numGovernances = govStream.count();
+            }
             if (numGovernances > 0) {
                 LOG.info("Existing user {} is a proxy of {} users in study {}", user.getGuid(), numGovernances, study.getGuid());
                 return user.getGuid();
