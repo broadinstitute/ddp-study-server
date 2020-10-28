@@ -224,7 +224,7 @@ public class DataExporter {
             }
             return extractParticipantsFromResultSet(handle, studyDto, resultset);
         } finally {
-            if(resultset != null) {
+            if (resultset != null) {
                 resultset.close();
             }
         }
@@ -429,17 +429,18 @@ public class DataExporter {
             }
             participants = extractParticipantsFromResultSet(handle, studyDto, resultset);
         } finally {
-            if(resultset != null) {
+            if (resultset != null) {
                 resultset.close();
             }
         }
+
 
         //load governances and build data structures to get proxies and governedUsers
         Map<String, Set<String>> proxiesMap = new HashMap<>();
         Map<String, Set<String>> governedUsersMap = new HashMap<>();
         Set<String> operatorGuids = new HashSet<>();
         UserGovernanceDao userGovernanceDao = handle.attach(UserGovernanceDao.class);
-        try(Stream<Governance> allGovernances = userGovernanceDao.findActiveGovernancesByStudyGuid(studyDto.getGuid())) {
+        try (Stream<Governance> allGovernances = userGovernanceDao.findActiveGovernancesByStudyGuid(studyDto.getGuid())) {
             allGovernances.forEach(governance -> {
                 String proxyGuid = governance.getProxyUserGuid();
                 String governedUserGuid = governance.getGovernedUserGuid();
@@ -462,7 +463,7 @@ public class DataExporter {
         });
 
         //load operators
-        try(Stream<User> users = handle.attach(UserDao.class).findUsersAndProfilesByGuids(operatorGuids)) {
+        try (Stream<User> users = handle.attach(UserDao.class).findUsersAndProfilesByGuids(operatorGuids)) {
             List<User> operators = extractUsersFromResultSet(handle, studyDto, users);
             operators.forEach(user -> {
                 if (allUsers.containsKey(user.getGuid())) {

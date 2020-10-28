@@ -140,7 +140,7 @@ public class KitCheckService {
         Map<String, List<PendingScheduleRecord>> groupByStudyBatch = new HashMap<>();
         var currentBatchSize = new AtomicInteger(0);
 
-        try(Stream<PendingScheduleRecord> records = kitScheduleDao.findAllEligibleRecordsWaitingForKitStatus()) {
+        try (Stream<PendingScheduleRecord> records = kitScheduleDao.findAllEligibleRecordsWaitingForKitStatus()) {
             records.forEach(pending -> {
                 groupByStudyBatch.computeIfAbsent(pending.getStudyGuid(), key -> new ArrayList<>()).add(pending);
                 currentBatchSize.incrementAndGet();

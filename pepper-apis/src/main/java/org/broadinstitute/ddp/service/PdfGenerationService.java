@@ -109,9 +109,10 @@ public class PdfGenerationService {
                                                        Handle handle) throws IOException {
         byte[] unflattenedPdf = generatePdfForConfiguration(configuration, userGuid, handle);
 
-        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
-             PdfWriter tempWriter = new PdfWriter(baos);
-             PdfDocument flattenedDoc = new PdfDocument(new PdfReader(new ByteArrayInputStream(unflattenedPdf)), tempWriter)) {
+        try (
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                PdfWriter tempWriter = new PdfWriter(baos);
+                PdfDocument flattenedDoc = new PdfDocument(new PdfReader(new ByteArrayInputStream(unflattenedPdf)), tempWriter);) {
 
             PdfAcroForm form = PdfAcroForm.getAcroForm(flattenedDoc, false);
             form.flattenFields();
@@ -169,9 +170,10 @@ public class PdfGenerationService {
         }
         checkForErrors(errors, userGuid);
 
-        try (ByteArrayOutputStream renderedStream = new ByteArrayOutputStream();
-             PdfWriter pdfWriter = new PdfWriter(renderedStream);
-             PdfDocument mergedDoc = new PdfDocument(pdfWriter)) {
+        try (
+                ByteArrayOutputStream renderedStream = new ByteArrayOutputStream();
+                PdfWriter pdfWriter = new PdfWriter(renderedStream);
+                PdfDocument mergedDoc = new PdfDocument(pdfWriter)) {
             // concatenate each rendered doc to a master doc
 
             int counter = 0;
@@ -446,8 +448,9 @@ public class PdfGenerationService {
                                                   String pdfConfigurationName,
                                                   List<String> errors) throws IOException {
 
-        try (ByteArrayOutputStream renderedStream = new ByteArrayOutputStream();
-             PdfDocument renderedPdf = new PdfDocument(new PdfReader(inputStream), new PdfWriter(renderedStream))) {
+        try (
+                ByteArrayOutputStream renderedStream = new ByteArrayOutputStream();
+                PdfDocument renderedPdf = new PdfDocument(new PdfReader(inputStream), new PdfWriter(renderedStream))) {
 
             PdfAcroForm form = PdfAcroForm.getAcroForm(renderedPdf, true);
             form.setGenerateAppearance(true);
@@ -545,8 +548,9 @@ public class PdfGenerationService {
                              String pdfConfigurationName,
                              Participant participant, Map<Long, ActivityResponse> instances, List<String> errors) throws IOException {
         InputStream templateStream = template.asByteStream();
-        try (ByteArrayOutputStream renderedStream = new ByteArrayOutputStream();
-             PdfDocument renderedPdf = new PdfDocument(new PdfReader(templateStream), new PdfWriter(renderedStream))) {
+        try (
+                ByteArrayOutputStream renderedStream = new ByteArrayOutputStream();
+                PdfDocument renderedPdf = new PdfDocument(new PdfReader(templateStream), new PdfWriter(renderedStream))) {
 
             PdfAcroForm form = PdfAcroForm.getAcroForm(renderedPdf, true);
             form.setGenerateAppearance(true);
@@ -808,9 +812,10 @@ public class PdfGenerationService {
     private byte[] renderCompositePdf(AnswerRow answerRow, CompositeAnswerSubstitution compositeSubstitution,
                                       CustomTemplate template, List<String> errors) throws IOException {
 
-        try (ByteArrayOutputStream renderedCompositeStream = new ByteArrayOutputStream();
-             PdfDocument renderedCompositePdf = new PdfDocument(
-                     new PdfReader(template.asByteStream()), new PdfWriter(renderedCompositeStream))) {
+        try (
+                ByteArrayOutputStream renderedCompositeStream = new ByteArrayOutputStream();
+                PdfDocument renderedCompositePdf = new PdfDocument(new PdfReader(template.asByteStream()),
+                        new PdfWriter(renderedCompositeStream))) {
 
             PdfAcroForm compositeForm = PdfAcroForm.getAcroForm(renderedCompositePdf, true);
             compositeForm.setGenerateAppearance(true);
@@ -837,8 +842,9 @@ public class PdfGenerationService {
                                             List<String> errors, String studyGuid, Handle handle) throws IOException {
 
         InputStream templateStream = template.asByteStream();
-        try (ByteArrayOutputStream renderedStream = new ByteArrayOutputStream();
-             PdfDocument renderedPdf = new PdfDocument(new PdfReader(templateStream), new PdfWriter(renderedStream))) {
+        try (
+                ByteArrayOutputStream renderedStream = new ByteArrayOutputStream();
+                PdfDocument renderedPdf = new PdfDocument(new PdfReader(templateStream), new PdfWriter(renderedStream))) {
 
             PdfAcroForm form = PdfAcroForm.getAcroForm(renderedPdf, true);
             form.setGenerateAppearance(true);

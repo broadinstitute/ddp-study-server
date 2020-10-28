@@ -61,7 +61,7 @@ public class AgeUpService {
         JdbiUserStudyEnrollment jdbiEnrollment = handle.attach(JdbiUserStudyEnrollment.class);
 
         List<AgeUpCandidate> potentialCandidates;
-        try(Stream<AgeUpCandidate> governanceStream = studyGovernanceDao.findAllAgeUpCandidatesByStudyId(policy.getStudyId())) {
+        try (Stream<AgeUpCandidate> governanceStream = studyGovernanceDao.findAllAgeUpCandidatesByStudyId(policy.getStudyId())) {
             potentialCandidates = governanceStream.collect(Collectors.toList());
         }
         Collections.shuffle(potentialCandidates);

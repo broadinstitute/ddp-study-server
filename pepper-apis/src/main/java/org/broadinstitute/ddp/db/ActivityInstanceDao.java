@@ -424,8 +424,8 @@ public class ActivityInstanceDao {
         var instanceDao = handle.attach(org.broadinstitute.ddp.db.dao.ActivityInstanceDao.class);
         Map<Long, Map<String, String>> substitutions;
         try (var substitionStream = instanceDao.bulkFindSubstitutions(instanceIds)) {
-             substitutions = substitionStream.
-                     collect(Collectors.toMap(wrapper -> wrapper.getActivityInstanceId(), wrapper -> wrapper.unwrap()));
+            substitutions = substitionStream
+                    .collect(Collectors.toMap(wrapper -> wrapper.getActivityInstanceId(), wrapper -> wrapper.unwrap()));
         }
         var sharedSnapshot = I18nContentRenderer
                 .newValueProviderBuilder(handle, userId)
@@ -468,10 +468,10 @@ public class ActivityInstanceDao {
     /**
      * Given a user, return a collection of activity instance summaries.
      *
-     * @param handle          JDBC handle
-     * @param userGuid        GUID of the user
-     * @param studyGuid       GUID of the study
-     * @param instanceGuid    GUID of the activity instance
+     * @param handle       JDBC handle
+     * @param userGuid     GUID of the user
+     * @param studyGuid    GUID of the study
+     * @param instanceGuid GUID of the activity instance
      * @return A size of sections for activity instance
      */
     public int getActivityInstanceSectionsSize(Handle handle,

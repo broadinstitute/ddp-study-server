@@ -2,7 +2,6 @@ package org.broadinstitute.ddp.db.dao;
 
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.stream.Stream;
 
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
