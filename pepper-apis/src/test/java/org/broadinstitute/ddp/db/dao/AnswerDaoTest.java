@@ -251,16 +251,22 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
     @Test
     public void testCreateUpdateDelete_picklist() {
         TransactionWrapper.useTxn(handle -> {
+            PicklistOptionDef nestedOptionDef1 = new PicklistOptionDef("NESTED_OPT1", Template.text("nested option 1"));
+            PicklistOptionDef nestedOptionDef2 = new PicklistOptionDef("NESTED_OPT2", Template.text("nested option 2"));
+            List<PicklistOptionDef> nestedOpts = List.of(nestedOptionDef1, nestedOptionDef2);
+            PicklistOptionDef optionDef = new PicklistOptionDef("PARENT_OPT", Template.text("parent option1"),
+                    Template.text("nested options Label"), nestedOpts);
+
             TestFormActivity act = TestFormActivity.builder()
-                    .withPicklistSingleList(true,
+                    .withPicklistMultiList(true,
                             new PicklistOptionDef("PO1", Template.text("po1")),
-                            new PicklistOptionDef("PO2", Template.text("po2"), Template.text("details")))
+                            new PicklistOptionDef("PO2", Template.text("po2"), Template.text("details")), optionDef)
                     .build(handle, testData.getUserId(), testData.getStudyGuid());
             long instanceId = createInstance(handle, act.getDef().getActivityId()).getId();
 
             AnswerDao answerDao = daoBuilder.buildDao(handle);
             var created = answerDao.createAnswer(testData.getUserId(), instanceId,
-                    new PicklistAnswer(null, act.getPicklistSingleListQuestion().getStableId(), null, List.of(
+                    new PicklistAnswer(null, act.getPicklistMultiListQuestion().getStableId(), null, List.of(
                             new SelectedPicklistOption("PO1"))));
 
             assertTrue(created.getAnswerId() > 0);
@@ -270,7 +276,7 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
             assertEquals(1, selected.size());
             assertEquals("PO1", selected.get(0).getStableId());
 
-            PicklistAnswer picklistAnswer = new PicklistAnswer(null, act.getPicklistSingleListQuestion().getStableId(), null, List.of(
+            PicklistAnswer picklistAnswer = new PicklistAnswer(null, act.getPicklistMultiListQuestion().getStableId(), null, List.of(
                     new SelectedPicklistOption("PO2", "details2")));
             answerDao.updateAnswer(testData.getUserId(), created.getAnswerId(), picklistAnswer);
 
@@ -287,6 +293,20 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
             assertEquals(1, selected.size());
             assertEquals("PO2", selected.get(0).getStableId());
             assertEquals("details2", selected.get(0).getDetailText());
+
+            picklistAnswer = new PicklistAnswer(null, act.getPicklistMultiListQuestion().getStableId(), null, List.of(
+                    new SelectedPicklistOption("PARENT_OPT"),
+                    new SelectedPicklistOption("NESTED_OPT2")));
+            answerDao.updateAnswer(testData.getUserId(), created.getAnswerId(), picklistAnswer);
+            assertEquals(created.getAnswerId(), picklistAnswer.getAnswerId());
+            updatedOpt = answerDao.findAnswerById(created.getAnswerId());
+            assertTrue(updatedOpt.isPresent());
+            updated = updatedOpt.get();
+            assertEquals(created.getAnswerGuid(), updated.getAnswerGuid());
+            selected = ((PicklistAnswer) updated).getValue();
+            assertEquals(2, selected.size());
+            assertEquals("NESTED_OPT2", selected.get(0).getStableId());
+            assertEquals("PARENT_OPT", selected.get(1).getStableId());
 
             answerDao.deleteAnswer(created.getAnswerId());
             assertFalse(answerDao.findAnswerById(created.getAnswerId()).isPresent());
