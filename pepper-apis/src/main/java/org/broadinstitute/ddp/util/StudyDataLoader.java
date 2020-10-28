@@ -275,10 +275,9 @@ public class StudyDataLoader {
         UserDto pepperUser;
 
         if (isMGU) {
-            String auth0UserId = createAuth0UserWithExistingPassword();
+            pepperUser = createGovernorAndGovernedUser(userDao, clientDao, datstatData, userGuid, userHruid, clientDto);
         }
         pepperUser = createLegacyPepperUser(userDao, clientDao, datstatData, userGuid, userHruid, clientDto);
-
 
 
         JdbiLanguageCode jdbiLanguageCode = handle.attach(JdbiLanguageCode.class);
@@ -983,6 +982,20 @@ public class StudyDataLoader {
         return parentAnswer.getAnswerGuid();
     }
 
+    public UserDto createGovernorAndGovernedUser(JdbiUser userDao, JdbiClient clientDao,
+                                          JsonElement data, String userGuid, String userHruid, ClientDto clientDto) throws Exception {
+        String emailAddress = data.getAsJsonObject().get("datstat_email").getAsString();
+        boolean hasPassword = data.getAsJsonObject().has("password");
+        String auth0UserId;
+
+        if (hasPassword) {
+            auth0UserId = createAuth0UserWithExistingPassword(data, userGuid, emailAddress);
+        } else {
+            auth0UserId = createAuth0UserWithRandomPassword(emailAddress);
+        }
+
+        UserDto operatorUser = insertNewUser(userDao, data, userGuid, userHruid, clientDto, auth0UserId);
+    }
 
     public UserDto createLegacyPepperUser(JdbiUser userDao, JdbiClient clientDao,
                                           JsonElement data, String userGuid, String userHruid, ClientDto clientDto) throws Exception {
@@ -996,7 +1009,10 @@ public class StudyDataLoader {
             auth0UserId = createAuth0UserWithRandomPassword(emailAddress);
         }
 
+        return insertNewUser(userDao, data, userGuid, userHruid, clientDto, auth0UserId);
+    }
 
+    private UserDto insertNewUser(JdbiUser userDao, JsonElement data, String userGuid, String userHruid, ClientDto clientDto, String auth0UserId) {
         String userCreatedAt = getStringValueFromElement(data, "datstat_created");
 
         LocalDateTime createdAtDate = LocalDateTime.parse(userCreatedAt, formatter);
@@ -1023,7 +1039,6 @@ public class StudyDataLoader {
 
         LOG.info("User created: Auth0UserId = " + auth0UserId + ", GUID = " + userGuid + ", HRUID = " + userHruid + ", ALTPID = "
                 + altpid);
-
         return newUser;
     }
 
