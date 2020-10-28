@@ -89,7 +89,7 @@ public class PicklistOptionDef {
         this.isExclusive = isExclusive;
     }
 
-    public PicklistOptionDef(Long optionId, String stableId, Template optionLabelTemplate, Template tooltipTemplate,
+    /*public PicklistOptionDef(Long optionId, String stableId, Template optionLabelTemplate, Template tooltipTemplate,
                              Template detailLabelTemplate, boolean isExclusive, Template nestedOptionsLabelTemplate) {
         this.optionId = optionId;
         this.stableId = MiscUtil.checkNotBlank(stableId, "stableId");
@@ -99,7 +99,7 @@ public class PicklistOptionDef {
         this.detailLabelTemplate = detailLabelTemplate;
         this.isExclusive = isExclusive;
         this.nestedOptionsLabelTemplate = nestedOptionsLabelTemplate;
-    }
+    }*/
 
     public PicklistOptionDef(Long optionId, String stableId, Template optionLabelTemplate, Template tooltipTemplate,
                              Template detailLabelTemplate, boolean isExclusive, Template nestedOptionsLabelTemplate,
@@ -111,6 +111,14 @@ public class PicklistOptionDef {
         this.isDetailsAllowed = (detailLabelTemplate != null);
         this.detailLabelTemplate = detailLabelTemplate;
         this.isExclusive = isExclusive;
+        this.nestedOptionsLabelTemplate = nestedOptionsLabelTemplate;
+        this.nestedPicklistOptions = nestedPicklistOptions;
+    }
+
+    public PicklistOptionDef(String stableId, Template optionLabelTemplate, Template nestedOptionsLabelTemplate,
+                             List<PicklistOptionDef> nestedPicklistOptions) {
+        this.stableId = MiscUtil.checkNotBlank(stableId, "stableId");
+        this.optionLabelTemplate = MiscUtil.checkNonNull(optionLabelTemplate, "optionLabelTemplate");
         this.nestedOptionsLabelTemplate = nestedOptionsLabelTemplate;
         this.nestedPicklistOptions = nestedPicklistOptions;
     }

@@ -7,6 +7,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -20,6 +21,7 @@ import org.broadinstitute.ddp.cache.DaoBuilder;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dto.ActivityVersionDto;
 import org.broadinstitute.ddp.db.dto.PicklistOptionDto;
+import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.db.dto.RevisionDto;
 import org.broadinstitute.ddp.model.activity.definition.FormActivityDef;
 import org.broadinstitute.ddp.model.activity.definition.FormSectionDef;
@@ -57,6 +59,7 @@ public class PicklistQuestionDaoTest extends TxnAwareBaseTest {
 
     private FormActivityDef activity;
     private PicklistQuestionDef question;
+    private PicklistQuestionDef question2;
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
@@ -91,10 +94,23 @@ public class PicklistQuestionDaoTest extends TxnAwareBaseTest {
         question = PicklistQuestionDef.buildSingleSelect(PicklistRenderMode.LIST, stableId, textTmpl("prompt"))
                 .addOption(new PicklistOptionDef("PO1", textTmpl("option1")))
                 .build();
+
+        PicklistOptionDef nestedOptionDef1 = new PicklistOptionDef("NESTED_OPT1", textTmpl("nested option 1"));
+        PicklistOptionDef nestedOptionDef2 = new PicklistOptionDef("NESTED_OPT2", textTmpl("nested option 2"));
+        List<PicklistOptionDef> nestedOpts = new ArrayList<>();
+        nestedOpts.add(nestedOptionDef1);
+        nestedOpts.add(nestedOptionDef2);
+        PicklistOptionDef optionDef = new PicklistOptionDef("PARENT_OPT", textTmpl("parent option1"),
+                textTmpl("nested options Label"), nestedOpts);
+        String stableId2 = "PQ_NESTED_OPTS" + Instant.now().toEpochMilli();
+        question2 = PicklistQuestionDef.buildSingleSelect(PicklistRenderMode.LIST, stableId2, textTmpl("prompt for Q#2"))
+                .addOption(optionDef)
+                .build();
+
         String actCode = "ACT" + Instant.now().toEpochMilli();
         activity = FormActivityDef.generalFormBuilder(actCode, "v1", testData.getStudyGuid())
                 .addName(new Translation("en", "activity"))
-                .addSection(new FormSectionDef(null, TestUtil.wrapQuestions(question)))
+                .addSection(new FormSectionDef(null, TestUtil.wrapQuestions(question, question2)))
                 .build();
         return activityDao.insertActivity(activity, meta);
     }
@@ -128,6 +144,19 @@ public class PicklistQuestionDaoTest extends TxnAwareBaseTest {
             String instanceGuid = createActivityInstance(activity);
             Optional<PicklistOptionDto> opt = jdbiOption.getByStableId(question.getQuestionId(), "PO1", instanceGuid);
             assertTrue(opt.isPresent());
+
+            QuestionDto question2Dto = handle.attach(JdbiQuestion.class).getQuestionDtoById(question2.getQuestionId()).get();
+            PicklistQuestionDao.GroupAndOptionDtos dtos = handle.attach(PicklistQuestionDao.class)
+                    .findOrderedGroupAndOptionDtos(question2Dto, version1.getRevStart());
+            assertNotNull(dtos.getUngroupedOptions());
+            assertEquals(1, dtos.getUngroupedOptions().size());
+
+            PicklistOptionDto parentOption = dtos.getUngroupedOptions().get(0);
+            assertNotNull(parentOption.getNestedPicklistOptions());
+            assertNotNull(parentOption.getNestedOptionsTemplateId());
+            assertEquals(2, parentOption.getNestedPicklistOptions().size());
+            assertEquals("NESTED_OPT1", parentOption.getNestedPicklistOptions().get(0).getStableId());
+            assertEquals("NESTED_OPT2", parentOption.getNestedPicklistOptions().get(1).getStableId());
 
             // Add a new option using a new version
             RevisionMetadata meta = new RevisionMetadata(version1.getRevStart() + 5000L, userId, "test");

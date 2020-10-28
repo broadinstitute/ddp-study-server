@@ -20,7 +20,7 @@ public class PicklistOptionDto implements TimestampRevisioned, Serializable {
     private Long revisionStartTimestamp;
     private Long revisionEndTimestamp;
     private Long nestedOptionsTemplateId;
-    private List<PicklistOptionDto> picklistSuboptions;
+    private List<PicklistOptionDto> nestedPicklistOptions;
 
     @JdbiConstructor
     public PicklistOptionDto(@ColumnName("picklist_option_id") long id,
@@ -101,15 +101,15 @@ public class PicklistOptionDto implements TimestampRevisioned, Serializable {
         return nestedOptionsTemplateId;
     }
 
-    public List<PicklistOptionDto> getPicklistSuboptions() {
-        return picklistSuboptions;
+    public List<PicklistOptionDto> getNestedPicklistOptions() {
+        return nestedPicklistOptions;
     }
 
     public void setNestedOptionsTemplateId(Long nestedOptionsTemplateId) {
         this.nestedOptionsTemplateId = nestedOptionsTemplateId;
     }
 
-    public void setPicklistSuboptions(List<PicklistOptionDto> picklistSuboptions) {
-        this.picklistSuboptions = picklistSuboptions;
+    public void setNestedPicklistOptions(List<PicklistOptionDto> nestedPicklistOptions) {
+        this.nestedPicklistOptions = nestedPicklistOptions;
     }
 }

@@ -423,16 +423,16 @@ public interface QuestionDao extends SqlObject {
         PicklistOption option = null;
         // Put the ungrouped options in the list first.
         for (PicklistOptionDto optionDto : container.getUngroupedOptions()) {
-            if (CollectionUtils.isEmpty(optionDto.getPicklistSuboptions())) {
+            if (CollectionUtils.isEmpty(optionDto.getNestedPicklistOptions())) {
                 option = new PicklistOption(optionDto.getStableId(),
                         optionDto.getOptionLabelTemplateId(), optionDto.getTooltipTemplateId(), optionDto.getDetailLabelTemplateId(),
                         optionDto.getAllowDetails(), optionDto.isExclusive());
             } else {
                 //find any suboptions
                 //LOG.info("--Lookig subopts for option : {} stable: {} QID: {}", optionDto.getId(), option.getStableId(), dto.getId());
-                if (CollectionUtils.isNotEmpty(optionDto.getPicklistSuboptions())) {
+                if (CollectionUtils.isNotEmpty(optionDto.getNestedPicklistOptions())) {
                     List<PicklistOption> nestedOptions = new ArrayList<>();
-                    for (PicklistOptionDto nestedOptionDto : optionDto.getPicklistSuboptions()) {
+                    for (PicklistOptionDto nestedOptionDto : optionDto.getNestedPicklistOptions()) {
                         nestedOptions.add(new PicklistOption(nestedOptionDto.getStableId(),
                                 nestedOptionDto.getOptionLabelTemplateId(), nestedOptionDto.getTooltipTemplateId(),
                                 nestedOptionDto.getDetailLabelTemplateId(), nestedOptionDto.getAllowDetails(),
@@ -1529,13 +1529,13 @@ public interface QuestionDao extends SqlObject {
                             : templateDao.loadTemplateById(optionDto.getNestedOptionsTemplateId());
 
                     PicklistOptionDef optionDef = null;
-                    if (CollectionUtils.isEmpty(optionDto.getPicklistSuboptions())) {
+                    if (CollectionUtils.isEmpty(optionDto.getNestedPicklistOptions())) {
                         optionDef = new PicklistOptionDef(optionDto.getId(), optionDto.getStableId(),
                                 optionLabel, tooltipTemplate, detailLabel, optionDto.isExclusive());
                     } else {
-                        if (CollectionUtils.isNotEmpty(optionDto.getPicklistSuboptions())) {
+                        if (CollectionUtils.isNotEmpty(optionDto.getNestedPicklistOptions())) {
                             List<PicklistOptionDef> nestedOptions = new ArrayList<>();
-                            for (PicklistOptionDto nestedOptionDto : optionDto.getPicklistSuboptions()) {
+                            for (PicklistOptionDto nestedOptionDto : optionDto.getNestedPicklistOptions()) {
                                 Template nestedOptionLabel = templateDao.loadTemplateById(nestedOptionDto.getOptionLabelTemplateId());
                                 Template nestedDetailLabel = !nestedOptionDto.getAllowDetails() ? null
                                         : templateDao.loadTemplateById(nestedOptionDto.getDetailLabelTemplateId());

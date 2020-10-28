@@ -415,10 +415,10 @@ public interface PicklistQuestionDao extends SqlObject {
                         } else {
                             for (PicklistOptionDto dto : container.getUngroupedOptions()) {
                                 if (dto.getId() == parentOptionId) {
-                                    if (dto.getPicklistSuboptions() == null) {
-                                        dto.setPicklistSuboptions(new ArrayList<>());
+                                    if (dto.getNestedPicklistOptions() == null) {
+                                        dto.setNestedPicklistOptions(new ArrayList<>());
                                     }
-                                    dto.getPicklistSuboptions().add(option);
+                                    dto.getNestedPicklistOptions().add(option);
                                     break;
                                 }
                             }
@@ -460,10 +460,10 @@ public interface PicklistQuestionDao extends SqlObject {
                             //        (k) -> new ArrayList<>()).add(option);
                             for (PicklistOptionDto dto : container.get(questionId).getUngroupedOptions()) {
                                 if (dto.getId() == parentOptionId) {
-                                    if (dto.getPicklistSuboptions() == null) {
-                                        dto.setPicklistSuboptions(new ArrayList<>());
+                                    if (dto.getNestedPicklistOptions() == null) {
+                                        dto.setNestedPicklistOptions(new ArrayList<>());
                                     }
-                                    dto.getPicklistSuboptions().add(option);
+                                    dto.getNestedPicklistOptions().add(option);
                                     break;
                                 }
                             }

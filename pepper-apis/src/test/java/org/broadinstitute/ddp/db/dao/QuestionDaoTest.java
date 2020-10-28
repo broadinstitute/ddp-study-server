@@ -467,6 +467,54 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
     }
 
     @Test
+    public void testInsertPicklistQuestion_with_NestedOptions() {
+        TransactionWrapper.useTxn(handle -> {
+            QuestionDao dao = handle.attach(QuestionDao.class);
+            ActivityDao actDao = handle.attach(ActivityDao.class);
+            JdbiQuestion jdbiQuestion = handle.attach(JdbiQuestion.class);
+
+            PicklistOptionDef nestedOptionDef1 = new PicklistOptionDef("NESTED_OPT1", Template.text("nested option 1"));
+            PicklistOptionDef nestedOptionDef2 = new PicklistOptionDef("NESTED_OPT2", Template.text("nested option 2"));
+            List<PicklistOptionDef> nestedOpts = new ArrayList<>();
+            nestedOpts.add(nestedOptionDef1);
+            nestedOpts.add(nestedOptionDef2);
+            PicklistOptionDef optionDef = new PicklistOptionDef("PARENT_OPT", Template.text("parent option1"),
+                    Template.text("nested options Label"), nestedOpts);
+            String stableId2 = "PQ_NESTED_OPTS" + Instant.now().toEpochMilli();
+
+            PicklistQuestionDef def = PicklistQuestionDef.buildSingleSelect(
+                    PicklistRenderMode.LIST, stableId2, Template.text("prompt for Q#2"))
+                    .addOption(optionDef)
+                    .build();
+
+            FormActivityDef form = buildSingleSectionForm(testData.getStudyGuid(), def);
+            ActivityVersionDto version = actDao.insertActivity(form, RevisionMetadata.now(testData.getUserId(), "test"));
+
+            QuestionDto questionDto = jdbiQuestion.getQuestionDtoById(def.getQuestionId()).get();
+            PicklistQuestionDef actual = dao.findPicklistQuestionDefByDtoAndTimestamp(questionDto, version.getRevStart());
+
+            assertNotNull(actual);
+            assertEquals(def.getQuestionId(), actual.getQuestionId());
+            assertEquals(def.getStableId(), actual.getStableId());
+            assertEquals(def.getSelectMode(), actual.getSelectMode());
+            assertEquals(def.getRenderMode(), actual.getRenderMode());
+
+            assertEquals(def.getPicklistOptions().size(), actual.getPicklistOptions().size());
+            assertEquals(def.getPicklistOptions().get(0).getStableId(), actual.getPicklistOptions().get(0).getStableId());
+
+            //check nested options
+            PicklistOptionDef parentOption = actual.getPicklistOptions().get(0);
+            assertNotNull(parentOption.getNestedPicklistOptions());
+            assertNotNull(parentOption.getNestedOptionsLabelTemplate());
+            assertEquals(2, parentOption.getNestedPicklistOptions().size());
+            assertEquals("NESTED_OPT1", parentOption.getNestedPicklistOptions().get(0).getStableId());
+            assertEquals("NESTED_OPT2", parentOption.getNestedPicklistOptions().get(1).getStableId());
+
+            handle.rollback();
+        });
+    }
+
+    @Test
     public void testDisablePicklistQuestion() {
         TransactionWrapper.useTxn(handle -> {
             QuestionDao dao = handle.attach(QuestionDao.class);
