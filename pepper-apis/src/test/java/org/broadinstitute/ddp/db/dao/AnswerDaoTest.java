@@ -305,8 +305,8 @@ public class AnswerDaoTest extends TxnAwareBaseTest {
             assertEquals(created.getAnswerGuid(), updated.getAnswerGuid());
             selected = ((PicklistAnswer) updated).getValue();
             assertEquals(2, selected.size());
-            assertEquals("NESTED_OPT2", selected.get(0).getStableId());
-            assertEquals("PARENT_OPT", selected.get(1).getStableId());
+            assertEquals("PARENT_OPT", selected.get(0).getStableId());
+            assertEquals("NESTED_OPT2", selected.get(1).getStableId());
 
             answerDao.deleteAnswer(created.getAnswerId());
             assertFalse(answerDao.findAnswerById(created.getAnswerId()).isPresent());
