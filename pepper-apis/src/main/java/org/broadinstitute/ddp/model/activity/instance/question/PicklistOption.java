@@ -1,8 +1,10 @@
 package org.broadinstitute.ddp.model.activity.instance.question;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.function.Consumer;
+import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
@@ -41,7 +43,7 @@ public class PicklistOption implements Renderable {
     private String nestedPicklistOptionsLabel;
 
     @SerializedName("nestedPicklistOptions")
-    private List<PicklistOption> nestedPicklistOptions;
+    private List<@Valid @NotNull PicklistOption> nestedPicklistOptions = new ArrayList<>();
 
     private transient long optionLabelTemplateId;
     private transient Long tooltipTemplateId;
@@ -130,21 +132,9 @@ public class PicklistOption implements Renderable {
         return groupStableId;
     }
 
-    public String getNestedPicklistOptionsLabel() {
-        return nestedPicklistOptionsLabel;
-    }
-
     public List<PicklistOption> getNestedPicklistOptions() {
         return nestedPicklistOptions;
     }
-
-    /*public void setNestedPicklistOptionsLabel(String nestedPicklistOptionsLabel) {
-        this.nestedPicklistOptionsLabel = nestedPicklistOptionsLabel;
-    }
-
-    public void setNestedPicklistOptions(List<PicklistOption> nestedPicklistOptions) {
-        this.nestedPicklistOptions = nestedPicklistOptions;
-    }*/
 
     @Override
     public void registerTemplateIds(Consumer<Long> registry) {

@@ -4,6 +4,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.google.gson.annotations.SerializedName;
@@ -39,7 +40,7 @@ public class PicklistOptionDef {
     private Template nestedOptionsLabelTemplate;
 
     @SerializedName("nestedPicklistOptions")
-    private List<PicklistOptionDef> nestedPicklistOptions;
+    private List<@Valid @NotNull PicklistOptionDef> nestedPicklistOptions = new ArrayList<>();
 
     private transient Long optionId;
 

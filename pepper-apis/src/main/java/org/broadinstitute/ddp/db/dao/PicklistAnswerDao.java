@@ -108,18 +108,6 @@ public interface PicklistAnswerDao extends SqlObject {
                         .filter(option -> selectedStableIds.contains(option.getStableId()))
                         .collect(toMap(def -> def.getStableId(), def -> def));
 
-        Map<String, PicklistOptionDef> allSelectedStableIdToNestedOptionDef = new HashMap<>();
-        for (PicklistOptionDef optionDef : selectedStableIdToOptionDef.values()) {
-            //get nested options
-            if (CollectionUtils.isNotEmpty(optionDef.getNestedPicklistOptions())) {
-                Map<String, PicklistOptionDef> selectedStableIdToSuboptionDef = optionDef.getNestedPicklistOptions().stream()
-                        .filter(suboption -> selectedStableIds.contains(suboption.getStableId()))
-                        .collect(toMap(def -> def.getStableId(), def -> def));
-                allSelectedStableIdToNestedOptionDef.putAll(selectedStableIdToSuboptionDef);
-            }
-        }
-        selectedStableIdToOptionDef.putAll(allSelectedStableIdToNestedOptionDef);
-
         boolean hasExclusive = selectedStableIdToOptionDef.values().stream().anyMatch(def -> def.isExclusive());
         if (hasExclusive && selected.size() > 1) {
             throw new OperationNotAllowedException("Only one selected option allowed when list contains an exclusive option");

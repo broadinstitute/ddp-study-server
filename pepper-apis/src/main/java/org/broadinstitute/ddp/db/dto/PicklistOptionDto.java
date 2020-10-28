@@ -1,6 +1,7 @@
 package org.broadinstitute.ddp.db.dto;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
@@ -20,7 +21,7 @@ public class PicklistOptionDto implements TimestampRevisioned, Serializable {
     private Long revisionStartTimestamp;
     private Long revisionEndTimestamp;
     private Long nestedOptionsTemplateId;
-    private List<PicklistOptionDto> nestedPicklistOptions;
+    private List<PicklistOptionDto> nestedPicklistOptions = new ArrayList<>();
 
     @JdbiConstructor
     public PicklistOptionDto(@ColumnName("picklist_option_id") long id,
@@ -105,11 +106,4 @@ public class PicklistOptionDto implements TimestampRevisioned, Serializable {
         return nestedPicklistOptions;
     }
 
-    public void setNestedOptionsTemplateId(Long nestedOptionsTemplateId) {
-        this.nestedOptionsTemplateId = nestedOptionsTemplateId;
-    }
-
-    public void setNestedPicklistOptions(List<PicklistOptionDto> nestedPicklistOptions) {
-        this.nestedPicklistOptions = nestedPicklistOptions;
-    }
 }

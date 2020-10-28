@@ -475,10 +475,7 @@ public class QuestionDaoTest extends TxnAwareBaseTest {
 
             PicklistOptionDef nestedOptionDef1 = new PicklistOptionDef("NESTED_OPT1", Template.text("nested option 1"));
             PicklistOptionDef nestedOptionDef2 = new PicklistOptionDef("NESTED_OPT2", Template.text("nested option 2"));
-            List<PicklistOptionDef> nestedOpts = new ArrayList<>() {{
-                add(nestedOptionDef1);
-                add(nestedOptionDef2);
-            }};
+            List<PicklistOptionDef> nestedOpts = List.of(nestedOptionDef1, nestedOptionDef2);
             PicklistOptionDef optionDef = new PicklistOptionDef("PARENT_OPT", Template.text("parent option1"),
                     Template.text("nested options Label"), nestedOpts);
             String stableId2 = "PQ_NESTED_OPTS" + Instant.now().toEpochMilli();

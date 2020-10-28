@@ -415,7 +415,6 @@ public interface PicklistQuestionDao extends SqlObject {
                     if (groupId == null) {
                         if (parentOptionId == null) {
                             container.getUngroupedOptions().add(option);
-                            option.setNestedPicklistOptions(new ArrayList<>());
                         } else {
                             container.getUngroupedOptions().stream()
                                     .filter(dto -> dto.getId() == parentOptionId)
@@ -451,7 +450,6 @@ public interface PicklistQuestionDao extends SqlObject {
                     if (groupId == null) {
                         if (parentOptionId == null) {
                             container.computeIfAbsent(questionId, (k) -> new GroupAndOptionDtos()).getUngroupedOptions().add(option);
-                            option.setNestedPicklistOptions(new ArrayList<>());
                         } else {
                             container.get(questionId).getUngroupedOptions().stream()
                                     .filter(dto -> dto.getId() == parentOptionId)
