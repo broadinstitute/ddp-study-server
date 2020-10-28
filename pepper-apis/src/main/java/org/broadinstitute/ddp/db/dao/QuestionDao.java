@@ -429,15 +429,15 @@ public interface QuestionDao extends SqlObject {
                         optionDto.getAllowDetails(), optionDto.isExclusive());
             } else {
                 //find any suboptions
-                //LOG.info("--Lookig subopts for option : {} stable: {} QID: {}", optionDto.getId(), option.getStableId(), dto.getId());
                 if (CollectionUtils.isNotEmpty(optionDto.getNestedPicklistOptions())) {
                     List<PicklistOption> nestedOptions = new ArrayList<>();
-                    for (PicklistOptionDto nestedOptionDto : optionDto.getNestedPicklistOptions()) {
+                    optionDto.getNestedPicklistOptions().stream().forEach(nestedOptionDto -> {
                         nestedOptions.add(new PicklistOption(nestedOptionDto.getStableId(),
                                 nestedOptionDto.getOptionLabelTemplateId(), nestedOptionDto.getTooltipTemplateId(),
                                 nestedOptionDto.getDetailLabelTemplateId(), nestedOptionDto.getAllowDetails(),
                                 nestedOptionDto.isExclusive()));
-                    }
+                    });
+
                     option = new PicklistOption(optionDto.getStableId(),
                             optionDto.getOptionLabelTemplateId(), optionDto.getTooltipTemplateId(), optionDto.getDetailLabelTemplateId(),
                             optionDto.getAllowDetails(), optionDto.isExclusive(), optionDto.getNestedOptionsTemplateId(), nestedOptions);

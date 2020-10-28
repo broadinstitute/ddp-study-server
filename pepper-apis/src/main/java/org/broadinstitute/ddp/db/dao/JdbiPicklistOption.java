@@ -101,12 +101,6 @@ public interface JdbiPicklistOption extends SqlObject {
     @RegisterConstructorMapper(PicklistOptionDto.class)
     List<PicklistOptionDto> findAllActiveOrderedOptionsByQuestionId(@Bind("questionId") long questionId);
 
-
-    @UseStringTemplateSqlLocator
-    @SqlQuery("queryAllOrderedPicklistSubOptionsByOptionId")
-    @RegisterConstructorMapper(PicklistOptionDto.class)
-    List<PicklistOptionDto> findOrderedSubpicklistOptionDtos(@Bind("questionId") long questionId, @Bind("optionId") long optionId);
-
     @SqlUpdate("update picklist_option set revision_id = :revisionId where picklist_option_id = :optionId")
     int updateRevisionByOptionId(@Bind("optionId") long optionId, @Bind("revisionId") long revisionId);
 
