@@ -65,6 +65,8 @@ import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyLegacyData;
 import org.broadinstitute.ddp.db.dao.KitTypeDao;
 import org.broadinstitute.ddp.db.dao.MedicalProviderDao;
+import org.broadinstitute.ddp.db.dao.UserDao;
+import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.ClientDto;
@@ -87,6 +89,7 @@ import org.broadinstitute.ddp.model.activity.instance.answer.TextAnswer;
 import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.activity.types.InstitutionType;
 import org.broadinstitute.ddp.model.address.MailAddress;
+import org.broadinstitute.ddp.model.governance.Governance;
 import org.broadinstitute.ddp.model.migration.BaseSurvey;
 import org.broadinstitute.ddp.model.migration.SurveyAddress;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
@@ -266,7 +269,8 @@ public class StudyDataLoader {
 
         userGuid = DBUtils.uniqueUserGuid(handle);
         String userHruid = DBUtils.uniqueUserHruid(handle);
-        JdbiUser userDao = handle.attach(JdbiUser.class);
+        UserDao userDao = handle.attach(UserDao.class);
+        UserGovernanceDao userGovernanceDao = handle.attach(UserGovernanceDao.class);
         JdbiClient clientDao = handle.attach(JdbiClient.class);
 
         //Todo after multigoverned users, check if user with this email already exists in auth0, if so skip creation of user
@@ -275,9 +279,9 @@ public class StudyDataLoader {
         UserDto pepperUser;
 
         if (isMGU) {
-            pepperUser = createGovernorAndGovernedUser(userDao, clientDao, datstatData, userGuid, userHruid, clientDto);
+            pepperUser = createOperatorAndGovernedUser(jdbiUser, clientDao, datstatData, userGuid, userHruid, clientDto, userGovernanceDao, userDao);
         }
-        pepperUser = createLegacyPepperUser(userDao, clientDao, datstatData, userGuid, userHruid, clientDto);
+        pepperUser = createLegacyPepperUser(jdbiUser, clientDao, datstatData, userGuid, userHruid, clientDto);
 
 
         JdbiLanguageCode jdbiLanguageCode = handle.attach(JdbiLanguageCode.class);
@@ -982,8 +986,9 @@ public class StudyDataLoader {
         return parentAnswer.getAnswerGuid();
     }
 
-    public UserDto createGovernorAndGovernedUser(JdbiUser userDao, JdbiClient clientDao,
-                                          JsonElement data, String userGuid, String userHruid, ClientDto clientDto) throws Exception {
+    public UserDto createOperatorAndGovernedUser(JdbiUser jdbiUser, JdbiClient clientDao,
+                                                 JsonElement data, String userGuid, String userHruid, ClientDto clientDto,
+                                                 UserGovernanceDao userGovernanceDao, UserDao userDao) throws Exception {
         String emailAddress = data.getAsJsonObject().get("datstat_email").getAsString();
         boolean hasPassword = data.getAsJsonObject().has("password");
         String auth0UserId;
@@ -994,10 +999,17 @@ public class StudyDataLoader {
             auth0UserId = createAuth0UserWithRandomPassword(emailAddress);
         }
 
-        UserDto operatorUser = insertNewUser(userDao, data, userGuid, userHruid, clientDto, auth0UserId);
+        UserDto operatorUserDto = insertNewUser(jdbiUser, data, userGuid, userHruid, clientDto, auth0UserId);
+        String operatorGuid = operatorUserDto.getUserGuid();
+        org.broadinstitute.ddp.model.user.User operatorUser = userDao.findUserByGuid(operatorGuid)
+                .orElseThrow(() -> new DDPException("Could not find operator with guid " + operatorGuid));
+        Governance governance = userGovernanceDao.createGovernedUserWithGuidAlias(op);
+        UserDto governedUserDto = insertNewUser(jdbiUser, data, userGuid, userHruid, clientDto, null);
+
+        return null;
     }
 
-    public UserDto createLegacyPepperUser(JdbiUser userDao, JdbiClient clientDao,
+    public UserDto createLegacyPepperUser(JdbiUser jdbiUser, JdbiClient clientDao,
                                           JsonElement data, String userGuid, String userHruid, ClientDto clientDto) throws Exception {
         String emailAddress = data.getAsJsonObject().get("datstat_email").getAsString();
         boolean hasPassword = data.getAsJsonObject().has("password");
@@ -1009,7 +1021,7 @@ public class StudyDataLoader {
             auth0UserId = createAuth0UserWithRandomPassword(emailAddress);
         }
 
-        return insertNewUser(userDao, data, userGuid, userHruid, clientDto, auth0UserId);
+        return insertNewUser(jdbiUser, data, userGuid, userHruid, clientDto, auth0UserId);
     }
 
     private UserDto insertNewUser(JdbiUser userDao, JsonElement data, String userGuid, String userHruid, ClientDto clientDto, String auth0UserId) {
