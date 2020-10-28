@@ -44,6 +44,8 @@ public class StudyDataExportJob implements Job {
 
     private static final Logger LOG = LoggerFactory.getLogger(StudyDataExportJob.class);
 
+    private static DataExporter exporter;
+
     public static JobKey getKey() {
         return Keys.Export.DataExportJob;
     }
@@ -52,6 +54,7 @@ public class StudyDataExportJob implements Job {
         // Test that we can initialize the credentials.
         GoogleCredentialUtil.initCredentials(cfg.getBoolean(ConfigFile.REQUIRE_DEFAULT_GCP_CREDENTIALS));
 
+        exporter = new DataExporter(cfg);
         JobDetail job = JobBuilder.newJob(StudyDataExportJob.class)
                 .withIdentity(getKey())
                 .requestRecovery(false)
@@ -95,7 +98,6 @@ public class StudyDataExportJob implements Job {
 
     private void run() {
         Config cfg = ConfigManager.getInstance().getConfig();
-        var exporter = new DataExporter(cfg);
 
         String gcpProjectId = cfg.getString(ConfigFile.GOOGLE_PROJECT_ID);
         String bucketName = cfg.getString(ConfigFile.STUDY_EXPORT_BUCKET);

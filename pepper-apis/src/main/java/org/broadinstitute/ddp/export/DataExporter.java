@@ -3,8 +3,10 @@ package org.broadinstitute.ddp.export;
 import static org.broadinstitute.ddp.model.activity.types.ComponentType.MAILING_ADDRESS;
 
 import java.io.BufferedWriter;
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.Writer;
+import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
@@ -124,7 +126,7 @@ import org.jdbi.v3.core.Handle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DataExporter {
+public class DataExporter implements Closeable {
 
     public static final String TIMESTAMP_PATTERN = "MM/dd/yyyy HH:mm:ss";
     public static final DateTimeFormatter TIMESTAMP_FMT = DateTimeFormatter
@@ -140,6 +142,7 @@ public class DataExporter {
     private Gson gson;
     private Set<String> componentNames;
     private PdfService pdfService;
+    private RestHighLevelClient esClient;
 
     public static String makeExportCSVFilename(String studyGuid, Instant timestamp) {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmssX").withZone(ZoneOffset.UTC);
@@ -168,11 +171,21 @@ public class DataExporter {
         this.cfg = cfg;
         this.gson = new GsonBuilder().serializeNulls().create();
         this.pdfService = new PdfService();
+        try {
+            this.esClient = ElasticsearchServiceUtil.getClientForElasticsearchCloud(cfg);
+        } catch (MalformedURLException e) {
+            throw new IllegalArgumentException(e);
+        }
         componentNames = new HashSet<>();
         componentNames.add("MAILING_ADDRESS");
         componentNames.add("INITIAL_BIOPSY");
         componentNames.add("INSTITUTION");
         componentNames.add("PHYSICIAN");
+    }
+
+    @Override
+    public void close() throws IOException {
+        this.esClient.close();
     }
 
     /**
@@ -396,25 +409,24 @@ public class DataExporter {
         if (data.isEmpty()) {
             return;
         }
-        try (RestHighLevelClient client = ElasticsearchServiceUtil.getClientForElasticsearchCloud(cfg)) {
-            BulkRequest bulkRequest = new BulkRequest().timeout("2m");
 
-            data.forEach((key, value) -> {
-                String esDoc = gson.toJson(value);
-                UpdateRequest updateRequest = new UpdateRequest()
-                        .index(index)
-                        .type(REQUEST_TYPE)
-                        .id(key)
-                        .doc(esDoc, XContentType.JSON)
-                        .docAsUpsert(true);
-                bulkRequest.add(updateRequest);
-            });
+        BulkRequest bulkRequest = new BulkRequest().timeout("2m");
 
-            BulkResponse bulkResponse = client.bulk(bulkRequest, RequestOptions.DEFAULT);
+        data.forEach((key, value) -> {
+            String esDoc = gson.toJson(value);
+            UpdateRequest updateRequest = new UpdateRequest()
+                    .index(index)
+                    .type(REQUEST_TYPE)
+                    .id(key)
+                    .doc(esDoc, XContentType.JSON)
+                    .docAsUpsert(true);
+            bulkRequest.add(updateRequest);
+        });
 
-            if (bulkResponse.hasFailures()) {
-                LOG.error(bulkResponse.buildFailureMessage());
-            }
+        BulkResponse bulkResponse = esClient.bulk(bulkRequest, RequestOptions.DEFAULT);
+
+        if (bulkResponse.hasFailures()) {
+            LOG.error(bulkResponse.buildFailureMessage());
         }
     }
 
@@ -597,24 +609,22 @@ public class DataExporter {
         Map<String, String> participantRecords = prepareParticipantRecordsForJSONExport(
                 studyExtract, participants, exportStructuredDocument, handle, medicalRecordService);
 
-        try (RestHighLevelClient client = ElasticsearchServiceUtil.getClientForElasticsearchCloud(cfg)) {
-            BulkRequest bulkRequest = new BulkRequest().timeout("2m");
+        BulkRequest bulkRequest = new BulkRequest().timeout("2m");
 
-            participantRecords.forEach((key, value) -> {
-                UpdateRequest updateRequest = new UpdateRequest()
-                        .index(index)
-                        .type(REQUEST_TYPE)
-                        .id(key)
-                        .doc(value, XContentType.JSON)
-                        .docAsUpsert(true);
-                bulkRequest.add(updateRequest);
-            });
+        participantRecords.forEach((key, value) -> {
+            UpdateRequest updateRequest = new UpdateRequest()
+                    .index(index)
+                    .type(REQUEST_TYPE)
+                    .id(key)
+                    .doc(value, XContentType.JSON)
+                    .docAsUpsert(true);
+            bulkRequest.add(updateRequest);
+        });
 
-            BulkResponse bulkResponse = client.bulk(bulkRequest, RequestOptions.DEFAULT);
+        BulkResponse bulkResponse = esClient.bulk(bulkRequest, RequestOptions.DEFAULT);
 
-            if (bulkResponse.hasFailures()) {
-                LOG.error(bulkResponse.buildFailureMessage());
-            }
+        if (bulkResponse.hasFailures()) {
+            LOG.error(bulkResponse.buildFailureMessage());
         }
     }
 
