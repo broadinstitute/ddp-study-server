@@ -65,6 +65,7 @@ import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
 import org.broadinstitute.ddp.db.dao.JdbiUserStudyLegacyData;
 import org.broadinstitute.ddp.db.dao.KitTypeDao;
 import org.broadinstitute.ddp.db.dao.MedicalProviderDao;
+import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
@@ -90,6 +91,7 @@ import org.broadinstitute.ddp.model.activity.types.InstanceStatusType;
 import org.broadinstitute.ddp.model.activity.types.InstitutionType;
 import org.broadinstitute.ddp.model.address.MailAddress;
 import org.broadinstitute.ddp.model.governance.Governance;
+import org.broadinstitute.ddp.model.governance.GovernancePolicy;
 import org.broadinstitute.ddp.model.migration.BaseSurvey;
 import org.broadinstitute.ddp.model.migration.SurveyAddress;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
@@ -272,6 +274,9 @@ public class StudyDataLoader {
         UserDao userDao = handle.attach(UserDao.class);
         UserGovernanceDao userGovernanceDao = handle.attach(UserGovernanceDao.class);
         JdbiClient clientDao = handle.attach(JdbiClient.class);
+        JdbiLanguageCode jdbiLanguageCode = handle.attach(JdbiLanguageCode.class);
+        UserProfileDao profileDao = handle.attach(UserProfileDao.class);
+        StudyGovernanceDao studyGovernanceDao = handle.attach(StudyGovernanceDao.class);
 
         //Todo after multigoverned users, check if user with this email already exists in auth0, if so skip creation of user
         //otherwise we create new user in auth0
@@ -279,13 +284,13 @@ public class StudyDataLoader {
         UserDto pepperUser;
 
         if (isMGU) {
-            pepperUser = createOperatorAndGovernedUser(jdbiUser, clientDao, datstatData, userGuid, userHruid, clientDto, userGovernanceDao, userDao, studyDto, );
+            pepperUser = createOperatorAndGovernedUser(jdbiUser, clientDao, datstatData, userGuid, userHruid,
+                    clientDto, userGovernanceDao, userDao, studyDto, jdbiLanguageCode, profileDao, studyGovernanceDao);
+        } else {
+            pepperUser = createLegacyPepperUser(jdbiUser, clientDao, datstatData, userGuid, userHruid, clientDto);
         }
-        pepperUser = createLegacyPepperUser(jdbiUser, clientDao, datstatData, userGuid, userHruid, clientDto);
 
 
-        JdbiLanguageCode jdbiLanguageCode = handle.attach(JdbiLanguageCode.class);
-        UserProfileDao profileDao = handle.attach(UserProfileDao.class);
         addUserProfile(pepperUser, datstatData, jdbiLanguageCode, profileDao, isMGU);
 
         JdbiMailAddress jdbiMailAddress = handle.attach(JdbiMailAddress.class);
@@ -989,7 +994,9 @@ public class StudyDataLoader {
     public UserDto createOperatorAndGovernedUser(JdbiUser jdbiUser, JdbiClient clientDao,
                                                  JsonElement data, String userGuid, String userHruid, ClientDto clientDto,
                                                  UserGovernanceDao userGovernanceDao, UserDao userDao, StudyDto studyDto,
-                                                 JdbiLanguageCode jdbiLanguageCode) throws Exception {
+                                                 JdbiLanguageCode jdbiLanguageCode,
+                                                 UserProfileDao userProfileDao,
+                                                 StudyGovernanceDao studyGovernanceDao) throws Exception {
         String emailAddress = data.getAsJsonObject().get("datstat_email").getAsString();
         boolean hasPassword = data.getAsJsonObject().has("password");
         String auth0UserId;
@@ -1004,11 +1011,26 @@ public class StudyDataLoader {
         String operatorGuid = operatorUserDto.getUserGuid();
         org.broadinstitute.ddp.model.user.User operatorUser = userDao.findUserByGuid(operatorGuid)
                 .orElseThrow(() -> new DDPException("Could not find operator with guid " + operatorGuid));
-        addUserProfile(operatorUser, data, jdbiLanguageCode, profileDao, true);
         Governance governance = userGovernanceDao.createGovernedUserWithGuidAlias(operatorUser.getCreatedByClientId(), operatorUser.getId());
         userGovernanceDao.grantGovernedStudy(governance.getId(), studyDto.getId());
+        org.broadinstitute.ddp.model.user.User governedUser = userDao.findUserById(governance.getGovernedUserId())
+                .orElseThrow(() -> new DDPException("Could not find governed user with id " + governance.getGovernedUserId()));
+        LOG.info("Created governed user with guid {} and granted access to study {} for proxy {}",
+                governedUser.getGuid(), studyDto.getGuid(), operatorUser.getGuid());
 
-        return null;
+        addUserProfile(operatorUserDto, data, jdbiLanguageCode, userProfileDao, true);
+
+        GovernancePolicy policy = studyGovernanceDao.findPolicyByStudyGuid(studyDto.getGuid())
+                .orElse(null);
+        if (policy != null && !policy.getAgeOfMajorityRules().isEmpty()) {
+            studyGovernanceDao.addAgeUpCandidate(policy.getStudyId(), governedUser.getId());
+            LOG.info("Added governed user {} as age-up candidate in study {}", governedUser.getGuid(), policy.getStudyGuid());
+        }
+
+        return new UserDto(governedUser.getId(), governedUser.getAuth0UserId(),
+                governedUser.getGuid(), governedUser.getHruid(), governedUser.getLegacyAltPid(),
+                governedUser.getLegacyShortId(), governedUser.getCreatedAt(), governedUser.getUpdatedAt(),
+                governedUser.getExpiresAt());
     }
 
     public UserDto createLegacyPepperUser(JdbiUser jdbiUser, JdbiClient clientDao,
