@@ -138,11 +138,11 @@ public class DataExporter implements Closeable {
     // A cache for user auth0 emails, storing (auth0UserId -> email).
     private static Map<String, String> emailStore = new HashMap<>();
 
-    private Config cfg;
-    private Gson gson;
-    private Set<String> componentNames;
-    private PdfService pdfService;
-    private RestHighLevelClient esClient;
+    private final Config cfg;
+    private final Gson gson;
+    private final Set<String> componentNames;
+    private final PdfService pdfService;
+    private final RestHighLevelClient esClient;
 
     public static String makeExportCSVFilename(String studyGuid, Instant timestamp) {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmssX").withZone(ZoneOffset.UTC);
