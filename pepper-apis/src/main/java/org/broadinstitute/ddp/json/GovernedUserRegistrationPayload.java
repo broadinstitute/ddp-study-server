@@ -26,6 +26,14 @@ public class GovernedUserRegistrationPayload {
 
     public GovernedUserRegistrationPayload() {}
 
+    public GovernedUserRegistrationPayload(String languageCode, String firstName, String lastName, String timeZone, String alias) {
+        this.languageCode = languageCode;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.timeZone = timeZone;
+        this.alias = alias;
+    }
+
     public String getLanguageCode() {
         return languageCode;
     }
