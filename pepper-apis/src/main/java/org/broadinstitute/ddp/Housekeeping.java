@@ -212,6 +212,7 @@ public class Housekeeping {
             LiquibaseUtil.runLiquibase(apisDbUrl, TransactionWrapper.DB.APIS);
             LOG.info("Running Housekeeping liquibase migrations against " + housekeepingDbUrl);
             LiquibaseUtil.runLiquibase(housekeepingDbUrl, TransactionWrapper.DB.HOUSEKEEPING);
+            LiquibaseUtil.releaseResources();
         }
         TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, LanguageStore::init);
 

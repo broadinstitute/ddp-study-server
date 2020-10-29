@@ -11,12 +11,14 @@ import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import liquibase.Contexts;
 import liquibase.Liquibase;
+import liquibase.database.DatabaseFactory;
 import liquibase.database.jvm.JdbcConnection;
 import liquibase.exception.LiquibaseException;
 import liquibase.exception.MigrationFailedException;
 import liquibase.exception.RollbackFailedException;
 import liquibase.lockservice.DatabaseChangeLogLock;
 import liquibase.resource.ClassLoaderResourceAccessor;
+import liquibase.servicelocator.ServiceLocator;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -88,6 +90,11 @@ public class LiquibaseUtil implements  AutoCloseable {
         } catch (Exception e) {
             throw new DDPException("Error running liquibase migrations for changeLogFile " + changeLogFile, e);
         }
+    }
+
+    public static void releaseResources() {
+        ServiceLocator.setInstance(null);
+        DatabaseFactory.setInstance(null);
     }
 
     /**
@@ -235,4 +242,7 @@ public class LiquibaseUtil implements  AutoCloseable {
         }
         return String.format("%d-%s", Instant.now().toEpochMilli(), hostname);
     }
+
+
+
 }
