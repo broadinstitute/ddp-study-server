@@ -1,6 +1,5 @@
 package org.broadinstitute.ddp.housekeeping.schedule;
 
-import java.io.IOException;
 import java.time.Instant;
 
 import com.google.auth.oauth2.GoogleCredentials;
