@@ -169,8 +169,7 @@ public class HousekeepingTaskReceiver implements MessageReceiver {
         CSV_EXPORT,
         ELASTIC_EXPORT,
         GENERATE_HEAP_DUMP,
-        PING,
-        GENERATE_HEAP_DUMP
+        PING
     }
 
     public static class ExportPayload {
