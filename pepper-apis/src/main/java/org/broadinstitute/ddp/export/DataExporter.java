@@ -215,23 +215,35 @@ public class DataExporter {
     }
 
     public List<Participant> extractParticipantDataSetByIds(Handle handle, StudyDto studyDto, Set<Long> userIds) {
-        Stream<Participant> resultset;
-        if (userIds == null) {
-            resultset = handle.attach(ParticipantDao.class).findParticipantsWithFullData(studyDto.getId());
-        } else {
-            resultset = handle.attach(ParticipantDao.class).findParticipantsWithFullDataByUserIds(studyDto.getId(), userIds);
+        Stream<Participant> resultset = null;
+        try {
+            if (userIds == null) {
+                resultset = handle.attach(ParticipantDao.class).findParticipantsWithFullData(studyDto.getId());
+            } else {
+                resultset = handle.attach(ParticipantDao.class).findParticipantsWithFullDataByUserIds(studyDto.getId(), userIds);
+            }
+            return extractParticipantsFromResultSet(handle, studyDto, resultset);
+        } finally {
+            if (resultset != null) {
+                resultset.close();
+            }
         }
-        return extractParticipantsFromResultSet(handle, studyDto, resultset);
     }
 
     public List<Participant> extractParticipantDataSetByGuids(Handle handle, StudyDto studyDto, Set<String> userGuids) {
-        Stream<Participant> resultset;
-        if (userGuids == null) {
-            resultset = handle.attach(ParticipantDao.class).findParticipantsWithFullData(studyDto.getId());
-        } else {
-            resultset = handle.attach(ParticipantDao.class).findParticipantsWithFullDataByUserGuids(studyDto.getId(), userGuids);
+        Stream<Participant> resultset = null;
+        try {
+            if (userGuids == null) {
+                resultset = handle.attach(ParticipantDao.class).findParticipantsWithFullData(studyDto.getId());
+            } else {
+                resultset = handle.attach(ParticipantDao.class).findParticipantsWithFullDataByUserGuids(studyDto.getId(), userGuids);
+            }
+            return extractParticipantsFromResultSet(handle, studyDto, resultset);
+        } finally {
+            if (resultset != null) {
+                resultset.close();
+            }
         }
-        return extractParticipantsFromResultSet(handle, studyDto, resultset);
     }
 
     private List<Participant> extractParticipantsFromResultSet(Handle handle, StudyDto studyDto, Stream<Participant> resultset) {
@@ -409,35 +421,43 @@ public class DataExporter {
     public void exportUsersToElasticsearch(Handle handle, StudyDto studyDto, Set<Long> userIds) {
 
         //load participants
-        Stream<Participant> resultset;
-        if (userIds != null) {
-            resultset = handle.attach(ParticipantDao.class).findParticipantsWithUserProfileByStudyIdAndUserIds(
-                    studyDto.getId(), userIds);
-        } else {
-            resultset = handle.attach(ParticipantDao.class)
-                    .findParticipantsWithUserProfileByStudyId(studyDto.getId());
+        Stream<Participant> resultset = null;
+        List<Participant> participants;
+        try {
+            if (userIds != null) {
+                resultset = handle.attach(ParticipantDao.class).findParticipantsWithUserProfileByStudyIdAndUserIds(
+                        studyDto.getId(), userIds);
+            } else {
+                resultset = handle.attach(ParticipantDao.class)
+                        .findParticipantsWithUserProfileByStudyId(studyDto.getId());
+            }
+            participants = extractParticipantsFromResultSet(handle, studyDto, resultset);
+        } finally {
+            if (resultset != null) {
+                resultset.close();
+            }
         }
-        List<Participant> participants = extractParticipantsFromResultSet(handle, studyDto, resultset);
+
 
         //load governances and build data structures to get proxies and governedUsers
-        UserGovernanceDao userGovernanceDao = handle.attach(UserGovernanceDao.class);
-        Stream<Governance> allGovernances = userGovernanceDao.findActiveGovernancesByStudyGuid(studyDto.getGuid());
         Map<String, Set<String>> proxiesMap = new HashMap<>();
         Map<String, Set<String>> governedUsersMap = new HashMap<>();
         Set<String> operatorGuids = new HashSet<>();
-
-        allGovernances.forEach(governance -> {
-            String proxyGuid = governance.getProxyUserGuid();
-            String governedUserGuid = governance.getGovernedUserGuid();
-            Long governedUserId = governance.getGovernedUserId();
-            governedUsersMap.computeIfAbsent(governedUserGuid, key -> new HashSet<>());
-            governedUsersMap.get(governedUserGuid).add(proxyGuid);
-            proxiesMap.computeIfAbsent(proxyGuid, key -> new HashSet<>());
-            proxiesMap.get(proxyGuid).add(governedUserGuid);
-            if (userIds == null || userIds.contains(governedUserId)) {
-                operatorGuids.add(proxyGuid);
-            }
-        });
+        UserGovernanceDao userGovernanceDao = handle.attach(UserGovernanceDao.class);
+        try (Stream<Governance> allGovernances = userGovernanceDao.findActiveGovernancesByStudyGuid(studyDto.getGuid())) {
+            allGovernances.forEach(governance -> {
+                String proxyGuid = governance.getProxyUserGuid();
+                String governedUserGuid = governance.getGovernedUserGuid();
+                Long governedUserId = governance.getGovernedUserId();
+                governedUsersMap.computeIfAbsent(governedUserGuid, key -> new HashSet<>());
+                governedUsersMap.get(governedUserGuid).add(proxyGuid);
+                proxiesMap.computeIfAbsent(proxyGuid, key -> new HashSet<>());
+                proxiesMap.get(proxyGuid).add(governedUserGuid);
+                if (userIds == null || userIds.contains(governedUserId)) {
+                    operatorGuids.add(proxyGuid);
+                }
+            });
+        }
 
         Map<String, Object> allUsers = new HashMap<>();
         //load participants
@@ -447,15 +467,16 @@ public class DataExporter {
         });
 
         //load operators
-        Stream<User> users = handle.attach(UserDao.class).findUsersAndProfilesByGuids(operatorGuids);
-        List<User> operators = extractUsersFromResultSet(handle, studyDto, users);
-        operators.forEach(user -> {
-            if (allUsers.containsKey(user.getGuid())) {
-                //operator/user is also a participant... skip
-                return;
-            }
-            allUsers.put(user.getGuid(), createUserRecord(user, proxiesMap, governedUsersMap));
-        });
+        try (Stream<User> users = handle.attach(UserDao.class).findUsersAndProfilesByGuids(operatorGuids)) {
+            List<User> operators = extractUsersFromResultSet(handle, studyDto, users);
+            operators.forEach(user -> {
+                if (allUsers.containsKey(user.getGuid())) {
+                    //operator/user is also a participant... skip
+                    return;
+                }
+                allUsers.put(user.getGuid(), createUserRecord(user, proxiesMap, governedUsersMap));
+            });
+        }
 
         String index = ElasticsearchServiceUtil.getIndexForStudy(
                 handle,
@@ -547,9 +568,11 @@ public class DataExporter {
         }
 
         //load proxies
-        Map<String, List<Governance>> userProxies = handle.attach(UserGovernanceDao.class)
-                .findActiveGovernancesByStudyGuid(studyDto.getGuid())
-                .collect(Collectors.groupingBy(Governance::getGovernedUserGuid));
+        Map<String, List<Governance>> userProxies;
+        try (Stream<Governance> governanceStream =
+                     handle.attach(UserGovernanceDao.class).findActiveGovernancesByStudyGuid(studyDto.getGuid())) {
+            userProxies = governanceStream.collect(Collectors.groupingBy(Governance::getGovernedUserGuid));
+        }
 
         Map<String, List<String>> participantProxyGuids = new HashMap<>();
         if (!userProxies.isEmpty()) {
