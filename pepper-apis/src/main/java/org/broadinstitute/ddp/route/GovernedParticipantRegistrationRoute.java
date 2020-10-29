@@ -53,7 +53,9 @@ public class GovernedParticipantRegistrationRoute extends ValidatedJsonInputRout
             User operatorUser = userDao.findUserByGuid(operatorGuid)
                     .orElseThrow(() -> new DDPException("Could not find operator with guid " + operatorGuid));
             long auth0ClientId = operatorUser.getCreatedByClientId();
-            Governance governance = userGovernanceDao.createGovernedUserWithGuidAlias(auth0ClientId, operatorUser.getId());
+            Governance governance = payload.getAlias() == null
+                    ? userGovernanceDao.createGovernedUserWithGuidAlias(auth0ClientId, operatorUser.getId())
+                    : userGovernanceDao.createGovernedUser(auth0ClientId, operatorUser.getId(), payload.getAlias());
             userGovernanceDao.grantGovernedStudy(governance.getId(), studyId.get());
             User governedUser = userDao.findUserById(governance.getGovernedUserId())
                     .orElseThrow(() -> new DDPException("Could not find governed user with id " + governance.getGovernedUserId()));

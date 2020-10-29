@@ -89,8 +89,6 @@ public class RouteConstants {
                 PathParam.USER_GUID, PathParam.STUDY_GUID, PathParam.INSTANCE_GUID);
         public static final String USER_ACTIVITY_ANSWERS = fmt(BASE + "/user/%s/studies/%s/activities/%s/answers",
                 PathParam.USER_GUID, PathParam.STUDY_GUID, PathParam.INSTANCE_GUID);
-        public static final String USER_SPECIFIC_ANSWER = fmt(BASE + "/user/%s/studies/%s/answers/%s",
-                PathParam.USER_GUID, PathParam.STUDY_GUID, PathParam.STABLE_ID);
         public static final String USER_MEDICAL_PROVIDERS = fmt(
                 BASE + "/user/%s/studies/%s/medical-providers/%s",
                 PathParam.USER_GUID,
@@ -176,7 +174,6 @@ public class RouteConstants {
         public static final String MEDICAL_PROVIDER_GUID = ":medicalProviderGuid";
         public static final String INSTITUTION_TYPE = ":institutionType";
         public static final String INVITATION_ID = ":invitationId";
-        public static final String STABLE_ID = ":stableId";
     }
 
     public static final class QueryParam {

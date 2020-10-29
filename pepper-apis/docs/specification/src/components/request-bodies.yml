@@ -204,3 +204,7 @@ RegisterGovernedRequestBody:
             type: string
             description: user's time zone, as an IANA time zone region identifier
             example: America/New_York
+          alias:
+            type: string
+            description: governed user's alias (name, etc.)
+            example: John Doe

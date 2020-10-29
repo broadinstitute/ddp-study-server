@@ -21,6 +21,9 @@ public class GovernedUserRegistrationPayload {
     @SerializedName("timeZone")
     private String timeZone;
 
+    @SerializedName("alias")
+    private String alias;
+
     public GovernedUserRegistrationPayload() {}
 
     public String getLanguageCode() {
@@ -57,5 +60,9 @@ public class GovernedUserRegistrationPayload {
     public GovernedUserRegistrationPayload setTimeZone(String timeZone) {
         this.timeZone = timeZone;
         return this;
+    }
+
+    public String getAlias() {
+        return alias;
     }
 }
