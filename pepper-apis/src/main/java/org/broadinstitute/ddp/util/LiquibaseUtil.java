@@ -93,8 +93,8 @@ public class LiquibaseUtil implements  AutoCloseable {
     }
 
     public static void releaseResources() {
-        ServiceLocator.reset();
-        DatabaseFactory.reset();
+        ServiceLocator.setInstance(null);
+        DatabaseFactory.setInstance(null);
     }
 
     /**
