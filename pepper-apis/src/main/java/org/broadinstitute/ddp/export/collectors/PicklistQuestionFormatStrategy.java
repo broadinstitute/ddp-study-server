@@ -121,7 +121,7 @@ public class PicklistQuestionFormatStrategy implements ResponseFormatStrategy<Pi
             }
         }
 
-        for (PicklistOptionDef optionDef : definition.getPicklistOptions()) {
+        for (PicklistOptionDef optionDef : definition.getAllPicklistOptions()) {
             if (optionDef.isDetailsAllowed()) {
                 headers.add(detailHeader(definition.getStableId(), optionDef.getStableId()));
             }
@@ -145,7 +145,7 @@ public class PicklistQuestionFormatStrategy implements ResponseFormatStrategy<Pi
             options.addAll(group.getOptions());
         }
 
-        options.addAll(question.getPicklistOptions());
+        options.addAll(question.getAllPicklistOptions());
 
         for (PicklistOptionDef option : options) {
             String osid = option.getStableId();
