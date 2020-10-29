@@ -124,6 +124,9 @@ public class LiquibaseUtil implements  AutoCloseable {
     private void runMigrations(String changelogFile) throws LiquibaseException, SQLException {
         Liquibase liquibase = null;
         String tag = null;
+        if (ServiceLocator.getInstance() == null) {
+            ServiceLocator.reset();
+        }
         try {
             liquibase = new Liquibase(changelogFile, new ClassLoaderResourceAccessor(), new JdbcConnection(dataSource.getConnection()));
             logLocks(liquibase.listLocks());
