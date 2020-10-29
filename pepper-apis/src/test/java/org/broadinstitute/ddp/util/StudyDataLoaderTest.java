@@ -622,7 +622,8 @@ public class StudyDataLoaderTest {
                 any(UserDto.class),
                 any(JsonElement.class),
                 any(JdbiLanguageCode.class),
-                any(UserProfileDao.class)
+                any(UserProfileDao.class),
+                any(Boolean.class)
         )).thenCallRealMethod();
 
         JdbiLanguageCode mockJdbiLanguageCode = mock(JdbiLanguageCode.class);
@@ -638,7 +639,8 @@ public class StudyDataLoaderTest {
                 userDto,
                 participantData,
                 mockJdbiLanguageCode,
-                mockProfileDao);
+                mockProfileDao,
+                false);
 
         verify(mockJdbiLanguageCode, times(1)).getLanguageCodeId(anyString());
 

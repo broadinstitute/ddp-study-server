@@ -279,14 +279,14 @@ public class StudyDataLoader {
         UserDto pepperUser;
 
         if (isMGU) {
-            pepperUser = createOperatorAndGovernedUser(jdbiUser, clientDao, datstatData, userGuid, userHruid, clientDto, userGovernanceDao, userDao);
+            pepperUser = createOperatorAndGovernedUser(jdbiUser, clientDao, datstatData, userGuid, userHruid, clientDto, userGovernanceDao, userDao, studyDto, );
         }
         pepperUser = createLegacyPepperUser(jdbiUser, clientDao, datstatData, userGuid, userHruid, clientDto);
 
 
         JdbiLanguageCode jdbiLanguageCode = handle.attach(JdbiLanguageCode.class);
         UserProfileDao profileDao = handle.attach(UserProfileDao.class);
-        addUserProfile(pepperUser, datstatData, jdbiLanguageCode, profileDao);
+        addUserProfile(pepperUser, datstatData, jdbiLanguageCode, profileDao, isMGU);
 
         JdbiMailAddress jdbiMailAddress = handle.attach(JdbiMailAddress.class);
         MailAddress createdAddress = addUserAddress(handle, pepperUser,
@@ -988,7 +988,8 @@ public class StudyDataLoader {
 
     public UserDto createOperatorAndGovernedUser(JdbiUser jdbiUser, JdbiClient clientDao,
                                                  JsonElement data, String userGuid, String userHruid, ClientDto clientDto,
-                                                 UserGovernanceDao userGovernanceDao, UserDao userDao) throws Exception {
+                                                 UserGovernanceDao userGovernanceDao, UserDao userDao, StudyDto studyDto,
+                                                 JdbiLanguageCode jdbiLanguageCode) throws Exception {
         String emailAddress = data.getAsJsonObject().get("datstat_email").getAsString();
         boolean hasPassword = data.getAsJsonObject().has("password");
         String auth0UserId;
@@ -1003,8 +1004,9 @@ public class StudyDataLoader {
         String operatorGuid = operatorUserDto.getUserGuid();
         org.broadinstitute.ddp.model.user.User operatorUser = userDao.findUserByGuid(operatorGuid)
                 .orElseThrow(() -> new DDPException("Could not find operator with guid " + operatorGuid));
-        Governance governance = userGovernanceDao.createGovernedUserWithGuidAlias(op);
-        UserDto governedUserDto = insertNewUser(jdbiUser, data, userGuid, userHruid, clientDto, null);
+        addUserProfile(operatorUser, data, jdbiLanguageCode, profileDao, true);
+        Governance governance = userGovernanceDao.createGovernedUserWithGuidAlias(operatorUser.getCreatedByClientId(), operatorUser.getId());
+        userGovernanceDao.grantGovernedStudy(governance.getId(), studyDto.getId());
 
         return null;
     }
@@ -1123,37 +1125,47 @@ public class StudyDataLoader {
     UserProfile addUserProfile(UserDto user,
                                JsonElement data,
                                JdbiLanguageCode jdbiLanguageCode,
-                               UserProfileDao profileDao) {
+                               UserProfileDao profileDao, Boolean isMGU) {
 
         JsonObject userJsonObject = data.getAsJsonObject();
         Boolean isDoNotContact = getBooleanValueFromElement(data, "ddp_do_not_contact");
         Long languageCodeId = jdbiLanguageCode.getLanguageCodeId(DEFAULT_PREFERRED_LANGUAGE_CODE);
         UserProfile.SexType sexType = null;
         LocalDate userDateOfBirth = null;
+        String firstName;
+        String lastName;
 
-
-        if (!userJsonObject.get("datstat_gender").isJsonNull() && userJsonObject.get("datstat_gender") != null) {
-            String genderCode = StringUtils.trim(data.getAsJsonObject().get("datstat_gender").getAsString());
-            switch (genderCode) {
-                case "F":
-                    sexType = UserProfile.SexType.FEMALE;
-                    break;
-                case "M":
-                    sexType = UserProfile.SexType.FEMALE;
-                    break;
-                default:
-                    break;
+        if (isMGU) {
+            String[] portalUsername = data.getAsJsonObject().get("portal_user_name").getAsString().split(" ");
+            firstName = portalUsername[0];
+            lastName = portalUsername[1];
+        } else {
+            if (!userJsonObject.get("datstat_gender").isJsonNull() && userJsonObject.get("datstat_gender") != null) {
+                String genderCode = StringUtils.trim(data.getAsJsonObject().get("datstat_gender").getAsString());
+                switch (genderCode) {
+                    case "F":
+                        sexType = UserProfile.SexType.FEMALE;
+                        break;
+                    case "M":
+                        sexType = UserProfile.SexType.MALE;
+                        break;
+                    default:
+                        break;
+                }
             }
-        }
-        if (!userJsonObject.get("datstat_dateofbirth").isJsonNull() && userJsonObject.get("datstat_dateofbirth") != null) {
-            String dateOfBirth = StringUtils.trim(data.getAsJsonObject().get("datstat_dateofbirth").getAsString());
-            userDateOfBirth = LocalDate.parse(dateOfBirth, DateTimeFormatter.ofPattern(DATSTAT_DATE_OF_BIRTH_FORMAT));
+            if (!userJsonObject.get("datstat_dateofbirth").isJsonNull() && userJsonObject.get("datstat_dateofbirth") != null) {
+                String dateOfBirth = StringUtils.trim(data.getAsJsonObject().get("datstat_dateofbirth").getAsString());
+                userDateOfBirth = LocalDate.parse(dateOfBirth, DateTimeFormatter.ofPattern(DATSTAT_DATE_OF_BIRTH_FORMAT));
+            }
+
+            firstName = StringUtils.trim(data.getAsJsonObject().get("datstat_firstname").getAsString());
+            lastName = StringUtils.trim(data.getAsJsonObject().get("datstat_lastname").getAsString());
         }
 
 
         UserProfile profile = new UserProfile.Builder(user.getUserId())
-                .setFirstName(StringUtils.trim(data.getAsJsonObject().get("datstat_firstname").getAsString()))
-                .setLastName(StringUtils.trim(data.getAsJsonObject().get("datstat_lastname").getAsString()))
+                .setFirstName(firstName)
+                .setLastName(lastName)
                 .setSexType(sexType)
                 .setBirthDate(userDateOfBirth)
                 .setPreferredLangId(languageCodeId)
