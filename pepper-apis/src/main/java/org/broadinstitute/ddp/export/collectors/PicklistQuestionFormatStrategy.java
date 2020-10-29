@@ -44,7 +44,7 @@ public class PicklistQuestionFormatStrategy implements ResponseFormatStrategy<Pi
             }
         }
 
-        for (PicklistOptionDef optionDef : definition.getPicklistOptions()) {
+        for (PicklistOptionDef optionDef : definition.getAllPicklistOptions()) {
             if (optionDef.isDetailsAllowed()) {
                 String key = detailHeader(definition.getStableId(), optionDef.getStableId());
                 props.put(key, MappingUtil.newTextType());
