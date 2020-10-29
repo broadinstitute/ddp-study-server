@@ -291,7 +291,7 @@ public class StudyDataLoader {
         }
 
 
-        addUserProfile(pepperUser, datstatData, jdbiLanguageCode, profileDao, isMGU);
+        addUserProfile(pepperUser, datstatData, jdbiLanguageCode, profileDao, false);
 
         JdbiMailAddress jdbiMailAddress = handle.attach(JdbiMailAddress.class);
         MailAddress createdAddress = addUserAddress(handle, pepperUser,
@@ -997,15 +997,17 @@ public class StudyDataLoader {
                                                  JdbiLanguageCode jdbiLanguageCode,
                                                  UserProfileDao userProfileDao,
                                                  StudyGovernanceDao studyGovernanceDao) throws Exception {
-        String emailAddress = data.getAsJsonObject().get("datstat_email").getAsString();
+        String emailAddress = data.getAsJsonObject().get("portal_user_email").getAsString();
         boolean hasPassword = data.getAsJsonObject().has("password");
-        String auth0UserId;
+        List<User> auth0UsersByEmail = auth0Util.getAuth0UsersByEmail(emailAddress, mgmtToken);
+        String auth0UserId = !auth0UsersByEmail.isEmpty() ? auth0UsersByEmail.get(0).getId() : null;
 
         if (hasPassword) {
             auth0UserId = createAuth0UserWithExistingPassword(data, userGuid, emailAddress);
         } else {
             auth0UserId = createAuth0UserWithRandomPassword(emailAddress);
         }
+
 
         UserDto operatorUserDto = insertNewUser(jdbiUser, data, userGuid, userHruid, clientDto, auth0UserId);
         String operatorGuid = operatorUserDto.getUserGuid();
@@ -1147,7 +1149,7 @@ public class StudyDataLoader {
     UserProfile addUserProfile(UserDto user,
                                JsonElement data,
                                JdbiLanguageCode jdbiLanguageCode,
-                               UserProfileDao profileDao, Boolean isMGU) {
+                               UserProfileDao profileDao, Boolean isOperator) {
 
         JsonObject userJsonObject = data.getAsJsonObject();
         Boolean isDoNotContact = getBooleanValueFromElement(data, "ddp_do_not_contact");
@@ -1157,7 +1159,7 @@ public class StudyDataLoader {
         String firstName;
         String lastName;
 
-        if (isMGU) {
+        if (isOperator) {
             String[] portalUsername = data.getAsJsonObject().get("portal_user_name").getAsString().split(" ");
             firstName = portalUsername[0];
             lastName = portalUsername[1];
