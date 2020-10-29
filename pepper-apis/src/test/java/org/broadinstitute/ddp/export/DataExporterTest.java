@@ -571,7 +571,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
 
         // Run the test!
         StringWriter buffer = new StringWriter();
-        int numWritten = exporter.exportDataSetAsCsv(testData.getTestingStudy(), activities, participants, buffer);
+        int numWritten = exporter.exportDataSetAsCsv(testData.getTestingStudy(), activities, participants.iterator(), buffer);
         assertEquals(1, numWritten);
 
         String output = buffer.toString();

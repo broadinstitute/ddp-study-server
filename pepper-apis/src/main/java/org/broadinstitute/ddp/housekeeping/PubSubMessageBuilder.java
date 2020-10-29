@@ -14,6 +14,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.auth0.json.mgmt.users.User;
 import com.google.gson.Gson;
@@ -99,9 +100,11 @@ public class PubSubMessageBuilder {
                     String auth0UserId = userDao.findUserByGuid(participantGuid).map(user -> user.getAuth0UserId()).orElse(null);
 
                     if (auth0UserId == null) {
-                        List<Governance> governances = apisHandle.attach(UserGovernanceDao.class)
-                                .findActiveGovernancesByParticipantAndStudyGuids(participantGuid, studyGuid)
-                                .collect(Collectors.toList());
+                        List<Governance> governances;
+                        try (Stream<Governance> governanceStream = apisHandle.attach(UserGovernanceDao.class)
+                                .findActiveGovernancesByParticipantAndStudyGuids(participantGuid, studyGuid)) {
+                            governances = governanceStream.collect(Collectors.toList());
+                        }
                         if (governances.isEmpty()) {
                             throw new NoSendableEmailAddressException(String.format(
                                     "Cannot send email to participant %s with no auth0 account and no proxies in study %s",

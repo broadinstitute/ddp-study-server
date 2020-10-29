@@ -2,7 +2,7 @@ group KitCheckService;
 
 /**
  * Get user and address info of all participants enrolled in given study and has not received a kit of given type yet.
- * This potentially returns a long list. Callers will need to apply more filtering criteria, such as pex expressions
+ * This returns list based on batch size. Callers will need to apply more filtering criteria, such as pex expressions
  * and geographic limitations from kit configuration information to narrow the list.
  */
 queryAddressInfoForEnrolledUsersWithoutKits() ::= <<
@@ -27,4 +27,6 @@ select user.user_id,
           and kit.study_id = study.umbrella_study_id
        )
    and valid_to is null
+ order by usen.user_study_enrollment_id
+ limit :limit offset :offset
 >>

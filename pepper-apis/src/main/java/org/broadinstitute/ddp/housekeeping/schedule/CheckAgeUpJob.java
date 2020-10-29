@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.TimeZone;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.typesafe.config.Config;
 import org.broadinstitute.ddp.constants.ConfigFile;
@@ -86,10 +87,11 @@ public class CheckAgeUpJob implements Job {
     private void run() {
         AgeUpService service = new AgeUpService();
         PexInterpreter interpreter = new TreeWalkInterpreter();
-        List<GovernancePolicy> policies = TransactionWrapper.withTxn(TransactionWrapper.DB.APIS, handle ->
-                handle.attach(StudyGovernanceDao.class)
-                        .findAllPolicies()
-                        .collect(Collectors.toList()));
+        List<GovernancePolicy> policies = TransactionWrapper.withTxn(TransactionWrapper.DB.APIS, handle -> {
+            try (Stream<GovernancePolicy> policyStream = handle.attach(StudyGovernanceDao.class).findAllPolicies()) {
+                return policyStream.collect(Collectors.toList());
+            }
+        });
         Collections.shuffle(policies);
         for (var policy : policies) {
             if (policy.getAgeOfMajorityRules().isEmpty()) {
