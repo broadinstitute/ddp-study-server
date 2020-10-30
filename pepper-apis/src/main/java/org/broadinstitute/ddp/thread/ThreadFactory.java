@@ -17,7 +17,7 @@ public class ThreadFactory implements java.util.concurrent.ThreadFactory {
     @Override
     public Thread newThread(Runnable r) {
         ThreadGroup threadGroup = new ThreadGroup(name);
-        Thread t = new Thread(threadGroup,r);
+        Thread t = new Thread(threadGroup, r);
         t.setPriority(priority);
         return t;
     }

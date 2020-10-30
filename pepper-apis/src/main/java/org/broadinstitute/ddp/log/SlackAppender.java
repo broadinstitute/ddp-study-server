@@ -105,15 +105,17 @@ public class SlackAppender<E> extends AppenderBase<ILoggingEvent> {
      * Constructor used by deployments via logback.xml
      */
     public SlackAppender() {
-        init(System.getenv("SLACK_HOOK"), System.getenv("SLACK_CHANNEL"),
-             System.getenv("SLACK_QUEUE_SIZE"), System.getenv("SLACK_INTERVAL"));
+        init(System.getenv("SLACK_HOOK"),
+                System.getenv("SLACK_CHANNEL"),
+                System.getenv("SLACK_QUEUE_SIZE"),
+                System.getenv("SLACK_INTERVAL"));
     }
 
     /**
      * Used only for testing.  In the real world, call {@link #SlackAppender()}.
      */
     SlackAppender(String slackHookUrl, String slackChannel, int queueSize, int intervalInMillis) {
-        init(slackHookUrl,slackChannel, Integer.toString(queueSize), Integer.toString(intervalInMillis));
+        init(slackHookUrl, slackChannel, Integer.toString(queueSize), Integer.toString(intervalInMillis));
     }
 
     private String getExceptionMessage(ILoggingEvent e) {
@@ -154,7 +156,7 @@ public class SlackAppender<E> extends AppenderBase<ILoggingEvent> {
         if (!messagesToSend.isEmpty()) {
             try {
                 wait(timeoutMillis);
-            } catch(InterruptedException e) {
+            } catch (InterruptedException e) {
                 LOG.error("Interrupted while waiting for queue to clear", e);
             }
         }

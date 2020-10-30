@@ -2,13 +2,17 @@ package org.broadinstitute.ddp.log;
 
 import static org.mockserver.model.HttpRequest.request;
 import static org.mockserver.model.HttpResponse.response;
-import static org.mockserver.model.JsonPathBody.jsonPath;
 
 import ch.qos.logback.classic.spi.LoggingEvent;
-import org.junit.*;
+import com.google.gson.Gson;
+
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
+
 import org.mockserver.client.MockServerClient;
 import org.mockserver.junit.MockServerRule;
-import org.mockserver.matchers.Times;
 import org.mockserver.model.JsonBody;
 
 public class SlackAppenderTest {
@@ -39,19 +43,18 @@ public class SlackAppenderTest {
                             .withStatusCode(200)
                             .withBody("ok"));
 
-            SlackAppender slackAppender = new SlackAppender("http://localhost:" + mockServerRule.getPort() + "/mock_slack_test" ,
+            SlackAppender slackAppender = new SlackAppender("http://localhost:" + mockServerRule.getPort() + "/mock_slack_test",
                     "SlackChannel", 100, 10);
             slackAppender.start();
             slackAppender.doAppend(loggingEvent);
 
             slackAppender.waitForClearToQueue(3000);
 
-            mockServerClient.verify(request().withPath("/mock_slack_test").withBody(JsonBody.json("{\n" +
-                    "      \"text\" : \"*Hi there*\\n ``````\",\n" +
-                    "      \"channel\" : \"SlackChannel\",\n" +
-                    "      \"username\" : \"Pepper\",\n" +
-                    "      \"icon_emoji\" : \":nerd_face:\", \"unfurl_links\":false" +
-                    "    }")));
+            mockServerClient.verify(request().withPath("/mock_slack_test").withBody(JsonBody.json(
+                    new Gson().toJson(new SlackAppender.SlackMessagePayload("*Hi there*\\n ``````",
+                            "SlackChannel",
+                            "Pepper",
+                            ":nerd_face")))));
         } else {
             Assert.fail("Mock slack not running");
         }
