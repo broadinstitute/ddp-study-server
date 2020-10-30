@@ -53,14 +53,6 @@ public interface PicklistAnswerDao extends SqlObject {
                         + " for answer id " + answerId));
 
         if (questionDto.getSelectMode() == PicklistSelectMode.SINGLE && selected.size() > 1) {
-            //TODO check only picklist parent options fom selected
-            //filter out nested options from selected
-            //what if pareent Question: multiple and nested option only single select !!
-            //load nestedOptions for questions
-            /*List<PicklistOption> nestedOpts = new ArrayList<>();
-            selected.stream().filter(selectedOpt -> {
-                selectedOpt.getStableId().equals(nestedOpts.)
-            });*/
             throw new OperationNotAllowedException("Single-select picklist question does not allow more than one selected options");
         }
 
