@@ -36,11 +36,14 @@ public class OnDemandExportJob implements Job {
 
     private static final Logger LOG = LoggerFactory.getLogger(OnDemandExportJob.class);
 
+    private static DataExporter exporter;
+
     public static JobKey getKey() {
         return Keys.Export.OnDemandJob;
     }
 
     public static void register(Scheduler scheduler, Config cfg) throws SchedulerException {
+        exporter = new DataExporter(cfg);
         JobDetail job = JobBuilder.newJob(OnDemandExportJob.class)
                 .withIdentity(getKey())
                 .requestRecovery(false)
@@ -87,7 +90,6 @@ public class OnDemandExportJob implements Job {
 
     private void run(String studyGuid, String index, boolean doCsv) {
         Config cfg = ConfigManager.getInstance().getConfig();
-        var exporter = new DataExporter(cfg);
 
         StudyDto studyDto = TransactionWrapper.withTxn(TransactionWrapper.DB.APIS, handle ->
                 handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid));
