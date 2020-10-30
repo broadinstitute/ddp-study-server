@@ -17,6 +17,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.typesafe.config.Config;
 import org.apache.commons.lang3.StringUtils;
@@ -371,10 +372,12 @@ public class ActivityInstanceDao {
         Set<String> instanceGuids = activitySummaries.stream()
                 .map(ActivityInstanceSummary::getActivityInstanceGuid)
                 .collect(Collectors.toSet());
-        Map<String, FormResponse> instanceResponses = handle
+        Map<String, FormResponse> instanceResponses;
+        try (Stream<FormResponse> responseStream = handle
                 .attach(org.broadinstitute.ddp.db.dao.ActivityInstanceDao.class)
-                .findFormResponsesWithAnswersByInstanceGuids(instanceGuids)
-                .collect(Collectors.toMap(ActivityResponse::getGuid, Function.identity()));
+                .findFormResponsesWithAnswersByInstanceGuids(instanceGuids)) {
+            instanceResponses = responseStream.collect(Collectors.toMap(ActivityResponse::getGuid, Function.identity()));
+        }
 
         for (var summary : activitySummaries) {
             if (ActivityType.valueOf(summary.getActivityType()) == FORMS) {
@@ -419,8 +422,11 @@ public class ActivityInstanceDao {
 
         Set<Long> instanceIds = summaries.stream().map(ActivityInstanceSummary::getActivityInstanceId).collect(Collectors.toSet());
         var instanceDao = handle.attach(org.broadinstitute.ddp.db.dao.ActivityInstanceDao.class);
-        var substitutions = instanceDao.bulkFindSubstitutions(instanceIds)
-                .collect(Collectors.toMap(wrapper -> wrapper.getActivityInstanceId(), wrapper -> wrapper.unwrap()));
+        Map<Long, Map<String, String>> substitutions;
+        try (var substitionStream = instanceDao.bulkFindSubstitutions(instanceIds)) {
+            substitutions = substitionStream
+                    .collect(Collectors.toMap(wrapper -> wrapper.getActivityInstanceId(), wrapper -> wrapper.unwrap()));
+        }
         var sharedSnapshot = I18nContentRenderer
                 .newValueProviderBuilder(handle, userId)
                 .build().getSnapshot();
@@ -462,10 +468,10 @@ public class ActivityInstanceDao {
     /**
      * Given a user, return a collection of activity instance summaries.
      *
-     * @param handle          JDBC handle
-     * @param userGuid        GUID of the user
-     * @param studyGuid       GUID of the study
-     * @param instanceGuid    GUID of the activity instance
+     * @param handle       JDBC handle
+     * @param userGuid     GUID of the user
+     * @param studyGuid    GUID of the study
+     * @param instanceGuid GUID of the activity instance
      * @return A size of sections for activity instance
      */
     public int getActivityInstanceSectionsSize(Handle handle,

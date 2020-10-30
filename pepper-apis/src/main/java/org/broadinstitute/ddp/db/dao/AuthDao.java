@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.model.governance.Governance;
@@ -42,9 +43,11 @@ public interface AuthDao extends SqlObject {
                 .findPermittedStudyGuidsByAuth0ClientIdAndAuth0Domain(auth0ClientId, auth0Domain);
 
         Map<String, ParticipantAccess> participants = new HashMap<>();
-        List<Governance> governances = getHandle().attach(UserGovernanceDao.class)
-                .findActiveGovernancesByProxyGuid(operatorGuid)
-                .collect(Collectors.toList());
+        List<Governance> governances;
+        try (Stream<Governance> governanceStream = getHandle().attach(UserGovernanceDao.class)
+                .findActiveGovernancesByProxyGuid(operatorGuid)) {
+            governances = governanceStream.collect(Collectors.toList());
+        }
         for (Governance governance : governances) {
             String participantGuid = governance.getGovernedUserGuid();
             ParticipantAccess access = participants.computeIfAbsent(participantGuid, ParticipantAccess::new);

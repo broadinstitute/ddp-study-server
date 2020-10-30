@@ -23,4 +23,6 @@ select usen.study_id,
 
 findPendingScheduleRecords() ::= <<
 <select_all_pending_records()> and rec.kit_configuration_id = :configId
+ order by rec.kit_schedule_record_id
+ limit :limit offset :offset
 >>

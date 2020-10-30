@@ -33,6 +33,17 @@ public interface JdbiUserStudyEnrollment extends SqlObject {
     @CreateSqlObject
     ActivityInstanceDao getActivityInstanceDao();
 
+    @SqlQuery("select user_id"
+            + "  from user_study_enrollment"
+            + " where study_id = :studyId"
+            + "   and valid_to is null"
+            + " order by user_study_enrollment_id"
+            + " limit :limit offset :offset")
+    Set<Long> findUserIdsByStudyIdAndLimit(
+            @Bind("studyId") long studyId,
+            @Bind("offset") int offset,
+            @Bind("limit") int limit);
+
     default List<EnrollmentStatusDto> findByStudyGuid(String studyGuid) {
         return findByStudyGuidAfterOrEqualToInstant(studyGuid, 0);
     }

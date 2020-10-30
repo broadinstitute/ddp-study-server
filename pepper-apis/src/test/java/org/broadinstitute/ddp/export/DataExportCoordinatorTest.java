@@ -1,12 +1,12 @@
-package org.broadinstitute.ddp.housekeeping.schedule;
+package org.broadinstitute.ddp.export;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.isNull;
-import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -14,19 +14,22 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Writer;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.io.IOUtils;
 import org.broadinstitute.ddp.db.dto.StudyDto;
+import org.broadinstitute.ddp.model.study.Participant;
 import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
 
-public class StudyDataExportJobTest {
+public class DataExportCoordinatorTest {
 
     @Test
     public void testStreamingOfData() {
-        StudyDataExportJob job = mock(StudyDataExportJob.class);
+        var coordinator = mock(DataExportCoordinator.class);
 
         int numberOfChunks = 100;
         int chunkSize = 1023; //yes. 1023
@@ -34,7 +37,7 @@ public class StudyDataExportJobTest {
         Arrays.fill(testData, 'x');
         //Simulate running the DataExporter
         //mocking the method that does the writing and the one that does reading. Writing first:
-        when(job.buildExportToCsvRunnable(any(StudyDto.class), isNull(), any(Writer.class), anyList(), anyList())).thenAnswer(
+        when(coordinator.buildExportToCsvRunnable(any(StudyDto.class), isNull(), any(Writer.class), anyList(), any())).thenAnswer(
                 (InvocationOnMock invocation) ->
                         (Runnable) () -> {
                             Writer writer = invocation.getArgument(2);
@@ -67,7 +70,7 @@ public class StudyDataExportJobTest {
         AtomicBoolean saveToGoogleBucketRanOk = new AtomicBoolean(false);
 
         // We read the data back. Presumably this is what the Google Bucket would be doing
-        when(job.saveToGoogleBucket(any(InputStream.class), anyString(), anyString(), any()))
+        when(coordinator.saveToGoogleBucket(any(InputStream.class), anyString(), anyString(), any()))
                 .thenAnswer((InvocationOnMock invocation) -> {
                     InputStream stream = invocation.getArgument(0);
                     char[] charsRead = IOUtils.toCharArray(stream, "utf-8");
@@ -90,10 +93,11 @@ public class StudyDataExportJobTest {
                 "http://blah.boo.com", 2, 1, null, false, null, null, true);
 
         // run the real thing when we call this
-        when(job.exportStudyToGoogleBucket(testStudyDto, null, null, List.of(), List.of())).thenCallRealMethod();
+        Iterator<Participant> iterator = Collections.emptyIterator();
+        when(coordinator.exportStudyToGoogleBucket(testStudyDto, null, null, List.of(), iterator)).thenCallRealMethod();
 
         // run it!
-        job.exportStudyToGoogleBucket(testStudyDto, null, null, List.of(), List.of());
+        coordinator.exportStudyToGoogleBucket(testStudyDto, null, null, List.of(), iterator);
         assertTrue(saveToGoogleBucketRanOk.get());
     }
 }

@@ -1,7 +1,7 @@
 package org.broadinstitute.ddp.db.dao;
 
+import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.stream.Stream;
 
 import org.broadinstitute.ddp.db.DBUtils;
 import org.broadinstitute.ddp.db.DaoException;
@@ -144,5 +144,5 @@ public interface ActivityDao extends SqlObject {
             + "  join activity_mapping_type as mtype on mapping.activity_mapping_type_id = mtype.activity_mapping_type_id"
             + " where study.umbrella_study_id = :studyId and mtype.activity_mapping_code = :type")
     @RegisterConstructorMapper(ActivityMapping.class)
-    Stream<ActivityMapping> findActivityMappings(@Bind("studyId") long studyId, @Bind("type") ActivityMappingType type);
+    List<ActivityMapping> findActivityMappings(@Bind("studyId") long studyId, @Bind("type") ActivityMappingType type);
 }
