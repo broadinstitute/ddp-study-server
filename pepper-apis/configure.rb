@@ -18,6 +18,8 @@ $env = ENV.fetch("ENVIRONMENT") { |_|
   exit 1
 }
 
+$app = ENV.fetch("APP", "UNKNOWN")
+
 
 
 $study_guid = ENV.fetch("STUDY_GUID","")
@@ -186,6 +188,7 @@ def render_from_path(path, output_file_name = nil)
              "docker", "run", "--rm", "-w", "/w", "-v", "#{Dir.pwd}:/w",
                   "-e", "VAULT_TOKEN=#{$vault_token}", "-e", "ENVIRONMENT=#{$env}", "-e", "VERSION=#{$version}",
                   "-e", "GAE=#{$gae}",
+                  "-e", "APP=#{$app}",
                   "-e", "BUILD_CONTAINERS=#{$build_containers_flag}",
                   "-e", "DOCS_PROXIED_HOST=#{$docsProxiedHost}",
                   "-e", "NGINX_PROXIED_HOST=#{$nginxProxiedHost}",

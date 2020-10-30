@@ -237,7 +237,7 @@ and 'output-build-config'. Docker images, such as
 'broadinstitute/pepper-api-backend', will be tagged with '\$VER_ENV'.
 
 USAGE:
-  $NAME <VER> <ENV> <DIR> [OPTIONS...]
+  $NAME <VER> <ENV> <DIR> [housekeeping] [OPTIONS...]
 
 VER
   is the version of the code, should always be 'v1'
@@ -250,8 +250,12 @@ DIR
   is the local directory from whence 'docker-compose' volumes originate,
   use '.' for local builds, '/app' for CI builds
 
+housekeeping
+  an optional application name parameter. housekeeping is the only valid one currently
+
 OPTIONS:
   --config          render local configurations
+  --gae-config      render configs for GAE deployment
   --docker-build    build docker images
   --docker-push     build docker images and push to dockerhub
   -h, --help        print this help message
@@ -289,6 +293,7 @@ DOCS_PROXIED_HOST=$DOCS_PROXIED_HOST
 VERSION=$1
 ENVIRONMENT=$2
 DIR=$3
+
 VAULT_TOKEN=$VAULT_TOKEN
 tag=${VERSION}_${ENVIRONMENT}
 
@@ -298,6 +303,12 @@ GIT_SHA_SHORT=${GIT_SHA:0:12}
 shift
 shift
 shift
+# Sneaking in another optional config parameter here
+if grep -q -v "\-\-" <<< "$1"; then
+  APPLICATION=$1
+  shift
+fi
+
 while [[ -n "$1" ]]; do
     case $1 in
         -h | --help)
