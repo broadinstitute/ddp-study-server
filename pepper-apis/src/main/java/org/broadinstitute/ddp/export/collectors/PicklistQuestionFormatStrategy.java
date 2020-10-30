@@ -6,6 +6,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.ddp.content.HtmlConverter;
 import org.broadinstitute.ddp.elastic.MappingUtil;
@@ -43,7 +44,7 @@ public class PicklistQuestionFormatStrategy implements ResponseFormatStrategy<Pi
             }
         }
 
-        for (PicklistOptionDef optionDef : definition.getPicklistOptions()) {
+        for (PicklistOptionDef optionDef : definition.getAllPicklistOptions()) {
             if (optionDef.isDetailsAllowed()) {
                 String key = detailHeader(definition.getStableId(), optionDef.getStableId());
                 props.put(key, MappingUtil.newTextType());
@@ -82,9 +83,25 @@ public class PicklistQuestionFormatStrategy implements ResponseFormatStrategy<Pi
 
         List<Object> options = new ArrayList<>();
         for (PicklistOptionDef optionDef : definition.getPicklistOptions()) {
-            Map<String, String> stableIdTxt = new HashMap<>();
+            Map<String, Object> stableIdTxt = new HashMap<>();
             stableIdTxt.put("optionStableId", optionDef.getStableId());
             stableIdTxt.put("optionText", HtmlConverter.getPlainText(optionDef.getOptionLabelTemplate().render("en")));
+
+            //add nested options
+            if (CollectionUtils.isNotEmpty(optionDef.getNestedOptions())) {
+                if (optionDef.getNestedOptionsLabelTemplate() != null) {
+                    stableIdTxt.put("nestedOptionsText", HtmlConverter.getPlainText(
+                            optionDef.getNestedOptionsLabelTemplate().render("en")));
+                }
+                List<Object> nestedOptions = new ArrayList<>();
+                for (PicklistOptionDef suboptionDef : optionDef.getNestedOptions()) {
+                    Map<String, String> suboptStableIdTxt = new HashMap<>();
+                    suboptStableIdTxt.put("optionStableId", suboptionDef.getStableId());
+                    suboptStableIdTxt.put("optionText", HtmlConverter.getPlainText(suboptionDef.getOptionLabelTemplate().render("en")));
+                    nestedOptions.add(suboptStableIdTxt);
+                }
+                stableIdTxt.put("nestedOptions", nestedOptions);
+            }
             options.add(stableIdTxt);
         }
         props.put("options", options);
@@ -104,7 +121,7 @@ public class PicklistQuestionFormatStrategy implements ResponseFormatStrategy<Pi
             }
         }
 
-        for (PicklistOptionDef optionDef : definition.getPicklistOptions()) {
+        for (PicklistOptionDef optionDef : definition.getAllPicklistOptions()) {
             if (optionDef.isDetailsAllowed()) {
                 headers.add(detailHeader(definition.getStableId(), optionDef.getStableId()));
             }
@@ -128,7 +145,7 @@ public class PicklistQuestionFormatStrategy implements ResponseFormatStrategy<Pi
             options.addAll(group.getOptions());
         }
 
-        options.addAll(question.getPicklistOptions());
+        options.addAll(question.getAllPicklistOptions());
 
         for (PicklistOptionDef option : options) {
             String osid = option.getStableId();

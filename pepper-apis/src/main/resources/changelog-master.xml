@@ -234,4 +234,5 @@
     <include file="db-changes/schema/DDP-4439-language-popup-settings.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/seed/DDP-5102-add-arabic-portuguese-vietnamese.xml" relativeToChangelogFile="true"/>
     <include file="db-changes/schema/DDP-5183-drop-initial-kit-record.xml" relativeToChangelogFile="true"/>
+    <include file="db-changes/schema/DDP-5194-picklist-nested-options.xml" relativeToChangelogFile="true"/>
 </databaseChangeLog>

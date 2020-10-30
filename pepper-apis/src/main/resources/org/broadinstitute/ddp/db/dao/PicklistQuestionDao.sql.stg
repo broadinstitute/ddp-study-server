@@ -19,7 +19,10 @@ select po.picklist_option_id        as po_picklist_option_id,
        pg.revision_id       as pg_revision_id,
        group_rev.start_date as pg_revision_start_timestamp,
        group_rev.end_date   as pg_revision_end_timestamp,
-       po.picklist_question_id as question_id
+       po.picklist_question_id as question_id,
+	     po.nested_options_template_id as po_nested_options_template_id,
+	     pno.nested_option_id          as pno_nested_option_id,
+		   pno.parent_option_id          as pno_parent_option_id
   from picklist_option as po
   join picklist_question pq on pq.question_id=po.picklist_question_id
   join question q on q.question_id=pq.question_id
@@ -27,8 +30,8 @@ select po.picklist_option_id        as po_picklist_option_id,
   left join picklist_grouped_option as pgo on pgo.picklist_option_id = po.picklist_option_id
   left join picklist_group as pg on pg.picklist_group_id = pgo.picklist_group_id
   left join revision as group_rev on group_rev.revision_id = pg.revision_id
+  left join picklist_nested_option as pno on pno.nested_option_id = po.picklist_option_id
 >>
-
 
 queryAllOrderedGroupsAndOptionsByQuestionIdAndTimestamp() ::= <<
 <selectAllGroupAndOptions()>
@@ -52,4 +55,3 @@ queryAllOrderedGroupsAndOptionsByActivityId() ::= <<
  where q.study_activity_id=:activityId
  order by q.question_id, pg.display_order asc, po.display_order asc
 >>
-
