@@ -126,7 +126,7 @@ public class DataExporterTest extends TxnAwareBaseTest {
         Mockito.when(mockMedicalRecordService.getDateOfBirth(Mockito.any(Handle.class),
                 Mockito.anyLong(), Mockito.anyLong())).thenReturn(Optional.of(testBirthdate));
         Mockito.when(mockMedicalRecordService.fetchBloodAndTissueConsents(Mockito.any(Handle.class),
-                Mockito.anyLong(), Mockito.anyString(), Mockito.anyString(), Mockito.anyLong(), Mockito.anyString()))
+                Mockito.anyLong(), Mockito.anyString(), Mockito.any(), Mockito.anyLong(), Mockito.anyString()))
                 .thenReturn(new MedicalRecordService.ParticipantConsents(true, true));
 
         AgeOfMajorityRule ageOfMajorityRule = Mockito.mock(AgeOfMajorityRule.class);

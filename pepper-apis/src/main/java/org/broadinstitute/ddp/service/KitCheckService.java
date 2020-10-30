@@ -229,7 +229,7 @@ public class KitCheckService {
                 pending.getUserId(),
                 pending.getUserId(),
                 pending.getUserGuid(),
-                pending.getUserGuid(),
+                null,
                 pending.getStudyId(), EventTriggerType.KIT_PREP);
         EventService.getInstance().processAllActionsForEventSignal(apisHandle, signal);
         kitScheduleDao.updateRecordCurrentOccurrencePrepTime(record.getId(), Instant.now());

@@ -20,14 +20,14 @@ expr
   ;
 
 query
-  : 'user' '.' study '.' studyPredicate                                                     # StudyQuery
+  : USER_TYPE '.' study '.' studyPredicate                                                  # StudyQuery
   | USER_TYPE '.' study '.' form '.' formPredicate                                          # FormQuery
   | USER_TYPE '.' study '.' form '.' instance '.' formInstancePredicate                     # FormInstanceQuery
   | USER_TYPE '.' study '.' form '.' question '.' questionPredicate                         # QuestionQuery
   | USER_TYPE '.' study '.' form '.' question '.' 'answers' '.' predicate                   # DefaultLatestAnswerQuery
   | USER_TYPE '.' study '.' form '.' instance '.' question '.' 'answers' '.' predicate      # AnswerQuery
   | USER_TYPE '.' 'profile' '.' profileDataQuery                                            # ProfileQuery
-  | 'user' '.' 'event' '.' 'testResult' '.' testResultQuery                                 # EventTestResultQuery
+  | USER_TYPE '.' 'event' '.' 'testResult' '.' testResultQuery                              # EventTestResultQuery
   ;
 
 study : 'studies' '[' STR ']' ;
@@ -39,6 +39,7 @@ question : 'questions' '[' STR ']' ;
 studyPredicate
   : 'hasAgedUp' '(' ')'  # HasAgedUpPredicate
   | 'hasInvitation' '(' STR ')'   # HasInvitationPredicate
+  | 'isGovernedParticipant' '(' ')' #IsGovernedParticipantQuery
   ;
 
 // Form predicate functions that operate on a single piece of data
@@ -72,7 +73,6 @@ predicate
 // Queries to pull out various pieces of profile data
 profileDataQuery
   : 'birthDate' '(' ')'   # ProfileBirthDateQuery
-  | 'isGovernedParticipant' '(' ')' #ProfileIsGovernedParticipantQuery
   ;
 
 // Queries for current test result event.

@@ -106,7 +106,7 @@ public class AgeUpService {
                                 candidate.getParticipantUserId(),
                                 candidate.getParticipantUserId(),
                                 candidate.getParticipantUserGuid(),
-                                candidate.getParticipantUserGuid(),
+                                null,
                                 policy.getStudyId(), EventTriggerType.CONSENT_SUSPENDED);
                         EventService.getInstance().processAllActionsForEventSignal(handle, signal);
                     });

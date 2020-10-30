@@ -25,6 +25,7 @@ import org.broadinstitute.ddp.db.dao.JdbiActivity;
 import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudyCached;
 import org.broadinstitute.ddp.db.dao.StudyGovernanceDao;
+import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
 import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.ActivityDto;
 import org.broadinstitute.ddp.db.dto.UserActivityInstanceSummary;
@@ -204,6 +205,9 @@ public class TreeWalkInterpreter implements PexInterpreter {
 
     private String getUserGuidByUserType(InterpreterContext ictx, TerminalNode node) {
         if (UserType.OPERATOR.equals(node.getText())) {
+            if (ictx.getOperatorGuid() == null) {
+                throw new PexRuntimeException("Expression has a reference to operator, but there is no operator in context");
+            }
             return ictx.getOperatorGuid();
         } else {
             return ictx.getUserGuid();
@@ -211,6 +215,9 @@ public class TreeWalkInterpreter implements PexInterpreter {
     }
 
     private boolean evalStudyQuery(InterpreterContext ictx, StudyQueryContext ctx) {
+        if (UserType.OPERATOR.equals(ctx.USER_TYPE().getText())) {
+            throw new PexUnsupportedException("Operator context is not supported for study queries");
+        }
         String userGuid = ictx.getUserGuid();
         String umbrellaStudyGuid = extractString(ctx.study().STR());
         return applyStudyPredicate(ictx, ctx.studyPredicate(), userGuid, umbrellaStudyGuid);
@@ -246,6 +253,13 @@ public class TreeWalkInterpreter implements PexInterpreter {
                     .findInvitations(studyGuid, userGuid)
                     .stream()
                     .anyMatch(invite -> invite.getInvitationType() == inviteType);
+        } else if (predCtx instanceof PexParser.IsGovernedParticipantQueryContext) {
+            if (ictx.getOperatorGuid() == null) {
+                throw new PexRuntimeException("isGovernedParticipant() shouldn't be used without operator in the context");
+            }
+            return ictx.getHandle().attach(UserGovernanceDao.class)
+                    .findActiveGovernancesByParticipantAndStudyGuids(ictx.getUserGuid(), studyGuid)
+                    .anyMatch(governance -> governance.getProxyUserGuid().equals(ictx.getOperatorGuid()));
         } else {
             throw new PexUnsupportedException("Unsupported study predicate: " + predCtx.getText());
         }
@@ -628,14 +642,15 @@ public class TreeWalkInterpreter implements PexInterpreter {
             } else {
                 return birthDate;
             }
-        } else if (queryCtx instanceof PexParser.ProfileIsGovernedParticipantQueryContext) {
-            return !ictx.getUserGuid().equals(ictx.getOperatorGuid());
         } else {
             throw new PexUnsupportedException("Unhandled profile data query: " + queryCtx.getText());
         }
     }
 
     private Object evalEventTestResultQuery(InterpreterContext ictx, PexParser.EventTestResultQueryContext ctx) {
+        if (UserType.OPERATOR.equals(ctx.USER_TYPE().getText())) {
+            throw new PexUnsupportedException("Operator context is not supported for event queries");
+        }
         EventSignal eventSignal = ictx.getEventSignal();
         if (eventSignal == null) {
             throw new PexRuntimeException("Expected event signal data but none found in evaluation context");
