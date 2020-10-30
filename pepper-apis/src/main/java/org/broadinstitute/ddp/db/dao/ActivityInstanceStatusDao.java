@@ -91,14 +91,16 @@ public interface ActivityInstanceStatusDao extends SqlObject {
      */
     default ActivityInstanceStatusDto insertStatus(long instanceId, InstanceStatusType newStatus, long epochMilliseconds,
                                                    String operatorGuid) {
-        long operatorId = getJdbiUser().getUserIdByGuid(operatorGuid);
-
         ActivityInstanceDto instanceDto = getJdbiActivityInstance().getByActivityInstanceId(instanceId)
                 .orElseThrow(() -> new DaoException("Could not find activity instance with id " + instanceId));
 
-        User participantUser = getHandle().attach(UserDao.class).findUserById(instanceDto.getParticipantId())
-                .orElseThrow(() -> new DaoException("Cound not find User participant with id:" + instanceDto.getParticipantId()));
-        updateOrInsertStatus(instanceDto, newStatus, epochMilliseconds, operatorId, participantUser);
+        UserDao userDao = getHandle().attach(UserDao.class);
+        User participantUser = userDao.findUserById(instanceDto.getParticipantId())
+                .orElseThrow(() -> new DaoException("Could not find User participant with id:" + instanceDto.getParticipantId()));
+        User operatorUser = userDao.findUserByGuid(operatorGuid)
+                .orElseThrow(() -> new DaoException("Could not find User operator with guid:" + operatorGuid));
+
+        updateOrInsertStatus(instanceDto, newStatus, epochMilliseconds, operatorUser, participantUser);
         return getCurrentStatus(instanceDto.getId()).orElse(null);
     }
 
@@ -111,7 +113,7 @@ public interface ActivityInstanceStatusDao extends SqlObject {
      * @return the most recent status
      */
     default void updateOrInsertStatus(ActivityInstanceDto instanceDto, InstanceStatusType newStatusType, long epochMilliseconds,
-                                      long operatorId, User participantUser) {
+                                      User operatorUser, User participantUser) {
 
         Optional<ActivityInstanceStatusDto> instanceStatusOptional = getCurrentStatus(instanceDto.getId());
 
@@ -127,7 +129,7 @@ public interface ActivityInstanceStatusDao extends SqlObject {
         }
 
 
-        getJdbiActivityStatus().insert(instanceDto.getId(), newStatusType, epochMilliseconds, operatorId);
+        getJdbiActivityStatus().insert(instanceDto.getId(), newStatusType, epochMilliseconds, operatorUser.getId());
         if (newStatusType == InstanceStatusType.COMPLETE) {
             int rowsUpdated = getJdbiActivityInstance().updateFirstCompletedAtIfNotSet(instanceDto.getId(), epochMilliseconds);
             if (rowsUpdated > 1) {
@@ -137,9 +139,10 @@ public interface ActivityInstanceStatusDao extends SqlObject {
         }
 
         EventSignal eventSignal = new ActivityInstanceStatusChangeSignal(
-                operatorId,
+                operatorUser.getId(),
                 participantUser.getId(),
                 participantUser.getGuid(),
+                operatorUser.getGuid(),
                 instanceDto.getId(),
                 instanceDto.getActivityId(),
                 instanceDto.getStudyId(),

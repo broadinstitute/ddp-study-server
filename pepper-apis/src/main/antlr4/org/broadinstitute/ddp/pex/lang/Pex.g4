@@ -20,14 +20,14 @@ expr
   ;
 
 query
-  : 'user' '.' study '.' studyPredicate                                                  # StudyQuery
-  | 'user' '.' study '.' form '.' formPredicate                                          # FormQuery
-  | 'user' '.' study '.' form '.' instance '.' formInstancePredicate                     # FormInstanceQuery
-  | 'user' '.' study '.' form '.' question '.' questionPredicate                         # QuestionQuery
-  | 'user' '.' study '.' form '.' question '.' 'answers' '.' predicate                   # DefaultLatestAnswerQuery
-  | 'user' '.' study '.' form '.' instance '.' question '.' 'answers' '.' predicate      # AnswerQuery
-  | 'user' '.' 'profile' '.' profileDataQuery   # ProfileQuery
-  | 'user' '.' 'event' '.' 'testResult' '.' testResultQuery   # EventTestResultQuery
+  : USER_TYPE '.' study '.' studyPredicate                                                  # StudyQuery
+  | USER_TYPE '.' study '.' form '.' formPredicate                                          # FormQuery
+  | USER_TYPE '.' study '.' form '.' instance '.' formInstancePredicate                     # FormInstanceQuery
+  | USER_TYPE '.' study '.' form '.' question '.' questionPredicate                         # QuestionQuery
+  | USER_TYPE '.' study '.' form '.' question '.' 'answers' '.' predicate                   # DefaultLatestAnswerQuery
+  | USER_TYPE '.' study '.' form '.' instance '.' question '.' 'answers' '.' predicate      # AnswerQuery
+  | USER_TYPE '.' 'profile' '.' profileDataQuery                                            # ProfileQuery
+  | USER_TYPE '.' 'event' '.' 'testResult' '.' testResultQuery                              # EventTestResultQuery
   ;
 
 study : 'studies' '[' STR ']' ;
@@ -39,6 +39,7 @@ question : 'questions' '[' STR ']' ;
 studyPredicate
   : 'hasAgedUp' '(' ')'  # HasAgedUpPredicate
   | 'hasInvitation' '(' STR ')'   # HasInvitationPredicate
+  | 'isGovernedParticipant' '(' ')' #IsGovernedParticipantQuery
   ;
 
 // Form predicate functions that operate on a single piece of data
@@ -83,6 +84,7 @@ testResultQuery
 
 // Lexical rules
 
+USER_TYPE : 'user' | 'operator' ;
 INSTANCE_TYPE : 'latest' | 'specific' ;
 BOOL : 'true' | 'false' ;
 STR : '"' .*? '"' ;

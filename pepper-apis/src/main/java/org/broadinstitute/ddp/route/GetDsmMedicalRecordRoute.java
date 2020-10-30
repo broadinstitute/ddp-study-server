@@ -96,7 +96,7 @@ public class GetDsmMedicalRecordRoute implements Route {
 
             // Converting booleans to ints because it's the format DSM expects
             MedicalRecordService.ParticipantConsents consents = medicalRecordService.fetchBloodAndTissueConsents(
-                    handle, dsmParticipant.getUserId(), dsmParticipant.getUserGuid(), studyDto.getId(), studyGuid);
+                    handle, dsmParticipant.getUserId(), dsmParticipant.getUserGuid(), null, studyDto.getId(), studyGuid);
             int hasConsentedToBloodDraw = consents.hasConsentedToBloodDraw()
                     ? DsmConsentElection.ELECTION_SELECTED.getNumberValue() : DsmConsentElection.ELECTION_NOT_SELECTED.getNumberValue();
             participant.setHasConsentedToBloodDraw(hasConsentedToBloodDraw);

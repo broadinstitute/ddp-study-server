@@ -1271,27 +1271,29 @@ public class TreeWalkInterpreterTest extends TxnAwareBaseTest {
         thrown.expect(PexRuntimeException.class);
         thrown.expectMessage(containsString("Expected DSM notification"));
         String expr = "user.event.testResult.isCorrected()";
-        EventSignal signal = new ActivityInstanceStatusChangeSignal(1L, 1L, "guid", 2L, 3L, 4L, InstanceStatusType.COMPLETE);
+        EventSignal signal = new ActivityInstanceStatusChangeSignal(1L, 1L, "guid", "guid", 2L, 3L, 4L, InstanceStatusType.COMPLETE);
         assertTrue(runEvalEventSignal(expr, signal));
     }
 
     private boolean run(String expr) {
-        return TransactionWrapper.withTxn(handle -> new TreeWalkInterpreter().eval(expr, handle, userGuid, firstInstance.getGuid()));
+        return TransactionWrapper.withTxn(handle -> new TreeWalkInterpreter()
+                .eval(expr, handle, userGuid, userGuid, firstInstance.getGuid()));
     }
 
     private boolean run(Handle handle, String expr) {
-        return new TreeWalkInterpreter().eval(expr, handle, userGuid, firstInstance.getGuid());
+        return new TreeWalkInterpreter().eval(expr, handle, userGuid, userGuid, firstInstance.getGuid());
     }
 
     private boolean runEvalEventSignal(String expr, EventSignal signal) {
         return TransactionWrapper.withTxn(handle -> new TreeWalkInterpreter()
-                .eval(expr, handle, userGuid, firstInstance.getGuid(), null, signal));
+                .eval(expr, handle, userGuid, userGuid, firstInstance.getGuid(), null, signal));
     }
 
     private DsmNotificationSignal newDsmEventSignal(TestResult testResult) {
         return new DsmNotificationSignal(
                 testData.getUserId(),
                 testData.getUserId(),
+                userGuid,
                 userGuid,
                 testData.getStudyId(),
                 DsmNotificationEventType.TEST_RESULT,

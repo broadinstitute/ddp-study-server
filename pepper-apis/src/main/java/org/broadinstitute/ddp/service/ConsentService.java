@@ -45,11 +45,11 @@ public class ConsentService {
      * @param studyGuid the study guid
      * @return list of summaries, or empty
      */
-    public List<ConsentSummary> getAllConsentSummariesByUserGuid(Handle handle, String userGuid, String studyGuid) {
+    public List<ConsentSummary> getAllConsentSummariesByUserGuid(Handle handle, String userGuid, String operatorGuid, String studyGuid) {
         List<ConsentSummary> summaries = studyActDao.getAllConsentSummaries(handle, userGuid, studyGuid);
         Optional<Long> studyIdOpt = handle.attach(JdbiUmbrellaStudy.class).getIdByGuid(studyGuid);
         for (ConsentSummary summary : summaries) {
-            resolveStatusAndElections(handle, userGuid, summary, studyIdOpt.get());
+            resolveStatusAndElections(handle, userGuid, operatorGuid, summary, studyIdOpt.get());
         }
         return summaries;
     }
@@ -64,17 +64,17 @@ public class ConsentService {
      * @param consentActivityCode the consent activity code
      * @return the latest summary, if found
      */
-    public Optional<ConsentSummary> getLatestConsentSummary(Handle handle, String userGuid,
+    public Optional<ConsentSummary> getLatestConsentSummary(Handle handle, String userGuid, String operatorGuid,
                                                       String studyGuid, String consentActivityCode) {
         Optional<Long> studyIdOpt = handle.attach(JdbiUmbrellaStudy.class).getIdByGuid(studyGuid);
         Optional<ConsentSummary> optSummary = studyActDao.getLatestConsentSummary(
                 handle, userGuid, studyGuid, consentActivityCode
         );
-        optSummary.ifPresent(summary -> resolveStatusAndElections(handle, userGuid, summary, studyIdOpt.get()));
+        optSummary.ifPresent(summary -> resolveStatusAndElections(handle, userGuid, operatorGuid, summary, studyIdOpt.get()));
         return optSummary;
     }
 
-    private void resolveStatusAndElections(Handle handle, String userGuid, ConsentSummary summary, long studyId) {
+    private void resolveStatusAndElections(Handle handle, String userGuid, String operatorGuid, ConsentSummary summary, long studyId) {
         if (StringUtils.isNotBlank(summary.getInstanceGuid()) && StringUtils.isBlank(summary.getConsentedExpr())) {
             throw new DDPException("Activity instance found for consent activity "
                     + summary.getActivityCode() + " but no consented expression found. "
@@ -82,7 +82,8 @@ public class ConsentService {
         }
         if (StringUtils.isNotBlank(summary.getInstanceGuid())) {
             try {
-                summary.setConsented(interpreter.eval(summary.getConsentedExpr(), handle, userGuid, summary.getInstanceGuid()));
+                summary.setConsented(interpreter.eval(summary.getConsentedExpr(), handle, userGuid,
+                        operatorGuid, summary.getInstanceGuid()));
             } catch (PexException e) {
                 throw new DDPException("Error evaluating pex expression `" + summary.getConsentedExpr()
                         + "` for consent " + summary.getActivityCode(), e);
@@ -93,7 +94,7 @@ public class ConsentService {
             for (ConsentElection election : elections) {
                 try {
                     election.setSelected(interpreter.eval(election.getSelectedExpr(),
-                            handle, userGuid, summary.getInstanceGuid()));
+                            handle, userGuid, operatorGuid, summary.getInstanceGuid()));
                 } catch (PexException e) {
                     throw new DDPException("Error evaluating pex expression `" + election.getSelectedExpr()
                             + "` for election " + election.getStableId(), e);

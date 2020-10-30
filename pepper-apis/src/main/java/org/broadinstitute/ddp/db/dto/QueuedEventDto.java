@@ -16,6 +16,7 @@ public class QueuedEventDto {
     private Long operatorUserId;
     private String participantGuid;
     private String participantHruid;
+    private String operatorGuid;
     private long eventConfigurationId;
     private EventTriggerType triggerType;
     private EventActionType actionType;
@@ -32,6 +33,7 @@ public class QueuedEventDto {
             @ColumnName("operator_id") Long operatorUserId,
             @ColumnName("participant_guid") String participantGuid,
             @ColumnName("participant_hruid") String participantHruid,
+            @ColumnName("operator_guid") String operatorGuid,
             @ColumnName("event_configuration_id") long eventConfigurationId,
             @ColumnName("event_trigger_type") EventTriggerType triggerType,
             @ColumnName("event_action_type") EventActionType actionType,
@@ -46,6 +48,7 @@ public class QueuedEventDto {
         this.operatorUserId = operatorUserId;
         this.participantGuid = participantGuid;
         this.participantHruid = participantHruid;
+        this.operatorGuid = operatorGuid;
         this.eventConfigurationId = eventConfigurationId;
         this.triggerType = triggerType;
         this.actionType = actionType;
@@ -62,6 +65,7 @@ public class QueuedEventDto {
                 other.getOperatorUserId(),
                 other.getParticipantGuid(),
                 other.getParticipantHruid(),
+                other.getOperatorGuid(),
                 other.getEventConfigurationId(),
                 other.getTriggerType(),
                 other.getActionType(),
@@ -95,6 +99,10 @@ public class QueuedEventDto {
 
     public String getParticipantHruid() {
         return participantHruid;
+    }
+
+    public String getOperatorGuid() {
+        return operatorGuid;
     }
 
     public long getEventConfigurationId() {

@@ -175,6 +175,7 @@ select q.queued_event_id,
        q.operator_user_id as operator_id,
        ptp.guid           as participant_guid,
        ptp.hruid          as participant_hruid,
+       op.guid            as operator_guid,
        prf.first_name     as participant_first_name,
        prf.last_name      as participant_last_name,
        cfg.event_configuration_id,
@@ -211,6 +212,7 @@ select q.queued_event_id,
   join sendgrid_configuration as sg on sg.umbrella_study_id = study.umbrella_study_id
   left join user as ptp on ptp.user_id = q.participant_user_id
   left join user_profile prf on prf.user_id = ptp.user_id
+  left join user as op on op.user_id = q.operator_user_id
   left join queued_notification as qn on qn.queued_event_id = q.queued_event_id
   left join queued_notification_template_substitution as sub on sub.queued_event_id = q.queued_event_id
   left join user_notification_event_action as n on n.user_notification_event_action_id = ea.event_action_id
