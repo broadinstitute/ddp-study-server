@@ -50,7 +50,7 @@ public class NotificationEventActionTest extends TxnAwareBaseTest {
         thrown.expectMessage(containsString("Could not find any non-voided invitations"));
         TransactionWrapper.useTxn(handle -> {
             var signal = new EventSignal(testData.getUserId(), testData.getUserId(), testData.getUserGuid(),
-                    testData.getStudyId(), EventTriggerType.REACHED_AOM);
+                    testData.getUserGuid(), testData.getStudyId(), EventTriggerType.REACHED_AOM);
             var dto = createEventConfigurationDto(handle, EventTriggerType.REACHED_AOM,
                     NotificationType.INVITATION_EMAIL, NotificationServiceType.SENDGRID, null);
             var action = new NotificationEventAction(new EventConfiguration(dto), dto);
@@ -67,7 +67,7 @@ public class NotificationEventActionTest extends TxnAwareBaseTest {
                     testData.getStudyId(), testData.getUserId(), "test@datadonationplatform.org");
 
             var signal = new EventSignal(testData.getUserId(), testData.getUserId(), testData.getUserGuid(),
-                    testData.getStudyId(), EventTriggerType.REACHED_AOM);
+                    testData.getUserGuid(), testData.getStudyId(), EventTriggerType.REACHED_AOM);
             var dto = createEventConfigurationDto(handle, EventTriggerType.REACHED_AOM,
                     NotificationType.INVITATION_EMAIL, NotificationServiceType.SENDGRID, null);
             var action = new NotificationEventAction(new EventConfiguration(dto), dto);
@@ -89,7 +89,7 @@ public class NotificationEventActionTest extends TxnAwareBaseTest {
                     testData.getStudyId(), testData.getUserId(), "test@datadonationplatform.org");
 
             var signal = new EventSignal(testData.getUserId(), testData.getUserId(), testData.getUserGuid(),
-                    testData.getStudyId(), EventTriggerType.REACHED_AOM);
+                    testData.getUserGuid(), testData.getStudyId(), EventTriggerType.REACHED_AOM);
             var dto = createEventConfigurationDto(handle, EventTriggerType.REACHED_AOM,
                     NotificationType.INVITATION_EMAIL, NotificationServiceType.SENDGRID, null);
             var action = new NotificationEventAction(new EventConfiguration(dto), dto);
@@ -125,7 +125,7 @@ public class NotificationEventActionTest extends TxnAwareBaseTest {
             invitationDao.markVoided(invitation1.getInvitationId(), Instant.now());
 
             var signal = new EventSignal(testData.getUserId(), testData.getUserId(), testData.getUserGuid(),
-                    testData.getStudyId(), EventTriggerType.REACHED_AOM);
+                    testData.getUserGuid(), testData.getStudyId(), EventTriggerType.REACHED_AOM);
             var dto = createEventConfigurationDto(handle, EventTriggerType.REACHED_AOM,
                     NotificationType.INVITATION_EMAIL, NotificationServiceType.SENDGRID, null);
             var action = new NotificationEventAction(new EventConfiguration(dto), dto);
@@ -149,7 +149,7 @@ public class NotificationEventActionTest extends TxnAwareBaseTest {
                     testData.getStudyId(), testData.getUserId(), "test222@datadonationplatform.org");
 
             var signal = new InvitationCreatedSignal(testData.getUserId(), testData.getUserId(), testData.getUserGuid(),
-                    testData.getStudyId(), invitation1);
+                    testData.getUserGuid(), testData.getStudyId(), invitation1);
             var dto = createEventConfigurationDto(handle, EventTriggerType.INVITATION_CREATED,
                     NotificationType.INVITATION_EMAIL, NotificationServiceType.SENDGRID, null);
             var action = new NotificationEventAction(new EventConfiguration(dto), dto);

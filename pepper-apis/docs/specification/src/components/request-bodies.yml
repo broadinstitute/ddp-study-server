@@ -182,3 +182,25 @@ UpdateActivityPropertiesRequestBody:
         properties:
           index:
             type: integer
+RegisterGovernedRequestBody:
+  description: user data
+  required: false
+  content:
+    application/json:
+      schema:
+        type: object
+        properties:
+          firstName:
+            type: string
+            description: user's first name, if available
+          lastName:
+            type: string
+            description: user's last name, if available
+          languageCode:
+            type: string
+            description: user's preferred language, as an ISO 639-1 code
+            example: en
+          timeZone:
+            type: string
+            description: user's time zone, as an IANA time zone region identifier
+            example: America/New_York

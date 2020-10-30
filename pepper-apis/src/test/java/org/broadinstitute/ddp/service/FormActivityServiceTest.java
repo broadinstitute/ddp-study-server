@@ -95,7 +95,7 @@ public class FormActivityServiceTest extends TxnAwareBaseTest {
                     .orElseThrow(() -> new DDPException("Could not find activity definition for instance " + instanceGuid));
 
             List<BlockVisibility> visibilities = service.getBlockVisibilities(handle, summary.get(), formDef, testData.getUserGuid(),
-                    instanceGuid);
+                    testData.getUserGuid(), instanceGuid);
             assertNotNull(visibilities);
             assertEquals(2, visibilities.size());
             assertFalse(visibilities.stream().anyMatch(vis -> vis.getGuid().equals(controlBlockGuid)));
@@ -106,7 +106,7 @@ public class FormActivityServiceTest extends TxnAwareBaseTest {
     @Test
     public void testGetBlockVisibilities_withExpr_included() {
         PexInterpreter mockInterpreter = Mockito.mock(PexInterpreter.class);
-        when(mockInterpreter.eval(anyString(), any(Handle.class), eq(testData.getUserGuid()), anyString(),
+        when(mockInterpreter.eval(anyString(), any(Handle.class), eq(testData.getUserGuid()), eq(testData.getUserGuid()), anyString(),
                 any(UserActivityInstanceSummary.class)))
                 .thenReturn(true);
 
@@ -131,7 +131,7 @@ public class FormActivityServiceTest extends TxnAwareBaseTest {
                     .orElseThrow(() -> new DDPException("Could not find activity definition for instance " + instanceGuid));
 
             List<BlockVisibility> visibilities = formService.getBlockVisibilities(handle, summary.get(), formDef, testData.getUserGuid(),
-                    instanceGuid);
+                    testData.getUserGuid(), instanceGuid);
             assertNotNull(visibilities);
             assertEquals(2, visibilities.size());
 
@@ -151,7 +151,7 @@ public class FormActivityServiceTest extends TxnAwareBaseTest {
 
         PexInterpreter mockInterpreter = Mockito.mock(PexInterpreter.class);
 
-        when(mockInterpreter.eval(anyString(), any(Handle.class), eq(testData.getUserGuid()), anyString(),
+        when(mockInterpreter.eval(anyString(), any(Handle.class), eq(testData.getUserGuid()), eq(testData.getUserGuid()), anyString(),
                 any(UserActivityInstanceSummary.class)))
                 .thenThrow(new PexException("testing"));
 
@@ -175,7 +175,7 @@ public class FormActivityServiceTest extends TxnAwareBaseTest {
                     versionDto)
                     .orElseThrow(() -> new DDPException("Could not find activity definition for instance " + instanceGuid));
 
-            formService.getBlockVisibilities(handle, summary.get(), formDef, testData.getUserGuid(), instanceGuid);
+            formService.getBlockVisibilities(handle, summary.get(), formDef, testData.getUserGuid(), testData.getUserGuid(), instanceGuid);
             fail("expected exception was not thrown");
         });
     }
@@ -201,7 +201,7 @@ public class FormActivityServiceTest extends TxnAwareBaseTest {
                     .orElseThrow(() -> new DDPException("Could not find activity definition for instance " + instanceGuid));
 
             List<BlockVisibility> visibilities = service.getBlockVisibilities(handle, summary.get(), formDef, testData.getUserGuid(),
-                    instanceGuid);
+                    testData.getUserGuid(), instanceGuid);
             assertNotNull(visibilities);
             assertEquals(2, visibilities.size());
             assertTrue(visibilities.stream().anyMatch(vis -> vis.getGuid().equals(conditionalNestedBlockGuid)));

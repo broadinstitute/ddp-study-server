@@ -37,7 +37,7 @@ public class MarkActivitiesReadOnlyEventActionTest extends TxnAwareBaseTest {
             FormActivityDef activity = newTestActivity(handle);
 
             var signal = new EventSignal(testData.getUserId(), testData.getUserId(), testData.getUserGuid(),
-                    testData.getStudyId(), EventTriggerType.GOVERNED_USER_REGISTERED);
+                    testData.getUserGuid(), testData.getStudyId(), EventTriggerType.GOVERNED_USER_REGISTERED);
             var action = new MarkActivitiesReadOnlyEventAction(null, Set.of(activity.getActivityId()));
             action.doAction(null, handle, signal);
             // all good!
@@ -57,7 +57,7 @@ public class MarkActivitiesReadOnlyEventActionTest extends TxnAwareBaseTest {
             ActivityInstanceDto instance2 = instanceDao.insertInstance(act2.getActivityId(), testData.getUserGuid());
 
             var signal = new EventSignal(testData.getUserId(), testData.getUserId(), testData.getUserGuid(),
-                    testData.getStudyId(), EventTriggerType.GOVERNED_USER_REGISTERED);
+                    testData.getUserGuid(), testData.getStudyId(), EventTriggerType.GOVERNED_USER_REGISTERED);
             var action = new MarkActivitiesReadOnlyEventAction(null, Set.of(act1.getActivityId(), act2.getActivityId()));
             action.doAction(null, handle, signal);
 
@@ -79,7 +79,7 @@ public class MarkActivitiesReadOnlyEventActionTest extends TxnAwareBaseTest {
             ActivityInstanceDto instance2 = instanceDao.insertInstance(act1.getActivityId(), testData.getUserGuid());
 
             var signal = new EventSignal(testData.getUserId(), testData.getUserId(), testData.getUserGuid(),
-                    testData.getStudyId(), EventTriggerType.GOVERNED_USER_REGISTERED);
+                    testData.getUserGuid(), testData.getStudyId(), EventTriggerType.GOVERNED_USER_REGISTERED);
             var action = new MarkActivitiesReadOnlyEventAction(null, Set.of(act1.getActivityId()));
             action.doAction(null, handle, signal);
 
@@ -102,7 +102,7 @@ public class MarkActivitiesReadOnlyEventActionTest extends TxnAwareBaseTest {
             ActivityInstanceDto instance2 = instanceDao.insertInstance(act2.getActivityId(), testData.getUserGuid());
 
             var signal = new EventSignal(testData.getUserId(), testData.getUserId(), testData.getUserGuid(),
-                    testData.getStudyId(), EventTriggerType.GOVERNED_USER_REGISTERED);
+                    testData.getUserGuid(), testData.getStudyId(), EventTriggerType.GOVERNED_USER_REGISTERED);
             var action = new MarkActivitiesReadOnlyEventAction(null, Set.of(act1.getActivityId()));
             action.doAction(null, handle, signal);
 

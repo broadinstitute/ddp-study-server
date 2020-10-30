@@ -8,8 +8,8 @@ public class InvitationCreatedSignal extends EventSignal {
     private InvitationDto invitationDto;
 
     public InvitationCreatedSignal(long operatorId, long participantId, String participantGuid,
-                                   long studyId, InvitationDto invitationDto) {
-        super(operatorId, participantId, participantGuid, studyId, EventTriggerType.INVITATION_CREATED);
+                                   String operatorGuid, long studyId, InvitationDto invitationDto) {
+        super(operatorId, participantId, participantGuid, operatorGuid, studyId, EventTriggerType.INVITATION_CREATED);
         this.invitationDto = invitationDto;
     }
 
