@@ -108,8 +108,8 @@ public class AgeUpService {
                                 candidate.getParticipantUserId(),
                                 candidate.getParticipantUserId(),
                                 candidate.getParticipantUserGuid(),
-                                policy.getStudyId(),
-                                EventTriggerType.CONSENT_SUSPENDED);
+                                null,
+                                policy.getStudyId(), EventTriggerType.CONSENT_SUSPENDED);
                         EventService.getInstance().processAllActionsForEventSignal(handle, signal);
                     });
                 } catch (Exception e) {
@@ -129,8 +129,8 @@ public class AgeUpService {
                                 candidate.getParticipantUserId(),
                                 candidate.getParticipantUserId(),
                                 candidate.getParticipantUserGuid(),
-                                policy.getStudyId(),
-                                EventTriggerType.REACHED_AOM_PREP);
+                                null,
+                                policy.getStudyId(), EventTriggerType.REACHED_AOM_PREP);
                         EventService.getInstance().processAllActionsForEventSignal(handle, signal);
                     });
                     preppedCandidateIds.add(candidate.getId());
@@ -155,8 +155,8 @@ public class AgeUpService {
                                     candidate.getParticipantUserId(),
                                     candidate.getParticipantUserId(),
                                     candidate.getParticipantUserGuid(),
-                                    policy.getStudyId(),
-                                    EventTriggerType.REACHED_AOM);
+                                    null,
+                                    policy.getStudyId(), EventTriggerType.REACHED_AOM);
                             EventService.getInstance().processAllActionsForEventSignal(handle, signal);
                         });
                         completedCandidateIds.add(candidate.getId());

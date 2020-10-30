@@ -108,7 +108,7 @@ public class MedicalRecordService {
      * @return the election statuses
      */
     public ParticipantConsents fetchBloodAndTissueConsents(Handle handle, long participantUserId, String participantGuid,
-                                                           long studyId, String studyGuid) {
+                                                           String operatorGuid, long studyId, String studyGuid) {
         var activityDao = handle.attach(ActivityDao.class);
         Map<Long, ActivityMapping> bloodMappings = activityDao
                 .findActivityMappings(studyId, ActivityMappingType.BLOOD)
@@ -132,16 +132,17 @@ public class MedicalRecordService {
                     .collect(Collectors.toList());
         }
 
-        boolean hasConsentedToBloodDraw = determineElectionStatus(handle, participantGuid, studyGuid,
+        boolean hasConsentedToBloodDraw = determineElectionStatus(handle, participantGuid, operatorGuid, studyGuid,
                 ActivityMappingType.BLOOD, bloodMappings, sortedSubmittedInstances);
-        boolean hasConsentedToTissueSample = determineElectionStatus(handle, participantGuid, studyGuid,
+        boolean hasConsentedToTissueSample = determineElectionStatus(handle, participantGuid, operatorGuid, studyGuid,
                 ActivityMappingType.TISSUE, tissueMappings, sortedSubmittedInstances);
 
         return new ParticipantConsents(hasConsentedToBloodDraw, hasConsentedToTissueSample);
     }
 
-    private boolean determineElectionStatus(Handle handle, String participantGuid, String studyGuid, ActivityMappingType mappingType,
-                                            Map<Long, ActivityMapping> mappings, List<ActivityResponse> instances) {
+    private boolean determineElectionStatus(Handle handle, String participantGuid, String operatorGuid, String studyGuid,
+                                            ActivityMappingType mappingType, Map<Long, ActivityMapping> mappings,
+                                            List<ActivityResponse> instances) {
         ActivityResponse instance = instances.stream()
                 .filter(inst -> mappings.containsKey(inst.getActivityId()))
                 .findFirst()
@@ -153,7 +154,7 @@ public class MedicalRecordService {
         }
 
         ConsentSummary summary = consentService
-                .getLatestConsentSummary(handle, participantGuid, studyGuid, instance.getActivityCode())
+                .getLatestConsentSummary(handle, participantGuid, operatorGuid, studyGuid, instance.getActivityCode())
                 .orElse(null);
         if (summary == null) {
             LOG.error("No consent summary found for activity {} user {} study {} for mapping type {}",

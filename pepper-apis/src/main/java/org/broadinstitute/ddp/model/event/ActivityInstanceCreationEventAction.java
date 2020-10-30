@@ -141,6 +141,7 @@ public class ActivityInstanceCreationEventAction extends EventAction {
                 signal.getOperatorId(),
                 signal.getParticipantId(),
                 signal.getParticipantGuid(),
+                signal.getOperatorGuid(),
                 newActivityInstanceId,
                 studyActivityId,
                 signal.getStudyId(),

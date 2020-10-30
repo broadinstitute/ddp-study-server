@@ -1,5 +1,7 @@
 package org.broadinstitute.ddp.util;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -12,13 +14,13 @@ import java.util.Locale;
 import java.util.Locale.LanguageRange;
 import java.util.Map;
 import java.util.Set;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.ObjectUtils;
+import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.constants.LanguageConstants;
 import org.broadinstitute.ddp.db.dao.StudyLanguageCachedDao;
+import org.broadinstitute.ddp.db.dto.LanguageDto;
 import org.broadinstitute.ddp.json.activity.TranslatedSummary;
 import org.broadinstitute.ddp.model.study.StudyLanguage;
 import org.jdbi.v3.core.Handle;
@@ -66,7 +68,7 @@ public class I18nUtil {
      * Given the collection of summaries' mappings (where same summaries are grouped by language code),
      * returns summaries translated to the preferred language (or falls back to the secondary one)
      *
-     * @param activitySummariesByLang Summaries groupped by language
+     * @param activitySummaries Summaries groupped by language
      * @param preferredLanguageCode   Preferred language code for user
      * @return A list containing the single translated summary
      */
@@ -231,6 +233,47 @@ public class I18nUtil {
 
         public void registerSecondaryLanguage(String secondaryLanguage) {
             this.secondaryLanguage = secondaryLanguage;
+        }
+    }
+
+
+    /**
+     * Determines language for the given study based on preferred languageCode.
+     * @param handle    the jdbi handle
+     * @param studyGuid the study guid
+     * @param languageCode  language code requested
+     * @return LanguageDTO for languageCode if accessible, study-default if not, API-default otherwise.
+     */
+    public static LanguageDto determineUserLanguage(Handle handle, String studyGuid, String languageCode) {
+        StudyLanguage userLanguage = null;
+        List<StudyLanguage> studyLanguages = new StudyLanguageCachedDao(handle).findLanguages(studyGuid);
+        for (var language : studyLanguages) {
+            if (language.getLanguageCode().equalsIgnoreCase(languageCode)) {
+                userLanguage = language;
+                break;
+            }
+        }
+
+        // If no language provided or language is not one of study's supported ones,
+        // then use study's default language. If all else fails, fallback to first study language.
+        if (userLanguage == null) {
+            userLanguage = studyLanguages.stream()
+                    .filter(StudyLanguage::isDefault)
+                    .findFirst()
+                    .orElse(null);
+            if (userLanguage == null && !studyLanguages.isEmpty()) {
+                userLanguage = studyLanguages.get(0);
+                LOG.warn("Study {} does not have a default language, falling back to {}",
+                        studyGuid, userLanguage.getLanguageCode());
+            }
+        }
+
+        if (userLanguage != null) {
+            return userLanguage.toLanguageDto();
+        } else {
+            LOG.warn("Study {} does not have any languages configured, falling back to {}",
+                    studyGuid, LanguageStore.DEFAULT_LANG_CODE);
+            return LanguageStore.getDefault();
         }
     }
 }

@@ -28,7 +28,6 @@ import org.broadinstitute.ddp.model.activity.instance.validation.ActivityValidat
 import org.broadinstitute.ddp.model.activity.types.BlockType;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.pex.PexInterpreter;
-import org.broadinstitute.ddp.security.DDPAuth;
 import org.broadinstitute.ddp.service.ActivityInstanceService;
 import org.broadinstitute.ddp.service.ActivityValidationService;
 import org.broadinstitute.ddp.util.RouteUtil;
@@ -63,7 +62,7 @@ public class GetActivityInstanceRoute implements Route {
         String userGuid = request.params(PathParam.USER_GUID);
         String studyGuid = request.params(PathParam.STUDY_GUID);
         String instanceGuid = request.params(PathParam.INSTANCE_GUID);
-        DDPAuth ddpAuth = RouteUtil.getDDPAuth(request);
+        String operatorGuid = RouteUtil.getDDPAuth(request).getOperator();
 
         LOG.info("Attempting to retrieve activity instance {} for participant {} in study {}", instanceGuid, userGuid, studyGuid);
 
@@ -83,7 +82,7 @@ public class GetActivityInstanceRoute implements Route {
 
             LOG.info("Attempting to find a translation for the following language: {}", isoLangCode);
             Optional<ActivityInstance> inst = actInstService.getTranslatedActivity(
-                    handle, userGuid, instanceDto.getActivityType(), instanceGuid, isoLangCode, style
+                    handle, userGuid, operatorGuid, instanceDto.getActivityType(), instanceGuid, isoLangCode, style
             );
             if (!inst.isPresent()) {
                 String errMsg = String.format(
@@ -106,7 +105,7 @@ public class GetActivityInstanceRoute implements Route {
             }
             // end To-do
             Long languageCodeId = preferredUserLanguage.getId();
-            return validateActivityInstance(handle, activityInstance, userGuid, languageCodeId);
+            return validateActivityInstance(handle, activityInstance, userGuid, operatorGuid, languageCodeId);
         });
 
         GoogleAnalyticsMetricsTracker.getInstance().sendAnalyticsMetrics(studyGuid, GoogleAnalyticsMetrics.EVENT_CATEGORY_ACTIVITY_INSTANCE,
@@ -117,10 +116,10 @@ public class GetActivityInstanceRoute implements Route {
     }
 
     private ActivityInstance validateActivityInstance(
-            Handle handle, ActivityInstance activityInstance, String userGuid, long languageCodeId
+            Handle handle, ActivityInstance activityInstance, String userGuid, String operatorGuid, long languageCodeId
     ) {
         List<ActivityValidationFailure> validationFailures = actValidationService.validate(
-                handle, interpreter, userGuid, activityInstance.getGuid(), activityInstance.getActivityId(), languageCodeId
+                handle, interpreter, userGuid, operatorGuid, activityInstance.getGuid(), activityInstance.getActivityId(), languageCodeId
         );
         if (validationFailures.isEmpty()) {
             return activityInstance;

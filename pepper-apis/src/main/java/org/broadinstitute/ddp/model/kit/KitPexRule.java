@@ -21,6 +21,6 @@ public class KitPexRule extends KitRule<String> {
 
 
     public boolean validate(Handle handle, String userGuid, String activityInstanceGuid) {
-        return pexInterpreter.eval(pexExpression, handle, userGuid, activityInstanceGuid);
+        return pexInterpreter.eval(pexExpression, handle, userGuid, userGuid, activityInstanceGuid);
     }
 }
