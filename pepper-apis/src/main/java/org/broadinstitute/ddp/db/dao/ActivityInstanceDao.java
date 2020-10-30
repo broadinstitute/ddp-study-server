@@ -177,6 +177,18 @@ public interface ActivityInstanceDao extends SqlObject {
             + " where ai.participant_id = :userId and sa.study_id = :studyId")
     Set<Long> findAllInstanceIdsByUserIdAndStudyId(@Bind("userId") long userId, @Bind("studyId") long studyId);
 
+    @SqlQuery("select activity_instance_id"
+            + "  from activity_instance as ai"
+            + "  join (select participant_id, study_activity_id, created_at"
+            + "          from activity_instance where activity_instance_id = :instanceId)"
+            + "       as ai2 on ai.participant_id = ai2.participant_id"
+            + "       and ai.study_activity_id = ai2.study_activity_id"
+            + "       and ai.created_at <= ai2.created_at"
+            + " where ai.activity_instance_id != :instanceId"
+            + " order by ai.created_at desc"
+            + " limit 1")
+    Optional<Long> findMostRecentInstanceBeforeCurrent(@Bind("instanceId") long currentInstanceId);
+
     /**
      * Helper that only deletes an activity instance and its associated status(es).
      */
