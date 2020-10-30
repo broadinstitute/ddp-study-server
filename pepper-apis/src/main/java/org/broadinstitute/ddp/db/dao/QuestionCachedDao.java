@@ -126,4 +126,10 @@ public class QuestionCachedDao extends SQLObjectWrapper<QuestionDao> implements 
     public AnswerDao getAnswerDao() {
         return new AnswerCachedDao(getHandle());
     }
+
+    @Override
+    public JdbiPicklistOption getJdbiPicklistOption() {
+        return delegate.getJdbiPicklistOption();
+    }
+
 }
