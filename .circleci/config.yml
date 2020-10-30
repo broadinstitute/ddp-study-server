@@ -297,6 +297,7 @@ commands:
             cp "$DEPLOY_CONFIG_FILE_DIR/<<parameters.jar_base_name>>.yaml" .
             cp ../output-config/application.conf .
             cp ../output-config/redisson-jcache.yaml .
+            cp ../output-config/redisson-jcache-housekeeping.yaml .
       - auth-gcp-service-account
       - run:
           name: Deploy <<parameters.jar_base_name>> to GAE
