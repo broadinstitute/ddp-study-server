@@ -50,12 +50,9 @@ public class GovernedParticipantRegistrationRoute extends ValidatedJsonInputRout
                 ApiError error = new ApiError(ErrorCodes.STUDY_NOT_FOUND, "Study " + studyGuid + " does not exist");
                 throw ResponseUtil.haltError(response, HttpStatus.SC_NOT_FOUND, error);
             }
-            User operatorUser = userDao.findUserByGuid(operatorGuid)
-                    .orElseThrow(() -> new DDPException("Could not find operator with guid " + operatorGuid));
+            User operatorUser = userDao.findUserByGuid(operatorGuid)                    .orElseThrow(() -> new DDPException("Could not find operator with guid " + operatorGuid));
             long auth0ClientId = operatorUser.getCreatedByClientId();
-            Governance governance = payload.getAlias() == null
-                    ? userGovernanceDao.createGovernedUserWithGuidAlias(auth0ClientId, operatorUser.getId())
-                    : userGovernanceDao.createGovernedUser(auth0ClientId, operatorUser.getId(), payload.getAlias());
+            Governance governance = userGovernanceDao.createGovernedUserWithGuidAlias(auth0ClientId, operatorUser.getId());
             userGovernanceDao.grantGovernedStudy(governance.getId(), studyId.get());
             User governedUser = userDao.findUserById(governance.getGovernedUserId())
                     .orElseThrow(() -> new DDPException("Could not find governed user with id " + governance.getGovernedUserId()));

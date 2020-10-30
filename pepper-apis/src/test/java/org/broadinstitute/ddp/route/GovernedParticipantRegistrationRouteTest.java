@@ -41,7 +41,7 @@ public class GovernedParticipantRegistrationRouteTest extends IntegrationTestSui
     @Test
     public void invalidStudy() {
         GovernedUserRegistrationPayload payload = new GovernedUserRegistrationPayload("it", "John", "Doe",
-                "Europe/Amsterdam", "test-alias");
+                "Europe/Amsterdam");
         postRequest("invalid-study-guid", payload)
                 .then().assertThat()
                 .statusCode(404);
@@ -50,9 +50,9 @@ public class GovernedParticipantRegistrationRouteTest extends IntegrationTestSui
     @Test
     public void createFew() {
         GovernedUserRegistrationPayload payload1 = new GovernedUserRegistrationPayload("it", "John", "Doe",
-                "Europe/Amsterdam", "test-alias1");
+                "Europe/Amsterdam");
         GovernedUserRegistrationPayload payload2 = new GovernedUserRegistrationPayload("en", "Frank", "Johnson",
-                "Europe/Moscow", "test-alias2");
+                "Europe/Moscow");
         List<String> governedUserGuids = new ArrayList<>();
         governedUserGuids.add(postRequest(testData.getStudyGuid(), payload1)
                 .then().assertThat()
