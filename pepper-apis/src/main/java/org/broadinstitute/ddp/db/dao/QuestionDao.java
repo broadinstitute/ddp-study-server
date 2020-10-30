@@ -423,14 +423,14 @@ public interface QuestionDao extends SqlObject {
         PicklistOption option = null;
         // Put the ungrouped options in the list first.
         for (PicklistOptionDto optionDto : container.getUngroupedOptions()) {
-            if (CollectionUtils.isEmpty(optionDto.getNestedPicklistOptions())) {
+            if (CollectionUtils.isEmpty(optionDto.getNestedOptions())) {
                 option = new PicklistOption(optionDto.getStableId(),
                         optionDto.getOptionLabelTemplateId(), optionDto.getTooltipTemplateId(), optionDto.getDetailLabelTemplateId(),
                         optionDto.getAllowDetails(), optionDto.isExclusive());
             } else {
                 //add nested options
                 List<PicklistOption> nestedOptions = new ArrayList<>();
-                optionDto.getNestedPicklistOptions().stream().forEach(nestedOptionDto -> {
+                optionDto.getNestedOptions().stream().forEach(nestedOptionDto -> {
                     nestedOptions.add(new PicklistOption(nestedOptionDto.getStableId(),
                             nestedOptionDto.getOptionLabelTemplateId(), nestedOptionDto.getTooltipTemplateId(),
                             nestedOptionDto.getDetailLabelTemplateId(), nestedOptionDto.getAllowDetails(),
@@ -1527,13 +1527,13 @@ public interface QuestionDao extends SqlObject {
                             : templateDao.loadTemplateById(optionDto.getNestedOptionsTemplateId());
 
                     PicklistOptionDef optionDef = null;
-                    if (CollectionUtils.isEmpty(optionDto.getNestedPicklistOptions())) {
+                    if (CollectionUtils.isEmpty(optionDto.getNestedOptions())) {
                         optionDef = new PicklistOptionDef(optionDto.getId(), optionDto.getStableId(),
                                 optionLabel, tooltipTemplate, detailLabel, optionDto.isExclusive());
                     } else {
-                        if (CollectionUtils.isNotEmpty(optionDto.getNestedPicklistOptions())) {
+                        if (CollectionUtils.isNotEmpty(optionDto.getNestedOptions())) {
                             List<PicklistOptionDef> nestedOptions = new ArrayList<>();
-                            for (PicklistOptionDto nestedOptionDto : optionDto.getNestedPicklistOptions()) {
+                            for (PicklistOptionDto nestedOptionDto : optionDto.getNestedOptions()) {
                                 Template nestedOptionLabel = templateDao.loadTemplateById(nestedOptionDto.getOptionLabelTemplateId());
                                 Template nestedDetailLabel = !nestedOptionDto.getAllowDetails() ? null
                                         : templateDao.loadTemplateById(nestedOptionDto.getDetailLabelTemplateId());

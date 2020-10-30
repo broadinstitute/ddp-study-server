@@ -9,6 +9,7 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 
 import com.google.gson.annotations.SerializedName;
+import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.ddp.content.ContentStyle;
 import org.broadinstitute.ddp.content.HtmlConverter;
 import org.broadinstitute.ddp.content.Renderable;
@@ -40,10 +41,10 @@ public class PicklistOption implements Renderable {
     private String groupStableId;
 
     @SerializedName("nestedOptionsLabel")
-    private String nestedPicklistOptionsLabel;
+    private String nestedOptionsLabel;
 
-    @SerializedName("nestedPicklistOptions")
-    private List<@Valid @NotNull PicklistOption> nestedPicklistOptions = new ArrayList<>();
+    @SerializedName("nestedOptions")
+    private List<@Valid @NotNull PicklistOption> nestedOptions = new ArrayList<>();
 
     private transient long optionLabelTemplateId;
     private transient Long tooltipTemplateId;
@@ -83,7 +84,7 @@ public class PicklistOption implements Renderable {
             this.detailLabelTemplateId = detailLabelTemplateId;
         }
         this.nestedOptionsLabelTemplateId  = nestedPicklistTemplateId;
-        this.nestedPicklistOptions = nestedOptions;
+        this.nestedOptions = nestedOptions;
     }
 
     public PicklistOption(String groupStableId, String stableId, long optionLabelTemplateId, Long tooltipTemplateId,
@@ -132,8 +133,8 @@ public class PicklistOption implements Renderable {
         return groupStableId;
     }
 
-    public List<PicklistOption> getNestedPicklistOptions() {
-        return nestedPicklistOptions;
+    public List<PicklistOption> getNestedOptions() {
+        return nestedOptions;
     }
 
     @Override
@@ -147,6 +148,11 @@ public class PicklistOption implements Renderable {
         }
         if (nestedOptionsLabelTemplateId != null) {
             registry.accept(nestedOptionsLabelTemplateId);
+        }
+        if (CollectionUtils.isNotEmpty(nestedOptions)) {
+            for (PicklistOption suboption : nestedOptions) {
+                suboption.registerTemplateIds(registry);
+            }
         }
     }
 
@@ -172,10 +178,16 @@ public class PicklistOption implements Renderable {
         }
 
         if (nestedOptionsLabelTemplateId != null) {
-            nestedPicklistOptionsLabel = HtmlConverter.getPlainText(rendered.get(nestedOptionsLabelTemplateId));
-            if (nestedPicklistOptionsLabel == null) {
+            nestedOptionsLabel = HtmlConverter.getPlainText(rendered.get(nestedOptionsLabelTemplateId));
+            if (nestedOptionsLabel == null) {
                 throw new NoSuchElementException("No rendered template found for nested options label with id "
                         + nestedOptionsLabelTemplateId);
+            }
+        }
+
+        if (CollectionUtils.isNotEmpty(nestedOptions)) {
+            for (PicklistOption suboption : nestedOptions) {
+                suboption.applyRenderedTemplates(rendered, style);
             }
         }
 

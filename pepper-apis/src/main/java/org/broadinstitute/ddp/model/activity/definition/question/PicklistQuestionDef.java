@@ -127,7 +127,7 @@ public final class PicklistQuestionDef extends QuestionDef {
 
     public List<PicklistOptionDef> getAllPicklistOptions() {
         Stream<PicklistOptionDef> nestedOptions =
-                picklistOptions.stream().flatMap(def -> def.getNestedPicklistOptions().stream());
+                picklistOptions.stream().flatMap(def -> def.getNestedOptions().stream());
         Stream<PicklistOptionDef> nestedOptsIncluded = Stream.concat(picklistOptions.stream(), nestedOptions);
         Stream<PicklistOptionDef> groupOptions =
                 getGroups().stream().flatMap(group -> group.getOptions().stream());

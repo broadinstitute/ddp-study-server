@@ -149,11 +149,11 @@ public class PicklistQuestionDaoTest extends TxnAwareBaseTest {
             assertEquals(1, dtos.getUngroupedOptions().size());
 
             PicklistOptionDto parentOption = dtos.getUngroupedOptions().get(0);
-            assertNotNull(parentOption.getNestedPicklistOptions());
+            assertNotNull(parentOption.getNestedOptions());
             assertNotNull(parentOption.getNestedOptionsTemplateId());
-            assertEquals(2, parentOption.getNestedPicklistOptions().size());
-            assertEquals("NESTED_OPT1", parentOption.getNestedPicklistOptions().get(0).getStableId());
-            assertEquals("NESTED_OPT2", parentOption.getNestedPicklistOptions().get(1).getStableId());
+            assertEquals(2, parentOption.getNestedOptions().size());
+            assertEquals("NESTED_OPT1", parentOption.getNestedOptions().get(0).getStableId());
+            assertEquals("NESTED_OPT2", parentOption.getNestedOptions().get(1).getStableId());
 
             // Add a new option using a new version
             RevisionMetadata meta = new RevisionMetadata(version1.getRevStart() + 5000L, userId, "test");

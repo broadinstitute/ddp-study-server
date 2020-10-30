@@ -157,10 +157,10 @@ public interface PicklistQuestionDao extends SqlObject {
                 detailLabelTmplId, option.isDetailsAllowed(), option.isExclusive(), displayOrder, revisionId, nestedOptionsTmplId);
         option.setOptionId(optionId);
 
-        if (CollectionUtils.isNotEmpty(option.getNestedPicklistOptions())) {
+        if (CollectionUtils.isNotEmpty(option.getNestedOptions())) {
             int subOptionDisplayOrder = displayOrder;
             List<Long> nestedOptionIds = new ArrayList<>();
-            for (PicklistOptionDef nestedOption : option.getNestedPicklistOptions()) {
+            for (PicklistOptionDef nestedOption : option.getNestedOptions()) {
                 subOptionDisplayOrder += DISPLAY_ORDER_GAP;
                 long nestedOptionId = insertOption(questionId, nestedOption, subOptionDisplayOrder, revisionId);
                 nestedOptionIds.add(nestedOptionId);
@@ -450,7 +450,7 @@ public interface PicklistQuestionDao extends SqlObject {
 
         dtos.getUngroupedOptions().stream().forEach(parentDto -> {
             if (nestedOptMap.containsKey(parentDto.getId())) {
-                parentDto.getNestedPicklistOptions().addAll(nestedOptMap.get(parentDto.getId()));
+                parentDto.getNestedOptions().addAll(nestedOptMap.get(parentDto.getId()));
             }
         });
 
@@ -497,7 +497,7 @@ public interface PicklistQuestionDao extends SqlObject {
         dtosMap.values().stream().forEach(dto -> {
             dto.getUngroupedOptions().stream().forEach(parentDto -> {
                 if (nestedOptMap.containsKey(parentDto.getId())) {
-                    parentDto.getNestedPicklistOptions().addAll(nestedOptMap.get(parentDto.getId()));
+                    parentDto.getNestedOptions().addAll(nestedOptMap.get(parentDto.getId()));
                 }
             });
         });

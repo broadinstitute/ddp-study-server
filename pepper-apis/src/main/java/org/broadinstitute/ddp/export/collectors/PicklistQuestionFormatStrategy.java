@@ -88,13 +88,13 @@ public class PicklistQuestionFormatStrategy implements ResponseFormatStrategy<Pi
             stableIdTxt.put("optionText", HtmlConverter.getPlainText(optionDef.getOptionLabelTemplate().render("en")));
 
             //add nested options
-            if (CollectionUtils.isNotEmpty(optionDef.getNestedPicklistOptions())) {
+            if (CollectionUtils.isNotEmpty(optionDef.getNestedOptions())) {
                 if (optionDef.getNestedOptionsLabelTemplate() != null) {
                     stableIdTxt.put("nestedOptionsText", HtmlConverter.getPlainText(
                             optionDef.getNestedOptionsLabelTemplate().render("en")));
                 }
                 List<Object> nestedOptions = new ArrayList<>();
-                for (PicklistOptionDef suboptionDef : optionDef.getNestedPicklistOptions()) {
+                for (PicklistOptionDef suboptionDef : optionDef.getNestedOptions()) {
                     Map<String, String> suboptStableIdTxt = new HashMap<>();
                     suboptStableIdTxt.put("optionStableId", suboptionDef.getStableId());
                     suboptStableIdTxt.put("optionText", HtmlConverter.getPlainText(suboptionDef.getOptionLabelTemplate().render("en")));

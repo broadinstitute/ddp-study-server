@@ -39,8 +39,8 @@ public class PicklistOptionDef {
     @SerializedName("nestedOptionsLabelTemplate")
     private Template nestedOptionsLabelTemplate;
 
-    @SerializedName("nestedPicklistOptions")
-    private List<@Valid @NotNull PicklistOptionDef> nestedPicklistOptions = new ArrayList<>();
+    @SerializedName("nestedOptions")
+    private List<@Valid @NotNull PicklistOptionDef> nestedOptions = new ArrayList<>();
 
     private transient Long optionId;
 
@@ -92,7 +92,7 @@ public class PicklistOptionDef {
 
     public PicklistOptionDef(Long optionId, String stableId, Template optionLabelTemplate, Template tooltipTemplate,
                              Template detailLabelTemplate, boolean isExclusive, Template nestedOptionsLabelTemplate,
-                             List<PicklistOptionDef> nestedPicklistOptions) {
+                             List<PicklistOptionDef> nestedOptions) {
         this.optionId = optionId;
         this.stableId = MiscUtil.checkNotBlank(stableId, "stableId");
         this.optionLabelTemplate = MiscUtil.checkNonNull(optionLabelTemplate, "optionLabelTemplate");
@@ -101,15 +101,15 @@ public class PicklistOptionDef {
         this.detailLabelTemplate = detailLabelTemplate;
         this.isExclusive = isExclusive;
         this.nestedOptionsLabelTemplate = nestedOptionsLabelTemplate;
-        this.nestedPicklistOptions = nestedPicklistOptions;
+        this.nestedOptions = nestedOptions;
     }
 
     public PicklistOptionDef(String stableId, Template optionLabelTemplate, Template nestedOptionsLabelTemplate,
-                             List<PicklistOptionDef> nestedPicklistOptions) {
+                             List<PicklistOptionDef> nestedOptions) {
         this.stableId = MiscUtil.checkNotBlank(stableId, "stableId");
         this.optionLabelTemplate = MiscUtil.checkNonNull(optionLabelTemplate, "optionLabelTemplate");
         this.nestedOptionsLabelTemplate = nestedOptionsLabelTemplate;
-        this.nestedPicklistOptions = nestedPicklistOptions;
+        this.nestedOptions = nestedOptions;
     }
 
     public String getStableId() {
@@ -144,8 +144,8 @@ public class PicklistOptionDef {
         this.optionId = optionId;
     }
 
-    public List<PicklistOptionDef> getNestedPicklistOptions() {
-        return nestedPicklistOptions;
+    public List<PicklistOptionDef> getNestedOptions() {
+        return nestedOptions;
     }
 
     public Template getNestedOptionsLabelTemplate() {
