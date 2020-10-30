@@ -333,7 +333,7 @@ public interface PicklistQuestionDao extends SqlObject {
         }
 
         //disable any nested options
-        List<PicklistOptionDto> nestedOptions = getJdbiPicklistOption().findAllActiveNestedPicklistOptionsByQuestionId(questionId);
+        List<PicklistOptionDto> nestedOptions = getJdbiPicklistOption().findAllActiveNestedOptionsByQuestionId(questionId);
         if (CollectionUtils.isNotEmpty(nestedOptions)) {
             nestedOptions.stream().forEach(nestedOpt -> disableOption(questionId, nestedOpt.getStableId(), meta, false));
         }
@@ -379,7 +379,7 @@ public interface PicklistQuestionDao extends SqlObject {
         }
 
         if (disableNested) {
-            List<PicklistOptionDto> nestedOptions = getJdbiPicklistOption().findActiveNestedPicklistOptions(questionId, optionDto.getId());
+            List<PicklistOptionDto> nestedOptions = getJdbiPicklistOption().findActiveNestedOptions(questionId, optionDto.getId());
             if (CollectionUtils.isNotEmpty(nestedOptions)) {
                 nestedOptions.stream().forEach(nestedOpt -> disableOption(questionId, nestedOpt.getStableId(), meta, false));
             }

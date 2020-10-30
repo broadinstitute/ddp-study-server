@@ -102,14 +102,14 @@ public interface JdbiPicklistOption extends SqlObject {
     List<PicklistOptionDto> findAllActiveOrderedOptionsByQuestionId(@Bind("questionId") long questionId);
 
     @UseStringTemplateSqlLocator
-    @SqlQuery("queryAllOrderedNestedPicklistOptionsByOptionId")
+    @SqlQuery("queryAllOrderedNestedOptionsByOptionId")
     @RegisterConstructorMapper(PicklistOptionDto.class)
-    List<PicklistOptionDto> findActiveNestedPicklistOptions(@Bind("questionId") long questionId, @Bind("optionId") long optionId);
+    List<PicklistOptionDto> findActiveNestedOptions(@Bind("questionId") long questionId, @Bind("optionId") long optionId);
 
     @UseStringTemplateSqlLocator
-    @SqlQuery("queryAllActiveNestedPicklistOptionsByQuestionId")
+    @SqlQuery("queryAllActiveNestedOptionsByQuestionId")
     @RegisterConstructorMapper(PicklistOptionDto.class)
-    List<PicklistOptionDto> findAllActiveNestedPicklistOptionsByQuestionId(@Bind("questionId") long questionId);
+    List<PicklistOptionDto> findAllActiveNestedOptionsByQuestionId(@Bind("questionId") long questionId);
 
     @SqlUpdate("update picklist_option set revision_id = :revisionId where picklist_option_id = :optionId")
     int updateRevisionByOptionId(@Bind("optionId") long optionId, @Bind("revisionId") long revisionId);
