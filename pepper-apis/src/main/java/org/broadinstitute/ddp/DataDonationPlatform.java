@@ -259,6 +259,7 @@ public class DataDonationPlatform {
         if (cfg.hasPath(ConfigFile.DO_LIQUIBASE_IN_STUDY_SERVER) && cfg.getBoolean(ConfigFile.DO_LIQUIBASE_IN_STUDY_SERVER)) {
             LOG.info("Running liquibase migrations in StudyServer against database url: {}", dbUrl);
             LiquibaseUtil.runLiquibase(dbUrl, TransactionWrapper.DB.APIS);
+            LiquibaseUtil.releaseResources();
         }
         //@TODO figure out how to do this only at deployment time.
         CacheService.getInstance().resetAllCaches();

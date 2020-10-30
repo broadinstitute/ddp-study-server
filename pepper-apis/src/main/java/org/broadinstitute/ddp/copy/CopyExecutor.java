@@ -75,9 +75,11 @@ public class CopyExecutor {
                 allQuestionStableIds.add(((CopyAnswerLocation) target).getQuestionStableId());
             }
         }
-        return handle.attach(JdbiQuestion.class)
-                .findLatestDtosByStudyIdAndQuestionStableIds(config.getStudyId(), allQuestionStableIds)
-                .collect(Collectors.toMap(QuestionDto::getStableId, Function.identity()));
+        try (var questionStream = handle.attach(JdbiQuestion.class)
+                .findLatestDtosByStudyIdAndQuestionStableIds(config.getStudyId(), allQuestionStableIds)) {
+            return questionStream
+                    .collect(Collectors.toMap(QuestionDto::getStableId, Function.identity()));
+        }
     }
 
     private Map<Long, FormResponse> retrieveActivityData(Handle handle, long participantId, List<QuestionDto> questionDtos) {
@@ -87,22 +89,24 @@ public class CopyExecutor {
         }
 
         Map<Long, FormResponse> container = new HashMap<>();
-        handle.attach(ActivityInstanceDao.class)
-                .findFormResponsesSubsetWithAnswersByUserId(participantId, allActivityIds)
-                .forEach(response -> {
-                    long activityId = response.getActivityId();
-                    FormResponse current = container.get(activityId);
-                    if (current == null) {
-                        container.put(activityId, response);
-                        return;
-                    }
+        try (var responseStream = handle.attach(ActivityInstanceDao.class)
+                .findFormResponsesSubsetWithAnswersByUserId(participantId, allActivityIds)) {
+            responseStream
+                    .forEach(response -> {
+                        long activityId = response.getActivityId();
+                        FormResponse current = container.get(activityId);
+                        if (current == null) {
+                            container.put(activityId, response);
+                            return;
+                        }
 
-                    boolean keepCurrent = (triggeredInstanceId != null && current.getId() == triggeredInstanceId);
-                    if (!keepCurrent && response.getCreatedAt() > current.getCreatedAt()) {
-                        container.put(activityId, response);
-                    }
-                });
+                        boolean keepCurrent = (triggeredInstanceId != null && current.getId() == triggeredInstanceId);
+                        if (!keepCurrent && response.getCreatedAt() > current.getCreatedAt()) {
+                            container.put(activityId, response);
+                        }
+                    });
 
-        return container;
+            return container;
+        }
     }
 }
