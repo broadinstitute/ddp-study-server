@@ -1028,7 +1028,8 @@ public class StudyDataLoader {
             addUserProfile(operatorUserDto, data, jdbiLanguageCode, userProfileDao, true);
         }
 
-        Governance governance = userGovernanceDao.createGovernedUserWithGuidAlias(operatorUser.getCreatedByClientId(), operatorUser.getId());
+        Governance governance = userGovernanceDao.createGovernedUserWithGuidAlias(operatorUser.getCreatedByClientId(),
+                operatorUser.getId());
         userGovernanceDao.grantGovernedStudy(governance.getId(), studyDto.getId());
         org.broadinstitute.ddp.model.user.User governedUser = userDao.findUserById(governance.getGovernedUserId())
                 .orElseThrow(() -> new DDPException("Could not find governed user with id " + governance.getGovernedUserId()));
@@ -1064,7 +1065,8 @@ public class StudyDataLoader {
         return insertNewUser(jdbiUser, data, userGuid, userHruid, clientDto, auth0UserId);
     }
 
-    private UserDto insertNewUser(JdbiUser userDao, JsonElement data, String userGuid, String userHruid, ClientDto clientDto, String auth0UserId) {
+    private UserDto insertNewUser(JdbiUser userDao, JsonElement data, String userGuid, String userHruid,
+                                  ClientDto clientDto, String auth0UserId) {
         String userCreatedAt = getStringValueFromElement(data, "datstat_created");
 
         LocalDateTime createdAtDate = LocalDateTime.parse(userCreatedAt, formatter);
