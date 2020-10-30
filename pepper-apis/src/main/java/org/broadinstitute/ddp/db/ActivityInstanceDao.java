@@ -365,7 +365,7 @@ public class ActivityInstanceDao {
      * @param studyGuid         the study guid
      * @param activitySummaries the list of activity summaries
      */
-    public void countActivitySummaryQuestionsAndAnswers(Handle handle, String userGuid, String studyGuid,
+    public void countActivitySummaryQuestionsAndAnswers(Handle handle, String userGuid, String operatorGuid, String studyGuid,
                                                         List<ActivityInstanceSummary> activitySummaries) {
         ActivityDefStore activityDefStore = ActivityDefStore.getInstance();
 
@@ -396,7 +396,7 @@ public class ActivityInstanceDao {
                 }
 
                 Pair<Integer, Integer> questionAndAnswerCounts = activityDefStore.countQuestionsAndAnswers(
-                        handle, userGuid, formActivityDef, summary.getActivityInstanceGuid(), instanceResponses);
+                        handle, userGuid, operatorGuid, formActivityDef, summary.getActivityInstanceGuid(), instanceResponses);
 
                 summary.setNumQuestions(questionAndAnswerCounts.getLeft());
                 summary.setNumQuestionsAnswered(questionAndAnswerCounts.getRight());

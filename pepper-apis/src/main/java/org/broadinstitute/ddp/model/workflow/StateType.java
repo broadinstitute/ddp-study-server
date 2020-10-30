@@ -23,7 +23,10 @@ public enum StateType {
     INTERNATIONAL_PATIENTS(true),
 
     /** Indicates routing the user to sign up for the mailing list. */
-    MAILING_LIST(true);
+    MAILING_LIST(true),
+
+    /** Indicates the list of governed participants */
+    PARTICIPANT_LIST(true);
 
     private boolean isStatic;
 

@@ -817,7 +817,7 @@ public class DataExporter implements Closeable {
 
         // Retrieving information to compute the dsm record
         MedicalRecordService.ParticipantConsents consents = medicalRecordService
-                .fetchBloodAndTissueConsents(handle, participantUser.getId(), userGuid, statusDto.getStudyId(), studyGuid);
+                .fetchBloodAndTissueConsents(handle, participantUser.getId(), userGuid, null, statusDto.getStudyId(), studyGuid);
 
         DsmComputedRecord dsmComputedRecord =
                 new DsmComputedRecord(participant.getBirthDate(),

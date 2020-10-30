@@ -64,6 +64,7 @@ public class CreateInvitationEventAction extends EventAction {
                 signal.getOperatorId(),
                 signal.getParticipantId(),
                 signal.getParticipantGuid(),
+                signal.getOperatorGuid(),
                 signal.getStudyId(),
                 invitationDto);
     }

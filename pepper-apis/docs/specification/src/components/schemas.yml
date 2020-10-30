@@ -1054,6 +1054,8 @@ Participant:
     userGuid:
       type: string
       example: Y9JJVE1MLN8AIZL8DO7D
+    userProfile:
+      $ref: '../pepper.yml#/components/schemas/ProfileModel'
 PicklistOption:
   type: object
   required:
@@ -2094,12 +2096,14 @@ WorkflowNextSuggestion:
         * `DASHBOARD` - Indicates end of workflow and should direct to a dashboard if available.
         * `MAILING_LIST` - Indicates end of workflow and should prompt user to join the study mailing list.
         * `THANK_YOU` - Indicates end of workflow and a thank you message should be shown.
+        * `PARTICIPANT_LIST` - Indicates the list of governed users.
         * `UNKNOWN` - No suggestions available.
       enum:
         - ACTIVITY
         - DASHBOARD
         - MAILING_LIST
         - THANK_YOU
+        - PARTICIPANT_LIST
         - UNKNOWN
 WorkflowNextSuggestion.Activity:
   allOf:
@@ -2129,4 +2133,5 @@ WorkflowNextSuggestion.Static:
         enum:
           - DASHBOARD
           - THANK_YOU
+          - PARTICIPANT_LIST
           - UNKNOWN
