@@ -11,12 +11,14 @@ import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import liquibase.Contexts;
 import liquibase.Liquibase;
+import liquibase.database.DatabaseFactory;
 import liquibase.database.jvm.JdbcConnection;
 import liquibase.exception.LiquibaseException;
 import liquibase.exception.MigrationFailedException;
 import liquibase.exception.RollbackFailedException;
 import liquibase.lockservice.DatabaseChangeLogLock;
 import liquibase.resource.ClassLoaderResourceAccessor;
+import liquibase.servicelocator.ServiceLocator;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
@@ -90,6 +92,11 @@ public class LiquibaseUtil implements  AutoCloseable {
         }
     }
 
+    public static void releaseResources() {
+        ServiceLocator.setInstance(null);
+        DatabaseFactory.setInstance(null);
+    }
+
     /**
      * Runs the global migration scripts.  These are the scripts from {@link #PEPPER_APIS_GLOBAL_MIGRATIONS here}
      * which will be applied to test databases as well as production.
@@ -117,6 +124,9 @@ public class LiquibaseUtil implements  AutoCloseable {
     private void runMigrations(String changelogFile) throws LiquibaseException, SQLException {
         Liquibase liquibase = null;
         String tag = null;
+        if (ServiceLocator.getInstance() == null) {
+            ServiceLocator.reset();
+        }
         try {
             liquibase = new Liquibase(changelogFile, new ClassLoaderResourceAccessor(), new JdbcConnection(dataSource.getConnection()));
             logLocks(liquibase.listLocks());
@@ -235,4 +245,7 @@ public class LiquibaseUtil implements  AutoCloseable {
         }
         return String.format("%d-%s", Instant.now().toEpochMilli(), hostname);
     }
+
+
+
 }
