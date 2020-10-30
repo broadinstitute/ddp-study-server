@@ -129,7 +129,7 @@ public class AgeUpService {
                                 candidate.getParticipantUserId(),
                                 candidate.getParticipantUserId(),
                                 candidate.getParticipantUserGuid(),
-                                candidate.getParticipantUserGuid(),
+                                null,
                                 policy.getStudyId(), EventTriggerType.REACHED_AOM_PREP);
                         EventService.getInstance().processAllActionsForEventSignal(handle, signal);
                     });
@@ -155,7 +155,7 @@ public class AgeUpService {
                                     candidate.getParticipantUserId(),
                                     candidate.getParticipantUserId(),
                                     candidate.getParticipantUserGuid(),
-                                    candidate.getParticipantUserGuid(),
+                                    null,
                                     policy.getStudyId(), EventTriggerType.REACHED_AOM);
                             EventService.getInstance().processAllActionsForEventSignal(handle, signal);
                         });
