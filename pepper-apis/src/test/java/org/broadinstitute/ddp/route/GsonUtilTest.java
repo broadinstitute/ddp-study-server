@@ -4,13 +4,18 @@ import static org.junit.Assert.assertEquals;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import org.broadinstitute.ddp.transformers.Exclude;
 import org.broadinstitute.ddp.util.GsonUtil;
-import org.json.JSONException;
-import org.json.JSONObject;
+
+import org.junit.Assert;
 import org.junit.Test;
 
 public class GsonUtilTest {
+
+    private JsonParser jsonParser = new JsonParser();
+
     public static class DummyTestClass {
         private String first;
         private String last;
@@ -26,34 +31,35 @@ public class GsonUtilTest {
     }
 
     @Test
-    public void testUseWithoutExclusionStrategy() throws JSONException {
+    public void testUseWithoutExclusionStrategy() {
         DummyTestClass dummyObject = new DummyTestClass("Ulysses", "Grant", "S");
         String jsonString = new Gson().toJson(dummyObject);
-        JSONObject jsonObject = new JSONObject(jsonString);
-        assertEquals("Ulysses", jsonObject.getString("first"));
-        assertEquals("Grant", jsonObject.getString("last"));
-        assertEquals("S", jsonObject.getString("middle"));
+
+        JsonObject jsonObject = jsonParser.parse(jsonString).getAsJsonObject();
+        assertEquals("Ulysses", jsonObject.get("first").getAsString());
+        assertEquals("Grant", jsonObject.get("last").getAsString());
+        assertEquals("S", jsonObject.get("middle").getAsString());
     }
 
     @Test
-    public void testUseWithExclusionStrategy() throws JSONException {
+    public void testUseWithExclusionStrategy() {
         DummyTestClass dummyObject = new DummyTestClass("Ulysses", "Grant", "S");
         Gson gson = new GsonBuilder().setExclusionStrategies(new GsonUtil.ExcludeAnnotationStrategy()).create();
         String jsonString = gson.toJson(dummyObject);
-        JSONObject jsonObject = new JSONObject(jsonString);
-        assertEquals("Ulysses", jsonObject.getString("first"));
-        assertEquals("Grant", jsonObject.getString("last"));
-        assertEquals("NOTHINGHERE", jsonObject.optString("middle", "NOTHINGHERE"));
+        JsonObject jsonObject = jsonParser.parse(jsonString).getAsJsonObject();
+        assertEquals("Ulysses", jsonObject.get("first").getAsString());
+        assertEquals("Grant", jsonObject.get("last").getAsString());
+        Assert.assertNull(jsonObject.get("middle"));
     }
 
     @Test
-    public void testPepperGsonStandard() throws JSONException {
+    public void testPepperGsonStandard()  {
         DummyTestClass dummyObject = new DummyTestClass("Ulysses", "Grant", "S");
         Gson gson = GsonUtil.standardGson();
         String jsonString = gson.toJson(dummyObject);
-        JSONObject jsonObject = new JSONObject(jsonString);
-        assertEquals("Ulysses", jsonObject.getString("first"));
-        assertEquals("Grant", jsonObject.getString("last"));
-        assertEquals("NOTHINGHERE", jsonObject.optString("middle", "NOTHINGHERE"));
+        JsonObject jsonObject = jsonParser.parse(jsonString).getAsJsonObject();
+        assertEquals("Ulysses", jsonObject.get("first").getAsString());
+        assertEquals("Grant", jsonObject.get("last").getAsString());
+        Assert.assertNull(jsonObject.get("middle"));
     }
 }
