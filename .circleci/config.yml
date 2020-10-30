@@ -158,8 +158,8 @@ commands:
       - run:
           name: api-build.sh
           command: |
-            echo "We are generating api-build.sh for application << parameter.application >>"
-            ./api-build.sh v1 ${ENVIRONMENT:-dev} . << parameter.application >> --gae-config
+            echo "We are generating api-build.sh for application << parameters.application >>"
+            ./api-build.sh v1 ${ENVIRONMENT:-dev} . << parameters.application >> --gae-config
           environment:
             USE_DOCKER: false
 
