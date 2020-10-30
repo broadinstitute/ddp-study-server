@@ -21,7 +21,6 @@ $env = ENV.fetch("ENVIRONMENT") { |_|
 $app = ENV.fetch("APP", "UNKNOWN")
 
 
-
 $study_guid = ENV.fetch("STUDY_GUID","")
 $study_key = ENV.fetch("STUDY_KEY","")
 $image_base = ENV.fetch("IMAGE_NAME","")
