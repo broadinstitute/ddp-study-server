@@ -33,6 +33,7 @@ import org.broadinstitute.ddp.model.kit.KitSchedule;
 import org.broadinstitute.ddp.model.user.EnrollmentStatusType;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.jdbi.v3.core.Handle;
+import org.jdbi.v3.core.HandleCallback;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -108,7 +109,9 @@ public class KitCheckServiceTest extends TxnAwareBaseTest {
             Optional<Long> enrollmentId = jdbiEnrollment.findIdByUserAndStudyGuid(userGuid, studyGuid);
             assertFalse("user should not be enrolled in study yet", enrollmentId.isPresent());
 
-            int numRecipients = new KitCheckService().checkForInitialKits(handle).getTotalNumberOfParticipantsQueuedForKit();
+            int numRecipients = new InjectedKitCheckService(handle)
+                    .checkForInitialKits()
+                    .getTotalNumberOfParticipantsQueuedForKit();
             assertEquals("should not have any recipients", 0L, numRecipients);
 
             handle.rollback();
@@ -123,7 +126,9 @@ public class KitCheckServiceTest extends TxnAwareBaseTest {
 
             enrollTestUser(handle);
 
-            int numRecipients = new KitCheckService().checkForInitialKits(handle).getTotalNumberOfParticipantsQueuedForKit();
+            int numRecipients = new InjectedKitCheckService(handle)
+                    .checkForInitialKits()
+                    .getTotalNumberOfParticipantsQueuedForKit();
             assertEquals("should not have any recipients", 0L, numRecipients);
 
             handle.rollback();
@@ -139,7 +144,9 @@ public class KitCheckServiceTest extends TxnAwareBaseTest {
             address.setValidationStatus(DsmAddressValidationStatus.DSM_INVALID_ADDRESS_STATUS);
             updateTestMailAddress(handle, address);
 
-            int numRecipients = new KitCheckService().checkForInitialKits(handle).getTotalNumberOfParticipantsQueuedForKit();
+            int numRecipients = new InjectedKitCheckService(handle)
+                    .checkForInitialKits()
+                    .getTotalNumberOfParticipantsQueuedForKit();
             assertEquals("should not have any recipients", 0L, numRecipients);
 
             handle.rollback();
@@ -155,7 +162,9 @@ public class KitCheckServiceTest extends TxnAwareBaseTest {
             address.setCountry("UK");   // Contrived example to test error case
             updateTestMailAddress(handle, address);
 
-            int numRecipients = new KitCheckService().checkForInitialKits(handle).getTotalNumberOfParticipantsQueuedForKit();
+            int numRecipients = new InjectedKitCheckService(handle)
+                    .checkForInitialKits()
+                    .getTotalNumberOfParticipantsQueuedForKit();
             assertEquals("should not have any recipients", 0L, numRecipients);
 
             handle.rollback();
@@ -171,7 +180,9 @@ public class KitCheckServiceTest extends TxnAwareBaseTest {
             JdbiExpression jdbiExpr = handle.attach(JdbiExpression.class);
             assertEquals(1, jdbiExpr.updateById(kitConfigExprId, "false"));
 
-            int numRecipients = new KitCheckService().checkForInitialKits(handle).getTotalNumberOfParticipantsQueuedForKit();
+            int numRecipients = new InjectedKitCheckService(handle)
+                    .checkForInitialKits()
+                    .getTotalNumberOfParticipantsQueuedForKit();
             assertEquals("should not have any recipients", 0L, numRecipients);
 
             handle.rollback();
@@ -188,7 +199,9 @@ public class KitCheckServiceTest extends TxnAwareBaseTest {
             List<DsmKitRequest> kits = kitRequestDao.findAllKitRequestsForStudy(testData.getStudyGuid());
             assertTrue("should not have any kit requests", kits.isEmpty());
 
-            int numRecipients = new KitCheckService().checkForInitialKits(handle).getTotalNumberOfParticipantsQueuedForKit();
+            int numRecipients = new InjectedKitCheckService(handle)
+                    .checkForInitialKits()
+                    .getTotalNumberOfParticipantsQueuedForKit();
             assertEquals(1L, numRecipients);
 
             kits = kitRequestDao.findAllKitRequestsForStudy(testData.getStudyGuid());
@@ -216,7 +229,9 @@ public class KitCheckServiceTest extends TxnAwareBaseTest {
             List<DsmKitRequest> kits = kitRequestDao.findAllKitRequestsForStudy(testData.getStudyGuid());
             assertTrue("should not have any kit requests", kits.isEmpty());
 
-            int numRecipients = new KitCheckService().checkForInitialKits(handle).getTotalNumberOfParticipantsQueuedForKit();
+            int numRecipients = new InjectedKitCheckService(handle)
+                    .checkForInitialKits()
+                    .getTotalNumberOfParticipantsQueuedForKit();
             assertEquals(1L, numRecipients);
 
             kits = kitRequestDao.findAllKitRequestsForStudy(testData.getStudyGuid());
@@ -267,7 +282,7 @@ public class KitCheckServiceTest extends TxnAwareBaseTest {
             kitScheduleDao.updateRecordInitialKitSentTime(recordId, sentTime);
 
             // Run
-            var actualResult = new KitCheckService().scheduleNextKits(handle);
+            var actualResult = new InjectedKitCheckService(handle).scheduleNextKits();
 
             // Verify
             assertNotNull(actualResult);
@@ -280,5 +295,19 @@ public class KitCheckServiceTest extends TxnAwareBaseTest {
             // Cleanup
             handle.rollback();
         });
+    }
+
+    // Wrapper class that uses the given database handle instead of opening new transactions.
+    private static class InjectedKitCheckService extends KitCheckService {
+        private Handle handle;
+
+        public InjectedKitCheckService(Handle handle) {
+            this.handle = handle;
+        }
+
+        @Override
+        <R, X extends Exception> R withAPIsTxn(HandleCallback<R, X> callback) throws X {
+            return callback.withHandle(handle);
+        }
     }
 }

@@ -7,7 +7,6 @@ import java.util.Map;
 
 import com.typesafe.config.Config;
 import org.broadinstitute.ddp.constants.ConfigFile;
-import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.monitoring.PointsReducerFactory;
 import org.broadinstitute.ddp.monitoring.StackdriverCustomMetric;
 import org.broadinstitute.ddp.monitoring.StackdriverMetricsTracker;
@@ -76,14 +75,11 @@ public class CheckKitsJob implements Job {
             LOG.info("Running job {}", getKey());
             long start = Instant.now().toEpochMilli();
 
-            KitCheckService.KitCheckResult result = TransactionWrapper.withTxn(TransactionWrapper.DB.APIS, handle -> {
-                LOG.info("Checking for initial kits");
-                return kitCheckService.checkForInitialKits(handle);
-            });
-            TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, handle -> {
-                LOG.info("Checking for recurring kits");
-                result.add(kitCheckService.scheduleNextKits(handle));
-            });
+            LOG.info("Checking for initial kits");
+            KitCheckService.KitCheckResult result = kitCheckService.checkForInitialKits();
+            LOG.info("Checking for recurring kits");
+            result.add(kitCheckService.scheduleNextKits());
+
             sendKitMetrics(result);
 
             long elapsed = Instant.now().toEpochMilli() - start;
