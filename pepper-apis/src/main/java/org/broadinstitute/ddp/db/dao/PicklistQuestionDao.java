@@ -11,6 +11,7 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.collections4.CollectionUtils;
 import org.broadinstitute.ddp.db.DaoException;
 import org.broadinstitute.ddp.db.dto.PicklistGroupDto;
 import org.broadinstitute.ddp.db.dto.PicklistOptionDto;
@@ -146,9 +147,29 @@ public interface PicklistQuestionDao extends SqlObject {
             detailLabelTmplId = option.getDetailLabelTemplate().getTemplateId();
         }
 
+        Long nestedOptionsTmplId = null;
+        if (option.getNestedOptionsLabelTemplate() != null) {
+            templateDao.insertTemplate(option.getNestedOptionsLabelTemplate(), revisionId);
+            nestedOptionsTmplId = option.getNestedOptionsLabelTemplate().getTemplateId();
+        }
+
         long optionId = jdbiOption.insert(questionId, option.getStableId(), optionLabelTmplId, tooltipTmplId,
-                detailLabelTmplId, option.isDetailsAllowed(), option.isExclusive(), displayOrder, revisionId);
+                detailLabelTmplId, option.isDetailsAllowed(), option.isExclusive(), displayOrder, revisionId, nestedOptionsTmplId);
         option.setOptionId(optionId);
+
+        if (CollectionUtils.isNotEmpty(option.getNestedOptions())) {
+            int subOptionDisplayOrder = displayOrder;
+            List<Long> nestedOptionIds = new ArrayList<>();
+            for (PicklistOptionDef nestedOption : option.getNestedOptions()) {
+                subOptionDisplayOrder += DISPLAY_ORDER_GAP;
+                long nestedOptionId = insertOption(questionId, nestedOption, subOptionDisplayOrder, revisionId);
+                nestedOptionIds.add(nestedOptionId);
+            }
+            //now populate nested options join table
+            getJdbiPicklistOption().bulkInsertNestedOptions(optionId, nestedOptionIds);
+            LOG.info("Inserted {} nested options for picklist option: {} optionId: {}",
+                    nestedOptionIds.size(), option.getStableId(), optionId);
+        }
 
         return optionId;
     }
@@ -306,6 +327,15 @@ public interface PicklistQuestionDao extends SqlObject {
             if (option.getTooltipTemplateId() != null) {
                 tmplDao.disableTemplate(option.getTooltipTemplateId(), meta);
             }
+            if (option.getNestedOptionsTemplateId() != null) {
+                tmplDao.disableTemplate(option.getNestedOptionsTemplateId(), meta);
+            }
+        }
+
+        //disable any nested options
+        List<PicklistOptionDto> nestedOptions = getJdbiPicklistOption().findAllActiveNestedOptionsByQuestionId(questionId);
+        if (CollectionUtils.isNotEmpty(nestedOptions)) {
+            nestedOptions.stream().forEach(nestedOpt -> disableOption(questionId, nestedOpt.getStableId(), meta, false));
         }
 
         LOG.info("Terminated {} picklist options for picklist question id {}", options.size(), questionId);
@@ -319,7 +349,7 @@ public interface PicklistQuestionDao extends SqlObject {
      * @param optionStableId the picklist option stable id
      * @param meta           the revision metadata to use for terminating data
      */
-    default void disableOption(long questionId, String optionStableId, RevisionMetadata meta) {
+    default void disableOption(long questionId, String optionStableId, RevisionMetadata meta, boolean disableNested) {
         JdbiPicklistOption jdbiOption = getJdbiPicklistOption();
         JdbiRevision jdbiRev = getJdbiRevision();
         TemplateDao tmplDao = getTemplateDao();
@@ -347,6 +377,14 @@ public interface PicklistQuestionDao extends SqlObject {
         if (jdbiRev.tryDeleteOrphanedRevision(oldRevId)) {
             LOG.info("Deleted orphaned revision {} by picklist option {}", oldRevId, optionStableId);
         }
+
+        if (disableNested) {
+            List<PicklistOptionDto> nestedOptions = getJdbiPicklistOption().findActiveNestedOptions(questionId, optionDto.getId());
+            if (CollectionUtils.isNotEmpty(nestedOptions)) {
+                nestedOptions.stream().forEach(nestedOpt -> disableOption(questionId, nestedOpt.getStableId(), meta, false));
+            }
+        }
+
     }
 
     default GroupAndOptionDtos findAllOrderedGroupAndOptionDtos(long questionId) {
@@ -378,15 +416,22 @@ public interface PicklistQuestionDao extends SqlObject {
     }
 
     private GroupAndOptionDtos executeGroupAndOptionDtosQuery(Query query) {
-        return query
+        Map<Long, List<PicklistOptionDto>> nestedOptMap = new HashMap<>();
+        GroupAndOptionDtos dtos = query
                 .registerRowMapper(ConstructorMapper.factory(PicklistOptionDto.class, "po"))
                 .registerRowMapper(ConstructorMapper.factory(PicklistGroupDto.class, "pg"))
                 .reduceRows(new GroupAndOptionDtos(), (container, row) -> {
                     PicklistOptionDto option = row.getRow(PicklistOptionDto.class);
                     Long groupId = row.getColumn("pg_picklist_group_id", Long.class);
+                    Long parentOptionId = row.getColumn("pno_parent_option_id", Long.class);
 
                     if (groupId == null) {
-                        container.getUngroupedOptions().add(option);
+                        if (parentOptionId == null) {
+                            container.getUngroupedOptions().add(option);
+                        } else {
+                            nestedOptMap.computeIfAbsent(parentOptionId, (k) -> new ArrayList<>());
+                            nestedOptMap.get(parentOptionId).add(option);
+                        }
                     } else {
                         PicklistGroupDto group = row.getRow(PicklistGroupDto.class);
                         if (container.getGroupIdToOptions().containsKey(groupId)) {
@@ -402,19 +447,34 @@ public interface PicklistQuestionDao extends SqlObject {
 
                     return container;
                 });
+
+        dtos.getUngroupedOptions().stream().forEach(parentDto -> {
+            if (nestedOptMap.containsKey(parentDto.getId())) {
+                parentDto.getNestedOptions().addAll(nestedOptMap.get(parentDto.getId()));
+            }
+        });
+
+        return dtos;
     }
 
     private Map<Long, GroupAndOptionDtos> executeGroupAndOptionDtosByQuestionQuery(Query query) {
-        return query
+        Map<Long, List<PicklistOptionDto>> nestedOptMap = new HashMap<>();
+        Map<Long, GroupAndOptionDtos> dtosMap = query
                 .registerRowMapper(ConstructorMapper.factory(PicklistOptionDto.class, "po"))
                 .registerRowMapper(ConstructorMapper.factory(PicklistGroupDto.class, "pg"))
                 .reduceRows(new HashMap<Long, GroupAndOptionDtos>(), (container, row) -> {
                     PicklistOptionDto option = row.getRow(PicklistOptionDto.class);
                     Long questionId = row.getColumn("question_id", Long.class);
                     Long groupId = row.getColumn("pg_picklist_group_id", Long.class);
+                    Long parentOptionId = row.getColumn("pno_parent_option_id", Long.class);
 
                     if (groupId == null) {
-                        container.computeIfAbsent(questionId, (k) -> new GroupAndOptionDtos()).getUngroupedOptions().add(option);
+                        if (parentOptionId == null) {
+                            container.computeIfAbsent(questionId, (k) -> new GroupAndOptionDtos()).getUngroupedOptions().add(option);
+                        } else {
+                            nestedOptMap.computeIfAbsent(parentOptionId, (k) -> new ArrayList<>());
+                            nestedOptMap.get(parentOptionId).add(option);
+                        }
                     } else {
                         PicklistGroupDto group = row.getRow(PicklistGroupDto.class);
                         if (container.computeIfAbsent(questionId, (k) ->
@@ -433,6 +493,16 @@ public interface PicklistQuestionDao extends SqlObject {
 
                     return container;
                 });
+
+        dtosMap.values().stream().forEach(dto -> {
+            dto.getUngroupedOptions().stream().forEach(parentDto -> {
+                if (nestedOptMap.containsKey(parentDto.getId())) {
+                    parentDto.getNestedOptions().addAll(nestedOptMap.get(parentDto.getId()));
+                }
+            });
+        });
+
+        return dtosMap;
     }
 
     class GroupAndOptionDtos implements Serializable {
@@ -440,18 +510,6 @@ public interface PicklistQuestionDao extends SqlObject {
         private List<PicklistGroupDto> groups = new ArrayList<>();
         private List<PicklistOptionDto> ungroupedOptions = new ArrayList<>();
         private Map<Long, List<PicklistOptionDto>> groupIdToOptions = new HashMap<>();
-
-        public List<PicklistGroupDto> getGroups() {
-            return groups;
-        }
-
-        public List<PicklistOptionDto> getUngroupedOptions() {
-            return ungroupedOptions;
-        }
-
-        public Map<Long, List<PicklistOptionDto>> getGroupIdToOptions() {
-            return groupIdToOptions;
-        }
 
         public GroupAndOptionDtos() {
             super();
@@ -463,6 +521,18 @@ public interface PicklistQuestionDao extends SqlObject {
             this.ungroupedOptions = ungroupedOptions;
             this.groupIdToOptions = groupIdToOptions;
 
+        }
+
+        public List<PicklistGroupDto> getGroups() {
+            return groups;
+        }
+
+        public List<PicklistOptionDto> getUngroupedOptions() {
+            return ungroupedOptions;
+        }
+
+        public Map<Long, List<PicklistOptionDto>> getGroupIdToOptions() {
+            return groupIdToOptions;
         }
     }
 }
