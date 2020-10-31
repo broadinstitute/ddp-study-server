@@ -24,7 +24,7 @@
         </filter>
     </appender>
 
-    <logger name="org.redisson" level="info">
+    <logger name="org.redisson" level="info" additivity="false">
         <appender-ref ref="STDOUT" />
         <appender-ref ref="REDISCONNVALIDATOR" />
     </logger>
