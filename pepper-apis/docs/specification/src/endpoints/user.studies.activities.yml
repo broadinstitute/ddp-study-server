@@ -29,13 +29,50 @@ post:
   tags:
     - Activities
   summary: create a new instance of an activity
-  description: given an `activityCode`, the server will create a new instance of the activity for the specified user and return the `instanceGuid` of the newly created default instance.
+  description: Given an `activityCode`, the server will create a new instance of the activity for the specified user if the configured conditions for the activity is met.
   requestBody:
-    $ref: '../pepper.yml#/components/requestBodies/ActivityCreateRequestBody'
+    required: true
+    content:
+      application/json:
+        schema:
+          type: object
+          required:
+            - activityCode
+          properties:
+            activityCode:
+              description: activity to create a new instance from
+              type: string
+              example: ABCDEFGH12
   responses:
       200:
-        $ref: '../pepper.yml#/components/responses/ActivityCreateResponse'
+        description: successfully created a new instance of the specified activity
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - instanceGuid
+              properties:
+                instanceGuid:
+                  type: string
+                  example: ABCDEFGH12
+      400:
+        description: invalid or missing required payload
+        content:
+          application/json:
+            schema:
+              $ref: '../pepper.yml#/components/schemas/Error.BadPayload'
+      404:
+        description: the user, study, or activity is not found
+        content:
+          application/json:
+            schema:
+              $ref: '../pepper.yml#/components/schemas/Error.UserStudyActivityNotFound'
       422:
-        $ref: '../pepper.yml#/components/responses/ActivityCreateErrorResponse'
+        description: activity instance failed to be created
+        content:
+          application/json:
+            schema:
+              $ref: '../pepper.yml#/components/schemas/Error.TooManyInstances'
       default:
         $ref: '../pepper.yml#/components/responses/ErrorResponse'
