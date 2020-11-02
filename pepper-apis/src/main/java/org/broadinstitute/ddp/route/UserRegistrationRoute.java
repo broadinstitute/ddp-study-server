@@ -390,7 +390,7 @@ public class UserRegistrationRoute extends ValidatedJsonInputRoute<UserRegistrat
         }
 
         UserGovernanceDao userGovernanceDao = handle.attach(UserGovernanceDao.class);
-        Governance gov = userGovernanceDao.createGovernedUserWithGuidAlias(clientConfig.getClientId(), operatorUser.getId());
+        Governance gov = userGovernanceDao.createGovernedUserWithGuidAlias(clientConfig.getClientId(), operatorUser.getId(), null);
         userGovernanceDao.grantGovernedStudy(gov.getId(), policy.getStudyId());
         LOG.info("Created governed user with guid {} and granted access to study {} for proxy {}",
                 gov.getGovernedUserGuid(), policy.getStudyGuid(), operatorUser.getGuid());

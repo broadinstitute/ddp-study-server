@@ -40,9 +40,9 @@ public class RevokeProxiesEventActionTest extends TxnAwareBaseTest {
     public void test_setAllActiveProxiesToInactive() {
         TransactionWrapper.useTxn(handle -> {
             var userDao = handle.attach(UserDao.class);
-            User proxy1 = userDao.createUser(testData.getClientId(), "a");
-            User proxy2 = userDao.createUser(testData.getClientId(), "b");
-            User participant = userDao.createUser(testData.getClientId(), "c");
+            User proxy1 = userDao.createUser(testData.getClientId(), "a", null);
+            User proxy2 = userDao.createUser(testData.getClientId(), "b", null);
+            User participant = userDao.createUser(testData.getClientId(), "c", null);
 
             var userGovernanceDao = handle.attach(UserGovernanceDao.class);
             long govId1 = userGovernanceDao.assignProxy("proxy1", proxy1.getId(), participant.getId());
@@ -68,9 +68,9 @@ public class RevokeProxiesEventActionTest extends TxnAwareBaseTest {
             StudyDto study2 = TestDataSetupUtil.generateTestStudy(handle, cfg);
 
             var userDao = handle.attach(UserDao.class);
-            User proxy1 = userDao.createUser(testData.getClientId(), "a");
-            User proxy2 = userDao.createUser(testData.getClientId(), "b");
-            User participant = userDao.createUser(testData.getClientId(), "c");
+            User proxy1 = userDao.createUser(testData.getClientId(), "a", null);
+            User proxy2 = userDao.createUser(testData.getClientId(), "b", null);
+            User participant = userDao.createUser(testData.getClientId(), "c", null);
 
             var userGovernanceDao = handle.attach(UserGovernanceDao.class);
             long govId1 = userGovernanceDao.assignProxy("proxy1", proxy1.getId(), participant.getId());

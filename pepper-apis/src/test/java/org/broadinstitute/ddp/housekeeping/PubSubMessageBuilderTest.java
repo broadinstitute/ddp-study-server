@@ -82,7 +82,7 @@ public class PubSubMessageBuilderTest extends TxnAwareBaseTest {
     public void testCreateMessage_participantHasOperatorAsProxy() {
         TransactionWrapper.useTxn(handle -> {
             UserGovernanceDao userGovernanceDao = handle.attach(UserGovernanceDao.class);
-            Governance gov = userGovernanceDao.createGovernedUserWithGuidAlias(testData.getClientId(), testData.getUserId());
+            Governance gov = userGovernanceDao.createGovernedUserWithGuidAlias(testData.getClientId(), testData.getUserId(), null);
             userGovernanceDao.grantGovernedStudy(gov.getId(), testData.getStudyId());
 
             QueuedEventDto event = new QueuedNotificationDto(
@@ -122,10 +122,10 @@ public class PubSubMessageBuilderTest extends TxnAwareBaseTest {
     public void testCreateMessage_operatorNotProxy_usesFirstProxy() {
         TransactionWrapper.useTxn(handle -> {
             UserGovernanceDao userGovernanceDao = handle.attach(UserGovernanceDao.class);
-            Governance gov = userGovernanceDao.createGovernedUserWithGuidAlias(testData.getClientId(), testData.getUserId());
+            Governance gov = userGovernanceDao.createGovernedUserWithGuidAlias(testData.getClientId(), testData.getUserId(), null);
             userGovernanceDao.grantGovernedStudy(gov.getId(), testData.getStudyId());
 
-            User operator = handle.attach(UserDao.class).createUser(testData.getClientId(), null);
+            User operator = handle.attach(UserDao.class).createUser(testData.getClientId(), null, null);
 
             QueuedEventDto event = new QueuedNotificationDto(
                     new QueuedEventDto(1L, operator.getId(), gov.getGovernedUserGuid(), "hruid",
@@ -168,7 +168,7 @@ public class PubSubMessageBuilderTest extends TxnAwareBaseTest {
             handle.attach(StudyDao.class).addSettings(testData.getStudyId(), null, null, false, null,
                     shouldDeleteUnsendableEmails, shouldDisplayLanguageChangePopup);
 
-            User user = handle.attach(UserDao.class).createUser(testData.getClientId(), null);
+            User user = handle.attach(UserDao.class).createUser(testData.getClientId(), null, null);
             QueuedEventDto event = new QueuedNotificationDto(
                     new QueuedEventDto(1L, user.getId(), user.getGuid(), user.getHruid(),
                             1L, EventTriggerType.ACTIVITY_STATUS, EventActionType.NOTIFICATION, null, null,

@@ -325,7 +325,7 @@ public class StudyDataLoader {
         }
 
         handle.attach(JdbiUserStudyEnrollment.class)
-                .changeUserStudyEnrollmentStatus(userGuid, studyDto.getGuid(), EnrollmentStatusType.REGISTERED, ddpCreatedAt);
+                .changeUserStudyEnrollmentStatus(pepperUser.getUserGuid(), studyDto.getGuid(), EnrollmentStatusType.REGISTERED, ddpCreatedAt);
 
         LOG.info("user guid: " + pepperUser.getUserGuid());
         processLegacyFields(handle, datstatData, mappingData.getAsJsonArray().get(1),
@@ -1028,8 +1028,10 @@ public class StudyDataLoader {
             addUserProfile(operatorUserDto, data, jdbiLanguageCode, userProfileDao, true);
         }
 
-        Governance governance = userGovernanceDao.createGovernedUserWithGuidAlias(operatorUser.getCreatedByClientId(),
-                operatorUser.getId());
+
+        String legacyAltPid = data.getAsJsonObject().get("datstat_altpid").getAsString();
+        Governance governance = userGovernanceDao.createGovernedUserWithGuidAlias(operatorUser.getCreatedByClientId(), operatorUser.getId(),
+                legacyAltPid);
         userGovernanceDao.grantGovernedStudy(governance.getId(), studyDto.getId());
         org.broadinstitute.ddp.model.user.User governedUser = userDao.findUserById(governance.getGovernedUserId())
                 .orElseThrow(() -> new DDPException("Could not find governed user with id " + governance.getGovernedUserId()));

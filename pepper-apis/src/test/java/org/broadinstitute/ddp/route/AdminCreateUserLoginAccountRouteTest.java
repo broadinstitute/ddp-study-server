@@ -221,7 +221,7 @@ public class AdminCreateUserLoginAccountRouteTest extends TxnAwareBaseTest {
 
     private User createDummyUser(String fakeAuth0UserId, boolean joinStudy) {
         return TransactionWrapper.withTxn(handle -> {
-            User user = handle.attach(UserDao.class).createUser(testData.getClientId(), fakeAuth0UserId);
+            User user = handle.attach(UserDao.class).createUser(testData.getClientId(), fakeAuth0UserId, null);
             if (joinStudy) {
                 handle.attach(JdbiUserStudyEnrollment.class).changeUserStudyEnrollmentStatus(
                         user.getGuid(), testData.getStudyGuid(), EnrollmentStatusType.REGISTERED);

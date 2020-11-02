@@ -46,24 +46,24 @@ public interface UserDao extends SqlObject {
 
 
     default User createUser(String auth0Domain, String auth0ClientId, String auth0UserId) {
-        return createUserByClientIdOrAuth0Ids(false, null, auth0Domain, auth0ClientId, auth0UserId, false);
+        return createUserByClientIdOrAuth0Ids(false, null, auth0Domain, auth0ClientId, auth0UserId, false, null);
     }
 
-    default User createUser(long clientId, String auth0UserId) {
-        return createUserByClientIdOrAuth0Ids(true, clientId, null, null, auth0UserId, false);
+    default User createUser(long clientId, String auth0UserId, String legacyAltPid) {
+        return createUserByClientIdOrAuth0Ids(true, clientId, null, null, auth0UserId, false, legacyAltPid);
     }
 
     default User createTempUser(String auth0Domain, String auth0ClientId) {
-        return createUserByClientIdOrAuth0Ids(false, null, auth0Domain, auth0ClientId, null, true);
+        return createUserByClientIdOrAuth0Ids(false, null, auth0Domain, auth0ClientId, null, true, null);
     }
 
     default User createTempUser(long clientId) {
-        return createUserByClientIdOrAuth0Ids(true, clientId, null, null, null, true);
+        return createUserByClientIdOrAuth0Ids(true, clientId, null, null, null, true, null);
     }
 
     private User createUserByClientIdOrAuth0Ids(boolean byClientId, Long clientId,
                                                 String auth0Domain, String auth0ClientId,
-                                                String auth0UserId, boolean isTemporary) {
+                                                String auth0UserId, boolean isTemporary, String legacyAltPid) {
         Handle handle = getHandle();
         String userGuid = DBUtils.uniqueUserGuid(handle);
         String userHruid = DBUtils.uniqueUserHruid(handle);
@@ -73,9 +73,10 @@ public interface UserDao extends SqlObject {
 
         long userId = getUserSql().insertByClientIdOrAuth0Ids(
                 byClientId, clientId, auth0Domain, auth0ClientId, auth0UserId,
-                userGuid, userHruid, null, null, false, now, now, expiresAt);
+                userGuid, userHruid, legacyAltPid, null, false, now, now, expiresAt);
         return findUserById(userId).orElseThrow(() -> new DaoException("Could not find user with id " + userId));
     }
+
 
     @UseStringTemplateSqlLocator
     @SqlQuery("queryUserById")

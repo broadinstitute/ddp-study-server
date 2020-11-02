@@ -205,7 +205,7 @@ public class GetUserAnnouncementsRouteTest extends IntegrationTestSuite.TestCase
             handle.attach(JdbiClientUmbrellaStudy.class).insert(testData.getClientId(), testStudy.getId());
 
             UserGovernanceDao userGovernanceDao = handle.attach(UserGovernanceDao.class);
-            Governance gov = userGovernanceDao.createGovernedUserWithGuidAlias(testData.getClientId(), testData.getUserId());
+            Governance gov = userGovernanceDao.createGovernedUserWithGuidAlias(testData.getClientId(), testData.getUserId(), null);
             userGovernanceDao.grantGovernedStudy(gov.getId(), testStudy.getId());
             handle.attach(JdbiUserStudyEnrollment.class)
                     .changeUserStudyEnrollmentStatus(gov.getGovernedUserId(), testStudy.getId(), EnrollmentStatusType.REGISTERED);

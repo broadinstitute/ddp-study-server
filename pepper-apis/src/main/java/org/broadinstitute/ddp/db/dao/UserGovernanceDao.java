@@ -26,16 +26,19 @@ public interface UserGovernanceDao extends SqlObject {
     UserDao getUserDao();
 
     @CreateSqlObject
+    JdbiUser getJdbiUser();
+
+    @CreateSqlObject
     UserGovernanceSql getUserGovernanceSql();
 
     default Governance createGovernedUser(long clientId, long proxyUserId, String alias) {
-        User governedUser = getUserDao().createUser(clientId, null);
+        User governedUser = getUserDao().createUser(clientId, null, null);
         long governanceId = getUserGovernanceSql().insertGovernance(proxyUserId, governedUser.getId(), alias, true);
         return findGovernanceById(governanceId).orElseThrow(() -> new DaoException("Could not find governance with id " + governanceId));
     }
 
-    default Governance createGovernedUserWithGuidAlias(long clientId, long proxyUserId) {
-        User governedUser = getUserDao().createUser(clientId, null);
+    default Governance createGovernedUserWithGuidAlias(long clientId, long proxyUserId, String legacyAltPid) {
+        User governedUser = getUserDao().createUser(clientId, null, legacyAltPid);
         String alias = governedUser.getGuid();
         long governanceId = getUserGovernanceSql().insertGovernance(proxyUserId, governedUser.getId(), alias, true);
         return findGovernanceById(governanceId).orElseThrow(() -> new DaoException("Could not find governance with id " + governanceId));

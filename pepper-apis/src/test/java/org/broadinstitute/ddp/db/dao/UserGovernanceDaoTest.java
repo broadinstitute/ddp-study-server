@@ -46,7 +46,7 @@ public class UserGovernanceDaoTest extends TxnAwareBaseTest {
     public void testCreateGovernedUserWithGuidAlias() {
         TransactionWrapper.useTxn(handle -> {
             Governance gov = handle.attach(UserGovernanceDao.class)
-                    .createGovernedUserWithGuidAlias(testData.getClientId(), testData.getUserId());
+                    .createGovernedUserWithGuidAlias(testData.getClientId(), testData.getUserId(), null);
             assertNotNull(gov.getGovernedUserGuid());
             assertEquals(gov.getGovernedUserGuid(), gov.getAlias());
             assertEquals(testData.getUserId(), gov.getProxyUserId());

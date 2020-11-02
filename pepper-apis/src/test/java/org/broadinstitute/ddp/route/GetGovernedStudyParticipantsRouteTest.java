@@ -26,7 +26,7 @@ public class GetGovernedStudyParticipantsRouteTest extends IntegrationTestSuite.
         TransactionWrapper.useTxn(handle -> {
             testData = TestDataSetupUtil.generateBasicUserTestData(handle);
             token = testData.getTestingUser().getToken();
-            otherUser = handle.attach(UserDao.class).createUser(testData.getClientId(), null);
+            otherUser = handle.attach(UserDao.class).createUser(testData.getClientId(), null, null);
         });
         String endpoint = RouteConstants.API.USER_STUDY_PARTICIPANTS
                 .replace(RouteConstants.PathParam.USER_GUID, "{userGuid}")
