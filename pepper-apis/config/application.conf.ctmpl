@@ -2,6 +2,7 @@
 
 {{with $environment := env "ENVIRONMENT"}}
 {{with $version := env "VERSION"}}
+{{with $app := env "APP"}}
 {{with $conf := vault (printf "secret/pepper/%s/%s/conf" $environment $version)}}
 {{with $dsm_conf := vault (printf "secret/pepper/%s/%s/dsm/config" $environment $version)}}
 {{with $auth0 := index $conf.Data "auth0"}}
@@ -98,7 +99,11 @@
         # Batch size to use for checking status and scheduling
         "batchSize": {{$conf.Data.kits.batchSize}}
     },
+    {{if eq $app "housekeeping"}}
+    "jcacheConfigurationFile": "redisson-jcache-housekeeping.yaml",
+    {{else}}
     "jcacheConfigurationFile": "redisson-jcache.yaml",
+    {{end}}
     "redisServerAddress": "redis://{{$conf.Data.redis.host}}:{{$conf.Data.redis.port}}",
     "elasticsearch": {
         # Whether to enable data sync to ES
@@ -136,6 +141,7 @@
         "dsmBaseUrl": "https://dsm.datadonationplatform.org:443"
     {{end}}
 }
+{{end}}
 {{end}}
 {{end}}
 {{end}}
