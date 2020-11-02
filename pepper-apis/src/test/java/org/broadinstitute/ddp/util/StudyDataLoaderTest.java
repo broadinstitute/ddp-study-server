@@ -100,7 +100,6 @@ public class StudyDataLoaderTest {
     private Auth0ManagementClient mockMgmtClient;
     private User mockAuth0User;
     private ClientDto mockClientDto;
-    private JdbiAuth0Tenant mockJdbiAuth0Tenant;
     private UserDao mockUserDao;
     private static String sourceData;
     private static Map<String, JsonElement> sourceDataMap;
@@ -137,7 +136,6 @@ public class StudyDataLoaderTest {
         mockMgmtClient = mock(Auth0ManagementClient.class);
         mockAuth0User = mock(User.class);
         mockClientDto = mock(ClientDto.class);
-        mockJdbiAuth0Tenant = mock(JdbiAuth0Tenant.class);
         mockUserDao = mock(UserDao.class);
         initMockStudyDataLoader();
 
@@ -668,7 +666,6 @@ public class StudyDataLoaderTest {
                 anyString(),
                 anyString(),
                 any(ClientDto.class),
-                any(JdbiAuth0Tenant.class),
                 any(UserDao.class))).thenCallRealMethod();
 
         mockDataLoader.createLegacyPepperUser(
@@ -678,7 +675,6 @@ public class StudyDataLoaderTest {
                 pretendUserGuid,
                 pretendUserHruid,
                 mockClientDto,
-                mockJdbiAuth0Tenant,
                 mockUserDao );
 
         ArgumentCaptor<String> creationEmail = ArgumentCaptor.forClass(String.class);
