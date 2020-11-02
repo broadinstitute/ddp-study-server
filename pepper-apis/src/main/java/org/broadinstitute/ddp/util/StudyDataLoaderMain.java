@@ -715,6 +715,7 @@ public class StudyDataLoaderMain {
         String altpid = datstatParticipantData.getAsJsonObject().get("datstat_altpid").getAsString();
         String emailAddress = datstatParticipantData.getAsJsonObject().get("datstat_email").getAsString().toLowerCase();
         String createdAt = datstatParticipantData.getAsJsonObject().get("datstat_created").getAsString();
+        int registrationType = datstatParticipantData.getAsJsonObject().get("registration_type").getAsInt();
         LOG.info("loading participant: {} email: {} ", altpid, emailAddress);
 
         TransactionWrapper.useTxn(handle -> {
@@ -742,6 +743,9 @@ public class StudyDataLoaderMain {
                 JdbiUser jdbiUser = handle.attach(JdbiUser.class);
                 userGuid = jdbiUser.getUserGuidByAltpid(altpid);
                 if (userGuid == null) {
+                    if (registrationType == 1) {
+                        dataLoader.deleteExistingAuth0User(emailAddress);
+                    }
                     JdbiActivity jdbiActivity = handle.attach(JdbiActivity.class);
                     ActivityInstanceDao activityInstanceDao = handle.attach(ActivityInstanceDao.class);
                     ActivityInstanceStatusDao activityInstanceStatusDao = handle.attach(ActivityInstanceStatusDao.class);

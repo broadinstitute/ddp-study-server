@@ -41,24 +41,7 @@ import com.google.gson.JsonElement;
 import com.typesafe.config.Config;
 import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
-import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
-import org.broadinstitute.ddp.db.dao.ActivityInstanceStatusDao;
-import org.broadinstitute.ddp.db.dao.AnswerDao;
-import org.broadinstitute.ddp.db.dao.DsmKitRequestDao;
-import org.broadinstitute.ddp.db.dao.JdbiActivity;
-import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
-import org.broadinstitute.ddp.db.dao.JdbiClient;
-import org.broadinstitute.ddp.db.dao.JdbiCountrySubnationalDivision;
-import org.broadinstitute.ddp.db.dao.JdbiInstitutionType;
-import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
-import org.broadinstitute.ddp.db.dao.JdbiMailAddress;
-import org.broadinstitute.ddp.db.dao.JdbiMedicalProvider;
-import org.broadinstitute.ddp.db.dao.JdbiUser;
-import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
-import org.broadinstitute.ddp.db.dao.JdbiUserStudyLegacyData;
-import org.broadinstitute.ddp.db.dao.KitTypeDao;
-import org.broadinstitute.ddp.db.dao.MedicalProviderDao;
-import org.broadinstitute.ddp.db.dao.UserProfileDao;
+import org.broadinstitute.ddp.db.dao.*;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.ClientDto;
 import org.broadinstitute.ddp.db.dto.MedicalProviderDto;
@@ -117,6 +100,8 @@ public class StudyDataLoaderTest {
     private Auth0ManagementClient mockMgmtClient;
     private User mockAuth0User;
     private ClientDto mockClientDto;
+    private JdbiAuth0Tenant mockJdbiAuth0Tenant;
+    private UserDao mockUserDao;
     private static String sourceData;
     private static Map<String, JsonElement> sourceDataMap;
     private static Map<String, JsonElement> mappingData;
@@ -152,6 +137,8 @@ public class StudyDataLoaderTest {
         mockMgmtClient = mock(Auth0ManagementClient.class);
         mockAuth0User = mock(User.class);
         mockClientDto = mock(ClientDto.class);
+        mockJdbiAuth0Tenant = mock(JdbiAuth0Tenant.class);
+        mockUserDao = mock(UserDao.class);
         initMockStudyDataLoader();
 
         ActivityInstanceDto mockInstanceDto = mock(ActivityInstanceDto.class);
@@ -680,8 +667,9 @@ public class StudyDataLoaderTest {
                 any(JsonElement.class),
                 anyString(),
                 anyString(),
-                any(ClientDto.class)
-        )).thenCallRealMethod();
+                any(ClientDto.class),
+                any(JdbiAuth0Tenant.class),
+                any(UserDao.class))).thenCallRealMethod();
 
         mockDataLoader.createLegacyPepperUser(
                 mockJdbiUser,
@@ -689,8 +677,9 @@ public class StudyDataLoaderTest {
                 participantData,
                 pretendUserGuid,
                 pretendUserHruid,
-                mockClientDto
-        );
+                mockClientDto,
+                mockJdbiAuth0Tenant,
+                mockUserDao );
 
         ArgumentCaptor<String> creationEmail = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<String> creationPass = ArgumentCaptor.forClass(String.class);

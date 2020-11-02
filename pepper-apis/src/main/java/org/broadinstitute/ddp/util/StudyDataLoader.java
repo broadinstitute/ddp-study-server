@@ -291,7 +291,7 @@ public class StudyDataLoader {
                     clientDto, userGovernanceDao, userDao, studyDto,
                     jdbiLanguageCode, profileDao, studyGovernanceDao, jdbiAuth0Tenant);
         } else {
-            pepperUser = createLegacyPepperUser(jdbiUser, clientDao, datstatData, userGuid, userHruid, clientDto);
+            pepperUser = createLegacyPepperUser(jdbiUser, clientDao, datstatData, userGuid, userHruid, clientDto, jdbiAuth0Tenant, userDao);
         }
 
 
@@ -1008,18 +1008,20 @@ public class StudyDataLoader {
         List<User> auth0UsersByEmail = auth0Util.getAuth0UsersByEmail(emailAddress, mgmtToken);
         String auth0UserId = !auth0UsersByEmail.isEmpty() ? auth0UsersByEmail.get(0).getId() : null;
         long tenantId = jdbiAuth0Tenant.findByDomain(auth0Domain).getId();
-        org.broadinstitute.ddp.model.user.User operatorUser;
-
         Optional<org.broadinstitute.ddp.model.user.User> userOptional = userDao.findUserByAuth0UserId(auth0UserId, tenantId);
+
+        org.broadinstitute.ddp.model.user.User operatorUser;
 
 
         if (userOptional.isPresent()) {
             operatorUser = userOptional.get();
         } else {
-            if (hasPassword) {
-                auth0UserId = createAuth0UserWithExistingPassword(data, userGuid, emailAddress);
-            } else {
-                auth0UserId = createAuth0UserWithRandomPassword(emailAddress);
+            if (auth0UserId == null) {
+                if (hasPassword) {
+                    auth0UserId = createAuth0UserWithExistingPassword(data, userGuid, emailAddress);
+                } else {
+                    auth0UserId = createAuth0UserWithRandomPassword(emailAddress);
+                }
             }
             UserDto operatorUserDto = insertNewUser(jdbiUser, data, userGuid, userHruid, clientDto, auth0UserId);
             String operatorGuid = operatorUserDto.getUserGuid();
@@ -1053,10 +1055,13 @@ public class StudyDataLoader {
     }
 
     public UserDto createLegacyPepperUser(JdbiUser jdbiUser, JdbiClient clientDao,
-                                          JsonElement data, String userGuid, String userHruid, ClientDto clientDto) throws Exception {
+                                          JsonElement data, String userGuid, String userHruid, ClientDto clientDto, JdbiAuth0Tenant jdbiAuth0Tenant, UserDao userDao) throws Exception {
         String emailAddress = data.getAsJsonObject().get("datstat_email").getAsString();
         boolean hasPassword = data.getAsJsonObject().has("password");
-        String auth0UserId;
+        List<User> auth0UsersByEmail = auth0Util.getAuth0UsersByEmail(emailAddress, mgmtToken);
+        String auth0UserId = !auth0UsersByEmail.isEmpty() ? auth0UsersByEmail.get(0).getId() : null;
+        long tenantId = jdbiAuth0Tenant.findByDomain(auth0Domain).getId();
+        Optional<org.broadinstitute.ddp.model.user.User> userOptional = userDao.findUserByAuth0UserId(auth0UserId, tenantId);
         // Create a user for the given domain
         if (hasPassword) {
             auth0UserId = createAuth0UserWithExistingPassword(data, userGuid, emailAddress);
@@ -1083,7 +1088,8 @@ public class StudyDataLoader {
         long updatedAtMillis = lastModifiedDate.toInstant(ZoneOffset.UTC).toEpochMilli();
 
         String shortId = null;
-        String altpid = data.getAsJsonObject().get("datstat_altpid").getAsString();
+        boolean isOperatorUser = data.getAsJsonObject().get("registration_type").getAsInt() == 2;
+        String altpid = isOperatorUser ? null : data.getAsJsonObject().get("datstat_altpid").getAsString();
         long userId = userDao.insertMigrationUser(auth0UserId, userGuid, clientDto.getId(), userHruid,
                 altpid, shortId, createdAtMillis, updatedAtMillis);
         UserDto newUser = new UserDto(userId, auth0UserId, userGuid, userHruid, altpid,
