@@ -22,11 +22,11 @@ public interface PexInterpreter {
      * @throws PexFetchException       if there are issues fetching data
      * @throws PexUnsupportedException if unsupported features are used in expression
      */
-    boolean eval(String expression, Handle handle, String userGuid, String activityInstanceGuid);
+    boolean eval(String expression, Handle handle, String userGuid, String operatorGuid, String activityInstanceGuid);
 
-    boolean eval(String expression, Handle handle, String userGuid, String activityInstanceGuid,
+    boolean eval(String expression, Handle handle, String userGuid, String operatorGuid, String activityInstanceGuid,
                  UserActivityInstanceSummary activityInstanceSummary);
 
-    boolean eval(String expression, Handle handle, String userGuid, String activityInstanceGuid,
+    boolean eval(String expression, Handle handle, String userGuid, String operatorGuid, String activityInstanceGuid,
                  UserActivityInstanceSummary activityInstanceSummary, EventSignal signal);
 }

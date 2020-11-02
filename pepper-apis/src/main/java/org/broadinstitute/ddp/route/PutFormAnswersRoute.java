@@ -103,7 +103,7 @@ public class PutFormAnswersRoute implements Route {
                     }
 
                     formInstanceDao.loadAllSectionsForForm(handle, form, langCodeId);
-                    form.updateBlockStatuses(handle, interpreter, userGuid, instanceGuid);
+                    form.updateBlockStatuses(handle, interpreter, userGuid, operatorGuid, instanceGuid);
 
                     if (!form.isComplete()) {
                         String msg = "The status cannot be set to COMPLETE because the question requirements are not met";
@@ -115,7 +115,7 @@ public class PutFormAnswersRoute implements Route {
                     // checkAddressRequirements(handle, userGuid, form);
 
                     List<ActivityValidationFailure> validationFailures = actValidationService.validate(
-                            handle, interpreter, userGuid, instanceGuid, form.getActivityId(), langCodeId
+                            handle, interpreter, userGuid, operatorGuid, instanceGuid, form.getActivityId(), langCodeId
                     );
                     if (!validationFailures.isEmpty()) {
                         String msg = "Activity validation failed";

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="sampath" id="20201026-alter-picklist-option-table">
+        <addColumn tableName="picklist_option">
+            <column name="nested_options_template_id" type="bigint">
+                <constraints nullable="true"
+                             references="template(template_id)"
+                             foreignKeyName="nested_options_template_fk"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet author="sampath" id="20201026-addd-picklist-nested-option-join-table">
+        <createTable tableName="picklist_nested_option">
+            <column name="picklist_option_nested_option_id" type="bigint" autoIncrement="true" startWith="1">
+                <constraints primaryKey="true" primaryKeyName="picklist_nested_option_pk"/>
+            </column>
+            <column name="parent_option_id" type="bigint">
+                <constraints nullable="false"
+                             references="picklist_option(picklist_option_id)"
+                             foreignKeyName="parent_option_fk"/>
+            </column>
+            <column name="nested_option_id" type="bigint">
+                <constraints nullable="false"
+                             references="picklist_option(picklist_option_id)"
+                             foreignKeyName="nested_option_fk"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet author="sampath" id="20201026-picklist_option_nested_option_uk">
+        <addUniqueConstraint tableName="picklist_nested_option" columnNames="parent_option_id, nested_option_id"
+                             constraintName="picklist_nested_option_uk"/>
+    </changeSet>
+
+</databaseChangeLog>

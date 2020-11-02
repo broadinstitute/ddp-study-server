@@ -174,7 +174,7 @@ public class BrainPrequalV2 implements CustomTask {
 
         //disable PREQUAL_SELF_DESCRIBE.MAILING_LIST option
         PicklistQuestionDao plQuestionDao = handle.attach(PicklistQuestionDao.class);
-        plQuestionDao.disableOption(questionDto.getId(), "MAILING_LIST", meta);
+        plQuestionDao.disableOption(questionDto.getId(), "MAILING_LIST", meta, false);
         LOG.info("Disabled mailing_list option");
 
         //update PREQUAL_SELF_DESCRIBE.DIAGNOSIED option prompt
@@ -188,7 +188,7 @@ public class BrainPrequalV2 implements CustomTask {
         FormBlockDef formBlockDef = plQuestionSec.getBlocks().get(0);
         QuestionDef questionDef1 = formBlockDef.getQuestions().findFirst().get();
         PicklistQuestionDef plQuestionDef = (PicklistQuestionDef) questionDef1;
-        List<PicklistOptionDef> options = plQuestionDef.getAllPicklistOptions();
+        List<PicklistOptionDef> options = plQuestionDef.getPicklistOptions();
         for (PicklistOptionDef opt : options) {
             if (opt.getStableId().equals("CHILD_DIAGNOSED")) {
                 plQuestionDao.addOption(questionDto.getId(), opt, 2, RevisionDto.fromStartMetadata(activityVersionDto.getRevId(), meta));

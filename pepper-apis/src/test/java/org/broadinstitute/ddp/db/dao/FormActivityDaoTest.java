@@ -357,7 +357,7 @@ public class FormActivityDaoTest extends TxnAwareBaseTest {
         String instanceGuid = handle.attach(ActivityInstanceDao.class)
                 .insertInstance(form.getActivityId(), userGuid, userGuid, InstanceStatusType.CREATED, false)
                 .getGuid();
-        Optional<FormInstance> inst = service.getTranslatedForm(handle, userGuid, instanceGuid, "en", ContentStyle.STANDARD);
+        Optional<FormInstance> inst = service.getTranslatedForm(handle, userGuid, userGuid, instanceGuid, "en", ContentStyle.STANDARD);
         assertTrue(inst.isPresent());
 
         return inst.get();

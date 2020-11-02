@@ -252,7 +252,7 @@ public class EventServiceTest extends IntegrationTestSuite.TestCase {
         // Do another triggering
         TransactionWrapper.useTxn(handle -> {
             ActivityInstanceStatusChangeSignal signal = new ActivityInstanceStatusChangeSignal(
-                    testUserId, testUserId, testData.getUserGuid(),
+                    testUserId, testUserId, testData.getUserGuid(), testData.getUserGuid(),
                     TestData.activityInstanceId, studyActivityTriggeringActionId,
                     umbrellaStudyId, InstanceStatusType.IN_PROGRESS);
             EventService.getInstance().processAllActionsForEventSignal(handle, signal);

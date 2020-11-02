@@ -10,6 +10,7 @@ import org.broadinstitute.ddp.constants.RouteConstants;
 import org.broadinstitute.ddp.db.TransactionWrapper;
 import org.broadinstitute.ddp.db.dao.JdbiUmbrellaStudy;
 import org.broadinstitute.ddp.db.dao.UserGovernanceDao;
+import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.json.GovernedParticipant;
 import org.broadinstitute.ddp.json.errors.ApiError;
@@ -34,6 +35,7 @@ public class GetGovernedStudyParticipantsRoute implements Route {
 
         List<GovernedParticipant> participants = TransactionWrapper.withTxn(handle -> {
             StudyDto studyDto = handle.attach(JdbiUmbrellaStudy.class).findByStudyGuid(studyGuid);
+            UserProfileDao userProfileDao = handle.attach(UserProfileDao.class);
             if (studyDto == null) {
                 ApiError err = new ApiError(ErrorCodes.STUDY_NOT_FOUND, "Could not find study with guid " + studyGuid);
                 LOG.warn(err.getMessage());
@@ -41,7 +43,8 @@ public class GetGovernedStudyParticipantsRoute implements Route {
             }
             try (Stream<Governance> govStream = handle.attach(UserGovernanceDao.class)
                     .findActiveGovernancesByProxyAndStudyGuids(operatorGuid, studyGuid)) {
-                return govStream.map(governed -> new GovernedParticipant(governed.getGovernedUserGuid(), governed.getAlias()))
+                return govStream.map(governed -> new GovernedParticipant(governed.getGovernedUserGuid(), governed.getAlias(),
+                        userProfileDao.findProfileByUserGuid(governed.getGovernedUserGuid()).orElse(null)))
                         .collect(Collectors.toList());
             }
         });

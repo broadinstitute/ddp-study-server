@@ -32,6 +32,20 @@ public interface JdbiPicklistOption extends SqlObject {
                 @Bind("revisionId") long revisionId);
 
     @UseStringTemplateSqlLocator
+    @SqlUpdate("insertOption")
+    @GetGeneratedKeys
+    long insert(@Bind("picklistQuestionId") long picklistQuestionId,
+                @Bind("stableId") String stableId,
+                @Bind("optionLabelTemplateId") long optionLabelTemplateId,
+                @Bind("tooltipTemplateId") Long tooltipTemplateId,
+                @Bind("detailLabelTemplateId") Long detailLabelTemplateId,
+                @Bind("allowDetails") boolean allowDetails,
+                @Bind("isExclusive") boolean isExclusive,
+                @Bind("displayOrder") int displayOrder,
+                @Bind("revisionId") long revisionId,
+                @Bind("nestedOptionsTemplateId") Long nestedOptionsTemplateId);
+
+    @UseStringTemplateSqlLocator
     @SqlBatch("insertOptionByDto")
     @GetGeneratedKeys
     long[] bulkInsertByDtos(@BindMethods("dto") List<PicklistOptionDto> optionDtos,
@@ -87,6 +101,15 @@ public interface JdbiPicklistOption extends SqlObject {
     @RegisterConstructorMapper(PicklistOptionDto.class)
     List<PicklistOptionDto> findAllActiveOrderedOptionsByQuestionId(@Bind("questionId") long questionId);
 
+    @UseStringTemplateSqlLocator
+    @SqlQuery("queryAllOrderedNestedOptionsByOptionId")
+    @RegisterConstructorMapper(PicklistOptionDto.class)
+    List<PicklistOptionDto> findActiveNestedOptions(@Bind("questionId") long questionId, @Bind("optionId") long optionId);
+
+    @UseStringTemplateSqlLocator
+    @SqlQuery("queryAllActiveNestedOptionsByQuestionId")
+    @RegisterConstructorMapper(PicklistOptionDto.class)
+    List<PicklistOptionDto> findAllActiveNestedOptionsByQuestionId(@Bind("questionId") long questionId);
 
     @SqlUpdate("update picklist_option set revision_id = :revisionId where picklist_option_id = :optionId")
     int updateRevisionByOptionId(@Bind("optionId") long optionId, @Bind("revisionId") long revisionId);
@@ -95,6 +118,8 @@ public interface JdbiPicklistOption extends SqlObject {
     int[] bulkUpdateRevisionIdsByDtos(@BindMethods("dto") List<PicklistOptionDto> options,
                                       @Bind("revisionId") long[] revisionIds);
 
+    @SqlBatch("insert into picklist_nested_option (parent_option_id, nested_option_id) values (:optionId, :nestedOptionId)")
+    int[] bulkInsertNestedOptions(@Bind("optionId") long optionId, @Bind("nestedOptionId") List<Long> nestedOptionIds);
 
     /**
      * Checks if stable id is already used with a picklist question, and if so, is it currently active.

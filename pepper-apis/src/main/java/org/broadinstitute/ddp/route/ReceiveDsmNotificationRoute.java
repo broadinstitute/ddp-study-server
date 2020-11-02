@@ -1,8 +1,8 @@
 package org.broadinstitute.ddp.route;
 
+import javax.validation.ValidationException;
 import java.time.Instant;
 import java.util.List;
-import javax.validation.ValidationException;
 
 import org.apache.http.HttpStatus;
 import org.broadinstitute.ddp.constants.ErrorCodes;
@@ -97,6 +97,7 @@ public class ReceiveDsmNotificationRoute extends ValidatedJsonInputRoute<DsmNoti
                     user.getId(),
                     user.getId(),
                     userGuid,
+                    null,
                     studyDto.getId(),
                     eventType,
                     testResult);

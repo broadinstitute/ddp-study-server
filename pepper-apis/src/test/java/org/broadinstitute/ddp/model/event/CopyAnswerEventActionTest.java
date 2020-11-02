@@ -81,7 +81,7 @@ public class CopyAnswerEventActionTest extends TxnAwareBaseTest {
             long configId = handle.attach(CopyConfigurationDao.class).createCopyConfig(config).getId();
 
             var signal = new EventSignal(
-                    testData.getUserId(), testData.getUserId(), testData.getUserGuid(),
+                    testData.getUserId(), testData.getUserId(), testData.getUserGuid(), testData.getUserGuid(),
                     testData.getStudyId(), EventTriggerType.REACHED_AOM);
             var action = new CopyAnswerEventAction(null, configId);
             action.doAction(null, handle, signal);
@@ -130,7 +130,7 @@ public class CopyAnswerEventActionTest extends TxnAwareBaseTest {
             long configId = handle.attach(CopyConfigurationDao.class).createCopyConfig(config).getId();
 
             var signal = new ActivityInstanceStatusChangeSignal(
-                    testData.getUserId(), testData.getUserId(), testData.getUserGuid(),
+                    testData.getUserId(), testData.getUserId(), testData.getUserGuid(), testData.getUserGuid(),
                     instanceId, act.getDef().getActivityId(),
                     testData.getStudyId(),
                     InstanceStatusType.COMPLETE);
@@ -250,7 +250,7 @@ public class CopyAnswerEventActionTest extends TxnAwareBaseTest {
 
             var signal = new ActivityInstanceStatusChangeSignal(
                     testData.getUserId(), testData.getUserId(), testData.getUserGuid(),
-                    instance2.getId(), act2.getDef().getActivityId(),
+                    testData.getUserGuid(), instance2.getId(), act2.getDef().getActivityId(),
                     testData.getStudyId(),
                     InstanceStatusType.CREATED);
             var action = new CopyAnswerEventAction(null, configId);

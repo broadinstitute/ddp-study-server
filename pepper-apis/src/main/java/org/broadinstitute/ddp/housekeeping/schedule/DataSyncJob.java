@@ -25,7 +25,6 @@ import org.jdbi.v3.core.Handle;
 import org.quartz.DisallowConcurrentExecution;
 import org.quartz.Job;
 import org.quartz.JobBuilder;
-import org.quartz.JobDataMap;
 import org.quartz.JobDetail;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
@@ -45,19 +44,17 @@ import org.slf4j.LoggerFactory;
 public class DataSyncJob implements Job {
 
     private static final Logger LOG = LoggerFactory.getLogger(DataSyncJob.class);
-    private static final String DATA_EXPORTER = "exporter";
+
+    private static DataExporter exporter;
 
     public static JobKey getKey() {
         return Keys.Export.SyncJob;
     }
 
     public static void register(Scheduler scheduler, Config cfg) throws SchedulerException {
-        JobDataMap map = new JobDataMap();
-        map.put(DATA_EXPORTER, new DataExporter(cfg));
-
+        exporter = new DataExporter(cfg);
         JobDetail job = JobBuilder.newJob(DataSyncJob.class)
                 .withIdentity(getKey())
-                .usingJobData(map)
                 .requestRecovery(false)
                 .storeDurably(true)
                 .build();
@@ -93,9 +90,6 @@ public class DataSyncJob implements Job {
                 LOG.warn("Regular data export job currently running, skipping sync job");
                 return;
             }
-
-            JobDataMap map = ctx.getMergedJobDataMap();
-            DataExporter exporter = (DataExporter) map.get(DATA_EXPORTER);
             TransactionWrapper.useTxn(TransactionWrapper.DB.APIS, handle -> run(handle, exporter));
         } catch (Exception e) {
             throw new JobExecutionException(e, false);
