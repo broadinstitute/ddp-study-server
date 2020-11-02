@@ -239,7 +239,7 @@ public class ActivityBuilder {
         }
     }
 
-    public void updatetActivityStatusIcons(Handle handle) {
+    public void updateActivityStatusIcons(Handle handle) {
         if (!cfg.hasPath("activityStatusIcons")) {
             return;
         }

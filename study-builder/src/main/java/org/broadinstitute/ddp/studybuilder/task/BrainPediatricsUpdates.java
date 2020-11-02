@@ -252,7 +252,7 @@ public class BrainPediatricsUpdates implements CustomTask {
         }
 
         //update activityStatus Icons
-        activityBuilder.updatetActivityStatusIcons(handle);
+        activityBuilder.updateActivityStatusIcons(handle);
     }
 
     private void addNewEvents(Handle handle, StudyDto studyDto, long adminUserId) {
