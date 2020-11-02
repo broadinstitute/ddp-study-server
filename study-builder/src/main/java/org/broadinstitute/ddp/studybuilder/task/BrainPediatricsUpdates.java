@@ -250,6 +250,9 @@ public class BrainPediatricsUpdates implements CustomTask {
             throw new RuntimeException("Expecting to update 1 Brain kit rule expression row, got :" + thisRowCount
                     + "  aborting patch ");
         }
+
+        //update activityStatus Icons
+        activityBuilder.updateActivityStatusIcons(handle);
     }
 
     private void addNewEvents(Handle handle, StudyDto studyDto, long adminUserId) {

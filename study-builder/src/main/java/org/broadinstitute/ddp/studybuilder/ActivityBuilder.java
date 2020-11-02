@@ -239,6 +239,35 @@ public class ActivityBuilder {
         }
     }
 
+    public void updateActivityStatusIcons(Handle handle) {
+        if (!cfg.hasPath("activityStatusIcons")) {
+            return;
+        }
+
+        JdbiFormTypeActivityInstanceStatusType jdbiStatusIcon = handle.attach(JdbiFormTypeActivityInstanceStatusType.class);
+
+        for (Config iconCfg : cfg.getConfigList("activityStatusIcons")) {
+            File file = dirPath.resolve(iconCfg.getString("filepath")).toFile();
+            if (!file.exists()) {
+                throw new DDPException("Activity status icon file is missing: " + file);
+            }
+
+            byte[] iconBytes;
+            try (FileInputStream input = new FileInputStream(file)) {
+                iconBytes = IOUtils.toByteArray(input);
+            } catch (IOException e) {
+                throw new DDPException(e);
+            }
+
+            InstanceStatusType statusType = InstanceStatusType.valueOf(iconCfg.getString("statusType"));
+            for (FormType formType : FormType.values()) {
+                jdbiStatusIcon.updateIcon(studyDto.getId(), formType, statusType, iconBytes);
+                LOG.info("Updated activity status icon with studyId={}, formType={}, statusType={}",
+                        studyDto.getId(), formType, statusType);
+            }
+        }
+    }
+
     public Config readDefinitionConfig(String filepath) {
         File file = dirPath.resolve(filepath).toFile();
         if (!file.exists()) {
