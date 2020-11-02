@@ -92,6 +92,7 @@ import org.broadinstitute.ddp.service.MedicalRecordService;
 import org.broadinstitute.ddp.util.TestDataSetupUtil;
 import org.broadinstitute.ddp.util.TestUtil;
 import org.jdbi.v3.core.Handle;
+import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -106,27 +107,32 @@ public class DataExporterTest extends TxnAwareBaseTest {
 
     private static TestDataSetupUtil.GeneratedTestData testData;
     private static String TEST_USER_GUID = "blah-guid";
+    private static DataExporter exporter;
     LocalDate testDateOfMajority = LocalDate.now();
     DateValue testBirthdate = new DateValue(1978, 5, 16);
     private MedicalRecordService mockMedicalRecordService;
     private GovernancePolicy mockGovernancePolicy;
-    private DataExporter exporter;
 
     @BeforeClass
     public static void setup() {
+        exporter = new DataExporter(cfg);
         TransactionWrapper.useTxn(handle -> {
             testData = TestDataSetupUtil.generateBasicUserTestData(handle);
         });
     }
 
+    @AfterClass
+    public static void tearDown() throws IOException {
+        exporter.close();
+    }
+
     @Before
     public void setupTest() {
-        exporter = new DataExporter(cfg);
         mockMedicalRecordService = Mockito.mock(MedicalRecordService.class);
         Mockito.when(mockMedicalRecordService.getDateOfBirth(Mockito.any(Handle.class),
                 Mockito.anyLong(), Mockito.anyLong())).thenReturn(Optional.of(testBirthdate));
         Mockito.when(mockMedicalRecordService.fetchBloodAndTissueConsents(Mockito.any(Handle.class),
-                Mockito.anyLong(), Mockito.anyString(), Mockito.anyLong(), Mockito.anyString()))
+                Mockito.anyLong(), Mockito.anyString(), Mockito.any(), Mockito.anyLong(), Mockito.anyString()))
                 .thenReturn(new MedicalRecordService.ParticipantConsents(true, true));
 
         AgeOfMajorityRule ageOfMajorityRule = Mockito.mock(AgeOfMajorityRule.class);

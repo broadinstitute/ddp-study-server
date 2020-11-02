@@ -1,6 +1,8 @@
 package org.broadinstitute.ddp.db.dto;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.jdbi.v3.core.mapper.reflect.ColumnName;
 import org.jdbi.v3.core.mapper.reflect.JdbiConstructor;
@@ -18,6 +20,8 @@ public class PicklistOptionDto implements TimestampRevisioned, Serializable {
     private long revisionId;
     private Long revisionStartTimestamp;
     private Long revisionEndTimestamp;
+    private Long nestedOptionsTemplateId;
+    private List<PicklistOptionDto> nestedOptions = new ArrayList<>();
 
     @JdbiConstructor
     public PicklistOptionDto(@ColumnName("picklist_option_id") long id,
@@ -30,7 +34,8 @@ public class PicklistOptionDto implements TimestampRevisioned, Serializable {
                              @ColumnName("display_order") int displayOrder,
                              @ColumnName("revision_id") long revisionId,
                              @ColumnName("revision_start_timestamp") Long revisionStartTimestamp,
-                             @ColumnName("revision_end_timestamp") Long revisionEndTimestamp) {
+                             @ColumnName("revision_end_timestamp") Long revisionEndTimestamp,
+                             @ColumnName("nested_options_template_id") Long nestedOptionsTemplateId) {
         this.id = id;
         this.stableId = stableId;
         this.optionLabelTemplateId = optionLabelTemplateId;
@@ -42,6 +47,7 @@ public class PicklistOptionDto implements TimestampRevisioned, Serializable {
         this.revisionId = revisionId;
         this.revisionStartTimestamp = revisionStartTimestamp;
         this.revisionEndTimestamp = revisionEndTimestamp;
+        this.nestedOptionsTemplateId = nestedOptionsTemplateId;
     }
 
     public long getId() {
@@ -91,4 +97,13 @@ public class PicklistOptionDto implements TimestampRevisioned, Serializable {
     public Long getRevisionEndTimestamp() {
         return revisionEndTimestamp;
     }
+
+    public Long getNestedOptionsTemplateId() {
+        return nestedOptionsTemplateId;
+    }
+
+    public List<PicklistOptionDto> getNestedOptions() {
+        return nestedOptions;
+    }
+
 }

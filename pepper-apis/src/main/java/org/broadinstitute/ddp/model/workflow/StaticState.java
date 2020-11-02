@@ -28,6 +28,10 @@ public class StaticState implements WorkflowState {
         return new StaticState(StateType.MAILING_LIST);
     }
 
+    public static StaticState participantList() {
+        return new StaticState(StateType.PARTICIPANT_LIST);
+    }
+
     public static StaticState of(StateType type) {
         if (type.isStatic()) {
             return new StaticState(type);

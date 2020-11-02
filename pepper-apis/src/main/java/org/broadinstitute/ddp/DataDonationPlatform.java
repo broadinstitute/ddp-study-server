@@ -27,8 +27,8 @@ import com.typesafe.config.ConfigFactory;
 import org.apache.http.HttpStatus;
 import org.apache.http.entity.ContentType;
 import org.broadinstitute.ddp.analytics.GoogleAnalyticsMetricsTracker;
-import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.cache.CacheService;
+import org.broadinstitute.ddp.cache.LanguageStore;
 import org.broadinstitute.ddp.client.DsmClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.constants.ErrorCodes;
@@ -113,6 +113,7 @@ import org.broadinstitute.ddp.route.GetStudyPasswordPolicyRoute;
 import org.broadinstitute.ddp.route.GetTempMailingAddressRoute;
 import org.broadinstitute.ddp.route.GetUserAnnouncementsRoute;
 import org.broadinstitute.ddp.route.GetWorkflowRoute;
+import org.broadinstitute.ddp.route.GovernedParticipantRegistrationRoute;
 import org.broadinstitute.ddp.route.HealthCheckRoute;
 import org.broadinstitute.ddp.route.InvitationCheckStatusRoute;
 import org.broadinstitute.ddp.route.InvitationVerifyRoute;
@@ -367,6 +368,7 @@ public class DataDonationPlatform {
 
         // Governed participant routes
         get(API.USER_STUDY_PARTICIPANTS, new GetGovernedStudyParticipantsRoute(), responseSerializer);
+        post(API.USER_STUDY_PARTICIPANTS, new GovernedParticipantRegistrationRoute(), responseSerializer);
 
         // User profile routes
         get(API.USER_PROFILE, new GetProfileRoute(), responseSerializer);

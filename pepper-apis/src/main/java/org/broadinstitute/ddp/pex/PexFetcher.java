@@ -27,10 +27,11 @@ class PexFetcher {
      * @param activityCode the activity
      * @return status code, if there is an activity instance
      */
-    Optional<InstanceStatusType> findLatestActivityInstanceStatus(InterpreterContext ictx, String studyGuid, String activityCode) {
+    Optional<InstanceStatusType> findLatestActivityInstanceStatus(InterpreterContext ictx, String userGuid,
+                                                                  String studyGuid, String activityCode) {
         try {
             return ictx.getHandle().attach(PexDao.class)
-                    .findLatestActivityInstanceStatus(ictx.getUserGuid(), studyGuid, activityCode);
+                    .findLatestActivityInstanceStatus(userGuid, studyGuid, activityCode);
         } catch (Exception e) {
             throw new PexFetchException("Could not determine latest activity instance status for study "
                     + studyGuid + " and activity " + activityCode, e);
@@ -47,10 +48,11 @@ class PexFetcher {
      * @param stableId     the question stable id
      * @return question type, if found
      */
-    Optional<QuestionType> findQuestionType(InterpreterContext ictx, String studyGuid, String activityCode, String stableId) {
+    Optional<QuestionType> findQuestionType(InterpreterContext ictx, String userGuid, String studyGuid,
+                                            String activityCode, String stableId) {
         try {
             return ictx.getHandle().attach(PexDao.class)
-                    .findQuestionType(ictx.getUserGuid(), studyGuid, activityCode, stableId);
+                    .findQuestionType(userGuid, studyGuid, activityCode, stableId);
         } catch (Exception e) {
             throw new PexFetchException("Could not determine question type for form "
                     + activityCode + " question " + stableId, e);
@@ -65,11 +67,11 @@ class PexFetcher {
      * @param stableId     the question stable id
      * @return stream of boolean values
      */
-    Boolean findLatestBoolAnswer(InterpreterContext ictx, String activityCode, String stableId,
+    Boolean findLatestBoolAnswer(InterpreterContext ictx, String userGuid, String activityCode, String stableId,
                                  long studyId) {
         try {
             return ictx.getHandle().attach(PexDao.class)
-                    .findLatestBoolAnswer(ictx.getUserGuid(), activityCode, stableId, studyId);
+                    .findLatestBoolAnswer(userGuid, activityCode, stableId, studyId);
         } catch (Exception e) {
             throw new PexFetchException("Could not fetch boolean answers for form "
                     + activityCode + " question " + stableId, e);
@@ -103,10 +105,10 @@ class PexFetcher {
      * @param stableId     the question stable id
      * @return possibly a date value
      */
-    Optional<DateValue> findLatestDateAnswer(InterpreterContext ictx, String activityCode, String stableId, long studyId) {
+    Optional<DateValue> findLatestDateAnswer(InterpreterContext ictx, String userGuid, String activityCode, String stableId, long studyId) {
         try {
             return Optional.ofNullable(ictx.getHandle().attach(PexDao.class)
-                    .findLatestDateAnswer(ictx.getUserGuid(), activityCode, stableId, studyId));
+                    .findLatestDateAnswer(userGuid, activityCode, stableId, studyId));
         } catch (Exception e) {
             throw new PexFetchException("Could not fetch date answer for form "
                     + activityCode + " question " + stableId, e);
@@ -140,10 +142,10 @@ class PexFetcher {
      * @param stableId     the question stable id
      * @return stream of text values
      */
-    String findLatestTextAnswer(InterpreterContext ictx, String activityCode, String stableId, long studyId) {
+    String findLatestTextAnswer(InterpreterContext ictx, String userGuid, String activityCode, String stableId, long studyId) {
         try {
             return ictx.getHandle().attach(PexDao.class)
-                    .findLatestTextAnswer(ictx.getUserGuid(), activityCode, stableId, studyId);
+                    .findLatestTextAnswer(userGuid, activityCode, stableId, studyId);
         } catch (Exception e) {
             throw new PexFetchException("Could not fetch text answers for form "
                     + activityCode + " question " + stableId, e);
@@ -178,10 +180,10 @@ class PexFetcher {
      * @param stableId     the question stable id
      * @return stream of selected option lists, of which may be empty
      */
-    List<String> findLatestPicklistAnswer(InterpreterContext ictx, String activityCode, String stableId, long studyId) {
+    List<String> findLatestPicklistAnswer(InterpreterContext ictx, String userGuid, String activityCode, String stableId, long studyId) {
         try {
             String result = ictx.getHandle().attach(PexDao.class)
-                    .findLatestPicklistAnswer(ictx.getUserGuid(), activityCode, stableId, studyId);
+                    .findLatestPicklistAnswer(userGuid, activityCode, stableId, studyId);
             if (result != null) {
                 return Arrays.asList(result.split(","));
             } else {
@@ -234,10 +236,10 @@ class PexFetcher {
      * @param stableId     the question stable id
      * @return numeric integer answer value
      */
-    Long findLatestNumericIntegerAnswer(InterpreterContext ictx, String activityCode, String stableId, long studyId) {
+    Long findLatestNumericIntegerAnswer(InterpreterContext ictx, String userGuid, String activityCode, String stableId, long studyId) {
         try {
             return ictx.getHandle().attach(PexDao.class)
-                    .findLatestNumericIntegerAnswer(ictx.getUserGuid(), activityCode, stableId, studyId);
+                    .findLatestNumericIntegerAnswer(userGuid, activityCode, stableId, studyId);
         } catch (Exception e) {
             throw new PexFetchException("Could not fetch latest numeric integer answer for form "
                     + activityCode + " question " + stableId, e);

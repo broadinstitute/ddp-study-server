@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                   http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.5.xsd">
+
+    <changeSet author="ypavlov" id="20201025-add-participant-list-workflow-state-type">
+        <insert tableName="workflow_state_type">
+            <column name="workflow_state_type_code" value="PARTICIPANT_LIST"/>
+        </insert>
+    </changeSet>
+
+</databaseChangeLog>

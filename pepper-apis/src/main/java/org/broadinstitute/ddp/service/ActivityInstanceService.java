@@ -39,7 +39,7 @@ public class ActivityInstanceService {
      * @return activity instance, if found
      * @throws DDPException if pex evaluation error
      */
-    public Optional<ActivityInstance> getTranslatedActivity(Handle handle, String userGuid, ActivityType actType,
+    public Optional<ActivityInstance> getTranslatedActivity(Handle handle, String userGuid, String operatorGuid, ActivityType actType,
                                                             String actInstanceGuid, String isoLangCode, ContentStyle style) {
         ActivityInstance inst = actInstanceDao.getTranslatedActivityByTypeAndGuid(handle, actType, actInstanceGuid, isoLangCode, style);
         if (inst == null) {
@@ -47,7 +47,7 @@ public class ActivityInstanceService {
         }
 
         if (ActivityType.FORMS.equals(inst.getActivityType())) {
-            ((FormInstance) inst).updateBlockStatuses(handle, interpreter, userGuid, actInstanceGuid);
+            ((FormInstance) inst).updateBlockStatuses(handle, interpreter, userGuid, operatorGuid, actInstanceGuid);
         }
 
         return Optional.of(inst);
@@ -63,7 +63,7 @@ public class ActivityInstanceService {
      * @return form instance, if found
      * @throws DDPException if pex evaluation error
      */
-    public Optional<FormInstance> getTranslatedForm(Handle handle, String userGuid, String formInstanceGuid,
+    public Optional<FormInstance> getTranslatedForm(Handle handle, String userGuid, String operatorGuid, String formInstanceGuid,
                                                     String isoLangCode, ContentStyle style) {
         Function<ActivityInstance, FormInstance> typeChecker = (inst) -> {
             if (ActivityType.FORMS.equals(inst.getActivityType())) {
@@ -74,6 +74,7 @@ public class ActivityInstanceService {
                 return null;
             }
         };
-        return getTranslatedActivity(handle, userGuid, ActivityType.FORMS, formInstanceGuid, isoLangCode, style).map(typeChecker);
+        return getTranslatedActivity(handle, userGuid, operatorGuid, ActivityType.FORMS,
+                formInstanceGuid, isoLangCode, style).map(typeChecker);
     }
 }

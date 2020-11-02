@@ -73,12 +73,12 @@ public class GovernancePolicy {
     }
 
     public boolean shouldCreateGovernedUser(Handle handle, PexInterpreter interpreter, String userGuid) {
-        return interpreter.eval(shouldCreateGovernedUserExpr.getText(), handle, userGuid, null);
+        return interpreter.eval(shouldCreateGovernedUserExpr.getText(), handle, userGuid, userGuid, null);
     }
 
     public Optional<AgeOfMajorityRule> getApplicableAgeOfMajorityRule(Handle handle, PexInterpreter interpreter, String userGuid) {
         return aomRules.stream()
-                .filter(rule -> interpreter.eval(rule.getCondition(), handle, userGuid, null))
+                .filter(rule -> interpreter.eval(rule.getCondition(), handle, userGuid, userGuid, null))
                 .findFirst();
     }
 

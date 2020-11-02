@@ -13,14 +13,16 @@ class InterpreterContext {
 
     private final Handle handle;
     private final String userGuid;
+    private final String operatorGuid;
     private final String activityInstanceGuid;
     private final UserActivityInstanceSummary activityInstanceSummary;
     private final EventSignal eventSignal;
 
-    InterpreterContext(Handle handle, String userGuid, String activityInstanceGuid,
+    InterpreterContext(Handle handle, String userGuid, String operatorGuid, String activityInstanceGuid,
                        UserActivityInstanceSummary activityInstanceSummary, EventSignal eventSignal) {
         this.handle = handle;
         this.userGuid = userGuid;
+        this.operatorGuid = operatorGuid;
         this.activityInstanceGuid = activityInstanceGuid;
         this.activityInstanceSummary = activityInstanceSummary;
         this.eventSignal = eventSignal;
@@ -32,6 +34,10 @@ class InterpreterContext {
 
     public String getUserGuid() {
         return userGuid;
+    }
+
+    public String getOperatorGuid() {
+        return operatorGuid;
     }
 
     public String getActivityInstanceGuid() {

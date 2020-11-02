@@ -7,13 +7,15 @@ public class EventSignal {
     private long participantId;
     private long studyId;
     private String participantGuid;
+    private String operatorGuid;
     private EventTriggerType eventTriggerType;
 
     public EventSignal(long operatorId,
                        long participantId,
                        String participantGuid,
-                       long studyId,
+                       String operatorGuid, long studyId,
                        EventTriggerType eventTriggerType) {
+        this.operatorGuid = operatorGuid;
         this.eventTriggerType = eventTriggerType;
         this.operatorId = operatorId;
         this.participantId = participantId;
@@ -31,6 +33,10 @@ public class EventSignal {
 
     public String getParticipantGuid() {
         return participantGuid;
+    }
+
+    public String getOperatorGuid() {
+        return operatorGuid;
     }
 
     public EventTriggerType getEventTriggerType() {

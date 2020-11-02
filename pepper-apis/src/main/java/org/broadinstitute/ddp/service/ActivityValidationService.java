@@ -35,6 +35,7 @@ public class ActivityValidationService {
             Handle handle,
             PexInterpreter interpreter,
             String userGuid,
+            String operatorGuid,
             String activityInstanceGuid,
             long activityId,
             long languageCodeId
@@ -48,13 +49,14 @@ public class ActivityValidationService {
             try {
                 if (validationDto.getPreconditionText() != null) {
                     boolean preconditionSucceeded = interpreter.eval(
-                            validationDto.getPreconditionText(), handle, userGuid, activityInstanceGuid
+                            validationDto.getPreconditionText(), handle, userGuid, operatorGuid, activityInstanceGuid
                     );
                     if (!preconditionSucceeded) {
                         continue;
                     }
                 }
-                boolean validationFailed = interpreter.eval(validationDto.getExpressionText(), handle, userGuid, activityInstanceGuid);
+                boolean validationFailed = interpreter.eval(validationDto.getExpressionText(), handle,
+                        userGuid, operatorGuid, activityInstanceGuid);
                 if (validationFailed) {
                     failedDtos.add(validationDto);
                 }

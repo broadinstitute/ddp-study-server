@@ -82,7 +82,7 @@ public class ActivityDefStoreTest extends TxnAwareBaseTest {
             answerDao.createAnswer(testData.getUserId(), instanceDto.getId(), composite);
 
             Pair<Integer, Integer> counts = ActivityDefStore.getInstance().countQuestionsAndAnswers(
-                    handle, testData.getUserGuid(), form, instanceDto.getGuid(), null);
+                    handle, testData.getUserGuid(), testData.getUserGuid(), form, instanceDto.getGuid(), null);
             assertNotNull(counts);
             assertEquals("should count all regular/control/nested/unwrapped questions",
                     (Integer) 6, counts.getLeft());
