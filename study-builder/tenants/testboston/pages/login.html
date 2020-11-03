@@ -80,6 +80,20 @@
     // Decode utf8 characters properly
     var config = JSON.parse(decodeURIComponent(escape(window.atob('@@config@@'))));
     config.extraParams = config.extraParams || {};
+    var inviteKey = 'invitationId';
+
+    // save the invitation in local storage to minimize breached password loss-of-invitation
+    if (config.extraParams.invitation_id) {
+        localStorage.setItem(inviteKey,config.extraParams.invitation_id);
+        console.log('Saving invitation ' + config.extraParams.invitation_id);
+    } else {
+        var invitation = localStorage.getItem(inviteKey);
+        if (invitation) {
+            // unsafe, but better than losing this value during breached password shield
+            config.internalOptions.invitation_id = invitation;
+            console.log('Using stored invitation ' + invitation + ' from local storage');
+        }
+    }
 
     var mode = config.extraParams.mode;
     var study_guid = config.extraParams.study_guid;
