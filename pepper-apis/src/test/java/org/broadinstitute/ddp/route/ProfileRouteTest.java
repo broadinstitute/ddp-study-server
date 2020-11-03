@@ -25,7 +25,6 @@ import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.json.Profile;
 import org.broadinstitute.ddp.json.errors.ApiError;
 import org.broadinstitute.ddp.model.user.UserProfile;
-import org.json.JSONObject;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -403,7 +402,7 @@ public class ProfileRouteTest extends IntegrationTestSuite.TestCase {
     @Test
     public void testPatchWithMissingBody() throws Exception {
         postDummyProfile();
-        JSONObject updatedProfile = new JSONObject();
+        JsonObject updatedProfile = new JsonObject();
 
         Response response = RouteTestUtil.buildAuthorizedPatchRequest(token, url, updatedProfile.toString()).execute();
         HttpResponse res = response.returnResponse();
