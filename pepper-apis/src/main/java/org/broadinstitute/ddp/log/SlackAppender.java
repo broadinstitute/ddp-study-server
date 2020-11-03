@@ -59,10 +59,13 @@ public class SlackAppender<E> extends AppenderBase<ILoggingEvent> {
 
     private int intervalInMillis;
 
+    private HttpClient httpClient;
+
     private void init(String slackHookUrl,
                       String slackChannel,
                       String queueSize,
-                      String intervalInSeconds) {
+                      String intervalInMillis) {
+        httpClient = HttpClient.newHttpClient();
         try {
             this.slackHookUrl = new URI(slackHookUrl);
         } catch (URISyntaxException e) {
@@ -75,8 +78,8 @@ public class SlackAppender<E> extends AppenderBase<ILoggingEvent> {
         } else {
             this.queueSize = 10;
         }
-        if (StringUtils.isNumeric(intervalInSeconds)) {
-            this.intervalInMillis = Integer.parseInt(intervalInSeconds);
+        if (StringUtils.isNumeric(intervalInMillis)) {
+            this.intervalInMillis = Integer.parseInt(intervalInMillis);
         } else {
             this.intervalInMillis = 60;
         }
@@ -90,7 +93,7 @@ public class SlackAppender<E> extends AppenderBase<ILoggingEvent> {
             canLog = false;
         }
         if (canLog) {
-            LOG.info("At most {} slack alerts will be sent to {} every {} ms", queueSize, slackChannel, intervalInSeconds);
+            LOG.info("At most {} slack alerts will be sent to {} every {} ms", queueSize, slackChannel, intervalInMillis);
         }
 
         ScheduledThreadPoolExecutor executorService = new ScheduledThreadPoolExecutor(1,
@@ -206,7 +209,6 @@ public class SlackAppender<E> extends AppenderBase<ILoggingEvent> {
                     .header(HttpHeaders.CONTENT_TYPE, ContentType.APPLICATION_JSON.getMimeType())
                     .build();
         try {
-            var httpClient = HttpClient.newHttpClient();
             HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() != 200) {
                 throw new IOException("Could not post " + payload + " to slack.  Hook returned " + response.body());
