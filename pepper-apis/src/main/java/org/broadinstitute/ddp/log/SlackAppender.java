@@ -94,13 +94,14 @@ public class SlackAppender<E> extends AppenderBase<ILoggingEvent> {
         }
         if (canLog) {
             LOG.info("At most {} slack alerts will be sent to {} every {} ms", queueSize, slackChannel, intervalInMillis);
+            ScheduledThreadPoolExecutor executorService = new ScheduledThreadPoolExecutor(1,
+                    new ThreadFactory("SlackAppender", ThreadPriorities.SLACK_PRIORITY));
+            executorService.scheduleWithFixedDelay(() -> {
+                sendQueuedMessages();
+            }, 0, this.intervalInMillis, TimeUnit.MILLISECONDS);
+        } else {
+            LOG.info("No slack alerts will be sent.");
         }
-
-        ScheduledThreadPoolExecutor executorService = new ScheduledThreadPoolExecutor(1,
-                new ThreadFactory("SlackAppender", ThreadPriorities.SLACK_PRIORITY));
-        executorService.scheduleWithFixedDelay(() -> {
-            sendQueuedMessages();
-        }, 0, this.intervalInMillis, TimeUnit.MILLISECONDS);
     }
 
 
