@@ -5,13 +5,10 @@ import static org.mockserver.model.HttpResponse.response;
 
 import ch.qos.logback.classic.spi.LoggingEvent;
 import com.google.gson.Gson;
-
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-
 import org.mockserver.client.MockServerClient;
 import org.mockserver.junit.MockServerRule;
 import org.mockserver.model.JsonBody;
@@ -60,10 +57,4 @@ public class SlackAppenderTest {
             Assert.fail("Mock slack not running");
         }
     }
-
-    @After
-    public void shutDown() {
-        mockServerClient.stop();
-    }
-
 }
