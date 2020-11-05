@@ -7,6 +7,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -19,10 +20,11 @@ import java.util.Map;
 import java.util.Set;
 
 import com.auth0.exception.Auth0Exception;
+import com.auth0.json.mgmt.Connection;
 import org.broadinstitute.ddp.TxnAwareBaseTest;
+import org.broadinstitute.ddp.client.ApiResult;
 import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.model.user.UserProfile;
-import org.broadinstitute.ddp.util.Auth0Util;
 import org.jdbi.v3.core.Handle;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -49,19 +51,20 @@ public class StudyPasswordResetEmailGeneratorTest extends TxnAwareBaseTest {
 
         when(generator.findUserProfilesForParticipantsNotExitedThatCanBeContacted(anyString(), any(),
                 any(Handle.class))).thenReturn(Arrays.asList(profileWithEmail1, profileWithEmail2));
-        Auth0Util auth0UtilMock = mock(Auth0Util.class);
+
         final String auth0Domain = "DUMMYDOMAIN";
         final String auth0Token = "DUMMYTOKEN";
         Auth0ManagementClient mockMgmtClient = mock(Auth0ManagementClient.class);
         when(mockMgmtClient.getDomain()).thenReturn(auth0Domain);
         when(mockMgmtClient.getToken()).thenReturn(auth0Token);
-        when(generator.buildAuth0Util(auth0Domain)).thenReturn(auth0UtilMock);
-
-        when(auth0UtilMock.getAuth0UserNamePasswordConnectionId(auth0Token)).thenReturn("DUMMYCONNECTIONID");
+        var mockConn = spy(new Connection(Auth0ManagementClient.DEFAULT_DB_CONN_NAME, "auth0"));
+        when(mockConn.getId()).thenReturn("DUMMYCONNECTIONID");
+        when(mockMgmtClient.getConnectionByName(anyString())).thenReturn(ApiResult.ok(200, mockConn));
         final String redirectUrlAfterPasswordReset = "http://www.www.org";
         final String resetLink = "http://www.resetpassword.com?someParam=true&works=YOUBETCHA";
-        when(auth0UtilMock.generatePasswordResetLink(anyString(), anyString(), anyString(), eq(redirectUrlAfterPasswordReset)))
-                .thenReturn(resetLink);
+        when(mockMgmtClient.createPasswordResetTicket(anyString(), anyString(), eq(redirectUrlAfterPasswordReset)))
+                .thenReturn(ApiResult.ok(200, resetLink));
+
         final String sendGridApiKey = "theKeyToSendGrid!";
         final String studyGuid = "DUMMYSTUDY";
         when(generator.getSendgridApiKey(eq(studyGuid), any(Handle.class))).thenReturn(sendGridApiKey);
