@@ -281,9 +281,6 @@ public class StudyDataLoader {
         StudyGovernanceDao studyGovernanceDao = handle.attach(StudyGovernanceDao.class);
         JdbiAuth0Tenant jdbiAuth0Tenant = handle.attach(JdbiAuth0Tenant.class);
 
-        //Todo after multigoverned users, check if user with this email already exists in auth0, if so skip creation of user
-        //otherwise we create new user in auth0
-
         UserDto pepperUser;
 
         if (isMGU) {
@@ -325,7 +322,8 @@ public class StudyDataLoader {
         }
 
         handle.attach(JdbiUserStudyEnrollment.class)
-                .changeUserStudyEnrollmentStatus(pepperUser.getUserGuid(), studyDto.getGuid(), EnrollmentStatusType.REGISTERED, ddpCreatedAt);
+                .changeUserStudyEnrollmentStatus(pepperUser.getUserGuid(), studyDto.getGuid(),
+                        EnrollmentStatusType.REGISTERED, ddpCreatedAt);
 
         LOG.info("user guid: " + pepperUser.getUserGuid());
         processLegacyFields(handle, datstatData, mappingData.getAsJsonArray().get(1),

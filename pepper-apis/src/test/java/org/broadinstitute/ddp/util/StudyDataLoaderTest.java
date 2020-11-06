@@ -41,12 +41,30 @@ import com.google.gson.JsonElement;
 import com.typesafe.config.Config;
 import org.broadinstitute.ddp.client.Auth0ManagementClient;
 import org.broadinstitute.ddp.constants.ConfigFile;
-import org.broadinstitute.ddp.db.dao.*;
+import org.broadinstitute.ddp.db.dao.ActivityInstanceDao;
+import org.broadinstitute.ddp.db.dao.ActivityInstanceStatusDao;
+import org.broadinstitute.ddp.db.dao.AnswerDao;
+import org.broadinstitute.ddp.db.dao.DsmKitRequestDao;
+import org.broadinstitute.ddp.db.dao.JdbiActivity;
+import org.broadinstitute.ddp.db.dao.JdbiActivityInstance;
+import org.broadinstitute.ddp.db.dao.JdbiClient;
+import org.broadinstitute.ddp.db.dao.JdbiCountrySubnationalDivision;
+import org.broadinstitute.ddp.db.dao.JdbiInstitutionType;
+import org.broadinstitute.ddp.db.dao.JdbiLanguageCode;
+import org.broadinstitute.ddp.db.dao.JdbiMailAddress;
+import org.broadinstitute.ddp.db.dao.JdbiMedicalProvider;
+import org.broadinstitute.ddp.db.dao.JdbiUser;
+import org.broadinstitute.ddp.db.dao.JdbiUserStudyEnrollment;
+import org.broadinstitute.ddp.db.dao.JdbiUserStudyLegacyData;
+import org.broadinstitute.ddp.db.dao.KitTypeDao;
+import org.broadinstitute.ddp.db.dao.MedicalProviderDao;
+import org.broadinstitute.ddp.db.dao.UserProfileDao;
 import org.broadinstitute.ddp.db.dto.ActivityInstanceDto;
 import org.broadinstitute.ddp.db.dto.ClientDto;
 import org.broadinstitute.ddp.db.dto.MedicalProviderDto;
 import org.broadinstitute.ddp.db.dto.StudyDto;
 import org.broadinstitute.ddp.db.dto.UserDto;
+import org.broadinstitute.ddp.db.dao.UserDao;
 import org.broadinstitute.ddp.model.activity.instance.answer.DateValue;
 import org.broadinstitute.ddp.model.activity.instance.answer.SelectedPicklistOption;
 import org.broadinstitute.ddp.model.activity.types.InstitutionType;
@@ -658,7 +676,6 @@ public class StudyDataLoaderTest {
         when(mockClientDto.getId()).thenReturn(pretendPepperClientId);
         when(mockClientDto.getAuth0ClientId()).thenReturn(pretendAuth0ClientId);
 
-
         when(mockDataLoader.createLegacyPepperUser(
                 any(JdbiUser.class),
                 any(JdbiClient.class),
@@ -675,7 +692,7 @@ public class StudyDataLoaderTest {
                 pretendUserGuid,
                 pretendUserHruid,
                 mockClientDto,
-                mockUserDao );
+                mockUserDao);
 
         ArgumentCaptor<String> creationEmail = ArgumentCaptor.forClass(String.class);
         ArgumentCaptor<String> creationPass = ArgumentCaptor.forClass(String.class);
