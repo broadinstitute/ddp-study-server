@@ -145,6 +145,7 @@ public interface AnswerDao extends SqlObject {
     private void createAnswerPicklistValue(long answerId, PicklistAnswer answer, PicklistQuestionDef questionDef) {
         getPicklistAnswerDao().assignOptionsToAnswerId(answerId, answer.getValue(), questionDef);
     }
+
     //
     // updates
     //
@@ -290,6 +291,9 @@ public interface AnswerDao extends SqlObject {
                         .forEach(child -> childAnswerIds.add(child.getId()));
             }
         }
+
+        // Child answers are deleted separately, so remove any potential ones from the set of top-level answer ids.
+        answerIds.removeAll(childAnswerIds);
 
         // Delete parent answers first so it de-references the child answers
         DBUtils.checkDelete(answerIds.size(), answerSql.bulkDeleteAnswersById(answerIds));
