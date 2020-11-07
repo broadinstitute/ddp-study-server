@@ -106,15 +106,23 @@ public class BrainPediatricsUpdates implements CustomTask {
         helper.update18nActivitySubtitle(activityDto.getActivityId(), newSubtitle);
         LOG.info("updated variables for release styling changes");
 
+        //update workflow expr for ABOUTYOU TO POSTCONSENT
+        long wfTransitionId = helper.findWorkflowTransitionId(studyId, "ABOUTYOU", "POSTCONSENT");
+        String newExpr = "user.studies[\"cmi-brain\"].forms[\"CONSENT\"].isStatus(\"COMPLETE\") && "
+                + "(user.studies[\"cmi-brain\"].forms[\"POSTCONSENT\"].isStatus(\"CREATED\") "
+                + "|| user.studies[\"cmi-brain\"].forms[\"POSTCONSENT\"].isStatus(\"IN_PROGRESS\"))";
+        helper.updateWorkflowExpressionTextById(wfTransitionId, newExpr);
+
+        //update execute_order of workflow ABOUTYOU --> CONSENT to be after ABOUTYOU -> POSTCONSENT
+        long aycTransitionId = helper.findWorkflowTransitionId(studyId, "ABOUTYOU", "CONSENT");
+        helper.updateWorkflowExecOrder(aycTransitionId, wfTransitionId);
+
         List<Long> workflowIdsToDelete = new ArrayList<>();
         //remove workflows
         //prequal --> aboutyou
         workflowIdsToDelete.add(helper.findWorkflowTransitionId(studyId, "PREQUAL", "ABOUTYOU"));
-        workflowIdsToDelete.add(helper.findWorkflowTransitionId(studyId, "ABOUTYOU", "CONSENT"));
         workflowIdsToDelete.add(helper.findWorkflowTransitionId(studyId, "ABOUTYOU", "RELEASE"));
         workflowIdsToDelete.add(helper.findWorkflowTransitionId(studyId, "CONSENT", "POSTCONSENT"));
-        workflowIdsToDelete.add(helper.findWorkflowTransitionId(studyId, "RELEASE", "POSTCONSENT"));
-
         int deletedRowCount = helper.deleteWorkflow(workflowIdsToDelete);
         if (deletedRowCount != workflowIdsToDelete.size()) {
             throw new RuntimeException("Expecting to delete : " + workflowIdsToDelete.size() + " but deleted :" + deletedRowCount
@@ -136,32 +144,49 @@ public class BrainPediatricsUpdates implements CustomTask {
             throw new RuntimeException("Expecting one event for Brain prequal complete activity creation, got :" + eventIds.size()
                     + "  aborting patch ");
         }
+        int rowCount = helper.disableStudyEvents(Set.copyOf(eventIds));
+        if (rowCount != eventIds.size()) {
+            throw new RuntimeException("Expecting to update 1 Brain event config rows, got :" + rowCount
+                    + "  aborting patch ");
+        }
+        LOG.info("Disabled {} activity instance creation event.. configId: {} ", rowCount, eventIds);
 
-        //disable consent activity instance creation on about-you completion
         List<Long> ayEventIds = helper.findStudyActivityCreationEventIds(studyId, "ABOUTYOU", "CONSENT");
         if (eventIds.size() != 1) {
             throw new RuntimeException("Expecting one event for Brain aboutyou complete activity creation, got :" + eventIds.size()
                     + "  aborting patch ");
         }
-        eventIds.add(ayEventIds.get(0));
 
-        //disable post-consent activity instance creation on release completion
+        //add cancel expressions
+        String ayCancelExp = "user.studies[\"cmi-brain\"].forms[\"CONSENT\"].hasInstance()";
+        JdbiExpression jdbiExpression = handle.attach(JdbiExpression.class);
+        Expression expr = jdbiExpression.insertExpression(ayCancelExp);
+        if (expr == null) {
+            throw new RuntimeException("Failed to insert new expression :" + ayCancelExp + "  aborting patch ");
+        }
+        rowCount = helper.addCancelExprToEvents(studyId, ayCancelExp, ayEventIds);
+        if (rowCount != 1) {
+            throw new RuntimeException("Expecting to update 1 Brain aboutyou Update event event config rows, got :" + rowCount
+                    + "  aborting patch ");
+        }
+
         List<Long> aiEventIds = helper.findStudyActivityCreationEventIds(studyId, "RELEASE", "POSTCONSENT");
         if (aiEventIds.size() != 1) {
             throw new RuntimeException("Expecting one event for Brain release complete activity creation, got :" + aiEventIds
                     .size() + "  aborting patch ");
         }
-        eventIds.add(aiEventIds.get(0));
-
-        int rowCount = helper.disableStudyEvents(Set.copyOf(eventIds));
-        if (rowCount != eventIds.size()) {
-            throw new RuntimeException("Expecting to update 3 Brain event config rows, got :" + rowCount
+        String relCancelExp = "!user.studies[\"cmi-brain\"].forms[\"ABOUTYOU\"].isStatus(\"COMPLETE\")";
+        expr = jdbiExpression.insertExpression(relCancelExp);
+        if (expr == null) {
+            throw new RuntimeException("Failed to insert new expression :" + relCancelExp + "  aborting patch ");
+        }
+        rowCount = helper.addCancelExprToEvents(studyId, relCancelExp, aiEventIds);
+        if (rowCount != 1) {
+            throw new RuntimeException("Expecting to update 1 Brain release Update event event config rows, got :" + rowCount
                     + "  aborting patch ");
         }
-        LOG.info("Disabled {} activity instance creation events.. configIds: {} ", rowCount, eventIds);
 
         //update cancel expressions
-        //String oldCancelExpr = "user.studies[\"cmi-brain\"].forms[\"RELEASE\"].isStatus(\"COMPLETE\")";
         String newCancelExpr = "user.studies[\"cmi-brain\"].forms[\"RELEASE\"].isStatus(\"COMPLETE\") "
                 + " || user.studies[\"cmi-brain\"].hasAgedUp()";
         List<Long> exprIds = helper.findStudyActivityCancelExpressionIds(studyDto.getId(), "RELEASE");
@@ -182,7 +207,7 @@ public class BrainPediatricsUpdates implements CustomTask {
                     + "  aborting patch ");
         }
         //insert expr
-        Expression expr = handle.attach(JdbiExpression.class).insertExpression(releasePdfGenCancelExpr);
+        expr = jdbiExpression.insertExpression(releasePdfGenCancelExpr);
         if (expr == null) {
             throw new RuntimeException("Failed to insert new expression :" + releasePdfGenCancelExpr + "  aborting patch ");
         }
@@ -426,6 +451,17 @@ public class BrainPediatricsUpdates implements CustomTask {
 
         @SqlUpdate("update expression set expression_text = :text where expression_id = :id")
         int updateKitRuleExpressionText(@Bind("id") long id, @Bind("text") String text);
+
+        @SqlUpdate("update expression as e, "
+                + " (select precondition_expression_id from workflow_transition t where t.workflow_transition_id = :id) as e2"
+                + " set expression_text = :text where e.expression_id = e2.precondition_expression_id")
+        int updateWorkflowExpressionTextById(@Bind("id") long id, @Bind("text") String text);
+
+        @SqlUpdate("update workflow_transition t, "
+                + " (select t2.execution_order from workflow_transition t2 where t2.workflow_transition_id = :idToCompare) as wft "
+                + " set t.execution_order = wft.execution_order + 1 where t.workflow_transition_id = :idToUpdate")
+        int updateWorkflowExecOrder(@Bind("idToUpdate") long idToUpdate, @Bind("idToCompare") long idToCompare);
+
     }
 
 }
