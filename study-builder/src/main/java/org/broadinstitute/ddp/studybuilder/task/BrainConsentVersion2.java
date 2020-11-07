@@ -92,7 +92,7 @@ public class BrainConsentVersion2 implements CustomTask {
 
     }
 
-    //@Override
+    @Override
     public void run(Handle handle) {
         //creates version: 2 for CONSENT (self/adult consent) activity.
 
@@ -134,6 +134,8 @@ public class BrainConsentVersion2 implements CustomTask {
         ValidationDto ageRangeValidation = consentDobValidations.stream().filter(
                 validationDto -> validationDto.getRuleType().equals(RuleType.AGE_RANGE)).findFirst().get();
         validationDao.disableBaseRule(ageRangeValidation, meta);
+        LOG.info("Disabled age range validation for consent dob QID: {} validationID: {} old ver: {} rule: {}",
+                dobDto.getId(), ageRangeValidation.getId(), ageRangeValidation.getRevisionId(), ageRangeValidation.getRuleType());
 
         UpdateTemplatesInPlace updateTemplatesTask = new UpdateTemplatesInPlace();
         updateTemplatesTask.traverseActivity(handle, activityCode, definition, activity);
