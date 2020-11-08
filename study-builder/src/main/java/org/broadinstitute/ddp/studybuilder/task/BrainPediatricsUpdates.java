@@ -145,7 +145,7 @@ public class BrainPediatricsUpdates implements CustomTask {
                     + "  aborting patch ");
         }
         int rowCount = helper.disableStudyEvents(Set.copyOf(eventIds));
-        if (rowCount != eventIds.size()) {
+        if (rowCount != 1) {
             throw new RuntimeException("Expecting to update 1 Brain event config rows, got :" + rowCount
                     + "  aborting patch ");
         }
