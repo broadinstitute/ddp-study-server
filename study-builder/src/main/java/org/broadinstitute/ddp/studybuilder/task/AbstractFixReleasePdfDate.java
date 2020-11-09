@@ -1,6 +1,8 @@
 package org.broadinstitute.ddp.studybuilder.task;
 
 import java.nio.file.Path;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import com.typesafe.config.Config;
 import org.broadinstitute.ddp.db.DBUtils;
@@ -56,7 +58,13 @@ abstract class AbstractFixReleasePdfDate implements CustomTask {
         PdfConfiguration config = pdfDao.findFullConfig(info, version);
 
         ActivityDateSubstitution sub = null;
-        for (PdfTemplate template : config.getTemplates()) {
+        List<PdfTemplate> templates =
+                config.getTemplateIds().stream()
+                        .map(id -> handle.attach(PdfDao.class)
+                                .findFullTemplateByTemplateId(id)
+                                .orElseThrow(()-> new DDPException("Could not find template with id: " + id)))
+                                .collect(Collectors.toList());
+        for (PdfTemplate template : templates) {
             if (template.getType() == PdfTemplateType.CUSTOM) {
                 for (PdfSubstitution substitution : ((CustomTemplate) template).getSubstitutions()) {
                     if (substitution.getType() == SubstitutionType.ACTIVITY_DATE) {
