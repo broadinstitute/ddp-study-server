@@ -1,7 +1,7 @@
 package org.broadinstitute.ddp.service;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -113,7 +113,7 @@ public class PdfService {
                                     PdfConfiguration pdfConfiguration,
                                     String participantGuid,
                                     String studyGuid) throws IOException {
-        byte[] pdf = pdfGenerationService.generateFlattenedPdfForConfiguration(
+        InputStream pdfStream = pdfGenerationService.generateFlattenedPdfForConfiguration(
                 pdfConfiguration,
                 participantGuid,
                 handle);
@@ -126,6 +126,6 @@ public class PdfService {
                 participantGuid,
                 pdfConfiguration.getConfigName(),
                 pdfConfiguration.getVersion().getVersionTag(),
-                new ByteArrayInputStream(pdf));
+                pdfStream);
     }
 }

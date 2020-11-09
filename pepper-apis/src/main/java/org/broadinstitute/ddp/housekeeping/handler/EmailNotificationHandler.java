@@ -13,7 +13,6 @@ import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.PAR
 import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.SALUTATION;
 import static org.broadinstitute.ddp.constants.NotificationTemplateVariables.STUDY_GUID;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.Instant;
@@ -273,20 +272,22 @@ public class EmailNotificationHandler implements HousekeepingMessageHandler<Noti
                     pdfConfig.getConfigName(),
                     pdfConfig.getVersion().getVersionTag());
 
-            try {
-                InputStream pdfStream = pdfBucketService.getPdfFromBucket(blobName).orElse(null);
+            try (
+                    InputStream pdfStreamFromBucket = pdfBucketService.getPdfFromBucket(blobName).orElse(null)) {
+                InputStream pdfStream = pdfStreamFromBucket;
                 if (pdfStream == null) {
                     // todo: remove the generateIfMissing feature
                     LOG.info("Could not find {} in bucket {}, generating", blobName, pdfBucketService.getBucketName());
-                    byte[] pdfBytes = pdfGenerationService.generateFlattenedPdfForConfiguration(
+                    pdfStream = pdfGenerationService.generateFlattenedPdfForConfiguration(
                             pdfConfig,
                             participantGuid,
                             apisHandle);
-                    pdfStream = new ByteArrayInputStream(pdfBytes);
-                    pdfBucketService.sendPdfToBucket(blobName, new ByteArrayInputStream(pdfBytes));
+                    pdfBucketService.sendPdfToBucket(blobName, pdfStream);
                     LOG.info("Uploaded pdf to bucket {} with filename {}", pdfBucketService.getBucketName(), blobName);
                 }
                 String name = pdfConfig.getFilename() + ".pdf";
+                // Implementation of newPdfAttachment reads stream and saves locally as string
+                // we can close stream when done
                 attachments.add(SendGridClient.newPdfAttachment(name, pdfStream));
             } catch (IOException | DDPException e) {
                 throw new MessageHandlingException("Error generating or retrieving PDF from bucket "

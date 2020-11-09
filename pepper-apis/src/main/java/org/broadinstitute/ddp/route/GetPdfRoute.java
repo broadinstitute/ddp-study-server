@@ -1,8 +1,8 @@
 package org.broadinstitute.ddp.route;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.List;
 import java.util.Optional;
 import javax.servlet.http.HttpServletResponse;
@@ -99,30 +99,31 @@ public class GetPdfRoute implements Route {
                         configInfo.getConfigName(),
                         pdfVersion.getVersionTag());
 
-                InputStream pdf = pdfBucketService.getPdfFromBucket(blobName).orElse(null);
-                if (pdf == null) {
+                InputStream pdfInputStream = pdfBucketService.getPdfFromBucket(blobName).orElse(null);
+                if (pdfInputStream == null) {
                     LOG.info("Could not find {} pdf for participant {} using filename {}, generating",
                             configInfo.getConfigName(), user.getGuid(), blobName);
                     PdfConfiguration pdfConfig = handle.attach(PdfDao.class).findFullConfig(pdfVersion);
-                    byte[] pdfBytes = pdfGenerationService.generateFlattenedPdfForConfiguration(
+                    pdfInputStream = pdfGenerationService.generateFlattenedPdfForConfiguration(
                             pdfConfig,
                             user.getGuid(),
                             handle);
-                    pdf = new ByteArrayInputStream(pdfBytes);
-                    pdfBucketService.sendPdfToBucket(blobName, new ByteArrayInputStream(pdfBytes));
+
+                    pdfBucketService.sendPdfToBucket(blobName, pdfInputStream);
                     LOG.info("Uploaded pdf to bucket {} with filename {}", pdfBucketService.getBucketName(), blobName);
                 }
 
-                byte[] pdfBytes = IOUtils.toByteArray(pdf);
                 response.type("application/pdf");
                 response.header("Content-Disposition", String.format("inline; filename=\"%s.pdf\"",
                         configInfo.getFilename()));
-
                 HttpServletResponse raw = response.raw();
-                raw.getOutputStream().write(pdfBytes);
-                raw.getOutputStream().flush();
-                raw.getOutputStream().close();
-                return raw;
+
+
+                try (OutputStream outputStream = raw.getOutputStream()) {
+                    IOUtils.copy(pdfInputStream, outputStream);
+                    raw.getOutputStream().flush();
+                }
+                return null;
             } catch (IOException | DDPException e) {
                 String msg = String.format("Failed to fetch %s pdf for study %s and participant %s",
                         configName, studyGuid, participantGuidOrAltPid);

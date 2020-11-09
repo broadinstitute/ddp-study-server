@@ -15,6 +15,7 @@ import org.broadinstitute.ddp.constants.ConfigFile;
 import org.broadinstitute.ddp.exception.DDPException;
 import org.broadinstitute.ddp.util.GoogleBucketUtil;
 import org.broadinstitute.ddp.util.GoogleCredentialUtil;
+import org.broadinstitute.ddp.util.GuidUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -94,6 +95,10 @@ public class PdfBucketService {
                                                   String pdfConfigName, String pdfVersionTag) {
         String blobName = getBlobName(umbrellaGuid, studyGuid, userGuid, pdfConfigName, pdfVersionTag);
         return getPdfFromBucket(blobName);
+    }
+
+    public String generateTempPdfBlobName(String baseName) {
+        return GuidUtils.randomWithPrefix(baseName + "-", GuidUtils.UPPER_ALPHA_NUMERIC, 5) + ".pdf";
     }
 
     /**

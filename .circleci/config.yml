@@ -124,7 +124,7 @@ commands:
             develop)
               DEPLOY_ENV=dev
             ;;
-            DownsizeRedissonInHousekeeping)
+            DDP-5236_ReduceMemoryPdfHandling)
               DEPLOY_ENV=dev
             ;;
             test)
@@ -839,7 +839,7 @@ workflows:
                 - develop
                 - &rc /^rc.*/
                 - &hotfix /^hotfix.*/
-                - DownsizeRedissonInHousekeeping
+                - DDP-5236_ReduceMemoryPdfHandling
       - parallel-compile-and-test-job:
           parallelism: *test_parallelism
           <<: *compile_and_test_filters
@@ -850,7 +850,7 @@ workflows:
             branches:
               only:
                 - develop
-                - DownsizeRedissonInHousekeeping
+                - DDP-5236_ReduceMemoryPdfHandling
           requires:
             - parallel-compile-and-test-job
             - compile-and-run-test-suite-job

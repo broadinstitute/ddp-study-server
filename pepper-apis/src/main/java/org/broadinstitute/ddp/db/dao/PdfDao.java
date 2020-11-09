@@ -1,5 +1,6 @@
 package org.broadinstitute.ddp.db.dao;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -143,7 +144,7 @@ public interface PdfDao extends SqlObject {
      * @param config the pdf configuration
      * @return id of newly created pdf configuration
      */
-    default long insertNewConfig(PdfConfiguration config) {
+    default long insertNewConfig(PdfConfiguration config, List<PdfTemplate> templates) {
         PdfSql pdfSql = getPdfSql();
         long configId = pdfSql.insertConfigInfo(config.getInfo());
         config.getInfo().setId(configId);
@@ -151,11 +152,11 @@ public interface PdfDao extends SqlObject {
         config.getVersion().setConfigId(configId);
         long versionId = insertConfigVersionWithDataSources(config.getVersion());
 
-        List<PdfTemplate> templates = config.getTemplates();
         for (int i = 0, size = templates.size(); i < size; i++) {
             int order = i + 1;
             long templateId = insertTemplate(templates.get(i));
             pdfSql.assignTemplateToVersion(versionId, templateId, order);
+            config.addTemplateId(templateId);
         }
 
         return configId;
@@ -168,7 +169,7 @@ public interface PdfDao extends SqlObject {
      * @return id of new pdf version
      * @throws DaoException if associated pdf document configuration does not already exist
      */
-    default long insertNewConfigVersion(PdfConfiguration config) {
+    default long insertNewConfigVersion(PdfConfiguration config, List<PdfTemplate> templates) {
         PdfConfigInfo info = findConfigInfoByStudyIdAndName(config.getStudyId(), config.getConfigName())
                 .orElseThrow(() -> new DaoException(String.format(
                         "Could not find pdf document configuration for creating new pdf version using studyId=%d configurationName=%s",
@@ -179,7 +180,7 @@ public interface PdfDao extends SqlObject {
         long versionId = insertConfigVersionWithDataSources(config.getVersion());
 
         PdfSql pdfSql = getPdfSql();
-        List<PdfTemplate> templates = config.getTemplates();
+
         for (int i = 0, size = templates.size(); i < size; i++) {
             int order = i + 1;
             long templateId = insertTemplate(templates.get(i));
@@ -268,13 +269,13 @@ public interface PdfDao extends SqlObject {
      */
     default boolean deleteSpecificConfigVersion(PdfConfiguration config) {
         PdfVersion version = config.getVersion();
-        List<PdfTemplate> templates = config.getTemplates();
+        List<Long> templateIds = config.getTemplateIds();
 
         PdfSql pdfSql = getPdfSql();
-        DBUtils.checkDelete(templates.size(), pdfSql.unassignTemplatesFromVersion(version.getId()));
+        DBUtils.checkDelete(templateIds.size(), pdfSql.unassignTemplatesFromVersion(version.getId()));
 
-        for (PdfTemplate template : templates) {
-            deleteTemplate(template);
+        for (Long templateId : templateIds) {
+            findFullTemplateByTemplateId(templateId).ifPresent(template -> deleteTemplate(template));
         }
 
         deleteConfigVersionAndDataSources(version);
@@ -303,7 +304,11 @@ public interface PdfDao extends SqlObject {
         for (PdfVersion version : versions) {
             PdfConfiguration config = findFullConfig(version);
             deleteSpecificConfigVersion(config);
+            //TODO query one by one instead of all at once
+            findFullTemplatesByVersionId(version.getId()).forEach(template -> deleteTemplate(template));
         }
+
+
 
         return versions.size();
     }
@@ -318,6 +323,14 @@ public interface PdfDao extends SqlObject {
     List<PdfTemplate> findBaseTemplatesByVersionId(@Bind("versionId") long versionId);
 
     @UseStringTemplateSqlLocator
+    @SqlQuery("findBaseTemplatesByTemplateId")
+    @RegisterConstructorMapper(PdfTemplateDto.class)
+    @RegisterConstructorMapper(value = MailingAddressTemplateDto.class, prefix = "m")
+    @RegisterConstructorMapper(value = PhysicianInstitutionTemplateDto.class, prefix = "p")
+    @UseRowReducer(BaseTemplatesReducer.class)
+    Optional<PdfTemplate> findBaseTemplateByTemplateId(@Bind("templateId") long templateId);
+
+    @UseStringTemplateSqlLocator
     @SqlQuery("bulkQuerySubstitutionsByCustomTemplateIds")
     @RegisterConstructorMapper(value = ProfileSubstitution.class, prefix = "p")
     @RegisterConstructorMapper(value = ActivityDateSubstitution.class, prefix = "d")
@@ -327,9 +340,27 @@ public interface PdfDao extends SqlObject {
     List<PdfSubstitution> findSubstitutionsByCustomTemplateIds(
             @BindList(value = "customTemplateIds", onEmpty = BindList.EmptyHandling.NULL) Set<Long> customTemplateIds);
 
+
+
+    @UseStringTemplateSqlLocator
+    @SqlQuery("findTemplateIdsByVersionId")
+    Long[] findTemplateIdsByVersionId(@Bind("versionId") long versionId);
+
+    default Optional<PdfTemplate> findFullTemplateByTemplateId(long templateId) {
+        Optional<PdfTemplate> optionalTemplate = findBaseTemplateByTemplateId(templateId);
+        optionalTemplate.ifPresent(template -> buildFullTemplates(Collections.singletonList(template)));
+        return optionalTemplate;
+    }
+
     default List<PdfTemplate> findFullTemplatesByVersionId(long versionId) {
         List<PdfTemplate> templates = findBaseTemplatesByVersionId(versionId);
 
+        buildFullTemplates(templates);
+
+        return templates;
+    }
+
+    private void buildFullTemplates(List<PdfTemplate> templates) {
         Map<Long, CustomTemplate> customTemplates = new HashMap<>();
         for (PdfTemplate template : templates) {
             if (template.getType() == PdfTemplateType.CUSTOM) {
@@ -367,8 +398,6 @@ public interface PdfDao extends SqlObject {
                 }
             }
         }
-
-        return templates;
     }
 
     @UseStringTemplateSqlLocator
@@ -431,10 +460,9 @@ public interface PdfDao extends SqlObject {
     }
 
     default PdfConfiguration findFullConfig(PdfConfigInfo info, PdfVersion version) {
-        List<PdfTemplate> templates = findFullTemplatesByVersionId(version.getId());
-        return new PdfConfiguration(info, version, templates);
+        Long[] templateIds = findTemplateIdsByVersionId(version.getId());
+        return new PdfConfiguration(info, version, templateIds);
     }
-
 
     class ConfigVersionWithDataSourcesReducer implements LinkedHashMapRowReducer<Long, PdfVersion> {
         @Override
