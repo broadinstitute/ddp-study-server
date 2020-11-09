@@ -113,12 +113,6 @@ public class BrainPediatricsUpdates implements CustomTask {
                 + "|| user.studies[\"cmi-brain\"].forms[\"POSTCONSENT\"].isStatus(\"IN_PROGRESS\"))";
         helper.updateWorkflowExpressionTextById(wfTransitionId, newExpr);
 
-        //update execute_order of workflow ABOUTYOU --> CONSENT, POSTCONSENT and INTERNATIONAL_PATIENT to be in order
-        //DASHBOARD, INTERNATIONAL_PATIENT, POSTCONSENT and CONSENT
-
-        //update execute_order of workflow POSTCONSENT to be after INTERNATIONAL_PATIENT
-        long intTransitionId = helper.findInternationalUserWorkflowTransitionId(studyId, "ABOUTYOU");
-        helper.updateWorkflowExecOrder(wfTransitionId, intTransitionId);
         //update execute_order of workflow ABOUTYOU --> CONSENT to be after ABOUTYOU -> POSTCONSENT
         long aycTransitionId = helper.findWorkflowTransitionId(studyId, "ABOUTYOU", "CONSENT");
         helper.updateWorkflowExecOrder(aycTransitionId, wfTransitionId);
@@ -429,18 +423,6 @@ public class BrainPediatricsUpdates implements CustomTask {
         long findWorkflowTransitionId(@Bind("studyId") long studyId,
                                       @Bind("fromActivityCode") String fromActivityCode,
                                       @Bind("toActivityCode") String toActivityCode);
-
-        @SqlQuery("select t.workflow_transition_id from workflow_transition t"
-                + " where from_state_id = "
-                + " (select was.workflow_state_id from study_activity sa, workflow_activity_state was"
-                + " where sa.study_activity_id = was.study_activity_id "
-                + " and sa.study_activity_code = :fromActivityCode and study_id =:studyId)"
-                + " and next_state_id = (select ws.workflow_state_id from workflow_state_type wst, workflow_state ws"
-                + " where wst.workflow_state_type_id = ws.workflow_state_type_id"
-                + " and wst.workflow_state_type_code = 'INTERNATIONAL_PATIENTS')"
-                + " and umbrella_study_id = :studyId")
-        long findInternationalUserWorkflowTransitionId(@Bind("studyId") long studyId,
-                                      @Bind("fromActivityCode") String fromActivityCode);
 
         @SqlUpdate("delete from workflow_transition where workflow_transition_id in (<ids>)")
         int deleteWorkflow(@BindList(value = "ids", onEmpty = BindList.EmptyHandling.NULL) List<Long> ids);
