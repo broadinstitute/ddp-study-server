@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Tests methods updating the user login data in Auth0
- * Big enough to reside in its own file (could be in Auth0UtilTest as well)
+ * Big enough to reside in its own file
  */
 public class UpdateUserLoginDataUtilTest extends TxnAwareBaseTest {
     private static final Logger LOG = LoggerFactory.getLogger(UpdateUserLoginDataUtilTest.class);
