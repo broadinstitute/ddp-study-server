@@ -715,6 +715,10 @@ public class StudyDataLoaderMain {
         String altpid = datstatParticipantData.getAsJsonObject().get("datstat_altpid").getAsString();
         String emailAddress = datstatParticipantData.getAsJsonObject().get("datstat_email").getAsString().toLowerCase();
         String createdAt = datstatParticipantData.getAsJsonObject().get("datstat_created").getAsString();
+        Integer registrationType = datstatParticipantData.getAsJsonObject().get("registration_type").getAsInt();
+        if (registrationType == 3) {
+            return;
+        }
         LOG.info("loading participant: {} email: {} ", altpid, emailAddress);
 
         TransactionWrapper.useTxn(handle -> {

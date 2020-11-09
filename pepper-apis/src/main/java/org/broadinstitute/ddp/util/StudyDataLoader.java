@@ -263,7 +263,7 @@ public class StudyDataLoader {
         //load data
         JdbiUser jdbiUser = handle.attach(JdbiUser.class);
         String altpid = datstatData.getAsJsonObject().get("datstat_altpid").getAsString();
-        boolean isMGU = datstatData.getAsJsonObject().get("registration_type").getAsInt() == 2;
+
         String userGuid = jdbiUser.getUserGuidByAltpid(altpid);
         if (userGuid != null) {
             LOG.warn("Looks like  Participant data already loaded: " + userGuid);
@@ -283,13 +283,19 @@ public class StudyDataLoader {
 
         UserDto pepperUser;
 
-        if (isMGU) {
-            pepperUser = createOperatorAndGovernedUser(jdbiUser, clientDao, datstatData, userGuid, userHruid,
-                    clientDto, userGovernanceDao, userDao, studyDto,
-                    jdbiLanguageCode, profileDao, studyGovernanceDao, jdbiAuth0Tenant);
-        } else {
-            pepperUser = createLegacyPepperUser(jdbiUser, clientDao, datstatData, userGuid, userHruid, clientDto, userDao);
+        switch (registrationType) {
+            case 1:
+                pepperUser = createLegacyPepperUser(jdbiUser, clientDao, datstatData, userGuid, userHruid, clientDto, userDao);
+                break;
+            case 2:
+                pepperUser = createOperatorAndGovernedUser(jdbiUser, clientDao, datstatData, userGuid, userHruid,
+                        clientDto, userGovernanceDao, userDao, studyDto,
+                        jdbiLanguageCode, profileDao, studyGovernanceDao, jdbiAuth0Tenant);
+                break;
+            default:
+                return null;
         }
+
 
 
         addUserProfile(pepperUser, datstatData, jdbiLanguageCode, profileDao, false);
