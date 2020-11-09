@@ -1,7 +1,6 @@
 package org.broadinstitute.ddp.model.pdf;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -12,17 +11,16 @@ public class PdfConfiguration {
 
     private PdfConfigInfo info;
     private PdfVersion version;
-    private List<PdfTemplate> templates;
     private List<Long> templateIds;
 
-    public PdfConfiguration(PdfConfigInfo info, PdfVersion version, Long[] templateIds) {
+    public PdfConfiguration(PdfConfigInfo info, PdfVersion version, List<Long> templateIds) {
         this.info = info;
         this.version = version;
-        this.templateIds = new ArrayList<>(Arrays.asList(templateIds));
+        this.templateIds = templateIds;
     }
 
     public PdfConfiguration(PdfConfigInfo info, PdfVersion version) {
-        this(info, version, new Long[0]);
+        this(info, version, new ArrayList<>());
     }
 
     public long getId() {

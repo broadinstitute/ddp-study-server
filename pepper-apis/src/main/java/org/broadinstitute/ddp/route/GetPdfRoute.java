@@ -123,7 +123,7 @@ public class GetPdfRoute implements Route {
                     IOUtils.copy(pdfInputStream, outputStream);
                     raw.getOutputStream().flush();
                 }
-                return null;
+                return raw;
             } catch (IOException | DDPException e) {
                 String msg = String.format("Failed to fetch %s pdf for study %s and participant %s",
                         configName, studyGuid, participantGuidOrAltPid);

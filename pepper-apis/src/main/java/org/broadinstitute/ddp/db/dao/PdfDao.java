@@ -344,7 +344,7 @@ public interface PdfDao extends SqlObject {
 
     @UseStringTemplateSqlLocator
     @SqlQuery("findTemplateIdsByVersionId")
-    Long[] findTemplateIdsByVersionId(@Bind("versionId") long versionId);
+    List<Long> findTemplateIdsByVersionId(@Bind("versionId") long versionId);
 
     default Optional<PdfTemplate> findFullTemplateByTemplateId(long templateId) {
         Optional<PdfTemplate> optionalTemplate = findBaseTemplateByTemplateId(templateId);
@@ -460,7 +460,7 @@ public interface PdfDao extends SqlObject {
     }
 
     default PdfConfiguration findFullConfig(PdfConfigInfo info, PdfVersion version) {
-        Long[] templateIds = findTemplateIdsByVersionId(version.getId());
+        List<Long> templateIds = findTemplateIdsByVersionId(version.getId());
         return new PdfConfiguration(info, version, templateIds);
     }
 
