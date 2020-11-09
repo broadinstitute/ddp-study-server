@@ -652,12 +652,13 @@ public class StudyDataLoaderMain {
             Map<String, JsonElement> surveyDataMap = altpidBucketDataMap.get(altpid);
 
             JsonElement datstatData = surveyDataMap.get("datstatparticipantdata");
+            String userEmail = datstatData.getAsJsonObject().get("datstat_email").getAsString();
             for (JsonElement item: hashedPasswordsJsonArray) {
-                if (item.getAsJsonObject().has(altpid)
-                        && item.getAsJsonObject().get(altpid) != null
-                        && !item.getAsJsonObject().get(altpid).isJsonNull()) {
+                if (item.getAsJsonObject().has(userEmail)
+                        && item.getAsJsonObject().get(userEmail) != null
+                        && !item.getAsJsonObject().get(userEmail).isJsonNull()) {
                     surveyDataMap.get("datstatparticipantdata").getAsJsonObject()
-                            .add("password", item.getAsJsonObject().get(altpid));
+                            .add("password", item.getAsJsonObject().get(userEmail));
                 }
             }
             if (datstatData.getAsJsonObject().get("datstat_email").isJsonNull()) {
