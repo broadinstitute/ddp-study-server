@@ -28,7 +28,7 @@ import org.broadinstitute.ddp.db.dto.PicklistQuestionDto;
 import org.broadinstitute.ddp.db.dto.QuestionDto;
 import org.broadinstitute.ddp.db.dto.TextQuestionDto;
 import org.broadinstitute.ddp.db.dto.TypedQuestionId;
-import org.broadinstitute.ddp.db.dto.validation.ValidationDto;
+import org.broadinstitute.ddp.db.dto.validation.RuleDto;
 import org.broadinstitute.ddp.model.activity.definition.QuestionBlockDef;
 import org.broadinstitute.ddp.model.activity.definition.question.AgreementQuestionDef;
 import org.broadinstitute.ddp.model.activity.definition.question.BoolQuestionDef;
@@ -1251,7 +1251,7 @@ public interface QuestionDao extends SqlObject {
      * @param meta       the revision metadata used for terminating data
      */
     default void disableRequiredRule(long questionId, RevisionMetadata meta) {
-        ValidationDto validation = getJdbiQuestionValidation().getRequiredValidationIfActive(questionId)
+        RuleDto validation = getJdbiQuestionValidation().getRequiredValidationIfActive(questionId)
                 .orElseThrow(() -> new NoSuchElementException("Question does not have a required validation rule"));
         getValidationDao().disableBaseRule(validation, meta);
     }
