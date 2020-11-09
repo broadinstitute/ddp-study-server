@@ -258,7 +258,7 @@ public class StudyDataLoader {
 
     public String loadParticipantData(Handle handle, JsonElement datstatData, JsonElement mappingData, String phoneNumber,
                                       StudyDto studyDto, ClientDto clientDto, MailAddress address, OLCService olcService,
-                                      AddressService addressService) throws Exception {
+                                      AddressService addressService, Integer registrationType) throws Exception {
 
         //load data
         JdbiUser jdbiUser = handle.attach(JdbiUser.class);
@@ -1122,7 +1122,6 @@ public class StudyDataLoader {
     private String createAuth0UserWithExistingPassword(JsonElement data, String userGuid, String emailAddress)
             throws IOException, InterruptedException {
         String auth0UserId = null;
-        auth0Util.deleteAuth0User("auth0|" + data.getAsJsonObject().get("datstat_altpid").getAsString(), mgmtToken);
         File userJsonFile = bulkUserCreateJson(data, userGuid, emailAddress);
         Auth0Util.BulkUserImportResponse bulkUserImportResponse = auth0Util.bulkUserWithHashedPassword(mgmtToken, userJsonFile);
         Auth0Util.Auth0JobResponse auth0JobResponse = auth0Util.getAuth0Job(bulkUserImportResponse.getJobId(), mgmtToken);
@@ -1132,11 +1131,8 @@ public class StudyDataLoader {
         }
         if (auth0JobResponse.getStatus().equals("completed")
                 && (auth0JobResponse.getSummary().get("inserted") == 1 || auth0JobResponse.getSummary().get("updated") == 1)) {
-            String expectedAuth0UserId = "auth0|" + data.getAsJsonObject().get("datstat_altpid").getAsString();
-            User auth0User = auth0Util.getAuth0User(expectedAuth0UserId, mgmtToken);
-            if (auth0User.getEmail().equals(emailAddress)) {
-                auth0UserId = auth0User.getId();
-            }
+            List<User> auth0UsersByEmail = auth0Util.getAuth0UsersByEmail(emailAddress, mgmtToken);
+            auth0UserId = auth0UsersByEmail.get(0).getId();
         }
         //TODO -> check if job failed
         return auth0UserId;
@@ -1144,13 +1140,12 @@ public class StudyDataLoader {
 
     private File bulkUserCreateJson(JsonElement data, String userGuid, String emailAddress) throws IOException {
         List<String> userList = new ArrayList<>();
-        String altPid = data.getAsJsonObject().get("datstat_altpid").getAsString();
         String firstName = data.getAsJsonObject().get("datstat_firstname").getAsString();
         String lastName = data.getAsJsonObject().get("datstat_lastname").getAsString();
         String passwordHash = data.getAsJsonObject().get("password").getAsString();
         Map<String, Object> appMetadata = new HashMap<>();
         appMetadata.put("user_guid", userGuid);
-        LegacyUser legacyUser = new LegacyUser(emailAddress, altPid, firstName, lastName,
+        LegacyUser legacyUser = new LegacyUser(emailAddress, null, firstName, lastName,
                 passwordHash, appMetadata);
         Gson gson = new Gson();
         String userJson = gson.toJson(legacyUser);
