@@ -58,18 +58,14 @@ public class TestingUserUtil {
                                                                   String studyGuid) throws Auth0Exception {
 
         var mgmtClient = Auth0ManagementClient.forStudy(handle, studyGuid);
-        Auth0Util auth0Util = new Auth0Util(mgmtClient.getDomain());
-        String mgmtToken = mgmtClient.getToken();
-        final Auth0Util.TestingUser testUser = auth0Util.createTestingUser(mgmtToken);
+        Auth0Util.TestingUser testUser = Auth0Util.createTestingUser(mgmtClient);
         String auth0UserId = testUser.getAuth0Id();
-
-        AuthAPI auth = new AuthAPI(auth0Domain, auth0ClientId, auth0Secret);
 
         JdbiUser userDao = handle.attach(JdbiUser.class);
         JdbiClient clientDao = handle.attach(JdbiClient.class);
 
         Optional<Long> clientId = clientDao.getClientIdByAuth0ClientAndDomain(auth0ClientId, auth0Domain);
-        if (!clientId.isPresent()) {
+        if (clientId.isEmpty()) {
             throw new DDPException("No client found for " + auth0ClientId);
         }
         String userGuid = DBUtils.uniqueUserGuid(handle);
@@ -82,6 +78,7 @@ public class TestingUserUtil {
 
         mgmtClient.setUserGuidForAuth0User(auth0UserId, auth0ClientId, testUser.getUserGuid());
 
+        AuthAPI auth = new AuthAPI(auth0Domain, auth0ClientId, auth0Secret);
         AuthRequest authRequest = auth.login(testUser.getEmail(), testUser.getPassword()).setRealm(auth0ClientName);
         TokenHolder tokenHolder = authRequest.execute();
 
@@ -105,11 +102,12 @@ public class TestingUserUtil {
             String auth0UserId,
             String auth0Domain,
             String mgmtApiClientId,
-            String mgmApiClientSecret) throws Auth0Exception {
-        Auth0Util auth0Util = new Auth0Util(auth0Domain);
+            String mgmApiClientSecret) {
         var mgmtClient = new Auth0ManagementClient(auth0Domain, mgmtApiClientId, mgmApiClientSecret);
-        String mgmtToken = mgmtClient.getToken();
-        auth0Util.deleteAuth0User(auth0UserId, mgmtToken);
+        var result = mgmtClient.deleteAuth0User(auth0UserId);
+        if (result.hasFailure()) {
+            throw new RuntimeException(result.hasThrown() ? result.getThrown() : result.getError());
+        }
     }
 
     public static Auth0Util.TestingUser loginTestUser(Handle handle, Config auth0Config) throws Auth0Exception {
