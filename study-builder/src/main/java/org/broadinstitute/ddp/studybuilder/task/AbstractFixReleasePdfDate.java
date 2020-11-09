@@ -62,8 +62,8 @@ abstract class AbstractFixReleasePdfDate implements CustomTask {
                 config.getTemplateIds().stream()
                         .map(id -> handle.attach(PdfDao.class)
                                 .findFullTemplateByTemplateId(id)
-                                .orElseThrow(()-> new DDPException("Could not find template with id: " + id)))
-                                .collect(Collectors.toList());
+                                .orElseThrow(() -> new DDPException("Could not find template with id: " + id)))
+                        .collect(Collectors.toList());
         for (PdfTemplate template : templates) {
             if (template.getType() == PdfTemplateType.CUSTOM) {
                 for (PdfSubstitution substitution : ((CustomTemplate) template).getSubstitutions()) {
